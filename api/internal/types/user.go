@@ -14,13 +14,14 @@ type User struct {
 	Username      string     `json:"username" bun:"username,notnull"`
 	Email         string     `json:"email" bun:"email,unique,notnull"`
 	Password      string     `json:"-" bun:"password,notnull"`
-	Role          string     `json:"role" bun:"role,notnull"`
 	Avatar        string     `json:"avatar" bun:"avatar"`
 	CreatedAt     time.Time  `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt     time.Time  `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 	DeletedAt     *time.Time `json:"deleted_at,omitempty" bun:"deleted_at"`
 	IsVerified    bool       `json:"is_verified" bun:"is_verified,notnull,default:false"`
 	ResetToken    string     `json:"-" bun:"reset_token"`
+
+	Organizations []Organization `json:"organizations,omitempty" bun:"m2m:organization_users,join:User=Organization"`
 }
 
 type RefreshToken struct {
@@ -44,11 +45,6 @@ func (u User) SetEmail(email string) User {
 
 func (u User) SetPassword(password string) User {
 	u.Password = password
-	return u
-}
-
-func (u User) SetRole(role string) User {
-	u.Role = role
 	return u
 }
 
@@ -86,9 +82,6 @@ func (u User) IsValidPassword(password string) error {
 
 // NewUser returns a new User with default values set. If the provided User has empty strings for Role, CreatedAt, UpdatedAt, DeletedAt, or IsVerified, the corresponding fields in the returned User will be set with default values.
 func (u User) NewUser() User {
-	if u.Role == "" {
-		u.Role = "user"
-	}
 	if u.CreatedAt.IsZero() {
 		u.CreatedAt = time.Now()
 	}
@@ -101,7 +94,6 @@ func (u User) NewUser() User {
 		Username:   u.Username,
 		Email:      u.Email,
 		Password:   u.Password,
-		Role:       u.Role,
 		Avatar:     u.Avatar,
 		CreatedAt:  u.CreatedAt,
 		UpdatedAt:  u.UpdatedAt,
@@ -174,6 +166,10 @@ var (
 	ErrFailedToSendEmail                       = errors.New("failed to send email")
 	ErrInvalidResetToken                       = errors.New("invalid reset token")
 	ErrFailedToCreateRefreshToken              = errors.New("failed to create refresh token")
+	ErrRefreshTokenIsRequired                  = errors.New("refresh token is required")
+	ErrInvalidRefreshToken                     = errors.New("invalid refresh token")
+	ErrPermissionAlreadyExists                 = errors.New("permission already exists")
+	ErrPermissionDoesNotExist                  = errors.New("permission does not exist")
 )
 
 func containsNumber(password string) bool {

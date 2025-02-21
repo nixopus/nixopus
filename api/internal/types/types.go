@@ -26,3 +26,9 @@ type Payload struct {
 }
 
 var JWTSecretKey = []byte("secret-key")
+
+
+type ValidationError struct {
+	Field   string `json:"field"`
+	Message string `json:"message"`
+}
