@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
@@ -28,7 +29,7 @@ func AuthMiddleware(next http.Handler, app *storage.App) http.Handler {
 		if len(token) > 7 && token[:7] == "Bearer " {
 			token = token[7:]
 		}
-		
+
 		user, err := verifyToken(token, app.Store.DB, app.Ctx)
 		if err != nil {
 			log.Printf("Auth error: %v", err)
@@ -70,8 +71,11 @@ func verifyToken(tokenString string, db *bun.DB, ctx context.Context) (*types.Us
 		if !ok {
 			return nil, fmt.Errorf("invalid token claims")
 		}
-
-		user, err := storage.FindUserByEmail(db, email, ctx)
+		user_storage := user_storage.UserStorage{
+			DB:  db,
+			Ctx: ctx,
+		}
+		user, err := user_storage.FindUserByEmail(email)
 		if err != nil {
 			return nil, err
 		}

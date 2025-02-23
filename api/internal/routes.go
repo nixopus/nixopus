@@ -6,8 +6,10 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/raghavyuva/nixopus-api/internal/controller"
-	"github.com/raghavyuva/nixopus-api/internal/controller/auth"
-	"github.com/raghavyuva/nixopus-api/internal/controller/organization"
+	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
+	organization "github.com/raghavyuva/nixopus-api/internal/features/organization/controller"
+	permission "github.com/raghavyuva/nixopus-api/internal/features/permission/controller"
+	role "github.com/raghavyuva/nixopus-api/internal/features/role/controller"
 	"github.com/raghavyuva/nixopus-api/internal/middleware"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 )
@@ -49,7 +51,7 @@ func (router *Router) Routes() *mux.Router {
 	u := r.PathPrefix("/api/v1").Subrouter()
 
 	// Unauthenticated routes
-	authController := auth.NewAuthController(router.app)
+	authController := auth.NewAuthController(router.app.Store, router.app.Ctx)
 	u.HandleFunc("/auth/register", authController.Register).Methods("POST", "OPTIONS")
 	u.HandleFunc("/auth/login", authController.Login).Methods("POST", "OPTIONS")
 
@@ -67,7 +69,7 @@ func (router *Router) Routes() *mux.Router {
 	api.HandleFunc("/auth/verify-email", authController.VerifyEmail).Methods("POST", "OPTIONS")
 
 	// Role based routes
-	roleController := organization.NewRolesController(router.app)
+	roleController := role.NewRolesController(router.app.Store, router.app.Ctx)
 	api.HandleFunc("/roles", roleController.CreateRole).Methods("POST", "OPTIONS")
 	// api.HandleFunc("/roles/{id}", roleController.GetRole).Methods("GET", "OPTIONS")
 	api.HandleFunc("/roles/", roleController.UpdateRole).Methods("PUT", "OPTIONS")
@@ -75,7 +77,7 @@ func (router *Router) Routes() *mux.Router {
 	api.HandleFunc("/roles", roleController.GetRoles).Methods("GET", "OPTIONS")
 
 	// Organization Routes
-	organizationController := organization.NewOrganizationsController(router.app)
+	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx)
 	api.HandleFunc("/organizations", organizationController.CreateOrganization).Methods("POST", "OPTIONS")
 	api.HandleFunc("/organizations", organizationController.GetOrganization).Methods("GET", "OPTIONS")
 	api.HandleFunc("/organizations", organizationController.UpdateOrganization).Methods("PUT", "OPTIONS")
@@ -88,12 +90,12 @@ func (router *Router) Routes() *mux.Router {
 	api.HandleFunc("/organization/users", organizationController.GetOrganizationUsers).Methods("GET", "OPTIONS")
 
 	// Permission Routes
-	permissionController := organization.NewPermissionsController(router.app)
+	permissionController := permission.NewPermissionController(router.app.Store, router.app.Ctx)
 	api.HandleFunc("/permissions", permissionController.CreatePermission).Methods("POST", "OPTIONS")
 	api.HandleFunc("/permission", permissionController.GetPermission).Methods("GET", "OPTIONS")
 	api.HandleFunc("/permissions", permissionController.UpdatePermission).Methods("PUT", "OPTIONS")
 	api.HandleFunc("/permissions", permissionController.DeletePermission).Methods("DELETE", "OPTIONS")
-	api.HandleFunc("/permissions", permissionController.GetPermissions).Methods("GET", "OPTIONS")	
+	api.HandleFunc("/permissions", permissionController.GetPermissions).Methods("GET", "OPTIONS")
 	api.HandleFunc("/roles/permission", permissionController.AddPermissionToRole).Methods("POST", "OPTIONS")
 	api.HandleFunc("/roles/permission", permissionController.RemovePermissionFromRole).Methods("DELETE", "OPTIONS")
 
