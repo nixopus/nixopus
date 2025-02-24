@@ -1,1 +1,3 @@
 api/.env
+api/tmp
+api/bin

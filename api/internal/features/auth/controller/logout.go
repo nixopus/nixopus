@@ -8,17 +8,18 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-// Logout handles HTTP requests to log out a user.
-//
-// It expects a JSON body of type types.LogoutRequest containing the user's
-// refresh token.
-//
-// If the request body cannot be decoded, it responds with a 400 error.
-// If the refresh token is provided, it attempts to revoke the token.
-// If revoking the refresh token fails, it logs the error.
-//
-// On successful logout, it responds with a 200 status code and a JSON response
-// indicating successful logout.
+// Logout godoc
+// @Summary Logout user endpoint
+// @Description Logs out a user by revoking the refresh token.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param logout body types.LogoutRequest true "Logout request"
+// @Success 200 {object} types.Response "Success response"
+// @Failure 400 {object} types.Response "Bad request"
+// @Failure 500 {object} types.Response "Internal server error"
+// @Router /auth/logout [post]
 func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 	var logoutRequest types.LogoutRequest
 	err := c.validator.ParseRequestBody(r, r.Body, &logoutRequest)

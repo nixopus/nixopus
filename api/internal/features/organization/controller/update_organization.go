@@ -9,6 +9,18 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
+// UpdateOrganization godoc
+// @Summary Update an organization
+// @Description Updates an organization
+// @Tags organization
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param update_organization body types.UpdateOrganizationRequest true "Update organization request"
+// @Success 200 {object} types.Response "Success response"
+// @Failure 400 {object} types.Response "Bad request"
+// @Failure 500 {object} types.Response "Internal server error"
+// @Router /organization/update [post]
 func (c *OrganizationsController) UpdateOrganization(w http.ResponseWriter, r *http.Request) {
 	var organization types.UpdateOrganizationRequest
 

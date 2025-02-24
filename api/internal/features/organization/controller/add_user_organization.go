@@ -9,6 +9,17 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
+// AddUserToOrganization godoc
+// @Summary Add a user to an organization
+// @Description Adds a user to an organization
+// @Tags organization
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param add_user_to_organization body types.AddUserToOrganizationRequest true "Add user to organization request"
+// @Success 200 {object} types.Response "Success response with user"
+// @Failure 400 {object} types.Response "Bad request"
+// @Router /organization/add-user-to-organization [post]
 func (c *OrganizationsController) AddUserToOrganization(w http.ResponseWriter, r *http.Request) {
 	var user types.AddUserToOrganizationRequest
 	if err := c.validator.ParseRequestBody(r, r.Body, &user); err != nil {

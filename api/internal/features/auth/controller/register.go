@@ -8,21 +8,16 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-// Register handles HTTP requests to register a new user.
-//
-// It expects a JSON body of type types.RegisterRequest containing the user's
-// username, email, and password.
-//
-// If the request body cannot be decoded, it responds with a 400 error.
-// If any of the fields are empty, it responds with a 400 error.
-// If the password is invalid, it responds with a 400 error.
-// If the password hashing fails, it responds with a 500 error.
-// If a user with the provided email already exists, it responds with a 400 error.
-// If the user cannot be registered, it responds with a 500 error.
-// If a token cannot be created, it responds with a 500 error.
-//
-// On successful registration, it responds with a 200 status code and a JSON
-// response containing the authentication token and user information.
+// Register godoc
+// @Summary Register a new user
+// @Description Registers a new user in the application.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param register body types.RegisterRequest true "Register request"
+// @Success 200 {object} types.AuthResponse "Success response with token"
+// @Failure 400 {object} types.Response "Bad request"
+// @Router /auth/register [post]
 func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	var registration_request types.RegisterRequest
 

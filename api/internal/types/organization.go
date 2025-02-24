@@ -8,7 +8,7 @@ import (
 )
 
 type Role struct {
-	bun.BaseModel `bun:"table:roles,alias:r"`
+	bun.BaseModel `bun:"table:roles,alias:r" swaggerignore:"true"`
 	ID            uuid.UUID  `json:"id" bun:"id,pk,type:uuid"`
 	Name          string     `json:"name" bun:"name,notnull,unique"`
 	Description   string     `json:"description" bun:"description"`
@@ -20,7 +20,7 @@ type Role struct {
 }
 
 type Permission struct {
-	bun.BaseModel `bun:"table:permissions,alias:p"`
+	bun.BaseModel `bun:"table:permissions,alias:p" swaggerignore:"true"`
 	ID            uuid.UUID  `json:"id" bun:"id,pk,type:uuid"`
 	Name          string     `json:"name" bun:"name,notnull,unique"`
 	Description   string     `json:"description" bun:"description"`
@@ -33,7 +33,7 @@ type Permission struct {
 }
 
 type RolePermissions struct {
-	bun.BaseModel `bun:"table:role_permissions,alias:rp"`
+	bun.BaseModel `bun:"table:role_permissions,alias:rp" swaggerignore:"true"`
 	ID            uuid.UUID  `json:"id" bun:"id,pk,type:uuid"`
 	RoleID        uuid.UUID  `json:"role_id" bun:"role_id,notnull,type:uuid"`
 	PermissionID  uuid.UUID  `json:"permission_id" bun:"permission_id,notnull,type:uuid"`
@@ -46,7 +46,7 @@ type RolePermissions struct {
 }
 
 type Organization struct {
-	bun.BaseModel `bun:"table:organizations,alias:o"`
+	bun.BaseModel `bun:"table:organizations,alias:o" swaggerignore:"true"`
 	ID            uuid.UUID  `json:"id" bun:"id,pk,type:uuid"`
 	Name          string     `json:"name" bun:"name,notnull,unique"`
 	Description   string     `json:"description" bun:"description"`
@@ -58,7 +58,7 @@ type Organization struct {
 }
 
 type OrganizationUsers struct {
-	bun.BaseModel  `bun:"table:organization_users,alias:ou"`
+	bun.BaseModel  `bun:"table:organization_users,alias:ou" swaggerignore:"true"`
 	ID             uuid.UUID  `json:"id" bun:"id,pk,type:uuid"`
 	UserID         uuid.UUID  `json:"user_id" bun:"user_id,notnull,type:uuid"`
 	OrganizationID uuid.UUID  `json:"organization_id" bun:"organization_id,notnull,type:uuid"`

@@ -8,6 +8,17 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
+// @Summary Get permissions by role
+// @Description Get permissions by role
+// @Tags permission
+// @Accept  json
+// @Produce  json
+// @Security BearerAuth
+// @Param id query string true "Role ID"
+// @Success 200 {object} types.Response
+// @Failure 400 {object} types.Response
+// @Failure 500 {object} types.Response
+// @Router /permissions/roles/{id} [get]
 func (p *PermissionController) GetPermissionsByRole(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	request := types.GetPermissionRequest{

@@ -6,8 +6,13 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-// HealthCheck handles HTTP requests to check the health status of the server.
-// It responds with a JSON message indicating that the server is healthy.
+// HealthCheck godoc
+// @Summary Check if the server is up
+// @Description Simple health check
+// @Tags health
+// @Produce json
+// @Success 200 {object} types.Response "Success response"
+// @Router /health [get]
 func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, "success", "Server is healthy", nil)
 }

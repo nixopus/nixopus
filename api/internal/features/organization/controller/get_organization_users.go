@@ -8,6 +8,17 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
+// @Summary Get organization users
+// @Description Get users of an organization
+// @Tags organization
+// @Accept json
+// @Security BearerAuth
+// @Produce json
+// @Param id path string true "Organization ID"
+// @Success 200 {object} types.OrganizationUsers "Success response with organization users"
+// @Failure 400 {object} types.Response "Bad request"
+// @Failure 500 {object} types.Response "Internal server error"
+// @Router /organization/{id}/users [get]
 func (c *OrganizationsController) GetOrganizationUsers(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if err := c.validator.ValidateID(id, types.ErrMissingOrganizationID); err != nil {

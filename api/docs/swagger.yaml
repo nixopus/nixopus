@@ -1,0 +1,1106 @@
+basePath: /api/v1
+definitions:
+  types.AddPermissionToRoleRequest:
+    properties:
+      permission_id:
+        type: string
+      role_id:
+        type: string
+    type: object
+  types.AddUserToOrganizationRequest:
+    properties:
+      organization_id:
+        type: string
+      role_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  types.AuthResponse:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      user:
+        $ref: '#/definitions/types.User'
+    type: object
+  types.ChangePasswordRequest:
+    properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+    type: object
+  types.CreateOrganizationRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  types.CreatePermissionRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      resource:
+        type: string
+    type: object
+  types.CreateRoleRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  types.DeleteOrganizationRequest:
+    properties:
+      id:
+        type: string
+    type: object
+  types.DeletePermissionRequest:
+    properties:
+      id:
+        type: string
+    type: object
+  types.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  types.LogoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  types.Organization:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/types.User'
+        type: array
+    type: object
+  types.OrganizationUsers:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: string
+      organization:
+        $ref: '#/definitions/types.Organization'
+      organization_id:
+        type: string
+      role:
+        $ref: '#/definitions/types.Role'
+      role_id:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/types.User'
+      user_id:
+        type: string
+    type: object
+  types.Permission:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      resource:
+        type: string
+      roles:
+        items:
+          $ref: '#/definitions/types.Role'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  types.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  types.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  types.RemovePermissionFromRoleRequest:
+    properties:
+      permission_id:
+        type: string
+      role_id:
+        type: string
+    type: object
+  types.RemoveUserFromOrganizationRequest:
+    properties:
+      organization_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  types.Response:
+    description: Standard API response structure
+    properties:
+      data:
+        description: Actual response data
+      error:
+        description: |-
+          Error message in case of error
+          @Example Invalid input parameters
+        type: string
+      message:
+        description: |-
+          Optional message providing additional information
+          @Example Operation completed successfully
+        type: string
+      status:
+        description: |-
+          Status of the response ("success" or "error")
+          @Example success
+        type: string
+    type: object
+  types.Role:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/types.Permission'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  types.UpdateOrganizationRequest:
+    properties:
+      description omitempty:
+        type: string
+      id:
+        type: string
+      name omitempty:
+        type: string
+    type: object
+  types.UpdatePermissionRequest:
+    properties:
+      description omitempty:
+        type: string
+      id:
+        type: string
+      name omitempty:
+        type: string
+      resource omitempty:
+        type: string
+    type: object
+  types.UpdateRoleRequest:
+    properties:
+      description omitempty:
+        type: string
+      id:
+        type: string
+      name omitempty:
+        type: string
+    type: object
+  types.User:
+    properties:
+      avatar:
+        type: string
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      is_verified:
+        type: boolean
+      organizations:
+        items:
+          $ref: '#/definitions/types.Organization'
+        type: array
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: raghav@nixopus.com
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Api for Nixopus
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://nixopus.com/terms/
+  title: Nixopus Documentation
+  version: "1.0"
+paths:
+  /auth/generate-password-reset-link:
+    post:
+      consumes:
+      - application/json
+      description: Generates a password reset link for a user and sends it to the
+        user's email
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password reset link sent successfully
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Failed to decode or validate request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Generates a password reset link for a user
+      tags:
+      - auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/types.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with token
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.AuthResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: User login endpoint
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logs out a user by revoking the refresh token.
+      parameters:
+      - description: Logout request
+        in: body
+        name: logout
+        required: true
+        schema:
+          $ref: '#/definitions/types.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Logout user endpoint
+      tags:
+      - auth
+  /auth/refresh-token:
+    post:
+      consumes:
+      - application/json
+      description: Refreshes a users access token with a new one.
+      parameters:
+      - description: Refresh request
+        in: body
+        name: refresh
+        required: true
+        schema:
+          $ref: '#/definitions/types.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with token
+          schema:
+            $ref: '#/definitions/types.AuthResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Refresh token endpoint
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Registers a new user in the application.
+      parameters:
+      - description: Register request
+        in: body
+        name: register
+        required: true
+        schema:
+          $ref: '#/definitions/types.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with token
+          schema:
+            $ref: '#/definitions/types.AuthResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Register a new user
+      tags:
+      - auth
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Resets the user's password using the provided information.
+      parameters:
+      - description: Reset password request
+        in: body
+        name: resetPassword
+        required: true
+        schema:
+          $ref: '#/definitions/types.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password reset successfully
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Failed to decode or validate request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Reset password endpoint
+      tags:
+      - auth
+  /health:
+    get:
+      description: Simple health check
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Check if the server is up
+      tags:
+      - health
+  /organization/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves an organization by its ID.
+      parameters:
+      - description: Organization ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with organization
+          schema:
+            $ref: '#/definitions/types.Organization'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Get an organization
+      tags:
+      - organization
+  /organization/{id}/users:
+    get:
+      consumes:
+      - application/json
+      description: Get users of an organization
+      parameters:
+      - description: Organization ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with organization users
+          schema:
+            $ref: '#/definitions/types.OrganizationUsers'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Get organization users
+      tags:
+      - organization
+  /organization/add-user-to-organization:
+    post:
+      consumes:
+      - application/json
+      description: Adds a user to an organization
+      parameters:
+      - description: Add user to organization request
+        in: body
+        name: add_user_to_organization
+        required: true
+        schema:
+          $ref: '#/definitions/types.AddUserToOrganizationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with user
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Add a user to an organization
+      tags:
+      - organization
+  /organization/create:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new organization in the application.
+      parameters:
+      - description: Create organization request
+        in: body
+        name: create_organization
+        required: true
+        schema:
+          $ref: '#/definitions/types.CreateOrganizationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with organization
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Create a new organization
+      tags:
+      - organization
+  /organization/delete:
+    post:
+      consumes:
+      - application/json
+      description: Deletes an organization with the given id.
+      parameters:
+      - description: Delete organization request
+        in: body
+        name: delete_organization
+        required: true
+        schema:
+          $ref: '#/definitions/types.DeleteOrganizationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete an organization
+      tags:
+      - organization
+  /organization/remove-user-from-organization:
+    post:
+      consumes:
+      - application/json
+      description: Removes a user from an organization
+      parameters:
+      - description: Remove user from organization request
+        in: body
+        name: remove_user_from_organization
+        required: true
+        schema:
+          $ref: '#/definitions/types.RemoveUserFromOrganizationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Remove a user from an organization
+      tags:
+      - organization
+  /organization/update:
+    post:
+      consumes:
+      - application/json
+      description: Updates an organization
+      parameters:
+      - description: Update organization request
+        in: body
+        name: update_organization
+        required: true
+        schema:
+          $ref: '#/definitions/types.UpdateOrganizationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Update an organization
+      tags:
+      - organization
+  /organizations:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all organizations.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with organizations
+          schema:
+            items:
+              $ref: '#/definitions/types.Organization'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Get all organizations
+      tags:
+      - organization
+  /permissions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all permissions.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with permissions
+          schema:
+            items:
+              $ref: '#/definitions/types.Permission'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Get all permissions
+      tags:
+      - permission
+    post:
+      consumes:
+      - application/json
+      description: Creates a new permission in the application.
+      parameters:
+      - description: Create permission request
+        in: body
+        name: create_permission
+        required: true
+        schema:
+          $ref: '#/definitions/types.CreatePermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Success response with permission
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Create a new permission
+      tags:
+      - permission
+  /permissions/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a permission by its ID.
+      parameters:
+      - description: Permission ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with permission
+          schema:
+            $ref: '#/definitions/types.Permission'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Get a permission
+      tags:
+      - permission
+  /permissions/delete:
+    post:
+      consumes:
+      - application/json
+      description: Deletes a permission with the given id.
+      parameters:
+      - description: Delete permission request
+        in: body
+        name: delete_permission
+        required: true
+        schema:
+          $ref: '#/definitions/types.DeletePermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete a permission
+      tags:
+      - permission
+  /permissions/roles:
+    post:
+      consumes:
+      - application/json
+      description: Add permission to role
+      parameters:
+      - description: Add permission to role request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/types.AddPermissionToRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Add permission to role
+      tags:
+      - permission
+  /permissions/roles/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get permissions by role
+      parameters:
+      - description: Role ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Get permissions by role
+      tags:
+      - permission
+  /permissions/roles/remove:
+    post:
+      consumes:
+      - application/json
+      description: Remove permission from role
+      parameters:
+      - description: Remove permission from role request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/types.RemovePermissionFromRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Remove permission from role
+      tags:
+      - permission
+  /permissions/update:
+    post:
+      consumes:
+      - application/json
+      description: Updates a permission
+      parameters:
+      - description: Update permission request
+        in: body
+        name: update_permission
+        required: true
+        schema:
+          $ref: '#/definitions/types.UpdatePermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Update a permission
+      tags:
+      - permission
+  /roles:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all roles in the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with roles
+          schema:
+            items:
+              $ref: '#/definitions/types.Role'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Get all roles
+      tags:
+      - role
+    post:
+      consumes:
+      - application/json
+      description: Creates a new role in the application.
+      parameters:
+      - description: Create role request
+        in: body
+        name: create_role
+        required: true
+        schema:
+          $ref: '#/definitions/types.CreateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Success response with role
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Create a new role
+      tags:
+      - role
+  /roles/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a role by its ID
+      parameters:
+      - description: Role ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with role
+          schema:
+            $ref: '#/definitions/types.Role'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Get a role
+      tags:
+      - role
+  /roles/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a role with the given id.
+      parameters:
+      - description: Role ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete a role
+      tags:
+      - role
+  /roles/update:
+    post:
+      consumes:
+      - application/json
+      description: Updates a role with the given id.
+      parameters:
+      - description: Update role request
+        in: body
+        name: update_role
+        required: true
+        schema:
+          $ref: '#/definitions/types.UpdateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Update a role
+      tags:
+      - role
+securityDefinitions:
+  BearerAuth:
+    description: Enter your bearer token in the format **Bearer &lt;token&gt;**
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

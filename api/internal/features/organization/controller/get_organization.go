@@ -8,6 +8,18 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
+// GetOrganization godoc
+// @Summary Get an organization
+// @Description Retrieves an organization by its ID.
+// @Tags organization
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Organization ID"
+// @Success 200 {object} types.Organization "Success response with organization"
+// @Failure 400 {object} types.Response "Bad request"
+// @Failure 500 {object} types.Response "Internal server error"
+// @Router /organization/{id} [get]
 func (c *OrganizationsController) GetOrganization(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if err := c.validator.ValidateID(id, types.ErrMissingOrganizationID); err != nil {

@@ -8,20 +8,19 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-// RefreshToken handles HTTP requests to refresh the user's access token.
-//
-// It expects a JSON body of type types.RefreshTokenRequest containing the user's
-// refresh token.
-//
-// If the request body cannot be decoded, it responds with a 400 error.
-// If the refresh token is empty, it responds with a 400 error.
-// If the refresh token is invalid or expired, it responds with a 401 error.
-// If the user is not found, it responds with a 404 error.
-// If the access token cannot be created, it responds with a 500 error.
-// If the refresh token cannot be revoked or a new one cannot be created, it responds with a 500 error.
-//
-// On successful refresh, it responds with a 200 status code and a JSON response
-// containing the new access token, refresh token, and user information.
+
+// RefreshToken godoc
+// @Summary Refresh token endpoint
+// @Description Refreshes a users access token with a new one.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param refresh body types.RefreshTokenRequest true "Refresh request"
+// @Success 200 {object} types.AuthResponse "Success response with token"
+// @Failure 400 {object} types.Response "Bad request"
+// @Failure 401 {object} types.Response "Unauthorized"
+// @Router /auth/refresh-token [post]
 func (c *AuthController) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var refreshRequest types.RefreshTokenRequest
 	err := c.validator.ParseRequestBody(r, r.Body, &refreshRequest)

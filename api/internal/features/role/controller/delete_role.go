@@ -8,7 +8,18 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-// DeleteRole deletes a role from the database
+// DeleteRole godoc
+// @Summary Delete a role
+// @Description Deletes a role with the given id.
+// @Tags role
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id query string true "Role ID"
+// @Success 200 {object} types.Response "Success response"
+// @Failure 400 {object} types.Response "Bad request"
+// @Failure 500 {object} types.Response "Internal server error"
+// @Router /roles/delete [delete]
 func (c *RolesController) DeleteRole(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 

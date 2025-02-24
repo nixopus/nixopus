@@ -8,18 +8,19 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-// Login handles HTTP requests to authenticate a user and provide a token.
-//
-// It expects a JSON body of type types.LoginRequest containing the user's email and password.
-//
-// If the request body cannot be decoded, it responds with a 400 error.
-// If the email or password is missing, it responds with a 400 error.
-// If the user is not found, it responds with a 404 error.
-// If the password is incorrect, it responds with a 401 error.
-// If a token cannot be created, it responds with a 500 error.
-//
-// On successful authentication, it responds with a 200 status code and a JSON response
-// containing the authentication token and user information.
+
+// Example from your login.go file
+// Login godoc
+// @Summary User login endpoint
+// @Description Authenticates a user and returns a JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param login body types.LoginRequest true "Login credentials"
+// @Success 200 {object} types.Response{data=types.AuthResponse} "Success response with token"
+// @Failure 400 {object} types.Response "Bad request"
+// @Failure 401 {object} types.Response "Unauthorized"
+// @Router /auth/login [post]
 func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	var login_request types.LoginRequest
 	err := c.validator.ParseRequestBody(r, r.Body, &login_request)

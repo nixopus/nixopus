@@ -13,6 +13,7 @@ import (
 	role "github.com/raghavyuva/nixopus-api/internal/features/role/controller"
 	"github.com/raghavyuva/nixopus-api/internal/middleware"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type Router struct {
@@ -25,20 +26,43 @@ func NewRouter(app *storage.App) *Router {
 	}
 }
 
-// Routes returns a new router that handles all API routes, including
-// unauthenticated and authenticated routes.
-// The following middleware is used:
-//
-// - middleware.CorsMiddleware: enables CORS
-// - middleware.LoggingMiddleware: logs all requests
-// - middleware.AuthMiddleware: checks if the request is authenticated
+// @title Nixopus Documentation
+// @version 1.0
+// @description Api for Nixopus
+// @termsOfService http://nixopus.com/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email raghav@nixopus.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Enter your bearer token in the format **Bearer &lt;token&gt;**
 func (router *Router) Routes() *mux.Router {
 	r := mux.NewRouter()
 	l := logger.NewLogger()
 	r.Use(middleware.CorsMiddleware)
 	r.Use(middleware.LoggingMiddleware)
 	r.Use(middleware.RateLimiter)
+
 	r.HandleFunc("/health", health.HealthCheck).Methods("GET", "OPTIONS")
+	r.PathPrefix("/docs/").Handler(httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+		httpSwagger.DeepLinking(true),
+		httpSwagger.DocExpansion("none"),
+		httpSwagger.DomID("swagger-ui"),
+	))
+
+	r.HandleFunc("/swagger/doc.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		http.ServeFile(w, r, "./docs/swagger.json")
+	})
 
 	wsServer, err := NewSocketServer()
 	if err != nil {
@@ -51,65 +75,56 @@ func (router *Router) Routes() *mux.Router {
 
 	u := r.PathPrefix("/api/v1").Subrouter()
 
-	// Unauthenticated routes
+	authCB := u.PathPrefix("/auth").Subrouter()
+
 	authController := auth.NewAuthController(router.app.Store, router.app.Ctx, l)
-	u.HandleFunc("/auth/register", authController.Register).Methods("POST", "OPTIONS")
-	u.HandleFunc("/auth/login", authController.Login).Methods("POST", "OPTIONS")
+	authCB.HandleFunc("/register", authController.Register).Methods("POST", "OPTIONS")
+	authCB.HandleFunc("/login", authController.Login).Methods("POST", "OPTIONS")
 
 	api := r.PathPrefix("/api/v1").Subrouter()
 	api.Use(func(next http.Handler) http.Handler {
 		return middleware.AuthMiddleware(next, router.app)
 	})
 
-	// Authenticated routes
-	api.HandleFunc("/auth/request-password-reset", authController.GeneratePasswordResetLink).Methods("POST", "OPTIONS")
-	api.HandleFunc("/auth/reset-password", authController.ResetPassword).Methods("POST", "OPTIONS")
-	api.HandleFunc("/auth/refresh-token", authController.RefreshToken).Methods("POST", "OPTIONS")
-	api.HandleFunc("/auth/logout", authController.Logout).Methods("POST", "OPTIONS")
-	api.HandleFunc("/auth/send-verification-email", authController.SendVerificationEmail).Methods("POST", "OPTIONS")
-	api.HandleFunc("/auth/verify-email", authController.VerifyEmail).Methods("POST", "OPTIONS")
+	authApi := api.PathPrefix("/auth").Subrouter()
+	authApi.HandleFunc("/request-password-reset", authController.GeneratePasswordResetLink).Methods("POST", "OPTIONS")
+	authApi.HandleFunc("/reset-password", authController.ResetPassword).Methods("POST", "OPTIONS")
+	authApi.HandleFunc("/refresh-token", authController.RefreshToken).Methods("POST", "OPTIONS")
+	authApi.HandleFunc("/logout", authController.Logout).Methods("POST", "OPTIONS")
+	authApi.HandleFunc("/send-verification-email", authController.SendVerificationEmail).Methods("POST", "OPTIONS")
+	authApi.HandleFunc("/verify-email", authController.VerifyEmail).Methods("POST", "OPTIONS")
 
-	// Role based routes
+	roleApi := api.PathPrefix("/roles").Subrouter()
 	roleController := role.NewRolesController(router.app.Store, router.app.Ctx, l)
-	api.HandleFunc("/roles", roleController.CreateRole).Methods("POST", "OPTIONS")
-	// api.HandleFunc("/roles/{id}", roleController.GetRole).Methods("GET", "OPTIONS")
-	api.HandleFunc("/roles/", roleController.UpdateRole).Methods("PUT", "OPTIONS")
-	api.HandleFunc("/roles/", roleController.DeleteRole).Methods("DELETE", "OPTIONS")
-	api.HandleFunc("/roles", roleController.GetRoles).Methods("GET", "OPTIONS")
+	roleApi.HandleFunc("", roleController.CreateRole).Methods("POST", "OPTIONS")
+	// roleApi.HandleFunc("/{id}", roleController.GetRole).Methods("GET", "OPTIONS")
+	roleApi.HandleFunc("/", roleController.UpdateRole).Methods("PUT", "OPTIONS")
+	roleApi.HandleFunc("/", roleController.DeleteRole).Methods("DELETE", "OPTIONS")
+	roleApi.HandleFunc("", roleController.GetRoles).Methods("GET", "OPTIONS")
 
-	// Organization Routes
+	orgApi := api.PathPrefix("/organizations").Subrouter()
 	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l)
-	api.HandleFunc("/organizations", organizationController.CreateOrganization).Methods("POST", "OPTIONS")
-	api.HandleFunc("/organizations", organizationController.GetOrganization).Methods("GET", "OPTIONS")
-	api.HandleFunc("/organizations", organizationController.UpdateOrganization).Methods("PUT", "OPTIONS")
-	api.HandleFunc("/organizations", organizationController.DeleteOrganization).Methods("DELETE", "OPTIONS")
-	api.HandleFunc("/organizations", organizationController.GetOrganizations).Methods("GET", "OPTIONS")
+	orgApi.HandleFunc("", organizationController.CreateOrganization).Methods("POST", "OPTIONS")
+	orgApi.HandleFunc("", organizationController.GetOrganization).Methods("GET", "OPTIONS")
+	orgApi.HandleFunc("", organizationController.UpdateOrganization).Methods("PUT", "OPTIONS")
+	orgApi.HandleFunc("", organizationController.DeleteOrganization).Methods("DELETE", "OPTIONS")
+	orgApi.HandleFunc("", organizationController.GetOrganizations).Methods("GET", "OPTIONS")
+	orgApi.HandleFunc("/user", organizationController.AddUserToOrganization).Methods("POST", "OPTIONS")
+	orgApi.HandleFunc("/user", organizationController.RemoveUserFromOrganization).Methods("DELETE", "OPTIONS")
+	orgApi.HandleFunc("/users", organizationController.GetOrganizationUsers).Methods("GET", "OPTIONS")
 
-	api.HandleFunc("/organizations/user", organizationController.AddUserToOrganization).Methods("POST", "OPTIONS")
-	api.HandleFunc("/organizations/user", organizationController.RemoveUserFromOrganization).Methods("DELETE", "OPTIONS")
-
-	api.HandleFunc("/organization/users", organizationController.GetOrganizationUsers).Methods("GET", "OPTIONS")
-
-	// Permission Routes
+	permApi := api.PathPrefix("/permissions").Subrouter()
 	permissionController := permission.NewPermissionController(router.app.Store, router.app.Ctx, l)
-	api.HandleFunc("/permissions", permissionController.CreatePermission).Methods("POST", "OPTIONS")
-	api.HandleFunc("/permission", permissionController.GetPermission).Methods("GET", "OPTIONS")
-	api.HandleFunc("/permissions", permissionController.UpdatePermission).Methods("PUT", "OPTIONS")
-	api.HandleFunc("/permissions", permissionController.DeletePermission).Methods("DELETE", "OPTIONS")
-	api.HandleFunc("/permissions", permissionController.GetPermissions).Methods("GET", "OPTIONS")
-	api.HandleFunc("/roles/permission", permissionController.AddPermissionToRole).Methods("POST", "OPTIONS")
-	api.HandleFunc("/roles/permission", permissionController.RemovePermissionFromRole).Methods("DELETE", "OPTIONS")
+	permApi.HandleFunc("", permissionController.CreatePermission).Methods("POST", "OPTIONS")
+	permApi.HandleFunc("", permissionController.GetPermission).Methods("GET", "OPTIONS")
+	permApi.HandleFunc("", permissionController.UpdatePermission).Methods("PUT", "OPTIONS")
+	permApi.HandleFunc("", permissionController.DeletePermission).Methods("DELETE", "OPTIONS")
+	permApi.HandleFunc("", permissionController.GetPermissions).Methods("GET", "OPTIONS")
 
-	api.HandleFunc("/roles/permissions", permissionController.GetPermissionsByRole).Methods("GET", "OPTIONS")
-
-	// User Routes
-	// userController := controller.NewUserController(router.app)
-	// api.HandleFunc("/users", userController.CreateUser).Methods("POST", "OPTIONS")
-	// api.HandleFunc("/users/{id}", userController.GetUser).Methods("GET", "OPTIONS")
-	// api.HandleFunc("/users/{id}", userController.UpdateUser).Methods("PUT", "OPTIONS")
-	// api.HandleFunc("/users/{id}", userController.DeleteUser).Methods("DELETE", "OPTIONS")
-
-	// User based routes
+	rolePermApi := api.PathPrefix("/roles/permission").Subrouter()
+	rolePermApi.HandleFunc("", permissionController.AddPermissionToRole).Methods("POST", "OPTIONS")
+	rolePermApi.HandleFunc("", permissionController.RemovePermissionFromRole).Methods("DELETE", "OPTIONS")
+	rolePermApi.HandleFunc("s", permissionController.GetPermissionsByRole).Methods("GET", "OPTIONS")
 
 	return r
 }

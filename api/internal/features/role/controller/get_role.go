@@ -8,8 +8,17 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-// GetRoles returns all roles that are active in the database
-// passing is_disabled as true will return all roles
+
+// GetRoles godoc
+// @Summary Get all roles
+// @Description Retrieves all roles in the database
+// @Tags role
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} types.Role "Success response with roles"
+// @Failure 500 {object} types.Response "Internal server error"
+// @Router /roles [get]
 func (c *RolesController) GetRoles(w http.ResponseWriter, r *http.Request) {
 	roles, err := c.service.GetRoles()
 	if err != nil {
@@ -21,7 +30,18 @@ func (c *RolesController) GetRoles(w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, "success", "Roles fetched successfully", roles)
 }
 
-// GetRole returns a single role for the given id in the database
+// GetRole godoc
+// @Summary Get a role
+// @Description Retrieves a role by its ID
+// @Tags role
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id query string true "Role ID"
+// @Success 200 {object} types.Role "Success response with role"
+// @Failure 400 {object} types.Response "Bad request"
+// @Failure 500 {object} types.Response "Internal server error"
+// @Router /roles/{id} [get]
 func (c *RolesController) GetRole(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 

@@ -10,6 +10,18 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
+// DeleteOrganization godoc
+// @Summary Delete an organization
+// @Description Deletes an organization with the given id.
+// @Tags organization
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param delete_organization body types.DeleteOrganizationRequest true "Delete organization request"
+// @Success 200 {object} types.Response "Success response"
+// @Failure 400 {object} types.Response "Bad request"
+// @Failure 500 {object} types.Response "Internal server error"
+// @Router /organization/delete [post]
 func (c *OrganizationsController) DeleteOrganization(w http.ResponseWriter, r *http.Request) {
 	var organization types.DeleteOrganizationRequest
 
