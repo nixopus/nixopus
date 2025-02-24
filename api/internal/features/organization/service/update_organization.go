@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -16,8 +17,10 @@ import (
 // If there is an error while updating the organization, it returns ErrFailedToUpdateOrganization.
 // Upon successful update, it returns nil.
 func (o *OrganizationService) UpdateOrganization(organization *types.UpdateOrganizationRequest) error {
+	o.logger.Log(logger.Info, "updating organization", organization.ID)
 	existingOrganization, err := o.storage.GetOrganization(organization.ID)
 	if err == nil && existingOrganization.ID == uuid.Nil {
+		o.logger.Log(logger.Error, types.ErrOrganizationDoesNotExist.Error(), "")
 		return types.ErrOrganizationDoesNotExist
 	}
 
@@ -31,6 +34,7 @@ func (o *OrganizationService) UpdateOrganization(organization *types.UpdateOrgan
 	}
 
 	if err := o.storage.UpdateOrganization(&organizationToUpdate); err != nil {
+		o.logger.Log(logger.Error, types.ErrFailedToUpdateOrganization.Error(), "")
 		return types.ErrFailedToUpdateOrganization
 	}
 

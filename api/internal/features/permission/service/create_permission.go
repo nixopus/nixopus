@@ -2,13 +2,16 @@ package service
 
 import (
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/permission/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 func (c *PermissionService) CreatePermission(permission *types.CreatePermissionRequest) error {
+	c.logger.Log(logger.Info, "Creating permission", "")
 	existingPermission, err := c.storage.GetPermissionByName(permission.Name)
 	if err == nil && existingPermission.ID != uuid.Nil {
+		c.logger.Log(logger.Error, types.ErrPermissionAlreadyExists.Error(), "")
 		return types.ErrPermissionAlreadyExists
 	}
 
@@ -20,6 +23,7 @@ func (c *PermissionService) CreatePermission(permission *types.CreatePermissionR
 	}
 
 	if err := c.storage.CreatePermission(permissionToCreate); err != nil {
+		c.logger.Log(logger.Error, types.ErrFailedToCreatePermission.Error(), err.Error())
 		return types.ErrFailedToCreatePermission
 	}
 

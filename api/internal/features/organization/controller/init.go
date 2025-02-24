@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/validation"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
@@ -13,16 +14,18 @@ type OrganizationsController struct {
 	validator *validation.Validator
 	service   *service.OrganizationService
 	ctx       context.Context
+	logger    logger.Logger
 }
 
 func NewOrganizationsController(
 	store *shared_storage.Store,
 	ctx context.Context,
+	l logger.Logger,
 ) *OrganizationsController {
 	return &OrganizationsController{
 		store:     store,
 		validator: validation.NewValidator(),
-		service:   service.NewOrganizationService(store, ctx),
+		service:   service.NewOrganizationService(store, ctx, l),
 		ctx:       ctx,
 	}
 }

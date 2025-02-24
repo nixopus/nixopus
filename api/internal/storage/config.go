@@ -50,7 +50,7 @@ func NewDB(c *Config) (*bun.DB, error) {
 	db := bun.NewDB(sqldb, pgdialect.New())
 
 	if c.Debug {
-		db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+		db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(false)))
 	}
 
 	return db, nil

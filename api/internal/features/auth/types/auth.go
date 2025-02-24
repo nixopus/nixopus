@@ -2,16 +2,16 @@ package types
 
 import (
 	"errors"
-	
+
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // This struct is used for both login and register responses
 type AuthResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    int64  `json:"expires_in"`
-	User         shared_types.User   `json:"user"`
+	AccessToken  string            `json:"access_token"`
+	RefreshToken string            `json:"refresh_token"`
+	ExpiresIn    int64             `json:"expires_in"`
+	User         shared_types.User `json:"user"`
 }
 
 type LoginRequest struct {

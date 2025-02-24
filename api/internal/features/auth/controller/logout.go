@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -20,15 +21,16 @@ import (
 // indicating successful logout.
 func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 	var logoutRequest types.LogoutRequest
-
 	err := c.validator.ParseRequestBody(r, r.Body, &logoutRequest)
 	if err != nil {
+		c.logger.Log(logger.Error, types.ErrFailedToDecodeRequest.Error(), err.Error())
 		utils.SendErrorResponse(w, types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = c.validator.ValidateRequest(logoutRequest)
 	if err != nil {
+		c.logger.Log(logger.Error, err.Error(), err.Error())
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}

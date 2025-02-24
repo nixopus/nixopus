@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
@@ -14,14 +15,17 @@ import (
 // If the storage layer returns an error, it returns ErrFailedToGetOrganizationUsers.
 // If the storage layer succeeds in fetching the users, it returns the users.
 func (o *OrganizationService) GetOrganizationUsers(id string) ([]shared_types.OrganizationUsers, error) {
+	o.logger.Log(logger.Info, "getting organization users", id)
 	existingOrganization, err := o.storage.GetOrganization(id)
 	if err != nil && existingOrganization.ID == uuid.Nil {
+		o.logger.Log(logger.Error, types.ErrOrganizationDoesNotExist.Error(), "")
 		return nil, types.ErrOrganizationDoesNotExist
 	}
 
 	users, err := o.storage.GetOrganizationUsers(id)
 
 	if err != nil {
+		o.logger.Log(logger.Error, types.ErrFailedToGetOrganizationUsers.Error(), err.Error())
 		return nil, types.ErrFailedToGetOrganizationUsers
 	}
 

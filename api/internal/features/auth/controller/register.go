@@ -1,10 +1,10 @@
 package auth
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -28,13 +28,14 @@ func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 
 	err := c.validator.ParseRequestBody(r, r.Body, &registration_request)
 	if err != nil {
-		log.Println(err.Error())
+		c.logger.Log(logger.Error, types.ErrFailedToDecodeRequest.Error(), err.Error())
 		utils.SendErrorResponse(w, types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = c.validator.ValidateRequest(registration_request)
 	if err != nil {
+		c.logger.Log(logger.Error, err.Error(), err.Error())
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}

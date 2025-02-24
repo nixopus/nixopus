@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/google/uuid"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 )
 
@@ -19,8 +20,10 @@ import (
 // If the removal fails, it returns ErrFailedToRemoveUserFromOrganization.
 // Upon successful removal, it returns nil.
 func (o *OrganizationService) RemoveUserFromOrganization(user *types.RemoveUserFromOrganizationRequest) error {
+	o.logger.Log(logger.Info, "removing user from organization", user.UserID)
 	existingOrganization, err := o.storage.GetOrganization(user.OrganizationID)
 	if err == nil && existingOrganization.ID == uuid.Nil {
+		o.logger.Log(logger.Error, types.ErrOrganizationDoesNotExist.Error(), "")
 		return types.ErrOrganizationDoesNotExist
 	}
 	user_storage := user_storage.UserStorage{
@@ -29,15 +32,18 @@ func (o *OrganizationService) RemoveUserFromOrganization(user *types.RemoveUserF
 	}
 	existingUser, err := user_storage.FindUserByID(user.UserID)
 	if err == nil && existingUser.ID == uuid.Nil {
+		o.logger.Log(logger.Error, types.ErrUserDoesNotExist.Error(), "")
 		return types.ErrUserDoesNotExist
 	}
 
 	existingUserInOrganization, err := o.storage.FindUserInOrganization(user.UserID, user.OrganizationID)
 	if err == nil && existingUserInOrganization.ID == uuid.Nil {
+		o.logger.Log(logger.Error, types.ErrUserNotInOrganization.Error(), "")
 		return types.ErrUserNotInOrganization
 	}
 
 	if err := o.storage.RemoveUserFromOrganization(user.UserID, user.OrganizationID); err != nil {
+		o.logger.Log(logger.Error, types.ErrFailedToRemoveUserFromOrganization.Error(), err.Error())
 		return types.ErrFailedToRemoveUserFromOrganization
 	}
 

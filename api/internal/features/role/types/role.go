@@ -34,4 +34,3 @@ var (
 	ErrRoleDoesNotExist   = errors.New("role does not exist")
 	ErrInvalidRequestType = errors.New("invalid request type")
 )
-

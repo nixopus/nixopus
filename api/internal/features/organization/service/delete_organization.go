@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 )
 
@@ -12,12 +13,15 @@ import (
 // If the storage layer returns an error, it returns ErrFailedToDeleteOrganization.
 // If the storage layer succeeds in deleting the organization, it returns nil.
 func (o *OrganizationService) DeleteOrganization(organizationID uuid.UUID) error {
+	o.logger.Log(logger.Info, "deleting organization", organizationID.String())
 	existingOrganization, err := o.storage.GetOrganization(organizationID.String())
 	if err == nil && existingOrganization.ID == uuid.Nil {
+		o.logger.Log(logger.Error, types.ErrOrganizationDoesNotExist.Error(), "")
 		return types.ErrOrganizationDoesNotExist
 	}
 
 	if err := o.storage.DeleteOrganization(organizationID.String()); err != nil {
+		o.logger.Log(logger.Error, types.ErrFailedToDeleteOrganization.Error(), err.Error())
 		return types.ErrFailedToDeleteOrganization
 	}
 

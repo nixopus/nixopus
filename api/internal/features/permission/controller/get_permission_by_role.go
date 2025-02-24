@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/permission/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
@@ -13,11 +14,13 @@ func (p *PermissionController) GetPermissionsByRole(w http.ResponseWriter, r *ht
 		ID: id,
 	}
 	if err := p.validator.ParseRequestBody(request, r.Body, &id); err != nil {
+		p.logger.Log(logger.Error, err.Error(), "")
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	permissions,err:= p.service.GetPermissionByRole(id)
+	permissions, err := p.service.GetPermissionByRole(id)
 	if err != nil {
+		p.logger.Log(logger.Error, err.Error(), "")
 		utils.SendErrorResponse(w, types.ErrFailedToGetPermission.Error(), http.StatusInternalServerError)
 		return
 	}

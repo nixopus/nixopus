@@ -7,6 +7,7 @@ import (
 
 	"github.com/raghavyuva/nixopus-api/internal"
 	"github.com/raghavyuva/nixopus-api/internal/config"
+	_ "github.com/raghavyuva/nixopus-api/internal/log"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
