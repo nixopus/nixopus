@@ -14,6 +14,7 @@ require (
 	github.com/uptrace/bun/extra/bundebug v1.2.10
 	golang.org/x/crypto v0.31.0
 	golang.org/x/net v0.21.0
+	golang.org/x/time v0.10.0
 )
 
 require (

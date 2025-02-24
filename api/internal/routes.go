@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/raghavyuva/nixopus-api/internal/controller"
+	health "github.com/raghavyuva/nixopus-api/internal/features/health"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
 	organization "github.com/raghavyuva/nixopus-api/internal/features/organization/controller"
 	permission "github.com/raghavyuva/nixopus-api/internal/features/permission/controller"
@@ -36,8 +36,8 @@ func (router *Router) Routes() *mux.Router {
 
 	r.Use(middleware.CorsMiddleware)
 	r.Use(middleware.LoggingMiddleware)
-
-	r.HandleFunc("/health", controller.HealthCheck).Methods("GET", "OPTIONS")
+	r.Use(middleware.RateLimiter)
+	r.HandleFunc("/health", health.HealthCheck).Methods("GET", "OPTIONS")
 
 	wsServer, err := NewSocketServer()
 	if err != nil {
