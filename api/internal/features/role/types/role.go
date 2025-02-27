@@ -9,8 +9,8 @@ type CreateRoleRequest struct {
 
 type UpdateRoleRequest struct {
 	ID          string `json:"id"`
-	Name        string `json:"name omitempty"`
-	Description string `json:"description omitempty"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type DeleteRoleRequest struct {

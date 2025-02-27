@@ -23,7 +23,7 @@ import (
 func (c *PermissionController) RemovePermissionFromRole(w http.ResponseWriter, r *http.Request) {
 	var permission types.RemovePermissionFromRoleRequest
 
-	if err := c.validator.ParseRequestBody(&permission, r.Body, &permission); err != nil {
+	if err := c.validator.ParseRequestBody(permission, r.Body, &permission); err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
 		return

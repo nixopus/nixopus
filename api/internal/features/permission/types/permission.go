@@ -10,9 +10,9 @@ type CreatePermissionRequest struct {
 
 type UpdatePermissionRequest struct {
 	ID          string `json:"id"`
-	Name        string `json:"name omitempty"`
-	Description string `json:"description omitempty"`
-	Resource    string `json:"resource omitempty"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Resource    string `json:"resource"`
 }
 
 type DeletePermissionRequest struct {

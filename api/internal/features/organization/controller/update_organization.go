@@ -20,9 +20,11 @@ import (
 // @Success 200 {object} types.Response "Success response"
 // @Failure 400 {object} types.Response "Bad request"
 // @Failure 500 {object} types.Response "Internal server error"
-// @Router /organization/update [post]
+// @Router /organizations [put]
 func (c *OrganizationsController) UpdateOrganization(w http.ResponseWriter, r *http.Request) {
 	var organization types.UpdateOrganizationRequest
+
+	c.logger.Log(logger.Info, "updating organization", organization.ID)
 
 	if err := c.validator.ParseRequestBody(r, r.Body, &organization); err != nil {
 		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())

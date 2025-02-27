@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"io"
-	"strings"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
@@ -37,8 +36,6 @@ func (v *Validator) ValidateName(name string) error {
 		return types.ErrMissingOrganizationName
 	case utf8.RuneCountInString(name) > MaxNameLength:
 		return types.ErrOrganizationNameTooLong
-	case strings.Contains(name, " "):
-		return types.ErrOrganizationNameContainsSpaces
 	default:
 		return nil
 	}

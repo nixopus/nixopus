@@ -49,12 +49,6 @@ func (c *RolesController) GetRole(w http.ResponseWriter, r *http.Request) {
 		ID: id,
 	}
 
-	if err := c.validator.ParseRequestBody(request, r.Body, &id); err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	if err := c.validator.ValidateRequest(request); err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)

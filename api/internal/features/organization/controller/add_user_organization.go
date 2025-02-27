@@ -34,5 +34,11 @@ func (c *OrganizationsController) AddUserToOrganization(w http.ResponseWriter, r
 		return
 	}
 
+	err := c.service.AddUserToOrganization(user)
+	if err != nil {
+		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	utils.SendJSONResponse(w, "success", "User added to organization successfully", nil)
 }

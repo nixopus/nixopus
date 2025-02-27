@@ -6,7 +6,7 @@ var (
 	ErrMissingOrganizationID              = errors.New("organization id is required to get organizations")
 	ErrFailedToGetOrganizations           = errors.New("failed to get organizations")
 	ErrFailedToGetOrganization            = errors.New("failed to get organization")
-	ErrMissingOrganizationName            = errors.New("name is required to create an organization")
+	ErrMissingOrganizationName            = errors.New("name is required")
 	ErrFailedToCreateOrganization         = errors.New("failed to create organization")
 	ErrFailedToUpdateOrganization         = errors.New("failed to update organization")
 	ErrFailedToDeleteOrganization         = errors.New("failed to delete organization")

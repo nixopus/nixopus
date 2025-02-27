@@ -11,15 +11,15 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (o *OrganizationService) AddUserToOrganization(user types.AddUserToOrganizationRequest, organization shared_types.Organization) error {
-	o.logger.Log(logger.Info, "adding user to organization", user.UserID)
-	roleId, err := uuid.Parse(user.RoleId)
+func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrganizationRequest) error {
+	o.logger.Log(logger.Info, "adding user to organization", request.UserID)
+	roleId, err := uuid.Parse(request.RoleId)
 	if err != nil {
 		o.logger.Log(logger.Error, types.ErrInvalidRoleID.Error(), err.Error())
 		return types.ErrInvalidRoleID
 	}
 
-	existingOrganization, err := o.storage.GetOrganization(user.OrganizationID)
+	existingOrganization, err := o.storage.GetOrganization(request.OrganizationID)
 	if err != nil {
 		o.logger.Log(logger.Error, types.ErrOrganizationDoesNotExist.Error(), err.Error())
 		return err
@@ -31,23 +31,23 @@ func (o *OrganizationService) AddUserToOrganization(user types.AddUserToOrganiza
 	}
 
 	user_storage := user_storage.UserStorage{
-		DB:  o.store.DB,
-		Ctx: o.Ctx,
+		DB:  o.storage.DB,
+		Ctx: o.storage.Ctx,
 	}
-
-	existingUser, err := user_storage.FindUserByID(user.UserID)
+	existingUser, err := user_storage.FindUserByID(request.UserID)
 	if err != nil {
 		o.logger.Log(logger.Error, types.ErrUserDoesNotExist.Error(), err.Error())
 		return err
 	}
+
 	if existingUser.ID == uuid.Nil {
 		o.logger.Log(logger.Error, types.ErrUserDoesNotExist.Error(), "")
 		return types.ErrUserDoesNotExist
 	}
 
 	role_storage := role_storage.RoleStorage{
-		DB:  o.store.DB,
-		Ctx: o.Ctx,
+		DB:  o.storage.DB,
+		Ctx: o.storage.Ctx,
 	}
 	existingRole, err := role_storage.GetRole(roleId.String())
 	if err != nil {
@@ -59,7 +59,7 @@ func (o *OrganizationService) AddUserToOrganization(user types.AddUserToOrganiza
 		return types.ErrRoleDoesNotExist
 	}
 
-	existingUserInOrganization, err := o.storage.FindUserInOrganization(user.UserID, user.OrganizationID)
+	existingUserInOrganization, err := o.storage.FindUserInOrganization(request.UserID, request.OrganizationID)
 	if err != nil {
 		o.logger.Log(logger.Error, types.ErrFailedToAddUserToOrganization.Error(), err.Error())
 		return err

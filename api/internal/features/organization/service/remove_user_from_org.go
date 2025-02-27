@@ -28,7 +28,7 @@ func (o *OrganizationService) RemoveUserFromOrganization(user *types.RemoveUserF
 	}
 	user_storage := user_storage.UserStorage{
 		DB:  o.store.DB,
-		Ctx: o.Ctx,
+		Ctx: o.storage.Ctx,
 	}
 	existingUser, err := user_storage.FindUserByID(user.UserID)
 	if err == nil && existingUser.ID == uuid.Nil {

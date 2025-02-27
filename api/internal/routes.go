@@ -97,10 +97,10 @@ func (router *Router) Routes() *mux.Router {
 	roleApi := api.PathPrefix("/roles").Subrouter()
 	roleController := role.NewRolesController(router.app.Store, router.app.Ctx, l)
 	roleApi.HandleFunc("", roleController.CreateRole).Methods("POST", "OPTIONS")
-	// roleApi.HandleFunc("/{id}", roleController.GetRole).Methods("GET", "OPTIONS")
-	roleApi.HandleFunc("/", roleController.UpdateRole).Methods("PUT", "OPTIONS")
-	roleApi.HandleFunc("/", roleController.DeleteRole).Methods("DELETE", "OPTIONS")
-	roleApi.HandleFunc("", roleController.GetRoles).Methods("GET", "OPTIONS")
+	roleApi.HandleFunc("", roleController.GetRole).Methods("GET", "OPTIONS")
+	roleApi.HandleFunc("", roleController.UpdateRole).Methods("PUT", "OPTIONS")
+	roleApi.HandleFunc("", roleController.DeleteRole).Methods("DELETE", "OPTIONS")
+	roleApi.HandleFunc("/all", roleController.GetRoles).Methods("GET", "OPTIONS")
 
 	orgApi := api.PathPrefix("/organizations").Subrouter()
 	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l)
@@ -108,7 +108,7 @@ func (router *Router) Routes() *mux.Router {
 	orgApi.HandleFunc("", organizationController.GetOrganization).Methods("GET", "OPTIONS")
 	orgApi.HandleFunc("", organizationController.UpdateOrganization).Methods("PUT", "OPTIONS")
 	orgApi.HandleFunc("", organizationController.DeleteOrganization).Methods("DELETE", "OPTIONS")
-	orgApi.HandleFunc("", organizationController.GetOrganizations).Methods("GET", "OPTIONS")
+	orgApi.HandleFunc("/all", organizationController.GetOrganizations).Methods("GET", "OPTIONS")
 	orgApi.HandleFunc("/user", organizationController.AddUserToOrganization).Methods("POST", "OPTIONS")
 	orgApi.HandleFunc("/user", organizationController.RemoveUserFromOrganization).Methods("DELETE", "OPTIONS")
 	orgApi.HandleFunc("/users", organizationController.GetOrganizationUsers).Methods("GET", "OPTIONS")
@@ -119,12 +119,12 @@ func (router *Router) Routes() *mux.Router {
 	permApi.HandleFunc("", permissionController.GetPermission).Methods("GET", "OPTIONS")
 	permApi.HandleFunc("", permissionController.UpdatePermission).Methods("PUT", "OPTIONS")
 	permApi.HandleFunc("", permissionController.DeletePermission).Methods("DELETE", "OPTIONS")
-	permApi.HandleFunc("", permissionController.GetPermissions).Methods("GET", "OPTIONS")
+	permApi.HandleFunc("/all", permissionController.GetPermissions).Methods("GET", "OPTIONS")
 
 	rolePermApi := api.PathPrefix("/roles/permission").Subrouter()
 	rolePermApi.HandleFunc("", permissionController.AddPermissionToRole).Methods("POST", "OPTIONS")
 	rolePermApi.HandleFunc("", permissionController.RemovePermissionFromRole).Methods("DELETE", "OPTIONS")
-	rolePermApi.HandleFunc("s", permissionController.GetPermissionsByRole).Methods("GET", "OPTIONS")
+	rolePermApi.HandleFunc("", permissionController.GetPermissionsByRole).Methods("GET", "OPTIONS")
 
 	return r
 }

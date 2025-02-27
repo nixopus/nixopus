@@ -22,7 +22,7 @@ import (
 func (c *AuthService) Register(registration_request types.RegisterRequest) (types.AuthResponse, error) {
 	var user shared_types.User
 	c.logger.Log(logger.Info, "registering user", registration_request.Email)
-	hashedPassword, err := HashPassword(user.Password)
+	hashedPassword, err := HashPassword(registration_request.Password)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToHashPassword.Error(), err.Error())
 		return types.AuthResponse{}, types.ErrFailedToHashPassword
