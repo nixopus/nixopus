@@ -22,7 +22,7 @@ type Role struct {
 type Permission struct {
 	bun.BaseModel `bun:"table:permissions,alias:p" swaggerignore:"true"`
 	ID            uuid.UUID  `json:"id" bun:"id,pk,type:uuid"`
-	Name          string     `json:"name" bun:"name,notnull,unique"`
+	Name          string     `json:"name" bun:"name,notnull"`
 	Description   string     `json:"description" bun:"description"`
 	Resource      string     `json:"resource" bun:"resource,notnull"`
 	CreatedAt     time.Time  `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`

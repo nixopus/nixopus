@@ -36,9 +36,9 @@ func (p *PermissionStorage) GetPermission(id string) (*types.Permission, error) 
 	return permission, err
 }
 
-func (p *PermissionStorage) GetPermissionByName(name string) (*types.Permission, error) {
+func (p *PermissionStorage) GetPermissionByNameAndResource(name string, resource string) (*types.Permission, error) {
 	permission := &types.Permission{}
-	err := p.DB.NewSelect().Model(permission).Where("name = ?", name).Scan(p.Ctx)
+	err := p.DB.NewSelect().Model(permission).Where("name = ?", name).Where("resource = ?", resource).Scan(p.Ctx)
 	if err == sql.ErrNoRows {
 		return permission, nil
 	}

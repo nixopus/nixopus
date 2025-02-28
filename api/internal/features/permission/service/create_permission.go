@@ -9,7 +9,7 @@ import (
 
 func (c *PermissionService) CreatePermission(permission *types.CreatePermissionRequest) error {
 	c.logger.Log(logger.Info, "Creating permission", "")
-	existingPermission, err := c.storage.GetPermissionByName(permission.Name)
+	existingPermission, err := c.storage.GetPermissionByNameAndResource(permission.Name, permission.Resource)
 	if err == nil && existingPermission.ID != uuid.Nil {
 		c.logger.Log(logger.Error, types.ErrPermissionAlreadyExists.Error(), "")
 		return types.ErrPermissionAlreadyExists

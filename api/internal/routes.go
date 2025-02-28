@@ -11,6 +11,7 @@ import (
 	organization "github.com/raghavyuva/nixopus-api/internal/features/organization/controller"
 	permission "github.com/raghavyuva/nixopus-api/internal/features/permission/controller"
 	role "github.com/raghavyuva/nixopus-api/internal/features/role/controller"
+	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
 	"github.com/raghavyuva/nixopus-api/internal/middleware"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -95,6 +96,7 @@ func (router *Router) Routes() *mux.Router {
 	authApi.HandleFunc("/verify-email", authController.VerifyEmail).Methods("POST", "OPTIONS")
 
 	roleApi := api.PathPrefix("/roles").Subrouter()
+	roleApi.Use(middleware.IsAdmin)
 	roleController := role.NewRolesController(router.app.Store, router.app.Ctx, l)
 	roleApi.HandleFunc("", roleController.CreateRole).Methods("POST", "OPTIONS")
 	roleApi.HandleFunc("", roleController.GetRole).Methods("GET", "OPTIONS")
@@ -103,6 +105,7 @@ func (router *Router) Routes() *mux.Router {
 	roleApi.HandleFunc("/all", roleController.GetRoles).Methods("GET", "OPTIONS")
 
 	orgApi := api.PathPrefix("/organizations").Subrouter()
+	orgApi.Use(middleware.IsAdmin)
 	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l)
 	orgApi.HandleFunc("", organizationController.CreateOrganization).Methods("POST", "OPTIONS")
 	orgApi.HandleFunc("", organizationController.GetOrganization).Methods("GET", "OPTIONS")
@@ -114,6 +117,7 @@ func (router *Router) Routes() *mux.Router {
 	orgApi.HandleFunc("/users", organizationController.GetOrganizationUsers).Methods("GET", "OPTIONS")
 
 	permApi := api.PathPrefix("/permissions").Subrouter()
+	permApi.Use(middleware.IsAdmin)
 	permissionController := permission.NewPermissionController(router.app.Store, router.app.Ctx, l)
 	permApi.HandleFunc("", permissionController.CreatePermission).Methods("POST", "OPTIONS")
 	permApi.HandleFunc("", permissionController.GetPermission).Methods("GET", "OPTIONS")
@@ -122,9 +126,15 @@ func (router *Router) Routes() *mux.Router {
 	permApi.HandleFunc("/all", permissionController.GetPermissions).Methods("GET", "OPTIONS")
 
 	rolePermApi := api.PathPrefix("/roles/permission").Subrouter()
+	rolePermApi.Use(middleware.IsAdmin)
 	rolePermApi.HandleFunc("", permissionController.AddPermissionToRole).Methods("POST", "OPTIONS")
 	rolePermApi.HandleFunc("", permissionController.RemovePermissionFromRole).Methods("DELETE", "OPTIONS")
 	rolePermApi.HandleFunc("", permissionController.GetPermissionsByRole).Methods("GET", "OPTIONS")
+
+	userApi := api.PathPrefix("/user").Subrouter()
+	userController := user.NewUserController(router.app.Store, router.app.Ctx, l)
+	userApi.HandleFunc("", userController.GetUserDetails).Methods("GET", "OPTIONS")
+	userApi.HandleFunc("/organizations", userController.GetUserOrganizations).Methods("GET", "OPTIONS")
 
 	return r
 }

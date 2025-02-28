@@ -8,6 +8,7 @@ export interface User {
     deleted_at: Date | null;
     is_verified: boolean;
     reset_token: string;
+    type: string;
 }
 
 export interface AuthResponse {

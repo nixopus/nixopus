@@ -28,3 +28,13 @@ func (p *PermissionService) GetPermissionByRole(roleID string) ([]shared_types.R
 
 	return permissions, nil
 }
+
+func (p *PermissionService) GetAllPermissions() ([]shared_types.Permission, error) {
+	p.logger.Log(logger.Info, "Getting all permissions", "")
+	permissions, err := p.storage.GetPermissions()
+	if err != nil {
+		p.logger.Log(logger.Error, types.ErrFailedToGetPermissions.Error(), err.Error())
+		return nil, types.ErrFailedToGetPermissions
+	}
+	return permissions, nil
+}

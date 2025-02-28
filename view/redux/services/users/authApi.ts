@@ -5,7 +5,7 @@ import { AuthResponse, LoginPayload, RefreshTokenPayload, User } from '@/redux/t
 import { createApi, fetchBaseQuery, BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 import { setCredentials, logout } from '../../features/users/authSlice';
 
-const baseQueryWithReauth: BaseQueryFn<
+export const baseQueryWithReauth: BaseQueryFn<
     string | FetchArgs,
     unknown,
     FetchBaseQueryError

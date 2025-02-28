@@ -147,6 +147,14 @@ func (v *Validator) validateRegisterRequest(req types.RegisterRequest) error {
 	if err := v.ValidateName(req.Username); err != nil {
 		return err
 	}
+	if req.Type == "" {
+		req.Type = "app_user"
+	}
+
+	if req.Type != "app_user" && req.Type != "admin" {
+		return types.ErrInvalidUserType
+	}
+
 	return nil
 }
 

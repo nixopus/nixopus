@@ -9,18 +9,18 @@ import (
 )
 
 type User struct {
-    bun.BaseModel `bun:"table:users,alias:u" swaggerignore:"true"`
-	ID            uuid.UUID  `json:"id" bun:"id,pk,type:uuid"`
-	Username      string     `json:"username" bun:"username,notnull"`
-	Email         string     `json:"email" bun:"email,unique,notnull"`
-	Password      string     `json:"-" bun:"password,notnull"`
-	Avatar        string     `json:"avatar" bun:"avatar"`
-	CreatedAt     time.Time  `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
-	UpdatedAt     time.Time  `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
-	DeletedAt     *time.Time `json:"deleted_at,omitempty" bun:"deleted_at"`
-	IsVerified    bool       `json:"is_verified" bun:"is_verified,notnull,default:false"`
-	ResetToken    string     `json:"-" bun:"reset_token"`
-
+	bun.BaseModel `bun:"table:users,alias:u" swaggerignore:"true"`
+	ID            uuid.UUID      `json:"id" bun:"id,pk,type:uuid"`
+	Username      string         `json:"username" bun:"username,notnull"`
+	Email         string         `json:"email" bun:"email,unique,notnull"`
+	Password      string         `json:"-" bun:"password,notnull"`
+	Avatar        string         `json:"avatar" bun:"avatar"`
+	CreatedAt     time.Time      `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
+	UpdatedAt     time.Time      `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
+	DeletedAt     *time.Time     `json:"deleted_at,omitempty" bun:"deleted_at"`
+	IsVerified    bool           `json:"is_verified" bun:"is_verified,notnull,default:false"`
+	ResetToken    string         `json:"-" bun:"reset_token"`
+	Type          string         `json:"type" bun:"type,notnull,default:'app_user'"`
 	Organizations []Organization `json:"organizations,omitempty" bun:"m2m:organization_users,join:User=Organization"`
 }
 
@@ -55,7 +55,7 @@ func (u User) NewUser() User {
 	}
 }
 
-func NewUser(email string, password string, username string, avatar string) User {
+func NewUser(email string, password string, username string, avatar string, role string, isVerified bool) User {
 	return User{
 		ID:         uuid.New(),
 		Username:   username,
@@ -65,10 +65,12 @@ func NewUser(email string, password string, username string, avatar string) User
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 		DeletedAt:  nil,
-		IsVerified: false,
+		IsVerified: isVerified,
+		Type:       role,
 	}
 }
 
 var (
-	ErrFailedToDecodeRequest = errors.New("failed to decode request")
+	ErrFailedToDecodeRequest      = errors.New("failed to decode request")
+	ErrFailedToGetUserFromContext = errors.New("failed to get user from context")
 )

@@ -13,8 +13,17 @@ import {
     SidebarProvider,
     SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { useAppSelector } from "@/redux/hooks"
+import { useRouter } from "next/navigation"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const user = useAppSelector(state => state.auth.user)
+    const router = useRouter()
+
+    if (!user) {
+        router.push("/login")
+        return null
+    }
     return (
         <SidebarProvider>
             <AppSidebar />
