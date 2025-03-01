@@ -8,7 +8,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-
 // GetRoles godoc
 // @Summary Get all roles
 // @Description Retrieves all roles in the database

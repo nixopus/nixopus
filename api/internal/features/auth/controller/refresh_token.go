@@ -8,7 +8,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-
 // RefreshToken godoc
 // @Summary Refresh token endpoint
 // @Description Refreshes a users access token with a new one.

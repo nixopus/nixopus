@@ -47,12 +47,21 @@ func (s OrganizationStore) DeleteOrganization(id string) error {
 }
 
 func (s OrganizationStore) GetOrganizationUsers(id string) ([]shared_types.OrganizationUsers, error) {
-	var organization_users []shared_types.OrganizationUsers
-	err := s.DB.NewSelect().Model(&organization_users).Where("organization_id = ?", id).Scan(s.Ctx)
+	var organizationUsers []shared_types.OrganizationUsers
+	
+	err := s.DB.NewSelect().
+		Model(&organizationUsers).
+		Where("organization_id = ?", id).
+		Relation("Role").
+		Relation("User").
+		Relation("Role.Permissions").
+		Scan(s.Ctx)
+	
 	if err == sql.ErrNoRows {
-		return organization_users, nil
+		return organizationUsers, nil
 	}
-	return organization_users, err
+	
+	return organizationUsers, err
 }
 
 func (s OrganizationStore) AddUserToOrganization(orgainzation_user shared_types.OrganizationUsers) error {

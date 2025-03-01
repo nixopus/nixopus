@@ -1,18 +1,27 @@
-"use client"
-import { LoginForm } from "@/components/login-form"
-import useLogin from "./hooks/use-login"
-import { ErrorBoundary } from "@/components/ui/error-handler"
-import { useAppSelector } from "@/redux/hooks"
-import { useRouter } from "next/navigation"
+'use client';
+import { LoginForm } from '@/components/login-form';
+import useLogin from './hooks/use-login';
+import { ErrorBoundary } from '@/components/ui/error-handler';
+import { useAppSelector } from '@/redux/hooks';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const { email, password, handleEmailChange, handlePasswordChange, handleLogin, isLoading, error } = useLogin()
-  const authenticated = useAppSelector(state => state.auth.isAuthenticated)
-  const router = useRouter()
+  const {
+    email,
+    password,
+    handleEmailChange,
+    handlePasswordChange,
+    handleLogin,
+    isLoading,
+    error
+  } = useLogin();
+  const authenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const user = useAppSelector((state) => state.auth.user);
+  const router = useRouter();
 
-  if (authenticated) {
-    router.push("/")
-    return < ></>
+  if (authenticated && user) {
+    router.push('/');
+    return <></>;
   }
 
   return (
@@ -27,14 +36,7 @@ export default function LoginPage() {
           isLoading={isLoading}
         />
       </div>
-      {
-        error && (
-          <ErrorBoundary
-            errors={[
-              { error, title: "Login Error" }]}
-          />
-        )
-      }
+      {error && <ErrorBoundary errors={[{ error, title: 'Login Error' }]} />}
     </div>
-  )
+  );
 }

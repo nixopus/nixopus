@@ -8,7 +8,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-
 // Example from your login.go file
 // Login godoc
 // @Summary User login endpoint
