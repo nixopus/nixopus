@@ -6,6 +6,7 @@ import (
 
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
@@ -53,6 +54,20 @@ func (c *AuthController) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	c.notification.SendNotification(notification.NewNotificationPayload(
+		notification.NotificationPayloadTypePasswordReset,
+		user.ID.String(),
+		notification.NotificationAuthenticationData{
+			Email: user.Email,
+			NotificationBaseData: notification.NotificationBaseData{
+				IP:      r.RemoteAddr,
+				Browser: r.UserAgent(),
+			},
+			UserName: user.Username,
+		},
+		notification.NotificationCategoryAuthentication,
+	))
 
 	utils.SendJSONResponse(w, "success", "Password reset successfully", nil)
 }

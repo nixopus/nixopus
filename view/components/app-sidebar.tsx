@@ -49,7 +49,7 @@ const data = {
         {
           title: 'Billing',
           url: '#'
-        },
+        }
       ]
     }
   ]

@@ -51,4 +51,3 @@ func (u *UserController) UpdateUserName(w http.ResponseWriter, r *http.Request) 
 
 	utils.SendJSONResponse(w, "success", "User name updated successfully", req.Name)
 }
-

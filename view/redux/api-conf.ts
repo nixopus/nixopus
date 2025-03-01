@@ -12,3 +12,10 @@ export enum USERURLS {
   REQUEST_PASSWORD_RESET_LINK = 'v1/auth/request-password-reset',
   ORGANIZATION_USERS = 'v1/organizations/users'
 }
+
+export enum USER_NOTIFICATION_SETTINGS {
+  ADD_SMTP = 'v1/notification/smtp',
+  GET_SMTP = 'v1/notification/smtp',
+  UPDATE_SMTP = 'v1/notification/smtp',
+  DELETE_SMTP = 'v1/notification/smtp'
+}

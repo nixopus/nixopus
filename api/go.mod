@@ -10,6 +10,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/joho/godotenv v1.5.1
 	github.com/sirupsen/logrus v1.9.3
+	github.com/slack-go/slack v0.16.0
 	github.com/swaggo/http-swagger/v2 v2.0.2
 	github.com/swaggo/swag v1.16.4
 	github.com/uptrace/bun v1.2.10

@@ -1,39 +1,39 @@
-package auth
+package controller
 
 import (
 	"context"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/auth/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/auth/validation"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification/validation"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 )
 
-type AuthController struct {
+type NotificationController struct {
 	store        *shared_storage.Store
 	validator    *validation.Validator
-	service      *service.AuthService
+	service      *service.NotificationService
 	ctx          context.Context
 	logger       logger.Logger
 	notification *notification.NotificationManager
 }
 
-// NewAuthController creates a new AuthController with the given App.
+// NewNotificationController creates a new NotificationController with the given App.
 //
-// This function creates a new AuthController with the given App and returns a pointer to it.
+// This function creates a new NotificationController with the given App and returns a pointer to it.
 //
 // The App passed to this function should be a valid App that has been created with storage.NewApp.
-func NewAuthController(
+func NewNotificationController(
 	store *shared_storage.Store,
 	ctx context.Context,
 	l logger.Logger,
 	notificationManager *notification.NotificationManager,
-) *AuthController {
-	return &AuthController{
+) *NotificationController {
+	return &NotificationController{
 		store:        store,
 		validator:    validation.NewValidator(),
-		service:      service.NewAuthService(store, ctx, l),
+		service:      service.NewNotificationService(store, ctx, l),
 		ctx:          ctx,
 		logger:       l,
 		notification: notificationManager,

@@ -8,6 +8,8 @@ import (
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
 	health "github.com/raghavyuva/nixopus-api/internal/features/health"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification"
+	notificationController "github.com/raghavyuva/nixopus-api/internal/features/notification/controller"
 	organization "github.com/raghavyuva/nixopus-api/internal/features/organization/controller"
 	permission "github.com/raghavyuva/nixopus-api/internal/features/permission/controller"
 	role "github.com/raghavyuva/nixopus-api/internal/features/role/controller"
@@ -74,11 +76,14 @@ func (router *Router) Routes() *mux.Router {
 		wsServer.HandleHTTP(w, r)
 	})
 
+	notificationManager := notification.NewNotificationManager(notification.NewNotificationChannels(), router.app.Store.DB)
+	notificationManager.Start()
+
 	u := r.PathPrefix("/api/v1").Subrouter()
 
 	authCB := u.PathPrefix("/auth").Subrouter()
 
-	authController := auth.NewAuthController(router.app.Store, router.app.Ctx, l)
+	authController := auth.NewAuthController(router.app.Store, router.app.Ctx, l, notificationManager)
 	authCB.HandleFunc("/register", authController.Register).Methods("POST", "OPTIONS")
 	authCB.HandleFunc("/login", authController.Login).Methods("POST", "OPTIONS")
 	authCB.HandleFunc("/refresh-token", authController.RefreshToken).Methods("POST", "OPTIONS")
@@ -106,7 +111,7 @@ func (router *Router) Routes() *mux.Router {
 
 	orgApi := api.PathPrefix("/organizations").Subrouter()
 	orgApi.Use(middleware.IsAdmin)
-	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l)
+	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager)
 	orgApi.HandleFunc("", organizationController.CreateOrganization).Methods("POST", "OPTIONS")
 	orgApi.HandleFunc("", organizationController.GetOrganization).Methods("GET", "OPTIONS")
 	orgApi.HandleFunc("", organizationController.UpdateOrganization).Methods("PUT", "OPTIONS")
@@ -136,6 +141,13 @@ func (router *Router) Routes() *mux.Router {
 	userApi.HandleFunc("", userController.GetUserDetails).Methods("GET", "OPTIONS")
 	userApi.HandleFunc("/name", userController.UpdateUserName).Methods("PATCH", "OPTIONS")
 	userApi.HandleFunc("/organizations", userController.GetUserOrganizations).Methods("GET", "OPTIONS")
+
+	notificationApi := api.PathPrefix("/notification").Subrouter()
+	notificationController := notificationController.NewNotificationController(router.app.Store, router.app.Ctx, l, notificationManager)
+	notificationApi.HandleFunc("/smtp", notificationController.AddSmtp).Methods("POST", "OPTIONS")
+	notificationApi.HandleFunc("/smtp", notificationController.GetSmtp).Methods("GET", "OPTIONS")
+	notificationApi.HandleFunc("/smtp", notificationController.UpdateSmtp).Methods("PUT", "OPTIONS")
+	notificationApi.HandleFunc("/smtp", notificationController.DeleteSmtp).Methods("DELETE", "OPTIONS")
 
 	return r
 }

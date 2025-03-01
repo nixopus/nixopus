@@ -5,6 +5,7 @@ import (
 
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -41,6 +42,20 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 		utils.SendErrorResponse(w, err.Error(), http.StatusNotFound)
 		return
 	}
+
+	c.notification.SendNotification(notification.NewNotificationPayload(
+		notification.NotificationPayloadTypeLogin,
+		response.User.ID.String(),
+		notification.NotificationAuthenticationData{
+			Email: login_request.Email,
+			NotificationBaseData: notification.NotificationBaseData{
+				IP:      r.RemoteAddr,
+				Browser: r.UserAgent(),
+			},
+			UserName: response.User.Username,
+		},
+		notification.NotificationCategoryAuthentication,
+	))
 
 	utils.SendJSONResponse(w, "success", "User logged in successfully", response)
 }

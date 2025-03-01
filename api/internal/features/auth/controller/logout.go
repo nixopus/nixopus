@@ -5,7 +5,10 @@ import (
 
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // Logout godoc
@@ -36,10 +39,33 @@ func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userAny := r.Context().Value(shared_types.UserContextKey)
+	user, ok := userAny.(*shared_types.User)
+
+	if !ok {
+		c.logger.Log(logger.Error, types.ErrFailedToGetUserFromContext.Error(), types.ErrFailedToGetUserFromContext.Error())
+		utils.SendErrorResponse(w, types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	if err := c.service.Logout(logoutRequest.RefreshToken); err != nil {
 		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	c.notification.SendNotification(notification.NewNotificationPayload(
+		notification.NotificationPayloadTypeLogout,
+		user.ID.String(),
+		notification.NotificationAuthenticationData{
+			Email: user.Email,
+			NotificationBaseData: notification.NotificationBaseData{
+				IP:      r.RemoteAddr,
+				Browser: r.UserAgent(),
+			},
+			UserName: user.Username,
+		},
+		notification.NotificationCategoryAuthentication,
+	))
 
 	utils.SendJSONResponse(w, "success", "Logged out successfully", nil)
 }

@@ -16,6 +16,6 @@ type UpdateUserNameRequest struct {
 }
 
 var (
-	ErrUserDoesNotExist = errors.New("user does not exist")
+	ErrUserDoesNotExist   = errors.New("user does not exist")
 	ErrFailedToUpdateUser = errors.New("failed to update user")
 )

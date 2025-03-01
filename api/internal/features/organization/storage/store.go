@@ -48,7 +48,7 @@ func (s OrganizationStore) DeleteOrganization(id string) error {
 
 func (s OrganizationStore) GetOrganizationUsers(id string) ([]shared_types.OrganizationUsers, error) {
 	var organizationUsers []shared_types.OrganizationUsers
-	
+
 	err := s.DB.NewSelect().
 		Model(&organizationUsers).
 		Where("organization_id = ?", id).
@@ -56,11 +56,11 @@ func (s OrganizationStore) GetOrganizationUsers(id string) ([]shared_types.Organ
 		Relation("User").
 		Relation("Role.Permissions").
 		Scan(s.Ctx)
-	
+
 	if err == sql.ErrNoRows {
 		return organizationUsers, nil
 	}
-	
+
 	return organizationUsers, err
 }
 

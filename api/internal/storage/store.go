@@ -48,6 +48,7 @@ func (s *Store) Init(ctx context.Context) error {
 		(*types.RolePermissions)(nil),
 		(*types.Organization)(nil),
 		(*types.OrganizationUsers)(nil),
+		(*types.SMTPConfigs)(nil),
 	}
 
 	for _, model := range tables {
@@ -68,6 +69,7 @@ func (s *Store) DropAllTables(ctx context.Context) error {
 		(*types.Role)(nil),
 		(*types.RefreshToken)(nil),
 		(*types.User)(nil),
+		(*types.SMTPConfigs)(nil),
 	}
 
 	for _, model := range models {
