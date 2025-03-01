@@ -106,7 +106,7 @@ func (c *AuthService) createDefaultOrganization(user shared_types.User) (shared_
 	c.logger.Log(logger.Info, "creating default organization for admin user", user.Email)
 	organiztion_service := organization_service.NewOrganizationService(c.store, c.storage.Ctx, c.logger)
 
-	err := organiztion_service.CreateOrganization(&organization_types.CreateOrganizationRequest{
+	_, err := organiztion_service.CreateOrganization(&organization_types.CreateOrganizationRequest{
 		Name:        user.Username + "'s Team",
 		Description: "My Team",
 	})

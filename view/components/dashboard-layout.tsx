@@ -15,10 +15,22 @@ import {
 } from "@/components/ui/sidebar"
 import { useAppSelector } from "@/redux/hooks"
 import { useRouter } from "next/navigation"
+import { CreateTeam } from "./create-team"
+import useTeamSwitcher from "@/hooks/use-team-switcher"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const user = useAppSelector(state => state.auth.user)
     const router = useRouter()
+    const {
+        addTeamModalOpen,
+        setAddTeamModalOpen,
+        toggleAddTeamModal,
+        createTeam,
+        teamName,
+        teamDescription,
+        isLoading,
+        handleTeamNameChange,
+        handleTeamDescriptionChange } = useTeamSwitcher()
 
     if (!user) {
         router.push("/login")
@@ -26,7 +38,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
     return (
         <SidebarProvider>
-            <AppSidebar />
+            <AppSidebar toggleAddTeamModal={toggleAddTeamModal} />
             <SidebarInset>
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
@@ -52,6 +64,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </header>
                 <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
                     {children}
+                    {
+                        addTeamModalOpen && (
+                            <CreateTeam
+                                open={addTeamModalOpen}
+                                setOpen={setAddTeamModalOpen}
+                                createTeam={createTeam}
+                                teamName={teamName}
+                                teamDescription={teamDescription}
+                                handleTeamNameChange={handleTeamNameChange}
+                                handleTeamDescriptionChange={handleTeamDescriptionChange}
+                                isLoading={isLoading}
+                            />
+                        )
+                    }
                 </div>
             </SidebarInset>
         </SidebarProvider>

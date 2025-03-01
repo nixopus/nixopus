@@ -6,4 +6,6 @@ export enum AUTHURLS {
 
 export enum USERURLS {
     USER_ORGANIZATIONS = 'v1/user/organizations',
+    CREATE_ORGANIZATION = 'v1/organizations',
+    ADD_USER_TO_ORGANIZATION = 'v1/organizations/user'
 }

@@ -73,7 +73,7 @@ const data = {
   ]
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar> & { toggleAddTeamModal?: () => void }) {
   const user = useAppSelector(state => state.auth.user)
   const {  isLoading } = useGetUserOrganizationsQuery()
   const organizations = useAppSelector(state => state.user.organizations)
@@ -81,7 +81,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={isLoading ? [] : organizations} />
+        <TeamSwitcher teams={isLoading ? [] : organizations} toggleAddTeamModal={props.toggleAddTeamModal} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

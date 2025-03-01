@@ -35,10 +35,12 @@ func (c *OrganizationsController) CreateOrganization(w http.ResponseWriter, r *h
 		return
 	}
 
-	if err := c.service.CreateOrganization(&organization); err != nil {
+	createdOrganization, err := c.service.CreateOrganization(&organization)
+
+	if err != nil {
 		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	utils.SendJSONResponse(w, "success", "Organization created successfully", nil)
+	utils.SendJSONResponse(w, "success", "Organization created successfully", createdOrganization)
 }

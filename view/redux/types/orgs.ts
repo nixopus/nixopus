@@ -49,3 +49,14 @@ export interface UserOrganizationsResponse {
     };
     organizations: UserOrganization[];
 }
+
+export interface CreateOrganizationRequest {
+    name: string;
+    description: string;
+}
+
+export interface AddUserToOrganizationRequest {
+    user_id: string;
+    organization_id: string;
+    role_id: string;
+}

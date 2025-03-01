@@ -19,17 +19,24 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { UserOrganization } from "@/redux/types/orgs"
+import { useAppDispatch, useAppSelector } from "@/redux/hooks"
+import { setActiveOrganization } from "@/redux/features/users/userSlice"
 
 export function TeamSwitcher({
   teams,
+  toggleAddTeamModal
 }: {
-  teams?: UserOrganization[] | []
+  teams?: UserOrganization[] | [],
+  toggleAddTeamModal?: () => void
 }) {
   const { isMobile } = useSidebar()
-  const [activeTeam, setActiveTeam] = React.useState(teams?.[0])
+  const user = useAppSelector(state => state.auth.user)
+  const isAdmin = React.useMemo(() => user.type === "admin", [user])
+  const activeTeam = useAppSelector(state => state.user.activeOrganization)
+  const dispatch = useAppDispatch()
 
   React.useEffect(() => {
-    setActiveTeam(teams?.[0])
+    dispatch(setActiveOrganization(teams?.[0]))
   }, [teams])
 
   return (
@@ -63,7 +70,7 @@ export function TeamSwitcher({
             {(teams || []).map((team, index) => (
               <DropdownMenuItem
                 key={team.organization.id}
-                onClick={() => setActiveTeam(team)}
+                onClick={() => dispatch(setActiveOrganization(team))}
                 className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-xs border">
@@ -74,12 +81,14 @@ export function TeamSwitcher({
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
-              <div className="bg-background flex size-6 items-center justify-center rounded-md border">
-                <Plus className="size-4" />
-              </div>
-              <div className="text-muted-foreground font-medium">Add team</div>
-            </DropdownMenuItem>
+            {
+              isAdmin && <DropdownMenuItem className="gap-2 p-2" onClick={toggleAddTeamModal}>
+                <div className="bg-background flex size-6 items-center justify-center rounded-md border">
+                  <Plus className="size-4" />
+                </div>
+                <div className="text-muted-foreground font-medium">Add team</div>
+              </DropdownMenuItem>
+            }
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
