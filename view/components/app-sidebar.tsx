@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Home, Package, Settings2, SettingsIcon } from 'lucide-react';
+import { Home, Package, SettingsIcon } from 'lucide-react';
 
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -45,6 +45,10 @@ const data = {
         {
           title: 'Team',
           url: '/settings/teams'
+        },
+        {
+          title: 'Domains',
+          url: '/settings/domains'
         },
         {
           title: 'Billing',

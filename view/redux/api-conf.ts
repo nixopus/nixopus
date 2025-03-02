@@ -22,3 +22,10 @@ export enum USER_NOTIFICATION_SETTINGS {
   GET_PREFERENCES = 'v1/notification/preferences',
   UPDATE_PREFERENCES = 'v1/notification/preferences'
 }
+
+export enum DOMAIN_SETTINGS {
+  ADD_DOMAIN = 'v1/domain',
+  GET_DOMAINS = 'v1/domain/all',
+  UPDATE_DOMAIN = 'v1/domain',
+  DELETE_DOMAIN = 'v1/domain'
+}

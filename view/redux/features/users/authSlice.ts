@@ -63,8 +63,9 @@ const isTokenExpired = () => {
 export const initializeAuth = createAsyncThunk<AuthPayload | null>(
   'auth/initialize',
   async (_, { dispatch, rejectWithValue }) => {
+    console.log('isClient', isClient);
     if (!isClient) return null;
-
+    console.log('Initializing auth');
     try {
       const token = getTokenFromStorage();
       const refreshToken = getRefreshTokenFromStorage();
@@ -87,7 +88,11 @@ export const initializeAuth = createAsyncThunk<AuthPayload | null>(
             const userResult = await dispatch(
               authApi.endpoints.getUserDetails.initiate(undefined)
             ).unwrap();
-
+            setTokensToStorage(
+              refreshResult.access_token,
+              refreshResult.refresh_token,
+              refreshResult.expires_in
+            );
             return {
               user: userResult,
               token: refreshResult.access_token,

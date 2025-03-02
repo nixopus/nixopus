@@ -9,6 +9,26 @@ import {
   fetchBaseQuery
 } from '@reduxjs/toolkit/query/react';
 
+export const setTokensToStorage = (token: string, refreshToken?: string, expiresIn?: number) => {
+  if (token) {
+    try {
+      localStorage.setItem('token', token);
+      localStorage.setItem('lastLogin', new Date().toISOString());
+
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken);
+      }
+
+      if (expiresIn) {
+        const expiryTime = Date.now() + expiresIn * 1000;
+        localStorage.setItem('tokenExpiry', expiryTime.toString());
+      }
+    } catch (error) {
+      console.error('Failed to save tokens to localStorage:', error);
+    }
+  }
+};
+
 const LOGOUT = 'auth/logout';
 const SET_CREDENTIALS = 'auth/setCredentials';
 
@@ -52,7 +72,11 @@ export const baseQueryWithReauth: BaseQueryFn<
 
     if (refreshResult.data) {
       const refreshData = refreshResult.data as AuthResponse;
-
+      setTokensToStorage(
+        refreshData.access_token,
+        refreshData.refresh_token,
+        refreshData.expires_in
+      );
       api.dispatch({
         type: SET_CREDENTIALS,
         payload: {

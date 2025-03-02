@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
+	domain "github.com/raghavyuva/nixopus-api/internal/features/domain/controller"
 	health "github.com/raghavyuva/nixopus-api/internal/features/health"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
@@ -148,9 +149,15 @@ func (router *Router) Routes() *mux.Router {
 	notificationApi.HandleFunc("/smtp", notificationController.GetSmtp).Methods("GET", "OPTIONS")
 	notificationApi.HandleFunc("/smtp", notificationController.UpdateSmtp).Methods("PUT", "OPTIONS")
 	notificationApi.HandleFunc("/smtp", notificationController.DeleteSmtp).Methods("DELETE", "OPTIONS")
-
 	notificationApi.HandleFunc("/preferences", notificationController.UpdatePreference).Methods("POST", "OPTIONS")
 	notificationApi.HandleFunc("/preferences", notificationController.GetPreferences).Methods("GET", "OPTIONS")
+
+	domainApi := api.PathPrefix("/domain").Subrouter()
+	domainController := domain.NewDomainsController(router.app.Store, router.app.Ctx, l, notificationManager)
+	domainApi.HandleFunc("", domainController.CreateDomain).Methods("POST", "OPTIONS")
+	domainApi.HandleFunc("", domainController.UpdateDomain).Methods("PUT", "OPTIONS")
+	domainApi.HandleFunc("", domainController.DeleteDomain).Methods("DELETE", "OPTIONS")
+	domainApi.HandleFunc("/all", domainController.GetDomains).Methods("GET", "OPTIONS")
 
 	return r
 }

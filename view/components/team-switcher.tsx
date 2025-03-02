@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { ChevronsUpDown, GroupIcon, Plus } from 'lucide-react';
+import { ChevronsUpDown, GroupIcon, Plus, Users } from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -55,7 +55,7 @@ export function TeamSwitcher({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="bg-primary text-background flex aspect-square size-8 items-center justify-center rounded-lg">
-                <GroupIcon className="size-4 text-background" />
+                <Users className="size-4 text-background" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{activeTeam?.name}</span>
