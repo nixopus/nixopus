@@ -104,12 +104,12 @@ type NotificationPayload struct {
 }
 
 type CreateSMTPConfigRequest struct {
-	Host      string    `json:"host"`
-	Port      int       `json:"port"`
-	Username  string    `json:"username"`
-	Password  string    `json:"password"`
-	FromName  string    `json:"from_name"`
-	FromEmail string    `json:"from_email"`
+	Host      string `json:"host"`
+	Port      int    `json:"port"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	FromName  string `json:"from_name"`
+	FromEmail string `json:"from_email"`
 }
 
 type UpdateSMTPConfigRequest struct {
@@ -137,9 +137,11 @@ var (
 	ErrMissingUsername    = errors.New("username is required")
 	ErrMissingPassword    = errors.New("password is required")
 	ErrMissingID          = errors.New("id is required")
+	ErrMissingCategory    = errors.New("category is required")
+	ErrMissingType        = errors.New("type is required")
 )
 
-func NewSMTPConfig(c *CreateSMTPConfigRequest,userID uuid.UUID) *shared_types.SMTPConfigs {
+func NewSMTPConfig(c *CreateSMTPConfigRequest, userID uuid.UUID) *shared_types.SMTPConfigs {
 	if c.FromEmail == "" {
 		c.FromEmail = c.Username
 	}
@@ -157,4 +159,44 @@ func NewSMTPConfig(c *CreateSMTPConfigRequest,userID uuid.UUID) *shared_types.SM
 		UserID:    userID,
 		ID:        uuid.New(),
 	}
+}
+
+type Category string
+
+const (
+	ActivityCategory Category = "activity"
+	SecurityCategory Category = "security"
+	UpdateCategory   Category = "update"
+)
+
+type PreferenceType struct {
+	ID          string `json:"id" validate:"required"`
+	Label       string `json:"label" validate:"required"`
+	Description string `json:"description" validate:"required"`
+	Enabled     bool   `json:"enabled"`
+}
+
+type CategoryPreferences struct {
+	Category    Category         `json:"category" validate:"required"`
+	Preferences []PreferenceType `json:"preferences" validate:"required"`
+}
+
+type UpdatePreferenceRequest struct {
+	Category string `json:"category" validate:"required,oneof=activity security update"`
+	Type     string `json:"type" validate:"required"`
+	Enabled  bool   `json:"enabled"`
+}
+
+type GetPreferencesResponse struct {
+	Activity []PreferenceType `json:"activity"`
+	Security []PreferenceType `json:"security"`
+	Update   []PreferenceType `json:"update"`
+}
+
+type PreferenceItem struct {
+	ID           uuid.UUID `json:"id"`
+	PreferenceID uuid.UUID `json:"preference_id"`
+	Category     string    `json:"category"`
+	Type         string    `json:"type"`
+	Enabled      bool      `json:"enabled"`
 }

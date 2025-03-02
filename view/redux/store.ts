@@ -14,7 +14,7 @@ import { authApi } from '@/redux/services/users/authApi';
 import authReducer from '@/redux/features/users/authSlice';
 import { userApi } from '@/redux/services/users/userApi';
 import userSlice from '@/redux/features/users/userSlice';
-import { notificationApi } from '@/redux/services/settings/notification';
+import { notificationApi } from '@/redux/services/settings/notificationApi';
 
 const persistConfig = {
   key: 'root',

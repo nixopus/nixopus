@@ -3,7 +3,9 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQueryWithReauth } from '@/redux/base-query';
 import {
   CreateSMTPConfigRequest,
+  GetPreferencesResponse,
   SMTPConfig,
+  UpdatePreferenceRequest,
   UpdateSMTPConfigRequest
 } from '@/redux/types/notification';
 
@@ -54,6 +56,27 @@ export const notificationApi = createApi({
       transformResponse: (response: { data: null }) => {
         return response.data;
       }
+    }),
+    getNotificationPreferences: builder.query<GetPreferencesResponse, void>({
+      query: () => ({
+        url: USER_NOTIFICATION_SETTINGS.GET_PREFERENCES,
+        method: 'GET'
+      }),
+      providesTags: [{ type: 'Notification', id: 'LIST' }],
+      transformResponse: (response: { data: GetPreferencesResponse }) => {
+        return response.data;
+      }
+    }),
+    updateNotificationPreferences: builder.mutation<null, UpdatePreferenceRequest>({
+      query: (payload) => ({
+        url: USER_NOTIFICATION_SETTINGS.UPDATE_PREFERENCES,
+        method: 'POST',
+        body: payload
+      }),
+      invalidatesTags: [{ type: 'Notification', id: 'LIST' }],
+      transformResponse: (response: { data: null }) => {
+        return response.data;
+      }
     })
   })
 });
@@ -62,5 +85,7 @@ export const {
   useGetSMTPConfigurationsQuery,
   useCreateSMPTConfigurationMutation,
   useUpdateSMTPConfigurationMutation,
-  useDeleteSMTPConfigurationMutation
+  useDeleteSMTPConfigurationMutation,
+  useGetNotificationPreferencesQuery,
+  useUpdateNotificationPreferencesMutation
 } = notificationApi;

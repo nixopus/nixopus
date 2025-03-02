@@ -23,6 +23,8 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return v.validateUpdateSMTPConfigRequest(r)
 	case notification.DeleteSMTPConfigRequest:
 		return v.validateDeleteSMTPConfigRequest(r)
+	case notification.UpdatePreferenceRequest:
+		return v.validateUpdatePreferenceRequest(r)
 	default:
 		return notification.ErrInvalidRequestType
 	}
@@ -65,6 +67,16 @@ func (v *Validator) validateDeleteSMTPConfigRequest(req notification.DeleteSMTPC
 func (v *Validator) validateGetSMTPConfigRequest(req notification.GetSMTPConfigRequest) error {
 	if req.ID.String() == "" {
 		return notification.ErrMissingID
+	}
+	return nil
+}
+
+func (v *Validator) validateUpdatePreferenceRequest(req notification.UpdatePreferenceRequest) error {
+	if req.Type == "" {
+		return notification.ErrMissingType
+	}
+	if req.Category == "" {
+		return notification.ErrMissingCategory
 	}
 	return nil
 }

@@ -1,10 +1,26 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { NotificationChannelField, NotificationChannelProps } from '../utils/types';
+
+export interface NotificationChannelField {
+  id: string;
+  label: string;
+  placeholder: string;
+  type?: string;
+  required: boolean;
+}
+
+export interface NotificationChannelProps {
+  title: string;
+  description: string;
+  icon: ReactNode;
+  configData?: Record<string, string>;
+  onSave?: (data: Record<string, string>) => void;
+  isLoading?: boolean;
+}
 
 const NotificationChannelCard: React.FC<NotificationChannelProps> = ({
   title,
@@ -16,8 +32,7 @@ const NotificationChannelCard: React.FC<NotificationChannelProps> = ({
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>(configData);
   const [isFormValid, setIsFormValid] = useState<boolean>(false);
-  
-  // Add useEffect to update formData when configData changes
+
   useEffect(() => {
     setFormData(configData);
   }, [configData]);
@@ -53,29 +68,29 @@ const NotificationChannelCard: React.FC<NotificationChannelProps> = ({
         return [];
     }
   };
-  
+
   const fields = getChannelFields();
-  
+
   useEffect(() => {
     const valid = fields
       .filter((field) => field.required)
       .every((field) => formData[field.id] && formData[field.id].trim() !== '');
     setIsFormValid(valid);
   }, [formData, fields]);
-  
+
   const handleInputChange = (id: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [id]: value
     }));
   };
-  
+
   const handleSave = () => {
     if (isFormValid) {
       onSave && onSave(formData);
     }
   };
-  
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -103,7 +118,7 @@ const NotificationChannelCard: React.FC<NotificationChannelProps> = ({
               />
             </div>
           ))}
-          
+
           <div className="pt-2 flex space-x-2 justify-end">
             <Button onClick={handleSave} disabled={!isFormValid || isLoading}>
               Save Configuration

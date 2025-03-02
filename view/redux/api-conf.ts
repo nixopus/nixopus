@@ -17,5 +17,8 @@ export enum USER_NOTIFICATION_SETTINGS {
   ADD_SMTP = 'v1/notification/smtp',
   GET_SMTP = 'v1/notification/smtp',
   UPDATE_SMTP = 'v1/notification/smtp',
-  DELETE_SMTP = 'v1/notification/smtp'
+  DELETE_SMTP = 'v1/notification/smtp',
+
+  GET_PREFERENCES = 'v1/notification/preferences',
+  UPDATE_PREFERENCES = 'v1/notification/preferences'
 }

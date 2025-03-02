@@ -149,5 +149,8 @@ func (router *Router) Routes() *mux.Router {
 	notificationApi.HandleFunc("/smtp", notificationController.UpdateSmtp).Methods("PUT", "OPTIONS")
 	notificationApi.HandleFunc("/smtp", notificationController.DeleteSmtp).Methods("DELETE", "OPTIONS")
 
+	notificationApi.HandleFunc("/preferences", notificationController.UpdatePreference).Methods("POST", "OPTIONS")
+	notificationApi.HandleFunc("/preferences", notificationController.GetPreferences).Methods("GET", "OPTIONS")
+
 	return r
 }

@@ -49,6 +49,8 @@ func (s *Store) Init(ctx context.Context) error {
 		(*types.Organization)(nil),
 		(*types.OrganizationUsers)(nil),
 		(*types.SMTPConfigs)(nil),
+		(*types.NotificationPreferences)(nil),
+		(*types.PreferenceItem)(nil),
 	}
 
 	for _, model := range tables {
@@ -70,6 +72,8 @@ func (s *Store) DropAllTables(ctx context.Context) error {
 		(*types.RefreshToken)(nil),
 		(*types.User)(nil),
 		(*types.SMTPConfigs)(nil),
+		(*types.NotificationPreferences)(nil),
+		(*types.PreferenceItem)(nil),
 	}
 
 	for _, model := range models {

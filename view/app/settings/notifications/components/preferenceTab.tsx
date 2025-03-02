@@ -1,18 +1,20 @@
 'use client';
 import React from 'react';
-import { NotificationPreference } from '../utils/types';
 import NotificationPreferenceCard from './preference';
+import { PreferenceType } from '@/redux/types/notification';
 
 interface NotificationPreferencesTabProps {
-  activityPreferences: NotificationPreference[];
-  securityPreferences: NotificationPreference[];
-  updatePreferences: NotificationPreference[];
+  activityPreferences?: PreferenceType[];
+  securityPreferences?: PreferenceType[];
+  updatePreferences?: PreferenceType[];
+  onUpdatePreference: (id: string, enabled: boolean) => void;
 }
 
 export const NotificationPreferencesTab: React.FC<NotificationPreferencesTabProps> = ({
   activityPreferences,
   securityPreferences,
-  updatePreferences
+  updatePreferences,
+  onUpdatePreference
 }) => {
   return (
     <div className="grid gap-6 md:grid-cols-1">
@@ -20,18 +22,21 @@ export const NotificationPreferencesTab: React.FC<NotificationPreferencesTabProp
         title="Activity Notifications"
         description="Notifications about activity in your team"
         preferences={activityPreferences}
+        onUpdate={onUpdatePreference}
       />
 
       <NotificationPreferenceCard
         title="Security Notifications"
         description="Important alerts about deployed applications and errors"
         preferences={securityPreferences}
+        onUpdate={onUpdatePreference}
       />
 
       <NotificationPreferenceCard
         title="Updates & Marketing"
         description="Stay informed about our product and services"
         preferences={updatePreferences}
+        onUpdate={onUpdatePreference}
       />
     </div>
   );
