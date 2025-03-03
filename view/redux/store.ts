@@ -16,6 +16,7 @@ import { userApi } from '@/redux/services/users/userApi';
 import userSlice from '@/redux/features/users/userSlice';
 import { notificationApi } from '@/redux/services/settings/notificationApi';
 import { domainsApi } from '@/redux/services/settings/domainsApi';
+import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorApi';
 
 const persistConfig = {
   key: 'root',
@@ -29,6 +30,7 @@ const rootReducer = combineReducers({
   [userApi.reducerPath]: userApi.reducer,
   notificationApi: notificationApi.reducer,
   [domainsApi.reducerPath]: domainsApi.reducer,
+  [GithubConnectorApi.reducerPath]: GithubConnectorApi.reducer,
   user: userSlice
 });
 
@@ -45,7 +47,8 @@ const storeOptions: ConfigureStoreOptions = {
       authApi.middleware,
       userApi.middleware,
       notificationApi.middleware,
-      domainsApi.middleware
+      domainsApi.middleware,
+      GithubConnectorApi.middleware
     )
 };
 

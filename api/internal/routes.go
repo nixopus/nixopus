@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
 	domain "github.com/raghavyuva/nixopus-api/internal/features/domain/controller"
+	githubConnector "github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller"
 	health "github.com/raghavyuva/nixopus-api/internal/features/health"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
@@ -158,6 +159,13 @@ func (router *Router) Routes() *mux.Router {
 	domainApi.HandleFunc("", domainController.UpdateDomain).Methods("PUT", "OPTIONS")
 	domainApi.HandleFunc("", domainController.DeleteDomain).Methods("DELETE", "OPTIONS")
 	domainApi.HandleFunc("/all", domainController.GetDomains).Methods("GET", "OPTIONS")
+
+	githubConnectorApi := api.PathPrefix("/github-connector").Subrouter()
+	githubConnectorApi.Use(middleware.IsAdmin)
+	githubConnectorController := githubConnector.NewGithubConnectorController(router.app.Store, router.app.Ctx, l, notificationManager)
+	githubConnectorApi.HandleFunc("", githubConnectorController.CreateGithubConnector).Methods("POST", "OPTIONS")
+	githubConnectorApi.HandleFunc("", githubConnectorController.UpdateGithubConnectorRequest).Methods("PUT", "OPTIONS")
+	githubConnectorApi.HandleFunc("/all", githubConnectorController.GetGithubConnectors).Methods("GET", "OPTIONS")
 
 	return r
 }

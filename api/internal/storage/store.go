@@ -53,6 +53,7 @@ func (s *Store) Init(ctx context.Context) error {
 		(*types.PreferenceItem)(nil),
 		(*types.Domain)(nil),
 		(*types.Server)(nil),
+		(*types.GithubConnector)(nil),
 	}
 
 	for _, model := range tables {
@@ -78,6 +79,7 @@ func (s *Store) DropAllTables(ctx context.Context) error {
 		(*types.PreferenceItem)(nil),
 		(*types.Domain)(nil),
 		(*types.Server)(nil),
+		(*types.GithubConnector)(nil),
 	}
 
 	for _, model := range models {
