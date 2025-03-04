@@ -1,13 +1,10 @@
 package auth
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -25,49 +22,23 @@ import (
 // @Router /auth/reset-password [post]
 func (c *AuthController) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var reset_password_request types.ChangePasswordRequest
-	err := c.validator.ParseRequestBody(r, r.Body, &reset_password_request)
 
-	if err != nil {
-		c.logger.Log(logger.Error, types.ErrFailedToDecodeRequest.Error(), err.Error())
-		utils.SendErrorResponse(w, types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
+	if !c.parseAndValidate(w, r, &reset_password_request) {
 		return
 	}
 
-	err = c.validator.ValidateRequest(reset_password_request)
-	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+	user := c.GetUser(w, r)
+	if user == nil {
 		return
 	}
 
-	userAny := r.Context().Value(shared_types.UserContextKey)
-	user, ok := userAny.(*shared_types.User)
-
-	if !ok {
-		log.Println("Failed to get user from context")
-		utils.SendErrorResponse(w, types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = c.service.ResetPassword(user, reset_password_request)
+	err := c.service.ResetPassword(user, reset_password_request)
 	if err != nil {
 		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	c.notification.SendNotification(notification.NewNotificationPayload(
-		notification.NotificationPayloadTypePasswordReset,
-		user.ID.String(),
-		notification.NotificationAuthenticationData{
-			Email: user.Email,
-			NotificationBaseData: notification.NotificationBaseData{
-				IP:      r.RemoteAddr,
-				Browser: r.UserAgent(),
-			},
-			UserName: user.Username,
-		},
-		notification.NotificationCategoryAuthentication,
-	))
+	c.Notify(notification.NotificationPayloadTypePasswordReset, user, r)
 
 	utils.SendJSONResponse(w, "success", "Password reset successfully", nil)
 }
@@ -84,15 +55,10 @@ func (c *AuthController) ResetPassword(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} types.Response "Internal server error"
 // @Router /auth/generate-password-reset-link [post]
 func (c *AuthController) GeneratePasswordResetLink(w http.ResponseWriter, r *http.Request) {
-	userAny := r.Context().Value(shared_types.UserContextKey)
-	user, ok := userAny.(*shared_types.User)
-
-	if !ok {
-		c.logger.Log(logger.Error, types.ErrFailedToGetUserFromContext.Error(), types.ErrFailedToGetUserFromContext.Error())
-		utils.SendErrorResponse(w, types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
+	user := c.GetUser(w, r)
+	if user == nil {
 		return
 	}
-
 	err := c.service.GeneratePasswordResetLink(user)
 	if err != nil {
 		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)

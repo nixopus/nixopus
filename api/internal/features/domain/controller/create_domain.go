@@ -6,8 +6,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // @Summary Create a new domain
@@ -24,30 +22,18 @@ import (
 func (c *DomainsController) CreateDomain(w http.ResponseWriter, r *http.Request) {
 	var domainRequest types.CreateDomainRequest
 
-	err := c.validator.ParseRequestBody(r, r.Body, &domainRequest)
-	if err != nil {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
+	if !c.parseAndValidate(w, r, &domainRequest) {
 		return
 	}
 
-	err = c.validator.ValidateRequest(domainRequest)
-	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+	user := c.GetUser(w, r)
+
+	if user == nil {
 		return
 	}
 
-	userAny := r.Context().Value(shared_types.UserContextKey)
-	user, ok := userAny.(*shared_types.User)
+	_, err := c.service.CreateDomain(domainRequest, user.ID.String())
 
-	if !ok {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToGetUserFromContext.Error(), shared_types.ErrFailedToGetUserFromContext.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	_, err = c.service.CreateDomain(domainRequest, user.ID.String())
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
@@ -56,4 +42,3 @@ func (c *DomainsController) CreateDomain(w http.ResponseWriter, r *http.Request)
 
 	utils.SendJSONResponse(w, "success", "Domain created successfully", nil)
 }
-

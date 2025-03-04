@@ -2,9 +2,6 @@ package controller
 
 import (
 	"net/http"
-
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -20,13 +17,9 @@ import (
 // @Failure 500 {object} types.Response "Internal server error"
 // @Router /user/details [get]
 func (u *UserController) GetUserDetails(w http.ResponseWriter, r *http.Request) {
-	u.logger.Log(logger.Info, "getting user details", "")
-	userAny := r.Context().Value(shared_types.UserContextKey)
-	user, ok := userAny.(*shared_types.User)
-
-	if !ok {
-		u.logger.Log(logger.Error, shared_types.ErrFailedToGetUserFromContext.Error(), shared_types.ErrFailedToGetUserFromContext.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
+	
+	user := u.GetUser(w, r)
+	if user == nil {
 		return
 	}
 

@@ -4,11 +4,8 @@ import (
 	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // Logout godoc
@@ -25,26 +22,12 @@ import (
 // @Router /auth/logout [post]
 func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 	var logoutRequest types.LogoutRequest
-	err := c.validator.ParseRequestBody(r, r.Body, &logoutRequest)
-	if err != nil {
-		c.logger.Log(logger.Error, types.ErrFailedToDecodeRequest.Error(), err.Error())
-		utils.SendErrorResponse(w, types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
+	if !c.parseAndValidate(w, r, &logoutRequest) {
 		return
 	}
 
-	err = c.validator.ValidateRequest(logoutRequest)
-	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	userAny := r.Context().Value(shared_types.UserContextKey)
-	user, ok := userAny.(*shared_types.User)
-
-	if !ok {
-		c.logger.Log(logger.Error, types.ErrFailedToGetUserFromContext.Error(), types.ErrFailedToGetUserFromContext.Error())
-		utils.SendErrorResponse(w, types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
+	user := c.GetUser(w, r)
+	if user == nil {
 		return
 	}
 
@@ -53,19 +36,7 @@ func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c.notification.SendNotification(notification.NewNotificationPayload(
-		notification.NotificationPayloadTypeLogout,
-		user.ID.String(),
-		notification.NotificationAuthenticationData{
-			Email: user.Email,
-			NotificationBaseData: notification.NotificationBaseData{
-				IP:      r.RemoteAddr,
-				Browser: r.UserAgent(),
-			},
-			UserName: user.Username,
-		},
-		notification.NotificationCategoryAuthentication,
-	))
+	c.Notify(notification.NotificationPayloadTypeLogout, user, r)
 
 	utils.SendJSONResponse(w, "success", "Logged out successfully", nil)
 }

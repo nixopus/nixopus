@@ -3,11 +3,8 @@ package controller
 import (
 	"net/http"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/permission/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // @Summary Add permission to role
@@ -24,15 +21,7 @@ import (
 func (p *PermissionController) AddPermissionToRole(w http.ResponseWriter, r *http.Request) {
 	var permission types.AddPermissionToRoleRequest
 
-	if err := p.validator.ParseRequestBody(&permission, r.Body, &permission); err != nil {
-		p.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if err := p.validator.ValidateRequest(permission); err != nil {
-		p.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+	if !p.parseAndValidate(w, r, &permission) {
 		return
 	}
 

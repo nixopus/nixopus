@@ -6,8 +6,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // @Summary Delete a domain
@@ -23,22 +21,11 @@ import (
 // @Router /domain [delete]
 func (c *DomainsController) DeleteDomain(w http.ResponseWriter, r *http.Request) {
 	var domainRequest types.DeleteDomainRequest
-
-	err := c.validator.ParseRequestBody(r, r.Body, &domainRequest)
-	if err != nil {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
+	if !c.parseAndValidate(w, r, &domainRequest) {
 		return
 	}
 
-	err = c.validator.ValidateRequest(domainRequest)
-	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	err = c.service.DeleteDomain(domainRequest.ID)
+	err := c.service.DeleteDomain(domainRequest.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)

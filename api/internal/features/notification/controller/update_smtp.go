@@ -6,8 +6,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // @Summary Update SMTP configuration
@@ -22,15 +20,8 @@ import (
 // @Router /notification/update-smtp [post]
 func (c *NotificationController) UpdateSmtp(w http.ResponseWriter, r *http.Request) {
 	var SMTPConfigs notification.UpdateSMTPConfigRequest
-	if err := c.validator.ParseRequestBody(r, r.Body, &SMTPConfigs); err != nil {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
-		return
-	}
 
-	if err := c.validator.ValidateRequest(SMTPConfigs); err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+	if !c.parseAndValidate(w, r, &SMTPConfigs) {
 		return
 	}
 

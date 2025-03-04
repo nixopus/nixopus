@@ -2,20 +2,23 @@ package controller
 
 import (
 	"net/http"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
+// GetGithubConnectors godoc
+// @Summary Retrieve all GitHub connectors for the authenticated user
+// @Description Retrieves a list of all GitHub connectors associated with the authenticated user
+// @Tags github-connector
+// @Produce json
+// @Success 200 {object} types.Response{data=[]shared_types.GithubConnector} "Success response with connectors"
+// @Failure 500 {object} types.Response "Internal server error"
+// @Router /github-connectors [get]
 func (c *GithubConnectorController) GetGithubConnectors(w http.ResponseWriter, r *http.Request) {
-	userAny := r.Context().Value(shared_types.UserContextKey)
-	user, ok := userAny.(*shared_types.User)
+	user := c.GetUser(w, r)
 
-	if !ok {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToGetUserFromContext.Error(), shared_types.ErrFailedToGetUserFromContext.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
+	if user == nil {
 		return
 	}
 

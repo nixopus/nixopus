@@ -3,10 +3,8 @@ package controller
 import (
 	"net/http"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -23,23 +21,13 @@ import (
 // @Router /organization/add-user-to-organization [post]
 func (c *OrganizationsController) AddUserToOrganization(w http.ResponseWriter, r *http.Request) {
 	var user types.AddUserToOrganizationRequest
-	if err := c.validator.ParseRequestBody(r, r.Body, &user); err != nil {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
+
+	if !c.parseAndValidate(w, r, &user) {
 		return
 	}
 
-	if err := c.validator.ValidateRequest(user); err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	userAny := r.Context().Value(shared_types.UserContextKey)
-	loggedInUser, ok := userAny.(*shared_types.User)
-
-	if !ok {
-		utils.SendErrorResponse(w, shared_types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
+	loggedInUser := c.GetUser(w, r)
+	if loggedInUser == nil {
 		return
 	}
 
@@ -49,19 +37,7 @@ func (c *OrganizationsController) AddUserToOrganization(w http.ResponseWriter, r
 		return
 	}
 
-	c.notification.SendNotification(notification.NewNotificationPayload(
-		notification.NortificationPayloadTypeAddUserToOrganization,
-		loggedInUser.ID.String(),
-		notification.NotificationOrganizationData{
-			NotificationBaseData: notification.NotificationBaseData{
-				IP:      r.RemoteAddr,
-				Browser: r.UserAgent(),
-			},
-			OrganizationID: user.OrganizationID,
-			UserID:         user.UserID,
-		},
-		notification.NotificationCategoryOrganization,
-	))
+	c.Notify(notification.NortificationPayloadTypeAddUserToOrganization, loggedInUser, r)
 
 	utils.SendJSONResponse(w, "success", "User added to organization successfully", nil)
 }

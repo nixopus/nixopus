@@ -3,10 +3,8 @@ package controller
 import (
 	"net/http"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -24,23 +22,12 @@ import (
 func (c *OrganizationsController) CreateOrganization(w http.ResponseWriter, r *http.Request) {
 	var organization types.CreateOrganizationRequest
 
-	userAny := r.Context().Value(shared_types.UserContextKey)
-	loggedInUser, ok := userAny.(*shared_types.User)
-
-	if !ok {
-		utils.SendErrorResponse(w, shared_types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
+	loggedInUser := c.GetUser(w, r)
+	if loggedInUser == nil {
 		return
 	}
 
-	if err := c.validator.ParseRequestBody(r, r.Body, &organization); err != nil {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if err := c.validator.ValidateRequest(organization); err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+	if !c.parseAndValidate(w, r, &organization) {
 		return
 	}
 
@@ -51,18 +38,7 @@ func (c *OrganizationsController) CreateOrganization(w http.ResponseWriter, r *h
 		return
 	}
 
-	c.notification.SendNotification(notification.NewNotificationPayload(
-		notification.NortificationPayloadTypeCreateOrganization,
-		loggedInUser.ID.String(),
-		notification.NotificationOrganizationData{
-			NotificationBaseData: notification.NotificationBaseData{
-				IP:      r.RemoteAddr,
-				Browser: r.UserAgent(),
-			},
-			OrganizationID: organization.Name,
-		},
-		notification.NotificationCategoryOrganization,
-	))
+	c.Notify(notification.NortificationPayloadTypeCreateOrganization, loggedInUser, r)
 
 	utils.SendJSONResponse(w, "success", "Organization created successfully", createdOrganization)
 }

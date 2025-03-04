@@ -1,42 +1,38 @@
 package controller
 
 import (
-	"net/http"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
+// CreateGithubConnector godoc
+// @Summary Create a new GitHub connector
+// @Description Creates a new GitHub connector for the authenticated user
+// @Tags github-connector
+// @Accept json
+// @Produce json
+// @Param connector body types.CreateGithubConnectorRequest true "GitHub Connector creation request"
+// @Success 200 {object} types.Response "Success response"
+// @Failure 400 {object} types.Response "Bad request"
+// @Failure 500 {object} types.Response "Internal server error"
+// @Router /github-connector [post]
 func (c *GithubConnectorController) CreateGithubConnector(w http.ResponseWriter, r *http.Request) {
 	var githubConnectorRequest types.CreateGithubConnectorRequest
 
-	err := c.validator.ParseRequestBody(r, r.Body, &githubConnectorRequest)
-	if err != nil {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
+	if !c.parseAndValidate(w, r, &githubConnectorRequest) {
 		return
 	}
 
-	err = c.validator.ValidateRequest(githubConnectorRequest)
-	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+	user := c.GetUser(w, r)
+
+	if user == nil {
 		return
 	}
 
-	userAny := r.Context().Value(shared_types.UserContextKey)
-	user, ok := userAny.(*shared_types.User)
-
-	if !ok {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToGetUserFromContext.Error(), shared_types.ErrFailedToGetUserFromContext.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = c.service.CreateConnector(&githubConnectorRequest, user.ID.String())
+	err := c.service.CreateConnector(&githubConnectorRequest, user.ID.String())
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)

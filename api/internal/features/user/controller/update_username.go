@@ -5,7 +5,6 @@ import (
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -26,18 +25,12 @@ func (u *UserController) UpdateUserName(w http.ResponseWriter, r *http.Request) 
 
 	var req types.UpdateUserNameRequest
 
-	if err := u.validator.ParseRequestBody(r, r.Body, &req); err != nil {
-		u.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+	if !u.parseAndValidate(w, r, &req) {
 		return
 	}
 
-	userAny := r.Context().Value(shared_types.UserContextKey)
-	user, ok := userAny.(*shared_types.User)
-
-	if !ok {
-		u.logger.Log(logger.Error, shared_types.ErrFailedToGetUserFromContext.Error(), shared_types.ErrFailedToGetUserFromContext.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
+	user := u.GetUser(w, r)
+	if user == nil {
 		return
 	}
 
