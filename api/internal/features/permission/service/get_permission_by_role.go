@@ -8,6 +8,12 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// GetPermissionByRole retrieves the permissions associated with a specific role ID.
+// It first verifies the existence of the role by its ID. If the role does not exist,
+// it returns an error indicating the role does not exist. If the role exists, it
+// fetches and returns the permissions linked to that role. If fetching permissions
+// fails, it returns an error indicating the failure. Returns a slice of RolePermissions
+// and an error, if any.
 func (p *PermissionService) GetPermissionByRole(roleID string) ([]shared_types.RolePermissions, error) {
 	p.logger.Log(logger.Info, "Getting permissions by role", "")
 	role_storage := role_storage.RoleStorage{

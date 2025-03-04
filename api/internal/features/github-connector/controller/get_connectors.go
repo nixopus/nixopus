@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"net/http"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )

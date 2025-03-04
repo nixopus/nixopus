@@ -3,11 +3,11 @@ package types
 import "errors"
 
 var (
-	ErrDomainNotFound = errors.New("domain not found")
-	ErrInvalidRequestType = errors.New("invalid request type")
-	ErrMissingDomainName = errors.New("domain name is required")
-	ErrInvalidDomainID = errors.New("invalid domain id")
-	ErrMissingDomainID = errors.New("domain id is required")
+	ErrDomainNotFound      = errors.New("domain not found")
+	ErrInvalidRequestType  = errors.New("invalid request type")
+	ErrMissingDomainName   = errors.New("domain name is required")
+	ErrInvalidDomainID     = errors.New("invalid domain id")
+	ErrMissingDomainID     = errors.New("domain id is required")
 	ErrDomainAlreadyExists = errors.New("domain already exists")
 )
 

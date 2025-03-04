@@ -6,6 +6,13 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/role/types"
 )
 
+// DeleteRole deletes a role in the application.
+//
+// It first checks if the role exists using the provided ID.
+// If the role does not exist, it returns ErrRoleDoesNotExist.
+// If the role exists, it deletes the role from the database.
+// If the deletion fails, it returns ErrFailedToDeleteRole.
+// Upon successful deletion, it returns nil.
 func (c *RoleService) DeleteRole(id string) error {
 	c.logger.Log(logger.Info, "Deleting role", "")
 	existingRole, err := c.storage.GetRole(id)

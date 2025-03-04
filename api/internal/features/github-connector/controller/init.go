@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/validation"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
@@ -32,13 +33,12 @@ func NewGithubConnectorController(
 	return &GithubConnectorController{
 		store:        store,
 		validator:    validation.NewValidator(),
-		service:      service.NewGithubConnectorService(store, ctx, l),
+		service:      service.NewGithubConnectorService(store, ctx, l, &storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx}),
 		ctx:          ctx,
 		logger:       l,
 		notification: notificationManager,
 	}
 }
-
 
 // parseAndValidate parses and validates the request body.
 //

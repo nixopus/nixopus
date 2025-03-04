@@ -7,8 +7,8 @@ import (
 	"net/smtp"
 	"time"
 
-	"github.com/uptrace/bun"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/uptrace/bun"
 )
 
 func NewNotificationPayload(payloadType NotificationPayloadType, userID string, data interface{}, category NotificationCategory) NotificationPayload {
@@ -43,7 +43,7 @@ func (m *NotificationManager) Start() {
 				switch payload.Category {
 				case NotificationCategoryAuthentication:
 					fmt.Printf("Authentication Notification - %+v", payload)
-					m.SendEmail(payload.UserID,"login successfully")
+					m.SendEmail(payload.UserID, "login successfully")
 				case NotificationCategoryOrganization:
 					fmt.Printf("Organization Notification - %+v", payload)
 				}
@@ -73,31 +73,31 @@ func (m *NotificationManager) GetPreferencesBasedOnCategory() {
 
 }
 
-func(m *NotificationManager) SendEmail(userId string,body string) {
-	smtpConfig,err := m.GetSmtp(userId)
+func (m *NotificationManager) SendEmail(userId string, body string) {
+	smtpConfig, err := m.GetSmtp(userId)
 	fmt.Println(smtpConfig)
 	if err != nil {
 		log.Printf("smtp error: %s", err)
 		return
 	}
-    from :=  smtpConfig.Username
-    pass := smtpConfig.Password
-    to := smtpConfig.FromEmail
+	from := smtpConfig.Username
+	pass := smtpConfig.Password
+	to := smtpConfig.FromEmail
 
-    msg := "From: " + from + "\n" +
-        "To: " + to + "\n" +
-        "Subject: Hello there\n\n" +
-        body
+	msg := "From: " + from + "\n" +
+		"To: " + to + "\n" +
+		"Subject: Hello there\n\n" +
+		body
 
-    err = smtp.SendMail(smtpConfig.Host + ":" + fmt.Sprint(smtpConfig.Port),
-        smtp.PlainAuth("", from, pass, smtpConfig.Host),
-        from, []string{to}, []byte(msg))
+	err = smtp.SendMail(smtpConfig.Host+":"+fmt.Sprint(smtpConfig.Port),
+		smtp.PlainAuth("", from, pass, smtpConfig.Host),
+		from, []string{to}, []byte(msg))
 
-    if err != nil {
-        log.Printf("smtp error: %s", err)
-        return
-    }
-    log.Println("Successfully sended to " + to)
+	if err != nil {
+		log.Printf("smtp error: %s", err)
+		return
+	}
+	log.Println("Successfully sended to " + to)
 }
 
 func (s *NotificationManager) GetSmtp(ID string) (*shared_types.SMTPConfigs, error) {

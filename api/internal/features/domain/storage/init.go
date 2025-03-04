@@ -16,6 +16,15 @@ type DomainStorage struct {
 	Ctx context.Context
 }
 
+type DomainStorageInterface interface {
+	CreateDomain(domain *shared_types.Domain) error
+	GetDomain(id string) (*shared_types.Domain, error)
+	UpdateDomain(ID string, Name string) error
+	DeleteDomain(domain *shared_types.Domain) error
+	GetDomains() ([]shared_types.Domain, error)
+	GetDomainByName(name string) (*shared_types.Domain, error)
+}
+
 func (s *DomainStorage) CreateDomain(domain *shared_types.Domain) error {
 	_, err := s.DB.NewInsert().Model(domain).Exec(s.Ctx)
 	if err != nil {
@@ -36,7 +45,7 @@ func (s *DomainStorage) GetDomain(id string) (*shared_types.Domain, error) {
 	return &domain, nil
 }
 
-func (s *DomainStorage) UpdateDomain(ID string,Name string) error {
+func (s *DomainStorage) UpdateDomain(ID string, Name string) error {
 	var domain shared_types.Domain
 	err := s.DB.NewSelect().Model(&domain).Where("id = ?", ID).Scan(s.Ctx)
 	if err != nil {
@@ -73,7 +82,7 @@ func (s *DomainStorage) GetDomainByName(name string) (*shared_types.Domain, erro
 	err := s.DB.NewSelect().Model(&domain).Where("name = ?", name).Scan(s.Ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil,nil
+			return nil, nil
 		}
 		return nil, err
 	}

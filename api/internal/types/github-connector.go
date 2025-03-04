@@ -11,7 +11,7 @@ type GithubConnector struct {
 	bun.BaseModel `bun:"table:github_connectors,alias:gc"`
 
 	ID             uuid.UUID  `bun:"id,pk,type:uuid" json:"id"`
-	AppID          string        `bun:"app_id,notnull" json:"app_id"`
+	AppID          string     `bun:"app_id,notnull" json:"app_id"`
 	Slug           string     `bun:"slug,notnull" json:"slug"`
 	Pem            string     `bun:"pem,notnull" json:"pem"`
 	ClientID       string     `bun:"client_id,notnull" json:"client_id"`

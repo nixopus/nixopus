@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/domain/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/validation"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
@@ -29,10 +30,11 @@ func NewDomainsController(
 	l logger.Logger,
 	notificationManager *notification.NotificationManager,
 ) *DomainsController {
+	storage := storage.DomainStorage{DB: store.DB, Ctx: ctx}
 	return &DomainsController{
 		store:        store,
 		validator:    validation.NewValidator(),
-		service:      service.NewDomainsService(store, ctx, l),
+		service:      service.NewDomainsService(store, ctx, l, &storage),
 		ctx:          ctx,
 		logger:       l,
 		notification: notificationManager,

@@ -10,6 +10,14 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// CreateDomain creates a new domain in the application.
+//
+// It takes a CreateDomainRequest, which contains the domain name, and a user ID.
+// The user ID is used to associate the domain with a user.
+//
+// It returns a CreateDomainResponse, which is always empty, and an error.
+// The error is either ErrDomainAlreadyExists, or any error that occurred
+// while creating the domain in the storage layer.
 func (s *DomainsService) CreateDomain(req types.CreateDomainRequest, userID string) (types.CreateDomainResponse, error) {
 	fmt.Printf("create domain request received: domain_name=%s, user_id=%s\n", req.Name, userID)
 
@@ -42,4 +50,3 @@ func (s *DomainsService) CreateDomain(req types.CreateDomainRequest, userID stri
 
 	return types.CreateDomainResponse{}, nil
 }
-

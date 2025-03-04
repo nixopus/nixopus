@@ -19,11 +19,29 @@ type NotificationStorage struct {
 	Ctx context.Context
 }
 
+type NotificationRepository interface {
+	AddSmtp(config *shared_types.SMTPConfigs) error
+	UpdateSmtp(config *notification.UpdateSMTPConfigRequest) error
+	DeleteSmtp(ID string) error
+	GetSmtp(ID string) (*shared_types.SMTPConfigs, error)
+	UpdatePreference(ctx context.Context, req notification.UpdatePreferenceRequest, userID uuid.UUID) error
+	GetPreferences(ctx context.Context, userID uuid.UUID) (*notification.GetPreferencesResponse, error)
+}
+
+// AddSmtp adds a new SMTP configuration to the database.
+//
+// It takes a shared_types.SMTPConfigs as a parameter and inserts it into the database.
+// It returns an error if the database operation fails.
 func (s NotificationStorage) AddSmtp(config *shared_types.SMTPConfigs) error {
 	_, err := s.DB.NewInsert().Model(config).Exec(s.Ctx)
 	return err
 }
 
+// UpdateSmtp updates an existing SMTP configuration in the database.
+//
+// It takes a notification.UpdateSMTPConfigRequest as a parameter and updates the
+// corresponding SMTP configuration in the database.
+// It returns an error if the database operation fails.
 func (s NotificationStorage) UpdateSmtp(config *notification.UpdateSMTPConfigRequest) error {
 	var smtp *shared_types.SMTPConfigs
 	_, err := s.DB.NewUpdate().Model(smtp).
@@ -37,12 +55,21 @@ func (s NotificationStorage) UpdateSmtp(config *notification.UpdateSMTPConfigReq
 	return err
 }
 
+// DeleteSmtp deletes a SMTP configuration associated with the given ID.
+//
+// It takes an ID as a parameter, deletes the corresponding SMTP configuration
+// from the database, and returns an error if the database operation fails.
 func (s NotificationStorage) DeleteSmtp(ID string) error {
 	var config shared_types.SMTPConfigs
 	_, err := s.DB.NewDelete().Model(config).Where("id = ?", ID).Exec(s.Ctx)
 	return err
 }
 
+// GetSmtp returns the SMTP configuration associated with the given ID.
+//
+// It takes an ID as a parameter, queries the database for the corresponding
+// SMTP configuration, and returns it. It returns an error if the database
+// operation fails.
 func (s NotificationStorage) GetSmtp(ID string) (*shared_types.SMTPConfigs, error) {
 	config := &shared_types.SMTPConfigs{}
 	err := s.DB.NewSelect().Model(config).Where("user_id = ?", ID).Scan(s.Ctx)
@@ -52,6 +79,14 @@ func (s NotificationStorage) GetSmtp(ID string) (*shared_types.SMTPConfigs, erro
 	return config, nil
 }
 
+// UpdatePreference updates a user's notification preference.
+//
+// It will update the corresponding preference item in the database.
+//
+// If the user has no preferences, this will create a new preference item
+// in the database.
+//
+// The function will log an info message with the details of the preference update.
 func (s *NotificationStorage) UpdatePreference(ctx context.Context, req notification.UpdatePreferenceRequest, userID uuid.UUID) error {
 	var preferenceID uuid.UUID
 	err := s.DB.NewSelect().
@@ -84,6 +119,14 @@ func (s *NotificationStorage) UpdatePreference(ctx context.Context, req notifica
 	return nil
 }
 
+// GetPreferences retrieves the notification preferences for a specified user.
+//
+// The function first attempts to fetch the existing preferences for the user
+// based on the user ID. If no preferences are found, it initializes default
+// preferences for the user and retrieves them.
+//
+// It returns a GetPreferencesResponse containing the user's preferences or an
+// error if any database operation fails.
 func (s *NotificationStorage) GetPreferences(ctx context.Context, userID uuid.UUID) (*notification.GetPreferencesResponse, error) {
 	var preferenceID uuid.UUID
 	err := s.DB.NewSelect().
@@ -128,6 +171,19 @@ func (s *NotificationStorage) GetPreferences(ctx context.Context, userID uuid.UU
 	return &response, nil
 }
 
+// initUserPreferences initializes a user's notification preferences in the database.
+//
+// This function begins a new database transaction to create a new set of notification
+// preferences for the given user ID. It generates a new UUID for the preference ID
+// and sets the current time for both the creation and update timestamps.
+//
+// Default preference items are created and customized based on the provided
+// UpdatePreferenceRequest. If the category and type of a default preference item
+// match those in the request, the item's enabled status is updated accordingly.
+//
+// If any database operation fails, the transaction is rolled back and an error
+// is returned. Otherwise, the transaction is committed, and nil is returned
+// to indicate success.
 func (s *NotificationStorage) initUserPreferences(ctx context.Context, userID uuid.UUID, update notification.UpdatePreferenceRequest) error {
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -169,6 +225,11 @@ func (s *NotificationStorage) initUserPreferences(ctx context.Context, userID uu
 	return nil
 }
 
+// initDefaultPreferences initializes the default notification preferences for a user in the database.
+//
+// If the user has no preferences, this will create a new preference item in the database.
+//
+// The function will log an info message with the details of the preference initialization.
 func (s *NotificationStorage) initDefaultPreferences(ctx context.Context, userID uuid.UUID) error {
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -204,6 +265,17 @@ func (s *NotificationStorage) initDefaultPreferences(ctx context.Context, userID
 	return nil
 }
 
+// createDefaultPreferenceItems returns a slice of default preference items for a user.
+//
+// The preference items are of the following types:
+// activity: team-updates
+// security: login-alerts, password-changes, security-alerts
+// update: product-updates, newsletter, marketing
+//
+// The enabled status for each item is as follows:
+// activity: team-updates (true)
+// security: login-alerts (true), password-changes (true), security-alerts (true)
+// update: product-updates (true), newsletter (false), marketing (false)
 func createDefaultPreferenceItems(preferenceID uuid.UUID) []shared_types.PreferenceItem {
 	return []shared_types.PreferenceItem{
 		{
@@ -258,6 +330,12 @@ func createDefaultPreferenceItems(preferenceID uuid.UUID) []shared_types.Prefere
 	}
 }
 
+// MapToResponse converts a slice of PreferenceItem into a GetPreferencesResponse.
+//
+// It maps each PreferenceItem to a PreferenceType with corresponding labels and
+// descriptions based on its category and type. The function returns a structured
+// GetPreferencesResponse containing categorized notification preferences for activity,
+// security, and update. If a preference type is not recognized, it is ignored.
 func MapToResponse(items []shared_types.PreferenceItem) notification.GetPreferencesResponse {
 	response := notification.GetPreferencesResponse{
 		Activity: []notification.PreferenceType{},

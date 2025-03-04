@@ -14,6 +14,12 @@ type UserStorage struct {
 	Ctx context.Context
 }
 
+type UserRepository interface {
+	GetUserById(id string) (*shared_types.User, error)
+	UpdateUserName(userID string, userName string, updatedAt time.Time) error
+	GetUserOrganizationsWithRolesAndPermissions(userID string) ([]types.UserOrganizationsResponse, error)
+}
+
 func CreateNewUserStorage(db *bun.DB, ctx context.Context) *UserStorage {
 	return &UserStorage{
 		DB:  db,
@@ -21,6 +27,13 @@ func CreateNewUserStorage(db *bun.DB, ctx context.Context) *UserStorage {
 	}
 }
 
+// GetUserById retrieves a user by their id from the database.
+//
+// The function takes a string argument that is the id of the user to be retrieved.
+// It queries the database using the bun package and scans the result into a
+// shared_types.User struct. If no user with the specified id is found, it returns
+// an empty user and a nil error. If an error occurs during the query, it returns
+// the error.
 func (s *UserStorage) GetUserById(id string) (*shared_types.User, error) {
 	user := &shared_types.User{}
 	err := s.DB.NewSelect().Model(user).Where("id = ?", id).Scan(s.Ctx)
@@ -30,6 +43,17 @@ func (s *UserStorage) GetUserById(id string) (*shared_types.User, error) {
 	return user, nil
 }
 
+// UpdateUserName updates the username and updated_at fields of a user in the database.
+//
+// Parameters:
+//
+//	userID - the unique identifier of the user whose username is to be updated.
+//	userName - the new username to set for the user.
+//	updatedAt - the timestamp indicating when the update is made.
+//
+// Returns:
+//
+//	error - an error if the update query fails, otherwise nil.
 func (s *UserStorage) UpdateUserName(userID string, userName string, updatedAt time.Time) error {
 	_, err := s.DB.NewUpdate().
 		Table("users").
@@ -41,6 +65,13 @@ func (s *UserStorage) UpdateUserName(userID string, userName string, updatedAt t
 	return err
 }
 
+// GetUserOrganizationsWithRolesAndPermissions retrieves the organizations for a given user.
+//
+// It first retrieves the organization users for the given user ID, then
+// retrieves the associated organization and role for each organization user.
+// If an error occurs during the retrieval, it returns the error.
+// If the retrieval is successful, it returns a slice of types.UserOrganizationsResponse
+// structs containing the organization and role information for each organization user.
 func (s *UserStorage) GetUserOrganizationsWithRolesAndPermissions(userID string) ([]types.UserOrganizationsResponse, error) {
 	var organizationUsers []shared_types.OrganizationUsers
 

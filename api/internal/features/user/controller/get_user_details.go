@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"net/http"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"net/http"
 )
 
 // GetUserDetails godoc
@@ -17,7 +17,7 @@ import (
 // @Failure 500 {object} types.Response "Internal server error"
 // @Router /user/details [get]
 func (u *UserController) GetUserDetails(w http.ResponseWriter, r *http.Request) {
-	
+
 	user := u.GetUser(w, r)
 	if user == nil {
 		return

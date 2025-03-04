@@ -4,13 +4,23 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
-	role_storage "github.com/raghavyuva/nixopus-api/internal/features/role/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// AddUserToOrganization adds a user to an organization.
+//
+// It first checks if the organization and role exist using the IDs from the request.
+// If the organization does not exist, it returns ErrOrganizationDoesNotExist.
+// If the role does not exist, it returns ErrRoleDoesNotExist.
+// It then checks if the user exists using the user ID from the request.
+// If the user does not exist, it returns ErrUserDoesNotExist.
+// It also checks if the user is already part of the organization using both IDs.
+// If the user is already in the organization, it returns ErrUserAlreadyInOrganization.
+// If all checks pass, it calls the storage layer's AddUserToOrganization method to add the user to the organization.
+// If the addition fails, it returns ErrFailedToAddUserToOrganization.
+// Upon successful addition, it returns nil.
 func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrganizationRequest) error {
 	o.logger.Log(logger.Info, "adding user to organization", request.UserID)
 	roleId, err := uuid.Parse(request.RoleId)
@@ -30,11 +40,7 @@ func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrgan
 		return types.ErrOrganizationDoesNotExist
 	}
 
-	user_storage := user_storage.UserStorage{
-		DB:  o.storage.DB,
-		Ctx: o.storage.Ctx,
-	}
-	existingUser, err := user_storage.FindUserByID(request.UserID)
+	existingUser, err := o.user_storage.FindUserByID(request.UserID)
 	if err != nil {
 		o.logger.Log(logger.Error, types.ErrUserDoesNotExist.Error(), err.Error())
 		return err
@@ -45,11 +51,7 @@ func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrgan
 		return types.ErrUserDoesNotExist
 	}
 
-	role_storage := role_storage.RoleStorage{
-		DB:  o.storage.DB,
-		Ctx: o.storage.Ctx,
-	}
-	existingRole, err := role_storage.GetRole(roleId.String())
+	existingRole, err := o.role_storage.GetRole(roleId.String())
 	if err != nil {
 		o.logger.Log(logger.Error, types.ErrRoleDoesNotExist.Error(), err.Error())
 		return err

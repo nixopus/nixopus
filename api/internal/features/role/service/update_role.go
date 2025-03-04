@@ -10,6 +10,13 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// UpdateRole updates a role in the application.
+//
+// It first checks if the role exists using the provided ID.
+// If the role does not exist, it returns ErrRoleDoesNotExist.
+// If the role exists, it updates the role with the provided details and saves it to the database.
+// If the update fails, it returns ErrFailedToUpdateRole.
+// Upon successful update, it returns nil.
 func (s *RoleService) UpdateRole(id string, role types.UpdateRoleRequest) error {
 	s.logger.Log(logger.Info, "Updating role", role.Name)
 	existingRole, err := s.storage.GetRole(role.ID)

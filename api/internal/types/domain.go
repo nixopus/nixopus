@@ -17,7 +17,7 @@ type Domain struct {
 	UpdatedAt     time.Time  `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 	DeletedAt     *time.Time `json:"deleted_at,omitempty" bun:"deleted_at"`
 	// ServerID      uuid.UUID  `json:"server_id" bun:"server_id,notnull,type:uuid"` // enable this when we have multiple server architecture, to keep things simple removing this
-	Name          string     `json:"name" bun:"name,notnull"`
+	Name string `json:"name" bun:"name,notnull"`
 }
 
 type Server struct {
@@ -48,7 +48,6 @@ func GetDefaultServer() Server {
 		Hostname:  hostname,
 	}
 }
-
 
 // this logic has to be rechecked for when app is running inside a docker container
 func getHostIP() string {

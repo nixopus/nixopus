@@ -9,6 +9,13 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// UpdatePermission updates a permission in the application.
+//
+// It first checks if the permission exists using the provided ID.
+// If the permission does not exist, it returns ErrPermissionDoesNotExist.
+// If the permission exists, it updates the permission with the provided details and saves it to the database.
+// If the update fails, it returns ErrFailedToUpdatePermission.
+// Upon successful update, it returns nil.
 func (c *PermissionService) UpdatePermission(permission *types.UpdatePermissionRequest) error {
 	c.logger.Log(logger.Info, "Updating permission", "")
 	existingPermission, err := c.storage.GetPermission(permission.ID)

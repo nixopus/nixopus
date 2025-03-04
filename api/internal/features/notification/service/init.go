@@ -9,20 +9,17 @@ import (
 )
 
 type NotificationService struct {
-	storage storage.NotificationStorage
+	storage storage.NotificationRepository
 	Ctx     context.Context
 	store   *shared_storage.Store
 	logger  logger.Logger
 }
 
-func NewNotificationService(store *shared_storage.Store, ctx context.Context, logger logger.Logger) *NotificationService {
+func NewNotificationService(store *shared_storage.Store, ctx context.Context, logger logger.Logger, notificationRepository storage.NotificationRepository) *NotificationService {
 	return &NotificationService{
-		storage: storage.NotificationStorage{
-			DB:  store.DB,
-			Ctx: ctx,
-		},
-		store:  store,
-		Ctx:    ctx,
-		logger: logger,
+		storage: notificationRepository,
+		store:   store,
+		Ctx:     ctx,
+		logger:  logger,
 	}
 }

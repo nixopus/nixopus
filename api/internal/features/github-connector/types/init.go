@@ -3,7 +3,7 @@ package types
 import "errors"
 
 type CreateGithubConnectorRequest struct {
-	AppID         string    `json:"app_id"`
+	AppID         string `json:"app_id"`
 	Slug          string `json:"slug"`
 	Pem           string `json:"pem"`
 	ClientID      string `json:"client_id"`

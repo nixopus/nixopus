@@ -6,23 +6,29 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 
+	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
+	role_storage "github.com/raghavyuva/nixopus-api/internal/features/role/storage"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 )
 
 type OrganizationService struct {
-	store   *shared_storage.Store
-	storage storage.OrganizationStore
-	Ctx     context.Context
-	logger  logger.Logger
+	store        *shared_storage.Store
+	storage      storage.OrganizationRepository
+	user_storage user_storage.UserStorage
+	role_storage role_storage.RoleStorage
+	Ctx          context.Context
+	logger       logger.Logger
 }
 
-func NewOrganizationService(store *shared_storage.Store, ctx context.Context, logger logger.Logger) *OrganizationService {
+func NewOrganizationService(store *shared_storage.Store, ctx context.Context, logger logger.Logger, organizationRepository storage.OrganizationRepository) *OrganizationService {
 	return &OrganizationService{
-		store: store,
-		storage: storage.OrganizationStore{
+		store:   store,
+		storage: organizationRepository,
+		logger:  logger,
+		user_storage: user_storage.UserStorage{
 			DB:  store.DB,
 			Ctx: ctx,
 		},
-		logger: logger,
+		role_storage: role_storage.RoleStorage{DB: store.DB, Ctx: ctx},
 	}
 }

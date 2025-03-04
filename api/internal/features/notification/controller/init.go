@@ -7,6 +7,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification/validation"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
@@ -37,7 +38,7 @@ func NewNotificationController(
 	return &NotificationController{
 		store:        store,
 		validator:    validation.NewValidator(),
-		service:      service.NewNotificationService(store, ctx, l),
+		service:      service.NewNotificationService(store, ctx, l, &storage.NotificationStorage{DB: store.DB, Ctx: ctx}),
 		ctx:          ctx,
 		logger:       l,
 		notification: notificationManager,

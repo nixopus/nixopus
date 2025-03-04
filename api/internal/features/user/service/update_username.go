@@ -8,6 +8,13 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
 )
 
+// UpdateUsername updates a user's name in the application.
+//
+// It first checks if the user exists using the provided ID.
+// If the user does not exist, it returns ErrUserDoesNotExist.
+// If the user exists, it updates the user with the provided details and saves it to the database.
+// If the update fails, it returns ErrFailedToUpdateUser.
+// Upon successful update, it returns nil.
 func (s *UserService) UpdateUsername(id string, req *types.UpdateUserNameRequest) error {
 	s.logger.Log(logger.Info, "Updating req", req.Name)
 	existingUser, err := s.storage.GetUserById(id)

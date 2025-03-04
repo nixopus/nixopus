@@ -12,17 +12,14 @@ type GithubConnectorService struct {
 	store   *shared_storage.Store
 	ctx     context.Context
 	l       logger.Logger
-	storage storage.GithubConnectorStorage
+	storage storage.GithubConnectorRepository
 }
 
-func NewGithubConnectorService(store *shared_storage.Store, ctx context.Context, l logger.Logger) *GithubConnectorService {
+func NewGithubConnectorService(store *shared_storage.Store, ctx context.Context, l logger.Logger, GithubConnectorRepository storage.GithubConnectorRepository) *GithubConnectorService {
 	return &GithubConnectorService{
-		store: store,
-		ctx:   ctx,
-		l:     l,
-		storage: storage.GithubConnectorStorage{
-			DB:  store.DB,
-			Ctx: ctx,
-		},
+		store:   store,
+		ctx:     ctx,
+		l:       l,
+		storage: GithubConnectorRepository,
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/validation"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -31,7 +32,7 @@ func NewOrganizationsController(
 	return &OrganizationsController{
 		store:        store,
 		validator:    validation.NewValidator(),
-		service:      service.NewOrganizationService(store, ctx, l),
+		service:      service.NewOrganizationService(store, ctx, l, storage.OrganizationStore{DB: store.DB, Ctx: ctx}),
 		ctx:          ctx,
 		notification: notificationManager,
 	}

@@ -7,6 +7,14 @@ import (
 	role_storage "github.com/raghavyuva/nixopus-api/internal/features/role/storage"
 )
 
+// RemovePermissionFromRole removes a permission from a role by their respective IDs.
+//
+// It first verifies the existence of the role and permission by their IDs.
+// If the role does not exist, it returns ErrRoleDoesNotExist.
+// If the permission does not exist, it returns ErrPermissionDoesNotExist.
+// If both exist, it removes the permission from the role.
+// If removal fails, it returns ErrFailedToRemovePermissionFromRole.
+// Upon successful removal, it returns nil.
 func (p *PermissionService) RemovePermissionFromRole(permissionID string, roleId string) error {
 	p.logger.Log(logger.Info, "Removing permission from role", "")
 	role_storage := role_storage.RoleStorage{

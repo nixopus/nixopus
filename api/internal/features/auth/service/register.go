@@ -6,11 +6,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	organization_service "github.com/raghavyuva/nixopus-api/internal/features/organization/service"
 	organization_types "github.com/raghavyuva/nixopus-api/internal/features/organization/types"
-	permission_service "github.com/raghavyuva/nixopus-api/internal/features/permission/service"
 	permission_types "github.com/raghavyuva/nixopus-api/internal/features/permission/types"
-	role_service "github.com/raghavyuva/nixopus-api/internal/features/role/service"
 	role_types "github.com/raghavyuva/nixopus-api/internal/features/role/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
@@ -104,9 +101,7 @@ func (c *AuthService) Register(registration_request types.RegisterRequest) (type
 
 func (c *AuthService) createDefaultOrganization(user shared_types.User) (shared_types.Organization, error) {
 	c.logger.Log(logger.Info, "creating default organization for admin user", user.Email)
-	organiztion_service := organization_service.NewOrganizationService(c.store, c.storage.Ctx, c.logger)
-
-	_, err := organiztion_service.CreateOrganization(&organization_types.CreateOrganizationRequest{
+	_, err := c.organization_service.CreateOrganization(&organization_types.CreateOrganizationRequest{
 		Name:        user.Username + "'s Team",
 		Description: "My Team",
 	})
@@ -122,9 +117,8 @@ func (c *AuthService) createDefaultOrganization(user shared_types.User) (shared_
 
 func (c *AuthService) createDefaultPermissions(organization shared_types.Organization) error {
 	c.logger.Log(logger.Info, "creating default permissions for organization", organization.Name)
-	permissions_service := permission_service.NewPermissionService(c.store, c.storage.Ctx, c.logger)
 	for _, permission := range permissions_to_create {
-		err := permissions_service.CreatePermission(&permission)
+		err := c.permissions_service.CreatePermission(&permission)
 		if err != nil {
 			c.logger.Log(logger.Error, types.ErrFailedToCreateDefaultPermissions.Error(), err.Error())
 			return types.ErrFailedToCreateDefaultPermissions
@@ -135,10 +129,9 @@ func (c *AuthService) createDefaultPermissions(organization shared_types.Organiz
 
 func (c *AuthService) createDefaultRoles(organization shared_types.Organization) error {
 	c.logger.Log(logger.Info, "creating default roles for organization", organization.Name)
-	roles_service := role_service.NewRoleService(c.store, c.storage.Ctx, c.logger)
 
 	for _, role := range roles_to_create {
-		err := roles_service.CreateRole(&role)
+		err := c.role_service.CreateRole(&role)
 		if err != nil {
 			c.logger.Log(logger.Error, types.ErrFailedToCreateDefaultRoles.Error(), err.Error())
 			return types.ErrFailedToCreateDefaultRoles
@@ -148,14 +141,12 @@ func (c *AuthService) createDefaultRoles(organization shared_types.Organization)
 }
 
 func (c *AuthService) addDefaultPermissionsToDefaultRole() error {
-	permission_service := permission_service.NewPermissionService(c.store, c.storage.Ctx, c.logger)
-	all_permissions, err := permission_service.GetAllPermissions()
+	all_permissions, err := c.permissions_service.GetAllPermissions()
 	if err != nil {
 		return err
 	}
 
-	role_service := role_service.NewRoleService(c.store, c.storage.Ctx, c.logger)
-	all_roles, err := role_service.GetRoles()
+	all_roles, err := c.role_service.GetRoles()
 	if err != nil {
 		return err
 	}
@@ -190,7 +181,7 @@ func (c *AuthService) addDefaultPermissionsToDefaultRole() error {
 				PermissionID: permID,
 			}
 
-			err := permission_service.AddPermissionToRole(req.PermissionID, req.RoleID)
+			err := c.permissions_service.AddPermissionToRole(req.PermissionID, req.RoleID)
 			if err != nil {
 				c.logger.Log(logger.Error, "Failed to add permission to role", err.Error())
 			}
@@ -202,16 +193,14 @@ func (c *AuthService) addDefaultPermissionsToDefaultRole() error {
 
 func (c *AuthService) addUserToOrganization(user shared_types.User) error {
 	c.logger.Log(logger.Info, "adding user to organization", user.Email)
-	organization_service := organization_service.NewOrganizationService(c.store, c.storage.Ctx, c.logger)
-	organizations, err := organization_service.GetOrganizations()
+	organizations, err := c.organization_service.GetOrganizations()
 	if err != nil {
 		return err
 	}
 	if len(organizations) == 0 {
 		return types.ErrNoOrganizationsFound
 	}
-	roles_service := role_service.NewRoleService(c.store, c.storage.Ctx, c.logger)
-	roles, err := roles_service.GetRoles()
+	roles, err := c.role_service.GetRoles()
 	if err != nil {
 		return err
 	}
@@ -223,7 +212,7 @@ func (c *AuthService) addUserToOrganization(user shared_types.User) error {
 		UserID:         user.ID.String(),
 		RoleId:         roles[0].ID.String(),
 	}
-	return organization_service.AddUserToOrganization(user_organization)
+	return c.organization_service.AddUserToOrganization(user_organization)
 }
 
 var permissions_to_create = []permission_types.CreatePermissionRequest{

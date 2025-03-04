@@ -9,20 +9,17 @@ import (
 )
 
 type PermissionService struct {
-	storage storage.PermissionStorage
+	storage storage.PermissionRepository
 	ctx     context.Context
 	store   *shared_storage.Store
 	logger  logger.Logger
 }
 
-func NewPermissionService(store *shared_storage.Store, ctx context.Context, logger logger.Logger) *PermissionService {
+func NewPermissionService(store *shared_storage.Store, ctx context.Context, logger logger.Logger, permissionRepository storage.PermissionRepository) *PermissionService {
 	return &PermissionService{
-		storage: storage.PermissionStorage{
-			DB:  store.DB,
-			Ctx: ctx,
-		},
-		store:  store,
-		ctx:    ctx,
-		logger: logger,
+		storage: permissionRepository,
+		store:   store,
+		ctx:     ctx,
+		logger:  logger,
 	}
 }

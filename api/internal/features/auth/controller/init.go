@@ -5,10 +5,14 @@ import (
 	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/validation"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
+	organization_storage "github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
+	permissions_storage "github.com/raghavyuva/nixopus-api/internal/features/permission/storage"
+	role_storage "github.com/raghavyuva/nixopus-api/internal/features/role/storage"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
@@ -35,9 +39,13 @@ func NewAuthController(
 	notificationManager *notification.NotificationManager,
 ) *AuthController {
 	return &AuthController{
-		store:        store,
-		validator:    validation.NewValidator(),
-		service:      service.NewAuthService(store, ctx, l),
+		store:     store,
+		validator: validation.NewValidator(),
+		service: service.NewAuthService(store, ctx, l,
+			&storage.UserStorage{DB: store.DB, Ctx: ctx},
+			&permissions_storage.PermissionStorage{DB: store.DB, Ctx: ctx},
+			&role_storage.RoleStorage{DB: store.DB, Ctx: ctx},
+			organization_storage.OrganizationStore{DB: store.DB, Ctx: ctx}),
 		ctx:          ctx,
 		logger:       l,
 		notification: notificationManager,
@@ -103,7 +111,6 @@ func (c *AuthController) GetUser(w http.ResponseWriter, r *http.Request) *shared
 
 	return user
 }
-
 
 // Notify sends a notification to the user for the given payload type.
 //

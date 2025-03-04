@@ -9,20 +9,17 @@ import (
 )
 
 type DomainsService struct {
-	storage storage.DomainStorage
+	storage storage.DomainStorageInterface
 	Ctx     context.Context
 	store   *shared_storage.Store
 	logger  logger.Logger
 }
 
-func NewDomainsService(store *shared_storage.Store, ctx context.Context, logger logger.Logger) *DomainsService {
+func NewDomainsService(store *shared_storage.Store, ctx context.Context, logger logger.Logger, domain_repo storage.DomainStorageInterface) *DomainsService {
 	return &DomainsService{
-		storage: storage.DomainStorage{
-			DB:  store.DB,
-			Ctx: ctx,
-		},
-		store:  store,
-		Ctx:    ctx,
-		logger: logger,
+		storage: domain_repo,
+		store:   store,
+		Ctx:     ctx,
+		logger:  logger,
 	}
 }

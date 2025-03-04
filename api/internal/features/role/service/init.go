@@ -10,15 +10,15 @@ import (
 
 type RoleService struct {
 	store   *shared_storage.Store
-	storage storage.RoleStorage
+	storage storage.RoleRepository
 	Ctx     context.Context
 	logger  logger.Logger
 }
 
-func NewRoleService(store *shared_storage.Store, ctx context.Context, logger logger.Logger) *RoleService {
+func NewRoleService(store *shared_storage.Store, ctx context.Context, logger logger.Logger, roleRepository storage.RoleRepository) *RoleService {
 	return &RoleService{
 		store:   store,
-		storage: storage.RoleStorage{DB: store.DB, Ctx: ctx},
+		storage: roleRepository,
 		Ctx:     ctx,
 		logger:  logger,
 	}

@@ -6,6 +6,13 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/permission/types"
 )
 
+// DeletePermission deletes a permission by its ID.
+//
+// It first checks if the permission exists using the provided ID.
+// If the permission does not exist, it returns ErrPermissionDoesNotExist.
+// If the permission exists, it calls the storage layer's DeletePermission method to delete it.
+// If the deletion fails, it returns ErrFailedToDeletePermission.
+// Upon successful deletion, it returns nil.
 func (s *PermissionService) DeletePermission(permissionID string) error {
 	s.logger.Log(logger.Info, "Deleting permission", "")
 	existingPermission, err := s.storage.GetPermission(permissionID)

@@ -6,10 +6,11 @@ import (
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/user/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/user/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/user/validation"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 type UserController struct {
@@ -28,12 +29,11 @@ func NewUserController(
 	return &UserController{
 		store:     store,
 		validator: validation.NewValidator(),
-		service:   service.NewUserService(store, ctx, l),
+		service:   service.NewUserService(store, ctx, l, &storage.UserStorage{DB: store.DB, Ctx: ctx}),
 		ctx:       ctx,
 		logger:    l,
 	}
 }
-
 
 // parseAndValidate parses and validates the request body.
 //

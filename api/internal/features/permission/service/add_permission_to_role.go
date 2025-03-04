@@ -10,6 +10,14 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// AddPermissionToRole adds a permission to a role by their respective IDs.
+//
+// It first checks if the role and permission exist using the provided IDs.
+// If the role does not exist, it returns ErrRoleDoesNotExist.
+// If the permission does not exist, it returns ErrPermissionDoesNotExist.
+// If both exist, it creates a RolePermissions entry associating the permission with the role.
+// If the association fails, it returns ErrFailedToAddPermissionToRole.
+// Upon successful addition, it returns nil.
 func (c *PermissionService) AddPermissionToRole(permissionID string, roleID string) error {
 	c.logger.Log(logger.Info, "Adding permission to role", "")
 	role_storage := role_storage.RoleStorage{

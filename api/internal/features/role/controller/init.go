@@ -6,6 +6,7 @@ import (
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/role/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/role/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/role/validation"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
@@ -29,7 +30,7 @@ func NewRolesController(
 	return &RolesController{
 		store:     store,
 		validator: validation.NewValidator(),
-		service:   service.NewRoleService(store, ctx, logger),
+		service:   service.NewRoleService(store, ctx, logger, &storage.RoleStorage{DB: store.DB, Ctx: ctx}),
 		ctx:       ctx,
 		logger:    logger,
 	}
