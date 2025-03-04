@@ -64,18 +64,18 @@ func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decode
 
 func (v *Validator) ValidateRequest(req interface{}) error {
 	switch r := req.(type) {
-	case types.CreatePermissionRequest:
-		return validateCreatePermissionRequest(r)
-	case types.GetPermissionRequest:
+	case *types.CreatePermissionRequest:
+		return validateCreatePermissionRequest(*r)
+	case *types.GetPermissionRequest:
 		return validateGetPermissionRequest(r.ID)
-	case types.DeletePermissionRequest:
+	case *types.DeletePermissionRequest:
 		return validateGetPermissionRequest(r.ID)
-	case types.UpdatePermissionRequest:
-		return validateUpdatePermissionRequest(r)
-	case types.AddPermissionToRoleRequest:
-		return validateAddPermissionToRoleRequest(r)
-	case types.RemovePermissionFromRoleRequest:
-		return validateRemovePermissionFromRoleRequest(r)
+	case *types.UpdatePermissionRequest:
+		return validateUpdatePermissionRequest(*r)
+	case *types.AddPermissionToRoleRequest:
+		return validateAddPermissionToRoleRequest(*r)
+	case *types.RemovePermissionFromRoleRequest:
+		return validateRemovePermissionFromRoleRequest(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}

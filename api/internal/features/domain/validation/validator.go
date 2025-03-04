@@ -38,12 +38,12 @@ func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decode
 
 func (v *Validator) ValidateRequest(req interface{}) error {
 	switch r := req.(type) {
-	case types.CreateDomainRequest:
-		return v.validateCreateDomainRequest(r)
-	case types.UpdateDomainRequest:
-		return v.validateUpdateDomainRequest(r)
-	case types.DeleteDomainRequest:
-		return v.validateDeleteDomainRequest(r)
+	case *types.CreateDomainRequest:
+		return v.validateCreateDomainRequest(*r)
+	case *types.UpdateDomainRequest:
+		return v.validateUpdateDomainRequest(*r)
+	case *types.DeleteDomainRequest:
+		return v.validateDeleteDomainRequest(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}

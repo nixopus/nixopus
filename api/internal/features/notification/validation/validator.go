@@ -15,16 +15,16 @@ func NewValidator() *Validator {
 
 func (v *Validator) ValidateRequest(req interface{}) error {
 	switch r := req.(type) {
-	case notification.CreateSMTPConfigRequest:
-		return v.validateCreateSMTPConfigRequest(r)
-	case notification.GetSMTPConfigRequest:
-		return v.validateGetSMTPConfigRequest(r)
-	case notification.UpdateSMTPConfigRequest:
-		return v.validateUpdateSMTPConfigRequest(r)
-	case notification.DeleteSMTPConfigRequest:
-		return v.validateDeleteSMTPConfigRequest(r)
-	case notification.UpdatePreferenceRequest:
-		return v.validateUpdatePreferenceRequest(r)
+	case *notification.CreateSMTPConfigRequest:
+		return v.validateCreateSMTPConfigRequest(*r)
+	case *notification.GetSMTPConfigRequest:
+		return v.validateGetSMTPConfigRequest(*r)
+	case *notification.UpdateSMTPConfigRequest:
+		return v.validateUpdateSMTPConfigRequest(*r)
+	case *notification.DeleteSMTPConfigRequest:
+		return v.validateDeleteSMTPConfigRequest(*r)
+	case *notification.UpdatePreferenceRequest:
+		return v.validateUpdatePreferenceRequest(*r)
 	default:
 		return notification.ErrInvalidRequestType
 	}

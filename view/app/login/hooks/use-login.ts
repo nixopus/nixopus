@@ -1,10 +1,13 @@
 import { useLoginUserMutation } from '@/redux/services/users/authApi';
+import { useRouter } from 'next/navigation';
 import React from 'react';
+import { toast } from 'sonner';
 
 function useLogin() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [loginUser, { isLoading, error }] = useLoginUserMutation();
+  const router = useRouter();
 
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(event.target.value);
@@ -15,7 +18,12 @@ function useLogin() {
   };
 
   const handleLogin = async () => {
-    await loginUser({ email, password });
+    try {
+      await loginUser({ email, password });
+      router.push('/dashboard');
+    } catch (error) {
+      toast.error('Login failed');
+    }
   };
 
   return {

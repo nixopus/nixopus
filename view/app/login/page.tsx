@@ -4,6 +4,7 @@ import useLogin from './hooks/use-login';
 import { ErrorBoundary } from '@/components/ui/error-handler';
 import { useAppSelector } from '@/redux/hooks';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function LoginPage() {
   const {
@@ -19,10 +20,14 @@ export default function LoginPage() {
   const user = useAppSelector((state) => state.auth.user);
   const router = useRouter();
 
-  if (authenticated && user) {
-    router.push('/');
-    return <></>;
-  }
+  useEffect(() => {
+    if (authenticated && user) {
+      router.push('/dashboard');
+    }
+    return () => {
+    }
+  }, [authenticated, user]);
+
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10">

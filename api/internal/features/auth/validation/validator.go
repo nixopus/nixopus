@@ -2,6 +2,7 @@ package validation
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"strings"
 	"unicode/utf8"
@@ -112,17 +113,18 @@ func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decode
 
 func (v *Validator) ValidateRequest(req interface{}) error {
 	switch r := req.(type) {
-	case types.LoginRequest:
-		return v.validateLoginRequest(r)
-	case types.RegisterRequest:
-		return v.validateRegisterRequest(r)
-	case types.LogoutRequest:
-		return v.validateLogoutRequest(r)
-	case types.RefreshTokenRequest:
-		return v.validateRefreshTokenRequest(r)
-	case types.ChangePasswordRequest:
-		return v.validateResetPasswordRequest(r)
+	case *types.LoginRequest:
+		return v.validateLoginRequest(*r)
+	case *types.RegisterRequest:
+		return v.validateRegisterRequest(*r)
+	case *types.LogoutRequest:
+		return v.validateLogoutRequest(*r)
+	case *types.RefreshTokenRequest:
+		return v.validateRefreshTokenRequest(*r)
+	case *types.ChangePasswordRequest:
+		return v.validateResetPasswordRequest(*r)
 	default:
+		fmt.Printf("invalid request type: %T\n", req)
 		return types.ErrInvalidRequestType
 	}
 }

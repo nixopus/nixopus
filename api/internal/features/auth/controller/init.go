@@ -68,7 +68,7 @@ func NewAuthController(
 // Returns:
 //
 //	bool - true if parsing and validation succeed, false otherwise.
-func (c *AuthController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) bool {
+func (c *AuthController) parseAndValidate(w http.ResponseWriter, r *http.Request, req any) bool {
 	if err := c.validator.ParseRequestBody(r, r.Body, req); err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToDecodeRequest.Error(), err.Error())
 		utils.SendErrorResponse(w, types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)

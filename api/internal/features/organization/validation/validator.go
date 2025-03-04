@@ -62,16 +62,16 @@ func (v *Validator) ValidateDescription(description string) error {
 // types.ErrInvalidRequestType.
 func (v *Validator) ValidateRequest(req interface{}) error {
 	switch r := req.(type) {
-	case types.CreateOrganizationRequest:
-		return v.validateCreate(r)
-	case types.UpdateOrganizationRequest:
-		return v.validateUpdate(r)
-	case types.DeleteOrganizationRequest:
-		return v.validateDelete(r)
-	case types.AddUserToOrganizationRequest:
-		return v.validateAddUser(r)
-	case types.RemoveUserFromOrganizationRequest:
-		return v.validateRemoveUser(r)
+	case *types.CreateOrganizationRequest:
+		return v.validateCreate(*r)
+	case *types.UpdateOrganizationRequest:
+		return v.validateUpdate(*r)
+	case *types.DeleteOrganizationRequest:
+		return v.validateDelete(*r)
+	case *types.AddUserToOrganizationRequest:
+		return v.validateAddUser(*r)
+	case *types.RemoveUserFromOrganizationRequest:
+		return v.validateRemoveUser(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}

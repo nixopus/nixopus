@@ -16,10 +16,10 @@ func NewValidator() *Validator {
 
 func (v *Validator) ValidateRequest(req interface{}) error {
 	switch r := req.(type) {
-	case types.CreateGithubConnectorRequest:
-		return v.validateCreateGithubConnectorRequest(r)
-	case types.UpdateGithubConnectorRequest:
-		return v.validateUpdateGithubConnectorRequest(r)
+	case *types.CreateGithubConnectorRequest:
+		return v.validateCreateGithubConnectorRequest(*r)
+	case *types.UpdateGithubConnectorRequest:
+		return v.validateUpdateGithubConnectorRequest(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}

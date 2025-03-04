@@ -43,12 +43,12 @@ func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decode
 
 func (v *Validator) ValidateRequest(req interface{}) error {
 	switch r := req.(type) {
-	case types.CreateRoleRequest:
-		return v.validateCreateRoleRequest(r)
-	case types.GetRoleRequest:
+	case *types.CreateRoleRequest:
+		return v.validateCreateRoleRequest(*r)
+	case *types.GetRoleRequest:
 		return v.validateGetRoleRequest(r.ID)
-	case types.UpdateRoleRequest:
-		return v.validateUpdateRoleRequest(r)
+	case *types.UpdateRoleRequest:
+		return v.validateUpdateRoleRequest(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}
