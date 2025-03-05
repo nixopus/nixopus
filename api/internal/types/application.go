@@ -25,9 +25,43 @@ type Application struct {
 	CreatedAt            time.Time   `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt            time.Time   `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 
-	Domain *Domain `json:"domain,omitempty" bun:"rel:belongs-to,join:domain_id=id"`
-	User   *User   `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
+	Domain       *Domain             `json:"domain,omitempty" bun:"rel:belongs-to,join:domain_id=id"`
+	User         *User               `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
+	Status       *ApplicationStatus  `json:"status,omitempty" bun:"rel:has-one,join:id=application_id"`
+	Logs         []*ApplicationLogs  `json:"logs,omitempty" bun:"rel:has-many,join:id=application_id"`
 }
+
+
+type ApplicationStatus struct {
+	bun.BaseModel `bun:"table:application_status,alias:as" swaggerignore:"true"`
+	ID            uuid.UUID    `json:"id" bun:"id,pk,type:uuid"`
+	ApplicationID uuid.UUID    `json:"application_id" bun:"application_id,notnull,type:uuid"`
+	Status        Status       `json:"status" bun:"status,notnull"`
+	CreatedAt     time.Time    `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
+	UpdatedAt     time.Time    `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
+	
+	Application   *Application `json:"-" bun:"rel:belongs-to,join:application_id=id"`
+}
+
+type ApplicationLogs struct {
+	bun.BaseModel `bun:"table:application_logs,alias:al" swaggerignore:"true"`
+	ID            uuid.UUID    `json:"id" bun:"id,pk,type:uuid"`
+	ApplicationID uuid.UUID    `json:"application_id" bun:"application_id,notnull,type:uuid"`
+	CreatedAt     time.Time    `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
+	UpdatedAt     time.Time    `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
+	Log           string      `json:"log" bun:"log,notnull"`
+	
+	Application   *Application `json:"-" bun:"rel:belongs-to,join:application_id=id"`
+}
+
+type Status string
+
+const (
+	Started Status = "started"
+	Running Status = "running"
+	Stopped Status = "stopped"
+	Failed  Status = "failed"
+)
 
 type Environment string
 

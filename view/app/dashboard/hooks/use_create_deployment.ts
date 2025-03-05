@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
 
 interface DeploymentFormValues {
   application_name: string;
@@ -31,6 +32,8 @@ function useCreateDeployment({
   pre_run_commands = '',
   post_run_commands = ''
 }: DeploymentFormValues) {
+  const { data: domains } = useGetAllDomainsQuery();
+
   const deploymentFormSchema = z.object({
     application_name: z
       .string()
@@ -146,7 +149,7 @@ function useCreateDeployment({
     };
   };
 
-  return { validateEnvVar, deploymentFormSchema, form, onSubmit };
+  return { validateEnvVar, deploymentFormSchema, form, onSubmit,domains };
 }
 
 export default useCreateDeployment;

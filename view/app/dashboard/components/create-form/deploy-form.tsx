@@ -35,7 +35,7 @@ export const DeployForm = ({
   pre_run_commands = '',
   post_run_commands = ''
 }: DeployFormProps) => {
-  const { validateEnvVar, form, onSubmit } = useCreateDeployment({
+  const { validateEnvVar, form, onSubmit,domains } = useCreateDeployment({
     application_name,
     environment,
     branch,
@@ -96,11 +96,7 @@ export const DeployForm = ({
             name="domain"
             description="Domain on which your application will be available"
             placeholder="Domain"
-            selectOptions={[
-              { label: 'example.com', value: 'example.com' },
-              { label: 'example2.com', value: 'example2.com' },
-              { label: 'example3.com', value: 'example3.com' }
-            ]}
+            selectOptions={domains?.map((domain) => ({ label: domain.name, value: domain.id }))}
           />
           <FormSelectField
             form={form}
@@ -153,7 +149,7 @@ export const DeployForm = ({
             required={false}
           />
         </div>
-        <Button type="submit" className="w-full">
+        <Button  className="w-full cursor-pointer">
           Deploy
         </Button>
       </form>

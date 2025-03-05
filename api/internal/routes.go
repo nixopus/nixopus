@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
+	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
 	domain "github.com/raghavyuva/nixopus-api/internal/features/domain/controller"
 	githubConnector "github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller"
 	health "github.com/raghavyuva/nixopus-api/internal/features/health"
@@ -16,7 +17,6 @@ import (
 	permission "github.com/raghavyuva/nixopus-api/internal/features/permission/controller"
 	role "github.com/raghavyuva/nixopus-api/internal/features/role/controller"
 	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
-	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
 	"github.com/raghavyuva/nixopus-api/internal/middleware"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -70,7 +70,11 @@ func (router *Router) Routes() *mux.Router {
 		http.ServeFile(w, r, "./docs/swagger.json")
 	})
 
-	wsServer, err := NewSocketServer()
+	notificationManager := notification.NewNotificationManager(notification.NewNotificationChannels(), router.app.Store.DB)
+	notificationManager.Start()
+	deployController := deploy.NewDeployController(router.app.Store, router.app.Ctx, l, notificationManager)
+
+	wsServer, err := NewSocketServer(deployController, router.app.Store.DB, router.app.Ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -78,9 +82,6 @@ func (router *Router) Routes() *mux.Router {
 	r.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		wsServer.HandleHTTP(w, r)
 	})
-
-	notificationManager := notification.NewNotificationManager(notification.NewNotificationChannels(), router.app.Store.DB)
-	notificationManager.Start()
 
 	u := r.PathPrefix("/api/v1").Subrouter()
 
@@ -171,11 +172,11 @@ func (router *Router) Routes() *mux.Router {
 
 	deployApi := api.PathPrefix("/deploy").Subrouter()
 	deployApi.Use(middleware.IsAdmin)
-	deployController := deploy.NewDeployController(router.app.Store, router.app.Ctx, l, notificationManager)
 	deployApiValidator := deployApi.PathPrefix("/validate").Subrouter()
 	deployApiValidator.HandleFunc("/name", deployController.IsNameAlreadyTaken).Methods("POST", "OPTIONS")
 	deployApiValidator.HandleFunc("/domain", deployController.IsDomainAlreadyTaken).Methods("POST", "OPTIONS")
 	deployApiValidator.HandleFunc("/port", deployController.IsPortAlreadyTaken).Methods("POST", "OPTIONS")
 
+	deployApi.HandleFunc("/applications", deployController.GetApplications).Methods("GET", "OPTIONS")
 	return r
 }

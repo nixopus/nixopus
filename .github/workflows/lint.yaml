@@ -1,0 +1,27 @@
+name: Lint Nixopus API
+
+on:
+  pull_request:
+    paths:
+      - 'api/**'
+  push:
+    branches:
+      - '*'
+    paths:
+      - 'api/**'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.23
+          stable: false
+      
+      - name: Lint API folder
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+          cd api && golangci-lint run

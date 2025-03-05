@@ -3,6 +3,8 @@ package storage
 import (
 	"context"
 	"github.com/uptrace/bun"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type DeployStorage struct {
@@ -15,6 +17,10 @@ type DeployRepository interface {
 	IsDomainAlreadyTaken(domain string) (bool, error)
 	IsPortAlreadyTaken(port int) (bool, error)
 	IsDomainValid(domain string) (bool, error)
+	AddApplication(application *shared_types.Application) error
+	AddApplicationLogs(applicationLogs *shared_types.ApplicationLogs) error
+	AddApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
+	GetApplications(page int, pageSize int) ([]shared_types.Application, int, error)
 }
 
 func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
@@ -52,4 +58,61 @@ func (s *DeployStorage) IsPortAlreadyTaken(port int) (bool, error) {
 
 func (s *DeployStorage) IsDomainValid(domain string) (bool, error) {
 	return true, nil
+}
+
+func (s *DeployStorage) AddApplication(application *shared_types.Application) error {
+	_, err := s.DB.NewInsert().Model(application).Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *DeployStorage) AddApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error {
+	_, err := s.DB.NewInsert().Model(applicationStatus).Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *DeployStorage) AddApplicationLogs(applicationLogs *shared_types.ApplicationLogs) error {
+	_, err := s.DB.NewInsert().Model(applicationLogs).Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *DeployStorage) GetApplications(page, pageSize int) ([]shared_types.Application, int, error) {
+	var applications []shared_types.Application
+
+	offset := (page - 1) * pageSize
+
+	totalCount, err := s.DB.NewSelect().
+		Model((*shared_types.Application)(nil)).
+		Count(s.Ctx)
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = s.DB.NewSelect().
+		Model(&applications).
+		Relation("Domain").
+		Relation("User").
+		Relation("Status").
+		Relation("Logs", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Order("created_at DESC").Limit(20)
+		}).
+		Order("created_at DESC").
+		Limit(pageSize).
+		Offset(offset).
+		Scan(s.Ctx)
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return applications, totalCount, nil
 }

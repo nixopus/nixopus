@@ -3,6 +3,9 @@ package validation
 import (
 	"encoding/json"
 	"io"
+
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type Validator struct {
@@ -17,15 +20,65 @@ func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decode
 }
 
 func (v *Validator) ValidateRequest(req interface{}) error {
-	// switch r := req.(type) {
-	// case *types.CreateDeployRequest:
-	// 	return v.validateCreateDeployRequest(*r)
-	// case *types.UpdateDeployRequest:
-	// 	return v.validateUpdateDeployRequest(*r)
-	// case *types.DeleteDeployRequest:
-	// 	return v.validateDeleteDeployRequest(*r)
-	// default:
-	// 	return types.ErrInvalidRequestType
-	// }
+	switch r := req.(type) {
+	case *types.CreateDeploymentRequest:
+		return validateDeploymentRequest(*r)
+	default:
+		return types.ErrInvalidRequestType
+	}
+}
+
+func validateDeploymentRequest(req types.CreateDeploymentRequest) error {
+	if req.Name == "" {
+		return types.ErrMissingName
+	}
+	if req.DomainID == "" {
+		return types.ErrMissingDomainID
+	}
+	if req.Repository == "" {
+		return types.ErrMissingRepository
+	}
+	if req.Branch == "" {
+		return types.ErrMissingBranch
+	}
+	if req.Port <= 0 {
+		return types.ErrMissingPort
+	}
+
+	if !isValidEnvironment(req.Environment) {
+		return types.ErrInvalidEnvironment
+	}
+	if !isValidBuildPack(req.BuildPack) {
+		return types.ErrInvalidBuildPack
+	}
+
 	return nil
+}
+
+func isValidEnvironment(env shared_types.Environment) bool {
+	validEnvs := []shared_types.Environment{
+		shared_types.Development,
+		shared_types.Staging,
+		shared_types.Production,
+	}
+	for _, v := range validEnvs {
+		if env == v {
+			return true
+		}
+	}
+	return false
+}
+
+func isValidBuildPack(bp shared_types.BuildPack) bool {
+	validBPs := []shared_types.BuildPack{
+		shared_types.DockerFile,
+		shared_types.DockerCompose,
+		shared_types.Static,
+	}
+	for _, v := range validBPs {
+		if bp == v {
+			return true
+		}
+	}
+	return false
 }
