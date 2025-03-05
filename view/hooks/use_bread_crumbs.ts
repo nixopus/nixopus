@@ -16,7 +16,9 @@ function use_bread_crumbs() {
       return { href, label: subpath.charAt(0).toUpperCase() + subpath.slice(1) };
     });
 
-    return [{ href: '/', label: 'Dashboard' }, ...crumblist];
+    return pathname.startsWith('/dashboard')
+      ? [...crumblist]
+      : [{ href: '/', label: 'Dashboard' }, ...crumblist];
   };
 
   return { getBreadcrumbs };

@@ -17,7 +17,8 @@ function ListRepositories() {
     handlePageChange,
     currentPage,
     totalPages,
-    paginatedApplications
+    paginatedApplications,
+    onSelectRepository
   } = useGithubRepoPagination();
 
   const renderGithubRepositories = () => {
@@ -36,7 +37,7 @@ function ListRepositories() {
               <GithubRepositories
                 key={repo.id}
                 {...repo}
-                setSelectedRepository={setSelectedRepository}
+                setSelectedRepository={onSelectRepository}
               />
             ))}
         </div>
@@ -59,7 +60,7 @@ function ListRepositories() {
         sortConfig={sortConfig}
         onSortChange={onSortChange}
         sortOptions={sortOptions}
-        label="Github Repositories"
+        label="Repositories"
         className="mt-5 mb-5"
       />
       {renderGithubRepositories()}

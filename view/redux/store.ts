@@ -17,6 +17,7 @@ import userSlice from '@/redux/features/users/userSlice';
 import { notificationApi } from '@/redux/services/settings/notificationApi';
 import { domainsApi } from '@/redux/services/settings/domainsApi';
 import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorApi';
+import githubConnector from './features/github-connector/githubConnectorSlice';
 
 const persistConfig = {
   key: 'root',
@@ -31,6 +32,7 @@ const rootReducer = combineReducers({
   notificationApi: notificationApi.reducer,
   [domainsApi.reducerPath]: domainsApi.reducer,
   [GithubConnectorApi.reducerPath]: GithubConnectorApi.reducer,
+  githubConnector: githubConnector,
   user: userSlice
 });
 

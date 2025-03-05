@@ -15,12 +15,13 @@ const GithubRepositories = ({
   open_issues_count,
   license,
   topics,
+  id,
   setSelectedRepository
 }: GithubRepository & { setSelectedRepository: (repo: string) => void }) => {
   return (
     <Card
       className="group relative  w-full max-w-md cursor-pointer overflow-hidden transition-all duration-300 hover:bg-muted hover:shadow-lg"
-      onClick={() => setSelectedRepository(name)}
+      onClick={() => setSelectedRepository(id.toString())}
     >
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg font-bold">

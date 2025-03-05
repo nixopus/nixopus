@@ -37,7 +37,7 @@ function useGithubRepoPagination() {
   const [updateGithubConnector] = useUpdateGithubConnectorMutation();
   const { data: githubRepositories, isLoading } = useGetAllGithubRepositoriesQuery();
   const router = useRouter();
-  const [selectedRepository, setSelectedRepository] = React.useState(null);
+  const [selectedRepository, setSelectedRepository] = React.useState<string | null>(null);
   const {
     filteredAndSortedData: filteredAndSortedApplications,
     searchTerm,
@@ -103,6 +103,11 @@ function useGithubRepoPagination() {
     []
   );
 
+  const onSelectRepository = (repository: string) => {
+    setSelectedRepository(repository);
+    router.push(`/dashboard/create/${repository}`);
+  };
+
   return {
     githubRepositories,
     selectedRepository,
@@ -117,7 +122,8 @@ function useGithubRepoPagination() {
     currentPage,
     totalPages,
     paginatedApplications,
-    isLoading
+    isLoading,
+    onSelectRepository
   };
 }
 

@@ -16,6 +16,7 @@ import (
 	permission "github.com/raghavyuva/nixopus-api/internal/features/permission/controller"
 	role "github.com/raghavyuva/nixopus-api/internal/features/role/controller"
 	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
+	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
 	"github.com/raghavyuva/nixopus-api/internal/middleware"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -167,6 +168,14 @@ func (router *Router) Routes() *mux.Router {
 	githubConnectorApi.HandleFunc("", githubConnectorController.UpdateGithubConnectorRequest).Methods("PUT", "OPTIONS")
 	githubConnectorApi.HandleFunc("/all", githubConnectorController.GetGithubConnectors).Methods("GET", "OPTIONS")
 	githubConnectorApi.HandleFunc("/repositories", githubConnectorController.GetGithubRepositories).Methods("GET", "OPTIONS")
+
+	deployApi := api.PathPrefix("/deploy").Subrouter()
+	deployApi.Use(middleware.IsAdmin)
+	deployController := deploy.NewDeployController(router.app.Store, router.app.Ctx, l, notificationManager)
+	deployApiValidator := deployApi.PathPrefix("/validate").Subrouter()
+	deployApiValidator.HandleFunc("/name", deployController.IsNameAlreadyTaken).Methods("POST", "OPTIONS")
+	deployApiValidator.HandleFunc("/domain", deployController.IsDomainAlreadyTaken).Methods("POST", "OPTIONS")
+	deployApiValidator.HandleFunc("/port", deployController.IsPortAlreadyTaken).Methods("POST", "OPTIONS")
 
 	return r
 }

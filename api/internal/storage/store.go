@@ -54,6 +54,7 @@ func (s *Store) Init(ctx context.Context) error {
 		(*types.Domain)(nil),
 		(*types.Server)(nil),
 		(*types.GithubConnector)(nil),
+		(*types.Application)(nil),
 	}
 
 	for _, model := range tables {
@@ -80,6 +81,7 @@ func (s *Store) DropAllTables(ctx context.Context) error {
 		(*types.Domain)(nil),
 		(*types.Server)(nil),
 		(*types.GithubConnector)(nil),
+		(*types.Application)(nil),
 	}
 
 	for _, model := range models {
