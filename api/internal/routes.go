@@ -166,6 +166,7 @@ func (router *Router) Routes() *mux.Router {
 	githubConnectorApi.HandleFunc("", githubConnectorController.CreateGithubConnector).Methods("POST", "OPTIONS")
 	githubConnectorApi.HandleFunc("", githubConnectorController.UpdateGithubConnectorRequest).Methods("PUT", "OPTIONS")
 	githubConnectorApi.HandleFunc("/all", githubConnectorController.GetGithubConnectors).Methods("GET", "OPTIONS")
+	githubConnectorApi.HandleFunc("/repositories", githubConnectorController.GetGithubRepositories).Methods("GET", "OPTIONS")
 
 	return r
 }

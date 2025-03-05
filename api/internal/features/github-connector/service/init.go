@@ -11,7 +11,7 @@ import (
 type GithubConnectorService struct {
 	store   *shared_storage.Store
 	ctx     context.Context
-	l       logger.Logger
+	logger       logger.Logger
 	storage storage.GithubConnectorRepository
 }
 
@@ -19,7 +19,7 @@ func NewGithubConnectorService(store *shared_storage.Store, ctx context.Context,
 	return &GithubConnectorService{
 		store:   store,
 		ctx:     ctx,
-		l:       l,
+		logger:       l,
 		storage: GithubConnectorRepository,
 	}
 }

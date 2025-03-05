@@ -24,10 +24,8 @@ export default function LoginPage() {
     if (authenticated && user) {
       router.push('/dashboard');
     }
-    return () => {
-    }
+    return () => {};
   }, [authenticated, user]);
-
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10">

@@ -59,7 +59,11 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-        {(pathname === '/' || pathname === '/login') ? <>{children}</> : <AuthWrapper>{children}</AuthWrapper>}
+        {pathname === '/' || pathname === '/login' ? (
+          <>{children}</>
+        ) : (
+          <AuthWrapper>{children}</AuthWrapper>
+        )}
       </ThemeProvider>
       <Toaster />
     </>

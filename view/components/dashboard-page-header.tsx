@@ -1,5 +1,8 @@
 import { cn } from '@/lib/utils';
 import React from 'react';
+import { SortOption, SortSelect } from './sort-selector';
+import { SearchBar } from './search-bar';
+import { SortConfig } from '@/hooks/use-searchable';
 
 interface DashboardPageHeaderProps {
   className?: string;
@@ -19,3 +22,56 @@ function DashboardPageHeader({ className, label, description }: DashboardPageHea
 }
 
 export default DashboardPageHeader;
+
+interface DashboardUtilityHeaderProps<T> {
+  className?: string;
+  searchTerm: string;
+  handleSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  sortConfig: SortConfig<T>;
+  onSortChange: (newSort: SortOption<T>) => void;
+  sortOptions: SortOption<T>[];
+  label: string;
+  searchPlaceHolder?: string;
+}
+
+export function DahboardUtilityHeader<T>({
+  className,
+  searchTerm,
+  handleSearchChange,
+  sortConfig,
+  onSortChange,
+  sortOptions,
+  label,
+  searchPlaceHolder = 'Search...'
+}: DashboardUtilityHeaderProps<T>) {
+  return (
+    <div className={'space-y-6' + className}>
+      <h1 className="text-3xl font-bold">{label}</h1>
+      <div className="flex flex-col gap-4 sm:flex-row mt-4">
+        <div className="flex-grow">
+          <SearchBar
+            searchTerm={searchTerm}
+            handleSearchChange={handleSearchChange}
+            label={searchPlaceHolder}
+          />
+        </div>
+        <div className="flex gap-4">
+          <SortSelect<T>
+            options={sortOptions}
+            currentSort={{
+              value: sortConfig.key,
+              direction: sortConfig.direction,
+              label:
+                sortOptions.find(
+                  (option) =>
+                    option.value === sortConfig.key && option.direction === sortConfig.direction
+                )?.label || ''
+            }}
+            onSortChange={onSortChange}
+            placeholder="Sort by"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

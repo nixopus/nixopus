@@ -34,5 +34,6 @@ export enum GITHUB_CONNECTOR {
   ADD_GITHUB_CONNECTOR = 'v1/github-connector',
   GET_GITHUB_CONNECTORS = 'v1/github-connector/all',
   UPDATE_GITHUB_CONNECTOR = 'v1/github-connector',
-  DELETE_GITHUB_CONNECTOR = 'v1/github-connector'
+  DELETE_GITHUB_CONNECTOR = 'v1/github-connector',
+  ALL_REPOSITORIES = 'v1/github-connector/repositories'
 }

@@ -133,13 +133,13 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
       const credentials: GitHubAppCredentials = await response.json();
 
       await createGithubConnector({
-          app_id: credentials.id.toString(),
-          slug: credentials.slug,
-          pem: credentials.pem,
-          client_id: credentials.client_id,
-          client_secret: credentials.client_secret,
-          webhook_secret: credentials.webhook_secret,
-      })
+        app_id: credentials.id.toString(),
+        slug: credentials.slug,
+        pem: credentials.pem,
+        client_id: credentials.client_id,
+        client_secret: credentials.client_secret,
+        webhook_secret: credentials.webhook_secret
+      });
 
       setStatus('success');
       onSuccess?.(credentials);
