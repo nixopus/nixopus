@@ -27,7 +27,7 @@ function AppItem({
   const router = useRouter();
   return (
     <Card
-      className="relative w-full max-w-md cursor-pointer overflow-hidden transition-all duration-300 hover:bg-muted hover:shadow-lg"
+      className="relative w-full  cursor-pointer overflow-hidden transition-all duration-300 hover:bg-muted hover:shadow-lg"
       onClick={() => router.push(`/self-host/configure/${id}?name=${name}`)}
     >
       <div className="absolute right-2 top-2">
