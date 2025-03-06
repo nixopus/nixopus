@@ -26,7 +26,7 @@ const data = {
     },
     {
       title: 'Self Host',
-      url: '#',
+      url: '/self-host',
       icon: Package
     },
     {

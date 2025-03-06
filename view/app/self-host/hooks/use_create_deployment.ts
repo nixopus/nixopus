@@ -149,7 +149,7 @@ function useCreateDeployment({
     };
   };
 
-  return { validateEnvVar, deploymentFormSchema, form, onSubmit,domains };
+  return { validateEnvVar, deploymentFormSchema, form, onSubmit, domains };
 }
 
 export default useCreateDeployment;

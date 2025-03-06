@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  useGetAllGithubConnectorQuery,
   useGetAllGithubRepositoriesQuery,
   useUpdateGithubConnectorMutation
 } from '@/redux/services/connector/githubConnectorApi';

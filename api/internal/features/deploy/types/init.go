@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 
+	"github.com/google/uuid"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -24,7 +25,7 @@ type IsPortAlreadyTakenRequest struct {
 
 type CreateDeploymentRequest struct {
 	Name                 string                   `json:"name"`
-	DomainID             string                   `json:"domain_id"`
+	DomainID             uuid.UUID                   `json:"domain_id"`
 	Environment          shared_types.Environment `json:"environment"`
 	BuildPack            shared_types.BuildPack   `json:"build_pack"`
 	Repository           string                   `json:"repository"`

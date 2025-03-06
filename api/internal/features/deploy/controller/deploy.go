@@ -38,7 +38,7 @@ func (c *DeployController) HandleDeploy(conn *websocket.Conn, data interface{}, 
 		return
 	}
 
-	err = c.service.CreateDeployment(&payload, user.ID.String())
+	err = c.service.CreateDeployment(&payload, user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to create deployment", err.Error())
 		conn.WriteJSON(map[string]string{"status": "error", "message": "Failed to create deployment"})

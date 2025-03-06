@@ -82,8 +82,8 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
         url: webhookUrl || `${window.location.origin}/github/webhook`,
         active: true
       },
-      redirect_url: redirectUrl || `${window.location.origin}/dashboard`,
-      callback_urls: [redirectUrl || `${window.location.origin}/dashboard`],
+      redirect_url: redirectUrl || `${window.location.origin}/self-host`,
+      callback_urls: [redirectUrl || `${window.location.origin}/self-host`],
       public: true,
       default_permissions: {
         contents: 'read',
@@ -92,7 +92,7 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
         pull_requests: 'write'
       },
       default_events: ['issues', 'issue_comment', 'pull_request', 'push'],
-      setup_url: `${window.location.origin}/dashboard`,
+      setup_url: `${window.location.origin}/self-host`,
       setup_on_update: true
     };
 
