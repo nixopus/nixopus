@@ -9,7 +9,7 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (s *DeployService) CreateDeployment(deployment *types.CreateDeploymentRequest, userID string) error {
+func (s *DeployService) CreateDeployment(deployment *types.CreateDeploymentRequest, userID uuid.UUID) error {
 	application := shared_types.Application{
 		ID:                   uuid.New(),
 		Name:                 deployment.Name,

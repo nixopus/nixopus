@@ -102,9 +102,7 @@ func (s *DeployStorage) GetApplications(page, pageSize int) ([]shared_types.Appl
 		Relation("Domain").
 		Relation("User").
 		Relation("Status").
-		Relation("Logs", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order("created_at DESC").Limit(20)
-		}).
+		Relation("Logs").
 		Order("created_at DESC").
 		Limit(pageSize).
 		Offset(offset).

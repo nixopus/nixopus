@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
@@ -32,7 +33,7 @@ func validateDeploymentRequest(req types.CreateDeploymentRequest) error {
 	if req.Name == "" {
 		return types.ErrMissingName
 	}
-	if req.DomainID == "" {
+	if req.DomainID == uuid.Nil {
 		return types.ErrMissingDomainID
 	}
 	if req.Repository == "" {
