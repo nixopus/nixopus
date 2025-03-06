@@ -35,7 +35,7 @@ export const DeployForm = ({
   pre_run_commands = '',
   post_run_commands = ''
 }: DeployFormProps) => {
-  const { validateEnvVar, form, onSubmit,domains } = useCreateDeployment({
+  const { validateEnvVar, form, onSubmit, domains } = useCreateDeployment({
     application_name,
     environment,
     branch,
@@ -149,9 +149,7 @@ export const DeployForm = ({
             required={false}
           />
         </div>
-        <Button  className="w-full cursor-pointer">
-          Deploy
-        </Button>
+        <Button className="w-full cursor-pointer">Deploy</Button>
       </form>
     </Form>
   );

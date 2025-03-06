@@ -37,3 +37,7 @@ export enum GITHUB_CONNECTOR {
   DELETE_GITHUB_CONNECTOR = 'v1/github-connector',
   ALL_REPOSITORIES = 'v1/github-connector/repositories'
 }
+
+export enum DEPLOY {
+  GET_APPLICATIONS = 'v1/deploy/applications'
+}
