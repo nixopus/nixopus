@@ -9,6 +9,7 @@ import PaginationWrapper from '@/components/pagination';
 import { DahboardUtilityHeader } from '@/components/dashboard-page-header';
 import { Application } from '@/redux/types/applications';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 function page() {
   const {
@@ -27,6 +28,7 @@ function page() {
     currentPage,
     totalPages
   } = useGetDeployedApplications();
+  const router = useRouter();
 
   const showApplications = applications?.length > 0 || isLoadingApplications;
 
@@ -49,7 +51,14 @@ function page() {
             label="Deployed Applications"
             className="mt-5 mb-5"
           />
-          <Button className="mb-4 w-max flex justify-self-end mt-4" onClick={() => { }}>Create</Button>
+          <Button
+            className="mb-4 w-max flex justify-self-end mt-4"
+            onClick={() => {
+              router.push('/self-host/create');
+            }}
+          >
+            Create
+          </Button>
           {isLoading || isLoadingApplications ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <AppItemSkeleton />
@@ -62,17 +71,15 @@ function page() {
                 {applications && applications.map((app: any) => <AppItem key={app.id} {...app} />)}
               </div>
 
-              {
-                totalPages > 1 && (
-                  <div className="mt-8 flex justify-center">
-                    <PaginationWrapper
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={handlePageChange}
-                    />
-                  </div>
-                )
-              }
+              {totalPages > 1 && (
+                <div className="mt-8 flex justify-center">
+                  <PaginationWrapper
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
+              )}
             </>
           )}
         </>

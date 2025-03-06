@@ -5,7 +5,7 @@ export enum Environment {
 }
 
 export enum BuildPack {
-  Dockerfile = 'Dockerfile',
-  DockerCompose = 'DockerCompose',
-  Static = 'Static'
+  Dockerfile = 'dockerfile',
+  DockerCompose = 'dockerCompose',
+  Static = 'static'
 }

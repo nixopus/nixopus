@@ -43,7 +43,7 @@ func (m *NotificationManager) Start() {
 				switch payload.Category {
 				case NotificationCategoryAuthentication:
 					fmt.Printf("Authentication Notification - %+v", payload)
-					m.SendEmail(payload.UserID, "login successfully")
+					// m.SendEmail(payload.UserID, "login successfully")
 				case NotificationCategoryOrganization:
 					fmt.Printf("Organization Notification - %+v", payload)
 				}

@@ -19,7 +19,7 @@ function page() {
         environment={Environment.Production}
         branch="main"
         port={3000}
-        domain="example.com"
+        domain=""
         build_pack={BuildPack.Dockerfile}
         env_variables={{}}
         build_variables={{}}

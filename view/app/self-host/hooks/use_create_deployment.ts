@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
+import { useWebSocket } from '@/hooks/socket_provider';
 
 interface DeploymentFormValues {
   application_name: string;
@@ -33,6 +34,9 @@ function useCreateDeployment({
   post_run_commands = ''
 }: DeploymentFormValues) {
   const { data: domains } = useGetAllDomainsQuery();
+  const { isReady, message, sendJsonMessage } = useWebSocket();
+
+  console.log(message)
 
   const deploymentFormSchema = z.object({
     application_name: z
@@ -121,7 +125,22 @@ function useCreateDeployment({
   ]);
 
   function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
-    console.log(values);
+    sendJsonMessage({
+      action: 'deploy',
+      data: {
+        name: values.application_name,
+        environment: values.environment,
+        branch: values.branch,
+        port: values.port,
+        domain_id: values.domain,
+        repository: values.repository,
+        build_pack: values.build_pack,
+        env_variables: values.env_variables,
+        build_variables: values.build_variables,
+        pre_run_commands: values.pre_run_commands,
+        post_run_commands: values.post_run_commands
+      }
+    })
   }
 
   const validateEnvVar = (

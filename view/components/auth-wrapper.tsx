@@ -2,6 +2,7 @@ import { useAppSelector } from '@/redux/hooks';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
 import DashboardLayout from './dashboard-layout';
+import { WebSocketProvider } from '@/hooks/socket_provider';
 
 function AuthWrapper({ children }: { children: React.ReactNode }) {
   const user = useAppSelector((state) => state.auth.user);
@@ -30,7 +31,13 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return (
+    <WebSocketProvider>
+      <DashboardLayout>
+        {children}
+      </DashboardLayout>
+    </WebSocketProvider>
+  )
 }
 
 export default AuthWrapper;

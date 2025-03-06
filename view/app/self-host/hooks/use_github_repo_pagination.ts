@@ -104,7 +104,7 @@ function useGithubRepoPagination() {
 
   const onSelectRepository = (repository: string) => {
     setSelectedRepository(repository);
-    router.push(`/dashboard/create/${repository}`);
+    router.push(`/self-host/create/${repository}`);
   };
 
   return {
