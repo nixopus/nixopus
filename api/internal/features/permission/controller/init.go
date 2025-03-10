@@ -24,12 +24,13 @@ type PermissionController struct {
 }
 
 func NewPermissionController(store *shared_storage.Store, ctx context.Context, logger logger.Logger) *PermissionController {
+	storage := storage.PermissionStorage{DB: store.DB, Ctx: ctx}
 	return &PermissionController{
-		service:   *service.NewPermissionService(store, ctx, logger, &storage.PermissionStorage{DB: store.DB, Ctx: ctx}),
+		service:   *service.NewPermissionService(store, ctx, logger, &storage),
 		store:     *store,
-		storage:   storage.PermissionStorage{DB: store.DB, Ctx: ctx},
+		storage:   storage,
 		ctx:       ctx,
-		validator: validation.NewValidator(),
+		validator: validation.NewValidator(&storage),
 		logger:    logger,
 	}
 }

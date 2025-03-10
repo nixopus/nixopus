@@ -29,10 +29,11 @@ func NewOrganizationsController(
 	l logger.Logger,
 	notificationManager *notification.NotificationManager,
 ) *OrganizationsController {
+	storage := storage.OrganizationStore{DB: store.DB, Ctx: ctx}
 	return &OrganizationsController{
 		store:        store,
-		validator:    validation.NewValidator(),
-		service:      service.NewOrganizationService(store, ctx, l, storage.OrganizationStore{DB: store.DB, Ctx: ctx}),
+		validator:    validation.NewValidator(&storage),
+		service:      service.NewOrganizationService(store, ctx, l, &storage),
 		ctx:          ctx,
 		notification: notificationManager,
 	}

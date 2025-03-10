@@ -23,6 +23,8 @@ type DomainStorageInterface interface {
 	DeleteDomain(domain *shared_types.Domain) error
 	GetDomains() ([]shared_types.Domain, error)
 	GetDomainByName(name string) (*shared_types.Domain, error)
+	IsDomainExists(ID string) (bool, error)
+	GetDomainOwnerByID(ID string) (string, error)
 }
 
 func (s *DomainStorage) CreateDomain(domain *shared_types.Domain) error {
@@ -87,4 +89,25 @@ func (s *DomainStorage) GetDomainByName(name string) (*shared_types.Domain, erro
 		return nil, err
 	}
 	return &domain, nil
+}
+
+func (s *DomainStorage) IsDomainExists(ID string) (bool, error) {
+	var domain shared_types.Domain
+	err := s.DB.NewSelect().Model(&domain).Where("id = ?", ID).Scan(s.Ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (s *DomainStorage) GetDomainOwnerByID(ID string) (string, error) {
+	var domain shared_types.Domain
+	err := s.DB.NewSelect().Model(&domain).Where("id = ?", ID).Scan(s.Ctx)
+	if err != nil {
+		return "", err
+	}
+	return domain.UserID.String(), nil
 }

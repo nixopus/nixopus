@@ -9,6 +9,9 @@ var (
 	ErrInvalidDomainID     = errors.New("invalid domain id")
 	ErrMissingDomainID     = errors.New("domain id is required")
 	ErrDomainAlreadyExists = errors.New("domain already exists")
+	ErrNotAllowed          = errors.New("request not allowed")
+	ErrDomainNameTooLong   = errors.New("domain name too long")
+	ErrDomainNameTooShort  = errors.New("domain name too short")
 )
 
 type CreateDomainRequest struct {

@@ -24,4 +24,6 @@ var (
 	ErrMissingInstallationID = errors.New("installation_id is required")
 	ErrInvalidRequestType    = errors.New("invalid request type")
 	ErrConnectorDoesNotExist = errors.New("connector does not exist")
+	ErrNoConnectors          = errors.New("no connectors found")
+	ErrPermissionDenied      = errors.New("permission denied")
 )

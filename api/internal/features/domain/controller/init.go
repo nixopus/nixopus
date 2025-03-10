@@ -33,7 +33,7 @@ func NewDomainsController(
 	storage := storage.DomainStorage{DB: store.DB, Ctx: ctx}
 	return &DomainsController{
 		store:        store,
-		validator:    validation.NewValidator(),
+		validator:    validation.NewValidator(&storage),
 		service:      service.NewDomainsService(store, ctx, l, &storage),
 		ctx:          ctx,
 		logger:       l,
@@ -58,13 +58,19 @@ func NewDomainsController(
 //
 //	bool - true if parsing and validation succeed, false otherwise.
 func (c *DomainsController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) bool {
+	user := c.GetUser(w, r)
+
+	if user == nil {
+		return false
+	}
+
 	if err := c.validator.ParseRequestBody(r, r.Body, req); err != nil {
 		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
 		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
 		return false
 	}
 
-	if err := c.validator.ValidateRequest(req); err != nil {
+	if err := c.validator.ValidateRequest(req,*user); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return false

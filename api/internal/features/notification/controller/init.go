@@ -35,10 +35,11 @@ func NewNotificationController(
 	l logger.Logger,
 	notificationManager *notification.NotificationManager,
 ) *NotificationController {
+	storage := storage.NotificationStorage{DB: store.DB, Ctx: ctx}
 	return &NotificationController{
 		store:        store,
-		validator:    validation.NewValidator(),
-		service:      service.NewNotificationService(store, ctx, l, &storage.NotificationStorage{DB: store.DB, Ctx: ctx}),
+		validator:    validation.NewValidator(&storage),
+		service:      service.NewNotificationService(store, ctx, l, &storage),
 		ctx:          ctx,
 		logger:       l,
 		notification: notificationManager,
@@ -68,7 +69,12 @@ func (c *NotificationController) parseAndValidate(w http.ResponseWriter, r *http
 		return false
 	}
 
-	if err := c.validator.ValidateRequest(req); err != nil {
+	user := c.GetUser(w, r)
+	if user == nil {
+		return false
+	}
+
+	if err := c.validator.ValidateRequest(req,*user); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return false

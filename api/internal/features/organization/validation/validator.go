@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"io"
 	"unicode/utf8"
-
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 )
 
@@ -14,10 +14,14 @@ const (
 	MaxDescriptionLength = 100
 )
 
-type Validator struct{}
+type Validator struct {
+	storage storage.OrganizationRepository
+}
 
-func NewValidator() *Validator {
-	return &Validator{}
+func NewValidator(storage storage.OrganizationRepository) *Validator {
+	return &Validator{
+		storage: storage,
+	}
 }
 
 func (v *Validator) ValidateID(id string, errorType error) error {
@@ -77,6 +81,11 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 	}
 }
 
+// validateCreate validates a CreateOrganizationRequest object.
+// It checks that the organization's name and description adhere to predefined rules.
+//
+// It returns an error if the name is missing or too long, or if the description is too long.
+// Otherwise, it returns nil.
 func (v *Validator) validateCreate(req types.CreateOrganizationRequest) error {
 	if err := v.ValidateName(req.Name); err != nil {
 		return err
@@ -84,17 +93,68 @@ func (v *Validator) validateCreate(req types.CreateOrganizationRequest) error {
 	return v.ValidateDescription(req.Description)
 }
 
+// validateUpdate validates an UpdateOrganizationRequest object.
+// It checks that the organization's name and description adhere to predefined rules,
+// and that the organization exists.
+//
+// It returns an error if the name is missing or too long, or if the description is too long,
+// or if the organization does not exist.
+// Otherwise, it returns nil.
 func (v *Validator) validateUpdate(req types.UpdateOrganizationRequest) error {
 	if err := v.ValidateName(req.Name); err != nil {
 		return err
 	}
-	return v.ValidateDescription(req.Description)
+	if err := v.ValidateDescription(req.Description); err != nil {
+		return err
+	}
+	if err := v.ValidateID(req.ID, types.ErrMissingOrganizationID); err != nil {
+		return err
+	}
+
+	organization, err := v.storage.GetOrganization(req.ID)
+
+	if err != nil {
+		return err
+	}
+
+	if organization == nil {
+		return types.ErrOrganizationNotFound
+	}
+
+	return nil
 }
 
+// validateDelete validates a DeleteOrganizationRequest object.
+// It checks that the organization's ID is valid and that the organization exists.
+//
+// It returns an error if the ID is missing or invalid, or if the organization does not exist.
+// Otherwise, it returns nil.
 func (v *Validator) validateDelete(req types.DeleteOrganizationRequest) error {
-	return v.ValidateID(req.ID, types.ErrMissingOrganizationID)
+	err := v.ValidateID(req.ID, types.ErrMissingOrganizationID)
+
+	if err != nil {
+		return err
+	}
+
+	organization, err := v.storage.GetOrganization(req.ID)
+
+	if err != nil {
+		return err
+	}
+
+	if organization == nil {
+		return types.ErrOrganizationNotFound
+	}
+
+	return nil
 }
 
+// validateAddUser validates an AddUserToOrganizationRequest object.
+// It checks that the organization's ID is valid and that the organization exists,
+// that the user's ID is valid, and that the role's ID is valid.
+//
+// It returns an error if any of these checks fail.
+// Otherwise, it returns nil.
 func (v *Validator) validateAddUser(req types.AddUserToOrganizationRequest) error {
 	if err := v.ValidateID(req.OrganizationID, types.ErrMissingOrganizationID); err != nil {
 		return err
@@ -102,13 +162,41 @@ func (v *Validator) validateAddUser(req types.AddUserToOrganizationRequest) erro
 	if err := v.ValidateID(req.UserID, types.ErrMissingUserID); err != nil {
 		return err
 	}
+
+	organization, err := v.storage.GetOrganization(req.OrganizationID)
+
+	if err != nil {
+		return err
+	}
+
+	if organization == nil {
+		return types.ErrOrganizationNotFound
+	}
+
 	return v.ValidateID(req.RoleId, types.ErrMissingRoleID)
 }
 
+// validateRemoveUser validates a RemoveUserFromOrganizationRequest object.
+// It checks that the organization's ID is valid and that the organization exists,
+// and that the user's ID is valid.
+//
+// It returns an error if any of these checks fail.
+// Otherwise, it returns nil.
 func (v *Validator) validateRemoveUser(req types.RemoveUserFromOrganizationRequest) error {
 	if err := v.ValidateID(req.OrganizationID, types.ErrMissingOrganizationID); err != nil {
 		return err
 	}
+
+	organization, err := v.storage.GetOrganization(req.OrganizationID)
+
+	if err != nil {
+		return err
+	}
+
+	if organization == nil {
+		return types.ErrOrganizationNotFound
+	}
+
 	return v.ValidateID(req.UserID, types.ErrMissingUserID)
 }
 

@@ -139,6 +139,8 @@ var (
 	ErrMissingID          = errors.New("id is required")
 	ErrMissingCategory    = errors.New("category is required")
 	ErrMissingType        = errors.New("type is required")
+	ErrPermissionDenied   = errors.New("permission denied")
+	ErrSMTPConfigNotFound = errors.New("smtp config not found")
 )
 
 func NewSMTPConfig(c *CreateSMTPConfigRequest, userID uuid.UUID) *shared_types.SMTPConfigs {

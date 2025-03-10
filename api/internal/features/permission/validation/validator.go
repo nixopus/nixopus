@@ -4,14 +4,19 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/permission/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/permission/types"
 )
 
 type Validator struct {
+	storage storage.PermissionRepository
 }
 
-func NewValidator() *Validator {
-	return &Validator{}
+func NewValidator(storage storage.PermissionRepository) *Validator {
+	return &Validator{
+		storage: storage,
+	}
 }
 
 func validateCreatePermissionRequest(permission types.CreatePermissionRequest) error {
@@ -31,10 +36,24 @@ func validateGetPermissionRequest(id string) error {
 	return nil
 }
 
-func validateUpdatePermissionRequest(permission types.UpdatePermissionRequest) error {
+func (v *Validator) validateUpdatePermissionRequest(permission types.UpdatePermissionRequest) error {
 	if permission.Name == "" && permission.Description == "" {
 		return types.ErrPermissionEmptyFields
 	}
+
+	if permission.ID == "" {
+		return types.ErrPermissionIDRequired
+	}
+
+	existing_permission, err := v.storage.GetPermission(permission.ID)
+	if err != nil {
+		return err
+	}
+
+	if existing_permission.ID == uuid.Nil {
+		return types.ErrPermissionDoesNotExist
+	}
+
 	return nil
 }
 
@@ -71,7 +90,7 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 	case *types.DeletePermissionRequest:
 		return validateGetPermissionRequest(r.ID)
 	case *types.UpdatePermissionRequest:
-		return validateUpdatePermissionRequest(*r)
+		return v.validateUpdatePermissionRequest(*r)
 	case *types.AddPermissionToRoleRequest:
 		return validateAddPermissionToRoleRequest(*r)
 	case *types.RemovePermissionFromRoleRequest:
