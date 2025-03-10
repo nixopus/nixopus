@@ -3,11 +3,18 @@ package docker
 import (
 	"context"
 	"io"
+	"os"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/google/uuid"
+	"github.com/moby/term"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	deploy_types "github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
@@ -18,8 +25,8 @@ type DockerService struct {
 }
 
 type DockerRepository interface {
-	ListAllContainers() []container.Summary
-	ListAllImages() []image.Summary
+	ListAllContainers() ([]container.Summary, error)
+	ListAllImages(opts image.ListOptions) []image.Summary
 
 	StopContainer(containerID string, opts container.StopOptions) error
 	RemoveContainer(containerID string, opts container.RemoveOptions) error
@@ -28,7 +35,8 @@ type DockerRepository interface {
 	GetContainerById(containerID string) (container.InspectResponse, error)
 	GetImageById(imageID string, opts client.ImageInspectOption) (image.InspectResponse, error)
 
-	BuildImage(opts types.ImageBuildOptions) (types.ImageBuildResponse, error)
+	BuildImage(opts types.ImageBuildOptions, buildContext io.Reader) (string, error)
+	CreateDeployment(deployment *deploy_types.CreateDeploymentRequest, userID uuid.UUID, contextPath string) error
 }
 
 // NewDockerService creates a new instance of DockerService using the default docker client.
@@ -177,6 +185,37 @@ func (s *DockerService) GetImageById(imageID string, opts client.ImageInspectOpt
 //
 //	types.ImageBuildResponse - the response containing the build details.
 //	error - an error if the build fails.
-func (s *DockerService) BuildImage(opts types.ImageBuildOptions) (types.ImageBuildResponse, error) {
-	return s.Cli.ImageBuild(s.Ctx, nil, opts)
+func (s *DockerService) BuildImage(opts types.ImageBuildOptions, buildContext io.Reader) (string, error) {
+	resp, err := s.Cli.ImageBuild(s.Ctx, buildContext, opts)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	termFd, isTerm := term.GetFdInfo(os.Stdout)
+	err = jsonmessage.DisplayJSONMessagesStream(resp.Body, os.Stdout, termFd, isTerm, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return resp.OSType, nil
+}
+
+// CreateContainer creates a new Docker container with the specified configurations.
+//
+// It uses the provided container configuration, host configuration, and networking configuration
+// to create the container. The container is created with the specified name and is set to run
+// on the "amd64" architecture and "linux" OS platform.
+//
+// Parameters:
+//   config - the configuration for the container, including environment variables, commands, etc.
+//   hostConfig - the host-specific configuration for the container, such as resource limits.
+//   networkConfig - the networking configuration for the container, specifying network settings.
+//   containerName - the name to assign to the new container.
+//
+// Returns:
+//   container.CreateResponse - the response containing details of the created container.
+//   error - an error if the container creation fails.
+func (s *DockerService) CreateContainer(config container.Config, hostConfig container.HostConfig, networkConfig network.NetworkingConfig, containerName string) (container.CreateResponse, error){
+	return s.Cli.ContainerCreate(s.Ctx, &config, &hostConfig, &networkConfig, &v1.Platform{Architecture: "amd64", OS: "linux"}, containerName)
 }

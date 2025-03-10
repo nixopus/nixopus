@@ -5,6 +5,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"strconv"
 	"time"
 )
 
@@ -63,6 +64,28 @@ func (s *DeployService) CreateDeployment(deployment *types.CreateDeploymentReque
 		s.logger.Log(logger.Error, err.Error(), "")
 		return err
 	}
+	repoID, err := strconv.ParseInt(application.Repository, 10, 64)
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return err
+	}
+
+	repoPath, err := s.github_service.CloneRepository(uint64(repoID), string(userID.String()), string(application.Environment))
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return err
+	}
+
+	s.logger.Log(logger.Info, "Cloned repository", repoPath)
+
+	err = s.dockerRepo.CreateDeployment(deployment, userID, repoPath)
+
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return err
+	}
+
+	s.logger.Log(logger.Info, "Deployment created ", "")
 
 	return nil
 }

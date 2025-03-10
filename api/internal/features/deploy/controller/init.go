@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/validation"
@@ -12,16 +13,18 @@ import (
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 
+	github_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
+	github_storage "github.com/raghavyuva/nixopus-api/internal/features/github-connector/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type DeployController struct {
-	store        *shared_storage.Store
-	validator    *validation.Validator
-	service      *service.DeployService
-	ctx          context.Context
-	logger       logger.Logger
-	notification *notification.NotificationManager
+	store          *shared_storage.Store
+	validator      *validation.Validator
+	service        *service.DeployService
+	ctx            context.Context
+	logger         logger.Logger
+	notification   *notification.NotificationManager
 }
 
 func NewDeployController(
@@ -31,13 +34,15 @@ func NewDeployController(
 	notificationManager *notification.NotificationManager,
 ) *DeployController {
 	storage := storage.DeployStorage{DB: store.DB, Ctx: ctx}
+	docker_repo := docker.NewDockerService()
+	github_service:= github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx})
 	return &DeployController{
-		store:        store,
-		validator:    validation.NewValidator(),
-		service:      service.NewDeployService(store, ctx, l, &storage),
-		ctx:          ctx,
-		logger:       l,
-		notification: notificationManager,
+		store:          store,
+		validator:      validation.NewValidator(),
+		service:        service.NewDeployService(store, ctx, l, &storage, docker_repo,github_service),
+		ctx:            ctx,
+		logger:         l,
+		notification:   notificationManager,
 	}
 }
 

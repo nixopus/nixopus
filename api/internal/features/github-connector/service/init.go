@@ -9,17 +9,19 @@ import (
 )
 
 type GithubConnectorService struct {
-	store   *shared_storage.Store
-	ctx     context.Context
-	logger  logger.Logger
-	storage storage.GithubConnectorRepository
+	store     *shared_storage.Store
+	ctx       context.Context
+	logger    logger.Logger
+	storage   storage.GithubConnectorRepository
+	gitClient GitClient
 }
 
 func NewGithubConnectorService(store *shared_storage.Store, ctx context.Context, l logger.Logger, GithubConnectorRepository storage.GithubConnectorRepository) *GithubConnectorService {
 	return &GithubConnectorService{
-		store:   store,
-		ctx:     ctx,
-		logger:  l,
-		storage: GithubConnectorRepository,
+		store:     store,
+		ctx:       ctx,
+		logger:    l,
+		storage:   GithubConnectorRepository,
+		gitClient: NewDefaultGitClient(l),
 	}
 }

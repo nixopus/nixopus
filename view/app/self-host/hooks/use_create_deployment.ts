@@ -10,7 +10,7 @@ interface DeploymentFormValues {
   application_name: string;
   environment: Environment;
   branch: string;
-  port: number;
+  port: string;
   domain: string;
   repository: string;
   build_pack: BuildPack;
@@ -24,7 +24,7 @@ function useCreateDeployment({
   application_name = '',
   environment = Environment.Production,
   branch = '',
-  port = 3000,
+  port = "3000",
   domain = '',
   repository,
   build_pack = BuildPack.Dockerfile,
@@ -35,8 +35,6 @@ function useCreateDeployment({
 }: DeploymentFormValues) {
   const { data: domains } = useGetAllDomainsQuery();
   const { isReady, message, sendJsonMessage } = useWebSocket();
-
-  console.log(message)
 
   const deploymentFormSchema = z.object({
     application_name: z
@@ -52,7 +50,7 @@ function useCreateDeployment({
       .string()
       .min(3, { message: 'Branch name must be at least 3 characters.' })
       .regex(/^[a-zA-Z0-9_-]+$/, { message: 'Branch name must be a valid name.' }),
-    port: z.number().min(1024, { message: 'Port must be at least 1024.' }),
+    port: z.string().regex(/^[0-9]+$/, { message: 'Port must be a number.' }),
     domain: z
       .string()
       .min(3, { message: 'Domain name must be at least 3 characters.' })
@@ -131,7 +129,7 @@ function useCreateDeployment({
         name: values.application_name,
         environment: values.environment,
         branch: values.branch,
-        port: values.port,
+        port: parseInt(values.port, 10),
         domain_id: values.domain,
         repository: values.repository,
         build_pack: values.build_pack,
@@ -168,7 +166,12 @@ function useCreateDeployment({
     };
   };
 
-  return { validateEnvVar, deploymentFormSchema, form, onSubmit, domains };
+  const parsePort = (port: string) => {
+    const parsedPort = parseInt(port, 10);
+    return isNaN(parsedPort) ? null : parsedPort;
+  };
+
+  return { validateEnvVar, deploymentFormSchema, form, onSubmit, domains, parsePort };
 }
 
 export default useCreateDeployment;

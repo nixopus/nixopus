@@ -12,7 +12,7 @@ interface DeployFormProps {
   application_name?: string;
   environment?: Environment;
   branch?: string;
-  port?: number;
+  port?: string;
   domain?: string;
   repository?: string;
   build_pack?: BuildPack;
@@ -26,7 +26,7 @@ export const DeployForm = ({
   application_name = '',
   environment = Environment.Production,
   branch = '',
-  port = 3000,
+  port = "3000",
   domain = '',
   repository,
   build_pack = BuildPack.Dockerfile,
@@ -35,7 +35,7 @@ export const DeployForm = ({
   pre_run_commands = '',
   post_run_commands = ''
 }: DeployFormProps) => {
-  const { validateEnvVar, form, onSubmit, domains } = useCreateDeployment({
+  const { validateEnvVar, form, onSubmit, domains,parsePort } = useCreateDeployment({
     application_name,
     environment,
     branch,
@@ -87,6 +87,7 @@ export const DeployForm = ({
             name="port"
             description="Port on which your application will be available"
             placeholder="3000"
+            validator={(value) => parsePort(value) !== null}
           />
         </div>
         <div className="grid sm:grid-cols-2 gap-4">

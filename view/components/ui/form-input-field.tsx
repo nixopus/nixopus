@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   FormControl,
   FormDescription,
@@ -16,6 +16,7 @@ interface FormInputFieldProps {
   description: string;
   placeholder?: string;
   required?: boolean;
+  validator?: (value: string) => boolean;
 }
 
 function FormInputField({
@@ -24,13 +25,20 @@ function FormInputField({
   name,
   description,
   placeholder,
-  required = true
+  required = true,
+  validator
 }: FormInputFieldProps) {
+
   return (
     <div>
       <FormField
         control={form.control}
         name={name}
+        rules={{
+          validate: validator ? {
+            custom: (value: string) => validator(value) || `Invalid ${name} format`
+          } : undefined
+        }}
         render={({ field }) => (
           <FormItem>
             <div className="flex gap-2">
