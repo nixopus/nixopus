@@ -9,29 +9,30 @@ import (
 )
 
 // updateStatus updates the application status
-func (s *DeployService) updateStatus(applicationID uuid.UUID, status shared_types.Status, id uuid.UUID) {
-	appStatus := shared_types.ApplicationStatus{
-		ID:            id,
-		ApplicationID: applicationID,
-		Status:        status,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+func (s *DeployService) updateStatus(deploymentID uuid.UUID, status shared_types.Status, id uuid.UUID) {
+	appStatus := shared_types.ApplicationDeploymentStatus{
+		ID:                      id,
+		ApplicationDeploymentID: deploymentID,
+		Status:                  status,
+		CreatedAt:               time.Now(),
+		UpdatedAt:               time.Now(),
 	}
 
-	err := s.storage.UpdateApplicationStatus(&appStatus)
+	err := s.storage.UpdateApplicationDeploymentStatus(&appStatus)
 	if err != nil {
-		s.logger.Log(logger.Error, "Failed to update application status: "+err.Error(), "")
+		s.logger.Log(logger.Error, "Failed to update application deployment status: "+err.Error(), "")
 	}
 }
 
 // addLog adds a new log entry for the application
-func (s *DeployService) addLog(applicationID uuid.UUID, logMessage string) {
+func (s *DeployService) addLog(applicationID uuid.UUID, logMessage string, deploymentID uuid.UUID) {
 	appLog := shared_types.ApplicationLogs{
-		ID:            uuid.New(),
-		ApplicationID: applicationID,
-		Log:           logMessage,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		ID:                      uuid.New(),
+		ApplicationID:           applicationID,
+		Log:                     logMessage,
+		CreatedAt:               time.Now(),
+		UpdatedAt:               time.Now(),
+		ApplicationDeploymentID: deploymentID,
 	}
 
 	err := s.storage.AddApplicationLogs(&appLog)

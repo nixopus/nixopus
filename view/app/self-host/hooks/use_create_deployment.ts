@@ -27,7 +27,7 @@ function useCreateDeployment({
   application_name = '',
   environment = Environment.Production,
   branch = '',
-  port = "3000",
+  port = '3000',
   domain = '',
   repository,
   build_pack = BuildPack.Dockerfile,

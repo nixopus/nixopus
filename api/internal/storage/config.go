@@ -12,15 +12,15 @@ import (
 
 // Config represents the configuration for a database connection.
 type Config struct {
-	Host        string
-	Port        string
-	Username    string
-	Password    string
-	DBName      string
-	SSLMode     string
-	MaxOpenConn int
-	Debug       bool
-	MaxIdleConn int
+	Host           string
+	Port           string
+	Username       string
+	Password       string
+	DBName         string
+	SSLMode        string
+	MaxOpenConn    int
+	Debug          bool
+	MaxIdleConn    int
 	MigrationsPath string
 }
 

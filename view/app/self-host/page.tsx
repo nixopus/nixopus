@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import GitHubAppSetup from './components/github-connector/github-app-setup';
 import ListRepositories from './components/github-repositories/list-repositories';
 import AppItem, { AppItemSkeleton } from './components/application';
@@ -9,7 +9,9 @@ import PaginationWrapper from '@/components/pagination';
 import { DahboardUtilityHeader } from '@/components/dashboard-page-header';
 import { Application } from '@/redux/types/applications';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useUpdateGithubConnectorMutation } from '@/redux/services/connector/githubConnectorApi';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 function page() {
   const {
@@ -28,19 +30,56 @@ function page() {
     currentPage,
     totalPages
   } = useGetDeployedApplications();
-  const router = useRouter();
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [updateGithubConnector, { isLoading: isUpdatingConnector }] =
+    useUpdateGithubConnectorMutation();
+  const [installationSuccess, setInstallationSuccess] = useState(false);
+  const [inGitHubFlow, setInGitHubFlow] = useState(false);
+  const code = searchParams.get('code');
+  const installationId = searchParams.get('installation_id');
   const showApplications = applications?.length > 0 || isLoadingApplications;
 
-  return (
-    <div className="container mx-auto py-6 space-y-8 max-w-4xl">
-      {!showApplications ? (
-        connectors?.length === 0 ? (
-          <GitHubAppSetup GetGithubConnectors={GetGithubConnectors} />
-        ) : (
-          <ListRepositories />
-        )
-      ) : (
+  useEffect(() => {
+    if (code) {
+      setInGitHubFlow(true);
+    }
+  }, [code]);
+
+  useEffect(() => {
+    if (installationId) {
+      const githubConnector = async () => {
+        try {
+          await updateGithubConnector({
+            installation_id: installationId
+          });
+          setInstallationSuccess(true);
+          await GetGithubConnectors();
+          setInGitHubFlow(false);
+          router.push('/self-host/create');
+        } catch (error) {
+          console.error('Failed to update GitHub connector:', error);
+          setInGitHubFlow(false);
+        }
+      };
+      githubConnector();
+    }
+  }, [installationId, router, GetGithubConnectors, updateGithubConnector]);
+
+  const renderContent = () => {
+    if (inGitHubFlow) {
+      return <GitHubAppSetup GetGithubConnectors={GetGithubConnectors} />;
+    }
+
+    if (!showApplications) {
+      if (!connectors?.length) {
+        return <GitHubAppSetup GetGithubConnectors={GetGithubConnectors} />;
+      } else {
+        return <ListRepositories />;
+      }
+    } else {
+      return (
         <>
           <DahboardUtilityHeader<Application>
             searchTerm={searchTerm}
@@ -83,9 +122,11 @@ function page() {
             </>
           )}
         </>
-      )}
-    </div>
-  );
+      );
+    }
+  };
+
+  return <div className="container mx-auto py-6 space-y-8 max-w-4xl">{renderContent()}</div>;
 }
 
 export default page;

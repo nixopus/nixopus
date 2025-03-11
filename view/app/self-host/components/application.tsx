@@ -25,7 +25,7 @@ function AppItem({
   status
 }: Application) {
   const router = useRouter();
-  const formattedDate = updated_at 
+  const formattedDate = updated_at
     ? new Date(updated_at).toLocaleString('en-US', {
         day: 'numeric',
         month: 'short',
@@ -34,14 +34,14 @@ function AppItem({
         minute: '2-digit'
       })
     : 'N/A';
-    
+
   const formattedBuildPack = build_pack
     .replace(/([A-Z])/g, ' $1')
     .trim()
     .toLowerCase();
-    
+
   const getEnvironmentStyles = () => {
-    switch(environment) {
+    switch (environment) {
       case Environment.Development.toLowerCase():
         return 'bg-yellow-500 text-white font-medium';
       case Environment.Staging.toLowerCase():
@@ -50,22 +50,24 @@ function AppItem({
         return 'bg-primary text-primary-foreground font-medium';
     }
   };
-  
+
   const getStatusStyles = () => {
-    return status?.status === 'failed' 
-      ? 'bg-destructive text-white' 
+    return status?.status === 'failed'
+      ? 'bg-destructive text-white'
       : status?.status === 'running'
         ? 'bg-success text-success-foreground'
         : 'bg-secondary text-secondary-foreground';
   };
-  
+
   return (
     <Card
       className={`relative w-full bg-secondary cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-xl  group`}
-      onClick={() => {router.push(`/self-host/application/${id}`)}}
+      onClick={() => {
+        router.push(`/self-host/application/${id}`);
+      }}
     >
       {/* <div className="absolute inset-0 bg-gradient-to-br from-transparent to-muted opacity-50"></div> */}
-      
+
       <div className="absolute right-3 top-3 z-10 transition-transform duration-300 group-hover:scale-110">
         {domain && (
           <a
@@ -80,7 +82,7 @@ function AppItem({
           </a>
         )}
       </div>
-      
+
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between pr-8">
           <CardTitle className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors duration-300">
@@ -88,35 +90,25 @@ function AppItem({
           </CardTitle>
         </div>
         <div className="mt-2">
-          <Badge className={`${getStatusStyles()} shadow-sm`}>
-            {status?.status || 'unknown'}
-          </Badge>
+          <Badge className={`${getStatusStyles()} shadow-sm`}>{status?.status || 'unknown'}</Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent className="flex flex-col space-y-3 pb-2 z-10 relative">
         <div className="flex items-center text-sm text-muted-foreground">
           <Clock size={16} className="mr-2 text-muted-foreground/70" />
-          <CardDescription className="text-sm">
-            {formattedDate}
-          </CardDescription>
+          <CardDescription className="text-sm">{formattedDate}</CardDescription>
         </div>
-        
+
         <div className="flex items-center text-sm text-muted-foreground">
           <Package size={16} className="mr-2 text-muted-foreground/70" />
-          <CardDescription className="text-sm capitalize">
-            {formattedBuildPack}
-          </CardDescription>
+          <CardDescription className="text-sm capitalize">{formattedBuildPack}</CardDescription>
         </div>
       </CardContent>
-      
+
       <CardFooter className="flex items-center justify-between pt-2 pb-3 border-t border-border z-10 relative">
-        <Badge
-          className={`${getEnvironmentStyles()} shadow-sm px-3 py-1`}
-        >
-          {environment}
-        </Badge>
-        
+        <Badge className={`${getEnvironmentStyles()} shadow-sm px-3 py-1`}>{environment}</Badge>
+
         <div className="flex items-center">
           <Server size={14} className="mr-1 text-muted-foreground/70" />
           <Badge variant="outline" className="text-xs font-mono">

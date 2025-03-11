@@ -37,12 +37,28 @@ func (s *DeployService) CreateDeployment(deployment *types.CreateDeploymentReque
 		UpdatedAt:     time.Now(),
 	}
 
-	appLogs := shared_types.ApplicationLogs{
+	deployment_config := shared_types.ApplicationDeployment{
 		ID:            uuid.New(),
 		ApplicationID: application.ID,
-		Log:           "Deployment process started",
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
+	}
+
+	appLogs := shared_types.ApplicationLogs{
+		ID:                      uuid.New(),
+		ApplicationID:           application.ID,
+		Log:                     "Deployment process started",
+		CreatedAt:               time.Now(),
+		UpdatedAt:               time.Now(),
+		ApplicationDeploymentID: deployment_config.ID,
+	}
+
+	deployment_status := shared_types.ApplicationDeploymentStatus{
+		ID:                      uuid.New(),
+		ApplicationDeploymentID: deployment_config.ID,
+		Status:                  shared_types.Started,
+		CreatedAt:               time.Now(),
+		UpdatedAt:               time.Now(),
 	}
 
 	err := s.storage.AddApplication(&application)
@@ -57,13 +73,25 @@ func (s *DeployService) CreateDeployment(deployment *types.CreateDeploymentReque
 		return shared_types.Application{}, err
 	}
 
+	err = s.storage.AddApplicationDeployment(&deployment_config)
+	if err != nil {
+		s.logger.Log(logger.Error, "Failed to create application deployment: "+err.Error(), "")
+		return shared_types.Application{}, err
+	}
+
 	err = s.storage.AddApplicationLogs(&appLogs)
 	if err != nil {
 		s.logger.Log(logger.Error, "Failed to create application logs: "+err.Error(), "")
 		return shared_types.Application{}, err
 	}
 
-	go s.StartDeploymentInBackground(application, deployment, userID, appStatus)
+	err = s.storage.AddApplicationDeploymentStatus(&deployment_status)
+	if err != nil {
+		s.logger.Log(logger.Error, "Failed to create application deployment status: "+err.Error(), "")
+		return shared_types.Application{}, err
+	}
+
+	go s.StartDeploymentInBackground(application, deployment, userID, appStatus, &deployment_config)
 
 	s.logger.Log(logger.Info, "Deployment created successfully", "")
 	return application, nil
@@ -80,37 +108,51 @@ func (s *DeployService) CreateDeployment(deployment *types.CreateDeploymentReque
 //   - deployment: The deployment request details.
 //   - userID: The ID of the user initiating the deployment.
 //   - appStatus: The current application status information.
-func (s *DeployService) StartDeploymentInBackground(application shared_types.Application, deployment *types.CreateDeploymentRequest, userID uuid.UUID, appStatus shared_types.ApplicationStatus) {
-	s.updateStatus(application.ID, shared_types.Cloning, appStatus.ID)
+func (s *DeployService) StartDeploymentInBackground(
+	application shared_types.Application,
+	deployment *types.CreateDeploymentRequest, userID uuid.UUID,
+	appStatus shared_types.ApplicationStatus,
+	deployment_config *shared_types.ApplicationDeployment,
+) {
+	s.updateStatus(deployment_config.ID, shared_types.Cloning, appStatus.ID)
 
 	repoID, err := strconv.ParseInt(application.Repository, 10, 64)
 	if err != nil {
 		s.logger.Log(logger.Error, "Failed to parse repository ID: "+err.Error(), "")
-		s.updateStatus(application.ID, shared_types.Failed, appStatus.ID)
-		s.addLog(application.ID, "Failed to parse repository ID: "+err.Error())
+		s.updateStatus(deployment_config.ID, shared_types.Failed, appStatus.ID)
+		s.addLog(application.ID, "Failed to parse repository ID: "+err.Error(), deployment_config.ID)
 		return
 	}
 
 	repoPath, err := s.github_service.CloneRepository(uint64(repoID), string(userID.String()), string(application.Environment))
 	if err != nil {
 		s.logger.Log(logger.Error, "Failed to clone repository: "+err.Error(), "")
-		s.updateStatus(application.ID, shared_types.Failed, appStatus.ID)
-		s.addLog(application.ID, "Failed to clone repository: "+err.Error())
+		s.updateStatus(deployment_config.ID, shared_types.Failed, appStatus.ID)
+		s.addLog(application.ID, "Failed to clone repository: "+err.Error(), deployment_config.ID)
 		return
 	}
 
 	s.logger.Log(logger.Info, "Repository cloned successfully", repoPath)
 
-	s.updateStatus(application.ID, shared_types.Building, appStatus.ID)
+	s.updateStatus(deployment_config.ID, shared_types.Building, appStatus.ID)
 
-	err = s.Deployer(application.ID, deployment, userID, repoPath, appStatus.ID)
+	deployer_config := DeployerConfig{
+		application.ID,
+		deployment,
+		userID,
+		repoPath,
+		appStatus.ID,
+		deployment_config,
+	}
+
+	err = s.Deployer(deployer_config)
 	if err != nil {
 		s.logger.Log(logger.Error, "Failed to create deployment: "+err.Error(), "")
-		s.updateStatus(application.ID, shared_types.Failed, appStatus.ID)
-		s.addLog(application.ID, "Failed to create deployment: "+err.Error())
+		s.updateStatus(deployment_config.ID, shared_types.Failed, appStatus.ID)
+		s.addLog(application.ID, "Failed to create deployment: "+err.Error(), deployment_config.ID)
 		return
 	}
 
-	s.updateStatus(application.ID, shared_types.Deployed, appStatus.ID)
-	s.addLog(application.ID, "Deployment completed successfully")
+	s.updateStatus(deployment_config.ID, shared_types.Deployed, appStatus.ID)
+	s.addLog(application.ID, "Deployment completed successfully", deployment_config.ID)
 }

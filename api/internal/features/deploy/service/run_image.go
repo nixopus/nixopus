@@ -12,34 +12,43 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+type RunImageConfig struct {
+	applicationID         uuid.UUID
+	imageName             string
+	environment_variables map[string]string
+	port_str              string
+	statusID              uuid.UUID
+	deployment_config     *shared_types.ApplicationDeployment
+}
+
 // RunImage runs a Docker container from the specified image, maps the
 // specified port from the container to the host, and sets the specified
 // environment variables. The function returns an error if the container
 // cannot be started.
-func (s *DeployService) RunImage(applicationID uuid.UUID, imageName string, environment_variables map[string]string, port_str string, statusID uuid.UUID) (string, error) {
-	if imageName == "" {
+func (s *DeployService) RunImage(r RunImageConfig) (string, error) {
+	if r.imageName == "" {
 		return "", fmt.Errorf("image name is empty")
 	}
-	s.logger.Log(logger.Info, "Running container from image", imageName)
-	s.addLog(applicationID, fmt.Sprintf("Preparing to run container from image %s", imageName))
-	s.updateStatus(applicationID, shared_types.Deploying, statusID)
+	s.logger.Log(logger.Info, "Running container from image", r.imageName)
+	s.addLog(r.applicationID, fmt.Sprintf("Preparing to run container from image %s", r.imageName), r.deployment_config.ID)
+	s.updateStatus(r.applicationID, shared_types.Deploying, r.statusID)
 
-	port, _ := nat.NewPort("tcp", port_str)
+	port, _ := nat.NewPort("tcp", r.port_str)
 	var env_vars []string
-	for k, v := range environment_variables {
+	for k, v := range r.environment_variables {
 		env_vars = append(env_vars, fmt.Sprintf("%s=%s", k, v))
 	}
 
 	logEnvVars := make([]string, 0)
-	for k, v := range environment_variables {
+	for k, v := range r.environment_variables {
 		if containsSensitiveKeyword(k) {
 			logEnvVars = append(logEnvVars, fmt.Sprintf("%s=********", k))
 		} else {
 			logEnvVars = append(logEnvVars, fmt.Sprintf("%s=%s", k, v))
 		}
 	}
-	s.addLog(applicationID, fmt.Sprintf("Environment variables: %v", logEnvVars))
-	s.addLog(applicationID, fmt.Sprintf("Container will expose port %s", port_str))
+	s.addLog(r.applicationID, fmt.Sprintf("Environment variables: %v", logEnvVars), r.deployment_config.ID)
+	s.addLog(r.applicationID, fmt.Sprintf("Container will expose port %s", r.port_str), r.deployment_config.ID)
 
 	// images := s.dockerRepo.ListAllImages(image.ListOptions{})
 	// var targetImage string
@@ -52,7 +61,7 @@ func (s *DeployService) RunImage(applicationID uuid.UUID, imageName string, envi
 	// }
 
 	container_config := container.Config{
-		Image:    imageName,
+		Image:    r.imageName,
 		Hostname: "nixopus",
 		ExposedPorts: nat.PortSet{
 			port: struct{}{},
@@ -61,8 +70,8 @@ func (s *DeployService) RunImage(applicationID uuid.UUID, imageName string, envi
 		Labels: map[string]string{
 			"com.docker.compose.project": "nixopus",
 			"com.docker.compose.version": "0.0.1",
-			"com.project.name":           imageName,
-			"application.id":             applicationID.String(),
+			"com.project.name":           r.imageName,
+			"application.id":             r.applicationID.String(),
 		},
 	}
 
@@ -72,7 +81,7 @@ func (s *DeployService) RunImage(applicationID uuid.UUID, imageName string, envi
 			port: {
 				{
 					HostIP:   "0.0.0.0",
-					HostPort: port_str,
+					HostPort: r.port_str,
 				},
 			},
 		},
@@ -84,25 +93,31 @@ func (s *DeployService) RunImage(applicationID uuid.UUID, imageName string, envi
 		},
 	}
 
-	s.addLog(applicationID, "Creating container...")
-	resp, err := s.dockerRepo.CreateContainer(container_config, host_config, network_config, imageName)
+	s.addLog(r.applicationID, "Creating container...", r.deployment_config.ID)
+	resp, err := s.dockerRepo.CreateContainer(container_config, host_config, network_config, r.imageName)
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to create container: %s", err.Error())
-		s.addLog(applicationID, errMsg)
+		s.addLog(r.applicationID, errMsg, r.deployment_config.ID)
 		return "", errors.New(errMsg)
 	}
-	s.addLog(applicationID, fmt.Sprintf("Container created with ID: %s", resp.ID))
+	s.addLog(r.applicationID, fmt.Sprintf("Container created with ID: %s", resp.ID), r.deployment_config.ID)
 
-	s.addLog(applicationID, "Starting container...")
+	s.addLog(r.applicationID, "Starting container...", r.deployment_config.ID)
 	err = s.dockerRepo.StartContainer(resp.ID, container.StartOptions{})
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to start container: %s", err.Error())
-		s.addLog(applicationID, errMsg)
+		s.addLog(r.applicationID, errMsg, r.deployment_config.ID)
 		return "", errors.New(errMsg)
 	}
-	s.addLog(applicationID, "Container started successfully")
+	s.addLog(r.applicationID, "Container started successfully", r.deployment_config.ID)
 
-	go s.collectContainerLogs(applicationID, resp.ID)
+	log_collection_config := ContainerLogCollection{
+		r.applicationID,
+		resp.ID,
+		r.deployment_config,
+	}
+
+	go s.collectContainerLogs(log_collection_config)
 
 	return resp.ID, nil
 }

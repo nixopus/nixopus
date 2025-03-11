@@ -18,7 +18,7 @@ function page() {
         application_name={repository?.name || ''}
         environment={Environment.Production}
         branch="main"
-        port={3000}
+        port={'3000'}
         domain=""
         build_pack={BuildPack.Dockerfile}
         env_variables={{}}

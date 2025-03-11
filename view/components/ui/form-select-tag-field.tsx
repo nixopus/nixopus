@@ -19,6 +19,7 @@ interface FormSelectTagField {
   form: any;
   required?: boolean;
   validator: (value: string) => ValidationType;
+  defaultValues?: Record<string, string>;
 }
 
 interface ValidationType {
@@ -35,15 +36,22 @@ export const FormSelectTagInputField = ({
   placeholder,
   form,
   validator,
-  required = false
+  required = false,
+  defaultValues = {}
 }: FormSelectTagField) => {
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [value, setSelectedValue] = useState<Record<string, string>>({});
+  const [value, setSelectedValue] = useState<Record<string, string>>(defaultValues);
 
   useEffect(() => {
     form.setValue(name, value);
   }, [value, form, name]);
+
+  useEffect(() => {
+    if (defaultValues && Object.keys(defaultValues).length > 0) {
+      setSelectedValue(defaultValues);
+    }
+  }, [defaultValues]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {

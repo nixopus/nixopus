@@ -1,9 +1,7 @@
-import React from 'react'
+import React from 'react';
 
 function Monitor() {
-  return (
-    <div>Monitor</div>
-  )
+  return <div>Monitor</div>;
 }
 
-export default Monitor
+export default Monitor;

@@ -5,30 +5,21 @@ import (
 	"context"
 	"fmt"
 	"github.com/docker/docker/api/types/container"
-	"strings"
-	// "github.com/docker/docker/api/types/image"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"strings"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// containsSensitiveKeyword checks if a key likely contains sensitive information
-func containsSensitiveKeyword(key string) bool {
-	sensitiveKeywords := []string{
-		"password", "secret", "token", "key", "auth", "credential", "private",
-	}
-
-	lowerKey := strings.ToLower(key)
-	for _, word := range sensitiveKeywords {
-		if strings.Contains(lowerKey, word) {
-			return true
-		}
-	}
-
-	return false
+type ContainerLogCollection struct {
+	applicationID     uuid.UUID
+	containerID       string
+	deployment_config *shared_types.ApplicationDeployment
 }
 
 // collectContainerLogs collects logs from a running container and adds them to application logs
-func (s *DeployService) collectContainerLogs(applicationID uuid.UUID, containerID string) {
+func (s *DeployService) collectContainerLogs(c ContainerLogCollection) {
 	ctx := context.Background()
 	options := container.LogsOptions{
 		ShowStdout: true,
@@ -37,10 +28,10 @@ func (s *DeployService) collectContainerLogs(applicationID uuid.UUID, containerI
 		Timestamps: true,
 	}
 
-	logs, err := s.dockerRepo.ContainerLogs(ctx, containerID, options)
+	logs, err := s.dockerRepo.ContainerLogs(ctx, c.containerID, options)
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("Failed to attach to container logs: %s", err.Error()), "")
-		s.addLog(applicationID, fmt.Sprintf("Failed to attach to container logs: %s", err.Error()))
+		s.addLog(c.applicationID, fmt.Sprintf("Failed to attach to container logs: %s", err.Error()), c.deployment_config.ID)
 		return
 	}
 	defer logs.Close()
@@ -58,12 +49,28 @@ func (s *DeployService) collectContainerLogs(applicationID uuid.UUID, containerI
 				}
 			}
 
-			s.addLog(applicationID, fmt.Sprintf("Container: %s", logLine))
+			s.addLog(c.applicationID, fmt.Sprintf("Container: %s", logLine), c.deployment_config.ID)
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("Error reading container logs: %s", err.Error()), "")
-		s.addLog(applicationID, fmt.Sprintf("Error reading container logs: %s", err.Error()))
+		s.addLog(c.applicationID, fmt.Sprintf("Error reading container logs: %s", err.Error()), c.deployment_config.ID)
 	}
+}
+
+// containsSensitiveKeyword checks if a key likely contains sensitive information
+func containsSensitiveKeyword(key string) bool {
+	sensitiveKeywords := []string{
+		"password", "secret", "token", "key", "auth", "credential", "private",
+	}
+
+	lowerKey := strings.ToLower(key)
+	for _, word := range sensitiveKeywords {
+		if strings.Contains(lowerKey, word) {
+			return true
+		}
+	}
+
+	return false
 }

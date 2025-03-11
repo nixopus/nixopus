@@ -26,7 +26,7 @@ export const DeployForm = ({
   application_name = '',
   environment = Environment.Production,
   branch = '',
-  port = "3000",
+  port = '3000',
   domain = '',
   repository,
   build_pack = BuildPack.Dockerfile,
@@ -35,7 +35,7 @@ export const DeployForm = ({
   pre_run_commands = '',
   post_run_commands = ''
 }: DeployFormProps) => {
-  const { validateEnvVar, form, onSubmit, domains,parsePort } = useCreateDeployment({
+  const { validateEnvVar, form, onSubmit, domains, parsePort } = useCreateDeployment({
     application_name,
     environment,
     branch,

@@ -147,7 +147,7 @@ func (m *Migrator) GetAppliedMigrations() ([]MigrationTable, error) {
 	return migrations, err
 }
 
-// MigrateUp applies all pending migrations.
+// MigrateUp applies all pending migrations in ID order.
 func (m *Migrator) MigrateUp() error {
 	err := m.InitMigrationTable()
 	if err != nil {
@@ -164,6 +164,10 @@ func (m *Migrator) MigrateUp() error {
 		appliedMap[migration.Name] = true
 	}
 
+	sort.Slice(m.migrations, func(i, j int) bool {
+		return m.migrations[i].ID < m.migrations[j].ID
+	})
+
 	tx, err := m.db.BeginTx(m.ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %w", err)
@@ -172,10 +176,11 @@ func (m *Migrator) MigrateUp() error {
 
 	for _, migration := range m.migrations {
 		if appliedMap[migration.Name] {
+			log.Printf("Skipping already applied migration: %s (ID: %d)", migration.Name, migration.ID)
 			continue
 		}
 
-		log.Printf("Applying migration: %s", migration.Name)
+		log.Printf("Applying migration: %s (ID: %d)", migration.Name, migration.ID)
 
 		_, err = tx.ExecContext(m.ctx, migration.Up)
 		if err != nil {
@@ -404,5 +409,114 @@ func RunMigrations(db *bun.DB, migrationsPath string) error {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
+	return nil
+}
+
+// MigrateDownAll drops all tables in the database, effectively rolling back all migrations
+func MigrateDownAll(db *bun.DB, migrationsPath string) error {
+	log.Println("Dropping all tables from the database")
+
+	tx, err := db.BeginTx(context.Background(), nil)
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	var schema string
+	err = tx.QueryRow("SELECT current_schema()").Scan(&schema)
+	if err != nil {
+		return fmt.Errorf("failed to get current schema: %w", err)
+	}
+	_, err = tx.Exec(fmt.Sprintf("SET session_replication_role = 'replica';"))
+	if err != nil {
+		return fmt.Errorf("failed to disable triggers: %w", err)
+	}
+
+	rows, err := tx.Query(fmt.Sprintf(`
+		SELECT tablename FROM pg_tables 
+		WHERE schemaname = '%s' AND 
+		tablename != 'schema_migrations' AND 
+		tablename != 'goose_db_version' AND 
+		tablename != 'schema_version'
+	`, schema))
+	if err != nil {
+		return fmt.Errorf("failed to get table names: %w", err)
+	}
+	defer rows.Close()
+
+	var tables []string
+	for rows.Next() {
+		var tableName string
+		if err := rows.Scan(&tableName); err != nil {
+			return fmt.Errorf("failed to scan table name: %w", err)
+		}
+		tables = append(tables, tableName)
+	}
+
+	if err = rows.Err(); err != nil {
+		return fmt.Errorf("error iterating over table rows: %w", err)
+	}
+
+	if len(tables) == 0 {
+		log.Println("No tables to drop")
+		return nil
+	}
+
+	dropStatement := fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE", strings.Join(tables, ", "))
+	log.Printf("Executing: %s", dropStatement)
+
+	_, err = tx.Exec(dropStatement)
+	if err != nil {
+		return fmt.Errorf("failed to drop tables: %w", err)
+	}
+
+	_, err = tx.Exec("DROP TABLE IF EXISTS migrations CASCADE")
+	if err != nil {
+		return fmt.Errorf("failed to drop migrations table: %w", err)
+	}
+
+	_, err = tx.Exec("SET session_replication_role = 'origin';")
+	if err != nil {
+		return fmt.Errorf("failed to re-enable triggers: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	log.Println("All tables dropped successfully")
+	return nil
+}
+
+// MigrateDown rolls back only the most recent migration
+func MigrateDown(db *bun.DB, migrationsPath string) error {
+	migrator := NewMigrator(db)
+
+	err := migrator.LoadMigrationsFromFS(migrationsPath)
+	if err != nil {
+		return fmt.Errorf("failed to load migrations: %w", err)
+	}
+
+	err = migrator.MigrateDown()
+	if err != nil {
+		return fmt.Errorf("failed to roll back migration: %w", err)
+	}
+
+	return nil
+}
+
+// ResetMigrations resets the migration state while keeping database objects
+func ResetMigrations(db *bun.DB) error {
+	log.Println("Resetting migration state (dropping migrations table)")
+	_, err := db.NewDropTable().
+		Model((*MigrationTable)(nil)).
+		IfExists().
+		Exec(context.Background())
+
+	if err != nil {
+		return fmt.Errorf("failed to drop migrations table: %w", err)
+	}
+
+	log.Println("Migration state reset successfully")
 	return nil
 }

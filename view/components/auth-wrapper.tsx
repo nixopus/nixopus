@@ -33,11 +33,9 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <WebSocketProvider>
-      <DashboardLayout>
-        {children}
-      </DashboardLayout>
+      <DashboardLayout>{children}</DashboardLayout>
     </WebSocketProvider>
-  )
+  );
 }
 
 export default AuthWrapper;

@@ -1,0 +1,47 @@
+{
+    "name": "Nixopus-Workspace",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "nixopus-api",
+    "workspaceFolder": "/workspace",
+    "initializeCommand": "docker pull golang:1.21-bullseye",
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "lts"
+        },
+        "ghcr.io/devcontainers/features/go:1": {
+            "version": "latest"
+        }
+    },
+    "postCreateCommand": "apt-get update && apt-get install -y bash && npm install -g typescript ts-node next && cd view && npm install && cd ../api && go mod tidy",
+    "remoteUser": "vscode",
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+        "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-azuretools.vscode-docker",
+                "golang.go",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "bradlc.vscode-tailwindcss",
+                "ms-vscode.vscode-typescript-next",
+                "streetsidesoftware.code-spell-checker",
+                "orta.vscode-jest",
+                "csstools.postcss",
+                "mikestead.dotenv"
+            ],
+            "settings": {
+                "go.toolsManagement.autoUpdate": true,
+                "go.useLanguageServer": true,
+                "typescript.tsdk": "node_modules/typescript/lib",
+                "typescript.enablePromptUseWorkspaceTsdk": true,
+                "editor.formatOnSave": true,
+                "editor.codeActionsOnSave": {
+                    "source.fixAll.eslint": "always"
+                }
+            }
+        }
+    }
+}

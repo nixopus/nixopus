@@ -4,12 +4,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
+import { useUpdateGithubConnectorMutation } from '@/redux/services/connector/githubConnectorApi';
 
 const Page = () => {
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [error, setError] = useState<string | null>(null);
-  // const [addInstallationIdToGithubApp, { isLoading, data }] =
-  //     useAddInstallationIdToGithubAppMutation();
   const router = useRouter();
 
   useEffect(() => {
@@ -28,11 +27,8 @@ const Page = () => {
         try {
           setStatus('success');
           console.log('installationId', installationId);
-          // await addInstallationIdToGithubApp({
-          //     installationId,
-          // });
           window.history.replaceState({}, document.title, window.location.pathname);
-          // router.push('/self-host/create/');
+          router.push('/self-host/create/');
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Installation failed');
           setStatus('error');

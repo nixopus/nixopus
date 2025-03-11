@@ -9,6 +9,15 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+type DeployerConfig struct {
+	applicationID     uuid.UUID
+	deployment        *types.CreateDeploymentRequest
+	userID            uuid.UUID
+	contextPath       string
+	statusID          uuid.UUID
+	deployment_config *shared_types.ApplicationDeployment
+}
+
 // Deployer handles deployment processes based on the specified build pack type.
 //
 // This method logs the start of the deployment process and executes different
@@ -28,64 +37,75 @@ import (
 // Returns:
 //
 //	error - an error if the deployment process fails at any step, otherwise nil.
-func (s *DeployService) Deployer(applicationID uuid.UUID, deployment *types.CreateDeploymentRequest, userID uuid.UUID, contextPath string, statusID uuid.UUID) error {
-	s.logger.Log(logger.Info, "Creating deployment", contextPath)
-	s.addLog(applicationID, fmt.Sprintf("Starting deployment process for build pack: %s", deployment.BuildPack))
+func (s *DeployService) Deployer(d DeployerConfig) error {
+	s.logger.Log(logger.Info, "Creating deployment", d.contextPath)
+	s.addLog(d.applicationID, fmt.Sprintf("Starting deployment process for build pack: %s", d.deployment.BuildPack), d.deployment_config.ID)
 
-	switch deployment.BuildPack {
+	switch d.deployment.BuildPack {
 	case shared_types.DockerFile:
-		s.addLog(applicationID, "Using Dockerfile build strategy")
+		s.addLog(d.applicationID, "Using Dockerfile build strategy", d.deployment_config.ID)
 		s.logger.Log(logger.Info, "Dockerfile building", "")
 
 		buildArgs := make(map[string]*string)
-		for k, v := range deployment.BuildVariables {
+		for k, v := range d.deployment.BuildVariables {
 			value := v
 			buildArgs[k] = &value
 		}
-		s.addLog(applicationID, fmt.Sprintf("Using %d build arguments", len(buildArgs)))
+		s.addLog(d.applicationID, fmt.Sprintf("Using %d build arguments", len(buildArgs)), d.deployment_config.ID)
 
 		labels := make(map[string]string)
-		for k, v := range deployment.EnvironmentVariables {
+		for k, v := range d.deployment.EnvironmentVariables {
 			labels[k] = v
 		}
 
 		dockerfilePath := "Dockerfile"
 
-		s.logger.Log(logger.Info, "Build context path", contextPath)
-		s.addLog(applicationID, fmt.Sprintf("Build context path: %s", contextPath))
+		s.logger.Log(logger.Info, "Build context path", d.contextPath)
+		s.addLog(d.applicationID, fmt.Sprintf("Build context path: %s", d.contextPath), d.deployment_config.ID)
 		s.logger.Log(logger.Info, "Using Dockerfile", dockerfilePath)
 
-		_, err := s.buildImageFromDockerfile(
-			applicationID,
-			contextPath,
+		build_config := BuildImageFromDockerFile{
+			d.applicationID,
+			d.contextPath,
 			dockerfilePath,
 			false,
 			buildArgs,
 			labels,
-			deployment.Name,
-			statusID,
-		)
+			d.deployment.Name,
+			d.statusID,
+			d.deployment_config,
+		}
+		_, err := s.buildImageFromDockerfile(build_config)
 		if err != nil {
-			s.addLog(applicationID, fmt.Sprintf("Failed to build Docker image: %s", err.Error()))
+			s.addLog(d.applicationID, fmt.Sprintf("Failed to build Docker image: %s", err.Error()), d.deployment_config.ID)
 			return fmt.Errorf("failed to build Docker image: %w", err)
 		}
 
-		s.logger.Log(logger.Info, "Dockerfile built successfully", deployment.Name)
-		s.addLog(applicationID, "Docker image built successfully")
+		s.logger.Log(logger.Info, "Dockerfile built successfully", d.deployment.Name)
+		s.addLog(d.applicationID, "Docker image built successfully", d.deployment_config.ID)
 
-		containerID, err := s.RunImage(applicationID, deployment.Name, deployment.EnvironmentVariables, fmt.Sprintf("%d", deployment.Port), statusID)
+		run_image_config := RunImageConfig{
+			d.applicationID,
+			d.deployment.Name,
+			d.deployment.EnvironmentVariables,
+			fmt.Sprintf("%d", d.deployment.Port),
+			d.statusID,
+			d.deployment_config,
+		}
+
+		containerID, err := s.RunImage(run_image_config)
 		if err != nil {
-			s.addLog(applicationID, fmt.Sprintf("Failed to run Docker image: %s", err.Error()))
+			s.addLog(d.applicationID, fmt.Sprintf("Failed to run Docker image: %s", err.Error()), d.deployment_config.ID)
 			return fmt.Errorf("failed to run Docker image: %w", err)
 		}
 
-		s.addLog(applicationID, fmt.Sprintf("Container is running with ID: %s", containerID))
-		s.addLog(applicationID, fmt.Sprintf("Application exposed on port: %d", deployment.Port))
+		s.addLog(d.applicationID, fmt.Sprintf("Container is running with ID: %s", containerID), d.deployment_config.ID)
+		s.addLog(d.applicationID, fmt.Sprintf("Application exposed on port: %d", d.deployment.Port), d.deployment_config.ID)
 
 	case shared_types.DockerCompose:
 		s.logger.Log(logger.Info, "Docker compose building", "")
-		s.addLog(applicationID, "Docker Compose deployment strategy selected")
-		s.addLog(applicationID, "Docker Compose deployment not implemented yet")
+		s.addLog(d.applicationID, "Docker Compose deployment strategy selected", d.deployment_config.ID)
+		s.addLog(d.applicationID, "Docker Compose deployment not implemented yet", d.deployment_config.ID)
 		return nil
 	}
 

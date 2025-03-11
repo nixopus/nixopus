@@ -33,8 +33,19 @@ export const deployApi = createApi({
       transformResponse: (response: { data: Application }) => {
         return response.data;
       }
+    }),
+    getApplicationById: builder.query<Application, { id: string }>({
+      query: ({ id }) => ({
+        url: `${DEPLOY.GET_APPLICATION}?id=${id}`,
+        method: 'GET'
+      }),
+      providesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: Application }) => {
+        return response.data;
+      }
     })
   })
 });
 
-export const { useGetApplicationsQuery,useCreateDeploymentMutation } = deployApi;
+export const { useGetApplicationsQuery, useCreateDeploymentMutation, useGetApplicationByIdQuery } =
+  deployApi;

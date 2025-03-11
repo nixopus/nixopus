@@ -18,7 +18,7 @@ const GitHubAppSetup: React.FC<GitHubAppSetupProps> = ({ organization, GetGithub
   const handleRegistrationSuccess = async (creds: GitHubAppCredentials) => {
     setCredentials(creds);
     setSetupStage('installation');
-    await GetGithubConnectors();
+    // await GetGithubConnectors();
   };
 
   const handleRegistrationError = (error: Error) => {

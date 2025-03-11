@@ -16,7 +16,7 @@ type Domain struct {
 	CreatedAt     time.Time  `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt     time.Time  `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 	DeletedAt     *time.Time `json:"deleted_at,omitempty" bun:"deleted_at"`
-	Name string `json:"name" bun:"name,notnull"`
+	Name          string     `json:"name" bun:"name,notnull"`
 }
 
 type Server struct {

@@ -7,21 +7,9 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	organization_types "github.com/raghavyuva/nixopus-api/internal/features/organization/types"
-	permission_types "github.com/raghavyuva/nixopus-api/internal/features/permission/types"
-	role_types "github.com/raghavyuva/nixopus-api/internal/features/role/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// Register registers a new user and returns an authentication response.
-//
-// The function takes a types.RegisterRequest as input, which includes the user's
-// username, email, and password. It first hashes the password and checks if a user
-// with the provided email already exists. If a user exists, it returns an error.
-// If not, it creates a new user in the database. It then creates a refresh token
-// and an access token for the user.
-//
-// Returns a types.AuthResponse containing the access token, refresh token, expiration
-// time, and user information. If any step fails, it returns an appropriate error.
 func (c *AuthService) Register(registration_request types.RegisterRequest) (types.AuthResponse, error) {
 	var user shared_types.User
 	c.logger.Log(logger.Info, "registering user", registration_request.Email)
@@ -58,7 +46,7 @@ func (c *AuthService) Register(registration_request types.RegisterRequest) (type
 		return types.AuthResponse{}, types.ErrFailedToCreateToken
 	}
 
-	// for admin user we need to create a default organization, roles and permissions, and add the user to the organization
+	// for admin user we need to add them to a default organization with appropriate role
 	if user.Type == "admin" {
 		organization, err := c.createDefaultOrganization(user)
 		if err != nil {
@@ -66,25 +54,7 @@ func (c *AuthService) Register(registration_request types.RegisterRequest) (type
 			return types.AuthResponse{}, types.ErrFailedToCreateDefaultOrganization
 		}
 
-		err = c.createDefaultPermissions(organization)
-		if err != nil {
-			c.logger.Log(logger.Error, types.ErrFailedToCreateDefaultPermissions.Error(), err.Error())
-			return types.AuthResponse{}, types.ErrFailedToCreateDefaultPermissions
-		}
-
-		err = c.createDefaultRoles(organization)
-		if err != nil {
-			c.logger.Log(logger.Error, types.ErrFailedToCreateDefaultRoles.Error(), err.Error())
-			return types.AuthResponse{}, types.ErrFailedToCreateDefaultRoles
-		}
-
-		err = c.addDefaultPermissionsToDefaultRole()
-		if err != nil {
-			c.logger.Log(logger.Error, types.ErrFailedToAddDefaultPermissionsToDefaultRole.Error(), err.Error())
-			return types.AuthResponse{}, types.ErrFailedToAddDefaultPermissionsToDefaultRole
-		}
-
-		err = c.addUserToOrganization(user)
+		err = c.addUserToOrganizationWithAdminRole(user, organization)
 		if err != nil {
 			c.logger.Log(logger.Error, types.ErrFailedToAddUserToOrganization.Error(), err.Error())
 			return types.AuthResponse{}, types.ErrFailedToAddUserToOrganization
@@ -101,7 +71,7 @@ func (c *AuthService) Register(registration_request types.RegisterRequest) (type
 
 func (c *AuthService) createDefaultOrganization(user shared_types.User) (shared_types.Organization, error) {
 	c.logger.Log(logger.Info, "creating default organization for admin user", user.Email)
-	_, err := c.organization_service.CreateOrganization(&organization_types.CreateOrganizationRequest{
+	org, err := c.organization_service.CreateOrganization(&organization_types.CreateOrganizationRequest{
 		Name:        user.Username + "'s Team",
 		Description: "My Team",
 	})
@@ -111,186 +81,24 @@ func (c *AuthService) createDefaultOrganization(user shared_types.User) (shared_
 	}
 
 	c.logger.Log(logger.Info, "created default organization for admin user", user.Email)
-
-	return shared_types.Organization{}, nil
+	return org, nil
 }
 
-func (c *AuthService) createDefaultPermissions(organization shared_types.Organization) error {
-	c.logger.Log(logger.Info, "creating default permissions for organization", organization.Name)
-	for _, permission := range permissions_to_create {
-		err := c.permissions_service.CreatePermission(&permission)
-		if err != nil {
-			c.logger.Log(logger.Error, types.ErrFailedToCreateDefaultPermissions.Error(), err.Error())
-			return types.ErrFailedToCreateDefaultPermissions
-		}
-	}
-	return nil
-}
+func (c *AuthService) addUserToOrganizationWithAdminRole(user shared_types.User, organization shared_types.Organization) error {
+	c.logger.Log(logger.Info, "adding user to organization with admin role", user.Email)
 
-func (c *AuthService) createDefaultRoles(organization shared_types.Organization) error {
-	c.logger.Log(logger.Info, "creating default roles for organization", organization.Name)
-
-	for _, role := range roles_to_create {
-		err := c.role_service.CreateRole(&role)
-		if err != nil {
-			c.logger.Log(logger.Error, types.ErrFailedToCreateDefaultRoles.Error(), err.Error())
-			return types.ErrFailedToCreateDefaultRoles
-		}
-	}
-	return nil
-}
-
-func (c *AuthService) addDefaultPermissionsToDefaultRole() error {
-	all_permissions, err := c.permissions_service.GetAllPermissions()
+	roles, err := c.role_service.GetRoleByName("admin")
 	if err != nil {
 		return err
 	}
-
-	all_roles, err := c.role_service.GetRoles()
-	if err != nil {
-		return err
-	}
-
-	roleNameToID := make(map[string]string)
-	for _, role := range all_roles {
-		roleNameToID[role.Name] = role.ID.String()
-	}
-
-	permKeyToID := make(map[string]string)
-	for _, perm := range all_permissions {
-		key := perm.Resource + ":" + perm.Name
-		permKeyToID[key] = perm.ID.String()
-	}
-
-	for roleName, permissions := range rolePermissions {
-		roleID, ok := roleNameToID[roleName]
-		if !ok {
-			c.logger.Log(logger.Error, "Role not found", roleName)
-			continue
-		}
-
-		for _, permKey := range permissions {
-			permID, ok := permKeyToID[permKey]
-			if !ok {
-				c.logger.Log(logger.Error, "Permission not found", permKey)
-				continue
-			}
-
-			req := permission_types.AddPermissionToRoleRequest{
-				RoleID:       roleID,
-				PermissionID: permID,
-			}
-
-			err := c.permissions_service.AddPermissionToRole(req.PermissionID, req.RoleID)
-			if err != nil {
-				c.logger.Log(logger.Error, "Failed to add permission to role", err.Error())
-			}
-		}
-	}
-
-	return nil
-}
-
-func (c *AuthService) addUserToOrganization(user shared_types.User) error {
-	c.logger.Log(logger.Info, "adding user to organization", user.Email)
-	organizations, err := c.organization_service.GetOrganizations()
-	if err != nil {
-		return err
-	}
-	if len(organizations) == 0 {
-		return types.ErrNoOrganizationsFound
-	}
-	roles, err := c.role_service.GetRoles()
-	if err != nil {
-		return err
-	}
-	if len(roles) == 0 {
+	if roles == nil {
 		return types.ErrNoRolesFound
 	}
+
 	user_organization := organization_types.AddUserToOrganizationRequest{
-		OrganizationID: organizations[0].ID.String(),
+		OrganizationID: organization.ID.String(),
 		UserID:         user.ID.String(),
-		RoleId:         roles[0].ID.String(),
+		RoleId:         roles.ID.String(),
 	}
 	return c.organization_service.AddUserToOrganization(user_organization)
-}
-
-var permissions_to_create = []permission_types.CreatePermissionRequest{
-	{
-		Name:        "READ",
-		Resource:    "organization",
-		Description: "Read Organization",
-	},
-	{
-		Name:        "UPDATE",
-		Resource:    "organization",
-		Description: "Update Organization",
-	},
-	{
-		Name:        "DELETE",
-		Resource:    "organization",
-		Description: "Delete Organization",
-	},
-	{
-		Name:        "READ",
-		Resource:    "user",
-		Description: "Read User",
-	},
-	{
-		Name:        "UPDATE",
-		Resource:    "user",
-		Description: "Update User",
-	},
-	{
-		Name:        "DELETE",
-		Resource:    "user",
-		Description: "Delete User",
-	},
-	{
-		Name:        "READ",
-		Resource:    "role",
-		Description: "Read Role",
-	},
-	{
-		Name:        "UPDATE",
-		Resource:    "role",
-		Description: "Update Role",
-	},
-	{
-		Name:        "DELETE",
-		Resource:    "role",
-		Description: "Delete Role",
-	},
-}
-
-var roles_to_create = []role_types.CreateRoleRequest{
-	{
-		Name:        "Owner",
-		Description: "Owner Role",
-	},
-	{
-		Name:        "admin",
-		Description: "Admin Role",
-	},
-	{
-		Name:        "user",
-		Description: "User Role",
-	},
-}
-
-var rolePermissions = map[string][]string{
-	"Owner": {
-		"organization:READ", "organization:UPDATE", "organization:DELETE",
-		"user:READ", "user:UPDATE", "user:DELETE",
-		"role:READ", "role:UPDATE", "role:DELETE",
-	},
-	"admin": {
-		"organization:READ", "organization:UPDATE",
-		"user:READ", "user:UPDATE", "user:DELETE",
-		"role:READ",
-	},
-	"user": {
-		"organization:READ",
-		"user:READ",
-	},
 }

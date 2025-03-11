@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  nixopus-api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      args:
+        - PORT=${API_PORT:-8080}
+    container_name: nixopus-api-container
+    ports:
+      - "${API_PORT:-8080}:${API_PORT:-8080}"
+    restart: unless-stopped
+    environment:
+      - PORT=${PORT:-8080}
+      - DB_NAME=${DB_NAME:-postgres}
+      - USERNAME=${USERNAME:-postgres}
+      - PASSWORD=${PASSWORD:-12344}
+      - HOST_NAME=${HOST_NAME:-localhost}
+      - DB_PORT=${DB_PORT:-5432}
+      - SSL_MODE=${SSL_MODE:-disable}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - nixopus-network
+    depends_on:
+      - nixopus-db
+
+  nixopus-db:
+    image: postgres:14-alpine
+    container_name: nixopus-db-container
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${USERNAME:-nixopus}
+      - POSTGRES_PASSWORD=${PASSWORD:-nixopus}
+      - POSTGRES_DB=${DB_NAME:-nixopus}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    networks:
+      - nixopus-network
+  
+  nixopus-view:
+    build:
+      context: ./view
+      dockerfile: Dockerfile
+      args:
+        - PORT=${NEXT_PUBLIC_PORT:-3000}
+    container_name: nixopus-view-container
+    ports:
+      - "${NEXT_PUBLIC_PORT:-3000}:${NEXT_PUBLIC_PORT:-3000}"
+    restart: unless-stopped
+    environment:
+      - PORT=${NEXT_PUBLIC_PORT:-3000}
+      - API_URL=${API_URL:-http://nixopus-api:8080}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - nixopus-network
+
+networks:
+  nixopus-network:
+    driver: bridge

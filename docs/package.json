@@ -1,0 +1,14 @@
+{
+  "devDependencies": {
+    "@types/node": "^22.7.6",
+    "vitepress": "^1.4.0"
+  },
+  "scripts": {
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview"
+  },
+  "dependencies": {
+    "vitepress-openapi": "^0.0.3-alpha.43"
+  }
+}

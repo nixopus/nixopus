@@ -18,7 +18,7 @@ export const githubConnectorSlice = createSlice({
     builder.addMatcher(
       GithubConnectorApi.endpoints.getAllGithubRepositories.matchFulfilled,
       (state, { payload }) => {
-        if (payload.length > 0) {
+        if (payload?.length > 0) {
           state.repositories = payload;
         }
       }

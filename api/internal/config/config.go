@@ -48,7 +48,7 @@ func Init() *storage.Store {
 		MaxOpenConn:    AppConfig.MaxOpenConn,
 		Debug:          AppConfig.Debug,
 		MaxIdleConn:    AppConfig.MaxIdleConn,
-		MigrationsPath: "migrations",
+		MigrationsPath: "./migrations",
 	}
 
 	store, err := storage.NewDB(&storage_config)

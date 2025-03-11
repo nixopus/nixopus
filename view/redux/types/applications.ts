@@ -21,6 +21,7 @@ export type Application = {
   user?: User;
   status?: ApplicationStatus;
   logs?: ApplicationLogs[];
+  deployments?: ApplicationDeployment[]
 };
 
 export type ApplicationStatus = {
@@ -32,14 +33,38 @@ export type ApplicationStatus = {
   application?: Application;
 };
 
+export type ApplicationDeployment = {
+  id: string;
+  application_id: string;
+  created_at: string;
+  updated_at: string;
+
+  application?: Application;
+  status?: ApplicationDeploymentStatus;
+  logs?: ApplicationLogs[];
+};
+
+export type ApplicationDeploymentStatus = {
+  id: string;
+  application_deployment_id: string;
+  status: Status;
+  created_at: string;
+  updated_at: string;
+
+  application_deployment?: ApplicationDeployment;
+};
+
 export type ApplicationLogs = {
   id: string;
   application_id: string;
-  created_at: Date;
-  updated_at: Date;
+  created_at: string;
+  updated_at: string;
   log: string;
+  application_deployment_id: string;
+  application_deployment?: ApplicationDeployment;
   application?: Application;
 };
+
 
 export type Status = 'started' | 'running' | 'stopped' | 'failed';
 

@@ -1,5 +1,5 @@
-import { WEBSOCKET_URL } from "@/redux/conf";
-import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
+import { WEBSOCKET_URL } from '@/redux/conf';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 
 type WebSocketContextValue = {
   isReady: boolean;
@@ -12,7 +12,7 @@ const WebSocketContext = createContext<WebSocketContextValue>({
   isReady: false,
   message: null,
   sendMessage: () => {},
-  sendJsonMessage: () => {},
+  sendJsonMessage: () => {}
 });
 
 interface WebSocketProviderProps {
@@ -24,9 +24,9 @@ interface WebSocketProviderProps {
 
 export const WebSocketProvider = ({
   children,
-  url = WEBSOCKET_URL + "?token=" + localStorage.getItem("token"),
+  url = WEBSOCKET_URL + '?token=' + localStorage.getItem('token'),
   reconnectInterval = 3000,
-  maxReconnectAttempts = 5,
+  maxReconnectAttempts = 5
 }: WebSocketProviderProps) => {
   const [isReady, setIsReady] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -37,7 +37,7 @@ export const WebSocketProvider = ({
 
   const connectWebSocket = () => {
     if (isConnectingRef.current) {
-      console.log("Connection already in progress, skipping");
+      console.log('Connection already in progress, skipping');
       return;
     }
 
@@ -46,9 +46,8 @@ export const WebSocketProvider = ({
       reconnectTimeoutRef.current = null;
     }
 
-
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      console.log("WebSocket connection already active, skipping connection attempt");
+      console.log('WebSocket connection already active, skipping connection attempt');
       return;
     }
 
@@ -56,19 +55,19 @@ export const WebSocketProvider = ({
       try {
         wsRef.current.close();
       } catch (e) {
-        console.warn("Error closing existing WebSocket:", e);
+        console.warn('Error closing existing WebSocket:', e);
       }
       wsRef.current = null;
     }
 
     isConnectingRef.current = true;
-    console.log("Initiating WebSocket connection...");
+    console.log('Initiating WebSocket connection...');
 
     try {
       const socket = new WebSocket(url);
 
       socket.onopen = () => {
-        console.log("WebSocket connection established");
+        console.log('WebSocket connection established');
         setIsReady(true);
         reconnectAttemptsRef.current = 0;
         isConnectingRef.current = false;
@@ -85,18 +84,18 @@ export const WebSocketProvider = ({
       };
 
       socket.onmessage = (event) => {
-        // console.log("WebSocket message received:", event.data);
+        console.log('WebSocket message received:', event.data);
         setMessage(event.data);
       };
 
       socket.onerror = (error) => {
-        console.error("WebSocket error:", error);
+        console.error('WebSocket error:', error);
         isConnectingRef.current = false;
       };
 
       wsRef.current = socket;
     } catch (error) {
-      console.error("Error creating WebSocket:", error);
+      console.error('Error creating WebSocket:', error);
       isConnectingRef.current = false;
       handleReconnect();
     }
@@ -104,7 +103,9 @@ export const WebSocketProvider = ({
 
   const handleReconnect = () => {
     if (reconnectAttemptsRef.current < maxReconnectAttempts) {
-      console.log(`Attempting to reconnect (${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})...`);
+      console.log(
+        `Attempting to reconnect (${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})...`
+      );
       reconnectAttemptsRef.current += 1;
 
       reconnectTimeoutRef.current = setTimeout(() => {
@@ -119,15 +120,15 @@ export const WebSocketProvider = ({
     connectWebSocket();
 
     return () => {
-      console.log("Cleaning up WebSocket");
+      console.log('Cleaning up WebSocket');
       isConnectingRef.current = false;
-      
+
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
 
       if (wsRef.current) {
-        wsRef.current.onclose = null; 
+        wsRef.current.onclose = null;
         wsRef.current.close();
       }
     };
@@ -137,7 +138,7 @@ export const WebSocketProvider = ({
     if (wsRef.current && isReady) {
       wsRef.current.send(data);
     } else {
-      console.warn("Cannot send message, WebSocket is not connected");
+      console.warn('Cannot send message, WebSocket is not connected');
     }
   };
 
@@ -145,7 +146,7 @@ export const WebSocketProvider = ({
     if (wsRef.current && isReady) {
       wsRef.current.send(JSON.stringify(data));
     } else {
-      console.warn("Cannot send message, WebSocket is not connected");
+      console.warn('Cannot send message, WebSocket is not connected');
     }
   };
 
@@ -156,18 +157,14 @@ export const WebSocketProvider = ({
     sendJsonMessage
   };
 
-  return (
-    <WebSocketContext.Provider value={contextValue}>
-      {children}
-    </WebSocketContext.Provider>
-  );
+  return <WebSocketContext.Provider value={contextValue}>{children}</WebSocketContext.Provider>;
 };
 
 export const useWebSocket = () => {
   const context = useContext(WebSocketContext);
 
   if (context === undefined) {
-    throw new Error("useWebSocket must be used within a WebSocketProvider");
+    throw new Error('useWebSocket must be used within a WebSocketProvider');
   }
 
   return context;

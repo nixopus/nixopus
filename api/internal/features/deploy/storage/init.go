@@ -22,6 +22,10 @@ type DeployRepository interface {
 	AddApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
 	GetApplications(page int, pageSize int) ([]shared_types.Application, int, error)
 	UpdateApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
+	GetApplicationById(id string) (shared_types.Application, error)
+	AddApplicationDeployment(deployment *shared_types.ApplicationDeployment) error
+	AddApplicationDeploymentStatus(deployment_status *shared_types.ApplicationDeploymentStatus) error
+	UpdateApplicationDeploymentStatus(applicationStatus *shared_types.ApplicationDeploymentStatus) error
 }
 
 func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
@@ -69,6 +73,30 @@ func (s *DeployStorage) AddApplication(application *shared_types.Application) er
 	return nil
 }
 
+func (s *DeployStorage) AddApplicationDeployment(deployment *shared_types.ApplicationDeployment) error {
+	_, err := s.DB.NewInsert().Model(deployment).Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *DeployStorage) AddApplicationDeploymentStatus(deployment_status *shared_types.ApplicationDeploymentStatus) error {
+	_, err := s.DB.NewInsert().Model(deployment_status).Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *DeployStorage) UpdateApplicationDeploymentStatus(applicationStatus *shared_types.ApplicationDeploymentStatus) error {
+	_, err := s.DB.NewUpdate().Model(applicationStatus).Where("id = ?", applicationStatus.ID).Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *DeployStorage) AddApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error {
 	_, err := s.DB.NewInsert().Model(applicationStatus).Exec(s.Ctx)
 	if err != nil {
@@ -109,7 +137,6 @@ func (s *DeployStorage) GetApplications(page, pageSize int) ([]shared_types.Appl
 	err = s.DB.NewSelect().
 		Model(&applications).
 		Relation("Domain").
-		Relation("User").
 		Relation("Status").
 		Relation("Logs").
 		Order("created_at DESC").
@@ -122,4 +149,23 @@ func (s *DeployStorage) GetApplications(page, pageSize int) ([]shared_types.Appl
 	}
 
 	return applications, totalCount, nil
+}
+
+func (s *DeployStorage) GetApplicationById(id string) (shared_types.Application, error) {
+	var application shared_types.Application
+
+	err := s.DB.NewSelect().
+		Model(&application).
+		Relation("Status").
+		Relation("Logs").
+		Relation("Domain").
+		Relation("Deployments").
+		Where("application_id = ?", id).
+		Scan(s.Ctx)
+
+	if err != nil {
+		return shared_types.Application{}, err
+	}
+
+	return application, nil
 }

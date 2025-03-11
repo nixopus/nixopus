@@ -33,7 +33,6 @@ import { SortOption } from '@/components/sort-selector';
  */
 function useGithubRepoPagination() {
   const searchParams = useSearchParams();
-  const [updateGithubConnector] = useUpdateGithubConnectorMutation();
   const { data: githubRepositories, isLoading } = useGetAllGithubRepositoriesQuery();
   const router = useRouter();
   const [selectedRepository, setSelectedRepository] = React.useState<string | null>(null);
@@ -64,21 +63,6 @@ function useGithubRepoPagination() {
     () => Math.ceil(filteredAndSortedApplications.length / ITEMS_PER_PAGE),
     [filteredAndSortedApplications]
   );
-
-  // Check if installation_id is present in the URL if so we will update the github connector with the installation id,
-  // this installation id will come from the callback of github manifest setup flow, the callback will redirect to the dashboard
-  useEffect(() => {
-    const installationId = searchParams.get('installation_id');
-    if (installationId) {
-      const githubConnector = async () => {
-        await updateGithubConnector({
-          installation_id: installationId
-        });
-      };
-      githubConnector();
-      router.push('/dashboard');
-    }
-  }, [searchParams, router]);
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);

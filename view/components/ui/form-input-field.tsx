@@ -28,16 +28,17 @@ function FormInputField({
   required = true,
   validator
 }: FormInputFieldProps) {
-
   return (
     <div>
       <FormField
         control={form.control}
         name={name}
         rules={{
-          validate: validator ? {
-            custom: (value: string) => validator(value) || `Invalid ${name} format`
-          } : undefined
+          validate: validator
+            ? {
+                custom: (value: string) => validator(value) || `Invalid ${name} format`
+              }
+            : undefined
         }}
         render={({ field }) => (
           <FormItem>
