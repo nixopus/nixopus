@@ -39,32 +39,41 @@ func Init() *storage.Store {
 	}
 
 	storage_config := storage.Config{
-		Host:        AppConfig.HostName,
-		Port:        AppConfig.DB_PORT,
-		Username:    AppConfig.Username,
-		Password:    AppConfig.Password,
-		DBName:      AppConfig.DBName,
-		SSLMode:     AppConfig.SSLMode,
-		MaxOpenConn: AppConfig.MaxOpenConn,
-		Debug:       AppConfig.Debug,
-		MaxIdleConn: AppConfig.MaxIdleConn,
+		Host:           AppConfig.HostName,
+		Port:           AppConfig.DB_PORT,
+		Username:       AppConfig.Username,
+		Password:       AppConfig.Password,
+		DBName:         AppConfig.DBName,
+		SSLMode:        AppConfig.SSLMode,
+		MaxOpenConn:    AppConfig.MaxOpenConn,
+		Debug:          AppConfig.Debug,
+		MaxIdleConn:    AppConfig.MaxIdleConn,
+		MigrationsPath: "migrations",
 	}
 
 	store, err := storage.NewDB(&storage_config)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	storage := storage.NewStore(store)
-	if err := storage.Init(context.Background()); err != nil {
-		log.Fatal(err)
+	err = storage.RunMigrations(store, storage_config.MigrationsPath)
+	if err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
+	log.Println("Migrations completed successfully")
 	if AppConfig.Port == "" {
 		AppConfig.Port = "8080"
 	}
 	if err != nil {
 		log.Fatalf("Failed to initialize postgres client: %v", err)
+	}
+
+	storage := storage.NewStore(store)
+
+	err = storage.Init(context.Background())
+
+	if err != nil {
+		log.Fatalf("Failed to initialize storage: %v", err)
 	}
 
 	return storage

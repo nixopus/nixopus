@@ -1,7 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQueryWithReauth } from '@/redux/base-query';
 import { DEPLOY } from '@/redux/api-conf';
-import { Application } from '@/redux/types/applications';
+import { Application, CreateApplicationRequest } from '@/redux/types/applications';
 
 export const deployApi = createApi({
   reducerPath: 'deployApi',
@@ -22,8 +22,19 @@ export const deployApi = createApi({
       }) => {
         return response.data;
       }
+    }),
+    createDeployment: builder.mutation<Application, CreateApplicationRequest>({
+      query: (data) => ({
+        url: DEPLOY.CREATE_APPLICATION,
+        method: 'POST',
+        body: data
+      }),
+      invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: Application }) => {
+        return response.data;
+      }
     })
   })
 });
 
-export const { useGetApplicationsQuery } = deployApi;
+export const { useGetApplicationsQuery,useCreateDeploymentMutation } = deployApi;

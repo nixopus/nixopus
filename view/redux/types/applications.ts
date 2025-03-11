@@ -46,3 +46,17 @@ export type Status = 'started' | 'running' | 'stopped' | 'failed';
 export type Environment = 'development' | 'staging' | 'production';
 
 export type BuildPack = 'dockerfile' | 'dockerCompose' | 'static';
+
+export interface CreateApplicationRequest {
+  name: string;
+  environment: Environment;
+  branch: string;
+  port: number;
+  domain_id: string;
+  repository: string;
+  build_pack: BuildPack;
+  env_variables: Record<string, string>;
+  build_variables: Record<string, string>;
+  pre_run_commands: string;
+  post_run_commands: string;
+}

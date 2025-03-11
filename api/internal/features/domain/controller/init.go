@@ -70,7 +70,7 @@ func (c *DomainsController) parseAndValidate(w http.ResponseWriter, r *http.Requ
 		return false
 	}
 
-	if err := c.validator.ValidateRequest(req,*user); err != nil {
+	if err := c.validator.ValidateRequest(req, *user); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return false

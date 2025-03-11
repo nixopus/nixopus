@@ -40,30 +40,30 @@ func (s *Store) Init(ctx context.Context) error {
 	s.DB.RegisterModel((*types.RolePermissions)(nil))
 	s.DB.RegisterModel((*types.OrganizationUsers)(nil))
 
-	tables := []interface{}{
-		(*types.User)(nil),
-		(*types.Role)(nil),
-		(*types.RefreshToken)(nil),
-		(*types.Permission)(nil),
-		(*types.RolePermissions)(nil),
-		(*types.Organization)(nil),
-		(*types.OrganizationUsers)(nil),
-		(*types.SMTPConfigs)(nil),
-		(*types.NotificationPreferences)(nil),
-		(*types.PreferenceItem)(nil),
-		(*types.Domain)(nil),
-		(*types.Server)(nil),
-		(*types.GithubConnector)(nil),
-		(*types.Application)(nil),
-		(*types.ApplicationStatus)(nil),
-		(*types.ApplicationLogs)(nil),
-	}
+	// tables := []interface{}{
+	// 	(*types.User)(nil),
+	// 	(*types.Role)(nil),
+	// 	(*types.RefreshToken)(nil),
+	// 	(*types.Permission)(nil),
+	// 	(*types.RolePermissions)(nil),
+	// 	(*types.Organization)(nil),
+	// 	(*types.OrganizationUsers)(nil),
+	// 	(*types.SMTPConfigs)(nil),
+	// 	(*types.NotificationPreferences)(nil),
+	// 	(*types.PreferenceItem)(nil),
+	// 	(*types.Domain)(nil),
+	// 	(*types.Server)(nil),
+	// 	(*types.GithubConnector)(nil),
+	// 	(*types.Application)(nil),
+	// 	(*types.ApplicationStatus)(nil),
+	// 	(*types.ApplicationLogs)(nil),
+	// }
 
-	for _, model := range tables {
-		if err := s.CreateTable(ctx, model); err != nil {
-			return fmt.Errorf("failed to create table for %T: %w", model, err)
-		}
-	}
+	// for _, model := range tables {
+	// 	if err := s.CreateTable(ctx, model); err != nil {
+	// 		return fmt.Errorf("failed to create table for %T: %w", model, err)
+	// 	}
+	// }
 
 	return nil
 }

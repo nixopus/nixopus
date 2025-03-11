@@ -2,11 +2,11 @@ package validation
 
 import (
 	"encoding/json"
-	"io"
-	"unicode/utf8"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
+	"io"
+	"unicode/utf8"
 )
 
 const (

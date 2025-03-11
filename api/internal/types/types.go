@@ -23,6 +23,7 @@ const DBContextKey ClientContext = "db"
 type Payload struct {
 	Action string      `json:"action"`
 	Data   interface{} `json:"data"`
+	Topic  string      `json:"topic"`
 }
 
 var JWTSecretKey = []byte("secret-key")

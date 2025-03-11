@@ -16,7 +16,6 @@ type Domain struct {
 	CreatedAt     time.Time  `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt     time.Time  `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 	DeletedAt     *time.Time `json:"deleted_at,omitempty" bun:"deleted_at"`
-	// ServerID      uuid.UUID  `json:"server_id" bun:"server_id,notnull,type:uuid"` // enable this when we have multiple server architecture, to keep things simple removing this
 	Name string `json:"name" bun:"name,notnull"`
 }
 

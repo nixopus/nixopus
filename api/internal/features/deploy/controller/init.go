@@ -19,12 +19,12 @@ import (
 )
 
 type DeployController struct {
-	store          *shared_storage.Store
-	validator      *validation.Validator
-	service        *service.DeployService
-	ctx            context.Context
-	logger         logger.Logger
-	notification   *notification.NotificationManager
+	store        *shared_storage.Store
+	validator    *validation.Validator
+	service      *service.DeployService
+	ctx          context.Context
+	logger       logger.Logger
+	notification *notification.NotificationManager
 }
 
 func NewDeployController(
@@ -35,14 +35,14 @@ func NewDeployController(
 ) *DeployController {
 	storage := storage.DeployStorage{DB: store.DB, Ctx: ctx}
 	docker_repo := docker.NewDockerService()
-	github_service:= github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx})
+	github_service := github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx})
 	return &DeployController{
-		store:          store,
-		validator:      validation.NewValidator(),
-		service:        service.NewDeployService(store, ctx, l, &storage, docker_repo,github_service),
-		ctx:            ctx,
-		logger:         l,
-		notification:   notificationManager,
+		store:        store,
+		validator:    validation.NewValidator(),
+		service:      service.NewDeployService(store, ctx, l, &storage, docker_repo, github_service),
+		ctx:          ctx,
+		logger:       l,
+		notification: notificationManager,
 	}
 }
 

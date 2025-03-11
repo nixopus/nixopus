@@ -88,7 +88,7 @@ func (v *Validator) validateDeleteSMTPConfigRequest(req notification.DeleteSMTPC
 		return notification.ErrSMTPConfigNotFound
 	}
 
-	if smtpConfig.UserID  != user.ID || user.Type != "admin" {
+	if smtpConfig.UserID != user.ID || user.Type != "admin" {
 		return notification.ErrPermissionDenied
 	}
 

@@ -1,49 +1,37 @@
 package controller
 
 import (
-	"encoding/json"
-	"github.com/gorilla/websocket"
+	"net/http"
+
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *DeployController) HandleDeploy(conn *websocket.Conn, data interface{}, user *shared_types.User) {
+// HandleDeploy handles the request to create a new deployment
+// It requires a valid user and a valid deployment request in the request body
+// It returns the created deployment in the response body with a status code of 200
+// If something fails, it returns an error response with a status code of 500
+func (c *DeployController) HandleDeploy(w http.ResponseWriter, r *http.Request) {
 	c.logger.Log(logger.Info, "deploying", "")
+	var data types.CreateDeploymentRequest
 
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		c.logger.Log(logger.Error, "failed to marshal data", err.Error())
-		conn.WriteJSON(map[string]string{"status": "error", "message": "Invalid request format"})
+	if !c.parseAndValidate(w, r, &data) {
 		return
 	}
 
-	var payload types.CreateDeploymentRequest
-	if err := json.Unmarshal(jsonData, &payload); err != nil {
-		c.logger.Log(logger.Error, "failed to unmarshal data", err.Error())
-		conn.WriteJSON(map[string]string{"status": "error", "message": "Invalid request format"})
-		return
-	}
-
-	if err := c.validator.ValidateRequest(&payload); err != nil {
-		c.logger.Log(logger.Error, "validation failed", err.Error())
-		conn.WriteJSON(map[string]string{"status": "error", "message": err.Error()})
-		return
-	}
+	user := c.GetUser(w, r)
 
 	if user == nil {
-		c.logger.Log(logger.Error, "user not found", "")
-		conn.WriteJSON(map[string]string{"status": "error", "message": "User not found"})
 		return
 	}
 
-	err = c.service.CreateDeployment(&payload, user.ID)
+	application, err := c.service.CreateDeployment(&data, user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to create deployment", err.Error())
-		conn.WriteJSON(map[string]string{"status": "error", "message": "Failed to create deployment"})
+		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	conn.WriteJSON(map[string]string{"status": "success", "message": "Deployment started"})
+	utils.SendJSONResponse(w, "success", "Deployment created successfully", application)
 }

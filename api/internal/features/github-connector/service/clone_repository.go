@@ -19,7 +19,7 @@ import (
 //
 // If any errors occur during the process, the method logs the error and
 // returns the error.
-func (s *GithubConnectorService) CloneRepository(repo_id uint64, userID string, environment string) (string,error) {
+func (s *GithubConnectorService) CloneRepository(repo_id uint64, userID string, environment string) (string, error) {
 	_, repo_url, err := s.GetRepositoryDetailsFromId(repo_id, userID)
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("Failed to get repository details: %s", err.Error()), "")
@@ -72,14 +72,14 @@ func (s *GithubConnectorService) CloneRepository(repo_id uint64, userID string, 
 //
 // Parameters:
 //
-// 	repoID - the ID of the repository to retrieve.
-// 	userID - the ID of the user whose repositories to search.
+//	repoID - the ID of the repository to retrieve.
+//	userID - the ID of the user whose repositories to search.
 //
 // Returns:
 //
-// 	string - the name of the repository if found, otherwise an empty string.
-// 	string - the clone URL of the repository if found, otherwise an empty string.
-// 	error - an error if the repository is not found or if the method fails.
+//	string - the name of the repository if found, otherwise an empty string.
+//	string - the clone URL of the repository if found, otherwise an empty string.
+//	error - an error if the repository is not found or if the method fails.
 func (s *GithubConnectorService) GetRepositoryDetailsFromId(repoID uint64, userID string) (string, string, error) {
 	repositories, err := s.GetGithubRepositories(userID)
 

@@ -5,6 +5,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
 import { useWebSocket } from '@/hooks/socket_provider';
+import { useRouter } from 'next/navigation';
+import { useCreateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';
+import { toast } from 'sonner';
 
 interface DeploymentFormValues {
   application_name: string;
@@ -35,6 +38,8 @@ function useCreateDeployment({
 }: DeploymentFormValues) {
   const { data: domains } = useGetAllDomainsQuery();
   const { isReady, message, sendJsonMessage } = useWebSocket();
+  const [createDeployment, { isLoading }] = useCreateDeploymentMutation();
+  const router = useRouter();
 
   const deploymentFormSchema = z.object({
     application_name: z
@@ -122,10 +127,9 @@ function useCreateDeployment({
     post_run_commands
   ]);
 
-  function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
-    sendJsonMessage({
-      action: 'deploy',
-      data: {
+  async function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
+    try {
+      const data = await createDeployment({
         name: values.application_name,
         environment: values.environment,
         branch: values.branch,
@@ -135,10 +139,13 @@ function useCreateDeployment({
         build_pack: values.build_pack,
         env_variables: values.env_variables,
         build_variables: values.build_variables,
-        pre_run_commands: values.pre_run_commands,
-        post_run_commands: values.post_run_commands
-      }
-    })
+        pre_run_commands: values.pre_run_commands as string,
+        post_run_commands: values.post_run_commands as string
+      }).unwrap();
+      router.push('/self-host/application/' + data?.id);
+    } catch (error) {
+      toast.error('Failed to create deployment');
+    }
   }
 
   const validateEnvVar = (

@@ -21,6 +21,7 @@ type Config struct {
 	MaxOpenConn int
 	Debug       bool
 	MaxIdleConn int
+	MigrationsPath string
 }
 
 // getConnString generates a PostgreSQL connection string from the given configuration.
