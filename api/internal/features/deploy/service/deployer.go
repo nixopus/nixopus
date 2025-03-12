@@ -18,96 +18,111 @@ type DeployerConfig struct {
 	deployment_config *shared_types.ApplicationDeployment
 }
 
-// Deployer handles deployment processes based on the specified build pack type.
-//
-// This method logs the start of the deployment process and executes different
-// deployment strategies depending on the build pack type specified in the
-// CreateDeploymentRequest. For Dockerfile build packs, it builds a Docker image
-// using the provided build variables and environment variables, then runs the
-// Docker image. For DockerCompose build packs, it logs the intended operation
-// and returns without performing any actions.
+// Deployer starts the deployment process using the specified build pack.
 //
 // Parameters:
 //
-//	applicationID - the UUID of the application.
-//	deployment - a pointer to the CreateDeploymentRequest containing the deployment details.
-//	userID - the UUID of the user initiating the deployment.
-//	contextPath - the path to the build context directory.
+//	d - a DeployerConfig struct containing the application ID, deployment request,
+//	    user ID, context path, status ID, and deployment configuration.
 //
 // Returns:
 //
 //	error - an error if the deployment process fails at any step, otherwise nil.
 func (s *DeployService) Deployer(d DeployerConfig) error {
-	s.logger.Log(logger.Info, "Creating deployment", d.contextPath)
-	s.addLog(d.applicationID, fmt.Sprintf("Starting deployment process for build pack: %s", d.deployment.BuildPack), d.deployment_config.ID)
+	s.addLog(d.applicationID, fmt.Sprintf(types.LogDeploymentBuildPack, d.deployment.BuildPack), d.deployment_config.ID)
 
 	switch d.deployment.BuildPack {
 	case shared_types.DockerFile:
-		s.addLog(d.applicationID, "Using Dockerfile build strategy", d.deployment_config.ID)
-		s.logger.Log(logger.Info, "Dockerfile building", "")
-
-		buildArgs := make(map[string]*string)
-		for k, v := range d.deployment.BuildVariables {
-			value := v
-			buildArgs[k] = &value
-		}
-		s.addLog(d.applicationID, fmt.Sprintf("Using %d build arguments", len(buildArgs)), d.deployment_config.ID)
-
-		labels := make(map[string]string)
-		for k, v := range d.deployment.EnvironmentVariables {
-			labels[k] = v
-		}
-
-		dockerfilePath := "Dockerfile"
-
-		s.logger.Log(logger.Info, "Build context path", d.contextPath)
-		s.addLog(d.applicationID, fmt.Sprintf("Build context path: %s", d.contextPath), d.deployment_config.ID)
-		s.logger.Log(logger.Info, "Using Dockerfile", dockerfilePath)
-
-		build_config := BuildImageFromDockerFile{
-			d.applicationID,
-			d.contextPath,
-			dockerfilePath,
-			false,
-			buildArgs,
-			labels,
-			d.deployment.Name,
-			d.statusID,
-			d.deployment_config,
-		}
-		_, err := s.buildImageFromDockerfile(build_config)
-		if err != nil {
-			s.addLog(d.applicationID, fmt.Sprintf("Failed to build Docker image: %s", err.Error()), d.deployment_config.ID)
-			return fmt.Errorf("failed to build Docker image: %w", err)
-		}
-
-		s.logger.Log(logger.Info, "Dockerfile built successfully", d.deployment.Name)
-		s.addLog(d.applicationID, "Docker image built successfully", d.deployment_config.ID)
-
-		run_image_config := RunImageConfig{
-			d.applicationID,
-			d.deployment.Name,
-			d.deployment.EnvironmentVariables,
-			fmt.Sprintf("%d", d.deployment.Port),
-			d.statusID,
-			d.deployment_config,
-		}
-
-		containerID, err := s.RunImage(run_image_config)
-		if err != nil {
-			s.addLog(d.applicationID, fmt.Sprintf("Failed to run Docker image: %s", err.Error()), d.deployment_config.ID)
-			return fmt.Errorf("failed to run Docker image: %w", err)
-		}
-
-		s.addLog(d.applicationID, fmt.Sprintf("Container is running with ID: %s", containerID), d.deployment_config.ID)
-		s.addLog(d.applicationID, fmt.Sprintf("Application exposed on port: %d", d.deployment.Port), d.deployment_config.ID)
-
+		return s.handleDockerfileDeployment(d)
 	case shared_types.DockerCompose:
-		s.logger.Log(logger.Info, "Docker compose building", "")
-		s.addLog(d.applicationID, "Docker Compose deployment strategy selected", d.deployment_config.ID)
-		s.addLog(d.applicationID, "Docker Compose deployment not implemented yet", d.deployment_config.ID)
-		return nil
+		return s.handleDockerComposeDeployment(d)
+	default:
+		return types.ErrInvalidBuildPack
 	}
+}
+
+// handleDockerfileDeployment processes Dockerfile-based deployments
+func (s *DeployService) handleDockerfileDeployment(d DeployerConfig) error {
+	s.addLog(d.applicationID, types.LogUsingDockerfileStrategy, d.deployment_config.ID)
+	buildArgs := s.prepareBuildArgs(d)
+	labels := s.prepareEnvironmentVariables(d)
+	dockerfilePath := "Dockerfile"
+	s.addLog(d.applicationID, fmt.Sprintf(types.LogBuildContextPath, d.contextPath), d.deployment_config.ID)
+	s.addLog(d.applicationID, fmt.Sprintf(types.LogUsingBuildArgs, len(buildArgs)), d.deployment_config.ID)
+
+	if err := s.buildAndRunDockerImage(d, buildArgs, labels, dockerfilePath); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// handleDockerComposeDeployment processes Docker Compose-based deployments
+func (s *DeployService) handleDockerComposeDeployment(d DeployerConfig) error {
+	s.addLog(d.applicationID, types.LogUsingDockerComposeStrategy, d.deployment_config.ID)
+	s.addLog(d.applicationID, types.LogDockerComposeNotImplemented, d.deployment_config.ID)
+	return types.ErrDockerComposeNotImplemented
+}
+
+// prepareBuildArgs extracts build variables from the deployment request
+func (s *DeployService) prepareBuildArgs(d DeployerConfig) map[string]*string {
+	buildArgs := make(map[string]*string)
+	for k, v := range d.deployment.BuildVariables {
+		value := v
+		buildArgs[k] = &value
+	}
+	return buildArgs
+}
+
+// prepareEnvironmentVariables extracts environment variables from the deployment request
+func (s *DeployService) prepareEnvironmentVariables(d DeployerConfig) map[string]string {
+	labels := make(map[string]string)
+	for k, v := range d.deployment.EnvironmentVariables {
+		labels[k] = v
+	}
+	return labels
+}
+
+// buildAndRunDockerImage handles the Docker image building and running process
+func (s *DeployService) buildAndRunDockerImage(d DeployerConfig, buildArgs map[string]*string, labels map[string]string, dockerfilePath string) error {
+	buildConfig := BuildImageFromDockerFile{
+		applicationID:     d.applicationID,
+		contextPath:       d.contextPath,
+		dockerfile:        dockerfilePath,
+		force:             false,
+		buildArgs:         buildArgs,
+		labels:            labels,
+		image_name:        d.deployment.Name,
+		statusID:          d.statusID,
+		deployment_config: d.deployment_config,
+	}
+
+	_, err := s.buildImageFromDockerfile(buildConfig)
+	if err != nil {
+		s.addLog(d.applicationID, fmt.Sprintf(types.LogFailedToBuildDockerImage, err.Error()), d.deployment_config.ID)
+		return fmt.Errorf("%w: %v", types.ErrBuildDockerImage, err)
+	}
+
+	s.logger.Log(logger.Info, types.LogDockerImageBuiltSuccessfully, d.deployment.Name)
+	s.addLog(d.applicationID, types.LogDockerImageBuiltSuccessfully, d.deployment_config.ID)
+
+	runImageConfig := RunImageConfig{
+		applicationID:         d.applicationID,
+		imageName:             d.deployment.Name,
+		environment_variables: d.deployment.EnvironmentVariables,
+		port_str:              fmt.Sprintf("%d", d.deployment.Port),
+		statusID:              d.statusID,
+		deployment_config:     d.deployment_config,
+	}
+
+	containerID, err := s.RunImage(runImageConfig)
+	if err != nil {
+		s.addLog(d.applicationID, fmt.Sprintf(types.LogFailedToRunDockerImage, err.Error()), d.deployment_config.ID)
+		return fmt.Errorf("%w: %v", types.ErrRunDockerImage, err)
+	}
+
+	s.addLog(d.applicationID, fmt.Sprintf(types.LogContainerRunning, containerID), d.deployment_config.ID)
+	s.addLog(d.applicationID, fmt.Sprintf(types.LogApplicationExposed, d.deployment.Port), d.deployment_config.ID)
 
 	return nil
 }

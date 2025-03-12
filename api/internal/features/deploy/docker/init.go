@@ -206,6 +206,23 @@ func (s *DockerService) CreateContainer(config container.Config, hostConfig cont
 	return s.Cli.ContainerCreate(s.Ctx, &config, &hostConfig, &networkConfig, &v1.Platform{}, containerName)
 }
 
+// ContainerLogs retrieves the logs of a container with the given ID, using the specified options.
+//
+// This function returns an io.ReadCloser that provides a stream of the container's logs. The logs can include
+// both stdout and stderr depending on the provided options. If the container does not exist or any error occurs
+// while retrieving the logs, an error is returned.
+//
+// Parameters:
+//
+//	Ctx - the context within which the logs are retrieved, allowing for cancellation and timeouts.
+//	containerID - the unique identifier of the container whose logs are to be retrieved.
+//	opts - the options specifying which logs to retrieve, including whether to include stdout, stderr, and timestamps.
+//
+// Returns:
+//
+//	io.ReadCloser - a stream of the container's logs.
+//	error - an error if the container does not exist or if there is an issue retrieving the logs.
+
 func (s *DockerService) ContainerLogs(Ctx context.Context, containerID string, opts container.LogsOptions) (io.ReadCloser, error) {
 	return s.Cli.ContainerLogs(Ctx, containerID, opts)
 }
