@@ -44,6 +44,7 @@ export enum DEPLOY {
   GET_APPLICATION = 'v1/deploy/application',
   UPDATE_APPLICATION = 'v1/deploy/application',
   REDEPLOY_APPLICATION = 'v1/deploy/application/redeploy',
+  DEPLOYMENT = 'v1/deploy/application/deployments',
 }
 
 export enum SOCKET_EVENTS {

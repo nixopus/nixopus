@@ -27,6 +27,7 @@ type DeployRepository interface {
 	AddApplicationDeploymentStatus(deployment_status *shared_types.ApplicationDeploymentStatus) error
 	UpdateApplicationDeploymentStatus(applicationStatus *shared_types.ApplicationDeploymentStatus) error
 	UpdateApplication(application *shared_types.Application) error
+	GetApplicationDeploymentById(deploymentID string) (shared_types.ApplicationDeployment, error)
 }
 
 func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
@@ -168,7 +169,9 @@ func (s *DeployStorage) GetApplicationById(id string) (shared_types.Application,
 	err := s.DB.NewSelect().
 		Model(&application).
 		Relation("Status").
-		Relation("Logs").
+		Relation("Logs", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Order("created_at DESC").Limit(100)
+		}).
 		Relation("Domain").
 		Relation("Deployments").
 		Where("a.id = ?", id).
@@ -179,4 +182,21 @@ func (s *DeployStorage) GetApplicationById(id string) (shared_types.Application,
 	}
 
 	return application, nil
+}
+
+func (s *DeployStorage) GetApplicationDeploymentById(deploymentID string) (shared_types.ApplicationDeployment, error) {
+	var deployment shared_types.ApplicationDeployment
+
+	err := s.DB.NewSelect().
+		Model(&deployment).
+		Relation("Status").
+		Relation("Logs").
+		Where("id = ?", deploymentID).
+		Scan(s.Ctx)
+
+	if err != nil {
+		return shared_types.ApplicationDeployment{}, err
+	}
+
+	return deployment, nil
 }

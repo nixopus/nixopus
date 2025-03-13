@@ -1,8 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ApplicationDeployment } from '@/redux/types/applications';
+import { useRouter } from 'next/navigation';
 import React from 'react';
 
 function DeploymentsList({ deployments }: { deployments?: ApplicationDeployment[] }) {
+  const router = useRouter();
+
   const formatDate = (created_at: string) =>
     deployments
       ? new Date(created_at).toLocaleString('en-US', {
@@ -30,7 +33,7 @@ function DeploymentsList({ deployments }: { deployments?: ApplicationDeployment[
       {deployments && deployments.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {deployments.map((deployment) => (
-            <Card key={deployment.id} className="w-full hover:shadow-md transition-shadow">
+            <Card key={deployment.id} className="w-full hover:shadow-md transition-shadow" onClick={() => { router.push(`/self-host/application/${deployment.application_id}/deployments/${deployment.id}`) }}>
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-lg font-medium">

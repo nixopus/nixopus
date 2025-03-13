@@ -158,3 +158,7 @@ func (s *DeployService) StartDeploymentInBackground(
 	s.updateStatus(d.deployment_config.ID, shared_types.Deployed, d.appStatus.ID)
 	s.addLog(d.application.ID, types.LogDeploymentCompletedSuccessfully, d.deployment_config.ID)
 }
+
+func (s *DeployService) GetDeploymentById(deploymentID string) (shared_types.ApplicationDeployment, error) {
+	return s.storage.GetApplicationDeploymentById(deploymentID)
+}

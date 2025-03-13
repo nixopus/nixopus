@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
@@ -120,4 +121,18 @@ func (c *DeployController) ReDeployApplication(w http.ResponseWriter, r *http.Re
 	}
 
 	utils.SendJSONResponse(w, "success", "Application redeployed successfully", application)
+}
+
+func (c *DeployController) GetDeploymentById(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    deploymentID := vars["deployment_id"]
+    
+	deployment, err := c.service.GetDeploymentById(deploymentID)
+	if err != nil {
+		c.logger.Log(logger.Error, err.Error(), "")
+		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	
+	utils.SendJSONResponse(w, "success", "Deployment Retrieved successfully", deployment)
 }
