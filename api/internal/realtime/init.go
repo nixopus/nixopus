@@ -92,8 +92,8 @@ func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx 
 // processing of further notifications.
 func (s *SocketServer) handleNotifications(notificationChan <-chan *PostgresNotification) {
 	for notification := range notificationChan {
-		fmt.Printf("Received notification on channel %s: %s\n",
-			notification.Channel, notification.Payload)
+		// fmt.Printf("Received notification on channel %s: %s\n",
+		// 	notification.Channel, notification.Payload)
 
 		if notification.Channel == "application_changes" {
 			var parsedPayload struct {

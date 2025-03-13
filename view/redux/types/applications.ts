@@ -85,3 +85,20 @@ export interface CreateApplicationRequest {
   pre_run_commands: string;
   post_run_commands: string;
 }
+
+export interface UpdateDeploymentRequest {
+  name?: string;
+  pre_run_command?: string;
+  post_run_command?: string;
+  build_variables?: Record<string, string>;
+  environment_variables?: Record<string, string>;
+  port?: number;
+  id?: string;
+  force?: boolean;
+}
+
+export interface ReDeployApplicationRequest {
+  id: string;
+  force: boolean;
+  force_without_cache: boolean;
+}

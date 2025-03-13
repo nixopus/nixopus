@@ -3,10 +3,11 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import FormInputField from '@/components/ui/form-input-field';
-import FormSelectField from '@/components/ui/form-select-field';
 import { FormSelectTagInputField } from '@/components/ui/form-select-tag-field';
 import { BuildPack, Environment } from '@/redux/types/deploy-form';
-import useCreateDeployment from '../../hooks/use_create_deployment';
+import useUpdateDeployment from '../../hooks/use_update_deployment';
+import { Domain } from '@/redux/types/domain';
+import { parsePort } from '../../utils/parsePort';
 
 interface DeployConfigureProps {
   application_name?: string;
@@ -20,6 +21,7 @@ interface DeployConfigureProps {
   build_variables?: Record<string, string>;
   pre_run_commands?: string;
   post_run_commands?: string;
+  application_id?: string;
 }
 
 export const DeployConfigureForm = ({
@@ -28,25 +30,23 @@ export const DeployConfigureForm = ({
   branch = '',
   port = '3000',
   domain = '',
-  repository,
+  repository = '',
   build_pack = BuildPack.Dockerfile,
   env_variables = {},
   build_variables = {},
   pre_run_commands = '',
-  post_run_commands = ''
+  post_run_commands = '',
+  application_id = ''
 }: DeployConfigureProps) => {
-  const { validateEnvVar, form, onSubmit, domains, parsePort } = useCreateDeployment({
-    application_name,
-    environment,
-    branch,
-    port,
-    domain,
-    repository: repository || '',
-    build_pack,
-    env_variables,
+  const { validateEnvVar, form, onSubmit, isLoading, domains } = useUpdateDeployment({
+    name: application_name,
+    pre_run_command: pre_run_commands,
+    post_run_command: post_run_commands,
     build_variables,
-    pre_run_commands,
-    post_run_commands
+    environment_variables: env_variables,
+    port: parsePort(port) || 3000,
+    force: true,
+    id: application_id
   });
 
   return (
@@ -56,30 +56,9 @@ export const DeployConfigureForm = ({
           <FormInputField
             form={form}
             label="Application Name"
-            name="application_name"
+            name="name"
             description="Application name"
             placeholder="Application name"
-          />
-          <FormSelectField
-            form={form}
-            label="Environment"
-            name="environment"
-            description="Environments helps you deploy to different spaces"
-            placeholder="Environment"
-            selectOptions={[
-              { label: 'Staging', value: 'staging' },
-              { label: 'Production', value: 'production' },
-              { label: 'Development', value: 'development' }
-            ]}
-          />
-        </div>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <FormInputField
-            form={form}
-            label="Branch"
-            name="branch"
-            description="Branch from where you want to deploy"
-            placeholder="Branch"
           />
           <FormInputField
             form={form}
@@ -90,33 +69,12 @@ export const DeployConfigureForm = ({
             validator={(value) => parsePort(value) !== null}
           />
         </div>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <FormSelectField
-            form={form}
-            label="Domain"
-            name="domain"
-            description="Domain on which your application will be available"
-            placeholder="Domain"
-            selectOptions={domains?.map((domain) => ({ label: domain.name, value: domain.id }))}
-          />
-          <FormSelectField
-            form={form}
-            label="Build Pack"
-            name="build_pack"
-            description="Choose the one that best fits your application structure"
-            placeholder="Build Pack"
-            selectOptions={[
-              { label: 'Dockerfile', value: BuildPack.Dockerfile },
-              { label: 'DockerCompose', value: BuildPack.DockerCompose },
-              { label: 'Static', value: BuildPack.Static }
-            ]}
-          />
-        </div>
+
         <div className="grid sm:grid-cols-2 gap-4">
           <FormSelectTagInputField
             form={form}
             label="Environment Variables"
-            name="env_variables"
+            name="environment_variables"
             description="Type KEY=VALUE and press Enter to add"
             placeholder="NODE_ENV=production"
             required={false}
@@ -134,11 +92,12 @@ export const DeployConfigureForm = ({
             defaultValues={build_variables}
           />
         </div>
+
         <div className="grid sm:grid-cols-2 gap-4">
           <FormInputField
             form={form}
             label="Pre Run Commands"
-            name="pre_run_commands"
+            name="pre_run_command"
             description="Commands to run before deployment"
             placeholder="npm install"
             required={false}
@@ -146,13 +105,42 @@ export const DeployConfigureForm = ({
           <FormInputField
             form={form}
             label="Post Run Commands"
-            name="post_run_commands"
+            name="post_run_command"
             description="Commands to run after deployment"
             placeholder="npm run test"
             required={false}
           />
         </div>
-        <Button className="w-full cursor-pointer">Deploy</Button>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Environment</label>
+            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">{environment}</div>
+            <p className="text-sm text-muted-foreground">Environment of the deployment</p>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Branch</label>
+            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">{branch}</div>
+            <p className="text-sm text-muted-foreground">Branch from where you want to deploy</p>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Domain</label>
+            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">{domains?.find((dm: Domain) => dm.id === domain)?.name}</div>
+            <p className="text-sm text-muted-foreground">Domain on which your application is available</p>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Build Pack</label>
+            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">{build_pack}</div>
+            <p className="text-sm text-muted-foreground">Build pack used for the application</p>
+          </div>
+        </div>
+
+        <Button type="submit" className="w-full cursor-pointer" disabled={isLoading}>
+          {isLoading ? 'Updating...' : 'Update Deployment'}
+        </Button>
       </form>
     </Form>
   );

@@ -11,6 +11,7 @@ import (
 // GitClient defines the interface for git operations
 type GitClient interface {
 	Clone(repoURL, destinationPath string) error
+	Pull(repoURL, destinationPath string) error
 }
 
 // DefaultGitClient is the default implementation of GitClient
@@ -31,6 +32,16 @@ func (g *DefaultGitClient) Clone(repoURL, destinationPath string) error {
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("git clone failed: %s, output: %s", err.Error(), string(output))
+	}
+	return nil
+}
+
+func (g *DefaultGitClient) Pull(repoURL, destinationPath string) error {
+	cmd := exec.Command("git", "pull", repoURL)
+	cmd.Dir = destinationPath
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("git pull failed: %s, output: %s", err.Error(), string(output))
 	}
 	return nil
 }

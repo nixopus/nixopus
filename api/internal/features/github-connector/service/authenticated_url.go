@@ -47,10 +47,10 @@ func (s *GithubConnectorService) createAuthenticatedRepoURL(repoURL, accessToken
 // Returns:
 //
 //	string - the path to which to clone the repository.
-func (s *GithubConnectorService) getClonePath(userID, environment, repoURL string) string {
+func (s *GithubConnectorService) getClonePath(userID, environment, repoURL, deploymentID string) string {
 	repoName := extractRepoName(repoURL)
 
-	clonePath := filepath.Join(repoBaseURL, userID, environment, repoName)
+	clonePath := filepath.Join(repoBaseURL, userID, environment, deploymentID, repoName)
 
 	os.MkdirAll(filepath.Dir(clonePath), 0755)
 

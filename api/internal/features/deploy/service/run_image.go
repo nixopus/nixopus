@@ -12,15 +12,6 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-type RunImageConfig struct {
-	applicationID         uuid.UUID
-	imageName             string
-	environment_variables map[string]string
-	port_str              string
-	statusID              uuid.UUID
-	deployment_config     *shared_types.ApplicationDeployment
-}
-
 // Generic helper functions for error handling and logging
 func (s *DeployService) logAndReturnError(
 	applicationID uuid.UUID,
@@ -109,51 +100,52 @@ func (s *DeployService) prepareNetworkConfig() network.NetworkingConfig {
 }
 
 // RunImage runs a Docker container from the specified image
-func (s *DeployService) RunImage(r RunImageConfig) (string, error) {
-	if r.imageName == "" {
+func (s *DeployService) RunImage(r DeployerConfig) (string, error) {
+	if r.application.Name == "" {
 		return "", types.ErrMissingImageName
 	}
 
-	s.logger.Log(logger.Info, types.LogRunningContainerFromImage, r.imageName)
-	s.formatLog(r.applicationID, r.deployment_config.ID, types.LogPreparingToRunContainer, r.imageName)
-	s.updateStatus(r.applicationID, shared_types.Deploying, r.statusID)
+	s.logger.Log(logger.Info, types.LogRunningContainerFromImage, r.application.Name)
+	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogPreparingToRunContainer, r.application.Name)
+	s.updateStatus(r.deployment_config.ID, shared_types.Deploying, r.appStatus.ID)
 
-	port, _ := nat.NewPort("tcp", r.port_str)
+	port_str := fmt.Sprintf("%d", r.application.Port)
+	port, _ := nat.NewPort("tcp", port_str)
 
 	var env_vars []string
-	for k, v := range r.environment_variables {
+	for k, v := range GetMapFromString(r.application.EnvironmentVariables) {
 		env_vars = append(env_vars, fmt.Sprintf("%s=%s", k, v))
 	}
 
-	logEnvVars := s.sanitizeEnvVars(r.environment_variables)
-	s.formatLog(r.applicationID, r.deployment_config.ID, types.LogEnvironmentVariables, logEnvVars)
-	s.formatLog(r.applicationID, r.deployment_config.ID, types.LogContainerExposingPort, r.port_str)
+	logEnvVars := s.sanitizeEnvVars(GetMapFromString(r.application.EnvironmentVariables))
+	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogEnvironmentVariables, logEnvVars)
+	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogContainerExposingPort, port_str)
 
 	container_config := s.prepareContainerConfig(
-		r.imageName,
+		r.application.Name,
 		port,
 		env_vars,
-		r.applicationID.String(),
+		r.application.ID.String(),
 	)
-	host_config := s.prepareHostConfig(port, r.port_str)
+	host_config := s.prepareHostConfig(port, port_str)
 	network_config := s.prepareNetworkConfig()
 
-	s.formatLog(r.applicationID, r.deployment_config.ID, types.LogCreatingContainer)
-	resp, err := s.dockerRepo.CreateContainer(container_config, host_config, network_config, r.imageName)
+	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogCreatingContainer)
+	resp, err := s.dockerRepo.CreateContainer(container_config, host_config, network_config, r.application.Name)
 	if err != nil {
-		return s.logAndReturnError(r.applicationID, r.deployment_config.ID, types.LogFailedToCreateContainer, err)
+		return s.logAndReturnError(r.application.ID, r.deployment_config.ID, types.LogFailedToCreateContainer, err)
 	}
-	s.formatLog(r.applicationID, r.deployment_config.ID, types.LogContainerCreated, resp.ID)
+	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogContainerCreated, resp.ID)
 
-	s.formatLog(r.applicationID, r.deployment_config.ID, types.LogStartingContainer)
+	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogStartingContainer)
 	err = s.dockerRepo.StartContainer(resp.ID, container.StartOptions{})
 	if err != nil {
-		return s.logAndReturnError(r.applicationID, r.deployment_config.ID, types.LogFailedToStartContainer, err)
+		return s.logAndReturnError(r.application.ID, r.deployment_config.ID, types.LogFailedToStartContainer, err)
 	}
-	s.formatLog(r.applicationID, r.deployment_config.ID, types.LogContainerStartedSuccessfully)
+	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogContainerStartedSuccessfully)
 
 	log_collection_config := ContainerLogCollection{
-		r.applicationID,
+		r.application.ID,
 		resp.ID,
 		r.deployment_config,
 	}

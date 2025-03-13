@@ -7,6 +7,7 @@ import DeploymentsList from '../../components/application-details/deploymentsLis
 import useApplicationDetails from '../../hooks/use_application_details';
 import { DeployConfigureForm } from '../../components/application-details/configuration';
 import { BuildPack, Environment } from '@/redux/types/deploy-form';
+import ApplicationDetailsHeader from '../../components/application-details/header';
 
 function Page() {
   const { application, currentPage, setCurrentPage } = useApplicationDetails();
@@ -37,7 +38,8 @@ function Page() {
     : {};
 
   return (
-    <div className="container mx-auto py-6 space-y-8 max-w-4xl mt-10">
+    <div className="container mx-auto py-6 space-y-8 max-w-4xl 2xl:max-w-7xl">
+      <ApplicationDetailsHeader application={application} />
       <Tabs defaultValue="monitoring" className="w-full">
         <TabsList>
           <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
@@ -61,6 +63,7 @@ function Page() {
             repository={application?.repository}
             pre_run_commands={application?.pre_run_command}
             post_run_commands={application?.post_run_command}
+            application_id={application?.id}
           />
         </TabsContent>
         <TabsContent value="logs" className="mt-6">
@@ -72,7 +75,7 @@ function Page() {
           />
         </TabsContent>
         <TabsContent value="monitoring" className="mt-6">
-          <Monitor />
+          <Monitor application={application} />
         </TabsContent>
       </Tabs>
     </div>

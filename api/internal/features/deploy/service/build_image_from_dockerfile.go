@@ -17,44 +17,18 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-type BuildImageFromDockerFile struct {
-	applicationID     uuid.UUID
-	contextPath       string
-	dockerfile        string
-	force             bool
-	buildArgs         map[string]*string
-	labels            map[string]string
-	image_name        string
-	statusID          uuid.UUID
-	deployment_config *shared_types.ApplicationDeployment
-}
-
-// buildImageFromDockerfile builds a Docker image from the specified Dockerfile and context path.
-//
-// This function logs the start of the Docker image build process, creates a build context archive
-// from the provided context path, and generates Docker build options using the specified parameters.
-// It then calls the Docker service to build the image and processes the build output logs. Upon
-// successful completion, it logs the successful build and returns the image name.
-//
-// Parameters:
-//
-//	b - a BuildImageFromDockerFile struct containing the application ID, context path, Dockerfile path,
-//	    build arguments, labels, image name, status ID, and deployment configuration.
-//
-// Returns:
-//
-//	string - the name of the built Docker image.
-//	error - an error if the build process fails at any step, otherwise nil.
-func (s *DeployService) buildImageFromDockerfile(b BuildImageFromDockerFile) (string, error) {
-	s.addLog(b.applicationID, types.LogStartingDockerImageBuild, b.deployment_config.ID)
-	s.updateStatus(b.applicationID, shared_types.Building, b.statusID)
+// buildImageFromDockerfile builds a Docker image from a Dockerfile using the provided DeployerConfig. It logs
+// the deployment status and image build output to the database, and returns the name of the built image.
+func (s *DeployService) buildImageFromDockerfile(b DeployerConfig) (string, error) {
+	s.addLog(b.application.ID, types.LogStartingDockerImageBuild, b.deployment_config.ID)
+	s.updateStatus(b.deployment_config.ID, shared_types.Building, b.appStatus.ID)
 
 	archive, err := s.createBuildContextArchive(b.contextPath)
 	if err != nil {
 		return "", err
 	}
 
-	dockerfile_path := filepath.Base(b.dockerfile)
+	dockerfile_path := filepath.Base("Dockerfile") // TODO: Add support for custom Dockerfile
 	buildOptions := s.createBuildOptions(b, dockerfile_path)
 	resp, err := s.dockerRepo.BuildImage(buildOptions, archive)
 	if err != nil {
@@ -64,7 +38,7 @@ func (s *DeployService) buildImageFromDockerfile(b BuildImageFromDockerFile) (st
 
 	logReader := &LogReader{
 		Reader:            resp.Body,
-		ApplicationID:     b.applicationID,
+		ApplicationID:     b.application.ID,
 		DeployService:     s,
 		deployment_config: b.deployment_config,
 	}
@@ -74,23 +48,13 @@ func (s *DeployService) buildImageFromDockerfile(b BuildImageFromDockerFile) (st
 		return "", err
 	}
 
-	s.addLog(b.applicationID, types.LogDockerImageBuiltSuccessfully, b.deployment_config.ID)
-	return b.image_name, nil
+	s.addLog(b.application.ID, types.LogDockerImageBuiltSuccessfully, b.deployment_config.ID)
+	return b.application.Name, nil
 }
 
-// createBuildContextArchive creates a tar archive from the specified build context path.
-// It uses the Docker archive package to generate the tar file from the provided directory,
-// returning an io.Reader for the tar archive. If an error occurs during the tar creation,
-// it returns an error with a descriptive message.
-//
-// Parameters:
-//
-//	contextPath - the path to the build context directory to be archived.
-//
-// Returns:
-//
-//	io.Reader - a reader for the created tar archive.
-//	error - an error if the tar creation fails, otherwise nil.
+
+// createBuildContextArchive creates a tar archive of the build context at the provided path.
+// It returns the archive as an io.Reader and an error if the archive creation fails.
 func (s *DeployService) createBuildContextArchive(contextPath string) (io.Reader, error) {
 	buildContextTar, err := archive.TarWithOptions(contextPath, &archive.TarOptions{})
 	if err != nil {
@@ -99,30 +63,50 @@ func (s *DeployService) createBuildContextArchive(contextPath string) (io.Reader
 	return buildContextTar, nil
 }
 
-// createBuildOptions creates a Docker image build options struct from the provided BuildImageFromDockerFile
-// and Dockerfile path. It populates the struct with the build context path, sets the Dockerfile path,
-// enables removal of intermediate containers, tags the image with the provided name and latest tag,
-// enables force removal of build cache when the force flag is set, and sets the build arguments and labels.
-//
-// Parameters:
-//
-//	b - the BuildImageFromDockerFile containing the build configuration.
-//	dockerfile_path - the path to the Dockerfile to use for the build.
-//
-// Returns:
-//
-//	docker_types.ImageBuildOptions - the populated image build options struct.
-func (s *DeployService) createBuildOptions(b BuildImageFromDockerFile, dockerfile_path string) docker_types.ImageBuildOptions {
+// createBuildOptions creates a docker_types.ImageBuildOptions struct based on the provided DeployerConfig.
+// The returned ImageBuildOptions include the following settings:
+// - Dockerfile: the path to the Dockerfile
+// - Remove: true, to remove intermediate containers
+// - Tags: two tags, one for the latest version of the image and one for the deployment-specific version
+// - NoCache: true if the force flag is set in the deployment config, false otherwise
+// - ForceRemove: true if the force flag is set in the deployment config, false otherwise
+// - BuildArgs: a map of build variables extracted from the deployment request
+// - Labels: a map of environment variables extracted from the deployment request
+// - BuildID: a unique identifier for the build
+func (s *DeployService) createBuildOptions(b DeployerConfig, dockerfile_path string) docker_types.ImageBuildOptions {
 	return docker_types.ImageBuildOptions{
 		Dockerfile:  dockerfile_path,
 		Remove:      true,
-		Tags:        []string{fmt.Sprintf("%s:latest", b.image_name)},
-		NoCache:     b.force,
-		ForceRemove: b.force,
-		BuildArgs:   b.buildArgs,
-		Labels:      b.labels,
+		Tags:        []string{fmt.Sprintf("%s:latest", b.application.Name), fmt.Sprintf("%s-%s", b.application.Name, b.deployment_config.ID)},
+		NoCache:     b.deployment.Force,
+		ForceRemove: b.deployment.Force,
+		BuildArgs:   s.prepareBuildArgs(b),
+		Labels:      s.prepareEnvironmentVariables(b),
 		BuildID:     uuid.New().String(),
 	}
+}
+
+// prepareBuildArgs takes a DeployerConfig and returns a map of build arguments extracted from the build variables
+// specified in the deployment request. The returned map has the same keys as the build variables, and the values
+// are pointers to the same strings as the build variables. This is because the docker build options requires
+// the build arguments to be pointers to strings.
+func (s *DeployService) prepareBuildArgs(d DeployerConfig) map[string]*string {
+	buildArgs := make(map[string]*string)
+	for k, v := range GetMapFromString(d.application.BuildVariables) {
+		value := v
+		buildArgs[k] = &value
+	}
+	return buildArgs
+}
+
+// prepareEnvironmentVariables takes a DeployerConfig and returns a map of environment variables extracted from the deployment request.
+// The returned map has the same keys as the environment variables, and the values are the same strings as the environment variables.
+func (s *DeployService) prepareEnvironmentVariables(d DeployerConfig) map[string]string {
+	labels := make(map[string]string)
+	for k, v := range GetMapFromString(d.application.EnvironmentVariables) {
+		labels[k] = v
+	}
+	return labels
 }
 
 // processBuildOutput reads the build output stream from the provided LogReader and

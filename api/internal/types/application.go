@@ -107,3 +107,18 @@ const (
 	DockerCompose BuildPack = "docker-compose"
 	Static        BuildPack = "static"
 )
+
+
+type DeploymentRequestConfig struct {
+	Type              DeploymentType `json:"type"`
+	Force             bool           `json:"force"`
+	ForceWithoutCache bool           `json:"force_without_cache"`
+}
+
+type DeploymentType string
+
+const (
+	DeploymentTypeCreate   = "create"
+	DeploymentTypeUpdate   = "update"
+	DeploymentTypeReDeploy = "redeploy"
+)

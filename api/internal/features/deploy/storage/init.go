@@ -26,6 +26,7 @@ type DeployRepository interface {
 	AddApplicationDeployment(deployment *shared_types.ApplicationDeployment) error
 	AddApplicationDeploymentStatus(deployment_status *shared_types.ApplicationDeploymentStatus) error
 	UpdateApplicationDeploymentStatus(applicationStatus *shared_types.ApplicationDeploymentStatus) error
+	UpdateApplication(application *shared_types.Application) error
 }
 
 func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
@@ -73,6 +74,16 @@ func (s *DeployStorage) AddApplication(application *shared_types.Application) er
 	return nil
 }
 
+func (s *DeployStorage) UpdateApplication(application *shared_types.Application) error {
+	_, err := s.DB.NewUpdate().
+		Model(application).
+		OmitZero().
+		WherePK().
+		Exec(s.Ctx)
+
+	return err
+}
+
 func (s *DeployStorage) AddApplicationDeployment(deployment *shared_types.ApplicationDeployment) error {
 	_, err := s.DB.NewInsert().Model(deployment).Exec(s.Ctx)
 	if err != nil {
@@ -90,7 +101,7 @@ func (s *DeployStorage) AddApplicationDeploymentStatus(deployment_status *shared
 }
 
 func (s *DeployStorage) UpdateApplicationDeploymentStatus(applicationStatus *shared_types.ApplicationDeploymentStatus) error {
-	_, err := s.DB.NewUpdate().Model(applicationStatus).Where("id = ?", applicationStatus.ID).Exec(s.Ctx)
+	_, err := s.DB.NewUpdate().Model(applicationStatus).Where("id = ?", applicationStatus.ID).OmitZero().Exec(s.Ctx)
 	if err != nil {
 		return err
 	}
@@ -160,7 +171,7 @@ func (s *DeployStorage) GetApplicationById(id string) (shared_types.Application,
 		Relation("Logs").
 		Relation("Domain").
 		Relation("Deployments").
-		Where("application_id = ?", id).
+		Where("a.id = ?", id).
 		Scan(s.Ctx)
 
 	if err != nil {
