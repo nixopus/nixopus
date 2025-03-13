@@ -77,6 +77,7 @@ func createDeploymentConfig(application shared_types.Application) shared_types.A
 	deployment_config := shared_types.ApplicationDeployment{
 		ID:            uuid.New(),
 		ApplicationID: application.ID,
+		CommitHash:    "", // Initialize with an empty string
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
@@ -117,7 +118,7 @@ func createDeploymentStatus(ApplicationDeploymentID uuid.UUID) shared_types.Appl
 
 // createAndPrepareDeployment handles the common logic for creating, updating, and redeploying applications
 // It creates or updates application records, deployment configs, logs, and statuses
-func (s *DeployService) createAndPrepareDeployment(application shared_types.Application,d shared_types.DeploymentRequestConfig) (*shared_types.DeploymentRequestConfig, shared_types.ApplicationDeploymentStatus, shared_types.ApplicationDeployment, error) {
+func (s *DeployService) createAndPrepareDeployment(application shared_types.Application, d shared_types.DeploymentRequestConfig) (*shared_types.DeploymentRequestConfig, shared_types.ApplicationDeploymentStatus, shared_types.ApplicationDeployment, error) {
 	deployment_config := createDeploymentConfig(application)
 	appLogs := createAppLogs(application, deployment_config.ID)
 	deployment_status := createDeploymentStatus(deployment_config.ID)

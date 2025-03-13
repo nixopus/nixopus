@@ -16,7 +16,7 @@ func (s *DeployService) CreateDeployment(deployment *types.CreateDeploymentReque
 	application := createApplicationFromDeploymentRequest(deployment, userID, nil)
 
 	deployRequest, deployStatus, deployment_config, err := s.createAndPrepareDeployment(application, shared_types.DeploymentRequestConfig{
-		Type:              shared_types.DeploymentTypeReDeploy,
+		Type:              shared_types.DeploymentTypeCreate,
 		Force:             false,
 		ForceWithoutCache: false,
 	})
@@ -50,7 +50,7 @@ func (s *DeployService) UpdateDeployment(deployment *types.UpdateDeploymentReque
 	application = createApplicationFromExistingApplicationAndUpdateRequest(application, deployment)
 
 	deployRequest, deployStatus, deployment_config, err := s.createAndPrepareDeployment(application, shared_types.DeploymentRequestConfig{
-		Type:              shared_types.DeploymentTypeReDeploy,
+		Type:              shared_types.DeploymentTypeUpdate,
 		Force:             false,
 		ForceWithoutCache: false,
 	})
@@ -136,6 +136,7 @@ func (s *DeployService) StartDeploymentInBackground(
 		Environment:    string(d.application.Environment),
 		DeploymentID:   d.deployment_config.ID.String(),
 		DeploymentType: string(d.deployment.Type),
+		Branch:         d.application.Branch,
 	}
 
 	repoPath, err := s.github_service.CloneRepository(cloneRepositoryConfig)

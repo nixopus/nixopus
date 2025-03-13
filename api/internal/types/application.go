@@ -34,14 +34,14 @@ type Application struct {
 
 type ApplicationDeployment struct {
 	bun.BaseModel `bun:"table:application_deployment,alias:ad" swaggerignore:"true"`
-	ID            uuid.UUID `json:"id" bun:"id,pk,type:uuid"`
-	ApplicationID uuid.UUID `json:"application_id" bun:"application_id,notnull,type:uuid"`
-	CreatedAt     time.Time `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
-	UpdatedAt     time.Time `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
-
-	Application *Application                 `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
-	Status      *ApplicationDeploymentStatus `json:"status,omitempty" bun:"rel:has-one,join:id=application_deployment_id"`
-	Logs        []*ApplicationLogs           `json:"logs,omitempty" bun:"rel:has-many,join:id=application_deployment_id"`
+	ID            uuid.UUID                    `json:"id" bun:"id,pk,type:uuid"`
+	ApplicationID uuid.UUID                    `json:"application_id" bun:"application_id,notnull,type:uuid"`
+	CreatedAt     time.Time                    `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
+	UpdatedAt     time.Time                    `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
+	CommitHash    string                       `json:"commit_hash" bun:"commit_hash,nullable"`
+	Application   *Application                 `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
+	Status        *ApplicationDeploymentStatus `json:"status,omitempty" bun:"rel:has-one,join:id=application_deployment_id"`
+	Logs          []*ApplicationLogs           `json:"logs,omitempty" bun:"rel:has-many,join:id=application_deployment_id"`
 }
 
 type ApplicationStatus struct {

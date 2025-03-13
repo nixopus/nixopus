@@ -42,17 +42,25 @@ func (s *GithubConnectorService) createAuthenticatedRepoURL(repoURL, accessToken
 //
 //	userID - the ID of the user whose repository to clone.
 //	environment - the environment name to clone the repository to.
-//	repoURL - the URL of the repository to clone.
+//	deploymentID - the ID of the deployment.
+//	latestCommitHash - the hash of the latest commit.
 //
 // Returns:
 //
 //	string - the path to which to clone the repository.
-func (s *GithubConnectorService) getClonePath(userID, environment, repoURL, deploymentID string) string {
-	repoName := extractRepoName(repoURL)
+//	string - the context information path.
+//	bool - whether to pull the repository instead of cloning.
+func (s *GithubConnectorService) getClonePath(userID, environment, deploymentID, latestCommitHash string) (string, bool, error) {
+	clonePath := filepath.Join(repoBaseURL, userID, environment)
+	var shouldPull bool
 
-	clonePath := filepath.Join(repoBaseURL, userID, environment, deploymentID, repoName)
+	if _, err := os.Stat(clonePath); err == nil {
+		shouldPull = true
+	}
 
-	os.MkdirAll(filepath.Dir(clonePath), 0755)
+	if err := os.MkdirAll(clonePath, 0755); err != nil {
+		return "", false, err
+	}
 
-	return clonePath
+	return clonePath, shouldPull, nil
 }

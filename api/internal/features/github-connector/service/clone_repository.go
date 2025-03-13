@@ -12,6 +12,7 @@ type CloneRepositoryConfig struct {
 	Environment    string
 	DeploymentID   string
 	DeploymentType string
+	Branch         string
 }
 
 // CloneRepository clones the specified repository for the given user and environment.
@@ -28,6 +29,7 @@ type CloneRepositoryConfig struct {
 // If any errors occur during the process, the method logs the error and
 // returns the error.
 func (s *GithubConnectorService) CloneRepository(c CloneRepositoryConfig) (string, error) {
+	// we have to optimize the code here
 	_, repo_url, err := s.GetRepositoryDetailsFromId(c.RepoID, c.UserID)
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("Failed to get repository details: %s", err.Error()), "")
@@ -63,20 +65,37 @@ func (s *GithubConnectorService) CloneRepository(c CloneRepositoryConfig) (strin
 		return "", err
 	}
 
-	clonePath := s.getClonePath(c.UserID, c.Environment, repo_url, c.DeploymentID)
+	latestCommitHash, err := s.gitClient.GetLatestCommitHash(repo_url, accessToken)
 
-	// If deployment type is not provided, default to "create"
-	if c.DeploymentType == "" {
-		c.DeploymentType = "create"
-	}
-
-	err = s.gitClient.Clone(authenticatedURL, clonePath)
 	if err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("Failed to clone repository: %s", err.Error()), "")
+		s.logger.Log(logger.Error, fmt.Sprintf("Failed to get latest commit hash: %s", err.Error()), "")
 		return "", err
 	}
 
-	s.logger.Log(logger.Info, fmt.Sprintf("Successfully cloned repository %s", repo_url), c.UserID)
+	clonePath, should_pull, err := s.getClonePath(c.UserID, c.Environment, c.DeploymentID, latestCommitHash)
+
+	if err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("Failed to get clone path: %s", err.Error()), "")
+		return "", err
+	}
+
+	if !should_pull {
+		s.logger.Log(logger.Info, "Cloning repository", c.UserID)
+		err = s.gitClient.Clone(authenticatedURL, clonePath)
+		if err != nil {
+			s.logger.Log(logger.Error, fmt.Sprintf("Failed to clone repository: %s", err.Error()), "")
+			return "", err
+		}
+	} else {
+		s.logger.Log(logger.Info, "Pulling repository", c.UserID)
+		err = s.gitClient.Pull(authenticatedURL, clonePath)
+		if err != nil {
+			s.logger.Log(logger.Error, fmt.Sprintf("Failed to pull repository: %s", err.Error()), "")
+			return "", err
+		}
+	}
+
+	s.logger.Log(logger.Info, fmt.Sprintf("Context loaded successfully %s", repo_url), c.UserID)
 	return clonePath, nil
 }
 
