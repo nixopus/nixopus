@@ -1,3 +1,4 @@
+import { getToken } from '@/lib/auth';
 import { WEBSOCKET_URL } from '@/redux/conf';
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 
@@ -24,7 +25,7 @@ interface WebSocketProviderProps {
 
 export const WebSocketProvider = ({
   children,
-  url = WEBSOCKET_URL + '?token=' + localStorage.getItem('token'),
+  url = WEBSOCKET_URL + '?token=' + getToken(),
   reconnectInterval = 3000,
   maxReconnectAttempts = 5
 }: WebSocketProviderProps) => {
@@ -89,7 +90,7 @@ export const WebSocketProvider = ({
       };
 
       socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        // console.error('WebSocket error:', error);
         isConnectingRef.current = false;
       };
 

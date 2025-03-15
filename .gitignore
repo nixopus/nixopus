@@ -2,3 +2,4 @@ api/.env
 api/tmp
 api/bin
 .env
+data

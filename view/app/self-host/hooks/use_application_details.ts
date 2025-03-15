@@ -15,10 +15,38 @@ function useApplicationDetails() {
     sendJsonMessage(SubscribeToTopic(id as string, SOCKET_EVENTS.MONITOR_APPLICATION_DEPLOYMENT));
   }, []);
 
+
+  const parseEnvVariables = (variablesString: string | undefined): Record<string, string> => {
+    if (!variablesString) return {};
+
+    try {
+      return variablesString
+        .split(/\s+/)
+        .filter((pair) => pair.includes('='))
+        .reduce<Record<string, string>>((acc, curr) => {
+          const [key, value] = curr.split('=');
+          return key && value ? { ...acc, [key]: value } : acc;
+        }, {});
+    } catch (error) {
+      console.error('Error parsing variables:', error);
+      return {};
+    }
+  };
+
+  const envVariables = application?.environment_variables
+    ? parseEnvVariables(application.environment_variables)
+    : {};
+
+  const buildVariables = application?.build_variables
+    ? parseEnvVariables(application.build_variables)
+    : {};
+
   return {
     currentPage,
     setCurrentPage,
-    application
+    application,
+    envVariables,
+    buildVariables
   };
 }
 

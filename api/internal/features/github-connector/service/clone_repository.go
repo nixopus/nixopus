@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type CloneRepositoryConfig struct {
@@ -28,7 +29,7 @@ type CloneRepositoryConfig struct {
 //
 // If any errors occur during the process, the method logs the error and
 // returns the error.
-func (s *GithubConnectorService) CloneRepository(c CloneRepositoryConfig) (string, error) {
+func (s *GithubConnectorService) CloneRepository(c CloneRepositoryConfig, commitHash *string) (string, error) {
 	// we have to optimize the code here
 	_, repo_url, err := s.GetRepositoryDetailsFromId(c.RepoID, c.UserID)
 	if err != nil {
@@ -59,39 +60,53 @@ func (s *GithubConnectorService) CloneRepository(c CloneRepositoryConfig) (strin
 		return "", err
 	}
 
-	authenticatedURL, err := s.createAuthenticatedRepoURL(repo_url, accessToken)
+	authenticatedURL, err := s.CreateAuthenticatedRepoURL(repo_url, accessToken)
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("Failed to create authenticated URL: %s", err.Error()), "")
 		return "", err
 	}
+	var latestCommitHash string
 
-	latestCommitHash, err := s.gitClient.GetLatestCommitHash(repo_url, accessToken)
+	if commitHash != nil {
+		latestCommitHash = *commitHash
+	} else {
+		latestCommitHash, err = s.gitClient.GetLatestCommitHash(repo_url, accessToken)
+	}
 
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("Failed to get latest commit hash: %s", err.Error()), "")
 		return "", err
 	}
 
-	clonePath, should_pull, err := s.getClonePath(c.UserID, c.Environment, c.DeploymentID, latestCommitHash)
+	clonePath, should_pull, err := s.GetClonePath(c.UserID, c.Environment)
 
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("Failed to get clone path: %s", err.Error()), "")
 		return "", err
 	}
 
-	if !should_pull {
-		s.logger.Log(logger.Info, "Cloning repository", c.UserID)
-		err = s.gitClient.Clone(authenticatedURL, clonePath)
+	if c.DeploymentType == shared_types.DeploymentTypeRollback {
+		s.logger.Log(logger.Info, "Rolling back repository", c.UserID)
+		err = s.gitClient.SetHeadToCommitHash(authenticatedURL, clonePath, latestCommitHash)
 		if err != nil {
-			s.logger.Log(logger.Error, fmt.Sprintf("Failed to clone repository: %s", err.Error()), "")
+			s.logger.Log(logger.Error, fmt.Sprintf("Failed to rollback repository: %s", err.Error()), "")
 			return "", err
 		}
 	} else {
-		s.logger.Log(logger.Info, "Pulling repository", c.UserID)
-		err = s.gitClient.Pull(authenticatedURL, clonePath)
-		if err != nil {
-			s.logger.Log(logger.Error, fmt.Sprintf("Failed to pull repository: %s", err.Error()), "")
-			return "", err
+		if !should_pull {
+			s.logger.Log(logger.Info, "Cloning repository", c.UserID)
+			err = s.gitClient.Clone(authenticatedURL, clonePath)
+			if err != nil {
+				s.logger.Log(logger.Error, fmt.Sprintf("Failed to clone repository: %s", err.Error()), "")
+				return "", err
+			}
+		} else {
+			s.logger.Log(logger.Info, "Pulling repository", c.UserID)
+			err = s.gitClient.Pull(authenticatedURL, clonePath)
+			if err != nil {
+				s.logger.Log(logger.Error, fmt.Sprintf("Failed to pull repository: %s", err.Error()), "")
+				return "", err
+			}
 		}
 	}
 

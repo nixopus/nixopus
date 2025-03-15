@@ -108,7 +108,6 @@ const (
 	Static        BuildPack = "static"
 )
 
-
 type DeploymentRequestConfig struct {
 	Type              DeploymentType `json:"type"`
 	Force             bool           `json:"force"`
@@ -121,4 +120,5 @@ const (
 	DeploymentTypeCreate   = "create"
 	DeploymentTypeUpdate   = "update"
 	DeploymentTypeReDeploy = "redeploy"
+	DeploymentTypeRollback = "rollback"
 )

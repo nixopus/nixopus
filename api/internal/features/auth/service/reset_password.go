@@ -70,7 +70,7 @@ func (c *AuthService) ResetPassword(user *shared_types.User, reset_password_requ
 // The generated link is valid for 5 minutes.
 func (c *AuthService) GeneratePasswordResetLink(user *shared_types.User) error {
 	c.logger.Log(logger.Info, "generating password reset link", user.Email)
-	token, err := createToken(user.Email, time.Minute*5)
+	token, err := CreateToken(user.Email, time.Minute*5)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToCreateToken.Error(), err.Error())
 		return types.ErrFailedToCreateToken

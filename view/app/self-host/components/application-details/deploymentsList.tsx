@@ -1,10 +1,14 @@
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useRollbackApplicationMutation } from '@/redux/services/deploy/applicationsApi';
 import { ApplicationDeployment } from '@/redux/types/applications';
+import { Redo, Undo } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
 function DeploymentsList({ deployments }: { deployments?: ApplicationDeployment[] }) {
   const router = useRouter();
+  const [rollBackApplication, { isLoading }] = useRollbackApplicationMutation();
 
   const formatDate = (created_at: string) =>
     deployments
@@ -33,19 +37,26 @@ function DeploymentsList({ deployments }: { deployments?: ApplicationDeployment[
       {deployments && deployments.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {deployments.map((deployment) => (
-            <Card key={deployment.id} className="w-full hover:shadow-md transition-shadow" onClick={() => { router.push(`/self-host/application/${deployment.application_id}/deployments/${deployment.id}`) }}>
+            <Card
+              key={deployment.id}
+              className="w-full hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg font-medium">
-                    #{deployment.id.slice(0, 6)}
-                  </CardTitle>
-                  <span className="text-xs px-2 py-1 rounded-full">
-                    {deployment.status?.status || 'Completed'}
-                  </span>
+                  <div className='flex flex-col items-center'>
+                    <CardTitle className="text-lg font-medium">
+                      #{deployment.id.slice(0, 6)}
+                    </CardTitle>
+                    <CardDescription>
+                      <span className="text-xs px-2 py-1 rounded-full">
+                        {deployment.status?.status || 'Completed'}
+                      </span>
+                    </CardDescription>
+                  </div>
+                  <Button size={"icon"} onClick={() => rollBackApplication({ id: deployment.id })}>
+                    <Undo className="h-4 w-4" />
+                  </Button>
                 </div>
-                <CardDescription>
-                  {formatDate(deployment.created_at)}
-                </CardDescription>
+                <CardDescription>{formatDate(deployment.created_at)}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col space-y-1">
@@ -56,6 +67,11 @@ function DeploymentsList({ deployments }: { deployments?: ApplicationDeployment[
                     </span>
                   </div>
                 </div>
+                <Button className='w-full mt-3 cursor-pointer' variant={"secondary"} onClick={() => {
+                  router.push(
+                    `/self-host/application/${deployment.application_id}/deployments/${deployment.id}`
+                  );
+                }}>View</Button>
               </CardContent>
             </Card>
           ))}

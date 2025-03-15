@@ -21,6 +21,17 @@ import (
 func (s *DomainsService) CreateDomain(req types.CreateDomainRequest, userID string) (types.CreateDomainResponse, error) {
 	fmt.Printf("create domain request received: domain_name=%s, user_id=%s\n", req.Name, userID)
 
+	_, err := uuid.Parse(userID)
+	if err != nil {
+		fmt.Printf("invalid user id: user_id=%s\n", userID)
+		return types.CreateDomainResponse{}, types.ErrInvalidUserID
+	}
+
+	if userID == "" {
+		fmt.Printf("invalid user id: user_id=%s\n", userID)
+		return types.CreateDomainResponse{}, types.ErrInvalidUserID
+	}
+
 	existing_domain, err := s.storage.GetDomainByName(req.Name)
 	if err != nil {
 		fmt.Printf("error while retrieving domain: error=%s\n", err.Error())

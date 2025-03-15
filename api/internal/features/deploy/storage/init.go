@@ -2,8 +2,12 @@ package storage
 
 import (
 	"context"
+	"fmt"
+
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -28,6 +32,7 @@ type DeployRepository interface {
 	UpdateApplicationDeploymentStatus(applicationStatus *shared_types.ApplicationDeploymentStatus) error
 	UpdateApplication(application *shared_types.Application) error
 	GetApplicationDeploymentById(deploymentID string) (shared_types.ApplicationDeployment, error)
+	DeleteDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID) error
 }
 
 func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
@@ -173,7 +178,7 @@ func (s *DeployStorage) GetApplicationById(id string) (shared_types.Application,
 			return q.Order("created_at DESC").Limit(100)
 		}).
 		Relation("Domain").
-		Relation("Deployments").
+		Relation("Deployments", func(q *bun.SelectQuery) *bun.SelectQuery { return q.Order("created_at DESC") }).
 		Where("a.id = ?", id).
 		Scan(s.Ctx)
 
@@ -199,4 +204,54 @@ func (s *DeployStorage) GetApplicationDeploymentById(deploymentID string) (share
 	}
 
 	return deployment, nil
+}
+
+func (s *DeployStorage) DeleteDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID) error {
+	var count int
+	err := s.DB.NewSelect().
+		TableExpr("applications").
+		ColumnExpr("count(*)").
+		Where("id = ? AND user_id = ?", deployment.ID, userID).
+		Scan(s.Ctx, &count)
+
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		return fmt.Errorf("application not found or not authorized")
+	}
+
+	_, err = s.DB.NewDelete().
+		Table("application_logs").
+		Where("application_deployment_id IN (SELECT id FROM application_deployment WHERE application_id = ?)", deployment.ID).
+		Exec(s.Ctx)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = s.DB.NewDelete().
+		Table("application_deployment_status").
+		Where("application_deployment_id IN (SELECT id FROM application_deployment WHERE application_id = ?)", deployment.ID).
+		Exec(s.Ctx)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = s.DB.NewDelete().
+		Table("application_deployment").
+		Where("application_id = ?", deployment.ID).
+		Exec(s.Ctx)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = s.DB.NewDelete().
+		Table("applications").
+		Where("id = ?", deployment.ID).
+		Exec(s.Ctx)
+	return err
 }

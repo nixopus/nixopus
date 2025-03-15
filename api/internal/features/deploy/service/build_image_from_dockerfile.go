@@ -52,7 +52,6 @@ func (s *DeployService) buildImageFromDockerfile(b DeployerConfig) (string, erro
 	return b.application.Name, nil
 }
 
-
 // createBuildContextArchive creates a tar archive of the build context at the provided path.
 // It returns the archive as an io.Reader and an error if the archive creation fails.
 func (s *DeployService) createBuildContextArchive(contextPath string) (io.Reader, error) {
@@ -71,18 +70,18 @@ func (s *DeployService) createBuildContextArchive(contextPath string) (io.Reader
 // - NoCache: true if the force flag is set in the deployment config, false otherwise
 // - ForceRemove: true if the force flag is set in the deployment config, false otherwise
 // - BuildArgs: a map of build variables extracted from the deployment request
-// - Labels: a map of environment variables extracted from the deployment request
+// - Labels: a map of labels extracted from the deployment request
 // - BuildID: a unique identifier for the build
 func (s *DeployService) createBuildOptions(b DeployerConfig, dockerfile_path string) docker_types.ImageBuildOptions {
 	return docker_types.ImageBuildOptions{
 		Dockerfile:  dockerfile_path,
 		Remove:      true,
-		Tags:        []string{fmt.Sprintf("%s:latest", b.application.Name), fmt.Sprintf("%s-%s", b.application.Name, b.deployment_config.ID)},
+		Tags:        []string{fmt.Sprintf("%s:latest", b.application.Name)},
 		NoCache:     b.deployment.Force,
 		ForceRemove: b.deployment.Force,
 		BuildArgs:   s.prepareBuildArgs(b),
-		Labels:      s.prepareEnvironmentVariables(b),
-		BuildID:     uuid.New().String(),
+		Labels:      s.prepareLabels(b),
+		BuildID:     b.deployment_config.ID.String(), // build id is the deployment id
 	}
 }
 
@@ -99,13 +98,13 @@ func (s *DeployService) prepareBuildArgs(d DeployerConfig) map[string]*string {
 	return buildArgs
 }
 
-// prepareEnvironmentVariables takes a DeployerConfig and returns a map of environment variables extracted from the deployment request.
-// The returned map has the same keys as the environment variables, and the values are the same strings as the environment variables.
-func (s *DeployService) prepareEnvironmentVariables(d DeployerConfig) map[string]string {
+func (s *DeployService) prepareLabels(d DeployerConfig) map[string]string {
 	labels := make(map[string]string)
-	for k, v := range GetMapFromString(d.application.EnvironmentVariables) {
-		labels[k] = v
-	}
+	labels["com.application.id"] = d.application.ID.String()
+	labels["com.application.name"] = d.application.Name
+	labels["com.deployment.id"] = d.deployment_config.ID.String()
+	labels["com.commit_hash"] = d.deployment_config.CommitHash
+	labels["com.user_id"] = string(d.application.UserID.String())
 	return labels
 }
 

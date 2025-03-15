@@ -58,6 +58,10 @@ type ReDeployApplicationRequest struct {
 	ForceWithoutCache bool      `json:"force_without_cache"`
 }
 
+type RollbackDeploymentRequest struct {
+	ID uuid.UUID `json:"id"`
+}
+
 var (
 	ErrMissingID                    = errors.New("id is required")
 	ErrInvalidRequestType           = errors.New("invalid request type")
@@ -74,6 +78,10 @@ var (
 	ErrRunDockerImage               = errors.New("failed to run Docker image")
 	ErrDockerComposeNotImplemented  = errors.New("docker compose deployment not implemented yet")
 	ErrMissingImageName             = errors.New("image name is required")
+	ErrFailedToListContainers       = errors.New("failed to list containers")
+	ErrFailedToCreateContainer      = errors.New("failed to create container")
+	ErrFailedToStartNewContainer    = errors.New("failed to start new container")
+	ErrFailedToUpdateContainer      = errors.New("failed to update container")
 )
 
 const (
@@ -110,4 +118,23 @@ const (
 	LogContainerStartedSuccessfully              = "Container started successfully"
 	LogFailedToCreateContainer                   = "Failed to create container: %s"
 	LogFailedToStartContainer                    = "Failed to start container: %s"
+	LogUpdatingContainer                         = "Updating container..."
+	LogPreparingToUpdateContainer                = "Preparing to update container from image %s"
+	LogFoundRunningContainer                     = "Found running container with ID: %s"
+	LogNoRunningContainerFound                   = "No running container found"
+	LogFailedToListContainers                    = "Failed to list containers: %s"
+	LogFailedToUpdateContainer                   = "Failed to update container: %s"
+	LogFailedToStopContainer                     = "Failed to stop container: %s"
+	LogFailedToRemoveContainer                   = "Failed to remove container: %s"
+	LogContainerStoppedSuccessfully              = "Container stopped successfully"
+	LogStartingNewContainer                      = "Starting new container from image"
+	LogCreatingNewContainer                      = "Creating new container..."
+	LogNewContainerCreated                       = "New container created with ID"
+	LogNewContainerStartedSuccessfully           = "New container started successfully"
+	LogFailedToStopOldContainer                  = "Failed to stop old container: %s"
+	LogRemovingOldContainer                      = "Removing old container..."
+	LogOldContainerRemovedSuccessfully           = "Old container removed successfully"
+	LogContainerUpdateCompleted                  = "Container update completed successfully"
+	LogFailedToRemoveOldContainer                = "Failed to remove old container: %s"
+	LogStoppingOldContainer                      = "Stopping old container..."
 )

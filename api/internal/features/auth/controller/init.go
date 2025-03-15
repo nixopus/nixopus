@@ -10,8 +10,11 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/validation"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
+	organization_service "github.com/raghavyuva/nixopus-api/internal/features/organization/service"
 	organization_storage "github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
+	permissions_service "github.com/raghavyuva/nixopus-api/internal/features/permission/service"
 	permissions_storage "github.com/raghavyuva/nixopus-api/internal/features/permission/storage"
+	role_service "github.com/raghavyuva/nixopus-api/internal/features/role/service"
 	role_storage "github.com/raghavyuva/nixopus-api/internal/features/role/storage"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -41,11 +44,13 @@ func NewAuthController(
 	return &AuthController{
 		store:     store,
 		validator: validation.NewValidator(),
-		service: service.NewAuthService(store, ctx, l,
+		service: service.NewAuthService(
 			&storage.UserStorage{DB: store.DB, Ctx: ctx},
-			&permissions_storage.PermissionStorage{DB: store.DB, Ctx: ctx},
-			&role_storage.RoleStorage{DB: store.DB, Ctx: ctx},
-			organization_storage.OrganizationStore{DB: store.DB, Ctx: ctx}),
+			l,
+			permissions_service.NewPermissionService(store, ctx, l, &permissions_storage.PermissionStorage{DB: store.DB, Ctx: ctx}),
+			role_service.NewRoleService(store, ctx, l, &role_storage.RoleStorage{DB: store.DB, Ctx: ctx}),
+			organization_service.NewOrganizationService(store, ctx, l, &organization_storage.OrganizationStore{DB: store.DB, Ctx: ctx}),
+			ctx),
 		ctx:          ctx,
 		logger:       l,
 		notification: notificationManager,

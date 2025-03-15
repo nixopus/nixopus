@@ -13,7 +13,7 @@ import (
 // includes the user's email and an expiration time set to 24 hours from the time
 // of creation. It returns the signed token string or an error if the signing process
 // fails.
-func createToken(email string, duration time.Duration) (string, error) {
+func CreateToken(email string, duration time.Duration) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"email": email,

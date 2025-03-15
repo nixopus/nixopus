@@ -10,32 +10,7 @@ import { BuildPack, Environment } from '@/redux/types/deploy-form';
 import ApplicationDetailsHeader from '../../components/application-details/header';
 
 function Page() {
-  const { application, currentPage, setCurrentPage } = useApplicationDetails();
-
-  const parseEnvVariables = (variablesString: string | undefined): Record<string, string> => {
-    if (!variablesString) return {};
-
-    try {
-      return variablesString
-        .split(/\s+/)
-        .filter(pair => pair.includes('='))
-        .reduce<Record<string, string>>((acc, curr) => {
-          const [key, value] = curr.split('=');
-          return key && value ? { ...acc, [key]: value } : acc;
-        }, {});
-    } catch (error) {
-      console.error('Error parsing variables:', error);
-      return {};
-    }
-  };
-
-  const envVariables = application?.environment_variables
-    ? parseEnvVariables(application.environment_variables)
-    : {};
-
-  const buildVariables = application?.build_variables
-    ? parseEnvVariables(application.build_variables)
-    : {};
+  const { application, currentPage, setCurrentPage, envVariables, buildVariables } = useApplicationDetails();
 
   return (
     <div className="container mx-auto py-6 space-y-8 max-w-4xl 2xl:max-w-7xl">

@@ -40,7 +40,7 @@ func (c *AuthService) Register(registration_request types.RegisterRequest) (type
 		return types.AuthResponse{}, types.ErrFailedToCreateToken
 	}
 
-	accessToken, err := createToken(user.Email, time.Minute*15)
+	accessToken, err := CreateToken(user.Email, time.Minute*15)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToCreateAccessToken.Error(), err.Error())
 		return types.AuthResponse{}, types.ErrFailedToCreateToken

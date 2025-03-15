@@ -115,12 +115,16 @@ export const DeployConfigureForm = ({
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Environment</label>
-            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">{environment}</div>
+            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">
+              {environment}
+            </div>
             <p className="text-sm text-muted-foreground">Environment of the deployment</p>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Branch</label>
-            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">{branch}</div>
+            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">
+              {branch}
+            </div>
             <p className="text-sm text-muted-foreground">Branch from where you want to deploy</p>
           </div>
         </div>
@@ -128,12 +132,18 @@ export const DeployConfigureForm = ({
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Domain</label>
-            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">{domains?.find((dm: Domain) => dm.id === domain)?.name}</div>
-            <p className="text-sm text-muted-foreground">Domain on which your application is available</p>
+            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">
+              {domains?.find((dm: Domain) => dm.id === domain)?.name}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Domain on which your application is available
+            </p>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Build Pack</label>
-            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">{build_pack}</div>
+            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">
+              {build_pack}
+            </div>
             <p className="text-sm text-muted-foreground">Build pack used for the application</p>
           </div>
         </div>

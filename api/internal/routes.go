@@ -183,10 +183,10 @@ func (router *Router) Routes() *mux.Router {
 	deployApplicationApi := deployApi.PathPrefix("/application").Subrouter()
 	deployApplicationApi.HandleFunc("", deployController.HandleDeploy).Methods("POST", "OPTIONS")
 	deployApplicationApi.HandleFunc("", deployController.GetApplicationById).Methods("GET", "OPTIONS")
-	// deployApi.HandleFunc("/application", deployController.DeleteApplication).Methods("DELETE", "OPTIONS")
+	deployApplicationApi.HandleFunc("", deployController.DeleteApplication).Methods("DELETE", "OPTIONS")
 	deployApplicationApi.HandleFunc("", deployController.UpdateApplication).Methods("PUT", "OPTIONS")
 	deployApplicationApi.HandleFunc("/redeploy", deployController.ReDeployApplication).Methods("POST", "OPTIONS")
 	deployApplicationApi.HandleFunc("/deployments/{deployment_id}", deployController.GetDeploymentById).Methods("GET", "OPTIONS")
-
+	deployApplicationApi.HandleFunc("/rollback", deployController.HandleRollback).Methods("POST", "OPTIONS")
 	return r
 }

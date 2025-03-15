@@ -1,17 +1,32 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 )
 
-// UpdateSmtp updates an existing SMTP configuration in the database.
+// UpdateSmtp updates the SMTP configuration.
 //
-// It takes a notification.UpdateSMTPConfigRequest as a parameter,
-// logs an info message to the logger, and calls the storage layer
-// to perform the update operation. It returns an error if the
-// storage operation fails.
-func (s *NotificationService) UpdateSmtp(SMTPConfigs notification.UpdateSMTPConfigRequest) error {
-	s.logger.Log(logger.Info, "Updating SMTP configuration", "")
-	return s.storage.UpdateSmtp(&SMTPConfigs)
+// It validates the input parameters and updates the SMTP configuration in storage.
+// Returns an error if validation fails or if there's an error updating the configuration.
+func (s *NotificationService) UpdateSmtp(config notification.UpdateSMTPConfigRequest) error {
+	if s.storage == nil {
+		return fmt.Errorf("storage layer not initialized")
+	}
+
+	if config.Host == "" {
+		return fmt.Errorf("SMTP host cannot be empty")
+	}
+
+	s.logger.Log(logger.Info, fmt.Sprintf("Updating SMTP configuration: Host=%s", config.Host), "")
+
+	err := s.storage.UpdateSmtp(&config)
+	if err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("Failed to update SMTP configuration: %v", err), "")
+		return fmt.Errorf("failed to update SMTP configuration: %w", err)
+	}
+
+	return nil
 }

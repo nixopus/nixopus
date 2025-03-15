@@ -12,6 +12,7 @@ var (
 	ErrNotAllowed          = errors.New("request not allowed")
 	ErrDomainNameTooLong   = errors.New("domain name too long")
 	ErrDomainNameTooShort  = errors.New("domain name too short")
+	ErrInvalidUserID       = errors.New("invalid user id")
 )
 
 type CreateDomainRequest struct {

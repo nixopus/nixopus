@@ -1,7 +1,12 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQueryWithReauth } from '@/redux/base-query';
 import { DEPLOY } from '@/redux/api-conf';
-import { Application, CreateApplicationRequest, ReDeployApplicationRequest, UpdateDeploymentRequest } from '@/redux/types/applications';
+import {
+  Application,
+  CreateApplicationRequest,
+  ReDeployApplicationRequest,
+  UpdateDeploymentRequest
+} from '@/redux/types/applications';
 
 export const deployApi = createApi({
   reducerPath: 'deployApi',
@@ -75,9 +80,39 @@ export const deployApi = createApi({
       transformResponse: (response: { data: Application }) => {
         return response.data;
       }
+    }),
+    deleteApplication: builder.mutation<null, { id: string }>({
+      query: ({ id }) => ({
+        url: `${DEPLOY.DELETE_APPLICATION}`,
+        body: { id },
+        method: 'DELETE'
+      }),
+      invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: null }) => {
+        return response.data;
+      }
+    }),
+    rollbackApplication: builder.mutation<null, { id: string }>({
+      query: ({ id }) => ({
+        url: `${DEPLOY.ROLLBACK_APPLICATION}`,
+        body: { id },
+        method: 'POST'
+      }),
+      invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: null }) => {
+        return response.data;
+      }
     })
   })
 });
 
-export const { useGetApplicationsQuery, useCreateDeploymentMutation, useGetApplicationByIdQuery, useUpdateDeploymentMutation, useRedeployApplicationMutation, useGetApplicationDeploymentByIdQuery } =
-  deployApi;
+export const {
+  useGetApplicationsQuery,
+  useCreateDeploymentMutation,
+  useGetApplicationByIdQuery,
+  useUpdateDeploymentMutation,
+  useRedeployApplicationMutation,
+  useGetApplicationDeploymentByIdQuery,
+  useDeleteApplicationMutation,
+  useRollbackApplicationMutation
+} = deployApi;

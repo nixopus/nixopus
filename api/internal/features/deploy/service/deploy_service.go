@@ -139,7 +139,8 @@ func (s *DeployService) StartDeploymentInBackground(
 		Branch:         d.application.Branch,
 	}
 
-	repoPath, err := s.github_service.CloneRepository(cloneRepositoryConfig)
+	// we will pass the commit hash to the clone repository function for rollback feature
+	repoPath, err := s.github_service.CloneRepository(cloneRepositoryConfig, &d.deployment_config.CommitHash)
 	if err != nil {
 		handleError(types.LogFailedToCloneRepository, err)
 		return
@@ -162,4 +163,43 @@ func (s *DeployService) StartDeploymentInBackground(
 
 func (s *DeployService) GetDeploymentById(deploymentID string) (shared_types.ApplicationDeployment, error) {
 	return s.storage.GetApplicationDeploymentById(deploymentID)
+}
+
+func (s *DeployService) DeleteDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID) error {
+	return s.storage.DeleteDeployment(deployment, userID)
+}
+
+func (s *DeployService) RollbackDeployment(deployment *types.RollbackDeploymentRequest, userID uuid.UUID) error {
+	deployment_details, err := s.storage.GetApplicationDeploymentById(deployment.ID.String())
+	if err != nil {
+		return err
+	}
+	application_details, err := s.storage.GetApplicationById(string(deployment_details.ApplicationID.String()))
+
+	if err != nil {
+		return err
+	}
+
+	deployStatus := createDeploymentStatus(deployment.ID)
+
+	s.updateStatus(deployment_details.ID, shared_types.Deploying, deployStatus.ID)
+
+	deployRequest := shared_types.DeploymentRequestConfig{
+		Type:              shared_types.DeploymentTypeRollback,
+		Force:             false,
+		ForceWithoutCache: false,
+	}
+
+	deploy_config := DeployerConfig{
+		application:       application_details,
+		deployment:        &deployRequest,
+		userID:            userID,
+		contextPath:       "",
+		appStatus:         deployStatus,
+		deployment_config: &deployment_details,
+	}
+
+	go s.StartDeploymentInBackground(deploy_config)
+
+	return nil
 }

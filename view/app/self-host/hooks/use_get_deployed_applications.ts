@@ -1,8 +1,12 @@
 import { SortOption } from '@/components/sort-selector';
 import { useSearchable } from '@/hooks/use-searchable';
-import { useGetAllGithubConnectorQuery } from '@/redux/services/connector/githubConnectorApi';
+import {
+  useGetAllGithubConnectorQuery,
+  useUpdateGithubConnectorMutation
+} from '@/redux/services/connector/githubConnectorApi';
 import { useGetApplicationsQuery } from '@/redux/services/deploy/applicationsApi';
 import { Application } from '@/redux/types/applications';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 
 /**
@@ -91,6 +95,40 @@ function useGetDeployedApplications() {
     []
   );
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [updateGithubConnector, { isLoading: isUpdatingConnector }] =
+    useUpdateGithubConnectorMutation();
+  const [inGitHubFlow, setInGitHubFlow] = useState(false);
+  const code = searchParams.get('code');
+  const installationId = searchParams.get('installation_id');
+  const showApplications = paginatedApplications?.length > 0 || isLoadingApplications;
+
+  useEffect(() => {
+    if (code) {
+      setInGitHubFlow(true);
+    }
+  }, [code]);
+
+  useEffect(() => {
+    if (installationId) {
+      const githubConnector = async () => {
+        try {
+          await updateGithubConnector({
+            installation_id: installationId
+          });
+          await GetGithubConnectors();
+          setInGitHubFlow(false);
+          router.push('/self-host/create');
+        } catch (error) {
+          console.error('Failed to update GitHub connector:', error);
+          setInGitHubFlow(false);
+        }
+      };
+      githubConnector();
+    }
+  }, [installationId, router, GetGithubConnectors, updateGithubConnector]);
+
   return {
     connectors,
     GetGithubConnectors,
@@ -105,7 +143,10 @@ function useGetDeployedApplications() {
     sortConfig,
     handlePageChange,
     currentPage,
-    totalPages
+    totalPages,
+    router,
+    showApplications,
+    inGitHubFlow
   };
 }
 

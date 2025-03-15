@@ -4,16 +4,23 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-type Validator struct {
-	storage storage.GithubConnectorRepository
+// GithubConnectorRepository defines the interface for the storage dependency
+// This makes it easier to mock in tests
+type GithubConnectorRepository interface {
+	GetAllConnectors(userID string) ([]shared_types.GithubConnector, error)
 }
 
-func NewValidator(storage storage.GithubConnectorRepository) *Validator {
+// Validator handles validation logic for github connector
+type Validator struct {
+	storage GithubConnectorRepository
+}
+
+// NewValidator creates a new validator instance
+func NewValidator(storage GithubConnectorRepository) *Validator {
 	return &Validator{
 		storage: storage,
 	}
@@ -95,7 +102,7 @@ func (v *Validator) validateUpdateGithubConnectorRequest(req types.UpdateGithubC
 		return types.ErrNoConnectors
 	}
 
-	if string(connectors[0].UserID.String()) != user.ID.String() || user.Type != "admin" {
+	if string(connectors[0].UserID.String()) != user.ID.String() && user.Type != "admin" {
 		return types.ErrPermissionDenied
 	}
 
@@ -108,6 +115,6 @@ func (v *Validator) validateUpdateGithubConnectorRequest(req types.UpdateGithubC
 // and stores the result in the provided interface.
 //
 // If the decoding fails, it returns an error.
-func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decoded interface{}) error {
+func (v *Validator) ParseRequestBody(body io.ReadCloser, decoded interface{}) error {
 	return json.NewDecoder(body).Decode(decoded)
 }

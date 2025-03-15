@@ -1,4 +1,4 @@
-"use client"
+'use client';
 import { Application } from '@/redux/types/applications';
 import React from 'react';
 import { DeploymentStatusChart } from './deploymentStatusChart';
@@ -12,7 +12,7 @@ function Monitor({ application }: { application?: Application }) {
 
   return (
     <div className="space-y-6">
-      <div className=''>
+      <div className="">
         <DeploymentStatusChart deployments={deployments} />
       </div>
     </div>

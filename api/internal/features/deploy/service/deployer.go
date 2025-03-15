@@ -66,9 +66,7 @@ func (s *DeployService) buildAndRunDockerImage(d DeployerConfig) error {
 
 	s.logger.Log(logger.Info, types.LogDockerImageBuiltSuccessfully, d.application.Name)
 	s.addLog(d.application.ID, types.LogDockerImageBuiltSuccessfully, d.deployment_config.ID)
-
-	d.application.Name = fmt.Sprintf("%s-%s", d.application.Name, d.deployment_config.ID)
-	containerID, err := s.RunImage(d)
+	containerID, err := s.AtomicUpdateContainer(d)
 	if err != nil {
 		s.addLog(d.application.ID, fmt.Sprintf(types.LogFailedToRunDockerImage, err.Error()), d.deployment_config.ID)
 		return fmt.Errorf("%w: %v", types.ErrRunDockerImage, err)

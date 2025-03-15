@@ -21,7 +21,7 @@ export type Application = {
   user?: User;
   status?: ApplicationStatus;
   logs?: ApplicationLogs[];
-  deployments?: ApplicationDeployment[]
+  deployments?: ApplicationDeployment[];
 };
 
 export type ApplicationStatus = {
@@ -64,7 +64,6 @@ export type ApplicationLogs = {
   application_deployment?: ApplicationDeployment;
   application?: Application;
 };
-
 
 export type Status = 'started' | 'running' | 'stopped' | 'failed';
 

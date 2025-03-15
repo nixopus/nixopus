@@ -1,17 +1,16 @@
-"use client"
+'use client';
 import { useRouter } from 'next/navigation';
-import React, { useEffect } from 'react'
+import React, { useEffect } from 'react';
 
 function page() {
-    const router = useRouter();
-    useEffect(() => {
-        router.push('/self-host')
-      return () => {
-      }
-    }, [])
+  const router = useRouter();
+  useEffect(() => {
+    router.push('/self-host');
+    return () => {};
+  }, []);
 
-  return 
-    <></>
+  return;
+  <></>;
 }
 
-export default page
+export default page;

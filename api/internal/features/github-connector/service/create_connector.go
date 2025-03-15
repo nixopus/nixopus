@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -21,6 +22,11 @@ import (
 //
 // If the connector cannot be created, an error is returned.
 func (s *GithubConnectorService) CreateConnector(connector *types.CreateGithubConnectorRequest, userID string) error {
+	if _, err := uuid.Parse(userID); err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return err
+	}
+
 	new_connector := shared_types.GithubConnector{
 		ID:             uuid.New(),
 		InstallationID: "",

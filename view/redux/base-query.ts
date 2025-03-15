@@ -8,29 +8,10 @@ import {
   FetchBaseQueryError,
   fetchBaseQuery
 } from '@reduxjs/toolkit/query/react';
+import { Mutex } from 'async-mutex';
+import { setAuthTokens } from '@/lib/auth';
 
-export const setTokensToStorage = (token: string, refreshToken?: string, expiresIn?: number) => {
-  if (token) {
-    try {
-      localStorage.setItem('token', token);
-      localStorage.setItem('lastLogin', new Date().toISOString());
-
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken);
-      }
-
-      if (expiresIn) {
-        const expiryTime = Date.now() + expiresIn * 1000;
-        localStorage.setItem('tokenExpiry', expiryTime.toString());
-      }
-    } catch (error) {
-      console.error('Failed to save tokens to localStorage:', error);
-    }
-  }
-};
-
-const LOGOUT = 'auth/logout';
-const SET_CREDENTIALS = 'auth/setCredentials';
+const mutex = new Mutex();
 
 export const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
@@ -45,51 +26,64 @@ export const baseQueryWithReauth: BaseQueryFn<
         headers.set('authorization', `Bearer ${token}`);
       }
       return headers;
-    }
+    },
+    credentials: 'include'
   });
 
+  await mutex.waitForUnlock();
   let result = await baseQuery(args, api, extraOptions);
 
   if (result.error && result.error.status === 401) {
-    console.log('Token expired, attempting refresh');
+    if (!mutex.isLocked()) {
+      const release = await mutex.acquire();
 
-    const refreshToken = (api.getState() as RootState).auth.refreshToken;
+      try {
+        const refreshToken = (api.getState() as RootState).auth.refreshToken;
 
-    if (!refreshToken) {
-      api.dispatch({ type: LOGOUT });
-      return result;
-    }
-
-    const refreshResult = await baseQuery(
-      {
-        url: AUTHURLS.REFRESH_TOKEN,
-        method: 'POST',
-        body: { refresh_token: refreshToken }
-      },
-      api,
-      extraOptions
-    );
-
-    if (refreshResult.data) {
-      const refreshData = refreshResult.data as AuthResponse;
-      setTokensToStorage(
-        refreshData.access_token,
-        refreshData.refresh_token,
-        refreshData.expires_in
-      );
-      api.dispatch({
-        type: SET_CREDENTIALS,
-        payload: {
-          user: null,
-          token: refreshData.access_token,
-          refreshToken: refreshData.refresh_token,
-          expiresIn: refreshData.expires_in
+        if (!refreshToken) {
+          api.dispatch({ type: 'auth/logout' });
+          return result;
         }
-      });
 
-      result = await baseQuery(args, api, extraOptions);
+        const refreshResult = await baseQuery(
+          {
+            url: AUTHURLS.REFRESH_TOKEN,
+            method: 'POST',
+            body: { refresh_token: refreshToken }
+          },
+          api,
+          extraOptions
+        );
+
+        if (refreshResult.data) {
+          const refreshData = refreshResult.data as AuthResponse;
+
+          setAuthTokens({
+            access_token: refreshData.access_token,
+            refresh_token: refreshData.refresh_token,
+            expires_in: refreshData.expires_in
+          });
+
+          api.dispatch({
+            type: 'auth/setCredentials',
+            payload: {
+              user: null,
+              token: refreshData.access_token,
+              refreshToken: refreshData.refresh_token,
+              expiresIn: refreshData.expires_in
+            }
+          });
+
+          result = await baseQuery(args, api, extraOptions);
+        } else {
+          api.dispatch({ type: 'auth/logout' });
+        }
+      } finally {
+        release();
+      }
     } else {
-      api.dispatch({ type: LOGOUT });
+      await mutex.waitForUnlock();
+      result = await baseQuery(args, api, extraOptions);
     }
   }
 
