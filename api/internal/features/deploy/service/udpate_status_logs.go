@@ -9,6 +9,13 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+func (s *DeployService) updateDeployment(deployment *shared_types.ApplicationDeployment)  {
+	err := s.storage.UpdateApplicationDeployment(deployment)
+	if err != nil {
+		s.logger.Log(logger.Error, "Failed to update application deployment: "+err.Error(), "")
+	}
+}
+
 // updateStatus updates the application status
 func (s *DeployService) updateStatus(deploymentID uuid.UUID, status shared_types.Status, id uuid.UUID) {
 	appStatus := shared_types.ApplicationDeploymentStatus{

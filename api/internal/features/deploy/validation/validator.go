@@ -32,6 +32,8 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return validateRedeployApplicationRequest(*r)
 	case *types.RollbackDeploymentRequest:
 		return validateRollbackDeploymentRequest(*r)
+	case *types.RestartDeploymentRequest:
+		return validateRestartDeploymentRequest(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}
@@ -88,6 +90,13 @@ func validateRedeployApplicationRequest(req types.ReDeployApplicationRequest) er
 }
 
 func validateRollbackDeploymentRequest(req types.RollbackDeploymentRequest) error {
+	if req.ID == uuid.Nil {
+		return types.ErrMissingID
+	}
+	return nil
+}
+
+func validateRestartDeploymentRequest(req types.RestartDeploymentRequest) error {
 	if req.ID == uuid.Nil {
 		return types.ErrMissingID
 	}

@@ -62,6 +62,10 @@ type RollbackDeploymentRequest struct {
 	ID uuid.UUID `json:"id"`
 }
 
+type RestartDeploymentRequest struct {
+	ID uuid.UUID `json:"id"`
+}
+
 var (
 	ErrMissingID                    = errors.New("id is required")
 	ErrInvalidRequestType           = errors.New("invalid request type")
@@ -82,6 +86,7 @@ var (
 	ErrFailedToCreateContainer      = errors.New("failed to create container")
 	ErrFailedToStartNewContainer    = errors.New("failed to start new container")
 	ErrFailedToUpdateContainer      = errors.New("failed to update container")
+	ErrContainerNotRunning          = errors.New("container is not running")
 )
 
 const (
@@ -137,4 +142,5 @@ const (
 	LogContainerUpdateCompleted                  = "Container update completed successfully"
 	LogFailedToRemoveOldContainer                = "Failed to remove old container: %s"
 	LogStoppingOldContainer                      = "Stopping old container..."
+	LogRestartingContainer                       = "Restarting container..."
 )

@@ -46,7 +46,8 @@ export enum DEPLOY {
   REDEPLOY_APPLICATION = 'v1/deploy/application/redeploy',
   DEPLOYMENT = 'v1/deploy/application/deployments',
   DELETE_APPLICATION = 'v1/deploy/application',
-  ROLLBACK_APPLICATION = 'v1/deploy/application/rollback'
+  ROLLBACK_APPLICATION = 'v1/deploy/application/rollback',
+  RESTART_APPLICATION = 'v1/deploy/application/restart'
 }
 
 export enum SOCKET_EVENTS {

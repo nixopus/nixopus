@@ -33,6 +33,7 @@ type DeployRepository interface {
 	UpdateApplication(application *shared_types.Application) error
 	GetApplicationDeploymentById(deploymentID string) (shared_types.ApplicationDeployment, error)
 	DeleteDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID) error
+	UpdateApplicationDeployment(deployment *shared_types.ApplicationDeployment) error
 }
 
 func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
@@ -92,6 +93,14 @@ func (s *DeployStorage) UpdateApplication(application *shared_types.Application)
 
 func (s *DeployStorage) AddApplicationDeployment(deployment *shared_types.ApplicationDeployment) error {
 	_, err := s.DB.NewInsert().Model(deployment).Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *DeployStorage) UpdateApplicationDeployment(deployment *shared_types.ApplicationDeployment) error {
+	_, err := s.DB.NewUpdate().Model(deployment).Where("id = ?", deployment.ID).OmitZero().Exec(s.Ctx)
 	if err != nil {
 		return err
 	}
@@ -179,6 +188,7 @@ func (s *DeployStorage) GetApplicationById(id string) (shared_types.Application,
 		}).
 		Relation("Domain").
 		Relation("Deployments", func(q *bun.SelectQuery) *bun.SelectQuery { return q.Order("created_at DESC") }).
+		Relation("Deployments.Status").
 		Where("a.id = ?", id).
 		Scan(s.Ctx)
 

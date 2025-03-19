@@ -102,6 +102,17 @@ export const deployApi = createApi({
       transformResponse: (response: { data: null }) => {
         return response.data;
       }
+    }),
+    restartApplication: builder.mutation<null, { id: string }>({
+      query: ({ id }) => ({
+        url: `${DEPLOY.RESTART_APPLICATION}`,
+        body: { id },
+        method: 'POST'
+      }),
+      invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: null }) => {
+        return response.data;
+      }
     })
   })
 });
@@ -114,5 +125,6 @@ export const {
   useRedeployApplicationMutation,
   useGetApplicationDeploymentByIdQuery,
   useDeleteApplicationMutation,
-  useRollbackApplicationMutation
+  useRollbackApplicationMutation,
+  useRestartApplicationMutation
 } = deployApi;

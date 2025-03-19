@@ -42,6 +42,11 @@ export type ApplicationDeployment = {
   application?: Application;
   status?: ApplicationDeploymentStatus;
   logs?: ApplicationLogs[];
+  commit_hash?: string;
+  container_id?: string;
+  container_name?: string;
+  container_image?: string;
+  container_status?: string;
 };
 
 export type ApplicationDeploymentStatus = {
@@ -65,7 +70,7 @@ export type ApplicationLogs = {
   application?: Application;
 };
 
-export type Status = 'started' | 'running' | 'stopped' | 'failed';
+export type Status = 'failed' | 'cloning' | 'building' | 'deploying' | 'deployed';
 
 export type Environment = 'development' | 'staging' | 'production';
 

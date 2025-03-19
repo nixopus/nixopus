@@ -40,25 +40,39 @@ func (s *GithubConnectorService) CreateAuthenticatedRepoURL(repoURL, accessToken
 //
 //	userID - the ID of the user whose repository to clone.
 //	environment - the environment name to clone the repository to.
-//	deploymentID - the ID of the deployment.
-//	latestCommitHash - the hash of the latest commit.
 //
 // Returns:
 //
 //	string - the path to which to clone the repository.
-//	string - the context information path.
 //	bool - whether to pull the repository instead of cloning.
+//	error - any error that occurred.
 func (s *GithubConnectorService) GetClonePath(userID, environment string) (string, bool, error) {
 	repoBaseURL := os.Getenv("MOUNT_PATH")
 	clonePath := filepath.Join(repoBaseURL, userID, environment)
 	var shouldPull bool
 
-	if _, err := os.Stat(clonePath); err == nil {
+	client, err := s.ssh.ConnectWithPassword()
+	if err != nil {
+		return "", false, fmt.Errorf("failed to connect via SSH: %w", err)
+	}
+	defer client.Close()
+
+	sftp, err := client.NewSftp()
+	if err != nil {
+		return "", false, fmt.Errorf("failed to create SFTP client: %w", err)
+	}
+	defer sftp.Close()
+
+	info, err := sftp.Stat(clonePath)
+	if err == nil && info.IsDir() {
 		shouldPull = true
 	}
 
-	if err := os.MkdirAll(clonePath, 0755); err != nil {
-		return "", false, err
+	if !shouldPull {
+		err = sftp.MkdirAll(clonePath)
+		if err != nil {
+			return "", false, fmt.Errorf("failed to create directory via SFTP: %w", err)
+		}
 	}
 
 	return clonePath, shouldPull, nil

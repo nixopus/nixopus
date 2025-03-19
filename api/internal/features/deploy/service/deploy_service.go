@@ -121,6 +121,12 @@ func (s *DeployService) StartDeploymentInBackground(
 		s.addLog(d.application.ID, errMsg, d.deployment_config.ID)
 	}
 
+	// if the deployment type is restart then just restart the container
+	if d.deployment.Type == shared_types.DeploymentTypeRestart {
+		s.RestartContainer(d)
+		return
+	}
+
 	s.updateStatus(d.deployment_config.ID, shared_types.Cloning, d.appStatus.ID)
 	s.addLog(d.application.ID, types.LogDeploymentStarted, d.deployment_config.ID)
 
@@ -200,6 +206,42 @@ func (s *DeployService) RollbackDeployment(deployment *types.RollbackDeploymentR
 	}
 
 	go s.StartDeploymentInBackground(deploy_config)
+
+	return nil
+}
+
+func (s *DeployService) RestartDeployment(deployment *types.RestartDeploymentRequest, userID uuid.UUID) error {
+	deployment_details, err := s.storage.GetApplicationDeploymentById(deployment.ID.String())
+	if err != nil {
+		return err
+	}
+	application_details, err := s.storage.GetApplicationById(string(deployment_details.ApplicationID.String()))
+
+	if err != nil {
+		return err
+	}
+
+	deployStatus := createDeploymentStatus(deployment.ID)
+
+	s.updateStatus(deployment_details.ID, shared_types.Deploying, deployStatus.ID)
+
+	deployRequest := shared_types.DeploymentRequestConfig{
+		Type:              shared_types.DeploymentTypeRestart,
+		Force:             false,
+		ForceWithoutCache: false,
+	}
+
+	deploy_config := DeployerConfig{
+		application:       application_details,
+		deployment:        &deployRequest,
+		userID:            userID,
+		contextPath:       "",
+		appStatus:         deployStatus,
+		deployment_config: &deployment_details,
+	}
+
+	// we will not run it in the background since it is a restart of the application
+	s.StartDeploymentInBackground(deploy_config)
 
 	return nil
 }

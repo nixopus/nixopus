@@ -80,6 +80,10 @@ func createDeploymentConfig(application shared_types.Application) shared_types.A
 		CommitHash:    "", // Initialize with an empty string
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
+		ContainerID:   "",
+		ContainerName: "",
+		ContainerImage: "",
+		ContainerStatus: "",
 	}
 
 	return deployment_config

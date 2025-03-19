@@ -25,10 +25,10 @@ export const DeploymentStatusChart = ({
 }) => {
   const statusCounts = useMemo(() => {
     const counts = {
-      started: 0,
-      running: 0,
-      stopped: 0,
-      failed: 0
+      failed: 0,
+      building: 0,
+      deploying: 0,
+      deployed: 0
     };
 
     deployments.forEach((deployment) => {
@@ -38,9 +38,9 @@ export const DeploymentStatusChart = ({
     });
 
     return [
-      { status: 'Started', value: counts.started },
-      { status: 'Running', value: counts.running },
-      { status: 'Stopped', value: counts.stopped },
+      { status: 'Building', value: counts.building },
+      { status: 'Deployed', value: counts.deployed },
+      { status: 'Deploying', value: counts.deploying },
       { status: 'Failed', value: counts.failed }
     ];
   }, [deployments]);
@@ -48,24 +48,24 @@ export const DeploymentStatusChart = ({
   const statusChartConfig = {
     value: {
       label: 'Count',
-      color: 'hsl(var(--primary))'
+      color: 'hsl(var(--color-desktop))'
     }
   } satisfies ChartConfig;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Deployment Status Distribution</CardTitle>
+        <CardTitle>Deployment Stats</CardTitle>
         <CardDescription>Current status of all deployments</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={statusChartConfig}>
-          <BarChart accessibilityLayer data={statusCounts} layout="vertical">
-            <CartesianGrid horizontal={false} />
-            <XAxis type="number" tickLine={false} axisLine={false} />
-            <YAxis dataKey="status" type="category" tickLine={false} axisLine={false} width={100} />
+          <BarChart accessibilityLayer data={statusCounts}>
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="status" type="category" tickLine={false} axisLine={false} width={100} />
+            <YAxis type="number" tickLine={false} axisLine={false} />
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
-            <Bar dataKey="value" fill="var(--color-desktop)" radius={4} />
+            <Bar dataKey="value" className='fill-secondary' radius={4} />
           </BarChart>
         </ChartContainer>
       </CardContent>

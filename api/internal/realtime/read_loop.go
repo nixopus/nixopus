@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/gorilla/websocket"
+	"github.com/raghavyuva/nixopus-api/internal/features/terminal"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -94,7 +95,19 @@ func (s *SocketServer) readLoop(conn *websocket.Conn, user *types.User) {
 			})
 
 			log.Printf("User re-authenticated. ID: %s, Email: %s", user.ID, user.Email)
+		case "terminal":
+			if user == nil {
+				s.sendError(conn, "Authentication required")
+				continue
+			}
 
+			terminal, err := terminal.NewTerminal(conn)
+			if err != nil {
+				s.sendError(conn, "Failed to start terminal")
+				continue
+			}
+
+			terminal.Start()
 		default:
 			s.sendError(conn, "Unknown message action")
 		}

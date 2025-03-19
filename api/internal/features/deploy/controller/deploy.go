@@ -160,3 +160,27 @@ func (c *DeployController) HandleRollback(w http.ResponseWriter, r *http.Request
 
 	utils.SendJSONResponse(w, "success", "Application rolled back successfully", nil)
 }
+
+func (c *DeployController) HandleRestart(w http.ResponseWriter, r *http.Request) {
+	c.logger.Log(logger.Info, "restarting application", "")
+	var data types.RestartDeploymentRequest
+
+	if !c.parseAndValidate(w, r, &data) {
+		return
+	}
+
+	user := c.GetUser(w, r)
+
+	if user == nil {
+		return
+	}
+
+	err := c.service.RestartDeployment(&data, user.ID)
+	if err != nil {
+		c.logger.Log(logger.Error, "failed to restart application", err.Error())
+		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.SendJSONResponse(w, "success", "Application restarted successfully", nil)
+}

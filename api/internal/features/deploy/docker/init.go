@@ -33,6 +33,7 @@ type DockerRepository interface {
 	CreateContainer(config container.Config, hostConfig container.HostConfig, networkConfig network.NetworkingConfig, containerName string) (container.CreateResponse, error)
 	// CreateDeployment(deployment *deploy_types.CreateDeploymentRequest, userID uuid.UUID, contextPath string) error
 	ContainerLogs(ctx context.Context, containerID string, opts container.LogsOptions) (io.ReadCloser, error)
+	RestartContainer(containerID string, opts container.StopOptions) error
 }
 
 // NewDockerService creates a new instance of DockerService using the default docker client.
@@ -99,6 +100,10 @@ func (s *DockerService) RemoveContainer(containerID string, opts container.Remov
 // it panics with the error.
 func (s *DockerService) StartContainer(containerID string, opts container.StartOptions) error {
 	return s.Cli.ContainerStart(s.Ctx, containerID, opts)
+}
+
+func (s *DockerService) RestartContainer(containerID string, opts container.StopOptions) error {
+	return s.Cli.ContainerRestart(s.Ctx, containerID, opts)
 }
 
 // GetContainerLogs retrieves the logs of a container with the given ID, using the given opts.

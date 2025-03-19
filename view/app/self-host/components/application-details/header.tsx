@@ -11,7 +11,7 @@ import {
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Application } from '@/redux/types/applications';
 import { DeleteDialog } from '@/components/delete-dialog';
-import { useRedeployApplicationMutation } from '@/redux/services/deploy/applicationsApi';
+import { useRedeployApplicationMutation, useRestartApplicationMutation } from '@/redux/services/deploy/applicationsApi';
 import { useDeleteApplicationMutation } from '@/redux/services/deploy/applicationsApi';
 import { useRouter } from 'next/navigation';
 
@@ -19,6 +19,7 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
   const [redeployApplication, { isLoading }] = useRedeployApplicationMutation();
   const [deleteApplication, { isLoading: isDeleting }] = useDeleteApplicationMutation();
   const router = useRouter();
+  const [restartApplication, { isLoading: isRestarting }] = useRestartApplicationMutation();
 
   return (
     <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -41,7 +42,7 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="secondary">
+              <Button variant="secondary" size="icon" disabled={isRestarting} onClick={() => restartApplication({ id: application?.deployments?.[0]?.id || '' })}>
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </TooltipTrigger>

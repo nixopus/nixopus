@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Home, Package, SettingsIcon } from 'lucide-react';
+import { Folder, Home, LockIcon, Package, SettingsIcon } from 'lucide-react';
 
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -30,6 +30,16 @@ const data = {
       icon: Package
     },
     {
+      title: 'File Manager',
+      url: '/file-manager',
+      icon: Folder
+    },
+    {
+      title: "Secret Manager",
+      url: "/secret-manager",
+      icon: LockIcon
+    },
+    {
       title: 'Settings',
       url: '/settings/general',
       icon: SettingsIcon,
@@ -49,10 +59,6 @@ const data = {
         {
           title: 'Domains',
           url: '/settings/domains'
-        },
-        {
-          title: 'Billing',
-          url: '#'
         }
       ]
     }
