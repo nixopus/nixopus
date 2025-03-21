@@ -1,156 +1,195 @@
 package terminal
 
 import (
-	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"sync"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/creack/pty"
 	"github.com/gorilla/websocket"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
-type Terminal struct {
-	pty     *os.File
-	cmd     *exec.Cmd
-	conn    *websocket.Conn
-	writeMu sync.Mutex
+type TermSize struct {
+	Rows uint16 `json:"rows"`
+	Cols uint16 `json:"cols"`
 }
 
-// NewTerminal creates a new WebSocket-enabled terminal
-func NewTerminal(conn *websocket.Conn) (*Terminal, error) {
-	// Start bash command
+type TerminalMessage struct {
+	Type string    `json:"type"`
+	Data string    `json:"data,omitempty"`
+	Size *TermSize `json:"size,omitempty"`
+}
+
+type Terminal struct {
+	pty        *os.File
+	cmd        *exec.Cmd
+	conn       *websocket.Conn
+	done       chan struct{}
+	outputBuf  []byte
+	bufferTime time.Duration
+	bufferTick *time.Ticker
+	log        logger.Logger
+	wsLock     sync.Mutex
+}
+
+func NewTerminal(conn *websocket.Conn, log *logger.Logger) (*Terminal, error) {
 	cmd := exec.Command("/bin/bash")
 
-	// Start the command with a pty
+	cmd.Env = append(os.Environ(),
+		"TERM=xterm-256color",
+		"COLORTERM=truecolor",
+	)
+
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Terminal{
-		pty:  ptmx,
-		cmd:  cmd,
-		conn: conn,
-	}, nil
+	setWinsize(ptmx, 24, 80)
+
+	terminal := &Terminal{
+		pty:        ptmx,
+		cmd:        cmd,
+		conn:       conn,
+		done:       make(chan struct{}),
+		outputBuf:  make([]byte, 0, 4096),
+		bufferTime: 10 * time.Millisecond,
+		log:        logger.NewLogger(),
+	}
+
+	terminal.bufferTick = time.NewTicker(terminal.bufferTime)
+	terminal.log.Log(logger.Info, "Terminal created", terminal.cmd.Dir)
+	return terminal, nil
 }
 
-// Start begins the terminal session
 func (t *Terminal) Start() {
-	// Read from the pty and write to websocket
-	go func() {
-		buf := make([]byte, 1024)
-		for {
+	go t.readPtyOutput()
+	go t.bufferFlusher()
+}
+
+func (t *Terminal) bufferFlusher() {
+	for {
+		select {
+		case <-t.done:
+			if t.bufferTick != nil {
+				t.bufferTick.Stop()
+			}
+			return
+		case <-t.bufferTick.C:
+			t.flushBuffer()
+		}
+	}
+}
+
+func (t *Terminal) flushBuffer() {
+	t.wsLock.Lock()
+	defer t.wsLock.Unlock()
+
+	if len(t.outputBuf) > 0 {
+		err := t.conn.WriteJSON(map[string]interface{}{
+			"data": map[string]interface{}{
+				"output_type": "stdout",
+				"content":     string(t.outputBuf),
+			},
+		})
+
+		if err != nil {
+			t.log.Log("error writing websocket message", err.Error(), "")
+			close(t.done)
+		}
+
+		t.outputBuf = t.outputBuf[:0]
+	}
+}
+
+func (t *Terminal) readPtyOutput() {
+	buf := make([]byte, 1024)
+	for {
+		select {
+		case <-t.done:
+			return
+		default:
 			n, err := t.pty.Read(buf)
 			if err != nil {
 				if err == io.EOF {
-					return
+					fmt.Println("pty closed")
+					continue
 				}
-				// Log error and terminate
+				t.log.Log("error reading from pty", err.Error(), "")
+				close(t.done)
 				return
 			}
 
-			t.writeMu.Lock()
-			err = t.conn.WriteMessage(websocket.BinaryMessage, buf[:n])
-			t.writeMu.Unlock()
-
+			func() {
+				t.wsLock.Lock()
+				defer t.wsLock.Unlock()
+				t.outputBuf = append(t.outputBuf, buf[:n]...)
+			}()
+			
+			t.wsLock.Lock()
+			err = t.conn.WriteMessage(websocket.TextMessage, buf[:n])
+			t.wsLock.Unlock()
+			
 			if err != nil {
+				t.log.Log("error writing to websocket", err.Error(), "")
+				close(t.done)
 				return
 			}
 		}
-	}()
-
-	// Read from websocket and write to the pty
-	go func() {
-		for {
-			messageType, p, err := t.conn.ReadMessage()
-			if err != nil {
-				return
-			}
-
-			if messageType == websocket.TextMessage {
-				var msg shared_types.Payload
-
-				if err := json.Unmarshal(p, &msg); err != nil {
-					return
-				}
-
-				if msg.Action == "terminal" {
-					var dataObj struct {
-						Type string `json:"type"`
-						Rows int    `json:"rows"`
-						Cols int    `json:"cols"`
-					}
-
-					if err := json.Unmarshal([]byte(msg.Data.(string)), &dataObj); err == nil {
-						if dataObj.Type == "resize" {
-							t.resize(dataObj.Rows, dataObj.Cols)
-						} else {
-							if data, ok := msg.Data.(string); ok {
-								_, err = t.pty.Write([]byte(data))
-								if err != nil {
-									return
-								}
-							}
-						}
-					}
-				}
-			} else if messageType == websocket.BinaryMessage {
-				_, err = t.pty.Write(p)
-				if err != nil {
-					return
-				}
-			}
-		}
-	}()
+	}
 }
 
-// resize changes the size of the terminal
-func (t *Terminal) resize(rows, cols int) error {
-	// Define the winsize struct
-	type winsize struct {
-		Row    uint16
-		Col    uint16
-		Xpixel uint16
-		Ypixel uint16
-	}
-
-	ws := &winsize{
-		Row:    uint16(rows),
-		Col:    uint16(cols),
-		Xpixel: 0,
-		Ypixel: 0,
-	}
-
-	// Set the window size
-	_, _, errno := syscall.Syscall(
-		syscall.SYS_IOCTL,
-		t.pty.Fd(),
-		syscall.TIOCSWINSZ,
-		uintptr(unsafe.Pointer(ws)),
-	)
-
-	if errno != 0 {
-		return errno
-	}
-
-	return nil
-}
-
-// Close cleans up resources
 func (t *Terminal) Close() error {
+	close(t.done)
+
+	if t.bufferTick != nil {
+		t.bufferTick.Stop()
+	}
+
+	t.flushBuffer()
+
 	if err := t.pty.Close(); err != nil {
 		return err
 	}
 
-	// Kill the process if it's still running
-	if t.cmd.Process != nil {
-		return t.cmd.Process.Kill()
+	if err := t.cmd.Process.Kill(); err != nil {
+		return err
+	}
+
+	t.wsLock.Lock()
+	err := t.conn.Close()
+	t.wsLock.Unlock()
+	
+	if err != nil {
+		t.log.Log("error closing websocket connection", err.Error(), "")
 	}
 
 	return nil
+}
+
+func (t *Terminal) WriteMessage(message string) error {
+	_, err := t.pty.Write([]byte(message))
+	return err
+}
+
+func setWinsize(f *os.File, rows, cols uint16) {
+	ws := &struct {
+		Rows uint16
+		Cols uint16
+		X    uint16
+		Y    uint16
+	}{rows, cols, 0, 0}
+
+	syscall.Syscall(
+		syscall.SYS_IOCTL,
+		f.Fd(),
+		syscall.TIOCSWINSZ,
+		uintptr(unsafe.Pointer(ws)),
+	)
 }

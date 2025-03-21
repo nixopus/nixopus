@@ -88,6 +88,7 @@ export interface CreateApplicationRequest {
   build_variables: Record<string, string>;
   pre_run_commands: string;
   post_run_commands: string;
+  DockerfilePath: string;
 }
 
 export interface UpdateDeploymentRequest {
@@ -99,6 +100,7 @@ export interface UpdateDeploymentRequest {
   port?: number;
   id?: string;
   force?: boolean;
+  DockerfilePath?: string;
 }
 
 export interface ReDeployApplicationRequest {

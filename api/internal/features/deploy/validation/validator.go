@@ -56,6 +56,12 @@ func validateDeploymentRequest(req types.CreateDeploymentRequest) error {
 		return types.ErrMissingPort
 	}
 
+	if req.DockerfilePath != "" && req.DockerfilePath[0] == '/' {
+		req.DockerfilePath = req.DockerfilePath[1:]
+	} else {
+		req.DockerfilePath = "Dockerfile"
+	}
+
 	if !isValidEnvironment(req.Environment) {
 		return types.ErrInvalidEnvironment
 	}
@@ -70,6 +76,11 @@ func validateUpdateDeploymentRequest(req types.UpdateDeploymentRequest) error {
 	// here we need to validate whether user has access to update the deployment
 	if req.ID == uuid.Nil {
 		return types.ErrMissingID
+	}
+	if req.DockerfilePath != "" && req.DockerfilePath[0] == '/' {
+		req.DockerfilePath = req.DockerfilePath[1:]
+	} else {
+		req.DockerfilePath = "Dockerfile"
 	}
 	return nil
 }

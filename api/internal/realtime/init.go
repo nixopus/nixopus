@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
+	"github.com/raghavyuva/nixopus-api/internal/features/terminal"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/uptrace/bun"
 )
@@ -46,7 +47,17 @@ type SocketServer struct {
 	db                *bun.DB
 	ctx               context.Context
 	postgres_listener PostgresListener
+	terminalMutex     sync.RWMutex
+	terminals         map[*websocket.Conn]*terminal.Terminal
 }
+
+// NewSocketServer initializes and returns a new instance of SocketServer.
+// It sets up a PostgreSQL listener for application change notifications and
+// starts a goroutine to handle these notifications.
+//
+// Parameters:
+//   deployController - a pointer to an instance of DeployController used for handling deployment-related operations.
+//   db - a pointer to a bun.DB object representing the database connection.
 
 func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx context.Context) (*SocketServer, error) {
 	err := godotenv.Load()
@@ -64,6 +75,7 @@ func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx 
 		ctx:               ctx,
 		topics:            make(map[string]map[*websocket.Conn]bool),
 		postgres_listener: *pgListener,
+		terminals:         make(map[*websocket.Conn]*terminal.Terminal),
 	}
 
 	notificationChan, err := pgListener.ListenToApplicationChanges(ctx)

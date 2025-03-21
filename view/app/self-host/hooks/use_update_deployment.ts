@@ -19,6 +19,7 @@ interface UseUpdateDeploymentProps {
   port?: number;
   id?: string;
   force?: boolean;
+  DockerfilePath?: string;
 }
 
 function useUpdateDeployment({
@@ -29,7 +30,8 @@ function useUpdateDeployment({
   environment_variables = {},
   port = 3000,
   id = '',
-  force = false
+  force = false,
+  DockerfilePath = '/Dockerfile'
 }: UseUpdateDeploymentProps = {}) {
   const { isReady, message, sendJsonMessage } = useWebSocket();
   const [updateDeployment, { isLoading }] = useUpdateDeploymentMutation();
@@ -48,7 +50,8 @@ function useUpdateDeployment({
     environment_variables: z.record(z.string(), z.string()).optional().default({}),
     port: z.string().optional(),
     id: z.string().optional(),
-    force: z.boolean().optional().default(false)
+    force: z.boolean().optional().default(false),
+    DockerfilePath: z.string().optional().default(DockerfilePath)
   });
 
   const form = useForm<z.infer<typeof deploymentFormSchema>>({
@@ -61,7 +64,8 @@ function useUpdateDeployment({
       environment_variables,
       port: port.toString(),
       id,
-      force
+      force,
+      DockerfilePath
     }
   });
 
@@ -75,6 +79,7 @@ function useUpdateDeployment({
       form.setValue('environment_variables', environment_variables);
     if (port) form.setValue('port', port.toString());
     if (id) form.setValue('id', id);
+    if (DockerfilePath) form.setValue('DockerfilePath', DockerfilePath);
     form.setValue('force', force);
   }, [
     form,
@@ -85,7 +90,8 @@ function useUpdateDeployment({
     environment_variables,
     port,
     id,
-    force
+    force,
+    DockerfilePath
   ]);
 
   async function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
@@ -98,7 +104,8 @@ function useUpdateDeployment({
         environment_variables: values.environment_variables,
         port: parsePort(values.port?.toString() || '3000') || 3000,
         id: values.id,
-        force: values.force
+        force: values.force,
+        DockerfilePath: values.DockerfilePath
       };
 
       const data = await updateDeployment(updateData).unwrap();

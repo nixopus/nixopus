@@ -28,7 +28,10 @@ func (s *DeployService) buildImageFromDockerfile(b DeployerConfig) (string, erro
 		return "", err
 	}
 
-	dockerfile_path := filepath.Base("Dockerfile") // TODO: Add support for custom Dockerfile
+	dockerfile_path := "Dockerfile"
+	if b.application.DockerfilePath != "" {
+		dockerfile_path = filepath.Base(b.application.DockerfilePath)
+	}
 	buildOptions := s.createBuildOptions(b, dockerfile_path)
 	resp, err := s.dockerRepo.BuildImage(buildOptions, archive)
 	if err != nil {

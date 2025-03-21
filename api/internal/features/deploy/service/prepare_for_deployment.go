@@ -35,6 +35,7 @@ func createApplicationFromDeploymentRequest(deployment *types.CreateDeploymentRe
 		UserID:               userID,
 		CreatedAt:            timeValue,
 		UpdatedAt:            time.Now(),
+		DockerfilePath:       deployment.DockerfilePath,
 	}
 
 	return application
@@ -65,6 +66,12 @@ func createApplicationFromExistingApplicationAndUpdateRequest(application shared
 		application.Port = deployment.Port
 	}
 
+	if deployment.DockerfilePath != "" {
+		application.DockerfilePath = deployment.DockerfilePath
+	}else{
+		application.DockerfilePath = "Dockerfile"
+	}
+
 	application.UpdatedAt = time.Now()
 
 	return application
@@ -75,14 +82,14 @@ func createApplicationFromExistingApplicationAndUpdateRequest(application shared
 // the created ApplicationDeployment.
 func createDeploymentConfig(application shared_types.Application) shared_types.ApplicationDeployment {
 	deployment_config := shared_types.ApplicationDeployment{
-		ID:            uuid.New(),
-		ApplicationID: application.ID,
-		CommitHash:    "", // Initialize with an empty string
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
-		ContainerID:   "",
-		ContainerName: "",
-		ContainerImage: "",
+		ID:              uuid.New(),
+		ApplicationID:   application.ID,
+		CommitHash:      "", // Initialize with an empty string
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+		ContainerID:     "",
+		ContainerName:   "",
+		ContainerImage:  "",
 		ContainerStatus: "",
 	}
 

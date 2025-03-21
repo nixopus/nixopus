@@ -68,6 +68,14 @@ export const DeployConfigureForm = ({
             placeholder="3000"
             validator={(value) => parsePort(value) !== null}
           />
+          <FormInputField
+            form={form}
+            label="Dockerfile Path"
+            name="dockerfile_path"
+            description="Path of the dockerfile in case of mono repo"
+            placeholder="Dockerfile"
+            required={false}
+          />
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">

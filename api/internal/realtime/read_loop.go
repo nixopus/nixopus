@@ -6,11 +6,21 @@ import (
 	"log"
 
 	"github.com/gorilla/websocket"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/terminal"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 func (s *SocketServer) readLoop(conn *websocket.Conn, user *types.User) {
+	defer func() {
+		s.terminalMutex.Lock()
+		if term, exists := s.terminals[conn]; exists {
+			term.Close()
+			delete(s.terminals, conn)
+		}
+		s.terminalMutex.Unlock()
+	}()
+
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
@@ -100,14 +110,30 @@ func (s *SocketServer) readLoop(conn *websocket.Conn, user *types.User) {
 				s.sendError(conn, "Authentication required")
 				continue
 			}
+			s.terminalMutex.Lock()
+			term, exists := s.terminals[conn]
+			s.terminalMutex.Unlock()
+		
+			if exists {
+				fmt.Println("Terminal already exists")
+				s.terminalMutex.Lock()
+				term.WriteMessage(msg.Data.(string))
+				s.terminalMutex.Unlock()
+			} else {
+				newTerminal, err := terminal.NewTerminal(conn, &logger.Logger{})
+				if err != nil {
+					s.sendError(conn, "Failed to start terminal")
+					continue
+				}
+		
+				s.terminalMutex.Lock()
+				s.terminals[conn] = newTerminal
+				s.terminalMutex.Unlock()
 
-			terminal, err := terminal.NewTerminal(conn)
-			if err != nil {
-				s.sendError(conn, "Failed to start terminal")
-				continue
+				newTerminal.WriteMessage(msg.Data.(string))
+				
+				go newTerminal.Start()
 			}
-
-			terminal.Start()
 		default:
 			s.sendError(conn, "Unknown message action")
 		}

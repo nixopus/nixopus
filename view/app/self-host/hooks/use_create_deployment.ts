@@ -21,6 +21,7 @@ interface DeploymentFormValues {
   build_variables: Record<string, string>;
   pre_run_commands: string;
   post_run_commands: string;
+  DockerfilePath: string;
 }
 
 function useCreateDeployment({
@@ -34,7 +35,8 @@ function useCreateDeployment({
   env_variables = {},
   build_variables = {},
   pre_run_commands = '',
-  post_run_commands = ''
+  post_run_commands = '',
+  DockerfilePath = '/Dockerfile'
 }: DeploymentFormValues) {
   const { data: domains } = useGetAllDomainsQuery();
   const { isReady, message, sendJsonMessage } = useWebSocket();
@@ -78,7 +80,8 @@ function useCreateDeployment({
     env_variables: z.record(z.string(), z.string()).optional().default({}),
     build_variables: z.record(z.string(), z.string()).optional().default({}),
     pre_run_commands: z.string().optional(),
-    post_run_commands: z.string().optional()
+    post_run_commands: z.string().optional(),
+    DockerfilePath: z.string().optional().default(DockerfilePath)
   });
 
   const form = useForm<z.infer<typeof deploymentFormSchema>>({
@@ -112,6 +115,7 @@ function useCreateDeployment({
       form.setValue('build_variables', build_variables);
     if (pre_run_commands) form.setValue('pre_run_commands', pre_run_commands);
     if (post_run_commands) form.setValue('post_run_commands', post_run_commands);
+    if (DockerfilePath) form.setValue('DockerfilePath', DockerfilePath);
   }, [
     form,
     application_name,
@@ -124,7 +128,8 @@ function useCreateDeployment({
     env_variables,
     build_variables,
     pre_run_commands,
-    post_run_commands
+    post_run_commands,
+    DockerfilePath
   ]);
 
   async function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
@@ -140,7 +145,8 @@ function useCreateDeployment({
         env_variables: values.env_variables,
         build_variables: values.build_variables,
         pre_run_commands: values.pre_run_commands as string,
-        post_run_commands: values.post_run_commands as string
+        post_run_commands: values.post_run_commands as string,
+        DockerfilePath: values.DockerfilePath
       }).unwrap();
       router.push('/self-host/application/' + data?.id);
     } catch (error) {

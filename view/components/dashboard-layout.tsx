@@ -1,3 +1,4 @@
+"use client";
 import { AppSidebar } from '@/components/app-sidebar';
 import {
   Breadcrumb,
@@ -12,7 +13,19 @@ import { useRouter } from 'next/navigation';
 import { CreateTeam } from './create-team';
 import useTeamSwitcher from '@/hooks/use-team-switcher';
 import use_bread_crumbs from '@/hooks/use_bread_crumbs';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { IntegratedTerminal } from '@/app/terminal/terminal';
+import { useTerminalState } from '@/app/terminal/utils/useTerminalState';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable"
+
+enum TERMINAL_POSITION {
+  BOTTOM = 'bottom',
+  RIGHT = 'right',
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -29,6 +42,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   } = useTeamSwitcher();
   const { getBreadcrumbs } = use_bread_crumbs();
   const breadcrumbs = React.useMemo(() => getBreadcrumbs(), [getBreadcrumbs]);
+  const { isTerminalOpen, toggleTerminal } = useTerminalState();
+  const [TerminalPosition, setTerminalPosition] = React.useState(TERMINAL_POSITION.BOTTOM);
+  const [fitAddonRef, setFitAddonRef] = React.useState<any | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 't' && e.ctrlKey) {
+        e.preventDefault();
+        setTerminalPosition((prevPosition) =>
+          prevPosition === TERMINAL_POSITION.BOTTOM
+            ? TERMINAL_POSITION.RIGHT
+            : TERMINAL_POSITION.BOTTOM,
+        );
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <SidebarProvider>
@@ -59,7 +90,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          {children}
           {addTeamModalOpen && (
             <CreateTeam
               open={addTeamModalOpen}
@@ -72,6 +102,36 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               isLoading={isLoading}
             />
           )}
+          <ResizablePanelGroup
+            direction={
+              TERMINAL_POSITION.BOTTOM === TerminalPosition
+                ? 'vertical'
+                : 'horizontal'
+            }
+            className="flex-grow"
+          >
+            <ResizablePanel defaultSize={80} minSize={30} className="overflow-hidden">
+              {children}
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel
+              defaultSize={20}
+              minSize={2}
+              hidden={!isTerminalOpen}
+              onResize={() => {
+                if (fitAddonRef?.current) {
+                  fitAddonRef.current.fit();
+                }
+              }}
+            >
+              <IntegratedTerminal
+                isOpen={false}
+                isTerminalOpen={isTerminalOpen}
+                toggleTerminal={toggleTerminal}
+                setFitAddonRef={setFitAddonRef}
+              />
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </div>
       </SidebarInset>
     </SidebarProvider>
