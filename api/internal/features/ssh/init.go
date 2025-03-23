@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-
 	"github.com/melbahja/goph"
 	"golang.org/x/crypto/ssh"
 )
@@ -100,4 +99,14 @@ func (s *SSH) ConnectWithPrivateKeyProtected() (*goph.Client, error) {
 
 	defer client.Close()
 	return client, nil
+}
+
+func (s *SSH) RunCommand(cmd string) (string, error) {
+	client, err := s.ConnectWithPassword()
+	if err != nil {
+		return "", err
+	}
+	output, err := client.Run(cmd)
+
+	return string(output), nil
 }

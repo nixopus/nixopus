@@ -144,7 +144,7 @@ func (s *DeployService) StartDeploymentInBackground(
 		DeploymentType: string(d.deployment.Type),
 		Branch:         d.application.Branch,
 	}
-
+	
 	// we will pass the commit hash to the clone repository function for rollback feature
 	repoPath, err := s.github_service.CloneRepository(cloneRepositoryConfig, &d.deployment_config.CommitHash)
 	if err != nil {

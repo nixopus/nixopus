@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -18,6 +19,35 @@ type DeployerConfig struct {
 	deployment_config *shared_types.ApplicationDeployment
 }
 
+func (s *DeployService) PrerunCommands(d DeployerConfig) error {
+	s.addLog(d.application.ID, fmt.Sprintf("Running pre run commands %v", d.application.PreRunCommand), d.deployment_config.ID)
+
+	client := ssh.NewSSH()
+	output, err := client.RunCommand(d.deployment_config.Application.PreRunCommand)
+	if err != nil {
+		s.addLog(d.application.ID, fmt.Sprintf("Error while running pre run command %v", output), d.deployment_config.ID)
+		return err
+	}
+	if output != "" {
+		s.addLog(d.application.ID, fmt.Sprintf("Pre run command Resulted in %v", output), d.deployment_config.ID)
+	}
+	return nil
+}
+
+func (s *DeployService) PostRunCommands(d DeployerConfig) error {
+	s.addLog(d.application.ID, fmt.Sprintf("Running post run commands %v", d.application.PostRunCommand), d.deployment_config.ID)
+	client := ssh.NewSSH()
+	output, err := client.RunCommand(d.deployment_config.Application.PreRunCommand)
+	if err != nil {
+		s.addLog(d.application.ID, fmt.Sprintf("Error while running post run command %v", output), d.deployment_config.ID)
+		return err
+	}
+	if output != "" {
+		s.addLog(d.application.ID, fmt.Sprintf("Post run command Resulted in %v", output), d.deployment_config.ID)
+	}
+	return nil
+}
+
 // Deployer deploys an application using the specified build pack.
 //
 // The build pack is determined by the Application field of the DeployerConfig
@@ -27,15 +57,23 @@ type DeployerConfig struct {
 // the function returns ErrInvalidBuildPack.
 func (s *DeployService) Deployer(d DeployerConfig) error {
 	s.addLog(d.application.ID, fmt.Sprintf(types.LogDeploymentBuildPack, d.application.BuildPack), d.deployment_config.ID)
+	s.PrerunCommands(d)
 
+	var err error
 	switch d.application.BuildPack {
 	case shared_types.DockerFile:
-		return s.handleDockerfileDeployment(d)
+		err = s.handleDockerfileDeployment(d)
 	case shared_types.DockerCompose:
-		return s.handleDockerComposeDeployment(d)
+		err = s.handleDockerComposeDeployment(d)
 	default:
 		return types.ErrInvalidBuildPack
 	}
+
+	if err != nil {
+		return err
+	}
+
+	return s.PostRunCommands(d)
 }
 
 // handleDockerfileDeployment processes Dockerfile-based deployments
