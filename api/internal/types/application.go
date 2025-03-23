@@ -20,12 +20,11 @@ type Application struct {
 	Branch               string                   `json:"branch" bun:"branch,notnull"`
 	PreRunCommand        string                   `json:"pre_run_command" bun:"pre_run_command,notnull"`
 	PostRunCommand       string                   `json:"post_run_command" bun:"post_run_command,notnull"`
-	DomainID             uuid.UUID                `json:"domain_id" bun:"domain_id,notnull,type:uuid"`
+	Domain               string                   `json:"domain" bun:"domain,notnull"`
 	DockerfilePath       string                   `json:"dockerfile_path" bun:"dockerfile_path,notnull,default:Dockerfile"`
 	UserID               uuid.UUID                `json:"user_id" bun:"user_id,notnull,type:uuid"`
 	CreatedAt            time.Time                `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt            time.Time                `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
-	Domain               *Domain                  `json:"domain,omitempty" bun:"rel:belongs-to,join:domain_id=id"`
 	User                 *User                    `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
 	Status               *ApplicationStatus       `json:"status,omitempty" bun:"rel:has-one,join:id=application_id"`
 	Logs                 []*ApplicationLogs       `json:"logs,omitempty" bun:"rel:has-many,join:id=application_id"`

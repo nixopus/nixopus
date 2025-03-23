@@ -31,7 +31,7 @@ func createApplicationFromDeploymentRequest(deployment *types.CreateDeploymentRe
 		PreRunCommand:        deployment.PreRunCommand,
 		PostRunCommand:       deployment.PostRunCommand,
 		Port:                 deployment.Port,
-		DomainID:             deployment.DomainID,
+		Domain:               deployment.Domain,
 		UserID:               userID,
 		CreatedAt:            timeValue,
 		UpdatedAt:            time.Now(),
@@ -68,7 +68,7 @@ func createApplicationFromExistingApplicationAndUpdateRequest(application shared
 
 	if deployment.DockerfilePath != "" {
 		application.DockerfilePath = deployment.DockerfilePath
-	}else{
+	} else {
 		application.DockerfilePath = "Dockerfile"
 	}
 

@@ -54,7 +54,7 @@ function AppItem({
   const getStatusStyles = () => {
     return status?.status === 'failed'
       ? 'bg-destructive text-white'
-      : status?.status === 'running'
+      : status?.status === 'deployed'
         ? 'bg-success text-success-foreground'
         : 'bg-secondary text-secondary-foreground';
   };

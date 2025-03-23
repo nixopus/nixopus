@@ -105,7 +105,7 @@ function useUpdateDeployment({
         port: parsePort(values.port?.toString() || '3000') || 3000,
         id: values.id,
         force: values.force,
-        DockerfilePath: values.DockerfilePath
+        dockerfile_path: values.DockerfilePath
       };
 
       const data = await updateDeployment(updateData).unwrap();

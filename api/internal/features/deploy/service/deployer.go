@@ -19,33 +19,36 @@ type DeployerConfig struct {
 	deployment_config *shared_types.ApplicationDeployment
 }
 
-func (s *DeployService) PrerunCommands(d DeployerConfig) error {
-	s.addLog(d.application.ID, fmt.Sprintf("Running pre run commands %v", d.application.PreRunCommand), d.deployment_config.ID)
+func (s *DeployService) runCommands(applicationID uuid.UUID, deploymentConfigID uuid.UUID,
+	command string, commandType string) error {
+	s.addLog(applicationID, fmt.Sprintf("Running %s commands %v", commandType, command), deploymentConfigID)
+
+	if command == "" {
+		return nil
+	}
 
 	client := ssh.NewSSH()
-	output, err := client.RunCommand(d.deployment_config.Application.PreRunCommand)
+	output, err := client.RunCommand(command)
 	if err != nil {
-		s.addLog(d.application.ID, fmt.Sprintf("Error while running pre run command %v", output), d.deployment_config.ID)
+		s.addLog(applicationID, fmt.Sprintf("Error while running %s command %v", commandType, output), deploymentConfigID)
 		return err
 	}
+
 	if output != "" {
-		s.addLog(d.application.ID, fmt.Sprintf("Pre run command Resulted in %v", output), d.deployment_config.ID)
+		s.addLog(applicationID, fmt.Sprintf("%s command resulted in %v", commandType, output), deploymentConfigID)
 	}
+
 	return nil
 }
 
+func (s *DeployService) PrerunCommands(d DeployerConfig) error {
+	return s.runCommands(d.application.ID, d.deployment_config.ID,
+		d.application.PreRunCommand, "pre run")
+}
+
 func (s *DeployService) PostRunCommands(d DeployerConfig) error {
-	s.addLog(d.application.ID, fmt.Sprintf("Running post run commands %v", d.application.PostRunCommand), d.deployment_config.ID)
-	client := ssh.NewSSH()
-	output, err := client.RunCommand(d.deployment_config.Application.PreRunCommand)
-	if err != nil {
-		s.addLog(d.application.ID, fmt.Sprintf("Error while running post run command %v", output), d.deployment_config.ID)
-		return err
-	}
-	if output != "" {
-		s.addLog(d.application.ID, fmt.Sprintf("Post run command Resulted in %v", output), d.deployment_config.ID)
-	}
-	return nil
+	return s.runCommands(d.application.ID, d.deployment_config.ID,
+		d.application.PostRunCommand, "post run")
 }
 
 // Deployer deploys an application using the specified build pack.

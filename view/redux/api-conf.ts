@@ -27,7 +27,8 @@ export enum DOMAIN_SETTINGS {
   ADD_DOMAIN = 'v1/domain',
   GET_DOMAINS = 'v1/domain/all',
   UPDATE_DOMAIN = 'v1/domain',
-  DELETE_DOMAIN = 'v1/domain'
+  DELETE_DOMAIN = 'v1/domain',
+  GENERATE_RANDOM_SUBDOMAIN= "v1/domain/generate"
 }
 
 export enum GITHUB_CONNECTOR {

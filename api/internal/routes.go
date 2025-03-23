@@ -162,6 +162,7 @@ func (router *Router) Routes() *mux.Router {
 	domainApi.HandleFunc("", domainController.UpdateDomain).Methods("PUT", "OPTIONS")
 	domainApi.HandleFunc("", domainController.DeleteDomain).Methods("DELETE", "OPTIONS")
 	domainApi.HandleFunc("/all", domainController.GetDomains).Methods("GET", "OPTIONS")
+	domainApi.HandleFunc("/generate",domainController.GenerateRandomSubDomain).Methods("GET","OPTIONS")
 
 	githubConnectorApi := api.PathPrefix("/github-connector").Subrouter()
 	githubConnectorApi.Use(middleware.IsAdmin)

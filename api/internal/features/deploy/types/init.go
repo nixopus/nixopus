@@ -25,7 +25,7 @@ type IsPortAlreadyTakenRequest struct {
 
 type CreateDeploymentRequest struct {
 	Name                 string                   `json:"name"`
-	DomainID             uuid.UUID                `json:"domain_id"`
+	Domain               string                   `json:"domain"`
 	Environment          shared_types.Environment `json:"environment"`
 	BuildPack            shared_types.BuildPack   `json:"build_pack"`
 	Repository           string                   `json:"repository"`
@@ -72,7 +72,7 @@ var (
 	ErrMissingID                    = errors.New("id is required")
 	ErrInvalidRequestType           = errors.New("invalid request type")
 	ErrMissingName                  = errors.New("name is required")
-	ErrMissingDomainID              = errors.New("domain_id is required")
+	ErrMissingDomain                = errors.New("domain is required")
 	ErrMissingRepository            = errors.New("repository is required")
 	ErrMissingBranch                = errors.New("branch is required")
 	ErrMissingPort                  = errors.New("port is required")

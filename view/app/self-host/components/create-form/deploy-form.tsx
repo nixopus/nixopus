@@ -37,7 +37,7 @@ export const DeployForm = ({
   post_run_commands = '',
   DockerfilePath = '/Dockerfile'
 }: DeployFormProps) => {
-  const { validateEnvVar, form, onSubmit, domains, parsePort } = useCreateDeployment({
+  const { validateEnvVar, form, onSubmit, parsePort } = useCreateDeployment({
     application_name,
     environment,
     branch,
@@ -87,7 +87,7 @@ export const DeployForm = ({
           <FormInputField
             form={form}
             label="Dockerfile Path"
-            name="dockerfile_path"
+            name="DockerfilePath"
             description="Path of the dockerfile in case of mono repo"
             placeholder="Dockerfile"
             required={false}
@@ -102,13 +102,12 @@ export const DeployForm = ({
           />
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
-          <FormSelectField
+          <FormInputField
             form={form}
             label="Domain"
             name="domain"
             description="Domain on which your application will be available"
             placeholder="Domain"
-            selectOptions={domains?.map((domain) => ({ label: domain.name, value: domain.id }))}
           />
           <FormSelectField
             form={form}

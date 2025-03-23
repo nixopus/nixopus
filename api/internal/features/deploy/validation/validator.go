@@ -43,8 +43,8 @@ func validateDeploymentRequest(req types.CreateDeploymentRequest) error {
 	if req.Name == "" {
 		return types.ErrMissingName
 	}
-	if req.DomainID == uuid.Nil {
-		return types.ErrMissingDomainID
+	if req.Domain == "" {
+		return types.ErrMissingDomain
 	}
 	if req.Repository == "" {
 		return types.ErrMissingRepository

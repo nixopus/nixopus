@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	docker_types "github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/archive"
@@ -22,15 +21,15 @@ import (
 func (s *DeployService) buildImageFromDockerfile(b DeployerConfig) (string, error) {
 	s.addLog(b.application.ID, types.LogStartingDockerImageBuild, b.deployment_config.ID)
 	s.updateStatus(b.deployment_config.ID, shared_types.Building, b.appStatus.ID)
-
 	archive, err := s.createBuildContextArchive(b.contextPath)
 	if err != nil {
 		return "", err
 	}
 
+	s.logger.Log("considering dockerfile base path as ", b.application.DockerfilePath, "")
 	dockerfile_path := "Dockerfile"
 	if b.application.DockerfilePath != "" {
-		dockerfile_path = filepath.Base(b.application.DockerfilePath)
+		dockerfile_path = b.application.DockerfilePath
 	}
 	buildOptions := s.createBuildOptions(b, dockerfile_path)
 	resp, err := s.dockerRepo.BuildImage(buildOptions, archive)

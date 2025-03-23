@@ -50,6 +50,12 @@ export const domainsApi = createApi({
       transformResponse: (response: { data: null }) => {
         return response.data;
       }
+    }),
+    generateRandomSubdomain: builder.query<string, void>({
+      query: (id) => ({
+        url: DOMAIN_SETTINGS.GENERATE_RANDOM_SUBDOMAIN,
+        method: 'GET',
+      }),
     })
   })
 });
@@ -58,5 +64,6 @@ export const {
   useGetAllDomainsQuery,
   useCreateDomainMutation,
   useUpdateDomainMutation,
-  useDeleteDomainMutation
+  useDeleteDomainMutation,
+  useGenerateRandomSubdomainQuery
 } = domainsApi;

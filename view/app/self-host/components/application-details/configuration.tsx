@@ -22,6 +22,7 @@ interface DeployConfigureProps {
   pre_run_commands?: string;
   post_run_commands?: string;
   application_id?: string;
+  dockerFilePath?: string
 }
 
 export const DeployConfigureForm = ({
@@ -36,7 +37,8 @@ export const DeployConfigureForm = ({
   build_variables = {},
   pre_run_commands = '',
   post_run_commands = '',
-  application_id = ''
+  application_id = '',
+  dockerFilePath = "/Dockerfile"
 }: DeployConfigureProps) => {
   const { validateEnvVar, form, onSubmit, isLoading, domains } = useUpdateDeployment({
     name: application_name,
@@ -46,7 +48,8 @@ export const DeployConfigureForm = ({
     environment_variables: env_variables,
     port: parsePort(port) || 3000,
     force: true,
-    id: application_id
+    id: application_id,
+    DockerfilePath: dockerFilePath
   });
 
   return (
@@ -71,7 +74,7 @@ export const DeployConfigureForm = ({
           <FormInputField
             form={form}
             label="Dockerfile Path"
-            name="dockerfile_path"
+            name="DockerfilePath"
             description="Path of the dockerfile in case of mono repo"
             placeholder="Dockerfile"
             required={false}
@@ -141,7 +144,7 @@ export const DeployConfigureForm = ({
           <div className="space-y-2">
             <label className="text-sm font-medium">Domain</label>
             <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">
-              {domains?.find((dm: Domain) => dm.id === domain)?.name}
+              {domain}
             </div>
             <p className="text-sm text-muted-foreground">
               Domain on which your application is available

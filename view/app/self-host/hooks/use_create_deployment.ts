@@ -139,14 +139,14 @@ function useCreateDeployment({
         environment: values.environment,
         branch: values.branch,
         port: parseInt(values.port, 10),
-        domain_id: values.domain,
+        domain: values.domain,
         repository: values.repository,
         build_pack: values.build_pack,
         env_variables: values.env_variables,
         build_variables: values.build_variables,
         pre_run_commands: values.pre_run_commands as string,
         post_run_commands: values.post_run_commands as string,
-        DockerfilePath: values.DockerfilePath
+        dockerfile_path: values.DockerfilePath
       }).unwrap();
       router.push('/self-host/application/' + data?.id);
     } catch (error) {
@@ -184,7 +184,7 @@ function useCreateDeployment({
     return isNaN(parsedPort) ? null : parsedPort;
   };
 
-  return { validateEnvVar, deploymentFormSchema, form, onSubmit, domains, parsePort };
+  return { validateEnvVar, deploymentFormSchema, form, onSubmit, parsePort };
 }
 
 export default useCreateDeployment;

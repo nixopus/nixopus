@@ -1,4 +1,3 @@
-import { Domain } from './domain';
 import { User } from './user';
 
 export type Application = {
@@ -17,11 +16,12 @@ export type Application = {
   user_id: string;
   created_at: Date;
   updated_at: Date;
-  domain?: Domain;
+  domain?: string;
   user?: User;
   status?: ApplicationStatus;
   logs?: ApplicationLogs[];
   deployments?: ApplicationDeployment[];
+  dockerfile_path?: string;
 };
 
 export type ApplicationStatus = {
@@ -81,14 +81,14 @@ export interface CreateApplicationRequest {
   environment: Environment;
   branch: string;
   port: number;
-  domain_id: string;
+  domain: string;
   repository: string;
   build_pack: BuildPack;
   env_variables: Record<string, string>;
   build_variables: Record<string, string>;
   pre_run_commands: string;
   post_run_commands: string;
-  DockerfilePath: string;
+  dockerfile_path: string;
 }
 
 export interface UpdateDeploymentRequest {
@@ -100,7 +100,7 @@ export interface UpdateDeploymentRequest {
   port?: number;
   id?: string;
   force?: boolean;
-  DockerfilePath?: string;
+  dockerfile_path?: string;
 }
 
 export interface ReDeployApplicationRequest {

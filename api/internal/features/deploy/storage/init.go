@@ -162,7 +162,6 @@ func (s *DeployStorage) GetApplications(page, pageSize int) ([]shared_types.Appl
 
 	err = s.DB.NewSelect().
 		Model(&applications).
-		Relation("Domain").
 		Relation("Status").
 		Relation("Logs").
 		Order("created_at DESC").
@@ -186,7 +185,6 @@ func (s *DeployStorage) GetApplicationById(id string) (shared_types.Application,
 		Relation("Logs", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Order("created_at DESC").Limit(100)
 		}).
-		Relation("Domain").
 		Relation("Deployments", func(q *bun.SelectQuery) *bun.SelectQuery { return q.Order("created_at DESC") }).
 		Relation("Deployments.Status").
 		Where("a.id = ?", id).

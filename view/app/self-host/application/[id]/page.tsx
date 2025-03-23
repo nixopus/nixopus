@@ -28,7 +28,7 @@ function Page() {
         <TabsContent value="configuration" className="mt-6">
           <DeployConfigureForm
             application_name={application?.name}
-            domain={application?.domain?.id}
+            domain={application?.domain}
             environment={application?.environment as Environment | undefined}
             env_variables={envVariables}
             build_variables={buildVariables}
@@ -39,6 +39,7 @@ function Page() {
             pre_run_commands={application?.pre_run_command}
             post_run_commands={application?.post_run_command}
             application_id={application?.id}
+            dockerFilePath={application?.dockerfile_path}
           />
         </TabsContent>
         <TabsContent value="logs" className="mt-6">
