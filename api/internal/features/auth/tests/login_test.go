@@ -35,19 +35,19 @@ func TestLogin(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:          "user not found",
-			email:         "nonexistent@nixopus.com",
-			password:      "password",
-			setupMocks:    func(mockStorage *MockAuthStorage, email, password string) {
+			name:     "user not found",
+			email:    "nonexistent@nixopus.com",
+			password: "password",
+			setupMocks: func(mockStorage *MockAuthStorage, email, password string) {
 				mockStorage.WithUserByEmail(email, nil, types.ErrUserNotFound)
 			},
 			expectedError: types.ErrUserNotFound,
 		},
 		{
-			name:          "invalid password",
-			email:         "nixopus_user3@nixopus.com",
-			password:      "wrongpassword",
-			setupMocks:    func(mockStorage *MockAuthStorage, email, password string) {
+			name:     "invalid password",
+			email:    "nixopus_user3@nixopus.com",
+			password: "wrongpassword",
+			setupMocks: func(mockStorage *MockAuthStorage, email, password string) {
 				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("correctpassword"), bcrypt.DefaultCost)
 				testUser := CreateTestUser(
 					uuid.New().String(),
@@ -65,16 +65,16 @@ func TestLogin(t *testing.T) {
 
 	for _, test := range successTable {
 		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(test.password), bcrypt.DefaultCost)
-		
+
 		userID := uuid.New()
 		testUser := CreateTestUser(
 			userID.String(),
 			test.email,
 			string(hashedPassword),
 		)
-		
+
 		mockStorage.WithUserByEmail(test.email, testUser, nil)
-		
+
 		refreshToken := CreateTestRefreshToken(
 			uuid.New().String(),
 			userID.String(),
@@ -83,7 +83,7 @@ func TestLogin(t *testing.T) {
 		)
 		mockStorage.WithCreateRefreshToken(userID, refreshToken, nil)
 	}
-	
+
 	authService := service.NewAuthService(mockStorage, mockLogger, nil, nil, nil, context.Background())
 
 	for _, test := range successTable {
@@ -92,34 +92,34 @@ func TestLogin(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Login failed for %s: %v", test.email, err)
 			}
-			
+
 			if response.User.Email != test.email {
 				t.Errorf("Expected user email %s, got %s", test.email, response.User.Email)
 			}
-			
+
 			if response.AccessToken == "" {
 				t.Errorf("Expected access token but got empty string")
 			}
-			
+
 			if response.RefreshToken == "" {
 				t.Errorf("Expected refresh token but got empty string")
 			}
-			
+
 			if response.ExpiresIn != 900 {
 				t.Errorf("Expected ExpiresIn to be 900, got %d", response.ExpiresIn)
 			}
 		})
 	}
-	
+
 	for _, test := range errorTable {
 		t.Run(test.name, func(t *testing.T) {
 			mockStorage := NewMockAuthStorage()
 			mockLogger := logger.NewLogger()
-			
+
 			test.setupMocks(mockStorage, test.email, test.password)
-			
+
 			authService := service.NewAuthService(mockStorage, mockLogger, nil, nil, nil, context.Background())
-			
+
 			_, err := authService.Login(test.email, test.password)
 			if err != test.expectedError {
 				t.Errorf("Expected error %v, got %v", test.expectedError, err)

@@ -45,7 +45,7 @@ func (g *DefaultGitClient) Clone(repoURL, destinationPath string) error {
 	cmd := fmt.Sprintf("git clone %s %s", repoURL, destinationPath)
 	output, err := client.Run(cmd)
 	if err != nil {
-		return fmt.Errorf("git clone failed: %s, output: %s", err.Error(),output)
+		return fmt.Errorf("git clone failed: %s, output: %s", err.Error(), output)
 	}
 
 	g.logger.Log(logger.Info, fmt.Sprintf("Successfully cloned repository to %s", destinationPath), "")
@@ -63,7 +63,7 @@ func (g *DefaultGitClient) Pull(repoURL, destinationPath string) error {
 	cmd := fmt.Sprintf("cd %s && git pull %s", destinationPath, repoURL)
 	output, err := client.Run(cmd)
 	if err != nil {
-		return fmt.Errorf("git pull failed: %s, output: %s", err.Error(),output)
+		return fmt.Errorf("git pull failed: %s, output: %s", err.Error(), output)
 	}
 
 	g.logger.Log(logger.Info, fmt.Sprintf("Successfully pulled latest changes for repository at %s", destinationPath), "")
@@ -128,7 +128,7 @@ func (g *DefaultGitClient) SetHeadToCommitHash(repoURL, destinationPath, commitH
 	cmd := fmt.Sprintf("cd %s && git checkout %s", destinationPath, commitHash)
 	output, err := client.Run(cmd)
 	if err != nil {
-		return fmt.Errorf("git checkout failed: %s, output: %s", err.Error(),output)
+		return fmt.Errorf("git checkout failed: %s, output: %s", err.Error(), output)
 	}
 
 	g.logger.Log(logger.Info, fmt.Sprintf("Successfully checked out commit %s at %s", commitHash, destinationPath), "")

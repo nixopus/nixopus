@@ -26,17 +26,41 @@ type AuthRepository interface {
 	RevokeRefreshToken(refresh_token string) error
 }
 
-// FindUserByEmail finds a user by email in the database.
-//
-// The function returns an error if the user does not exist or if the query
-// fails.
 func (u *UserStorage) FindUserByEmail(email string) (*types.User, error) {
-	user := &types.User{}
-	err := u.DB.NewSelect().Model(user).Where("email = ?", email).Scan(u.Ctx)
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
+    user := &types.User{}
+    err := u.DB.NewSelect().
+        Model(user).
+        Where("email = ?", email).
+        Relation("Organizations").
+        Scan(u.Ctx)
+    if err != nil {
+        return nil, err
+    }
+    
+    err = u.DB.NewSelect().
+        Model(&user.OrganizationUsers).
+        Where("user_id = ?", user.ID).
+        Relation("Role").
+        Relation("Organization").
+        Scan(u.Ctx)
+    if err != nil {
+        return nil, err
+    }
+    
+    for i, orgUser := range user.OrganizationUsers {
+        if orgUser.Role != nil {
+            err = u.DB.NewSelect().
+                Model(&user.OrganizationUsers[i].Role.Permissions).
+                Join("JOIN role_permissions AS rp ON rp.permission_id = p.id").
+                Where("rp.role_id = ?", orgUser.Role.ID).
+                Scan(u.Ctx)
+            if err != nil {
+                return nil, err
+            }
+        }
+    }
+    
+    return user, nil
 }
 
 // FindUserByID finds a user by id in the database.

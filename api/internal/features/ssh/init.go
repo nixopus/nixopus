@@ -1,11 +1,14 @@
 package ssh
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
+
 	"github.com/melbahja/goph"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type SSH struct {
@@ -108,5 +111,58 @@ func (s *SSH) RunCommand(cmd string) (string, error) {
 	}
 	output, err := client.Run(cmd)
 
+	if err != nil {
+		return "", err
+	}
+
 	return string(output), nil
+}
+
+func (s *SSH) Terminal() {
+	client, err := s.ConnectWithPassword()
+	if err != nil {
+		fmt.Print("Failed to connect to ssh")
+		return
+	}
+	session, err := client.NewSession()
+	if err != nil {
+		fmt.Printf("Failed to create session: %s\n", err)
+		return
+	}
+	defer session.Close()
+
+	session.Stdout = os.Stdout
+	session.Stderr = os.Stderr
+	session.Stdin = os.Stdin
+
+	modes := ssh.TerminalModes{
+		ssh.ECHO:          1,
+		ssh.TTY_OP_ISPEED: 14400,
+		ssh.TTY_OP_OSPEED: 14400,
+	}
+
+	fileDescriptor := int(os.Stdin.Fd())
+	if terminal.IsTerminal(fileDescriptor) {
+		originalState, err := terminal.MakeRaw(fileDescriptor)
+		if err != nil {
+			panic(err)
+		}
+		defer terminal.Restore(fileDescriptor, originalState)
+
+		termWidth, termHeight, err := terminal.GetSize(fileDescriptor)
+		if err != nil {
+			panic(err)
+		}
+
+		err = session.RequestPty("xterm-256color", termHeight, termWidth, modes)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	err = session.Shell()
+	if err != nil {
+		return
+	}
+	session.Wait()
 }

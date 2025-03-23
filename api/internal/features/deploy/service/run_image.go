@@ -65,17 +65,18 @@ func (s *DeployService) prepareContainerConfig(
 }
 
 // prepareHostConfig creates Docker host configuration with port bindings
-func (s *DeployService) prepareHostConfig(port nat.Port, portStr string) container.HostConfig {
+func (s *DeployService) prepareHostConfig(port nat.Port) container.HostConfig {
 	return container.HostConfig{
 		NetworkMode: "bridge",
 		PortBindings: map[nat.Port][]nat.PortBinding{
 			port: {
 				{
 					HostIP:   "0.0.0.0",
-					HostPort: portStr,
+					HostPort: "",
 				},
 			},
 		},
+		PublishAllPorts: true,
 	}
 }
 
@@ -124,7 +125,7 @@ func (s *DeployService) createContainerConfigs(r DeployerConfig) (container.Conf
 		env_vars,
 		r.application.ID.String(),
 	)
-	host_config := s.prepareHostConfig(port, port_str)
+	host_config := s.prepareHostConfig(port)
 	network_config := s.prepareNetworkConfig()
 
 	return container_config, host_config, network_config
@@ -162,11 +163,11 @@ func (s *DeployService) AtomicUpdateContainer(r DeployerConfig) (string, error) 
 			s.formatLog(r.application.ID, r.deployment_config.ID, types.LogFailedToStopOldContainer, err.Error())
 		}
 
-		s.formatLog(r.application.ID, r.deployment_config.ID, types.LogRemovingOldContainer+"%s", ctr.ID)
-		err = s.dockerRepo.RemoveContainer(ctr.ID, container.RemoveOptions{Force: true})
-		if err != nil {
-			s.formatLog(r.application.ID, r.deployment_config.ID, types.LogFailedToRemoveOldContainer, err.Error())
-		}
+		// s.formatLog(r.application.ID, r.deployment_config.ID, types.LogRemovingOldContainer+"%s", ctr.ID)
+		// err = s.dockerRepo.RemoveContainer(ctr.ID, container.RemoveOptions{Force: true})
+		// if err != nil {
+		// 	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogFailedToRemoveOldContainer, err.Error())
+		// }
 	}
 
 	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogStartingNewContainer)

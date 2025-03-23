@@ -16,8 +16,20 @@ import (
 // @Produce json
 // @Success 200 {object} types.Response "Success response with domains"
 // @Failure 500 {object} types.Response "Internal server error"
-// @Router /domain [get]
+// @Router /domain/all [get]
 func (c *DomainsController) GetDomains(w http.ResponseWriter, r *http.Request) {
+	user := c.GetUser(w, r)
+
+	if user == nil {
+		return
+	}
+
+	if err := c.validator.AccessValidator(w, r, user); err != nil {
+		c.logger.Log(logger.Error, err.Error(), err.Error())
+		utils.SendErrorResponse(w, err.Error(), http.StatusForbidden)
+		return
+	}
+
 	domains, err := c.service.GetDomains()
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
@@ -45,18 +57,18 @@ func (c *DomainsController) GenerateRandomSubDomain(w http.ResponseWriter, r *ht
 	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
 	const prefixLength = 8
 	randomPrefix := make([]byte, prefixLength)
-	
+
 	source := rand.NewSource(time.Now().UnixNano())
 	random := rand.New(source)
-	
+
 	for i := range randomPrefix {
 		randomPrefix[i] = charset[random.Intn(len(charset))]
 	}
-	
+
 	randomDomain := domains[random.Intn(len(domains))]
-	
+
 	subdomain := string(randomPrefix) + "." + randomDomain.Name
-	
+
 	response := struct {
 		Subdomain string `json:"subdomain"`
 		Domain    string `json:"domain"`
@@ -66,6 +78,6 @@ func (c *DomainsController) GenerateRandomSubDomain(w http.ResponseWriter, r *ht
 	}
 
 	c.logger.Log(logger.Info, "Generated random subdomain", subdomain)
-	
+
 	utils.SendJSONResponse(w, "success", "RandomSubdomain", response)
 }

@@ -3,6 +3,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import {
   AddUserToOrganizationRequest,
   CreateOrganizationRequest,
+  CreateUserRequest,
   Organization,
   OrganizationUsers,
   UpdateOrganizationDetailsRequest,
@@ -92,6 +93,15 @@ export const userApi = createApi({
           body: payload
         };
       }
+    }),
+    createUser: builder.mutation<void, CreateUserRequest>({
+      query(body) {
+        return {
+          url: USERURLS.CREATE_USER,
+          method: 'POST',
+          body
+        };
+      }
     })
   })
 });
@@ -103,5 +113,6 @@ export const {
   useUpdateUserNameMutation,
   useRequestPasswordResetLinkMutation,
   useGetOrganizationUsersQuery,
-  useUpdateOrganizationDetailsMutation
+  useUpdateOrganizationDetailsMutation,
+  useCreateUserMutation
 } = userApi;

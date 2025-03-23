@@ -12,6 +12,10 @@ import (
 // revokes the old refresh token and creates a new one, and finally returns the new access token,
 // refresh token, the user's expiration time, and the user information.
 func (c *AuthService) RefreshToken(refreshToken types.RefreshTokenRequest) (types.AuthResponse, error) {
+	if refreshToken.RefreshToken == "" {
+		return types.AuthResponse{}, types.ErrRefreshTokenIsRequired
+	}
+
 	c.logger.Log(logger.Info, "refreshing token", refreshToken.RefreshToken)
 	token, err := c.storage.GetRefreshToken(refreshToken.RefreshToken)
 	if err != nil {

@@ -9,10 +9,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-// HandleDeploy handles the request to create a new deployment
-// It requires a valid user and a valid deployment request in the request body
-// It returns the created deployment in the response body with a status code of 200
-// If something fails, it returns an error response with a status code of 500
+
 func (c *DeployController) HandleDeploy(w http.ResponseWriter, r *http.Request) {
 	c.logger.Log(logger.Info, "deploying", "")
 	var data types.CreateDeploymentRequest
@@ -36,21 +33,6 @@ func (c *DeployController) HandleDeploy(w http.ResponseWriter, r *http.Request) 
 	utils.SendJSONResponse(w, "success", "Deployment created successfully", application)
 }
 
-// UpdateApplication updates an existing application deployment
-//
-// This endpoint is accessible by the authenticated user.
-//
-// @Summary Update an application deployment
-// @Description Updates an existing application deployment in the application.
-// @Tags deploy
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param deployment body types.UpdateDeploymentRequest true "Deployment update request"
-// @Success 200 {object} types.UpdateDeploymentResponse "Success response with updated deployment"
-// @Failure 400 {object} types.Response "Bad request"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /deploy [patch]
 func (c *DeployController) UpdateApplication(w http.ResponseWriter, r *http.Request) {
 	c.logger.Log(logger.Info, "updating application", "")
 	var data types.UpdateDeploymentRequest

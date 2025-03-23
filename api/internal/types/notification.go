@@ -108,17 +108,18 @@ func CreateDefaultPreferenceItems(preferenceID uuid.UUID) []PreferenceItem {
 }
 
 type SMTPConfigs struct {
-	bun.BaseModel `bun:"table:smtp_configs,alias:sc" swaggerignore:"true"`
-	ID            uuid.UUID `json:"id" bun:"id,pk,type:uuid"`
-	Host          string    `json:"host" bun:"host,notnull"`
-	Port          int       `json:"port" bun:"port,notnull"`
-	Username      string    `json:"username" bun:"username,notnull"`
-	Password      string    `json:"-" bun:"password,notnull"`
-	FromEmail     string    `json:"from_email" bun:"from_email,notnull"`
-	FromName      string    `json:"from_name" bun:"from_name,notnull"`
-	Security      string    `json:"security" bun:"security,notnull"`
-	CreatedAt     time.Time `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
-	UpdatedAt     time.Time `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
-	IsActive      bool      `json:"is_active" bun:"is_active,notnull,default:false"`
-	UserID        uuid.UUID `json:"user_id" bson:"user_id"`
+	bun.BaseModel  `bun:"table:smtp_configs,alias:sc" swaggerignore:"true"`
+	ID             uuid.UUID `json:"id" bun:"id,pk,type:uuid"`
+	Host           string    `json:"host" bun:"host,notnull"`
+	Port           int       `json:"port" bun:"port,notnull"`
+	Username       string    `json:"username" bun:"username,notnull"`
+	Password       string    `json:"-" bun:"password,notnull"`
+	FromEmail      string    `json:"from_email" bun:"from_email,notnull"`
+	FromName       string    `json:"from_name" bun:"from_name,notnull"`
+	Security       string    `json:"security" bun:"security,notnull"`
+	CreatedAt      time.Time `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
+	UpdatedAt      time.Time `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
+	IsActive       bool      `json:"is_active" bun:"is_active,notnull,default:false"`
+	UserID         uuid.UUID `json:"user_id" bson:"user_id"`
+	OrganizationID uuid.UUID `json:"organization_id" bun:"organization_id,notnull"`
 }

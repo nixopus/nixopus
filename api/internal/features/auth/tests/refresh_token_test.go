@@ -29,10 +29,10 @@ func TestRefreshToken(t *testing.T) {
 			userId,
 			test.token,
 			30)
-		user:=CreateTestUser(userId, "nixopus_user1@nixopus.com", "password")
+		user := CreateTestUser(userId, "nixopus_user1@nixopus.com", "password")
 		mockStorage.WithGetRefreshToken(test.token, refreshToken, nil)
 		mockStorage.WithUserByID(userId, user, nil)
-		mockStorage.WithRevokeRefreshToken(test.token,nil)
+		mockStorage.WithRevokeRefreshToken(test.token, nil)
 		mockStorage.WithCreateRefreshToken(user.ID, refreshToken, nil)
 	}
 

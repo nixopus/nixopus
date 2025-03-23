@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/validation"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -113,17 +113,17 @@ func TestValidateCreateGithubConnectorRequest(t *testing.T) {
 func TestValidateUpdateGithubConnectorRequest(t *testing.T) {
 	userID := uuid.New()
 	connectorUserID := userID
-	
+
 	adminUser := &shared_types.User{
 		ID:   userID,
 		Type: "admin",
 	}
-	
+
 	regularUser := &shared_types.User{
 		ID:   userID,
 		Type: "regular",
 	}
-	
+
 	differentUserID := uuid.New()
 	differentUser := &shared_types.User{
 		ID:   differentUserID,
@@ -166,11 +166,11 @@ func TestValidateUpdateGithubConnectorRequest(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "Missing installation ID",
-			request: types.UpdateGithubConnectorRequest{},
-			user: regularUser,
+			name:      "Missing installation ID",
+			request:   types.UpdateGithubConnectorRequest{},
+			user:      regularUser,
 			mockSetup: func(mockRepo *MockGithubConnectorStorage) {},
-			wantErr: types.ErrMissingInstallationID,
+			wantErr:   types.ErrMissingInstallationID,
 		},
 		{
 			name: "No connectors",
@@ -213,11 +213,11 @@ func TestValidateUpdateGithubConnectorRequest(t *testing.T) {
 			if tt.mockSetup != nil {
 				tt.mockSetup(mockRepo)
 			}
-			
+
 			validator := validation.NewValidator(mockRepo)
 			req := &tt.request
 			err := validator.ValidateRequest(req, tt.user)
-			
+
 			if tt.wantErr == nil {
 				assert.NoError(t, err)
 			} else if errors.Is(err, tt.wantErr) {
@@ -225,7 +225,7 @@ func TestValidateUpdateGithubConnectorRequest(t *testing.T) {
 			} else if tt.wantErr.Error() != "" && err != nil {
 				assert.Equal(t, tt.wantErr.Error(), err.Error())
 			}
-			
+
 			mockRepo.AssertExpectations(t)
 		})
 	}
@@ -237,20 +237,20 @@ func TestValidateUpdateGithubConnectorRequest_WithErrorMock(t *testing.T) {
 		ID:   userID,
 		Type: "regular",
 	}
-	
+
 	t.Run("Storage error", func(t *testing.T) {
 		mockRepo := NewMockGithubConnectorStorageWithErr()
 		mockRepo.On("GetAllConnectors", userID.String()).Return(nil, errors.New("failed to get all connectors")).Once()
-		
+
 		validator := validation.NewValidator(mockRepo)
 		req := &types.UpdateGithubConnectorRequest{
 			InstallationID: "test-installation-id",
 		}
-		
+
 		err := validator.ValidateRequest(req, regularUser)
 		assert.Error(t, err)
 		assert.Equal(t, "failed to get all connectors", err.Error())
-		
+
 		mockRepo.AssertExpectations(t)
 	})
 }

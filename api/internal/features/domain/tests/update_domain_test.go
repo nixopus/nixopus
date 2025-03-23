@@ -15,7 +15,7 @@ import (
 
 func TestUpdateDomain(t *testing.T) {
 	validUUID := "123e4567-e89b-12d3-a456-426614174000"
-	
+
 	tests := []struct {
 		name            string
 		domainID        string
@@ -67,11 +67,11 @@ func TestUpdateDomain(t *testing.T) {
 			expectedErr:     errors.New("update domain error"),
 		},
 		{
-			name:         "invalid domain ID",
-			domainID:     "123",
-			userID:       "456",
-			newName:      "new-name",
-			expectedErr:  types.ErrInvalidDomainID,
+			name:        "invalid domain ID",
+			domainID:    "123",
+			userID:      "456",
+			newName:     "new-name",
+			expectedErr: types.ErrInvalidDomainID,
 		},
 	}
 
@@ -84,12 +84,12 @@ func TestUpdateDomain(t *testing.T) {
 				if test.domainExists {
 					domain = &shared_types.Domain{ID: uuid.MustParse(test.domainID)}
 				}
-				
+
 				mockStorage.WithGetDomain(test.domainID, domain, test.getDomainErr)
-				
+
 				if test.domainExists && test.getDomainErr == nil {
 					mockStorage.WithUpdateDomain(test.domainID, test.newName, test.updateDomainErr)
-					
+
 					if test.updateDomainErr == nil {
 						mockStorage.WithGetDomain(test.domainID, domain, nil)
 					}
@@ -104,7 +104,7 @@ func TestUpdateDomain(t *testing.T) {
 			} else {
 				assert.Equal(t, test.expectedErr.Error(), err.Error())
 			}
-			
+
 			mockStorage.AssertExpectations(t)
 		})
 	}

@@ -1,8 +1,10 @@
 import { useAppSelector } from '@/redux/hooks';
 import {
+  useCreateUserMutation,
   useGetOrganizationUsersQuery,
   useUpdateOrganizationDetailsMutation
 } from '@/redux/services/users/userApi';
+import { UserTypes } from '@/redux/types/orgs';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -13,7 +15,7 @@ function useTeamSettings() {
   const [isEditTeamDialogOpen, setEditTeamDialogOpen] = useState(false);
   const [teamName, setTeamName] = useState('');
   const [teamDescription, setTeamDescription] = useState('');
-
+  const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
   const {
     data: apiUsers,
@@ -54,7 +56,7 @@ function useTeamSettings() {
     }
   }, [activeOrganization]);
 
-  const handleAddUser = () => {
+  const handleAddUser = async () => {
     const newId = crypto.randomUUID();
     let permissions: string[] = [];
 
@@ -72,15 +74,17 @@ function useTeamSettings() {
     }
 
     const tempUser = {
-      id: newId,
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      permissions,
-      avatar: ''
+      username: newUser.name || '',
+      email: newUser.email || '',
+      avatar: '' as string,
+      password: "test1234@Test", // This is a temporary password we can use for testing,
+      organization: activeOrganization?.id || '',
+      type: UserTypes.MEMBER,
     };
 
-    setUsers([...users, tempUser]);
+    setUsers([...users, { id: newId, ...tempUser, permissions, name: newUser.name }]);
+    await createUser(tempUser as any);
+    toast.success('User added successfully');
     setNewUser({ name: '', email: '', role: 'Member' });
     setIsAddUserDialogOpen(false);
   };
@@ -144,7 +148,7 @@ function useTeamSettings() {
     isEditTeamDialogOpen,
     teamName,
     teamDescription,
-    isUpdating
+    isUpdating,
   };
 }
 

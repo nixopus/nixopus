@@ -1,5 +1,43 @@
-basePath: /api/v1
 definitions:
+  notification.CreateSMTPConfigRequest:
+    properties:
+      from_email:
+        type: string
+      from_name:
+        type: string
+      host:
+        type: string
+      organization_id:
+        type: string
+      password:
+        type: string
+      port:
+        type: integer
+      username:
+        type: string
+    type: object
+  notification.DeleteSMTPConfigRequest:
+    properties:
+      id:
+        type: string
+    type: object
+  notification.UpdateSMTPConfigRequest:
+    properties:
+      from_email:
+        type: string
+      from_name:
+        type: string
+      host:
+        type: string
+      id:
+        type: string
+      password:
+        type: string
+      port:
+        type: integer
+      username:
+        type: string
+    type: object
   types.AddPermissionToRoleRequest:
     properties:
       permission_id:
@@ -34,6 +72,31 @@ definitions:
       old_password:
         type: string
     type: object
+  types.CreateDomainRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  types.CreateDomainResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  types.CreateGithubConnectorRequest:
+    properties:
+      app_id:
+        type: string
+      client_id:
+        type: string
+      client_secret:
+        type: string
+      pem:
+        type: string
+      slug:
+        type: string
+      webhook_secret:
+        type: string
+    type: object
   types.CreateOrganizationRequest:
     properties:
       description:
@@ -57,6 +120,11 @@ definitions:
       name:
         type: string
     type: object
+  types.DeleteDomainRequest:
+    properties:
+      id:
+        type: string
+    type: object
   types.DeleteOrganizationRequest:
     properties:
       id:
@@ -65,6 +133,50 @@ definitions:
   types.DeletePermissionRequest:
     properties:
       id:
+        type: string
+    type: object
+  types.Domain:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      organization_id:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  types.GithubConnector:
+    properties:
+      app_id:
+        type: string
+      client_id:
+        type: string
+      client_secret:
+        type: string
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: string
+      installation_id:
+        type: string
+      pem:
+        type: string
+      slug:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      webhook_secret:
         type: string
     type: object
   types.LoginRequest:
@@ -151,7 +263,11 @@ definitions:
     properties:
       email:
         type: string
+      organization:
+        type: string
       password:
+        type: string
+      type:
         type: string
       username:
         type: string
@@ -210,33 +326,50 @@ definitions:
       updated_at:
         type: string
     type: object
+  types.UpdateDomainRequest:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  types.UpdateGithubConnectorRequest:
+    properties:
+      installation_id:
+        type: string
+    type: object
   types.UpdateOrganizationRequest:
     properties:
-      description omitempty:
+      description:
         type: string
       id:
         type: string
-      name omitempty:
+      name:
         type: string
     type: object
   types.UpdatePermissionRequest:
     properties:
-      description omitempty:
+      description:
         type: string
       id:
         type: string
-      name omitempty:
+      name:
         type: string
-      resource omitempty:
+      resource:
         type: string
     type: object
   types.UpdateRoleRequest:
     properties:
-      description omitempty:
+      description:
         type: string
       id:
         type: string
-      name omitempty:
+      name:
+        type: string
+    type: object
+  types.UpdateUserNameRequest:
+    properties:
+      name:
         type: string
     type: object
   types.User:
@@ -253,55 +386,24 @@ definitions:
         type: string
       is_verified:
         type: boolean
+      organization_users:
+        items:
+          $ref: '#/definitions/types.OrganizationUsers'
+        type: array
       organizations:
         items:
           $ref: '#/definitions/types.Organization'
         type: array
+      type:
+        type: string
       updated_at:
         type: string
       username:
         type: string
     type: object
-host: localhost:8080
 info:
-  contact:
-    email: raghav@nixopus.com
-    name: API Support
-    url: http://www.swagger.io/support
-  description: Api for Nixopus
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://nixopus.com/terms/
-  title: Nixopus Documentation
-  version: "1.0"
+  contact: {}
 paths:
-  /auth/generate-password-reset-link:
-    post:
-      consumes:
-      - application/json
-      description: Generates a password reset link for a user and sends it to the
-        user's email
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Password reset link sent successfully
-          schema:
-            $ref: '#/definitions/types.Response'
-        "400":
-          description: Failed to decode or validate request
-          schema:
-            $ref: '#/definitions/types.Response'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/types.Response'
-      security:
-      - BearerAuth: []
-      summary: Generates a password reset link for a user
-      tags:
-      - auth
   /auth/login:
     post:
       consumes:
@@ -427,6 +529,32 @@ paths:
       summary: Register a new user
       tags:
       - auth
+  /auth/request-password-reset:
+    post:
+      consumes:
+      - application/json
+      description: Generates a password reset link for a user and sends it to the
+        user's email
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password reset link sent successfully
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Failed to decode or validate request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Generates a password reset link for a user
+      tags:
+      - auth
   /auth/reset-password:
     post:
       consumes:
@@ -459,6 +587,199 @@ paths:
       summary: Reset password endpoint
       tags:
       - auth
+  /domain:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a domain by its ID.
+      parameters:
+      - description: Domain deletion request
+        in: body
+        name: deleteDomain
+        required: true
+        schema:
+          $ref: '#/definitions/types.DeleteDomainRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Domain deleted successfully
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete a domain
+      tags:
+      - domain
+    patch:
+      consumes:
+      - application/json
+      description: Updates an existing domain in the application.
+      parameters:
+      - description: Domain update request
+        in: body
+        name: domain
+        required: true
+        schema:
+          $ref: '#/definitions/types.UpdateDomainRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with updated domain
+          schema:
+            $ref: '#/definitions/types.Domain'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Update a domain
+      tags:
+      - domain
+    post:
+      consumes:
+      - application/json
+      description: Creates a new domain in the application.
+      parameters:
+      - description: Domain creation request
+        in: body
+        name: domain
+        required: true
+        schema:
+          $ref: '#/definitions/types.CreateDomainRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with domain
+          schema:
+            $ref: '#/definitions/types.CreateDomainResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Create a new domain
+      tags:
+      - domain
+  /domain/all:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all domains.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with domains
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Get all domains
+      tags:
+      - domain
+  /github-connector:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new GitHub connector for the authenticated user
+      parameters:
+      - description: GitHub Connector creation request
+        in: body
+        name: connector
+        required: true
+        schema:
+          $ref: '#/definitions/types.CreateGithubConnectorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Create a new GitHub connector
+      tags:
+      - github-connector
+  /github-connector-request:
+    put:
+      consumes:
+      - application/json
+      description: Updates a GitHub connector request for the authenticated user
+      parameters:
+      - description: GitHub Connector request update
+        in: body
+        name: connector
+        required: true
+        schema:
+          $ref: '#/definitions/types.UpdateGithubConnectorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Update a GitHub connector request
+      tags:
+      - github-connector
+  /github-connectors:
+    get:
+      description: Retrieves a list of all GitHub connectors associated with the authenticated
+        user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with connectors
+          schema:
+            items:
+              $ref: '#/definitions/types.GithubConnector'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Retrieve all GitHub connectors for the authenticated user
+      tags:
+      - github-connector
   /health:
     get:
       description: Simple health check
@@ -472,6 +793,119 @@ paths:
       summary: Check if the server is up
       tags:
       - health
+  /notification/add-smtp:
+    post:
+      consumes:
+      - application/json
+      description: Add SMTP configuration
+      parameters:
+      - description: SMTP configuration
+        in: body
+        name: SMTPConfigs
+        required: true
+        schema:
+          $ref: '#/definitions/notification.CreateSMTPConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SMTP added successfully
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Add SMTP configuration
+      tags:
+      - notification
+  /notification/delete-smtp:
+    post:
+      consumes:
+      - application/json
+      description: Delete SMTP configuration
+      parameters:
+      - description: SMTP configuration
+        in: body
+        name: SMTPConfigs
+        required: true
+        schema:
+          $ref: '#/definitions/notification.DeleteSMTPConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SMTP deleted successfully
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Delete SMTP configuration
+      tags:
+      - notification
+  /notification/get-smtp:
+    get:
+      consumes:
+      - application/json
+      description: Get SMTP configuration
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SMTP configuration
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Get SMTP configuration
+      tags:
+      - notification
+  /notification/update-smtp:
+    post:
+      consumes:
+      - application/json
+      description: Update SMTP configuration
+      parameters:
+      - description: SMTP configuration
+        in: body
+        name: SMTPConfigs
+        required: true
+        schema:
+          $ref: '#/definitions/notification.UpdateSMTPConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SMTP updated successfully
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Update SMTP configuration
+      tags:
+      - notification
   /organization/{id}:
     get:
       consumes:
@@ -654,8 +1088,30 @@ paths:
       summary: Remove a user from an organization
       tags:
       - organization
-  /organization/update:
-    post:
+  /organizations:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all organizations.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with organizations
+          schema:
+            items:
+              $ref: '#/definitions/types.Organization'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Get all organizations
+      tags:
+      - organization
+    put:
       consumes:
       - application/json
       description: Updates an organization
@@ -684,29 +1140,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Update an organization
-      tags:
-      - organization
-  /organizations:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves all organizations.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success response with organizations
-          schema:
-            items:
-              $ref: '#/definitions/types.Organization'
-            type: array
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/types.Response'
-      security:
-      - BearerAuth: []
-      summary: Get all organizations
       tags:
       - organization
   /permissions:
@@ -1097,10 +1530,93 @@ paths:
       summary: Update a role
       tags:
       - role
-securityDefinitions:
-  BearerAuth:
-    description: Enter your bearer token in the format **Bearer &lt;token&gt;**
-    in: header
-    name: Authorization
-    type: apiKey
+  /user:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the details of the current user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with user details
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.User'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Get user details endpoint
+      tags:
+      - user
+  /user/name:
+    patch:
+      consumes:
+      - application/json
+      description: Updates the user's name based on the provided information.
+      parameters:
+      - description: Update user name request
+        in: body
+        name: updateUserName
+        required: true
+        schema:
+          $ref: '#/definitions/types.UpdateUserNameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User name updated successfully
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Failed to decode or validate request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Update user name endpoint
+      tags:
+      - user
+  /user/organizations:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the organizations for the current user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with organizations
+          schema:
+            items:
+              $ref: '#/definitions/types.Organization'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Get user organizations
+      tags:
+      - user
 swagger: "2.0"

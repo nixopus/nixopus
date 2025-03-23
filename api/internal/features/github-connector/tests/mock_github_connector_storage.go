@@ -15,8 +15,8 @@ type MockGithubConnectorStorage struct {
 	connectors     map[string]*shared_types.GithubConnector
 	appMapping     map[string]string
 	userConnectors map[string][]string
-	lastConnector  *shared_types.GithubConnector 
-	methodCalls    map[string]int             
+	lastConnector  *shared_types.GithubConnector
+	methodCalls    map[string]int
 }
 
 // NewMockGithubConnectorStorage creates a new instance of MockGithubConnectorStorage
@@ -54,7 +54,7 @@ func (m *MockGithubConnectorStorage) CreateConnector(connector *shared_types.Git
 
 func (m *MockGithubConnectorStorage) UpdateConnector(ConnectorID, InstallationID string) error {
 	m.methodCalls["UpdateConnector"] = m.methodCalls["UpdateConnector"] + 1
-	
+
 	args := m.Called(ConnectorID, InstallationID)
 	if args.Get(0) != nil {
 		return args.Error(0)
@@ -69,7 +69,7 @@ func (m *MockGithubConnectorStorage) UpdateConnector(ConnectorID, InstallationID
 
 func (m *MockGithubConnectorStorage) GetConnector(ConnectorID string) (*shared_types.GithubConnector, error) {
 	m.methodCalls["GetConnector"] = m.methodCalls["GetConnector"] + 1
-	
+
 	args := m.Called(ConnectorID)
 	if args.Get(0) != nil {
 		return args.Get(0).(*shared_types.GithubConnector), args.Error(1)
@@ -83,7 +83,7 @@ func (m *MockGithubConnectorStorage) GetConnector(ConnectorID string) (*shared_t
 
 func (m *MockGithubConnectorStorage) GetAllConnectors(UserID string) ([]shared_types.GithubConnector, error) {
 	m.methodCalls["GetAllConnectors"] = m.methodCalls["GetAllConnectors"] + 1
-	
+
 	args := m.Called(UserID)
 	if len(args) > 0 && args.Get(0) != nil {
 		return args.Get(0).([]shared_types.GithubConnector), args.Error(1)
@@ -104,7 +104,7 @@ func (m *MockGithubConnectorStorage) GetAllConnectors(UserID string) ([]shared_t
 
 func (m *MockGithubConnectorStorage) GetConnectorByAppID(AppID string) (*shared_types.GithubConnector, error) {
 	m.methodCalls["GetConnectorByAppID"] = m.methodCalls["GetConnectorByAppID"] + 1
-	
+
 	args := m.Called(AppID)
 	if args.Get(0) != nil {
 		return args.Get(0).(*shared_types.GithubConnector), args.Error(1)
@@ -170,11 +170,11 @@ type CustomMockStorage struct {
 	getAllConnectorsUserID string
 	getAllConnectorsResult []shared_types.GithubConnector
 	getAllConnectorsError  error
-	
-	updateConnectorID          string
-	updateConnectorInstallID   string  
-	updateConnectorError       error
-	
+
+	updateConnectorID        string
+	updateConnectorInstallID string
+	updateConnectorError     error
+
 	getAllConnectorsCalled bool
 	updateConnectorCalled  bool
 }

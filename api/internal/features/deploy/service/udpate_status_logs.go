@@ -9,7 +9,7 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (s *DeployService) updateDeployment(deployment *shared_types.ApplicationDeployment)  {
+func (s *DeployService) updateDeployment(deployment *shared_types.ApplicationDeployment) {
 	err := s.storage.UpdateApplicationDeployment(deployment)
 	if err != nil {
 		s.logger.Log(logger.Error, "Failed to update application deployment: "+err.Error(), "")

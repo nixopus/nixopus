@@ -24,7 +24,7 @@ function Page() {
     isEditTeamDialogOpen,
     teamName,
     teamDescription,
-    isUpdating
+    isUpdating,
   } = useTeamSettings();
 
   return (

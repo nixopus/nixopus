@@ -3,7 +3,6 @@ module github.com/raghavyuva/nixopus-api
 go 1.23.1
 
 require (
-	github.com/creack/pty v1.1.24
 	github.com/docker/docker v28.0.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -25,7 +24,6 @@ require (
 	github.com/uptrace/bun/extra/bundebug v1.2.10
 	golang.org/x/crypto v0.33.0
 	golang.org/x/net v0.35.0
-	golang.org/x/term v0.29.0
 	golang.org/x/time v0.10.0
 )
 
@@ -35,6 +33,7 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/containerd/log v0.1.0 // indirect
+	github.com/creack/pty v1.1.24 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
@@ -81,6 +80,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/term v0.29.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/tools v0.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

@@ -113,9 +113,8 @@ func (s *SocketServer) readLoop(conn *websocket.Conn, user *types.User) {
 			s.terminalMutex.Lock()
 			term, exists := s.terminals[conn]
 			s.terminalMutex.Unlock()
-		
+
 			if exists {
-				fmt.Println("Terminal already exists")
 				s.terminalMutex.Lock()
 				term.WriteMessage(msg.Data.(string))
 				s.terminalMutex.Unlock()
@@ -125,13 +124,13 @@ func (s *SocketServer) readLoop(conn *websocket.Conn, user *types.User) {
 					s.sendError(conn, "Failed to start terminal")
 					continue
 				}
-		
+
 				s.terminalMutex.Lock()
 				s.terminals[conn] = newTerminal
 				s.terminalMutex.Unlock()
 
 				newTerminal.WriteMessage(msg.Data.(string))
-				
+
 				go newTerminal.Start()
 			}
 		default:

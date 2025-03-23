@@ -13,6 +13,13 @@ var (
 	ErrDomainNameTooLong   = errors.New("domain name too long")
 	ErrDomainNameTooShort  = errors.New("domain name too short")
 	ErrInvalidUserID       = errors.New("invalid user id")
+	ErrInvalidAccess       = errors.New("invalid access")
+	ErrUserDoesNotBelongToOrganization = errors.New("user does not belong to organization")
+	ErrUserDoesNotHavePermissionForTheResource = errors.New("user does not have permission for the resource")
+	ErrInvalidResource = errors.New("invalid resource")
+	ErrMissingID = errors.New("id is required")
+	ErrPermissionDenied = errors.New("permission denied")
+	ErrAccessDenied = errors.New("access denied")
 )
 
 type CreateDomainRequest struct {

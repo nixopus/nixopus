@@ -38,15 +38,15 @@ func (v *Validator) ValidateName(name string) error {
 	if name == "" {
 		return types.ErrMissingDomainName
 	}
-	
+
 	if len(name) < 3 {
 		return types.ErrDomainNameTooShort
 	}
-	
+
 	if len(name) > 255 {
 		return types.ErrDomainNameTooLong
 	}
-	
+
 	return nil
 }
 
@@ -80,12 +80,12 @@ func (v *Validator) ValidateUpdateDomainRequest(req types.UpdateDomainRequest, u
 	if err := v.ValidateID(req.ID); err != nil {
 		return err
 	}
-	
+
 	// Validate name
 	if err := v.ValidateName(req.Name); err != nil {
 		return err
 	}
-	
+
 	// Check if domain exists
 	domain, err := v.storage.GetDomain(req.ID)
 	if err != nil {
@@ -94,12 +94,12 @@ func (v *Validator) ValidateUpdateDomainRequest(req types.UpdateDomainRequest, u
 	if domain == nil {
 		return types.ErrDomainNotFound
 	}
-	
+
 	// Check permissions
 	if user.Type != "admin" && domain.UserID.String() != user.ID.String() {
 		return types.ErrNotAllowed
 	}
-	
+
 	return nil
 }
 
@@ -109,7 +109,7 @@ func (v *Validator) ValidateDeleteDomainRequest(req types.DeleteDomainRequest, u
 	if err := v.ValidateID(req.ID); err != nil {
 		return err
 	}
-	
+
 	// Check if domain exists
 	domain, err := v.storage.GetDomain(req.ID)
 	if err != nil {
@@ -118,11 +118,11 @@ func (v *Validator) ValidateDeleteDomainRequest(req types.DeleteDomainRequest, u
 	if domain == nil {
 		return types.ErrDomainNotFound
 	}
-	
+
 	// Check permissions
 	if user.Type != "admin" && domain.UserID.String() != user.ID.String() {
 		return types.ErrNotAllowed
 	}
-	
+
 	return nil
 }

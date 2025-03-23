@@ -168,9 +168,9 @@ func TestValidateUpdateDomainRequest(t *testing.T) {
 
 	validID := "f47ac10b-58cc-4372-a567-0e02b2c3d479"
 	validUUID, _ := uuid.Parse(validID)
-	
+
 	nonExistentID := "a47ac10b-58cc-4372-a567-0e02b2c3d480"
-	
+
 	errorID := "b47ac10b-58cc-4372-a567-0e02b2c3d481"
 
 	adminUser := shared_types.User{
@@ -263,21 +263,21 @@ func TestValidateDeleteDomainRequest(t *testing.T) {
 
 	validID := "f47ac10b-58cc-4372-a567-0e02b2c3d479"
 	validUUID, _ := uuid.Parse(validID)
-	
+
 	nonExistentID := "a47ac10b-58cc-4372-a567-0e02b2c3d480"
-	
+
 	errorID := "b47ac10b-58cc-4372-a567-0e02b2c3d481"
-	
+
 	adminUser := shared_types.User{
 		ID:   validUUID,
 		Type: "admin",
 	}
-	
+
 	ownerUser := shared_types.User{
 		ID:   validUUID,
 		Type: "regular",
 	}
-	
+
 	otherUser := shared_types.User{
 		ID:   uuid.New(),
 		Type: "regular",
@@ -286,9 +286,9 @@ func TestValidateDeleteDomainRequest(t *testing.T) {
 	mockDomain := &shared_types.Domain{
 		ID:     validUUID,
 		Name:   "example.com",
-		UserID: validUUID, 
+		UserID: validUUID,
 	}
-	
+
 	mockStorage.WithGetDomain(mockDomain.ID.String(), mockDomain, nil)
 	mockStorage.WithGetDomain(nonExistentID, nil, nil)
 	mockStorage.WithGetDomain(errorID, nil, assert.AnError)

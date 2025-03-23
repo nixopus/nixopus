@@ -8,7 +8,7 @@ import (
 )
 
 type GithubConnector struct {
-	bun.BaseModel `bun:"table:github_connectors,alias:gc"`
+	bun.BaseModel `bun:"table:github_connectors,alias:gc" swaggerignore:"true"`
 
 	ID             uuid.UUID  `bun:"id,pk,type:uuid" json:"id"`
 	AppID          string     `bun:"app_id,notnull" json:"app_id"`

@@ -14,11 +14,11 @@ import (
 
 func TestUpdatePreference(t *testing.T) {
 	tests := []struct {
-		name       string
+		name        string
 		preferences notification.UpdatePreferenceRequest
-		userID     uuid.UUID
-		storageErr error
-		wantErr    bool
+		userID      uuid.UUID
+		storageErr  error
+		wantErr     bool
 	}{
 		{
 			name: "valid input",

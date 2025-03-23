@@ -53,7 +53,7 @@ func (c *AuthController) ResetPassword(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} types.Response "Password reset link sent successfully"
 // @Failure 400 {object} types.Response "Failed to decode or validate request"
 // @Failure 500 {object} types.Response "Internal server error"
-// @Router /auth/generate-password-reset-link [post]
+// @Router /auth/request-password-reset [post]
 func (c *AuthController) GeneratePasswordResetLink(w http.ResponseWriter, r *http.Request) {
 	user := c.GetUser(w, r)
 	if user == nil {

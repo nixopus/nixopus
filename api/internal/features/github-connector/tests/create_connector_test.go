@@ -16,47 +16,47 @@ import (
 func TestCreateConnector(t *testing.T) {
 	userID := uuid.New().String()
 	request := &types.CreateGithubConnectorRequest{
-		AppID:          "test-app-id",
-		Slug:           "test-slug",
-		Pem:            "test-pem",
-		ClientID:       "test-client-id",
-		ClientSecret:   "test-client-secret",
-		WebhookSecret:  "test-webhook-secret",
+		AppID:         "test-app-id",
+		Slug:          "test-slug",
+		Pem:           "test-pem",
+		ClientID:      "test-client-id",
+		ClientSecret:  "test-client-secret",
+		WebhookSecret: "test-webhook-secret",
 	}
 
 	tests := []struct {
-		name          string
-		request       *types.CreateGithubConnectorRequest
-		userID        string
-		mockSetup     func(*MockGithubConnectorStorage)
-		expectedError bool
+		name           string
+		request        *types.CreateGithubConnectorRequest
+		userID         string
+		mockSetup      func(*MockGithubConnectorStorage)
+		expectedError  bool
 		expectedErrMsg string
 	}{
 		{
-			name:          "Success case",
-			request:       request,
-			userID:        userID,
+			name:    "Success case",
+			request: request,
+			userID:  userID,
 			mockSetup: func(mockRepo *MockGithubConnectorStorage) {
 				mockRepo.On("CreateConnector", mock.AnythingOfType("*types.GithubConnector")).Return(nil).Once()
 			},
 			expectedError: false,
 		},
 		{
-			name:          "Invalid UUID",
-			request:       request,
-			userID:        "invalid-uuid",
-			mockSetup:     func(mockRepo *MockGithubConnectorStorage) {},
-			expectedError: true,
+			name:           "Invalid UUID",
+			request:        request,
+			userID:         "invalid-uuid",
+			mockSetup:      func(mockRepo *MockGithubConnectorStorage) {},
+			expectedError:  true,
 			expectedErrMsg: "invalid UUID",
 		},
 		{
-			name:          "Storage error",
-			request:       request,
-			userID:        userID,
+			name:    "Storage error",
+			request: request,
+			userID:  userID,
 			mockSetup: func(mockRepo *MockGithubConnectorStorage) {
 				mockRepo.On("CreateConnector", mock.AnythingOfType("*types.GithubConnector")).Return(assert.AnError).Once()
 			},
-			expectedError: true,
+			expectedError:  true,
 			expectedErrMsg: "assert.AnError general error for testing",
 		},
 	}
@@ -94,11 +94,11 @@ func TestCreateConnector(t *testing.T) {
 				assert.Equal(t, tt.request.WebhookSecret, createdConnector.WebhookSecret)
 				assert.Equal(t, "", createdConnector.InstallationID)
 				assert.Equal(t, uuid.MustParse(tt.userID), createdConnector.UserID)
-				
+
 				assert.WithinDuration(t, time.Now(), createdConnector.CreatedAt, 5*time.Second)
 				assert.WithinDuration(t, time.Now(), createdConnector.UpdatedAt, 5*time.Second)
 				assert.Nil(t, createdConnector.DeletedAt)
-				
+
 				assert.NotEqual(t, uuid.Nil, createdConnector.ID)
 			}
 		})

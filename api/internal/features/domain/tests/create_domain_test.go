@@ -62,4 +62,3 @@ func TestCreateDomainStorageError(t *testing.T) {
 	_, err := service.CreateDomain(req, userID)
 	assert.NotNil(t, err)
 }
-

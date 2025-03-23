@@ -19,7 +19,7 @@ import (
 // @Success 200 {object} types.Response "User name updated successfully"
 // @Failure 400 {object} types.Response "Failed to decode or validate request"
 // @Failure 500 {object} types.Response "Internal server error"
-// @Router /user/update-username [put]
+// @Router /user/name [patch]
 func (u *UserController) UpdateUserName(w http.ResponseWriter, r *http.Request) {
 	u.logger.Log(logger.Info, "updating user name", "")
 

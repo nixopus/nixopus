@@ -76,6 +76,12 @@ func (c *DomainsController) parseAndValidate(w http.ResponseWriter, r *http.Requ
 		return false
 	}
 
+	if err := c.validator.AccessValidator(w, r, user); err != nil {
+		c.logger.Log(logger.Error, err.Error(), err.Error())
+		utils.SendErrorResponse(w, err.Error(), http.StatusForbidden)
+		return false
+	}
+
 	return true
 }
 

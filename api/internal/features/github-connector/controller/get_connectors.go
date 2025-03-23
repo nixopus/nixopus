@@ -12,7 +12,7 @@ import (
 // @Description Retrieves a list of all GitHub connectors associated with the authenticated user
 // @Tags github-connector
 // @Produce json
-// @Success 200 {object} types.Response{data=[]shared_types.GithubConnector} "Success response with connectors"
+// @Success 200 {array} types.GithubConnector "Success response with connectors"
 // @Failure 500 {object} types.Response "Internal server error"
 // @Router /github-connectors [get]
 func (c *GithubConnectorController) GetGithubConnectors(w http.ResponseWriter, r *http.Request) {

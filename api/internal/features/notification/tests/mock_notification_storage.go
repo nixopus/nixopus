@@ -33,8 +33,11 @@ func (m *MockNotificationStorage) GetPreferences(context context.Context, userID
 }
 
 func (m *MockNotificationStorage) GetSmtp(ID string) (*shared_types.SMTPConfigs, error) {
-	args := m.Called(ID)
-	return args.Get(0).(*shared_types.SMTPConfigs), args.Error(1)
+    args := m.Called(ID)
+    if args.Get(0) == nil {
+        return nil, args.Error(1)
+    }
+    return args.Get(0).(*shared_types.SMTPConfigs), args.Error(1)
 }
 
 func (m *MockNotificationStorage) UpdatePreference(ctx context.Context, req notification.UpdatePreferenceRequest, userID uuid.UUID) error {

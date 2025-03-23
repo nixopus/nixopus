@@ -1,0 +1,1 @@
+ALTER TABLE smtp_configs DROP COLUMN organization_id;

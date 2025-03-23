@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -21,12 +20,9 @@ import (
 // @Router /user/organizations [get]
 func (u *UserController) GetUserOrganizations(w http.ResponseWriter, r *http.Request) {
 	u.logger.Log(logger.Info, "getting user organizations", "")
-	userAny := r.Context().Value(shared_types.UserContextKey)
-	user, ok := userAny.(*shared_types.User)
 
-	if !ok {
-		u.logger.Log(logger.Error, shared_types.ErrFailedToGetUserFromContext.Error(), shared_types.ErrFailedToGetUserFromContext.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
+	user := u.GetUser(w, r)
+	if user == nil {
 		return
 	}
 

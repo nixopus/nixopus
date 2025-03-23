@@ -16,7 +16,6 @@ import (
 )
 
 type NotificationController struct {
-	store        *shared_storage.Store
 	validator    *validation.Validator
 	service      *service.NotificationService
 	ctx          context.Context
@@ -37,7 +36,6 @@ func NewNotificationController(
 ) *NotificationController {
 	storage := storage.NotificationStorage{DB: store.DB, Ctx: ctx}
 	return &NotificationController{
-		store:        store,
 		validator:    validation.NewValidator(&storage),
 		service:      service.NewNotificationService(store, ctx, l, &storage),
 		ctx:          ctx,
@@ -69,14 +67,20 @@ func (c *NotificationController) parseAndValidate(w http.ResponseWriter, r *http
 		return false
 	}
 
+	if err := c.validator.ValidateRequest(req); err != nil {
+		c.logger.Log(logger.Error, err.Error(), err.Error())
+		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return false
+	}
+
 	user := c.GetUser(w, r)
 	if user == nil {
 		return false
 	}
 
-	if err := c.validator.ValidateRequest(req, *user); err != nil {
+	if err := c.validator.AccessValidator(w, r, user); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+		utils.SendErrorResponse(w, err.Error(), http.StatusForbidden)
 		return false
 	}
 

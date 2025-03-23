@@ -10,26 +10,39 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *AuthService) Register(registration_request types.RegisterRequest) (types.AuthResponse, error) {
-	var user shared_types.User
-	c.logger.Log(logger.Info, "registering user", registration_request.Email)
-	hashedPassword, err := HashPassword(registration_request.Password)
+func (c *AuthService) Register(registrationRequest types.RegisterRequest) (types.AuthResponse, error) {
+	c.logger.Log(logger.Info, "registering user", registrationRequest.Email)
+	userType := registrationRequest.Type
+	if userType == "" {
+		userType = shared_types.RoleViewer
+	}
+
+	if userType != shared_types.RoleAdmin && userType != shared_types.RoleMember && userType != shared_types.RoleViewer {
+		c.logger.Log(logger.Error, types.ErrInvalidUserType.Error(), "")
+		return types.AuthResponse{}, types.ErrInvalidUserType
+	}
+
+	if dbUser, err := c.storage.FindUserByEmail(registrationRequest.Email); err == nil && dbUser.ID != uuid.Nil {
+		c.logger.Log(logger.Error, types.ErrUserWithEmailAlreadyExists.Error(), "")
+		return types.AuthResponse{}, types.ErrUserWithEmailAlreadyExists
+	}
+
+	hashedPassword, err := HashPassword(registrationRequest.Password)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToHashPassword.Error(), err.Error())
 		return types.AuthResponse{}, types.ErrFailedToHashPassword
 	}
 
-	user = shared_types.NewUser(registration_request.Email, hashedPassword, registration_request.Username, "", registration_request.Type, user.Type == "admin")
+	user := shared_types.NewUser(
+		registrationRequest.Email,
+		hashedPassword,
+		registrationRequest.Username,
+		"",
+		"",
+		false,
+	)
 
-	if db_user, err := c.storage.FindUserByEmail(registration_request.Email); err == nil {
-		c.logger.Log(logger.Error, types.ErrUserWithEmailAlreadyExists.Error(), "")
-		if db_user.ID != uuid.Nil {
-			return types.AuthResponse{}, types.ErrUserWithEmailAlreadyExists
-		}
-	}
-
-	err = c.storage.CreateUser(&user)
-	if err != nil {
+	if err := c.storage.CreateUser(&user); err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToRegisterUser.Error(), err.Error())
 		return types.AuthResponse{}, types.ErrFailedToRegisterUser
 	}
@@ -46,16 +59,25 @@ func (c *AuthService) Register(registration_request types.RegisterRequest) (type
 		return types.AuthResponse{}, types.ErrFailedToCreateToken
 	}
 
-	// for admin user we need to add them to a default organization with appropriate role
-	if user.Type == "admin" {
-		organization, err := c.createDefaultOrganization(user)
+	organization, err := c.createDefaultOrganization(user)
+	if err != nil {
+		c.logger.Log(logger.Error, types.ErrFailedToCreateDefaultOrganization.Error(), err.Error())
+		return types.AuthResponse{}, types.ErrFailedToCreateDefaultOrganization
+	}
+
+	if err := c.addUserToOrganizationWithRole(user, organization, "admin"); err != nil {
+		c.logger.Log(logger.Error, types.ErrFailedToAddUserToOrganization.Error(), err.Error())
+		return types.AuthResponse{}, types.ErrFailedToAddUserToOrganization
+	}
+
+	if registrationRequest.Organization != "" {
+		requestedOrganization, err := c.organization_service.GetOrganization(registrationRequest.Organization)
 		if err != nil {
-			c.logger.Log(logger.Error, types.ErrFailedToCreateDefaultOrganization.Error(), err.Error())
-			return types.AuthResponse{}, types.ErrFailedToCreateDefaultOrganization
+			c.logger.Log(logger.Error, types.ErrFailedToGetOrganization.Error(), err.Error())
+			return types.AuthResponse{}, types.ErrFailedToGetOrganization
 		}
 
-		err = c.addUserToOrganizationWithAdminRole(user, organization)
-		if err != nil {
+		if err := c.addUserToOrganizationWithRole(user, requestedOrganization, userType); err != nil {
 			c.logger.Log(logger.Error, types.ErrFailedToAddUserToOrganization.Error(), err.Error())
 			return types.AuthResponse{}, types.ErrFailedToAddUserToOrganization
 		}
@@ -70,35 +92,42 @@ func (c *AuthService) Register(registration_request types.RegisterRequest) (type
 }
 
 func (c *AuthService) createDefaultOrganization(user shared_types.User) (shared_types.Organization, error) {
-	c.logger.Log(logger.Info, "creating default organization for admin user", user.Email)
-	org, err := c.organization_service.CreateOrganization(&organization_types.CreateOrganizationRequest{
+	c.logger.Log(logger.Info, "creating default organization for user", user.Email)
+
+	orgRequest := &organization_types.CreateOrganizationRequest{
 		Name:        user.Username + "'s Team",
 		Description: "My Team",
-	})
+	}
+
+	org, err := c.organization_service.CreateOrganization(orgRequest)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToCreateDefaultOrganization.Error(), err.Error())
 		return shared_types.Organization{}, types.ErrFailedToCreateDefaultOrganization
 	}
 
-	c.logger.Log(logger.Info, "created default organization for admin user", user.Email)
+	c.logger.Log(logger.Info, "created default organization for user", user.Email)
 	return org, nil
 }
 
-func (c *AuthService) addUserToOrganizationWithAdminRole(user shared_types.User, organization shared_types.Organization) error {
-	c.logger.Log(logger.Info, "adding user to organization with admin role", user.Email)
+func (c *AuthService) addUserToOrganizationWithRole(user shared_types.User, organization shared_types.Organization, roleName string) error {
+	c.logger.Log(logger.Info, "adding user to organization with role", roleName)
 
-	roles, err := c.role_service.GetRoleByName("admin")
+	roles, err := c.role_service.GetRoleByName(roleName)
 	if err != nil {
+		c.logger.Log(logger.Error, "failed to get role by name", err.Error())
 		return err
 	}
+
 	if roles == nil {
+		c.logger.Log(logger.Error, types.ErrNoRolesFound.Error(), "")
 		return types.ErrNoRolesFound
 	}
 
-	user_organization := organization_types.AddUserToOrganizationRequest{
+	userOrganization := organization_types.AddUserToOrganizationRequest{
 		OrganizationID: organization.ID.String(),
 		UserID:         user.ID.String(),
 		RoleId:         roles.ID.String(),
 	}
-	return c.organization_service.AddUserToOrganization(user_organization)
+
+	return c.organization_service.AddUserToOrganization(userOrganization)
 }

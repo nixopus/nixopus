@@ -19,6 +19,12 @@ type Role struct {
 	Permissions []Permission `json:"permissions,omitempty" bun:"m2m:role_permissions,join:Role=Permission"`
 }
 
+const (
+	RoleAdmin  = "admin"
+	RoleMember = "member"
+	RoleViewer = "viewer"
+)
+
 type Permission struct {
 	bun.BaseModel `bun:"table:permissions,alias:p" swaggerignore:"true"`
 	ID            uuid.UUID  `json:"id" bun:"id,pk,type:uuid"`

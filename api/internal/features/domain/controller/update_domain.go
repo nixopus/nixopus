@@ -19,7 +19,7 @@ import (
 // @Produce json
 // @Security BearerAuth
 // @Param domain body types.UpdateDomainRequest true "Domain update request"
-// @Success 200 {object} types.UpdateDomainResponse "Success response with updated domain"
+// @Success 200 {object} types.Domain "Success response with updated domain"
 // @Failure 400 {object} types.Response "Bad request"
 // @Failure 500 {object} types.Response "Internal server error"
 // @Router /domain [patch]

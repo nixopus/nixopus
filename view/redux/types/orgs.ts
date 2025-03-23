@@ -80,3 +80,17 @@ export interface UpdateOrganizationDetailsRequest {
   name: string;
   description: string;
 }
+
+export interface CreateUserRequest {
+  email: string;
+  password: string;
+  username: string;
+  type: UserTypes;
+  organization: string;
+}
+
+export enum UserTypes {
+  ADMIN = 'admin',
+  MEMBER = 'member',
+  VIEWER = 'viewer'
+}
