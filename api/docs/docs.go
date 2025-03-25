@@ -9,12 +9,61 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "termsOfService": "http://nixopus.com/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "raghav@nixopus.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/generate-password-reset-link": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generates a password reset link for a user and sends it to the user's email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Generates a password reset link for a user",
+                "responses": {
+                    "200": {
+                        "description": "Password reset link sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Failed to decode or validate request",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Authenticates a user and returns a JWT token",
@@ -215,46 +264,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/request-password-reset": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Generates a password reset link for a user and sends it to the user's email",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Generates a password reset link for a user",
-                "responses": {
-                    "200": {
-                        "description": "Password reset link sent successfully",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Failed to decode or validate request",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/auth/reset-password": {
             "post": {
                 "security": [
@@ -306,305 +315,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/domain": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Creates a new domain in the application.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "domain"
-                ],
-                "summary": "Create a new domain",
-                "parameters": [
-                    {
-                        "description": "Domain creation request",
-                        "name": "domain",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/types.CreateDomainRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success response with domain",
-                        "schema": {
-                            "$ref": "#/definitions/types.CreateDomainResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Deletes a domain by its ID.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "domain"
-                ],
-                "summary": "Delete a domain",
-                "parameters": [
-                    {
-                        "description": "Domain deletion request",
-                        "name": "deleteDomain",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/types.DeleteDomainRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Domain deleted successfully",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Updates an existing domain in the application.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "domain"
-                ],
-                "summary": "Update a domain",
-                "parameters": [
-                    {
-                        "description": "Domain update request",
-                        "name": "domain",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/types.UpdateDomainRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success response with updated domain",
-                        "schema": {
-                            "$ref": "#/definitions/types.Domain"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/domain/all": {
-            "get": {
-                "description": "Retrieves a list of all domains.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "domain"
-                ],
-                "summary": "Get all domains",
-                "responses": {
-                    "200": {
-                        "description": "Success response with domains",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/github-connector": {
-            "post": {
-                "description": "Creates a new GitHub connector for the authenticated user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "github-connector"
-                ],
-                "summary": "Create a new GitHub connector",
-                "parameters": [
-                    {
-                        "description": "GitHub Connector creation request",
-                        "name": "connector",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/types.CreateGithubConnectorRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success response",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/github-connector-request": {
-            "put": {
-                "description": "Updates a GitHub connector request for the authenticated user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "github-connector"
-                ],
-                "summary": "Update a GitHub connector request",
-                "parameters": [
-                    {
-                        "description": "GitHub Connector request update",
-                        "name": "connector",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/types.UpdateGithubConnectorRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success response",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/github-connectors": {
-            "get": {
-                "description": "Retrieves a list of all GitHub connectors associated with the authenticated user",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "github-connector"
-                ],
-                "summary": "Retrieve all GitHub connectors for the authenticated user",
-                "responses": {
-                    "200": {
-                        "description": "Success response with connectors",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/types.GithubConnector"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/health": {
             "get": {
                 "description": "Simple health check",
@@ -618,179 +328,6 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "Success response",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/notification/add-smtp": {
-            "post": {
-                "description": "Add SMTP configuration",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "notification"
-                ],
-                "summary": "Add SMTP configuration",
-                "parameters": [
-                    {
-                        "description": "SMTP configuration",
-                        "name": "SMTPConfigs",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/notification.CreateSMTPConfigRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "SMTP added successfully",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/notification/delete-smtp": {
-            "post": {
-                "description": "Delete SMTP configuration",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "notification"
-                ],
-                "summary": "Delete SMTP configuration",
-                "parameters": [
-                    {
-                        "description": "SMTP configuration",
-                        "name": "SMTPConfigs",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/notification.DeleteSMTPConfigRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "SMTP deleted successfully",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/notification/get-smtp": {
-            "get": {
-                "description": "Get SMTP configuration",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "notification"
-                ],
-                "summary": "Get SMTP configuration",
-                "responses": {
-                    "200": {
-                        "description": "SMTP configuration",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/notification/update-smtp": {
-            "post": {
-                "description": "Update SMTP configuration",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "notification"
-                ],
-                "summary": "Update SMTP configuration",
-                "parameters": [
-                    {
-                        "description": "SMTP configuration",
-                        "name": "SMTPConfigs",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/notification.UpdateSMTPConfigRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "SMTP updated successfully",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/types.Response"
                         }
@@ -990,6 +527,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/organization/update": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an organization",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organization"
+                ],
+                "summary": "Update an organization",
+                "parameters": [
+                    {
+                        "description": "Update organization request",
+                        "name": "update_organization",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.UpdateOrganizationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success response",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/organization/{id}": {
             "get": {
                 "security": [
@@ -1114,55 +702,6 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/types.Organization"
                             }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Updates an organization",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "organization"
-                ],
-                "summary": "Update an organization",
-                "parameters": [
-                    {
-                        "description": "Update organization request",
-                        "name": "update_organization",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/types.UpdateOrganizationRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success response",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
                         }
                     },
                     "500": {
@@ -1790,215 +1329,9 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/user": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Retrieves the details of the current user.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "Get user details endpoint",
-                "responses": {
-                    "200": {
-                        "description": "Success response with user details",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/types.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/types.User"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/name": {
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Updates the user's name based on the provided information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "Update user name endpoint",
-                "parameters": [
-                    {
-                        "description": "Update user name request",
-                        "name": "updateUserName",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/types.UpdateUserNameRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "User name updated successfully",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Failed to decode or validate request",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/organizations": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Retrieves the organizations for the current user.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "Get user organizations",
-                "responses": {
-                    "200": {
-                        "description": "Success response with organizations",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/types.Organization"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
-        "notification.CreateSMTPConfigRequest": {
-            "type": "object",
-            "properties": {
-                "from_email": {
-                    "type": "string"
-                },
-                "from_name": {
-                    "type": "string"
-                },
-                "host": {
-                    "type": "string"
-                },
-                "organization_id": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "port": {
-                    "type": "integer"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "notification.DeleteSMTPConfigRequest": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                }
-            }
-        },
-        "notification.UpdateSMTPConfigRequest": {
-            "type": "object",
-            "properties": {
-                "from_email": {
-                    "type": "string"
-                },
-                "from_name": {
-                    "type": "string"
-                },
-                "host": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "port": {
-                    "type": "integer"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
         "types.AddPermissionToRoleRequest": {
             "type": "object",
             "properties": {
@@ -2052,45 +1385,6 @@ const docTemplate = `{
                 }
             }
         },
-        "types.CreateDomainRequest": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "types.CreateDomainResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                }
-            }
-        },
-        "types.CreateGithubConnectorRequest": {
-            "type": "object",
-            "properties": {
-                "app_id": {
-                    "type": "string"
-                },
-                "client_id": {
-                    "type": "string"
-                },
-                "client_secret": {
-                    "type": "string"
-                },
-                "pem": {
-                    "type": "string"
-                },
-                "slug": {
-                    "type": "string"
-                },
-                "webhook_secret": {
-                    "type": "string"
-                }
-            }
-        },
         "types.CreateOrganizationRequest": {
             "type": "object",
             "properties": {
@@ -2127,14 +1421,6 @@ const docTemplate = `{
                 }
             }
         },
-        "types.DeleteDomainRequest": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                }
-            }
-        },
         "types.DeleteOrganizationRequest": {
             "type": "object",
             "properties": {
@@ -2147,73 +1433,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "string"
-                }
-            }
-        },
-        "types.Domain": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "deleted_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "organization_id": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "types.GithubConnector": {
-            "type": "object",
-            "properties": {
-                "app_id": {
-                    "type": "string"
-                },
-                "client_id": {
-                    "type": "string"
-                },
-                "client_secret": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "deleted_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "installation_id": {
-                    "type": "string"
-                },
-                "pem": {
-                    "type": "string"
-                },
-                "slug": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                },
-                "webhook_secret": {
                     "type": "string"
                 }
             }
@@ -2347,13 +1566,7 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
-                "organization": {
-                    "type": "string"
-                },
                 "password": {
-                    "type": "string"
-                },
-                "type": {
                     "type": "string"
                 },
                 "username": {
@@ -2433,35 +1646,16 @@ const docTemplate = `{
                 }
             }
         },
-        "types.UpdateDomainRequest": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "types.UpdateGithubConnectorRequest": {
-            "type": "object",
-            "properties": {
-                "installation_id": {
-                    "type": "string"
-                }
-            }
-        },
         "types.UpdateOrganizationRequest": {
             "type": "object",
             "properties": {
-                "description": {
+                "description omitempty": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "name": {
+                "name omitempty": {
                     "type": "string"
                 }
             }
@@ -2469,16 +1663,16 @@ const docTemplate = `{
         "types.UpdatePermissionRequest": {
             "type": "object",
             "properties": {
-                "description": {
+                "description omitempty": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "name": {
+                "name omitempty": {
                     "type": "string"
                 },
-                "resource": {
+                "resource omitempty": {
                     "type": "string"
                 }
             }
@@ -2486,21 +1680,13 @@ const docTemplate = `{
         "types.UpdateRoleRequest": {
             "type": "object",
             "properties": {
-                "description": {
+                "description omitempty": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "types.UpdateUserNameRequest": {
-            "type": "object",
-            "properties": {
-                "name": {
+                "name omitempty": {
                     "type": "string"
                 }
             }
@@ -2526,20 +1712,11 @@ const docTemplate = `{
                 "is_verified": {
                     "type": "boolean"
                 },
-                "organization_users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/types.OrganizationUsers"
-                    }
-                },
                 "organizations": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/types.Organization"
                     }
-                },
-                "type": {
-                    "type": "string"
                 },
                 "updated_at": {
                     "type": "string"
@@ -2549,17 +1726,25 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Enter your bearer token in the format **Bearer \u0026lt;token\u0026gt;**",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
+	Version:          "1.0",
+	Host:             "localhost:8080",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Nixopus Documentation",
+	Description:      "Api for Nixopus",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

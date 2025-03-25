@@ -22,6 +22,7 @@ import (
 )
 
 type AuthController struct {
+	store        *shared_storage.Store
 	validator    *validation.Validator
 	service      *service.AuthService
 	ctx          context.Context
@@ -41,6 +42,7 @@ func NewAuthController(
 	notificationManager *notification.NotificationManager,
 ) *AuthController {
 	return &AuthController{
+		store:     store,
 		validator: validation.NewValidator(),
 		service: service.NewAuthService(
 			&storage.UserStorage{DB: store.DB, Ctx: ctx},
@@ -81,18 +83,6 @@ func (c *AuthController) parseAndValidate(w http.ResponseWriter, r *http.Request
 	if err := c.validator.ValidateRequest(req); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
-		return false
-	}
-
-	if r.URL.Path == "/api/v1/auth/login" {
-		return true
-	}
-
-	user := c.GetUser(w, r)
-
-	if err := c.validator.AccessValidator(w, r, user); err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusForbidden)
 		return false
 	}
 

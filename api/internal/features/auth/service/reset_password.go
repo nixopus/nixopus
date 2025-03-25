@@ -20,14 +20,9 @@ import (
 // returned at each step if any process fails.
 func (c *AuthService) ResetPassword(user *shared_types.User, reset_password_request types.ChangePasswordRequest) error {
 	c.logger.Log(logger.Info, "resetting password", user.Email)
-	if user.ResetToken == "" {
-		c.logger.Log(logger.Error, types.ErrInvalidResetToken.Error(), "reset token is empty")
-		return types.ErrInvalidResetToken
-	}
-
 	user, err := c.storage.GetResetToken(user.ResetToken)
 
-	if err != nil {
+	if user.ResetToken == "" || err != nil {
 		c.logger.Log(logger.Error, types.ErrInvalidResetToken.Error(), err.Error())
 		return types.ErrInvalidResetToken
 	}
@@ -74,11 +69,6 @@ func (c *AuthService) ResetPassword(user *shared_types.User, reset_password_requ
 //
 // The generated link is valid for 5 minutes.
 func (c *AuthService) GeneratePasswordResetLink(user *shared_types.User) error {
-	if user == nil {
-		c.logger.Log(logger.Error, types.ErrInvalidUser.Error(), "user is nil")
-		return types.ErrInvalidUser
-	}
-
 	c.logger.Log(logger.Info, "generating password reset link", user.Email)
 	token, err := CreateToken(user.Email, time.Minute*5)
 	if err != nil {

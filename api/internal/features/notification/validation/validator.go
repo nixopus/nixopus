@@ -2,9 +2,11 @@ package validation
 
 import (
 	"encoding/json"
+	"io"
+
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification/storage"
-	"io"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type Validator struct {
@@ -17,17 +19,16 @@ func NewValidator(storage storage.NotificationRepository) *Validator {
 	}
 }
 
-// ValidateRequest validates different request types
-func (v *Validator) ValidateRequest(req interface{}) error {
+func (v *Validator) ValidateRequest(req interface{}, user shared_types.User) error {
 	switch r := req.(type) {
 	case *notification.CreateSMTPConfigRequest:
 		return v.validateCreateSMTPConfigRequest(*r)
 	case *notification.GetSMTPConfigRequest:
 		return v.validateGetSMTPConfigRequest(*r)
 	case *notification.UpdateSMTPConfigRequest:
-		return v.validateUpdateSMTPConfigRequest(*r)
+		return v.validateUpdateSMTPConfigRequest(*r, user)
 	case *notification.DeleteSMTPConfigRequest:
-		return v.validateDeleteSMTPConfigRequest(*r)
+		return v.validateDeleteSMTPConfigRequest(*r, user)
 	case *notification.UpdatePreferenceRequest:
 		return v.validateUpdatePreferenceRequest(*r)
 	default:
@@ -35,12 +36,10 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 	}
 }
 
-// ParseRequestBody decodes request body into the provided interface
 func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decoded interface{}) error {
 	return json.NewDecoder(body).Decode(decoded)
 }
 
-// validateCreateSMTPConfigRequest validates create SMTP request fields
 func (v *Validator) validateCreateSMTPConfigRequest(req notification.CreateSMTPConfigRequest) error {
 	if req.Host == "" {
 		return notification.ErrMissingHost
@@ -57,23 +56,45 @@ func (v *Validator) validateCreateSMTPConfigRequest(req notification.CreateSMTPC
 	return nil
 }
 
-// validateUpdateSMTPConfigRequest validates update SMTP request fields
-func (v *Validator) validateUpdateSMTPConfigRequest(req notification.UpdateSMTPConfigRequest) error {
+func (v *Validator) validateUpdateSMTPConfigRequest(req notification.UpdateSMTPConfigRequest, user shared_types.User) error {
 	if req.ID.String() == "" {
 		return notification.ErrMissingID
 	}
+
+	smtpConfig, err := v.storage.GetSmtp(req.ID.String())
+
+	if err != nil {
+		return err
+	}
+
+	if smtpConfig.UserID != user.ID || user.Type != "admin" {
+		return notification.ErrPermissionDenied
+	}
+
 	return nil
 }
 
-// validateDeleteSMTPConfigRequest validates delete SMTP request fields
-func (v *Validator) validateDeleteSMTPConfigRequest(req notification.DeleteSMTPConfigRequest) error {
+func (v *Validator) validateDeleteSMTPConfigRequest(req notification.DeleteSMTPConfigRequest, user shared_types.User) error {
 	if req.ID.String() == "" {
 		return notification.ErrMissingID
 	}
+
+	smtpConfig, err := v.storage.GetSmtp(req.ID.String())
+	if err != nil {
+		return err
+	}
+
+	if smtpConfig == nil {
+		return notification.ErrSMTPConfigNotFound
+	}
+
+	if smtpConfig.UserID != user.ID || user.Type != "admin" {
+		return notification.ErrPermissionDenied
+	}
+
 	return nil
 }
 
-// validateGetSMTPConfigRequest validates get SMTP request fields
 func (v *Validator) validateGetSMTPConfigRequest(req notification.GetSMTPConfigRequest) error {
 	if req.ID.String() == "" {
 		return notification.ErrMissingID
@@ -81,7 +102,6 @@ func (v *Validator) validateGetSMTPConfigRequest(req notification.GetSMTPConfigR
 	return nil
 }
 
-// validateUpdatePreferenceRequest validates update preference request fields
 func (v *Validator) validateUpdatePreferenceRequest(req notification.UpdatePreferenceRequest) error {
 	if req.Type == "" {
 		return notification.ErrMissingType

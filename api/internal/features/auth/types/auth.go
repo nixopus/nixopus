@@ -20,11 +20,10 @@ type LoginRequest struct {
 }
 
 type RegisterRequest struct {
-	Username     string `json:"username"`
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	Type         string `json:"type"`
-	Organization string `json:"organization"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Type     string `json:"type"`
 }
 
 type UpdateUserRequest struct {
@@ -52,7 +51,6 @@ type RefreshTokenRequest struct {
 }
 
 var (
-	ErrInvalidUser                                = errors.New("invalid user")
 	ErrEmptyPassword                              = errors.New("password cannot be empty")
 	ErrPasswordMustHaveAtLeast8Chars              = errors.New("password must have at least 8 characters")
 	ErrPasswordMustHaveAtLeast1Number             = errors.New("password must have at least 1 number")
@@ -91,6 +89,4 @@ var (
 	ErrNoOrganizationsFound                       = errors.New("no organizations found")
 	ErrNoRolesFound                               = errors.New("no roles found")
 	ErrFailedToAddUserToOrganization              = errors.New("failed to add user to organization")
-	ErrFailedToGetOrganization                    = errors.New("failed to get organization")
-	ErrInvalidAccess                              = errors.New("invalid access")
 )

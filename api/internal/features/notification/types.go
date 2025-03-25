@@ -104,13 +104,12 @@ type NotificationPayload struct {
 }
 
 type CreateSMTPConfigRequest struct {
-	Host           string    `json:"host"`
-	Port           int       `json:"port"`
-	Username       string    `json:"username"`
-	Password       string    `json:"password"`
-	FromName       string    `json:"from_name"`
-	FromEmail      string    `json:"from_email"`
-	OrganizationID uuid.UUID `json:"organization_id"`
+	Host      string `json:"host"`
+	Port      int    `json:"port"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	FromName  string `json:"from_name"`
+	FromEmail string `json:"from_email"`
 }
 
 type UpdateSMTPConfigRequest struct {
@@ -132,20 +131,16 @@ type GetSMTPConfigRequest struct {
 }
 
 var (
-	ErrInvalidRequestType                      = errors.New("invalid request type")
-	ErrMissingHost                             = errors.New("host is required")
-	ErrMissingPort                             = errors.New("port is required")
-	ErrMissingUsername                         = errors.New("username is required")
-	ErrMissingPassword                         = errors.New("password is required")
-	ErrMissingID                               = errors.New("id is required")
-	ErrMissingCategory                         = errors.New("category is required")
-	ErrMissingType                             = errors.New("type is required")
-	ErrPermissionDenied                        = errors.New("permission denied")
-	ErrSMTPConfigNotFound                      = errors.New("smtp config not found")
-	ErrAccessDenied                            = errors.New("access denied")
-	ErrUserDoesNotBelongToOrganization         = errors.New("user does not belong to organization")
-	ErrUserDoesNotHavePermissionForTheResource = errors.New("user does not have permission for the resource")
-	ErrInvalidResource                         = errors.New("invalid resource")
+	ErrInvalidRequestType = errors.New("invalid request type")
+	ErrMissingHost        = errors.New("host is required")
+	ErrMissingPort        = errors.New("port is required")
+	ErrMissingUsername    = errors.New("username is required")
+	ErrMissingPassword    = errors.New("password is required")
+	ErrMissingID          = errors.New("id is required")
+	ErrMissingCategory    = errors.New("category is required")
+	ErrMissingType        = errors.New("type is required")
+	ErrPermissionDenied   = errors.New("permission denied")
+	ErrSMTPConfigNotFound = errors.New("smtp config not found")
 )
 
 func NewSMTPConfig(c *CreateSMTPConfigRequest, userID uuid.UUID) *shared_types.SMTPConfigs {
