@@ -13,11 +13,12 @@ import (
 // @Tags notification
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param SMTPConfigs body notification.DeleteSMTPConfigRequest true "SMTP configuration"
 // @Success 200 {object} types.Response "SMTP deleted successfully"
 // @Failure 400 {object} types.Response "Bad request"
 // @Failure 500 {object} types.Response "Internal server error"
-// @Router /notification/delete-smtp [post]
+// @Router /notification/smtp [delete]
 func (c *NotificationController) DeleteSmtp(w http.ResponseWriter, r *http.Request) {
 	var SMTPConfigs notification.DeleteSMTPConfigRequest
 

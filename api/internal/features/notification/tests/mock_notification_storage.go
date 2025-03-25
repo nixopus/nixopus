@@ -40,6 +40,11 @@ func (m *MockNotificationStorage) GetSmtp(ID string) (*shared_types.SMTPConfigs,
     return args.Get(0).(*shared_types.SMTPConfigs), args.Error(1)
 }
 
+func (m *MockNotificationStorage) GetOrganizationsSmtp(organizationID string) ([]shared_types.SMTPConfigs, error) {
+	args := m.Called(organizationID)
+	return args.Get(0).([]shared_types.SMTPConfigs), args.Error(1)
+}
+
 func (m *MockNotificationStorage) UpdatePreference(ctx context.Context, req notification.UpdatePreferenceRequest, userID uuid.UUID) error {
 	args := m.Called(ctx, req, userID)
 	return args.Error(0)

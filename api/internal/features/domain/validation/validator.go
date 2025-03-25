@@ -3,11 +3,11 @@ package validation
 import (
 	"encoding/json"
 	"io"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // Validator handles domain validation logic
@@ -47,6 +47,15 @@ func (v *Validator) ValidateName(name string) error {
 		return types.ErrDomainNameTooLong
 	}
 
+	if !strings.Contains(name, ".") {
+		return types.ErrDomainNameInvalid
+	}
+
+	tld := strings.Split(name, ".")[1]
+	if len(tld) < 2 || len(tld) > 63 {
+		return types.ErrDomainNameInvalid
+	}
+
 	return nil
 }
 
@@ -56,14 +65,14 @@ func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decode
 }
 
 // ValidateRequest validates different domain request types
-func (v *Validator) ValidateRequest(req interface{}, user shared_types.User) error {
+func (v *Validator) ValidateRequest(req interface{}) error {
 	switch r := req.(type) {
 	case *types.CreateDomainRequest:
 		return v.ValidateCreateDomainRequest(*r)
 	case *types.UpdateDomainRequest:
-		return v.ValidateUpdateDomainRequest(*r, user)
+		return v.ValidateUpdateDomainRequest(*r)
 	case *types.DeleteDomainRequest:
-		return v.ValidateDeleteDomainRequest(*r, user)
+		return v.ValidateDeleteDomainRequest(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}
@@ -71,11 +80,19 @@ func (v *Validator) ValidateRequest(req interface{}, user shared_types.User) err
 
 // validateCreateDomainRequest validates domain creation requests
 func (v *Validator) ValidateCreateDomainRequest(req types.CreateDomainRequest) error {
-	return v.ValidateName(req.Name)
+	err := v.ValidateName(req.Name)
+	if err != nil {
+		return err
+	}
+	err = v.ValidateID(req.OrganizationID.String())
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // validateUpdateDomainRequest validates domain update requests
-func (v *Validator) ValidateUpdateDomainRequest(req types.UpdateDomainRequest, user shared_types.User) error {
+func (v *Validator) ValidateUpdateDomainRequest(req types.UpdateDomainRequest) error {
 	// Validate ID first
 	if err := v.ValidateID(req.ID); err != nil {
 		return err
@@ -86,42 +103,14 @@ func (v *Validator) ValidateUpdateDomainRequest(req types.UpdateDomainRequest, u
 		return err
 	}
 
-	// Check if domain exists
-	domain, err := v.storage.GetDomain(req.ID)
-	if err != nil {
-		return err
-	}
-	if domain == nil {
-		return types.ErrDomainNotFound
-	}
-
-	// Check permissions
-	if user.Type != "admin" && domain.UserID.String() != user.ID.String() {
-		return types.ErrNotAllowed
-	}
-
 	return nil
 }
 
 // validateDeleteDomainRequest validates domain deletion requests
-func (v *Validator) ValidateDeleteDomainRequest(req types.DeleteDomainRequest, user shared_types.User) error {
+func (v *Validator) ValidateDeleteDomainRequest(req types.DeleteDomainRequest) error {
 	// Validate ID first
 	if err := v.ValidateID(req.ID); err != nil {
 		return err
-	}
-
-	// Check if domain exists
-	domain, err := v.storage.GetDomain(req.ID)
-	if err != nil {
-		return err
-	}
-	if domain == nil {
-		return types.ErrDomainNotFound
-	}
-
-	// Check permissions
-	if user.Type != "admin" && domain.UserID.String() != user.ID.String() {
-		return types.ErrNotAllowed
 	}
 
 	return nil

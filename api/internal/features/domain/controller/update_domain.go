@@ -22,7 +22,7 @@ import (
 // @Success 200 {object} types.Domain "Success response with updated domain"
 // @Failure 400 {object} types.Response "Bad request"
 // @Failure 500 {object} types.Response "Internal server error"
-// @Router /domain [patch]
+// @Router /domain [put]
 func (c *DomainsController) UpdateDomain(w http.ResponseWriter, r *http.Request) {
 	var domainRequest types.UpdateDomainRequest
 

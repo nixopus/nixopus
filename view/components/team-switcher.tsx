@@ -31,19 +31,28 @@ export function TeamSwitcher({
 }) {
   const { isMobile } = useSidebar();
   const user = useAppSelector((state) => state.auth.user);
-  const isAdmin = React.useMemo(() => user.type === 'admin', [user]);
+  const isAdmin = React.useMemo(() => user?.type === 'admin', [user]);
   const activeTeam = useAppSelector((state) => state.user.activeOrganization);
   const dispatch = useAppDispatch();
-
   React.useEffect(() => {
-    if (teams && teams.length > 0) {
+    if (teams && teams.length > 0 && !activeTeam) {
       dispatch(setActiveOrganization(teams[0].organization));
     }
-  }, [teams]);
+  }, [teams, activeTeam, dispatch]);
 
-  if (!teams || teams.length === 0 || !activeTeam) {
+  if (!teams || teams.length === 0) {
     return null;
   }
+
+  const displayTeam = activeTeam || (teams.length > 0 ? teams[0].organization : null);
+
+  if (!displayTeam) {
+    return null;
+  }
+
+  const handleTeamChange = (team: UserOrganization) => {
+    dispatch(setActiveOrganization(team.organization));
+  };
 
   return (
     <SidebarMenu>
@@ -58,8 +67,8 @@ export function TeamSwitcher({
                 <Users className="size-4 text-background" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activeTeam?.name}</span>
-                <span className="truncate text-xs">{activeTeam?.description}</span>
+                <span className="truncate font-medium">{displayTeam.name}</span>
+                <span className="truncate text-xs">{displayTeam.description}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -71,10 +80,10 @@ export function TeamSwitcher({
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">Teams</DropdownMenuLabel>
-            {(teams || []).map((team, index) => (
+            {teams.map((team, index) => (
               <DropdownMenuItem
                 key={team.organization.id}
-                onClick={() => dispatch(setActiveOrganization(team))}
+                onClick={() => handleTeamChange(team)}
                 className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-xs border">

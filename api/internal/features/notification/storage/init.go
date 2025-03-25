@@ -24,6 +24,7 @@ type NotificationRepository interface {
 	UpdateSmtp(config *notification.UpdateSMTPConfigRequest) error
 	DeleteSmtp(ID string) error
 	GetSmtp(ID string) (*shared_types.SMTPConfigs, error)
+	GetOrganizationsSmtp(organizationID string) ([]shared_types.SMTPConfigs, error)
 	UpdatePreference(ctx context.Context, req notification.UpdatePreferenceRequest, userID uuid.UUID) error
 	GetPreferences(ctx context.Context, userID uuid.UUID) (*notification.GetPreferencesResponse, error)
 }
@@ -77,6 +78,20 @@ func (s NotificationStorage) GetSmtp(ID string) (*shared_types.SMTPConfigs, erro
 		return nil, err
 	}
 	return config, nil
+}
+
+// GetOrganizationsSmtp returns the SMTP configurations associated with the given organization ID.
+//
+// It takes an organization ID as a parameter, queries the database for the
+// corresponding SMTP configurations, and returns them. It returns an error
+// if the database operation fails.
+func (s NotificationStorage) GetOrganizationsSmtp(organizationID string) ([]shared_types.SMTPConfigs, error) {
+	configs := []shared_types.SMTPConfigs{}
+	err := s.DB.NewSelect().Model(&configs).Where("organization_id = ?", organizationID).Scan(s.Ctx)
+	if err != nil {
+		return nil, err
+	}
+	return configs, nil
 }
 
 // UpdatePreference updates a user's notification preference.

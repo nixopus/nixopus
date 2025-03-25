@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/stretchr/testify/mock"
 )
@@ -38,7 +39,7 @@ func (m *MockDomainStorage) DeleteDomain(domain *types.Domain) error {
 	return args.Error(0)
 }
 
-func (m *MockDomainStorage) GetDomains() ([]types.Domain, error) {
+func (m *MockDomainStorage) GetDomains(OrganizationID string, UserID uuid.UUID) ([]types.Domain, error) {
 	args := m.Called()
 	return args.Get(0).([]types.Domain), args.Error(1)
 }

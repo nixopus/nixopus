@@ -22,6 +22,7 @@ import { TrashIcon } from 'lucide-react';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAppSelector } from '@/redux/hooks';
+import { useResourcePermissions } from '@/lib/permission';
 
 interface TeamMembersProps {
   users: {
@@ -39,6 +40,11 @@ interface TeamMembersProps {
 function TeamMembers({ users, handleRemoveUser, getRoleBadgeVariant }: TeamMembersProps) {
   const loggedInUser = useAppSelector((state) => state.auth.user);
 
+  const {
+    canUpdate: canUpdateUser,
+    canDelete: canDeleteUser
+  } = useResourcePermissions(loggedInUser, "user");
+
   return (
     <Card>
       <CardHeader>
@@ -52,7 +58,9 @@ function TeamMembers({ users, handleRemoveUser, getRoleBadgeVariant }: TeamMembe
               <TableHead>User</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Permissions</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              {(canUpdateUser || canDeleteUser) && (
+                <TableHead className="text-right">Actions</TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -87,7 +95,7 @@ function TeamMembers({ users, handleRemoveUser, getRoleBadgeVariant }: TeamMembe
                     ))}
                   </div>
                 </TableCell>
-                {loggedInUser.id != user.id && (
+                {(canUpdateUser || canDeleteUser) && loggedInUser.id !== user.id && (
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -97,16 +105,22 @@ function TeamMembers({ users, handleRemoveUser, getRoleBadgeVariant }: TeamMembe
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit User</DropdownMenuItem>
-                        <DropdownMenuItem>Change Role</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => handleRemoveUser(user.id)}
-                        >
-                          <TrashIcon className="h-4 w-4 mr-2" />
-                          Remove User
-                        </DropdownMenuItem>
+                        {canUpdateUser && (
+                          <>
+                            <DropdownMenuItem>Edit User</DropdownMenuItem>
+                            <DropdownMenuItem>Change Role</DropdownMenuItem>
+                          </>
+                        )}
+                        {canUpdateUser && canDeleteUser && <DropdownMenuSeparator />}
+                        {canDeleteUser && (
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleRemoveUser(user.id)}
+                          >
+                            <TrashIcon className="h-4 w-4 mr-2" />
+                            Remove User
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

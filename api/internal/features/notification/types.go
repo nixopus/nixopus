@@ -146,6 +146,7 @@ var (
 	ErrUserDoesNotBelongToOrganization         = errors.New("user does not belong to organization")
 	ErrUserDoesNotHavePermissionForTheResource = errors.New("user does not have permission for the resource")
 	ErrInvalidResource                         = errors.New("invalid resource")
+	ErrMissingOrganization                     = errors.New("organization is required")
 )
 
 func NewSMTPConfig(c *CreateSMTPConfigRequest, userID uuid.UUID) *shared_types.SMTPConfigs {
@@ -165,6 +166,7 @@ func NewSMTPConfig(c *CreateSMTPConfigRequest, userID uuid.UUID) *shared_types.S
 		FromEmail: c.FromEmail,
 		UserID:    userID,
 		ID:        uuid.New(),
+		OrganizationID: c.OrganizationID,
 	}
 }
 

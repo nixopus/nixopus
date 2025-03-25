@@ -13,11 +13,12 @@ import (
 // @Tags notification
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param SMTPConfigs body notification.UpdateSMTPConfigRequest true "SMTP configuration"
 // @Success 200 {object} types.Response "SMTP updated successfully"
 // @Failure 400 {object} types.Response "Bad request"
 // @Failure 500 {object} types.Response "Internal server error"
-// @Router /notification/update-smtp [post]
+// @Router /notification/smtp [put]
 func (c *NotificationController) UpdateSmtp(w http.ResponseWriter, r *http.Request) {
 	var SMTPConfigs notification.UpdateSMTPConfigRequest
 

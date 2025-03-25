@@ -50,6 +50,7 @@ func (s *DomainsService) CreateDomain(req types.CreateDomainRequest, userID stri
 		UpdatedAt: time.Now(),
 		DeletedAt: nil,
 		Name:      req.Name,
+		OrganizationID: req.OrganizationID,
 	}
 
 	if err := s.storage.CreateDomain(domain); err != nil {
@@ -57,7 +58,5 @@ func (s *DomainsService) CreateDomain(req types.CreateDomainRequest, userID stri
 		return types.CreateDomainResponse{}, err
 	}
 
-	fmt.Printf("domain created successfully: domain_id=%s\n", domain.ID)
-
-	return types.CreateDomainResponse{}, nil
+	return types.CreateDomainResponse{ID: domain.ID.String()}, nil
 }

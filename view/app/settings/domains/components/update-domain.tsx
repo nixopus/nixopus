@@ -20,6 +20,7 @@ import {
   useUpdateDomainMutation
 } from '@/redux/services/settings/domainsApi';
 import { Domain } from '@/redux/types/domain';
+import { useAppSelector } from '@/redux/hooks';
 
 const domainFormSchema = z.object({
   domainName: z
@@ -47,11 +48,12 @@ function UpdateDomainDialog({ open, setOpen, id, data }: UpdateDomainDialogProps
       domainName: data?.name || ''
     }
   });
+  const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
 
   async function onSubmit(data: z.infer<typeof domainFormSchema>) {
     try {
       if (!id) {
-        await createDomain({ name: data.domainName });
+        await createDomain({ name: data.domainName, organization_id: activeOrganization?.id || '' });
       } else {
         await updateDomain({ name: data.domainName, id: id });
       }

@@ -20,6 +20,7 @@ export interface CreateSMTPConfigRequest {
   password: string;
   from_name: string;
   from_email: string;
+  organization_id: string;
 }
 
 export interface UpdateSMTPConfigRequest extends CreateSMTPConfigRequest {

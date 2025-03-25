@@ -7,6 +7,16 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
+// @Summary Get notification preferences
+// @Description Retrieves the notification preferences for the current user
+// @Tags notification
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} types.Response{data=notification.GetPreferencesResponse} "Success response with preferences"
+// @Failure 400 {object} types.Response "Bad request"
+// @Failure 500 {object} types.Response "Internal server error"
+// @Router /notification/preferences [get]
 func (c *NotificationController) GetPreferences(w http.ResponseWriter, r *http.Request) {
 	user := c.GetUser(w, r)
 

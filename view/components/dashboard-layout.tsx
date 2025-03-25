@@ -108,10 +108,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 ? 'vertical'
                 : 'horizontal'
             }
-            className="flex-grow"
+            className="flex-grow h-full"
           >
-            <ResizablePanel defaultSize={80} minSize={30} className="overflow-hidden">
-              {children}
+            <ResizablePanel
+              defaultSize={80}
+              minSize={30}
+              className="overflow-auto scrollbar-hide" 
+            >
+              <div className="h-full overflow-y-auto scrollbar-hide">
+                {children}
+              </div>
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel

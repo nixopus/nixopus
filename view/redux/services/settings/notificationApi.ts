@@ -14,9 +14,9 @@ export const notificationApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ['Notification'],
   endpoints: (builder) => ({
-    getSMTPConfigurations: builder.query<SMTPConfig, void>({
-      query: () => ({
-        url: USER_NOTIFICATION_SETTINGS.GET_SMTP,
+    getSMTPConfigurations: builder.query<SMTPConfig, string>({
+      query: (organizationId) => ({
+        url: USER_NOTIFICATION_SETTINGS.GET_SMTP + `?id=${organizationId}`,
         method: 'GET'
       }),
       providesTags: [{ type: 'Notification', id: 'LIST' }],

@@ -1,3 +1,4 @@
+import { useAppSelector } from '@/redux/hooks';
 import {
   useCreateSMPTConfigurationMutation,
   useGetNotificationPreferencesQuery,
@@ -7,13 +8,18 @@ import {
 } from '@/redux/services/settings/notificationApi';
 import {
   CreateSMTPConfigRequest,
-  UpdatePreferenceRequest,
   UpdateSMTPConfigRequest
 } from '@/redux/types/notification';
 import { toast } from 'sonner';
 
 function useNotificationSettings() {
-  const { data: smtpConfigs, isLoading, error } = useGetSMTPConfigurationsQuery();
+  const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
+  const { data: smtpConfigs, isLoading, error } = useGetSMTPConfigurationsQuery(
+    activeOrganization?.id,
+    {
+      skip: !activeOrganization?.id
+    }
+  );
   const [createSMTPConfiguration, { isLoading: isCreating }] = useCreateSMPTConfigurationMutation();
   const [updateSMTPConfiguration, { isLoading: isUpdating }] = useUpdateSMTPConfigurationMutation();
 
@@ -39,7 +45,8 @@ function useNotificationSettings() {
         username: data.username,
         password: data.password,
         from_email: data.fromEmail,
-        from_name: data.fromName
+        from_name: data.fromName,
+        organization_id: activeOrganization?.id
       };
       if (smtpConfigs?.id) {
         await handleUpdateSMTPConfiguration({ ...smtpConfig, id: smtpConfigs?.id });

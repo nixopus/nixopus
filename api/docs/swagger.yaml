@@ -1,3 +1,4 @@
+basePath: /api/v1
 definitions:
   notification.CreateSMTPConfigRequest:
     properties:
@@ -20,6 +21,52 @@ definitions:
     properties:
       id:
         type: string
+    type: object
+  notification.GetPreferencesResponse:
+    properties:
+      activity:
+        items:
+          $ref: '#/definitions/notification.PreferenceType'
+        type: array
+      security:
+        items:
+          $ref: '#/definitions/notification.PreferenceType'
+        type: array
+      update:
+        items:
+          $ref: '#/definitions/notification.PreferenceType'
+        type: array
+    type: object
+  notification.PreferenceType:
+    properties:
+      description:
+        type: string
+      enabled:
+        type: boolean
+      id:
+        type: string
+      label:
+        type: string
+    required:
+    - description
+    - id
+    - label
+    type: object
+  notification.UpdatePreferenceRequest:
+    properties:
+      category:
+        enum:
+        - activity
+        - security
+        - update
+        type: string
+      enabled:
+        type: boolean
+      type:
+        type: string
+    required:
+    - category
+    - type
     type: object
   notification.UpdateSMTPConfigRequest:
     properties:
@@ -75,6 +122,8 @@ definitions:
   types.CreateDomainRequest:
     properties:
       name:
+        type: string
+      organization_id:
         type: string
     type: object
   types.CreateDomainResponse:
@@ -254,6 +303,13 @@ definitions:
       updated_at:
         type: string
     type: object
+  types.RandomSubdomainResponse:
+    properties:
+      domain:
+        type: string
+      subdomain:
+        type: string
+    type: object
   types.RefreshTokenRequest:
     properties:
       refresh_token:
@@ -401,8 +457,19 @@ definitions:
       username:
         type: string
     type: object
+host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: raghav@nixopus.com
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Api for Nixopus
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://nixopus.com/terms/
+  title: Nixopus Documentation
+  version: "1.0"
 paths:
   /auth/login:
     post:
@@ -619,37 +686,6 @@ paths:
       summary: Delete a domain
       tags:
       - domain
-    patch:
-      consumes:
-      - application/json
-      description: Updates an existing domain in the application.
-      parameters:
-      - description: Domain update request
-        in: body
-        name: domain
-        required: true
-        schema:
-          $ref: '#/definitions/types.UpdateDomainRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success response with updated domain
-          schema:
-            $ref: '#/definitions/types.Domain'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/types.Response'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/types.Response'
-      security:
-      - BearerAuth: []
-      summary: Update a domain
-      tags:
-      - domain
     post:
       consumes:
       - application/json
@@ -681,7 +717,64 @@ paths:
       summary: Create a new domain
       tags:
       - domain
-  /domain/all:
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing domain in the application.
+      parameters:
+      - description: Domain update request
+        in: body
+        name: domain
+        required: true
+        schema:
+          $ref: '#/definitions/types.UpdateDomainRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with updated domain
+          schema:
+            $ref: '#/definitions/types.Domain'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Update a domain
+      tags:
+      - domain
+  /domain/generate:
+    get:
+      consumes:
+      - application/json
+      description: Generates a random subdomain by taking a random domain from the
+        list of all domains and appending a random string to it.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with random subdomain
+          schema:
+            $ref: '#/definitions/types.RandomSubdomainResponse'
+        "404":
+          description: No domains available
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Generate a random subdomain
+      tags:
+      - domain
+  /domains:
     get:
       consumes:
       - application/json
@@ -697,6 +790,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
       summary: Get all domains
       tags:
       - domain
@@ -793,7 +888,123 @@ paths:
       summary: Check if the server is up
       tags:
       - health
-  /notification/add-smtp:
+  /notification/preferences:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the notification preferences for the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with preferences
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/notification.GetPreferencesResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Get notification preferences
+      tags:
+      - notification
+    post:
+      consumes:
+      - application/json
+      description: Update notification preference
+      parameters:
+      - description: Notification preference
+        in: body
+        name: preference
+        required: true
+        schema:
+          $ref: '#/definitions/notification.UpdatePreferenceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Notification preferences updated successfully
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Update notification preference
+      tags:
+      - notification
+  /notification/smtp:
+    delete:
+      consumes:
+      - application/json
+      description: Delete SMTP configuration
+      parameters:
+      - description: SMTP configuration
+        in: body
+        name: SMTPConfigs
+        required: true
+        schema:
+          $ref: '#/definitions/notification.DeleteSMTPConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SMTP deleted successfully
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete SMTP configuration
+      tags:
+      - notification
+    get:
+      consumes:
+      - application/json
+      description: Get SMTP configuration
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SMTP configuration
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      summary: Get SMTP configuration
+      tags:
+      - notification
     post:
       consumes:
       - application/json
@@ -820,64 +1031,12 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
       summary: Add SMTP configuration
       tags:
       - notification
-  /notification/delete-smtp:
-    post:
-      consumes:
-      - application/json
-      description: Delete SMTP configuration
-      parameters:
-      - description: SMTP configuration
-        in: body
-        name: SMTPConfigs
-        required: true
-        schema:
-          $ref: '#/definitions/notification.DeleteSMTPConfigRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: SMTP deleted successfully
-          schema:
-            $ref: '#/definitions/types.Response'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/types.Response'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/types.Response'
-      summary: Delete SMTP configuration
-      tags:
-      - notification
-  /notification/get-smtp:
-    get:
-      consumes:
-      - application/json
-      description: Get SMTP configuration
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: SMTP configuration
-          schema:
-            $ref: '#/definitions/types.Response'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/types.Response'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/types.Response'
-      summary: Get SMTP configuration
-      tags:
-      - notification
-  /notification/update-smtp:
-    post:
+    put:
       consumes:
       - application/json
       description: Update SMTP configuration
@@ -903,6 +1062,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
       summary: Update SMTP configuration
       tags:
       - notification
@@ -1619,4 +1780,10 @@ paths:
       summary: Get user organizations
       tags:
       - user
+securityDefinitions:
+  BearerAuth:
+    description: Enter your bearer token in the format **Bearer &lt;token&gt;**
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

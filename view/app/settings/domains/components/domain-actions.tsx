@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import UpdateDomainDialog from './update-domain';
 import { Domain } from '@/redux/types/domain';
 import DeleteDomain from './delete-domain';
+import { useAppSelector } from '@/redux/hooks';
+import { useResourcePermissions } from '@/lib/permission';
 
 interface DomainActionsProps {
   domain: Domain;
@@ -11,6 +13,9 @@ interface DomainActionsProps {
 export function DomainActions({ domain }: DomainActionsProps) {
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+  const user = useAppSelector((state) => state.auth.user);
+  const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
+  const { canUpdate, canDelete } = useResourcePermissions(user, "organization", activeOrganization?.id);
 
   const handleEdit = () => {
     setIsEditModalOpen(true);
@@ -22,12 +27,16 @@ export function DomainActions({ domain }: DomainActionsProps) {
 
   return (
     <div className="flex justify-end gap-2">
-      <Button variant="ghost" className="text-primary p-0 m-0" onClick={handleEdit}>
-        Edit
-      </Button>
-      <Button variant="ghost" className="text-red-500 p-0 m-0" onClick={handleDelete}>
-        Delete
-      </Button>
+      {canUpdate && (
+        <Button variant="ghost" className="text-primary p-0 m-0" onClick={handleEdit}>
+          Edit
+        </Button>
+      )}
+      {canDelete && (
+        <Button variant="ghost" className="text-red-500 p-0 m-0" onClick={handleDelete}>
+          Delete
+        </Button>
+      )}
       {isEditModalOpen && (
         <UpdateDomainDialog
           open={isEditModalOpen}

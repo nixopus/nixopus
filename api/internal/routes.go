@@ -33,24 +33,6 @@ func NewRouter(app *storage.App) *Router {
 	}
 }
 
-// @title Nixopus Documentation
-// @version 1.0
-// @description Api for Nixopus
-// @termsOfService http://nixopus.com/terms/
-
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email raghav@nixopus.com
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @host localhost:8080
-// @BasePath /api/v1
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @description Enter your bearer token in the format **Bearer &lt;token&gt;**
 func (router *Router) Routes() *mux.Router {
 	r := mux.NewRouter()
 	l := logger.NewLogger()
@@ -180,8 +162,9 @@ func (router *Router) DomainRoutes(api *mux.Router, domainController *domain.Dom
 	domainApi.HandleFunc("", domainController.CreateDomain).Methods("POST", "OPTIONS")
 	domainApi.HandleFunc("", domainController.UpdateDomain).Methods("PUT", "OPTIONS")
 	domainApi.HandleFunc("", domainController.DeleteDomain).Methods("DELETE", "OPTIONS")
-	domainApi.HandleFunc("/all", domainController.GetDomains).Methods("GET", "OPTIONS")
 	domainApi.HandleFunc("/generate", domainController.GenerateRandomSubDomain).Methods("GET", "OPTIONS")
+
+	api.HandleFunc("/domains", domainController.GetDomains).Methods("GET", "OPTIONS")
 }
 
 func (router *Router) GithubConnectorRoutes(api *mux.Router, githubConnectorController *githubConnector.GithubConnectorController) {

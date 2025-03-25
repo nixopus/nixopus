@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 // RequestInfo encapsulates parsed request details
@@ -70,17 +71,7 @@ func parseRequest(r *http.Request) (*RequestInfo, error) {
 		info.ResourceType = "preferences"
 	}
 
-	if info.SMTPID == "" {
-		info.SMTPID = extractIDFromPath(r.URL.Path)
-	}
-
 	return info, nil
-}
-
-// extractIDFromPath gets ID from URL path segments
-func extractIDFromPath(urlPath string) string {
-	lastSegment := path.Base(urlPath)
-	return lastSegment
 }
 
 // extractIDFromBody attempts to extract ID from the request body
@@ -134,10 +125,7 @@ func (v *Validator) validateSMTPAccess(req *RequestInfo, user *shared_types.User
 
 // validateCreateSMTPAccess checks if user can create SMTP configs
 func (v *Validator) validateCreateSMTPAccess(user *shared_types.User) error {
-	// Only admin can create SMTP configurations
-	if user.Type != shared_types.RoleAdmin {
-		return notification.ErrAccessDenied
-	}
+	// Any authenticated user can create SMTP configs
 	return nil
 }
 
@@ -159,17 +147,23 @@ func (v *Validator) validateReadSMTPAccess(req *RequestInfo, user *shared_types.
 
 	req.OrganizationID = smtp.OrganizationID
 
-	// Admin can always read
-	if user.Type == shared_types.RoleAdmin {
-		return nil
-	}
-
-	// Non-admin users must belong to the organization and have read access
-	if err := v.checkIfUserBelongsToOrganization(user.Organizations, smtp.OrganizationID); err != nil {
+	// Check if the user belongs to the domain's organization
+	err = utils.CheckIfUserBelongsToOrganization(user.Organizations, smtp.OrganizationID)
+	if err != nil {
 		return err
 	}
 
-	return v.checkIfUserHasReadAccess(user.OrganizationUsers, smtp.OrganizationID)
+	// Check user's role in the organization
+	role, err := utils.GetUserRoleInOrganization(user.OrganizationUsers, smtp.OrganizationID)
+	if err != nil {
+		return err
+	}
+	// Any role (viewer, member, admin) can list domains in their organization
+	if role == shared_types.RoleViewer || role == shared_types.RoleMember || role == shared_types.RoleAdmin {
+		return nil
+	}
+
+	return notification.ErrPermissionDenied
 }
 
 // validateUpdateSMTPAccess checks if user can update an SMTP config
@@ -187,6 +181,23 @@ func (v *Validator) validateUpdateSMTPAccess(req *RequestInfo, user *shared_type
 	// User must be the creator of the SMTP configuration
 	if smtp.UserID != user.ID {
 		return notification.ErrPermissionDenied
+	}
+
+	// If not creator, check if user is in the same organization
+	err = utils.CheckIfUserBelongsToOrganization(user.Organizations, smtp.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	// Check user's role in the organization
+	role, err := utils.GetUserRoleInOrganization(user.OrganizationUsers, smtp.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	// Only admin or member roles can update
+	if role == shared_types.RoleAdmin || role == shared_types.RoleMember {
+		return nil
 	}
 
 	return nil
@@ -209,39 +220,22 @@ func (v *Validator) validateDeleteSMTPAccess(req *RequestInfo, user *shared_type
 		return notification.ErrPermissionDenied
 	}
 
-	return nil
-}
-
-// checkIfUserBelongsToOrganization verifies if a user belongs to a specific organization
-func (v *Validator) checkIfUserBelongsToOrganization(userOrgs []shared_types.Organization, orgID uuid.UUID) error {
-	for _, org := range userOrgs {
-		if org.ID == orgID {
-			return nil
-		}
-	}
-	return notification.ErrUserDoesNotBelongToOrganization
-}
-
-// checkIfUserHasReadAccess verifies if a user has read access to a specific organization.
-func (v *Validator) checkIfUserHasReadAccess(userOrgs []shared_types.OrganizationUsers, orgID uuid.UUID) error {
-	for _, userOrg := range userOrgs {
-		if userOrg.OrganizationID != orgID {
-			continue
-		}
-
-		if userOrg.Role == nil {
-			continue
-		}
-
-		// If the user has specific permissions, check if they have "read" access on the "organization" resource
-		if userOrg.Role.Permissions != nil {
-			for _, permission := range userOrg.Role.Permissions {
-				if permission.Name == "read" && permission.Resource == "organization" {
-					return nil
-				}
-			}
-		}
+	// If not creator, check if user is in the same organization
+	err = utils.CheckIfUserBelongsToOrganization(user.Organizations, smtp.OrganizationID)
+	if err != nil {
+		return err
 	}
 
-	return notification.ErrUserDoesNotHavePermissionForTheResource
+	// Check user's role in the organization
+	role, err := utils.GetUserRoleInOrganization(user.OrganizationUsers, smtp.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	// Only admin role can delete
+	if role == shared_types.RoleAdmin {
+		return nil
+	}
+
+	return notification.ErrPermissionDenied
 }

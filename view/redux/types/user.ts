@@ -1,3 +1,5 @@
+import { OrganizationUsers } from "./orgs";
+
 export interface User {
   id: string;
   username: string;
@@ -9,6 +11,7 @@ export interface User {
   is_verified: boolean;
   reset_token: string;
   type: string;
+  organization_users: OrganizationUsers[];
 }
 
 export interface AuthResponse {

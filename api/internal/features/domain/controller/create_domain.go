@@ -32,7 +32,7 @@ func (c *DomainsController) CreateDomain(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err := c.service.CreateDomain(domainRequest, user.ID.String())
+	created, err := c.service.CreateDomain(domainRequest, user.ID.String())
 
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
@@ -40,5 +40,5 @@ func (c *DomainsController) CreateDomain(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	utils.SendJSONResponse(w, "success", "Domain created successfully", nil)
+	utils.SendJSONResponse(w, "success", "Domain created successfully", created)
 }

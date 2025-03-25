@@ -61,10 +61,6 @@ function useTeamSettings() {
     let permissions: string[] = [];
 
     switch (newUser.role) {
-      case 'Owner':
-      case 'Admin':
-        permissions = ['READ', 'UPDATE', 'DELETE', 'MANAGE'];
-        break;
       case 'Member':
         permissions = ['READ', 'UPDATE'];
         break;
@@ -79,7 +75,7 @@ function useTeamSettings() {
       avatar: '' as string,
       password: "test1234@Test", // This is a temporary password we can use for testing,
       organization: activeOrganization?.id || '',
-      type: UserTypes.MEMBER,
+      type: newUser.role.toLowerCase() as UserTypes,
     };
 
     setUsers([...users, { id: newId, ...tempUser, permissions, name: newUser.name }]);

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/google/uuid"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -12,6 +13,6 @@ import (
 // Returns:
 //
 //	([]shared_types.Domain, error) - A slice of Domain objects and an error if any occurred.
-func (s *DomainsService) GetDomains() ([]shared_types.Domain, error) {
-	return s.storage.GetDomains()
+func (s *DomainsService) GetDomains(organization_id string,UserID uuid.UUID) ([]shared_types.Domain, error) {
+	return s.storage.GetDomains(organization_id,UserID)
 }
