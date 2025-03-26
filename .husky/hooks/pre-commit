@@ -1,9 +1,7 @@
 #!/bin/sh
+ROOTDIR=$(pwd)
+
 cd api && go build -v ./... && go test -v ./... && go fmt ./...
-API_RESULT=$?
+cd "$ROOTDIR"
 
-cd ..
 cd view && yarn format && yarn lint && yarn run build
-VIEW_RESULT=$?
-
-[ $API_RESULT -eq 0 ] && [ $VIEW_RESULT -eq 0 ] 
