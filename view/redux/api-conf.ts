@@ -59,3 +59,16 @@ export enum SOCKET_EVENTS {
 export enum SOCKET_ACTIONS {
   SUBSCRIBE = 'subscribe'
 }
+
+export enum FILEMANAGERURLS {
+  LIST_FILES_AT_PATH = 'v1/file-manager',
+  CREATE_DIRECTORY = 'v1/files/directories',
+  DELETE_FILE = 'v1/files',
+  CREATE_FILE = 'v1/files',
+  DELETE_DIRECTORY = 'v1/files/directories',
+  MOVE_FOLDER_FILES_RECURSIVELY_OR_RENAME = 'v1/files/move',
+  COPY_FOLDER_FILES_RECURSIVELY = 'v1/files/copy',
+  CALCULATE_DIRECTORY_SIZE = 'v1/files/directories/size',
+  GET_DISK_USAGE = 'v1/files/disk-usage',
+  GET_MEMORY_USAGE = 'v1/files/memory-usage',
+}

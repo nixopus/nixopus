@@ -19,6 +19,7 @@ import { domainsApi } from '@/redux/services/settings/domainsApi';
 import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorApi';
 import githubConnector from './features/github-connector/githubConnectorSlice';
 import { deployApi } from './services/deploy/applicationsApi';
+import { fileManagersApi } from './services/file-manager/fileManagersApi';
 
 const persistConfig = {
   key: 'root',
@@ -35,7 +36,8 @@ const rootReducer = combineReducers({
   [GithubConnectorApi.reducerPath]: GithubConnectorApi.reducer,
   githubConnector: githubConnector,
   [deployApi.reducerPath]: deployApi.reducer,
-  user: userSlice
+  user: userSlice,
+  fileManagersApi: fileManagersApi.reducer
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -53,7 +55,8 @@ const storeOptions: ConfigureStoreOptions = {
       notificationApi.middleware,
       domainsApi.middleware,
       GithubConnectorApi.middleware,
-      deployApi.middleware
+      deployApi.middleware,
+      fileManagersApi.middleware
     )
 };
 
