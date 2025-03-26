@@ -72,8 +72,8 @@ func NewUser(email string, password string, username string, avatar string, role
 }
 
 var (
-	ErrFailedToDecodeRequest      = errors.New("failed to decode request")
-	ErrFailedToGetUserFromContext = errors.New("failed to get user from context")
+	ErrFailedToDecodeRequest           = errors.New("failed to decode request")
+	ErrFailedToGetUserFromContext      = errors.New("failed to get user from context")
 	ErrUserDoesNotBelongToOrganization = errors.New("user does not belong to organization")
-	ErrNoRoleAssigned             = errors.New("no role assigned")
+	ErrNoRoleAssigned                  = errors.New("no role assigned")
 )

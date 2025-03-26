@@ -14,7 +14,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-
 // @title Nixopus Documentation
 // @version 1.0
 // @description Api for Nixopus

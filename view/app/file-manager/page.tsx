@@ -4,7 +4,7 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
-  ContextMenuTrigger,
+  ContextMenuTrigger
 } from '@/components/ui/context-menu';
 import {
   Copy,
@@ -13,8 +13,8 @@ import {
   FolderPlusIcon,
   Move,
   TrashIcon,
-  UploadCloudIcon,
-} from 'lucide-react'
+  UploadCloudIcon
+} from 'lucide-react';
 import FileManagerSkeleton from './components/FileManagerSkeleton';
 import FileManagerHeader from './components/FileManagerHeader';
 import { SearchBar } from '@/components/search-bar';
@@ -54,14 +54,8 @@ function FileManager() {
     files
   } = use_file_manager();
 
-  if (
-    isLoading ||
-    isCopyFileOrDirectoryLoading ||
-    isMoveOrRenameDirectoryLoading
-  ) {
-    return (
-      <FileManagerSkeleton />
-    );
+  if (isLoading || isCopyFileOrDirectoryLoading || isMoveOrRenameDirectoryLoading) {
+    return <FileManagerSkeleton />;
   }
 
   return (
@@ -116,11 +110,7 @@ function FileManager() {
                   key={file.path}
                   file={file}
                   onFolderClick={fileClicked}
-                  type={
-                    file.file_type === 'Directory'
-                      ? 'folder'
-                      : 'file'
-                  }
+                  type={file.file_type === 'Directory' ? 'folder' : 'file'}
                   layout={layout}
                   activePath={selectedPath}
                   onFolderClickActive={handleFileSelect}
@@ -131,9 +121,7 @@ function FileManager() {
                 />
               ))}
               {visibleFiles.length === 0 && (
-                <div className="text-center text-5xl text-muted-foreground">
-                  No files found
-                </div>
+                <div className="text-center text-5xl text-muted-foreground">No files found</div>
               )}
             </div>
           </ContextMenuTrigger>
@@ -145,10 +133,7 @@ function FileManager() {
             {fileToMove && (
               <ContextMenuItem
                 onSelect={() => {
-                  handleFileMove(
-                    fileToMove.path,
-                    currentPath + '/' + fileToMove.name,
-                  );
+                  handleFileMove(fileToMove.path, currentPath + '/' + fileToMove.name);
                   refetch();
                   setFileToMove(undefined);
                 }}
@@ -160,10 +145,7 @@ function FileManager() {
             {fileToCopy && (
               <ContextMenuItem
                 onSelect={() => {
-                  handleFilePaste(
-                    fileToCopy.path,
-                    currentPath + '/' + fileToCopy.name,
-                  );
+                  handleFilePaste(fileToCopy.path, currentPath + '/' + fileToCopy.name);
                   refetch();
                   setFileToCopy(undefined);
                 }}

@@ -12,8 +12,8 @@ type WebSocketContextValue = {
 const WebSocketContext = createContext<WebSocketContextValue>({
   isReady: false,
   message: null,
-  sendMessage: () => { },
-  sendJsonMessage: () => { }
+  sendMessage: () => {},
+  sendJsonMessage: () => {}
 });
 
 interface WebSocketProviderProps {
@@ -59,7 +59,7 @@ export const WebSocketProvider = ({
         console.log('WebSocket connection already active, skipping connection attempt');
         return;
       }
-      
+
       if (wsRef.current.readyState !== WebSocket.CONNECTING) {
         try {
           wsRef.current.close();
@@ -85,7 +85,7 @@ export const WebSocketProvider = ({
           socket.close();
           return;
         }
-        
+
         console.log('WebSocket connection established');
         setIsReady(true);
         reconnectAttemptsRef.current = 0;
@@ -96,7 +96,7 @@ export const WebSocketProvider = ({
         if (!isMountedRef.current) {
           return;
         }
-        
+
         console.log(`WebSocket connection closed: ${event.code} ${event.reason}`);
         setIsReady(false);
         isConnectingRef.current = false;
@@ -110,7 +110,7 @@ export const WebSocketProvider = ({
         if (!isMountedRef.current) {
           return;
         }
-        
+
         setMessage(event.data);
       };
 
@@ -118,10 +118,10 @@ export const WebSocketProvider = ({
         if (!isMountedRef.current) {
           return;
         }
-        
+
         console.log('WebSocket error:', error);
         isConnectingRef.current = false;
-        
+
         // Don't try to reconnect here - wait for onclose which will be called after an error
       };
 
@@ -129,7 +129,7 @@ export const WebSocketProvider = ({
     } catch (error) {
       console.error('Error creating WebSocket:', error);
       isConnectingRef.current = false;
-      
+
       if (isMountedRef.current) {
         handleReconnect();
       }
@@ -140,7 +140,7 @@ export const WebSocketProvider = ({
     if (!isMountedRef.current) {
       return;
     }
-    
+
     if (reconnectAttemptsRef.current < maxReconnectAttempts) {
       console.log(
         `Attempting to reconnect (${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})...`
@@ -149,7 +149,7 @@ export const WebSocketProvider = ({
 
       // Use exponential backoff for reconnection
       const backoffTime = reconnectInterval * Math.pow(1.5, reconnectAttemptsRef.current - 1);
-      
+
       reconnectTimeoutRef.current = setTimeout(() => {
         if (isMountedRef.current) {
           connectWebSocket();
@@ -164,19 +164,19 @@ export const WebSocketProvider = ({
   useEffect(() => {
     reconnectAttemptsRef.current = 0;
     isConnectingRef.current = false;
-    
+
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
     }
-    
+
     connectWebSocket();
   }, [url]);
 
   // Main setup and cleanup effect
   useEffect(() => {
     isMountedRef.current = true;
-    
+
     if (!wsRef.current) {
       connectWebSocket();
     }
@@ -196,7 +196,7 @@ export const WebSocketProvider = ({
         wsRef.current.onclose = null;
         wsRef.current.onmessage = null;
         wsRef.current.onerror = null;
-        
+
         wsRef.current.close();
         wsRef.current = null;
       }

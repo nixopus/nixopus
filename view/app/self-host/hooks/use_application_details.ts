@@ -15,7 +15,6 @@ function useApplicationDetails() {
     sendJsonMessage(SubscribeToTopic(id as string, SOCKET_EVENTS.MONITOR_APPLICATION_DEPLOYMENT));
   }, []);
 
-
   const parseEnvVariables = (variablesString: string | undefined): Record<string, string> => {
     if (!variablesString) return {};
 

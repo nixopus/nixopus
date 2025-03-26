@@ -11,7 +11,7 @@ export enum USERURLS {
   UPDATE_USER_NAME = 'v1/user/name',
   REQUEST_PASSWORD_RESET_LINK = 'v1/auth/request-password-reset',
   ORGANIZATION_USERS = 'v1/organizations/users',
-  CREATE_USER = 'v1/auth/create-user',
+  CREATE_USER = 'v1/auth/create-user'
 }
 
 export enum USER_NOTIFICATION_SETTINGS {
@@ -29,7 +29,7 @@ export enum DOMAIN_SETTINGS {
   GET_DOMAINS = 'v1/domains',
   UPDATE_DOMAIN = 'v1/domain',
   DELETE_DOMAIN = 'v1/domain',
-  GENERATE_RANDOM_SUBDOMAIN= "v1/domain/generate"
+  GENERATE_RANDOM_SUBDOMAIN = 'v1/domain/generate'
 }
 
 export enum GITHUB_CONNECTOR {
@@ -70,5 +70,5 @@ export enum FILEMANAGERURLS {
   COPY_FOLDER_FILES_RECURSIVELY = 'v1/files/copy',
   CALCULATE_DIRECTORY_SIZE = 'v1/files/directories/size',
   GET_DISK_USAGE = 'v1/files/disk-usage',
-  GET_MEMORY_USAGE = 'v1/files/memory-usage',
+  GET_MEMORY_USAGE = 'v1/files/memory-usage'
 }

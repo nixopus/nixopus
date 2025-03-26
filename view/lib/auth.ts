@@ -26,7 +26,7 @@ export function getRefreshToken(ctx?: any): string | null {
 export function isTokenExpired(token: string | null): boolean {
   try {
     if (!token) return true;
-    
+
     const decoded = jwtDecode<DecodedToken>(token);
     return decoded.exp * 1000 < Date.now() + 60000;
   } catch (error) {
@@ -36,17 +36,17 @@ export function isTokenExpired(token: string | null): boolean {
 
 export function setAuthTokens(tokens: AuthTokens, ctx?: any): void {
   const { access_token, refresh_token, expires_in } = tokens;
-  
+
   setCookie(ctx, 'token', access_token, {
-    maxAge: expires_in || 30 * 24 * 60 * 60, 
+    maxAge: expires_in || 30 * 24 * 60 * 60,
     path: '/',
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict'
   });
-  
+
   if (refresh_token) {
     setCookie(ctx, 'refreshToken', refresh_token, {
-      maxAge: 60 * 24 * 60 * 60, 
+      maxAge: 60 * 24 * 60 * 60,
       path: '/',
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict'
@@ -63,9 +63,9 @@ export async function refreshAccessToken(refreshToken: string): Promise<AuthToke
   const response = await fetch(`${BASE_URL}${AUTHURLS.REFRESH_TOKEN}`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ refresh_token: refreshToken }),
+    body: JSON.stringify({ refresh_token: refreshToken })
   });
 
   if (!response.ok) {

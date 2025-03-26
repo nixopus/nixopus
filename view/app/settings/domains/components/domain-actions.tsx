@@ -15,7 +15,11 @@ export function DomainActions({ domain }: DomainActionsProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   const user = useAppSelector((state) => state.auth.user);
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
-  const { canUpdate, canDelete } = useResourcePermissions(user, "organization", activeOrganization?.id);
+  const { canUpdate, canDelete } = useResourcePermissions(
+    user,
+    'organization',
+    activeOrganization?.id
+  );
 
   const handleEdit = () => {
     setIsEditModalOpen(true);

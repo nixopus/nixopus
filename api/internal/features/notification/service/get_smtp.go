@@ -10,10 +10,10 @@ import (
 // GetSmtp returns the SMTP configuration associated with the given ID.
 //
 // It logs an info message to the logger before calling the same method on the storage layer.
-func (s *NotificationService) GetSmtp(ID string,organizationID string) (*shared_types.SMTPConfigs, error) {
+func (s *NotificationService) GetSmtp(ID string, organizationID string) (*shared_types.SMTPConfigs, error) {
 	s.logger.Log(logger.Info, "Getting SMTP configuration", "")
-	smtp,err:= s.storage.GetOrganizationsSmtp(organizationID)
-	if err!=nil{
+	smtp, err := s.storage.GetOrganizationsSmtp(organizationID)
+	if err != nil {
 		return nil, err
 	}
 

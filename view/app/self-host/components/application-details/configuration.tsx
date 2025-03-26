@@ -22,7 +22,7 @@ interface DeployConfigureProps {
   pre_run_commands?: string;
   post_run_commands?: string;
   application_id?: string;
-  dockerFilePath?: string
+  dockerFilePath?: string;
 }
 
 export const DeployConfigureForm = ({
@@ -38,7 +38,7 @@ export const DeployConfigureForm = ({
   pre_run_commands = '',
   post_run_commands = '',
   application_id = '',
-  dockerFilePath = "/Dockerfile"
+  dockerFilePath = '/Dockerfile'
 }: DeployConfigureProps) => {
   const { validateEnvVar, form, onSubmit, isLoading, domains } = useUpdateDeployment({
     name: application_name,

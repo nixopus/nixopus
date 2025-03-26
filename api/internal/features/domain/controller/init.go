@@ -76,7 +76,7 @@ func (c *DomainsController) parseAndValidate(w http.ResponseWriter, r *http.Requ
 		return false
 	}
 
-	if err := c.validator.AccessValidator(w, r, user,req); err != nil {
+	if err := c.validator.AccessValidator(w, r, user, req); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
 		utils.SendErrorResponse(w, err.Error(), http.StatusForbidden)
 		return false

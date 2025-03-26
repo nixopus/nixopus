@@ -134,22 +134,22 @@ func TestValidateCreateDomainRequest(t *testing.T) {
 	}{
 		{
 			name:    "Valid Request",
-			req:     types.CreateDomainRequest{Name: "example.com",OrganizationID: uuid.New()},
+			req:     types.CreateDomainRequest{Name: "example.com", OrganizationID: uuid.New()},
 			wantErr: nil,
 		},
 		{
 			name:    "Empty Name",
-			req:     types.CreateDomainRequest{Name: "",OrganizationID: uuid.New()},
+			req:     types.CreateDomainRequest{Name: "", OrganizationID: uuid.New()},
 			wantErr: types.ErrMissingDomainName,
 		},
 		{
 			name:    "Name Too Short",
-			req:     types.CreateDomainRequest{Name: "ab",OrganizationID: uuid.New()},
+			req:     types.CreateDomainRequest{Name: "ab", OrganizationID: uuid.New()},
 			wantErr: types.ErrDomainNameTooShort,
 		},
 		{
 			name:    "Name Too Long",
-			req:     types.CreateDomainRequest{Name: strings.Repeat("a", 256),OrganizationID: uuid.New()},
+			req:     types.CreateDomainRequest{Name: strings.Repeat("a", 256), OrganizationID: uuid.New()},
 			wantErr: types.ErrDomainNameTooLong,
 		},
 	}

@@ -243,7 +243,7 @@ func (v *Validator) validateDeleteDomainAccess(req *RequestInfo, user *shared_ty
 	}
 
 	// Check user's role in the organization
-	role, err :=utils.GetUserRoleInOrganization(user.OrganizationUsers, domain.OrganizationID)
+	role, err := utils.GetUserRoleInOrganization(user.OrganizationUsers, domain.OrganizationID)
 	if err != nil {
 		return err
 	}

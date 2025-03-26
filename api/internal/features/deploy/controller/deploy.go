@@ -9,7 +9,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-
 func (c *DeployController) HandleDeploy(w http.ResponseWriter, r *http.Request) {
 	c.logger.Log(logger.Info, "deploying", "")
 	var data types.CreateDeploymentRequest

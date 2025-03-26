@@ -53,7 +53,10 @@ function UpdateDomainDialog({ open, setOpen, id, data }: UpdateDomainDialogProps
   async function onSubmit(data: z.infer<typeof domainFormSchema>) {
     try {
       if (!id) {
-        await createDomain({ name: data.domainName, organization_id: activeOrganization?.id || '' });
+        await createDomain({
+          name: data.domainName,
+          organization_id: activeOrganization?.id || ''
+        });
       } else {
         await updateDomain({ name: data.domainName, id: id });
       }

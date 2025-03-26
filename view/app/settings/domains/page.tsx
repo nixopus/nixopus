@@ -10,23 +10,20 @@ import { useResourcePermissions } from '@/lib/permission';
 
 const Page = () => {
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const { data: domains } = useGetAllDomainsQuery({ organizationId: activeOrg?.id || '' }, { skip: !activeOrg });
+  const { data: domains } = useGetAllDomainsQuery(
+    { organizationId: activeOrg?.id || '' },
+    { skip: !activeOrg }
+  );
   const [addDomainDialogOpen, setAddDomainDialogOpen] = React.useState(false);
   const user = useAppSelector((state) => state.auth.user);
-  const { canCreate, canRead } = useResourcePermissions(
-    user,
-    "organization",
-    activeOrg?.id
-  );
+  const { canCreate, canRead } = useResourcePermissions(user, 'organization', activeOrg?.id);
 
   if (!canRead) {
     return (
       <div className="container mx-auto py-6 space-y-8 max-w-4xl">
         <DashboardPageHeader label="Server and Domains" description="Configure your domains" />
         <div className="flex flex-col h-full justify-center items-center gap-4 mt-12">
-          <h2 className="text-xl font-medium text-center text-foreground">
-            Access Denied
-          </h2>
+          <h2 className="text-xl font-medium text-center text-foreground">Access Denied</h2>
           <p className="text-muted-foreground text-center">
             You don't have permission to view domains for this organization.
           </p>
@@ -57,10 +54,7 @@ const Page = () => {
         />
       )}
       {addDomainDialogOpen && (
-        <UpdateDomainDialog
-          open={addDomainDialogOpen}
-          setOpen={setAddDomainDialogOpen}
-        />
+        <UpdateDomainDialog open={addDomainDialogOpen} setOpen={setAddDomainDialogOpen} />
       )}
     </div>
   );

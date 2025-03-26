@@ -10,7 +10,8 @@ import { BuildPack, Environment } from '@/redux/types/deploy-form';
 import ApplicationDetailsHeader from '../../components/application-details/header';
 
 function Page() {
-  const { application, currentPage, setCurrentPage, envVariables, buildVariables } = useApplicationDetails();
+  const { application, currentPage, setCurrentPage, envVariables, buildVariables } =
+    useApplicationDetails();
 
   return (
     <div className="container mx-auto py-6 space-y-8 max-w-4xl 2xl:max-w-7xl">
@@ -45,7 +46,7 @@ function Page() {
         <TabsContent value="logs" className="mt-6">
           <ApplicationLogs
             logs={application?.logs}
-            onRefresh={() => { }}
+            onRefresh={() => {}}
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
           />
