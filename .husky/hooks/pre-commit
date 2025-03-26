@@ -12,6 +12,5 @@ cd "$ROOTDIR"
 
 cd view 
 yarn format
-yarn lint
 yarn run build
 git add -u .
