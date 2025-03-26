@@ -4,105 +4,99 @@ import { FileData } from '@/redux/types/files';
 import { FILEMANAGERURLS } from '@/redux/api-conf';
 
 export const fileManagersApi = createApi({
-    reducerPath: 'fileManagersApi',
-    baseQuery: baseQueryWithReauth,
-    tagTypes: ['fileManager'],
-    endpoints: (builder) => ({
-        getFilesInPath: builder.query<FileData[], { path: string }>({
-            query: ({ path }) => ({
-                url: `${FILEMANAGERURLS.LIST_FILES_AT_PATH}?path=${encodeURIComponent(path)}`,
-                method: 'GET',
-            }),
-            transformResponse: (response: { data: FileData[] }) => response.data,
-        }),
-        createDirectory: builder.mutation<any, { path: string; name: string }>({
-            query: ({ path, name }) => ({
-                url: FILEMANAGERURLS.CREATE_DIRECTORY,
-                method: 'POST',
-                body: { path, name },
-            }),
-            transformResponse: (response: any) => response,
-        }),
-        deleteDirectory: builder.mutation<any, { path: string }>({
-            query: ({ path }) => ({
-                url: FILEMANAGERURLS.DELETE_DIRECTORY,
-                method: 'DELETE',
-                body: { path },
-            }),
-            transformResponse: (response: any) => response,
-        }),
-        deleteFile: builder.mutation<any, { path: string }>({
-            query: ({ path }) => ({
-                url: FILEMANAGERURLS.DELETE_FILE,
-                method: 'DELETE',
-                body: { path },
-            }),
-            transformResponse: (response: any) => response,
-        }),
-        moveOrRenameDirectory: builder.mutation<
-            any,
-            { from_path: string; to_path: string }
-        >({
-            query: ({ from_path, to_path }) => ({
-                url: FILEMANAGERURLS.MOVE_FOLDER_FILES_RECURSIVELY_OR_RENAME,
-                method: 'POST',
-                body: { from_path, to_path },
-            }),
-            transformResponse: (response: any) => response,
-        }),
-        copyFileOrDirectory: builder.mutation<
-            any,
-            { from_path: string; to_path: string }
-        >({
-            query: ({ from_path, to_path }) => ({
-                url: FILEMANAGERURLS.COPY_FOLDER_FILES_RECURSIVELY,
-                method: 'POST',
-                body: { from_path, to_path },
-            }),
-            transformResponse: (response: any) => response,
-        }),
-        createFile: builder.mutation<any, { path: string; name: string }>({
-            query: ({ path, name }) => ({
-                url: FILEMANAGERURLS.CREATE_FILE,
-                method: 'POST',
-                body: { path, name },
-            }),
-            transformResponse: (response: any) => response,
-        }),
-        calculateDirectorySize: builder.mutation<any['data'], { path: string }>({
-            query: ({ path }) => ({
-                url: FILEMANAGERURLS.CALCULATE_DIRECTORY_SIZE,
-                method: 'POST',
-                body: { path },
-            }),
-            transformResponse: (response: any) => response.data,
-        }),
-        getDiskUsage: builder.query<any, void>({
-            query: () => ({
-                url: FILEMANAGERURLS.GET_DISK_USAGE,
-                method: 'GET',
-            }),
-            transformResponse: (response: { data: any }) => response.data,
-        }),
-        getMemoryUsage: builder.query<any, void>({
-            query: () => ({
-                url: FILEMANAGERURLS.GET_MEMORY_USAGE,
-                method: 'GET',
-            }),
-            transformResponse: (response: { data: any }) => response.data,
-        }),
+  reducerPath: 'fileManagersApi',
+  baseQuery: baseQueryWithReauth,
+  tagTypes: ['fileManager'],
+  endpoints: (builder) => ({
+    getFilesInPath: builder.query<FileData[], { path: string }>({
+      query: ({ path }) => ({
+        url: `${FILEMANAGERURLS.LIST_FILES_AT_PATH}?path=${encodeURIComponent(path)}`,
+        method: 'GET'
+      }),
+      transformResponse: (response: { data: FileData[] }) => response.data
+    }),
+    createDirectory: builder.mutation<any, { path: string; name: string }>({
+      query: ({ path, name }) => ({
+        url: FILEMANAGERURLS.CREATE_DIRECTORY,
+        method: 'POST',
+        body: { path, name }
+      }),
+      transformResponse: (response: any) => response
+    }),
+    deleteDirectory: builder.mutation<any, { path: string }>({
+      query: ({ path }) => ({
+        url: FILEMANAGERURLS.DELETE_DIRECTORY,
+        method: 'DELETE',
+        body: { path }
+      }),
+      transformResponse: (response: any) => response
+    }),
+    deleteFile: builder.mutation<any, { path: string }>({
+      query: ({ path }) => ({
+        url: FILEMANAGERURLS.DELETE_FILE,
+        method: 'DELETE',
+        body: { path }
+      }),
+      transformResponse: (response: any) => response
+    }),
+    moveOrRenameDirectory: builder.mutation<any, { from_path: string; to_path: string }>({
+      query: ({ from_path, to_path }) => ({
+        url: FILEMANAGERURLS.MOVE_FOLDER_FILES_RECURSIVELY_OR_RENAME,
+        method: 'POST',
+        body: { from_path, to_path }
+      }),
+      transformResponse: (response: any) => response
+    }),
+    copyFileOrDirectory: builder.mutation<any, { from_path: string; to_path: string }>({
+      query: ({ from_path, to_path }) => ({
+        url: FILEMANAGERURLS.COPY_FOLDER_FILES_RECURSIVELY,
+        method: 'POST',
+        body: { from_path, to_path }
+      }),
+      transformResponse: (response: any) => response
+    }),
+    createFile: builder.mutation<any, { path: string; name: string }>({
+      query: ({ path, name }) => ({
+        url: FILEMANAGERURLS.CREATE_FILE,
+        method: 'POST',
+        body: { path, name }
+      }),
+      transformResponse: (response: any) => response
+    }),
+    calculateDirectorySize: builder.mutation<any['data'], { path: string }>({
+      query: ({ path }) => ({
+        url: FILEMANAGERURLS.CALCULATE_DIRECTORY_SIZE,
+        method: 'POST',
+        body: { path }
+      }),
+      transformResponse: (response: any) => response.data
+    }),
+    getDiskUsage: builder.query<any, void>({
+      query: () => ({
+        url: FILEMANAGERURLS.GET_DISK_USAGE,
+        method: 'GET'
+      }),
+      transformResponse: (response: { data: any }) => response.data
+    }),
+    getMemoryUsage: builder.query<any, void>({
+      query: () => ({
+        url: FILEMANAGERURLS.GET_MEMORY_USAGE,
+        method: 'GET'
+      }),
+      transformResponse: (response: { data: any }) => response.data
     })
+  })
 });
 
 export const {
-    useGetFilesInPathQuery,
-    useCreateDirectoryMutation,
-    useDeleteDirectoryMutation,
-    useDeleteFileMutation,
-    useMoveOrRenameDirectoryMutation,
-    useCopyFileOrDirectoryMutation,
-    useCreateFileMutation,
-    useCalculateDirectorySizeMutation,
-    useGetDiskUsageQuery,
-    useGetMemoryUsageQuery,
+  useGetFilesInPathQuery,
+  useCreateDirectoryMutation,
+  useDeleteDirectoryMutation,
+  useDeleteFileMutation,
+  useMoveOrRenameDirectoryMutation,
+  useCopyFileOrDirectoryMutation,
+  useCreateFileMutation,
+  useCalculateDirectorySizeMutation,
+  useGetDiskUsageQuery,
+  useGetMemoryUsageQuery
 } = fileManagersApi;

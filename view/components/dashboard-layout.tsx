@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { AppSidebar } from '@/components/app-sidebar';
 import {
   Breadcrumb,
@@ -16,15 +16,11 @@ import use_bread_crumbs from '@/hooks/use_bread_crumbs';
 import React, { useEffect } from 'react';
 import { IntegratedTerminal } from '@/app/terminal/terminal';
 import { useTerminalState } from '@/app/terminal/utils/useTerminalState';
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 
 enum TERMINAL_POSITION {
   BOTTOM = 'bottom',
-  RIGHT = 'right',
+  RIGHT = 'right'
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -53,7 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setTerminalPosition((prevPosition) =>
           prevPosition === TERMINAL_POSITION.BOTTOM
             ? TERMINAL_POSITION.RIGHT
-            : TERMINAL_POSITION.BOTTOM,
+            : TERMINAL_POSITION.BOTTOM
         );
       }
     };
@@ -103,21 +99,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             />
           )}
           <ResizablePanelGroup
-            direction={
-              TERMINAL_POSITION.BOTTOM === TerminalPosition
-                ? 'vertical'
-                : 'horizontal'
-            }
+            direction={TERMINAL_POSITION.BOTTOM === TerminalPosition ? 'vertical' : 'horizontal'}
             className="flex-grow h-full"
           >
-            <ResizablePanel
-              defaultSize={80}
-              minSize={30}
-              className="overflow-auto scrollbar-hide" 
-            >
-              <div className="h-full overflow-y-auto scrollbar-hide">
-                {children}
-              </div>
+            <ResizablePanel defaultSize={80} minSize={30} className="overflow-auto scrollbar-hide">
+              <div className="h-full overflow-y-auto scrollbar-hide">{children}</div>
             </ResizablePanel>
             <ResizableHandle />
             <ResizablePanel

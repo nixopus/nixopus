@@ -13,12 +13,12 @@ function DeploymentsList({ deployments }: { deployments?: ApplicationDeployment[
   const formatDate = (created_at: string) =>
     deployments
       ? new Date(created_at).toLocaleString('en-US', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
       : 'N/A';
 
   const calculateRunTime = (updated_at: string, created_at: string) => {
@@ -37,20 +37,17 @@ function DeploymentsList({ deployments }: { deployments?: ApplicationDeployment[
       {deployments && deployments.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {deployments.map((deployment) => (
-            <Card
-              key={deployment.id}
-              className="w-full hover:shadow-md transition-shadow"
-            >
+            <Card key={deployment.id} className="w-full hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-center">
                   <div>
                     <CardTitle className="text-lg font-medium">
-                      {deployment.container_name?.startsWith("/") ? deployment.container_name.slice(1) : deployment.container_name}
+                      {deployment.container_name?.startsWith('/')
+                        ? deployment.container_name.slice(1)
+                        : deployment.container_name}
                     </CardTitle>
                     <CardDescription>
-                      <span className="text-xs">
-                        {deployment.status?.status || 'Completed'}
-                      </span>
+                      <span className="text-xs">{deployment.status?.status || 'Completed'}</span>
                     </CardDescription>
                   </div>
                   <Button

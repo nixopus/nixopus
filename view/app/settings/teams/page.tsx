@@ -26,16 +26,22 @@ function Page() {
     isEditTeamDialogOpen,
     teamName,
     teamDescription,
-    isUpdating,
+    isUpdating
   } = useTeamSettings();
 
   const user = useAppSelector((state) => state.auth.user);
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
 
-  const { canUpdate: canUpdateUser, canDelete: canDeleteUser, canCreate: canCreateUser } =
-    useResourcePermissions(user, "user", activeOrganization?.id);
-  const { canRead: canReadOrg, canUpdate: canUpdateOrg } =
-    useResourcePermissions(user, "organization", activeOrganization?.id);
+  const {
+    canUpdate: canUpdateUser,
+    canDelete: canDeleteUser,
+    canCreate: canCreateUser
+  } = useResourcePermissions(user, 'user', activeOrganization?.id);
+  const { canRead: canReadOrg, canUpdate: canUpdateOrg } = useResourcePermissions(
+    user,
+    'organization',
+    activeOrganization?.id
+  );
 
   return (
     <div className="container mx-auto py-6 space-y-8 max-w-4xl">
@@ -71,14 +77,15 @@ function Page() {
         )}
       </div>
 
-      {
-        canReadOrg && users.length > 0 ? <TeamMembers
+      {canReadOrg && users.length > 0 ? (
+        <TeamMembers
           users={users}
           handleRemoveUser={handleRemoveUser}
           getRoleBadgeVariant={getRoleBadgeVariant}
         />
-          : <div className="text-center text-muted-foreground">No team members found.</div>
-      }
+      ) : (
+        <div className="text-center text-muted-foreground">No team members found.</div>
+      )}
     </div>
   );
 }

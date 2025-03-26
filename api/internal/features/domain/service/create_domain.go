@@ -44,12 +44,12 @@ func (s *DomainsService) CreateDomain(req types.CreateDomainRequest, userID stri
 	}
 
 	domain := &shared_types.Domain{
-		ID:        uuid.New(),
-		UserID:    uuid.MustParse(userID),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		DeletedAt: nil,
-		Name:      req.Name,
+		ID:             uuid.New(),
+		UserID:         uuid.MustParse(userID),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+		DeletedAt:      nil,
+		Name:           req.Name,
 		OrganizationID: req.OrganizationID,
 	}
 

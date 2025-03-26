@@ -73,9 +73,9 @@ function useTeamSettings() {
       username: newUser.name || '',
       email: newUser.email || '',
       avatar: '' as string,
-      password: "test1234@Test", // This is a temporary password we can use for testing,
+      password: 'test1234@Test', // This is a temporary password we can use for testing,
       organization: activeOrganization?.id || '',
-      type: newUser.role.toLowerCase() as UserTypes,
+      type: newUser.role.toLowerCase() as UserTypes
     };
 
     setUsers([...users, { id: newId, ...tempUser, permissions, name: newUser.name }]);
@@ -144,7 +144,7 @@ function useTeamSettings() {
     isEditTeamDialogOpen,
     teamName,
     teamDescription,
-    isUpdating,
+    isUpdating
   };
 }
 

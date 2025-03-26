@@ -158,14 +158,14 @@ func NewSMTPConfig(c *CreateSMTPConfigRequest, userID uuid.UUID) *shared_types.S
 		c.FromName = strings.Split(c.Username, "@")[0]
 	}
 	return &shared_types.SMTPConfigs{
-		Host:      c.Host,
-		Port:      c.Port,
-		Username:  c.Username,
-		Password:  c.Password,
-		FromName:  c.FromName,
-		FromEmail: c.FromEmail,
-		UserID:    userID,
-		ID:        uuid.New(),
+		Host:           c.Host,
+		Port:           c.Port,
+		Username:       c.Username,
+		Password:       c.Password,
+		FromName:       c.FromName,
+		FromEmail:      c.FromEmail,
+		UserID:         userID,
+		ID:             uuid.New(),
 		OrganizationID: c.OrganizationID,
 	}
 }

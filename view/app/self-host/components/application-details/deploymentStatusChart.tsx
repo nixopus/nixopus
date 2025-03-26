@@ -65,7 +65,7 @@ export const DeploymentStatusChart = ({
             <XAxis dataKey="status" type="category" tickLine={false} axisLine={false} width={100} />
             <YAxis type="number" tickLine={false} axisLine={false} />
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
-            <Bar dataKey="value" className='fill-secondary' radius={4} />
+            <Bar dataKey="value" className="fill-secondary" radius={4} />
           </BarChart>
         </ChartContainer>
       </CardContent>

@@ -11,7 +11,10 @@ import {
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Application } from '@/redux/types/applications';
 import { DeleteDialog } from '@/components/delete-dialog';
-import { useRedeployApplicationMutation, useRestartApplicationMutation } from '@/redux/services/deploy/applicationsApi';
+import {
+  useRedeployApplicationMutation,
+  useRestartApplicationMutation
+} from '@/redux/services/deploy/applicationsApi';
 import { useDeleteApplicationMutation } from '@/redux/services/deploy/applicationsApi';
 import { useRouter } from 'next/navigation';
 
@@ -42,7 +45,12 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="secondary" size="icon" disabled={isRestarting} onClick={() => restartApplication({ id: application?.deployments?.[0]?.id || '' })}>
+              <Button
+                variant="secondary"
+                size="icon"
+                disabled={isRestarting}
+                onClick={() => restartApplication({ id: application?.deployments?.[0]?.id || '' })}
+              >
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </TooltipTrigger>

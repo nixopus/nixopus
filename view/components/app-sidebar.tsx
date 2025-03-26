@@ -68,7 +68,7 @@ export function AppSidebar({
   const organizations = useAppSelector((state) => state.user.organizations);
 
   React.useEffect(() => {
-    if (user && user.type !== "admin") {
+    if (user && user.type !== 'admin') {
       delete data.navMain[2];
     }
   }, [user]);

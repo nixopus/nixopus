@@ -18,7 +18,7 @@ export const domainsApi = createApi({
         return response.data;
       }
     }),
-    createDomain: builder.mutation<null, { name: string, organization_id: string }>({
+    createDomain: builder.mutation<null, { name: string; organization_id: string }>({
       query: (data) => ({
         url: DOMAIN_SETTINGS.ADD_DOMAIN,
         method: 'POST',
@@ -54,8 +54,8 @@ export const domainsApi = createApi({
     generateRandomSubdomain: builder.query<string, void>({
       query: (id) => ({
         url: DOMAIN_SETTINGS.GENERATE_RANDOM_SUBDOMAIN,
-        method: 'GET',
-      }),
+        method: 'GET'
+      })
     })
   })
 });

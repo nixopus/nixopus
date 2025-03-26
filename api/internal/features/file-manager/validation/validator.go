@@ -8,10 +8,9 @@ import (
 )
 
 type Validator struct {
-
 }
 
-func NewValidator() *Validator{
+func NewValidator() *Validator {
 	return &Validator{}
 }
 

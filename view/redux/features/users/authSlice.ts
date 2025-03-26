@@ -8,7 +8,7 @@ import {
   getRefreshToken,
   isTokenExpired,
   setAuthTokens,
-  clearAuthTokens,
+  clearAuthTokens
 } from '@/lib/auth';
 
 interface AuthState {
@@ -56,7 +56,7 @@ export const initializeAuth = createAsyncThunk<AuthPayload | null>(
             return {
               user: userResult,
               token: refreshResult.access_token,
-              refreshToken: refreshResult.refresh_token || refreshToken,
+              refreshToken: refreshResult.refresh_token || refreshToken
             };
           } else {
             return null;
@@ -74,7 +74,7 @@ export const initializeAuth = createAsyncThunk<AuthPayload | null>(
           return {
             user: userResult,
             token,
-            refreshToken,
+            refreshToken
           };
         } catch (error) {
           return rejectWithValue('Failed to fetch user details');
@@ -100,7 +100,12 @@ export const authSlice = createSlice({
   reducers: {
     setCredentials: (
       state,
-      action: PayloadAction<{ user: User | null; token: string; refreshToken?: string; expiresIn?: number }>
+      action: PayloadAction<{
+        user: User | null;
+        token: string;
+        refreshToken?: string;
+        expiresIn?: number;
+      }>
     ) => {
       const { user, token, refreshToken, expiresIn } = action.payload;
 
