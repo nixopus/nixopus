@@ -1,7 +1,3 @@
 #!/bin/sh
-ROOTDIR=$(pwd)
-echo "Running pre-commit hook"
-# cd api && go build -v ./... && go test -v ./... && go fmt ./...
-# cd "$ROOTDIR"
 
-# cd view && yarn format && yarn lint && yarn run build
+echo "Running pre-commit hook"
