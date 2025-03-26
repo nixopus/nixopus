@@ -71,18 +71,14 @@ function Page() {
         )}
       </div>
 
-      <TeamMembers
-        users={users}
-        handleRemoveUser={handleRemoveUser}
-        getRoleBadgeVariant={getRoleBadgeVariant}
-      />
-
-      {canReadOrg && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <TeamStats users={users} />
-          <RecentActivity />
-        </div>
-      )}
+      {
+        canReadOrg && users.length > 0 ? <TeamMembers
+          users={users}
+          handleRemoveUser={handleRemoveUser}
+          getRoleBadgeVariant={getRoleBadgeVariant}
+        />
+          : <div className="text-center text-muted-foreground">No team members found.</div>
+      }
     </div>
   );
 }

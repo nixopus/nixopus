@@ -15,32 +15,32 @@ export const fileManagersApi = createApi({
             }),
             transformResponse: (response: { data: FileData[] }) => response.data,
         }),
-        createDirectory: builder.mutation<CreateDirectoryResponse, { path: string; name: string }>({
+        createDirectory: builder.mutation<any, { path: string; name: string }>({
             query: ({ path, name }) => ({
                 url: FILEMANAGERURLS.CREATE_DIRECTORY,
                 method: 'POST',
                 body: { path, name },
             }),
-            transformResponse: (response: CreateDirectoryResponse) => response,
+            transformResponse: (response: any) => response,
         }),
-        deleteDirectory: builder.mutation<CreateDirectoryResponse, { path: string }>({
+        deleteDirectory: builder.mutation<any, { path: string }>({
             query: ({ path }) => ({
                 url: FILEMANAGERURLS.DELETE_DIRECTORY,
                 method: 'DELETE',
                 body: { path },
             }),
-            transformResponse: (response: CreateDirectoryResponse) => response,
+            transformResponse: (response: any) => response,
         }),
-        deleteFile: builder.mutation<CreateDirectoryResponse, { path: string }>({
+        deleteFile: builder.mutation<any, { path: string }>({
             query: ({ path }) => ({
                 url: FILEMANAGERURLS.DELETE_FILE,
                 method: 'DELETE',
                 body: { path },
             }),
-            transformResponse: (response: CreateDirectoryResponse) => response,
+            transformResponse: (response: any) => response,
         }),
         moveOrRenameDirectory: builder.mutation<
-            CreateDirectoryResponse,
+            any,
             { from_path: string; to_path: string }
         >({
             query: ({ from_path, to_path }) => ({
@@ -48,10 +48,10 @@ export const fileManagersApi = createApi({
                 method: 'POST',
                 body: { from_path, to_path },
             }),
-            transformResponse: (response: CreateDirectoryResponse) => response,
+            transformResponse: (response: any) => response,
         }),
         copyFileOrDirectory: builder.mutation<
-            CreateDirectoryResponse,
+            any,
             { from_path: string; to_path: string }
         >({
             query: ({ from_path, to_path }) => ({
@@ -59,37 +59,37 @@ export const fileManagersApi = createApi({
                 method: 'POST',
                 body: { from_path, to_path },
             }),
-            transformResponse: (response: CreateDirectoryResponse) => response,
+            transformResponse: (response: any) => response,
         }),
-        createFile: builder.mutation<CreateDirectoryResponse, { path: string; name: string }>({
+        createFile: builder.mutation<any, { path: string; name: string }>({
             query: ({ path, name }) => ({
                 url: FILEMANAGERURLS.CREATE_FILE,
                 method: 'POST',
                 body: { path, name },
             }),
-            transformResponse: (response: CreateDirectoryResponse) => response,
+            transformResponse: (response: any) => response,
         }),
-        calculateDirectorySize: builder.mutation<FileSizeResponse['data'], { path: string }>({
+        calculateDirectorySize: builder.mutation<any['data'], { path: string }>({
             query: ({ path }) => ({
                 url: FILEMANAGERURLS.CALCULATE_DIRECTORY_SIZE,
                 method: 'POST',
                 body: { path },
             }),
-            transformResponse: (response: FileSizeResponse) => response.data,
+            transformResponse: (response: any) => response.data,
         }),
-        getDiskUsage: builder.query<DiskUsageData, void>({
+        getDiskUsage: builder.query<any, void>({
             query: () => ({
                 url: FILEMANAGERURLS.GET_DISK_USAGE,
                 method: 'GET',
             }),
-            transformResponse: (response: { data: DiskUsageData }) => response.data,
+            transformResponse: (response: { data: any }) => response.data,
         }),
-        getMemoryUsage: builder.query<MemoryUsageData, void>({
+        getMemoryUsage: builder.query<any, void>({
             query: () => ({
                 url: FILEMANAGERURLS.GET_MEMORY_USAGE,
                 method: 'GET',
             }),
-            transformResponse: (response: { data: MemoryUsageData }) => response.data,
+            transformResponse: (response: { data: any }) => response.data,
         }),
     })
 });

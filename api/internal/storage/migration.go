@@ -176,7 +176,6 @@ func (m *Migrator) MigrateUp() error {
 
 	for _, migration := range m.migrations {
 		if appliedMap[migration.Name] {
-			log.Printf("Skipping already applied migration: %s (ID: %d)", migration.Name, migration.ID)
 			continue
 		}
 
@@ -427,7 +426,7 @@ func MigrateDownAll(db *bun.DB, migrationsPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get current schema: %w", err)
 	}
-	_, err = tx.Exec(fmt.Sprintf("SET session_replication_role = 'replica';"))
+	_, err = tx.Exec("SET session_replication_role = 'replica';")
 	if err != nil {
 		return fmt.Errorf("failed to disable triggers: %w", err)
 	}

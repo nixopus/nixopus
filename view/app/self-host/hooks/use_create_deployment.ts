@@ -8,6 +8,7 @@ import { useWebSocket } from '@/hooks/socket_provider';
 import { useRouter } from 'next/navigation';
 import { useCreateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';
 import { toast } from 'sonner';
+import { useAppSelector } from '@/redux/hooks';
 
 interface DeploymentFormValues {
   application_name: string;
@@ -38,7 +39,8 @@ function useCreateDeployment({
   post_run_commands = '',
   DockerfilePath = '/Dockerfile'
 }: DeploymentFormValues) {
-  const { data: domains } = useGetAllDomainsQuery();
+  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
+  const { data: domains } = useGetAllDomainsQuery(activeOrg?.id);
   const { isReady, message, sendJsonMessage } = useWebSocket();
   const [createDeployment, { isLoading }] = useCreateDeploymentMutation();
   const router = useRouter();

@@ -14,7 +14,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	notificationController "github.com/raghavyuva/nixopus-api/internal/features/notification/controller"
-	// organization "github.com/raghavyuva/nixopus-api/internal/features/organization/controller"
+	organization "github.com/raghavyuva/nixopus-api/internal/features/organization/controller"
 	// permission "github.com/raghavyuva/nixopus-api/internal/features/permission/controller"
 	// role "github.com/raghavyuva/nixopus-api/internal/features/role/controller"
 	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
@@ -65,8 +65,8 @@ func (router *Router) Routes() *mux.Router {
 	// roleController := role.NewRolesController(router.app.Store, router.app.Ctx, l)
 	// router.RoleRoutes(api, roleController)
 
-	// organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager)
-	// router.OrganizationRoutes(api, organizationController)
+	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager)
+	router.OrganizationRoutes(api, organizationController)
 
 	// permissionController := permission.NewPermissionController(router.app.Store, router.app.Ctx, l)
 	// router.PermissionRoutes(api, permissionController)
@@ -207,9 +207,12 @@ func (router *Router) DeployApplicationRoutes(deployApi *mux.Router, deployContr
 
 func (router *Router) FileManagerRoutes(api *mux.Router, fileManagerController *file_manager.FileManagerController) {
 	file_manager_api := api.PathPrefix("/file-manager").Subrouter()
+	// we will expose these routes only for admin
+	file_manager_api.Use(middleware.IsAdmin)
 	file_manager_api.HandleFunc("", fileManagerController.ListFiles).Methods("GET", "OPTIONS")
 	file_manager_api.HandleFunc("/create-directory", fileManagerController.CreateDirectory).Methods("POST", "OPTIONS")
-	file_manager_api.HandleFunc("/delete-file", fileManagerController.DeleteFile).Methods("DELETE", "OPTIONS")
+	// Removed for now (security reasons)
+	// file_manager_api.HandleFunc("/delete-file", fileManagerController.DeleteFile).Methods("DELETE", "OPTIONS")
 }
 
 // these routes are admin routes (disabled for now)
@@ -224,18 +227,18 @@ func (router *Router) FileManagerRoutes(api *mux.Router, fileManagerController *
 // 	roleApi.HandleFunc("/all", roleController.GetRoles).Methods("GET", "OPTIONS")
 // }
 
-// func (router *Router) OrganizationRoutes(api *mux.Router, organizationController *organization.OrganizationsController) {
-// 	orgApi := api.PathPrefix("/organizations").Subrouter()
-// 	orgApi.Use(middleware.IsAdmin)
-// 	orgApi.HandleFunc("", organizationController.CreateOrganization).Methods("POST", "OPTIONS")
-// 	orgApi.HandleFunc("", organizationController.GetOrganization).Methods("GET", "OPTIONS")
-// 	orgApi.HandleFunc("", organizationController.UpdateOrganization).Methods("PUT", "OPTIONS")
-// 	orgApi.HandleFunc("", organizationController.DeleteOrganization).Methods("DELETE", "OPTIONS")
-// 	orgApi.HandleFunc("/all", organizationController.GetOrganizations).Methods("GET", "OPTIONS")
-// 	orgApi.HandleFunc("/user", organizationController.AddUserToOrganization).Methods("POST", "OPTIONS")
-// 	orgApi.HandleFunc("/user", organizationController.RemoveUserFromOrganization).Methods("DELETE", "OPTIONS")
-// 	orgApi.HandleFunc("/users", organizationController.GetOrganizationUsers).Methods("GET", "OPTIONS")
-// }
+func (router *Router) OrganizationRoutes(api *mux.Router, organizationController *organization.OrganizationsController) {
+	orgApi := api.PathPrefix("/organizations").Subrouter()
+	// orgApi.Use(middleware.IsAdmin)
+	// orgApi.HandleFunc("", organizationController.CreateOrganization).Methods("POST", "OPTIONS")
+	// orgApi.HandleFunc("", organizationController.GetOrganization).Methods("GET", "OPTIONS")
+	// orgApi.HandleFunc("", organizationController.UpdateOrganization).Methods("PUT", "OPTIONS")
+	// orgApi.HandleFunc("", organizationController.DeleteOrganization).Methods("DELETE", "OPTIONS")
+	// orgApi.HandleFunc("/all", organizationController.GetOrganizations).Methods("GET", "OPTIONS")
+	// orgApi.HandleFunc("/user", organizationController.AddUserToOrganization).Methods("POST", "OPTIONS")
+	// orgApi.HandleFunc("/user", organizationController.RemoveUserFromOrganization).Methods("DELETE", "OPTIONS")
+	orgApi.HandleFunc("/users", organizationController.GetOrganizationUsers).Methods("GET", "OPTIONS")
+}
 
 // func (router *Router) PermissionRoutes(api *mux.Router, permissionController *permission.PermissionController) {
 // 	permApi := api.PathPrefix("/permissions").Subrouter()

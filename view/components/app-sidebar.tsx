@@ -1,8 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Folder, Home, LockIcon, Package, SettingsIcon } from 'lucide-react';
-
+import { Folder, Home, Package, SettingsIcon } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { TeamSwitcher } from '@/components/team-switcher';
@@ -33,11 +32,6 @@ const data = {
       title: 'File Manager',
       url: '/file-manager',
       icon: Folder
-    },
-    {
-      title: "Secret Manager",
-      url: "/secret-manager",
-      icon: LockIcon
     },
     {
       title: 'Settings',
@@ -72,6 +66,16 @@ export function AppSidebar({
   const user = useAppSelector((state) => state.auth.user);
   const { isLoading } = useGetUserOrganizationsQuery();
   const organizations = useAppSelector((state) => state.user.organizations);
+
+  React.useEffect(() => {
+    if (user && user.type !== "admin") {
+      delete data.navMain[2];
+    }
+  }, [user]);
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <Sidebar collapsible="icon" {...props}>

@@ -9,6 +9,7 @@ import { useUpdateDeploymentMutation } from '@/redux/services/deploy/application
 import { UpdateDeploymentRequest } from '@/redux/types/applications';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
 import { parsePort } from '../utils/parsePort';
+import { useAppSelector } from '@/redux/hooks';
 
 interface UseUpdateDeploymentProps {
   name?: string;
@@ -36,7 +37,8 @@ function useUpdateDeployment({
   const { isReady, message, sendJsonMessage } = useWebSocket();
   const [updateDeployment, { isLoading }] = useUpdateDeploymentMutation();
   const router = useRouter();
-  const { data: domains } = useGetAllDomainsQuery();
+  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
+  const { data: domains } = useGetAllDomainsQuery(activeOrg?.id);
 
   const deploymentFormSchema = z.object({
     name: z
