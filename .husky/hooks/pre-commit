@@ -1,5 +1,9 @@
 #!/bin/sh
+cd api && go build -v ./... && go test -v ./... && go fmt ./...
+API_RESULT=$?
 
-cd api && go build -v ./... &&  go test -v ./... && go fmt ./...
+cd ..
+cd view && yarn format && yarn lint && yarn run build
+VIEW_RESULT=$?
 
-cd ../view && yarn format && yarn lint && yarn run build
+[ $API_RESULT -eq 0 ] && [ $VIEW_RESULT -eq 0 ] 
