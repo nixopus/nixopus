@@ -69,13 +69,11 @@ func NewDockerClient() *client.Client {
 //
 // If an error occurs while listing the containers, it panics with the error.
 func (s *DockerService) ListAllContainers() ([]container.Summary, error) {
-	containers, err := s.Cli.ContainerList(s.Ctx, container.ListOptions{})
+	containers, err := s.Cli.ContainerList(s.Ctx, container.ListOptions{
+		All: true,
+	})
 	if err != nil {
 		panic(err)
-	}
-
-	for _, ctr := range containers {
-		s.logger.Log(logger.Info, "container", ctr.ID)
 	}
 
 	return containers, nil

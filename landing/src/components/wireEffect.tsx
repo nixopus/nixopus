@@ -11,7 +11,7 @@ const WireEffect = ({ children }: { children: React.ReactNode }) => {
                 duration: 2,
                 ease: "easeInOut",
                 repeat: Infinity,
-                repeatType: "reverse"
+                repeatType: "reverse" as const
             }
         }
     };

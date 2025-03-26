@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
+	"github.com/raghavyuva/nixopus-api/internal/features/dashboard"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
 	"github.com/raghavyuva/nixopus-api/internal/features/terminal"
 	"github.com/raghavyuva/nixopus-api/internal/types"
@@ -49,6 +50,8 @@ type SocketServer struct {
 	postgres_listener PostgresListener
 	terminalMutex     sync.RWMutex
 	terminals         map[*websocket.Conn]*terminal.Terminal
+	dashboardMonitors map[*websocket.Conn]*dashboard.DashboardMonitor
+	dashboardMutex    sync.Mutex
 }
 
 // NewSocketServer initializes and returns a new instance of SocketServer.
@@ -76,6 +79,7 @@ func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx 
 		topics:            make(map[string]map[*websocket.Conn]bool),
 		postgres_listener: *pgListener,
 		terminals:         make(map[*websocket.Conn]*terminal.Terminal),
+		dashboardMonitors: make(map[*websocket.Conn]*dashboard.DashboardMonitor),
 	}
 
 	notificationChan, err := pgListener.ListenToApplicationChanges(ctx)

@@ -1,3 +1,4 @@
+'use client';
 import { getToken } from '@/lib/auth';
 import { WEBSOCKET_URL } from '@/redux/conf';
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
@@ -35,14 +36,8 @@ export const WebSocketProvider = ({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const isConnectingRef = useRef(false);
-  const isMountedRef = useRef(true);
 
   const connectWebSocket = () => {
-    // Don't attempt to connect if the component is unmounting
-    if (!isMountedRef.current) {
-      return;
-    }
-
     if (isConnectingRef.current) {
       console.log('Connection already in progress, skipping');
       return;
@@ -53,7 +48,6 @@ export const WebSocketProvider = ({
       reconnectTimeoutRef.current = null;
     }
 
-    // Only close the existing connection if it's not in CONNECTING state
     if (wsRef.current) {
       if (wsRef.current.readyState === WebSocket.OPEN) {
         console.log('WebSocket connection already active, skipping connection attempt');
@@ -68,7 +62,6 @@ export const WebSocketProvider = ({
         }
         wsRef.current = null;
       } else {
-        // If it's connecting, wait for it
         console.log('WebSocket is currently connecting, waiting...');
         return;
       }
@@ -81,11 +74,6 @@ export const WebSocketProvider = ({
       const socket = new WebSocket(url);
 
       socket.onopen = () => {
-        if (!isMountedRef.current) {
-          socket.close();
-          return;
-        }
-
         console.log('WebSocket connection established');
         setIsReady(true);
         reconnectAttemptsRef.current = 0;
@@ -93,10 +81,6 @@ export const WebSocketProvider = ({
       };
 
       socket.onclose = (event) => {
-        if (!isMountedRef.current) {
-          return;
-        }
-
         console.log(`WebSocket connection closed: ${event.code} ${event.reason}`);
         setIsReady(false);
         isConnectingRef.current = false;
@@ -107,60 +91,39 @@ export const WebSocketProvider = ({
       };
 
       socket.onmessage = (event) => {
-        if (!isMountedRef.current) {
-          return;
-        }
-
         setMessage(event.data);
       };
 
       socket.onerror = (error) => {
-        if (!isMountedRef.current) {
-          return;
-        }
-
         console.log('WebSocket error:', error);
         isConnectingRef.current = false;
-
-        // Don't try to reconnect here - wait for onclose which will be called after an error
       };
 
       wsRef.current = socket;
     } catch (error) {
       console.error('Error creating WebSocket:', error);
       isConnectingRef.current = false;
-
-      if (isMountedRef.current) {
-        handleReconnect();
-      }
+      handleReconnect();
     }
   };
 
   const handleReconnect = () => {
-    if (!isMountedRef.current) {
-      return;
-    }
-
     if (reconnectAttemptsRef.current < maxReconnectAttempts) {
       console.log(
         `Attempting to reconnect (${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})...`
       );
       reconnectAttemptsRef.current += 1;
 
-      // Use exponential backoff for reconnection
       const backoffTime = reconnectInterval * Math.pow(1.5, reconnectAttemptsRef.current - 1);
 
       reconnectTimeoutRef.current = setTimeout(() => {
-        if (isMountedRef.current) {
-          connectWebSocket();
-        }
+        connectWebSocket();
       }, backoffTime);
     } else {
       console.error(`Failed to reconnect after ${maxReconnectAttempts} attempts`);
     }
   };
 
-  // Reset connection attempt on URL change
   useEffect(() => {
     reconnectAttemptsRef.current = 0;
     isConnectingRef.current = false;
@@ -173,25 +136,18 @@ export const WebSocketProvider = ({
     connectWebSocket();
   }, [url]);
 
-  // Main setup and cleanup effect
   useEffect(() => {
-    isMountedRef.current = true;
-
     if (!wsRef.current) {
       connectWebSocket();
     }
 
     return () => {
-      isMountedRef.current = false;
-      isConnectingRef.current = false;
-
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
 
       if (wsRef.current) {
-        // Remove event handlers to prevent callbacks after unmount
         wsRef.current.onopen = null;
         wsRef.current.onclose = null;
         wsRef.current.onmessage = null;

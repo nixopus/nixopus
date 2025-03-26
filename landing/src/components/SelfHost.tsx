@@ -19,7 +19,7 @@ function SelfHost() {
         <ul className='space-y-6 text-lg'>
           <li className='flex items-start'>
             <Package className='w-6 h-6 text-yellow-400 mr-4 mt-1 flex-shrink-0' />
-            <span>We'll build it for you whenever you push to GitHub.</span>
+            <span>We&apos;ll build it for you whenever you push to GitHub.</span>
           </li>
           <li className='flex items-start'>
             <GitBranch className='w-6 h-6 text-yellow-400 mr-4 mt-1 flex-shrink-0' />

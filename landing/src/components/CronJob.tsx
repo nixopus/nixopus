@@ -14,7 +14,7 @@ function CronJob() {
                     </span>
                 </h1>
                 <h2 className='text-xl md:text-xl font-semibold text-white mb-6 leading-tight'>
-                    We know that you&apos;re busy. It's super fast to run cron jobs.
+                    We know that you&apos;re busy. It&apos;s super fast to run cron jobs.
                 </h2>
                 <ul className='space-y-6 text-lg'>
                     <li className='flex items-start'>

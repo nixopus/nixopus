@@ -29,7 +29,7 @@ export function FeaturesSectionDemo() {
           Showcasing the coolness of Nixopus
         </h4>
         <p className="text-sm lg:text-base max-w-2xl my-4 mx-auto text-neutral-500 text-center font-normal dark:text-neutral-300">
-          We are proud of what we have built, and we're always looking for ways to make the experience even better.
+          We are proud of what we have built, and we&apos;re always looking for ways to make the experience even better.
         </p>
       </div>
       <div className="relative">
