@@ -1,5 +1,5 @@
 #!/bin/sh
 
- cd api && go build -v ./... &&  go test -v ./... && go fmt ./...
+cd api && go build -v ./... &&  go test -v ./... && go fmt ./...
 
- cd view && yarn format
+cd ../view && yarn format && yarn lint && yarn run build
