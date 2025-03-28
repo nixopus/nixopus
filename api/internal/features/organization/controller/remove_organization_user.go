@@ -23,7 +23,7 @@ import (
 func (c *OrganizationsController) RemoveUserFromOrganization(w http.ResponseWriter, r *http.Request) {
 	var user types.RemoveUserFromOrganizationRequest
 
-	loggedInUser := c.GetUser(w, r)
+	loggedInUser := utils.GetUser(w, r)
 	if loggedInUser == nil {
 		return
 	}

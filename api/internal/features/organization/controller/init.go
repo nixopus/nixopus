@@ -71,34 +71,6 @@ func (c *OrganizationsController) parseAndValidate(w http.ResponseWriter, r *htt
 	return true
 }
 
-// GetUser retrieves the current user from the request context.
-//
-// This method extracts the user from the request context using the UserContextKey.
-// If the user cannot be retrieved or is of the wrong type, an error is logged,
-// an error response is sent to the client, and the method returns nil.
-//
-// Parameters:
-//
-//	w - the HTTP response writer used to send error responses.
-//	r - the HTTP request containing the context from which to retrieve the user.
-//
-// Returns:
-//
-//	*shared_types.User - a pointer to the User object retrieved from the context,
-//	or nil if the user could not be retrieved.
-func (c *OrganizationsController) GetUser(w http.ResponseWriter, r *http.Request) *shared_types.User {
-	userAny := r.Context().Value(shared_types.UserContextKey)
-	user, ok := userAny.(*shared_types.User)
-
-	if !ok {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToGetUserFromContext.Error(), shared_types.ErrFailedToGetUserFromContext.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
-		return nil
-	}
-
-	return user
-}
-
 // Notify sends a notification to the user for the given payload type.
 //
 // This method constructs a new NotificationPayload object with the given user and request data,

@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/gorilla/mux"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
@@ -19,7 +20,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/middleware"
 	"github.com/raghavyuva/nixopus-api/internal/realtime"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type Router struct {
@@ -35,68 +35,63 @@ func NewRouter(app *storage.App) *Router {
 func (router *Router) Routes() *mux.Router {
 	r := mux.NewRouter()
 	l := logger.NewLogger()
-	r.Use(middleware.CorsMiddleware)
-	r.Use(middleware.LoggingMiddleware)
-	r.Use(middleware.RateLimiter)
+	s := fuego.NewServer(
+		fuego.WithAddr("localhost:8080"),
+		fuego.WithGlobalMiddlewares(
+			middleware.CorsMiddleware,
+			middleware.LoggingMiddleware,
+			middleware.RateLimiter),
+	)
 
-	router.BasicRoutes(r)
-
-	router.SwaggerRoutes(r)
+	healthGroup := fuego.Group(s, "/api/v1/health")
+	router.BasicRoutes(healthGroup)
 
 	notificationManager := notification.NewNotificationManager(notification.NewNotificationChannels(), router.app.Store.DB)
 	notificationManager.Start()
 
+	authController := auth.NewAuthController(router.app.Store, router.app.Ctx, l, notificationManager)
+	authGroup := fuego.Group(s, "/api/v1/auth")
+	router.AuthRoutes(authController, authGroup)
+	router.AuthenticatedAuthRoutes(authGroup, authController)
+
+	userController := user.NewUserController(router.app.Store, router.app.Ctx, l)
+	userGroup := fuego.Group(s, "/api/v1/user")
+	router.UserRoutes(userGroup, userController)
+
+	domainController := domain.NewDomainsController(router.app.Store, router.app.Ctx, l, notificationManager)
+	domainGroup := fuego.Group(s, "/api/v1/domain")
+	domainsAllGroup := fuego.Group(s, "/api/v1/domains")
+	router.DomainRoutes(domainGroup, domainsAllGroup, domainController)
+
+	githubConnectorController := githubConnector.NewGithubConnectorController(router.app.Store, router.app.Ctx, l, notificationManager)
+	githubConnectorGroup := fuego.Group(s, "/api/v1/github-connector")
+	router.GithubConnectorRoutes(githubConnectorGroup, githubConnectorController)
+
+	notifController := notificationController.NewNotificationController(router.app.Store, router.app.Ctx, l, notificationManager)
+	notificationGroup := fuego.Group(s, "/api/v1/notification")
+	router.NotificationRoutes(notificationGroup, notifController)
+
+	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager)
+	organizationGroup := fuego.Group(s, "/api/v1/organization")
+	router.OrganizationRoutes(organizationGroup, organizationController)
+
+	fileManagerController := file_manager.NewFileManagerController(router.app.Ctx, l, notificationManager)
+	fileManagerGroup := fuego.Group(s, "/api/v1/file-manager")
+	fuego.Use(fileManagerGroup, middleware.IsAdmin)
+	router.FileManagerRoutes(fileManagerGroup, fileManagerController)
+
 	deployController := deploy.NewDeployController(router.app.Store, router.app.Ctx, l, notificationManager)
+	deployGroup := fuego.Group(s, "/api/v1/deploy")
+	router.DeployRoutes(deployGroup, deployController)
 
 	router.WebSocketServer(r, deployController)
 
-	authController := auth.NewAuthController(router.app.Store, router.app.Ctx, l, notificationManager)
-	router.AuthRoutes(r, authController)
-
-	api := r.PathPrefix("/api/v1").Subrouter()
-	api.Use(func(next http.Handler) http.Handler {
-		return middleware.AuthMiddleware(next, router.app)
-	})
-
-	router.AuthenticatedAuthRoutes(api, authController)
-	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager)
-	router.OrganizationRoutes(api, organizationController)
-
-	userController := user.NewUserController(router.app.Store, router.app.Ctx, l)
-	router.UserRoutes(api, userController)
-
-	notifController := notificationController.NewNotificationController(router.app.Store, router.app.Ctx, l, notificationManager)
-	router.NotificationRoutes(api, notifController)
-
-	domainController := domain.NewDomainsController(router.app.Store, router.app.Ctx, l, notificationManager)
-	router.DomainRoutes(api, domainController)
-
-	githubConnectorController := githubConnector.NewGithubConnectorController(router.app.Store, router.app.Ctx, l, notificationManager)
-	router.GithubConnectorRoutes(api, githubConnectorController)
-
-	file_managerController := file_manager.NewFileManagerController(router.app.Ctx, l, notificationManager)
-	router.FileManagerRoutes(api, file_managerController)
-
-	router.DeployRoutes(api, deployController)
+	s.Run()
 	return r
 }
 
-func (router *Router) BasicRoutes(r *mux.Router) {
-	r.HandleFunc("/health", health.HealthCheck).Methods("GET", "OPTIONS")
-}
-
-func (router *Router) SwaggerRoutes(r *mux.Router) {
-	r.PathPrefix("/docs/").Handler(httpSwagger.Handler(
-		httpSwagger.URL("/swagger/doc.json"),
-		httpSwagger.DeepLinking(true),
-		httpSwagger.DocExpansion("none"),
-		httpSwagger.DomID("swagger-ui"),
-	))
-
-	r.HandleFunc("/swagger/doc.json", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		http.ServeFile(w, r, "./docs/swagger.json")
-	})
+func (s *Router) BasicRoutes(fs *fuego.Server) {
+	fuego.Get(fs, "", health.HealthCheck)
 }
 
 func (router *Router) WebSocketServer(r *mux.Router, deployController *deploy.DeployController) {
@@ -111,98 +106,78 @@ func (router *Router) WebSocketServer(r *mux.Router, deployController *deploy.De
 }
 
 // these routes are public routes
-func (router *Router) AuthRoutes(r *mux.Router, authController *auth.AuthController) {
-	authApi := r.PathPrefix("/api/v1/auth").Subrouter()
-
+func (router *Router) AuthRoutes(authController *auth.AuthController, s *fuego.Server) {
 	//register route is disabled for now (we do not have register seperately either the one who installs it, or the one who is added by admin)
 	// authApi.HandleFunc("/register", authController.Register).Methods("POST", "OPTIONS")
-	authApi.HandleFunc("/login", authController.Login).Methods("POST", "OPTIONS")
+	fuego.Post(s, "/login", authController.Login)
 }
 
-func (router *Router) AuthenticatedAuthRoutes(api *mux.Router, authController *auth.AuthController) {
-	authApi := api.PathPrefix("/auth").Subrouter()
-	authApi.HandleFunc("/request-password-reset", authController.GeneratePasswordResetLink).Methods("POST", "OPTIONS")
-	authApi.HandleFunc("/reset-password", authController.ResetPassword).Methods("POST", "OPTIONS")
-	authApi.HandleFunc("/logout", authController.Logout).Methods("POST", "OPTIONS")
-	authApi.HandleFunc("/send-verification-email", authController.SendVerificationEmail).Methods("POST", "OPTIONS")
-	authApi.HandleFunc("/verify-email", authController.VerifyEmail).Methods("POST", "OPTIONS")
-	authApi.HandleFunc("/create-user", authController.CreateUser).Methods("POST", "OPTIONS")
-	authApi.HandleFunc("/refresh-token", authController.RefreshToken).Methods("POST", "OPTIONS")
+func (router *Router) AuthenticatedAuthRoutes(s *fuego.Server, authController *auth.AuthController) {
+	fuego.Post(s, "/request-password-reset", authController.GeneratePasswordResetLink)
+	fuego.Post(s, "/reset-password", authController.ResetPassword)
+	fuego.Post(s, "/logout", authController.Logout)
+	fuego.Post(s, "/send-verification-email", authController.SendVerificationEmail)
+	fuego.Post(s, "/verify-email", authController.VerifyEmail)
+	fuego.Post(s, "/create-user", authController.CreateUser)
+	fuego.Post(s, "/refresh-token", authController.RefreshToken)
 }
 
-func (router *Router) UserRoutes(api *mux.Router, userController *user.UserController) {
-	userApi := api.PathPrefix("/user").Subrouter()
-	userApi.HandleFunc("", userController.GetUserDetails).Methods("GET", "OPTIONS")
-	userApi.HandleFunc("/name", userController.UpdateUserName).Methods("PATCH", "OPTIONS")
-	userApi.HandleFunc("/organizations", userController.GetUserOrganizations).Methods("GET", "OPTIONS")
+func (router *Router) UserRoutes(s *fuego.Server, userController *user.UserController) {
+	fuego.Get(s, "", userController.GetUserDetails)
+	fuego.Patch(s, "/name", userController.UpdateUserName)
+	fuego.Get(s, "/organizations", userController.GetUserOrganizations)
 }
 
-func (router *Router) NotificationRoutes(api *mux.Router, notificationController *notificationController.NotificationController) {
-	notificationApi := api.PathPrefix("/notification").Subrouter()
-	notificationSmtpApi := notificationApi.PathPrefix("/smtp").Subrouter()
-	notificationSmtpApi.HandleFunc("", notificationController.AddSmtp).Methods("POST", "OPTIONS")
-	notificationSmtpApi.HandleFunc("", notificationController.GetSmtp).Methods("GET", "OPTIONS")
-	notificationSmtpApi.HandleFunc("", notificationController.UpdateSmtp).Methods("PUT", "OPTIONS")
-	notificationSmtpApi.HandleFunc("", notificationController.DeleteSmtp).Methods("DELETE", "OPTIONS")
+func (router *Router) NotificationRoutes(s *fuego.Server, notificationController *notificationController.NotificationController) {
+	smtpGroup := fuego.Group(s, "/smtp")
+	fuego.Post(smtpGroup, "", notificationController.AddSmtp)
+	fuego.Get(smtpGroup, "", notificationController.GetSmtp)
+	fuego.Put(smtpGroup, "", notificationController.UpdateSmtp)
+	fuego.Delete(smtpGroup, "", notificationController.DeleteSmtp)
 
-	notificationPreferencesApi := notificationApi.PathPrefix("/preferences").Subrouter()
-	notificationPreferencesApi.HandleFunc("", notificationController.UpdatePreference).Methods("POST", "OPTIONS")
-	notificationPreferencesApi.HandleFunc("", notificationController.GetPreferences).Methods("GET", "OPTIONS")
+	preferenceGroup := fuego.Group(s, "/preferences")
+	fuego.Post(preferenceGroup, "", notificationController.UpdatePreference)
+	fuego.Get(preferenceGroup, "", notificationController.GetPreferences)
 }
 
-func (router *Router) DomainRoutes(api *mux.Router, domainController *domain.DomainsController) {
-	domainApi := api.PathPrefix("/domain").Subrouter()
-	domainApi.HandleFunc("", domainController.CreateDomain).Methods("POST", "OPTIONS")
-	domainApi.HandleFunc("", domainController.UpdateDomain).Methods("PUT", "OPTIONS")
-	domainApi.HandleFunc("", domainController.DeleteDomain).Methods("DELETE", "OPTIONS")
-	domainApi.HandleFunc("/generate", domainController.GenerateRandomSubDomain).Methods("GET", "OPTIONS")
-
-	api.HandleFunc("/domains", domainController.GetDomains).Methods("GET", "OPTIONS")
+func (router *Router) DomainRoutes(s *fuego.Server, domainsGroup *fuego.Server, domainController *domain.DomainsController) {
+	fuego.Post(s, "", domainController.CreateDomain)
+	fuego.Put(s, "", domainController.UpdateDomain)
+	fuego.Delete(s, "", domainController.DeleteDomain)
+	fuego.Get(s, "/generate", domainController.GenerateRandomSubDomain)
+	fuego.Get(domainsGroup, "/domains", domainController.GetDomains)
 }
 
-func (router *Router) GithubConnectorRoutes(api *mux.Router, githubConnectorController *githubConnector.GithubConnectorController) {
-	githubConnectorApi := api.PathPrefix("/github-connector").Subrouter()
-	githubConnectorApi.HandleFunc("", githubConnectorController.CreateGithubConnector).Methods("POST", "OPTIONS")
-	githubConnectorApi.HandleFunc("", githubConnectorController.UpdateGithubConnectorRequest).Methods("PUT", "OPTIONS")
-	githubConnectorApi.HandleFunc("/all", githubConnectorController.GetGithubConnectors).Methods("GET", "OPTIONS")
-	githubConnectorApi.HandleFunc("/repositories", githubConnectorController.GetGithubRepositories).Methods("GET", "OPTIONS")
+func (router *Router) GithubConnectorRoutes(s *fuego.Server, githubConnectorController *githubConnector.GithubConnectorController) {
+	fuego.Post(s, "", githubConnectorController.CreateGithubConnector)
+	fuego.Put(s, "", githubConnectorController.UpdateGithubConnectorRequest)
+	fuego.Get(s, "/all", githubConnectorController.GetGithubConnectors)
+	fuego.Get(s, "/repositories", githubConnectorController.GetGithubRepositories)
 }
 
-func (router *Router) DeployRoutes(api *mux.Router, deployController *deploy.DeployController) {
-	deployApi := api.PathPrefix("/deploy").Subrouter()
-	router.DeployValidatorRoutes(deployApi, deployController)
-	deployApi.HandleFunc("/applications", deployController.GetApplications).Methods("GET", "OPTIONS")
-	router.DeployApplicationRoutes(deployApi, deployController)
+func (router *Router) DeployRoutes(f *fuego.Server, deployController *deploy.DeployController) {
+	fuego.Get(f, "/applications", deployController.GetApplications)
+
+	deploy_application_group := fuego.Group(f, "/application")
+	router.DeployApplicationRoutes(deploy_application_group, deployController)
 }
 
-func (router *Router) DeployValidatorRoutes(deployApi *mux.Router, deployController *deploy.DeployController) {
-	deployApiValidator := deployApi.PathPrefix("/validate").Subrouter()
-	deployApiValidator.HandleFunc("/name", deployController.IsNameAlreadyTaken).Methods("POST", "OPTIONS")
-	deployApiValidator.HandleFunc("/domain", deployController.IsDomainAlreadyTaken).Methods("POST", "OPTIONS")
-	deployApiValidator.HandleFunc("/port", deployController.IsPortAlreadyTaken).Methods("POST", "OPTIONS")
+func (router *Router) DeployApplicationRoutes(f *fuego.Server, deployController *deploy.DeployController) {
+	fuego.Post(f, "", deployController.HandleDeploy)
+	fuego.Get(f, "", deployController.GetApplicationById)
+	fuego.Delete(f, "", deployController.DeleteApplication)
+	fuego.Put(f, "", deployController.UpdateApplication)
+	fuego.Post(f, "/redeploy", deployController.ReDeployApplication)
+	fuego.Get(f, "/deployments/{deployment_id}", deployController.GetDeploymentById)
+	fuego.Post(f, "/rollback", deployController.HandleRollback)
+	fuego.Post(f, "/restart", deployController.HandleRestart)
 }
 
-func (router *Router) DeployApplicationRoutes(deployApi *mux.Router, deployController *deploy.DeployController) {
-	deployApplicationApi := deployApi.PathPrefix("/application").Subrouter()
-	deployApplicationApi.HandleFunc("", deployController.HandleDeploy).Methods("POST", "OPTIONS")
-	deployApplicationApi.HandleFunc("", deployController.GetApplicationById).Methods("GET", "OPTIONS")
-	deployApplicationApi.HandleFunc("", deployController.DeleteApplication).Methods("DELETE", "OPTIONS")
-	deployApplicationApi.HandleFunc("", deployController.UpdateApplication).Methods("PUT", "OPTIONS")
-	deployApplicationApi.HandleFunc("/redeploy", deployController.ReDeployApplication).Methods("POST", "OPTIONS")
-	deployApplicationApi.HandleFunc("/deployments/{deployment_id}", deployController.GetDeploymentById).Methods("GET", "OPTIONS")
-	deployApplicationApi.HandleFunc("/rollback", deployController.HandleRollback).Methods("POST", "OPTIONS")
-	deployApplicationApi.HandleFunc("/restart", deployController.HandleRestart).Methods("POST", "OPTIONS")
+func (router *Router) FileManagerRoutes(f *fuego.Server, fileManagerController *file_manager.FileManagerController) {
+	fuego.Get(f, "", fileManagerController.ListFiles)
+	fuego.Post(f, "/create-directory", fileManagerController.CreateDirectory)
 }
 
-func (router *Router) FileManagerRoutes(api *mux.Router, fileManagerController *file_manager.FileManagerController) {
-	file_manager_api := api.PathPrefix("/file-manager").Subrouter()
-	// we will expose these routes only for admin
-	file_manager_api.Use(middleware.IsAdmin)
-	file_manager_api.HandleFunc("", fileManagerController.ListFiles).Methods("GET", "OPTIONS")
-	file_manager_api.HandleFunc("/create-directory", fileManagerController.CreateDirectory).Methods("POST", "OPTIONS")
-}
-
-func (router *Router) OrganizationRoutes(api *mux.Router, organizationController *organization.OrganizationsController) {
-	orgApi := api.PathPrefix("/organizations").Subrouter()
-	orgApi.HandleFunc("/users", organizationController.GetOrganizationUsers).Methods("GET", "OPTIONS")
+func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController *organization.OrganizationsController) {
+	fuego.Get(f, "/users", organizationController.GetOrganizationUsers)
 }

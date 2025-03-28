@@ -1,43 +1,57 @@
 package controller
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/utils"
 	"net/http"
+
+	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// UpdateGithubConnectorRequest godoc
-// @Summary Update a GitHub connector request
-// @Description Updates a GitHub connector request for the authenticated user
-// @Tags github-connector
-// @Accept json
-// @Produce json
-// @Param connector body types.UpdateGithubConnectorRequest true "GitHub Connector request update"
-// @Success 200 {object} types.Response "Success response"
-// @Failure 400 {object} types.Response "Bad request"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /github-connector-request [put]
-func (c *GithubConnectorController) UpdateGithubConnectorRequest(w http.ResponseWriter, r *http.Request) {
-	var UpdateConnectorRequest types.UpdateGithubConnectorRequest
+func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.ContextWithBody[types.UpdateGithubConnectorRequest]) (*shared_types.Response, error) {
+
+	UpdateConnectorRequest, err := f.Body()
+
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	w, r := f.Response(), f.Request()
 
 	if !c.parseAndValidate(w, r, &UpdateConnectorRequest) {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	user := c.GetUser(w, r)
+	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
-	err := c.service.UpdateGithubConnectorRequest(UpdateConnectorRequest.InstallationID, user.ID.String())
+	err = c.service.UpdateGithubConnectorRequest(UpdateConnectorRequest.InstallationID, user.ID.String())
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "Github connector request updated", nil)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Github Connector Request Updated",
+	}, nil
 }

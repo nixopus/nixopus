@@ -1,33 +1,39 @@
 package controller
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/utils"
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// GetGithubConnectors godoc
-// @Summary Retrieve all GitHub connectors for the authenticated user
-// @Description Retrieves a list of all GitHub connectors associated with the authenticated user
-// @Tags github-connector
-// @Produce json
-// @Success 200 {array} types.GithubConnector "Success response with connectors"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /github-connectors [get]
-func (c *GithubConnectorController) GetGithubConnectors(w http.ResponseWriter, r *http.Request) {
-	user := c.GetUser(w, r)
+func (c *GithubConnectorController) GetGithubConnectors(f fuego.ContextNoBody) (*shared_types.Response, error) {
+	w, r := f.Response(), f.Request()
+
+	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
 	connectors, err := c.service.GetAllConnectors(user.ID.String())
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "Github connectors", connectors)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Connectors fetched successfully",
+		Data:    connectors,
+	}, nil
 }

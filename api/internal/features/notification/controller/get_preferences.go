@@ -3,33 +3,37 @@ package controller
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// @Summary Get notification preferences
-// @Description Retrieves the notification preferences for the current user
-// @Tags notification
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {object} types.Response{data=notification.GetPreferencesResponse} "Success response with preferences"
-// @Failure 400 {object} types.Response "Bad request"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /notification/preferences [get]
-func (c *NotificationController) GetPreferences(w http.ResponseWriter, r *http.Request) {
-	user := c.GetUser(w, r)
+func (c *NotificationController) GetPreferences(f fuego.ContextWithBody[GetWithID]) (*shared_types.Response, error) {
+	w, r := f.Response(), f.Request()
+	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
 	preferences, err := c.service.GetPreferences(user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "Notification preferences", preferences)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Preferences fetched successfully",
+		Data:    preferences,
+	}, nil
 }

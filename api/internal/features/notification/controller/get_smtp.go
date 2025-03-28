@@ -1,35 +1,47 @@
 package controller
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
 	"net/http"
+
+	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// @Summary Get SMTP configuration
-// @Description Get SMTP configuration
-// @Tags notification
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {object} types.Response "SMTP configuration"
-// @Failure 400 {object} types.Response "Bad request"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /notification/smtp [get]
-func (c *NotificationController) GetSmtp(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
-	user := c.GetUser(w, r)
+type GetWithID struct {
+	ID string `query:"id"`
+}
 
-	if user == nil {
-		return
-	}
-
-	SMTPConfigs, err := c.service.GetSmtp(user.ID.String(), id)
+func (c *NotificationController) GetSmtp(f fuego.ContextWithBody[GetWithID]) (*shared_types.Response, error) {
+	params, err := f.Body()
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "SMTP configuration", SMTPConfigs)
+	w, r := f.Response(), f.Request()
+	user := utils.GetUser(w, r)
+	if user == nil {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
+	}
+
+	SMTPConfigs, err := c.service.GetSmtp(user.ID.String(), params.ID)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "SMTP configs fetched successfully",
+		Data:    SMTPConfigs,
+	}, nil
 }

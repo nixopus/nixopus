@@ -3,36 +3,38 @@ package controller
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// GetUserOrganizations godoc
-// @Summary Get user organizations
-// @Description Retrieves the organizations for the current user.
-// @Tags user
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {array} types.Organization "Success response with organizations"
-// @Failure 401 {object} types.Response "Unauthorized"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /user/organizations [get]
-func (u *UserController) GetUserOrganizations(w http.ResponseWriter, r *http.Request) {
+func (u *UserController) GetUserOrganizations(s fuego.ContextNoBody) (*shared_types.Response, error) {
+	w, r := s.Response(), s.Request()
 	u.logger.Log(logger.Info, "getting user organizations", "")
 
-	user := u.GetUser(w, r)
+	user := utils.GetUser(w, r)
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
 	organizations, err := u.service.GetUserOrganizations(user.ID.String())
 
 	if err != nil {
 		u.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "User organizations retrieved successfully", organizations)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "User organizations fetched successfully",
+		Data:    organizations,
+	}, nil
 }

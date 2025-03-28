@@ -25,7 +25,7 @@ import (
 func (c *OrganizationsController) DeleteOrganization(w http.ResponseWriter, r *http.Request) {
 	var organization types.DeleteOrganizationRequest
 
-	loggedInUser := c.GetUser(w, r)
+	loggedInUser := utils.GetUser(w, r)
 	if loggedInUser == nil {
 		return
 	}

@@ -3,11 +3,21 @@ package controller
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *DeployController) GetApplications(w http.ResponseWriter, r *http.Request) {
+type GetApplicationsRequest struct {
+	Page       string `json:"page"`
+	PageSize   string `json:"page_size"`
+	Repository string `json:"repository"`
+}
+
+func (c *DeployController) GetApplications(f fuego.ContextWithBody[GetApplicationsRequest]) (*shared_types.Response, error) {
+	w, r := f.Response(), f.Request()
 	page := r.URL.Query().Get("page")
 	pageSize := r.URL.Query().Get("page_size")
 
@@ -19,24 +29,32 @@ func (c *DeployController) GetApplications(w http.ResponseWriter, r *http.Reques
 		pageSize = "10"
 	}
 
-	user := c.GetUser(w, r)
+	user := utils.GetUser(w, r)
 
 	if user == nil {
 		c.logger.Log(logger.Error, "user not found", "")
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
 	applications, totalCount, err := c.service.GetApplications(page, pageSize)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
-
-	utils.SendJSONResponse(w, "success", "Applications", map[string]interface{}{
-		"applications": applications,
-		"total_count":  totalCount,
-		"page":         page,
-		"page_size":    pageSize,
-	})
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Applications",
+		Data: map[string]interface{}{
+			"applications": applications,
+			"total_count":  totalCount,
+			"page":         page,
+			"page_size":    pageSize,
+		},
+	}, nil
 }

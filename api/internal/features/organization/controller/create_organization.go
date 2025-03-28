@@ -22,7 +22,7 @@ import (
 func (c *OrganizationsController) CreateOrganization(w http.ResponseWriter, r *http.Request) {
 	var organization types.CreateOrganizationRequest
 
-	loggedInUser := c.GetUser(w, r)
+	loggedInUser := utils.GetUser(w, r)
 	if loggedInUser == nil {
 		return
 	}

@@ -3,35 +3,38 @@ package auth
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// Login godoc
-// @Summary User login endpoint
-// @Description Authenticates a user and returns a JWT token
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param login body types.LoginRequest true "Login credentials"
-// @Success 200 {object} types.Response{data=types.AuthResponse} "Success response with token"
-// @Failure 400 {object} types.Response "Bad request"
-// @Failure 401 {object} types.Response "Unauthorized"
-// @Router /auth/login [post]
-func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
-	var loginRequest types.LoginRequest
-	if !c.parseAndValidate(w, r, &loginRequest) {
-		return
-	}
+func (ar *AuthController) Login(c fuego.ContextWithBody[types.LoginRequest]) (*shared_types.Response, error) {
+	loginRequest, err := c.Body()
 
-	response, err := c.service.Login(loginRequest.Email, loginRequest.Password)
+	ar.logger.Log(logger.Info, "logging in user", loginRequest.Email)
 	if err != nil {
-		utils.SendErrorResponse(w, err.Error(), http.StatusNotFound)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	c.Notify(notification.NotificationPayloadTypeLogin, &response.User, r)
+	response, err := ar.service.Login(loginRequest.Email, loginRequest.Password)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusUnauthorized,
+		}
+	}
 
-	utils.SendJSONResponse(w, "success", "User logged in successfully", response)
+	ar.Notify(notification.NotificationPayloadTypeLogin, &response.User, c.Request())
+
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "User logged in successfully",
+		Data:    response,
+	}, nil
 }

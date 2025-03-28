@@ -3,25 +3,38 @@ package controller
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *FileManagerController) CreateDirectory(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Query().Get("path")
+type CreateDirectoryRequest struct {
+	Path string `json:"path"`
+}
 
+func (c *FileManagerController) CreateDirectory(f fuego.ContextWithBody[CreateDirectoryRequest]) (*shared_types.Response, error) {
+	_, r := f.Response(), f.Request()
+
+	path := r.URL.Query().Get("path")
 	if path == "" {
 		c.logger.Log(logger.Error, "path is required", "")
-		utils.SendErrorResponse(w, "path is required", http.StatusBadRequest)
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
 	}
 
 	err := c.service.CreateDirectory(path)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "Directory created successfully", nil)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Directory created successfully",
+	}, nil
 }

@@ -3,40 +3,50 @@ package auth
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-// Logout godoc
-// @Summary Logout user endpoint
-// @Description Logs out a user by revoking the refresh token.
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param logout body types.LogoutRequest true "Logout request"
-// @Success 200 {object} types.Response "Success response"
-// @Failure 400 {object} types.Response "Bad request"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /auth/logout [post]
-func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
-	var logoutRequest types.LogoutRequest
-	if !c.parseAndValidate(w, r, &logoutRequest) {
-		return
+func (c *AuthController) Logout(s fuego.ContextWithBody[types.LogoutRequest]) (*shared_types.Response, error) {
+	logoutRequest, err := s.Body()
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	user := c.GetUser(w, r)
+	w, r := s.Response(), s.Request()
+	if !c.parseAndValidate(w, r, &logoutRequest) {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	user := utils.GetUser(w, r)
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
 	if err := c.service.Logout(logoutRequest.RefreshToken); err != nil {
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
 	c.Notify(notification.NotificationPayloadTypeLogout, user, r)
 
-	utils.SendJSONResponse(w, "success", "Logged out successfully", nil)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "User logged out successfully",
+		Data:    nil,
+	}, nil
 }

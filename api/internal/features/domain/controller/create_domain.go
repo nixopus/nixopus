@@ -3,42 +3,54 @@ package controller
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// @Summary Create a new domain
-// @Description Creates a new domain in the application.
-// @Tags domain
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param domain body types.CreateDomainRequest true "Domain creation request"
-// @Success 200 {object} types.CreateDomainResponse "Success response with domain"
-// @Failure 400 {object} types.Response "Bad request"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /domain [post]
-func (c *DomainsController) CreateDomain(w http.ResponseWriter, r *http.Request) {
-	var domainRequest types.CreateDomainRequest
+func (c *DomainsController) CreateDomain(f fuego.ContextWithBody[types.CreateDomainRequest]) (*shared_types.Response, error) {
+	domainRequest, err := f.Body()
 
-	if !c.parseAndValidate(w, r, &domainRequest) {
-		return
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	user := c.GetUser(w, r)
+	w, r := f.Response(), f.Request()
+	if !c.parseAndValidate(w, r, &domainRequest) {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
 	created, err := c.service.CreateDomain(domainRequest, user.ID.String())
 
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "Domain created successfully", created)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Domain created successfully",
+		Data:    created,
+	}, nil
 }

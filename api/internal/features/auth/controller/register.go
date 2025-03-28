@@ -3,20 +3,13 @@ package auth
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// Register godoc
-// @Summary Register a new user
-// @Description Registers a new user in the application.
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param register body types.RegisterRequest true "Register request"
-// @Success 200 {object} types.AuthResponse "Success response with token"
-// @Failure 400 {object} types.Response "Bad request"
-// @Router /auth/register [post]
 func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	var registration_request types.RegisterRequest
 	if !c.parseAndValidate(w, r, &registration_request) {
@@ -32,17 +25,34 @@ func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, "success", "User registered successfully", userResponse)
 }
 
-func (c *AuthController) CreateUser(w http.ResponseWriter, r *http.Request) {
-	var registration_request types.RegisterRequest
+func (c *AuthController) CreateUser(s fuego.ContextWithBody[types.RegisterRequest]) (*shared_types.Response, error) {
+	registration_request, err := s.Body()
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	w, r := s.Response(), s.Request()
 	if !c.parseAndValidate(w, r, &registration_request) {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
 	}
 
 	userResponse, err := c.service.Register(registration_request)
 	if err != nil {
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "User created successfully", userResponse)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "User created successfully",
+		Data:    userResponse,
+	}, nil
 }

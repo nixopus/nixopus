@@ -26,7 +26,7 @@ func (c *OrganizationsController) UpdateOrganization(w http.ResponseWriter, r *h
 
 	c.logger.Log(logger.Info, "updating organization", organization.ID)
 
-	loggedInUser := c.GetUser(w, r)
+	loggedInUser := utils.GetUser(w, r)
 	if loggedInUser == nil {
 		return
 	}

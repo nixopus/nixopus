@@ -1,18 +1,15 @@
 package controller
 
 import (
-	"net/http"
+	"github.com/go-fuego/fuego"
 
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// HealthCheck godoc
-// @Summary Check if the server is up
-// @Description Simple health check
-// @Tags health
-// @Produce json
-// @Success 200 {object} types.Response "Success response"
-// @Router /health [get]
-func HealthCheck(w http.ResponseWriter, r *http.Request) {
-	utils.SendJSONResponse(w, "success", "Server is healthy", nil)
+func HealthCheck(fuego.ContextNoBody) (types.Response, error) {
+	return types.Response{
+		Status:  "success",
+		Message: "Server is up and running",
+		Data:    nil,
+	}, nil
 }

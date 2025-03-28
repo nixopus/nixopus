@@ -3,41 +3,55 @@ package controller
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// @Summary Add SMTP configuration
-// @Description Add SMTP configuration
-// @Tags notification
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param SMTPConfigs body notification.CreateSMTPConfigRequest true "SMTP configuration"
-// @Success 200 {object} types.Response "SMTP added successfully"
-// @Failure 400 {object} types.Response "Bad request"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /notification/smtp [post]
-func (c *NotificationController) AddSmtp(w http.ResponseWriter, r *http.Request) {
-	var SMTPConfigs notification.CreateSMTPConfigRequest
+func (c *NotificationController) AddSmtp(f fuego.ContextWithBody[notification.CreateSMTPConfigRequest]) (*shared_types.Response, error) {
+
+	SMTPConfigs, err := f.Body()
+
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	w, r := f.Response(), f.Request()
 
 	if !c.parseAndValidate(w, r, &SMTPConfigs) {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	user := c.GetUser(w, r)
+	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
-	err := c.service.AddSmtp(SMTPConfigs, user.ID)
+	err = c.service.AddSmtp(SMTPConfigs, user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "SMTP added successfully", nil)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "SMTP Config added successfully",
+		Data:    nil,
+	}, nil
 }

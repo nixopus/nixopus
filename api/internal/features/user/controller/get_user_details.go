@@ -1,26 +1,27 @@
 package controller
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/utils"
 	"net/http"
+
+	"github.com/go-fuego/fuego"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-// GetUserDetails godoc
-// @Summary Get user details endpoint
-// @Description Retrieves the details of the current user.
-// @Tags user
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {object} types.Response{data=types.User} "Success response with user details"
-// @Failure 401 {object} types.Response "Unauthorized"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /user [get]
-func (u *UserController) GetUserDetails(w http.ResponseWriter, r *http.Request) {
-	user := u.GetUser(w, r)
+func (u *UserController) GetUserDetails(s fuego.ContextNoBody) (*shared_types.Response, error) {
+	w, r := s.Response(), s.Request()
+
+	user := utils.GetUser(w, r)
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "User details retrieved successfully", user)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "User details fetched successfully",
+		Data:    user,
+	}, nil
 }

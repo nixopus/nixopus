@@ -26,7 +26,7 @@ func (c *OrganizationsController) AddUserToOrganization(w http.ResponseWriter, r
 		return
 	}
 
-	loggedInUser := c.GetUser(w, r)
+	loggedInUser := utils.GetUser(w, r)
 	if loggedInUser == nil {
 		return
 	}

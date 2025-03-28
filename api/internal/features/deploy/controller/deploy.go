@@ -3,165 +3,287 @@ package controller
 import (
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *DeployController) HandleDeploy(w http.ResponseWriter, r *http.Request) {
+func (c *DeployController) HandleDeploy(f fuego.ContextWithBody[types.CreateDeploymentRequest]) (*shared_types.Response, error) {
 	c.logger.Log(logger.Info, "deploying", "")
-	var data types.CreateDeploymentRequest
 
-	if !c.parseAndValidate(w, r, &data) {
-		return
+	data, err := f.Body()
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	user := c.GetUser(w, r)
+	w, r := f.Response(), f.Request()
+	if !c.parseAndValidate(w, r, &data) {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
+	}
 
+	user := utils.GetUser(w, r)
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
 	application, err := c.service.CreateDeployment(&data, user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to create deployment", err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
-	utils.SendJSONResponse(w, "success", "Deployment created successfully", application)
+
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Deployment created successfully",
+		Data:    application,
+	}, nil
 }
 
-func (c *DeployController) UpdateApplication(w http.ResponseWriter, r *http.Request) {
+func (c *DeployController) UpdateApplication(f fuego.ContextWithBody[types.UpdateDeploymentRequest]) (*shared_types.Response, error) {
 	c.logger.Log(logger.Info, "updating application", "")
-	var data types.UpdateDeploymentRequest
 
-	if !c.parseAndValidate(w, r, &data) {
-		return
+	data, err := f.Body()
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	user := c.GetUser(w, r)
+	w, r := f.Response(), f.Request()
+	if !c.parseAndValidate(w, r, &data) {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
+	}
 
+	user := utils.GetUser(w, r)
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
 	application, err := c.service.UpdateDeployment(&data, user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to update application", err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "Application updated successfully", application)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Application updated successfully",
+		Data:    application,
+	}, nil
 }
 
-func (c *DeployController) DeleteApplication(w http.ResponseWriter, r *http.Request) {
+func (c *DeployController) DeleteApplication(f fuego.ContextWithBody[types.DeleteDeploymentRequest]) (*shared_types.Response, error) {
 	c.logger.Log(logger.Info, "deleting application", "")
-	var data types.DeleteDeploymentRequest
 
+	data, err := f.Body()
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	w, r := f.Response(), f.Request()
 	if !c.parseAndValidate(w, r, &data) {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	user := c.GetUser(w, r)
-
+	user := utils.GetUser(w, r)
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
-	err := c.service.DeleteDeployment(&data, user.ID)
+	err = c.service.DeleteDeployment(&data, user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to delete application", err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "Application deleted successfully", nil)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Application deleted successfully",
+		Data:    nil,
+	}, nil
 }
 
-func (c *DeployController) ReDeployApplication(w http.ResponseWriter, r *http.Request) {
+func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReDeployApplicationRequest]) (*shared_types.Response, error) {
 	c.logger.Log(logger.Info, "redeploying application", "")
-	var data types.ReDeployApplicationRequest
 
-	if !c.parseAndValidate(w, r, &data) {
-		return
+	data, err := f.Body()
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	user := c.GetUser(w, r)
+	w, r := f.Response(), f.Request()
+	if !c.parseAndValidate(w, r, &data) {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
+	}
 
+	user := utils.GetUser(w, r)
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
 	application, err := c.service.ReDeployApplication(&data, user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to redeploy application", err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "Application redeployed successfully", application)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Application redeployed successfully",
+		Data:    application,
+	}, nil
 }
 
-func (c *DeployController) GetDeploymentById(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	deploymentID := vars["deployment_id"]
+func (c *DeployController) GetDeploymentById(f fuego.ContextNoBody) (*shared_types.Response, error) {
+	deploymentID := f.QueryParam("deployment_id")
 
 	deployment, err := c.service.GetDeploymentById(deploymentID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "Deployment Retrieved successfully", deployment)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Deployment Retrieved successfully",
+		Data:    deployment,
+	}, nil
 }
 
-func (c *DeployController) HandleRollback(w http.ResponseWriter, r *http.Request) {
+func (c *DeployController) HandleRollback(f fuego.ContextWithBody[types.RollbackDeploymentRequest]) (*shared_types.Response, error) {
 	c.logger.Log(logger.Info, "rolling back application", "")
-	var data types.RollbackDeploymentRequest
 
+	data, err := f.Body()
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	w, r := f.Response(), f.Request()
 	if !c.parseAndValidate(w, r, &data) {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	user := c.GetUser(w, r)
-
+	user := utils.GetUser(w, r)
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
-	err := c.service.RollbackDeployment(&data, user.ID)
+	err = c.service.RollbackDeployment(&data, user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to rollback application", err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "Application rolled back successfully", nil)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Application rolled back successfully",
+		Data:    nil,
+	}, nil
 }
 
-func (c *DeployController) HandleRestart(w http.ResponseWriter, r *http.Request) {
+func (c *DeployController) HandleRestart(f fuego.ContextWithBody[types.RestartDeploymentRequest]) (*shared_types.Response, error) {
 	c.logger.Log(logger.Info, "restarting application", "")
-	var data types.RestartDeploymentRequest
 
+	data, err := f.Body()
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	w, r := f.Response(), f.Request()
 	if !c.parseAndValidate(w, r, &data) {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	user := c.GetUser(w, r)
-
+	user := utils.GetUser(w, r)
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
-	err := c.service.RestartDeployment(&data, user.ID)
+	err = c.service.RestartDeployment(&data, user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to restart application", err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "Application restarted successfully", nil)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Application restarted successfully",
+		Data:    nil,
+	}, nil
 }

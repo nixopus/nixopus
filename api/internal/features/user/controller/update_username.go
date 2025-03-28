@@ -3,44 +3,55 @@ package controller
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// UpdateUserName godoc
-// @Summary Update user name endpoint
-// @Description Updates the user's name based on the provided information.
-// @Tags user
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param updateUserName body types.UpdateUserNameRequest true "Update user name request"
-// @Success 200 {object} types.Response "User name updated successfully"
-// @Failure 400 {object} types.Response "Failed to decode or validate request"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /user/name [patch]
-func (u *UserController) UpdateUserName(w http.ResponseWriter, r *http.Request) {
+func (u *UserController) UpdateUserName(s fuego.ContextWithBody[types.UpdateUserNameRequest]) (*shared_types.Response, error) {
 	u.logger.Log(logger.Info, "updating user name", "")
 
-	var req types.UpdateUserNameRequest
+	req, err := s.Body()
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	w, r := s.Response(), s.Request()
 
 	if !u.parseAndValidate(w, r, &req) {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	user := u.GetUser(w, r)
+	user := utils.GetUser(w, r)
 	if user == nil {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
-	err := u.service.UpdateUsername(user.ID.String(), &req)
+	err = u.service.UpdateUsername(user.ID.String(), &req)
 
 	if err != nil {
 		u.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "User name updated successfully", req.Name)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Username updated successfully",
+		Data:    req.Name,
+	}, nil
 }
