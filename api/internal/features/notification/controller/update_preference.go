@@ -12,7 +12,6 @@ import (
 )
 
 func (c *NotificationController) UpdatePreference(f fuego.ContextWithBody[notification.UpdatePreferenceRequest]) (*shared_types.Response, error) {
-
 	prefRequest, err := f.Body()
 
 	if err != nil {

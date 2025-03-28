@@ -50,7 +50,6 @@ func parseRequest(r *http.Request) (*RequestInfo, error) {
 	info := &RequestInfo{
 		Path:   r.URL.Path,
 		Method: r.Method,
-		SMTPID: r.URL.Query().Get("id"),
 	}
 
 	basePath := path.Base(r.URL.Path)
@@ -76,11 +75,6 @@ func parseRequest(r *http.Request) (*RequestInfo, error) {
 
 // extractIDFromBody attempts to extract ID from the request body
 func (v *Validator) extractIDFromBody(r *http.Request) string {
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" && contentType != "application/json; charset=utf-8" {
-		return ""
-	}
-
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		return ""
@@ -178,12 +172,12 @@ func (v *Validator) validateUpdateSMTPAccess(req *RequestInfo, user *shared_type
 	}
 	req.OrganizationID = smtp.OrganizationID
 
-	// User must be the creator of the SMTP configuration
-	if smtp.UserID != user.ID {
-		return notification.ErrPermissionDenied
+	// If user is the creator, they can update
+	if smtp.UserID == user.ID {
+		return nil
 	}
 
-	// If not creator, check if user is in the same organization
+	// Check if user is in the same organization
 	err = utils.CheckIfUserBelongsToOrganization(user.Organizations, smtp.OrganizationID)
 	if err != nil {
 		return err
@@ -200,7 +194,7 @@ func (v *Validator) validateUpdateSMTPAccess(req *RequestInfo, user *shared_type
 		return nil
 	}
 
-	return nil
+	return notification.ErrPermissionDenied
 }
 
 // validateDeleteSMTPAccess checks if user can delete an SMTP config

@@ -6,7 +6,6 @@ import (
 
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/validation"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
@@ -72,15 +71,8 @@ func NewAuthController(
 //
 //	bool - true if parsing and validation succeed, false otherwise.
 func (c *AuthController) parseAndValidate(w http.ResponseWriter, r *http.Request, req any) bool {
-	if err := c.validator.ParseRequestBody(r, r.Body, req); err != nil {
-		c.logger.Log(logger.Error, types.ErrFailedToDecodeRequest.Error(), err.Error())
-		utils.SendErrorResponse(w, types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
-		return false
-	}
-
 	if err := c.validator.ValidateRequest(req); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return false
 	}
 
@@ -92,7 +84,6 @@ func (c *AuthController) parseAndValidate(w http.ResponseWriter, r *http.Request
 
 	if err := c.validator.AccessValidator(w, r, user); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusForbidden)
 		return false
 	}
 

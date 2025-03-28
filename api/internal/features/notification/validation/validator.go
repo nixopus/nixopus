@@ -2,9 +2,10 @@ package validation
 
 import (
 	"encoding/json"
+	"io"
+
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification/storage"
-	"io"
 )
 
 type Validator struct {

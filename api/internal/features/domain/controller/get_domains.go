@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
@@ -14,7 +15,7 @@ import (
 )
 
 func (c *DomainsController) GetDomains(f fuego.ContextNoBody) (*shared_types.Response, error) {
-	organization_id := f.QueryParam("organization_id")
+	organization_id := f.QueryParam("id")
 
 	w, r := f.Response(), f.Request()
 
@@ -35,6 +36,8 @@ func (c *DomainsController) GetDomains(f fuego.ContextNoBody) (*shared_types.Res
 		}
 	}
 
+	c.logger.Log(logger.Info, "fetching domains", fmt.Sprintf("organization_id: %s", organization_id))
+
 	domains, err := c.service.GetDomains(organization_id, user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
@@ -54,7 +57,7 @@ func (c *DomainsController) GetDomains(f fuego.ContextNoBody) (*shared_types.Res
 func (c *DomainsController) GenerateRandomSubDomain(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	w, r := f.Response(), f.Request()
 
-	organization_id := f.QueryParam("organization_id")
+	organization_id := f.QueryParam("id")
 
 	domains, err := c.service.GetDomains(organization_id, utils.GetUser(w, r).ID)
 	if err != nil {

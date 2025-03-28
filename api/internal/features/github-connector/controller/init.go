@@ -58,12 +58,6 @@ func NewGithubConnectorController(
 //
 //	bool - true if parsing and validation succeed, false otherwise.
 func (c *GithubConnectorController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) bool {
-	if err := c.validator.ParseRequestBody(r.Body, req); err != nil {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
-		return false
-	}
-
 	user := utils.GetUser(w, r)
 
 	if user == nil {

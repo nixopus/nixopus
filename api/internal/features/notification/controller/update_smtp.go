@@ -20,13 +20,14 @@ func (c *NotificationController) UpdateSmtp(f fuego.ContextWithBody[notification
 		}
 	}
 
-	w, r := f.Response(), f.Request()
-	if !c.parseAndValidate(w, r, &SMTPConfigs) {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusBadRequest,
-		}
-	}
+	// TODO: add validation
+	// w, r := f.Response(), f.Request()
+	// if !c.parseAndValidate(w, r, &SMTPConfigs) {
+	// 	return nil, fuego.HTTPError{
+	// 		Err:    nil,
+	// 		Status: http.StatusBadRequest,
+	// 	}
+	// }
 
 	err = c.service.UpdateSmtp(SMTPConfigs)
 	if err != nil {

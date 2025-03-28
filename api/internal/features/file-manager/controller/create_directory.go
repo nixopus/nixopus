@@ -13,18 +13,16 @@ type CreateDirectoryRequest struct {
 }
 
 func (c *FileManagerController) CreateDirectory(f fuego.ContextWithBody[CreateDirectoryRequest]) (*shared_types.Response, error) {
-	_, r := f.Response(), f.Request()
+	request, err := f.Body()
 
-	path := r.URL.Query().Get("path")
-	if path == "" {
-		c.logger.Log(logger.Error, "path is required", "")
+	if err != nil {
 		return nil, fuego.HTTPError{
-			Err:    nil,
+			Err:    err,
 			Status: http.StatusBadRequest,
 		}
 	}
 
-	err := c.service.CreateDirectory(path)
+	err = c.service.CreateDirectory(request.Path)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

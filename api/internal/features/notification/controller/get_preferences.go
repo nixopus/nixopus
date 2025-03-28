@@ -10,7 +10,7 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *NotificationController) GetPreferences(f fuego.ContextWithBody[GetWithID]) (*shared_types.Response, error) {
+func (c *NotificationController) GetPreferences(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 

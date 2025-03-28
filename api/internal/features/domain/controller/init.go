@@ -11,8 +11,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type DomainsController struct {
@@ -61,12 +59,6 @@ func (c *DomainsController) parseAndValidate(w http.ResponseWriter, r *http.Requ
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return false
-	}
-
-	if err := c.validator.ParseRequestBody(r, r.Body, req); err != nil {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
 		return false
 	}
 

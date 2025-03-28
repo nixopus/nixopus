@@ -9,18 +9,8 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-type GetWithID struct {
-	ID string `query:"id"`
-}
-
-func (c *NotificationController) GetSmtp(f fuego.ContextWithBody[GetWithID]) (*shared_types.Response, error) {
-	params, err := f.Body()
-	if err != nil {
-		return nil, fuego.HTTPError{
-			Err:    err,
-			Status: http.StatusBadRequest,
-		}
-	}
+func (c *NotificationController) GetSmtp(f fuego.ContextNoBody) (*shared_types.Response, error) {
+	id := f.QueryParam("id")
 
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
@@ -31,7 +21,7 @@ func (c *NotificationController) GetSmtp(f fuego.ContextWithBody[GetWithID]) (*s
 		}
 	}
 
-	SMTPConfigs, err := c.service.GetSmtp(user.ID.String(), params.ID)
+	SMTPConfigs, err := c.service.GetSmtp(user.ID.String(), id)
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,

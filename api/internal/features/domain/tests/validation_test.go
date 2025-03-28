@@ -1,8 +1,6 @@
 package tests
 
 import (
-	"bytes"
-	"io"
 	"strings"
 	"testing"
 
@@ -82,43 +80,6 @@ func TestValidateName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := validator.ValidateName(tt.domainName)
 			assert.Equal(t, tt.wantErr, err)
-		})
-	}
-}
-
-func TestParseRequestBody(t *testing.T) {
-	mockStorage := NewMockDomainStorage()
-	validator := validation.NewValidator(mockStorage)
-
-	tests := []struct {
-		name     string
-		jsonBody string
-		wantErr  bool
-	}{
-		{
-			name:     "Valid JSON",
-			jsonBody: `{"name": "example.com"}`,
-			wantErr:  false,
-		},
-		{
-			name:     "Invalid JSON",
-			jsonBody: `{"name": "example.com"`,
-			wantErr:  true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			body := io.NopCloser(bytes.NewReader([]byte(tt.jsonBody)))
-			var decoded map[string]string
-			err := validator.ParseRequestBody(nil, body, &decoded)
-
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, "example.com", decoded["name"])
-			}
 		})
 	}
 }

@@ -171,6 +171,11 @@ func (u *UserStorage) GetRefreshToken(token string) (*types.RefreshToken, error)
 // returns nil. Otherwise, it returns an error indicating the failure to update the
 // database.
 func (u *UserStorage) RevokeRefreshToken(token string) error {
-	_, err := u.DB.NewUpdate().Model(&types.RefreshToken{RevokedAt: &time.Time{}}).Where("token = ?", token).Exec(u.Ctx)
+	now := time.Now()
+	_, err := u.DB.NewUpdate().
+		Model(&types.RefreshToken{}).
+		Set("revoked_at = ?", now).
+		Where("token = ?", token).
+		Exec(u.Ctx)
 	return err
 }

@@ -1,8 +1,6 @@
 package validation
 
 import (
-	"encoding/json"
-	"io"
 	"strings"
 
 	"github.com/google/uuid"
@@ -57,11 +55,6 @@ func (v *Validator) ValidateName(name string) error {
 	}
 
 	return nil
-}
-
-// ParseRequestBody decodes JSON request body
-func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decoded interface{}) error {
-	return json.NewDecoder(body).Decode(decoded)
 }
 
 // ValidateRequest validates different domain request types

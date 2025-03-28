@@ -47,7 +47,7 @@ func (s NotificationStorage) UpdateSmtp(config *notification.UpdateSMTPConfigReq
 	var smtp *shared_types.SMTPConfigs
 	_, err := s.DB.NewUpdate().Model(smtp).
 		Set("host = ?", config.Host).
-		Set("port = ?", strconv.Itoa(config.Port)).
+		Set("port = ?", strconv.Itoa(*config.Port)).
 		Set("username = ?", config.Username).
 		Set("password = ?", config.Password).
 		Set("from_name = ?", config.FromName).

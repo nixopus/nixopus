@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/go-fuego/fuego/option"
+	"github.com/go-fuego/fuego/param"
 	"github.com/gorilla/mux"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
@@ -35,58 +37,68 @@ func NewRouter(app *storage.App) *Router {
 func (router *Router) Routes() *mux.Router {
 	r := mux.NewRouter()
 	l := logger.NewLogger()
-	s := fuego.NewServer(
+	server := fuego.NewServer(
 		fuego.WithAddr("localhost:8080"),
 		fuego.WithGlobalMiddlewares(
 			middleware.CorsMiddleware,
 			middleware.LoggingMiddleware,
 			middleware.RateLimiter),
+		// fuego.WithoutLogger(),
 	)
 
-	healthGroup := fuego.Group(s, "/api/v1/health")
+	healthGroup := fuego.Group(server, "/api/v1/health")
 	router.BasicRoutes(healthGroup)
 
 	notificationManager := notification.NewNotificationManager(notification.NewNotificationChannels(), router.app.Store.DB)
 	notificationManager.Start()
 
 	authController := auth.NewAuthController(router.app.Store, router.app.Ctx, l, notificationManager)
-	authGroup := fuego.Group(s, "/api/v1/auth")
+	authGroup := fuego.Group(server, "/api/v1/auth")
 	router.AuthRoutes(authController, authGroup)
-	router.AuthenticatedAuthRoutes(authGroup, authController)
+
+	fuego.Use(server, func(next http.Handler) http.Handler {
+		return middleware.AuthMiddleware(next, router.app)
+	})
+
+	s := fuego.Group(server, "/api/v1", option.Header("Authorization", "Bearer token", param.Required()))
+
+	authProtectedGroup := fuego.Group(server, "/api/v1/auth")
+	router.AuthenticatedAuthRoutes(authProtectedGroup, authController)
 
 	userController := user.NewUserController(router.app.Store, router.app.Ctx, l)
-	userGroup := fuego.Group(s, "/api/v1/user")
+	userGroup := fuego.Group(s, "/user")
+
 	router.UserRoutes(userGroup, userController)
 
 	domainController := domain.NewDomainsController(router.app.Store, router.app.Ctx, l, notificationManager)
-	domainGroup := fuego.Group(s, "/api/v1/domain")
-	domainsAllGroup := fuego.Group(s, "/api/v1/domains")
+	domainGroup := fuego.Group(s, "/domain")
+	domainsAllGroup := fuego.Group(s, "/domains")
 	router.DomainRoutes(domainGroup, domainsAllGroup, domainController)
 
 	githubConnectorController := githubConnector.NewGithubConnectorController(router.app.Store, router.app.Ctx, l, notificationManager)
-	githubConnectorGroup := fuego.Group(s, "/api/v1/github-connector")
+	githubConnectorGroup := fuego.Group(s, "/github-connector")
 	router.GithubConnectorRoutes(githubConnectorGroup, githubConnectorController)
 
 	notifController := notificationController.NewNotificationController(router.app.Store, router.app.Ctx, l, notificationManager)
-	notificationGroup := fuego.Group(s, "/api/v1/notification")
+	notificationGroup := fuego.Group(s, "/notification")
 	router.NotificationRoutes(notificationGroup, notifController)
 
 	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager)
-	organizationGroup := fuego.Group(s, "/api/v1/organization")
+	organizationGroup := fuego.Group(s, "/organization")
 	router.OrganizationRoutes(organizationGroup, organizationController)
 
 	fileManagerController := file_manager.NewFileManagerController(router.app.Ctx, l, notificationManager)
-	fileManagerGroup := fuego.Group(s, "/api/v1/file-manager")
+	fileManagerGroup := fuego.Group(s, "/file-manager")
 	fuego.Use(fileManagerGroup, middleware.IsAdmin)
 	router.FileManagerRoutes(fileManagerGroup, fileManagerController)
 
 	deployController := deploy.NewDeployController(router.app.Store, router.app.Ctx, l, notificationManager)
-	deployGroup := fuego.Group(s, "/api/v1/deploy")
+	deployGroup := fuego.Group(s, "/deploy")
 	router.DeployRoutes(deployGroup, deployController)
 
 	router.WebSocketServer(r, deployController)
 
-	s.Run()
+	server.Run()
 	return r
 }
 
@@ -145,7 +157,7 @@ func (router *Router) DomainRoutes(s *fuego.Server, domainsGroup *fuego.Server, 
 	fuego.Put(s, "", domainController.UpdateDomain)
 	fuego.Delete(s, "", domainController.DeleteDomain)
 	fuego.Get(s, "/generate", domainController.GenerateRandomSubDomain)
-	fuego.Get(domainsGroup, "/domains", domainController.GetDomains)
+	fuego.Get(domainsGroup, "", domainController.GetDomains)
 }
 
 func (router *Router) GithubConnectorRoutes(s *fuego.Server, githubConnectorController *githubConnector.GithubConnectorController) {
@@ -157,7 +169,6 @@ func (router *Router) GithubConnectorRoutes(s *fuego.Server, githubConnectorCont
 
 func (router *Router) DeployRoutes(f *fuego.Server, deployController *deploy.DeployController) {
 	fuego.Get(f, "/applications", deployController.GetApplications)
-
 	deploy_application_group := fuego.Group(f, "/application")
 	router.DeployApplicationRoutes(deploy_application_group, deployController)
 }

@@ -95,7 +95,7 @@ func (c *AuthService) GeneratePasswordResetLink(user *shared_types.User) error {
 	// 	utils.SendErrorResponse(w, types.ErrFailedToSendEmail.Error(), http.StatusInternalServerError)
 	// 	return
 	// }
-
+	fmt.Println(user.ResetToken)
 	err = c.storage.UpdateUser(user)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToUpdateUser.Error(), err.Error())

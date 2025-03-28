@@ -9,7 +9,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/user/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/user/validation"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -50,11 +49,6 @@ func NewUserController(
 //
 //	bool - true if parsing and validation succeed, false otherwise.
 func (c *UserController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) bool {
-	if err := c.validator.ParseRequestBody(r, r.Body, req); err != nil {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
-		return false
-	}
 	user := utils.GetUser(w, r)
 
 	if user == nil {

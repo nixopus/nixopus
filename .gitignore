@@ -1,5 +1,5 @@
 api/.env
 api/tmp
-api/bin
+api/bin/
 .env
 data

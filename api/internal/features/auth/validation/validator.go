@@ -175,6 +175,11 @@ func (v *Validator) AccessValidator(w http.ResponseWriter, r *http.Request, user
 		return nil
 	}
 
+	if user == nil {
+		return types.ErrInvalidAccess
+	}
+
+	fmt.Printf("User ID: %s, Path: %s\n", user.ID, path)
 	// for creating a new user the user should have admin role
 	if path == "/api/v1/auth/create-user" {
 		if user.Type != shared_types.RoleAdmin {

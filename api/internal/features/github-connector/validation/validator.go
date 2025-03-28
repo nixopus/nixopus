@@ -1,9 +1,6 @@
 package validation
 
 import (
-	"encoding/json"
-	"io"
-
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
@@ -107,14 +104,4 @@ func (v *Validator) validateUpdateGithubConnectorRequest(req types.UpdateGithubC
 	}
 
 	return nil
-}
-
-// ParseRequestBody parses a request body into the provided interface.
-//
-// The method decodes the body of the request using the provided io.ReadCloser,
-// and stores the result in the provided interface.
-//
-// If the decoding fails, it returns an error.
-func (v *Validator) ParseRequestBody(body io.ReadCloser, decoded interface{}) error {
-	return json.NewDecoder(body).Decode(decoded)
 }
