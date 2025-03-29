@@ -63,26 +63,17 @@ func NewNotificationController(
 func (c *NotificationController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) bool {
 	if err := c.validator.ParseRequestBody(r, r.Body, req); err != nil {
 		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
 		return false
 	}
-
-	if err := c.validator.ValidateRequest(req); err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
-		return false
-	}
-
 	user := utils.GetUser(w, r)
 	if user == nil {
 		return false
 	}
 
-	// if err := c.validator.AccessValidator(w, r, user); err != nil {
-	// 	c.logger.Log(logger.Error, err.Error(), err.Error())
-	// 	utils.SendErrorResponse(w, err.Error(), http.StatusForbidden)
-	// 	return false
-	// }
+	if err := c.validator.ValidateRequest(req, user); err != nil {
+		c.logger.Log(logger.Error, err.Error(), err.Error())
+		return false
+	}
 
 	return true
 }

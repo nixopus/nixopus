@@ -60,17 +60,8 @@ function FileManager() {
 
   return (
     <div>
-      {/* <KeyboardShortcutsHandler
-        selectedFile={selectedFile}
-        setFileToCopy={setFileToCopy}
-        setFileToMove={setFileToMove}
-        handleFilePaste={handleFilePaste}
-        currentPath={currentPath}
-        refetch={refetch}
-        handleFileMove={handleFileMove}
-      /> */}
-      <div className="mx-auto max-w-7xl p-0 lg:p-6">
-        <div className="mb-6 flex items-center justify-between">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6 flex items-center justify-between px-0 lg:px-6">
           <FileManagerHeader />
           <div className="relative">
             <SearchBar
@@ -80,7 +71,7 @@ function FileManager() {
             />
           </div>
         </div>
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between px-0 lg:px-6">
           <FileBreadCrumbs
             breadcrumbs={currentPath.split('/').filter(Boolean)}
             fileClicked={fileClicked}
@@ -101,9 +92,13 @@ function FileManager() {
         </div>
 
         <ContextMenu>
-          <ContextMenuTrigger className="m-0 p-0">
+          <ContextMenuTrigger>
             <div
-              className={`m-0 flex p-0 ${layout === 'grid' ? 'flex-wrap gap-10 lg:gap-16' : 'flex-col gap-10'}`}
+              className={`grid w-full ${
+                layout === 'grid'
+                  ? 'grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-6 xl:grid-cols-8'
+                  : 'grid-cols-1 gap-2'
+              }`}
             >
               {visibleFiles.map((file, index) => (
                 <FileItem
@@ -121,7 +116,9 @@ function FileManager() {
                 />
               ))}
               {visibleFiles.length === 0 && (
-                <div className="text-center text-5xl text-muted-foreground">No files found</div>
+                <div className="col-span-full text-center text-5xl text-muted-foreground">
+                  No files found
+                </div>
               )}
             </div>
           </ContextMenuTrigger>

@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -22,6 +25,16 @@ func (c *NotificationController) UpdatePreference(f fuego.ContextWithBody[notifi
 	}
 
 	w, r := f.Response(), f.Request()
+
+	jsonData, err := json.Marshal(prefRequest)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	r.Body = io.NopCloser(bytes.NewBuffer(jsonData))
 
 	if !c.parseAndValidate(w, r, &prefRequest) {
 		return nil, fuego.HTTPError{

@@ -22,7 +22,7 @@ type IconProps = React.ComponentProps<typeof FileCode>;
 export function getFileIcons(
   type: 'folder' | 'file',
   ext: string,
-  layout: 'grid' | 'list'
+  layout: 'grid' | 'list' | 'gallery'
 ): React.ReactNode {
   const iconSize = layout === 'grid' ? 'h-10 w-10 lg:h-20 lg:w-20' : 'h-5 w-5 lg:h-8 lg:w-8';
   const baseProps: IconProps = { className: `${iconSize}` };

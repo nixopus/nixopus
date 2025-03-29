@@ -23,7 +23,7 @@ func main() {
 	ctx := context.Background()
 	app := storage.NewApp(&types.Config{}, store, ctx)
 	router := internal.NewRouter(app)
-	r := router.Routes()
+	router.Routes()
 	log.Printf("Server starting on port %s", config.AppConfig.Port)
-	log.Fatal(http.ListenAndServe(":"+config.AppConfig.Port, r))
+	log.Fatal(http.ListenAndServe(":"+config.AppConfig.Port, nil))
 }

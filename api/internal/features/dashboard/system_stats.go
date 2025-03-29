@@ -9,38 +9,11 @@ import (
 	"time"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/disk"
+	"github.com/shirou/gopsutil/v3/host"
+	"github.com/shirou/gopsutil/v3/mem"
 )
-
-func parseSize(sizeStr string) float64 {
-	re := regexp.MustCompile(`^([\d.]+)([KMGT])?`)
-	matches := re.FindStringSubmatch(sizeStr)
-	if len(matches) < 2 {
-		return 0
-	}
-
-	value, err := strconv.ParseFloat(matches[1], 64)
-	if err != nil {
-		return 0
-	}
-
-	if len(matches) < 3 {
-		return value
-	}
-
-	unit := strings.ToUpper(matches[2])
-	switch unit {
-	case "K":
-		return value / 1024
-	case "M":
-		return value
-	case "G":
-		return value * 1024
-	case "T":
-		return value * 1024 * 1024
-	default:
-		return value
-	}
-}
 
 func (m *DashboardMonitor) GetSystemStats() {
 	osType, err := m.getCommandOutput("uname -s")
@@ -58,53 +31,65 @@ func (m *DashboardMonitor) GetSystemStats() {
 		Disk:      DiskStats{AllMounts: []DiskMount{}},
 	}
 
+	if hostInfo, err := host.Info(); err == nil {
+		stats.Load.Uptime = time.Duration(hostInfo.Uptime * uint64(time.Second)).String()
+	}
+
 	if loadAvg, err := m.getCommandOutput("uptime"); err == nil {
 		loadAvgStr := strings.TrimSpace(loadAvg)
 		stats.Load = parseLoadAverage(loadAvgStr)
-		uptimeRe := regexp.MustCompile(`up\s+(.*?),\s+\d+\s+users?`)
-		uptimeMatches := uptimeRe.FindStringSubmatch(loadAvgStr)
-		if len(uptimeMatches) > 1 {
-			stats.Load.Uptime = uptimeMatches[1]
+	}
+
+	if cpuInfo, err := cpu.Info(); err == nil && len(cpuInfo) > 0 {
+		stats.CPUInfo = cpuInfo[0].ModelName
+	}
+
+	if memInfo, err := mem.VirtualMemory(); err == nil {
+		stats.Memory = MemoryStats{
+			Total:      float64(memInfo.Total) / (1024 * 1024),
+			Used:       float64(memInfo.Used) / (1024 * 1024),
+			Percentage: memInfo.UsedPercent,
+			RawInfo: fmt.Sprintf("Total: %.2f MB, Used: %.2f MB, Free: %.2f MB",
+				float64(memInfo.Total)/(1024*1024),
+				float64(memInfo.Used)/(1024*1024),
+				float64(memInfo.Free)/(1024*1024)),
 		}
 	}
 
-	switch osType {
-	case "Linux":
-		if cpuInfo, err := m.getCommandOutput("grep 'model name' /proc/cpuinfo | head -1"); err == nil {
-			cpuInfoStr := strings.TrimSpace(cpuInfo)
-			stats.CPUInfo = strings.Replace(cpuInfoStr, "model name\t: ", "", 1)
+	if diskInfo, err := disk.Partitions(false); err == nil {
+		diskStats := DiskStats{
+			AllMounts: make([]DiskMount, 0, len(diskInfo)),
 		}
 
-		if memInfo, err := m.getCommandOutput("free -m | head -2"); err == nil {
-			memInfoStr := strings.TrimSpace(memInfo)
-			stats.Memory = parseLinuxMemory(memInfoStr)
+		for _, partition := range diskInfo {
+			if usage, err := disk.Usage(partition.Mountpoint); err == nil {
+				mount := DiskMount{
+					Filesystem: partition.Fstype,
+					Size:       fmt.Sprintf("%.2fG", float64(usage.Total)/(1024*1024*1024)),
+					Used:       fmt.Sprintf("%.2fG", float64(usage.Used)/(1024*1024*1024)),
+					Avail:      fmt.Sprintf("%.2fG", float64(usage.Free)/(1024*1024*1024)),
+					Capacity:   fmt.Sprintf("%.1f%%", usage.UsedPercent),
+					MountPoint: partition.Mountpoint,
+				}
+
+				diskStats.AllMounts = append(diskStats.AllMounts, mount)
+
+				if mount.MountPoint == "/" || (diskStats.MountPoint != "/" && diskStats.Total == 0) {
+					diskStats.MountPoint = mount.MountPoint
+					diskStats.Total = float64(usage.Total) / (1024 * 1024 * 1024)
+					diskStats.Used = float64(usage.Used) / (1024 * 1024 * 1024)
+					diskStats.Available = float64(usage.Free) / (1024 * 1024 * 1024)
+					diskStats.Percentage = usage.UsedPercent
+				}
+			}
 		}
 
-		if diskInfo, err := m.getCommandOutput("df -h | grep -v 'tmpfs\\|udev'"); err == nil {
-			diskInfoStr := strings.TrimSpace(diskInfo)
-			stats.Disk = parseLinuxDisk(diskInfoStr)
-		}
-
-	case "Darwin":
-		if cpuInfo, err := m.getCommandOutput("sysctl -n machdep.cpu.brand_string"); err == nil {
-			stats.CPUInfo = strings.TrimSpace(cpuInfo)
-		}
-
-		if memInfo, err := m.getCommandOutput("top -l 1 | grep PhysMem"); err == nil {
-			memInfoStr := strings.TrimSpace(memInfo)
-			stats.Memory = parseDarwinMemory(memInfoStr)
-		}
-
-		if diskInfo, err := m.getCommandOutput("df -h"); err == nil {
-			diskInfoStr := strings.TrimSpace(diskInfo)
-			stats.Disk = parseDarwinDisk(diskInfoStr)
-		}
+		stats.Disk = diskStats
 	}
 
 	m.Broadcast(string(GetSystemStats), stats)
 }
 
-// parseLoadAverage extracts load average from uptime command output
 func parseLoadAverage(loadStr string) LoadStats {
 	loadStats := LoadStats{}
 
@@ -123,134 +108,6 @@ func parseLoadAverage(loadStr string) LoadStats {
 	}
 
 	return loadStats
-}
-
-// parseLinuxMemory extracts memory information from Linux free command
-func parseLinuxMemory(memStr string) MemoryStats {
-	memStats := MemoryStats{
-		RawInfo: memStr,
-	}
-
-	lines := strings.Split(memStr, "\n")
-	if len(lines) < 2 {
-		return memStats
-	}
-
-	fields := strings.Fields(lines[1])
-	if len(fields) < 3 {
-		return memStats
-	}
-
-	if total, err := strconv.ParseFloat(fields[1], 64); err == nil {
-		memStats.Total = total
-	}
-
-	if used, err := strconv.ParseFloat(fields[2], 64); err == nil {
-		memStats.Used = used
-	}
-
-	if memStats.Total > 0 {
-		memStats.Percentage = (memStats.Used / memStats.Total) * 100
-	}
-
-	return memStats
-}
-
-// parseDarwinMemory extracts memory information from macOS top command
-func parseDarwinMemory(memStr string) MemoryStats {
-	memStats := MemoryStats{
-		RawInfo: memStr,
-	}
-
-	re := regexp.MustCompile(`PhysMem: (\d+)([KMGT]) used .* (\d+)([KMGT]) unused`)
-	matches := re.FindStringSubmatch(memStr)
-	if len(matches) >= 5 {
-		usedVal, _ := strconv.ParseFloat(matches[1], 64)
-		usedUnit := matches[2]
-
-		unusedVal, _ := strconv.ParseFloat(matches[3], 64)
-		unusedUnit := matches[4]
-
-		used := convertToMB(usedVal, usedUnit)
-		unused := convertToMB(unusedVal, unusedUnit)
-
-		memStats.Used = used
-		memStats.Total = used + unused
-
-		if memStats.Total > 0 {
-			memStats.Percentage = (memStats.Used / memStats.Total) * 100
-		}
-	}
-
-	return memStats
-}
-
-// parseLinuxDisk extracts disk information from Linux df command
-func parseLinuxDisk(diskStr string) DiskStats {
-	diskStats := DiskStats{
-		AllMounts: []DiskMount{},
-	}
-
-	lines := strings.Split(diskStr, "\n")
-	if len(lines) < 2 {
-		return diskStats
-	}
-
-	for i := 1; i < len(lines); i++ {
-		line := strings.TrimSpace(lines[i])
-		if line == "" {
-			continue
-		}
-
-		fields := strings.Fields(line)
-		if len(fields) < 6 {
-			continue
-		}
-
-		mount := DiskMount{
-			Filesystem: fields[0],
-			Size:       fields[1],
-			Used:       fields[2],
-			Avail:      fields[3],
-			Capacity:   fields[4],
-			MountPoint: fields[5],
-		}
-
-		diskStats.AllMounts = append(diskStats.AllMounts, mount)
-
-		if mount.MountPoint == "/" || (diskStats.MountPoint != "/" && diskStats.Total == 0) {
-			diskStats.MountPoint = mount.MountPoint
-			diskStats.Total = parseSize(mount.Size)
-			diskStats.Used = parseSize(mount.Used)
-			diskStats.Available = parseSize(mount.Avail)
-			percentStr := strings.TrimSuffix(mount.Capacity, "%")
-			if percent, err := strconv.ParseFloat(percentStr, 64); err == nil {
-				diskStats.Percentage = percent
-			}
-		}
-	}
-
-	return diskStats
-}
-
-// parseDarwinDisk extracts disk information from macOS df command
-func parseDarwinDisk(diskStr string) DiskStats {
-	return parseLinuxDisk(diskStr)
-}
-
-func convertToMB(value float64, unit string) float64 {
-	switch unit {
-	case "K":
-		return value / 1024
-	case "M":
-		return value
-	case "G":
-		return value * 1024
-	case "T":
-		return value * 1024 * 1024
-	default:
-		return value
-	}
 }
 
 func (m *DashboardMonitor) getCommandOutput(cmd string) (string, error) {

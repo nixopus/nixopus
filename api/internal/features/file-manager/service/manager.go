@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"syscall"
 	"time"
+
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
 type FileInfo struct {
@@ -28,6 +30,7 @@ type SFTPClient interface {
 	Mkdir(path string) error
 	Remove(path string) error
 	Stat(path string) (os.FileInfo, error)
+	Rename(fromPath string, toPath string) error
 }
 
 type SFTPFileInfo interface {
@@ -150,6 +153,7 @@ type FileData struct {
 
 // CreateDirectory creates a new directory at the given path and returns its contents
 func (f *FileManagerService) CreateDirectory(path string) error {
+	f.logger.Log(logger.Info, "creating directory", path)
 	err := f.withSFTPClient(func(client SFTPClient) error {
 		if err := client.Mkdir(path); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", path, err)
@@ -168,6 +172,21 @@ func (f *FileManagerService) DeleteFile(path string) error {
 	err := f.withSFTPClient(func(client SFTPClient) error {
 		if err := client.Remove(path); err != nil {
 			return fmt.Errorf("failed to delete file %s: %w", path, err)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (f *FileManagerService) MoveDirectory(fromPath string, toPath string) error {
+	err := f.withSFTPClient(func(client SFTPClient) error {
+		if err := client.Rename(fromPath, toPath); err != nil {
+			return fmt.Errorf("failed to move directory %s to %s: %w", fromPath, toPath, err)
 		}
 		return nil
 	})

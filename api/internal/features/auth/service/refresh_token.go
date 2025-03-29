@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/auth/utils"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
@@ -29,7 +30,7 @@ func (c *AuthService) RefreshToken(refreshToken types.RefreshTokenRequest) (type
 		return types.AuthResponse{}, types.ErrUserNotFound
 	}
 
-	accessToken, err := CreateToken(user.Email, time.Minute*15)
+	accessToken, err := utils.CreateToken(user.Email, time.Minute*15)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToCreateToken.Error(), err.Error())
 		return types.AuthResponse{}, types.ErrFailedToCreateToken

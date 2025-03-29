@@ -3,13 +3,13 @@ package tests
 import (
 	"testing"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/auth/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/auth/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func TestHashPasswordValidInput(t *testing.T) {
 	password := "mysecretpassword"
-	hashedPassword, err := service.HashPassword(password)
+	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
 		t.Fatalf("HashPassword failed: %v", err)
 	}
@@ -21,7 +21,7 @@ func TestHashPasswordValidInput(t *testing.T) {
 
 func TestHashPasswordEmptyInput(t *testing.T) {
 	password := ""
-	_, err := service.HashPassword(password)
+	_, err := utils.HashPassword(password)
 	if err == nil {
 		t.Errorf("HashPassword should return an error for empty input")
 	}

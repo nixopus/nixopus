@@ -6,12 +6,12 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from '@/redux/store';
 import { Toaster } from '@/components/ui/sonner';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import DashboardLayout from '@/components/dashboard-layout';
+import { useAppDispatch } from '@/redux/hooks';
 import { useEffect } from 'react';
 import { initializeAuth } from '@/redux/features/users/authSlice';
-import AuthWrapper from '@/components/auth-wrapper';
 import { usePathname } from 'next/navigation';
+import { WebSocketProvider } from '@/hooks/socket_provider';
+import DashboardLayout from '@/components/dashboard-layout';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -62,7 +62,9 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
         {pathname === '/' || pathname === '/login' ? (
           <>{children}</>
         ) : (
-          <AuthWrapper>{children}</AuthWrapper>
+          <WebSocketProvider>
+            <DashboardLayout>{children}</DashboardLayout>
+          </WebSocketProvider>
         )}
       </ThemeProvider>
       <Toaster />

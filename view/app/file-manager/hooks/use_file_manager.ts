@@ -74,6 +74,81 @@ function use_file_manager() {
     refetch();
   };
 
+  const handleKeyboardShortcuts = (e: KeyboardEvent) => {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      return;
+    }
+
+    const isModifierKey = e.ctrlKey || e.metaKey;
+
+    if (isModifierKey && e.key === 'c') {
+      e.preventDefault();
+      if (selectedFile) {
+        setFileToCopy(selectedFile);
+      }
+    }
+
+    if (isModifierKey && e.key === 'x') {
+      e.preventDefault();
+      if (selectedFile) {
+        setFileToMove(selectedFile);
+      }
+    }
+
+    if (isModifierKey && e.key === 'v') {
+      e.preventDefault();
+      if (fileToCopy) {
+        handleFilePaste(fileToCopy.path, currentPath + '/' + fileToCopy.name);
+        refetch();
+        setFileToCopy(undefined);
+      } else if (fileToMove) {
+        handleFileMove(fileToMove.path, currentPath + '/' + fileToMove.name);
+        refetch();
+        setFileToMove(undefined);
+      }
+    }
+
+    if (e.key === 'Delete' && selectedFile) {
+      e.preventDefault();
+      // TODO : Implement delete functionality
+    }
+
+    if (isModifierKey && e.key === 'h') {
+      e.preventDefault();
+      setShowHidden(!showHidden);
+    }
+
+    if (isModifierKey && e.key === 'l') {
+      e.preventDefault();
+      setLayout(layout === 'grid' ? 'list' : 'grid');
+    }
+
+    if (isModifierKey && e.shiftKey && e.key === 'n') {
+      e.preventDefault();
+      createNewFolder();
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyboardShortcuts);
+    return () => window.removeEventListener('keydown', handleKeyboardShortcuts);
+  }, [
+    selectedFile,
+    fileToCopy,
+    fileToMove,
+    currentPath,
+    layout,
+    showHidden,
+    handleFilePaste,
+    handleFileMove,
+    refetch,
+    setFileToCopy,
+    setFileToMove,
+    setShowHidden,
+    setLayout,
+    createNewFolder
+  ]);
+
   const handleFileSelect = (path: string) => {
     setSelectedPath(path);
     setSelectedFile(files?.find((file) => file.path === path));

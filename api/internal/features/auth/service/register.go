@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/auth/utils"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	organization_types "github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -27,7 +28,7 @@ func (c *AuthService) Register(registrationRequest types.RegisterRequest) (types
 		return types.AuthResponse{}, types.ErrUserWithEmailAlreadyExists
 	}
 
-	hashedPassword, err := HashPassword(registrationRequest.Password)
+	hashedPassword, err := utils.HashPassword(registrationRequest.Password)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToHashPassword.Error(), err.Error())
 		return types.AuthResponse{}, types.ErrFailedToHashPassword
@@ -38,7 +39,7 @@ func (c *AuthService) Register(registrationRequest types.RegisterRequest) (types
 		hashedPassword,
 		registrationRequest.Username,
 		"",
-		"",
+		"admin",
 		false,
 	)
 
@@ -53,7 +54,7 @@ func (c *AuthService) Register(registrationRequest types.RegisterRequest) (types
 		return types.AuthResponse{}, types.ErrFailedToCreateToken
 	}
 
-	accessToken, err := CreateToken(user.Email, time.Minute*15)
+	accessToken, err := utils.CreateToken(user.Email, time.Minute*15)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToCreateAccessToken.Error(), err.Error())
 		return types.AuthResponse{}, types.ErrFailedToCreateToken

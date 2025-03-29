@@ -148,6 +148,7 @@ var (
 	ErrUserDoesNotHavePermissionForTheResource = errors.New("user does not have permission for the resource")
 	ErrInvalidResource                         = errors.New("invalid resource")
 	ErrMissingOrganization                     = errors.New("organization is required")
+	ErrSmtpAlreadyExists                       = errors.New("smtp already exists")
 )
 
 func NewSMTPConfig(c *CreateSMTPConfigRequest, userID uuid.UUID) *shared_types.SMTPConfigs {

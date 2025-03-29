@@ -15,6 +15,12 @@ import (
 // It returns an error if the storage operation fails.
 func (s *NotificationService) AddSmtp(SMTPConfigs notification.CreateSMTPConfigRequest, userID uuid.UUID) error {
 	s.logger.Log(logger.Info, "Adding SMTP configuration", "")
+
+	existing_smtp, _ := s.storage.GetSmtp(userID.String())
+	if existing_smtp != nil {
+		return notification.ErrSmtpAlreadyExists
+	}
+
 	config := notification.NewSMTPConfig(&SMTPConfigs, userID)
 	return s.storage.AddSmtp(config)
 }

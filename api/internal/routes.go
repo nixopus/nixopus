@@ -3,12 +3,15 @@ package internal
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/go-fuego/fuego"
 	"github.com/go-fuego/fuego/option"
 	"github.com/go-fuego/fuego/param"
-	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
+	authService "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
+	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
 	domain "github.com/raghavyuva/nixopus-api/internal/features/domain/controller"
 	file_manager "github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller"
@@ -18,6 +21,12 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	notificationController "github.com/raghavyuva/nixopus-api/internal/features/notification/controller"
 	organization "github.com/raghavyuva/nixopus-api/internal/features/organization/controller"
+	organization_service "github.com/raghavyuva/nixopus-api/internal/features/organization/service"
+	organization_storage "github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
+	permissions_service "github.com/raghavyuva/nixopus-api/internal/features/permission/service"
+	permissions_storage "github.com/raghavyuva/nixopus-api/internal/features/permission/storage"
+	role_service "github.com/raghavyuva/nixopus-api/internal/features/role/service"
+	role_storage "github.com/raghavyuva/nixopus-api/internal/features/role/storage"
 	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
 	"github.com/raghavyuva/nixopus-api/internal/middleware"
 	"github.com/raghavyuva/nixopus-api/internal/realtime"
@@ -34,16 +43,23 @@ func NewRouter(app *storage.App) *Router {
 	}
 }
 
-func (router *Router) Routes() *mux.Router {
-	r := mux.NewRouter()
+func (router *Router) Routes() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	PORT := os.Getenv("PORT")
+
+	log.Printf("open port %s", PORT)
+
 	l := logger.NewLogger()
 	server := fuego.NewServer(
-		fuego.WithAddr("localhost:8080"),
 		fuego.WithGlobalMiddlewares(
 			middleware.CorsMiddleware,
 			middleware.LoggingMiddleware,
-			middleware.RateLimiter),
-		// fuego.WithoutLogger(),
+			// middleware.RateLimiter
+		),
+		fuego.WithAddr(":"+PORT),
 	)
 
 	healthGroup := fuego.Group(server, "/api/v1/health")
@@ -51,8 +67,18 @@ func (router *Router) Routes() *mux.Router {
 
 	notificationManager := notification.NewNotificationManager(notification.NewNotificationChannels(), router.app.Store.DB)
 	notificationManager.Start()
+	deployController := deploy.NewDeployController(router.app.Store, router.app.Ctx, l, notificationManager)
+	router.WebSocketServer(server, deployController)
 
-	authController := auth.NewAuthController(router.app.Store, router.app.Ctx, l, notificationManager)
+	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
+	permStorage := &permissions_storage.PermissionStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
+	roleStorage := &role_storage.RoleStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
+	orgStorage := &organization_storage.OrganizationStore{DB: router.app.Store.DB, Ctx: router.app.Ctx}
+	permService := permissions_service.NewPermissionService(router.app.Store, router.app.Ctx, l, permStorage)
+	roleService := role_service.NewRoleService(router.app.Store, router.app.Ctx, l, roleStorage)
+	orgService := organization_service.NewOrganizationService(router.app.Store, router.app.Ctx, l, orgStorage)
+	authService := authService.NewAuthService(userStorage, l, permService, roleService, orgService, router.app.Ctx)
+	authController := auth.NewAuthController(router.app.Ctx, l, notificationManager, *authService)
 	authGroup := fuego.Group(server, "/api/v1/auth")
 	router.AuthRoutes(authController, authGroup)
 
@@ -84,7 +110,7 @@ func (router *Router) Routes() *mux.Router {
 	router.NotificationRoutes(notificationGroup, notifController)
 
 	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager)
-	organizationGroup := fuego.Group(s, "/organization")
+	organizationGroup := fuego.Group(s, "/organizations")
 	router.OrganizationRoutes(organizationGroup, organizationController)
 
 	fileManagerController := file_manager.NewFileManagerController(router.app.Ctx, l, notificationManager)
@@ -92,35 +118,36 @@ func (router *Router) Routes() *mux.Router {
 	fuego.Use(fileManagerGroup, middleware.IsAdmin)
 	router.FileManagerRoutes(fileManagerGroup, fileManagerController)
 
-	deployController := deploy.NewDeployController(router.app.Store, router.app.Ctx, l, notificationManager)
 	deployGroup := fuego.Group(s, "/deploy")
 	router.DeployRoutes(deployGroup, deployController)
 
-	router.WebSocketServer(r, deployController)
-
 	server.Run()
-	return r
 }
 
 func (s *Router) BasicRoutes(fs *fuego.Server) {
 	fuego.Get(fs, "", health.HealthCheck)
 }
 
-func (router *Router) WebSocketServer(r *mux.Router, deployController *deploy.DeployController) {
+// This is a special adapter that allows using a raw http.Handler with Fuego
+func (router *Router) WebSocketServer(f *fuego.Server, deployController *deploy.DeployController) {
 	wsServer, err := realtime.NewSocketServer(deployController, router.app.Store.DB, router.app.Ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
+	wsHandler := func(c fuego.ContextNoBody) (interface{}, error) {
+		log.Printf("WebSocket connection attempt from: %s", c.Request().RemoteAddr)
 
-	r.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		wsServer.HandleHTTP(w, r)
-	})
+		wsServer.HandleHTTP(c.Response(), c.Request())
+		return nil, nil
+	}
+
+	fuego.Get(f, "/ws", wsHandler)
 }
 
 // these routes are public routes
 func (router *Router) AuthRoutes(authController *auth.AuthController, s *fuego.Server) {
 	//register route is disabled for now (we do not have register seperately either the one who installs it, or the one who is added by admin)
-	// authApi.HandleFunc("/register", authController.Register).Methods("POST", "OPTIONS")
+	fuego.Post(s, "/register", authController.Register)
 	fuego.Post(s, "/login", authController.Login)
 }
 
@@ -187,6 +214,7 @@ func (router *Router) DeployApplicationRoutes(f *fuego.Server, deployController 
 func (router *Router) FileManagerRoutes(f *fuego.Server, fileManagerController *file_manager.FileManagerController) {
 	fuego.Get(f, "", fileManagerController.ListFiles)
 	fuego.Post(f, "/create-directory", fileManagerController.CreateDirectory)
+	fuego.Post(f, "/move-directory", fileManagerController.MoveDirectory)
 }
 
 func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController *organization.OrganizationsController) {

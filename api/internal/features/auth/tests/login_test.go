@@ -2,12 +2,17 @@ package tests
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
+	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -126,4 +131,89 @@ func TestLogin(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestLoginEndpoint tests the Login endpoint of the AuthController.
+// It sets up a mock AuthController and tests the following scenarios:
+// - Success case: valid email and password
+// - Invalid Password: invalid password
+// - User Not Found: user not found in storage
+func TestLoginEndpoint(t *testing.T) {
+	l := logger.NewLogger()
+	notificationManager := notification.NewNotificationManager(notification.NewNotificationChannels(), nil)
+
+	t.Run("Success case", func(t *testing.T) {
+		authService := setupAuthService(t, l)
+		authController := auth.NewAuthController(context.Background(), l, notificationManager, *authService)
+
+		ctx := fuego.NewMockContext(types.LoginRequest{
+			Email:    "nixopus_user1@nixopus.com",
+			Password: "password",
+		})
+
+		response, err := authController.Login(ctx)
+		assert.Nil(t, err)
+		assert.Equal(t, "success", response.Status)
+		assert.Equal(t, "User logged in successfully", response.Message)
+		assert.NotNil(t, response.Data)
+	})
+
+	t.Run("Invalid Password", func(t *testing.T) {
+		authService := setupAuthService(t, l)
+		authController := auth.NewAuthController(context.Background(), l, notificationManager, *authService)
+
+		ctx := fuego.NewMockContext(types.LoginRequest{
+			Email:    "nixopus_user1@nixopus.com",
+			Password: "wrong-password",
+		})
+
+		response, err := authController.Login(ctx)
+		assert.NotNil(t, err)
+		assert.Nil(t, response)
+	})
+
+	t.Run("User Not Found", func(t *testing.T) {
+		userStorage := &MockAuthStorage{}
+		userStorage.WithUserByEmail("nixopus_user2@nixopus.com", nil, errors.New("user not found"))
+
+		authService := service.NewAuthService(userStorage, l, nil, nil, nil, context.Background())
+		authController := auth.NewAuthController(context.Background(), l, notificationManager, *authService)
+
+		ctx := fuego.NewMockContext(types.LoginRequest{
+			Email:    "nixopus_user2@nixopus.com",
+			Password: "password",
+		})
+
+		response, err := authController.Login(ctx)
+		assert.NotNil(t, err)
+		assert.Nil(t, response)
+	})
+}
+
+func setupAuthService(t *testing.T, l logger.Logger) *service.AuthService {
+	userStorage := &MockAuthStorage{}
+	userId := uuid.New()
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatalf("HashPassword failed: %v", err)
+	}
+
+	testUser := CreateTestUser(
+		userId.String(),
+		"nixopus_user1@nixopus.com",
+		string(hashedPassword),
+	)
+
+	refreshToken := CreateTestRefreshToken(
+		uuid.New().String(),
+		userId.String(),
+		"test-refresh-token-nixopus_user1@nixopus.com",
+		30,
+	)
+
+	userStorage.WithCreateRefreshToken(userId, refreshToken, nil)
+	userStorage.WithUserByEmail("nixopus_user1@nixopus.com", testUser, nil)
+
+	authService := service.NewAuthService(userStorage, l, nil, nil, nil, context.Background())
+	return authService
 }

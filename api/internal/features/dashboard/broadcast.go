@@ -23,7 +23,7 @@ func (m *DashboardMonitor) Broadcast(action string, message interface{}) {
 		}
 		_ = m.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 
-		if err := m.conn.WriteJSON(map[string]interface{}{"action": action, "data": message}); err != nil {
+		if err := m.conn.WriteJSON(map[string]interface{}{"action": action, "data": message, "timestamp": time.Now().Unix(), "topic": "dashboard_monitor"}); err != nil {
 			m.log.Log(logger.Error, "Failed to broadcast message", err.Error())
 		}
 

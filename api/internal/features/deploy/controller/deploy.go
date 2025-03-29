@@ -23,12 +23,12 @@ func (c *DeployController) HandleDeploy(f fuego.ContextWithBody[types.CreateDepl
 	}
 
 	w, r := f.Response(), f.Request()
-	if !c.parseAndValidate(w, r, &data) {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusBadRequest,
-		}
-	}
+	// if !c.parseAndValidate(w, r, &data) {
+	// 	return nil, fuego.HTTPError{
+	// 		Err:    nil,
+	// 		Status: http.StatusBadRequest,
+	// 	}
+	// }
 
 	user := utils.GetUser(w, r)
 	if user == nil {

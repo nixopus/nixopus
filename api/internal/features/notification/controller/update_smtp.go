@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -12,7 +15,6 @@ import (
 
 func (c *NotificationController) UpdateSmtp(f fuego.ContextWithBody[notification.UpdateSMTPConfigRequest]) (*shared_types.Response, error) {
 	SMTPConfigs, err := f.Body()
-
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
@@ -20,14 +22,24 @@ func (c *NotificationController) UpdateSmtp(f fuego.ContextWithBody[notification
 		}
 	}
 
-	// TODO: add validation
-	// w, r := f.Response(), f.Request()
-	// if !c.parseAndValidate(w, r, &SMTPConfigs) {
-	// 	return nil, fuego.HTTPError{
-	// 		Err:    nil,
-	// 		Status: http.StatusBadRequest,
-	// 	}
-	// }
+	w, r := f.Response(), f.Request()
+
+	jsonData, err := json.Marshal(SMTPConfigs)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	r.Body = io.NopCloser(bytes.NewBuffer(jsonData))
+
+	if !c.parseAndValidate(w, r, &SMTPConfigs) {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
+	}
 
 	err = c.service.UpdateSmtp(SMTPConfigs)
 	if err != nil {

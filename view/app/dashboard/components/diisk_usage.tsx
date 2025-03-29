@@ -4,13 +4,16 @@ import React from 'react';
 import { HardDrive } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SystemStatsType } from '../hooks/use_monitor';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface DiskUsageCardProps {
-  systemStats: SystemStatsType;
+  systemStats: SystemStatsType | null;
 }
 
 const DiskUsageCard: React.FC<DiskUsageCardProps> = ({ systemStats }) => {
-  if (!systemStats) return null;
+  if (!systemStats) {
+    return <DiskUsageCardSkeleton />;
+  }
 
   const { disk } = systemStats;
 
@@ -31,9 +34,9 @@ const DiskUsageCard: React.FC<DiskUsageCardProps> = ({ systemStats }) => {
             />
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{disk.used} GB used</span>
-            <span>{disk.percentage}%</span>
-            <span>{disk.total} GB total</span>
+            <span>{disk.used.toFixed(2)} GB used</span>
+            <span>{disk.percentage.toFixed(2)}%</span>
+            <span>{disk.total.toFixed(2)} GB total</span>
           </div>
           <div className="text-xs font-mono text-muted-foreground mt-1 sm:mt-2">
             <table className="min-w-full">
@@ -66,3 +69,56 @@ const DiskUsageCard: React.FC<DiskUsageCardProps> = ({ systemStats }) => {
 };
 
 export default DiskUsageCard;
+
+const DiskUsageCardSkeleton = () => {
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
+          <HardDrive className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          Disk Usage
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2 sm:space-y-3">
+          <div className="w-full h-2 bg-gray-200 rounded-full">
+            <div className="h-2 rounded-full bg-gray-400" />
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <Skeleton className="h-3 w-10" />
+            <Skeleton className="h-3 w-10" />
+            <Skeleton className="h-3 w-10" />
+          </div>
+          <div className="text-xs font-mono text-muted-foreground mt-1 sm:mt-2">
+            <table className="min-w-full">
+              <thead>
+                <tr>
+                  <th className="text-left pr-1 sm:pr-2">Mount</th>
+                  <th className="text-right pr-1 sm:pr-2">Size</th>
+                  <th className="text-right pr-1 sm:pr-2">Used</th>
+                  <th className="text-right">%</th>
+                </tr>
+              </thead>
+              <tbody className="text-xxs sm:text-xs">
+                <tr>
+                  <td className="text-left pr-1 sm:pr-2">
+                    <Skeleton className="h-3 w-10" />
+                  </td>
+                  <td className="text-right pr-1 sm:pr-2">
+                    <Skeleton className="h-3 w-10" />
+                  </td>
+                  <td className="text-right pr-1 sm:pr-2">
+                    <Skeleton className="h-3 w-10" />
+                  </td>
+                  <td className="text-right">
+                    <Skeleton className="h-3 w-10" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};

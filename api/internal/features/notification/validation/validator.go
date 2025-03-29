@@ -1,11 +1,14 @@
 package validation
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
+	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification/storage"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type Validator struct {
@@ -19,17 +22,37 @@ func NewValidator(storage storage.NotificationRepository) *Validator {
 }
 
 // ValidateRequest validates different request types
-func (v *Validator) ValidateRequest(req interface{}) error {
+func (v *Validator) ValidateRequest(req interface{}, user *shared_types.User) error {
 	switch r := req.(type) {
 	case *notification.CreateSMTPConfigRequest:
+		err := v.AccessValidator("smtp", "create", user)
+		if err != nil {
+			return err
+		}
 		return v.validateCreateSMTPConfigRequest(*r)
 	case *notification.GetSMTPConfigRequest:
+		err := v.AccessValidator("smtp", "read", user)
+		if err != nil {
+			return err
+		}
 		return v.validateGetSMTPConfigRequest(*r)
 	case *notification.UpdateSMTPConfigRequest:
+		err := v.AccessValidator("smtp", "update", user)
+		if err != nil {
+			return err
+		}
 		return v.validateUpdateSMTPConfigRequest(*r)
 	case *notification.DeleteSMTPConfigRequest:
+		err := v.AccessValidator("smtp", "delete", user)
+		if err != nil {
+			return err
+		}
 		return v.validateDeleteSMTPConfigRequest(*r)
 	case *notification.UpdatePreferenceRequest:
+		err := v.AccessValidator("preferences", "update", user)
+		if err != nil {
+			return err
+		}
 		return v.validateUpdatePreferenceRequest(*r)
 	default:
 		return notification.ErrInvalidRequestType
@@ -37,8 +60,21 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 }
 
 // ParseRequestBody decodes request body into the provided interface
-func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decoded interface{}) error {
-	return json.NewDecoder(body).Decode(decoded)
+// It preserves the original request body for future reads
+func (v *Validator) ParseRequestBody(r *http.Request, body io.ReadCloser, decoded interface{}) error {
+	bodyBytes, err := io.ReadAll(body)
+	if err != nil {
+		return err
+	}
+
+	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	err = json.Unmarshal(bodyBytes, decoded)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // validateCreateSMTPConfigRequest validates create SMTP request fields

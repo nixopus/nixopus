@@ -84,10 +84,10 @@ export interface CreateApplicationRequest {
   domain: string;
   repository: string;
   build_pack: BuildPack;
-  env_variables: Record<string, string>;
+  environment_variables: Record<string, string>;
   build_variables: Record<string, string>;
-  pre_run_commands: string;
-  post_run_commands: string;
+  pre_run_command: string;
+  post_run_command: string;
   dockerfile_path: string;
 }
 

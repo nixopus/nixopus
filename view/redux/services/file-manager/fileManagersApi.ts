@@ -15,11 +15,11 @@ export const fileManagersApi = createApi({
       }),
       transformResponse: (response: { data: FileData[] }) => response.data
     }),
-    createDirectory: builder.mutation<any, { path: string; name: string }>({
+    createDirectory: builder.mutation<null, { path: string; name: string }>({
       query: ({ path, name }) => ({
         url: FILEMANAGERURLS.CREATE_DIRECTORY,
         method: 'POST',
-        body: { path, name }
+        body: { path: path + '/' + name }
       }),
       transformResponse: (response: any) => response
     }),

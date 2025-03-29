@@ -4,14 +4,13 @@ import React from 'react';
 import { BarChart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SystemStatsType } from '../hooks/use_monitor';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface MemoryUsageCardProps {
   systemStats: SystemStatsType;
 }
 
 const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
-  if (!systemStats) return null;
-
   const { memory } = systemStats;
 
   return (
@@ -45,3 +44,30 @@ const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
 };
 
 export default MemoryUsageCard;
+
+export const MemoryUsageCardSkeleton: React.FC = () => {
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
+          <BarChart className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          Memory Usage
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2 sm:space-y-3">
+          <Skeleton className="w-full h-2 rounded-full" />
+
+          <div className="flex justify-between text-xs">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-10" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+
+          <Skeleton className="h-4 w-full mt-1 sm:mt-2" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+};

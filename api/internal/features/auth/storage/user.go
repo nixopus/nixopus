@@ -21,9 +21,9 @@ type AuthRepository interface {
 	CreateUser(user *types.User) error
 	UpdateUser(user *types.User) error
 	CreateRefreshToken(user_id uuid.UUID) (*types.RefreshToken, error)
-	GetRefreshToken(refresh_token string) (*types.RefreshToken, error)
+	GetRefreshToken(refreshToken string) (*types.RefreshToken, error)
 	GetResetToken(token string) (*types.User, error)
-	RevokeRefreshToken(refresh_token string) error
+	RevokeRefreshToken(refreshToken string) error
 }
 
 func (u *UserStorage) FindUserByEmail(email string) (*types.User, error) {

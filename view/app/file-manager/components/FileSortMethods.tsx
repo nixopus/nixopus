@@ -31,7 +31,7 @@ function FileSortMethods({ files, onSortChange }: FileSortMethodsProps) {
   return (
     <div>
       <DropdownMenu>
-        <DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon" onClick={() => console.log(files)}>
             <ArrowUpDown className="h-4 w-4" />
           </Button>

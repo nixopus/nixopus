@@ -14,7 +14,7 @@ import { CreateTeam } from './create-team';
 import useTeamSwitcher from '@/hooks/use-team-switcher';
 import use_bread_crumbs from '@/hooks/use_bread_crumbs';
 import React, { useEffect } from 'react';
-import { IntegratedTerminal } from '@/app/terminal/terminal';
+import { Terminal } from '@/app/terminal/terminal';
 import { useTerminalState } from '@/app/terminal/utils/useTerminalState';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 
@@ -62,27 +62,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <AppSidebar toggleAddTeamModal={toggleAddTeamModal} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-            {breadcrumbs.length > 0 && (
-              <Breadcrumb>
-                <BreadcrumbList>
-                  {breadcrumbs.map((breadcrumb, idx) => (
-                    <React.Fragment key={idx}>
-                      <BreadcrumbItem className="hidden md:block">
-                        <BreadcrumbLink onClick={() => router.push(breadcrumb.href)}>
-                          {breadcrumb.label}
-                        </BreadcrumbLink>
-                      </BreadcrumbItem>
-                      {idx < breadcrumbs.length - 1 && (
-                        <BreadcrumbSeparator className="hidden md:block" />
-                      )}
-                    </React.Fragment>
-                  ))}
-                </BreadcrumbList>
-              </Breadcrumb>
-            )}
+          <div className="flex items-center gap-2 px-4 justify-between w-full">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+              {breadcrumbs.length > 0 && (
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    {breadcrumbs.map((breadcrumb, idx) => (
+                      <React.Fragment key={idx}>
+                        <BreadcrumbItem className="hidden md:block">
+                          <BreadcrumbLink onClick={() => router.push(breadcrumb.href)}>
+                            {breadcrumb.label}
+                          </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        {idx < breadcrumbs.length - 1 && (
+                          <BreadcrumbSeparator className="hidden md:block" />
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </BreadcrumbList>
+                </Breadcrumb>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <img src="/nixopus_logo_transparent.png" alt="" width={50} height={50} />
+              <span className="hidden md:block text-2xl font-mono">Nixopus</span>
+            </div>
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
@@ -102,24 +108,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             direction={TERMINAL_POSITION.BOTTOM === TerminalPosition ? 'vertical' : 'horizontal'}
             className="flex-grow h-full"
           >
-            <ResizablePanel defaultSize={80} minSize={30} className="overflow-auto scrollbar-hide">
-              <div className="h-full overflow-y-auto scrollbar-hide">{children}</div>
+            <ResizablePanel defaultSize={80} minSize={30} className="overflow-auto no-scrollbar">
+              <div className="h-full overflow-y-auto no-scrollbar">{children}</div>
             </ResizablePanel>
-            <ResizableHandle />
+            {isTerminalOpen && <ResizableHandle draggable withHandle />}
             <ResizablePanel
               defaultSize={20}
-              minSize={2}
+              minSize={15}
+              maxSize={50}
               hidden={!isTerminalOpen}
               onResize={() => {
                 if (fitAddonRef?.current) {
-                  fitAddonRef.current.fit();
+                  requestAnimationFrame(() => {
+                    fitAddonRef.current.fit();
+                  });
                 }
               }}
+              className="min-h-[200px] flex flex-col"
             >
-              <IntegratedTerminal
-                isOpen={false}
-                isTerminalOpen={isTerminalOpen}
+              <Terminal
+                isOpen={isTerminalOpen}
                 toggleTerminal={toggleTerminal}
+                isTerminalOpen={isTerminalOpen}
                 setFitAddonRef={setFitAddonRef}
               />
             </ResizablePanel>

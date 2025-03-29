@@ -6,10 +6,10 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 function useApplicationDetails() {
-  const { sendJsonMessage } = useWebSocket();
   const { id } = useParams();
   const { data: application } = useGetApplicationByIdQuery({ id: id as string }, { skip: !id });
   const [currentPage, setCurrentPage] = useState(1);
+  const { isReady, message, sendJsonMessage } = useWebSocket();
 
   useEffect(() => {
     sendJsonMessage(SubscribeToTopic(id as string, SOCKET_EVENTS.MONITOR_APPLICATION_DEPLOYMENT));

@@ -1,6 +1,6 @@
 FROM node:18-alpine AS builder
 
-ARG NEXT_PUBLIC_BASE_URL
+ARG NEXT_PUBLIC_BASE_URL=https://api.nixopus.com
 ARG NEXT_PUBLIC_WEBSOCKET_URL=wss://api.nixopus.com
 
 ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL

@@ -84,24 +84,26 @@ export const FileItem = ({
 
   const gridLayout = (
     <div
-      className={`flex flex-col items-center ${activePath === file.path ? '' : ''} w-24 rounded-lg lg:w-32`}
+      className={`flex flex-col items-center  w-full min-h-[120px] sm:min-h-[130px] md:min-h-[140px] p-2 sm:p-3`}
     >
       <div
-        className="mb-2"
+        className="mb-3 flex items-center justify-center flex-1"
         onDoubleClick={() => {
           if (type === 'folder') onFolderClick(file.path);
         }}
       >
-        {getFileIcons(type, file.name.split('.').pop() as string, layout)}
+        <div className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 flex items-center justify-center">
+          {getFileIcons(type, file.name.split('.').pop() as string, layout)}
+        </div>
       </div>
-      <div className="w-full break-all text-center">{renderFileName()}</div>
+      <div className="w-full px-1 sm:px-2 text-center text-xs sm:text-sm truncate">
+        {renderFileName()}
+      </div>
     </div>
   );
 
   const listLayout = (
-    <div
-      className={`flex items-center p-2 ${activePath === file.path ? 'bg-muted' : ''} rounded-lg`}
-    >
+    <div className={`flex items-center p-2`}>
       <div
         className="flex flex-1 items-center"
         onDoubleClick={() => {
@@ -129,10 +131,6 @@ export const FileItem = ({
       </div>
     </div>
   );
-
-  if (isHeader && layout === 'list') {
-    return listLayout;
-  }
 
   return (
     <ContextMenu>

@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/auth/utils"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"golang.org/x/crypto/bcrypt"
@@ -50,7 +51,7 @@ func (c *AuthService) ResetPassword(user *shared_types.User, reset_password_requ
 		return types.ErrInvalidPassword
 	}
 
-	hashedPassword, err := HashPassword(reset_password_request.NewPassword)
+	hashedPassword, err := utils.HashPassword(reset_password_request.NewPassword)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToHashPassword.Error(), err.Error())
 		return types.ErrFailedToHashPassword
@@ -80,7 +81,7 @@ func (c *AuthService) GeneratePasswordResetLink(user *shared_types.User) error {
 	}
 
 	c.logger.Log(logger.Info, "generating password reset link", user.Email)
-	token, err := CreateToken(user.Email, time.Minute*5)
+	token, err := utils.CreateToken(user.Email, time.Minute*5)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToCreateToken.Error(), err.Error())
 		return types.ErrFailedToCreateToken

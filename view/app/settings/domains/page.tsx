@@ -7,16 +7,35 @@ import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
 import UpdateDomainDialog from './components/update-domain';
 import { useAppSelector } from '@/redux/hooks';
 import { useResourcePermissions } from '@/lib/permission';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2 } from 'lucide-react';
 
 const Page = () => {
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const { data: domains } = useGetAllDomainsQuery(
-    { organizationId: activeOrg?.id || '' },
-    { skip: !activeOrg }
-  );
+  const {
+    data: domains,
+    isLoading,
+    error
+  } = useGetAllDomainsQuery({ organizationId: activeOrg?.id || '' }, { skip: !activeOrg?.id });
   const [addDomainDialogOpen, setAddDomainDialogOpen] = React.useState(false);
   const user = useAppSelector((state) => state.auth.user);
   const { canCreate, canRead } = useResourcePermissions(user, 'organization', activeOrg?.id);
+
+  if (!activeOrg?.id) {
+    return (
+      <div className="container mx-auto py-6 space-y-8 max-w-4xl">
+        <DashboardPageHeader label="Server and Domains" description="Configure your domains" />
+        <div className="flex flex-col h-full justify-center items-center gap-4 mt-12">
+          <h2 className="text-xl font-medium text-center text-foreground">
+            No Organization Selected
+          </h2>
+          <p className="text-muted-foreground text-center">
+            Please select an organization to view and manage domains.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!canRead) {
     return (
@@ -32,10 +51,33 @@ const Page = () => {
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-6 space-y-8 max-w-4xl">
+        <DashboardPageHeader label="Server and Domains" description="Configure your domains" />
+        <div className="flex flex-col h-full justify-center items-center gap-4 mt-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="text-muted-foreground text-center">Loading domains...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-6 space-y-8 max-w-4xl">
+        <DashboardPageHeader label="Server and Domains" description="Configure your domains" />
+        <Alert variant="destructive">
+          <AlertDescription>Failed to load domains. Please try again later.</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-6 space-y-8 max-w-4xl">
       <DashboardPageHeader label="Server and Domains" description="Configure your domains" />
-      {domains ? (
+      {domains && domains.length > 0 ? (
         <>
           <div className="flex justify-between items-center mt-8">
             <h2 className="text-xl font-medium text-foreground">Domains</h2>
@@ -45,7 +87,7 @@ const Page = () => {
               </Button>
             )}
           </div>
-          <DomainsTable domains={domains || []} />
+          <DomainsTable domains={domains} />
         </>
       ) : (
         <NoDomainsFound

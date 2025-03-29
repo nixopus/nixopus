@@ -76,7 +76,7 @@ func RateLimiter(next http.Handler) http.Handler {
 		c, exists := clients[ip]
 		if !exists {
 			c = &client{
-				limiter:  rate.NewLimiter(2, 10),
+				limiter:  rate.NewLimiter(5, 10),
 				lastSeen: time.Now(),
 			}
 			clients[ip] = c

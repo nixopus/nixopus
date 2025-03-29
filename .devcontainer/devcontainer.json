@@ -3,17 +3,8 @@
     "dockerComposeFile": "../docker-compose.yml",
     "service": "nixopus-api",
     "workspaceFolder": "/workspace",
-    "initializeCommand": "docker pull golang:1.21-bullseye",
-    "features": {
-        "ghcr.io/devcontainers/features/node:1": {
-            "version": "lts"
-        },
-        "ghcr.io/devcontainers/features/go:1": {
-            "version": "latest"
-        }
-    },
+    "initializeCommand": "docker pull golang:1.23.6-alpine",
     "postCreateCommand": "apt-get update && apt-get install -y bash && npm install -g typescript ts-node next && cd view && npm install && cd ../api && go mod tidy",
-    "remoteUser": "vscode",
     "mounts": [
         "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
         "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"

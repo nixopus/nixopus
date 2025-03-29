@@ -73,12 +73,17 @@ function use_monitor() {
   const { sendJsonMessage, message, isReady } = useWebSocket();
   const [containersData, setContainersData] = useState<ContainerData[]>([]);
   const [systemStats, setSystemStats] = useState<SystemStatsType | null>(null);
+  const [isMonitoring, setIsMonitoring] = useState(false);
 
   useEffect(() => {
     if (message) {
       try {
         const parsedMessage =
           typeof message === 'string' && message.startsWith('{') ? JSON.parse(message) : message;
+
+        if (parsedMessage.topic != 'dashboard_monitor') {
+          return;
+        }
 
         if (parsedMessage.action === 'get_containers' && parsedMessage.data) {
           setContainersData(parsedMessage.data);
@@ -99,12 +104,14 @@ function use_monitor() {
         operations: ['get_containers', 'get_system_stats']
       }
     });
+    setIsMonitoring(true);
   };
 
   const stopMonitoring = () => {
     sendJsonMessage({
       action: 'stop_dashboard_monitor'
     });
+    setIsMonitoring(false);
   };
 
   useEffect(() => {
@@ -113,6 +120,12 @@ function use_monitor() {
       stopMonitoring();
     };
   }, [isReady]);
+
+  useEffect(() => {
+    if (!isMonitoring) {
+      startMonitoring();
+    }
+  }, [isMonitoring]);
 
   return {
     containersData,

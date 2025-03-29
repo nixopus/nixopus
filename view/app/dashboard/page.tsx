@@ -22,8 +22,10 @@ function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>{systemStats && <SystemStats systemStats={systemStats} />}</div>
-          {systemStats && <DiskUsageCard systemStats={systemStats} />}
+          <div>
+            <SystemStats systemStats={systemStats} />
+          </div>
+          <DiskUsageCard systemStats={systemStats} />
         </div>
         <Card>
           <CardHeader>

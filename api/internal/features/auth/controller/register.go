@@ -10,19 +10,27 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
-	var registration_request types.RegisterRequest
-	if !c.parseAndValidate(w, r, &registration_request) {
-		return
+func (c *AuthController) Register(f fuego.ContextWithBody[types.RegisterRequest]) (*shared_types.Response, error) {
+	w, _ := f.Response(), f.Request()
+	registration_request, err := f.Body()
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
 	}
 
 	userResponse, err := c.service.Register(registration_request)
 	if err != nil {
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, nil
 	}
 
-	utils.SendJSONResponse(w, "success", "User registered successfully", userResponse)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "User created successfully",
+		Data:    userResponse,
+	}, nil
 }
 
 func (c *AuthController) CreateUser(s fuego.ContextWithBody[types.RegisterRequest]) (*shared_types.Response, error) {

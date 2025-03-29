@@ -39,7 +39,7 @@ func (c *DeployController) GetApplications(f fuego.ContextWithBody[GetApplicatio
 		}
 	}
 
-	applications, totalCount, err := c.service.GetApplications(page, pageSize)
+	applications, totalCount, err := c.service.GetApplications(page, pageSize, user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

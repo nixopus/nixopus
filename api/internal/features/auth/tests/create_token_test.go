@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/raghavyuva/nixopus-api/internal/features/auth/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/auth/utils"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -27,7 +27,7 @@ func TestCreateToken(t *testing.T) {
 
 	for _, test := range table {
 		t.Run(test.name, func(t *testing.T) {
-			token, err := service.CreateToken(test.email, test.duration)
+			token, err := utils.CreateToken(test.email, test.duration)
 			if err != nil {
 				t.Fatalf("createToken failed: %v", err)
 			}

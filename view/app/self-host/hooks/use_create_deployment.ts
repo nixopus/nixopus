@@ -144,10 +144,10 @@ function useCreateDeployment({
         domain: values.domain,
         repository: values.repository,
         build_pack: values.build_pack,
-        env_variables: values.env_variables,
+        environment_variables: values.env_variables,
         build_variables: values.build_variables,
-        pre_run_commands: values.pre_run_commands as string,
-        post_run_commands: values.post_run_commands as string,
+        pre_run_command: values.pre_run_commands as string,
+        post_run_command: values.post_run_commands as string,
         dockerfile_path: values.DockerfilePath
       }).unwrap();
       router.push('/self-host/application/' + data?.id);

@@ -3,6 +3,7 @@ package terminal
 import (
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"time"
 
@@ -106,25 +107,37 @@ func (t *Terminal) Start() {
 			ssh.ECHO:          1,
 			ssh.TTY_OP_ISPEED: 14400,
 			ssh.TTY_OP_OSPEED: 14400,
+			ssh.ICANON:        1,
+			ssh.ISIG:          1,
+			ssh.ICRNL:         1,
 		}
 
-		err = session.RequestPty("xterm-256color", 24, 80, modes)
-		if err != nil {
+		if err = session.RequestPty("xterm-256color", 40, 100, modes); err != nil {
 			t.log.Log(logger.Error, "Failed to request PTY", err.Error())
 			close(t.done)
 			return
 		}
 
-		err = session.Shell()
-		if err != nil {
+		envVars := []string{
+			"TERM=xterm-256color",
+			"COLORTERM=truecolor",
+			"LANG=en_US.UTF-8",
+			"LC_ALL=en_US.UTF-8",
+		}
+
+		for _, env := range envVars {
+			if err := session.Setenv(strings.Split(env, "=")[0], strings.Split(env, "=")[1]); err != nil {
+				t.log.Log(logger.Info, fmt.Sprintf("Failed to set environment variable %s: %s", env, err.Error()), "")
+			}
+		}
+
+		if err = session.Shell(); err != nil {
 			t.log.Log(logger.Error, "Failed to start shell", err.Error())
 			close(t.done)
 			return
 		}
 
 		session.Wait()
-
-		close(t.done)
 	}()
 }
 
@@ -185,7 +198,9 @@ func (t *Terminal) flushBuffer() {
 			"data": map[string]interface{}{
 				"output_type": "stdout",
 				"content":     string(t.outputBuf),
+				"timestamp":   time.Now().Unix(),
 			},
+			"topic": "terminal",
 		})
 
 		if err != nil {

@@ -5,71 +5,36 @@ import (
 	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/validation"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	organization_service "github.com/raghavyuva/nixopus-api/internal/features/organization/service"
-	organization_storage "github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
-	permissions_service "github.com/raghavyuva/nixopus-api/internal/features/permission/service"
-	permissions_storage "github.com/raghavyuva/nixopus-api/internal/features/permission/storage"
-	role_service "github.com/raghavyuva/nixopus-api/internal/features/role/service"
-	role_storage "github.com/raghavyuva/nixopus-api/internal/features/role/storage"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 type AuthController struct {
 	validator    *validation.Validator
-	service      *service.AuthService
+	service      service.AuthServiceInterface
 	ctx          context.Context
 	logger       logger.Logger
 	notification *notification.NotificationManager
 }
 
-// NewAuthController creates a new AuthController with the given App.
-//
-// This function creates a new AuthController with the given App and returns a pointer to it.
-//
-// The App passed to this function should be a valid App that has been created with storage.NewApp.
 func NewAuthController(
-	store *shared_storage.Store,
 	ctx context.Context,
-	l logger.Logger,
+	logger logger.Logger,
 	notificationManager *notification.NotificationManager,
+	authService service.AuthService,
 ) *AuthController {
 	return &AuthController{
-		validator: validation.NewValidator(),
-		service: service.NewAuthService(
-			&storage.UserStorage{DB: store.DB, Ctx: ctx},
-			l,
-			permissions_service.NewPermissionService(store, ctx, l, &permissions_storage.PermissionStorage{DB: store.DB, Ctx: ctx}),
-			role_service.NewRoleService(store, ctx, l, &role_storage.RoleStorage{DB: store.DB, Ctx: ctx}),
-			organization_service.NewOrganizationService(store, ctx, l, &organization_storage.OrganizationStore{DB: store.DB, Ctx: ctx}),
-			ctx),
+		validator:    validation.NewValidator(),
+		service:      &authService,
 		ctx:          ctx,
-		logger:       l,
+		logger:       logger,
 		notification: notificationManager,
 	}
 }
 
-// parseAndValidate parses and validates the request body.
-//
-// This method attempts to parse the request body into the provided 'req' interface
-// using the controller's validator. If parsing fails, an error response is sent
-// and the method returns false. It also validates the parsed request object and
-// returns false if validation fails. If both operations are successful, it returns true.
-//
-// Parameters:
-//
-//	w - the HTTP response writer to send error responses.
-//	r - the HTTP request containing the body to parse.
-//	req - the interface to populate with the parsed request body.
-//
-// Returns:
-//
-//	bool - true if parsing and validation succeed, false otherwise.
 func (c *AuthController) parseAndValidate(w http.ResponseWriter, r *http.Request, req any) bool {
 	if err := c.validator.ValidateRequest(req); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
@@ -81,7 +46,6 @@ func (c *AuthController) parseAndValidate(w http.ResponseWriter, r *http.Request
 	}
 
 	user := utils.GetUser(w, r)
-
 	if err := c.validator.AccessValidator(w, r, user); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
 		return false
@@ -90,22 +54,25 @@ func (c *AuthController) parseAndValidate(w http.ResponseWriter, r *http.Request
 	return true
 }
 
-// Notify sends a notification to the user for the given payload type.
-//
-// This method constructs a new NotificationPayload object with the given user and request data,
-// and sends it to the notification manager.
 func (c *AuthController) Notify(payloadType notification.NotificationPayloadType, user *shared_types.User, r *http.Request) {
-	c.notification.SendNotification(notification.NewNotificationPayload(
+	if r == nil {
+		return
+	}
+	notificationData := notification.NotificationAuthenticationData{
+		Email: user.Email,
+		NotificationBaseData: notification.NotificationBaseData{
+			IP:      r.RemoteAddr,
+			Browser: r.UserAgent(),
+		},
+		UserName: user.Username,
+	}
+
+	payload := notification.NewNotificationPayload(
 		payloadType,
 		user.ID.String(),
-		notification.NotificationAuthenticationData{
-			Email: user.Email,
-			NotificationBaseData: notification.NotificationBaseData{
-				IP:      r.RemoteAddr,
-				Browser: r.UserAgent(),
-			},
-			UserName: user.Username,
-		},
+		notificationData,
 		notification.NotificationCategoryAuthentication,
-	))
+	)
+
+	c.notification.SendNotification(payload)
 }

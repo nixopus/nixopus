@@ -24,7 +24,7 @@ type DeployRepository interface {
 	AddApplication(application *shared_types.Application) error
 	AddApplicationLogs(applicationLogs *shared_types.ApplicationLogs) error
 	AddApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
-	GetApplications(page int, pageSize int) ([]shared_types.Application, int, error)
+	GetApplications(page int, pageSize int, userID uuid.UUID) ([]shared_types.Application, int, error)
 	UpdateApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
 	GetApplicationById(id string) (shared_types.Application, error)
 	AddApplicationDeployment(deployment *shared_types.ApplicationDeployment) error
@@ -147,7 +147,7 @@ func (s *DeployStorage) AddApplicationLogs(applicationLogs *shared_types.Applica
 	return nil
 }
 
-func (s *DeployStorage) GetApplications(page, pageSize int) ([]shared_types.Application, int, error) {
+func (s *DeployStorage) GetApplications(page, pageSize int, userID uuid.UUID) ([]shared_types.Application, int, error) {
 	var applications []shared_types.Application
 
 	offset := (page - 1) * pageSize
@@ -167,6 +167,7 @@ func (s *DeployStorage) GetApplications(page, pageSize int) ([]shared_types.Appl
 		Order("created_at DESC").
 		Limit(pageSize).
 		Offset(offset).
+		Where("user_id = ?", userID).
 		Scan(s.Ctx)
 
 	if err != nil {

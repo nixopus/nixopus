@@ -1,43 +1,19 @@
 package validation
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
 	"net/http"
-	"path"
 
-	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-// RequestInfo encapsulates parsed request details
-type RequestInfo struct {
-	Path           string
-	Method         string
-	ResourceType   string
-	Action         string
-	SMTPID         string
-	OrganizationID uuid.UUID
-}
-
 // AccessValidator is the main entry point for access validation
-func (v *Validator) AccessValidator(w http.ResponseWriter, r *http.Request, user *shared_types.User) error {
-	reqInfo, err := parseRequest(r)
-	if err != nil {
-		return err
-	}
-
-	if reqInfo.SMTPID == "" && reqInfo.ResourceType == "smtp" &&
-		(reqInfo.Action == "read" || reqInfo.Action == "update" || reqInfo.Action == "delete") {
-		reqInfo.SMTPID = v.extractIDFromBody(r)
-	}
-
-	switch reqInfo.ResourceType {
+// Now takes pre-parsed resource type, action and user
+func (v *Validator) AccessValidator(resourceType, action string, user *shared_types.User) error {
+	switch resourceType {
 	case "smtp":
-		return v.validateSMTPAccess(reqInfo, user)
+		return v.validateSMTPAccess(action, user)
 	case "preferences":
 		return nil
 	default:
@@ -45,101 +21,79 @@ func (v *Validator) AccessValidator(w http.ResponseWriter, r *http.Request, user
 	}
 }
 
-// parseRequest extracts basic information from the HTTP request
-func parseRequest(r *http.Request) (*RequestInfo, error) {
-	info := &RequestInfo{
-		Path:   r.URL.Path,
-		Method: r.Method,
+// parseResourceAndAction extracts resource type and action from request
+// Kept as a helper for HTTP handlers
+func ParseResourceAndAction(r *http.Request) (string, string) {
+	var resourceType, action string
+
+	path := r.URL.Path
+	if path == "/api/v1/notification/smtp" || path == "/api/v1/notification/smtp/" {
+		resourceType = "smtp"
+	} else if path == "/api/v1/notification/preferences" || path == "/api/v1/notification/preferences/" {
+		resourceType = "preferences"
 	}
 
-	basePath := path.Base(r.URL.Path)
-	switch {
-	case path.Dir(r.URL.Path) == "/api/v1/notification" && basePath == "smtp":
-		info.ResourceType = "smtp"
-		switch r.Method {
-		case http.MethodGet:
-			info.Action = "read"
-		case http.MethodPost:
-			info.Action = "create"
-		case http.MethodPut:
-			info.Action = "update"
-		case http.MethodDelete:
-			info.Action = "delete"
-		}
-	case path.Dir(r.URL.Path) == "/api/v1/notification" && basePath == "preferences":
-		info.ResourceType = "preferences"
+	switch r.Method {
+	case http.MethodGet:
+		action = "read"
+	case http.MethodPost:
+		action = "create"
+	case http.MethodPut:
+		action = "update"
+	case http.MethodDelete:
+		action = "delete"
 	}
 
-	return info, nil
+	return resourceType, action
 }
 
-// extractIDFromBody attempts to extract ID from the request body
-func (v *Validator) extractIDFromBody(r *http.Request) string {
-	bodyBytes, err := io.ReadAll(r.Body)
-	if err != nil {
-		return ""
-	}
-
-	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-
-	var requestData map[string]interface{}
-	if err := json.Unmarshal(bodyBytes, &requestData); err != nil {
-		return ""
-	}
-
-	if idVal, ok := requestData["id"]; ok {
-		switch id := idVal.(type) {
-		case string:
-			return id
-		case map[string]interface{}:
-			if strID, ok := id["String"].(string); ok {
-				return strID
-			}
-		}
-	}
-
-	return ""
-}
-
-// validateSMTPAccess handles access validation for SMTP endpoints
-func (v *Validator) validateSMTPAccess(req *RequestInfo, user *shared_types.User) error {
-	switch req.Action {
-	case "create":
-		return v.validateCreateSMTPAccess(user)
-	case "read":
-		return v.validateReadSMTPAccess(req, user)
-	case "update":
-		return v.validateUpdateSMTPAccess(req, user)
-	case "delete":
-		return v.validateDeleteSMTPAccess(req, user)
-	default:
-		return notification.ErrInvalidRequestType
-	}
-}
-
-// validateCreateSMTPAccess checks if user can create SMTP configs
-func (v *Validator) validateCreateSMTPAccess(user *shared_types.User) error {
-	// Any authenticated user can create SMTP configs
+// validateSMTPAccess handles validation for SMTP endpoints with type safety
+func (v *Validator) validateSMTPAccess(action string, user *shared_types.User) error {
 	return nil
 }
 
-// validateReadSMTPAccess checks if user can read an SMTP config
-func (v *Validator) validateReadSMTPAccess(req *RequestInfo, user *shared_types.User) error {
-	if req.SMTPID == "" {
-		return notification.ErrMissingID
-	}
+// validateCreateSMTPAccess checks if user can create SMTP configs
+// Takes the parsed request directly instead of parsing it again
+func (v *Validator) ValidateCreateSMTPAccess(req notification.CreateSMTPConfigRequest, user *shared_types.User) error {
+	// Extract organization ID from request
+	orgID := req.OrganizationID
 
-	smtp, err := v.storage.GetSmtp(req.SMTPID)
+	// Check if user belongs to the organization
+	err := utils.CheckIfUserBelongsToOrganization(user.Organizations, orgID)
 	if err != nil {
 		return err
 	}
 
-	// if user is the creator of the SMTP config, they can read
-	if smtp.UserID == user.ID {
+	// Check user's role in the organization
+	role, err := utils.GetUserRoleInOrganization(user.OrganizationUsers, orgID)
+	if err != nil {
+		return err
+	}
+
+	// Only admin or member roles can create SMTP configs
+	if role == shared_types.RoleAdmin || role == shared_types.RoleMember {
 		return nil
 	}
 
-	req.OrganizationID = smtp.OrganizationID
+	return notification.ErrPermissionDenied
+}
+
+// validateReadSMTPAccess checks if user can read an SMTP config
+// Takes the parsed request directly
+func (v *Validator) ValidateReadSMTPAccess(req notification.GetSMTPConfigRequest, user *shared_types.User) error {
+	if req.ID.String() == "" {
+		return notification.ErrMissingID
+	}
+
+	smtp, err := v.storage.GetSmtp(req.ID.String())
+	if err != nil {
+		return err
+	}
+
+	// If user is the creator of the SMTP config, they can read
+	if smtp.UserID == user.ID {
+		return nil
+	}
 
 	// Check if the user belongs to the domain's organization
 	err = utils.CheckIfUserBelongsToOrganization(user.Organizations, smtp.OrganizationID)
@@ -152,7 +106,8 @@ func (v *Validator) validateReadSMTPAccess(req *RequestInfo, user *shared_types.
 	if err != nil {
 		return err
 	}
-	// Any role (viewer, member, admin) can list domains in their organization
+
+	// Any role (viewer, member, admin) can view SMTP configs in their organization
 	if role == shared_types.RoleViewer || role == shared_types.RoleMember || role == shared_types.RoleAdmin {
 		return nil
 	}
@@ -161,20 +116,27 @@ func (v *Validator) validateReadSMTPAccess(req *RequestInfo, user *shared_types.
 }
 
 // validateUpdateSMTPAccess checks if user can update an SMTP config
-func (v *Validator) validateUpdateSMTPAccess(req *RequestInfo, user *shared_types.User) error {
-	if req.SMTPID == "" {
+// Takes the parsed request directly
+func (v *Validator) ValidateUpdateSMTPAccess(req notification.UpdateSMTPConfigRequest, user *shared_types.User) error {
+	// Validate SMTP ID
+	if req.ID.String() == "" {
 		return notification.ErrMissingID
 	}
 
-	smtp, err := v.storage.GetSmtp(req.SMTPID)
+	// Get SMTP config
+	smtp, err := v.storage.GetSmtp(req.ID.String())
 	if err != nil {
 		return err
 	}
-	req.OrganizationID = smtp.OrganizationID
 
 	// If user is the creator, they can update
 	if smtp.UserID == user.ID {
 		return nil
+	}
+
+	// Check if organization IDs match
+	if req.OrganizationID != smtp.OrganizationID {
+		return notification.ErrAccessDenied
 	}
 
 	// Check if user is in the same organization
@@ -198,20 +160,21 @@ func (v *Validator) validateUpdateSMTPAccess(req *RequestInfo, user *shared_type
 }
 
 // validateDeleteSMTPAccess checks if user can delete an SMTP config
-func (v *Validator) validateDeleteSMTPAccess(req *RequestInfo, user *shared_types.User) error {
-	if req.SMTPID == "" {
+// Takes the parsed request directly
+func (v *Validator) ValidateDeleteSMTPAccess(req notification.DeleteSMTPConfigRequest, user *shared_types.User) error {
+	// Validate SMTP ID
+	if req.ID.String() == "" {
 		return notification.ErrMissingID
 	}
 
-	smtp, err := v.storage.GetSmtp(req.SMTPID)
+	smtp, err := v.storage.GetSmtp(req.ID.String())
 	if err != nil {
 		return err
 	}
-	req.OrganizationID = smtp.OrganizationID
 
-	// User must be the creator of the SMTP configuration
-	if smtp.UserID != user.ID {
-		return notification.ErrPermissionDenied
+	// Check if user is the creator of the SMTP configuration
+	if smtp.UserID == user.ID {
+		return nil
 	}
 
 	// If not creator, check if user is in the same organization

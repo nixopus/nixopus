@@ -10,16 +10,14 @@ interface FileManagerLayoutsProps {
 function FileManagerLayouts({ layout, setLayout }: FileManagerLayoutsProps) {
   return (
     <div>
-      <div>
-        <Button
-          variant={'outline'}
-          size="icon"
-          onClick={() => setLayout(layout === 'grid' ? 'list' : 'grid')}
-          className="mr-2"
-        >
-          {layout === 'list' ? <Grid className="h-4 w-4" /> : <List className="h-4 w-4" />}
-        </Button>
-      </div>
+      <Button
+        variant={'outline'}
+        size="icon"
+        onClick={() => setLayout(layout === 'grid' ? 'list' : 'grid')}
+        className="mr-2"
+      >
+        {layout === 'list' ? <Grid className="h-4 w-4" /> : <List className="h-4 w-4" />}
+      </Button>
     </div>
   );
 }
