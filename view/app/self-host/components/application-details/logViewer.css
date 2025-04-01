@@ -39,3 +39,14 @@
     word-wrap: break-word !important;
   }
 }
+
+.search-result {
+  background-color: rgba(255, 255, 0, 0.3);
+  border-bottom: 1px solid #ffd700;
+  position: absolute;
+}
+
+.search-result.active {
+  background-color: rgba(255, 255, 0, 0.6);
+  border-bottom: 2px solid #ffd700;
+}

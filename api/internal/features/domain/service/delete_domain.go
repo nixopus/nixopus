@@ -19,17 +19,34 @@ func (s *DomainsService) DeleteDomain(domainID string) error {
 		return types.ErrInvalidDomainID
 	}
 
-	existing_domain, err := s.storage.GetDomain(domainID)
+	tx, err := s.storage.BeginTx()
 	if err != nil {
+		s.logger.Log(logger.Error, "failed to start transaction", err.Error())
+		return types.ErrFailedToDeleteDomain
+	}
+	defer tx.Rollback()
+
+	txStorage := s.storage.WithTx(tx)
+
+	existing_domain, err := txStorage.GetDomain(domainID)
+	if err != nil {
+		s.logger.Log(logger.Error, "error while retrieving domain", err.Error())
 		return err
 	}
 
 	if existing_domain == nil {
+		s.logger.Log(logger.Error, "domain not found", domainID)
 		return types.ErrDomainNotFound
 	}
 
-	if err := s.storage.DeleteDomain(existing_domain); err != nil {
+	if err := txStorage.DeleteDomain(existing_domain); err != nil {
+		s.logger.Log(logger.Error, "error while deleting domain", err.Error())
 		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		s.logger.Log(logger.Error, "failed to commit transaction", err.Error())
+		return types.ErrFailedToDeleteDomain
 	}
 
 	return nil

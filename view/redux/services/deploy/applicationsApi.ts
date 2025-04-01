@@ -3,15 +3,17 @@ import { baseQueryWithReauth } from '@/redux/base-query';
 import { DEPLOY } from '@/redux/api-conf';
 import {
   Application,
+  ApplicationLogsResponse,
   CreateApplicationRequest,
   ReDeployApplicationRequest,
-  UpdateDeploymentRequest
+  UpdateDeploymentRequest,
+  ApplicationDeployment
 } from '@/redux/types/applications';
 
 export const deployApi = createApi({
   reducerPath: 'deployApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Deploy'],
+  tagTypes: ['Applications', 'Deploy'],
   endpoints: (builder) => ({
     getApplications: builder.query<
       { applications: Application[]; total_count: number },
@@ -113,6 +115,64 @@ export const deployApi = createApi({
       transformResponse: (response: { data: null }) => {
         return response.data;
       }
+    }),
+    getApplicationLogs: builder.query<ApplicationLogsResponse, { 
+      id: string;
+      page: number;
+      page_size: number;
+      level?: string;
+      search_term?: string;
+      start_time?: string;
+      end_time?: string;
+    }>({
+      query: ({ id, page, page_size, level, search_term, start_time, end_time }) => ({
+        url: DEPLOY.GET_APPLICATION_LOGS.replace('{application_id}', id),
+        method: 'GET',
+        params: {
+          page,
+          page_size,
+          level,
+          search_term,
+          start_time,
+          end_time
+        }
+      }),
+      providesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: ApplicationLogsResponse }) => {
+        return response.data;
+      }
+    }),
+    getDeploymentLogs: builder.query<ApplicationLogsResponse, {
+      id: string;
+      page: number;
+      page_size: number;
+      search_term?: string;
+    }>({
+      query: ({ id, page, page_size, search_term }) => ({
+        url: DEPLOY.GET_DEPLOYMENT_LOGS.replace('{deployment_id}', id),
+        method: 'GET',
+        params: {
+          page,
+          page_size,
+          search_term
+        }
+      }),
+      transformResponse: (response: { data: ApplicationLogsResponse }) => response.data,
+      providesTags: (result, error, arg) => [{ type: 'Deploy' as const, id: arg.id }]
+    }),
+    getApplicationDeployments: builder.query<{ deployments: ApplicationDeployment[]; total_count: number }, { 
+      id: string;
+      page: number;
+      limit: number;
+    }>({
+      query: ({ id, page, limit }) => ({
+        url: `${DEPLOY.GET_APPLICATION_DEPLOYMENTS}?id=${id}&page=${page}&limit=${limit}`,
+        method: 'GET'
+      }),
+      providesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: { deployments: ApplicationDeployment[]; total_count: number } }) => {
+        return response.data;
+      }
     })
   })
 });
@@ -126,5 +186,8 @@ export const {
   useGetApplicationDeploymentByIdQuery,
   useDeleteApplicationMutation,
   useRollbackApplicationMutation,
-  useRestartApplicationMutation
+  useRestartApplicationMutation,
+  useGetApplicationLogsQuery,
+  useGetDeploymentLogsQuery,
+  useGetApplicationDeploymentsQuery
 } = deployApi;

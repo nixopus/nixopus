@@ -36,7 +36,10 @@ function FormInputField({
         rules={{
           validate: validator
             ? {
-                custom: (value: string) => validator(value) || `Invalid ${name} format`
+                custom: (value: string) => {
+                  if (!value) return true;
+                  return validator(value) || `Invalid ${name} format`;
+                }
               }
             : undefined
         }}

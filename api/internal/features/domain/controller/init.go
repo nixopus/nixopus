@@ -56,21 +56,9 @@ func NewDomainsController(
 //
 //	bool - true if parsing and validation succeed, false otherwise.
 func (c *DomainsController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) bool {
-	user := utils.GetUser(w, r)
-
-	if user == nil {
-		return false
-	}
-
 	if err := c.validator.ValidateRequest(req); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
-		return false
-	}
-
-	if err := c.validator.AccessValidator(w, r, user, req); err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusForbidden)
 		return false
 	}
 

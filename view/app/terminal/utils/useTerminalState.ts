@@ -4,9 +4,9 @@ export const useTerminalState = () => {
   const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const savedState = localStorage.getItem('terminalOpen');
-      return savedState !== null ? JSON.parse(savedState) : false;
+      return savedState !== null ? JSON.parse(savedState) : true;
     }
-    return false;
+    return true;
   });
 
   const toggleTerminal = useCallback((): void => {

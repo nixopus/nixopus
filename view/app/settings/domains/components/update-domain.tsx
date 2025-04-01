@@ -21,16 +21,7 @@ import {
 } from '@/redux/services/settings/domainsApi';
 import { Domain } from '@/redux/types/domain';
 import { useAppSelector } from '@/redux/hooks';
-
-const domainFormSchema = z.object({
-  domainName: z
-    .string()
-    .min(3, { message: 'Domain name must be at least 3 characters.' })
-    .refine(
-      (domain) => /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/.test(domain),
-      { message: 'Please enter a valid domain name (e.g., example.com).' }
-    )
-});
+import { useTranslation } from '@/hooks/use-translation';
 
 interface UpdateDomainDialogProps {
   open: boolean;
@@ -40,8 +31,28 @@ interface UpdateDomainDialogProps {
 }
 
 function UpdateDomainDialog({ open, setOpen, id, data }: UpdateDomainDialogProps) {
+  const { t } = useTranslation();
   const [createDomain, { isLoading }] = useCreateDomainMutation();
   const [updateDomain, { isLoading: isUpdating }] = useUpdateDomainMutation();
+
+  const domainFormSchema = z.object({
+    domainName: z
+      .string()
+      .min(3, { message: t('settings.domains.update.form.validation.minLength') })
+      .refine(
+        (domain) => {
+          // Allow wildcard domains (e.g., *.example.com)
+          if (domain.startsWith('*.')) {
+            const baseDomain = domain.substring(2);
+            return /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/.test(baseDomain);
+          }
+          // Regular domain validation
+          return /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/.test(domain);
+        },
+        { message: t('settings.domains.update.form.validation.invalidFormat') }
+      )
+  });
+
   const form = useForm({
     resolver: zodResolver(domainFormSchema),
     defaultValues: {
@@ -56,16 +67,15 @@ function UpdateDomainDialog({ open, setOpen, id, data }: UpdateDomainDialogProps
         await createDomain({
           name: data.domainName,
           organization_id: activeOrganization?.id || ''
-        });
+        }).unwrap();
       } else {
-        await updateDomain({ name: data.domainName, id: id });
+        await updateDomain({ name: data.domainName, id: id }).unwrap();
       }
-      toast.success('Domain added successfully');
-    } catch (error) {
-      toast.error('Failed to add domain');
-    } finally {
+      toast.success(t('settings.domains.update.success'));
       form.reset();
       setOpen(false);
+    } catch (error) {
+      toast.error(t('settings.domains.update.error'));
     }
   }
 
@@ -73,13 +83,15 @@ function UpdateDomainDialog({ open, setOpen, id, data }: UpdateDomainDialogProps
     <Dialog open={open} onOpenChange={setOpen}>
       {!id && (
         <DialogTrigger asChild>
-          <Button variant="outline">Add Domain</Button>
+          <Button variant="outline">{t('settings.domains.update.addButton')}</Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{!id ? 'Add Domain' : 'Update Domain'}</DialogTitle>
-          <DialogDescription>Domain will help to deploy your applications</DialogDescription>
+          <DialogTitle>
+            {!id ? t('settings.domains.update.addTitle') : t('settings.domains.update.updateTitle')}
+          </DialogTitle>
+          <DialogDescription>{t('settings.domains.update.description')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -89,7 +101,7 @@ function UpdateDomainDialog({ open, setOpen, id, data }: UpdateDomainDialogProps
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input placeholder="example.com" {...field} />
+                    <Input placeholder={t('settings.domains.update.form.placeholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -104,10 +116,12 @@ function UpdateDomainDialog({ open, setOpen, id, data }: UpdateDomainDialogProps
                   setOpen(false);
                 }}
               >
-                Cancel
+                {t('settings.domains.update.buttons.cancel')}
               </Button>
               <Button type="submit" disabled={isLoading || isUpdating}>
-                {isLoading || isUpdating ? 'Saving...' : 'Save'}
+                {isLoading || isUpdating
+                  ? t('settings.domains.update.buttons.saving')
+                  : t('settings.domains.update.buttons.save')}
               </Button>
             </DialogFooter>
           </form>

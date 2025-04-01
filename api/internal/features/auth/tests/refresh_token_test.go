@@ -1,47 +1,96 @@
 package tests
 
 import (
-	"context"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/auth/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/testutils"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRefreshToken(t *testing.T) {
-	table := []struct {
-		token string
+	setup := testutils.NewTestSetup()
+
+	registerRequest := types.RegisterRequest{
+		Email:    "test@example.com",
+		Password: "password123",
+		Username: "testuser",
+		Type:     "viewer",
+	}
+
+	registerResponse, err := setup.AuthService.Register(registerRequest, "app_user")
+	assert.NoError(t, err)
+
+	tests := []struct {
+		name          string
+		request       types.RefreshTokenRequest
+		expectError   bool
+		errorContains string
 	}{
-		{"test-refresh-token-nixopus_user1@nixopus.com"},
-		{"test-refresh-token-nixopus_user2@nixopus.com"},
-		{"test-refresh-token-nixopus_user3@nixopus.com"},
+		{
+			name: "successful token refresh",
+			request: types.RefreshTokenRequest{
+				RefreshToken: registerResponse.RefreshToken,
+			},
+			expectError: false,
+		},
+		{
+			name: "invalid refresh token",
+			request: types.RefreshTokenRequest{
+				RefreshToken: "invalid_token",
+			},
+			expectError:   true,
+			errorContains: types.ErrRefreshTokenAlreadyRevoked.Error(),
+		},
+		{
+			name: "empty refresh token",
+			request: types.RefreshTokenRequest{
+				RefreshToken: "",
+			},
+			expectError:   true,
+			errorContains: types.ErrRefreshTokenIsRequired.Error(),
+		},
 	}
 
-	mockStorage := NewMockAuthStorage()
-	mockLogger := logger.NewLogger()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			response, err := setup.AuthService.RefreshToken(tt.request)
 
-	for _, test := range table {
-		userId := uuid.New().String()
-		refreshToken := CreateTestRefreshToken(
-			uuid.New().String(),
-			userId,
-			test.token,
-			30)
-		user := CreateTestUser(userId, "nixopus_user1@nixopus.com", "password")
-		mockStorage.WithGetRefreshToken(test.token, refreshToken, nil)
-		mockStorage.WithUserByID(userId, user, nil)
-		mockStorage.WithRevokeRefreshToken(test.token, nil)
-		mockStorage.WithCreateRefreshToken(user.ID, refreshToken, nil)
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errorContains)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.NotEmpty(t, response.AccessToken)
+			assert.NotEmpty(t, response.RefreshToken)
+			assert.NotEmpty(t, response.User.ID)
+			assert.Equal(t, registerRequest.Email, response.User.Email)
+		})
+	}
+}
+
+func TestRefreshTokenWithRevokedToken(t *testing.T) {
+	setup := testutils.NewTestSetup()
+
+	registerRequest := types.RegisterRequest{
+		Email:    "test@example.com",
+		Password: "password123",
+		Username: "testuser",
+		Type:     "viewer",
 	}
 
-	authService := service.NewAuthService(mockStorage, mockLogger, nil, nil, nil, context.Background())
+	registerResponse, err := setup.AuthService.Register(registerRequest, "app_user")
+	assert.NoError(t, err)
 
-	for _, test := range table {
-		_, err := authService.RefreshToken(types.RefreshTokenRequest{RefreshToken: test.token})
-		if err != nil {
-			t.Errorf("Error refreshing token: %v", err)
-		}
-	}
+	err = setup.AuthService.Logout(registerResponse.RefreshToken)
+	assert.NoError(t, err)
+
+	_, err = setup.AuthService.RefreshToken(types.RefreshTokenRequest{
+		RefreshToken: registerResponse.RefreshToken,
+	})
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), types.ErrRefreshTokenAlreadyRevoked.Error())
 }

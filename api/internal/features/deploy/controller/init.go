@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
@@ -63,7 +65,15 @@ func NewDeployController(
 //
 //	bool - true if parsing and validation succeed, false otherwise.
 func (c *DeployController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) bool {
-	if err := c.validator.ParseRequestBody(r, r.Body, req); err != nil {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
+		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
+		return false
+	}
+	defer r.Body.Close()
+
+	if err := c.validator.ParseRequestBody(r, io.NopCloser(bytes.NewReader(body)), req); err != nil {
 		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
 		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
 		return false

@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import DashboardPageHeader from '@/components/dashboard-page-header';
+import DashboardPageHeader from '@/components/layout/dashboard-page-header';
 
 function Page() {
   return (

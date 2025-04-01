@@ -28,14 +28,6 @@ func (c *DomainsController) GetDomains(f fuego.ContextNoBody) (*shared_types.Res
 		}
 	}
 
-	if err := c.validator.AccessValidator(w, r, user, nil); err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
-		return nil, fuego.HTTPError{
-			Err:    err,
-			Status: http.StatusForbidden,
-		}
-	}
-
 	c.logger.Log(logger.Info, "fetching domains", fmt.Sprintf("organization_id: %s", organization_id))
 
 	domains, err := c.service.GetDomains(organization_id, user.ID)

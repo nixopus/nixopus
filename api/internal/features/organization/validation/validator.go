@@ -136,16 +136,6 @@ func (v *Validator) validateDelete(req types.DeleteOrganizationRequest) error {
 		return err
 	}
 
-	organization, err := v.storage.GetOrganization(req.ID)
-
-	if err != nil {
-		return err
-	}
-
-	if organization == nil {
-		return types.ErrOrganizationNotFound
-	}
-
 	return nil
 }
 

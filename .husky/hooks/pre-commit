@@ -13,4 +13,6 @@ cd "$ROOTDIR"
 cd view 
 yarn format
 yarn run build
+
+cd "$ROOTDIR"
 git add -u .

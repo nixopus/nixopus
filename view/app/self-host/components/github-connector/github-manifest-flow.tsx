@@ -11,6 +11,7 @@ import {
   GitHubAppStatus
 } from '@/redux/types/github';
 import { useCreateGithubConnectorMutation } from '@/redux/services/connector/githubConnectorApi';
+import { useTranslation } from '@/hooks/use-translation';
 
 const adjectives = [
   'cosmic',
@@ -52,6 +53,7 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
   onSuccess,
   onError
 }) => {
+  const { t } = useTranslation();
   const [appName, setAppName] = useState<string>(generateRandomName());
   const [status, setStatus] = useState<GitHubAppStatus>('initial');
   const [error, setError] = useState<string | null>(null);
@@ -156,26 +158,28 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Github size={24} />
-          Create GitHub App
+          {t('selfHost.githubManifest.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {status === 'initial' && (
           <>
             <div className="space-y-2">
-              <label className="text-sm font-medium">App Name</label>
+              <label className="text-sm font-medium">
+                {t('selfHost.githubManifest.appName.label')}
+              </label>
               <div className="flex gap-2">
                 <Input
                   value={appName}
                   onChange={(e) => setAppName(e.target.value)}
-                  placeholder="Enter app name"
+                  placeholder={t('selfHost.githubManifest.appName.placeholder')}
                   className="flex-1"
                 />
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={() => setAppName(generateRandomName())}
-                  title="Generate new name"
+                  title={t('selfHost.githubManifest.appName.generate')}
                 >
                   <RefreshCw size={16} />
                 </Button>
@@ -188,7 +192,7 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
             )}
 
             <Button className="w-full" onClick={createManifestForm}>
-              Create GitHub App
+              {t('selfHost.githubManifest.createButton')}
             </Button>
           </>
         )}
@@ -198,8 +202,8 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
             <Loader2 className="h-8 w-8 animate-spin" />
             <p>
               {status === 'redirecting'
-                ? 'Redirecting to GitHub...'
-                : 'Setting up your GitHub App...'}
+                ? t('selfHost.githubManifest.status.redirecting')
+                : t('selfHost.githubManifest.status.converting')}
             </p>
           </div>
         )}
@@ -207,7 +211,7 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
         {status === 'success' && (
           <Alert>
             <AlertDescription className="text-green-600">
-              GitHub App created successfully!
+              {t('selfHost.githubManifest.status.success')}
             </AlertDescription>
           </Alert>
         )}

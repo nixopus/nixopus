@@ -1,6 +1,8 @@
 package validation
 
 import (
+	"net"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -107,4 +109,36 @@ func (v *Validator) ValidateDeleteDomainRequest(req types.DeleteDomainRequest) e
 	}
 
 	return nil
+}
+
+// ValidateDomainBelongsToServer checks if the domain belongs to the current server by resolving its IP
+func (v *Validator) ValidateDomainBelongsToServer(domainName string) error {
+	serverHost := os.Getenv("SSH_HOST")
+	if serverHost == "" {
+		var err error
+		serverHost, err = os.Hostname()
+		if err != nil {
+			return types.ErrDomainDoesNotBelongToServer
+		}
+	}
+
+	domainIPs, err := net.LookupIP(domainName)
+	if err != nil {
+		return types.ErrDomainDoesNotBelongToServer
+	}
+
+	serverIPs, err := net.LookupIP(serverHost)
+	if err != nil {
+		return types.ErrDomainDoesNotBelongToServer
+	}
+
+	for _, domainIP := range domainIPs {
+		for _, serverIP := range serverIPs {
+			if domainIP.Equal(serverIP) {
+				return nil
+			}
+		}
+	}
+
+	return types.ErrDomainDoesNotBelongToServer
 }

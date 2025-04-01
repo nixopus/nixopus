@@ -3,20 +3,6 @@
 ## Introduction
 The file manager in Nixopus is unique and is inspired by many file managers on the internet, with added customizability.
 
-## Demo
-<div style="position:relative;padding-bottom:56.25%;padding-top:30px;height:0;overflow:hidden;">
-    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="https://www.youtube.com/embed/HQZKUge9nw0" title="i created my own protocol for my games..." frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-</div>
-
-
-
-## Gallery
-
-<div class="gallery">
-    <img src="./file-manager.png" alt="An image">
-</div>
-
-
 ## Key Bindings
 The file manager has the following key bindings:
 

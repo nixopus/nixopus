@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Github } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface GithubInstallProps {
   appSlug: string;
@@ -10,6 +11,8 @@ interface GithubInstallProps {
 }
 
 const GithubInstaller = ({ appSlug, organization, callbackUrl }: GithubInstallProps) => {
+  const { t } = useTranslation();
+
   const handleConnectGithub = () => {
     const baseUrl = 'https://github.com';
     const installPath = organization
@@ -28,19 +31,19 @@ const GithubInstaller = ({ appSlug, organization, callbackUrl }: GithubInstallPr
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Github size={24} />
-          Install GitHub App
+          {t('selfHost.githubInstaller.title')}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <p className="mb-4 text-sm text-muted-foreground">
-          Let's connect to the app we just created
+          {t('selfHost.githubInstaller.description')}
         </p>
         <Button className="w-full" onClick={handleConnectGithub}>
-          Connect GitHub
+          {t('selfHost.githubInstaller.connectButton')}
         </Button>
       </CardContent>
       <CardFooter className="text-xs text-muted-foreground/40">
-        <p>By connecting, you agree to our Terms of Service and Privacy Policy.</p>
+        <p>{t('selfHost.githubInstaller.terms')}</p>
       </CardFooter>
     </Card>
   );

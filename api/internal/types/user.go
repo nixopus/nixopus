@@ -10,19 +10,21 @@ import (
 
 type User struct {
 	bun.BaseModel     `bun:"table:users,alias:u" swaggerignore:"true"`
-	ID                uuid.UUID           `json:"id" bun:"id,pk,type:uuid"`
-	Username          string              `json:"username" bun:"username,notnull"`
-	Email             string              `json:"email" bun:"email,unique,notnull"`
-	Password          string              `json:"-" bun:"password,notnull"`
-	Avatar            string              `json:"avatar" bun:"avatar"`
-	CreatedAt         time.Time           `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
-	UpdatedAt         time.Time           `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
-	DeletedAt         *time.Time          `json:"deleted_at,omitempty" bun:"deleted_at"`
-	IsVerified        bool                `json:"is_verified" bun:"is_verified,notnull,default:false"`
-	ResetToken        string              `json:"-" bun:"reset_token"`
-	Type              string              `json:"type" bun:"type,notnull,default:'app_user'"`
-	Organizations     []Organization      `json:"organizations,omitempty" bun:"m2m:organization_users,join:User=Organization"`
-	OrganizationUsers []OrganizationUsers `json:"organization_users,omitempty" bun:"m2m:organization_users,join:User=Organization"`
+	ID                uuid.UUID            `json:"id" bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
+	Username          string               `json:"username" bun:"username,type:text,notnull"`
+	Email             string               `json:"email" bun:"email,type:text,notnull,unique"`
+	Password          string               `json:"-" bun:"password,type:text,notnull"`
+	Avatar            string               `json:"avatar" bun:"avatar,type:text"`
+	CreatedAt         time.Time            `json:"created_at" bun:"created_at,type:timestamp,notnull,default:now()"`
+	UpdatedAt         time.Time            `json:"updated_at" bun:"updated_at,type:timestamp,notnull,default:now()"`
+	DeletedAt         *time.Time           `json:"deleted_at,omitempty" bun:"deleted_at"`
+	IsVerified        bool                 `json:"is_verified" bun:"is_verified,type:boolean,notnull,default:false"`
+	ResetToken        string               `json:"-" bun:"reset_token"`
+	Type              string               `json:"type" bun:"type,type:text,notnull"`
+	TwoFactorEnabled  bool                 `json:"two_factor_enabled" bun:"two_factor_enabled,type:boolean,notnull,default:false"`
+	TwoFactorSecret   string               `json:"two_factor_secret" bun:"two_factor_secret,type:text"`
+	Organizations     []*Organization      `json:"organizations,omitempty" bun:"m2m:organization_users,join:User=Organization"`
+	OrganizationUsers []*OrganizationUsers `json:"organization_users,omitempty" bun:"m2m:organization_users,join:User=Organization"`
 }
 
 type RefreshToken struct {
@@ -72,8 +74,14 @@ func NewUser(email string, password string, username string, avatar string, role
 }
 
 var (
-	ErrFailedToDecodeRequest           = errors.New("failed to decode request")
-	ErrFailedToGetUserFromContext      = errors.New("failed to get user from context")
-	ErrUserDoesNotBelongToOrganization = errors.New("user does not belong to organization")
-	ErrNoRoleAssigned                  = errors.New("no role assigned")
+	ErrFailedToDecodeRequest              = errors.New("failed to decode request")
+	ErrFailedToGetUserFromContext         = errors.New("failed to get user from context")
+	ErrFailedToGetOrganizationFromContext = errors.New("failed to get organization from context")
+	ErrUserDoesNotBelongToOrganization    = errors.New("user does not belong to organization")
+	ErrNoRoleAssigned                     = errors.New("no role assigned")
+)
+
+const (
+	UserTypeAdmin = "admin"
+	UserTypeUser  = "app_user"
 )

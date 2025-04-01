@@ -1,5 +1,6 @@
-import { SortOption } from '@/components/sort-selector';
+import { SortOption } from '@/components/ui/sort-selector';
 import { useSearchable } from '@/hooks/use-searchable';
+import { useAppSelector } from '@/redux/hooks';
 import {
   useGetAllGithubConnectorQuery,
   useUpdateGithubConnectorMutation
@@ -60,6 +61,7 @@ function useGetDeployedApplications() {
   );
   const totalPages = applications?.total_count ? Math.ceil(applications.total_count / limit) : 1;
   const ITEMS_PER_PAGE = React.useMemo(() => 9, []);
+  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
 
   const paginatedApplications = React.useMemo(
     () =>
@@ -78,6 +80,12 @@ function useGetDeployedApplications() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, sortConfig]);
+
+  useEffect(() => {
+    if (activeOrg) {
+      GetApplications();
+    }
+  }, [activeOrg]);
 
   const onSortChange = (newSort: SortOption<Application>) => {
     handleSortChange(newSort.value as keyof Application);

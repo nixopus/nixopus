@@ -1,0 +1,46 @@
+# API related changes
+nixopus-api:
+  - api/**
+  - '**/*.go'
+  - '**/go.mod'
+  - '**/go.sum'
+
+# Frontend related changes
+nixopus-view:
+  - view/**
+  - '**/*.ts'
+  - '**/*.tsx'
+  - '**/*.js'
+  - '**/*.jsx'
+  - '**/package.json'
+  - '**/package-lock.json'
+
+# Documentation changes
+nixopus-documentation:
+  - '**/*.md'
+  - '**/*.rst'
+  - '**/*.txt'
+  - '**/docs/**'
+
+# CI/CD changes
+nixopus-ci:
+  - '.github/workflows/**'
+  - '.github/**/*.yml'
+  - '.github/**/*.yaml'
+
+# Docker related changes
+nixopus-docker:
+  - '**/Dockerfile*'
+  - '**/docker-compose*.yml'
+  - '**/.dockerignore'
+
+# Environment configuration
+nixopus-config:
+  - '**/.env*'
+
+# Test related changes
+nixopus-test:
+  - '**/*_test.go'
+  - '**/tests/**'
+  - '**/test/**'
+  - '**/*.test.*' 

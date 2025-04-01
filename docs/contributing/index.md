@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Nixopus! This guide will help you
 
 1. [Code of Conduct](#code-of-conduct)
 2. [Development Setup](#development-setup)
-   - [Using Dev Container](#using-dev-container)
+   - [Using Docker](#using-docker)
    - [Manual Setup](#manual-setup)
 3. [Running the Application](#running-the-application)
 4. [Making Changes](#making-changes)
@@ -20,146 +20,192 @@ Thank you for your interest in contributing to Nixopus! This guide will help you
 Before contributing, please review and agree to our [Code of Conduct](/code-of-conduct/index.md). We're committed to maintaining a welcoming and inclusive community.
 
 ## Development Setup
-### Using Dev Container
 
-For a quick and easy setup, you can use the provided Dev Container configuration.
-This method requires VS Code and Docker to be installed on your system.
+### Using Docker
 
-1. Click [here](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/nixopus/nixopus) to clone the repository and open it in a Dev Container.
-2. VS Code will automatically install the Dev Containers extension if needed, clone the source code into a container volume, and spin up a dev container for use.
+For a quick and easy setup, you can use Docker and Docker Compose:
 
-The Dev Container is configured with all necessary dependencies and tools.
-Once it's ready, you can start developing right away.
+1. Clone the repository:
+```bash
+git clone https://github.com/nixopus/nixopus.git
+cd nixopus
+```
+
+2. Copy the environment sample file:
+```bash
+cp .env.sample .env
+```
+
+3. Update the environment variables in `.env` as needed. Key variables include:
+```bash
+# API Configuration
+API_PORT=9999
+DB_NAME=postgres
+USERNAME=postgres
+PASSWORD=12344
+HOST_NAME=nixopus-db
+DB_PORT=5432
+SSL_MODE=disable
+
+# SSH Configuration (if needed)
+SSH_HOST=localhost
+SSH_PORT=22
+SSH_USER=root
+SSH_PASSWORD=1234
+
+# Redis Configuration
+REDIS_PORT=6379
+
+# Test Database Configuration
+TEST_DB_PORT=5433
+TEST_DB_USERNAME=nixopus
+TEST_DB_PASSWORD=nixopus
+TEST_DB_NAME=nixopus_test
+
+# View Configuration
+NEXT_PUBLIC_PORT=3000
+NEXT_PUBLIC_BASE_URL=http://localhost:9999/api
+```
+
+4. Start all services:
+```bash
+docker-compose up -d
+```
+
+This will start:
+- `nixopus-api`: The main API service (port 9999)
+- `nixopus-db`: PostgreSQL database (port 5432)
+- `nixopus-redis`: Redis cache (port 6379)
+- `nixopus-test-db`: Test database (port 5433)
+- `nixopus-view`: Frontend view service (port 3000)
+
+5. Check service status:
+```bash
+docker-compose ps
+```
 
 ### Manual Setup
 
-If you prefer to set up your development environment manually, follow these steps:
+If you prefer to set up your development environment manually:
 
-1. Clone the repository and switch to nixopus directory:
-
-    `git clone https://github.com/nixopus/nixopus.git` 
-
-    `cd nixopus`
-
-2. Install [Node.js](https://nodejs.org/en/download/package-manager) (version 18.10 or newer) and [yarn](https://classic.yarnpkg.com/lang/en/docs/install/) (version 4.5.0 or newer) .
-
-3. Install Rust and Cargo (latest stable version) click [here](https://doc.rust-lang.org/cargo/getting-started/installation.html).
-
-4. Install PostgreSQL and libpq-dev:
-
-    `sudo apt-get update && sudo apt-get install -y postgresql libpq-dev`
-
-5. Install Diesel CLI:
-
-    `cargo install diesel_cli --no-default-features --features postgres`
-
-6. Install cargo-watch:
-
-    `cargo install cargo-watch`
-
-7. Set up the required environment variables (you may want to add these to your `.env` file):
-```
-export POSTGRES_DB=mydb
-export POSTGRES_USER=myuser
-export POSTGRES_PASSWORD=mypassword
-export DATABASE_URL=postgres://myuser:mypassword@domain:port/mydb
-export CORE_PORT=8080
-export RUST_LOG=info
-export NEXT_PUBLIC_API_URL=http://localhost:8080
-export JWT_SECRET=change_this_secret
-export SERVER_ADDR=0.0.0.0
-export SERVER_PORT=8080
-export FILE_STORAGE_PATH=/
-export HASH_SECRET=somehashscecrethere
-export RUST_BACKTRACE=1
-export GITHUB_APP_PRIVATE_KEY=""
-export GITHUB_APP_ID=238234
-export ZITADEL_APPLICATION='{"type":"application","keyId":"","key":","appId":"","clientId":""}'
+1. Clone the repository:
+```bash
+git clone https://github.com/nixopus/nixopus.git
+cd nixopus
 ```
 
-8. Install project dependencies:
+2. Install Go (version 1.23.6 or newer), Redis, and PostgreSQL.
 
-`cd app && yarn install`
+3. Set up PostgreSQL databases:
+```bash
+# Main database
+createdb postgres -U postgres
+
+# Test database
+createdb nixopus_test -U postgres
+```
+
+4. Copy and configure environment variables:
+```bash
+cp .env.sample .env
+```
+
+5. Install project dependencies:
+```bash
+# Install API dependencies
+cd api
+go mod download
+
+# Install View dependencies
+cd ../view
+yarn install
+```
 
 ## Running the Application
 
-The Nixopus project consists of multiple components. Here's how to run each part:
+1. Start Redis:
+```bash
+redis-server
+```
 
-1. Start the PostgreSQL database (if not already running).
+2. Start the API service:
+```bash
+cd api
+make run
+```
 
-2. Run the core Rust application:
+3. Start the view service:
+```bash
+cd view
+yarn dev
+```
 
-`cd core && cargo watch -x run`
-
-3. Run the consumer application:
-
-`cd consumer && cargo watch -x run`
-
-4. Run the terminal application:
-
-`cd terminal && cargo watch -x run`
-
-5. Run the Next.js application:
-
-`cd app && yarn run dev`
+The view service uses:
+- Next.js 15 with App Router
+- React 19
+- Redux Toolkit for state management
+- Tailwind CSS for styling
+- Radix UI for accessible components
+- TypeScript for type safety
 
 ## Making Changes
-Nixopus follows [trunk-based-development](https://www.atlassian.com/continuous-delivery/continuous-integration/trunk-based-development) conventions. It's recommended to follow the same to make all the commit messages and feature/fixes more clear. 
 
-1. Create a new branch for your changes. For example, if you're working on a feature, name it `feature/your-feature-name`.
+Nixopus follows [trunk-based-development](https://www.atlassian.com/continuous-delivery/continuous-integration/trunk-based-development) conventions.
 
-`git checkout -b feature/your-feature-name`
+1. Create a new branch:
+```bash
+git checkout -b feature/your-feature-name
+```
 
-2. Make your changes and commit them with clear, concise commit messages.
+2. Make your changes following the project structure:
+   - Place new features under `api/internal/features/`
+   - Add tests for new functionality
+   - Update migrations if needed
+   - Follow existing patterns for controllers, services, and storage
+   - For frontend changes, follow the Next.js app directory structure
 
-3. Push your changes to your fork:
+3. Run tests:
+```bash
+# API tests
+cd api
+make test
 
-`git push origin feature/your-feature-name`
+# View linting
+cd view
+yarn lint
+```
+
+4. Commit your changes with clear messages.
 
 ## Submitting a Pull Request
 
-1. Go to the Nixopus repository on GitHub and click the `New pull request` button.
+1. Push your branch and create a pull request.
 
-2. Select your branch and provide a clear title and description for your pull request.
+2. Ensure your code:
+   - Follows the project structure
+   - Includes tests
+   - Updates documentation if needed
+   - Passes all CI checks
 
-3. Ensure that your code follows the project's coding standards and best practices.
-
-4. Include tests for your changes if applicable.
-
-5. Update the documentation if your changes affect the user-facing functionality.
-
-6. Be prepared to respond to feedback and make necessary adjustments.
+3. Be prepared to address feedback.
 
 ## Proposing New Features
 
-If you have an idea for a new feature:
+1. Check existing issues and pull requests.
 
-1. Check the existing issues and pull requests to see if it has already been proposed.
+2. Create a new issue with the `Feature request` template.
 
-2. If not, create a new issue with the `Feature request` template.
-
-3. Clearly describe the feature, its benefits, and potential implementation details.
-
-4. Engage in discussion with maintainers and other contributors about the feature.
+3. Include:
+   - Feature description
+   - Technical implementation details
+   - Impact on existing code
 
 ## Extending Documentation
 
-To contribute to the documentation:
-
-1. The documentation repository is located at [https://github.com/nixopus/nixopus](https://github.com/nixopus/nixopus).
-
-2. Follow the same process as code contributions for submitting documentation changes.
-
-3. Ensure your writing is clear, concise, and follows the existing documentation style.
+Documentation is located in the `docs/` directory. Follow the existing structure and style when adding new content.
 
 ## Contributor License Agreement
 
-Before your contributions can be merged, you need to sign our [Contributor License Agreement](CONTRIBUTOR_LICENSE_AGREEMENT.md). This is a simple process:
-
-1. When you open a pull request, an automated bot will comment with instructions.
-
-2. Follow the link provided by the bot to sign the CLA electronically.
-
-3. Once signed, the bot will update the pull request, allowing it to be merged.
+Before your contributions can be merged, you need to sign our [Contributor License Agreement](CONTRIBUTOR_LICENSE_AGREEMENT.md).
 
 Thank you for contributing to Nixopus! Your efforts help make this project better for everyone.

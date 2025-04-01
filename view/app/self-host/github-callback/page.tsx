@@ -4,12 +4,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
-import { useUpdateGithubConnectorMutation } from '@/redux/services/connector/githubConnectorApi';
+import { useTranslation } from '@/hooks/use-translation';
 
 const Page = () => {
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -18,7 +19,7 @@ const Page = () => {
       const setupAction = params.get('setup_action');
 
       if (!installationId) {
-        setError('Invalid installation parameters');
+        setError(t('selfHost.githubCallback.error.invalidParams'));
         setStatus('error');
         return;
       }
@@ -30,7 +31,7 @@ const Page = () => {
           window.history.replaceState({}, document.title, window.location.pathname);
           router.push('/self-host/create/');
         } catch (err) {
-          setError(err instanceof Error ? err.message : 'Installation failed');
+          setError(t('selfHost.githubCallback.error.installationFailed'));
           setStatus('error');
         }
       }
@@ -44,7 +45,7 @@ const Page = () => {
       <Card className="w-[350px]">
         <CardContent className="flex flex-col items-center justify-center py-8">
           <Loader2 className="mb-4 h-8 w-8 animate-spin" />
-          <p>Processing GitHub installation...</p>
+          <p>{t('selfHost.githubCallback.processing')}</p>
         </CardContent>
       </Card>
     );
@@ -56,7 +57,7 @@ const Page = () => {
         <CardContent className="py-6">
           <Alert>
             <AlertDescription className="text-green-600">
-              Successfully connected to GitHub!
+              {t('selfHost.githubCallback.success')}
             </AlertDescription>
           </Alert>
         </CardContent>

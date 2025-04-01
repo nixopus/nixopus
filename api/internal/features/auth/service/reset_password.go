@@ -9,7 +9,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/utils"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // ResetPassword resets a user's password.
@@ -19,15 +18,23 @@ import (
 // checks if the provided old password matches the stored password. If valid, it hashes
 // the new password and updates the user's password in the storage. Errors are logged and
 // returned at each step if any process fails.
-func (c *AuthService) ResetPassword(user *shared_types.User, reset_password_request types.ChangePasswordRequest) error {
+func (c *AuthService) ResetPassword(user *shared_types.User, reset_password_request types.ResetPasswordRequest) error {
 	c.logger.Log(logger.Info, "resetting password", user.Email)
 	if user.ResetToken == "" {
 		c.logger.Log(logger.Error, types.ErrInvalidResetToken.Error(), "reset token is empty")
 		return types.ErrInvalidResetToken
 	}
 
-	user, err := c.storage.GetResetToken(user.ResetToken)
+	tx, err := c.storage.BeginTx()
+	if err != nil {
+		c.logger.Log(logger.Error, "failed to start transaction", err.Error())
+		return types.ErrFailedToUpdateUser
+	}
+	defer tx.Rollback()
 
+	txStorage := c.storage.WithTx(tx)
+
+	user, err = txStorage.GetResetToken(user.ResetToken)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrInvalidResetToken.Error(), err.Error())
 		return types.ErrInvalidResetToken
@@ -46,22 +53,23 @@ func (c *AuthService) ResetPassword(user *shared_types.User, reset_password_requ
 		return types.ErrInvalidResetToken
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(reset_password_request.OldPassword)); err != nil {
-		c.logger.Log(logger.Error, types.ErrInvalidPassword.Error(), err.Error())
-		return types.ErrInvalidPassword
-	}
-
-	hashedPassword, err := utils.HashPassword(reset_password_request.NewPassword)
+	hashedPassword, err := utils.HashPassword(reset_password_request.Password)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToHashPassword.Error(), err.Error())
 		return types.ErrFailedToHashPassword
 	}
 
 	user.Password = hashedPassword
+	user.ResetToken = ""
 
-	err = c.storage.UpdateUser(user)
+	err = txStorage.UpdateUser(user)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToUpdateUser.Error(), err.Error())
+		return types.ErrFailedToUpdateUser
+	}
+
+	if err := tx.Commit(); err != nil {
+		c.logger.Log(logger.Error, "failed to commit transaction", err.Error())
 		return types.ErrFailedToUpdateUser
 	}
 
@@ -74,34 +82,58 @@ func (c *AuthService) ResetPassword(user *shared_types.User, reset_password_requ
 // cannot be created. It also returns an error if the user cannot be updated.
 //
 // The generated link is valid for 5 minutes.
-func (c *AuthService) GeneratePasswordResetLink(user *shared_types.User) error {
+func (c *AuthService) GeneratePasswordResetLink(user *shared_types.User) (*shared_types.User, string, error) {
 	if user == nil {
 		c.logger.Log(logger.Error, types.ErrInvalidUser.Error(), "user is nil")
-		return types.ErrInvalidUser
+		return nil, "", types.ErrInvalidUser
 	}
 
 	c.logger.Log(logger.Info, "generating password reset link", user.Email)
-	token, err := utils.CreateToken(user.Email, time.Minute*5)
+	token, err := utils.CreateToken(user.Email, time.Minute*5, user.TwoFactorEnabled, true)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToCreateToken.Error(), err.Error())
-		return types.ErrFailedToCreateToken
+		return nil, "", types.ErrFailedToCreateToken
 	}
 
 	user.ResetToken = token
 
-	// handle sending email with reset link
-	// err = utils.SendPasswordResetLinkEmail(user.Email, token)
-	// if err != nil {
-	// 	log.Println(err.Error())
-	// 	utils.SendErrorResponse(w, types.ErrFailedToSendEmail.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
-	fmt.Println(user.ResetToken)
 	err = c.storage.UpdateUser(user)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToUpdateUser.Error(), err.Error())
-		return types.ErrFailedToUpdateUser
+		return nil, "", types.ErrFailedToUpdateUser
 	}
 
-	return nil
+	return user, token, nil
+}
+
+// GetUserByResetToken retrieves a user by their reset token.
+//
+// This function takes a reset token as input and returns the associated user.
+// If the token is invalid or expired, it returns an error.
+func (c *AuthService) GetUserByResetToken(token string) (*shared_types.User, error) {
+	if token == "" {
+		c.logger.Log(logger.Error, types.ErrInvalidResetToken.Error(), "reset token is empty")
+		return nil, types.ErrInvalidResetToken
+	}
+
+	user, err := c.storage.GetResetToken(token)
+	if err != nil {
+		c.logger.Log(logger.Error, types.ErrInvalidResetToken.Error(), err.Error())
+		return nil, types.ErrInvalidResetToken
+	}
+
+	jwtToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			c.logger.Log(logger.Error, types.ErrInvalidResetToken.Error(), err.Error())
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return shared_types.JWTSecretKey, nil
+	})
+
+	if err != nil || !jwtToken.Valid {
+		c.logger.Log(logger.Error, types.ErrInvalidResetToken.Error(), err.Error())
+		return nil, types.ErrInvalidResetToken
+	}
+
+	return user, nil
 }

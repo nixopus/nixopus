@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { StopExecution } from './stopExecution';
-import { useWebSocket } from '@/hooks/socket_provider';
+import { useWebSocket } from '@/hooks/socket-provider';
 
 const CTRL_C = '\x03';
 
@@ -132,10 +132,10 @@ export const useTerminal = (isTerminalOpen: boolean, width: number, height: numb
           action: 'terminal',
           data: '\r'
         });
-        sendJsonMessage({
-          action: 'terminal',
-          data: 'export TERM=xterm-256color\r'
-        });
+        // sendJsonMessage({
+        //   action: 'terminal',
+        //   data: 'export TERM=xterm-256color\r'
+        // });
         requestAnimationFrame(() => {
           fitAddon.fit();
           const dimensions = fitAddon.proposeDimensions();

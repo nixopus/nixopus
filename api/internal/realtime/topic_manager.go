@@ -8,6 +8,57 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// handleSubscribe handles the subscription to a topic.
+//
+// Parameters:
+//
+//	conn - the *websocket.Conn representing the client connection.
+//	msg - the types.Payload representing the message from the client.
+//
+// Returns:
+func (s *SocketServer) handleSubscribe(conn *websocket.Conn, msg types.Payload) {
+	if msg.Topic != "" && msg.Data != nil {
+		var resourceID string
+		if dataMap, ok := msg.Data.(map[string]interface{}); ok {
+			resourceID, ok = dataMap["resource_id"].(string)
+			if !ok {
+				s.sendError(conn, "Invalid topic subscription format. Requires resourceId")
+				return
+			}
+		}
+
+		s.SubscribeToTopic(topics(msg.Topic), resourceID, conn)
+		return
+	}
+	s.sendError(conn, "Invalid topic subscription format")
+}
+
+// handleUnsubscribe handles the unsubscription from a topic.
+//
+// Parameters:
+//
+//	conn - the *websocket.Conn representing the client connection.
+//	msg - the types.Payload representing the message from the client.
+//
+// Returns:
+func (s *SocketServer) handleUnsubscribe(conn *websocket.Conn, msg types.Payload) {
+	if msg.Topic != "" && msg.Data != nil {
+		var resourceID string
+		if dataMap, ok := msg.Data.(map[string]interface{}); ok {
+			resourceID, ok = dataMap["resource_id"].(string)
+			if !ok {
+				s.sendError(conn, "Invalid topic unsubscription format. Requires resourceId")
+				return
+			}
+		}
+
+		s.UnsubscribeFromTopic(topics(msg.Topic), resourceID, conn)
+		return
+	}
+
+	s.sendError(conn, "Invalid topic unsubscription format")
+}
+
 // SubscribeToTopic adds a connection to the specified topic.
 //
 // The function takes a topic string and a connection as parameters and

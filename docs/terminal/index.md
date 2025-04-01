@@ -16,7 +16,7 @@ The following key bindings are available in the terminal:
 You can resize the terminal by dragging the terminal from the top, which provides the same behaviour as vscode's terminal.
 
 ## Themes and fonts
-The terminal inherits the theme and font from the application. See [Theme and Fonts](/docs/customization/theme-and-fonts) for more information on how to change them.
+The terminal inherits the theme and font from the application. See [Theme and Fonts](/themes-and-fonts) for more information on how to change them.
 
 ## Terminal focus
 When you click inside the terminal, some keybindings won't work for the application anymore because they are treated as terminal's keybindings. 

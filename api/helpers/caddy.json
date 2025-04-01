@@ -1,0 +1,87 @@
+{
+    "admin": {
+        "listen": "0.0.0.0:2019"
+    },
+    "apps": {
+        "http": {
+            "servers": {
+                "nixopus": {
+                    "automatic_https": {
+                        "disable": false
+                    },
+                    "listen": [
+                        ":443"
+                    ],
+                    "routes": [
+                        {
+                            "handle": [
+                                {
+                                    "handler": "subroute",
+                                    "routes": [
+                                        {
+                                            "handle": [
+                                                {
+                                                    "handler": "reverse_proxy",
+                                                    "upstreams": [
+                                                        {
+                                                            "dial": "nixopus-view:7443"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ],
+                            "match": [
+                                {
+                                    "host": [
+                                        "app.nixopus.com"
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "handle": [
+                                {
+                                    "handler": "subroute",
+                                    "routes": [
+                                        {
+                                            "handle": [
+                                                {
+                                                    "handler": "reverse_proxy",
+                                                    "upstreams": [
+                                                        {
+                                                            "dial": "nixopus-api:8443"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ],
+                            "match": [
+                                {
+                                    "host": [
+                                        "api.nixopus.com"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "logging": {
+        "logs": {
+            "default": {
+                "encoder": {
+                    "format": "json"
+                },
+                "level": "INFO"
+            }
+        }
+    }
+}

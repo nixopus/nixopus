@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"io"
 
+	"errors"
+
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type Validator struct {
@@ -23,9 +24,9 @@ func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decode
 func (v *Validator) ValidateRequest(req interface{}) error {
 	switch r := req.(type) {
 	case *types.CreateDeploymentRequest:
-		return validateDeploymentRequest(*r)
+		return validateDeploymentRequest(r)
 	case *types.UpdateDeploymentRequest:
-		return validateUpdateDeploymentRequest(*r)
+		return validateUpdateDeploymentRequest(r)
 	case *types.DeleteDeploymentRequest:
 		return validateDeleteDeploymentRequest(*r)
 	case *types.ReDeployApplicationRequest:
@@ -39,48 +40,51 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 	}
 }
 
-func validateDeploymentRequest(req types.CreateDeploymentRequest) error {
+func validateDeploymentRequest(req *types.CreateDeploymentRequest) error {
 	if req.Name == "" {
-		return types.ErrMissingName
+		return errors.New("name is required")
 	}
 	if req.Domain == "" {
-		return types.ErrMissingDomain
+		return errors.New("domain is required")
+	}
+	if req.Environment == "" {
+		return errors.New("environment is required")
+	}
+	if req.BuildPack == "" {
+		return errors.New("build_pack is required")
 	}
 	if req.Repository == "" {
-		return types.ErrMissingRepository
+		return errors.New("repository is required")
 	}
 	if req.Branch == "" {
-		return types.ErrMissingBranch
+		return errors.New("branch is required")
 	}
-	if req.Port <= 0 {
-		return types.ErrMissingPort
+	if req.Port == 0 {
+		return errors.New("port is required")
 	}
-
-	if req.DockerfilePath != "" && req.DockerfilePath[0] == '/' {
-		req.DockerfilePath = req.DockerfilePath[1:]
-	} else {
-		req.DockerfilePath = "Dockerfile"
+	if req.BasePath == "" {
+		req.BasePath = "/"
+	} else if req.BasePath[0] != '/' {
+		req.BasePath = "/" + req.BasePath
 	}
-
-	if !isValidEnvironment(req.Environment) {
-		return types.ErrInvalidEnvironment
-	}
-	if !isValidBuildPack(req.BuildPack) {
-		return types.ErrInvalidBuildPack
-	}
-
 	return nil
 }
 
-func validateUpdateDeploymentRequest(req types.UpdateDeploymentRequest) error {
-	// here we need to validate whether user has access to update the deployment
-	if req.ID == uuid.Nil {
-		return types.ErrMissingID
+func validateUpdateDeploymentRequest(req *types.UpdateDeploymentRequest) error {
+	if req.Name != "" {
+		if len(req.Name) < 3 {
+			return errors.New("name must be at least 3 characters")
+		}
 	}
-	if req.DockerfilePath != "" && req.DockerfilePath[0] == '/' {
-		req.DockerfilePath = req.DockerfilePath[1:]
-	} else {
-		req.DockerfilePath = "Dockerfile"
+	if req.Port != 0 {
+		if req.Port < 1 || req.Port > 65535 {
+			return errors.New("port must be between 1 and 65535")
+		}
+	}
+	if req.BasePath != "" {
+		if req.BasePath[0] != '/' {
+			req.BasePath = "/" + req.BasePath
+		}
 	}
 	return nil
 }
@@ -112,32 +116,4 @@ func validateRestartDeploymentRequest(req types.RestartDeploymentRequest) error 
 		return types.ErrMissingID
 	}
 	return nil
-}
-
-func isValidEnvironment(env shared_types.Environment) bool {
-	validEnvs := []shared_types.Environment{
-		shared_types.Development,
-		shared_types.Staging,
-		shared_types.Production,
-	}
-	for _, v := range validEnvs {
-		if env == v {
-			return true
-		}
-	}
-	return false
-}
-
-func isValidBuildPack(bp shared_types.BuildPack) bool {
-	validBPs := []shared_types.BuildPack{
-		shared_types.DockerFile,
-		shared_types.DockerCompose,
-		shared_types.Static,
-	}
-	for _, v := range validBPs {
-		if bp == v {
-			return true
-		}
-	}
-	return false
 }

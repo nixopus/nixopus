@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 
@@ -22,7 +23,16 @@ func (c *DeployController) GetApplicationById(f fuego.ContextNoBody) (*shared_ty
 		}
 	}
 
-	application, err := c.service.GetApplicationById(id)
+	organizationID := utils.GetOrganizationID(f.Request())
+	if organizationID == uuid.Nil {
+		c.logger.Log(logger.Error, "organization not found", "")
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
+	}
+
+	application, err := c.service.GetApplicationById(id, organizationID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

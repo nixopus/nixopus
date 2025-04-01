@@ -1,5 +1,5 @@
 import { useOpenapi, httpVerbs } from 'vitepress-openapi'
-import spec from '../public/openapi.json' assert { type: 'json' }
+import spec from '../../src/openapi.json' assert { type: 'json' }
 
 export default {
     paths() {

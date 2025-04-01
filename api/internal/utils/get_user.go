@@ -3,6 +3,7 @@ package utils
 import (
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -31,4 +32,23 @@ func GetUser(w http.ResponseWriter, r *http.Request) *types.User {
 	}
 
 	return user
+}
+
+func GetOrganizationID(r *http.Request) uuid.UUID {
+	organizationIDAny := r.Context().Value(types.OrganizationIDKey)
+	if organizationIDAny == nil {
+		return uuid.Nil
+	}
+
+	if strID, ok := organizationIDAny.(string); ok {
+		if id, err := uuid.Parse(strID); err == nil {
+			return id
+		}
+	}
+
+	if id, ok := organizationIDAny.(uuid.UUID); ok {
+		return id
+	}
+
+	return uuid.Nil
 }

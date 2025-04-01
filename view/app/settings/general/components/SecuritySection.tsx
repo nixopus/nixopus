@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TabsContent } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useTranslation } from '@/hooks/use-translation';
+import { TwoFactorSetup } from '@/app/settings/general/components/TwoFactorSetup';
 
 interface SecuritySectionProps {
   emailSent: boolean;
@@ -19,29 +21,33 @@ function SecuritySection({
   isLoading,
   handlePasswordResetRequest
 }: SecuritySectionProps) {
+  const { t } = useTranslation();
+
   return (
     <TabsContent value="security" className="space-y-4 mt-4">
       <Card>
         <CardHeader>
-          <CardTitle>Password</CardTitle>
-          <CardDescription>Change your password </CardDescription>
+          <CardTitle>{t('settings.security.password.title')}</CardTitle>
+          <CardDescription>{t('settings.security.password.description')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Lock size={16} />
-              Reset Password
+              {t('settings.security.password.reset.label')}
             </Label>
             <p className="text-sm text-muted-foreground">
-              We'll send a password reset link to your email address
+              {t('settings.security.password.reset.description')}
             </p>
           </div>
 
           {emailSent ? (
             <Alert>
               <CheckCircle className="h-4 w-4" />
-              <AlertTitle>Email Sent!</AlertTitle>
-              <AlertDescription>Check your inbox for a password reset link</AlertDescription>
+              <AlertTitle>{t('settings.security.password.reset.emailSent.title')}</AlertTitle>
+              <AlertDescription>
+                {t('settings.security.password.reset.emailSent.description')}
+              </AlertDescription>
             </Alert>
           ) : (
             <Button
@@ -50,11 +56,13 @@ function SecuritySection({
               variant="outline"
               className="w-full lg:w-auto"
             >
-              Send Password Reset Link
+              {t('settings.security.password.reset.button')}
             </Button>
           )}
         </CardContent>
       </Card>
+
+      <TwoFactorSetup />
     </TabsContent>
   );
 }

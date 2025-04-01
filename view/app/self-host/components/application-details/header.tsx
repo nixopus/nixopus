@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, MoreVertical, RotateCcw } from 'lucide-react';
+import { ExternalLink, MoreVertical, RotateCcw, TrashIcon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,19 +10,76 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Application } from '@/redux/types/applications';
-import { DeleteDialog } from '@/components/delete-dialog';
+import { DeleteDialog } from '@/components/ui/delete-dialog';
 import {
   useRedeployApplicationMutation,
   useRestartApplicationMutation
 } from '@/redux/services/deploy/applicationsApi';
 import { useDeleteApplicationMutation } from '@/redux/services/deploy/applicationsApi';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { useAppSelector } from '@/redux/hooks';
+import { hasPermission } from '@/lib/permission';
+import { useTranslation } from '@/hooks/use-translation';
 
 const ApplicationDetailsHeader = ({ application }: { application?: Application }) => {
-  const [redeployApplication, { isLoading }] = useRedeployApplicationMutation();
+  const { t } = useTranslation();
+  const user = useAppSelector((state) => state.auth.user);
+  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
+  const [redeployApplication, { isLoading: isRedeploying }] = useRedeployApplicationMutation();
   const [deleteApplication, { isLoading: isDeleting }] = useDeleteApplicationMutation();
   const router = useRouter();
   const [restartApplication, { isLoading: isRestarting }] = useRestartApplicationMutation();
+
+  const canUpdate = hasPermission(user, 'deploy', 'update', activeOrg?.id);
+  const canDelete = hasPermission(user, 'deploy', 'delete', activeOrg?.id);
+
+  const handleDelete = async () => {
+    if (!canDelete) {
+      toast.error(t('selfHost.applicationDetails.header.actions.delete.permissionError'));
+      return;
+    }
+    try {
+      await deleteApplication({
+        id: application?.id || ''
+      }).unwrap();
+      toast.success(t('selfHost.applicationDetails.header.actions.delete.success'));
+      router.push('/self-host');
+    } catch (error) {
+      toast.error(t('selfHost.applicationDetails.header.actions.delete.error'));
+    }
+  };
+
+  const handleRestart = async () => {
+    if (!canUpdate) {
+      toast.error(t('selfHost.applicationDetails.header.actions.restart.permissionError'));
+      return;
+    }
+    try {
+      await restartApplication({ id: application?.deployments?.[0]?.id || '' }).unwrap();
+      toast.success(t('selfHost.applicationDetails.header.actions.restart.success'));
+    } catch (error) {
+      toast.error(t('selfHost.applicationDetails.header.actions.restart.error'));
+    }
+  };
+
+  const handleRedeploy = async (forceWithoutCache: boolean) => {
+    if (!canUpdate) {
+      toast.error(t('selfHost.applicationDetails.header.actions.redeploy.permissionError'));
+      return;
+    }
+    try {
+      await redeployApplication({
+        id: application?.id || '',
+        force: true,
+        force_without_cache: forceWithoutCache
+      }).unwrap();
+      router.push('/self-host/application/' + application?.id + '?logs=true');
+      toast.success(t('selfHost.applicationDetails.header.actions.redeploy.success'));
+    } catch (error) {
+      toast.error(t('selfHost.applicationDetails.header.actions.redeploy.error'));
+    }
+  };
 
   return (
     <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -34,7 +91,7 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
               variant="ghost"
               size="icon"
               onClick={() => window.open('https://' + application?.domain, '_blank')}
-              aria-label="Open application in new tab"
+              aria-label={t('selfHost.applicationDetails.header.actions.open')}
             >
               <ExternalLink className="h-5 w-5" />
             </Button>
@@ -42,65 +99,62 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="secondary"
-                size="icon"
-                disabled={isRestarting}
-                onClick={() => restartApplication({ id: application?.deployments?.[0]?.id || '' })}
-              >
-                <RotateCcw className="h-4 w-4" />
+        {canUpdate && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  disabled={isRestarting}
+                  onClick={handleRestart}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('selfHost.applicationDetails.header.actions.restart.button')}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        {canDelete && (
+          <DeleteDialog
+            title={t('selfHost.applicationDetails.header.actions.delete.dialog.title').replace(
+              '{name}',
+              application?.name || ''
+            )}
+            description={t(
+              'selfHost.applicationDetails.header.actions.delete.dialog.description'
+            ).replace('{name}', application?.name || '')}
+            onConfirm={handleDelete}
+            trigger={
+              <Button variant="outline" size="icon">
+                <TrashIcon className="h-4 w-4" />
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Restart Application</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <DeleteDialog
-          jobName={application?.name || ''}
-          onDelete={() => {
-            deleteApplication({
-              id: application?.id || ''
-            });
-            router.push('/self-host');
-          }}
-          showButton={false}
-          isDeleting={isDeleting}
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => {
-                redeployApplication({
-                  id: application?.id || '',
-                  force: true,
-                  force_without_cache: true
-                });
-              }}
-            >
-              Re-Deploy
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                redeployApplication({
-                  id: application?.id || '',
-                  force: true,
-                  force_without_cache: false
-                });
-              }}
-            >
-              Force Deploy Without Cache
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            }
+            isDeleting={isDeleting}
+            variant="destructive"
+            icon={TrashIcon}
+          />
+        )}
+        {canUpdate && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleRedeploy(true)} disabled={isRedeploying}>
+                {t('selfHost.applicationDetails.header.actions.redeploy.button')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleRedeploy(false)} disabled={isRedeploying}>
+                {t('selfHost.applicationDetails.header.actions.redeploy.forceButton')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </div>
   );

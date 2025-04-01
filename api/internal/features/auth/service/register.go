@@ -9,9 +9,10 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	organization_types "github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/uptrace/bun"
 )
 
-func (c *AuthService) Register(registrationRequest types.RegisterRequest) (types.AuthResponse, error) {
+func (c *AuthService) Register(registrationRequest types.RegisterRequest, userTypeype string) (types.AuthResponse, error) {
 	c.logger.Log(logger.Info, "registering user", registrationRequest.Email)
 	userType := registrationRequest.Type
 	if userType == "" {
@@ -39,34 +40,43 @@ func (c *AuthService) Register(registrationRequest types.RegisterRequest) (types
 		hashedPassword,
 		registrationRequest.Username,
 		"",
-		"admin",
+		userType,
 		false,
 	)
 
-	if err := c.storage.CreateUser(&user); err != nil {
+	tx, err := c.storage.BeginTx()
+	if err != nil {
+		c.logger.Log(logger.Error, "failed to start transaction", err.Error())
+		return types.AuthResponse{}, types.ErrFailedToRegisterUser
+	}
+	defer tx.Rollback()
+
+	txStorage := c.storage.WithTx(tx)
+
+	if err := txStorage.CreateUser(&user); err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToRegisterUser.Error(), err.Error())
 		return types.AuthResponse{}, types.ErrFailedToRegisterUser
 	}
 
-	refreshToken, err := c.storage.CreateRefreshToken(user.ID)
+	refreshToken, err := txStorage.CreateRefreshToken(user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToCreateRefreshToken.Error(), err.Error())
 		return types.AuthResponse{}, types.ErrFailedToCreateToken
 	}
 
-	accessToken, err := utils.CreateToken(user.Email, time.Minute*15)
+	accessToken, err := utils.CreateToken(user.Email, time.Minute*15, user.TwoFactorEnabled, true)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToCreateAccessToken.Error(), err.Error())
 		return types.AuthResponse{}, types.ErrFailedToCreateToken
 	}
 
-	organization, err := c.createDefaultOrganization(user)
+	organization, err := c.createDefaultOrganization(user, tx)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToCreateDefaultOrganization.Error(), err.Error())
 		return types.AuthResponse{}, types.ErrFailedToCreateDefaultOrganization
 	}
 
-	if err := c.addUserToOrganizationWithRole(user, organization, "admin"); err != nil {
+	if err := c.addUserToOrganizationWithRole(user, organization, "admin", tx); err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToAddUserToOrganization.Error(), err.Error())
 		return types.AuthResponse{}, types.ErrFailedToAddUserToOrganization
 	}
@@ -78,10 +88,15 @@ func (c *AuthService) Register(registrationRequest types.RegisterRequest) (types
 			return types.AuthResponse{}, types.ErrFailedToGetOrganization
 		}
 
-		if err := c.addUserToOrganizationWithRole(user, requestedOrganization, userType); err != nil {
+		if err := c.addUserToOrganizationWithRole(user, requestedOrganization, userType, tx); err != nil {
 			c.logger.Log(logger.Error, types.ErrFailedToAddUserToOrganization.Error(), err.Error())
 			return types.AuthResponse{}, types.ErrFailedToAddUserToOrganization
 		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		c.logger.Log(logger.Error, "failed to commit transaction", err.Error())
+		return types.AuthResponse{}, types.ErrFailedToRegisterUser
 	}
 
 	return types.AuthResponse{
@@ -92,7 +107,7 @@ func (c *AuthService) Register(registrationRequest types.RegisterRequest) (types
 	}, nil
 }
 
-func (c *AuthService) createDefaultOrganization(user shared_types.User) (shared_types.Organization, error) {
+func (c *AuthService) createDefaultOrganization(user shared_types.User, tx bun.Tx) (shared_types.Organization, error) {
 	c.logger.Log(logger.Info, "creating default organization for user", user.Email)
 
 	orgRequest := &organization_types.CreateOrganizationRequest{
@@ -100,7 +115,7 @@ func (c *AuthService) createDefaultOrganization(user shared_types.User) (shared_
 		Description: "My Team",
 	}
 
-	org, err := c.organization_service.CreateOrganization(orgRequest)
+	org, err := c.organization_service.CreateOrganization(orgRequest, tx)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToCreateDefaultOrganization.Error(), err.Error())
 		return shared_types.Organization{}, types.ErrFailedToCreateDefaultOrganization
@@ -110,7 +125,7 @@ func (c *AuthService) createDefaultOrganization(user shared_types.User) (shared_
 	return org, nil
 }
 
-func (c *AuthService) addUserToOrganizationWithRole(user shared_types.User, organization shared_types.Organization, roleName string) error {
+func (c *AuthService) addUserToOrganizationWithRole(user shared_types.User, organization shared_types.Organization, roleName string, tx bun.Tx) error {
 	c.logger.Log(logger.Info, "adding user to organization with role", roleName)
 
 	roles, err := c.role_service.GetRoleByName(roleName)
@@ -130,5 +145,5 @@ func (c *AuthService) addUserToOrganizationWithRole(user shared_types.User, orga
 		RoleId:         roles.ID.String(),
 	}
 
-	return c.organization_service.AddUserToOrganization(userOrganization)
+	return c.organization_service.AddUserToOrganization(userOrganization, tx)
 }

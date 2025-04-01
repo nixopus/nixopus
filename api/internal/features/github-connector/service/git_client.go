@@ -18,6 +18,12 @@ type GitClient interface {
 	Pull(repoURL, destinationPath string) error
 	GetLatestCommitHash(repoURL string, accessToken string) (string, error)
 	SetHeadToCommitHash(repoURL, destinationPath, commitHash string) error
+	SwitchBranch(destinationPath, branch string) error
+	HasUncommittedChanges(destinationPath string) (bool, error)
+	Stash(destinationPath string) (string, error)
+	ApplyStash(destinationPath, stashID string) error
+	ResetHard(destinationPath string) error
+	RemoveRepository(repoPath string) error
 }
 
 // DefaultGitClient is the default implementation of GitClient
@@ -36,7 +42,7 @@ func NewDefaultGitClient(logger logger.Logger, ssh *ssh.SSH) *DefaultGitClient {
 
 // Clone clones a git repository to the specified path
 func (g *DefaultGitClient) Clone(repoURL, destinationPath string) error {
-	client, err := g.ssh.ConnectWithPassword()
+	client, err := g.ssh.Connect()
 	if err != nil {
 		return fmt.Errorf("failed to connect via SSH: %w", err)
 	}
@@ -54,7 +60,7 @@ func (g *DefaultGitClient) Clone(repoURL, destinationPath string) error {
 
 // Pull updates a git repository from remote
 func (g *DefaultGitClient) Pull(repoURL, destinationPath string) error {
-	client, err := g.ssh.ConnectWithPassword()
+	client, err := g.ssh.Connect()
 	if err != nil {
 		return fmt.Errorf("failed to connect via SSH: %w", err)
 	}
@@ -119,7 +125,7 @@ func (g *DefaultGitClient) GetLatestCommitHash(repoURL string, accessToken strin
 // SetHeadToCommitHash sets the HEAD of the repository to a specific commit hash
 func (g *DefaultGitClient) SetHeadToCommitHash(repoURL, destinationPath, commitHash string) error {
 	// Connect to SSH
-	client, err := g.ssh.ConnectWithPassword()
+	client, err := g.ssh.Connect()
 	if err != nil {
 		return fmt.Errorf("failed to connect via SSH: %w", err)
 	}
@@ -132,5 +138,117 @@ func (g *DefaultGitClient) SetHeadToCommitHash(repoURL, destinationPath, commitH
 	}
 
 	g.logger.Log(logger.Info, fmt.Sprintf("Successfully checked out commit %s at %s", commitHash, destinationPath), "")
+	return nil
+}
+
+// SwitchBranch switches to the specified branch in the repository
+func (g *DefaultGitClient) SwitchBranch(destinationPath, branch string) error {
+	client, err := g.ssh.Connect()
+	if err != nil {
+		return fmt.Errorf("failed to connect via SSH: %w", err)
+	}
+	defer client.Close()
+
+	cmd := fmt.Sprintf("cd %s && git checkout %s", destinationPath, branch)
+	output, err := client.Run(cmd)
+	if err != nil {
+		return fmt.Errorf("git checkout branch failed: %s, output: %s", err.Error(), output)
+	}
+
+	g.logger.Log(logger.Info, fmt.Sprintf("Successfully switched to branch %s at %s", branch, destinationPath), "")
+	return nil
+}
+
+func (g *DefaultGitClient) HasUncommittedChanges(destinationPath string) (bool, error) {
+	client, err := g.ssh.Connect()
+	if err != nil {
+		return false, fmt.Errorf("failed to connect via SSH: %w", err)
+	}
+	defer client.Close()
+
+	cmd := fmt.Sprintf("cd %s && git status --porcelain", destinationPath)
+	output, err := client.Run(cmd)
+	if err != nil {
+		return false, fmt.Errorf("git status failed: %s, output: %s", err.Error(), string(output))
+	}
+
+	return strings.TrimSpace(string(output)) != "", nil
+}
+
+func (g *DefaultGitClient) Stash(destinationPath string) (string, error) {
+	client, err := g.ssh.Connect()
+	if err != nil {
+		return "", fmt.Errorf("failed to connect via SSH: %w", err)
+	}
+	defer client.Close()
+
+	cmd := fmt.Sprintf("cd %s && git stash push -m 'nixopus-auto-stash'", destinationPath)
+	output, err := client.Run(cmd)
+	if err != nil {
+		return "", fmt.Errorf("git stash push failed: %s, output: %s", err.Error(), string(output))
+	}
+
+	cmd = fmt.Sprintf("cd %s && git stash list --format='%%H' -n 1", destinationPath)
+	stashOutput, err := client.Run(cmd)
+	if err != nil {
+		return "", fmt.Errorf("git stash list failed: %s, output: %s", err.Error(), string(stashOutput))
+	}
+
+	stashID := strings.TrimSpace(string(stashOutput))
+	if stashID == "" {
+		return "", fmt.Errorf("no stash created")
+	}
+
+	g.logger.Log(logger.Info, fmt.Sprintf("Successfully stashed changes at %s with ID %s", destinationPath, stashID), "")
+	return stashID, nil
+}
+
+func (g *DefaultGitClient) ApplyStash(destinationPath, stashID string) error {
+	client, err := g.ssh.Connect()
+	if err != nil {
+		return fmt.Errorf("failed to connect via SSH: %w", err)
+	}
+	defer client.Close()
+
+	cmd := fmt.Sprintf("cd %s && git stash apply %s", destinationPath, stashID)
+	output, err := client.Run(cmd)
+	if err != nil {
+		return fmt.Errorf("git stash apply failed: %s, output: %s", err.Error(), string(output))
+	}
+
+	g.logger.Log(logger.Info, fmt.Sprintf("Successfully applied stash %s at %s", stashID, destinationPath), "")
+	return nil
+}
+
+func (g *DefaultGitClient) ResetHard(destinationPath string) error {
+	client, err := g.ssh.Connect()
+	if err != nil {
+		return fmt.Errorf("failed to connect via SSH: %w", err)
+	}
+	defer client.Close()
+
+	cmd := fmt.Sprintf("cd %s && git reset --hard", destinationPath)
+	output, err := client.Run(cmd)
+	if err != nil {
+		return fmt.Errorf("git reset --hard failed: %s, output: %s", err.Error(), string(output))
+	}
+
+	g.logger.Log(logger.Info, fmt.Sprintf("Successfully reset repository at %s", destinationPath), "")
+	return nil
+}
+
+func (g *DefaultGitClient) RemoveRepository(repoPath string) error {
+	client, err := g.ssh.Connect()
+	if err != nil {
+		return fmt.Errorf("failed to connect via SSH: %w", err)
+	}
+	defer client.Close()
+
+	cmd := fmt.Sprintf("rm -rf %s", repoPath)
+	output, err := client.Run(cmd)
+	if err != nil {
+		return fmt.Errorf("failed to remove repository directory: %s, output: %s", err.Error(), output)
+	}
+
 	return nil
 }

@@ -28,6 +28,46 @@ For more information  on how to deploy projects [visit](#configuration)
 | Build Variables | Add build variables to your project | `NODE_ENV=production` |
 | Environment Variables | Add environment variables to your project | `NODE_ENV=production` |
 | Custom Domain | Domain in which your project will be available | `example.com` |
+| Base Path | Root directory of your application within the repository (for monorepo setups) | `apps/frontend` |
+| Dockerfile Path | Path to Dockerfile relative to the base path | `Dockerfile` or `docker/Dockerfile.prod` |
+
+## Monorepo Support
+Nixopus supports deploying applications from monorepo structures. This is particularly useful when you have multiple applications in a single repository.
+
+### Configuration for Monorepos
+1. **Base Path**: 
+   - Specifies the root directory of your application within the repository
+   - Example: If your app is in `apps/frontend`, set base path to `apps/frontend`
+   - Default: `/` (root of repository)
+
+2. **Dockerfile Path**:
+   - Path to your Dockerfile relative to the base path
+   - Example: If Dockerfile is in `apps/frontend/docker/Dockerfile.prod`, set to `docker/Dockerfile.prod`
+   - Default: `Dockerfile`
+
+### Example Monorepo Structure
+```
+monorepo/
+  ├── apps/
+  │   ├── frontend/
+  │   │   ├── docker/
+  │   │   │   └── Dockerfile.prod
+  │   │   └── src/
+  │   └── backend/
+  │       ├── Dockerfile
+  │       └── src/
+  └── shared/
+      └── libs/
+```
+
+### Configuration Examples
+1. **Frontend App**:
+   - Base Path: `apps/frontend`
+   - Dockerfile Path: `docker/Dockerfile.prod`
+
+2. **Backend App**:
+   - Base Path: `apps/backend`
+   - Dockerfile Path: `Dockerfile` (default)
 
 ## Project Management
 * Once your project has been deployed, you can manage it from the "Self Host" section.

@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@reactour/tour": "^3.7.0",
+    "date-fns": "^4.1.0"
+  }
+}

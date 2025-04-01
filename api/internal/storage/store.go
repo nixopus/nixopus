@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/uptrace/bun"
 )
 
 type Store struct {
-	DB *bun.DB
+	DB           *bun.DB
+	Organization storage.OrganizationRepository
 }
 
 type App struct {
@@ -23,7 +25,10 @@ func NewApp(config *types.Config, store *Store, ctx context.Context) *App {
 }
 
 func NewStore(db *bun.DB) *Store {
-	return &Store{DB: db}
+	return &Store{
+		DB:           db,
+		Organization: &storage.OrganizationStore{DB: db, Ctx: context.Background()},
+	}
 }
 
 func (s *Store) CreateTable(ctx context.Context, model interface{}) error {
@@ -70,21 +75,25 @@ func (s *Store) Init(ctx context.Context) error {
 
 func (s *Store) DropAllTables(ctx context.Context) error {
 	models := []interface{}{
+		(*types.ApplicationLogs)(nil),
+		(*types.ApplicationDeploymentStatus)(nil),
+		(*types.ApplicationDeployment)(nil),
+		(*types.ApplicationStatus)(nil),
+		(*types.Application)(nil),
+		(*types.GithubConnector)(nil),
+		(*types.Domain)(nil),
+		(*types.PreferenceItem)(nil),
+		(*types.NotificationPreferences)(nil),
+		(*types.SMTPConfigs)(nil),
 		(*types.OrganizationUsers)(nil),
 		(*types.Organization)(nil),
 		(*types.RolePermissions)(nil),
 		(*types.Permission)(nil),
 		(*types.Role)(nil),
 		(*types.RefreshToken)(nil),
-		(*types.SMTPConfigs)(nil),
-		(*types.PreferenceItem)(nil),
-		(*types.NotificationPreferences)(nil),
-		(*types.Domain)(nil),
-		(*types.Server)(nil),
-		(*types.GithubConnector)(nil),
-		(*types.Application)(nil),
-		(*types.ApplicationStatus)(nil),
-		(*types.ApplicationLogs)(nil),
+		&struct {
+			bun.BaseModel `bun:"table:verification_tokens"`
+		}{},
 		(*types.User)(nil),
 	}
 

@@ -8,7 +8,6 @@ import (
 
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification/storage"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type Validator struct {
@@ -22,37 +21,17 @@ func NewValidator(storage storage.NotificationRepository) *Validator {
 }
 
 // ValidateRequest validates different request types
-func (v *Validator) ValidateRequest(req interface{}, user *shared_types.User) error {
+func (v *Validator) ValidateRequest(req any) error {
 	switch r := req.(type) {
 	case *notification.CreateSMTPConfigRequest:
-		err := v.AccessValidator("smtp", "create", user)
-		if err != nil {
-			return err
-		}
 		return v.validateCreateSMTPConfigRequest(*r)
 	case *notification.GetSMTPConfigRequest:
-		err := v.AccessValidator("smtp", "read", user)
-		if err != nil {
-			return err
-		}
 		return v.validateGetSMTPConfigRequest(*r)
 	case *notification.UpdateSMTPConfigRequest:
-		err := v.AccessValidator("smtp", "update", user)
-		if err != nil {
-			return err
-		}
 		return v.validateUpdateSMTPConfigRequest(*r)
 	case *notification.DeleteSMTPConfigRequest:
-		err := v.AccessValidator("smtp", "delete", user)
-		if err != nil {
-			return err
-		}
 		return v.validateDeleteSMTPConfigRequest(*r)
 	case *notification.UpdatePreferenceRequest:
-		err := v.AccessValidator("preferences", "update", user)
-		if err != nil {
-			return err
-		}
 		return v.validateUpdatePreferenceRequest(*r)
 	default:
 		return notification.ErrInvalidRequestType

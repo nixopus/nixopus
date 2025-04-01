@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { PencilIcon } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface EditTeamProps {
   isEditTeamDialogOpen: boolean;
@@ -35,6 +36,8 @@ function EditTeam({
   setTeamDescription,
   isUpdating
 }: EditTeamProps) {
+  const { t } = useTranslation();
+
   return (
     <Dialog open={isEditTeamDialogOpen} onOpenChange={setEditTeamDialogOpen}>
       <DialogTrigger asChild>
@@ -44,39 +47,43 @@ function EditTeam({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Team Details</DialogTitle>
-          <DialogDescription>Team details helps you identify your team.</DialogDescription>
+          <DialogTitle>{t('settings.teams.editTeam.dialog.title')}</DialogTitle>
+          <DialogDescription>{t('settings.teams.editTeam.dialog.description')}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
-              Name
+              {t('settings.teams.editTeam.dialog.fields.name.label')}
             </Label>
             <Input
               id="name"
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
               className="col-span-3"
+              placeholder={t('settings.teams.editTeam.dialog.fields.name.placeholder')}
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">
-              Description
+              {t('settings.teams.editTeam.dialog.fields.description.label')}
             </Label>
             <Input
-              id="name"
+              id="description"
               value={teamDescription}
               onChange={(e) => setTeamDescription(e.target.value)}
               className="col-span-3"
+              placeholder={t('settings.teams.editTeam.dialog.fields.description.placeholder')}
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setEditTeamDialogOpen(false)}>
-            Cancel
+            {t('settings.teams.editTeam.dialog.buttons.cancel')}
           </Button>
           <Button onClick={handleUpdateTeam} disabled={isUpdating}>
-            {isUpdating ? 'Updating...' : 'Update'}
+            {isUpdating
+              ? t('settings.teams.editTeam.dialog.buttons.updating')
+              : t('settings.teams.editTeam.dialog.buttons.update')}
           </Button>
         </DialogFooter>
       </DialogContent>

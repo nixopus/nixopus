@@ -2,11 +2,12 @@ package types
 
 import (
 	"errors"
+	"time"
 
+	"github.com/google/uuid"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// This struct is used for both login and register responses
 type AuthResponse struct {
 	AccessToken  string            `json:"access_token"`
 	RefreshToken string            `json:"refresh_token"`
@@ -38,9 +39,8 @@ type DeleteUserRequest struct {
 	Password string `json:"password"`
 }
 
-type ChangePasswordRequest struct {
-	OldPassword string `json:"old_password"`
-	NewPassword string `json:"new_password"`
+type ResetPasswordRequest struct {
+	Password string `json:"password"`
 }
 
 type LogoutRequest struct {
@@ -49,6 +49,29 @@ type LogoutRequest struct {
 
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token"`
+}
+
+type VerificationToken struct {
+	ID        uuid.UUID `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
+	UserID    uuid.UUID `bun:"user_id,type:uuid,notnull"`
+	Token     string    `bun:"token,type:text,notnull,unique"`
+	ExpiresAt time.Time `bun:"expires_at,type:timestamp,notnull"`
+	CreatedAt time.Time `bun:"created_at,type:timestamp,notnull,default:now()"`
+}
+
+type TwoFactorSetupResponse struct {
+	Secret string `json:"secret"`
+	QRCode string `json:"qr_code"`
+}
+
+type TwoFactorVerifyRequest struct {
+	Code string `json:"code"`
+}
+
+type TwoFactorLoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Code     string `json:"code"`
 }
 
 var (
@@ -75,6 +98,7 @@ var (
 	ErrFailedToCreateRefreshToken                 = errors.New("failed to create refresh token")
 	ErrRefreshTokenIsRequired                     = errors.New("refresh token is required")
 	ErrInvalidRefreshToken                        = errors.New("invalid refresh token")
+	ErrRefreshTokenAlreadyRevoked                 = errors.New("refresh token is already revoked")
 	ErrPermissionAlreadyExists                    = errors.New("permission already exists")
 	ErrPermissionDoesNotExist                     = errors.New("permission does not exist")
 	ErrUserNameContainsSpaces                     = errors.New("user name cannot contain spaces")
@@ -93,4 +117,8 @@ var (
 	ErrFailedToAddUserToOrganization              = errors.New("failed to add user to organization")
 	ErrFailedToGetOrganization                    = errors.New("failed to get organization")
 	ErrInvalidAccess                              = errors.New("invalid access")
+	ErrFailedToSetup2FA                           = errors.New("failed to setup two-factor authentication")
+	ErrFailedToEnable2FA                          = errors.New("failed to enable two-factor authentication")
+	ErrFailedToDisable2FA                         = errors.New("failed to disable two-factor authentication")
+	ErrInvalid2FACode                             = errors.New("invalid two-factor authentication code")
 )

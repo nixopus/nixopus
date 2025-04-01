@@ -2,6 +2,9 @@ package docker
 
 import (
 	"context"
+	"fmt"
+	"io"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
@@ -9,7 +12,7 @@ import (
 	"github.com/docker/docker/client"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"io"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 )
 
 type DockerService struct {
@@ -34,6 +37,15 @@ type DockerRepository interface {
 	// CreateDeployment(deployment *deploy_types.CreateDeploymentRequest, userID uuid.UUID, contextPath string) error
 	ContainerLogs(ctx context.Context, containerID string, opts container.LogsOptions) (io.ReadCloser, error)
 	RestartContainer(containerID string, opts container.StopOptions) error
+
+	ComposeUp(composeFilePath string, envVars map[string]string) error
+	ComposeDown(composeFilePath string) error
+	ComposeBuild(composeFilePath string, envVars map[string]string) error
+	RemoveImage(imageName string, opts image.RemoveOptions) error
+}
+
+type DockerClient struct {
+	Client *client.Client
 }
 
 // NewDockerService creates a new instance of DockerService using the default docker client.
@@ -56,9 +68,25 @@ func NewDockerServiceWithClient(cli *client.Client, ctx context.Context, logger 
 // NewDockerClient creates a new docker client with the environment variables and
 // the correct API version negotiation.
 func NewDockerClient() *client.Client {
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(
+		client.WithHost("unix:///var/run/docker.sock"),
+		client.WithAPIVersionNegotiation(),
+	)
 	if err != nil {
-		panic(err)
+		cli, err = client.NewClientWithOpts(
+			client.FromEnv,
+			client.WithAPIVersionNegotiation(),
+			client.WithTLSClientConfigFromEnv(),
+		)
+		if err != nil {
+			cli, err = client.NewClientWithOpts(
+				client.FromEnv,
+				client.WithAPIVersionNegotiation(),
+			)
+			if err != nil {
+				panic(err)
+			}
+		}
 	}
 
 	return cli
@@ -225,7 +253,56 @@ func (s *DockerService) CreateContainer(config container.Config, hostConfig cont
 //
 //	io.ReadCloser - a stream of the container's logs.
 //	error - an error if the container does not exist or if there is an issue retrieving the logs.
-
 func (s *DockerService) ContainerLogs(Ctx context.Context, containerID string, opts container.LogsOptions) (io.ReadCloser, error) {
 	return s.Cli.ContainerLogs(Ctx, containerID, opts)
+}
+
+// ComposeUp starts the Docker Compose services defined in the specified compose file
+func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]string) error {
+	client := ssh.NewSSH()
+	envVarsStr := ""
+	for k, v := range envVars {
+		envVarsStr += fmt.Sprintf("export %s=%s && ", k, v)
+	}
+	command := fmt.Sprintf("%sdocker compose -f %s up -d", envVarsStr, composeFilePath)
+	output, err := client.RunCommand(command)
+	if err != nil {
+		return fmt.Errorf("failed to start docker compose services: %v, output: %s", err, output)
+	}
+	return nil
+}
+
+// ComposeDown stops and removes the Docker Compose services
+func (s *DockerService) ComposeDown(composeFilePath string) error {
+	client := ssh.NewSSH()
+	command := fmt.Sprintf("docker compose -f %s down", composeFilePath)
+	output, err := client.RunCommand(command)
+	if err != nil {
+		return fmt.Errorf("failed to stop docker compose services: %v, output: %s", err, output)
+	}
+	return nil
+}
+
+// ComposeBuild builds the Docker Compose services
+func (s *DockerService) ComposeBuild(composeFilePath string, envVars map[string]string) error {
+	client := ssh.NewSSH()
+	envVarsStr := ""
+	for k, v := range envVars {
+		envVarsStr += fmt.Sprintf("export %s=%s && ", k, v)
+	}
+	command := fmt.Sprintf("%sdocker compose -f %s build", envVarsStr, composeFilePath)
+	output, err := client.RunCommand(command)
+	if err != nil {
+		return fmt.Errorf("failed to build docker compose services: %v, output: %s", err, output)
+	}
+	return nil
+}
+
+func (s *DockerService) RemoveImage(imageName string, opts image.RemoveOptions) error {
+	ctx := context.Background()
+	_, err := s.Cli.ImageRemove(ctx, imageName, image.RemoveOptions{
+		Force:         opts.Force,
+		PruneChildren: true,
+	})
+	return err
 }

@@ -111,15 +111,15 @@ export const FormSelectTagInputField = ({
                 {Object.entries(value).map(([key, value]) => (
                   <div
                     key={key}
-                    className="flex items-center gap-1 px-2 py-1 text-sm rounded-md bg-secondary text-secondary-foreground"
+                    className="flex items-center gap-1 px-2 py-1 text-sm rounded-md bg-secondary text-secondary-foreground max-w-[200px]"
                   >
-                    <span className="font-medium">{key}</span>
+                    <span className="font-medium truncate">{key}</span>
                     <span>=</span>
-                    <span>{value}</span>
+                    <span className="truncate">{value}</span>
                     <button
                       type="button"
                       onClick={() => removeSelected(key)}
-                      className="ml-1 text-muted-foreground"
+                      className="ml-1 text-muted-foreground shrink-0"
                     >
                       <X size={14} />
                     </button>

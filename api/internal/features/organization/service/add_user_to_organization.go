@@ -7,6 +7,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/uptrace/bun"
 )
 
 // AddUserToOrganization adds a user to an organization.
@@ -21,7 +22,7 @@ import (
 // If all checks pass, it calls the storage layer's AddUserToOrganization method to add the user to the organization.
 // If the addition fails, it returns ErrFailedToAddUserToOrganization.
 // Upon successful addition, it returns nil.
-func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrganizationRequest) error {
+func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrganizationRequest, tx ...bun.Tx) error {
 	o.logger.Log(logger.Info, "adding user to organization", request.UserID)
 	roleId, err := uuid.Parse(request.RoleId)
 	if err != nil {
@@ -29,45 +30,87 @@ func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrgan
 		return types.ErrInvalidRoleID
 	}
 
-	existingOrganization, err := o.storage.GetOrganization(request.OrganizationID)
+	var dbTx bun.Tx
+	var shouldCommit bool
+
+	if len(tx) == 0 {
+		dbTx, err = o.storage.BeginTx()
+		if err != nil {
+			o.logger.Log(logger.Error, "failed to begin transaction", err.Error())
+			return types.ErrInternalServer
+		}
+		shouldCommit = true
+	} else {
+		dbTx = tx[0]
+	}
+
+	storageWithTx := o.storage.WithTx(dbTx)
+	userStorageWithTx := o.user_storage.WithTx(dbTx)
+	roleStorageWithTx := o.role_storage.WithTx(dbTx)
+
+	existingOrganization, err := storageWithTx.GetOrganization(request.OrganizationID)
 	if err != nil {
 		o.logger.Log(logger.Error, types.ErrOrganizationDoesNotExist.Error(), err.Error())
+		if shouldCommit {
+			dbTx.Rollback()
+		}
 		return err
 	}
 
 	if existingOrganization.ID == uuid.Nil {
 		o.logger.Log(logger.Error, types.ErrOrganizationDoesNotExist.Error(), "")
+		if shouldCommit {
+			dbTx.Rollback()
+		}
 		return types.ErrOrganizationDoesNotExist
 	}
 
-	existingUser, err := o.user_storage.FindUserByID(request.UserID)
+	existingUser, err := userStorageWithTx.FindUserByID(request.UserID)
 	if err != nil {
 		o.logger.Log(logger.Error, types.ErrUserDoesNotExist.Error(), err.Error())
+		if shouldCommit {
+			dbTx.Rollback()
+		}
 		return err
 	}
 
 	if existingUser.ID == uuid.Nil {
 		o.logger.Log(logger.Error, types.ErrUserDoesNotExist.Error(), "")
+		if shouldCommit {
+			dbTx.Rollback()
+		}
 		return types.ErrUserDoesNotExist
 	}
 
-	existingRole, err := o.role_storage.GetRole(roleId.String())
+	existingRole, err := roleStorageWithTx.GetRole(roleId.String())
 	if err != nil {
 		o.logger.Log(logger.Error, types.ErrRoleDoesNotExist.Error(), err.Error())
+		if shouldCommit {
+			dbTx.Rollback()
+		}
 		return err
 	}
 	if existingRole.ID == uuid.Nil {
 		o.logger.Log(logger.Error, types.ErrRoleDoesNotExist.Error(), "")
+		if shouldCommit {
+			dbTx.Rollback()
+		}
 		return types.ErrRoleDoesNotExist
 	}
 
-	existingUserInOrganization, err := o.storage.FindUserInOrganization(request.UserID, request.OrganizationID)
+	existingUserInOrganization, err := storageWithTx.FindUserInOrganization(request.UserID, request.OrganizationID)
 	if err != nil {
 		o.logger.Log(logger.Error, types.ErrFailedToAddUserToOrganization.Error(), err.Error())
+		if shouldCommit {
+			dbTx.Rollback()
+		}
 		return err
 	}
 	if existingUserInOrganization.ID != uuid.Nil {
 		o.logger.Log(logger.Error, types.ErrUserAlreadyInOrganization.Error(), "")
+		if shouldCommit {
+			dbTx.Rollback()
+		}
 		return types.ErrUserAlreadyInOrganization
 	}
 
@@ -81,9 +124,19 @@ func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrgan
 		ID:             uuid.New(),
 	}
 
-	if err := o.storage.AddUserToOrganization(organizationUser); err != nil {
+	if err := storageWithTx.AddUserToOrganization(organizationUser); err != nil {
 		o.logger.Log(logger.Error, types.ErrFailedToAddUserToOrganization.Error(), err.Error())
+		if shouldCommit {
+			dbTx.Rollback()
+		}
 		return types.ErrFailedToAddUserToOrganization
+	}
+
+	if shouldCommit {
+		if err := dbTx.Commit(); err != nil {
+			o.logger.Log(logger.Error, "failed to commit transaction", err.Error())
+			return types.ErrInternalServer
+		}
 	}
 
 	return nil

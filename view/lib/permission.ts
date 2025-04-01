@@ -18,7 +18,6 @@ export const hasPermission = (
   if (!user || !user.organization_users) return false;
 
   return user.organization_users.some((orgUser) => {
-    // If organizationId is provided, only check permissions for that organization
     if (organizationId && orgUser.organization_id !== organizationId) {
       return false;
     }

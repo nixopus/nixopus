@@ -89,9 +89,6 @@ function AppItem({
             {name}
           </CardTitle>
         </div>
-        <div className="mt-2">
-          <Badge className={`${getStatusStyles()} shadow-sm`}>{status?.status || 'unknown'}</Badge>
-        </div>
       </CardHeader>
 
       <CardContent className="flex flex-col space-y-3 pb-2 z-10 relative">

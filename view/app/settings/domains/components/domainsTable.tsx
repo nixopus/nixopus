@@ -10,21 +10,28 @@ import {
 } from '@/components/ui/table';
 import { DomainTypeTag } from './domain-type-tag';
 import { DomainActions } from './domain-actions';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface DomainsTableProps {
   domains: Domain[];
 }
 
 function DomainsTable({ domains }: DomainsTableProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="bg-secondary shadow-md rounded-lg overflow-hidden p-4">
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow>
-            <TableHead className="text-xs font-medium text-muted-foreground">Domain</TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground">Type</TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground">
+              {t('settings.domains.table.headers.domain')}
+            </TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground">
+              {t('settings.domains.table.headers.type')}
+            </TableHead>
             <TableHead className="text-right text-xs font-medium text-muted-foreground">
-              Actions
+              {t('settings.domains.table.headers.actions')}
             </TableHead>
           </TableRow>
         </TableHeader>

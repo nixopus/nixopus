@@ -3,25 +3,35 @@ package controller
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *FileManagerController) DeleteFile(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Query().Get("path")
+type DeleteDirectoryRequest struct {
+	Path string `json:"path"`
+}
 
-	if path == "" {
-		c.logger.Log(logger.Error, "path is required", "")
-		utils.SendErrorResponse(w, "path is required", http.StatusBadRequest)
-		return
+func (c *FileManagerController) DeleteDirectory(f fuego.ContextWithBody[DeleteDirectoryRequest]) (*shared_types.Response, error) {
+	request, err := f.Body()
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
 	}
 
-	err := c.service.DeleteFile(path)
+	err = c.service.DeleteDirectory(request.Path)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
-	utils.SendJSONResponse(w, "success", "File deleted successfully", nil)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Directory deleted successfully",
+	}, nil
 }

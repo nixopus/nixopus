@@ -1,44 +1,27 @@
 "use client";
-
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowRightIcon, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useRef } from "react";
 import AnimatedShinyText from "./shinyText";
 import { cn } from "./lib/utils";
 import { BackgroundLines } from "./ui/background-lines";
 
-
 export default function Hero() {
-  const fadeInRef = useRef(null);
-  const fadeInInView = useInView(fadeInRef, {
-    once: true,
-  });
-
-  const fadeUpVariants = {
-    initial: {
-      opacity: 0,
-      y: 24,
-    },
-    animate: {
-      opacity: 1,
-      y: 0,
-    },
-  };
-
   return (
     <section >
-      <div className="relative h-full py-10 bg-black">
+      <div className="relative h-full py-10 bg-gradient-to-b from-gray-900 via-gray-950 to-black">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(120,119,198,0.1),rgba(255,255,255,0))]"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
         <div className="container z-10 flex flex-col">
           <div className=" grid grid-cols-1">
             <div className="flex flex-col items-center gap-6 pb-8 text-center">
               <Link href="/components/text">
                 <div
                   className={cn(
-                    "group rounded-full border border-black/5 bg-neutral-100 text-base text-white transition-all ease-in hover:cursor-pointer hover:bg-neutral-200 dark:border-white/5 dark:bg-neutral-900 dark:hover:bg-neutral-800",
+                    "group rounded-full border border-white/10 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-base text-white transition-all ease-in hover:cursor-pointer hover:from-indigo-500/20 hover:to-purple-500/20",
                   )}
                 >
-                  <AnimatedShinyText className="inline-flex items-center justify-center px-4 py-1 transition ease-out hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
+                  <AnimatedShinyText className="inline-flex items-center justify-center px-4 py-1 transition ease-out hover:text-indigo-300 hover:duration-300">
                     <span>✨ Version alpha is here </span>
                     <ArrowRightIcon className="ml-1 size-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" />
                   </AnimatedShinyText>
@@ -46,21 +29,21 @@ export default function Hero() {
               </Link>
               <BackgroundLines className="relative flex flex-col gap-4 md:items-center lg:flex-row">
                 <h1 className="relative mx-0 max-w-[43.5rem] text-balance pt-5 text-left text-5xl font-extrabold tracking-tight text-white dark:text-white sm:text-7xl md:mx-auto md:px-4 md:py-2 md:text-center md:text-7xl lg:text-7xl">
-                  <span className="bg-gradient bg-clip-text text-transparent bg-gradient-to-r to-red-400 from-yellow-400  mr-2">Nixopus</span>
+                  <span className="bg-gradient bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 mr-2">Nixopus</span>
                   <br />
                   All in one tool for managing your vps
                 </h1>
-                <span className="text-neutral-90 absolute -top-3.5 left-0 z-10 rotate-3 whitespace-nowrap rounded-full bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold uppercase leading-5 tracking-wide text-white md:top-12 md:-rotate-12">
+                <span className="text-neutral-90 absolute -top-3.5 left-0 z-10 rotate-3 whitespace-nowrap rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-2.5 py-1 text-[11px] font-semibold uppercase leading-5 tracking-wide text-white md:top-12 md:-rotate-12">
                   Self hostable
                 </span>
               </BackgroundLines>
-              <p className="max-w-[64rem] text-balance text-lg tracking-tight text-black dark:text-white md:text-xl">
+              <p className="max-w-[64rem] text-balance text-lg tracking-tight text-gray-300 dark:text-gray-300 md:text-xl">
                 Nixopus boosts your productivity for managing vps graphically with built in features such as{" "}
-                <strong>Self hosting capabilities</strong>, <strong>Open source Marketplace</strong>,{" "}
-                <strong>File Manager</strong>, and{" "}
-                <strong>Mail Server </strong>.
+                <strong className="text-indigo-300">Self hosting capabilities</strong>, <strong className="text-purple-300">Open source Marketplace</strong>,{" "}
+                <strong className="text-pink-300">File Manager</strong>, and{" "}
+                <strong className="text-indigo-300">Mail Server </strong>.
                 <br />
-                100% open-source, with love.
+                <span className="text-gray-400">100% open-source, with love.</span>
               </p>
 
               <div className="flex flex-col gap-4 lg:flex-row" >
@@ -68,16 +51,16 @@ export default function Hero() {
                   <Link
                     href="/components"
                     className={cn(
-                      "group relative inline-flex items-center rounded-full border bg-yellow-400 border-transparent px-4 py-2 text-sm font-semibold tracking-tighter text-black transition-all ease-in hover:bg-yellow-300 hover:text-black focus-visible:outline-none focus-visible:ring focus-visible:ring-yellow-500 focus-visible:ring-offset-2 focus-visible:ring-offset-yellow-100",
+                      "group relative inline-flex items-center rounded-full border bg-gradient-to-r from-indigo-500 to-purple-500 border-transparent px-4 py-2 text-sm font-semibold tracking-tighter text-white transition-all ease-in hover:from-indigo-600 hover:to-purple-600 hover:text-white focus-visible:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-100",
                     )}
                   >
                     Self host
-                    <ChevronRight className="ml-1  size-4 flex-shrink-0 transition-all duration-300 ease-out group-hover:translate-x-1" />
+                    <ChevronRight className="ml-1 size-4 flex-shrink-0 transition-all duration-300 ease-out group-hover:translate-x-1" />
                   </Link>
                   <Link
                     href="/docs/installation"
                     className={cn(
-                      "group relative inline-flex items-center  rounded-full border border-white px-4 py-2 text-sm font-semibold tracking-tighter text-white transition-all ease-in hover:bg-yellow-300 hover:text-black focus-visible:outline-none focus-visible:ring hover:border-transparent focus-visible:ring-yellow-500 focus-visible:ring-offset-2 focus-visible:ring-offset-yellow-100",
+                      "group relative inline-flex items-center rounded-full border border-white/20 px-4 py-2 text-sm font-semibold tracking-tighter text-white transition-all ease-in hover:bg-gradient-to-r hover:from-indigo-500/20 hover:to-purple-500/20 hover:border-transparent focus-visible:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-100",
                     )}
                   >
                     Try cloud version
@@ -112,7 +95,7 @@ export default function Hero() {
             className="absolute -top-16 left-0 right-auto cursor-pointer lg:-top-20"
           >
             <span className="flex items-center">
-              <span className="mt-3 inline-block whitespace-nowrap rounded-full bg-neutral-800 px-2.5 py-1 text-[11px] font-semibold uppercase leading-5 tracking-wide text-white">
+              <span className="mt-3 inline-block whitespace-nowrap rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 px-2.5 py-1 text-[11px] font-semibold uppercase leading-5 tracking-wide text-white">
                 Explore Features
               </span>
               <svg

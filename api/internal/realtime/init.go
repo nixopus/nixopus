@@ -2,7 +2,6 @@ package realtime
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -58,13 +57,6 @@ type SocketServer struct {
 }
 
 // NewSocketServer initializes and returns a new instance of SocketServer.
-// It sets up a PostgreSQL listener for application change notifications and
-// starts a goroutine to handle these notifications.
-//
-// Parameters:
-//   deployController - a pointer to an instance of DeployController used for handling deployment-related operations.
-//   db - a pointer to a bun.DB object representing the database connection.
-
 func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx context.Context) (*SocketServer, error) {
 	err := godotenv.Load()
 	if err != nil {
@@ -85,116 +77,67 @@ func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx 
 		dashboardMonitors:   make(map[*websocket.Conn]*dashboard.DashboardMonitor),
 		applicationMonitors: make(map[*websocket.Conn]*realtime.ApplicationMonitor),
 	}
-
-	notificationChan, err := pgListener.ListenToApplicationChanges(ctx)
+	err = StartListeningAndNotify(&server.postgres_listener, ctx, server)
 	if err != nil {
-		return nil, fmt.Errorf("failed to listen for PostgreSQL notifications: %w", err)
+		log.Printf("Error initializing postgres listener: %v", err)
+		return nil, err
 	}
-
-	go server.handleNotifications(notificationChan)
-
 	return server, nil
 }
 
-// handleNotifications processes incoming PostgreSQL notifications from the notification channel.
-//
-// This method listens on the provided channel for notifications related to application changes.
-// Upon receiving a notification, it checks if the notification is from the "application_changes"
-// channel. If it is, the method attempts to parse the JSON payload to extract the table, action,
-// and ID details. If parsing is successful, it constructs a message containing the parsed data
-// and broadcasts it to the appropriate topic using the BroadcastToTopic method.
+// HandleHTTP handles incoming HTTP connections and upgrades them to WebSocket connections.
+// It verifies the authorization token and authenticates the user.
 //
 // Parameters:
 //
-//	notificationChan - a channel that receives *PostgresNotification objects.
+//	w - the http.ResponseWriter for the response.
+//	r - the http.Request from the client.
 //
-// Errors and any issues parsing the notification payload are logged, but do not stop the
-// processing of further notifications.
-func (s *SocketServer) handleNotifications(notificationChan <-chan *PostgresNotification) {
-	for notification := range notificationChan {
-		// fmt.Printf("Received notification on channel %s: %s\n",
-		// 	notification.Channel, notification.Payload)
-
-		if notification.Channel == "application_changes" {
-			var parsedPayload struct {
-				Table         string                 `json:"table"`
-				Action        string                 `json:"action"`
-				ApplicationID string                 `json:"application_id"`
-				Data          map[string]interface{} `json:"data"`
-			}
-
-			if err := json.Unmarshal([]byte(notification.Payload), &parsedPayload); err != nil {
-				log.Printf("Error parsing notification payload: %v", err)
-				continue
-			}
-
-			resourceID := parsedPayload.ApplicationID
-
-			messageData := map[string]interface{}{
-				"table":          parsedPayload.Table,
-				"action":         parsedPayload.Action,
-				"application_id": parsedPayload.ApplicationID,
-				"data":           parsedPayload.Data,
-			}
-
-			s.BroadcastToTopic(MonitorApplicationDeployment, resourceID, messageData)
-		}
-	}
-}
-
+// Returns:
+//   - nil if the connection is successfully upgraded.
+//   - an error if the connection fails to upgrade or if the token is invalid.
 func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
+	if token == "" {
+		http.Error(w, "Token is required", http.StatusUnauthorized)
+		return
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("Error upgrading connection: %v", err)
 		return
 	}
 
-	fmt.Printf("New connection from client: %s\n", conn.RemoteAddr())
 	conn.SetReadLimit(maxMessageSize)
 
-	if token != "" {
-		if len(token) > 7 && strings.HasPrefix(token, "Bearer ") {
-			token = token[7:]
-		}
+	if strings.HasPrefix(token, "Bearer ") {
+		token = token[7:]
+	}
 
-		user, err := s.verifyToken(token)
-		if err != nil {
-			log.Printf("Auth error: %v", err)
-			s.sendError(conn, "Invalid authorization token")
-			conn.Close()
-			return
-		}
-
-		log.Printf("User authenticated via URL token. ID: %s, Email: %s", user.ID, user.Email)
-		s.conns.Store(conn, user.ID)
-		defer s.handleDisconnect(conn)
-		s.readLoop(conn, user)
+	user, err := s.verifyToken(token)
+	if err != nil || user == nil {
+		log.Printf("Auth error: %v", err)
+		s.sendError(conn, "Invalid authorization token")
+		conn.Close()
 		return
 	}
 
-	s.conns.Store(conn, "")
+	s.conns.Store(conn, user.ID)
 	defer s.handleDisconnect(conn)
 
-	authTimer := time.NewTimer(30 * time.Second)
-	authChan := make(chan *types.User)
-
-	go func() {
-		select {
-		case user := <-authChan:
-			if user != nil {
-				s.readLoop(conn, user)
-			}
-		case <-authTimer.C:
-			log.Printf("Authentication timeout for client: %s", conn.RemoteAddr())
-			s.sendError(conn, "Authentication timeout")
-			conn.Close()
-		}
-	}()
-
-	s.waitForAuth(conn, authChan)
+	log.Printf("User authenticated: %s", user.ID)
+	s.readLoop(conn)
 }
 
+// handleDisconnect handles the disconnection of a client.
+// it closes all the monitors and deletes the connection from the map.
+// Parameters:
+//
+//	conn - the *websocket.Conn representing the client connection.
+//
+// Returns:
+//   - nil
 func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
 	userID, _ := s.conns.Load(conn)
 	s.conns.Delete(conn)
@@ -210,6 +153,27 @@ func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
 	}
 
 	s.topicsMu.Unlock()
+
+	s.terminalMutex.Lock()
+	if term, exists := s.terminals[conn]; exists {
+		term.Close()
+		delete(s.terminals, conn)
+	}
+	s.terminalMutex.Unlock()
+
+	s.dashboardMutex.Lock()
+	if monitor, exists := s.dashboardMonitors[conn]; exists {
+		monitor.Stop()
+		delete(s.dashboardMonitors, conn)
+	}
+	s.dashboardMutex.Unlock()
+
+	s.applicationMutex.Lock()
+	if monitor, exists := s.applicationMonitors[conn]; exists {
+		monitor.Stop()
+		delete(s.applicationMonitors, conn)
+	}
+	s.applicationMutex.Unlock()
 
 	conn.Close()
 	fmt.Printf("Client disconnected: %s (User ID: %v)\n", conn.RemoteAddr(), userID)

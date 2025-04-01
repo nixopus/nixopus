@@ -1,5 +1,5 @@
 'use client';
-import DashboardPageHeader from '@/components/dashboard-page-header';
+import DashboardPageHeader from '@/components/layout/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import React from 'react';
 import DomainsTable from './components/domainsTable';
@@ -9,8 +9,10 @@ import { useAppSelector } from '@/redux/hooks';
 import { useResourcePermissions } from '@/lib/permission';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 const Page = () => {
+  const { t } = useTranslation();
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const {
     data: domains,
@@ -24,13 +26,16 @@ const Page = () => {
   if (!activeOrg?.id) {
     return (
       <div className="container mx-auto py-6 space-y-8 max-w-4xl">
-        <DashboardPageHeader label="Server and Domains" description="Configure your domains" />
+        <DashboardPageHeader
+          label={t('settings.domains.page.title')}
+          description={t('settings.domains.page.description')}
+        />
         <div className="flex flex-col h-full justify-center items-center gap-4 mt-12">
           <h2 className="text-xl font-medium text-center text-foreground">
-            No Organization Selected
+            {t('settings.domains.page.noOrganization.title')}
           </h2>
           <p className="text-muted-foreground text-center">
-            Please select an organization to view and manage domains.
+            {t('settings.domains.page.noOrganization.description')}
           </p>
         </div>
       </div>
@@ -40,11 +45,16 @@ const Page = () => {
   if (!canRead) {
     return (
       <div className="container mx-auto py-6 space-y-8 max-w-4xl">
-        <DashboardPageHeader label="Server and Domains" description="Configure your domains" />
+        <DashboardPageHeader
+          label={t('settings.domains.page.title')}
+          description={t('settings.domains.page.description')}
+        />
         <div className="flex flex-col h-full justify-center items-center gap-4 mt-12">
-          <h2 className="text-xl font-medium text-center text-foreground">Access Denied</h2>
+          <h2 className="text-xl font-medium text-center text-foreground">
+            {t('settings.domains.page.accessDenied.title')}
+          </h2>
           <p className="text-muted-foreground text-center">
-            You don't have permission to view domains for this organization.
+            {t('settings.domains.page.accessDenied.description')}
           </p>
         </div>
       </div>
@@ -54,10 +64,13 @@ const Page = () => {
   if (isLoading) {
     return (
       <div className="container mx-auto py-6 space-y-8 max-w-4xl">
-        <DashboardPageHeader label="Server and Domains" description="Configure your domains" />
+        <DashboardPageHeader
+          label={t('settings.domains.page.title')}
+          description={t('settings.domains.page.description')}
+        />
         <div className="flex flex-col h-full justify-center items-center gap-4 mt-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <p className="text-muted-foreground text-center">Loading domains...</p>
+          <p className="text-muted-foreground text-center">{t('settings.domains.page.loading')}</p>
         </div>
       </div>
     );
@@ -66,9 +79,12 @@ const Page = () => {
   if (error) {
     return (
       <div className="container mx-auto py-6 space-y-8 max-w-4xl">
-        <DashboardPageHeader label="Server and Domains" description="Configure your domains" />
+        <DashboardPageHeader
+          label={t('settings.domains.page.title')}
+          description={t('settings.domains.page.description')}
+        />
         <Alert variant="destructive">
-          <AlertDescription>Failed to load domains. Please try again later.</AlertDescription>
+          <AlertDescription>{t('settings.domains.page.error')}</AlertDescription>
         </Alert>
       </div>
     );
@@ -76,14 +92,19 @@ const Page = () => {
 
   return (
     <div className="container mx-auto py-6 space-y-8 max-w-4xl">
-      <DashboardPageHeader label="Server and Domains" description="Configure your domains" />
+      <DashboardPageHeader
+        label={t('settings.domains.page.title')}
+        description={t('settings.domains.page.description')}
+      />
       {domains && domains.length > 0 ? (
         <>
           <div className="flex justify-between items-center mt-8">
-            <h2 className="text-xl font-medium text-foreground">Domains</h2>
+            <h2 className="text-xl font-medium text-foreground">
+              {t('settings.domains.page.domainsList.title')}
+            </h2>
             {canCreate && (
               <Button variant="default" onClick={() => setAddDomainDialogOpen(true)}>
-                Add Domain
+                {t('settings.domains.page.domainsList.addButton')}
               </Button>
             )}
           </div>
@@ -110,16 +131,19 @@ interface NoDomainsFoundProps {
 }
 
 const NoDomainsFound = ({ onPressAddDomain, canCreate }: NoDomainsFoundProps) => {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col h-full justify-center items-center gap-4">
-      <h2 className="text-xl font-medium text-center text-foreground">No Domains Found</h2>
+      <h2 className="text-xl font-medium text-center text-foreground">
+        {t('settings.domains.page.noDomains.title')}
+      </h2>
       {canCreate ? (
         <Button className="mx-auto" variant="default" onClick={onPressAddDomain}>
-          Add Domain
+          {t('settings.domains.page.domainsList.addButton')}
         </Button>
       ) : (
         <p className="text-muted-foreground text-center">
-          You don't have permission to add domains.
+          {t('settings.domains.page.noDomains.noPermission')}
         </p>
       )}
     </div>

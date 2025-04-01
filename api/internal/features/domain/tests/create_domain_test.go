@@ -1,64 +1,159 @@
 package tests
 
 import (
-	"context"
-	"errors"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	domainService "github.com/raghavyuva/nixopus-api/internal/features/domain/service"
+	domainStorage "github.com/raghavyuva/nixopus-api/internal/features/domain/storage"
+	domainTypes "github.com/raghavyuva/nixopus-api/internal/features/domain/types"
+	"github.com/raghavyuva/nixopus-api/internal/testutils"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-func TestCreateDomainSuccess(t *testing.T) {
-	mockStorage := NewMockDomainStorage()
-	mockStorage.On("GetDomainByName", mock.Anything).Return(nil, nil)
-	mockStorage.On("CreateDomain", mock.Anything).Return(nil)
+func TestCreateDomain(t *testing.T) {
+	t.Run("should create domain successfully", func(t *testing.T) {
+		setup := testutils.NewTestSetup()
+		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
+		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
 
-	service := service.NewDomainsService(nil, context.Background(), logger.NewLogger(), mockStorage)
+		user, org, err := setup.CreateTestUserAndOrg()
+		assert.NoError(t, err)
 
-	req := types.CreateDomainRequest{Name: "example.com"}
-	userID := uuid.New().String()
-	_, err := service.CreateDomain(req, userID)
-	assert.NoError(t, err)
-}
+		req := domainTypes.CreateDomainRequest{
+			Name:           "test.domain.com",
+			OrganizationID: org.ID,
+		}
 
-func TestCreateDomainAlreadyExists(t *testing.T) {
-	mockStorage := NewMockDomainStorage()
-	mockStorage.On("GetDomainByName", "example.com").Return(&shared_types.Domain{}, nil)
+		resp, err := service.CreateDomain(req, user.ID.String())
+		assert.NoError(t, err)
+		assert.NotEmpty(t, resp.ID)
 
-	service := service.NewDomainsService(nil, context.Background(), logger.NewLogger(), mockStorage)
+		// Verify domain was created
+		domains, err := service.GetDomains(org.ID.String(), user.ID)
+		assert.NoError(t, err)
+		assert.Len(t, domains, 1)
+		assert.Equal(t, req.Name, domains[0].Name)
+		assert.Equal(t, org.ID, domains[0].OrganizationID)
+		assert.Equal(t, user.ID, domains[0].UserID)
+	})
 
-	req := types.CreateDomainRequest{Name: "example.com"}
-	userID := uuid.New().String()
-	_, err := service.CreateDomain(req, userID)
-	assert.Equal(t, types.ErrDomainAlreadyExists, err)
-}
+	t.Run("should not create domain with duplicate name in same organization", func(t *testing.T) {
+		setup := testutils.NewTestSetup()
+		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
+		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
 
-func TestCreateDomainInvalidUserID(t *testing.T) {
-	mockStorage := NewMockDomainStorage()
-	mockStorage.On("GetDomainByName", "example.com").Return(nil, nil)
+		user, org, err := setup.CreateTestUserAndOrg()
+		assert.NoError(t, err)
 
-	service := service.NewDomainsService(nil, context.Background(), logger.NewLogger(), mockStorage)
+		req := domainTypes.CreateDomainRequest{
+			Name:           "test.domain.com",
+			OrganizationID: org.ID,
+		}
 
-	req := types.CreateDomainRequest{Name: "example.com"}
-	_, err := service.CreateDomain(req, "invalid-user-id")
-	assert.NotNil(t, err)
-}
+		// Create first domain
+		resp, err := service.CreateDomain(req, user.ID.String())
+		assert.NoError(t, err)
+		assert.NotEmpty(t, resp.ID)
 
-func TestCreateDomainStorageError(t *testing.T) {
-	mockStorage := NewMockDomainStorage()
-	mockStorage.On("GetDomainByName", mock.Anything).Return(nil, nil)
-	mockStorage.On("CreateDomain", mock.Anything).Return(errors.New("storage error"))
+		// Try to create domain with same name
+		_, err = service.CreateDomain(req, user.ID.String())
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, domainTypes.ErrDomainAlreadyExists)
+	})
 
-	service := service.NewDomainsService(nil, context.Background(), logger.NewLogger(), mockStorage)
+	t.Run("should not create domain with invalid organization ID", func(t *testing.T) {
+		setup := testutils.NewTestSetup()
+		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
+		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
 
-	req := types.CreateDomainRequest{Name: "example.com"}
-	userID := uuid.New().String()
-	_, err := service.CreateDomain(req, userID)
-	assert.NotNil(t, err)
+		user, _, err := setup.CreateTestUserAndOrg()
+		assert.NoError(t, err)
+
+		req := domainTypes.CreateDomainRequest{
+			Name:           "test.domain.com",
+			OrganizationID: uuid.New(), // Random non-existent org ID
+		}
+
+		_, err = service.CreateDomain(req, user.ID.String())
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "organization not found")
+	})
+
+	t.Run("should not create domain with invalid name format", func(t *testing.T) {
+		setup := testutils.NewTestSetup()
+		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
+		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
+
+		user, org, err := setup.CreateTestUserAndOrg()
+		assert.NoError(t, err)
+
+		invalidNames := []string{
+			"",                                // Empty name
+			"test",                            // No TLD
+			"t.c",                             // TLD too short
+			"test." + strings.Repeat("x", 64), // TLD too long
+			"a",                               // Name too short
+			strings.Repeat("x", 256) + ".com", // Name too long
+		}
+
+		for _, name := range invalidNames {
+			req := domainTypes.CreateDomainRequest{
+				Name:           name,
+				OrganizationID: org.ID,
+			}
+
+			_, err = service.CreateDomain(req, user.ID.String())
+			assert.Error(t, err, "Expected error for invalid name: %s", name)
+		}
+	})
+
+	t.Run("should not create domain that does not belong to server", func(t *testing.T) {
+		setup := testutils.NewTestSetup()
+		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
+		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
+
+		user, org, err := setup.CreateTestUserAndOrg()
+		assert.NoError(t, err)
+
+		serverHost := os.Getenv("SSH_HOST")
+		if serverHost == "" {
+			serverHost, err = os.Hostname()
+			assert.NoError(t, err)
+		}
+
+		req := domainTypes.CreateDomainRequest{
+			Name:           "example.com",
+			OrganizationID: org.ID,
+		}
+
+		_, err = service.CreateDomain(req, user.ID.String())
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, domainTypes.ErrDomainDoesNotBelongToServer)
+	})
+
+	t.Run("should create domain that belongs to server", func(t *testing.T) {
+		setup := testutils.NewTestSetup()
+		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
+		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
+
+		user, org, err := setup.CreateTestUserAndOrg()
+		assert.NoError(t, err)
+
+		serverHost := os.Getenv("SSH_HOST")
+		if serverHost == "" {
+			serverHost, err = os.Hostname()
+			assert.NoError(t, err)
+		}
+
+		req := domainTypes.CreateDomainRequest{
+			Name:           "test." + serverHost,
+			OrganizationID: org.ID,
+		}
+
+		_, err = service.CreateDomain(req, user.ID.String())
+		assert.NoError(t, err)
+	})
 }

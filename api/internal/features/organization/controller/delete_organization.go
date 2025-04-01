@@ -3,50 +3,80 @@ package controller
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// DeleteOrganization godoc
-// @Summary Delete an organization
-// @Description Deletes an organization with the given id.
-// @Tags organization
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param delete_organization body types.DeleteOrganizationRequest true "Delete organization request"
-// @Success 200 {object} types.Response "Success response"
-// @Failure 400 {object} types.Response "Bad request"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /organization/delete [post]
-func (c *OrganizationsController) DeleteOrganization(w http.ResponseWriter, r *http.Request) {
-	var organization types.DeleteOrganizationRequest
+func (c *OrganizationsController) DeleteOrganization(f fuego.ContextWithBody[types.DeleteOrganizationRequest]) (*shared_types.Response, error) {
+	organization, err := f.Body()
+	c.logger.Log(logger.Info, "Deleting organization", organization.ID)
+
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	w, r := f.Response(), f.Request()
+	if err := c.validator.ValidateRequest(&organization); err != nil {
+		c.logger.Log(logger.Error, err.Error(), err.Error())
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
 
 	loggedInUser := utils.GetUser(w, r)
 	if loggedInUser == nil {
-		return
-	}
-
-	if !c.parseAndValidate(w, r, &organization) {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
 	organizationID, err := uuid.Parse(organization.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	count, err := c.service.GetOrganizationCount(loggedInUser.ID.String())
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	if count <= 1 {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
 	}
 
 	if err := c.service.DeleteOrganization(organizationID); err != nil {
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
 	c.Notify(notification.NotificationPayloadTypeDeleteOrganization, loggedInUser, r)
 
-	utils.SendJSONResponse(w, "success", "Organization deleted successfully", nil)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Organization deleted successfully",
+		Data:    nil,
+	}, nil
 }

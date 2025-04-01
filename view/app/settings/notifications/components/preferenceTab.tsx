@@ -2,6 +2,7 @@
 import React from 'react';
 import NotificationPreferenceCard from './preference';
 import { PreferenceType } from '@/redux/types/notification';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface NotificationPreferencesTabProps {
   activityPreferences?: PreferenceType[];
@@ -16,25 +17,27 @@ export const NotificationPreferencesTab: React.FC<NotificationPreferencesTabProp
   updatePreferences,
   onUpdatePreference
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="grid gap-6 md:grid-cols-1">
       <NotificationPreferenceCard
-        title="Activity Notifications"
-        description="Notifications about activity in your team"
+        title={t('settings.notifications.preferences.activity.title')}
+        description={t('settings.notifications.preferences.activity.description')}
         preferences={activityPreferences}
         onUpdate={onUpdatePreference}
       />
 
       <NotificationPreferenceCard
-        title="Security Notifications"
-        description="Important alerts about deployed applications and errors"
+        title={t('settings.notifications.preferences.security.title')}
+        description={t('settings.notifications.preferences.security.description')}
         preferences={securityPreferences}
         onUpdate={onUpdatePreference}
       />
 
       <NotificationPreferenceCard
-        title="Updates & Marketing"
-        description="Stay informed about our product and services"
+        title={t('settings.notifications.preferences.updates.title')}
+        description={t('settings.notifications.preferences.updates.description')}
         preferences={updatePreferences}
         onUpdate={onUpdatePreference}
       />

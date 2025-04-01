@@ -1,0 +1,116 @@
+name: Container CI/CD
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'api/**'
+      - 'view/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/build_container.yml'
+      - '.env.sample'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'api/**'
+      - 'view/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/build_container.yml'
+      - '.env.sample'
+
+env:
+  REGISTRY: ghcr.io
+  API_IMAGE: ${{ github.repository }}-api
+  VIEW_IMAGE: ${{ github.repository }}-view
+  API_PORT: 8443
+  NEXT_PUBLIC_PORT: 7443
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create .env files
+        run: |
+          cp .env.sample api/.env
+          cp .env.sample view/.env
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for API
+        id: meta-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.API_IMAGE }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+            type=ref,event=branch
+            type=ref,event=tag
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./api
+          push: true
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+          build-args: |
+            API_PORT=${{ env.API_PORT }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      - name: Extract metadata for View
+        id: meta-view
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+            type=ref,event=branch
+            type=ref,event=tag
+
+      - name: Build and push View image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./view
+          push: true
+          tags: ${{ steps.meta-view.outputs.tags }}
+          labels: ${{ steps.meta-view.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_PORT=${{ env.NEXT_PUBLIC_PORT }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache

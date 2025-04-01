@@ -13,6 +13,7 @@ type Application struct {
 	Name                 string                   `json:"name" bun:"name,notnull"`
 	Port                 int                      `json:"port" bun:"port,notnull"`
 	Environment          Environment              `json:"environment" bun:"environment,notnull"`
+	ProxyServer          ProxyServer              `json:"proxy_server" bun:"proxy_server,notnull,default:caddy"`
 	BuildVariables       string                   `json:"build_variables" bun:"build_variables,notnull"`
 	EnvironmentVariables string                   `json:"environment_variables" bun:"environment_variables,notnull"`
 	BuildPack            BuildPack                `json:"build_pack" bun:"build_pack,notnull"`
@@ -22,13 +23,16 @@ type Application struct {
 	PostRunCommand       string                   `json:"post_run_command" bun:"post_run_command,notnull"`
 	Domain               string                   `json:"domain" bun:"domain,notnull"`
 	DockerfilePath       string                   `json:"dockerfile_path" bun:"dockerfile_path,notnull,default:Dockerfile"`
+	BasePath             string                   `json:"base_path" bun:"base_path,notnull,default:/"`
 	UserID               uuid.UUID                `json:"user_id" bun:"user_id,notnull,type:uuid"`
+	OrganizationID       uuid.UUID                `json:"organization_id" bun:"organization_id,notnull,type:uuid"`
 	CreatedAt            time.Time                `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt            time.Time                `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 	User                 *User                    `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
 	Status               *ApplicationStatus       `json:"status,omitempty" bun:"rel:has-one,join:id=application_id"`
 	Logs                 []*ApplicationLogs       `json:"logs,omitempty" bun:"rel:has-many,join:id=application_id"`
 	Deployments          []*ApplicationDeployment `json:"deployments,omitempty" bun:"rel:has-many,join:id=application_id"`
+	Organization         *Organization            `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
 type ApplicationDeployment struct {
@@ -103,6 +107,13 @@ const (
 	Production  Environment = "production"
 )
 
+type ProxyServer string
+
+const (
+	Nginx ProxyServer = "nginx"
+	Caddy ProxyServer = "caddy"
+)
+
 type BuildPack string
 
 const (
@@ -126,3 +137,16 @@ const (
 	DeploymentTypeRollback = "rollback"
 	DeploymentTypeRestart  = "restart"
 )
+
+type WebhookPayload struct {
+	Repository struct {
+		ID       uint64 `json:"id"`
+		FullName string `json:"full_name"`
+	} `json:"repository"`
+	Ref    string `json:"ref"`
+	Before string `json:"before"`
+	After  string `json:"after"`
+	Pusher struct {
+		Name string `json:"name"`
+	} `json:"pusher"`
+}

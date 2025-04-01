@@ -3,3 +3,4 @@ api/tmp
 api/bin/
 .env
 data
+node_modules

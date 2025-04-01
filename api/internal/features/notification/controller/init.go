@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net/http"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -10,9 +12,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/notification/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification/validation"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type NotificationController struct {
@@ -61,16 +60,19 @@ func NewNotificationController(
 //
 //	bool - true if parsing and validation succeed, false otherwise.
 func (c *NotificationController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) bool {
-	if err := c.validator.ParseRequestBody(r, r.Body, req); err != nil {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		c.logger.Log(logger.Error, "Failed to read request body", err.Error())
 		return false
 	}
-	user := utils.GetUser(w, r)
-	if user == nil {
+	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	if err := c.validator.ParseRequestBody(r, io.NopCloser(bytes.NewBuffer(bodyBytes)), req); err != nil {
+		c.logger.Log(logger.Error, "Failed to decode request", err.Error())
 		return false
 	}
 
-	if err := c.validator.ValidateRequest(req, user); err != nil {
+	if err := c.validator.ValidateRequest(req); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
 		return false
 	}

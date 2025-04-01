@@ -1,111 +1,119 @@
 package tests
 
 import (
-	"context"
-	"errors"
+	"os"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	domainService "github.com/raghavyuva/nixopus-api/internal/features/domain/service"
+	domainStorage "github.com/raghavyuva/nixopus-api/internal/features/domain/storage"
+	domainTypes "github.com/raghavyuva/nixopus-api/internal/features/domain/types"
+	"github.com/raghavyuva/nixopus-api/internal/testutils"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestUpdateDomain(t *testing.T) {
-	validUUID := "123e4567-e89b-12d3-a456-426614174000"
+	t.Run("should update domain successfully", func(t *testing.T) {
+		setup := testutils.NewTestSetup()
+		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
+		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
 
-	tests := []struct {
-		name            string
-		domainID        string
-		userID          string
-		newName         string
-		domainExists    bool
-		getDomainErr    error
-		updateDomainErr error
-		expectedErr     error
-	}{
-		{
-			name:            "success",
-			domainID:        validUUID,
-			userID:          "456",
-			newName:         "new-name",
-			domainExists:    true,
-			getDomainErr:    nil,
-			updateDomainErr: nil,
-			expectedErr:     nil,
-		},
-		{
-			name:            "domain not found",
-			domainID:        validUUID,
-			userID:          "456",
-			newName:         "new-name",
-			domainExists:    false,
-			getDomainErr:    nil,
-			updateDomainErr: nil,
-			expectedErr:     types.ErrDomainNotFound,
-		},
-		{
-			name:            "storage get domain error",
-			domainID:        validUUID,
-			userID:          "456",
-			newName:         "new-name",
-			domainExists:    false,
-			getDomainErr:    types.ErrDomainNotFound,
-			updateDomainErr: nil,
-			expectedErr:     types.ErrDomainNotFound,
-		},
-		{
-			name:            "storage update domain error",
-			domainID:        validUUID,
-			userID:          "456",
-			newName:         "new-name",
-			domainExists:    true,
-			getDomainErr:    nil,
-			updateDomainErr: errors.New("update domain error"),
-			expectedErr:     errors.New("update domain error"),
-		},
-		{
-			name:        "invalid domain ID",
-			domainID:    "123",
-			userID:      "456",
-			newName:     "new-name",
-			expectedErr: types.ErrInvalidDomainID,
-		},
-	}
+		user, org, err := setup.CreateTestUserAndOrg()
+		assert.NoError(t, err)
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			mockStorage := NewMockDomainStorage()
+		req := domainTypes.CreateDomainRequest{
+			Name:           "test.domain.com",
+			OrganizationID: org.ID,
+		}
 
-			if test.expectedErr != types.ErrInvalidDomainID {
-				var domain *shared_types.Domain
-				if test.domainExists {
-					domain = &shared_types.Domain{ID: uuid.MustParse(test.domainID)}
-				}
+		resp, err := service.CreateDomain(req, user.ID.String())
+		assert.NoError(t, err)
+		assert.NotEmpty(t, resp.ID)
 
-				mockStorage.WithGetDomain(test.domainID, domain, test.getDomainErr)
+		newName := "updated.domain.com"
+		updated, err := service.UpdateDomain(newName, user.ID.String(), resp.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, newName, updated.Name)
 
-				if test.domainExists && test.getDomainErr == nil {
-					mockStorage.WithUpdateDomain(test.domainID, test.newName, test.updateDomainErr)
+		domains, err := service.GetDomains(org.ID.String(), user.ID)
+		assert.NoError(t, err)
+		assert.Len(t, domains, 1)
+		assert.Equal(t, newName, domains[0].Name)
+	})
 
-					if test.updateDomainErr == nil {
-						mockStorage.WithGetDomain(test.domainID, domain, nil)
-					}
-				}
-			}
+	t.Run("should not update domain with invalid domain ID", func(t *testing.T) {
+		setup := testutils.NewTestSetup()
+		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
+		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
 
-			s := service.NewDomainsService(nil, context.Background(), logger.NewLogger(), mockStorage)
-			_, err := s.UpdateDomain(test.newName, test.userID, test.domainID)
+		user, _, err := setup.CreateTestUserAndOrg()
+		assert.NoError(t, err)
 
-			if test.expectedErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.Equal(t, test.expectedErr.Error(), err.Error())
-			}
+		_, err = service.UpdateDomain("new.domain.com", user.ID.String(), "invalid-uuid")
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, domainTypes.ErrInvalidDomainID)
+	})
 
-			mockStorage.AssertExpectations(t)
-		})
-	}
+	t.Run("should not update domain with non-existent domain ID", func(t *testing.T) {
+		setup := testutils.NewTestSetup()
+		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
+		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
+
+		user, _, err := setup.CreateTestUserAndOrg()
+		assert.NoError(t, err)
+
+		nonExistentID := uuid.New().String()
+		_, err = service.UpdateDomain("new.domain.com", user.ID.String(), nonExistentID)
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, domainTypes.ErrDomainNotFound)
+	})
+
+	t.Run("should not update domain that does not belong to server", func(t *testing.T) {
+		setup := testutils.NewTestSetup()
+		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
+		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
+
+		user, org, err := setup.CreateTestUserAndOrg()
+		assert.NoError(t, err)
+
+		createReq := domainTypes.CreateDomainRequest{
+			Name:           "test." + os.Getenv("SSH_HOST"),
+			OrganizationID: org.ID,
+		}
+
+		resp, err := service.CreateDomain(createReq, user.ID.String())
+		assert.NoError(t, err)
+
+		_, err = service.UpdateDomain("example.com", user.ID.String(), resp.ID)
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, domainTypes.ErrDomainDoesNotBelongToServer)
+	})
+
+	t.Run("should update domain that belongs to server", func(t *testing.T) {
+		setup := testutils.NewTestSetup()
+		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
+		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
+
+		user, org, err := setup.CreateTestUserAndOrg()
+		assert.NoError(t, err)
+
+		serverHost := os.Getenv("SSH_HOST")
+		if serverHost == "" {
+			serverHost, err = os.Hostname()
+			assert.NoError(t, err)
+		}
+
+		createReq := domainTypes.CreateDomainRequest{
+			Name:           "test1." + serverHost,
+			OrganizationID: org.ID,
+		}
+
+		resp, err := service.CreateDomain(createReq, user.ID.String())
+		assert.NoError(t, err)
+
+		newName := "test2." + serverHost
+		updated, err := service.UpdateDomain(newName, user.ID.String(), resp.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, newName, updated.Name)
+	})
 }

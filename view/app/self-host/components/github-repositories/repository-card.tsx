@@ -4,6 +4,7 @@ import { ExternalLink, Github, Star, GitFork, AlertCircle, Lock, Unlock } from '
 import { Badge } from '@/components/ui/badge';
 import { GithubRepository } from '@/redux/types/github';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/hooks/use-translation';
 
 const GithubRepositories = ({
   name,
@@ -18,6 +19,8 @@ const GithubRepositories = ({
   id,
   setSelectedRepository
 }: GithubRepository & { setSelectedRepository: (repo: string) => void }) => {
+  const { t } = useTranslation();
+
   return (
     <Card
       className="group relative  w-full max-w-md cursor-pointer overflow-hidden transition-all duration-300 hover:bg-muted hover:shadow-lg"
@@ -26,14 +29,14 @@ const GithubRepositories = ({
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg font-bold">
           <Github className="text-primary" size={24} />
-          {name || 'Unnamed Repository'}
+          {name || t('selfHost.repositoryCard.unnamed')}
           {url && (
             <a
               href={url}
               target="_blank"
               rel="noopener noreferrer"
               className="ml-auto text-muted-foreground transition-colors duration-200 hover:text-primary"
-              title="View on GitHub"
+              title={t('selfHost.repositoryCard.viewOnGithub')}
             >
               <ExternalLink size={18} />
             </a>
@@ -53,7 +56,9 @@ const GithubRepositories = ({
             ) : (
               <Unlock size={12} className="mr-1" />
             )}
-            {isPrivate ? 'Private' : 'Public'}
+            {isPrivate
+              ? t('selfHost.repositoryCard.visibility.private')
+              : t('selfHost.repositoryCard.visibility.public')}
           </Badge>
           {license && license.spdx_id && (
             <Badge variant="outline" className="text-xs font-medium">
@@ -84,7 +89,10 @@ const GithubRepositories = ({
             ))}
             {topics.length > 2 && (
               <Badge variant="secondary" className="text-xs font-medium">
-                +{topics.length - 2} more
+                {t('selfHost.repositoryCard.topics.more').replace(
+                  '{count}',
+                  (topics.length - 2).toString()
+                )}
               </Badge>
             )}
           </div>

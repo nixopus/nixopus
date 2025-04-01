@@ -32,7 +32,7 @@ func (m *DashboardMonitor) Start() {
 	go func() {
 		ticker := time.NewTicker(m.Interval)
 		defer ticker.Stop()
-		client, err := m.sshpkg.ConnectWithPassword()
+		client, err := m.sshpkg.Connect()
 		if err != nil {
 			m.log.Log(logger.Error, "Failed to connect to SSH server", err.Error())
 			m.BroadcastError(err.Error(), "ssh_connect")

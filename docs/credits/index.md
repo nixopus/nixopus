@@ -3,33 +3,14 @@
 This file lists the contributors and acknowledgments for the Nixopus project. We appreciate the time and effort of everyone who has helped make this project possible.
 
 ## Core Developers
-
-
-
-## Contributors
-
-We would like to thank the following individuals for their contributions to the Nixopus project:
-
-
+[raghavyuva@gmail.com](mailto:raghavyuva@gmail.com)
 
 ## Community Support
-
 Special thanks to our community members who have provided valuable feedback, reported issues, and helped other users:
 
-
-## External Libraries and Resources
-
-Nixopus wouldn't be possible without the following open-source projects and resources:
-
-
-
 ## Sponsors
-
 We are grateful for the support of our sponsors, who help make the continued development of Nixopus possible:
-
-
-## Special Acknowledgments
-
+[View our sponsors](/sponsor)
 
 ---
 

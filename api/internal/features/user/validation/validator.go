@@ -3,7 +3,6 @@ package validation
 import (
 	"encoding/json"
 	"io"
-	"net/http"
 	"strings"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
@@ -19,16 +18,6 @@ func NewValidator() *Validator {
 
 func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decoded interface{}) error {
 	return json.NewDecoder(body).Decode(decoded)
-}
-
-// AccessValidator checks if the user has access to the requested resource
-func (v *Validator) AccessValidator(w http.ResponseWriter, r *http.Request, user *shared_types.User) error {
-	path := r.URL.Path
-	// Allow access to /api/v1/user, /api/v1/user/name, and /api/v1/user/organizations (endpoints for updating user name and getting user organizations, and accessing user's own details)
-	if path == "/api/v1/user" || path == "/api/v1/user/name" || path == "/api/v1/user/organizations" {
-		return nil
-	}
-	return types.ErrInvalidAccess
 }
 
 // ValidateRequest checks if the request is valid

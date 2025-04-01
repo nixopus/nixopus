@@ -46,12 +46,12 @@ func (s *GithubConnectorService) CreateAuthenticatedRepoURL(repoURL, accessToken
 //	string - the path to which to clone the repository.
 //	bool - whether to pull the repository instead of cloning.
 //	error - any error that occurred.
-func (s *GithubConnectorService) GetClonePath(userID, environment string) (string, bool, error) {
+func (s *GithubConnectorService) GetClonePath(userID, environment, applicationID string) (string, bool, error) {
 	repoBaseURL := os.Getenv("MOUNT_PATH")
-	clonePath := filepath.Join(repoBaseURL, userID, environment)
+	clonePath := filepath.Join(repoBaseURL, userID, environment, applicationID)
 	var shouldPull bool
 
-	client, err := s.ssh.ConnectWithPassword()
+	client, err := s.ssh.Connect()
 	if err != nil {
 		return "", false, fmt.Errorf("failed to connect via SSH: %w", err)
 	}

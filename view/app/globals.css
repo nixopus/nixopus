@@ -1,3 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 @plugin "tailwindcss-animate";
@@ -7,6 +14,36 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --font-geist-sans:
+    'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-geist-mono:
+    'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+  --font-inter:
+    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-roboto:
+    'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-poppins:
+    'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-montserrat:
+    'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-space-grotesk:
+    'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-outfit:
+    'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-jakarta:
+    'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-system:
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+    'Open Sans', 'Helvetica Neue', sans-serif;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -46,41 +83,40 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.13 0.028 261.692);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.13 0.028 261.692);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.13 0.028 261.692);
-  --primary: oklch(0.21 0.034 264.665);
-  --primary-foreground: oklch(0.985 0.002 247.839);
-  --secondary: oklch(0.967 0.003 264.542);
-  --secondary-foreground: oklch(0.21 0.034 264.665);
-  --muted: oklch(0.967 0.003 264.542);
-  --muted-foreground: oklch(0.551 0.027 264.364);
-  --accent: oklch(0.967 0.003 264.542);
-  --accent-foreground: oklch(0.21 0.034 264.665);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.928 0.006 264.531);
-  --input: oklch(0.928 0.006 264.531);
-  --ring: oklch(0.707 0.022 261.325);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0.002 247.839);
-  --sidebar-foreground: oklch(0.13 0.028 261.692);
-  --sidebar-primary: oklch(0.21 0.034 264.665);
-  --sidebar-primary-foreground: oklch(0.985 0.002 247.839);
-  --sidebar-accent: oklch(0.967 0.003 264.542);
-  --sidebar-accent-foreground: oklch(0.21 0.034 264.665);
-  --sidebar-border: oklch(0.928 0.006 264.531);
-  --sidebar-ring: oklch(0.707 0.022 261.325);
+  --background: oklch(0.9710144927536232 0 353.52517985611513);
+  --foreground: oklch(0.02877697841726619 0.002898550724637694 327.8);
+  --card: oklch(0.9879536078536166 0.009937069667111312 327.77);
+  --card-foreground: oklch(0.021582733812949638 0.008695652173913038 327.8);
+  --popover: oklch(0.9316546762589928 0.02898550724637681 327.8);
+  --popover-foreground: oklch(0.1426580886254863 0.06573272721213694 327.77);
+  --muted: oklch(0.8884892086330936 0.005797101449275344 29.8);
+  --muted-foreground: oklch(0.09352517985611511 0.06956521739130435 327.8);
+  --primary: oklch(0.04334155497037928 0.02898050303458294 267.77);
+  --primary-foreground: oklch(0.6090248882744487 0.026065007042772266 267.77);
+  --secondary: oklch(0.5251798561151079 0.046376811594202885 147.8);
+  --secondary-foreground: oklch(0.999999993473546 0 none);
+  --accent: oklch(0.7368310698121926 0.09393307080979607 207.76999999999998);
+  --accent-foreground: oklch(0.10235083741470075 0.017567760541657155 207.76999999999998);
+  --destructive: oklch(0.6562235881349574 0.10615842822612404 26.815387773949883);
+  --destructive-foreground: oklch(0.999999993473546 0 none);
+  --border: oklch(0.9582592009424099 0.035368369971233465 327.77);
+  --input: oklch(0.7301154991755429 0.13070893232412792 147.76999999999998);
+  --ring: oklch(0.8434478207927733 0.07697614037101647 267.77);
+  --sidebar-background: oklch(0.9568345323741008 0.011594202898550732 142.4);
+  --sidebar-foreground: oklch(0.2397390833315577 0.04744254850061158 327.77);
+  --sidebar-primary: oklch(0.08927257175696202 0.05967054291040397 267.77);
+  --sidebar-primary-foreground: oklch(0.6129422628611327 0.050433311748803 267.77);
+  --sidebar-accent: oklch(0.08316067312764996 0.014267655426272332 207.76999999999998);
+  --sidebar-accent-foreground: oklch(0.7432096841495911 0.09487915781595722 207.76999999999998);
+  --sidebar-border: oklch(0.05719919039992305 0.026336274651318464 327.77);
+  --sidebar-ring: oklch(0.45105005237918105 0.30158800230122107 267.77);
+  --chart-1: oklch(0.4665060861235537 0.1358273419866176 147.76999999999998);
+  --chart-2: oklch(0.6381764054237958 0.10729351986880964 147.76999999999998);
+  --chart-3: oklch(0.6870920277696998 0.03839878783876527 297.77);
+  --chart-4: oklch(0.49049837702841836 0.10024155300666912 87.76999999999998);
+  --chart-5: oklch(0.49590095549641655 0.15342559743355066 267.77);
+  --radius: 0.5rem;
 }
-
 .dark {
   --background: oklch(14.67% 0.0041 49.31);
   --foreground: oklch(0.985 0.002 247.839);

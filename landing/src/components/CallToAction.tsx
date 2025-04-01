@@ -14,36 +14,76 @@ export const CallToAction = () => {
   })
 
   const translateY = useTransform(scrollYProgress, [0, 1], [50, -50]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [0, 1, 1]);
 
   return (
-    <section ref={containerRef} className={cn("mx-auto max-w-2xl px-6 text-center bg-black text-white p-20 relative overflow-hidden")}>
-      <motion.div style={{ y: translateY }} className="relative">
-        <h2 className="mx-auto mt-8 max-w-2xl text-3xl font-bold tracking-tighter lg:text-5xl">
-          We love <span className="bg-gradient-to-r from-yellow-400 to-red-400 bg-clip-text text-transparent">open-source</span>
-        </h2>
-        <p className="mt-4 text-lg text-fg-muted">
+    <section 
+      ref={containerRef} 
+      className={cn(
+        "relative overflow-hidden py-32",
+        "bg-gradient-to-b from-gray-900 via-gray-950 to-black"
+      )}
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(120,119,198,0.1),rgba(255,255,255,0))]"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
+      
+      <motion.div 
+        style={{ y: translateY, opacity }} 
+        className="relative container max-w-4xl text-center"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500/10 to-purple-500/10 mb-6"
+        >
+          <Star className="size-4 text-yellow-400" />
+          <span className="text-sm font-medium text-white/70">Open Source</span>
+        </motion.div>
+
+        <motion.h2 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          viewport={{ once: true }}
+          className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-6"
+        >
+          We love <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">open-source</span>
+        </motion.h2>
+
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          viewport={{ once: true }}
+          className="text-lg text-white/70 max-w-2xl mx-auto mb-10"
+        >
           Our source code is available on GitHub - feel free to read, review, or contribute to it
           however you want!
-        </p>
-        <div className="mt-10 flex justify-center space-x-2">
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          viewport={{ once: true }}
+          className="flex justify-center"
+        >
           <Link
-            href={"https://github.com/nixopus/nixopus"}
+            href="https://github.com/raghavyuva/nixopus"
             target="_blank"
-            rel="noreferrer"
-            className="group flex"
+            rel="noopener noreferrer"
+            className="group inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 px-6 py-3 text-white transition-all duration-300 hover:from-indigo-600 hover:to-purple-600 hover:shadow-lg hover:shadow-indigo-500/20"
           >
-            <div className="flex  items-center justify-center space-x-2 rounded-md bg-bg-neutral px-4 transition-colors group-hover:bg-bg-neutral-hover">
-              <GithubIcon size={18} />
-              <span className="truncate">Star us on GitHub</span>
-            </div>
-            <div className="flex items-center">
-             <Star size={18} />
-              <div className="flex  items-center rounded-md bg-bg-neutral px-4 font-medium transition-colors group-hover:bg-bg-neutral-hover">
-                9999
-              </div>
+            <GithubIcon className="size-5" />
+            <span>Star us on GitHub</span>
+            <div className="ml-2 flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-sm">
+              <Star className="size-4" />
+              <span>9999</span>
             </div>
           </Link>
-        </div>
+        </motion.div>
       </motion.div>
     </section>
   )

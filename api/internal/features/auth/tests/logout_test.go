@@ -1,78 +1,83 @@
 package tests
 
 import (
-	"context"
-	"errors"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/auth/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
+	"github.com/raghavyuva/nixopus-api/internal/testutils"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestLogoutSuccess(t *testing.T) {
-	mockStorage := NewMockAuthStorage()
-	mockLogger := logger.NewLogger()
-	authService := service.NewAuthService(mockStorage, mockLogger, nil, nil, nil, context.Background())
-	refreshToken := "test-refresh-token"
-	userID := uuid.New()
-	token := CreateTestRefreshToken(uuid.New().String(), userID.String(), refreshToken, 30)
-	mockStorage.WithGetRefreshToken(refreshToken, token, nil)
-	mockStorage.WithRevokeRefreshToken(refreshToken, nil)
+func TestLogout(t *testing.T) {
+	setup := testutils.NewTestSetup()
 
-	err := authService.Logout(refreshToken)
-
-	if err != nil {
-		t.Errorf("Logout failed: %v", err)
+	registerRequest := types.RegisterRequest{
+		Email:    "test@example.com",
+		Password: "password123",
+		Username: "testuser",
+		Type:     "viewer",
 	}
-	mockStorage.AssertExpectations(t)
+
+	registerResponse, err := setup.AuthService.Register(registerRequest, "app_user")
+	assert.NoError(t, err)
+
+	tests := []struct {
+		name          string
+		refreshToken  string
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name:         "successful logout",
+			refreshToken: registerResponse.RefreshToken,
+			expectError:  false,
+		},
+		{
+			name:          "invalid refresh token",
+			refreshToken:  "invalid_token",
+			expectError:   true,
+			errorContains: "invalid refresh token",
+		},
+		{
+			name:          "empty refresh token",
+			refreshToken:  "",
+			expectError:   true,
+			errorContains: "refresh token is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := setup.AuthService.Logout(tt.refreshToken)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errorContains)
+				return
+			}
+
+			assert.NoError(t, err)
+		})
+	}
 }
 
-func TestLogoutInvalidToken(t *testing.T) {
-	mockStorage := NewMockAuthStorage()
-	mockLogger := logger.NewLogger()
-	authService := service.NewAuthService(mockStorage, mockLogger, nil, nil, nil, context.Background())
-	refreshToken := "invalid-refresh-token"
-	mockStorage.WithGetRefreshTokenError(refreshToken, errors.New("invalid token"))
-	err := authService.Logout(refreshToken)
+func TestLogoutWithAlreadyRevokedToken(t *testing.T) {
+	setup := testutils.NewTestSetup()
 
-	if err == nil {
-		t.Errorf("Expected error for invalid token")
+	registerRequest := types.RegisterRequest{
+		Email:    "test@example.com",
+		Password: "password123",
+		Username: "testuser",
+		Type:     "viewer",
 	}
-	mockStorage.AssertExpectations(t)
-}
 
-func TestLogoutGetRefreshTokenError(t *testing.T) {
-	mockStorage := NewMockAuthStorage()
-	mockLogger := logger.NewLogger()
-	authService := service.NewAuthService(mockStorage, mockLogger, nil, nil, nil, context.Background())
-	refreshToken := "test-refresh-token"
-	userID := uuid.New()
-	token := CreateTestRefreshToken(uuid.New().String(), userID.String(), refreshToken, 30)
-	mockStorage.WithGetRefreshToken(refreshToken, token, errors.New("get refresh token error"))
+	registerResponse, err := setup.AuthService.Register(registerRequest, "app_user")
+	assert.NoError(t, err)
 
-	err := authService.Logout(refreshToken)
+	err = setup.AuthService.Logout(registerResponse.RefreshToken)
+	assert.NoError(t, err)
 
-	if err == nil {
-		t.Errorf("Expected error for GetRefreshToken")
-	}
-	mockStorage.AssertExpectations(t)
-}
-
-func TestLogoutRevokeRefreshTokenError(t *testing.T) {
-	mockStorage := NewMockAuthStorage()
-	mockLogger := logger.NewLogger()
-	authService := service.NewAuthService(mockStorage, mockLogger, nil, nil, nil, context.Background())
-	refreshToken := "test-refresh-token"
-	userID := uuid.New()
-	token := CreateTestRefreshToken(uuid.New().String(), userID.String(), refreshToken, 30)
-	mockStorage.WithGetRefreshToken(refreshToken, token, nil)
-	mockStorage.WithRevokeRefreshToken(refreshToken, errors.New("revoke refresh token error"))
-
-	err := authService.Logout(refreshToken)
-
-	if err == nil {
-		t.Errorf("Expected error for RevokeRefreshToken")
-	}
-	mockStorage.AssertExpectations(t)
+	err = setup.AuthService.Logout(registerResponse.RefreshToken)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), types.ErrInvalidRefreshToken.Error())
 }

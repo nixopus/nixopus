@@ -8,8 +8,10 @@ import TeamMembers from './components/TeamMembers';
 import EditTeam from './components/EditTeam';
 import { useResourcePermissions } from '@/lib/permission';
 import { useAppSelector } from '@/redux/hooks';
+import { useTranslation } from '@/hooks/use-translation';
 
 function Page() {
+  const { t } = useTranslation();
   const {
     users,
     isAddUserDialogOpen,
@@ -26,17 +28,14 @@ function Page() {
     isEditTeamDialogOpen,
     teamName,
     teamDescription,
-    isUpdating
+    isUpdating,
+    handleUpdateUser
   } = useTeamSettings();
 
   const user = useAppSelector((state) => state.auth.user);
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
 
-  const {
-    canUpdate: canUpdateUser,
-    canDelete: canDeleteUser,
-    canCreate: canCreateUser
-  } = useResourcePermissions(user, 'user', activeOrganization?.id);
+  const { canCreate: canCreateUser } = useResourcePermissions(user, 'user', activeOrganization?.id);
   const { canRead: canReadOrg, canUpdate: canUpdateOrg } = useResourcePermissions(
     user,
     'organization',
@@ -82,10 +81,16 @@ function Page() {
           users={users}
           handleRemoveUser={handleRemoveUser}
           getRoleBadgeVariant={getRoleBadgeVariant}
+          onUpdateUser={handleUpdateUser}
         />
       ) : (
-        <div className="text-center text-muted-foreground">No team members found.</div>
+        <div className="text-center text-muted-foreground">{t('settings.teams.noMembers')}</div>
       )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TeamStats users={users} />
+        <RecentActivity />
+      </div>
     </div>
   );
 }

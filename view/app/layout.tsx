@@ -1,7 +1,7 @@
 'use client';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from '@/components/ui/theme-provider';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from '@/redux/store';
@@ -10,8 +10,9 @@ import { useAppDispatch } from '@/redux/hooks';
 import { useEffect } from 'react';
 import { initializeAuth } from '@/redux/features/users/authSlice';
 import { usePathname } from 'next/navigation';
-import { WebSocketProvider } from '@/hooks/socket_provider';
-import DashboardLayout from '@/components/dashboard-layout';
+import { WebSocketProvider } from '@/hooks/socket-provider';
+import DashboardLayout from '@/components/layout/dashboard-layout';
+import { Tour } from '@/components/Tour';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -59,13 +60,13 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-        {pathname === '/' || pathname === '/login' ? (
-          <>{children}</>
-        ) : (
-          <WebSocketProvider>
+        <WebSocketProvider>
+          {pathname === '/' || pathname === '/login' ? (
+            <>{children}</>
+          ) : (
             <DashboardLayout>{children}</DashboardLayout>
-          </WebSocketProvider>
-        )}
+          )}
+        </WebSocketProvider>
       </ThemeProvider>
       <Toaster />
     </>

@@ -72,7 +72,7 @@ func (s *DeployService) prepareHostConfig(port nat.Port) container.HostConfig {
 			port: {
 				{
 					HostIP:   "0.0.0.0",
-					HostPort: "",
+					HostPort: port.Port(),
 				},
 			},
 		},

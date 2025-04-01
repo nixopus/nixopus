@@ -1,37 +1,72 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useGetRecentAuditLogsQuery } from '@/redux/services/audit';
+import { formatDistanceToNow } from 'date-fns';
+import { Loader2 } from 'lucide-react';
+import { AuditAction, AuditLog } from '@/redux/types/audit';
+import { useTranslation } from '@/hooks/use-translation';
+
+const getActionColor = (action: AuditAction) => {
+  switch (action) {
+    case 'create':
+      return 'bg-green-500';
+    case 'update':
+      return 'bg-blue-500';
+    case 'delete':
+      return 'bg-red-500';
+    default:
+      return 'bg-gray-500';
+  }
+};
+
+const getActionMessage = (log: AuditLog, t: (key: string) => string) => {
+  const username = log.user?.username || t('settings.teams.recentActivity.actions.defaultUser');
+  const resource = log.resource_type
+    .split('_')
+    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+    .toLowerCase();
+
+  const actionKey = `settings.teams.recentActivity.actions.${log.action}`;
+  return t(actionKey).replace('{username}', username).replace('{resource}', resource);
+};
 
 function RecentActivity() {
+  const { t } = useTranslation();
+  const { data: auditLogs, isLoading, error } = useGetRecentAuditLogsQuery();
+
   return (
-    <Card className="col-span-1 lg:col-span-2">
+    <Card>
       <CardHeader>
-        <CardTitle>Recent Activities</CardTitle>
-        <CardDescription>Recent changes to your organization</CardDescription>
+        <CardTitle>{t('settings.teams.recentActivity.title')}</CardTitle>
+        <CardDescription>{t('settings.teams.recentActivity.description')}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-start gap-4">
-            <div className="h-2 w-2 mt-2 rounded-full bg-blue-500"></div>
-            <div>
-              <p className="text-sm font-medium">Jane Smith joined the organization</p>
-              <p className="text-xs text-muted-foreground">3 hours ago</p>
-            </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center p-4">
+            <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-          <div className="flex items-start gap-4">
-            <div className="h-2 w-2 mt-2 rounded-full bg-green-500"></div>
-            <div>
-              <p className="text-sm font-medium">Bob Johnson's role changed to Viewer</p>
-              <p className="text-xs text-muted-foreground">Yesterday</p>
-            </div>
+        ) : error ? (
+          <div className="p-4 text-red-600">{t('settings.teams.recentActivity.error')}</div>
+        ) : auditLogs && auditLogs.length > 0 ? (
+          <div className="space-y-4">
+            {auditLogs.map((log) => (
+              <div key={log.id} className="flex items-start gap-4">
+                <div className={`h-2 w-2 mt-2 rounded-full ${getActionColor(log.action)}`}></div>
+                <div>
+                  <p className="text-sm font-medium">{getActionMessage(log, t)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="flex items-start gap-4">
-            <div className="h-2 w-2 mt-2 rounded-full bg-red-500"></div>
-            <div>
-              <p className="text-sm font-medium">Alex Wilson was removed from the organization</p>
-              <p className="text-xs text-muted-foreground">Last week</p>
-            </div>
+        ) : (
+          <div className="text-center text-muted-foreground">
+            {t('settings.teams.recentActivity.noActivities')}
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

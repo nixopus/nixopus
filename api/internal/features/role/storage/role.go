@@ -11,6 +11,7 @@ import (
 type RoleStorage struct {
 	DB  *bun.DB
 	Ctx context.Context
+	tx  *bun.Tx
 }
 
 func NewRoleStorage(db *bun.DB, ctx context.Context) *RoleStorage {
@@ -27,6 +28,27 @@ type RoleRepository interface {
 	GetRole(id string) (*types.Role, error)
 	UpdateRole(role *types.Role) error
 	DeleteRole(id string) error
+	BeginTx() (bun.Tx, error)
+	WithTx(tx bun.Tx) RoleRepository
+}
+
+func (s *RoleStorage) BeginTx() (bun.Tx, error) {
+	return s.DB.BeginTx(s.Ctx, nil)
+}
+
+func (s *RoleStorage) WithTx(tx bun.Tx) RoleRepository {
+	return &RoleStorage{
+		DB:  s.DB,
+		Ctx: s.Ctx,
+		tx:  &tx,
+	}
+}
+
+func (s *RoleStorage) getDB() bun.IDB {
+	if s.tx != nil {
+		return *s.tx
+	}
+	return s.DB
 }
 
 // CreateRole creates a new role in the database
@@ -35,7 +57,7 @@ type RoleRepository interface {
 // It returns an error if the role already exists or if there is a problem
 // with the database.
 func (s *RoleStorage) CreateRole(role types.Role) error {
-	_, err := s.DB.NewInsert().Model(&role).Exec(s.Ctx)
+	_, err := s.getDB().NewInsert().Model(&role).Exec(s.Ctx)
 	return err
 }
 
@@ -44,7 +66,7 @@ func (s *RoleStorage) CreateRole(role types.Role) error {
 // If the role does not exist, it returns a nil role and no error.
 func (s *RoleStorage) GetRoleByName(name string) (*types.Role, error) {
 	role := &types.Role{}
-	err := s.DB.NewSelect().Model(role).Where("name = ?", name).Scan(s.Ctx)
+	err := s.getDB().NewSelect().Model(role).Where("name = ?", name).Scan(s.Ctx)
 	if err == sql.ErrNoRows {
 		return role, nil
 	}
@@ -56,7 +78,10 @@ func (s *RoleStorage) GetRoleByName(name string) (*types.Role, error) {
 // If no roles are found, it returns an empty slice and no error.
 func (s *RoleStorage) GetRoles() ([]types.Role, error) {
 	var roles []types.Role
-	err := s.DB.NewSelect().Model(&roles).Scan(s.Ctx)
+	err := s.getDB().NewSelect().
+		Model(&roles).
+		Relation("Permissions").
+		Scan(s.Ctx)
 	if err == sql.ErrNoRows {
 		return roles, nil
 	}
@@ -68,7 +93,7 @@ func (s *RoleStorage) GetRoles() ([]types.Role, error) {
 // If the role does not exist, it returns a nil role and no error.
 func (s *RoleStorage) GetRole(id string) (*types.Role, error) {
 	role := &types.Role{}
-	err := s.DB.NewSelect().Model(role).Where("id = ?", id).Scan(s.Ctx)
+	err := s.getDB().NewSelect().Model(role).Where("id = ?", id).Scan(s.Ctx)
 	if err == sql.ErrNoRows {
 		return role, nil
 	}
@@ -82,7 +107,7 @@ func (s *RoleStorage) GetRole(id string) (*types.Role, error) {
 // If the update operation is successful, it returns nil. Otherwise,
 // it returns an error indicating what went wrong.
 func (s *RoleStorage) UpdateRole(role *types.Role) error {
-	_, err := s.DB.NewUpdate().Model(role).Where("id = ?", role.ID).Exec(s.Ctx)
+	_, err := s.getDB().NewUpdate().Model(role).Where("id = ?", role.ID).Exec(s.Ctx)
 	return err
 }
 
@@ -93,6 +118,6 @@ func (s *RoleStorage) UpdateRole(role *types.Role) error {
 // the deletion, it returns the error. Otherwise, it returns nil, indicating
 // a successful deletion.
 func (s *RoleStorage) DeleteRole(id string) error {
-	_, err := s.DB.NewDelete().Model(&types.Role{}).Where("id = ?", id).Exec(s.Ctx)
+	_, err := s.getDB().NewDelete().Model(&types.Role{}).Where("id = ?", id).Exec(s.Ctx)
 	return err
 }

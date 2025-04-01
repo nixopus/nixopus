@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -20,7 +21,22 @@ func (c *AuthController) Register(f fuego.ContextWithBody[types.RegisterRequest]
 		}
 	}
 
-	userResponse, err := c.service.Register(registration_request)
+	adminRegistered, err := c.service.IsAdminRegistered()
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	if adminRegistered {
+		return nil, fuego.HTTPError{
+			Err:    errors.New("admin already registered"),
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	userResponse, err := c.service.Register(registration_request, shared_types.UserTypeAdmin)
 	if err != nil {
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return nil, nil
@@ -43,14 +59,14 @@ func (c *AuthController) CreateUser(s fuego.ContextWithBody[types.RegisterReques
 	}
 
 	w, r := s.Response(), s.Request()
-	if !c.parseAndValidate(w, r, &registration_request) {
+	if err := c.parseAndValidate(w, r, &registration_request); err != nil {
 		return nil, fuego.HTTPError{
-			Err:    nil,
+			Err:    err,
 			Status: http.StatusBadRequest,
 		}
 	}
 
-	userResponse, err := c.service.Register(registration_request)
+	userResponse, err := c.service.Register(registration_request, shared_types.UserTypeUser)
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,

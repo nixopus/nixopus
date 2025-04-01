@@ -6,13 +6,17 @@ import { FILEMANAGERURLS } from '@/redux/api-conf';
 export const fileManagersApi = createApi({
   reducerPath: 'fileManagersApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['fileManager'],
+  tagTypes: ['FileList', 'FileListAll'],
   endpoints: (builder) => ({
     getFilesInPath: builder.query<FileData[], { path: string }>({
       query: ({ path }) => ({
         url: `${FILEMANAGERURLS.LIST_FILES_AT_PATH}?path=${encodeURIComponent(path)}`,
         method: 'GET'
       }),
+      providesTags: (result, error, { path }) => [
+        { type: 'FileList', id: path },
+        { type: 'FileListAll', id: 'LIST' }
+      ],
       transformResponse: (response: { data: FileData[] }) => response.data
     }),
     createDirectory: builder.mutation<null, { path: string; name: string }>({
@@ -21,6 +25,7 @@ export const fileManagersApi = createApi({
         method: 'POST',
         body: { path: path + '/' + name }
       }),
+      invalidatesTags: (result, error, { path }) => [{ type: 'FileList', id: path }],
       transformResponse: (response: any) => response
     }),
     deleteDirectory: builder.mutation<any, { path: string }>({
@@ -29,14 +34,7 @@ export const fileManagersApi = createApi({
         method: 'DELETE',
         body: { path }
       }),
-      transformResponse: (response: any) => response
-    }),
-    deleteFile: builder.mutation<any, { path: string }>({
-      query: ({ path }) => ({
-        url: FILEMANAGERURLS.DELETE_FILE,
-        method: 'DELETE',
-        body: { path }
-      }),
+      invalidatesTags: (result, error, { path }) => [{ type: 'FileList', id: path.split('/').slice(0, -1).join('/') }],
       transformResponse: (response: any) => response
     }),
     moveOrRenameDirectory: builder.mutation<any, { from_path: string; to_path: string }>({
@@ -45,6 +43,10 @@ export const fileManagersApi = createApi({
         method: 'POST',
         body: { from_path, to_path }
       }),
+      invalidatesTags: (result, error, { from_path, to_path }) => [
+        { type: 'FileList', id: from_path.split('/').slice(0, -1).join('/') },
+        { type: 'FileList', id: to_path.split('/').slice(0, -1).join('/') }
+      ],
       transformResponse: (response: any) => response
     }),
     copyFileOrDirectory: builder.mutation<any, { from_path: string; to_path: string }>({
@@ -53,14 +55,11 @@ export const fileManagersApi = createApi({
         method: 'POST',
         body: { from_path, to_path }
       }),
-      transformResponse: (response: any) => response
-    }),
-    createFile: builder.mutation<any, { path: string; name: string }>({
-      query: ({ path, name }) => ({
-        url: FILEMANAGERURLS.CREATE_FILE,
-        method: 'POST',
-        body: { path, name }
-      }),
+      invalidatesTags: (result, error, { from_path, to_path }) => [
+        { type: 'FileList', id: to_path.split('/').slice(0, -1).join('/') },
+        { type: 'FileList', id: from_path.split('/').slice(0, -1).join('/') },
+        { type: 'FileListAll', id: 'LIST' }
+      ],
       transformResponse: (response: any) => response
     }),
     calculateDirectorySize: builder.mutation<any['data'], { path: string }>({
@@ -71,19 +70,20 @@ export const fileManagersApi = createApi({
       }),
       transformResponse: (response: any) => response.data
     }),
-    getDiskUsage: builder.query<any, void>({
-      query: () => ({
-        url: FILEMANAGERURLS.GET_DISK_USAGE,
-        method: 'GET'
-      }),
-      transformResponse: (response: { data: any }) => response.data
-    }),
-    getMemoryUsage: builder.query<any, void>({
-      query: () => ({
-        url: FILEMANAGERURLS.GET_MEMORY_USAGE,
-        method: 'GET'
-      }),
-      transformResponse: (response: { data: any }) => response.data
+    uploadFile: builder.mutation<any, { file: File; path: string }>({
+      query: ({ file, path }) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('path', path);
+
+        return {
+          url: FILEMANAGERURLS.UPLOAD_FILE,
+          method: 'POST',
+          body: formData
+        };
+      },
+      invalidatesTags: (result, error, { path }) => [{ type: 'FileList', id: path }],
+      transformResponse: (response: any) => response
     })
   })
 });
@@ -92,11 +92,8 @@ export const {
   useGetFilesInPathQuery,
   useCreateDirectoryMutation,
   useDeleteDirectoryMutation,
-  useDeleteFileMutation,
   useMoveOrRenameDirectoryMutation,
   useCopyFileOrDirectoryMutation,
-  useCreateFileMutation,
   useCalculateDirectorySizeMutation,
-  useGetDiskUsageQuery,
-  useGetMemoryUsageQuery
+  useUploadFileMutation
 } = fileManagersApi;

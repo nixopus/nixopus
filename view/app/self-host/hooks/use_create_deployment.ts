@@ -4,11 +4,12 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
-import { useWebSocket } from '@/hooks/socket_provider';
+import { useWebSocket } from '@/hooks/socket-provider';
 import { useRouter } from 'next/navigation';
 import { useCreateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';
 import { toast } from 'sonner';
 import { useAppSelector } from '@/redux/hooks';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface DeploymentFormValues {
   application_name: string;
@@ -23,6 +24,7 @@ interface DeploymentFormValues {
   pre_run_commands: string;
   post_run_commands: string;
   DockerfilePath: string;
+  base_path: string;
 }
 
 function useCreateDeployment({
@@ -37,37 +39,64 @@ function useCreateDeployment({
   build_variables = {},
   pre_run_commands = '',
   post_run_commands = '',
-  DockerfilePath = '/Dockerfile'
+  DockerfilePath = '/Dockerfile',
+  base_path = '/'
 }: DeploymentFormValues) {
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const { data: domains } = useGetAllDomainsQuery(activeOrg?.id);
+  const { data: domains } = useGetAllDomainsQuery({ organizationId: activeOrg?.id }, { skip: !activeOrg?.id });
   const { isReady, message, sendJsonMessage } = useWebSocket();
   const [createDeployment, { isLoading }] = useCreateDeploymentMutation();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const deploymentFormSchema = z.object({
     application_name: z
       .string()
-      .min(3, { message: 'Application name must be at least 3 characters.' })
-      .regex(/^[a-zA-Z0-9_-]+$/, { message: 'Application name must be a valid name.' }),
+      .min(3, { message: t('selfHost.deployForm.validation.applicationName.minLength') })
+      .regex(/^[a-zA-Z0-9_-]+$/, {
+        message: t('selfHost.deployForm.validation.applicationName.invalidFormat')
+      }),
     environment: z
       .enum([Environment.Production, Environment.Staging, Environment.Development])
       .refine((value) => value === 'production' || value === 'staging' || value === 'development', {
-        message: 'Environment name must be production, staging, or development.'
+        message: t('selfHost.deployForm.validation.environment.invalidValue')
       }),
-    branch: z
+    branch: z.string().min(3, { message: t('selfHost.deployForm.validation.branch.minLength') }),
+    port: z
       .string()
-      .min(3, { message: 'Branch name must be at least 3 characters.' })
-      .regex(/^[a-zA-Z0-9_-]+$/, { message: 'Branch name must be a valid name.' }),
-    port: z.string().regex(/^[0-9]+$/, { message: 'Port must be a number.' }),
+      .regex(/^[0-9]+$/, { message: t('selfHost.deployForm.validation.port.invalidFormat') }),
     domain: z
       .string()
-      .min(3, { message: 'Domain name must be at least 3 characters.' })
-      .regex(/^[a-zA-Z0-9.-]+$/, { message: 'Domain name must be a valid domain name.' }),
+      .min(3, { message: t('selfHost.deployForm.validation.domain.minLength') })
+      .regex(
+        /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/,
+        {
+          message: t('selfHost.deployForm.validation.domain.invalidFormat')
+        }
+      )
+      .refine(
+        (value) => {
+          if (!domains || !value) return false;
+          return domains.some((d) => {
+            const storedDomain = d.name;
+            if (storedDomain === value) return true;
+            if (storedDomain.startsWith('*.')) {
+              const baseDomain = storedDomain.substring(2);
+              if (value === baseDomain) return true;
+              const subdomainPattern = new RegExp(`^[^.]+\.${baseDomain.replace(/\./g, '\\.')}$`);
+              return subdomainPattern.test(value);
+            }
+            return false;
+          });
+        },
+        { message: t('selfHost.deployForm.validation.domain.notAllowed') }
+      ),
     repository: z
       .string()
-      .min(3, { message: 'Repository name must be at least 3 characters.' })
-      .regex(/^[a-zA-Z0-9_-]+$/, { message: 'Repository name must be a valid name.' }),
+      .min(3, { message: t('selfHost.deployForm.validation.repository.minLength') })
+      .regex(/^[a-zA-Z0-9_-]+$/, {
+        message: t('selfHost.deployForm.validation.repository.invalidFormat')
+      }),
     build_pack: z
       .enum([BuildPack.Dockerfile, BuildPack.DockerCompose, BuildPack.Static])
       .refine(
@@ -76,14 +105,15 @@ function useCreateDeployment({
           value === BuildPack.DockerCompose ||
           value === BuildPack.Static,
         {
-          message: 'Build pack must be Dockerfile, DockerCompose, or Static.'
+          message: t('selfHost.deployForm.validation.buildPack.invalidValue')
         }
       ),
     env_variables: z.record(z.string(), z.string()).optional().default({}),
     build_variables: z.record(z.string(), z.string()).optional().default({}),
     pre_run_commands: z.string().optional(),
     post_run_commands: z.string().optional(),
-    DockerfilePath: z.string().optional().default(DockerfilePath)
+    DockerfilePath: z.string().optional().default(DockerfilePath),
+    base_path: z.string().optional().default(base_path)
   });
 
   const form = useForm<z.infer<typeof deploymentFormSchema>>({
@@ -99,7 +129,9 @@ function useCreateDeployment({
       env_variables,
       build_variables,
       pre_run_commands,
-      post_run_commands
+      post_run_commands,
+      DockerfilePath,
+      base_path
     }
   });
 
@@ -118,6 +150,7 @@ function useCreateDeployment({
     if (pre_run_commands) form.setValue('pre_run_commands', pre_run_commands);
     if (post_run_commands) form.setValue('post_run_commands', post_run_commands);
     if (DockerfilePath) form.setValue('DockerfilePath', DockerfilePath);
+    if (base_path) form.setValue('base_path', base_path);
   }, [
     form,
     application_name,
@@ -131,7 +164,8 @@ function useCreateDeployment({
     build_variables,
     pre_run_commands,
     post_run_commands,
-    DockerfilePath
+    DockerfilePath,
+    base_path
   ]);
 
   async function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
@@ -148,30 +182,40 @@ function useCreateDeployment({
         build_variables: values.build_variables,
         pre_run_command: values.pre_run_commands as string,
         post_run_command: values.post_run_commands as string,
-        dockerfile_path: values.DockerfilePath
+        dockerfile_path: values.DockerfilePath,
+        base_path: values.base_path
       }).unwrap();
-      router.push('/self-host/application/' + data?.id);
+
+      if (data?.deployments?.[0]?.id) {
+        router.push('/self-host/application/' + data.id + '/deployments/' + data.deployments[0].id);
+      } else {
+        router.push('/self-host/application/' + data.id + '?logs=true');
+      }
     } catch (error) {
-      toast.error('Failed to create deployment');
+      toast.error(t('selfHost.deployForm.errors.createFailed'));
     }
   }
 
   const validateEnvVar = (
     input: string
   ): { isValid: boolean; error?: string; key?: string; value?: string } => {
-    if (!input.trim()) return { isValid: false, error: 'Input cannot be empty' };
+    if (!input.trim())
+      return { isValid: false, error: t('selfHost.deployForm.validation.envVariables.emptyInput') };
 
     const regex = /^([^=]+)=(.*)$/;
     const isValid = regex.test(input);
 
     if (!isValid) {
-      return { isValid: false, error: 'Must be in format KEY=VALUE' };
+      return {
+        isValid: false,
+        error: t('selfHost.deployForm.validation.envVariables.invalidFormat')
+      };
     }
 
     const [, key] = input.match(regex) as RegExpMatchArray;
 
     if (!key.trim()) {
-      return { isValid: false, error: 'Key cannot be empty' };
+      return { isValid: false, error: t('selfHost.deployForm.validation.envVariables.emptyKey') };
     }
 
     return {
@@ -186,7 +230,27 @@ function useCreateDeployment({
     return isNaN(parsedPort) ? null : parsedPort;
   };
 
-  return { validateEnvVar, deploymentFormSchema, form, onSubmit, parsePort };
+  const validateDomain = (domain: string): boolean => {
+    if (!domains || !domain) return false;
+
+    return domains.some((d) => {
+      const storedDomain = d.name;
+
+      if (storedDomain === domain) return true;
+
+      if (storedDomain.startsWith('*.')) {
+        const baseDomain = storedDomain.substring(2);
+        if (domain === baseDomain) return true;
+
+        const subdomainPattern = new RegExp(`^[^.]+\.${baseDomain.replace(/\./g, '\\.')}$`);
+        return subdomainPattern.test(domain);
+      }
+
+      return false;
+    });
+  };
+
+  return { validateEnvVar, deploymentFormSchema, form, onSubmit, parsePort, validateDomain };
 }
 
 export default useCreateDeployment;

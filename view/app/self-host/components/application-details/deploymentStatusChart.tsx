@@ -17,12 +17,15 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from '@/components/ui/chart';
+import { useTranslation } from '@/hooks/use-translation';
 
 export const DeploymentStatusChart = ({
   deployments = []
 }: {
   deployments: ApplicationDeployment[];
 }) => {
+  const { t } = useTranslation();
+
   const statusCounts = useMemo(() => {
     const counts = {
       failed: 0,
@@ -38,12 +41,12 @@ export const DeploymentStatusChart = ({
     });
 
     return [
-      { status: 'Building', value: counts.building },
-      { status: 'Deployed', value: counts.deployed },
-      { status: 'Deploying', value: counts.deploying },
-      { status: 'Failed', value: counts.failed }
+      { status: t('selfHost.deployments.chart.status.building'), value: counts.building },
+      { status: t('selfHost.deployments.chart.status.deployed'), value: counts.deployed },
+      { status: t('selfHost.deployments.chart.status.deploying'), value: counts.deploying },
+      { status: t('selfHost.deployments.chart.status.failed'), value: counts.failed }
     ];
-  }, [deployments]);
+  }, [deployments, t]);
 
   const statusChartConfig = {
     value: {
@@ -55,8 +58,8 @@ export const DeploymentStatusChart = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Deployment Stats</CardTitle>
-        <CardDescription>Current status of all deployments</CardDescription>
+        <CardTitle>{t('selfHost.deployments.chart.title')}</CardTitle>
+        <CardDescription>{t('selfHost.deployments.chart.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={statusChartConfig}>
@@ -70,7 +73,7 @@ export const DeploymentStatusChart = ({
         </ChartContainer>
       </CardContent>
       <CardFooter className="text-sm text-muted-foreground">
-        Total deployments: {deployments.length}
+        {t('selfHost.deployments.chart.total').replace('{count}', deployments.length.toString())}
       </CardFooter>
     </Card>
   );

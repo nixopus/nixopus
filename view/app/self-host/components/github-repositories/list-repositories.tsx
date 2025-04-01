@@ -1,11 +1,13 @@
 import React from 'react';
 import { GithubRepository } from '@/redux/types/github';
 import useGithubRepoPagination from '../../hooks/use_github_repo_pagination';
-import { DahboardUtilityHeader } from '@/components/dashboard-page-header';
+import { DahboardUtilityHeader } from '@/components/layout/dashboard-page-header';
 import GithubRepositories, { GithubRepositoriesSkeletonLoader } from './repository-card';
-import PaginationWrapper from '@/components/pagination';
+import PaginationWrapper from '@/components/ui/pagination';
+import { useTranslation } from '@/hooks/use-translation';
 
 function ListRepositories() {
+  const { t } = useTranslation();
   const {
     isLoading,
     setSelectedRepository,
@@ -27,7 +29,7 @@ function ListRepositories() {
     }
 
     if (paginatedApplications?.length === 0 && !isLoading) {
-      return <div className="text-center">No repositories found</div>;
+      return <div className="text-center">{t('selfHost.repositories.noRepositories')}</div>;
     }
     return (
       <>
@@ -60,7 +62,7 @@ function ListRepositories() {
         sortConfig={sortConfig}
         onSortChange={onSortChange}
         sortOptions={sortOptions}
-        label="Repositories"
+        label={t('selfHost.repositories.title')}
         className="mt-5 mb-5"
       />
       {renderGithubRepositories()}

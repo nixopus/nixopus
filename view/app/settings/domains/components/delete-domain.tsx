@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import React from 'react';
 import { useDeleteDomainMutation } from '@/redux/services/settings/domainsApi';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface DeleteDomainProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface DeleteDomainProps {
 }
 
 const DeleteDomain = ({ open, setOpen, id }: DeleteDomainProps) => {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = React.useState(false);
   const [deleteDomain] = useDeleteDomainMutation();
 
@@ -25,9 +27,9 @@ const DeleteDomain = ({ open, setOpen, id }: DeleteDomainProps) => {
     setIsLoading(true);
     try {
       await deleteDomain(id);
-      toast.success('Domain deleted successfully');
+      toast.success(t('settings.domains.delete.success'));
     } catch (error) {
-      toast.error('Failed to delete domain');
+      toast.error(t('settings.domains.delete.error'));
     } finally {
       setIsLoading(false);
       setOpen(false);
@@ -38,15 +40,17 @@ const DeleteDomain = ({ open, setOpen, id }: DeleteDomainProps) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Delete Domain</DialogTitle>
-          <DialogDescription>Are you sure you want to delete this domain?</DialogDescription>
+          <DialogTitle>{t('settings.domains.delete.title')}</DialogTitle>
+          <DialogDescription>{t('settings.domains.delete.description')}</DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex justify-between sm:justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-            Cancel
+            {t('settings.domains.delete.cancel')}
           </Button>
           <Button type="button" disabled={isLoading} onClick={handleDelete}>
-            {isLoading ? 'Deleting...' : 'Delete'}
+            {isLoading
+              ? t('settings.domains.delete.deleting')
+              : t('settings.domains.delete.delete')}
           </Button>
         </DialogFooter>
       </DialogContent>

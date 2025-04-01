@@ -4,12 +4,13 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useWebSocket } from '@/hooks/socket_provider';
+import { useWebSocket } from '@/hooks/socket-provider';
 import { useUpdateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';
 import { UpdateDeploymentRequest } from '@/redux/types/applications';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
 import { parsePort } from '../utils/parsePort';
 import { useAppSelector } from '@/redux/hooks';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface UseUpdateDeploymentProps {
   name?: string;
@@ -21,6 +22,7 @@ interface UseUpdateDeploymentProps {
   id?: string;
   force?: boolean;
   DockerfilePath?: string;
+  base_path?: string;
 }
 
 function useUpdateDeployment({
@@ -32,8 +34,10 @@ function useUpdateDeployment({
   port = 3000,
   id = '',
   force = false,
-  DockerfilePath = '/Dockerfile'
+  DockerfilePath = '/Dockerfile',
+  base_path = '/'
 }: UseUpdateDeploymentProps = {}) {
+  const { t } = useTranslation();
   const { isReady, message, sendJsonMessage } = useWebSocket();
   const [updateDeployment, { isLoading }] = useUpdateDeploymentMutation();
   const router = useRouter();
@@ -43,8 +47,10 @@ function useUpdateDeployment({
   const deploymentFormSchema = z.object({
     name: z
       .string()
-      .min(3, { message: 'Application name must be at least 3 characters.' })
-      .regex(/^[a-zA-Z0-9_-]+$/, { message: 'Application name must be a valid name.' })
+      .min(3, { message: t('selfHost.deployForm.fields.applicationName.minLength') })
+      .regex(/^[a-zA-Z0-9_-]+$/, {
+        message: t('selfHost.deployForm.fields.applicationName.invalidFormat')
+      })
       .optional(),
     pre_run_command: z.string().optional(),
     post_run_command: z.string().optional(),
@@ -53,7 +59,8 @@ function useUpdateDeployment({
     port: z.string().optional(),
     id: z.string().optional(),
     force: z.boolean().optional().default(false),
-    DockerfilePath: z.string().optional().default(DockerfilePath)
+    DockerfilePath: z.string().optional().default(DockerfilePath),
+    base_path: z.string().optional().default(base_path)
   });
 
   const form = useForm<z.infer<typeof deploymentFormSchema>>({
@@ -67,7 +74,8 @@ function useUpdateDeployment({
       port: port.toString(),
       id,
       force,
-      DockerfilePath
+      DockerfilePath,
+      base_path
     }
   });
 
@@ -82,6 +90,7 @@ function useUpdateDeployment({
     if (port) form.setValue('port', port.toString());
     if (id) form.setValue('id', id);
     if (DockerfilePath) form.setValue('DockerfilePath', DockerfilePath);
+    if (base_path) form.setValue('base_path', base_path);
     form.setValue('force', force);
   }, [
     form,
@@ -93,7 +102,8 @@ function useUpdateDeployment({
     port,
     id,
     force,
-    DockerfilePath
+    DockerfilePath,
+    base_path
   ]);
 
   async function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
@@ -107,36 +117,47 @@ function useUpdateDeployment({
         port: parsePort(values.port?.toString() || '3000') || 3000,
         id: values.id,
         force: values.force,
-        dockerfile_path: values.DockerfilePath
+        dockerfile_path: values.DockerfilePath,
+        base_path: values.base_path
       };
 
       const data = await updateDeployment(updateData).unwrap();
 
       if (data?.id) {
         router.push('/self-host/application/' + data.id);
-        toast.success('Deployment updated successfully');
+        toast.success(t('selfHost.deployForm.success.update'));
       }
     } catch (error) {
-      toast.error('Failed to update deployment');
+      toast.error(t('selfHost.deployForm.errors.updateFailed'));
     }
   }
 
   const validateEnvVar = (
     input: string
   ): { isValid: boolean; error?: string; key?: string; value?: string } => {
-    if (!input.trim()) return { isValid: false, error: 'Input cannot be empty' };
+    if (!input.trim())
+      return {
+        isValid: false,
+        error: t('selfHost.deployForm.fields.environmentVariables.emptyInput')
+      };
 
     const regex = /^([^=]+)=(.*)$/;
     const isValid = regex.test(input);
 
     if (!isValid) {
-      return { isValid: false, error: 'Must be in format KEY=VALUE' };
+      return {
+        isValid: false,
+        error: t('selfHost.deployForm.fields.environmentVariables.invalidFormat')
+      };
     }
 
     const [, key] = input.match(regex) as RegExpMatchArray;
 
     if (!key.trim()) {
-      return { isValid: false, error: 'Key cannot be empty' };
+      return {
+        isValid: false,
+        error: t('selfHost.deployForm.fields.environmentVariables.emptyKey')
+      };
     }
 
     return {

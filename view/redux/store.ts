@@ -9,7 +9,7 @@ import {
   PURGE,
   REGISTER
 } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
+import createWebStorage from 'redux-persist/lib/storage/createWebStorage';
 import { authApi } from '@/redux/services/users/authApi';
 import authReducer from '@/redux/features/users/authSlice';
 import { userApi } from '@/redux/services/users/userApi';
@@ -20,11 +20,25 @@ import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorAp
 import githubConnector from './features/github-connector/githubConnectorSlice';
 import { deployApi } from './services/deploy/applicationsApi';
 import { fileManagersApi } from './services/file-manager/fileManagersApi';
+import { auditApi } from './services/audit';
+
+const createNoopStorage = () => ({
+  getItem: (_key: string) => Promise.resolve(null),
+  setItem: (_key: string, value: any) => Promise.resolve(value),
+  removeItem: (_key: string) => Promise.resolve()
+});
+
+const storage = typeof window !== 'undefined' ? createWebStorage('local') : createNoopStorage();
 
 const persistConfig = {
   key: 'root',
+  version: 1,
   storage,
-  whitelist: ['auth']
+  whitelist: ['auth', 'user'],
+  migrate: (state: any) => {
+    if (!state) return Promise.resolve(undefined);
+    return Promise.resolve(state);
+  }
 };
 
 const rootReducer = combineReducers({
@@ -37,10 +51,20 @@ const rootReducer = combineReducers({
   githubConnector: githubConnector,
   [deployApi.reducerPath]: deployApi.reducer,
   user: userSlice,
-  fileManagersApi: fileManagersApi.reducer
+  fileManagersApi: fileManagersApi.reducer,
+  [auditApi.reducerPath]: auditApi.reducer
 });
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+type RootReducer = ReturnType<typeof rootReducer>;
+
+const appReducer = (state: RootReducer | undefined, action: { type: string }) => {
+  if (action.type === 'RESET_STATE') {
+    return rootReducer(undefined, action);
+  }
+  return rootReducer(state, action);
+};
+
+const persistedReducer = persistReducer(persistConfig, appReducer);
 
 const storeOptions: ConfigureStoreOptions = {
   reducer: persistedReducer,
@@ -48,16 +72,20 @@ const storeOptions: ConfigureStoreOptions = {
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER]
-      }
-    }).concat(
+      },
+      immutableCheck: process.env.NODE_ENV === 'development',
+      thunk: true
+    }).concat([
       authApi.middleware,
       userApi.middleware,
       notificationApi.middleware,
       domainsApi.middleware,
       GithubConnectorApi.middleware,
       deployApi.middleware,
-      fileManagersApi.middleware
-    )
+      fileManagersApi.middleware,
+      auditApi.middleware
+    ]),
+  devTools: process.env.NODE_ENV === 'development'
 };
 
 export const store = configureStore(storeOptions);

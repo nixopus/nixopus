@@ -29,20 +29,20 @@ export interface Organization {
   description: string;
   created_at: string;
   updated_at: string;
-  deleted_at?: string | null;
+  deleted_at: string | null;
 }
 
 export interface UserOrganization {
+  id: string;
   organization: Organization;
   role: {
     id: string;
     name: string;
     description: string;
-    created_at: string;
-    updated_at: string;
-    deleted_at?: string | null;
-    permissions: Permission[];
   };
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
 }
 
 export interface UserOrganizationsResponse {
@@ -63,6 +63,11 @@ export interface AddUserToOrganizationRequest {
   role_id: string;
 }
 
+export interface RemoveUserFromOrganizationRequest {
+  user_id: string;
+  organization_id: string;
+}
+
 export interface OrganizationUsers {
   id: string;
   user_id: string;
@@ -81,6 +86,8 @@ export interface UpdateOrganizationDetailsRequest {
   description: string;
 }
 
+export type UserTypes = 'admin' | 'member' | 'viewer';
+
 export interface CreateUserRequest {
   email: string;
   password: string;
@@ -89,8 +96,8 @@ export interface CreateUserRequest {
   organization: string;
 }
 
-export enum UserTypes {
-  ADMIN = 'admin',
-  MEMBER = 'member',
-  VIEWER = 'viewer'
+export interface UpdateUserRoleRequest {
+  user_id: string;
+  organization_id: string;
+  role_name: UserTypes;
 }

@@ -2,25 +2,32 @@ import { useAppSelector } from '@/redux/hooks';
 import {
   useCreateUserMutation,
   useGetOrganizationUsersQuery,
-  useUpdateOrganizationDetailsMutation
+  useRemoveUserFromOrganizationMutation,
+  useUpdateOrganizationDetailsMutation,
+  useUpdateUserRoleMutation
 } from '@/redux/services/users/userApi';
 import { UserTypes } from '@/redux/types/orgs';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/use-translation';
 
 function useTeamSettings() {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<any>([]);
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Member' });
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Member', password: '' });
   const [isEditTeamDialogOpen, setEditTeamDialogOpen] = useState(false);
   const [teamName, setTeamName] = useState('');
   const [teamDescription, setTeamDescription] = useState('');
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
+  const [removeUserFromOrganization] = useRemoveUserFromOrganizationMutation();
+  const [updateUserRole] = useUpdateUserRoleMutation();
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
   const {
     data: apiUsers,
     isLoading,
-    error
+    error,
+    refetch: refetchUsers
   } = useGetOrganizationUsersQuery(activeOrganization?.id, {
     skip: !activeOrganization
   });
@@ -33,15 +40,14 @@ function useTeamSettings() {
         const roleName = user.role?.name || 'Unknown';
         const permissions =
           user.role?.permissions?.map(
-            (permission) => permission.resource.toUpperCase() + ':' + permission.name
+            (permission) => `${permission.resource.toUpperCase()}:${permission.name}`
           ) || [];
         return {
           id: user.user.id,
           name: user.user?.username || 'Unknown User',
           email: user.user?.email || '',
           role: roleName,
-          permissions,
-          avatar: user.user?.avatar
+          permissions
         };
       });
 
@@ -58,35 +64,51 @@ function useTeamSettings() {
 
   const handleAddUser = async () => {
     const newId = crypto.randomUUID();
-    let permissions: string[] = [];
-
-    switch (newUser.role) {
-      case 'Member':
-        permissions = ['READ', 'UPDATE'];
-        break;
-      case 'Viewer':
-        permissions = ['READ'];
-        break;
-    }
-
     const tempUser = {
       username: newUser.name || '',
       email: newUser.email || '',
-      avatar: '' as string,
-      password: 'test1234@Test', // This is a temporary password we can use for testing,
+      password: newUser.password || '',
       organization: activeOrganization?.id || '',
       type: newUser.role.toLowerCase() as UserTypes
     };
-
-    setUsers([...users, { id: newId, ...tempUser, permissions, name: newUser.name }]);
-    await createUser(tempUser as any);
-    toast.success('User added successfully');
-    setNewUser({ name: '', email: '', role: 'Member' });
+    const permissions = newUser.role === 'Member' ? ['READ', 'UPDATE'] : ['READ'];
+    setUsers([...users, { id: newId, ...tempUser, name: newUser.name, permissions }]);
+    try {
+      const user = await createUser(tempUser as any);
+      await refetchUsers();
+      toast.success(t('settings.teams.messages.userAdded'));
+    } catch (error) {
+      toast.error(t('settings.teams.messages.userAddFailed'));
+    }
+    setNewUser({ name: '', email: '', role: 'Member', password: '' });
     setIsAddUserDialogOpen(false);
   };
 
-  const handleRemoveUser = (userId: string) => {
-    setUsers(users.filter((user: any) => user.id !== userId));
+  const handleRemoveUser = async (userId: string) => {
+    try {
+      await removeUserFromOrganization({
+        user_id: userId,
+        organization_id: activeOrganization?.id || ''
+      });
+      await refetchUsers();
+      toast.success(t('settings.teams.messages.userRemoved'));
+    } catch (error) {
+      toast.error(t('settings.teams.messages.userRemoveFailed'));
+    }
+  };
+
+  const handleUpdateUser = async (userId: string, role: UserTypes) => {
+    try {
+      await updateUserRole({
+        user_id: userId,
+        organization_id: activeOrganization?.id || '',
+        role_name: role
+      });
+      await refetchUsers();
+      toast.success(t('settings.teams.messages.userUpdated'));
+    } catch (error) {
+      toast.error(t('settings.teams.messages.userUpdateFailed'));
+    }
   };
 
   const getRoleBadgeVariant = (role: string) => {
@@ -107,7 +129,7 @@ function useTeamSettings() {
   const handleUpdateTeam = async () => {
     setEditTeamDialogOpen(false);
     if (teamName.length <= 0 || teamDescription.length <= 0) {
-      toast.error('Team name and description are required');
+      toast.error(t('settings.teams.messages.requiredFields'));
       setTeamName(activeOrganization?.name || '');
       setTeamDescription(activeOrganization?.description || '');
       return;
@@ -117,12 +139,19 @@ function useTeamSettings() {
       teamName !== activeOrganization?.name ||
       teamDescription !== activeOrganization?.description
     ) {
-      await updateOrganizationDetails({
-        id: activeOrganization?.id,
-        name: teamName,
-        description: teamDescription
-      });
-      toast.success('Team details updated successfully');
+      try {
+        await updateOrganizationDetails({
+          id: activeOrganization?.id || '',
+          name: teamName,
+          description: teamDescription
+        });
+        await refetchUsers();
+        toast.success(t('settings.teams.messages.teamUpdated'));
+      } catch (error) {
+        toast.error(t('settings.teams.messages.teamUpdateFailed'));
+        setTeamName(activeOrganization?.name || '');
+        setTeamDescription(activeOrganization?.description || '');
+      }
     }
   };
 
@@ -136,6 +165,7 @@ function useTeamSettings() {
     setNewUser,
     handleAddUser,
     handleRemoveUser,
+    handleUpdateUser,
     getRoleBadgeVariant,
     handleUpdateTeam,
     setEditTeamDialogOpen,

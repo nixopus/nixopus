@@ -4,6 +4,7 @@ import '@xterm/xterm/css/xterm.css';
 import { useTerminal } from './utils/useTerminal';
 import { useContainerReady } from './utils/isContainerReady';
 import { X } from 'lucide-react';
+import { useTranslation } from '@/hooks/use-translation';
 
 const globalStyles = `
   .xterm-viewport::-webkit-scrollbar {
@@ -28,6 +29,7 @@ export const Terminal: React.FC<TerminalProps> = ({
   isTerminalOpen,
   setFitAddonRef
 }) => {
+  const { t } = useTranslation();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -102,16 +104,21 @@ export const Terminal: React.FC<TerminalProps> = ({
   }, []);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-[#1e1e1e]" ref={containerRef}>
+    <div
+      className="flex h-full flex-col overflow-hidden bg-[#1e1e1e]"
+      ref={containerRef}
+      data-slot="terminal"
+    >
       <div className="flex h-8 items-center justify-between border-b border-[#2d2d2d] px-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-[#cccccc]">Terminal</span>
-          <span className="text-xs text-[#666666]">⌘J</span>
+          <span className="text-xs font-medium text-[#cccccc]">{t('terminal.title')}</span>
+          <span className="text-xs text-[#666666]">{t('terminal.shortcut')}</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             className="flex h-4 w-4 items-center justify-center rounded hover:bg-[#2d2d2d]"
             onClick={toggleTerminal}
+            title={t('terminal.close')}
           >
             <X className="h-3 w-3 text-[#666666] hover:text-[#cccccc]" />
           </button>

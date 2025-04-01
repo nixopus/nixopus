@@ -1,22 +1,86 @@
 # Introduction
 
-Nixopus is your all in one solution for managing your VPS. With Nixopus, you can easily manage rolling updates, monitor container statistics, and configure it to run as a CI/CD pipeline.
+Nixopus is a powerful, all-in-one VPS management platform designed to simplify your server administration tasks. Whether you're a developer, system administrator, or hobbyist, Nixopus provides the tools you need to efficiently manage your virtual private server.
 
-This guide is a comprehensive resource for understanding Nixopus's key concepts and features. It covers installation, contribution, sponsorship, and serves as a knowledge base for the project.
+## What is Nixopus?
 
-## Why Nixopus?
-While we can see many alternative projects that has the same features, but with different configurations, Nixopus is the one that is best suited for your needs. It makes it easy to manage your VPS with ease, and it also provides a great user experience.
+Nixopus is a comprehensive VPS management solution that combines essential server administration tools with modern development features. It's built to help you:
 
-Nixopus has the following features:
-- [Terminal](/terminal/index.md)
-- [File Manager](/file-manager/index.md)
-- [Hosting Projects](/self-host/index.md)
-- [Marketplace](/marketplace/index.md)
-- [Cron Jobs](/cron-jobs/index.md)
-- [Firewall](/firewall/index.md)
-- [Mail](/mail/index.md)
+- Manage server updates and configurations
+- Monitor container performance and statistics
+- Deploy and manage applications
+- Streamline your development workflow
+- Automate CI/CD pipelines
 
-## Story Behind Nixopus
-Nixopus is a project that was started in 2024 by [Raghav](https://github.com/raghavyuva) to solve the problem of the complexity of managing a VPS. At that time, We were frustrated with the current solutions available. They were either too expensive or too difficult to use. We knew that there had to be a better way. So we decided to take matters into our own hands and create a solution that would be both user-friendly and free.
+## Key Features
 
-After months of hard work, Nixopus was born. It is a solution that is both user-friendly and free. It is also customizable, scalable, secure, and well-documented. It is a solution that is driven by the community and is open-source. It is a solution that is easy to use and allows users to customize it to suit their needs.
+### 🖥️ Terminal Access
+- Secure SSH access to your server
+- Multiple terminal sessions
+- Customizable terminal settings
+- Command history and autocomplete
+
+### 📁 File Management
+- Intuitive file browser
+- Drag-and-drop file uploads
+- File editing capabilities
+- Permission management
+- Remote file operations
+
+### 🚀 Project Hosting
+- One-click application deployment
+- Container management
+- Environment configuration
+- SSL certificate management
+- Domain and DNS configuration
+
+### 🔄 CI/CD Integration
+- Automated build and deployment
+- Pipeline configuration
+- Version control integration
+- Build status monitoring
+- Deployment history tracking
+
+## Why Choose Nixopus?
+
+While there are many VPS management tools available, Nixopus stands out because:
+
+1. **User-Friendly Interface**
+   - Intuitive dashboard
+   - Easy-to-navigate features
+   - Clear visual feedback
+   - Responsive design
+
+2. **Comprehensive Toolset**
+   - All essential VPS management tools in one place
+   - No need to switch between different applications
+   - Consistent user experience across features
+
+3. **Flexible Configuration**
+   - Customizable settings
+   - Adaptable to different use cases
+   - Scalable for projects of any size
+
+4. **Reliable Performance**
+   - Stable and secure
+   - Regular updates and maintenance
+   - Active community support
+
+## Getting Started
+
+Ready to start using Nixopus? Here's how to begin:
+
+1. [Installation Guide](/installation/index.md) - Set up Nixopus on your server
+2. [Terminal Guide](/terminal/index.md) - Learn about terminal features
+3. [File Manager Guide](/file-manager/index.md) - Master file management
+4. [Project Hosting Guide](/self-host/index.md) - Deploy your applications
+
+## Need Help?
+
+- Check out our [documentation](/docs/index.md)
+- Join our [community](/community/index.md)
+- Contact [support](/support/index.md)
+
+---
+
+*Nixopus is continuously evolving. Stay tuned for new features and improvements!*

@@ -9,7 +9,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 type AuthController struct {
@@ -35,23 +34,17 @@ func NewAuthController(
 	}
 }
 
-func (c *AuthController) parseAndValidate(w http.ResponseWriter, r *http.Request, req any) bool {
+func (c *AuthController) parseAndValidate(w http.ResponseWriter, r *http.Request, req any) error {
 	if err := c.validator.ValidateRequest(req); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
-		return false
+		return err
 	}
 
 	if r.URL.Path == "/api/v1/auth/login" {
-		return true
+		return nil
 	}
 
-	user := utils.GetUser(w, r)
-	if err := c.validator.AccessValidator(w, r, user); err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
-		return false
-	}
-
-	return true
+	return nil
 }
 
 func (c *AuthController) Notify(payloadType notification.NotificationPayloadType, user *shared_types.User, r *http.Request) {
@@ -69,6 +62,29 @@ func (c *AuthController) Notify(payloadType notification.NotificationPayloadType
 
 	payload := notification.NewNotificationPayload(
 		payloadType,
+		user.ID.String(),
+		notificationData,
+		notification.NotificationCategoryAuthentication,
+	)
+
+	c.notification.SendNotification(payload)
+}
+
+func (c *AuthController) NotifyPasswordReset(user *shared_types.User, token string, r *http.Request) {
+	if r == nil {
+		return
+	}
+	notificationData := notification.NotificationPasswordResetData{
+		Email: user.Email,
+		Token: token,
+		NotificationBaseData: notification.NotificationBaseData{
+			IP:      r.RemoteAddr,
+			Browser: r.UserAgent(),
+		},
+	}
+
+	payload := notification.NewNotificationPayload(
+		notification.NotificationPayloadTypePasswordReset,
 		user.ID.String(),
 		notificationData,
 		notification.NotificationCategoryAuthentication,

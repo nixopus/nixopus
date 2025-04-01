@@ -1,11 +1,18 @@
-import { useAppSelector } from '@/redux/hooks';
+import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import {
-  useAddUserToOrganizationMutation,
-  useCreateOrganizationMutation
+  useCreateOrganizationMutation,
+  useDeleteOrganizationMutation
 } from '@/redux/services/users/userApi';
-import { UserOrganization } from '@/redux/types/orgs';
 import React from 'react';
 import { toast } from 'sonner';
+import { setActiveOrganization } from '@/redux/features/users/userSlice';
+import { domainsApi } from '@/redux/services/settings/domainsApi';
+import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorApi';
+import { deployApi } from '@/redux/services/deploy/applicationsApi';
+import { notificationApi } from '@/redux/services/settings/notificationApi';
+import { UserOrganization } from '@/redux/types/orgs';
+
+const ACTIVE_ORGANIZATION_KEY = 'active_organization';
 
 function useTeamSwitcher() {
   const [open, setOpen] = React.useState(false);
@@ -14,8 +21,57 @@ function useTeamSwitcher() {
   const [teamName, setTeamName] = React.useState('');
   const [teamDescription, setTeamDescription] = React.useState('');
   const [createOrganization, { isLoading }] = useCreateOrganizationMutation();
-  const [addUserToOrganization, { isLoading: isAddingUser }] = useAddUserToOrganizationMutation();
-  const organizations = useAppSelector((state) => state.user.organizations);
+  const [deleteOrganization] = useDeleteOrganizationMutation();
+  const dispatch = useAppDispatch();
+  const activeTeam = useAppSelector((state) => state.user.activeOrganization);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const teams = useAppSelector((state) => state.user.organizations);
+  const displayTeam = activeTeam || (teams && teams.length > 0 ? teams[0].organization : null);
+
+  React.useEffect(() => {
+    const storedOrg = localStorage.getItem(ACTIVE_ORGANIZATION_KEY);
+    if (storedOrg && teams) {
+      const parsedOrg = JSON.parse(storedOrg);
+      const matchingTeam = teams.find(
+        (team: UserOrganization) => team.organization.id === parsedOrg.id
+      );
+      if (matchingTeam) {
+        dispatch(setActiveOrganization(matchingTeam.organization));
+      }
+    }
+  }, [teams, dispatch]);
+
+  const handleTeamChange = async (team: UserOrganization) => {
+    dispatch(setActiveOrganization(team.organization));
+    localStorage.setItem(ACTIVE_ORGANIZATION_KEY, JSON.stringify(team.organization));
+    try {
+      dispatch(domainsApi.util.invalidateTags([{ type: 'Domains', id: 'LIST' }]));
+      dispatch(GithubConnectorApi.util.invalidateTags([{ type: 'GithubConnector', id: 'LIST' }]));
+      dispatch(deployApi.util.invalidateTags([{ type: 'Deploy', id: 'LIST' }]));
+      dispatch(notificationApi.util.invalidateTags([{ type: 'Notification', id: 'LIST' }]));
+    } catch (error) {
+      console.error('Failed to invalidate cache:', error);
+    }
+  };
+
+  const handleDeleteOrganization = async () => {
+    if (teams && teams.length <= 1) {
+      return;
+    }
+
+    try {
+      await deleteOrganization(displayTeam.id).unwrap();
+      const remainingTeams = teams?.filter(
+        (team: UserOrganization) => team.organization.id !== displayTeam.id
+      );
+      if (remainingTeams && remainingTeams.length > 0) {
+        handleTeamChange(remainingTeams[0]);
+      }
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to delete organization:', error);
+    }
+  };
 
   const toggleAddTeamModal = () => {
     setOpen(!open);
@@ -30,16 +86,17 @@ function useTeamSwitcher() {
   };
 
   const validateTeamName = (name: string) => {
-    return name.length > 0;
+    if (!name) {
+      return false;
+    }
+    return name.length <= 50;
   };
 
   const validateTeamDescription = (description: string) => {
-    return description.length > 0;
-  };
-
-  const getOwnerRoleId = () => {
-    const org = organizations.find((org: UserOrganization) => org.role.name === 'Owner');
-    return org?.role.id;
+    if (!description) {
+      return false;
+    }
+    return description.length <= 100;
   };
 
   const onCreateTeam = async () => {
@@ -50,12 +107,12 @@ function useTeamSwitcher() {
       }
 
       if (!validateTeamName(teamName)) {
-        toast.error('Team name is required');
+        toast.error('Team name is required and must be less than 50 characters');
         return;
       }
 
       if (!validateTeamDescription(teamDescription)) {
-        toast.error('Team description is required');
+        toast.error('Team description is required and must be less than 100 characters');
         return;
       }
 
@@ -68,16 +125,12 @@ function useTeamSwitcher() {
         toast.error('Failed to create team');
         return;
       }
-      const ownerRoleId = getOwnerRoleId();
-      await addUserToOrganization({
-        organization_id: res.id,
-        user_id: user?.id,
-        role_id: ownerRoleId
-      }).unwrap();
       toast.success('Team created successfully');
       setOpen(false);
+      setTeamName('');
+      setTeamDescription('');
     } catch (error) {
-      console.log(error);
+      console.error('Failed to create team:', error);
       toast.error('Failed to create team');
     }
   };
@@ -91,7 +144,14 @@ function useTeamSwitcher() {
     teamDescription,
     handleTeamNameChange,
     handleTeamDescriptionChange,
-    isLoading: isLoading || isAddingUser
+    isLoading,
+    handleTeamChange,
+    handleDeleteOrganization,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    activeTeam,
+    isAdmin,
+    displayTeam
   };
 }
 

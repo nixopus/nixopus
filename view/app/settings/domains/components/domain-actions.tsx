@@ -5,12 +5,14 @@ import { Domain } from '@/redux/types/domain';
 import DeleteDomain from './delete-domain';
 import { useAppSelector } from '@/redux/hooks';
 import { useResourcePermissions } from '@/lib/permission';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface DomainActionsProps {
   domain: Domain;
 }
 
 export function DomainActions({ domain }: DomainActionsProps) {
+  const { t } = useTranslation();
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   const user = useAppSelector((state) => state.auth.user);
@@ -33,12 +35,12 @@ export function DomainActions({ domain }: DomainActionsProps) {
     <div className="flex justify-end gap-2">
       {canUpdate && (
         <Button variant="ghost" className="text-primary p-0 m-0" onClick={handleEdit}>
-          Edit
+          {t('settings.domains.actions.edit')}
         </Button>
       )}
       {canDelete && (
         <Button variant="ghost" className="text-red-500 p-0 m-0" onClick={handleDelete}>
-          Delete
+          {t('settings.domains.actions.delete')}
         </Button>
       )}
       {isEditModalOpen && (

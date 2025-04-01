@@ -2,64 +2,88 @@ version: '3.8'
 
 services:
   nixopus-api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-      args:
-        - PORT=${API_PORT:-9999}
+    image: ghcr.io/${GITHUB_REPOSITORY:-raghavyuva/nixopus}-api:latest
     container_name: nixopus-api-container
     ports:
-      - "${API_PORT:-9999}:${API_PORT:-9999}"
+      - "${API_PORT:-8443}:${API_PORT:-8443}"
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      - PORT=${PORT:-9999}
-      - DB_NAME=${DB_NAME:-postgres}
-      - USERNAME=${USERNAME:-postgres}
-      - PASSWORD=${PASSWORD:-12344}
-      - HOST_NAME=${HOST_NAME:-localhost}
-      - DB_PORT=${DB_PORT:-5432}
-      - SSL_MODE=${SSL_MODE:-disable}
-      - SSH_HOST=${SSH_HOST:-localhost}
-      - SSH_PORT=${SSH_PORT:-22}
-      - SSH_USER=${SSH_USER:-root}
-      - SSH_PASSWORD=${SSH_PASSWORD:-1234}
-      - SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY:-}
+      - HOST_NAME=nixopus-db
     volumes:
       - ./logs:/app/logs
+      - ${DOCKER_CERT_PATH}:/etc/nixopus/docker-certs
+      - ${SSH_PRIVATE_KEY}:/etc/nixopus/ssh/id_rsa
+      - ${MOUNT_PATH:-/etc/nixopus/configs}:/etc/nixopus/configs
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - nixopus-network
     depends_on:
-      - nixopus-db
+      nixopus-db:
+        condition: service_healthy
 
   nixopus-db:
     image: postgres:14-alpine
     container_name: nixopus-db-container
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=${USERNAME:-nixopus}
-      - POSTGRES_PASSWORD=${PASSWORD:-nixopus}
-      - POSTGRES_DB=${DB_NAME:-nixopus}
+      - POSTGRES_USER=${USERNAME}
+      - POSTGRES_PASSWORD=${PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_HOST_AUTH_METHOD=trust
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
-      - ./data:/var/lib/postgresql/data
+      - ${DB_VOLUME:-/etc/nixopus/db}:/var/lib/postgresql/data
     networks:
       - nixopus-network
-  
-  nixopus-view:
-    build:
-      context: ./view
-      dockerfile: Dockerfile
-      args:
-        - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://api.nixopus.com/api}
-    container_name: nixopus-view-container
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${USERNAME} -d ${DB_NAME}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nixopus-test-db:
+    image: postgres:14-alpine
+    container_name: nixopus-test-db-container
     ports:
-      - "${NEXT_PUBLIC_PORT:-3000}:${NEXT_PUBLIC_PORT:-3000}"
+      - "${TEST_DB_PORT:-5433}:5432"
     restart: unless-stopped
     environment:
-      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://api.nixopus.com/api}
+      - POSTGRES_USER=${TEST_DB_USERNAME:-nixopus}
+      - POSTGRES_PASSWORD=${TEST_DB_PASSWORD:-nixopus}
+      - POSTGRES_DB=${TEST_DB_NAME:-nixopus_test}
+    networks:
+      - nixopus-network
+
+  nixopus-view:
+    image: ghcr.io/${GITHUB_REPOSITORY:-raghavyuva/nixopus}-view:latest
+    container_name: nixopus-view-container
+    build:
+      args:
+        - NEXT_PUBLIC_PORT=${NEXT_PUBLIC_PORT}
+    ports:
+      - "${NEXT_PUBLIC_PORT:-7443}:${NEXT_PUBLIC_PORT:-7443}"
+    restart: unless-stopped
+    env_file:
+      - .env
     volumes:
       - ./logs:/app/logs
+    networks:
+      - nixopus-network
+
+  nixopus-caddy:
+    image: caddy:latest
+    container_name: nixopus-caddy-container
+    ports:
+      - "2019:2019"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./api/helpers/Caddyfile:/etc/caddy/Caddyfile
+      - ${CADDY_DATA_VOLUME:-/etc/nixopus/caddy}:/data
+      - ${CADDY_CONFIG_VOLUME:-/etc/nixopus/caddy}:/config
     networks:
       - nixopus-network
 

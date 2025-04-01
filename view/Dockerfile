@@ -1,11 +1,8 @@
 FROM node:18-alpine AS builder
 
-ARG NEXT_PUBLIC_BASE_URL=https://api.nixopus.com
-ARG NEXT_PUBLIC_WEBSOCKET_URL=wss://api.nixopus.com
-
-ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
-ENV NEXT_PUBLIC_WEBSOCKET_URL=$NEXT_PUBLIC_WEBSOCKET_URL
+ARG NEXT_PUBLIC_PORT=7443
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_PUBLIC_PORT=$NEXT_PUBLIC_PORT
 
 WORKDIR /app
 
@@ -14,18 +11,19 @@ RUN yarn install --frozen-lockfile --network-timeout 600000
 
 COPY . .
 
-RUN yarn build
+RUN yarn build && \
+    yarn install --frozen-lockfile --network-timeout 600000 --production && \
+    yarn cache clean
 
 FROM node:18-alpine AS runner
 
-WORKDIR /app
-
+ARG NEXT_PUBLIC_PORT=7443
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
+ENV NEXT_PUBLIC_PORT=$NEXT_PUBLIC_PORT
+WORKDIR /app
 
-RUN addgroup -g 1001 nixopus && \
-    adduser -u 1001 -G nixopus -s /bin/sh -D nixopus
+RUN addgroup -S nixopus && adduser -S nixopus -G nixopus
 
 COPY --from=builder --chown=nixopus:nixopus /app/next.config.ts ./
 COPY --from=builder --chown=nixopus:nixopus /app/public ./public
@@ -36,10 +34,11 @@ COPY --from=builder --chown=nixopus:nixopus /app/yarn.lock ./
 
 RUN mkdir -p .next/cache && \
     chown -R nixopus:nixopus . && \
-    chmod -R 755 .
+    chmod -R 755 . && \
+    rm -rf /app/node_modules/.cache
 
 USER nixopus
 
-EXPOSE 3000
+EXPOSE ${NEXT_PUBLIC_PORT}
 
-CMD ["yarn", "start"]
+CMD yarn start -p ${NEXT_PUBLIC_PORT}

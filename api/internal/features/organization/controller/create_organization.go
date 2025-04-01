@@ -3,42 +3,78 @@ package controller
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// CreateOrganization godoc
-// @Summary Create a new organization
-// @Description Creates a new organization in the application.
-// @Tags organization
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param create_organization body types.CreateOrganizationRequest true "Create organization request"
-// @Success 200 {object} types.Response "Success response with organization"
-// @Failure 400 {object} types.Response "Bad request"
-// @Router /organization/create [post]
-func (c *OrganizationsController) CreateOrganization(w http.ResponseWriter, r *http.Request) {
-	var organization types.CreateOrganizationRequest
+func (c *OrganizationsController) CreateOrganization(f fuego.ContextWithBody[types.CreateOrganizationRequest]) (*shared_types.Response, error) {
+	organization, err := f.Body()
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	c.logger.Log("Creating organization", organization.Name, organization.Description)
+
+	w, r := f.Response(), f.Request()
+	if err := c.validator.ValidateRequest(&organization); err != nil {
+		c.logger.Log(logger.Error, err.Error(), err.Error())
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
 
 	loggedInUser := utils.GetUser(w, r)
 	if loggedInUser == nil {
-		return
-	}
-
-	if !c.parseAndValidate(w, r, &organization) {
-		return
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
 	}
 
 	createdOrganization, err := c.service.CreateOrganization(&organization)
-
 	if err != nil {
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
+
+	roles, err := c.role_service.GetRoleByName(shared_types.RoleAdmin)
+	if err != nil {
+		c.logger.Log(logger.Error, "failed to get role by name", err.Error())
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	if roles == nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	c.service.AddUserToOrganization(types.AddUserToOrganizationRequest{
+		UserID:         loggedInUser.ID.String(),
+		OrganizationID: createdOrganization.ID.String(),
+		RoleId:         roles.ID.String(),
+	})
 
 	c.Notify(notification.NortificationPayloadTypeCreateOrganization, loggedInUser, r)
 
-	utils.SendJSONResponse(w, "success", "Organization created successfully", createdOrganization)
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Organization created successfully",
+		Data:    createdOrganization,
+	}, nil
 }

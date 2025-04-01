@@ -1,8 +1,13 @@
 package service
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
@@ -12,94 +17,52 @@ import (
 
 // CreateDeployment creates a new application deployment in the database
 // and starts the deployment process in a separate goroutine.
-func (s *DeployService) CreateDeployment(deployment *types.CreateDeploymentRequest, userID uuid.UUID) (shared_types.Application, error) {
-	application := createApplicationFromDeploymentRequest(deployment, userID, nil)
+func (s *DeployService) CreateDeployment(deployment *types.CreateDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
+	application := createApplicationFromDeploymentRequest(deployment, userID, organizationID, nil)
 
-	deployRequest, deployStatus, deployment_config, err := s.createAndPrepareDeployment(application, shared_types.DeploymentRequestConfig{
-		Type:              shared_types.DeploymentTypeCreate,
-		Force:             false,
-		ForceWithoutCache: false,
-	})
+	deploy_config, err := s.prepareDeploymentConfig(application, userID, shared_types.DeploymentTypeCreate, false, false)
 	if err != nil {
 		return shared_types.Application{}, err
 	}
 
-	deploy_config := DeployerConfig{
-		application:       application,
-		deployment:        deployRequest,
-		userID:            userID,
-		contextPath:       "",
-		appStatus:         deployStatus,
-		deployment_config: &deployment_config,
-	}
-
 	go s.StartDeploymentInBackground(deploy_config)
-
 	s.logger.Log(logger.Info, types.LogDeploymentStarted, "")
 	return application, nil
 }
 
 // UpdateDeployment updates an existing application deployment
 // in the database and starts the deployment process in a separate goroutine.
-func (s *DeployService) UpdateDeployment(deployment *types.UpdateDeploymentRequest, userID uuid.UUID) (shared_types.Application, error) {
-	application, err := s.storage.GetApplicationById(deployment.ID.String())
+func (s *DeployService) UpdateDeployment(deployment *types.UpdateDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
+	application, err := s.storage.GetApplicationById(deployment.ID.String(), organizationID)
 	if err != nil {
 		return shared_types.Application{}, err
 	}
 
 	application = createApplicationFromExistingApplicationAndUpdateRequest(application, deployment)
 
-	deployRequest, deployStatus, deployment_config, err := s.createAndPrepareDeployment(application, shared_types.DeploymentRequestConfig{
-		Type:              shared_types.DeploymentTypeUpdate,
-		Force:             false,
-		ForceWithoutCache: false,
-	})
+	deploy_config, err := s.prepareDeploymentConfig(application, userID, shared_types.DeploymentTypeUpdate, false, false)
 	if err != nil {
 		return shared_types.Application{}, err
 	}
 
-	deploy_config := DeployerConfig{
-		application:       application,
-		deployment:        deployRequest,
-		userID:            userID,
-		contextPath:       "",
-		appStatus:         deployStatus,
-		deployment_config: &deployment_config,
-	}
-
 	go s.StartDeploymentInBackground(deploy_config)
-
 	s.logger.Log(logger.Info, types.LogDeploymentStarted, "")
 	return application, nil
 }
 
 // ReDeployApplication redeploys an existing application
-func (s *DeployService) ReDeployApplication(redeployRequest *types.ReDeployApplicationRequest, userID uuid.UUID) (shared_types.Application, error) {
-	application, err := s.storage.GetApplicationById(redeployRequest.ID.String())
+func (s *DeployService) ReDeployApplication(redeployRequest *types.ReDeployApplicationRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
+	application, err := s.storage.GetApplicationById(redeployRequest.ID.String(), organizationID)
 	if err != nil {
 		return shared_types.Application{}, err
 	}
 
-	deployRequest, deployStatus, deployment_config, err := s.createAndPrepareDeployment(application, shared_types.DeploymentRequestConfig{
-		Type:              shared_types.DeploymentTypeReDeploy,
-		Force:             redeployRequest.Force,
-		ForceWithoutCache: redeployRequest.ForceWithoutCache,
-	})
+	deploy_config, err := s.prepareDeploymentConfig(application, userID, shared_types.DeploymentTypeReDeploy, redeployRequest.Force, redeployRequest.ForceWithoutCache)
 	if err != nil {
 		return shared_types.Application{}, err
-	}
-
-	deploy_config := DeployerConfig{
-		application:       application,
-		deployment:        deployRequest,
-		userID:            userID,
-		contextPath:       "",
-		appStatus:         deployStatus,
-		deployment_config: &deployment_config,
 	}
 
 	go s.StartDeploymentInBackground(deploy_config)
-
 	s.logger.Log(logger.Info, types.LogDeploymentStarted, "")
 	return application, nil
 }
@@ -143,6 +106,7 @@ func (s *DeployService) StartDeploymentInBackground(
 		DeploymentID:   d.deployment_config.ID.String(),
 		DeploymentType: string(d.deployment.Type),
 		Branch:         d.application.Branch,
+		ApplicationID:  d.application.ID.String(),
 	}
 
 	// we will pass the commit hash to the clone repository function for rollback feature
@@ -171,77 +135,111 @@ func (s *DeployService) GetDeploymentById(deploymentID string) (shared_types.App
 	return s.storage.GetApplicationDeploymentById(deploymentID)
 }
 
-func (s *DeployService) DeleteDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID) error {
+func (s *DeployService) DeleteDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) error {
+	application, err := s.storage.GetApplicationById(deployment.ID.String(), organizationID)
+	if err != nil {
+		return fmt.Errorf("failed to get application details: %w", err)
+	}
+
+	deployments, err := s.storage.GetApplicationDeployments(application.ID)
+	if err != nil {
+		s.logger.Log(logger.Error, "Failed to get application deployments", err.Error())
+	} else {
+		for _, dep := range deployments {
+			if dep.ContainerID != "" {
+				s.logger.Log(logger.Info, "Stopping container", dep.ContainerID)
+				if err := s.dockerRepo.StopContainer(dep.ContainerID, container.StopOptions{}); err != nil {
+					s.logger.Log(logger.Error, "Failed to stop container", err.Error())
+				}
+
+				s.logger.Log(logger.Info, "Removing container", dep.ContainerID)
+				if err := s.dockerRepo.RemoveContainer(dep.ContainerID, container.RemoveOptions{Force: true}); err != nil {
+					s.logger.Log(logger.Error, "Failed to remove container", err.Error())
+				}
+			}
+
+			if dep.ContainerImage != "" {
+				s.logger.Log(logger.Info, "Removing image", dep.ContainerImage)
+				if err := s.dockerRepo.RemoveImage(dep.ContainerImage, image.RemoveOptions{Force: true}); err != nil {
+					s.logger.Log(logger.Error, "Failed to remove image", err.Error())
+				}
+			}
+		}
+	}
+
+	repoPath := filepath.Join(os.Getenv("MOUNT_PATH"), userID.String(), string(application.Environment), application.ID.String())
+	s.logger.Log(logger.Info, "Cleaning up repository directory", repoPath)
+
+	err = s.github_service.RemoveRepository(repoPath)
+	if err != nil {
+		s.logger.Log(logger.Error, "Failed to remove repository", err.Error())
+	}
+
 	return s.storage.DeleteDeployment(deployment, userID)
 }
 
-func (s *DeployService) RollbackDeployment(deployment *types.RollbackDeploymentRequest, userID uuid.UUID) error {
+func (s *DeployService) RollbackDeployment(deployment *types.RollbackDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) error {
 	deployment_details, err := s.storage.GetApplicationDeploymentById(deployment.ID.String())
 	if err != nil {
 		return err
 	}
-	application_details, err := s.storage.GetApplicationById(string(deployment_details.ApplicationID.String()))
 
+	application_details, err := s.storage.GetApplicationById(string(deployment_details.ApplicationID.String()), organizationID)
 	if err != nil {
 		return err
 	}
 
 	deployStatus := createDeploymentStatus(deployment.ID)
-
 	s.updateStatus(deployment_details.ID, shared_types.Deploying, deployStatus.ID)
 
-	deployRequest := shared_types.DeploymentRequestConfig{
-		Type:              shared_types.DeploymentTypeRollback,
-		Force:             false,
-		ForceWithoutCache: false,
-	}
-
-	deploy_config := DeployerConfig{
-		application:       application_details,
-		deployment:        &deployRequest,
-		userID:            userID,
-		contextPath:       "",
-		appStatus:         deployStatus,
-		deployment_config: &deployment_details,
+	deploy_config, err := s.prepareDeploymentConfig(application_details, userID, shared_types.DeploymentTypeRollback, false, false)
+	if err != nil {
+		return err
 	}
 
 	go s.StartDeploymentInBackground(deploy_config)
-
 	return nil
 }
 
-func (s *DeployService) RestartDeployment(deployment *types.RestartDeploymentRequest, userID uuid.UUID) error {
+func (s *DeployService) RestartDeployment(deployment *types.RestartDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) error {
 	deployment_details, err := s.storage.GetApplicationDeploymentById(deployment.ID.String())
 	if err != nil {
 		return err
 	}
-	application_details, err := s.storage.GetApplicationById(string(deployment_details.ApplicationID.String()))
 
+	application_details, err := s.storage.GetApplicationById(string(deployment_details.ApplicationID.String()), organizationID)
 	if err != nil {
 		return err
 	}
 
 	deployStatus := createDeploymentStatus(deployment.ID)
-
 	s.updateStatus(deployment_details.ID, shared_types.Deploying, deployStatus.ID)
 
-	deployRequest := shared_types.DeploymentRequestConfig{
-		Type:              shared_types.DeploymentTypeRestart,
-		Force:             false,
-		ForceWithoutCache: false,
+	deploy_config, err := s.prepareDeploymentConfig(application_details, userID, shared_types.DeploymentTypeRestart, false, false)
+	if err != nil {
+		return err
 	}
 
-	deploy_config := DeployerConfig{
-		application:       application_details,
-		deployment:        &deployRequest,
+	s.StartDeploymentInBackground(deploy_config)
+	return nil
+}
+
+func (s *DeployService) prepareDeploymentConfig(application shared_types.Application, userID uuid.UUID, deploymentType shared_types.DeploymentType, force, forceWithoutCache bool) (DeployerConfig, error) {
+	deployRequest, deployStatus, deployment_config, err := s.createAndPrepareDeployment(application, shared_types.DeploymentRequestConfig{
+		Type:              deploymentType,
+		Force:             force,
+		ForceWithoutCache: forceWithoutCache,
+	})
+	if err != nil {
+		return DeployerConfig{}, err
+	}
+
+	return DeployerConfig{
+		application:       application,
+		deployment:        deployRequest,
 		userID:            userID,
 		contextPath:       "",
 		appStatus:         deployStatus,
-		deployment_config: &deployment_details,
-	}
-
-	// we will not run it in the background since it is a restart of the application
-	s.StartDeploymentInBackground(deploy_config)
-
-	return nil
+		deployment_config: &deployment_config,
+	}, nil
 }

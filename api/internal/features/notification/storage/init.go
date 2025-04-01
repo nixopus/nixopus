@@ -27,6 +27,10 @@ type NotificationRepository interface {
 	GetOrganizationsSmtp(organizationID string) ([]shared_types.SMTPConfigs, error)
 	UpdatePreference(ctx context.Context, req notification.UpdatePreferenceRequest, userID uuid.UUID) error
 	GetPreferences(ctx context.Context, userID uuid.UUID) (*notification.GetPreferencesResponse, error)
+	CreateWebhookConfig(ctx context.Context, config *shared_types.WebhookConfig) error
+	UpdateWebhookConfig(ctx context.Context, config *shared_types.WebhookConfig) error
+	DeleteWebhookConfig(ctx context.Context, webhookType string, organizationID uuid.UUID) error
+	GetWebhookConfig(ctx context.Context, webhookType string, organizationID uuid.UUID) (*shared_types.WebhookConfig, error)
 }
 
 // AddSmtp adds a new SMTP configuration to the database.
@@ -75,6 +79,9 @@ func (s NotificationStorage) GetSmtp(ID string) (*shared_types.SMTPConfigs, erro
 	config := &shared_types.SMTPConfigs{}
 	err := s.DB.NewSelect().Model(config).Where("user_id = ?", ID).Scan(s.Ctx)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return config, nil
@@ -89,6 +96,9 @@ func (s NotificationStorage) GetOrganizationsSmtp(organizationID string) ([]shar
 	configs := []shared_types.SMTPConfigs{}
 	err := s.DB.NewSelect().Model(&configs).Where("organization_id = ?", organizationID).Scan(s.Ctx)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return []shared_types.SMTPConfigs{}, nil
+		}
 		return nil, err
 	}
 	return configs, nil
@@ -422,4 +432,48 @@ func MapToResponse(items []shared_types.PreferenceItem) notification.GetPreferen
 	}
 
 	return response
+}
+
+// CreateWebhookConfig creates a new webhook configuration in the database.
+func (s NotificationStorage) CreateWebhookConfig(ctx context.Context, config *shared_types.WebhookConfig) error {
+	_, err := s.DB.NewInsert().Model(config).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create webhook config: %w", err)
+	}
+	return nil
+}
+
+// UpdateWebhookConfig updates an existing webhook configuration in the database.
+func (s NotificationStorage) UpdateWebhookConfig(ctx context.Context, config *shared_types.WebhookConfig) error {
+	_, err := s.DB.NewUpdate().Model(config).WherePK().Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to update webhook config: %w", err)
+	}
+	return nil
+}
+
+// DeleteWebhookConfig deletes a webhook configuration from the database.
+func (s NotificationStorage) DeleteWebhookConfig(ctx context.Context, webhookType string, organizationID uuid.UUID) error {
+	_, err := s.DB.NewDelete().Model((*shared_types.WebhookConfig)(nil)).
+		Where("type = ? AND organization_id = ?", webhookType, organizationID).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete webhook config: %w", err)
+	}
+	return nil
+}
+
+// GetWebhookConfig retrieves a webhook configuration from the database.
+func (s NotificationStorage) GetWebhookConfig(ctx context.Context, webhookType string, organizationID uuid.UUID) (*shared_types.WebhookConfig, error) {
+	config := &shared_types.WebhookConfig{}
+	err := s.DB.NewSelect().Model(config).
+		Where("type = ? AND organization_id = ?", webhookType, organizationID).
+		Scan(ctx)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("webhook config not found: %w", err)
+	}
+	return config, nil
 }

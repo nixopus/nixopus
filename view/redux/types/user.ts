@@ -1,17 +1,19 @@
-import { OrganizationUsers } from './orgs';
+import { Organization, OrganizationUsers } from './orgs';
 
 export interface User {
   id: string;
   username: string;
   email: string;
-  avatar: string;
-  created_at: Date;
-  updated_at: Date;
-  deleted_at: Date | null;
-  is_verified: boolean;
-  reset_token: string;
+  avatar?: string;
   type: string;
   organization_users: OrganizationUsers[];
+  is_verified: boolean;
+  is_email_verified: boolean;
+  two_factor_enabled: boolean;
+  two_factor_secret: string;
+  created_at: string;
+  updated_at: string;
+  organizations: Organization[];
 }
 
 export interface AuthResponse {
@@ -19,6 +21,7 @@ export interface AuthResponse {
   refresh_token: string;
   expires_in: number;
   user: User;
+  temp_token?: string;
 }
 
 export interface RefreshTokenPayload {
@@ -28,4 +31,16 @@ export interface RefreshTokenPayload {
 export interface LoginPayload {
   email: string;
   password: string;
+}
+
+
+export interface TwoFactorSetupResponse {
+  secret: string;
+  qr_code: string;
+}
+
+export interface TwoFactorLoginPayload {
+  email: string;
+  password: string;
+  code: string;
 }

@@ -1,31 +1,68 @@
 'use client';
-import { LoginForm } from '@/components/login-form';
-import useLogin from './hooks/use-login';
-import { ErrorBoundary } from '@/components/ui/error-handler';
-import { useAppSelector } from '@/redux/hooks';
+import { LoginForm } from '@/components/features/login-form';
+import { useTranslation } from '@/hooks/use-translation';
+import { useLoginUserMutation, useTwoFactorLoginMutation } from '@/redux/services/users/authApi';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { AuthResponse } from '@/redux/types/user';
+import { useDispatch, useSelector } from 'react-redux';
+import { setCredentials } from '@/redux/features/users/authSlice';
+import { RootState } from '@/redux/store';
 
 export default function LoginPage() {
-  const {
-    email,
-    password,
-    handleEmailChange,
-    handlePasswordChange,
-    handleLogin,
-    isLoading,
-    error
-  } = useLogin();
-  const authenticated = useAppSelector((state) => state.auth.isAuthenticated);
-  const user = useAppSelector((state) => state.auth.user);
+  const { t } = useTranslation();
   const router = useRouter();
+  const dispatch = useDispatch();
+  const { twoFactor } = useSelector((state: RootState) => state.auth);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [loginUser, { isLoading: isLoginLoading }] = useLoginUserMutation();
+  const [twoFactorLogin, { isLoading: isTwoFactorLoading }] = useTwoFactorLoginMutation();
 
-  useEffect(() => {
-    if (authenticated && user) {
-      router.push('/dashboard');
+  const handleLogin = async () => {
+    try {
+      const response = await loginUser({ email, password }).unwrap() as AuthResponse;
+      
+      if (response.temp_token) {
+        dispatch(setCredentials({
+          user: null,
+          token: response.temp_token,
+          tempToken: response.temp_token,
+          expiresIn: response.expires_in,
+        }));
+      } else if (response.access_token) {
+        dispatch(setCredentials({
+          user: response.user,
+          token: response.access_token,
+          refreshToken: response.refresh_token,
+          expiresIn: response.expires_in,
+        }));
+        router.push('/dashboard');
+      }
+    } catch (error) {
+      toast.error(t('auth.login.errors.loginFailed'));
     }
-    return () => {};
-  }, [authenticated, user]);
+  };
+
+  const handleTwoFactorLogin = async () => {
+    try {
+      const response = await twoFactorLogin({ email, password, code }).unwrap() as AuthResponse;
+      
+      if (response.access_token) {
+        dispatch(setCredentials({
+          user: response.user,
+          token: response.access_token,
+          refreshToken: response.refresh_token,
+          expiresIn: response.expires_in,
+        }));
+        router.push('/dashboard');
+      }
+    } catch (error) {
+      toast.error(t('auth.login.errors.2faFailed'));
+    }
+  };
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
@@ -33,13 +70,17 @@ export default function LoginPage() {
         <LoginForm
           email={email}
           password={password}
-          handleEmailChange={handleEmailChange}
-          handlePasswordChange={handlePasswordChange}
+          handleEmailChange={(e) => setEmail(e.target.value)}
+          handlePasswordChange={(e) => setPassword(e.target.value)}
           handleLogin={handleLogin}
-          isLoading={isLoading}
+          isLoading={isLoginLoading}
+          twoFactorCode={code}
+          handleTwoFactorCodeChange={(e) => setCode(e.target.value)}
+          showTwoFactor={twoFactor.isRequired}
+          handleTwoFactorLogin={handleTwoFactorLogin}
+          isTwoFactorLoading={isTwoFactorLoading}
         />
       </div>
-      {error && <ErrorBoundary errors={[{ error, title: 'Login Error' }]} />}
     </div>
   );
 }

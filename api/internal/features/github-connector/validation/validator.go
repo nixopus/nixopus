@@ -32,12 +32,12 @@ func NewValidator(storage GithubConnectorRepository) *Validator {
 //
 // If the request object is not of one of the above types, it returns
 // types.ErrInvalidRequestType.
-func (v *Validator) ValidateRequest(req interface{}, user *shared_types.User) error {
+func (v *Validator) ValidateRequest(req any) error {
 	switch r := req.(type) {
 	case *types.CreateGithubConnectorRequest:
 		return v.validateCreateGithubConnectorRequest(*r)
 	case *types.UpdateGithubConnectorRequest:
-		return v.validateUpdateGithubConnectorRequest(*r, *user)
+		return v.validateUpdateGithubConnectorRequest(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}
@@ -74,33 +74,9 @@ func (v *Validator) validateCreateGithubConnectorRequest(req types.CreateGithubC
 	return nil
 }
 
-// validateUpdateGithubConnectorRequest validates the update GitHub connector request.
-//
-// The method first checks if the InstallationID is empty. If so, it returns an error.
-//
-// Then, it retrieves all GitHub connectors associated with the provided userID.
-// If there are no connectors or if the retrieval fails, it returns an error.
-//
-// Otherwise, it checks if the first connector's UserID matches the provided userID.
-// If not, it returns a permission denied error.
-//
-// Finally, it returns nil if the validation is successful.
-func (v *Validator) validateUpdateGithubConnectorRequest(req types.UpdateGithubConnectorRequest, user shared_types.User) error {
+func (v *Validator) validateUpdateGithubConnectorRequest(req types.UpdateGithubConnectorRequest) error {
 	if req.InstallationID == "" {
 		return types.ErrMissingInstallationID
-	}
-
-	connectors, err := v.storage.GetAllConnectors(user.ID.String())
-
-	if err != nil {
-		return err
-	}
-	if len(connectors) == 0 {
-		return types.ErrNoConnectors
-	}
-
-	if string(connectors[0].UserID.String()) != user.ID.String() && user.Type != "admin" {
-		return types.ErrPermissionDenied
 	}
 
 	return nil

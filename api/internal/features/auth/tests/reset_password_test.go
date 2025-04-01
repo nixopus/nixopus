@@ -1,64 +1,97 @@
 package tests
 
 import (
-	"context"
-	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
-	"github.com/raghavyuva/nixopus-api/internal/features/auth/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/raghavyuva/nixopus-api/internal/testutils"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestResetPasswordBasic(t *testing.T) {
-	mockStorage := NewMockAuthStorage()
-	mockLogger := logger.NewLogger()
-	authService := service.NewAuthService(mockStorage, mockLogger, nil, nil, nil, context.Background())
+func TestResetPassword(t *testing.T) {
+	setup := testutils.NewTestSetup()
+
+	registerRequest := types.RegisterRequest{
+		Email:    "test@example.com",
+		Password: "password123",
+		Username: "testuser",
+		Type:     "viewer",
+	}
+
+	registerResponse, err := setup.AuthService.Register(registerRequest, "app_user")
+	assert.NoError(t, err)
+
+	user, resetToken, err := setup.AuthService.GeneratePasswordResetLink(&registerResponse.User)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, resetToken)
 
 	tests := []struct {
-		name           string
-		setupUser      *shared_types.User
-		inputUser      *shared_types.User
-		request        types.ChangePasswordRequest
-		storageError   error
-		expectedError  error
-		updateErrorSet bool
+		name          string
+		request       types.ResetPasswordRequest
+		expectError   bool
+		errorContains string
 	}{
 		{
-			name:           "empty reset token",
-			setupUser:      nil,
-			inputUser:      &shared_types.User{ResetToken: "", Email: "user@example.com"},
-			request:        types.ChangePasswordRequest{OldPassword: "old", NewPassword: "new"},
-			storageError:   nil,
-			expectedError:  types.ErrInvalidResetToken,
-			updateErrorSet: false,
+			name: "successful password reset",
+			request: types.ResetPasswordRequest{
+				Password: "newpassword123",
+			},
+			expectError: false,
 		},
 		{
-			name:           "storage error on GetResetToken",
-			setupUser:      nil,
-			inputUser:      &shared_types.User{ResetToken: "some-token", Email: "user@example.com"},
-			request:        types.ChangePasswordRequest{OldPassword: "old", NewPassword: "new"},
-			storageError:   errors.New("database error"),
-			expectedError:  types.ErrInvalidResetToken,
-			updateErrorSet: false,
+			name: "empty password",
+			request: types.ResetPasswordRequest{
+				Password: "",
+			},
+			expectError:   true,
+			errorContains: types.ErrInvalidResetToken.Error(),
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			mockStorage.ExpectedCalls = nil
-			mockStorage.On("GetResetToken", test.inputUser.ResetToken).Return(test.setupUser, test.storageError)
-			if test.updateErrorSet {
-				mockStorage.On("UpdateUser", mock.Anything).Return(types.ErrFailedToUpdateUser)
-			} else {
-				mockStorage.On("UpdateUser", mock.Anything).Return(nil)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := setup.AuthService.ResetPassword(user, tt.request)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errorContains)
+				return
 			}
-			err := authService.ResetPassword(test.inputUser, test.request)
-			assert.Equal(t, test.expectedError, err)
+
+			assert.NoError(t, err)
+
+			response, err := setup.AuthService.Login(user.Email, tt.request.Password)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, response.AccessToken)
 		})
 	}
+}
+
+func TestResetPasswordWithExpiredToken(t *testing.T) {
+	setup := testutils.NewTestSetup()
+
+	registerRequest := types.RegisterRequest{
+		Email:    "test@example.com",
+		Password: "password123",
+		Username: "testuser",
+		Type:     "viewer",
+	}
+
+	registerResponse, err := setup.AuthService.Register(registerRequest, "app_user")
+	assert.NoError(t, err)
+
+	user, resetToken, err := setup.AuthService.GeneratePasswordResetLink(&registerResponse.User)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, resetToken)
+
+	err = setup.AuthService.ResetPassword(user, types.ResetPasswordRequest{
+		Password: "newpassword123",
+	})
+	assert.NoError(t, err)
+
+	err = setup.AuthService.ResetPassword(user, types.ResetPasswordRequest{
+		Password: "newpassword456",
+	})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid reset token")
 }

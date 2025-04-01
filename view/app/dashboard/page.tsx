@@ -1,25 +1,38 @@
 'use client';
 
 import React from 'react';
-import use_monitor from './hooks/use_monitor';
-import ContainersTable from './components/container_table';
-import SystemStats from './components/system_stats';
+import useMonitor from './hooks/use-monitor';
+import ContainersTable from './components/containers/container-table';
+import SystemStats from './components/system/system-stats';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package } from 'lucide-react';
-import DiskUsageCard from './components/diisk_usage';
+import DiskUsageCard from './components/system/disk-usage';
+import { useTranslation } from '@/hooks/use-translation';
+import { useAppSelector } from '@/redux/hooks';
+import { useGetSMTPConfigurationsQuery } from '@/redux/services/settings/notificationApi';
+import { SMTPBanner } from './components/smtp-banner';
 
 function DashboardPage() {
-  const { containersData, systemStats } = use_monitor();
+  const { t } = useTranslation();
+  const { containersData, systemStats } = useMonitor();
+  const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
+  const { data: smtpConfig } = useGetSMTPConfigurationsQuery(activeOrganization?.id, {
+    skip: !activeOrganization
+  });
 
   return (
     <div className="container mx-auto py-6 space-y-8 max-w-6xl">
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold">Dashboard</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">Monitor your server</p>
+            <h1 className="text-xl sm:text-2xl font-bold">{t('dashboard.title')}</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              {t('dashboard.description')}
+            </p>
           </div>
         </div>
+
+        {!smtpConfig && <SMTPBanner />}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -31,7 +44,7 @@ function DashboardPage() {
           <CardHeader>
             <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
               <Package className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              Containers
+              {t('dashboard.containers.title')}
             </CardTitle>
           </CardHeader>
           <CardContent>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            max-width: 150px;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #666;
+        }
+        .content {
+            margin: 20px 0;
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>New Login Detected</h1>
+        </div>
+        <div class="content">
+            <p>Hello {{.UserName}},</p>
+            <p>We noticed a new login to your Nixopus account with the following details:</p>
+            <div class="info-box">
+                <p><strong>Email:</strong> {{.Email}}</p>
+                <p><strong>Browser:</strong> {{.Browser}}</p>
+                <p><strong>IP Address:</strong> {{.IP}}</p>
+            </div>
+            <p>If this was you, you can safely ignore this email.</p>
+            <p>If you did not initiate this login, please take immediate action to secure your account by changing your password.</p>
+            <p>For additional security, we recommend enabling two-factor authentication if you haven't already.</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message, please do not reply to this email.</p>
+            <p>© 2025 Nixopus. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

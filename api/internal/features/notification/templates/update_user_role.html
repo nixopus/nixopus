@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>User Role Updated</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .content {
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>User Role Updated</h1>
+    </div>
+    <div class="content">
+        <p>Hello,</p>
+        <p>The role for user with ID {{.UserID}} in organization {{.OrganizationID}} has been updated.</p>
+        <p>If you did not make this change, please contact your administrator immediately.</p>
+    </div>
+    <div class="footer">
+        <p>This is an automated message, please do not reply.</p>
+    </div>
+</body>
+</html> 

@@ -36,6 +36,7 @@ func Init() *storage.Store {
 		MaxOpenConn: 10,
 		Debug:       true,
 		MaxIdleConn: 5,
+		RedisURL:    os.Getenv("REDIS_URL"),
 	}
 
 	storage_config := storage.Config{

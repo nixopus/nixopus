@@ -4,11 +4,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
-	"github.com/go-fuego/fuego/option"
-	"github.com/go-fuego/fuego/param"
 	"github.com/joho/godotenv"
+	audit "github.com/raghavyuva/nixopus-api/internal/features/audit/controller"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
 	authService "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
@@ -31,6 +32,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/middleware"
 	"github.com/raghavyuva/nixopus-api/internal/realtime"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
+	api "github.com/raghavyuva/nixopus-api/internal/version-manager"
 )
 
 type Router struct {
@@ -50,24 +52,43 @@ func (router *Router) Routes() {
 	}
 	PORT := os.Getenv("PORT")
 
-	log.Printf("open port %s", PORT)
+	docs := api.NewVersionDocumentation()
+	if err := docs.Save("api/versions.json"); err != nil {
+		log.Printf("Warning: Failed to save version documentation: %v", err)
+	}
 
 	l := logger.NewLogger()
 	server := fuego.NewServer(
 		fuego.WithGlobalMiddlewares(
+			middleware.RecoveryMiddleware,
 			middleware.CorsMiddleware,
 			middleware.LoggingMiddleware,
+			api.VersionMiddleware,
+			api.MigrationMiddleware,
 			// middleware.RateLimiter
 		),
+		fuego.WithSecurity(openapi3.SecuritySchemes{
+			"bearerAuth": &openapi3.SecuritySchemeRef{
+				Value: openapi3.NewSecurityScheme().
+					WithType("http").
+					WithScheme("bearer").
+					WithBearerFormat("JWT").
+					WithDescription("Enter your JWT token in the format: Bearer <token>"),
+			},
+		}),
 		fuego.WithAddr(":"+PORT),
 	)
 
-	healthGroup := fuego.Group(server, "/api/v1/health")
+	apiV1 := api.NewVersion(api.CurrentVersion)
+	healthGroup := fuego.Group(server, apiV1.Path+"/health")
 	router.BasicRoutes(healthGroup)
 
-	notificationManager := notification.NewNotificationManager(notification.NewNotificationChannels(), router.app.Store.DB)
+	notificationManager := notification.NewNotificationManager(router.app.Store.DB)
 	notificationManager.Start()
 	deployController := deploy.NewDeployController(router.app.Store, router.app.Ctx, l, notificationManager)
+
+	fuego.Post(server, "/webhook/", deployController.HandleGithubWebhook)
+
 	router.WebSocketServer(server, deployController)
 
 	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
@@ -79,56 +100,100 @@ func (router *Router) Routes() {
 	orgService := organization_service.NewOrganizationService(router.app.Store, router.app.Ctx, l, orgStorage)
 	authService := authService.NewAuthService(userStorage, l, permService, roleService, orgService, router.app.Ctx)
 	authController := auth.NewAuthController(router.app.Ctx, l, notificationManager, *authService)
-	authGroup := fuego.Group(server, "/api/v1/auth")
+	authGroup := fuego.Group(server, apiV1.Path+"/auth")
 	router.AuthRoutes(authController, authGroup)
 
+	// Auth middleware for development environment will be bypassed for swagger UI
 	fuego.Use(server, func(next http.Handler) http.Handler {
-		return middleware.AuthMiddleware(next, router.app)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if os.Getenv("ENV") == "development" && strings.HasPrefix(r.URL.Path, "/swagger") {
+				next.ServeHTTP(w, r)
+				return
+			}
+			middleware.AuthMiddleware(next, router.app).ServeHTTP(w, r)
+		})
 	})
 
-	s := fuego.Group(server, "/api/v1", option.Header("Authorization", "Bearer token", param.Required()))
+	fuego.Use(server, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l)
+	})
 
-	authProtectedGroup := fuego.Group(server, "/api/v1/auth")
+	apiV1Group := fuego.Group(server, apiV1.Path)
+
+	authProtectedGroup := fuego.Group(server, apiV1.Path+"/auth")
 	router.AuthenticatedAuthRoutes(authProtectedGroup, authController)
 
 	userController := user.NewUserController(router.app.Store, router.app.Ctx, l)
-	userGroup := fuego.Group(s, "/user")
-
+	userGroup := fuego.Group(apiV1Group, "/user")
 	router.UserRoutes(userGroup, userController)
 
 	domainController := domain.NewDomainsController(router.app.Store, router.app.Ctx, l, notificationManager)
-	domainGroup := fuego.Group(s, "/domain")
-	domainsAllGroup := fuego.Group(s, "/domains")
+	domainGroup := fuego.Group(apiV1Group, "/domain")
+	domainsAllGroup := fuego.Group(apiV1Group, "/domains")
+	fuego.Use(domainGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "domain")
+	})
+	fuego.Use(domainsAllGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "domain")
+	})
 	router.DomainRoutes(domainGroup, domainsAllGroup, domainController)
 
 	githubConnectorController := githubConnector.NewGithubConnectorController(router.app.Store, router.app.Ctx, l, notificationManager)
-	githubConnectorGroup := fuego.Group(s, "/github-connector")
+	githubConnectorGroup := fuego.Group(apiV1Group, "/github-connector")
+	fuego.Use(githubConnectorGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "github-connector")
+	})
 	router.GithubConnectorRoutes(githubConnectorGroup, githubConnectorController)
 
 	notifController := notificationController.NewNotificationController(router.app.Store, router.app.Ctx, l, notificationManager)
-	notificationGroup := fuego.Group(s, "/notification")
+	notificationGroup := fuego.Group(apiV1Group, "/notification")
+	fuego.Use(notificationGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "notification")
+	})
 	router.NotificationRoutes(notificationGroup, notifController)
 
 	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager)
-	organizationGroup := fuego.Group(s, "/organizations")
+	organizationGroup := fuego.Group(apiV1Group, "/organizations")
+	fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "organization")
+	})
 	router.OrganizationRoutes(organizationGroup, organizationController)
 
 	fileManagerController := file_manager.NewFileManagerController(router.app.Ctx, l, notificationManager)
-	fileManagerGroup := fuego.Group(s, "/file-manager")
-	fuego.Use(fileManagerGroup, middleware.IsAdmin)
+	fileManagerGroup := fuego.Group(apiV1Group, "/file-manager")
+	fuego.Use(fileManagerGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "file-manager")
+	})
 	router.FileManagerRoutes(fileManagerGroup, fileManagerController)
 
-	deployGroup := fuego.Group(s, "/deploy")
+	deployGroup := fuego.Group(apiV1Group, "/deploy")
+	fuego.Use(deployGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "deploy")
+	})
 	router.DeployRoutes(deployGroup, deployController)
+
+	auditController := audit.NewAuditController(router.app.Store.DB, router.app.Ctx, l)
+	auditGroup := fuego.Group(apiV1Group, "/audit")
+	fuego.Use(auditGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "audit")
+	})
+	router.AuditRoutes(auditGroup, auditController)
 
 	server.Run()
 }
 
 func (s *Router) BasicRoutes(fs *fuego.Server) {
 	fuego.Get(fs, "", health.HealthCheck)
+	versionGroup := fuego.Group(fs, "/versions")
+	fuego.Get(versionGroup, "", func(c fuego.ContextNoBody) (interface{}, error) {
+		docs := api.NewVersionDocumentation()
+		if err := docs.Load("api/versions.json"); err != nil {
+			return nil, err
+		}
+		return docs, nil
+	})
 }
 
-// This is a special adapter that allows using a raw http.Handler with Fuego
 func (router *Router) WebSocketServer(f *fuego.Server, deployController *deploy.DeployController) {
 	wsServer, err := realtime.NewSocketServer(deployController, router.app.Store.DB, router.app.Ctx)
 	if err != nil {
@@ -144,11 +209,10 @@ func (router *Router) WebSocketServer(f *fuego.Server, deployController *deploy.
 	fuego.Get(f, "/ws", wsHandler)
 }
 
-// these routes are public routes
 func (router *Router) AuthRoutes(authController *auth.AuthController, s *fuego.Server) {
-	//register route is disabled for now (we do not have register seperately either the one who installs it, or the one who is added by admin)
 	fuego.Post(s, "/register", authController.Register)
 	fuego.Post(s, "/login", authController.Login)
+	fuego.Post(s, "/refresh-token", authController.RefreshToken)
 }
 
 func (router *Router) AuthenticatedAuthRoutes(s *fuego.Server, authController *auth.AuthController) {
@@ -156,9 +220,12 @@ func (router *Router) AuthenticatedAuthRoutes(s *fuego.Server, authController *a
 	fuego.Post(s, "/reset-password", authController.ResetPassword)
 	fuego.Post(s, "/logout", authController.Logout)
 	fuego.Post(s, "/send-verification-email", authController.SendVerificationEmail)
-	fuego.Post(s, "/verify-email", authController.VerifyEmail)
+	fuego.Get(s, "/verify-email", authController.VerifyEmail)
 	fuego.Post(s, "/create-user", authController.CreateUser)
-	fuego.Post(s, "/refresh-token", authController.RefreshToken)
+	fuego.Post(s, "/setup-2fa", authController.SetupTwoFactor)
+	fuego.Post(s, "/verify-2fa", authController.VerifyTwoFactor)
+	fuego.Post(s, "/disable-2fa", authController.DisableTwoFactor)
+	fuego.Post(s, "/2fa-login", authController.TwoFactorLogin)
 }
 
 func (router *Router) UserRoutes(s *fuego.Server, userController *user.UserController) {
@@ -177,6 +244,12 @@ func (router *Router) NotificationRoutes(s *fuego.Server, notificationController
 	preferenceGroup := fuego.Group(s, "/preferences")
 	fuego.Post(preferenceGroup, "", notificationController.UpdatePreference)
 	fuego.Get(preferenceGroup, "", notificationController.GetPreferences)
+
+	webhookGroup := fuego.Group(s, "/webhook")
+	fuego.Post(webhookGroup, "", notificationController.CreateWebhookConfig)
+	fuego.Get(webhookGroup, "/{type}", notificationController.GetWebhookConfig)
+	fuego.Put(webhookGroup, "", notificationController.UpdateWebhookConfig)
+	fuego.Delete(webhookGroup, "", notificationController.DeleteWebhookConfig)
 }
 
 func (router *Router) DomainRoutes(s *fuego.Server, domainsGroup *fuego.Server, domainController *domain.DomainsController) {
@@ -209,14 +282,32 @@ func (router *Router) DeployApplicationRoutes(f *fuego.Server, deployController 
 	fuego.Get(f, "/deployments/{deployment_id}", deployController.GetDeploymentById)
 	fuego.Post(f, "/rollback", deployController.HandleRollback)
 	fuego.Post(f, "/restart", deployController.HandleRestart)
+	fuego.Get(f, "/logs/{application_id}", deployController.GetLogs)
+	fuego.Get(f, "/deployments/{deployment_id}/logs", deployController.GetDeploymentLogs)
+	fuego.Get(f, "/deployments", deployController.GetApplicationDeployments)
 }
 
 func (router *Router) FileManagerRoutes(f *fuego.Server, fileManagerController *file_manager.FileManagerController) {
 	fuego.Get(f, "", fileManagerController.ListFiles)
 	fuego.Post(f, "/create-directory", fileManagerController.CreateDirectory)
 	fuego.Post(f, "/move-directory", fileManagerController.MoveDirectory)
+	fuego.Post(f, "/copy-directory", fileManagerController.CopyDirectory)
+	fuego.Post(f, "/upload", fileManagerController.UploadFile)
+	fuego.Delete(f, "/delete-directory", fileManagerController.DeleteDirectory)
 }
 
 func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController *organization.OrganizationsController) {
 	fuego.Get(f, "/users", organizationController.GetOrganizationUsers)
+	fuego.Post(f, "/add-user", organizationController.AddUserToOrganization)
+	fuego.Post(f, "/remove-user", organizationController.RemoveUserFromOrganization)
+	fuego.Post(f, "/update-user-role", organizationController.UpdateUserRole)
+	fuego.Get(f, "/roles", organizationController.GetRoles)
+	fuego.Get(f, "/resources", organizationController.GetResources)
+	fuego.Put(f, "", organizationController.UpdateOrganization)
+	fuego.Post(f, "", organizationController.CreateOrganization)
+	fuego.Delete(f, "", organizationController.DeleteOrganization)
+}
+
+func (router *Router) AuditRoutes(s *fuego.Server, auditController *audit.AuditController) {
+	fuego.Get(s, "/logs", auditController.GetRecentAuditLogs)
 }

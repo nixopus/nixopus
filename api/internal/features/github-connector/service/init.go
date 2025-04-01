@@ -29,3 +29,7 @@ func NewGithubConnectorService(store *shared_storage.Store, ctx context.Context,
 		ssh:       sshService,
 	}
 }
+
+func (s *GithubConnectorService) RemoveRepository(repoPath string) error {
+	return s.gitClient.RemoveRepository(repoPath)
+}

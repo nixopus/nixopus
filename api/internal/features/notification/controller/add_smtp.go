@@ -12,18 +12,9 @@ import (
 )
 
 func (c *NotificationController) AddSmtp(f fuego.ContextWithBody[notification.CreateSMTPConfigRequest]) (*shared_types.Response, error) {
-
-	SMTPConfigs, err := f.Body()
-
-	if err != nil {
-		return nil, fuego.HTTPError{
-			Err:    err,
-			Status: http.StatusBadRequest,
-		}
-	}
-
 	w, r := f.Response(), f.Request()
 
+	var SMTPConfigs notification.CreateSMTPConfigRequest
 	if !c.parseAndValidate(w, r, &SMTPConfigs) {
 		return nil, fuego.HTTPError{
 			Err:    nil,
@@ -32,17 +23,17 @@ func (c *NotificationController) AddSmtp(f fuego.ContextWithBody[notification.Cr
 	}
 
 	user := utils.GetUser(w, r)
-
 	if user == nil {
+		c.logger.Log(logger.Error, "User authentication failed", "")
 		return nil, fuego.HTTPError{
 			Err:    nil,
 			Status: http.StatusUnauthorized,
 		}
 	}
 
-	err = c.service.AddSmtp(SMTPConfigs, user.ID)
+	err := c.service.AddSmtp(SMTPConfigs, user.ID)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, "Failed to add SMTP config", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,

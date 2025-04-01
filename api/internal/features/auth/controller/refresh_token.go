@@ -19,9 +19,9 @@ func (c *AuthController) RefreshToken(s fuego.ContextWithBody[types.RefreshToken
 	}
 
 	w, r := s.Response(), s.Request()
-	if !c.parseAndValidate(w, r, &refreshRequest) {
+	if err := c.parseAndValidate(w, r, &refreshRequest); err != nil {
 		return shared_types.Response{}, fuego.HTTPError{
-			Err:    nil,
+			Err:    err,
 			Status: http.StatusBadRequest,
 		}
 	}

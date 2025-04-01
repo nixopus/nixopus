@@ -7,7 +7,7 @@ import {
 } from '@/redux/services/connector/githubConnectorApi';
 import { useSearchable } from '@/hooks/use-searchable';
 import { GithubRepository } from '@/redux/types/github';
-import { SortOption } from '@/components/sort-selector';
+import { SortOption } from '@/components/ui/sort-selector';
 
 /**
  * @function useGithubRepoPagination

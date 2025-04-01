@@ -22,6 +22,7 @@ export type Application = {
   logs?: ApplicationLogs[];
   deployments?: ApplicationDeployment[];
   dockerfile_path?: string;
+  base_path?: string;
 };
 
 export type ApplicationStatus = {
@@ -66,8 +67,13 @@ export type ApplicationLogs = {
   updated_at: string;
   log: string;
   application_deployment_id: string;
-  application_deployment?: ApplicationDeployment;
-  application?: Application;
+};
+
+export type ApplicationLogsResponse = {
+  logs: ApplicationLogs[];
+  total_count: number;
+  current_page: number;
+  total_pages: number;
 };
 
 export type Status = 'failed' | 'cloning' | 'building' | 'deploying' | 'deployed';
@@ -89,6 +95,7 @@ export interface CreateApplicationRequest {
   pre_run_command: string;
   post_run_command: string;
   dockerfile_path: string;
+  base_path: string;
 }
 
 export interface UpdateDeploymentRequest {
@@ -101,6 +108,7 @@ export interface UpdateDeploymentRequest {
   id?: string;
   force?: boolean;
   dockerfile_path?: string;
+  base_path?: string;
 }
 
 export interface ReDeployApplicationRequest {

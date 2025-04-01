@@ -60,7 +60,7 @@ func (t *Terminal) Start() {
 	go t.bufferFlusher()
 
 	go func() {
-		client, err := t.ssh.ConnectWithPassword()
+		client, err := t.ssh.Connect()
 		if err != nil {
 			t.log.Log(logger.Error, "Failed to connect to SSH", err.Error())
 			close(t.done)

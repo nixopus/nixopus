@@ -6,7 +6,9 @@ import {
   CreateUserRequest,
   Organization,
   OrganizationUsers,
+  RemoveUserFromOrganizationRequest,
   UpdateOrganizationDetailsRequest,
+  UpdateUserRoleRequest,
   UserOrganization
 } from '@/redux/types/orgs';
 import { baseQueryWithReauth } from '@/redux/base-query';
@@ -43,6 +45,19 @@ export const userApi = createApi({
       query(payload) {
         return {
           url: USERURLS.ADD_USER_TO_ORGANIZATION,
+          method: 'POST',
+          body: payload
+        };
+      },
+      invalidatesTags: [{ type: 'User', id: 'LIST' }],
+      transformResponse: (response: { data: void }) => {
+        return response.data;
+      }
+    }),
+    removeUserFromOrganization: builder.mutation<void, RemoveUserFromOrganizationRequest>({
+      query(payload) {
+        return {
+          url: USERURLS.REMOVE_USER_FROM_ORGANIZATION,
           method: 'POST',
           body: payload
         };
@@ -102,6 +117,35 @@ export const userApi = createApi({
           body
         };
       }
+    }),
+    updateUserRole: builder.mutation<void, UpdateUserRoleRequest>({
+      query(payload) {
+        return {
+          url: USERURLS.UPDATE_USER_ROLE,
+          method: 'POST',
+          body: payload
+        };
+      }
+    }),
+    getResources: builder.query<string[], void>({
+      query: () => ({
+        url: USERURLS.GET_RESOURCES,
+        method: 'GET'
+      }),
+      providesTags: [{ type: 'User', id: 'LIST' }],
+      transformResponse: (response: { data: string[] }) => {
+        return response.data;
+      }
+    }),
+    deleteOrganization: builder.mutation<void, string>({
+      query(organizationId) {
+        return {
+          url: `${USERURLS.CREATE_ORGANIZATION}`,
+          method: 'DELETE',
+          body: { id: organizationId }
+        };
+      },
+      invalidatesTags: [{ type: 'User', id: 'LIST' }]
     })
   })
 });
@@ -110,9 +154,13 @@ export const {
   useGetUserOrganizationsQuery,
   useCreateOrganizationMutation,
   useAddUserToOrganizationMutation,
+  useRemoveUserFromOrganizationMutation,
   useUpdateUserNameMutation,
   useRequestPasswordResetLinkMutation,
   useGetOrganizationUsersQuery,
   useUpdateOrganizationDetailsMutation,
-  useCreateUserMutation
+  useCreateUserMutation,
+  useUpdateUserRoleMutation,
+  useGetResourcesQuery,
+  useDeleteOrganizationMutation
 } = userApi;

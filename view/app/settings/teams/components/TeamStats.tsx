@@ -1,46 +1,49 @@
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface TeamStatsProps {
   users: {
     id: string;
     name: string;
-    role: 'Admin' | 'Member' | 'Viewer' | 'Owner';
+    role: 'admin' | 'member' | 'viewer' | 'owner';
   }[];
 }
 
 function TeamStats({ users }: TeamStatsProps) {
+  const { t } = useTranslation();
+
   return (
     <Card className="col-span-1">
       <CardHeader>
-        <CardTitle>Team Stats</CardTitle>
-        <CardDescription>Overview of your team</CardDescription>
+        <CardTitle>{t('settings.teams.stats.title')}</CardTitle>
+        <CardDescription>{t('settings.teams.stats.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Total Members</span>
+            <span className="text-sm text-muted-foreground">
+              {t('settings.teams.stats.totalMembers')}
+            </span>
             <span className="font-medium">{users.length}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Owners</span>
-            <span className="font-medium">{users.filter((u) => u.role === 'Owner').length}</span>
+            <span className="text-sm text-muted-foreground">
+              {t('settings.teams.stats.owners')}
+            </span>
+            <span className="font-medium">{users.filter((u) => u.role === 'admin').length}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Members</span>
-            <span className="font-medium">{users.filter((u) => u.role === 'Member').length}</span>
+            <span className="text-sm text-muted-foreground">
+              {t('settings.teams.stats.members')}
+            </span>
+            <span className="font-medium">{users.filter((u) => u.role === 'member').length}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Viewers</span>
-            <span className="font-medium">{users.filter((u) => u.role === 'Viewer').length}</span>
+            <span className="text-sm text-muted-foreground">
+              {t('settings.teams.stats.viewers')}
+            </span>
+            <span className="font-medium">{users.filter((u) => u.role === 'viewer').length}</span>
           </div>
         </div>
       </CardContent>

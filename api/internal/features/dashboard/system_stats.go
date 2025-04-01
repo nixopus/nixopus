@@ -15,6 +15,22 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
+const (
+	bytesInMB = 1024 * 1024
+	bytesInGB = 1024 * 1024 * 1024
+)
+
+func formatBytes(bytes uint64, unit string) string {
+	switch unit {
+	case "MB":
+		return fmt.Sprintf("%.2f MB", float64(bytes)/bytesInMB)
+	case "GB":
+		return fmt.Sprintf("%.2f GB", float64(bytes)/bytesInGB)
+	default:
+		return fmt.Sprintf("%d bytes", bytes)
+	}
+}
+
 func (m *DashboardMonitor) GetSystemStats() {
 	osType, err := m.getCommandOutput("uname -s")
 	if err != nil {
@@ -46,13 +62,13 @@ func (m *DashboardMonitor) GetSystemStats() {
 
 	if memInfo, err := mem.VirtualMemory(); err == nil {
 		stats.Memory = MemoryStats{
-			Total:      float64(memInfo.Total) / (1024 * 1024),
-			Used:       float64(memInfo.Used) / (1024 * 1024),
+			Total:      float64(memInfo.Total) / bytesInGB,
+			Used:       float64(memInfo.Used) / bytesInGB,
 			Percentage: memInfo.UsedPercent,
-			RawInfo: fmt.Sprintf("Total: %.2f MB, Used: %.2f MB, Free: %.2f MB",
-				float64(memInfo.Total)/(1024*1024),
-				float64(memInfo.Used)/(1024*1024),
-				float64(memInfo.Free)/(1024*1024)),
+			RawInfo: fmt.Sprintf("Total: %s, Used: %s, Free: %s",
+				formatBytes(memInfo.Total, "GB"),
+				formatBytes(memInfo.Used, "GB"),
+				formatBytes(memInfo.Free, "GB")),
 		}
 	}
 
@@ -65,9 +81,9 @@ func (m *DashboardMonitor) GetSystemStats() {
 			if usage, err := disk.Usage(partition.Mountpoint); err == nil {
 				mount := DiskMount{
 					Filesystem: partition.Fstype,
-					Size:       fmt.Sprintf("%.2fG", float64(usage.Total)/(1024*1024*1024)),
-					Used:       fmt.Sprintf("%.2fG", float64(usage.Used)/(1024*1024*1024)),
-					Avail:      fmt.Sprintf("%.2fG", float64(usage.Free)/(1024*1024*1024)),
+					Size:       formatBytes(usage.Total, "GB"),
+					Used:       formatBytes(usage.Used, "GB"),
+					Avail:      formatBytes(usage.Free, "GB"),
 					Capacity:   fmt.Sprintf("%.1f%%", usage.UsedPercent),
 					MountPoint: partition.Mountpoint,
 				}
@@ -76,9 +92,9 @@ func (m *DashboardMonitor) GetSystemStats() {
 
 				if mount.MountPoint == "/" || (diskStats.MountPoint != "/" && diskStats.Total == 0) {
 					diskStats.MountPoint = mount.MountPoint
-					diskStats.Total = float64(usage.Total) / (1024 * 1024 * 1024)
-					diskStats.Used = float64(usage.Used) / (1024 * 1024 * 1024)
-					diskStats.Available = float64(usage.Free) / (1024 * 1024 * 1024)
+					diskStats.Total = float64(usage.Total) / bytesInGB
+					diskStats.Used = float64(usage.Used) / bytesInGB
+					diskStats.Available = float64(usage.Free) / bytesInGB
 					diskStats.Percentage = usage.UsedPercent
 				}
 			}

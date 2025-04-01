@@ -5,8 +5,10 @@ import {
 } from '@/redux/services/users/userApi';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/use-translation';
 
 function useGeneralSettings() {
+  const { t } = useTranslation();
   const user = useAppSelector((state) => state.auth.user);
 
   const [username, setUsername] = useState(user?.username || '');
@@ -22,12 +24,12 @@ function useGeneralSettings() {
 
   const handleUsernameChange = async () => {
     if (username.trim() === '') {
-      setUsernameError('Username cannot be empty');
+      setUsernameError(t('settings.account.errors.emptyUsername'));
       return;
     }
 
     if (username === user.username) {
-      setUsernameError('Please enter a different username');
+      setUsernameError(t('settings.account.errors.sameUsername'));
       return;
     }
 
@@ -37,7 +39,7 @@ function useGeneralSettings() {
       setUsernameSuccess(true);
       setUsernameError('');
     } catch (error) {
-      setUsernameError('Failed to update username. Please try again.');
+      setUsernameError(t('settings.account.errors.updateFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -49,7 +51,7 @@ function useGeneralSettings() {
       await requestPasswordResetLink();
       setEmailSent(true);
     } catch (error) {
-      console.error('Failed to send reset email', error);
+      console.error(t('settings.account.errors.resetEmailFailed'), error);
     } finally {
       setIsLoading(false);
     }
@@ -57,7 +59,7 @@ function useGeneralSettings() {
 
   const onImageChange = (imageUrl: string | null) => {
     console.log('Image URL:', imageUrl);
-    toast.error('Not yet implemented');
+    toast.error(t('settings.account.errors.imageNotImplemented'));
   };
 
   return {

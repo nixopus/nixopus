@@ -1,0 +1,49 @@
+import re
+import sys
+import socket
+class Validation:
+    def __init__(self): 
+        pass
+    
+    def validate_email(self, email):
+        if not email:
+            print("Error: Email is required")
+            sys.exit(1)
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            print("Error: Invalid email address")
+            sys.exit(1)
+        return email
+
+    def validate_password(self, password):
+        if not password:
+            print("Error: Password is required")
+            sys.exit(1)
+        if len(password) < 8:
+            print("Error: Password must be at least 8 characters long")
+            sys.exit(1)
+        if not re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", password):
+            print("Error: Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
+            sys.exit(1)
+        return password
+    
+    def validate_domain(self, domain):
+        if not domain:
+            print("Error: Domain is required")
+            sys.exit(1)
+        if not re.match(r"^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$", domain):
+            print("Error: Invalid domain name")
+            sys.exit(1)
+        
+        try:
+            hostname = socket.gethostname()
+            server_ip = socket.gethostbyname(hostname)
+            domain_ip = socket.gethostbyname(domain)
+            
+            if server_ip != domain_ip:
+                print(f"Error: Domain {domain} does not point to this server's IP ({server_ip})")
+                sys.exit(1)
+        except socket.gaierror:
+            print(f"Error: Could not resolve domain {domain}")
+            sys.exit(1)
+            
+        return domain

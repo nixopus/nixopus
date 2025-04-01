@@ -1,15 +1,26 @@
 'use client';
-import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useAppSelector } from '@/redux/hooks';
+import { Loader2 } from 'lucide-react';
 
 export default function Home() {
   const router = useRouter();
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const isInitialized = useAppSelector((state) => state.auth.isInitialized);
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
+
+  useEffect(() => {
+    if (isInitialized && isAuthenticated) {
+      router.push('/dashboard');
+    } else {
+      router.push('/login');
+    }
+  }, [isAuthenticated, isInitialized, router]);
+
   return (
     <div className="flex h-screen flex-col items-center justify-center">
-      <div className="text-5xl">Hello, Welcome to Nixopus</div>
-      <div className="mt-10 flex justify-center gap-20 text-2xl">
-        <Button onClick={() => router.push('/login')}>Signin</Button>
-      </div>
+      <Loader2 className="h-8 w-8 animate-spin" />
     </div>
   );
 }

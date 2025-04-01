@@ -1,66 +1,81 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { isTokenExpired, refreshAccessToken, setAuthTokens } from './lib/auth';
+import {
+  getRefreshToken,
+  getToken,
+  isTokenExpired,
+  refreshAccessToken,
+  setAuthTokens,
+  clearAuthTokens
+} from './lib/auth';
+import { defaultLocale, locales } from './lib/i18n/config';
+import { jwtDecode } from 'jwt-decode';
+
+interface DecodedToken {
+  exp: number;
+  '2fa_enabled': boolean;
+  '2fa_verified': boolean;
+}
 
 export async function middleware(request: NextRequest) {
-  const publicPaths = ['/login', '/register', '/api/auth', '/_next', '/static', '/favicon.ico'];
+  const pathname = request.nextUrl.pathname;
 
-  if (publicPaths.some((path) => request.nextUrl.pathname.startsWith(path))) {
+  // Handle auth token clearing
+  if (pathname === '/logout') {
+    const response = NextResponse.redirect(new URL('/login', request.url));
+    clearAuthTokens(response);
+    return response;
+  }
+
+  // Define public paths that don't require authentication
+  const publicPaths = [
+    '/login',
+    '/register',
+    '/api/auth',
+    '/_next',
+    '/static',
+    '/favicon.ico',
+    '/reset-password',
+    '/verify-email',
+    '/login'
+  ];
+
+  // Check if the path is public
+  const isPublicPath = publicPaths.some((path) => pathname.includes(path));
+  if (isPublicPath) {
     return NextResponse.next();
   }
 
+  // Handle special flows that don't require auth
   const isGitHubFlow =
-    (request.nextUrl.pathname.startsWith('/self-host') ||
-      request.nextUrl.pathname.startsWith('/github-callback')) &&
+    (pathname.includes('/self-host') || pathname.includes('/github-callback')) &&
     (request.nextUrl.searchParams.has('code') ||
       request.nextUrl.searchParams.has('installation_id') ||
       request.nextUrl.searchParams.has('setup_action'));
 
-  if (isGitHubFlow) {
+  const isPasswordResetFlow =
+    pathname.includes('/reset-password') && request.nextUrl.searchParams.has('token');
+
+  const isVerificationFlow =
+    pathname.includes('/verify-email') && request.nextUrl.searchParams.has('token');
+
+  if (isGitHubFlow || isPasswordResetFlow || isVerificationFlow) {
     return NextResponse.next();
   }
 
   const token = request.cookies.get('token')?.value;
-  const refreshToken = request.cookies.get('refreshToken')?.value;
-
   if (!token) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (isTokenExpired(token) && refreshToken) {
-    try {
-      const newTokens = await refreshAccessToken(refreshToken);
-      const response = NextResponse.next();
-
-      response.cookies.set({
-        name: 'token',
-        value: newTokens.access_token,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: newTokens.expires_in || 30 * 24 * 60 * 60
-      });
-
-      if (newTokens.refresh_token) {
-        response.cookies.set({
-          name: 'refreshToken',
-          value: newTokens.refresh_token,
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-          maxAge: 60 * 24 * 60 * 60
-        });
-      }
-
-      return response;
-    } catch (error) {
-      const response = NextResponse.redirect(new URL('/login', request.url));
-
-      response.cookies.delete('token');
-      response.cookies.delete('refreshToken');
-
-      return response;
+  try {
+    const decoded = jwtDecode<DecodedToken>(token);
+    if (decoded['2fa_enabled'] && !decoded['2fa_verified']) {
+      return NextResponse.redirect(new URL('/login', request.url));
     }
+  } catch (error) {
+    console.error('Error decoding token:', error);
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   return NextResponse.next();
@@ -68,8 +83,20 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api/v1/auth|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
     '/self-host/:path*',
     '/github-callback/:path*'
   ]
 };
+
+export function i18nMiddleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const pathnameIsMissingLocale = locales.every(
+    (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
+  );
+
+  if (pathnameIsMissingLocale) {
+    const locale = defaultLocale;
+    return NextResponse.redirect(new URL(`/${locale}${pathname}`, request.url));
+  }
+}

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -92,7 +91,7 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return v.validateLogoutRequest(*r)
 	case *types.RefreshTokenRequest:
 		return v.validateRefreshTokenRequest(*r)
-	case *types.ChangePasswordRequest:
+	case *types.ResetPasswordRequest:
 		return v.validateResetPasswordRequest(*r)
 	case *types.RegisterRequest:
 		return v.validateCreateUserRequest(*r)
@@ -117,7 +116,6 @@ func (v *Validator) validateLogoutRequest(req types.LogoutRequest) error {
 		return types.ErrMissingRefreshToken
 	}
 
-	// Check if the refresh token is a valid UUID
 	if _, err := uuid.Parse(req.RefreshToken); err != nil {
 		return types.ErrInvalidRefreshToken
 	}
@@ -129,7 +127,6 @@ func (v *Validator) validateRefreshTokenRequest(req types.RefreshTokenRequest) e
 		return types.ErrMissingRefreshToken
 	}
 
-	// Check if the refresh token is a valid UUID
 	if _, err := uuid.Parse(req.RefreshToken); err != nil {
 		return types.ErrInvalidRefreshToken
 	}
@@ -137,16 +134,16 @@ func (v *Validator) validateRefreshTokenRequest(req types.RefreshTokenRequest) e
 	return nil
 }
 
-func (v *Validator) validateResetPasswordRequest(resetPasswordRequest types.ChangePasswordRequest) error {
-	if resetPasswordRequest.NewPassword == "" || resetPasswordRequest.OldPassword == "" {
-		return types.ErrEmptyPassword
+func (v *Validator) validateResetPasswordRequest(resetPasswordRequest types.ResetPasswordRequest) error {
+	if resetPasswordRequest.Password == "" {
+		return types.ErrMissingRequiredFields
 	}
 
-	if resetPasswordRequest.NewPassword == resetPasswordRequest.OldPassword {
-		return types.ErrSamePassword
+	if err := v.IsValidPassword(resetPasswordRequest.Password); err != nil {
+		return err
 	}
 
-	return v.IsValidPassword(resetPasswordRequest.NewPassword)
+	return nil
 }
 
 func (v *Validator) validateCreateUserRequest(createUserRequest types.RegisterRequest) error {
@@ -165,28 +162,4 @@ func (v *Validator) validateCreateUserRequest(createUserRequest types.RegisterRe
 	}
 
 	return nil
-}
-
-func (v *Validator) AccessValidator(w http.ResponseWriter, r *http.Request, user *shared_types.User) error {
-	path := r.URL.Path
-
-	// User has access to login, logout, refresh-token, and request-password-reset, reset-password (where they are the owner of the resource they are accessing to)
-	if path == "/api/v1/auth/login" || path == "/api/v1/auth/logout" || path == "/api/v1/auth/refresh-token" || path == "/api/v1/auth/request-password-reset" || path == "/api/v1/auth/reset-password" {
-		return nil
-	}
-
-	if user == nil {
-		return types.ErrInvalidAccess
-	}
-
-	fmt.Printf("User ID: %s, Path: %s\n", user.ID, path)
-	// for creating a new user the user should have admin role
-	if path == "/api/v1/auth/create-user" {
-		if user.Type != shared_types.RoleAdmin {
-			return types.ErrInvalidAccess
-		}
-		return nil
-	}
-
-	return types.ErrInvalidAccess
 }

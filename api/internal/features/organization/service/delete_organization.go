@@ -20,8 +20,27 @@ func (o *OrganizationService) DeleteOrganization(organizationID uuid.UUID) error
 		return types.ErrOrganizationDoesNotExist
 	}
 
-	if err := o.storage.DeleteOrganization(organizationID.String()); err != nil {
+	tx, err := o.storage.BeginTx()
+	if err != nil {
+		o.logger.Log(logger.Error, "failed to begin transaction", err.Error())
+		return types.ErrFailedToDeleteOrganization
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	storage := o.storage.WithTx(tx)
+
+	if err := storage.DeleteOrganization(organizationID.String()); err != nil {
 		o.logger.Log(logger.Error, types.ErrFailedToDeleteOrganization.Error(), err.Error())
+		return types.ErrFailedToDeleteOrganization
+	}
+
+	if err := tx.Commit(); err != nil {
+		o.logger.Log(logger.Error, "failed to commit transaction", err.Error())
 		return types.ErrFailedToDeleteOrganization
 	}
 

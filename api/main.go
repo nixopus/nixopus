@@ -22,6 +22,12 @@ func main() {
 	store := config.Init()
 	ctx := context.Background()
 	app := storage.NewApp(&types.Config{}, store, ctx)
+
+	// cacheClient, err := cache.NewCache(config.AppConfig.RedisURL)
+	// if err != nil {
+	// 	log.Fatalf("Failed to initialize cache: %v", err)
+	// }
+
 	router := internal.NewRouter(app)
 	router.Routes()
 	log.Printf("Server starting on port %s", config.AppConfig.Port)
