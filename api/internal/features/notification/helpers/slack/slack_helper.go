@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -18,7 +19,7 @@ type SlackMessage struct {
 	Text string `json:"text"`
 }
 
-func (m *SlackManager) SendNotification(message string) error {
+func (m *SlackManager) SendNotification(message string, webhookUrl string) error {
 	slackMsg := SlackMessage{
 		Text: message,
 	}
@@ -27,15 +28,17 @@ func (m *SlackManager) SendNotification(message string) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal slack message: %w", err)
 	}
-	resp, err := http.Post("", "application/json", bytes.NewBuffer(jsonData)) // TODO: add webhook url
+
+	resp, err := http.Post(webhookUrl, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return fmt.Errorf("failed to send slack notification: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("slack webhook returned non-200 status code: %d", resp.StatusCode)
 	}
 
+	log.Printf("Slack notification sent successfully")
 	return nil
 }

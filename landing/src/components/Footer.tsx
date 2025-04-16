@@ -31,20 +31,20 @@ export const Footer = () => {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
       <div className="container relative">
-        <div className="flex flex-col items-center gap-8 sm:flex-row sm:justify-between">
+        <div className="flex flex-col items-center gap-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             viewport={{ once: true }}
-            className="text-center sm:text-left"
+            className="text-center"
           >
             <p className="text-white/60">
               © 2024 Nixopus. All rights reserved.
             </p>
           </motion.div>
 
-          <motion.ul
+          {/* <motion.ul
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
@@ -76,7 +76,7 @@ export const Footer = () => {
                 </a>
               </motion.li>
             ))}
-          </motion.ul>
+          </motion.ul> */}
         </div>
       </div>
     </footer>

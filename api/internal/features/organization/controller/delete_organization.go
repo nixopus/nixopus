@@ -6,7 +6,6 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 
@@ -72,7 +71,7 @@ func (c *OrganizationsController) DeleteOrganization(f fuego.ContextWithBody[typ
 		}
 	}
 
-	c.Notify(notification.NotificationPayloadTypeDeleteOrganization, loggedInUser, r)
+	// c.Notify(notification.NotificationPayloadTypeDeleteOrganization, loggedInUser, r)
 
 	return &shared_types.Response{
 		Status:  "success",

@@ -1,47 +1,30 @@
 # File Manager
 
-## Introduction
-The file manager in Nixopus is unique and is inspired by many file managers on the internet, with added customizability.
+The file manager in Nixopus is unique and is inspired by many file managers on the internet, with added customizability. Whether you're coming from Windows, macOS, or Linux, you'll find our file manager familiar yet refreshingly different.
 
-## Key Bindings
-The file manager has the following key bindings:
+## Working with Files
 
-- `CTRL + C` (or `CMD + C` on a Mac): Copy a file.
-- `CTRL + X` (or `CMD + X` on a Mac): Cut a file.
-- `CTRL + V` (or `CMD + V` on a Mac): Paste a file.
+Managing your files is a breeze with our intuitive interface. You can copy files using `CTRL + C` (or `CMD + C` on Mac), cut them with `CTRL + X` (or `CMD + X`), and paste them using `CTRL + V` (or `CMD + V`). Need to move files? Just drag and drop them into the folder you want - it's that simple!
 
-## FAQs
+Want to rename a file? Just double-click on its name and type away. When you're done, click anywhere else to save your changes. Looking for a specific file? You can sort your files by clicking on any column header - we support sorting by size, name, type, and date.
 
-#### How do I change the layout of the file manager?
-You can switch between the grid and list view for the file manager by clicking on the layout button on the top right corner of the file manager.
+## View Options
 
-#### How do I sort the files in the file manager?
-You can sort the files by clicking on the column header of the criteria you want to sort by. The criteria for sorting are size, name, type, and date.
+We know everyone has their preferred way of viewing files. That's why we give you the flexibility to switch between grid and list views with just a click of the layout button in the top right corner. Need to see hidden files? Just click the three dots menu and select "Show Hidden Files" - it's all there when you need it.
 
-#### How do I see the file information in the file manager?
-You can access the file information by right-clicking on the file and selecting the "Get Info" option from the context menu.
+## File Information
 
-#### Where can I enable the hidden file option in the file manager?
-You can enable the hidden file option by clicking on the three dots on the right side of the file manager and selecting "Show Hidden Files" from the dropdown menu.
+Curious about a file's details? Right-click on any file and select "Get Info" from the menu to see everything you need to know.
+Need to organize your files? Creating a new folder is as easy as clicking the three dots menu and selecting "New Folder". It's these little touches that make working with files feel natural and effortless.
 
-#### How do I rename a file?
-To rename a file, simply double click on the file's name and start typing the new name. Once you've finished, click away from the input field to save the changes.
+## What's Coming Next
 
-#### Is there drag and drop support for moving files?
-Yes, you can drag a file and drop it into another folder to move the file to that particular folder.
+We're always working to make the file manager even better. Here's what we're planning to add:
 
-#### How do i open the file in code editor? 
-You can open any file or folder from the file manager in the code editor by right clicking on that file and select Open with code editor option from the dropdown menu
-
-#### How do i create a new folder? 
-You can create the new folder by clicking on the three dots on the right side of the file manager and selecting "New Folder" from the dropdown menu.
-
-## Upcoming Features :rocket:
-* A tree view of the file manager, so you can easily navigate your files
-* Improved privacy features for the file manager
-* The ability to drag and move files and have them stick to that position persistently, like in the `Mac Finder`
-* Customizable icon set to switch between
-* `Zip` / `TarBall` extractor or create `zip` / `tarballs`
-* File Sync option from local machine 
-* File Sync option from multiple servers
-* File share and download option
+* A tree view for easier navigation through your files
+* Enhanced privacy features to keep your files secure
+* Persistent file positioning, similar to Mac Finder
+* Custom icon sets to personalize your experience
+* Built-in support for zip and tarball files
+* File synchronization options for both local and remote servers
+* Easy file sharing and downloading capabilities

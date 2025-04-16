@@ -4,26 +4,15 @@ Nixopus is an open-source project that benefits from the support of sponsors. Yo
 
 ## Sponsorship Tiers
 
-### 🏆 Platinum Sponsor ($500+/month)
-- Logo placement on the project's main page
-- Featured in all project announcements
-- Priority support
-- Custom sponsorship recognition
-- Your name/company in the project's README
-- Social media shoutouts
-
-### 🥇 Gold Sponsor ($250+/month)
-- Logo placement on the project's main page
-- Featured in major project announcements
-- Priority support
-- Your name/company in the project's README
-
-### 🥈 Silver Sponsor ($100+/month)
-- Logo placement on the project's main page
-- Your name/company in the project's README
-
-### 🥉 Bronze Sponsor ($50+/month)
-- Your name/company in the project's README
+| Feature | Bronze ($50) | Silver ($100) | Gold ($250) | Platinum ($500+) |
+|---------|--------------|---------------|-------------|------------------|
+| Logo on Main Page | ❌ | ✅ | ✅ | ✅ |
+| Project Announcements | ❌ | ❌  | ✅ | ✅ |
+| Priority Support | ❌ |  ✅ | ✅ | ✅ |
+| Custom Recognition | ❌ | ❌ | ❌ | ✅ |
+| README Listing | ✅ | ✅ | ✅ | ✅ |
+| Social Media Shoutouts | ❌ | ❌ | ❌ | ✅ |
+| Custom Arrangements | ❌ | ❌ | ❌ | ✅ |
 
 ## How to Become a Sponsor
 
@@ -31,6 +20,10 @@ Nixopus is an open-source project that benefits from the support of sponsors. Yo
 2. Contact us at [raghavyuva@gmail.com](mailto:raghavyuva@gmail.com) with your sponsorship request
 3. We'll provide you with the necessary payment details
 4. Once confirmed, we'll add your sponsorship recognition to the project
+
+You can also support us through GitHub Sponsors! It's a simple way to contribute to open source projects you love. 
+
+[![Sponsor on GitHub](https://img.shields.io/badge/Sponsor%20on%20GitHub-%2300A67E?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sponsors/nixopus)
 
 ## Why Sponsor?
 

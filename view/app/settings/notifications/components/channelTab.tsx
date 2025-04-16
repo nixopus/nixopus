@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import {
   Form,
   FormControl,
@@ -39,12 +40,13 @@ const emailFormSchema = z.object({
 });
 
 const slackFormSchema = z.object({
-  webhook_secret: z.string().min(1, 'Webhook secret is required'),
-  channel_id: z.string().min(1, 'Channel ID is required')
+  webhook_url: z.string().url('Invalid webhook URL'),
+  is_active: z.boolean().default(true)
 });
 
 const discordFormSchema = z.object({
-  webhook_url: z.string().url('Invalid webhook URL')
+  webhook_url: z.string().url('Invalid webhook URL'),
+  is_active: z.boolean().default(true)
 });
 
 const ChannelTab: React.FC<ChannelTabProps> = ({
@@ -73,28 +75,30 @@ const ChannelTab: React.FC<ChannelTabProps> = ({
   const slackForm = useForm<z.infer<typeof slackFormSchema>>({
     resolver: zodResolver(slackFormSchema),
     defaultValues: {
-      webhook_secret: slackConfig?.webhook_secret || '',
-      channel_id: slackConfig?.channel_id || ''
+      webhook_url: slackConfig?.webhook_url || '',
+      is_active: slackConfig?.is_active ?? true
     }
   });
 
   const discordForm = useForm<z.infer<typeof discordFormSchema>>({
     resolver: zodResolver(discordFormSchema),
     defaultValues: {
-      webhook_url: discordConfig?.webhook_url || ''
+      webhook_url: discordConfig?.webhook_url || '',
+      is_active: discordConfig?.is_active ?? true
     }
   });
 
   useEffect(() => {
     if (slackConfig) {
-      slackForm.setValue('webhook_secret', slackConfig.webhook_secret || '');
-      slackForm.setValue('channel_id', slackConfig.channel_id || '');
+      slackForm.setValue('webhook_url', slackConfig.webhook_url || '');
+      slackForm.setValue('is_active', slackConfig.is_active);
     }
   }, [slackConfig]);
 
   useEffect(() => {
     if (discordConfig) {
       discordForm.setValue('webhook_url', discordConfig.webhook_url || '');
+      discordForm.setValue('is_active', discordConfig.is_active);
     }
   }, [discordConfig]);
 
@@ -120,7 +124,10 @@ const ChannelTab: React.FC<ChannelTabProps> = ({
 
   const onSubmitSlack = async (data: z.infer<typeof slackFormSchema>) => {
     try {
-      await handleOnSaveSlack(data);
+      await handleOnSaveSlack({
+        webhook_url: data.webhook_url,
+        is_active: data.is_active.toString()
+      });
       toast.success(t('settings.notifications.messages.slack.success'));
     } catch (error) {
       toast.error(t('settings.notifications.messages.slack.error'));
@@ -129,7 +136,10 @@ const ChannelTab: React.FC<ChannelTabProps> = ({
 
   const onSubmitDiscord = async (data: z.infer<typeof discordFormSchema>) => {
     try {
-      await handleOnSaveDiscord(data);
+      await handleOnSaveDiscord({
+        webhook_url: data.webhook_url,
+        is_active: data.is_active.toString()
+      });
       toast.success(t('settings.notifications.messages.discord.success'));
     } catch (error) {
       toast.error(t('settings.notifications.messages.discord.error'));
@@ -299,18 +309,17 @@ const ChannelTab: React.FC<ChannelTabProps> = ({
             <form onSubmit={slackForm.handleSubmit(onSubmitSlack)} className="space-y-4">
               <FormField
                 control={slackForm.control}
-                name="webhook_secret"
+                name="webhook_url"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      {t('settings.notifications.channels.slack.fields.webhook_secret.label')}
+                      {t('settings.notifications.channels.slack.fields.webhook_url.label')}
                     </FormLabel>
                     <FormControl>
                       <Input
-                        type="password"
                         {...field}
                         placeholder={t(
-                          'settings.notifications.channels.slack.fields.webhook_secret.placeholder'
+                          'settings.notifications.channels.slack.fields.webhook_url.placeholder'
                         )}
                       />
                     </FormControl>
@@ -318,26 +327,30 @@ const ChannelTab: React.FC<ChannelTabProps> = ({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={slackForm.control}
-                name="channel_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t('settings.notifications.channels.slack.fields.channel_id.label')}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder={t(
-                          'settings.notifications.channels.slack.fields.channel_id.placeholder'
-                        )}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {slackConfig?.webhook_url && (
+                <FormField
+                  control={slackForm.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          {t('settings.notifications.channels.slack.fields.is_active.label')}
+                        </FormLabel>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            slackForm.setValue('is_active', checked);
+                          }}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
               <div className="flex justify-end">
                 <Button type="submit" disabled={isLoading}>
                   {t('settings.notifications.channels.save')}
@@ -381,6 +394,27 @@ const ChannelTab: React.FC<ChannelTabProps> = ({
                   </FormItem>
                 )}
               />
+              {discordConfig?.webhook_url && (
+                <FormField
+                  control={discordForm.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          {t('settings.notifications.channels.discord.fields.is_active.label')}
+                        </FormLabel>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
               <div className="flex justify-end">
                 <Button type="submit" disabled={isLoading}>
                   {t('settings.notifications.channels.save')}

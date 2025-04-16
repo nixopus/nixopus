@@ -310,13 +310,12 @@
           "title": "Slack",
           "description": "Configurez les notifications Slack",
           "fields": {
-            "webhook_secret": {
-              "label": "Secret du webhook",
-              "placeholder": "Entrez votre secret de webhook Slack"
+            "webhook_url": {
+              "label": "URL du webhook",
+              "placeholder": "https://slack.com/api/webhooks/..."
             },
-            "channel_id": {
-              "label": "ID du canal",
-              "placeholder": "Entrez l'ID de votre canal Slack"
+            "is_active": {
+              "label": "Actif"
             }
           },
           "buttons": {
@@ -330,6 +329,9 @@
             "webhook_url": {
               "label": "URL du webhook",
               "placeholder": "https://discord.com/api/webhooks/..."
+            },
+            "is_active": {
+              "label": "Actif"
             }
           },
           "buttons": {

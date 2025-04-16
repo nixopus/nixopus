@@ -78,8 +78,6 @@ export interface WebhookConfig {
   id: string;
   type: 'slack' | 'discord';
   webhook_url: string;
-  webhook_secret?: string;
-  channel_id: string;
   is_active: boolean;
   user_id: string;
   organization_id: string;
@@ -90,15 +88,11 @@ export interface WebhookConfig {
 export interface CreateWebhookConfigRequest {
   type: 'slack' | 'discord';
   webhook_url: string;
-  webhook_secret?: string;
-  channel_id: string;
 }
 
 export interface UpdateWebhookConfigRequest {
   type: 'slack' | 'discord';
   webhook_url?: string;
-  webhook_secret?: string;
-  channel_id?: string;
   is_active?: boolean;
 }
 

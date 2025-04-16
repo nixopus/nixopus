@@ -80,18 +80,11 @@ func (c *OrganizationsController) parseAndValidate(w http.ResponseWriter, r *htt
 //
 // This method constructs a new NotificationPayload object with the given user and request data,
 // and sends it to the notification manager.
-func (c *OrganizationsController) Notify(payloadType notification.NotificationPayloadType, user *shared_types.User, r *http.Request) {
+func (c *OrganizationsController) Notify(payloadType notification.NotificationPayloadType, user *shared_types.User, r *http.Request, data any) {
 	c.notification.SendNotification(notification.NewNotificationPayload(
 		payloadType,
 		user.ID.String(),
-		notification.NotificationAuthenticationData{
-			Email: user.Email,
-			NotificationBaseData: notification.NotificationBaseData{
-				IP:      r.RemoteAddr,
-				Browser: r.UserAgent(),
-			},
-			UserName: user.Username,
-		},
+		data,
 		notification.NotificationCategoryOrganization,
 	))
 }

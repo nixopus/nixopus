@@ -60,7 +60,7 @@ export default defineConfigWithTheme({
         items: [
           { text: "Introduction", link: "/introduction/index.md" },
           { text: "Installation", link: "/install/index.md" },
-          { text: "Themes and Fonts", link: "/themes-and-fonts/index.md" }
+          { text: "Preferences", link: "/preferences/index.md" }
         ]
       },
       {
@@ -69,6 +69,7 @@ export default defineConfigWithTheme({
           { text: 'Terminal', link: '/terminal/index.md' },
           { text: "File Manager", link: "/file-manager/index.md" },
           { text: "Hosting Projects", link: "/self-host/index.md" },
+          { text: "Notifications", link: "/notifications/index.md" }
         ]
       },
       {
@@ -76,7 +77,7 @@ export default defineConfigWithTheme({
         items: [
           { text: 'Contribution', link: '/contributing/index.md' },
           { text: "Code of Conduct", link: "/code-of-conduct/index.md" },
-          { text: "Change Log", link: "/changelog/index.md" },
+          { text: "Change Log", link: "https://github.com/raghavyuva/nixopus/releases" },
           { text: "License", link: "/license/index.md" },
           { text: "Privacy Policy", link: "/privacy-policy/index.md" },
           { text: "Credits", link: "/credits/index.md" }

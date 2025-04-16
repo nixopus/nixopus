@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 
@@ -70,7 +69,7 @@ func (c *OrganizationsController) CreateOrganization(f fuego.ContextWithBody[typ
 		RoleId:         roles.ID.String(),
 	})
 
-	c.Notify(notification.NortificationPayloadTypeCreateOrganization, loggedInUser, r)
+	// c.Notify(notification.NortificationPayloadTypeCreateOrganization, loggedInUser, r, createdOrganization)
 
 	return &shared_types.Response{
 		Status:  "success",

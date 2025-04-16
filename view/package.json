@@ -30,7 +30,6 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@reactour/tour": "^3.7.0",
     "@reduxjs/toolkit": "^2.6.0",
-    "@types/react-joyride": "^2.0.5",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
     "async-mutex": "^0.5.0",

@@ -114,6 +114,7 @@ func (v *Validator) ValidateDeleteDomainRequest(req types.DeleteDomainRequest) e
 // ValidateDomainBelongsToServer checks if the domain belongs to the current server by resolving its IP
 func (v *Validator) ValidateDomainBelongsToServer(domainName string) error {
 	serverHost := os.Getenv("SSH_HOST")
+
 	if serverHost == "" {
 		var err error
 		serverHost, err = os.Hostname()
@@ -122,7 +123,13 @@ func (v *Validator) ValidateDomainBelongsToServer(domainName string) error {
 		}
 	}
 
-	domainIPs, err := net.LookupIP(domainName)
+	// Handle wildcard domains by extracting main domain
+	mainDomain := domainName
+	if strings.HasPrefix(domainName, "*.") {
+		mainDomain = strings.TrimPrefix(domainName, "*.")
+	}
+
+	domainIPs, err := net.LookupIP(mainDomain)
 	if err != nil {
 		return types.ErrDomainDoesNotBelongToServer
 	}

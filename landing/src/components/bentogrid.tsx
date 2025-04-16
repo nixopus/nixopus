@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FileIcon, Package, Store } from 'lucide-react';
+import Image from "next/image";
 
 const logos = [
   "https://res.cloudinary.com/dl2adjye7/image/upload/v1716817722/Amazon_icon.svg_a4qmtg.png",
@@ -176,7 +177,7 @@ const AWSIcon = () => {
 };
 
 const BentoBox1 = () => {
-  const chartRef = useRef(null);
+  const chartRef = useRef<HTMLDivElement>(null);
   const [isChartVisible, setIsChartVisible] = useState(false);
 
   useEffect(() => {

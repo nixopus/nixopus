@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>User Role Updated in {{.OrganizationName}}</title>
+    <title>User Removed from Organization</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,7 +15,6 @@
         .header {
             background-color: #f8f9fa;
             padding: 20px;
-            text-align: center;
             border-radius: 5px;
             margin-bottom: 20px;
         }
@@ -26,24 +25,34 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .footer {
-            text-align: center;
             margin-top: 20px;
             font-size: 12px;
             color: #666;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>User Role Updated in {{.OrganizationName}}</h1>
+        <h2>User Removed from Organization</h2>
     </div>
     <div class="content">
         <p>Hello,</p>
-        <p>The role for user with ID {{.UserName}} in organization {{.OrganizationName}} has been updated to {{.NewRole}}.</p>
-        <p>If you did not make this change, please contact your administrator immediately.</p>
+        <p>A user has been removed from your organization <strong>{{.OrganizationName}}</strong>.</p>
+        <p>User Details:</p>
+        <ul>
+            <li>Name: {{.UserName}}</li>
+            <li>Email: {{.UserEmail}}</li>
+        </ul>
+        <p>This action was performed from:</p>
+        <ul>
+            <li>IP Address: {{.IP}}</li>
+            <li>Browser: {{.Browser}}</li>
+        </ul>
+        <p>If you did not authorize this action, please contact your system administrator immediately.</p>
     </div>
     <div class="footer">
-        <p>This is an automated message, please do not reply.</p>
+        <p>This is an automated message, please do not reply to this email.</p>
     </div>
 </body>
 </html> 

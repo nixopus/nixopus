@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
@@ -35,7 +34,7 @@ func (c *OrganizationsController) UpdateOrganization(f fuego.ContextWithBody[typ
 		}
 	}
 
-	c.Notify(notification.NotificationPayloadTypeUpdateOrganization, loggedInUser, r)
+	// c.Notify(notification.NotificationPayloadTypeUpdateOrganization, loggedInUser, r)
 
 	return &shared_types.Response{
 		Status:  "success",

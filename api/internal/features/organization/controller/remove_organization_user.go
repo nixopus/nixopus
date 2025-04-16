@@ -35,7 +35,31 @@ func (c *OrganizationsController) RemoveUserFromOrganization(f fuego.ContextWith
 		}
 	}
 
-	c.Notify(notification.NortificationPayloadTypeRemoveUserFromOrganization, loggedInUser, r)
+	org, err := c.service.GetOrganization(user.OrganizationID)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	userDetails := utils.GetUser(f.Response(), r)
+	if userDetails == nil {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
+	}
+
+	c.Notify(notification.NotificationPayloadTypeRemoveUserFromOrganization, loggedInUser, r, notification.RemoveUserFromOrganizationData{
+		NotificationBaseData: notification.NotificationBaseData{
+			IP:      r.RemoteAddr,
+			Browser: r.UserAgent(),
+		},
+		OrganizationName: org.Name,
+		UserName:         userDetails.Username,
+		UserEmail:        userDetails.Email,
+	})
 
 	return &shared_types.Response{
 		Status:  "success",

@@ -129,8 +129,6 @@ type WebhookConfig struct {
 	ID             uuid.UUID `json:"id" bun:"id,pk,type:uuid"`
 	Type           string    `json:"type" bun:"type,notnull"`
 	WebhookURL     string    `json:"webhook_url" bun:"webhook_url,notnull"`
-	WebhookSecret  *string   `json:"webhook_secret,omitempty" bun:"webhook_secret"`
-	ChannelID      string    `json:"channel_id" bun:"channel_id,notnull"`
 	IsActive       bool      `json:"is_active" bun:"is_active,notnull,default:false"`
 	UserID         uuid.UUID `json:"user_id" bun:"user_id,notnull,type:uuid"`
 	OrganizationID uuid.UUID `json:"organization_id" bun:"organization_id,notnull,type:uuid"`

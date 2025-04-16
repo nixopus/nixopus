@@ -3,6 +3,7 @@ import type { Theme } from 'vitepress'
 
 import { theme, useOpenapi } from 'vitepress-openapi'
 import 'vitepress-openapi/dist/style.css'
+import './style.css'
 
 import spec from '../../src/openapi.json' assert { type: 'json' }
 

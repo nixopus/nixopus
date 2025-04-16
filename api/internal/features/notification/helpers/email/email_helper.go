@@ -9,12 +9,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"net/smtp"
+
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification/helpers/preferences"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/uptrace/bun"
-	"net/smtp"
 )
 
 type EmailManager struct {
@@ -49,8 +50,33 @@ type VerificationEmailData struct {
 }
 
 type UpdateUserRoleData struct {
-	OrganizationID string `json:"organization_id"`
-	UserID         string `json:"user_id"`
+	OrganizationName string `json:"organization_name"`
+	UserName         string `json:"user_name"`
+	NewRole          string `json:"new_role"`
+}
+
+type AddUserToOrganizationData struct {
+	OrganizationName string `json:"organization_name"`
+	UserName         string `json:"user_name"`
+	UserEmail        string `json:"user_email"`
+	IP               string `json:"ip"`
+	Browser          string `json:"browser"`
+}
+
+type RemoveUserFromOrganizationData struct {
+	OrganizationName string `json:"organization_name"`
+	UserName         string `json:"user_name"`
+	UserEmail        string `json:"user_email"`
+	IP               string `json:"ip"`
+	Browser          string `json:"browser"`
+}
+
+type EmailTemplateData struct {
+	Subject  string
+	Template string
+	Data     interface{}
+	Category string
+	Type     string
 }
 
 func (m *EmailManager) SendEmailWithTemplate(userID string, data EmailData) error {
@@ -170,7 +196,7 @@ func (m *EmailManager) SendVerificationEmail(userID string, token string) error 
 	return nil
 }
 
-func (m *EmailManager) SendUpdateUserRoleEmail(userID string, organizationID string, updatedUserID string) error {
+func (m *EmailManager) SendUpdateUserRoleEmail(userID string, organizationName string, userName string, newRole string) error {
 	shouldSend, err := m.prefManager.CheckUserNotificationPreferences(userID, string(types.ActivityCategory), "team-updates")
 	if err != nil {
 		return fmt.Errorf("failed to check notification preferences: %w", err)
@@ -181,8 +207,9 @@ func (m *EmailManager) SendUpdateUserRoleEmail(userID string, organizationID str
 	}
 
 	data := UpdateUserRoleData{
-		OrganizationID: organizationID,
-		UserID:         updatedUserID,
+		OrganizationName: organizationName,
+		UserName:         userName,
+		NewRole:          newRole,
 	}
 
 	emailData := EmailData{
@@ -203,6 +230,58 @@ func (m *EmailManager) SendUpdateUserRoleEmail(userID string, organizationID str
 	return nil
 }
 
+func (m *EmailManager) SendAddUserToOrganizationEmail(userID string, data AddUserToOrganizationData) error {
+	shouldSend, err := m.prefManager.CheckUserNotificationPreferences(userID, string(types.ActivityCategory), "team-updates")
+	if err != nil {
+		return fmt.Errorf("failed to check notification preferences: %w", err)
+	}
+
+	if !shouldSend {
+		return nil
+	}
+
+	emailData := EmailData{
+		Subject:     "New User Added to Organization",
+		Template:    "add_user_to_organization.html",
+		Data:        data,
+		ContentType: "text/html; charset=UTF-8",
+		Category:    string(types.ActivityCategory),
+		Type:        "team-updates",
+	}
+
+	if err := m.SendEmailWithTemplate(userID, emailData); err != nil {
+		log.Printf("Failed to send add user to organization email: %s", err)
+		return err
+	}
+
+	log.Printf("Add user to organization email sent successfully")
+	return nil
+}
+
+func (m *EmailManager) SendRemoveUserFromOrganizationEmail(userID string, data RemoveUserFromOrganizationData) error {
+	shouldSend, err := m.prefManager.CheckUserNotificationPreferences(userID, string(types.ActivityCategory), "team-updates")
+	if err != nil {
+		return fmt.Errorf("failed to check notification preferences: %w", err)
+	}
+
+	if !shouldSend {
+		return nil
+	}
+
+	emailData := EmailData{
+		Subject:  "User Removed from Organization",
+		Template: "remove_user_from_organization.html",
+	}
+
+	if err := m.SendEmailWithTemplate(userID, emailData); err != nil {
+		log.Printf("Failed to send remove user from organization email: %s", err)
+		return err
+	}
+
+	log.Printf("Remove user from organization email sent successfully")
+	return nil
+}
+
 func (m *EmailManager) GetSmtp(ID string) (*shared_types.SMTPConfigs, error) {
 	config := &shared_types.SMTPConfigs{}
 	err := m.db.NewSelect().Model(config).Where("user_id = ?", ID).Scan(m.ctx)
@@ -210,4 +289,32 @@ func (m *EmailManager) GetSmtp(ID string) (*shared_types.SMTPConfigs, error) {
 		return nil, err
 	}
 	return config, nil
+}
+
+func (m *EmailManager) sendEmailWithPreferences(userID string, data EmailTemplateData) error {
+	shouldSend, err := m.prefManager.CheckUserNotificationPreferences(userID, data.Category, data.Type)
+	if err != nil {
+		return fmt.Errorf("failed to check notification preferences: %w", err)
+	}
+
+	if !shouldSend {
+		return nil
+	}
+
+	emailData := EmailData{
+		Subject:     data.Subject,
+		Template:    data.Template,
+		Data:        data.Data,
+		ContentType: "text/html; charset=UTF-8",
+		Category:    data.Category,
+		Type:        data.Type,
+	}
+
+	if err := m.SendEmailWithTemplate(userID, emailData); err != nil {
+		log.Printf("Failed to send email: %s", err)
+		return err
+	}
+
+	log.Printf("Email sent successfully")
+	return nil
 }

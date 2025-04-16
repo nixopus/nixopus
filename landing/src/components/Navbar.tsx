@@ -2,6 +2,7 @@
 import MenuIcon from '../assets/icons/menu.svg';
 import Link from 'next/link';
 import { useState } from 'react';
+import Image from "next/image";
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,29 +15,31 @@ export const Navbar = () => {
         <div className="container">
           <div className="py-4 flex items-center justify-between">
             <Link href="/" className="relative group">
-              <img 
-                src="/nixopus_logo_transparent.png" 
-                alt="Nixopus Logo" 
-                className="h-24 w-24 relative mt-1 object-contain transition-transform duration-300 group-hover:scale-105"
+              <Image
+                src="/nixopus_logo_transparent.png"
+                alt="Nixopus Logo"
+                width={64}
+                height={64}
+                className="h-16 w-auto"
               />
             </Link>
             
-            <button 
+            {/* <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className='border border-white/20 h-10 w-10 inline-flex justify-center items-center rounded-lg sm:hidden hover:bg-gradient-to-r hover:from-indigo-500/10 hover:to-purple-500/10 transition-all duration-300'
               aria-label="Toggle menu"
             >
               <MenuIcon className="text-white" />
-            </button>
+            </button> */}
 
             <nav className={`text-white gap-6 items-center ${isMenuOpen ? 'flex flex-col absolute top-full left-0 right-0 bg-gray-900/95 backdrop-blur-sm py-4' : 'hidden sm:flex'}`}>
-              <Link 
+              {/* <Link 
                 href="https://github.com/raghavyuva/nixopus" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className='text-opacity-60 text-white hover:text-opacity-100 hover:text-indigo-300 transition-all duration-300 px-4 py-2 rounded-lg hover:bg-white/5'
               >
-                About
+                GitHub
               </Link>
               <Link 
                 href="https://docs.nixopus.com" 
@@ -44,29 +47,13 @@ export const Navbar = () => {
                 rel="noopener noreferrer" 
                 className='text-opacity-60 text-white hover:text-opacity-100 hover:text-purple-300 transition-all duration-300 px-4 py-2 rounded-lg hover:bg-white/5'
               >
-                Features
-              </Link>
-              <Link 
-                href="https://github.com/raghavyuva/nixopus/releases" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className='text-opacity-60 text-white hover:text-opacity-100 hover:text-pink-300 transition-all duration-300 px-4 py-2 rounded-lg hover:bg-white/5'
-              >
-                Changelogs
-              </Link>
-              <Link 
-                href="https://docs.nixopus.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className='text-opacity-60 text-white hover:text-opacity-100 hover:text-indigo-300 transition-all duration-300 px-4 py-2 rounded-lg hover:bg-white/5'
-              >
                 Docs
-              </Link>
+              </Link> */}
               <Link 
-                href="/try" 
+                href="#waitlist" 
                 className='bg-gradient-to-r from-indigo-500 to-purple-500 py-2 px-6 rounded-lg text-white hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20'
               >
-                Try now
+                Join Waitlist
               </Link>
             </nav>
           </div>

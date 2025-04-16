@@ -40,7 +40,27 @@ func (c *OrganizationsController) UpdateUserRole(f fuego.ContextWithBody[UpdateU
 		}
 	}
 
-	c.Notify(notification.NotificationPayloadTypeUpdateUserRole, loggedInUser, r)
+	org, err := c.service.GetOrganization(req.OrganizationID)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	userDetails := utils.GetUser(f.Response(), r)
+	if userDetails == nil {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
+	}
+
+	c.Notify(notification.NotificationPayloadTypeUpdateUserRole, loggedInUser, r, notification.UpdateUserRoleData{
+		OrganizationName: org.Name,
+		UserName:         userDetails.Username,
+		NewRole:          req.RoleName,
+	})
 
 	return &shared_types.Response{
 		Status:  "success",

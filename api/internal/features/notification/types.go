@@ -59,6 +59,26 @@ type NotificationOrganizationData struct {
 	UserID         string
 }
 
+type AddUserToOrganizationData struct {
+	NotificationBaseData
+	OrganizationName string
+	UserName         string
+	UserEmail        string
+}
+
+type RemoveUserFromOrganizationData struct {
+	NotificationBaseData
+	OrganizationName string
+	UserName         string
+	UserEmail        string
+}
+
+type UpdateUserRoleData struct {
+	OrganizationName string
+	UserName         string
+	NewRole          string
+}
+
 type NotificationManager struct {
 	sync.RWMutex
 	Channels       *NotificationChannels
@@ -84,22 +104,17 @@ type NotificationVerificationEmailData struct {
 	Token string
 }
 
-type UpdateUserRoleData struct {
-	NotificationBaseData
-	OrganizationID string
-	UserID         string
-}
-
 type NotificationPayloadType string
 
 const (
-	NotificationPayloadTypeRegister               NotificationPayloadType = "register"
-	NotificationPayloadTypeLogin                  NotificationPayloadType = "login"
-	NotificationPayloadTypeLogout                 NotificationPayloadType = "logout"
-	NotificationPayloadTypePasswordReset          NotificationPayloadType = "password_reset"
-	NortificationPayloadTypeAddUserToOrganization NotificationPayloadType = "add_user_to_organization"
-	NotificationPayloadTypeVerificationEmail      NotificationPayloadType = "verification_email"
-	NotificationPayloadTypeUpdateUserRole         NotificationPayloadType = "update_user_role"
+	NotificationPayloadTypeRegister                   NotificationPayloadType = "register"
+	NotificationPayloadTypeLogin                      NotificationPayloadType = "login"
+	NotificationPayloadTypeLogout                     NotificationPayloadType = "logout"
+	NotificationPayloadTypePasswordReset              NotificationPayloadType = "password_reset"
+	NotificationPayloadTypeAddUserToOrganization      NotificationPayloadType = "add_user_to_organization"
+	NotificationPayloadTypeRemoveUserFromOrganization NotificationPayloadType = "remove_user_from_organization"
+	NotificationPayloadTypeVerificationEmail          NotificationPayloadType = "verification_email"
+	NotificationPayloadTypeUpdateUserRole             NotificationPayloadType = "update_user_role"
 )
 
 const (
@@ -243,18 +258,14 @@ type ResetEmailData struct {
 }
 
 type CreateWebhookConfigRequest struct {
-	Type          string  `json:"type" validate:"required,oneof=slack discord"`
-	WebhookURL    string  `json:"webhook_url"`
-	WebhookSecret *string `json:"webhook_secret,omitempty"`
-	ChannelID     string  `json:"channel_id,omitempty"`
+	Type       string `json:"type" validate:"required,oneof=slack discord"`
+	WebhookURL string `json:"webhook_url"`
 }
 
 type UpdateWebhookConfigRequest struct {
-	Type          string  `json:"type" validate:"required,oneof=slack discord"`
-	WebhookURL    *string `json:"webhook_url,omitempty"`
-	WebhookSecret *string `json:"webhook_secret,omitempty"`
-	ChannelID     *string `json:"channel_id,omitempty"`
-	IsActive      *bool   `json:"is_active,omitempty"`
+	Type       string  `json:"type" validate:"required,oneof=slack discord"`
+	WebhookURL *string `json:"webhook_url,omitempty"`
+	IsActive   *bool   `json:"is_active,omitempty"`
 }
 
 type DeleteWebhookConfigRequest struct {

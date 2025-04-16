@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -18,7 +19,7 @@ type DiscordMessage struct {
 	Content string `json:"content"`
 }
 
-func (m *DiscordManager) SendNotification(message string) error {
+func (m *DiscordManager) SendNotification(message string, webhookURL string) error {
 	discordMsg := DiscordMessage{
 		Content: message,
 	}
@@ -28,7 +29,7 @@ func (m *DiscordManager) SendNotification(message string) error {
 		return fmt.Errorf("failed to marshal discord message: %w", err)
 	}
 
-	resp, err := http.Post("", "application/json", bytes.NewBuffer(jsonData)) // TODO: add webhook url
+	resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return fmt.Errorf("failed to send discord notification: %w", err)
 	}
@@ -38,5 +39,6 @@ func (m *DiscordManager) SendNotification(message string) error {
 		return fmt.Errorf("discord webhook returned non-200 status code: %d", resp.StatusCode)
 	}
 
+	log.Printf("Discord notification sent successfully")
 	return nil
 }

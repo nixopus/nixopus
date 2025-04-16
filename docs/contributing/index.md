@@ -27,7 +27,7 @@ For a quick and easy setup, you can use Docker and Docker Compose:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/nixopus/nixopus.git
+git clone https://github.com/raghavyuva/nixopus.git
 cd nixopus
 ```
 
@@ -75,9 +75,9 @@ docker-compose up -d
 This will start:
 - `nixopus-api`: The main API service (port 9999)
 - `nixopus-db`: PostgreSQL database (port 5432)
-- `nixopus-redis`: Redis cache (port 6379)
 - `nixopus-test-db`: Test database (port 5433)
 - `nixopus-view`: Frontend view service (port 3000)
+- `nixopus-caddy`: Proxy service
 
 5. Check service status:
 ```bash
@@ -90,7 +90,7 @@ If you prefer to set up your development environment manually:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/nixopus/nixopus.git
+git clone https://github.com/raghavyuva/nixopus.git
 cd nixopus
 ```
 
@@ -98,10 +98,8 @@ cd nixopus
 
 3. Set up PostgreSQL databases:
 ```bash
-# Main database
 createdb postgres -U postgres
 
-# Test database
 createdb nixopus_test -U postgres
 ```
 
@@ -112,29 +110,21 @@ cp .env.sample .env
 
 5. Install project dependencies:
 ```bash
-# Install API dependencies
 cd api
 go mod download
 
-# Install View dependencies
 cd ../view
 yarn install
 ```
 
 ## Running the Application
-
-1. Start Redis:
-```bash
-redis-server
-```
-
-2. Start the API service:
+1. Start the API service:
 ```bash
 cd api
-make run
+air
 ```
 
-3. Start the view service:
+2. Start the view service:
 ```bash
 cd view
 yarn dev
@@ -145,11 +135,10 @@ The view service uses:
 - React 19
 - Redux Toolkit for state management
 - Tailwind CSS for styling
-- Radix UI for accessible components
+- Radix UI for accessible components (Shadcn Components)
 - TypeScript for type safety
 
 ## Making Changes
-
 Nixopus follows [trunk-based-development](https://www.atlassian.com/continuous-delivery/continuous-integration/trunk-based-development) conventions.
 
 1. Create a new branch:
@@ -166,7 +155,6 @@ git checkout -b feature/your-feature-name
 
 3. Run tests:
 ```bash
-# API tests
 cd api
 make test
 
@@ -204,8 +192,5 @@ yarn lint
 
 Documentation is located in the `docs/` directory. Follow the existing structure and style when adding new content.
 
-## Contributor License Agreement
-
-Before your contributions can be merged, you need to sign our [Contributor License Agreement](CONTRIBUTOR_LICENSE_AGREEMENT.md).
-
+## Gratitude
 Thank you for contributing to Nixopus! Your efforts help make this project better for everyone.

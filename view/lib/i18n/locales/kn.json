@@ -310,13 +310,12 @@
           "title": "ಸ್ಲ್ಯಾಕ್",
           "description": "ಸ್ಲ್ಯಾಕ್ ಅ thಣಿಸುವಿಕೆಗಳನ್ನು ಸಂರಚಿಸಿ",
           "fields": {
-            "webhook_secret": {
-              "label": "ವೆಬ್ಹುಕ್ ರಹಸ್ಯ",
-              "placeholder": "ನಿಮ್ಮ ಸ್ಲ್ಯಾಕ್ ವೆಬ್ಹುಕ್ ರಹಸ್ಯವನ್ನು ನಮೂದಿಸಿ"
+            "webhook_url": {
+              "label": "ವೆಬ್ಹುಕ್ URL",
+              "placeholder": "https://slack.com/api/webhooks/..."
             },
-            "channel_id": {
-              "label": "ಚಾನಲ್ ID",
-              "placeholder": "ನಿಮ್ಮ ಸ್ಲ್ಯಾಕ್ ಚಾನಲ್ ID ಅನ್ನು ನಮೂದಿಸಿ"
+            "is_active": {
+              "label": "ಸಕ್ರಿಯ"
             }
           },
           "buttons": {
@@ -330,6 +329,9 @@
             "webhook_url": {
               "label": "ವೆಬ್ಹುಕ್ URL",
               "placeholder": "https://discord.com/api/webhooks/..."
+            },
+            "is_active": {
+              "label": "ಸಕ್ರಿಯ"
             }
           },
           "buttons": {
