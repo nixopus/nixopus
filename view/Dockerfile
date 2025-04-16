@@ -13,6 +13,7 @@ COPY . .
 ARG NEXT_PUBLIC_PORT=7443
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_PORT=$NEXT_PUBLIC_PORT
+ENV PORT=$NEXT_PUBLIC_PORT
 
 RUN yarn build && \
     rm -rf node_modules/.cache
@@ -24,6 +25,7 @@ ARG NEXT_PUBLIC_PORT=7443
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_PORT=$NEXT_PUBLIC_PORT
+ENV PORT=$NEXT_PUBLIC_PORT
 
 RUN addgroup -S nixopus && adduser -S nixopus -G nixopus
 
@@ -35,5 +37,7 @@ COPY --from=builder --chown=nixopus:nixopus /app/.next/static ./.next/static
 USER nixopus
 
 EXPOSE ${NEXT_PUBLIC_PORT}
+
+ENV PORT=${NEXT_PUBLIC_PORT}
 
 CMD ["node", "server.js"]
