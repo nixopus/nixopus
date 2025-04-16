@@ -577,8 +577,8 @@
     },
     "memory": {
       "title": "Memory Usage",
-      "used": "{value} MB used",
-      "total": "{value} MB total",
+      "used": "{value} GB used",
+      "total": "{value} GB total",
       "percentage": "{value}%"
     },
     "errors": {

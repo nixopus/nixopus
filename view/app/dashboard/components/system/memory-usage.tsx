@@ -11,7 +11,7 @@ interface MemoryUsageCardProps {
   systemStats: SystemStatsType;
 }
 
-const formatGB = (value: number) => `${value.toFixed(2)} GB`;
+const formatGB = (value: number) => `${value.toFixed(2)}`;
 
 const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
   const { t } = useTranslation();

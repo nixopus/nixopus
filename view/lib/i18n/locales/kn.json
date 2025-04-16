@@ -561,8 +561,8 @@
     },
     "memory": {
       "title": "ಮೆಮೊರಿ ಬಳಕೆ",
-      "used": "{value} MB ಬಳಸಲಾಗಿದೆ",
-      "total": "{value} MB ಒಟ್ಟು",
+      "used": "{value} GB ಬಳಸಲಾಗಿದೆ",
+      "total": "{value} GB ಒಟ್ಟು",
       "percentage": "{value}%"
     },
     "errors": {

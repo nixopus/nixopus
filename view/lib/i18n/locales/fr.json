@@ -565,8 +565,8 @@
     },
     "memory": {
       "title": "Utilisation de la mémoire",
-      "used": "{value} Mo utilisé",
-      "total": "{value} Mo total",
+      "used": "{value} Go utilisé",
+      "total": "{value} Go total",
       "percentage": "{value}%"
     },
     "errors": {
