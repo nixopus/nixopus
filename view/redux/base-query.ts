@@ -14,7 +14,11 @@ const MAX_RETRIES = 1;
 
 let currentBaseUrl: string | undefined;
 
-const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (args, api, extraOptions) => {
+const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
+  args,
+  api,
+  extraOptions
+) => {
   if (!currentBaseUrl) {
     currentBaseUrl = await getBaseUrl();
   }

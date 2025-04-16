@@ -7,4 +7,4 @@ export async function GET() {
     webhookUrl: process.env.WEBHOOK_URL || 'http://localhost:8080/webhook',
     port: process.env.NEXT_PUBLIC_PORT || '7443'
   });
-} 
+}

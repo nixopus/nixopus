@@ -1,9 +1,6 @@
 'use client';
 import React from 'react';
-import {
-  TrashIcon,
-  CheckIcon
-} from 'lucide-react';
+import { TrashIcon, CheckIcon } from 'lucide-react';
 import Skeleton from './components/skeleton/Skeleton';
 import Header from './components/layout/Header';
 import { SearchBar } from '@/components/ui/search-bar';
@@ -101,11 +98,11 @@ function FileManager() {
       onMove={() => {
         if (fileToMove) {
           const destinationPath = `${currentPath}/${fileToMove.name}`;
-          if (!files?.some(f => f.path === destinationPath)) {
+          if (!files?.some((f) => f.path === destinationPath)) {
             handleMove(fileToMove.path, destinationPath);
             setFileToMove(undefined);
           } else {
-            toast.error(t("fileManager.errors.fileExists"));
+            toast.error(t('fileManager.errors.fileExists'));
           }
         }
       }}
@@ -116,7 +113,7 @@ function FileManager() {
         }
       }}
     >
-      <div onDragOver={(e) => e.preventDefault()} className='min-h-[calc(100vh-100px)]'>
+      <div onDragOver={(e) => e.preventDefault()} className="min-h-[calc(100vh-100px)]">
         <div className="mx-auto max-w-7xl">
           {showCopyFeedback && (
             <div className="fixed bottom-4 right-4 flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground shadow-lg animate-in fade-in slide-in-from-bottom-4">
@@ -160,10 +157,11 @@ function FileManager() {
           </div>
 
           <div
-            className={`grid w-full ${layout === 'grid'
+            className={`grid w-full ${
+              layout === 'grid'
                 ? 'grid-cols-1 gap-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8'
                 : 'grid-cols-1 gap-2'
-              }`}
+            }`}
           >
             {visibleFiles.map((file, index) => (
               <FileItem
@@ -206,8 +204,8 @@ function FileManager() {
             description={
               fileToDelete?.file_type === 'Directory'
                 ? t('fileManager.deleteDialog.descriptionDirectory', {
-                  name: fileToDelete.name || ''
-                })
+                    name: fileToDelete.name || ''
+                  })
                 : t('fileManager.deleteDialog.descriptionFile', { name: fileToDelete?.name || '' })
             }
             onConfirm={() => {

@@ -43,7 +43,10 @@ function useCreateDeployment({
   base_path = '/'
 }: DeploymentFormValues) {
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const { data: domains } = useGetAllDomainsQuery({ organizationId: activeOrg?.id }, { skip: !activeOrg?.id });
+  const { data: domains } = useGetAllDomainsQuery(
+    { organizationId: activeOrg?.id },
+    { skip: !activeOrg?.id }
+  );
   const { isReady, message, sendJsonMessage } = useWebSocket();
   const [createDeployment, { isLoading }] = useCreateDeploymentMutation();
   const router = useRouter();

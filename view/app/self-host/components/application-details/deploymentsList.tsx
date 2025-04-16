@@ -2,7 +2,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRollbackApplicationMutation } from '@/redux/services/deploy/applicationsApi';
 import { ApplicationDeployment } from '@/redux/types/applications';
-import { Undo, Eye, Clock, GitBranch, Terminal, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import {
+  Undo,
+  Eye,
+  Clock,
+  GitBranch,
+  Terminal,
+  CheckCircle2,
+  AlertCircle,
+  Loader2
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
@@ -17,7 +26,12 @@ interface DeploymentsListProps {
   onPageChange: (page: number) => void;
 }
 
-function DeploymentsList({ deployments, currentPage, totalPages, onPageChange }: DeploymentsListProps) {
+function DeploymentsList({
+  deployments,
+  currentPage,
+  totalPages,
+  onPageChange
+}: DeploymentsListProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const [rollBackApplication, { isLoading }] = useRollbackApplicationMutation();
@@ -63,8 +77,8 @@ function DeploymentsList({ deployments, currentPage, totalPages, onPageChange }:
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {deployments.map((deployment) => (
-              <Card 
-                key={deployment.id} 
+              <Card
+                key={deployment.id}
                 className="w-full hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-800"
               >
                 <CardHeader className="pb-2">
@@ -106,7 +120,7 @@ function DeploymentsList({ deployments, currentPage, totalPages, onPageChange }:
                         )}
                       </Badge>
                     </div>
-                    <div 
+                    <div
                       className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                       onClick={() => {
                         router.push(

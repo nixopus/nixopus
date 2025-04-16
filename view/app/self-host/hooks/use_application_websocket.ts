@@ -13,4 +13,4 @@ export function useApplicationWebSocket(id: string) {
   }, [id, isReady, sendJsonMessage]);
 
   return { message };
-} 
+}

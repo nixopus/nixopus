@@ -18,7 +18,8 @@ export function useFileOperations(refetch: () => void) {
   const [uploadFile] = useUploadFileMutation();
   const [createDirectory] = useCreateDirectoryMutation();
   const [copyFileOrDirectory] = useCopyFileOrDirectoryMutation();
-  const [calculateDirectorySize, { isLoading: isSizeLoading, data: fileSize }] = useCalculateDirectorySizeMutation();
+  const [calculateDirectorySize, { isLoading: isSizeLoading, data: fileSize }] =
+    useCalculateDirectorySizeMutation();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedFileName, setEditedFileName] = useState('');
@@ -38,9 +39,9 @@ export function useFileOperations(refetch: () => void) {
         }
       }
 
-      const failedUploads = uploadResults.filter(result => !result.success);
+      const failedUploads = uploadResults.filter((result) => !result.success);
       if (failedUploads.length > 0) {
-        const errorMessage = failedUploads.map(f => `${f.file}: ${f.error}`).join('\n');
+        const errorMessage = failedUploads.map((f) => `${f.file}: ${f.error}`).join('\n');
         toast.error(t('toasts.errors.uploadFile'), {
           description: errorMessage
         });

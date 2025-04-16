@@ -13,7 +13,8 @@ COPY . .
 
 RUN yarn build && \
     yarn install --frozen-lockfile --network-timeout 600000 --production && \
-    yarn cache clean
+    yarn cache clean && \
+    rm -rf node_modules/.cache
 
 FROM node:18-alpine AS runner
 
@@ -30,12 +31,10 @@ COPY --from=builder --chown=nixopus:nixopus /app/public ./public
 COPY --from=builder --chown=nixopus:nixopus /app/.next ./.next
 COPY --from=builder --chown=nixopus:nixopus /app/node_modules ./node_modules
 COPY --from=builder --chown=nixopus:nixopus /app/package.json ./
-COPY --from=builder --chown=nixopus:nixopus /app/yarn.lock ./
 
 RUN mkdir -p .next/cache && \
     chown -R nixopus:nixopus . && \
-    chmod -R 755 . && \
-    rm -rf /app/node_modules/.cache
+    chmod -R 755 .
 
 USER nixopus
 

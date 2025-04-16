@@ -34,7 +34,9 @@ export const fileManagersApi = createApi({
         method: 'DELETE',
         body: { path }
       }),
-      invalidatesTags: (result, error, { path }) => [{ type: 'FileList', id: path.split('/').slice(0, -1).join('/') }],
+      invalidatesTags: (result, error, { path }) => [
+        { type: 'FileList', id: path.split('/').slice(0, -1).join('/') }
+      ],
       transformResponse: (response: any) => response
     }),
     moveOrRenameDirectory: builder.mutation<any, { from_path: string; to_path: string }>({

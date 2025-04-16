@@ -1,8 +1,15 @@
-import { useGetApplicationByIdQuery, useGetApplicationDeploymentsQuery } from '@/redux/services/deploy/applicationsApi';
+import {
+  useGetApplicationByIdQuery,
+  useGetApplicationDeploymentsQuery
+} from '@/redux/services/deploy/applicationsApi';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { useApplicationWebSocket } from './use_application_websocket';
-import { Application, ApplicationDeployment, ApplicationDeploymentStatus } from '@/redux/types/applications';
+import {
+  Application,
+  ApplicationDeployment,
+  ApplicationDeploymentStatus
+} from '@/redux/types/applications';
 
 interface WebSocketMessage {
   action: string;
@@ -20,14 +27,14 @@ function useApplicationDetails() {
   const applicationId = id as string;
   const [deploymentsPage, setDeploymentsPage] = useState(1);
   const [deploymentsPerPage] = useState(9);
-  
+
   const { data: applicationData } = useGetApplicationByIdQuery(
     { id: applicationId },
     { skip: !applicationId }
   );
 
   const { data: deploymentsData } = useGetApplicationDeploymentsQuery(
-    { 
+    {
       id: applicationId,
       page: deploymentsPage,
       limit: deploymentsPerPage
@@ -82,13 +89,13 @@ function useApplicationDetails() {
 
     try {
       const parsedMessage = JSON.parse(message) as WebSocketMessage;
-      
+
       if (parsedMessage.action !== 'message' || !parsedMessage.data) return;
 
       const { action, table, data } = parsedMessage.data;
-      
+
       if (!table || !action || !data) return;
-      
+
       if (table === 'application_deployment') {
         const deployment = data as ApplicationDeployment;
         if (action === 'INSERT') {
@@ -101,7 +108,7 @@ function useApplicationDetails() {
         } else if (action === 'UPDATE') {
           const updatedApplication = {
             ...applicationRef.current,
-            deployments: (applicationRef.current.deployments || []).map(d => 
+            deployments: (applicationRef.current.deployments || []).map((d) =>
               d.id === deployment.id ? deployment : d
             )
           };
@@ -113,7 +120,7 @@ function useApplicationDetails() {
         if (action === 'INSERT' || action === 'UPDATE') {
           const updatedApplication = {
             ...applicationRef.current,
-            deployments: (applicationRef.current.deployments || []).map(d => {
+            deployments: (applicationRef.current.deployments || []).map((d) => {
               if (d.id === status.application_deployment_id) {
                 return { ...d, status };
               }
@@ -124,8 +131,7 @@ function useApplicationDetails() {
           applicationRef.current = updatedApplication;
         }
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }, [message]);
 
   return {
@@ -143,4 +149,3 @@ function useApplicationDetails() {
 }
 
 export default useApplicationDetails;
-

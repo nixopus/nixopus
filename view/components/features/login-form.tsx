@@ -34,7 +34,9 @@ export function LoginForm({ ...props }: LoginFormProps) {
                   {props.showTwoFactor ? t('auth.login.2fa.title') : t('auth.login.title')}
                 </h1>
                 <p className="text-muted-foreground text-balance">
-                  {props.showTwoFactor ? t('auth.login.2fa.description') : t('auth.login.description')}
+                  {props.showTwoFactor
+                    ? t('auth.login.2fa.description')
+                    : t('auth.login.description')}
                 </p>
               </div>
               {!props.showTwoFactor && (
@@ -92,8 +94,8 @@ export function LoginForm({ ...props }: LoginFormProps) {
                     ? t('auth.login.2fa.verifying')
                     : t('auth.login.2fa.verifyButton')
                   : props.isLoading
-                  ? t('auth.login.loading')
-                  : t('auth.login.submit')}
+                    ? t('auth.login.loading')
+                    : t('auth.login.submit')}
               </Button>
               {/* <div className="text-center text-sm">
                 Don&apos;t have an account?{' '}

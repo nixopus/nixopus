@@ -21,8 +21,12 @@ function use_file_manager() {
   const [copyFeedbackMessage, setCopyFeedbackMessage] = useState('');
   const router = useRouter();
   const path = useSearchParams().get('path');
-  
-  const { data: files, isLoading, refetch } = useGetFilesInPathQuery(
+
+  const {
+    data: files,
+    isLoading,
+    refetch
+  } = useGetFilesInPathQuery(
     { path: currentPath },
     {
       refetchOnMountOrArgChange: true,
@@ -151,8 +155,10 @@ function use_file_manager() {
         let newPath = `${basePath}/${fileName}`;
         let counter = 1;
 
-        while (files?.some(f => f.path === newPath)) {
-          const extension = fileName.includes('.') ? fileName.substring(fileName.lastIndexOf('.')) : '';
+        while (files?.some((f) => f.path === newPath)) {
+          const extension = fileName.includes('.')
+            ? fileName.substring(fileName.lastIndexOf('.'))
+            : '';
           const baseName = extension ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
           newPath = `${basePath}/${baseName} (${counter})${extension}`;
           counter++;

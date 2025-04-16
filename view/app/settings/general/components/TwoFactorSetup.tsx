@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { useSetupTwoFactorMutation, useVerifyTwoFactorMutation, useDisableTwoFactorMutation } from '@/redux/services/users/authApi';
+import {
+  useSetupTwoFactorMutation,
+  useVerifyTwoFactorMutation,
+  useDisableTwoFactorMutation
+} from '@/redux/services/users/authApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -63,16 +67,10 @@ export function TwoFactorSetup() {
             <Alert>
               <CheckCircle2 className="h-4 w-4" />
               <AlertTitle>{t('settings.2fa.enabledTitle')}</AlertTitle>
-              <AlertDescription>
-                {t('settings.2fa.enabledDescription')}
-              </AlertDescription>
+              <AlertDescription>{t('settings.2fa.enabledDescription')}</AlertDescription>
             </Alert>
 
-            <Button 
-              onClick={handleDisable} 
-              variant="destructive"
-              className="w-full"
-            >
+            <Button onClick={handleDisable} variant="destructive" className="w-full">
               {t('settings.2fa.disableButton')}
             </Button>
           </div>
@@ -81,9 +79,7 @@ export function TwoFactorSetup() {
             <Alert>
               <Smartphone className="h-4 w-4" />
               <AlertTitle>{t('settings.2fa.title')}</AlertTitle>
-              <AlertDescription>
-                {t('settings.2fa.description')}
-              </AlertDescription>
+              <AlertDescription>{t('settings.2fa.description')}</AlertDescription>
             </Alert>
             <Button onClick={handleSetup} className="w-full">
               {t('settings.2fa.setupButton')}
@@ -93,18 +89,13 @@ export function TwoFactorSetup() {
           <div className="space-y-6">
             <div className="flex flex-col items-center space-y-4">
               <div className="rounded-lg border p-4">
-                <QRCodeSVG 
-                  value={setupData.qr_code} 
-                  size={200}
-                  level="H"
-                  includeMargin={true}
-                />
+                <QRCodeSVG value={setupData.qr_code} size={200} level="H" includeMargin={true} />
               </div>
               <p className="text-sm text-muted-foreground text-center">
                 {t('settings.2fa.description')}
               </p>
             </div>
-            
+
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>{t('settings.2fa.enterCode')}</Label>
@@ -115,8 +106,8 @@ export function TwoFactorSetup() {
                   className="w-full"
                 />
               </div>
-              <Button 
-                onClick={handleVerify} 
+              <Button
+                onClick={handleVerify}
                 className="w-full"
                 disabled={!code || code.length !== 6}
               >
@@ -128,4 +119,4 @@ export function TwoFactorSetup() {
       </CardContent>
     </Card>
   );
-} 
+}

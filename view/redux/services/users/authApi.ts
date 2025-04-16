@@ -1,6 +1,13 @@
 import { AUTHURLS } from '@/redux/api-conf';
 import { baseQueryWithReauth } from '@/redux/base-query';
-import { AuthResponse, LoginPayload, RefreshTokenPayload, TwoFactorLoginPayload, TwoFactorSetupResponse, User } from '@/redux/types/user';
+import {
+  AuthResponse,
+  LoginPayload,
+  RefreshTokenPayload,
+  TwoFactorLoginPayload,
+  TwoFactorSetupResponse,
+  User
+} from '@/redux/types/user';
 import { createApi } from '@reduxjs/toolkit/query/react';
 
 export const authApi = createApi({
@@ -84,7 +91,7 @@ export const authApi = createApi({
       transformResponse: (response: { data: TwoFactorSetupResponse }) => {
         return { ...response.data };
       },
-      invalidatesTags: [{ type: 'Authentication', id: 'LIST' }],
+      invalidatesTags: [{ type: 'Authentication', id: 'LIST' }]
     }),
     verifyTwoFactor: builder.mutation<void, { code: string }>({
       query: (body) => ({

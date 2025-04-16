@@ -23,22 +23,26 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     try {
-      const response = await loginUser({ email, password }).unwrap() as AuthResponse;
-      
+      const response = (await loginUser({ email, password }).unwrap()) as AuthResponse;
+
       if (response.temp_token) {
-        dispatch(setCredentials({
-          user: null,
-          token: response.temp_token,
-          tempToken: response.temp_token,
-          expiresIn: response.expires_in,
-        }));
+        dispatch(
+          setCredentials({
+            user: null,
+            token: response.temp_token,
+            tempToken: response.temp_token,
+            expiresIn: response.expires_in
+          })
+        );
       } else if (response.access_token) {
-        dispatch(setCredentials({
-          user: response.user,
-          token: response.access_token,
-          refreshToken: response.refresh_token,
-          expiresIn: response.expires_in,
-        }));
+        dispatch(
+          setCredentials({
+            user: response.user,
+            token: response.access_token,
+            refreshToken: response.refresh_token,
+            expiresIn: response.expires_in
+          })
+        );
         router.push('/dashboard');
       }
     } catch (error) {
@@ -48,15 +52,17 @@ export default function LoginPage() {
 
   const handleTwoFactorLogin = async () => {
     try {
-      const response = await twoFactorLogin({ email, password, code }).unwrap() as AuthResponse;
-      
+      const response = (await twoFactorLogin({ email, password, code }).unwrap()) as AuthResponse;
+
       if (response.access_token) {
-        dispatch(setCredentials({
-          user: response.user,
-          token: response.access_token,
-          refreshToken: response.refresh_token,
-          expiresIn: response.expires_in,
-        }));
+        dispatch(
+          setCredentials({
+            user: response.user,
+            token: response.access_token,
+            refreshToken: response.refresh_token,
+            expiresIn: response.expires_in
+          })
+        );
         router.push('/dashboard');
       }
     } catch (error) {

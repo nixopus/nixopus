@@ -1,13 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import {
-  getRefreshToken,
-  getToken,
-  isTokenExpired,
-  refreshAccessToken,
-  setAuthTokens,
-  clearAuthTokens
-} from './lib/auth';
+import { clearAuthTokens } from './lib/auth';
 import { defaultLocale, locales } from './lib/i18n/config';
 import { jwtDecode } from 'jwt-decode';
 
@@ -20,14 +13,12 @@ interface DecodedToken {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Handle auth token clearing
   if (pathname === '/logout') {
     const response = NextResponse.redirect(new URL('/login', request.url));
     clearAuthTokens(response);
     return response;
   }
 
-  // Define public paths that don't require authentication
   const publicPaths = [
     '/login',
     '/register',
@@ -40,13 +31,11 @@ export async function middleware(request: NextRequest) {
     '/login'
   ];
 
-  // Check if the path is public
   const isPublicPath = publicPaths.some((path) => pathname.includes(path));
   if (isPublicPath) {
     return NextResponse.next();
   }
 
-  // Handle special flows that don't require auth
   const isGitHubFlow =
     (pathname.includes('/self-host') || pathname.includes('/github-callback')) &&
     (request.nextUrl.searchParams.has('code') ||
@@ -73,8 +62,7 @@ export async function middleware(request: NextRequest) {
     if (decoded['2fa_enabled'] && !decoded['2fa_verified']) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
-  } catch (error) {
-    console.error('Error decoding token:', error);
+  } catch (error) {;
     return NextResponse.redirect(new URL('/login', request.url));
   }
 

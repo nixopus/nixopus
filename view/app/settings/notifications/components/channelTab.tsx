@@ -406,10 +406,7 @@ const ChannelTab: React.FC<ChannelTabProps> = ({
                         </FormLabel>
                       </div>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                     </FormItem>
                   )}

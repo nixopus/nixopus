@@ -33,7 +33,6 @@ export interface LoginPayload {
   password: string;
 }
 
-
 export interface TwoFactorSetupResponse {
   secret: string;
   qr_code: string;

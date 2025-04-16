@@ -24,7 +24,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ setIsDialogOpen, currentPath })
     setFiles([]);
     setIsDialogOpen(false);
   });
-  
+
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<UploadingFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,21 +46,19 @@ const FileUpload: React.FC<FileUploadProps> = ({ setIsDialogOpen, currentPath })
   const processFiles = async (newFiles: File[]) => {
     if (isUploading) return;
     setIsUploading(true);
-    
-    const uploadingFiles = newFiles.map(file => ({
+
+    const uploadingFiles = newFiles.map((file) => ({
       id: Math.random().toString(36).substring(7),
       file,
       progress: 0
     }));
 
-    setFiles(prev => [...prev, ...uploadingFiles]);
+    setFiles((prev) => [...prev, ...uploadingFiles]);
 
     try {
       for (const fileObj of uploadingFiles) {
         await handleFileUpload(fileObj.file, currentPath);
-        setFiles(prev => prev.map(f => 
-          f.id === fileObj.id ? { ...f, progress: 100 } : f
-        ));
+        setFiles((prev) => prev.map((f) => (f.id === fileObj.id ? { ...f, progress: 100 } : f)));
       }
     } catch (error) {
       console.error('Error processing files:', error);
@@ -85,7 +83,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ setIsDialogOpen, currentPath })
   };
 
   const deleteFile = (id: string) => {
-    setFiles(prev => prev.filter(f => f.id !== id));
+    setFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
   return (

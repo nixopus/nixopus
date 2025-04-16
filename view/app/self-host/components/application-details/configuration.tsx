@@ -71,9 +71,7 @@ export const DeployConfigureForm = ({
       <div className="space-y-2">
         <label className="text-sm font-medium">{label}</label>
         <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground overflow-hidden">
-          <div className={`${!isExpanded ? 'truncate' : ''}`}>
-            {displayValue}
-          </div>
+          <div className={`${!isExpanded ? 'truncate' : ''}`}>{displayValue}</div>
           {shouldShowMore && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}

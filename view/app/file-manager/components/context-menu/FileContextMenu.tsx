@@ -184,4 +184,4 @@ export function FileContextMenu({
       </ContextMenuContent>
     </ContextMenu>
   );
-} 
+}

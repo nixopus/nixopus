@@ -13,13 +13,7 @@ const ApplicationLogs = ({
   currentPage: number;
   setCurrentPage: (page: number) => void;
 }) => {
-  return (
-    <LogViewer
-      id={id}
-      currentPage={currentPage}
-      setCurrentPage={setCurrentPage}
-    />
-  );
+  return <LogViewer id={id} currentPage={currentPage} setCurrentPage={setCurrentPage} />;
 };
 
 export default ApplicationLogs;

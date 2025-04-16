@@ -1,4 +1,7 @@
-import { useGetApplicationLogsQuery, useGetDeploymentLogsQuery } from '@/redux/services/deploy/applicationsApi';
+import {
+  useGetApplicationLogsQuery,
+  useGetDeploymentLogsQuery
+} from '@/redux/services/deploy/applicationsApi';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ApplicationLogs, ApplicationLogsResponse } from '@/redux/types/applications';
 import { useApplicationWebSocket } from './use_application_websocket';
@@ -36,16 +39,16 @@ function useLogViewer({
 
     try {
       const parsedMessage = JSON.parse(message);
-      
+
       if (!parsedMessage?.topic || !parsedMessage?.data) return;
-      
+
       if (parsedMessage.topic.includes(SOCKET_EVENTS.MONITOR_APPLICATION_DEPLOYMENT)) {
         const { action, table, data } = parsedMessage.data;
-        
+
         if (!action || !table || !data) return;
-        
-        if ((action === "INSERT" || action === "UPDATE") && table === "application_logs") {
-          setAllLogs(prevLogs => [...prevLogs, data]);
+
+        if ((action === 'INSERT' || action === 'UPDATE') && table === 'application_logs') {
+          setAllLogs((prevLogs) => [...prevLogs, data]);
         }
       }
     } catch (error) {
@@ -53,19 +56,25 @@ function useLogViewer({
     }
   }, [message]);
 
-  const { data: applicationLogsResponse } = useGetApplicationLogsQuery({
-    id: id,
-    page: currentPage,
-    page_size: 100,
-    search_term: searchTerm
-  }, { skip: isDeployment || !id });
+  const { data: applicationLogsResponse } = useGetApplicationLogsQuery(
+    {
+      id: id,
+      page: currentPage,
+      page_size: 100,
+      search_term: searchTerm
+    },
+    { skip: isDeployment || !id }
+  );
 
-  const { data: deploymentLogsResponse } = useGetDeploymentLogsQuery({
-    id: id,
-    page: currentPage,
-    page_size: 100,
-    search_term: searchTerm
-  }, { skip: !isDeployment || !id });
+  const { data: deploymentLogsResponse } = useGetDeploymentLogsQuery(
+    {
+      id: id,
+      page: currentPage,
+      page_size: 100,
+      search_term: searchTerm
+    },
+    { skip: !isDeployment || !id }
+  );
 
   const logsResponse = isDeployment ? deploymentLogsResponse : applicationLogsResponse;
 
@@ -74,9 +83,9 @@ function useLogViewer({
       if (currentPage === 1) {
         setAllLogs(logsResponse.logs);
       } else {
-        setAllLogs(prevLogs => {
-          const newLogs = logsResponse.logs.filter(newLog =>
-            !prevLogs.some(prevLog => prevLog.id === newLog.id)
+        setAllLogs((prevLogs) => {
+          const newLogs = logsResponse.logs.filter(
+            (newLog) => !prevLogs.some((prevLog) => prevLog.id === newLog.id)
           );
           return [...newLogs, ...prevLogs];
         });
@@ -86,15 +95,17 @@ function useLogViewer({
 
   const filteredLogs = useMemo(() => {
     if (allLogs.length === 0) return '';
-    const sortedLogs = [...allLogs].sort((a, b) =>
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    const sortedLogs = [...allLogs].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
 
-    return sortedLogs.map((log: ApplicationLogs) => {
-      const date = new Date(log.created_at);
-      const timestamp = date.toLocaleString();
-      return `[${timestamp}] ${log.log}`;
-    }).join('\n');
+    return sortedLogs
+      .map((log: ApplicationLogs) => {
+        const date = new Date(log.created_at);
+        const timestamp = date.toLocaleString();
+        return `[${timestamp}] ${log.log}`;
+      })
+      .join('\n');
   }, [allLogs]);
 
   useEffect(() => {

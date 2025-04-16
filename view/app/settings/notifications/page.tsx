@@ -73,7 +73,7 @@ const Page: React.FC = () => {
         handleUpdateWebhookConfig({
           type: 'slack',
           webhook_url: data.webhook_url,
-          is_active: data.is_active === 'true',
+          is_active: data.is_active === 'true'
         });
       } else {
         toast.error(t('settings.notifications.page.permissions.update'));
@@ -82,7 +82,7 @@ const Page: React.FC = () => {
       if (canCreate) {
         handleCreateWebhookConfig({
           type: 'slack',
-          webhook_url: data.webhook_url,
+          webhook_url: data.webhook_url
         });
       } else {
         toast.error(t('settings.notifications.page.permissions.create'));
@@ -96,7 +96,7 @@ const Page: React.FC = () => {
         handleUpdateWebhookConfig({
           type: 'discord',
           webhook_url: data.webhook_url,
-          is_active: data.is_active === 'true',
+          is_active: data.is_active === 'true'
         });
       } else {
         toast.error(t('settings.notifications.page.permissions.update'));
@@ -105,7 +105,7 @@ const Page: React.FC = () => {
       if (canCreate) {
         handleCreateWebhookConfig({
           type: 'discord',
-          webhook_url: data.webhook_url,
+          webhook_url: data.webhook_url
         });
       } else {
         toast.error(t('settings.notifications.page.permissions.create'));
