@@ -13,6 +13,9 @@ jobs:
       issues: write
 
     steps:
+    - name: Set up PAT
+      env:
+        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
     - uses: actions/labeler@v4
       with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}" 
+        repo-token: "${{ secrets.PERSONAL_ACCESS_TOKEN }}" 
