@@ -140,7 +140,8 @@ func (m *EmailManager) SendEmailWithTemplate(userID string, data EmailData) erro
 }
 
 func (m *EmailManager) SendPasswordResetEmail(userID string, token string) error {
-	resetURL := fmt.Sprintf("http://localhost:3000/reset-password?token=%s", token)
+	viewURL := os.Getenv("ALLOWED_ORIGIN")
+	resetURL := fmt.Sprintf("%s/reset-password?token=%s", viewURL, token)
 	data := ResetEmailData{
 		ResetURL: resetURL,
 	}
@@ -173,7 +174,8 @@ func (m *EmailManager) SendVerificationEmail(userID string, token string) error 
 		return nil
 	}
 
-	verifyURL := fmt.Sprintf("http://localhost:3000/verify-email?token=%s", token)
+	viewURL := os.Getenv("ALLOWED_ORIGIN")
+	verifyURL := fmt.Sprintf("%s/verify-email?token=%s", viewURL, token)
 	data := VerificationEmailData{
 		VerifyURL: verifyURL,
 	}
