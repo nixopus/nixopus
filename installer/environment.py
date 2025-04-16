@@ -283,7 +283,10 @@ class EnvironmentSetup:
         view_env_file = self.project_root / "view" / ".env"
         with open(view_env_file, 'w') as f:
             for key, value in env_vars.items():
-                f.write(f"{key}={value}\n")
+                if key == "PORT":
+                    f.write(f"PORT={next_public_port}\n")
+                else:
+                    f.write(f"{key}={value}\n")
 
         self.env_file.chmod(0o600)
         private_key_path.chmod(0o600)
