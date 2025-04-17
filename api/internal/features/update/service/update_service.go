@@ -39,18 +39,17 @@ func (s *UpdateService) PerformUpdate() error {
 }
 
 func (s *UpdateService) GetUserAutoUpdatePreference(userID uuid.UUID) (bool, error) {
-	var settings struct {
-		AutoUpdate bool `bun:"auto_update"`
-	}
+	var autoUpdate bool
 
 	err := s.storage.Store.DB.NewSelect().
 		TableExpr("user_settings").
+		Column("auto_update").
 		Where("user_id = ?", userID).
-		Scan(s.ctx, &settings)
+		Scan(s.ctx, &autoUpdate)
 
 	if err != nil {
 		return false, fmt.Errorf("failed to get user settings: %w", err)
 	}
 
-	return settings.AutoUpdate, nil
+	return autoUpdate, nil
 }
