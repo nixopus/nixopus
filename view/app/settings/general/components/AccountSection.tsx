@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { User as UserType } from '@/redux/types/user';
+import { UserSettings, User as UserType } from '@/redux/types/user';
 import { ModeToggle } from '@/components/ui/theme-toggler';
 import { useSendVerificationEmailMutation } from '@/redux/services/users/authApi';
 import { useTranslation } from '@/hooks/use-translation';
@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { useFontSelection } from '@/hooks/use-font-selection';
+import { Switch } from '@/components/ui/switch';
 
 interface AccountSectionProps {
   username: string;
@@ -33,6 +33,16 @@ interface AccountSectionProps {
   isLoading: boolean;
   handleUsernameChange: () => void;
   user: UserType;
+  userSettings: UserSettings;
+  isGettingUserSettings: boolean;
+  isUpdatingFont: boolean;
+  isUpdatingTheme: boolean;
+  isUpdatingLanguage: boolean;
+  isUpdatingAutoUpdate: boolean;
+  handleThemeChange: (theme: string) => void;
+  handleLanguageChange: (language: string) => void;
+  handleAutoUpdateChange: (autoUpdate: boolean) => void;
+  handleFontUpdate: (fontFamily: string, fontSize: number) => Promise<void>;
 }
 
 function AccountSection({
@@ -44,14 +54,36 @@ function AccountSection({
   email,
   isLoading,
   handleUsernameChange,
-  user
+  user,
+  userSettings,
+  isGettingUserSettings,
+  isUpdatingFont,
+  isUpdatingTheme,
+  isUpdatingLanguage,
+  isUpdatingAutoUpdate,
+  handleThemeChange,
+  handleLanguageChange,
+  handleAutoUpdateChange,
+  handleFontUpdate  
 }: AccountSectionProps) {
   const { t } = useTranslation();
   const [sendVerificationEmail, { isLoading: isSendingVerification }] =
     useSendVerificationEmailMutation();
   const [verificationSent, setVerificationSent] = useState(false);
   const [verificationError, setVerificationError] = useState('');
-  const { selectedFont, handleFontChange } = useFontSelection();
+
+  const handleFontChange = async (value: string) => {
+    try {
+      await handleFontUpdate(value, userSettings.font_size || 16);
+      document.documentElement.style.setProperty('--font-sans', value);
+      document.documentElement.style.setProperty(
+        '--font-mono',
+        value === 'geist' ? 'var(--font-geist-mono)' : value
+      );
+    } catch (error) {
+      console.error('Failed to update font:', error);
+    }
+  };
 
   const handleSendVerification = async () => {
     try {
@@ -166,7 +198,11 @@ function AccountSection({
           </div>
           <div className="flex justify-between items-center">
             <p className="text-muted-foreground text-sm">{t('settings.preferences.font')}</p>
-            <Select value={selectedFont} onValueChange={handleFontChange}>
+            <Select 
+              value={userSettings.font_family || 'outfit'} 
+              onValueChange={handleFontChange}
+              disabled={isUpdatingFont}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder={t('settings.preferences.font')} />
               </SelectTrigger>
@@ -209,7 +245,29 @@ function AccountSection({
           <CardContent>
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-500">{t('settings.preferences.language.select')}</p>
-              <LanguageSwitcher />
+              <LanguageSwitcher
+                handleLanguageChange={handleLanguageChange}
+                isUpdatingLanguage={isUpdatingLanguage}
+                userSettings={userSettings}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('settings.preferences.autoUpdate.title')}</CardTitle>
+            <CardDescription>{t('settings.preferences.autoUpdate.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-500">{t('settings.preferences.autoUpdate.select')}</p>
+              <Switch
+                checked={userSettings.auto_update}
+                onCheckedChange={handleAutoUpdateChange}
+                disabled={isUpdatingAutoUpdate}
+              />
             </div>
           </CardContent>
         </Card>

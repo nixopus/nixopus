@@ -43,3 +43,33 @@ export interface TwoFactorLoginPayload {
   password: string;
   code: string;
 }
+
+export interface UserSettings {
+  id: string;
+  user_id: string;
+  font_family: string;
+  font_size: number;
+  theme: string;
+  language: string;
+  auto_update: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdateFontRequest {
+  font_family: string;
+  font_size: number;
+}
+
+export interface UpdateThemeRequest {
+  theme: string;
+}
+
+export interface UpdateLanguageRequest {
+  language: string;
+}
+
+export interface UpdateAutoUpdateRequest {
+  auto_update: boolean;
+}
+

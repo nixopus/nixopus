@@ -12,6 +12,7 @@ import {
   UserOrganization
 } from '@/redux/types/orgs';
 import { baseQueryWithReauth } from '@/redux/base-query';
+import { UserSettings, UpdateFontRequest, UpdateThemeRequest, UpdateLanguageRequest, UpdateAutoUpdateRequest } from '@/redux/types/user';
 
 export const userApi = createApi({
   reducerPath: 'userApi',
@@ -146,6 +147,51 @@ export const userApi = createApi({
         };
       },
       invalidatesTags: [{ type: 'User', id: 'LIST' }]
+    }),
+    getUserSettings: builder.query<UserSettings, void>({
+      query: () => ({
+        url: USERURLS.GET_SETTINGS,
+        method: 'GET'
+      }),
+      transformResponse: (response: { data: UserSettings }) => {
+        return response.data;
+      }
+    }),
+    updateFont: builder.mutation<UserSettings, UpdateFontRequest>({
+      query(payload) {
+        return {
+          url: USERURLS.UPDATE_FONT,
+          method: 'PATCH',
+          body: payload
+        };
+      }
+    }),
+    updateTheme: builder.mutation<UserSettings, UpdateThemeRequest>({
+      query(payload) {
+        return {
+          url: USERURLS.UPDATE_THEME,
+          method: 'PATCH',
+          body: payload
+        };
+      }
+    }),
+    updateLanguage: builder.mutation<UserSettings, UpdateLanguageRequest>({
+      query(payload) {
+        return {
+          url: USERURLS.UPDATE_LANGUAGE,
+          method: 'PATCH',
+          body: payload
+        };
+      }
+    }),
+    updateAutoUpdate: builder.mutation<UserSettings, UpdateAutoUpdateRequest>({
+      query(payload) {
+        return {
+          url: USERURLS.UPDATE_AUTO_UPDATE,
+          method: 'PATCH',
+          body: payload
+        };
+      }
     })
   })
 });
@@ -162,5 +208,10 @@ export const {
   useCreateUserMutation,
   useUpdateUserRoleMutation,
   useGetResourcesQuery,
-  useDeleteOrganizationMutation
+  useDeleteOrganizationMutation,
+  useGetUserSettingsQuery,
+  useUpdateFontMutation,
+  useUpdateThemeMutation,
+  useUpdateLanguageMutation,
+  useUpdateAutoUpdateMutation
 } = userApi;

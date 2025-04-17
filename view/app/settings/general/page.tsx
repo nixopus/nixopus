@@ -23,7 +23,17 @@ function Page() {
     handleUsernameChange,
     handlePasswordResetRequest,
     setUsername,
-    setUsernameError
+    setUsernameError,
+    userSettings,
+    isGettingUserSettings,
+    isUpdatingFont,
+    isUpdatingTheme,
+    isUpdatingLanguage,
+    isUpdatingAutoUpdate,
+    handleThemeChange,
+    handleLanguageChange,
+    handleAutoUpdateChange,
+    handleFontUpdate
   } = useGeneralSettings();
 
   return (
@@ -47,6 +57,26 @@ function Page() {
               isLoading={settingsLoading}
               handleUsernameChange={handleUsernameChange}
               user={user}
+              userSettings={userSettings || {
+                id: '0',
+                user_id: '0',
+                font_family: 'outfit',
+                font_size: 16,
+                language: 'en',
+                theme: 'light',
+                auto_update: true,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              }}
+              isGettingUserSettings={isGettingUserSettings}
+              isUpdatingFont={isUpdatingFont}
+              isUpdatingTheme={isUpdatingTheme}
+              isUpdatingLanguage={isUpdatingLanguage}
+              isUpdatingAutoUpdate={isUpdatingAutoUpdate}
+              handleThemeChange={handleThemeChange}
+              handleLanguageChange={handleLanguageChange}
+              handleAutoUpdateChange={handleAutoUpdateChange}
+              handleFontUpdate={handleFontUpdate}
             />
             <SecuritySection
               emailSent={emailSent}

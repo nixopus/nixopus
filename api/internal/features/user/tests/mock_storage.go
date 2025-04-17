@@ -26,3 +26,13 @@ func (m *MockUserStorage) UpdateUserName(userID string, userName string, updated
 	args := m.Called(userID, userName, updatedAt)
 	return args.Error(0)
 }
+
+func (m *MockUserStorage) GetUserSettings(userID string) (*shared_types.UserSettings, error) {
+	args := m.Called(userID)
+	return args.Get(0).(*shared_types.UserSettings), args.Error(1)
+}
+
+func (m *MockUserStorage) UpdateUserSettings(userID string, updates map[string]interface{}) (*shared_types.UserSettings, error) {
+	args := m.Called(userID, updates)
+	return args.Get(0).(*shared_types.UserSettings), args.Error(1)
+}

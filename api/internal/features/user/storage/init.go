@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/uptrace/bun"
@@ -18,6 +19,8 @@ type UserRepository interface {
 	GetUserById(id string) (*shared_types.User, error)
 	UpdateUserName(userID string, userName string, updatedAt time.Time) error
 	GetUserOrganizationsWithRolesAndPermissions(userID string) ([]types.UserOrganizationsResponse, error)
+	GetUserSettings(userID string) (*shared_types.UserSettings, error)
+	UpdateUserSettings(userID string, updates map[string]interface{}) (*shared_types.UserSettings, error)
 }
 
 func CreateNewUserStorage(db *bun.DB, ctx context.Context) *UserStorage {
@@ -118,4 +121,55 @@ func (s *UserStorage) GetUserOrganizationsWithRolesAndPermissions(userID string)
 	}
 
 	return response, nil
+}
+
+func (s *UserStorage) GetUserSettings(userID string) (*shared_types.UserSettings, error) {
+	var settings shared_types.UserSettings
+	err := s.DB.NewSelect().
+		Model(&settings).
+		Where("user_id = ?", userID).
+		Scan(s.Ctx)
+
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			defaultSettings := &shared_types.UserSettings{
+				ID:         uuid.New(),
+				UserID:     uuid.MustParse(userID),
+				FontFamily: "outfit",
+				FontSize:   16,
+				Language:   "en",
+				Theme:      "light",
+				AutoUpdate: true,
+				CreatedAt:  time.Now(),
+				UpdatedAt:  time.Now(),
+			}
+
+			_, err := s.DB.NewInsert().
+				Model(defaultSettings).
+				Exec(s.Ctx)
+			if err != nil {
+				return nil, err
+			}
+			return defaultSettings, nil
+		}
+		return nil, err
+	}
+	return &settings, nil
+}
+
+func (s *UserStorage) UpdateUserSettings(userID string, updates map[string]interface{}) (*shared_types.UserSettings, error) {
+	var settings shared_types.UserSettings
+	query := s.DB.NewUpdate().
+		Model(&settings).
+		Where("user_id = ?", userID)
+
+	for key, value := range updates {
+		query = query.Set(key+" = ?", value)
+	}
+
+	_, err := query.Returning("*").Exec(s.Ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &settings, nil
 }

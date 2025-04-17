@@ -23,7 +23,12 @@ export enum USERURLS {
   REQUEST_PASSWORD_RESET_LINK = 'v1/auth/request-password-reset',
   ORGANIZATION_USERS = 'v1/organizations/users',
   CREATE_USER = 'v1/auth/create-user',
-  GET_RESOURCES = 'v1/organizations/resources'
+  GET_RESOURCES = 'v1/organizations/resources',
+  GET_SETTINGS = 'v1/user/settings',
+  UPDATE_FONT = 'v1/user/settings/font',
+  UPDATE_THEME = 'v1/user/settings/theme',
+  UPDATE_LANGUAGE = 'v1/user/settings/language',
+  UPDATE_AUTO_UPDATE = 'v1/user/settings/auto-update'
 }
 
 export enum USER_NOTIFICATION_SETTINGS {

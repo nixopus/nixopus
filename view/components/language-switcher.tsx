@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { locales } from '@/lib/i18n/config';
 import {
   Select,
@@ -11,28 +10,40 @@ import {
 } from '@/components/ui/select';
 import { useTranslation } from '@/hooks/use-translation';
 import { useEffect, useState } from 'react';
+import { useUpdateLanguageMutation } from '@/redux/services/users/userApi';
+import { UserSettings } from '@/redux/types/user';
 
-export function LanguageSwitcher() {
-  const router = useRouter();
+interface LanguageSwitcherProps {
+  handleLanguageChange: (language: string) => void;
+  isUpdatingLanguage: boolean;
+  userSettings: UserSettings;
+}
+
+export function LanguageSwitcher({ handleLanguageChange, isUpdatingLanguage, userSettings }: LanguageSwitcherProps) {
   const { t } = useTranslation();
-  const [currentLocale, setCurrentLocale] = useState('en');
+  const [currentLocale, setCurrentLocale] = useState(userSettings?.language || 'en');
+  const [updateLanguage] = useUpdateLanguageMutation();
 
   useEffect(() => {
-    const cookie = document.cookie.split('; ').find((row) => row.startsWith('NEXT_LOCALE='));
-    if (cookie) {
-      const locale = cookie.split('=')[1];
-      setCurrentLocale(locale);
+    if (userSettings?.language) {
+      setCurrentLocale(userSettings.language);
     }
-  }, []);
+  }, [userSettings?.language]);
 
-  const handleLanguageChange = async (locale: string) => {
-    document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000; SameSite=Lax`;
-    setCurrentLocale(locale);
-    window.location.reload();
+  const handleChange = async (locale: string) => {
+    try {
+      await updateLanguage({ language: locale }).unwrap();
+      document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000; SameSite=Lax`;
+      setCurrentLocale(locale);
+      handleLanguageChange(locale);
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to update language:', error);
+    }
   };
 
   return (
-    <Select value={currentLocale} onValueChange={handleLanguageChange}>
+    <Select value={currentLocale} onValueChange={handleChange} disabled={isUpdatingLanguage}>
       <SelectTrigger className="w-[180px]">
         <SelectValue placeholder={t('settings.preferences.language.select')} />
       </SelectTrigger>

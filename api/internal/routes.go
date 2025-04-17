@@ -232,6 +232,11 @@ func (router *Router) UserRoutes(s *fuego.Server, userController *user.UserContr
 	fuego.Get(s, "", userController.GetUserDetails)
 	fuego.Patch(s, "/name", userController.UpdateUserName)
 	fuego.Get(s, "/organizations", userController.GetUserOrganizations)
+	fuego.Get(s, "/settings", userController.GetSettings)
+	fuego.Patch(s, "/settings/font", userController.UpdateFont)
+	fuego.Patch(s, "/settings/theme", userController.UpdateTheme)
+	fuego.Patch(s, "/settings/language", userController.UpdateLanguage)
+	fuego.Patch(s, "/settings/auto-update", userController.UpdateAutoUpdate)
 }
 
 func (router *Router) NotificationRoutes(s *fuego.Server, notificationController *notificationController.NotificationController) {

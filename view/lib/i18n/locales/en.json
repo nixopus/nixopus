@@ -104,6 +104,11 @@
         "outfit": "Outfit",
         "jakarta": "Plus Jakarta Sans",
         "system": "System"
+      },
+      "autoUpdate": {
+        "title": "Auto Update",
+        "description": "Automatically update nixopus when a new version is available",
+        "select": "Select auto update"
       }
     },
     "account": {

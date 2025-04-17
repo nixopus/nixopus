@@ -1,6 +1,11 @@
 import { useAppSelector } from '@/redux/hooks';
 import {
+  useGetUserSettingsQuery,
+  useUpdateFontMutation,
   useRequestPasswordResetLinkMutation,
+  useUpdateAutoUpdateMutation,
+  useUpdateLanguageMutation,
+  useUpdateThemeMutation,
   useUpdateUserNameMutation
 } from '@/redux/services/users/userApi';
 import { useState } from 'react';
@@ -21,6 +26,12 @@ function useGeneralSettings() {
   const [updateUserName, { isLoading: isUpdatingUsername }] = useUpdateUserNameMutation();
   const [requestPasswordResetLink, { isLoading: isRequestingPasswordReset }] =
     useRequestPasswordResetLinkMutation();
+
+  const { data: userSettings, isLoading: isGettingUserSettings,refetch: refetchUserSettings } = useGetUserSettingsQuery();
+  const [updateFont, { isLoading: isUpdatingFont }] = useUpdateFontMutation();
+  const [updateTheme, { isLoading: isUpdatingTheme }] = useUpdateThemeMutation();
+  const [updateLanguage, { isLoading: isUpdatingLanguage }] = useUpdateLanguageMutation();
+  const [updateAutoUpdate, { isLoading: isUpdatingAutoUpdate }] = useUpdateAutoUpdateMutation();
 
   const handleUsernameChange = async () => {
     if (username.trim() === '') {
@@ -62,6 +73,42 @@ function useGeneralSettings() {
     toast.error(t('settings.account.errors.imageNotImplemented'));
   };
 
+  const handleFontChange = async (fontFamily: string, fontSize: number) => {
+    try {
+      await updateFont({ font_family: fontFamily, font_size: fontSize });
+      refetchUserSettings();
+    } catch (error) {
+      console.error(t('settings.account.errors.fontUpdateFailed'), error);
+    }
+  };
+
+  const handleThemeChange = async (theme: string) => {
+    try {
+      await updateTheme({ theme });
+      refetchUserSettings();
+    } catch (error) {
+      console.error(t('settings.account.errors.themeUpdateFailed'), error);
+    }
+  };
+
+  const handleLanguageChange = async (language: string) => {
+    try {
+      await updateLanguage({ language });
+      refetchUserSettings();
+    } catch (error) {
+      console.error(t('settings.account.errors.languageUpdateFailed'), error);
+    }
+  };
+
+  const handleAutoUpdateChange = async (autoUpdate: boolean) => {
+    try {
+      await updateAutoUpdate({ auto_update: autoUpdate });
+      refetchUserSettings();
+    } catch (error) {
+      console.error(t('settings.account.errors.autoUpdateUpdateFailed'), error);
+    }
+  };
+
   return {
     onImageChange,
     username,
@@ -74,7 +121,17 @@ function useGeneralSettings() {
     handlePasswordResetRequest,
     setUsername,
     setUsernameError,
-    user
+    user,
+    userSettings,
+    isGettingUserSettings,
+    isUpdatingFont,
+    isUpdatingTheme,
+    isUpdatingLanguage,
+    isUpdatingAutoUpdate,
+    handleThemeChange,
+    handleLanguageChange,
+    handleAutoUpdateChange,
+    handleFontUpdate:handleFontChange
   };
 }
 
