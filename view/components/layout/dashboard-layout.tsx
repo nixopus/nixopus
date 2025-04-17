@@ -27,6 +27,7 @@ import { HelpCircle } from 'lucide-react';
 import { UpdateIcon } from '@radix-ui/react-icons';
 import { useAppSelector } from '@/redux/hooks';
 import { useCheckForUpdatesQuery, usePerformUpdateMutation } from '@/redux/services/users/userApi';
+import { toast } from 'sonner';
 
 enum TERMINAL_POSITION {
   BOTTOM = 'bottom',
@@ -77,8 +78,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     try {
       await checkForUpdates();
       await performUpdate();
+      toast.success('Update will run in the background');
     } catch (error) {
       console.error('Update failed:', error);
+      toast.error('Update failed, please try again');
     }
   };
 

@@ -12,7 +12,6 @@ import { initializeAuth } from '@/redux/features/users/authSlice';
 import { usePathname } from 'next/navigation';
 import { WebSocketProvider } from '@/hooks/socket-provider';
 import DashboardLayout from '@/components/layout/dashboard-layout';
-import { Tour } from '@/components/Tour';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

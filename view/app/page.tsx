@@ -8,7 +8,6 @@ export default function Home() {
   const router = useRouter();
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const isInitialized = useAppSelector((state) => state.auth.isInitialized);
-  const isLoading = useAppSelector((state) => state.auth.isLoading);
 
   useEffect(() => {
     if (isInitialized && isAuthenticated) {
