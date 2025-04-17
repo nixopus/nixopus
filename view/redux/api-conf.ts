@@ -28,7 +28,9 @@ export enum USERURLS {
   UPDATE_FONT = 'v1/user/settings/font',
   UPDATE_THEME = 'v1/user/settings/theme',
   UPDATE_LANGUAGE = 'v1/user/settings/language',
-  UPDATE_AUTO_UPDATE = 'v1/user/settings/auto-update'
+  UPDATE_AUTO_UPDATE = 'v1/user/settings/auto-update',
+  CHECK_FOR_UPDATES = 'v1/update/check',
+  PERFORM_UPDATE = 'v1/update'
 }
 
 export enum USER_NOTIFICATION_SETTINGS {

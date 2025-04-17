@@ -28,6 +28,8 @@ import (
 	permissions_storage "github.com/raghavyuva/nixopus-api/internal/features/permission/storage"
 	role_service "github.com/raghavyuva/nixopus-api/internal/features/role/service"
 	role_storage "github.com/raghavyuva/nixopus-api/internal/features/role/storage"
+	update "github.com/raghavyuva/nixopus-api/internal/features/update/controller"
+	update_service "github.com/raghavyuva/nixopus-api/internal/features/update/service"
 	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
 	"github.com/raghavyuva/nixopus-api/internal/middleware"
 	"github.com/raghavyuva/nixopus-api/internal/realtime"
@@ -179,6 +181,11 @@ func (router *Router) Routes() {
 	})
 	router.AuditRoutes(auditGroup, auditController)
 
+	updateService := update_service.NewUpdateService(router.app, &l, router.app.Ctx)
+	updateController := update.NewUpdateController(updateService, &l)
+	updateGroup := fuego.Group(apiV1Group, "/update")
+	router.UpdateRoutes(updateGroup, updateController)
+
 	server.Run()
 }
 
@@ -315,4 +322,9 @@ func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController
 
 func (router *Router) AuditRoutes(s *fuego.Server, auditController *audit.AuditController) {
 	fuego.Get(s, "/logs", auditController.GetRecentAuditLogs)
+}
+
+func (router *Router) UpdateRoutes(s *fuego.Server, updateController *update.UpdateController) {
+	fuego.Get(s, "/check", updateController.CheckForUpdates)
+	fuego.Post(s, "", updateController.PerformUpdate)
 }

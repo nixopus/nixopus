@@ -5,21 +5,7 @@ import sys
 import subprocess
 from pathlib import Path
 import shutil
-
-def install_git_package():
-    try:
-        import git
-    except ImportError:
-        print("Installing gitpython package...")
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "gitpython"])
-            print("gitpython package installed successfully!")
-        except subprocess.CalledProcessError:
-            print("Error: Failed to install gitpython package")
-            sys.exit(1)
-
-install_git_package()
-import git
+import json
 
 class Updater:
     def __init__(self):
@@ -48,33 +34,34 @@ class Updater:
         self.check_docker_compose_installed()
         print("System requirements check passed!")
     
-    def update_from_github(self):
-        print("\nUpdating from GitHub...")
-        try:
-            self.repo = git.Repo(self.project_root)
-            
-            self.repo.git.stash()
-            
-            self.repo.remotes.origin.pull()
-            
-            self.repo.git.stash('pop')
-            
-            print("GitHub update completed successfully!")
-        except Exception as e:
-            print(f"Error updating from GitHub: {str(e)}")
-            sys.exit(1)
-    
     def update_services(self):
         print("\nUpdating services...")
         try:
-            self.update_from_github()
             os.environ["DOCKER_HOST"] = "tcp://localhost:2376"
             os.environ["DOCKER_TLS_VERIFY"] = "1"
             os.environ["DOCKER_CERT_PATH"] = "/etc/nixopus/docker-certs"
             
             compose_cmd = ["docker", "compose"] if shutil.which("docker") else ["docker-compose"]
             
-            result = subprocess.run(compose_cmd + ["up", "--build", "-d"], capture_output=True, text=True, cwd=self.project_root)
+            pull_result = subprocess.run(
+                compose_cmd + ["pull"],
+                capture_output=True,
+                text=True,
+                cwd=self.project_root
+            )
+            
+            if pull_result.returncode != 0:
+                print("Error pulling images:")
+                print(pull_result.stderr)
+                sys.exit(1)
+            
+            result = subprocess.run(
+                compose_cmd + ["up", "--build", "-d"],
+                capture_output=True,
+                text=True,
+                cwd=self.project_root
+            )
+            
             if result.returncode != 0:
                 print("Error updating services:")
                 print(result.stderr)
@@ -88,24 +75,61 @@ class Updater:
     def verify_update(self):
         print("\nVerifying update...")
         try:
-            result = subprocess.run(["docker", "ps"], capture_output=True, text=True)
+            result = subprocess.run(["docker", "ps", "--format", "{{.Names}} {{.Status}}"], capture_output=True, text=True)
             if result.returncode != 0:
                 print("Error verifying update:")
                 print(result.stderr)
                 sys.exit(1)
                 
-            containers = result.stdout
-            required_containers = ["nixopus-api-container", "nixopus-db-container", "nixopus-view-container"]
+            running_containers = result.stdout.splitlines()
+            required_containers = {
+                "nixopus-api-container": "API service",
+                "nixopus-db-container": "Database service",
+                "nixopus-view-container": "View service",
+                "nixopus-caddy-container": "Caddy service"
+            }
             
-            for container in required_containers:
-                if container not in containers:
-                    print(f"Error: {container} is not running")
-                    sys.exit(1)
+            missing_containers = []
+            for container, service_name in required_containers.items():
+                container_running = any(
+                    line.startswith(container) and "Up" in line
+                    for line in running_containers
+                )
+                if not container_running:
+                    missing_containers.append(service_name)
 
-            print("Update verified successfully!")
+            if missing_containers:
+                print("Error: The following services are not running:")
+                for service in missing_containers:
+                    print(f"  - {service}")
+                sys.exit(1)
+
+            print("✓ All services are running successfully!")
         except Exception as e:
             print(f"Error verifying update: {str(e)}")
             sys.exit(1)
+    
+    def setup_caddy(self):
+        print("\nSetting up Proxy...")
+        try:
+            with open('api/helpers/caddy.json', 'r') as f:
+                config = json.dumps(json.load(f))
+            
+            result = subprocess.run(
+                ['curl', '-X', 'POST', 'http://localhost:2019/load',
+                 '-H', 'Content-Type: application/json',
+                 '-d', config],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                print("✓ Caddy configuration loaded successfully")
+            else:
+                print("✗ Failed to load Caddy configuration:")
+                print(result.stderr)
+        except Exception as e:
+            print(f"✗ Error setting up Caddy: {str(e)}")
 
 def main():
     updater = Updater()
@@ -127,6 +151,7 @@ def main():
     updater.check_system_requirements()
     updater.update_services()
     updater.verify_update()
+    updater.setup_caddy()
     
     print("\n\033[1mUpdate Complete!\033[0m")
     print("\n\033[1mYour Nixopus services have been successfully updated to the latest version.\033[0m")

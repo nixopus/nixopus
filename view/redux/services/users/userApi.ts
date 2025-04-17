@@ -192,6 +192,18 @@ export const userApi = createApi({
           body: payload
         };
       }
+    }),
+    checkForUpdates: builder.query<void, void>({
+      query: () => ({
+        url: USERURLS.CHECK_FOR_UPDATES,
+        method: 'GET'
+      })
+    }),
+    performUpdate: builder.mutation<void, void>({
+      query: () => ({
+        url: USERURLS.PERFORM_UPDATE,
+        method: 'POST'
+      })
     })
   })
 });
@@ -213,5 +225,7 @@ export const {
   useUpdateFontMutation,
   useUpdateThemeMutation,
   useUpdateLanguageMutation,
-  useUpdateAutoUpdateMutation
+  useUpdateAutoUpdateMutation,
+  useCheckForUpdatesQuery,
+  usePerformUpdateMutation
 } = userApi;

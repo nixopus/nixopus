@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { HelpCircle } from 'lucide-react';
 import { UpdateIcon } from '@radix-ui/react-icons';
 import { useAppSelector } from '@/redux/hooks';
+import { useCheckForUpdatesQuery, usePerformUpdateMutation } from '@/redux/services/users/userApi';
 
 enum TERMINAL_POSITION {
   BOTTOM = 'bottom',
@@ -54,6 +55,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [TerminalPosition, setTerminalPosition] = React.useState(TERMINAL_POSITION.BOTTOM);
   const [fitAddonRef, setFitAddonRef] = React.useState<any | null>(null);
   const { startTour } = useTour();
+  const { data: updateCheck, refetch: checkForUpdates } = useCheckForUpdatesQuery();
+  const [performUpdate] = usePerformUpdateMutation();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -70,8 +73,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isAdmin]);
 
-  const handleUpdate = () => {
-    console.log('update');
+  const handleUpdate = async () => {
+    try {
+      await checkForUpdates();
+      await performUpdate();
+    } catch (error) {
+      console.error('Update failed:', error);
+    }
   };
 
   return (
@@ -103,10 +111,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
             </div>
             <div className="flex items-center gap-4">
-              {/* <Button variant="outline" onClick={handleUpdate}>
+              <Button variant="outline" onClick={handleUpdate}>
                 <UpdateIcon className="h-4 w-4" />
                 {t('navigation.update')}
-              </Button> */}
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
