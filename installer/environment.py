@@ -241,7 +241,7 @@ class EnvironmentSetup:
         self.setup_docker_certs()
         self.setup_docker_tls()
 
-        env_vars = {
+        base_env_vars = {
             "DB_NAME": db_name,
             "USERNAME": username,
             "PASSWORD": password,
@@ -270,29 +270,27 @@ class EnvironmentSetup:
         }
 
         with open(self.env_file, 'w') as f:
-            for key, value in env_vars.items():
+            for key, value in base_env_vars.items():
                 f.write(f"{key}={value}\n")
 
-        # copy to api/.env
+        api_env_vars = base_env_vars.copy()
+        api_env_vars["PORT"] = str(api_port)
+
         api_env_file = self.project_root / "api" / ".env"
         with open(api_env_file, 'w') as f:
-            for key, value in env_vars.items():
+            for key, value in api_env_vars.items():
                 f.write(f"{key}={value}\n")
         
-        # copy to view/.env
+        view_env_vars = base_env_vars.copy()
+        view_env_vars["PORT"] = str(next_public_port)
+
         view_env_file = self.project_root / "view" / ".env"
+        print(f"Writing to {view_env_file} with {next_public_port} for PORT")
         with open(view_env_file, 'w') as f:
-            for key, value in env_vars.items():
-                if key == "PORT":
-                    f.write(f"PORT={next_public_port}\n")
-                else:
-                    f.write(f"{key}={value}\n")
+            for key, value in view_env_vars.items():
+                f.write(f"{key}={value}\n")
 
         self.env_file.chmod(0o600)
         private_key_path.chmod(0o600)
         public_key_path.chmod(0o644)
         self.docker_certs_dir.chmod(0o700)
-        for cert_file in self.docker_certs_dir.glob("*"):
-            cert_file.chmod(0o600)
-
-        return env_vars

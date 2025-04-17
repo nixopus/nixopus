@@ -67,7 +67,7 @@ services:
       - "${NEXT_PUBLIC_PORT:-7443}:${NEXT_PUBLIC_PORT:-7443}"
     restart: unless-stopped
     env_file:
-      - .env
+      - view/.env
     volumes:
       - ./logs:/app/logs
     networks:
