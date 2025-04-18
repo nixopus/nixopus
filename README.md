@@ -21,7 +21,7 @@ For complete documentation, visit our [Documentation Portal](https://docs.nixopu
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](https://docs.nixopus.com/contributing/index.md) for more details.
+We welcome contributions! Please see our [Contributing Guide](https://docs.nixopus.com/contributing/) for more details.
 
 ## 💖 Sponsorship
 
