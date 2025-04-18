@@ -1,0 +1,73 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+categories:
+  - title: '🚀 Features'
+    labels:
+      - 'feature'
+      - 'enhancement'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'bug'
+      - 'fix'
+  - title: '🧹 Chores'
+    labels:
+      - 'chore'
+      - 'maintenance'
+  - title: '📚 Documentation'
+    labels:
+      - 'documentation'
+      - 'docs'
+  - title: '🧪 Tests'
+    labels:
+      - 'test'
+      - 'testing'
+  - title: '🔧 Refactoring'
+    labels:
+      - 'refactor'
+      - 'refactoring'
+  - title: '🔒 Security'
+    labels:
+      - 'security'
+      - 'vulnerability'
+  - title: '🚨 Breaking Changes'
+    labels:
+      - 'breaking-change'
+      - 'breaking'
+
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+change-title-escapes: '\<*_&'
+
+template: |
+  ## Changes
+
+  $CHANGES
+
+  ## Contributors
+
+  $CONTRIBUTORS
+
+  ## Full Changelog
+
+  $FULL_CHANGELOG
+
+exclude-labels:
+  - 'skip-changelog'
+  - 'wip'
+  - 'draft'
+
+sort-by: 'MERGED_AT'
+sort-direction: 'descending'
+
+version-resolver:
+  major:
+    labels:
+      - 'major'
+  minor:
+    labels:
+      - 'minor'
+  patch:
+    labels:
+      - 'patch'
+  default: patch
+
+filter-by-commitish: true 
