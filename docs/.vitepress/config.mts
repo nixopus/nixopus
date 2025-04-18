@@ -9,7 +9,6 @@ const sidebar = useSidebar({
 export default defineConfigWithTheme({
   title: "Nixopus Docs",
   description: "documentation",
-  lastUpdated: true,
 
   themeConfig: {
     search: {
