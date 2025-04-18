@@ -1,4 +1,4 @@
-name: Container CI/CD
+name: Package Manager
 
 on:
   push:
