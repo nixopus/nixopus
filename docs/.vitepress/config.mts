@@ -9,6 +9,7 @@ const sidebar = useSidebar({
 export default defineConfigWithTheme({
   title: "Nixopus Docs",
   description: "documentation",
+  head: [['link', { rel: 'icon', href: '/favicon.png' }]],
 
   themeConfig: {
     search: {
@@ -42,7 +43,7 @@ export default defineConfigWithTheme({
       }
     },
     editLink: {
-      pattern: 'https://github.com/nixopus/nixopus/edit/main/docs/:path',
+      pattern: 'https://github.com/raghavyuva/nixopus/edit/master/docs/:path',
       text: "Edit this page on Github"
     },
     nav: [
