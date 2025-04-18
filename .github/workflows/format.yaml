@@ -1,0 +1,74 @@
+name: Format Nixopus
+
+on:
+  pull_request:
+    paths:
+      - 'api/**'
+      - 'view/**'
+  push:
+    branches:
+      - '*'
+    paths:
+      - 'api/**'
+      - 'view/**'
+
+jobs:
+  format-api:
+    name: Format API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          check-latest: true
+          cache: true
+          cache-dependency-path: api/go.sum
+      
+      - name: Run gofmt
+        working-directory: api
+        run: gofmt -l -w .
+      
+      - name: Commit API changes
+        if: github.event_name == 'pull_request'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'style(api): format Go code'
+          branch: ${{ github.head_ref }}
+          file_pattern: 'api/**/*.go'
+
+  format-view:
+    name: Format View
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: view/yarn.lock
+      
+      - name: Install Yarn
+        run: npm install -g yarn
+      
+      - name: Install dependencies
+        working-directory: view
+        run: yarn install --frozen-lockfile
+      
+      - name: Run Prettier
+        working-directory: view
+        run: yarn format
+      
+      - name: Commit View changes
+        if: github.event_name == 'pull_request'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'style(view): format frontend code'
+          branch: ${{ github.head_ref }}
+          file_pattern: 'view/**/*.{js,jsx,ts,tsx,css,md,json}'
