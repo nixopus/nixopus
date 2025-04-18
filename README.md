@@ -3,6 +3,7 @@
 <p align="center">
   <img src="./assets/nixopus_logo_transparent.png" alt="Nixopus Logo" width="300"/>
 </p>
+[![Security Scan](https://github.com/raghavyuva/nixopus/actions/workflows/security.yml/badge.svg)](https://github.com/raghavyuva/nixopus/actions/workflows/security.yml)
 
 ## Your All-in-One VPS Management Solution
 

@@ -16,6 +16,7 @@ jobs:
     - name: Set up PAT
       env:
         GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      run: echo "PAT set up"
     - uses: actions/labeler@v4
       with:
         repo-token: "${{ secrets.PERSONAL_ACCESS_TOKEN }}" 
