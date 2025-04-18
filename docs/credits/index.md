@@ -10,7 +10,7 @@ Special thanks to our community members who have provided valuable feedback, rep
 
 ## Sponsors
 We are grateful for the support of our sponsors, who help make the continued development of Nixopus possible:
-[View our sponsors](/sponsor)
+[View our sponsors](/sponsor/index.md)
 
 ---
 

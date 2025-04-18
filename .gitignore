@@ -4,3 +4,7 @@ api/bin/
 .env
 data
 node_modules
+.cache
+dist
+docs/.vitepress/dist
+docs/.vitepress/cache

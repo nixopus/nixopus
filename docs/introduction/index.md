@@ -23,4 +23,4 @@ This documentation provides a comprehensive guide to Nixopus's features and capa
 - Insights into our development roadmap and upcoming features
 - Our vision for continuous improvement and evolution
 
-Ready to dive in? Whether you're a first-time user or looking to explore advanced features, our documentation is designed to help you get the most out of Nixopus. Let's begin your journey with [Installation](/install).
+Ready to dive in? Whether you're a first-time user or looking to explore advanced features, our documentation is designed to help you get the most out of Nixopus. Let's begin your journey with [Installation](/install/index.md).

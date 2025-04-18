@@ -3,26 +3,24 @@ package controller
 import (
 	"net/http"
 
+	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// GetOrganizations godoc
-// @Summary Get all organizations
-// @Description Retrieves all organizations.
-// @Tags organization
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {array} types.Organization "Success response with organizations"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /organizations [get]
-func (c *OrganizationsController) GetOrganizations(w http.ResponseWriter, r *http.Request) {
+func (c *OrganizationsController) GetOrganizations(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	organizations, err := c.service.GetOrganizations()
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
-	utils.SendJSONResponse(w, "success", "Organizations fetched successfully", organizations)
+
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Organizations fetched successfully",
+		Data:    organizations,
+	}, nil
 }

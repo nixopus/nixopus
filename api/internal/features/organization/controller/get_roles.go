@@ -8,16 +8,6 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// GetRoles godoc
-// @Summary Get all roles with permissions
-// @Description Retrieves all roles with their permissions in the database
-// @Tags organization
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {array} types.Role "Success response with roles and permissions"
-// @Failure 500 {object} types.Response "Internal server error"
-// @Router /organizations/roles [get]
 func (c *OrganizationsController) GetRoles(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	c.logger.Log(logger.Info, "getting all roles with permissions", "")
 

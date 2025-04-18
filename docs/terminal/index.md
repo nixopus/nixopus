@@ -89,7 +89,7 @@ Drag the terminal's top edge to resize, similar to VS Code's terminal behavior.
 
 ### Themes and Fonts
 
-The terminal inherits your application's theme and font settings. Customize them in [Theme and Fonts](/themes-and-fonts).
+The terminal inherits your application's theme and font settings. Customize them in [Theme and Fonts](/preferences/index.md).
 
 ### Terminal Focus
 

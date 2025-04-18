@@ -82,6 +82,7 @@ func (router *Router) Routes() {
 	)
 
 	apiV1 := api.NewVersion(api.CurrentVersion)
+
 	healthGroup := fuego.Group(server, apiV1.Path+"/health")
 	router.BasicRoutes(healthGroup)
 
@@ -89,7 +90,8 @@ func (router *Router) Routes() {
 	notificationManager.Start()
 	deployController := deploy.NewDeployController(router.app.Store, router.app.Ctx, l, notificationManager)
 
-	fuego.Post(server, "/webhook/", deployController.HandleGithubWebhook)
+	webhookGroup := fuego.Group(server, apiV1.Path+"/webhook")
+	fuego.Post(webhookGroup, "", deployController.HandleGithubWebhook)
 
 	router.WebSocketServer(server, deployController)
 
@@ -120,18 +122,16 @@ func (router *Router) Routes() {
 		return middleware.AuditMiddleware(next, router.app, l)
 	})
 
-	apiV1Group := fuego.Group(server, apiV1.Path)
-
 	authProtectedGroup := fuego.Group(server, apiV1.Path+"/auth")
 	router.AuthenticatedAuthRoutes(authProtectedGroup, authController)
 
 	userController := user.NewUserController(router.app.Store, router.app.Ctx, l)
-	userGroup := fuego.Group(apiV1Group, "/user")
+	userGroup := fuego.Group(server, apiV1.Path+"/user")
 	router.UserRoutes(userGroup, userController)
 
 	domainController := domain.NewDomainsController(router.app.Store, router.app.Ctx, l, notificationManager)
-	domainGroup := fuego.Group(apiV1Group, "/domain")
-	domainsAllGroup := fuego.Group(apiV1Group, "/domains")
+	domainGroup := fuego.Group(server, apiV1.Path+"/domain")
+	domainsAllGroup := fuego.Group(server, apiV1.Path+"/domains")
 	fuego.Use(domainGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "domain")
 	})
@@ -141,41 +141,41 @@ func (router *Router) Routes() {
 	router.DomainRoutes(domainGroup, domainsAllGroup, domainController)
 
 	githubConnectorController := githubConnector.NewGithubConnectorController(router.app.Store, router.app.Ctx, l, notificationManager)
-	githubConnectorGroup := fuego.Group(apiV1Group, "/github-connector")
+	githubConnectorGroup := fuego.Group(server, apiV1.Path+"/github-connector")
 	fuego.Use(githubConnectorGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "github-connector")
 	})
 	router.GithubConnectorRoutes(githubConnectorGroup, githubConnectorController)
 
 	notifController := notificationController.NewNotificationController(router.app.Store, router.app.Ctx, l, notificationManager)
-	notificationGroup := fuego.Group(apiV1Group, "/notification")
+	notificationGroup := fuego.Group(server, apiV1.Path+"/notification")
 	fuego.Use(notificationGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "notification")
 	})
 	router.NotificationRoutes(notificationGroup, notifController)
 
 	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager)
-	organizationGroup := fuego.Group(apiV1Group, "/organizations")
+	organizationGroup := fuego.Group(server, apiV1.Path+"/organizations")
 	fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "organization")
 	})
 	router.OrganizationRoutes(organizationGroup, organizationController)
 
 	fileManagerController := file_manager.NewFileManagerController(router.app.Ctx, l, notificationManager)
-	fileManagerGroup := fuego.Group(apiV1Group, "/file-manager")
+	fileManagerGroup := fuego.Group(server, apiV1.Path+"/file-manager")
 	fuego.Use(fileManagerGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "file-manager")
 	})
 	router.FileManagerRoutes(fileManagerGroup, fileManagerController)
 
-	deployGroup := fuego.Group(apiV1Group, "/deploy")
+	deployGroup := fuego.Group(server, apiV1.Path+"/deploy")
 	fuego.Use(deployGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "deploy")
 	})
 	router.DeployRoutes(deployGroup, deployController)
 
 	auditController := audit.NewAuditController(router.app.Store.DB, router.app.Ctx, l)
-	auditGroup := fuego.Group(apiV1Group, "/audit")
+	auditGroup := fuego.Group(server, apiV1.Path+"/audit")
 	fuego.Use(auditGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "audit")
 	})
@@ -183,7 +183,7 @@ func (router *Router) Routes() {
 
 	updateService := update_service.NewUpdateService(router.app, &l, router.app.Ctx)
 	updateController := update.NewUpdateController(updateService, &l)
-	updateGroup := fuego.Group(apiV1Group, "/update")
+	updateGroup := fuego.Group(server, apiV1.Path+"/update")
 	router.UpdateRoutes(updateGroup, updateController)
 
 	server.Run()

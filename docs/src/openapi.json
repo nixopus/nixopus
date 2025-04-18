@@ -1,9 +1,40 @@
 {
     "components": {
         "schemas": {
+            "AddUserToOrganizationRequest": {
+                "description": "AddUserToOrganizationRequest schema",
+                "properties": {
+                    "organization_id": {
+                        "type": "string"
+                    },
+                    "role_id": {
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "CopyDirectory": {
+                "description": "CopyDirectory schema",
+                "properties": {
+                    "from_path": {
+                        "type": "string"
+                    },
+                    "to_path": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "CreateDeploymentRequest": {
                 "description": "CreateDeploymentRequest schema",
                 "properties": {
+                    "base_path": {
+                        "nullable": true,
+                        "type": "string"
+                    },
                     "branch": {
                         "type": "string"
                     },
@@ -93,6 +124,18 @@
                 },
                 "type": "object"
             },
+            "CreateOrganizationRequest": {
+                "description": "CreateOrganizationRequest schema",
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "CreateSMTPConfigRequest": {
                 "description": "CreateSMTPConfigRequest schema",
                 "properties": {
@@ -118,10 +161,34 @@
                 },
                 "type": "object"
             },
+            "CreateWebhookConfigRequest": {
+                "description": "CreateWebhookConfigRequest schema",
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    },
+                    "webhook_url": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "type"
+                ],
+                "type": "object"
+            },
             "DeleteDeploymentRequest": {
                 "description": "DeleteDeploymentRequest schema",
                 "properties": {
                     "id": {}
+                },
+                "type": "object"
+            },
+            "DeleteDirectoryRequest": {
+                "description": "DeleteDirectoryRequest schema",
+                "properties": {
+                    "path": {
+                        "type": "string"
+                    }
                 },
                 "type": "object"
             },
@@ -134,10 +201,46 @@
                 },
                 "type": "object"
             },
+            "DeleteOrganizationRequest": {
+                "description": "DeleteOrganizationRequest schema",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "DeleteSMTPConfigRequest": {
                 "description": "DeleteSMTPConfigRequest schema",
                 "properties": {
                     "id": {}
+                },
+                "type": "object"
+            },
+            "DeleteWebhookConfigRequest": {
+                "description": "DeleteWebhookConfigRequest schema",
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "type"
+                ],
+                "type": "object"
+            },
+            "GetApplicationDeploymentsRequest": {
+                "description": "GetApplicationDeploymentsRequest schema",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "limit": {
+                        "type": "string"
+                    },
+                    "page": {
+                        "type": "string"
+                    }
                 },
                 "type": "object"
             },
@@ -300,6 +403,18 @@
                 },
                 "type": "object"
             },
+            "RemoveUserFromOrganizationRequest": {
+                "description": "RemoveUserFromOrganizationRequest schema",
+                "properties": {
+                    "organization_id": {
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "ResetPasswordRequest": {
                 "description": "ResetPasswordRequest schema",
                 "properties": {
@@ -343,9 +458,65 @@
                 },
                 "type": "object"
             },
+            "TwoFactorLoginRequest": {
+                "description": "TwoFactorLoginRequest schema",
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "TwoFactorVerifyRequest": {
+                "description": "TwoFactorVerifyRequest schema",
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateAutoUpdateRequest": {
+                "description": "UpdateAutoUpdateRequest schema",
+                "properties": {
+                    "auto_update": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateCheckResponse": {
+                "description": "UpdateCheckResponse schema",
+                "properties": {
+                    "current_version": {
+                        "type": "string"
+                    },
+                    "last_checked": {
+                        "format": "date-time",
+                        "type": "string"
+                    },
+                    "latest_version": {
+                        "type": "string"
+                    },
+                    "update_available": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
             "UpdateDeploymentRequest": {
                 "description": "UpdateDeploymentRequest schema",
                 "properties": {
+                    "base_path": {
+                        "nullable": true,
+                        "type": "string"
+                    },
                     "build_variables": {
                         "additionalProperties": {
                             "type": "string"
@@ -402,10 +573,46 @@
                 },
                 "type": "object"
             },
+            "UpdateFontRequest": {
+                "description": "UpdateFontRequest schema",
+                "properties": {
+                    "font_family": {
+                        "type": "string"
+                    },
+                    "font_size": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
             "UpdateGithubConnectorRequest": {
                 "description": "UpdateGithubConnectorRequest schema",
                 "properties": {
                     "installation_id": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateLanguageRequest": {
+                "description": "UpdateLanguageRequest schema",
+                "properties": {
+                    "language": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateOrganizationRequest": {
+                "description": "UpdateOrganizationRequest schema",
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
                         "type": "string"
                     }
                 },
@@ -428,6 +635,27 @@
                     "category",
                     "type"
                 ],
+                "type": "object"
+            },
+            "UpdateRequest": {
+                "description": "UpdateRequest schema",
+                "properties": {
+                    "force": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateResponse": {
+                "description": "UpdateResponse schema",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "success": {
+                        "type": "boolean"
+                    }
+                },
                 "type": "object"
             },
             "UpdateSMTPConfigRequest": {
@@ -462,6 +690,15 @@
                 },
                 "type": "object"
             },
+            "UpdateThemeRequest": {
+                "description": "UpdateThemeRequest schema",
+                "properties": {
+                    "theme": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "UpdateUserNameRequest": {
                 "description": "UpdateUserNameRequest schema",
                 "properties": {
@@ -471,8 +708,51 @@
                 },
                 "type": "object"
             },
+            "UpdateUserRoleRequest": {
+                "description": "UpdateUserRoleRequest schema",
+                "properties": {
+                    "organization_id": {
+                        "type": "string"
+                    },
+                    "role_name": {
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateWebhookConfigRequest": {
+                "description": "UpdateWebhookConfigRequest schema",
+                "properties": {
+                    "is_active": {
+                        "nullable": true,
+                        "type": "boolean"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "webhook_url": {
+                        "nullable": true,
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "type"
+                ],
+                "type": "object"
+            },
             "unknown-interface": {
                 "description": "unknown-interface schema"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "bearerFormat": "JWT",
+                "description": "Enter your JWT token in the format: Bearer \u003ctoken\u003e",
+                "scheme": "bearer",
+                "type": "http"
             }
         }
     },
@@ -483,9 +763,158 @@
     },
     "openapi": "3.1.0",
     "paths": {
+        "/api/v1/audit/logs": {
+            "get": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/audit/controller.(*AuditController).GetRecentAuditLogs`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func10`\n\n---\n\n",
+                "operationId": "GET_/api/v1/audit/logs",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "get recent audit logs",
+                "tags": [
+                    "api/v1/audit"
+                ]
+            }
+        },
+        "/api/v1/auth/2fa-login": {
+            "post": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).TwoFactorLogin`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
+                "operationId": "POST_/api/v1/auth/2fa-login",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TwoFactorLoginRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for types.TwoFactorLoginRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "two factor login",
+                "tags": [
+                    "api/v1/auth"
+                ]
+            }
+        },
         "/api/v1/auth/create-user": {
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).CreateUser`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).CreateUser`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
                 "operationId": "POST_/api/v1/auth/create-user",
                 "parameters": [
                     {
@@ -558,6 +987,75 @@
                     }
                 },
                 "summary": "create user",
+                "tags": [
+                    "api/v1/auth"
+                ]
+            }
+        },
+        "/api/v1/auth/disable-2fa": {
+            "post": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).DisableTwoFactor`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
+                "operationId": "POST_/api/v1/auth/disable-2fa",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "disable two factor",
                 "tags": [
                     "api/v1/auth"
                 ]
@@ -645,7 +1143,7 @@
         },
         "/api/v1/auth/logout": {
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).Logout`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).Logout`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
                 "operationId": "POST_/api/v1/auth/logout",
                 "parameters": [
                     {
@@ -725,7 +1223,7 @@
         },
         "/api/v1/auth/refresh-token": {
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).RefreshToken`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).RefreshToken`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
                 "operationId": "POST_/api/v1/auth/refresh-token",
                 "parameters": [
                     {
@@ -885,7 +1383,7 @@
         },
         "/api/v1/auth/request-password-reset": {
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).GeneratePasswordResetLink`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).GeneratePasswordResetLink`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
                 "operationId": "POST_/api/v1/auth/request-password-reset",
                 "parameters": [
                     {
@@ -954,7 +1452,7 @@
         },
         "/api/v1/auth/reset-password": {
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).ResetPassword`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).ResetPassword`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
                 "operationId": "POST_/api/v1/auth/reset-password",
                 "parameters": [
                     {
@@ -1034,7 +1532,7 @@
         },
         "/api/v1/auth/send-verification-email": {
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).SendVerificationEmail`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).SendVerificationEmail`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
                 "operationId": "POST_/api/v1/auth/send-verification-email",
                 "parameters": [
                     {
@@ -1101,10 +1599,159 @@
                 ]
             }
         },
-        "/api/v1/auth/verify-email": {
+        "/api/v1/auth/setup-2fa": {
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).VerifyEmail`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
-                "operationId": "POST_/api/v1/auth/verify-email",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).SetupTwoFactor`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
+                "operationId": "POST_/api/v1/auth/setup-2fa",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "setup two factor",
+                "tags": [
+                    "api/v1/auth"
+                ]
+            }
+        },
+        "/api/v1/auth/verify-2fa": {
+            "post": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).VerifyTwoFactor`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
+                "operationId": "POST_/api/v1/auth/verify-2fa",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TwoFactorVerifyRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for types.TwoFactorVerifyRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "verify two factor",
+                "tags": [
+                    "api/v1/auth"
+                ]
+            }
+        },
+        "/api/v1/auth/verify-email": {
+            "get": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).VerifyEmail`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
+                "operationId": "GET_/api/v1/auth/verify-email",
                 "parameters": [
                     {
                         "in": "header",
@@ -1172,18 +1819,9 @@
         },
         "/api/v1/deploy/application": {
             "delete": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).DeleteApplication`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).DeleteApplication`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func9`\n\n---\n\n",
                 "operationId": "DELETE_/api/v1/deploy/application",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -1255,24 +1893,14 @@
                 },
                 "summary": "delete application",
                 "tags": [
-                    "api/v1",
-                    "deploy",
+                    "api/v1/deploy",
                     "application"
                 ]
             },
             "get": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetApplicationById`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetApplicationById`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func9`\n\n---\n\n",
                 "operationId": "GET_/api/v1/deploy/application",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -1333,24 +1961,14 @@
                 },
                 "summary": "get application by id",
                 "tags": [
-                    "api/v1",
-                    "deploy",
+                    "api/v1/deploy",
                     "application"
                 ]
             },
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleDeploy`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleDeploy`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func9`\n\n---\n\n",
                 "operationId": "POST_/api/v1/deploy/application",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -1422,24 +2040,14 @@
                 },
                 "summary": "handle deploy",
                 "tags": [
-                    "api/v1",
-                    "deploy",
+                    "api/v1/deploy",
                     "application"
                 ]
             },
             "put": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).UpdateApplication`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).UpdateApplication`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func9`\n\n---\n\n",
                 "operationId": "PUT_/api/v1/deploy/application",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -1511,26 +2119,97 @@
                 },
                 "summary": "update application",
                 "tags": [
-                    "api/v1",
-                    "deploy",
+                    "api/v1/deploy",
+                    "application"
+                ]
+            }
+        },
+        "/api/v1/deploy/application/deployments": {
+            "get": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetApplicationDeployments`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func9`\n\n---\n\n",
+                "operationId": "GET_/api/v1/deploy/application/deployments",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GetApplicationDeploymentsRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for controller.GetApplicationDeploymentsRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "get application deployments",
+                "tags": [
+                    "api/v1/deploy",
                     "application"
                 ]
             }
         },
         "/api/v1/deploy/application/deployments/{deployment_id}": {
             "get": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetDeploymentById`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetDeploymentById`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func9`\n\n---\n\n",
                 "operationId": "GET_/api/v1/deploy/application/deployments/:deployment_id",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -1599,26 +2278,172 @@
                 },
                 "summary": "get deployment by id",
                 "tags": [
-                    "api/v1",
-                    "deploy",
+                    "api/v1/deploy",
+                    "application"
+                ]
+            }
+        },
+        "/api/v1/deploy/application/deployments/{deployment_id}/logs": {
+            "get": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetDeploymentLogs`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func9`\n\n---\n\n",
+                "operationId": "GET_/api/v1/deploy/application/deployments/:deployment_id/logs",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "deployment_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "get deployment logs",
+                "tags": [
+                    "api/v1/deploy",
+                    "application"
+                ]
+            }
+        },
+        "/api/v1/deploy/application/logs/{application_id}": {
+            "get": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetLogs`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func9`\n\n---\n\n",
+                "operationId": "GET_/api/v1/deploy/application/logs/:application_id",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "application_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "get logs",
+                "tags": [
+                    "api/v1/deploy",
                     "application"
                 ]
             }
         },
         "/api/v1/deploy/application/redeploy": {
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).ReDeployApplication`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).ReDeployApplication`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func9`\n\n---\n\n",
                 "operationId": "POST_/api/v1/deploy/application/redeploy",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -1690,26 +2515,16 @@
                 },
                 "summary": "re deploy application",
                 "tags": [
-                    "api/v1",
-                    "deploy",
+                    "api/v1/deploy",
                     "application"
                 ]
             }
         },
         "/api/v1/deploy/application/restart": {
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleRestart`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleRestart`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func9`\n\n---\n\n",
                 "operationId": "POST_/api/v1/deploy/application/restart",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -1781,26 +2596,16 @@
                 },
                 "summary": "handle restart",
                 "tags": [
-                    "api/v1",
-                    "deploy",
+                    "api/v1/deploy",
                     "application"
                 ]
             }
         },
         "/api/v1/deploy/application/rollback": {
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleRollback`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleRollback`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func9`\n\n---\n\n",
                 "operationId": "POST_/api/v1/deploy/application/rollback",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -1872,26 +2677,16 @@
                 },
                 "summary": "handle rollback",
                 "tags": [
-                    "api/v1",
-                    "deploy",
+                    "api/v1/deploy",
                     "application"
                 ]
             }
         },
         "/api/v1/deploy/applications": {
             "get": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetApplications`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetApplications`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func9`\n\n---\n\n",
                 "operationId": "GET_/api/v1/deploy/applications",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -1963,25 +2758,15 @@
                 },
                 "summary": "get applications",
                 "tags": [
-                    "api/v1",
-                    "deploy"
+                    "api/v1/deploy"
                 ]
             }
         },
         "/api/v1/domain": {
             "delete": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).DeleteDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).DeleteDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func4`\n\n---\n\n",
                 "operationId": "DELETE_/api/v1/domain",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -2053,23 +2838,13 @@
                 },
                 "summary": "delete domain",
                 "tags": [
-                    "api/v1",
-                    "domain"
+                    "api/v1/domain"
                 ]
             },
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).CreateDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).CreateDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func4`\n\n---\n\n",
                 "operationId": "POST_/api/v1/domain",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -2141,23 +2916,13 @@
                 },
                 "summary": "create domain",
                 "tags": [
-                    "api/v1",
-                    "domain"
+                    "api/v1/domain"
                 ]
             },
             "put": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).UpdateDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).UpdateDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func4`\n\n---\n\n",
                 "operationId": "PUT_/api/v1/domain",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -2229,25 +2994,15 @@
                 },
                 "summary": "update domain",
                 "tags": [
-                    "api/v1",
-                    "domain"
+                    "api/v1/domain"
                 ]
             }
         },
         "/api/v1/domain/generate": {
             "get": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).GenerateRandomSubDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).GenerateRandomSubDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func4`\n\n---\n\n",
                 "operationId": "GET_/api/v1/domain/generate",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -2308,25 +3063,15 @@
                 },
                 "summary": "generate random sub domain",
                 "tags": [
-                    "api/v1",
-                    "domain"
+                    "api/v1/domain"
                 ]
             }
         },
         "/api/v1/domains": {
             "get": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).GetDomains`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).GetDomains`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func4`\n\n---\n\n",
                 "operationId": "GET_/api/v1/domains",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -2387,25 +3132,15 @@
                 },
                 "summary": "get domains",
                 "tags": [
-                    "api/v1",
-                    "domains"
+                    "api/v1/domains"
                 ]
             }
         },
         "/api/v1/file-manager": {
             "get": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).ListFiles`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal/middleware.IsAdmin`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).ListFiles`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func8`\n\n---\n\n",
                 "operationId": "GET_/api/v1/file-manager",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -2477,25 +3212,95 @@
                 },
                 "summary": "list files",
                 "tags": [
-                    "api/v1",
-                    "file-manager"
+                    "api/v1/file-manager"
+                ]
+            }
+        },
+        "/api/v1/file-manager/copy-directory": {
+            "post": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).CopyDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func8`\n\n---\n\n",
+                "operationId": "POST_/api/v1/file-manager/copy-directory",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CopyDirectory"
+                            }
+                        }
+                    },
+                    "description": "Request body for controller.CopyDirectory",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "copy directory",
+                "tags": [
+                    "api/v1/file-manager"
                 ]
             }
         },
         "/api/v1/file-manager/create-directory": {
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).CreateDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal/middleware.IsAdmin`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).CreateDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func8`\n\n---\n\n",
                 "operationId": "POST_/api/v1/file-manager/create-directory",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -2567,25 +3372,95 @@
                 },
                 "summary": "create directory",
                 "tags": [
-                    "api/v1",
-                    "file-manager"
+                    "api/v1/file-manager"
+                ]
+            }
+        },
+        "/api/v1/file-manager/delete-directory": {
+            "delete": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).DeleteDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func8`\n\n---\n\n",
+                "operationId": "DELETE_/api/v1/file-manager/delete-directory",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeleteDirectoryRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for controller.DeleteDirectoryRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "delete directory",
+                "tags": [
+                    "api/v1/file-manager"
                 ]
             }
         },
         "/api/v1/file-manager/move-directory": {
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).MoveDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal/middleware.IsAdmin`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).MoveDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func8`\n\n---\n\n",
                 "operationId": "POST_/api/v1/file-manager/move-directory",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -2657,25 +3532,84 @@
                 },
                 "summary": "move directory",
                 "tags": [
-                    "api/v1",
-                    "file-manager"
+                    "api/v1/file-manager"
+                ]
+            }
+        },
+        "/api/v1/file-manager/upload": {
+            "post": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).UploadFile`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func8`\n\n---\n\n",
+                "operationId": "POST_/api/v1/file-manager/upload",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "upload file",
+                "tags": [
+                    "api/v1/file-manager"
                 ]
             }
         },
         "/api/v1/github-connector": {
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).CreateGithubConnector`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).CreateGithubConnector`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func5`\n\n---\n\n",
                 "operationId": "POST_/api/v1/github-connector",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -2747,23 +3681,13 @@
                 },
                 "summary": "create github connector",
                 "tags": [
-                    "api/v1",
-                    "github-connector"
+                    "api/v1/github-connector"
                 ]
             },
             "put": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).UpdateGithubConnectorRequest`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).UpdateGithubConnectorRequest`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func5`\n\n---\n\n",
                 "operationId": "PUT_/api/v1/github-connector",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -2835,25 +3759,15 @@
                 },
                 "summary": "update github connector request",
                 "tags": [
-                    "api/v1",
-                    "github-connector"
+                    "api/v1/github-connector"
                 ]
             }
         },
         "/api/v1/github-connector/all": {
             "get": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).GetGithubConnectors`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).GetGithubConnectors`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func5`\n\n---\n\n",
                 "operationId": "GET_/api/v1/github-connector/all",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -2914,25 +3828,15 @@
                 },
                 "summary": "get github connectors",
                 "tags": [
-                    "api/v1",
-                    "github-connector"
+                    "api/v1/github-connector"
                 ]
             }
         },
         "/api/v1/github-connector/repositories": {
             "get": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).GetGithubRepositories`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).GetGithubRepositories`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func5`\n\n---\n\n",
                 "operationId": "GET_/api/v1/github-connector/repositories",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -2993,8 +3897,7 @@
                 },
                 "summary": "get github repositories",
                 "tags": [
-                    "api/v1",
-                    "github-connector"
+                    "api/v1/github-connector"
                 ]
             }
         },
@@ -3067,20 +3970,81 @@
                 ]
             }
         },
-        "/api/v1/notification/preferences": {
+        "/api/v1/health/versions": {
             "get": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).GetPreferences`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
-                "operationId": "GET_/api/v1/notification/preferences",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal.(*Router).BasicRoutes.func1`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
+                "operationId": "GET_/api/v1/health/versions",
                 "parameters": [
                     {
-                        "description": "Bearer token",
                         "in": "header",
-                        "name": "Authorization",
-                        "required": true,
+                        "name": "Accept",
                         "schema": {
                             "type": "string"
                         }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/unknown-interface"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/unknown-interface"
+                                }
+                            }
+                        },
+                        "description": "OK"
                     },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "func1",
+                "tags": [
+                    "api/v1/health",
+                    "versions"
+                ]
+            }
+        },
+        "/api/v1/notification/preferences": {
+            "get": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).GetPreferences`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func6`\n\n---\n\n",
+                "operationId": "GET_/api/v1/notification/preferences",
+                "parameters": [
                     {
                         "in": "header",
                         "name": "Accept",
@@ -3141,24 +4105,14 @@
                 },
                 "summary": "get preferences",
                 "tags": [
-                    "api/v1",
-                    "notification",
+                    "api/v1/notification",
                     "preferences"
                 ]
             },
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).UpdatePreference`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).UpdatePreference`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func6`\n\n---\n\n",
                 "operationId": "POST_/api/v1/notification/preferences",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -3230,26 +4184,16 @@
                 },
                 "summary": "update preference",
                 "tags": [
-                    "api/v1",
-                    "notification",
+                    "api/v1/notification",
                     "preferences"
                 ]
             }
         },
         "/api/v1/notification/smtp": {
             "delete": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).DeleteSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).DeleteSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func6`\n\n---\n\n",
                 "operationId": "DELETE_/api/v1/notification/smtp",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -3321,24 +4265,14 @@
                 },
                 "summary": "delete smtp",
                 "tags": [
-                    "api/v1",
-                    "notification",
+                    "api/v1/notification",
                     "smtp"
                 ]
             },
             "get": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).GetSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).GetSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func6`\n\n---\n\n",
                 "operationId": "GET_/api/v1/notification/smtp",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -3399,24 +4333,14 @@
                 },
                 "summary": "get smtp",
                 "tags": [
-                    "api/v1",
-                    "notification",
+                    "api/v1/notification",
                     "smtp"
                 ]
             },
             "post": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).AddSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).AddSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func6`\n\n---\n\n",
                 "operationId": "POST_/api/v1/notification/smtp",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -3488,24 +4412,14 @@
                 },
                 "summary": "add smtp",
                 "tags": [
-                    "api/v1",
-                    "notification",
+                    "api/v1/notification",
                     "smtp"
                 ]
             },
             "put": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).UpdateSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).UpdateSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func6`\n\n---\n\n",
                 "operationId": "PUT_/api/v1/notification/smtp",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -3577,26 +4491,947 @@
                 },
                 "summary": "update smtp",
                 "tags": [
-                    "api/v1",
-                    "notification",
+                    "api/v1/notification",
                     "smtp"
+                ]
+            }
+        },
+        "/api/v1/notification/webhook": {
+            "delete": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).DeleteWebhookConfig`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func6`\n\n---\n\n",
+                "operationId": "DELETE_/api/v1/notification/webhook",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeleteWebhookConfigRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for notification.DeleteWebhookConfigRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "delete webhook config",
+                "tags": [
+                    "api/v1/notification",
+                    "webhook"
+                ]
+            },
+            "post": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).CreateWebhookConfig`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func6`\n\n---\n\n",
+                "operationId": "POST_/api/v1/notification/webhook",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateWebhookConfigRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for notification.CreateWebhookConfigRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "create webhook config",
+                "tags": [
+                    "api/v1/notification",
+                    "webhook"
+                ]
+            },
+            "put": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).UpdateWebhookConfig`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func6`\n\n---\n\n",
+                "operationId": "PUT_/api/v1/notification/webhook",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateWebhookConfigRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for notification.UpdateWebhookConfigRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "update webhook config",
+                "tags": [
+                    "api/v1/notification",
+                    "webhook"
+                ]
+            }
+        },
+        "/api/v1/notification/webhook/{type}": {
+            "get": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).GetWebhookConfig`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func6`\n\n---\n\n",
+                "operationId": "GET_/api/v1/notification/webhook/:type",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "type",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "get webhook config",
+                "tags": [
+                    "api/v1/notification",
+                    "webhook"
+                ]
+            }
+        },
+        "/api/v1/organizations": {
+            "delete": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/organization/controller.(*OrganizationsController).DeleteOrganization`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func7`\n\n---\n\n",
+                "operationId": "DELETE_/api/v1/organizations",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeleteOrganizationRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for types.DeleteOrganizationRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "delete organization",
+                "tags": [
+                    "api/v1/organizations"
+                ]
+            },
+            "post": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/organization/controller.(*OrganizationsController).CreateOrganization`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func7`\n\n---\n\n",
+                "operationId": "POST_/api/v1/organizations",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateOrganizationRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for types.CreateOrganizationRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "create organization",
+                "tags": [
+                    "api/v1/organizations"
+                ]
+            },
+            "put": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/organization/controller.(*OrganizationsController).UpdateOrganization`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func7`\n\n---\n\n",
+                "operationId": "PUT_/api/v1/organizations",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateOrganizationRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for types.UpdateOrganizationRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "update organization",
+                "tags": [
+                    "api/v1/organizations"
+                ]
+            }
+        },
+        "/api/v1/organizations/add-user": {
+            "post": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/organization/controller.(*OrganizationsController).AddUserToOrganization`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func7`\n\n---\n\n",
+                "operationId": "POST_/api/v1/organizations/add-user",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddUserToOrganizationRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for types.AddUserToOrganizationRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "add user to organization",
+                "tags": [
+                    "api/v1/organizations"
+                ]
+            }
+        },
+        "/api/v1/organizations/remove-user": {
+            "post": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/organization/controller.(*OrganizationsController).RemoveUserFromOrganization`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func7`\n\n---\n\n",
+                "operationId": "POST_/api/v1/organizations/remove-user",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RemoveUserFromOrganizationRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for types.RemoveUserFromOrganizationRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "remove user from organization",
+                "tags": [
+                    "api/v1/organizations"
+                ]
+            }
+        },
+        "/api/v1/organizations/resources": {
+            "get": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/organization/controller.(*OrganizationsController).GetResources`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func7`\n\n---\n\n",
+                "operationId": "GET_/api/v1/organizations/resources",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "get resources",
+                "tags": [
+                    "api/v1/organizations"
+                ]
+            }
+        },
+        "/api/v1/organizations/roles": {
+            "get": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/organization/controller.(*OrganizationsController).GetRoles`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func7`\n\n---\n\n",
+                "operationId": "GET_/api/v1/organizations/roles",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "get roles",
+                "tags": [
+                    "api/v1/organizations"
+                ]
+            }
+        },
+        "/api/v1/organizations/update-user-role": {
+            "post": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/organization/controller.(*OrganizationsController).UpdateUserRole`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func7`\n\n---\n\n",
+                "operationId": "POST_/api/v1/organizations/update-user-role",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateUserRoleRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for controller.UpdateUserRoleRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "update user role",
+                "tags": [
+                    "api/v1/organizations"
                 ]
             }
         },
         "/api/v1/organizations/users": {
             "get": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/organization/controller.(*OrganizationsController).GetOrganizationUsers`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/organization/controller.(*OrganizationsController).GetOrganizationUsers`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func7`\n\n---\n\n",
                 "operationId": "GET_/api/v1/organizations/users",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -3668,25 +5503,164 @@
                 },
                 "summary": "get organization users",
                 "tags": [
-                    "api/v1",
-                    "organizations"
+                    "api/v1/organizations"
+                ]
+            }
+        },
+        "/api/v1/update": {
+            "post": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/update/controller.(*UpdateController).PerformUpdate`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
+                "operationId": "POST_/api/v1/update",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for types.UpdateRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateResponse"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "perform update",
+                "tags": [
+                    "api/v1/update"
+                ]
+            }
+        },
+        "/api/v1/update/check": {
+            "get": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/update/controller.(*UpdateController).CheckForUpdates`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
+                "operationId": "GET_/api/v1/update/check",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateCheckResponse"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateCheckResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "check for updates",
+                "tags": [
+                    "api/v1/update"
                 ]
             }
         },
         "/api/v1/user": {
             "get": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/user/controller.(*UserController).GetUserDetails`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/user/controller.(*UserController).GetUserDetails`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
                 "operationId": "GET_/api/v1/user",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -3747,25 +5721,15 @@
                 },
                 "summary": "get user details",
                 "tags": [
-                    "api/v1",
-                    "user"
+                    "api/v1/user"
                 ]
             }
         },
         "/api/v1/user/name": {
             "patch": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/user/controller.(*UserController).UpdateUserName`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/user/controller.(*UserController).UpdateUserName`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
                 "operationId": "PATCH_/api/v1/user/name",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -3837,25 +5801,15 @@
                 },
                 "summary": "update user name",
                 "tags": [
-                    "api/v1",
-                    "user"
+                    "api/v1/user"
                 ]
             }
         },
         "/api/v1/user/organizations": {
             "get": {
-                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/user/controller.(*UserController).GetUserOrganizations`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n\n---\n\n",
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/user/controller.(*UserController).GetUserOrganizations`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
                 "operationId": "GET_/api/v1/user/organizations",
                 "parameters": [
-                    {
-                        "description": "Bearer token",
-                        "in": "header",
-                        "name": "Authorization",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "header",
                         "name": "Accept",
@@ -3916,8 +5870,465 @@
                 },
                 "summary": "get user organizations",
                 "tags": [
-                    "api/v1",
-                    "user"
+                    "api/v1/user"
+                ]
+            }
+        },
+        "/api/v1/user/settings": {
+            "get": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/user/controller.(*UserController).GetSettings`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
+                "operationId": "GET_/api/v1/user/settings",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "get settings",
+                "tags": [
+                    "api/v1/user"
+                ]
+            }
+        },
+        "/api/v1/user/settings/auto-update": {
+            "patch": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/user/controller.(*UserController).UpdateAutoUpdate`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
+                "operationId": "PATCH_/api/v1/user/settings/auto-update",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAutoUpdateRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for controller.UpdateAutoUpdateRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "update auto update",
+                "tags": [
+                    "api/v1/user"
+                ]
+            }
+        },
+        "/api/v1/user/settings/font": {
+            "patch": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/user/controller.(*UserController).UpdateFont`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
+                "operationId": "PATCH_/api/v1/user/settings/font",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateFontRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for controller.UpdateFontRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "update font",
+                "tags": [
+                    "api/v1/user"
+                ]
+            }
+        },
+        "/api/v1/user/settings/language": {
+            "patch": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/user/controller.(*UserController).UpdateLanguage`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
+                "operationId": "PATCH_/api/v1/user/settings/language",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateLanguageRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for controller.UpdateLanguageRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "update language",
+                "tags": [
+                    "api/v1/user"
+                ]
+            }
+        },
+        "/api/v1/user/settings/theme": {
+            "patch": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/user/controller.(*UserController).UpdateTheme`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func1`\n- `github.com/raghavyuva/nixopus-api/internal.(*Router).Routes.func2`\n\n---\n\n",
+                "operationId": "PATCH_/api/v1/user/settings/theme",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateThemeRequest"
+                            }
+                        }
+                    },
+                    "description": "Request body for controller.UpdateThemeRequest",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "update theme",
+                "tags": [
+                    "api/v1/user"
+                ]
+            }
+        },
+        "/api/v1/webhook": {
+            "post": {
+                "description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleGithubWebhook`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
+                "operationId": "POST_/api/v1/webhook",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Accept",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Response"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Bad Request _(validation or deserialization error)_"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            },
+                            "application/xml": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPError"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error _(panics)_"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "summary": "handle github webhook",
+                "tags": [
+                    "api/v1/webhook"
                 ]
             }
         },
@@ -3991,42 +6402,57 @@
     "servers": [
         {
             "description": "local server",
-            "url": "http://:8080"
+            "url": "http://localhost:8080/api/v1",
+            "variables": {
+                "ws": {
+                    "default": "ws://localhost:8080/api/v1/ws",
+                    "description": "WebSocket server URL"
+                }
+            }
         }
     ],
     "tags": [
         {
-            "name": "api/v1"
+            "name": "api/v1/audit"
         },
         {
             "name": "api/v1/auth"
         },
         {
+            "name": "api/v1/deploy"
+        },
+        {
+            "name": "api/v1/domain"
+        },
+        {
+            "name": "api/v1/domains"
+        },
+        {
+            "name": "api/v1/file-manager"
+        },
+        {
+            "name": "api/v1/github-connector"
+        },
+        {
             "name": "api/v1/health"
         },
         {
+            "name": "api/v1/notification"
+        },
+        {
+            "name": "api/v1/organizations"
+        },
+        {
+            "name": "api/v1/update"
+        },
+        {
+            "name": "api/v1/user"
+        },
+        {
+            "name": "api/v1/webhook"
+        },
+        {
             "name": "application"
-        },
-        {
-            "name": "deploy"
-        },
-        {
-            "name": "domain"
-        },
-        {
-            "name": "domains"
-        },
-        {
-            "name": "file-manager"
-        },
-        {
-            "name": "github-connector"
-        },
-        {
-            "name": "notification"
-        },
-        {
-            "name": "organizations"
         },
         {
             "name": "preferences"
@@ -4035,7 +6461,10 @@
             "name": "smtp"
         },
         {
-            "name": "user"
+            "name": "versions"
+        },
+        {
+            "name": "webhook"
         }
     ]
 }
