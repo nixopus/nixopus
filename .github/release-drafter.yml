@@ -55,7 +55,7 @@ exclude-labels:
   - 'wip'
   - 'draft'
 
-sort-by: 'MERGED_AT'
+sort-by: 'merged_at'
 sort-direction: 'descending'
 
 version-resolver:
