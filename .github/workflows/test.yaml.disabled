@@ -25,4 +25,4 @@ jobs:
       
       - name: Test API folder
         run: |
-          cd api && make test
+          cd api && make test 

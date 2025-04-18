@@ -2,21 +2,10 @@ name: Container CI/CD
 
 on:
   push:
-    branches: [ master ]
-    paths:
-      - 'api/**'
-      - 'view/**'
-      - 'docker-compose.yml'
-      - '.github/workflows/build_container.yml'
-      - '.env.sample'
-  pull_request:
-    branches: [ master ]
-    paths:
-      - 'api/**'
-      - 'view/**'
-      - 'docker-compose.yml'
-      - '.github/workflows/build_container.yml'
-      - '.env.sample'
+    tags:
+      - 'v*'
+  release:
+    types: [published]
 
 env:
   REGISTRY: ghcr.io
@@ -66,9 +55,9 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.API_IMAGE }}
           tags: |
             type=raw,value=latest
-            type=sha,format=short
-            type=ref,event=branch
-            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
 
       - name: Build and push API image
         uses: docker/build-push-action@v5
@@ -94,9 +83,9 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}
           tags: |
             type=raw,value=latest
-            type=sha,format=short
-            type=ref,event=branch
-            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
 
       - name: Build and push View image
         uses: docker/build-push-action@v5

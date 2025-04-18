@@ -1,33 +1,33 @@
-# name: Generate Changelog
+name: Generate Changelog
 
-# on:
-#   push:
-#     branches:
-#       - master
-#   release:
-#     types: [published]
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [published]
 
-# jobs:
-#   generate-changelog:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v4
-#         with:
-#           fetch-depth: 0
+jobs:
+  generate-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
-#       - name: Setup Node.js
-#         uses: actions/setup-node@v4
-#         with:
-#           node-version: '20'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       
-#       - name: Generate Changelog
-#         run: |
-#           npm install -g conventional-changelog-cli
-#           conventional-changelog -p angular -i CHANGELOG.md -s
-#           git config --global user.name 'github-actions[bot]'
-#           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-#           git add CHANGELOG.md
-#           git commit -m "chore: update changelog"
-#           git push
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+      - name: Generate Changelog
+        run: |
+          npm install -g conventional-changelog-cli
+          conventional-changelog -p angular -i CHANGELOG.md -s
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add CHANGELOG.md
+          git commit -m "chore: update changelog"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
