@@ -50,7 +50,7 @@ export default defineConfigWithTheme({
       { text: 'Get Started', link: '/install/index.md' }
     ],
     footer: {
-      message: 'Released under the MIT License.',
+      message: 'Released under the Apache License 2.0.',
       copyright: 'Copyright © 2025-present Nixopus'
     },
     sidebar: [
@@ -65,9 +65,9 @@ export default defineConfigWithTheme({
       {
         text: 'Features',
         items: [
+          { text: "Hosting Projects", link: "/self-host/index.md" },
           { text: 'Terminal', link: '/terminal/index.md' },
           { text: "File Manager", link: "/file-manager/index.md" },
-          { text: "Hosting Projects", link: "/self-host/index.md" },
           { text: "Notifications", link: "/notifications/index.md" }
         ]
       },
@@ -115,9 +115,7 @@ export default defineConfigWithTheme({
     ],
     socialLinks: [
       { icon: 'github', link: 'https://github.com/raghavyuva/nixopus' },
-      { icon: "discord", link: "https://github.com/raghavyuva/nixopus" },
-      { icon: "x", link: "https://github.com/raghavyuva/nixopus" },
-      { icon: "youtube", link: "https://github.com/raghavyuva/nixopus" },
+      { icon: "discord", link: "https://discord.gg/skdcq39Wpv" },
     ]
   }
 })

@@ -29,8 +29,6 @@ Getting Slack notifications is pretty straightforward. You'll need:
 | Field | Description |
 |-------|-------------|
 | Webhook URL | The unique URL provided by Slack for sending messages to your channel |
-| Client ID | Your Slack app's unique identifier for authentication |
-| Secret Key | A secure key that verifies the authenticity of your Slack app |
 
 Just add these and your Slack channel will start getting real-time updates.
 

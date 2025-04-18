@@ -251,7 +251,7 @@ class EnvironmentSetup:
             "API_PORT": str(api_port),
             "API_URL": f"https://api.{self.domain}/api",
             "WEBSOCKET_URL": f"wss://api.{self.domain}/ws",
-            "WEBHOOK_URL": f"https://api.{self.domain}/webhook",
+            "WEBHOOK_URL": f"https://api.{self.domain}/api/v1/webhook",
             "NEXT_PUBLIC_PORT": str(next_public_port),
             "MOUNT_PATH": "/etc/nixopus/configs",
             "PORT": str(api_port),

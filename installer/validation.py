@@ -21,7 +21,7 @@ class Validation:
         if len(password) < 8:
             print("Error: Password must be at least 8 characters long")
             sys.exit(1)
-        if not re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", password):
+        if not re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]{8,}$", password):
             print("Error: Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
             sys.exit(1)
         return password

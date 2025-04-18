@@ -36,7 +36,7 @@
                             "match": [
                                 {
                                     "host": [
-                                        "app.nixopus.com"
+                                        "{env.APP_DOMAIN}"
                                     ]
                                 }
                             ]
@@ -64,7 +64,7 @@
                             "match": [
                                 {
                                     "host": [
-                                        "api.nixopus.com"
+                                        "{env.API_DOMAIN}"
                                     ]
                                 }
                             ]

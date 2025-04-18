@@ -6,8 +6,6 @@ Thank you for your interest in contributing to Nixopus! This guide will help you
 
 1. [Code of Conduct](#code-of-conduct)
 2. [Development Setup](#development-setup)
-   - [Using Docker](#using-docker)
-   - [Manual Setup](#manual-setup)
 3. [Running the Application](#running-the-application)
 4. [Making Changes](#making-changes)
 5. [Submitting a Pull Request](#submitting-a-pull-request)
@@ -19,72 +17,7 @@ Thank you for your interest in contributing to Nixopus! This guide will help you
 
 Before contributing, please review and agree to our [Code of Conduct](/code-of-conduct/index.md). We're committed to maintaining a welcoming and inclusive community.
 
-## Development Setup
-
-### Using Docker
-
-For a quick and easy setup, you can use Docker and Docker Compose:
-
-1. Clone the repository:
-```bash
-git clone https://github.com/raghavyuva/nixopus.git
-cd nixopus
-```
-
-2. Copy the environment sample file:
-```bash
-cp .env.sample .env
-```
-
-3. Update the environment variables in `.env` as needed. Key variables include:
-```bash
-# API Configuration
-API_PORT=9999
-DB_NAME=postgres
-USERNAME=postgres
-PASSWORD=12344
-HOST_NAME=nixopus-db
-DB_PORT=5432
-SSL_MODE=disable
-
-# SSH Configuration (if needed)
-SSH_HOST=localhost
-SSH_PORT=22
-SSH_USER=root
-SSH_PASSWORD=1234
-
-# Redis Configuration
-REDIS_PORT=6379
-
-# Test Database Configuration
-TEST_DB_PORT=5433
-TEST_DB_USERNAME=nixopus
-TEST_DB_PASSWORD=nixopus
-TEST_DB_NAME=nixopus_test
-
-# View Configuration
-NEXT_PUBLIC_PORT=3000
-NEXT_PUBLIC_BASE_URL=http://localhost:9999/api
-```
-
-4. Start all services:
-```bash
-docker-compose up -d
-```
-
-This will start:
-- `nixopus-api`: The main API service (port 9999)
-- `nixopus-db`: PostgreSQL database (port 5432)
-- `nixopus-test-db`: Test database (port 5433)
-- `nixopus-view`: Frontend view service (port 3000)
-- `nixopus-caddy`: Proxy service
-
-5. Check service status:
-```bash
-docker-compose ps
-```
-
-### Manual Setup
+### Developmentg Setup
 
 If you prefer to set up your development environment manually:
 
@@ -94,7 +27,7 @@ git clone https://github.com/raghavyuva/nixopus.git
 cd nixopus
 ```
 
-2. Install Go (version 1.23.6 or newer), Redis, and PostgreSQL.
+2. Install Go (version 1.23.6 or newer), and PostgreSQL.
 
 3. Set up PostgreSQL databases:
 ```bash

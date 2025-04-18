@@ -10,10 +10,8 @@ from validation import Validation
 from environment import EnvironmentSetup
 import shutil
 import json
-import secrets
-import time
 import string
-import random
+import secrets
 
 class Installer:
     def __init__(self):
@@ -37,10 +35,9 @@ class Installer:
     
     def generate_strong_password(self):
         while True:
-            password = ''.join(random.choices(
-                string.ascii_letters + string.digits + string.punctuation,
-                k=16
-            ))
+            password = ''.join(secrets.choice(
+                string.ascii_letters + string.digits + string.punctuation
+            ) for _ in range(16))
             if (any(c.isupper() for c in password) and
                 any(c.islower() for c in password) and
                 any(c.isdigit() for c in password) and
@@ -182,31 +179,34 @@ class Installer:
     def setup_caddy(self):
         print("\nSetting up Proxy...")
         try:
-            with open('api/helpers/caddy.json', 'r') as f:
-                config = json.dumps(json.load(f))
+            with open('helpers/caddy.json', 'r') as f:
+                config = json.load(f)
+            
+            os.environ['APP_DOMAIN'] = f'app.{self.domain}'
+            os.environ['API_DOMAIN'] = f'api.{self.domain}'
             
             result = subprocess.run(
                 ['curl', '-X', 'POST', 'http://localhost:2019/load',
                  '-H', 'Content-Type: application/json',
-                 '-d', config],
+                 '-d', json.dumps(config)],
                 capture_output=True,
                 text=True
             )
             
             if result.returncode == 0:
-                print("✓ Caddy configuration loaded successfully")
+                print("Caddy configuration loaded successfully")
             else:
-                print("✗ Failed to load Caddy configuration:")
+                print("Failed to load Caddy configuration:")
                 print(result.stderr)
         except Exception as e:
-            print(f"✗ Error setting up Caddy: {str(e)}")
+            print(f"Error setting up Caddy: {str(e)}")
     
     def setup_admin(self, email, password, domain):
         print("\nSetting up admin...")
         username = email.split('@')[0]
         
         curl_command = [
-            "curl", "-X", "POST", "https://api.{domain}/api/v1/auth/register",
+            "curl", "-X", "POST", f"https://api.{domain}/api/v1/auth/register",
             "-H", "Content-Type: application/json",
             "-d", json.dumps({
                 "email": email,
@@ -220,22 +220,22 @@ class Installer:
         result = subprocess.run(curl_command, capture_output=True, text=True, check=False)
         
         if not result.stdout:
-            print("✗ No response received from server")
+            print("No response received from server")
             raise Exception("Empty response from server")
             
         try:
             response = json.loads(result.stdout)
             if response.get("status") == 200:
-                print("✓ Admin setup completed successfully")
+                print("Admin setup completed successfully")
                 return
             if response.get("title") == "Bad Request" and "admin already registered" in str(response):
-                print("✓ Admin already registered")
+                print("Admin already registered")
                 return
             error_msg = response.get("message", "Unknown error")
-            print(f"✗ API Error: {error_msg}")
+            print(f"API Error: {error_msg}")
             raise Exception(f"API Error: {error_msg}")
         except json.JSONDecodeError as e:
-            print(f"✗ Invalid JSON response: {result.stdout}")
+            print(f"Invalid JSON response: {result.stdout}")
             raise Exception(f"Invalid response from API: {str(e)}")
 
 def main():
@@ -266,7 +266,7 @@ def main():
     try:
         installer.setup_admin(email, password, domain)
     except Exception as e:
-        print(f"✗ {str(e)}")
+        print(f"{str(e)}")
         sys.exit(1)
     
     print("\n\033[1mInstallation Complete!\033[0m")
@@ -279,7 +279,7 @@ def main():
     print("\n\033[1mImportant:\033[0m Please save these credentials securely. You will need them to log in.")
     print("\n\033[1mThank you for installing Nixopus!\033[0m")
     print("\n\033[1mPlease visit the documentation at https://docs.nixopus.com for more information.\033[0m")
-    print("\n\033[1mIf you have any questions, please visit the community forum at https://community.nixopus.com\033[0m")
+    print("\n\033[1mIf you have any questions, please visit the community forum at https://discord.gg/skdcq39Wpv\033[0m")
     print("\n\033[1mSee you in the community!\033[0m")
 
 if __name__ == "__main__":

@@ -35,11 +35,6 @@ func (c *Caddy) Serve() error {
 		return fmt.Errorf("caddy is not running: %w", err)
 	}
 
-	currentConfig, err := c.GetConfig()
-	if err != nil {
-		return fmt.Errorf("failed to get current config: %w", err)
-	}
-
 	var handle interface{}
 	if c.FileServerType == FileServer {
 		handle = FileServerHandle{
@@ -77,28 +72,26 @@ func (c *Caddy) Serve() error {
 		Handle: []interface{}{handle},
 	}
 
-	if currentConfig.Apps.HTTP.Servers == nil {
-		currentConfig.Apps.HTTP.Servers = make(map[string]Server)
-	}
-	server := currentConfig.Apps.HTTP.Servers["nixopus"]
-
-	routeExists := false
-	for i, route := range server.Routes {
-		if len(route.Match) > 0 && len(route.Match[0].Host) > 0 && route.Match[0].Host[0] == c.Domain {
-			server.Routes[i] = routeConfig
-			routeExists = true
-			break
-		}
+	jsonData, err := json.Marshal([]Route{routeConfig})
+	if err != nil {
+		return fmt.Errorf("failed to marshal route config: %w", err)
 	}
 
-	if !routeExists {
-		server.Routes = append(server.Routes, routeConfig)
+	req, err := http.NewRequest("POST", c.Endpoint+"/config/apps/http/servers/nixopus/routes/...", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
 	}
+	req.Header.Set("Content-Type", "application/json")
 
-	currentConfig.Apps.HTTP.Servers["nixopus"] = server
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
 
-	if err := c.loadConfig(currentConfig); err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to append route: %s - %s", resp.Status, string(body))
 	}
 
 	c.Logger.Log(logger.Info, "Caddy server started successfully", "")
