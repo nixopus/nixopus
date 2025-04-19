@@ -182,73 +182,82 @@ export const DeployConfigureForm = ({
             description={t('selfHost.configuration.fields.applicationName.description')}
             placeholder={t('selfHost.configuration.fields.applicationName.label')}
           />
-          <FormInputField
-            form={form}
-            label={t('selfHost.configuration.fields.port.label')}
-            name="port"
-            description={t('selfHost.configuration.fields.port.description')}
-            placeholder="3000"
-            validator={(value) => parsePort(value) !== null}
-          />
-          <FormInputField
-            form={form}
-            label={t('selfHost.configuration.fields.basePath.label')}
-            name="base_path"
-            description={t('selfHost.configuration.fields.basePath.description')}
-            placeholder="/"
-            required={false}
-          />
-          <FormInputField
-            form={form}
-            label={t('selfHost.configuration.fields.dockerfilePath.label')}
-            name="DockerfilePath"
-            description={t('selfHost.configuration.fields.dockerfilePath.description')}
-            placeholder="Dockerfile"
-            required={false}
-          />
+          {build_pack !== BuildPack.Static && (
+            <FormInputField
+              form={form}
+              label={t('selfHost.configuration.fields.port.label')}
+              name="port"
+              description={t('selfHost.configuration.fields.port.description')}
+              placeholder="3000"
+              validator={(value) => parsePort(value) !== null}
+            />
+          )}
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <FormSelectTagInputField
-            form={form}
-            label={t('selfHost.configuration.fields.environmentVariables.label')}
-            name="environment_variables"
-            description={t('selfHost.configuration.fields.environmentVariables.description')}
-            placeholder={t('selfHost.configuration.fields.environmentVariables.placeholder')}
-            required={false}
-            validator={validateEnvVar}
-            defaultValues={env_variables}
-          />
-          <FormSelectTagInputField
-            form={form}
-            label={t('selfHost.configuration.fields.buildVariables.label')}
-            name="build_variables"
-            description={t('selfHost.configuration.fields.buildVariables.description')}
-            placeholder={t('selfHost.configuration.fields.buildVariables.placeholder')}
-            required={false}
-            validator={validateEnvVar}
-            defaultValues={build_variables}
-          />
-        </div>
+        {build_pack !== BuildPack.Static && (
+          <>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <FormInputField
+                form={form}
+                label={t('selfHost.configuration.fields.basePath.label')}
+                name="base_path"
+                description={t('selfHost.configuration.fields.basePath.description')}
+                placeholder="/"
+                required={false}
+              />
+              <FormInputField
+                form={form}
+                label={t('selfHost.configuration.fields.dockerfilePath.label')}
+                name="DockerfilePath"
+                description={t('selfHost.configuration.fields.dockerfilePath.description')}
+                placeholder="Dockerfile"
+                required={false}
+              />
+            </div>
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <FormInputField
-            form={form}
-            label={t('selfHost.configuration.fields.preRunCommands.label')}
-            name="pre_run_command"
-            description={t('selfHost.configuration.fields.preRunCommands.description')}
-            placeholder={t('selfHost.configuration.fields.preRunCommands.placeholder')}
-            required={false}
-          />
-          <FormInputField
-            form={form}
-            label={t('selfHost.configuration.fields.postRunCommands.label')}
-            name="post_run_command"
-            description={t('selfHost.configuration.fields.postRunCommands.description')}
-            placeholder={t('selfHost.configuration.fields.postRunCommands.placeholder')}
-            required={false}
-          />
-        </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <FormSelectTagInputField
+                form={form}
+                label={t('selfHost.configuration.fields.environmentVariables.label')}
+                name="environment_variables"
+                description={t('selfHost.configuration.fields.environmentVariables.description')}
+                placeholder={t('selfHost.configuration.fields.environmentVariables.placeholder')}
+                required={false}
+                validator={validateEnvVar}
+                defaultValues={env_variables}
+              />
+              <FormSelectTagInputField
+                form={form}
+                label={t('selfHost.configuration.fields.buildVariables.label')}
+                name="build_variables"
+                description={t('selfHost.configuration.fields.buildVariables.description')}
+                placeholder={t('selfHost.configuration.fields.buildVariables.placeholder')}
+                required={false}
+                validator={validateEnvVar}
+                defaultValues={build_variables}
+              />
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <FormInputField
+                form={form}
+                label={t('selfHost.configuration.fields.preRunCommands.label')}
+                name="pre_run_command"
+                description={t('selfHost.configuration.fields.preRunCommands.description')}
+                placeholder={t('selfHost.configuration.fields.preRunCommands.placeholder')}
+                required={false}
+              />
+              <FormInputField
+                form={form}
+                label={t('selfHost.configuration.fields.postRunCommands.label')}
+                name="post_run_command"
+                description={t('selfHost.configuration.fields.postRunCommands.description')}
+                placeholder={t('selfHost.configuration.fields.postRunCommands.placeholder')}
+                required={false}
+              />
+            </div>
+          </>
+        )}
 
         <div className="grid sm:grid-cols-2 gap-4">
           {renderReadOnlyField(

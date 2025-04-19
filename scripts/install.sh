@@ -35,8 +35,18 @@ echo "Installing dependencies..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
+echo "Caddy configuration Setup..."
+rm -rf /etc/nixopus/caddy
+mkdir -p /etc/nixopus/caddy
+echo '{
+	admin 0.0.0.0:2019
+	log {
+		format json
+		level INFO
+	}
+}' > /etc/nixopus/caddy/Caddyfile
+
 echo "Starting installation..."
-cat docker-compose.yml
 python3 install.py "$@"
 
 deactivate

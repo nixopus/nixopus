@@ -63,6 +63,8 @@ export const DeployForm = ({
     base_path
   });
 
+  const isStaticBuildPack = form.watch('build_pack') === BuildPack.Static;
+
   if (!canCreate) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -110,46 +112,6 @@ export const DeployForm = ({
           />
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
-          <FormInputField
-            form={form}
-            label={t('selfHost.deployForm.fields.basePath.label')}
-            name="base_path"
-            description={t('selfHost.deployForm.fields.basePath.description')}
-            placeholder={t('selfHost.deployForm.fields.basePath.placeholder')}
-            required={false}
-          />
-          <FormInputField
-            form={form}
-            label={t('selfHost.deployForm.fields.dockerfilePath.label')}
-            name="DockerfilePath"
-            description={t('selfHost.deployForm.fields.dockerfilePath.description')}
-            placeholder={t('selfHost.deployForm.fields.dockerfilePath.placeholder')}
-            required={false}
-          />
-          <FormInputField
-            form={form}
-            label={t('selfHost.deployForm.fields.branch.label')}
-            name="branch"
-            description={t('selfHost.deployForm.fields.branch.description')}
-            placeholder={t('selfHost.deployForm.fields.branch.placeholder')}
-          />
-          <FormInputField
-            form={form}
-            label={t('selfHost.deployForm.fields.port.label')}
-            name="port"
-            description={t('selfHost.deployForm.fields.port.description')}
-            placeholder={t('selfHost.deployForm.fields.port.placeholder')}
-            validator={(value) => parsePort(value) !== null}
-          />
-        </div>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <FormInputField
-            form={form}
-            label={t('selfHost.deployForm.fields.domain.label')}
-            name="domain"
-            description={t('selfHost.deployForm.fields.domain.description')}
-            placeholder={t('selfHost.deployForm.fields.domain.placeholder')}
-          />
           <FormSelectField
             form={form}
             label={t('selfHost.deployForm.fields.buildPack.label')}
@@ -161,55 +123,99 @@ export const DeployForm = ({
                 label: t('selfHost.deployForm.fields.buildPack.options.dockerfile'),
                 value: BuildPack.Dockerfile
               },
-              // {
-              //   label: t('selfHost.deployForm.fields.buildPack.options.dockerCompose'),
-              //   value: BuildPack.DockerCompose
-              // },
               {
                 label: t('selfHost.deployForm.fields.buildPack.options.static'),
                 value: BuildPack.Static
               }
             ]}
           />
-        </div>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <FormSelectTagInputField
-            form={form}
-            label={t('selfHost.deployForm.fields.envVariables.label')}
-            name="env_variables"
-            description={t('selfHost.deployForm.fields.envVariables.description')}
-            placeholder={t('selfHost.deployForm.fields.envVariables.placeholder')}
-            required={false}
-            validator={validateEnvVar}
-          />
-          <FormSelectTagInputField
-            form={form}
-            label={t('selfHost.deployForm.fields.buildVariables.label')}
-            name="build_variables"
-            description={t('selfHost.deployForm.fields.buildVariables.description')}
-            placeholder={t('selfHost.deployForm.fields.buildVariables.placeholder')}
-            required={false}
-            validator={validateEnvVar}
-          />
+          {!isStaticBuildPack && (
+            <FormInputField
+              form={form}
+              label={t('selfHost.deployForm.fields.port.label')}
+              name="port"
+              description={t('selfHost.deployForm.fields.port.description')}
+              placeholder={t('selfHost.deployForm.fields.port.placeholder')}
+              validator={(value) => parsePort(value) !== null}
+            />
+          )}
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <FormInputField
             form={form}
-            label={t('selfHost.deployForm.fields.preRunCommands.label')}
-            name="pre_run_commands"
-            description={t('selfHost.deployForm.fields.preRunCommands.description')}
-            placeholder={t('selfHost.deployForm.fields.preRunCommands.placeholder')}
-            required={false}
+            label={t('selfHost.deployForm.fields.domain.label')}
+            name="domain"
+            description={t('selfHost.deployForm.fields.domain.description')}
+            placeholder={t('selfHost.deployForm.fields.domain.placeholder')}
           />
           <FormInputField
             form={form}
-            label={t('selfHost.deployForm.fields.postRunCommands.label')}
-            name="post_run_commands"
-            description={t('selfHost.deployForm.fields.postRunCommands.description')}
-            placeholder={t('selfHost.deployForm.fields.postRunCommands.placeholder')}
-            required={false}
+            label={t('selfHost.deployForm.fields.branch.label')}
+            name="branch"
+            description={t('selfHost.deployForm.fields.branch.description')}
+            placeholder={t('selfHost.deployForm.fields.branch.placeholder')}
           />
         </div>
+        {!isStaticBuildPack && (
+          <>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <FormInputField
+                form={form}
+                label={t('selfHost.deployForm.fields.basePath.label')}
+                name="base_path"
+                description={t('selfHost.deployForm.fields.basePath.description')}
+                placeholder={t('selfHost.deployForm.fields.basePath.placeholder')}
+                required={false}
+              />
+              <FormInputField
+                form={form}
+                label={t('selfHost.deployForm.fields.dockerfilePath.label')}
+                name="DockerfilePath"
+                description={t('selfHost.deployForm.fields.dockerfilePath.description')}
+                placeholder={t('selfHost.deployForm.fields.dockerfilePath.placeholder')}
+                required={false}
+              />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <FormSelectTagInputField
+                form={form}
+                label={t('selfHost.deployForm.fields.envVariables.label')}
+                name="env_variables"
+                description={t('selfHost.deployForm.fields.envVariables.description')}
+                placeholder={t('selfHost.deployForm.fields.envVariables.placeholder')}
+                required={false}
+                validator={validateEnvVar}
+              />
+              <FormSelectTagInputField
+                form={form}
+                label={t('selfHost.deployForm.fields.buildVariables.label')}
+                name="build_variables"
+                description={t('selfHost.deployForm.fields.buildVariables.description')}
+                placeholder={t('selfHost.deployForm.fields.buildVariables.placeholder')}
+                required={false}
+                validator={validateEnvVar}
+              />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <FormInputField
+                form={form}
+                label={t('selfHost.deployForm.fields.preRunCommands.label')}
+                name="pre_run_commands"
+                description={t('selfHost.deployForm.fields.preRunCommands.description')}
+                placeholder={t('selfHost.deployForm.fields.preRunCommands.placeholder')}
+                required={false}
+              />
+              <FormInputField
+                form={form}
+                label={t('selfHost.deployForm.fields.postRunCommands.label')}
+                name="post_run_commands"
+                description={t('selfHost.deployForm.fields.postRunCommands.description')}
+                placeholder={t('selfHost.deployForm.fields.postRunCommands.placeholder')}
+                required={false}
+              />
+            </div>
+          </>
+        )}
         <Button className="w-full cursor-pointer">{t('selfHost.deployForm.submit')}</Button>
       </form>
     </Form>

@@ -1,6 +1,7 @@
 {
     "admin": {
-        "listen": "0.0.0.0:2019"
+        "listen": "0.0.0.0:2019",
+        "disabled": false
     },
     "apps": {
         "http": {
