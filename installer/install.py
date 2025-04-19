@@ -285,25 +285,25 @@ class Installer:
     def setup_caddy(self, domains):
         print("\nSetting up Proxy...")
         try:
-            with open('helpers/caddy.json', 'r') as f:
-                config = json.load(f)
+            with open('../helpers/caddy.json', 'r') as f:
+                config_str = f.read()
+                config_str = config_str.replace('{env.APP_DOMAIN}', domains['app_domain'])
+                config_str = config_str.replace('{env.API_DOMAIN}', domains['api_domain'])
+                config = json.loads(config_str)
             
-            os.environ['APP_DOMAIN'] = domains['app_domain']
-            os.environ['API_DOMAIN'] = domains['api_domain']
-            
-            result = subprocess.run(
-                ['curl', '-X', 'POST', 'http://localhost:2019/load',
-                 '-H', 'Content-Type: application/json',
-                 '-d', json.dumps(config)],
-                capture_output=True,
-                text=True
+            response = requests.post(
+                'http://localhost:2019/load',
+                json=config,
+                headers={'Content-Type': 'application/json'}
             )
             
-            if result.returncode == 0:
+            if response.status_code == 200:
                 print("Caddy configuration loaded successfully")
             else:
                 print("Failed to load Caddy configuration:")
-                print(result.stderr)
+                print(response.text)
+        except requests.exceptions.RequestException as e:
+            print(f"Error connecting to Caddy: {str(e)}")
         except Exception as e:
             print(f"Error setting up Caddy: {str(e)}")
     
