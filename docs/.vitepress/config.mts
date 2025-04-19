@@ -51,7 +51,7 @@ export default defineConfigWithTheme({
       { text: 'Get Started', link: '/install/index.md' }
     ],
     footer: {
-      message: 'Released under the Apache License 2.0.',
+      message: 'Released under the Fair-Code Sustainable Use License',
       copyright: 'Copyright © 2025-present Nixopus'
     },
     sidebar: [
