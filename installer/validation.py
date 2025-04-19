@@ -40,10 +40,14 @@ class Validation:
             domain_ip = socket.gethostbyname(domain)
             
             if server_ip != domain_ip:
-                print(f"Error: Domain {domain} does not point to this server's IP ({server_ip})")
-                sys.exit(1)
+                print(f"Warning: Domain {domain} does not point to this server's IP ({server_ip})")
+                print("Please ensure your DNS records are properly configured before proceeding.")
+                if input("Do you want to continue anyway? (y/n): ").lower() != 'y':
+                    sys.exit(1)
         except socket.gaierror:
-            print(f"Error: Could not resolve domain {domain}")
-            sys.exit(1)
+            print(f"Warning: Could not resolve domain {domain}")
+            print("Please ensure your DNS records are properly configured before proceeding.")
+            if input("Do you want to continue anyway? (y/n): ").lower() != 'y':
+                sys.exit(1)
             
         return domain

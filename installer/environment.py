@@ -8,8 +8,8 @@ import json
 import time
 
 class EnvironmentSetup:
-    def __init__(self, domain):
-        self.domain = domain
+    def __init__(self, domains):
+        self.domains = domains
         self.project_root = Path(__file__).parent.parent
         self.env_file = self.project_root / ".env"
         self.env_sample = self.project_root / ".env.sample"
@@ -249,9 +249,9 @@ class EnvironmentSetup:
             "DB_PORT": str(db_port),
             "SSL_MODE": "disable",
             "API_PORT": str(api_port),
-            "API_URL": f"https://api.{self.domain}/api",
-            "WEBSOCKET_URL": f"wss://api.{self.domain}/ws",
-            "WEBHOOK_URL": f"https://api.{self.domain}/api/v1/webhook",
+            "API_URL": f"https://{self.domains['api_domain']}/api",
+            "WEBSOCKET_URL": f"wss://{self.domains['api_domain']}/ws",
+            "WEBHOOK_URL": f"https://{self.domains['api_domain']}/api/v1/webhook",
             "NEXT_PUBLIC_PORT": str(next_public_port),
             "MOUNT_PATH": "/etc/nixopus/configs",
             "PORT": str(api_port),
@@ -266,7 +266,7 @@ class EnvironmentSetup:
             "CADDY_DATA_VOLUME": str(self.config_dir / "caddy" / "data"),
             "CADDY_CONFIG_VOLUME": str(self.config_dir / "caddy" / "config"),
             "DB_VOLUME": str(self.config_dir / "db"),
-            "ALLOWED_ORIGIN": f"https://app.{self.domain}"
+            "ALLOWED_ORIGIN": f"https://{self.domains['app_domain']}"
         }
 
         with open(self.env_file, 'w') as f:

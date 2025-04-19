@@ -81,7 +81,6 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./api/helpers/Caddyfile:/etc/caddy/Caddyfile
       - ${CADDY_DATA_VOLUME:-/etc/nixopus/caddy}:/data
       - ${CADDY_CONFIG_VOLUME:-/etc/nixopus/caddy}:/config
     networks:
