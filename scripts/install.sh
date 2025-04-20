@@ -21,23 +21,22 @@ if ! command -v git &> /dev/null; then
 fi
 
 TEMP_DIR=$(mktemp -d)
-cd $TEMP_DIR
+cd $TEMP_DIR > /dev/null 2>&1
 
 echo "Downloading Nixopus..."
-git clone https://github.com/raghavyuva/nixopus.git
-cd nixopus/installer
+git clone https://github.com/raghavyuva/nixopus.git > /dev/null 2>&1
+cd nixopus/installer > /dev/null 2>&1
 
-echo "Setting up Python virtual environment..."
-python3 -m venv venv
-source venv/bin/activate
+echo "Setting up Nixopus Installation Environment..."
+python3 -m venv venv > /dev/null 2>&1
+source venv/bin/activate > /dev/null 2>&1
 
 echo "Installing dependencies..."
-pip install --upgrade pip
-pip install -r requirements.txt
+pip install --upgrade pip > /dev/null 2>&1
+pip install -r requirements.txt > /dev/null 2>&1
 
-echo "Caddy configuration Setup..."
-rm -rf /etc/nixopus/caddy
-mkdir -p /etc/nixopus/caddy
+rm -rf /etc/nixopus/caddy > /dev/null 2>&1
+mkdir -p /etc/nixopus/caddy > /dev/null 2>&1
 echo '{
 	admin 0.0.0.0:2019
 	log {
@@ -46,11 +45,9 @@ echo '{
 	}
 }' > /etc/nixopus/caddy/Caddyfile
 
-echo "Starting installation..."
-python3 install.py "$@"
+echo "Starting Nixopus Installation..."
+python3 install.py "$@" > /dev/null 2>&1
 
-deactivate
-cd $TEMP_DIR/..
-rm -rf $TEMP_DIR
-
-echo "Installation completed!"
+deactivate > /dev/null 2>&1
+cd $TEMP_DIR/.. > /dev/null 2>&1
+rm -rf $TEMP_DIR > /dev/null 2>&1
