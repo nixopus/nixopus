@@ -294,3 +294,4 @@ class EnvironmentSetup:
         private_key_path.chmod(0o600)
         public_key_path.chmod(0o644)
         self.docker_certs_dir.chmod(0o700)
+        return base_env_vars

@@ -64,11 +64,12 @@ def main():
     installer.service_manager.start_services()
     installer.service_manager.verify_installation()
     installer.service_manager.setup_caddy(domains)
+    time.sleep(10)
     max_retries = 3
     retry_count = 0
     while retry_count < max_retries:
-        if installer.service_manager.check_api_up_status(domains["api_domain"]):
-            installer.service_manager.setup_admin(email, password, domains["api_domain"])
+        if installer.service_manager.check_api_up_status(env_vars["API_PORT"]):
+            installer.service_manager.setup_admin(email, password, env_vars["API_PORT"])
             break
         retry_count += 1
         if retry_count < max_retries:
