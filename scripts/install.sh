@@ -46,7 +46,7 @@ echo '{
 }' > /etc/nixopus/caddy/Caddyfile
 
 echo "Starting Nixopus Installation..."
-python3 install.py "$@" > /dev/null 2>&1
+python3 install.py "$@"
 
 deactivate > /dev/null 2>&1
 cd $TEMP_DIR/.. > /dev/null 2>&1
