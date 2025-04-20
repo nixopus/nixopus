@@ -12,6 +12,7 @@ import {
 } from '@/redux/types/github';
 import { useCreateGithubConnectorMutation } from '@/redux/services/connector/githubConnectorApi';
 import { useTranslation } from '@/hooks/use-translation';
+import { getWebhookUrl } from '@/redux/conf';
 
 const adjectives = [
   'cosmic',
@@ -47,7 +48,6 @@ const generateRandomName = (): string => {
 
 const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
   organization,
-  webhookUrl = process.env.NEXT_PUBLIC_WEBHOOK_URL,
   appUrl = process.env.NEXT_PUBLIC_APP_URL,
   redirectUrl = process.env.NEXT_PUBLIC_REDIRECT_URL,
   onSuccess,
@@ -59,6 +59,15 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [createGithubConnector, { isLoading, error: registerGithubAppError }] =
     useCreateGithubConnectorMutation();
+  const [webhookUrl, setWebhookUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchWebHookUrl = async () => {
+      const url = await getWebhookUrl();
+      setWebhookUrl(url);
+    };
+    fetchWebHookUrl();
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

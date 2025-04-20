@@ -1010,6 +1010,9 @@
       "visibility": {
         "private": "ಖಾಸಗಿ",
         "public": "ಸಾರ್ವಜನಿಕ"
+      },
+      "topics": {
+        "more": "+{count} ಹೆಸರು"
       }
     },
     "create": {

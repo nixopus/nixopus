@@ -17,3 +17,8 @@ export async function getWebsocketUrl() {
   const { websocketUrl } = await fetchConfig();
   return websocketUrl;
 }
+
+export async function getWebhookUrl() {
+  const { webhookUrl } = await fetchConfig();
+  return webhookUrl;
+}

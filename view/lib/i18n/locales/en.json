@@ -1033,6 +1033,9 @@
       "visibility": {
         "private": "Private",
         "public": "Public"
+      },
+      "topics": {
+        "more": "+{count} more"
       }
     },
     "create": {

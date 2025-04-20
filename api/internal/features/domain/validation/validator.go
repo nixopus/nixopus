@@ -115,6 +115,12 @@ func (v *Validator) ValidateDeleteDomainRequest(req types.DeleteDomainRequest) e
 func (v *Validator) ValidateDomainBelongsToServer(domainName string) error {
 	serverHost := os.Getenv("SSH_HOST")
 
+	development := os.Getenv("ENV") == "development"
+
+	if development {
+		return nil
+	}
+
 	if serverHost == "" {
 		var err error
 		serverHost, err = os.Hostname()

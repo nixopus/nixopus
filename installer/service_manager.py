@@ -171,6 +171,17 @@ class ServiceManager:
         except Exception as e:
             print(f"Error setting up Caddy: {str(e)}")
     
+    def check_api_up_status(self, api_domain):
+        print(f"Checking API status on {api_domain}...")
+        try:
+            response = requests.get(f"https://{api_domain}/api/v1/health")
+            if response.status_code == 200:
+                return True
+            return False
+        except requests.exceptions.RequestException as e:
+            print(f"Error checking API status: {str(e)}")
+            return False
+    
     def setup_admin(self, email, password, api_domain):
         print("\nSetting up admin...")
         username = email.split('@')[0]
