@@ -8,14 +8,17 @@ import json
 import time
 
 class EnvironmentSetup:
-    def __init__(self, domains):
+    def __init__(self, domains, env="staging"):
         self.domains = domains
         self.project_root = Path(__file__).parent.parent
         self.env_file = self.project_root / ".env"
         self.env_sample = self.project_root / ".env.sample"
-        self.config_dir = Path("/etc/nixopus")
+        # we will use different config directories for staging and production
+        self.config_dir = Path("/etc/nixopus-staging") if env == "staging" else Path("/etc/nixopus")
         self.docker_certs_dir = self.config_dir / "docker-certs"
         self.ssh_dir = self.config_dir / "ssh"
+        self.env = env
+        self.context_name = f"nixopus-{self.env}"
 
     def generate_random_string(self, length=12):
         alphabet = string.ascii_letters + string.digits
@@ -89,7 +92,7 @@ class EnvironmentSetup:
                 "openssl", "req", "-new", "-x509", "-days", "365",
                 "-key", str(self.docker_certs_dir / "ca-key.pem"),
                 "-sha256", "-out", str(self.docker_certs_dir / "ca.pem"),
-                "-subj", "/CN=nixopus"
+                "-subj", f"/CN={self.context_name}"
             ], capture_output=True, text=True)
             if result.returncode != 0:
                 print("Error generating CA certificate:")
@@ -139,7 +142,7 @@ class EnvironmentSetup:
                 raise Exception("Failed to generate client key")
 
             result = subprocess.run([
-                "openssl", "req", "-subj", "/CN=client", "-new",
+                "openssl", "req", "-subj", f"/CN={self.context_name}", "-new",
                 "-key", str(self.docker_certs_dir / "key.pem"),
                 "-out", str(self.docker_certs_dir / "client.csr")
             ], capture_output=True, text=True)
@@ -176,76 +179,131 @@ class EnvironmentSetup:
             return local_ip
         except Exception:
             return "localhost"
+    
+    def create_docker_context(self):
+        """Create a Docker context for this environment instead of modifying the daemon."""
+        docker_port = 2376 if self.env == "production" else 2377
+        local_ip = self.get_local_ip()
+        
+        try:
+            result = subprocess.run(["docker", "context", "ls"], 
+                                    capture_output=True, text=True)
+            if result.returncode != 0:
+                print("Error: Docker doesn't seem to be running or doesn't support contexts")
+                print(result.stderr)
+                raise Exception("Docker not available or doesn't support contexts")
+                
+            subprocess.run(["docker", "context", "rm", "-f", self.context_name], 
+                           capture_output=True, check=False)
+            
+            result = subprocess.run([
+                "docker", "context", "create", self.context_name,
+                "--docker", f"host=tcp://{local_ip}:{docker_port}",
+                "--docker", f"ca={self.docker_certs_dir / 'ca.pem'}",
+                "--docker", f"cert={self.docker_certs_dir / 'cert.pem'}",
+                "--docker", f"key={self.docker_certs_dir / 'key.pem'}"
+            ], capture_output=True, text=True)
+            
+            if result.returncode != 0:
+                print(f"Error creating Docker context: {result.stderr}")
+                raise Exception(f"Failed to create Docker context: {result.stderr}")
+                
+            print(f"Successfully created Docker context '{self.context_name}'")
+            
+            test_result = subprocess.run(
+                ["docker", "--context", self.context_name, "version", "--format", "{{.Server.Version}}"],
+                capture_output=True, text=True
+            )
+            
+            if test_result.returncode != 0:
+                print(f"Warning: Docker context created but connection test failed: {test_result.stderr}")
+                print("Make sure Docker daemon is configured to listen on TCP port")
+                print(f"Please check that port {docker_port} is open and Docker is properly configured")
+                
+            return self.context_name
+            
+        except Exception as e:
+            print(f"Error setting up Docker context: {str(e)}")
+            raise
+        
 
-    def setup_docker_tls(self):
+    def setup_docker_daemon_for_tcp(self):
+        """Configure Docker daemon to listen on TCP for the context to connect."""
         docker_config_dir = Path("/etc/docker")
         docker_config_dir.mkdir(parents=True, exist_ok=True)
-
-        daemon_config = {
-            "tls": True,
-            "tlscacert": str(self.docker_certs_dir / "ca.pem"),
-            "tlscert": str(self.docker_certs_dir / "server-cert.pem"),
-            "tlskey": str(self.docker_certs_dir / "server-key.pem"),
-            "hosts": [
-                "unix:///var/run/docker.sock",
-                "tcp://0.0.0.0:2376"
-            ],
-            "tlsverify": True
-        }
-
-        with open(docker_config_dir / "daemon.json", "w") as f:
-            json.dump(daemon_config, f, indent=2)
-
-        try:
-            result = subprocess.run(["systemctl", "stop", "docker"], capture_output=True, text=True)
-            if result.returncode != 0:
-                print("Error stopping Docker service:")
-                print(result.stderr)
-                raise Exception("Failed to stop Docker service")
-
-            result = subprocess.run(["systemctl", "start", "docker"], capture_output=True, text=True)
-            if result.returncode != 0:
-                print("Error starting Docker service:")
-                print(result.stderr)
-                raise Exception("Failed to start Docker service")
-
-            time.sleep(5)
-            result = subprocess.run(["systemctl", "status", "docker"], capture_output=True, text=True)
-            if result.returncode != 0:
-                print("Error checking Docker service status:")
-                print(result.stderr)
-                raise Exception("Failed to check Docker service status")
-
-            # print("\nDocker service status:")
-            # print(result.stdout)
-
-        except Exception as e:
-            result = subprocess.run(["journalctl", "-u", "docker", "-n", "50"], capture_output=True, text=True)
-            print("\nDocker service error logs:")
-            print(result.stdout)
-            raise Exception(f"Failed to manage Docker service. Error: {str(e)}\nJournal logs: {result.stdout}")
+        
+        docker_port = 2376 if self.env == "production" else 2377
+        
+        daemon_config = {}
+        daemon_json_path = docker_config_dir / "daemon.json"
+        
+        if daemon_json_path.exists():
+            with open(daemon_json_path, "r") as f:
+                try:
+                    daemon_config = json.load(f)
+                except json.JSONDecodeError:
+                    print("Warning: Existing daemon.json is invalid. Starting with empty config.")
+        
+        hosts = daemon_config.get("hosts", ["unix:///var/run/docker.sock"])
+        tcp_endpoint = f"tcp://0.0.0.0:{docker_port}"
+        
+        if tcp_endpoint not in hosts:
+            hosts.append(tcp_endpoint)
+            daemon_config["hosts"] = hosts
+            
+            with open(daemon_json_path, "w") as f:
+                json.dump(daemon_config, f, indent=2)
+            
+            try:
+                result = subprocess.run(["systemctl", "reload", "docker"], 
+                                        capture_output=True, text=True)
+                if result.returncode != 0:
+                    result = subprocess.run(["systemctl", "restart", "docker"], 
+                                            capture_output=True, text=True)
+                    if result.returncode != 0:
+                        print("Error restarting Docker service:")
+                        print(result.stderr)
+                        raise Exception("Failed to restart Docker service")
+                
+                time.sleep(3)
+                
+                result = subprocess.run(["systemctl", "status", "docker"], 
+                                        capture_output=True, text=True)
+                if result.returncode != 0:
+                    print("Error checking Docker service status:")
+                    print(result.stderr)
+                    raise Exception("Failed to check Docker service status")
+                
+            except Exception as e:
+                result = subprocess.run(["journalctl", "-u", "docker", "-n", "50"], 
+                                        capture_output=True, text=True)
+                print("\nDocker service error logs:")
+                print(result.stdout)
+                raise Exception(f"Failed to manage Docker service. Error: {str(e)}")
 
     def setup_environment(self):
         db_name = f"nixopus_{self.generate_random_string(8)}"
         username = f"nixopus_{self.generate_random_string(8)}"
         password = self.generate_random_string(16)
         
-        api_port = 8443
-        next_public_port = 7443 
-        db_port = 5432 
+        # we will use different ports for staging and production
+        api_port = 8443 if self.env == "production" else 8444
+        next_public_port = 7443 if self.env == "production" else 7444
+        db_port = 5432 if self.env == "production" else 5433
 
         private_key_path, public_key_path = self.generate_ssh_key()
         self.setup_authorized_keys()
         local_ip = self.get_local_ip()
 
         self.setup_docker_certs()
-        self.setup_docker_tls()
+        self.setup_docker_daemon_for_tcp()
+        self.create_docker_context()
 
         base_env_vars = {
             "DB_NAME": db_name,
             "USERNAME": username,
             "PASSWORD": password,
-            "HOST_NAME": "nixopus-db",
+            "HOST_NAME": "nixopus-db" if self.env == "production" else f"nixopus-{self.env}-db",
             "DB_PORT": str(db_port),
             "SSL_MODE": "disable",
             "API_PORT": str(api_port),
@@ -259,10 +317,11 @@ class EnvironmentSetup:
             "SSH_PORT": "22",
             "SSH_USER": "root",
             "SSH_PRIVATE_KEY": str(private_key_path),
-            "DOCKER_HOST": f"tcp://{local_ip}:2376",
+            "DOCKER_HOST": f"tcp://{local_ip}:2376" if self.env == "production" else f"tcp://{local_ip}:2377",
             "DOCKER_TLS_VERIFY": "1",
             "DOCKER_CERT_PATH": str(self.docker_certs_dir),
-            "CADDY_ENDPOINT": "http://nixopus-caddy:2019",
+            "DOCKER_CONTEXT": self.context_name,
+            "CADDY_ENDPOINT": "http://nixopus-caddy:2019" if self.env == "production" else "http://nixopus-staging-caddy:2020",
             "CADDY_DATA_VOLUME": str(self.config_dir / "caddy" / "data"),
             "CADDY_CONFIG_VOLUME": str(self.config_dir / "caddy" / "config"),
             "DB_VOLUME": str(self.config_dir / "db"),
@@ -285,7 +344,6 @@ class EnvironmentSetup:
         view_env_vars["PORT"] = str(next_public_port)
 
         view_env_file = self.project_root / "view" / ".env"
-        print(f"Writing to {view_env_file} with {next_public_port} for PORT")
         with open(view_env_file, 'w') as f:
             for key, value in view_env_vars.items():
                 f.write(f"{key}={value}\n")

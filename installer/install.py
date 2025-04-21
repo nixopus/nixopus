@@ -25,9 +25,9 @@ class Installer:
             print("Please run the script with sudo privileges")
             sys.exit(1)
 
-    def setup_environment(self, domain):
+    def setup_environment(self, domain, env):
         print("\nSetting up environment...")
-        env_setup = EnvironmentSetup(domain)
+        env_setup = EnvironmentSetup(domain,env) # TODO: make this dynamic 
         env_vars = env_setup.setup_environment()
         print("Environment setup completed!")
         return env_vars
@@ -50,7 +50,7 @@ def main():
     print("Please follow the prompts carefully to complete the setup.\n")
     
     installer.ask_for_sudo()
-    
+    env = installer.input_parser.get_env_from_args(args)
     domains = installer.input_parser.get_domains_from_args(args)
     if not domains:
         domains = installer.input_parser.ask_for_domain()
@@ -60,10 +60,10 @@ def main():
         email, password = installer.input_parser.ask_admin_credentials()
     
     installer.service_manager.check_system_requirements()
-    env_vars = installer.setup_environment(domains)
-    installer.service_manager.start_services()
-    installer.service_manager.verify_installation()
-    installer.service_manager.setup_caddy(domains)
+    env_vars = installer.setup_environment(domains,env)
+    installer.service_manager.start_services(env)
+    installer.service_manager.verify_installation(env) 
+    installer.service_manager.setup_caddy(domains,env)
     time.sleep(10)
     max_retries = 3
     retry_count = 0

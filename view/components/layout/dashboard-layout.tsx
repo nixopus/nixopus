@@ -114,10 +114,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={handleUpdate}>
+              {/* <Button variant="outline" onClick={handleUpdate}>
                 <UpdateIcon className="h-4 w-4" />
                 {t('navigation.update')}
-              </Button>
+              </Button> */}
               <Button
                 variant="ghost"
                 size="icon"

@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  nixopus-staging-api:
+    image: nixopus-staging-api:latest
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      args:
+        - PORT=${PORT:-8444}
+    container_name: nixopus-staging-api
+    ports:
+      - "${PORT:-8444}:${PORT:-8444}"
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - HOST_NAME=nixopus-staging-db
+    volumes:
+      - ./logs:/app/logs
+      - ${DOCKER_CERT_PATH}:/etc/nixopus/docker-certs
+      - ${SSH_PRIVATE_KEY}:/etc/nixopus/ssh/id_rsa
+      - ${MOUNT_PATH:-/etc/nixopus/configs}:/etc/nixopus/configs
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - nixopus-staging-network
+    depends_on:
+      nixopus-staging-db:
+        condition: service_healthy
+
+  nixopus-staging-db:
+    image: postgres:14-alpine
+    container_name: nixopus-staging-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${USERNAME}
+      - POSTGRES_PASSWORD=${PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    command: postgres -p 5433
+    ports:
+      - "5433:5433"
+    volumes:
+      - ${DB_VOLUME:-/etc/nixopus/db}:/var/lib/postgresql/data
+    networks:
+      - nixopus-staging-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${USERNAME} -d ${DB_NAME} -p 5433" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nixopus-staging-view:
+    image: nixopus-staging-view:latest
+    build:
+      context: ./view
+      dockerfile: Dockerfile
+    container_name: nixopus-staging-view
+    ports:
+      - "${NEXT_PUBLIC_PORT:-7444}:${NEXT_PUBLIC_PORT:-7444}"
+    restart: unless-stopped
+    env_file:
+      - view/.env
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - nixopus-staging-network
+
+  nixopus-staging-caddy:
+    image: caddy:latest
+    container_name: nixopus-staging-caddy
+    ports:
+      - "2020:2019"
+      - "8081:80"
+      - "8445:443"
+    volumes:
+      - /etc/nixopus-staging/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ${CADDY_DATA_VOLUME:-/etc/nixopus-staging/caddy/data}:/data
+      - ${CADDY_CONFIG_VOLUME:-/etc/nixopus-staging/caddy/config}:/config
+    command: [ "caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile" ]
+    networks:
+      - nixopus-staging-network
+
+networks:
+  nixopus-staging-network:
+    driver: bridge
