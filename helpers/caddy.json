@@ -25,7 +25,7 @@
                                                     "handler": "reverse_proxy",
                                                     "upstreams": [
                                                         {
-                                                            "dial": "nixopus-view:7443"
+                                                            "dial": "{env.APP_REVERSE_PROXY_URL}"
                                                         }
                                                     ]
                                                 }
@@ -53,7 +53,7 @@
                                                     "handler": "reverse_proxy",
                                                     "upstreams": [
                                                         {
-                                                            "dial": "nixopus-api:8443"
+                                                            "dial": "{env.API_REVERSE_PROXY_URL}"
                                                         }
                                                     ]
                                                 }

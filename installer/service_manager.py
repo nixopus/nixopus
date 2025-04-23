@@ -134,7 +134,6 @@ class ServiceManager:
             "nixopus-staging-api": "API service",
             "nixopus-staging-db": "Database service",
             "nixopus-staging-view": "View service",
-            "nixopus-staging-caddy": "Caddy service"
         }
 
     def verify_installation(self,env):
@@ -172,23 +171,48 @@ class ServiceManager:
     def setup_caddy(self, domains, env):
         print("\nSetting up Proxy...")
         try:
+            current_config = None
+            try:
+                response = requests.get('http://localhost:2019/config')
+                if response.status_code == 200:
+                    current_config = response.json()
+            except requests.exceptions.RequestException:
+                current_config = None
+
             with open('../helpers/caddy.json', 'r') as f:
                 config_str = f.read()
                 config_str = config_str.replace('{env.APP_DOMAIN}', domains['app_domain'])
                 config_str = config_str.replace('{env.API_DOMAIN}', domains['api_domain'])
-                config = json.loads(config_str)
-            request_url = 'http://localhost:2019/load' if env == "production" else 'http://localhost:2020/load'
-            response = requests.post(
-                request_url,
-                json=config,
-                headers={'Content-Type': 'application/json'}
-            )
-            
-            if response.status_code == 200:
-                print("Caddy configuration loaded successfully")
+                app_reverse_proxy_url = "nixopus-view:7443" if env == "production" else "nixopus-staging-view:7444"
+                api_reverse_proxy_url = "nixopus-api:8443" if env == "production" else "nixopus-staging-api:8444"
+                config_str = config_str.replace('{env.APP_REVERSE_PROXY_URL}', app_reverse_proxy_url)
+                config_str = config_str.replace('{env.API_REVERSE_PROXY_URL}', api_reverse_proxy_url)
+                new_config = json.loads(config_str)
+
+            if current_config and 'apps' in current_config and 'http' in current_config['apps'] and 'servers' in current_config['apps']['http'] and 'nixopus' in current_config['apps']['http']['servers']:
+                new_routes = new_config['apps']['http']['servers']['nixopus'].get('routes', [])
+                if new_routes:
+                    for route in new_routes:
+                        response = requests.post(
+                            'http://localhost:2019/config/apps/http/servers/nixopus/routes/...',
+                            json=[route],
+                            headers={'Content-Type': 'application/json'}
+                        )
+                        if response.status_code != 200:
+                            print(f"Failed to append route: {response.text}")
+                            raise Exception("Failed to append route to Caddy configuration")
             else:
-                print("Failed to load Caddy configuration:")
-                print(response.text)
+                response = requests.post(
+                    'http://localhost:2019/load',
+                    json=new_config,
+                    headers={'Content-Type': 'application/json'}
+                )
+                if response.status_code != 200:
+                    print("Failed to load Caddy configuration:")
+                    print(response.text)
+                    raise Exception("Failed to load Caddy configuration")
+
+            print("Caddy configuration loaded successfully")
         except requests.exceptions.RequestException as e:
             print(f"Error connecting to Caddy: {str(e)}")
         except Exception as e:
