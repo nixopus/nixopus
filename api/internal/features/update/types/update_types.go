@@ -7,6 +7,7 @@ type UpdateCheckResponse struct {
 	LatestVersion   string    `json:"latest_version"`
 	UpdateAvailable bool      `json:"update_available"`
 	LastChecked     time.Time `json:"last_checked"`
+	Environment     string    `json:"environment"`
 }
 
 type UpdateRequest struct {

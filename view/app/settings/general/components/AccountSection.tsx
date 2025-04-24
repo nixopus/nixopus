@@ -255,7 +255,7 @@ function AccountSection({
         </Card>
       </div>
       <div className="mt-6">
-        {/* <Card>
+        <Card>
           <CardHeader>
             <CardTitle>{t('settings.preferences.autoUpdate.title')}</CardTitle>
             <CardDescription>{t('settings.preferences.autoUpdate.description')}</CardDescription>
@@ -270,7 +270,7 @@ function AccountSection({
               />
             </div>
           </CardContent>
-        </Card> */}
+        </Card>
       </div>
     </TabsContent>
   );

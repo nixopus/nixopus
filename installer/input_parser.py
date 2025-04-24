@@ -13,7 +13,7 @@ class InputParser:
         parser.add_argument('--app-domain', help='The domain where the nixopus app will be accessible (e.g. nixopus.example.com)')
         parser.add_argument('--email', '-e', help='The email to create the admin account with')
         parser.add_argument('--password', '-p', help='The password to create the admin account with')
-        parser.add_argument('--env', '-env', help='The environment to install in (production or staging)')
+        parser.add_argument('--env', choices=['production', 'staging'], default='production', help='The environment to install in (production or staging)')
         return parser
     
     def generate_strong_password(self):

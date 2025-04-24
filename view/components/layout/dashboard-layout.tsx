@@ -23,7 +23,7 @@ import Link from 'next/link';
 import { Tour } from '@/components/Tour';
 import { useTour } from '@/hooks/useTour';
 import { Button } from '@/components/ui/button';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Loader2 } from 'lucide-react';
 import { UpdateIcon } from '@radix-ui/react-icons';
 import { useAppSelector } from '@/redux/hooks';
 import { useCheckForUpdatesQuery, usePerformUpdateMutation } from '@/redux/services/users/userApi';
@@ -56,8 +56,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [TerminalPosition, setTerminalPosition] = React.useState(TERMINAL_POSITION.BOTTOM);
   const [fitAddonRef, setFitAddonRef] = React.useState<any | null>(null);
   const { startTour } = useTour();
-  const { data: updateCheck, refetch: checkForUpdates } = useCheckForUpdatesQuery();
-  const [performUpdate] = usePerformUpdateMutation();
+  const { data: updateCheck, refetch: checkForUpdates, isFetching: isCheckingForUpdates } = useCheckForUpdatesQuery();
+  const [performUpdate, { isLoading: isPerformingUpdate }] = usePerformUpdateMutation();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -78,7 +78,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     try {
       await checkForUpdates();
       await performUpdate();
-      toast.success('Update will run in the background');
+      toast.success('Update Completed Successfully');
     } catch (error) {
       console.error('Update failed:', error);
       toast.error('Update failed, please try again');
@@ -114,12 +114,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
             </div>
             <div className="flex items-center gap-4">
-              {/* <Button variant="outline" onClick={handleUpdate}>
-                <UpdateIcon className="h-4 w-4" />
+              <Button variant="outline" onClick={handleUpdate} disabled={isPerformingUpdate}>
+                {isPerformingUpdate ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <UpdateIcon className="h-4 w-4" />
+                )}
                 {t('navigation.update')}
-              </Button> */}
+              </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 className="ml-auto"
                 onClick={startTour}

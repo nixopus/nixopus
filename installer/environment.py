@@ -6,7 +6,7 @@ import subprocess
 import socket
 import json
 import time
-
+import shutil
 class EnvironmentSetup:
     def __init__(self, domains, env="staging"):
         self.domains = domains
@@ -179,6 +179,13 @@ class EnvironmentSetup:
             return local_ip
         except Exception:
             return "localhost"
+
+    def get_version(self):
+        version_file = self.project_root / "version.txt"
+        if version_file.exists():
+            with open(version_file, 'r') as f:
+                return f.read().strip()
+        return "unknown"
     
     def create_docker_context(self):
         """Create a Docker context for this environment instead of modifying the daemon."""
@@ -325,7 +332,8 @@ class EnvironmentSetup:
             "CADDY_DATA_VOLUME": str(self.config_dir / "caddy" / "data"),
             "CADDY_CONFIG_VOLUME": str(self.config_dir / "caddy" / "config"),
             "DB_VOLUME": str(self.config_dir / "db"),
-            "ALLOWED_ORIGIN": f"https://{self.domains['app_domain']}"
+            "ALLOWED_ORIGIN": f"https://{self.domains['app_domain']}",
+            "APP_VERSION": self.get_version()
         }
 
         with open(self.env_file, 'w') as f:
@@ -334,20 +342,20 @@ class EnvironmentSetup:
 
         api_env_vars = base_env_vars.copy()
         api_env_vars["PORT"] = str(api_port)
-
-        api_env_file = self.project_root / "api" / ".env"
+        api_env_file = self.config_dir / "api" / ".env"
+        api_env_file.parent.mkdir(parents=True, exist_ok=True)
         with open(api_env_file, 'w') as f:
             for key, value in api_env_vars.items():
                 f.write(f"{key}={value}\n")
         
         view_env_vars = base_env_vars.copy()
         view_env_vars["PORT"] = str(next_public_port)
-
-        view_env_file = self.project_root / "view" / ".env"
+        view_env_file = self.config_dir / "view" / ".env"
+        view_env_file.parent.mkdir(parents=True, exist_ok=True)
         with open(view_env_file, 'w') as f:
             for key, value in view_env_vars.items():
                 f.write(f"{key}={value}\n")
-
+        
         self.env_file.chmod(0o600)
         private_key_path.chmod(0o600)
         public_key_path.chmod(0o644)
