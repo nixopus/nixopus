@@ -106,23 +106,33 @@ func (s *UpdateService) getCurrentVersion() (string, error) {
 // fetchLatestVersion fetches the latest version from the appropriate branch from our repo
 func (s *UpdateService) fetchLatestVersion() (string, error) {
 	branch := s.getBranch()
+	s.logger.Log(logger.Info, "Fetching latest version", fmt.Sprintf("Using branch: %s", branch))
+
 	url := fmt.Sprintf("https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/%s/version.txt", branch)
+	s.logger.Log(logger.Info, "Constructed version URL", url)
+
 	resp, err := http.Get(url)
 	if err != nil {
+		s.logger.Log(logger.Error, "Failed to fetch version", fmt.Sprintf("Error: %v", err))
 		return "", err
 	}
 	defer resp.Body.Close()
 
+	s.logger.Log(logger.Info, "Version fetch response", fmt.Sprintf("Status: %d", resp.StatusCode))
 	if resp.StatusCode != http.StatusOK {
+		s.logger.Log(logger.Error, "Failed to fetch version", fmt.Sprintf("Status code: %d", resp.StatusCode))
 		return "", fmt.Errorf("failed to fetch version: status %d", resp.StatusCode)
 	}
 
 	versionBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
+		s.logger.Log(logger.Error, "Failed to read version response", fmt.Sprintf("Error: %v", err))
 		return "", err
 	}
 
-	return strings.TrimSpace(string(versionBytes)), nil
+	version := strings.TrimSpace(string(versionBytes))
+	s.logger.Log(logger.Info, "Successfully fetched version", version)
+	return version, nil
 }
 
 func (s *UpdateService) getBranch() string {
@@ -173,6 +183,14 @@ func (s *UpdateService) PerformUpdate() error {
 	}
 
 	updateSuccess = true
+	latestVersion, err := s.fetchLatestVersion()
+	if err != nil {
+		return fmt.Errorf("failed to fetch latest version: %w", err)
+	}
+	err = os.Setenv("APP_VERSION", latestVersion)
+	if err != nil {
+		return fmt.Errorf("failed to set APP_VERSION: %w", err)
+	}
 	s.logger.Log(logger.Info, "Update completed successfully", "")
 	return nil
 }
@@ -242,8 +260,8 @@ func (s *UpdateService) cloneRepository(ssh *ssh.SSH, paths PathConfig) error {
 	if _, err := ssh.RunCommand(fmt.Sprintf("rm -rf %s/* %s/.[!.]*", paths.SourceDir, paths.SourceDir)); err != nil {
 		return fmt.Errorf("failed to clean source directory: %w", err)
 	}
-
-	cloneCmd := fmt.Sprintf("cd %s && GIT_TERMINAL_PROMPT=0 git clone --verbose https://github.com/raghavyuva/nixopus.git . 2>&1", paths.SourceDir)
+	repoURL := "https://github.com/raghavyuva/nixopus.git"
+	cloneCmd := fmt.Sprintf("cd %s && git clone %s . 2>&1", paths.SourceDir, repoURL)
 	cloneOutput, err := ssh.RunCommand(cloneCmd)
 	if err != nil {
 		s.logger.Log(logger.Error, "Git clone failed", fmt.Sprintf("output: %s, error: %v", cloneOutput, err))
@@ -265,7 +283,7 @@ func (s *UpdateService) startContainers(ssh *ssh.SSH, paths PathConfig) error {
 	if s.env == Staging {
 		startCmd = fmt.Sprintf("cd %s && DOCKER_HOST=unix:///var/run/docker.sock DOCKER_CONTEXT=nixopus-staging docker compose -f %s up -d --build 2>&1", paths.SourceDir, paths.ComposeFile)
 	} else {
-		startCmd = fmt.Sprintf("cd %s && DOCKER_HOST=unix:///var/run/docker.sock DOCKER_CONTEXT=nixopus docker compose -f %s up -d 2>&1", paths.SourceDir, paths.ComposeFile)
+		startCmd = fmt.Sprintf("cd %s && DOCKER_HOST=unix:///var/run/docker.sock DOCKER_CONTEXT=default docker compose -f %s up -d 2>&1", paths.SourceDir, paths.ComposeFile)
 	}
 
 	startOutput, err := ssh.RunCommand(startCmd)

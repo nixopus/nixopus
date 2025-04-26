@@ -116,14 +116,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex items-center gap-4">
               <Button variant="outline" onClick={handleUpdate} disabled={isPerformingUpdate}>
                 {isPerformingUpdate ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <UpdateIcon className="h-4 w-4 animate-spin text-green-500" />
                 ) : (
                   <UpdateIcon className="h-4 w-4" />
                 )}
                 {t('navigation.update')}
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 className="ml-auto"
                 onClick={startTour}
