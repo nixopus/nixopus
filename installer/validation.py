@@ -1,6 +1,8 @@
 import re
 import sys
 import socket
+import string
+
 class Validation:
     def __init__(self): 
         pass
@@ -15,15 +17,19 @@ class Validation:
         return email
 
     def validate_password(self, password):
-        if not password:
-            print("Error: Password is required")
+        if not password or len(password) < 8:
+            print(f"Error: Password must be at least 8 characters long")
             sys.exit(1)
-        if len(password) < 8:
-            print("Error: Password must be at least 8 characters long")
-            sys.exit(1)
-        if not re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]{8,}$", password):
+    
+        has_uppercase = any(char.isupper() for char in password)
+        has_lowercase = any(char.islower() for char in password)
+        has_digit = any(char.isdigit() for char in password)
+        has_special = any(char in string.punctuation for char in password)
+        
+        if not (has_uppercase and has_lowercase and has_digit and has_special):
             print("Error: Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
             sys.exit(1)
+    
         return password
     
     def validate_domain(self, domain):

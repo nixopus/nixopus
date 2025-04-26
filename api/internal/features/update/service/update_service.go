@@ -127,7 +127,7 @@ func (s *UpdateService) fetchLatestVersion() (string, error) {
 
 func (s *UpdateService) getBranch() string {
 	if s.env == Staging {
-		return "feat/auto_update"
+		return "feat/develop"
 	}
 	return "master"
 }

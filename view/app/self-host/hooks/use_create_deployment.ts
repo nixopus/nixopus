@@ -42,11 +42,6 @@ function useCreateDeployment({
   DockerfilePath = '/Dockerfile',
   base_path = '/'
 }: DeploymentFormValues) {
-  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const { data: domains } = useGetAllDomainsQuery(
-    { organizationId: activeOrg?.id },
-    { skip: !activeOrg?.id }
-  );
   const { isReady, message, sendJsonMessage } = useWebSocket();
   const [createDeployment, { isLoading }] = useCreateDeploymentMutation();
   const router = useRouter();
@@ -76,23 +71,6 @@ function useCreateDeployment({
         {
           message: t('selfHost.deployForm.validation.domain.invalidFormat')
         }
-      )
-      .refine(
-        (value) => {
-          if (!domains || !value) return false;
-          return domains.some((d) => {
-            const storedDomain = d.name;
-            if (storedDomain === value) return true;
-            if (storedDomain.startsWith('*.')) {
-              const baseDomain = storedDomain.substring(2);
-              if (value === baseDomain) return true;
-              const subdomainPattern = new RegExp(`^[^.]+\.${baseDomain.replace(/\./g, '\\.')}$`);
-              return subdomainPattern.test(value);
-            }
-            return false;
-          });
-        },
-        { message: t('selfHost.deployForm.validation.domain.notAllowed') }
       ),
     repository: z
       .string()
@@ -233,27 +211,7 @@ function useCreateDeployment({
     return isNaN(parsedPort) ? null : parsedPort;
   };
 
-  const validateDomain = (domain: string): boolean => {
-    if (!domains || !domain) return false;
-
-    return domains.some((d) => {
-      const storedDomain = d.name;
-
-      if (storedDomain === domain) return true;
-
-      if (storedDomain.startsWith('*.')) {
-        const baseDomain = storedDomain.substring(2);
-        if (domain === baseDomain) return true;
-
-        const subdomainPattern = new RegExp(`^[^.]+\.${baseDomain.replace(/\./g, '\\.')}$`);
-        return subdomainPattern.test(domain);
-      }
-
-      return false;
-    });
-  };
-
-  return { validateEnvVar, deploymentFormSchema, form, onSubmit, parsePort, validateDomain };
+  return { validateEnvVar, deploymentFormSchema, form, onSubmit, parsePort };
 }
 
 export default useCreateDeployment;
