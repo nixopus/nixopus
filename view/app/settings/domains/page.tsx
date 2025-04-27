@@ -10,7 +10,10 @@ import { useResourcePermissions } from '@/lib/permission';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
-
+import { useFeatureFlags } from '@/hooks/features_provider';
+import Skeleton from '@/app/file-manager/components/skeleton/Skeleton';
+import DisabledFeature from '@/components/features/disabled-feature';
+import { FeatureNames } from '@/types/feature-flags';
 const Page = () => {
   const { t } = useTranslation();
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
@@ -22,6 +25,7 @@ const Page = () => {
   const [addDomainDialogOpen, setAddDomainDialogOpen] = React.useState(false);
   const user = useAppSelector((state) => state.auth.user);
   const { canCreate, canRead } = useResourcePermissions(user, 'organization', activeOrg?.id);
+  const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
 
   if (!activeOrg?.id) {
     return (
@@ -40,6 +44,14 @@ const Page = () => {
         </div>
       </div>
     );
+  }
+
+  if (isFeatureFlagsLoading) {
+    return <Skeleton />;
+  }
+
+  if (!isFeatureEnabled(FeatureNames.FeatureDomain)) {
+    return <DisabledFeature />;
   }
 
   if (!canRead) {

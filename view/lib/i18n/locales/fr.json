@@ -7,7 +7,11 @@
     "logout": "Déconnexion",
     "accessDenied": "Accès Refusé",
     "noPermissionView": "Vous n'avez pas la permission de voir cette page",
-    "searchFiles": "Rechercher des fichiers..."
+    "searchFiles": "Rechercher des fichiers...",
+    "featureDisabled": "Caractéristique Désactivée",
+    "featureNotAvailable": "Cette caractéristique n'est pas disponible pour votre organisation",
+    "goBack": "Retour",
+    "refreshPage": "Actualiser la page"
   },
   "auth": {
     "login": {
@@ -85,7 +89,8 @@
     "description": "Gérez votre compte",
     "tabs": {
       "account": "Compte",
-      "security": "Sécurité"
+      "security": "Sécurité",
+      "featureFlags": "Caractéristiques"
     },
     "preferences": {
       "language": {
@@ -109,6 +114,70 @@
         "title": "Mise à Jour Automatique",
         "description": "Mettre à jour nixopus automatiquement lorsqu'une nouvelle version est disponible",
         "select": "Sélectionner la mise à jour automatique"
+      }
+    },
+    "featureFlags": {
+      "title": "Caractéristiques",
+      "description": "Activer ou désactiver des caractéristiques spécifiques pour votre organisation",
+      "groups": {
+        "infrastructure": {
+          "title": "Infrastructure",
+          "description": "Activer ou désactiver des caractéristiques spécifiques d'infrastructure pour votre organisation"
+        },
+        "development": {
+          "title": "Développement",
+          "description": "Activer ou désactiver des caractéristiques spécifiques de développement pour votre organisation"
+        },
+        "monitoring": {
+          "title": "Monitoreo",
+          "description": "Activer ou désactiver des caractéristiques spécifiques de monitoreo pour votre organisation"
+        },
+        "notifications": {
+          "title": "Notifications",
+          "description": "Activer ou désactiver des caractéristiques spécifiques de notifications pour votre organisation"
+        }
+      },
+      "features": {
+        "terminal": {
+          "title": "Terminal",
+          "description": "Accès à la caractéristique de terminal"
+        },
+        "file_manager": {
+          "title": "Gestionnaire de Fichiers",
+          "description": "Accès à la caractéristique de gestionnaire de fichiers"
+        },
+        "self_hosted": {
+          "title": "Self Hosted",
+          "description": "Accès à la caractéristique de self hosted"
+        },
+        "domain": {
+          "title": "Domaine",
+          "description": "Accès à la caractéristique de domaine"
+        },
+        "monitoring": {
+          "title": "Monitoreo",
+          "description": "Accès à la caractéristique de monitoreo"
+        },
+        "proxy_config": {
+          "title": "Configuration de Proxy",
+          "description": "Accès à la caractéristique de configuration de proxy"
+        },
+        "github_connector": {
+          "title": "Connexion GitHub",
+          "description": "Accès à la caractéristique de connexion GitHub"
+        },
+        "audit": {
+          "title": "Registres d'Audit",
+          "description": "Accès à la caractéristique de registres d'audit"
+        },
+        "notifications": {
+          "title": "Notifications",
+          "description": "Accès à la caractéristique de notifications"
+        }
+      },
+      "messages": {
+        "updated": "Caractéristique mise à jour avec succès",
+        "updateFailed": "Échec de la mise à jour de la caractéristique"
       }
     },
     "account": {

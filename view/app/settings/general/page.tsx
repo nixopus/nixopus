@@ -8,6 +8,7 @@ import AvatarSection from './components/AvatarSection';
 import AccountSection from './components/AccountSection';
 import SecuritySection from './components/SecuritySection';
 import { useTranslation } from '@/hooks/use-translation';
+import FeatureFlagsSettings from './components/FeatureFlagsSettings';
 
 function Page() {
   const { t, isLoading } = useTranslation();
@@ -43,9 +44,10 @@ function Page() {
         <AvatarSection onImageChange={onImageChange} user={user} />
         <div className="col-span-1 lg:col-span-2">
           <Tabs defaultValue="account" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="account">{t('settings.tabs.account')}</TabsTrigger>
               <TabsTrigger value="security">{t('settings.tabs.security')}</TabsTrigger>
+              <TabsTrigger value="feature-flags">{t('settings.tabs.featureFlags')}</TabsTrigger>
             </TabsList>
             <AccountSection
               username={username}
@@ -83,6 +85,7 @@ function Page() {
               isLoading={settingsLoading}
               handlePasswordResetRequest={handlePasswordResetRequest}
             />
+            <FeatureFlagsSettings />
           </Tabs>
         </div>
       </div>

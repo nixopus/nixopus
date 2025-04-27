@@ -7,7 +7,11 @@
     "logout": "Logout",
     "accessDenied": "Access Denied",
     "noPermissionView": "You don't have permission to view this page",
-    "searchFiles": "Search files..."
+    "searchFiles": "Search files...",
+    "featureDisabled": "Feature Disabled",
+    "featureNotAvailable": "This feature is not available for your organization",
+    "goBack": "Go Back",
+    "refreshPage": "Refresh Page"
   },
   "auth": {
     "login": {
@@ -85,7 +89,8 @@
     "description": "Manage your account",
     "tabs": {
       "account": "Account",
-      "security": "Security"
+      "security": "Security",
+      "featureFlags" : "Features"
     },
     "preferences": {
       "language": {
@@ -109,6 +114,70 @@
         "title": "Auto Update",
         "description": "Automatically update nixopus when a new version is available",
         "select": "Select auto update"
+      }
+    },
+    "featureFlags": { 
+      "title": "Features",
+      "description": "Enable or disable specific features for your organization",
+      "groups": {
+        "infrastructure": {
+          "title": "Infrastructure",
+          "description": "Enable or disable specific infrastructure features for your organization"
+        },
+        "development": {
+          "title": "Development",
+          "description": "Enable or disable specific development features for your organization"
+        },
+        "monitoring": {
+          "title": "Monitoring",
+          "description": "Enable or disable specific monitoring features for your organization"
+        },
+        "notifications": {
+          "title": "Notifications",
+          "description": "Enable or disable specific notifications features for your organization"
+        }
+      },
+      "features": {
+        "terminal": {
+          "title": "Terminal",
+          "description": "Access to the terminal feature"
+        },
+        "file_manager": {
+          "title": "File Manager",
+          "description": "Access to the file manager feature"
+        },
+        "self_hosted": {
+          "title": "Self Hosted",
+          "description": "Access to the self hosted feature"
+        },
+        "domain": {
+          "title": "Domain",
+          "description": "Access to the domain feature"
+        },
+        "monitoring": {
+          "title": "Monitoring",
+          "description": "Access to the monitoring feature"
+        },
+        "proxy_config": {
+          "title": "Proxy Configuration",
+          "description": "Access to the proxy configuration feature"
+        },
+        "github_connector": {
+          "title": "GitHub Connector",
+          "description": "Access to the GitHub connector feature"
+        },
+        "audit": {
+          "title": "Audit Logs",
+          "description": "Access to the audit logs feature"
+        },
+        "notifications": {
+          "title": "Notifications",
+          "description": "Access to the notifications feature"
+        }
+      },
+      "messages": {
+        "updated": "Feature flag updated successfully",
+        "updateFailed": "Failed to update feature flag"
       }
     },
     "account": {

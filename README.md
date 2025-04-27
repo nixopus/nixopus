@@ -9,27 +9,20 @@
 [![Security Scan](https://github.com/raghavyuva/nixopus/actions/workflows/security.yml/badge.svg)](https://github.com/raghavyuva/nixopus/actions/workflows/security.yml)
 [![Package Manager](https://github.com/raghavyuva/nixopus/actions/workflows/build_container.yml/badge.svg)](https://github.com/raghavyuva/nixopus/actions/workflows/build_container.yml)
 [![Release](https://github.com/raghavyuva/nixopus/actions/workflows/release.yml/badge.svg)](https://github.com/raghavyuva/nixopus/actions/workflows/release.yml)
+
+[Website](https://nixopus.com) | [Documentation](https://docs.nixopus.com) | [Join Community](https://discord.gg/skdcq39Wpv)
+
 </div>
 
 ## Your All-in-One VPS Management Solution
 
 Nixopus is a powerful platform designed to simplify VPS management. Whether you're a DevOps engineer, system administrator, or developer, Nixopus streamlines your workflow with comprehensive tools for deployment, monitoring, and maintenance.
 
+> ⚠️ **Important Note**: Nixopus is currently in alpha/pre-release stage and is not yet ready for production use. While you're welcome to try it out, we recommend waiting for the beta or stable release before using it in production environments. The platform is still undergoing testing and development.
+
 ## 📚 Documentation
 
 For complete documentation, visit our [Documentation Portal](https://docs.nixopus.com).
-
-## Demo
-
-<p align="center">
-  <a href="https://youtu.be/QTrCqsesibU" title="Nixopus Demo - Click to Watch!">
-    <img src="https://img.youtube.com/vi/QTrCqsesibU/0.jpg" 
-         alt="Nixopus Demo" 
-         width="600" 
-         height="440" 
-         style="max-width: 100%;">
-  </a>
-</p>
 
 ## 🤝 Contributing
 

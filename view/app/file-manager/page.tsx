@@ -17,12 +17,15 @@ import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { FileData } from '@/redux/types/files';
 import { FileContextMenu } from './components/context-menu/FileContextMenu';
 import { toast } from 'sonner';
-
+import { useFeatureFlags } from '@/hooks/features_provider';
+import DisabledFeature from '@/components/features/disabled-feature';
+import { FeatureNames } from '@/types/feature-flags';
 function FileManager() {
   const { t } = useTranslation();
   const user = useAppSelector((state) => state.auth.user);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const [fileToDelete, setFileToDelete] = React.useState<FileData | null>(null);
+  const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
 
   const {
     currentPath,
@@ -68,6 +71,14 @@ function FileManager() {
   const canCreate = hasPermission(user, 'file-manager', 'create', activeOrg?.id);
   const canUpdate = hasPermission(user, 'file-manager', 'update', activeOrg?.id);
   const canDelete = hasPermission(user, 'file-manager', 'delete', activeOrg?.id);
+
+  if (isFeatureFlagsLoading) {
+    return <Skeleton />;
+  }
+
+  if (!isFeatureEnabled(FeatureNames.FeatureFileManager)) {
+    return <DisabledFeature />; 
+  }
 
   if (!canRead) {
     return (

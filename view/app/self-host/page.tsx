@@ -11,6 +11,10 @@ import { Button } from '@/components/ui/button';
 import { useAppSelector } from '@/redux/hooks';
 import { hasPermission } from '@/lib/permission';
 import { useTranslation } from '@/hooks/use-translation';
+import { useFeatureFlags } from '@/hooks/features_provider';
+import Skeleton from '../file-manager/components/skeleton/Skeleton';
+import { FeatureNames } from '@/types/feature-flags';
+import DisabledFeature from '@/components/features/disabled-feature';
 
 function page() {
   const { t } = useTranslation();
@@ -34,6 +38,7 @@ function page() {
     showApplications,
     router
   } = useGetDeployedApplications();
+  const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
 
   const canRead = hasPermission(user, 'deploy', 'read', activeOrg?.id);
   const canCreate = hasPermission(user, 'deploy', 'create', activeOrg?.id);
@@ -46,6 +51,16 @@ function page() {
           <p className="text-muted-foreground">{t('selfHost.page.accessDenied.description')}</p>
         </div>
       </div>
+    );
+  }
+
+  if (isFeatureFlagsLoading) {
+    return <Skeleton />;
+  }
+
+  if (!isFeatureEnabled(FeatureNames.FeatureSelfHosted)) {
+    return (
+      <DisabledFeature />
     );
   }
 

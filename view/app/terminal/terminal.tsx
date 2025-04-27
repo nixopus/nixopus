@@ -5,7 +5,10 @@ import { useTerminal } from './utils/useTerminal';
 import { useContainerReady } from './utils/isContainerReady';
 import { X } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
-
+import { useFeatureFlags } from '@/hooks/features_provider';
+import DisabledFeature from '@/components/features/disabled-feature';
+import Skeleton from '@/app/file-manager/components/skeleton/Skeleton';
+import { FeatureNames } from '@/types/feature-flags';
 const globalStyles = `
   .xterm-viewport::-webkit-scrollbar {
     display: none;
@@ -46,7 +49,7 @@ export const Terminal: React.FC<TerminalProps> = ({
   };
 
   const isContainerReady = useContainerReady(isTerminalOpen, terminalRef);
-
+  const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
   const updateDimensions = useCallback(() => {
     if (!containerRef.current) return;
 
@@ -103,6 +106,13 @@ export const Terminal: React.FC<TerminalProps> = ({
     };
   }, []);
 
+  if (isFeatureFlagsLoading) {
+    return <Skeleton />;
+  }
+
+  if (!isFeatureEnabled(FeatureNames.FeatureTerminal)) {
+    return <DisabledFeature />;
+  }
   return (
     <div
       className="flex h-full flex-col overflow-hidden bg-[#1e1e1e]"

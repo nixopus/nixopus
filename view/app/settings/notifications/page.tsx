@@ -10,7 +10,10 @@ import { hasPermission } from '@/lib/permission';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 import { SMTPFormData } from '@/redux/types/notification';
-
+import { useFeatureFlags } from '@/hooks/features_provider';
+import Skeleton from '@/app/file-manager/components/skeleton/Skeleton';
+import DisabledFeature from '@/components/features/disabled-feature';
+import { FeatureNames } from '@/types/feature-flags';
 export type NotificationChannelConfig = {
   [key: string]: string;
 };
@@ -31,7 +34,7 @@ const Page: React.FC = () => {
     preferences,
     handleUpdatePreference
   } = useNotificationSettings();
-
+  const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
   const canRead = hasPermission(user, 'notification', 'read', activeOrg?.id);
   const canUpdate = hasPermission(user, 'notification', 'update', activeOrg?.id);
   const canCreate = hasPermission(user, 'notification', 'create', activeOrg?.id);
@@ -51,6 +54,14 @@ const Page: React.FC = () => {
     );
   }
 
+  if (isFeatureFlagsLoading) {
+    return <Skeleton />;
+  }
+
+  if (!isFeatureEnabled(FeatureNames.FeatureNotifications)) {
+    return <DisabledFeature />;
+  }
+  
   const handleSave = (data: SMTPFormData) => {
     if (smtpConfigs) {
       if (canUpdate) {

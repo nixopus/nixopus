@@ -12,6 +12,7 @@ import { initializeAuth } from '@/redux/features/users/authSlice';
 import { usePathname } from 'next/navigation';
 import { WebSocketProvider } from '@/hooks/socket-provider';
 import DashboardLayout from '@/components/layout/dashboard-layout';
+import { FeatureFlagsProvider } from '@/hooks/features_provider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -60,11 +61,13 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
     <>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         <WebSocketProvider>
-          {pathname === '/' || pathname === '/login' ? (
-            <>{children}</>
-          ) : (
-            <DashboardLayout>{children}</DashboardLayout>
-          )}
+          <FeatureFlagsProvider>
+            {pathname === '/' || pathname === '/login' ? (
+              <>{children}</>
+            ) : (
+              <DashboardLayout>{children}</DashboardLayout>
+            )}
+          </FeatureFlagsProvider>
         </WebSocketProvider>
       </ThemeProvider>
       <Toaster />

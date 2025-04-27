@@ -100,3 +100,9 @@ export enum FILEMANAGERURLS {
 export enum AUDITURLS {
   GET_RECENT_AUDIT_LOGS = 'v1/audit/logs'
 }
+
+export const FEATURE_FLAGS = {
+  GET_FEATURE_FLAGS: 'v1/feature-flags',
+  UPDATE_FEATURE_FLAG: 'v1/feature-flags',
+  CHECK_FEATURE_ENABLED: 'v1/feature-flags/check'
+};

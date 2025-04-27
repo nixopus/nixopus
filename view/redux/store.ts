@@ -21,6 +21,7 @@ import githubConnector from './features/github-connector/githubConnectorSlice';
 import { deployApi } from './services/deploy/applicationsApi';
 import { fileManagersApi } from './services/file-manager/fileManagersApi';
 import { auditApi } from './services/audit';
+import { FeatureFlagsApi } from './services/feature-flags/featureFlagsApi';
 
 const createNoopStorage = () => ({
   getItem: (_key: string) => Promise.resolve(null),
@@ -52,7 +53,8 @@ const rootReducer = combineReducers({
   [deployApi.reducerPath]: deployApi.reducer,
   user: userSlice,
   fileManagersApi: fileManagersApi.reducer,
-  [auditApi.reducerPath]: auditApi.reducer
+  [auditApi.reducerPath]: auditApi.reducer,
+  [FeatureFlagsApi.reducerPath]: FeatureFlagsApi.reducer
 });
 
 type RootReducer = ReturnType<typeof rootReducer>;
@@ -83,7 +85,8 @@ const storeOptions: ConfigureStoreOptions = {
       GithubConnectorApi.middleware,
       deployApi.middleware,
       fileManagersApi.middleware,
-      auditApi.middleware
+      auditApi.middleware,
+      FeatureFlagsApi.middleware
     ]),
   devTools: process.env.NODE_ENV === 'development'
 };
