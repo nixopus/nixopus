@@ -29,6 +29,12 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 			return
 		}
 
+		// Optionally cache can be disabled by setting the X-Disable-Cache header to true
+		disableCache := r.Header.Get("X-Disable-Cache")
+		if disableCache == "true" {
+			cache = nil
+		}
+
 		if len(token) > 7 && token[:7] == "Bearer " {
 			token = token[7:]
 		}

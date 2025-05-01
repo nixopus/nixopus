@@ -150,10 +150,10 @@ func (router *Router) Routes() {
 		return middleware.RBACMiddleware(next, router.app, "domain")
 	})
 	fuego.Use(domainGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "domain")
+		return middleware.FeatureFlagMiddleware(next, router.app, "domain", router.cache)
 	})
 	fuego.Use(domainsAllGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "domain")
+		return middleware.FeatureFlagMiddleware(next, router.app, "domain", router.cache)
 	})
 	router.DomainRoutes(domainGroup, domainsAllGroup, domainController)
 
@@ -163,7 +163,7 @@ func (router *Router) Routes() {
 		return middleware.RBACMiddleware(next, router.app, "github-connector")
 	})
 	fuego.Use(githubConnectorGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "github_connector")
+		return middleware.FeatureFlagMiddleware(next, router.app, "github_connector", router.cache)
 	})
 	router.GithubConnectorRoutes(githubConnectorGroup, githubConnectorController)
 
@@ -173,7 +173,7 @@ func (router *Router) Routes() {
 		return middleware.RBACMiddleware(next, router.app, "notification")
 	})
 	fuego.Use(notificationGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "notifications")
+		return middleware.FeatureFlagMiddleware(next, router.app, "notifications", router.cache)
 	})
 	router.NotificationRoutes(notificationGroup, notifController)
 
@@ -190,7 +190,7 @@ func (router *Router) Routes() {
 		return middleware.RBACMiddleware(next, router.app, "file-manager")
 	})
 	fuego.Use(fileManagerGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "file_manager")
+		return middleware.FeatureFlagMiddleware(next, router.app, "file_manager", router.cache)
 	})
 	router.FileManagerRoutes(fileManagerGroup, fileManagerController)
 
@@ -199,7 +199,7 @@ func (router *Router) Routes() {
 		return middleware.RBACMiddleware(next, router.app, "deploy")
 	})
 	fuego.Use(deployGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "deploy")
+		return middleware.FeatureFlagMiddleware(next, router.app, "deploy", router.cache)
 	})
 	router.DeployRoutes(deployGroup, deployController)
 
@@ -209,7 +209,7 @@ func (router *Router) Routes() {
 		return middleware.RBACMiddleware(next, router.app, "audit")
 	})
 	fuego.Use(auditGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "audit")
+		return middleware.FeatureFlagMiddleware(next, router.app, "audit", router.cache)
 	})
 	router.AuditRoutes(auditGroup, auditController)
 
@@ -220,7 +220,7 @@ func (router *Router) Routes() {
 
 	featureFlagStorage := &feature_flags_storage.FeatureFlagStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	featureFlagService := feature_flags_service.NewFeatureFlagService(featureFlagStorage, l, router.app.Ctx)
-	featureFlagController := feature_flags_controller.NewFeatureFlagController(featureFlagService, l, router.app.Ctx)
+	featureFlagController := feature_flags_controller.NewFeatureFlagController(featureFlagService, l, router.app.Ctx, router.cache)
 	featureFlagGroup := fuego.Group(server, apiV1.Path+"/feature-flags")
 	fuego.Use(featureFlagGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "feature_flags")

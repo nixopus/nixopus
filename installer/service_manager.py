@@ -127,6 +127,7 @@ class ServiceManager:
             "nixopus-db-container": "Database service",
             "nixopus-view-container": "View service",
             "nixopus-caddy-container": "Caddy service"
+            # we will not check for redis service here because it is not strictly required for the api to run
         }
     
     def staging_containers(self):
