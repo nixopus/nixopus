@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/raghavyuva/nixopus-api/internal/cache"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/service"
@@ -24,7 +23,6 @@ type OrganizationsController struct {
 	ctx          context.Context
 	logger       logger.Logger
 	notification *notification.NotificationManager
-	cache        *cache.Cache
 }
 
 func NewOrganizationsController(
@@ -32,19 +30,16 @@ func NewOrganizationsController(
 	ctx context.Context,
 	l logger.Logger,
 	notificationManager *notification.NotificationManager,
-	cache *cache.Cache,
 ) *OrganizationsController {
 	storage := storage.OrganizationStore{DB: store.DB, Ctx: ctx}
 	role_storage := role_storage.RoleStorage{DB: store.DB, Ctx: ctx}
-
 	return &OrganizationsController{
 		store:        store,
 		validator:    validation.NewValidator(&storage),
-		service:      service.NewOrganizationService(store, ctx, l, &storage, cache),
+		service:      service.NewOrganizationService(store, ctx, l, &storage),
 		role_service: role_service.NewRoleService(store, ctx, l, &role_storage),
 		ctx:          ctx,
 		notification: notificationManager,
-		cache:        cache,
 	}
 }
 

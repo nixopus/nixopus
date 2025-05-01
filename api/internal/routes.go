@@ -9,7 +9,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
 	"github.com/joho/godotenv"
-	"github.com/raghavyuva/nixopus-api/internal/cache"
 	audit "github.com/raghavyuva/nixopus-api/internal/features/audit/controller"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
 	authService "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
@@ -42,19 +41,12 @@ import (
 )
 
 type Router struct {
-	app   *storage.App
-	cache *cache.Cache
+	app *storage.App
 }
 
 func NewRouter(app *storage.App) *Router {
-	// Initialize cache
-	cache, err := cache.NewCache(os.Getenv("REDIS_URL"))
-	if err != nil {
-		log.Fatal("Error creating cache", err)
-	}
 	return &Router{
-		app:   app,
-		cache: cache,
+		app: app,
 	}
 }
 
@@ -112,7 +104,7 @@ func (router *Router) Routes() {
 	orgStorage := &organization_storage.OrganizationStore{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	permService := permissions_service.NewPermissionService(router.app.Store, router.app.Ctx, l, permStorage)
 	roleService := role_service.NewRoleService(router.app.Store, router.app.Ctx, l, roleStorage)
-	orgService := organization_service.NewOrganizationService(router.app.Store, router.app.Ctx, l, orgStorage, router.cache)
+	orgService := organization_service.NewOrganizationService(router.app.Store, router.app.Ctx, l, orgStorage)
 	authService := authService.NewAuthService(userStorage, l, permService, roleService, orgService, router.app.Ctx)
 	authController := auth.NewAuthController(router.app.Ctx, l, notificationManager, *authService)
 	authGroup := fuego.Group(server, apiV1.Path+"/auth")
@@ -125,7 +117,7 @@ func (router *Router) Routes() {
 				next.ServeHTTP(w, r)
 				return
 			}
-			middleware.AuthMiddleware(next, router.app, router.cache).ServeHTTP(w, r)
+			middleware.AuthMiddleware(next, router.app).ServeHTTP(w, r)
 		})
 	})
 
@@ -136,7 +128,7 @@ func (router *Router) Routes() {
 	authProtectedGroup := fuego.Group(server, apiV1.Path+"/auth")
 	router.AuthenticatedAuthRoutes(authProtectedGroup, authController)
 
-	userController := user.NewUserController(router.app.Store, router.app.Ctx, l, router.cache)
+	userController := user.NewUserController(router.app.Store, router.app.Ctx, l)
 	userGroup := fuego.Group(server, apiV1.Path+"/user")
 	router.UserRoutes(userGroup, userController)
 
@@ -150,10 +142,10 @@ func (router *Router) Routes() {
 		return middleware.RBACMiddleware(next, router.app, "domain")
 	})
 	fuego.Use(domainGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "domain", router.cache)
+		return middleware.FeatureFlagMiddleware(next, router.app, "domain")
 	})
 	fuego.Use(domainsAllGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "domain", router.cache)
+		return middleware.FeatureFlagMiddleware(next, router.app, "domain")
 	})
 	router.DomainRoutes(domainGroup, domainsAllGroup, domainController)
 
@@ -163,7 +155,7 @@ func (router *Router) Routes() {
 		return middleware.RBACMiddleware(next, router.app, "github-connector")
 	})
 	fuego.Use(githubConnectorGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "github_connector", router.cache)
+		return middleware.FeatureFlagMiddleware(next, router.app, "github_connector")
 	})
 	router.GithubConnectorRoutes(githubConnectorGroup, githubConnectorController)
 
@@ -173,11 +165,11 @@ func (router *Router) Routes() {
 		return middleware.RBACMiddleware(next, router.app, "notification")
 	})
 	fuego.Use(notificationGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "notifications", router.cache)
+		return middleware.FeatureFlagMiddleware(next, router.app, "notifications")
 	})
 	router.NotificationRoutes(notificationGroup, notifController)
 
-	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager, router.cache)
+	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager)
 	organizationGroup := fuego.Group(server, apiV1.Path+"/organizations")
 	fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "organization")
@@ -190,7 +182,7 @@ func (router *Router) Routes() {
 		return middleware.RBACMiddleware(next, router.app, "file-manager")
 	})
 	fuego.Use(fileManagerGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "file_manager", router.cache)
+		return middleware.FeatureFlagMiddleware(next, router.app, "file_manager")
 	})
 	router.FileManagerRoutes(fileManagerGroup, fileManagerController)
 
@@ -199,7 +191,7 @@ func (router *Router) Routes() {
 		return middleware.RBACMiddleware(next, router.app, "deploy")
 	})
 	fuego.Use(deployGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "deploy", router.cache)
+		return middleware.FeatureFlagMiddleware(next, router.app, "deploy")
 	})
 	router.DeployRoutes(deployGroup, deployController)
 
@@ -209,7 +201,7 @@ func (router *Router) Routes() {
 		return middleware.RBACMiddleware(next, router.app, "audit")
 	})
 	fuego.Use(auditGroup, func(next http.Handler) http.Handler {
-		return middleware.FeatureFlagMiddleware(next, router.app, "audit", router.cache)
+		return middleware.FeatureFlagMiddleware(next, router.app, "audit")
 	})
 	router.AuditRoutes(auditGroup, auditController)
 
@@ -220,7 +212,7 @@ func (router *Router) Routes() {
 
 	featureFlagStorage := &feature_flags_storage.FeatureFlagStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	featureFlagService := feature_flags_service.NewFeatureFlagService(featureFlagStorage, l, router.app.Ctx)
-	featureFlagController := feature_flags_controller.NewFeatureFlagController(featureFlagService, l, router.app.Ctx, router.cache)
+	featureFlagController := feature_flags_controller.NewFeatureFlagController(featureFlagService, l, router.app.Ctx)
 	featureFlagGroup := fuego.Group(server, apiV1.Path+"/feature-flags")
 	fuego.Use(featureFlagGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "feature_flags")

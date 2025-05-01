@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -33,6 +34,13 @@ func (c *UpdateController) CheckForUpdates(s fuego.ContextNoBody) (*types.Update
 		}
 	}
 
+	// If the environment is development, we will not check for updates
+	if os.Getenv("ENV") == "development" {
+		return &types.UpdateCheckResponse{
+			UpdateAvailable: false,
+		}, nil
+	}
+
 	response, err := c.service.CheckForUpdates()
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to check for updates", err.Error())
@@ -47,7 +55,7 @@ func (c *UpdateController) CheckForUpdates(s fuego.ContextNoBody) (*types.Update
 		autoUpdate, err := c.service.GetUserAutoUpdatePreference(user.ID)
 		if err != nil {
 			c.logger.Log(logger.Error, "failed to get user auto-update preference", err.Error())
-			return response, nil 
+			return response, nil
 		}
 
 		if autoUpdate {
@@ -65,6 +73,14 @@ func (c *UpdateController) CheckForUpdates(s fuego.ContextNoBody) (*types.Update
 func (c *UpdateController) PerformUpdate(s fuego.ContextWithBody[types.UpdateRequest]) (*types.UpdateResponse, error) {
 	w, r := s.Response(), s.Request()
 	user := utils.GetUser(w, r)
+
+	// If the environment is development, we will not perform updates
+	if os.Getenv("ENV") == "development" {
+		return &types.UpdateResponse{
+			Success: true,
+			Message: "Update completed successfully",
+		}, nil
+	}
 
 	if user == nil {
 		return nil, fuego.HTTPError{
