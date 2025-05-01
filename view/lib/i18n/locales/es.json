@@ -10,7 +10,8 @@
     "featureDisabled": "Característica Deshabilitada",
     "featureNotAvailable": "Esta característica no está disponible para tu organización",
     "goBack": "Volver",
-    "refreshPage": "Actualizar página"
+    "refreshPage": "Actualizar página",
+    "loading": "Cargando..."
   },
   "auth": {
     "login": {

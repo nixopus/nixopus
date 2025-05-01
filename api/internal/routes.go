@@ -9,6 +9,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
 	"github.com/joho/godotenv"
+	"github.com/raghavyuva/nixopus-api/internal/cache"
 	audit "github.com/raghavyuva/nixopus-api/internal/features/audit/controller"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
 	authService "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
@@ -41,12 +42,19 @@ import (
 )
 
 type Router struct {
-	app *storage.App
+	app   *storage.App
+	cache *cache.Cache
 }
 
 func NewRouter(app *storage.App) *Router {
+	// Initialize cache
+	cache, err := cache.NewCache(os.Getenv("REDIS_URL"))
+	if err != nil {
+		log.Fatal("Error creating cache", err)
+	}
 	return &Router{
-		app: app,
+		app:   app,
+		cache: cache,
 	}
 }
 
@@ -104,7 +112,7 @@ func (router *Router) Routes() {
 	orgStorage := &organization_storage.OrganizationStore{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	permService := permissions_service.NewPermissionService(router.app.Store, router.app.Ctx, l, permStorage)
 	roleService := role_service.NewRoleService(router.app.Store, router.app.Ctx, l, roleStorage)
-	orgService := organization_service.NewOrganizationService(router.app.Store, router.app.Ctx, l, orgStorage)
+	orgService := organization_service.NewOrganizationService(router.app.Store, router.app.Ctx, l, orgStorage, router.cache)
 	authService := authService.NewAuthService(userStorage, l, permService, roleService, orgService, router.app.Ctx)
 	authController := auth.NewAuthController(router.app.Ctx, l, notificationManager, *authService)
 	authGroup := fuego.Group(server, apiV1.Path+"/auth")
@@ -117,7 +125,7 @@ func (router *Router) Routes() {
 				next.ServeHTTP(w, r)
 				return
 			}
-			middleware.AuthMiddleware(next, router.app).ServeHTTP(w, r)
+			middleware.AuthMiddleware(next, router.app, router.cache).ServeHTTP(w, r)
 		})
 	})
 
@@ -128,7 +136,7 @@ func (router *Router) Routes() {
 	authProtectedGroup := fuego.Group(server, apiV1.Path+"/auth")
 	router.AuthenticatedAuthRoutes(authProtectedGroup, authController)
 
-	userController := user.NewUserController(router.app.Store, router.app.Ctx, l)
+	userController := user.NewUserController(router.app.Store, router.app.Ctx, l, router.cache)
 	userGroup := fuego.Group(server, apiV1.Path+"/user")
 	router.UserRoutes(userGroup, userController)
 
@@ -169,7 +177,7 @@ func (router *Router) Routes() {
 	})
 	router.NotificationRoutes(notificationGroup, notifController)
 
-	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager)
+	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager, router.cache)
 	organizationGroup := fuego.Group(server, apiV1.Path+"/organizations")
 	fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "organization")

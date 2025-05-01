@@ -11,7 +11,8 @@
     "featureDisabled": "Caractéristique Désactivée",
     "featureNotAvailable": "Cette caractéristique n'est pas disponible pour votre organisation",
     "goBack": "Retour",
-    "refreshPage": "Actualiser la page"
+    "refreshPage": "Actualiser la page",
+    "loading": "Chargement..."
   },
   "auth": {
     "login": {

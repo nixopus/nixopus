@@ -11,7 +11,8 @@
     "featureDisabled": "Feature Disabled",
     "featureNotAvailable": "This feature is not available for your organization",
     "goBack": "Go Back",
-    "refreshPage": "Refresh Page"
+    "refreshPage": "Refresh Page",
+    "loading": "Loading..."
   },
   "auth": {
     "login": {

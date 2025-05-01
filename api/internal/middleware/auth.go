@@ -3,12 +3,12 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/raghavyuva/nixopus-api/internal/cache"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
@@ -19,8 +19,10 @@ import (
 // AuthMiddleware is a middleware that checks if the request has a valid
 // authorization token. If the token is valid, it adds both the user and
 // the authenticated client to the request context.
-func AuthMiddleware(next http.Handler, app *storage.App) http.Handler {
+func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		token := r.Header.Get("Authorization")
 		if token == "" {
 			utils.SendErrorResponse(w, "No authorization token provided", http.StatusUnauthorized)
@@ -31,17 +33,14 @@ func AuthMiddleware(next http.Handler, app *storage.App) http.Handler {
 			token = token[7:]
 		}
 
-		user, err := verifyToken(token, app.Store.DB, app.Ctx)
+		user, err := verifyToken(token, app.Store.DB, ctx, cache)
 		if err != nil {
-			log.Printf("Auth error: %v", err)
 			utils.SendErrorResponse(w, "Invalid authorization token", http.StatusUnauthorized)
 			return
 		}
 
-		// Check if 2FA is required but not verified
 		claims, err := getTokenClaims(token)
 		if err != nil {
-			log.Printf("Token claims error: %v", err)
 			utils.SendErrorResponse(w, "Invalid token claims", http.StatusUnauthorized)
 			return
 		}
@@ -49,17 +48,14 @@ func AuthMiddleware(next http.Handler, app *storage.App) http.Handler {
 		twoFactorEnabled, _ := claims["2fa_enabled"].(bool)
 		twoFactorVerified, _ := claims["2fa_verified"].(bool)
 
-		// If 2FA is enabled but not verified, only allow access to 2FA verification endpoints
-		if twoFactorEnabled && !twoFactorVerified {
-			if !is2FAVerificationEndpoint(r.URL.Path) {
-				utils.SendErrorResponse(w, "Two-factor authentication required", http.StatusForbidden)
-				return
-			}
+		if twoFactorEnabled && !twoFactorVerified && !is2FAVerificationEndpoint(r.URL.Path) {
+			utils.SendErrorResponse(w, "Two-factor authentication required", http.StatusForbidden)
+			return
 		}
 
-		log.Printf("User authenticated. ID: %s, Phone: %s", user.ID, user.Email)
+		ctx = context.WithValue(ctx, types.UserContextKey, user)
+		ctx = context.WithValue(ctx, types.AuthTokenKey, token)
 
-		// Skip organization ID check for authentication routes
 		if !isAuthEndpoint(r.URL.Path) {
 			organizationID := r.Header.Get("X-Organization-Id")
 			if organizationID == "" {
@@ -67,29 +63,37 @@ func AuthMiddleware(next http.Handler, app *storage.App) http.Handler {
 				return
 			}
 
-			userStorage := user_storage.UserStorage{
-				DB:  app.Store.DB,
-				Ctx: app.Ctx,
-			}
-			belongsToOrg, err := userStorage.UserBelongsToOrganization(user.ID.String(), organizationID)
-			if err != nil {
-				log.Printf("Error checking organization membership: %v", err)
-				utils.SendErrorResponse(w, "Error verifying organization membership", http.StatusInternalServerError)
-				return
+			var belongsToOrg bool
+			if cache != nil {
+				if cached, err := cache.GetOrgMembership(ctx, user.ID.String(), organizationID); err == nil {
+					belongsToOrg = cached
+				}
 			}
 
 			if !belongsToOrg {
-				utils.SendErrorResponse(w, "User does not belong to the specified organization", http.StatusForbidden)
-				return
+				userStorage := user_storage.UserStorage{
+					DB:  app.Store.DB,
+					Ctx: ctx,
+				}
+				belongsToOrg, err = userStorage.UserBelongsToOrganization(user.ID.String(), organizationID)
+				if err != nil {
+					utils.SendErrorResponse(w, "Error verifying organization membership", http.StatusInternalServerError)
+					return
+				}
+
+				if !belongsToOrg {
+					utils.SendErrorResponse(w, "User does not belong to the specified organization", http.StatusForbidden)
+					return
+				}
+
+				if cache != nil {
+					cache.SetOrgMembership(ctx, user.ID.String(), organizationID, belongsToOrg)
+				}
 			}
 
-			ctx := context.WithValue(r.Context(), types.OrganizationIDKey, organizationID)
-			r = r.WithContext(ctx)
+			ctx = context.WithValue(ctx, types.OrganizationIDKey, organizationID)
 		}
 
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, types.UserContextKey, user)
-		ctx = context.WithValue(ctx, types.AuthTokenKey, token)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
@@ -157,7 +161,7 @@ func isAuthEndpoint(path string) bool {
 }
 
 // verifyToken validates a JWT token and returns the associated user
-func verifyToken(tokenString string, db *bun.DB, ctx context.Context) (*types.User, error) {
+func verifyToken(tokenString string, db *bun.DB, ctx context.Context, cache *cache.Cache) (*types.User, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -181,6 +185,12 @@ func verifyToken(tokenString string, db *bun.DB, ctx context.Context) (*types.Us
 			return nil, fmt.Errorf("invalid token claims")
 		}
 
+		if cache != nil {
+			if user, err := cache.GetUser(ctx, email); err == nil && user != nil {
+				return user, nil
+			}
+		}
+
 		user_storage := user_storage.UserStorage{
 			DB:  db,
 			Ctx: ctx,
@@ -188,6 +198,10 @@ func verifyToken(tokenString string, db *bun.DB, ctx context.Context) (*types.Us
 		user, err := user_storage.FindUserByEmail(email)
 		if err != nil {
 			return nil, err
+		}
+
+		if cache != nil {
+			cache.SetUser(ctx, email, user)
 		}
 
 		return user, nil

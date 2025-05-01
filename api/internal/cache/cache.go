@@ -13,7 +13,7 @@ import (
 const (
 	UserCacheKeyPrefix          = "user:"
 	OrgMembershipCacheKeyPrefix = "org_membership:"
-	UserCacheTTL                = 15 * time.Minute
+	UserCacheTTL                = 10 * time.Minute
 	OrgMembershipCacheTTL       = 30 * time.Minute
 )
 
