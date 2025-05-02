@@ -14,6 +14,47 @@
     "refreshPage": "Actualiser la page",
     "loading": "Chargement..."
   },
+  "containers": {
+    "title": "Conteneurs",
+    "list": "Liste des Conteneurs",
+    "name": "Nom",
+    "image": "Image",
+    "status": "Statut",
+    "ports": "Ports",
+    "actions": "Actions",
+    "refresh": "Actualiser",
+    "start": "Démarrer",
+    "stop": "Arrêter",
+    "remove": "Supprimer",
+    "restart": "Redémarrer",
+    "start_success": "Conteneur démarré avec succès",
+    "stop_success": "Conteneur arrêté avec succès",
+    "remove_success": "Conteneur supprimé avec succès",
+    "start_error": "Erreur lors de l'ouverture du conteneur",
+    "stop_error": "Erreur lors de l'arrêt du conteneur",
+    "remove_error": "Erreur lors de la suppression du conteneur",
+    "fetch_error": "Erreur lors de la récupération des conteneurs",
+    "overview": "Aperçu",
+    "logs": "Logs",
+    "details": "Détails",
+    "basic_info": "Informations de base",
+    "resources": "Ressources",
+    "cpu_shares": "Partes de CPU",
+    "memory": "Mémoire",
+    "command": "Commande",
+    "created": "Créé",
+    "ip_address": "IP",
+    "load_more_logs": "Charger plus de logs",
+    "no_logs": "Aucun log trouvé",
+    "no_containers": "Aucun conteneur trouvé",
+    "more_ports": "+{count} plus",
+    "deleteDialog": {
+      "title": "Supprimer le Conteneur",
+      "description": "Êtes-vous sûr de vouloir supprimer ce conteneur ?",
+      "confirm": "Supprimer",
+      "cancel": "Annuler"
+    }
+  },
   "auth": {
     "login": {
       "title": "Bienvenue",
@@ -1110,7 +1151,8 @@
     "notifications": "Notifications",
     "team": "Équipe",
     "domains": "Domaines",
-    "update": "Mettre à jour"
+    "update": "Mettre à jour",
+    "containers": "Conteneurs"
   },
   "layout": {
     "breadcrumbs": {

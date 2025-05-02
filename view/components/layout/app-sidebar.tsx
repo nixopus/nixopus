@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Folder, Home, Package, SettingsIcon } from 'lucide-react';
+import { Folder, Home, Package, SettingsIcon, Container } from 'lucide-react';
 import { NavMain } from '@/components/layout/nav-main';
 import { NavUser } from '@/components/layout/nav-user';
 import { TeamSwitcher } from '@/components/ui/team-switcher';
@@ -32,6 +32,12 @@ const data = {
       url: '/self-host',
       icon: Package,
       resource: 'deploy'
+    },
+    {
+      title: 'navigation.containers',
+      url: '/containers',
+      icon: Container,
+      resource: 'container'
     },
     {
       title: 'navigation.fileManager',
@@ -83,7 +89,7 @@ export function AppSidebar({
   const dispatch = useAppDispatch();
 
   const hasAnyPermission = React.useMemo(() => {
-    const allowedResources = ['dashboard', 'settings'];
+    const allowedResources = ['dashboard', 'settings', 'container'];
 
     return (resource: string) => {
       if (!user || !activeOrg) return false;
