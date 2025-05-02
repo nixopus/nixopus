@@ -333,7 +333,8 @@ class EnvironmentSetup:
             "CADDY_CONFIG_VOLUME": str(self.config_dir / "caddy" / "config"),
             "DB_VOLUME": str(self.config_dir / "db"),
             "ALLOWED_ORIGIN": f"https://{self.domains['app_domain']}",
-            "APP_VERSION": self.get_version()
+            "APP_VERSION": self.get_version(),
+            "REDIS_URL": "redis://nixopus-redis:6379" if self.env == "production" else "redis://nixopus-staging-redis:6380"
         }
 
         with open(self.env_file, 'w') as f:

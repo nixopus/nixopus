@@ -6,4 +6,4 @@ run: build
 	@./bin/$(APP_NAME)
 
 test:
-	@go test -v ./...
+	@go test -p 1 ./... -v -count=1

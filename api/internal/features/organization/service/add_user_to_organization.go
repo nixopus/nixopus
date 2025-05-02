@@ -132,6 +132,11 @@ func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrgan
 		return types.ErrFailedToAddUserToOrganization
 	}
 
+	// Invalidate cache for organization membership
+	if err := o.cache.InvalidateOrgMembership(o.Ctx, request.UserID, request.OrganizationID); err != nil {
+		o.logger.Log(logger.Error, "failed to invalidate organization membership cache", err.Error())
+	}
+
 	if shouldCommit {
 		if err := dbTx.Commit(); err != nil {
 			o.logger.Log(logger.Error, "failed to commit transaction", err.Error())

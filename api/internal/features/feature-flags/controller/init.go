@@ -2,7 +2,9 @@ package controller
 
 import (
 	"context"
+
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/cache"
 	"github.com/raghavyuva/nixopus-api/internal/features/feature-flags/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/types"
@@ -13,13 +15,15 @@ type FeatureFlagController struct {
 	service *service.FeatureFlagService
 	logger  logger.Logger
 	ctx     context.Context
+	cache   *cache.Cache
 }
 
-func NewFeatureFlagController(service *service.FeatureFlagService, logger logger.Logger, ctx context.Context) *FeatureFlagController {
+func NewFeatureFlagController(service *service.FeatureFlagService, logger logger.Logger, ctx context.Context, cache *cache.Cache) *FeatureFlagController {
 	return &FeatureFlagController{
 		service: service,
 		logger:  logger,
 		ctx:     ctx,
+		cache:   cache,
 	}
 }
 
@@ -50,6 +54,9 @@ func (c *FeatureFlagController) UpdateFeatureFlag(f fuego.ContextWithBody[types.
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, err
 	}
+
+	// Invalidate the feature flag cache
+	c.cache.InvalidateFeatureFlag(c.ctx, organizationID.String(), req.FeatureName)
 
 	return &types.Response{
 		Status:  "success",

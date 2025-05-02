@@ -1,0 +1,71 @@
+name: Test Nixopus API
+
+on:
+  pull_request:
+    branches:
+      - master
+      - feat/develop
+      - test/unit_test
+    paths:
+      - 'api/**'
+  push:
+    branches:
+      - 'master'
+      - 'feat/develop'
+      - 'test/unit_test'
+    paths:
+      - 'api/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      test-db:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_USER: nixopus
+          POSTGRES_PASSWORD: nixopus
+          POSTGRES_DB: nixopus_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          check-latest: true
+          cache: true
+          cache-dependency-path: api/go.sum
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..10}; do
+            if pg_isready -h localhost -p 5433 -U nixopus -d nixopus_test; then
+              echo "PostgreSQL is ready"
+              exit 0
+            fi
+            echo "Waiting for PostgreSQL... $i"
+            sleep 2
+          done
+          echo "PostgreSQL failed to start"
+          exit 1
+      
+      - name: Build and run tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5433
+          DB_USER: nixopus
+          DB_PASSWORD: nixopus
+          DB_NAME: nixopus_test
+        run: |
+          cd api && make test 

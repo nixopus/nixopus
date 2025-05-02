@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"os"
 	"testing"
 
 	"github.com/google/uuid"
@@ -16,7 +17,9 @@ func TestDeleteDomain(t *testing.T) {
 		setup := testutils.NewTestSetup()
 		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
 		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
-
+		// Set development mode for domain validation
+		os.Setenv("ENV", "development")
+		defer os.Unsetenv("ENV")
 		user, org, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
 

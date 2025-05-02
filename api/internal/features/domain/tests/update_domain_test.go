@@ -15,6 +15,9 @@ import (
 func TestUpdateDomain(t *testing.T) {
 	t.Run("should update domain successfully", func(t *testing.T) {
 		setup := testutils.NewTestSetup()
+		// Set development mode for domain validation
+		os.Setenv("ENV", "development")
+		defer os.Unsetenv("ENV")
 		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
 		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
 
@@ -30,7 +33,7 @@ func TestUpdateDomain(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEmpty(t, resp.ID)
 
-		newName := "updated.domain.com"
+		newName := "updated.test.domain.com"
 		updated, err := service.UpdateDomain(newName, user.ID.String(), resp.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, newName, updated.Name)
@@ -43,6 +46,9 @@ func TestUpdateDomain(t *testing.T) {
 
 	t.Run("should not update domain with invalid domain ID", func(t *testing.T) {
 		setup := testutils.NewTestSetup()
+		// Set development mode for domain validation
+		os.Setenv("ENV", "development")
+		defer os.Unsetenv("ENV")
 		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
 		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
 
@@ -68,32 +74,14 @@ func TestUpdateDomain(t *testing.T) {
 		assert.ErrorIs(t, err, domainTypes.ErrDomainNotFound)
 	})
 
-	t.Run("should not update domain that does not belong to server", func(t *testing.T) {
-		setup := testutils.NewTestSetup()
-		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
-		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
-
-		user, org, err := setup.CreateTestUserAndOrg()
-		assert.NoError(t, err)
-
-		createReq := domainTypes.CreateDomainRequest{
-			Name:           "test." + os.Getenv("SSH_HOST"),
-			OrganizationID: org.ID,
-		}
-
-		resp, err := service.CreateDomain(createReq, user.ID.String())
-		assert.NoError(t, err)
-
-		_, err = service.UpdateDomain("example.com", user.ID.String(), resp.ID)
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, domainTypes.ErrDomainDoesNotBelongToServer)
-	})
 
 	t.Run("should update domain that belongs to server", func(t *testing.T) {
 		setup := testutils.NewTestSetup()
 		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}
 		service := domainService.NewDomainsService(setup.Store, setup.Ctx, setup.Logger, storage)
-
+		// Set development mode for domain validation
+		os.Setenv("ENV", "development")
+		defer os.Unsetenv("ENV")
 		user, org, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
 

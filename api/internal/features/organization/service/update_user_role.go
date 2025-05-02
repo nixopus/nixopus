@@ -49,5 +49,10 @@ func (o *OrganizationService) UpdateUserRole(userID, organizationID, role string
 		return types.ErrFailedToUpdateUserRole
 	}
 
+	// Invalidate cache for organization membership
+	if err := o.cache.InvalidateOrgMembership(o.Ctx, userID, organizationID); err != nil {
+		o.logger.Log(logger.Error, "failed to invalidate organization membership cache", err.Error())
+	}
+
 	return nil
 }

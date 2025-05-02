@@ -42,5 +42,10 @@ func (o *OrganizationService) RemoveUserFromOrganization(user *types.RemoveUserF
 		return types.ErrFailedToRemoveUserFromOrganization
 	}
 
+	// Invalidate cache for organization membership
+	if err := o.cache.InvalidateOrgMembership(o.Ctx, user.UserID, user.OrganizationID); err != nil {
+		o.logger.Log(logger.Error, "failed to invalidate organization membership cache", err.Error())
+	}
+
 	return nil
 }

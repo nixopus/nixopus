@@ -22,6 +22,10 @@ func TestCreateDomain(t *testing.T) {
 		user, org, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
 
+		// Set development mode for domain validation
+		os.Setenv("ENV", "development")
+		defer os.Unsetenv("ENV")
+
 		req := domainTypes.CreateDomainRequest{
 			Name:           "test.domain.com",
 			OrganizationID: org.ID,
@@ -48,6 +52,10 @@ func TestCreateDomain(t *testing.T) {
 		user, org, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
 
+		// Set development mode for domain validation
+		os.Setenv("ENV", "development")
+		defer os.Unsetenv("ENV")
+
 		req := domainTypes.CreateDomainRequest{
 			Name:           "test.domain.com",
 			OrganizationID: org.ID,
@@ -72,6 +80,10 @@ func TestCreateDomain(t *testing.T) {
 		user, _, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
 
+		// Set development mode for domain validation
+		os.Setenv("ENV", "development")
+		defer os.Unsetenv("ENV")
+
 		req := domainTypes.CreateDomainRequest{
 			Name:           "test.domain.com",
 			OrganizationID: uuid.New(), // Random non-existent org ID
@@ -89,6 +101,10 @@ func TestCreateDomain(t *testing.T) {
 
 		user, org, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
+
+		// Set development mode for domain validation
+		os.Setenv("ENV", "development")
+		defer os.Unsetenv("ENV")
 
 		invalidNames := []string{
 			"",                                // Empty name
@@ -118,11 +134,9 @@ func TestCreateDomain(t *testing.T) {
 		user, org, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
 
-		serverHost := os.Getenv("SSH_HOST")
-		if serverHost == "" {
-			serverHost, err = os.Hostname()
-			assert.NoError(t, err)
-		}
+		// Explicitly set production mode
+		os.Setenv("ENV", "production")
+		defer os.Unsetenv("ENV")
 
 		req := domainTypes.CreateDomainRequest{
 			Name:           "example.com",
@@ -142,14 +156,12 @@ func TestCreateDomain(t *testing.T) {
 		user, org, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
 
-		serverHost := os.Getenv("SSH_HOST")
-		if serverHost == "" {
-			serverHost, err = os.Hostname()
-			assert.NoError(t, err)
-		}
+		// Set development mode for domain validation
+		os.Setenv("ENV", "development")
+		defer os.Unsetenv("ENV")
 
 		req := domainTypes.CreateDomainRequest{
-			Name:           "test." + serverHost,
+			Name:           "test.domain.com",
 			OrganizationID: org.ID,
 		}
 

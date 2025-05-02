@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -13,8 +14,10 @@ import (
 const (
 	UserCacheKeyPrefix          = "user:"
 	OrgMembershipCacheKeyPrefix = "org_membership:"
-	UserCacheTTL                = 15 * time.Minute
+	UserCacheTTL                = 10 * time.Minute
 	OrgMembershipCacheTTL       = 30 * time.Minute
+	FeatureFlagCacheKeyPrefix   = "feature_flag:"
+	FeatureFlagCacheTTL         = 10 * time.Minute
 )
 
 type Cache struct {
@@ -26,6 +29,9 @@ type CacheRepository interface {
 	SetUser(ctx context.Context, email string, user *types.User) error
 	GetOrgMembership(ctx context.Context, userID, orgID string) (bool, error)
 	SetOrgMembership(ctx context.Context, userID, orgID string, belongs bool) error
+	GetFeatureFlag(ctx context.Context, orgID, featureName string) (bool, error)
+	SetFeatureFlag(ctx context.Context, orgID, featureName string, enabled bool) error
+	InvalidateFeatureFlag(ctx context.Context, orgID, featureName string) error
 }
 
 func NewCache(redisURL string) (*Cache, error) {
@@ -107,5 +113,31 @@ func (c *Cache) InvalidateUser(ctx context.Context, email string) error {
 
 func (c *Cache) InvalidateOrgMembership(ctx context.Context, userID, orgID string) error {
 	key := OrgMembershipCacheKeyPrefix + userID + ":" + orgID
+	return c.client.Del(key).Err()
+}
+
+func (c *Cache) GetFeatureFlag(ctx context.Context, orgID, featureName string) (bool, error) {
+	key := fmt.Sprintf("%s:%s:%s", FeatureFlagCacheKeyPrefix, orgID, featureName)
+	val, err := c.client.Get(key).Result()
+	if err == redis.Nil {
+		return false, redis.Nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return val == "true", nil
+}
+
+func (c *Cache) SetFeatureFlag(ctx context.Context, orgID, featureName string, enabled bool) error {
+	key := fmt.Sprintf("%s:%s:%s", FeatureFlagCacheKeyPrefix, orgID, featureName)
+	val := "false"
+	if enabled {
+		val = "true"
+	}
+	return c.client.Set(key, val, FeatureFlagCacheTTL).Err()
+}
+
+func (c *Cache) InvalidateFeatureFlag(ctx context.Context, orgID, featureName string) error {
+	key := fmt.Sprintf("%s:%s:%s", FeatureFlagCacheKeyPrefix, orgID, featureName)
 	return c.client.Del(key).Err()
 }

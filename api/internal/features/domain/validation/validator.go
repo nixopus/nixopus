@@ -113,14 +113,12 @@ func (v *Validator) ValidateDeleteDomainRequest(req types.DeleteDomainRequest) e
 
 // ValidateDomainBelongsToServer checks if the domain belongs to the current server by resolving its IP
 func (v *Validator) ValidateDomainBelongsToServer(domainName string) error {
-	serverHost := os.Getenv("SSH_HOST")
-
 	development := os.Getenv("ENV") == "development"
-
 	if development {
 		return nil
 	}
 
+	serverHost := os.Getenv("SSH_HOST")
 	if serverHost == "" {
 		var err error
 		serverHost, err = os.Hostname()

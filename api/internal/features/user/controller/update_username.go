@@ -49,6 +49,8 @@ func (u *UserController) UpdateUserName(s fuego.ContextWithBody[types.UpdateUser
 		}
 	}
 
+	u.cache.InvalidateUser(u.ctx, user.ID.String())
+
 	return &shared_types.Response{
 		Status:  "success",
 		Message: "Username updated successfully",
