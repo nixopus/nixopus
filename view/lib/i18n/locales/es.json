@@ -191,6 +191,10 @@
           "title": "Self Hosted",
           "description": "Acceso a la característica de self hosted"
         },
+        "container": {
+          "title": "Contenedor",
+          "description": "Acceso a la característica de contenedor"
+        },
         "domain": {
           "title": "Dominio",
           "description": "Acceso a la característica de dominio"

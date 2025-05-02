@@ -19,6 +19,12 @@ import Autoplay from 'embla-carousel-autoplay';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { useState } from 'react';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
+import { FeatureNames } from '@/types/feature-flags';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useFeatureFlags } from '@/hooks/features_provider';
+import DisabledFeature from '@/components/features/disabled-feature';
+import { useAppSelector } from '@/redux/hooks';
+import { hasPermission } from '@/lib/permission';
 
 const getGradientFromName = (name: string) => {
   const colors = [
@@ -36,12 +42,20 @@ const getGradientFromName = (name: string) => {
 export default function ContainersPage() {
   const { t } = useTranslation();
   const router = useRouter();
+  const user = useAppSelector((state) => state.auth.user);
+  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const { data: containers = [], isLoading, refetch } = useGetContainersQuery();
   const [startContainer] = useStartContainerMutation();
   const [stopContainer] = useStopContainerMutation();
   const [removeContainer] = useRemoveContainerMutation();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [containerToDelete, setContainerToDelete] = useState<string | null>(null);
+  const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
+
+  const canRead = hasPermission(user, 'container', 'read', activeOrg?.id);
+  const canCreate = hasPermission(user, 'container', 'create', activeOrg?.id);
+  const canUpdate = hasPermission(user, 'container', 'update', activeOrg?.id);
+  const canDelete = hasPermission(user, 'container', 'delete', activeOrg?.id);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -87,8 +101,27 @@ export default function ContainersPage() {
     return <ContainersLoading />;
   }
 
+  if (!canRead) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold">{t('common.accessDenied')}</h2>
+          <p className="text-muted-foreground">{t('common.noPermissionView')}</p>
+        </div>
+      </div>
+    );
+  }
+
   const featuredContainers = containers.slice(0, 3);
   const remainingContainers = containers.slice(3);
+
+  if (isFeatureFlagsLoading) {
+    return <Skeleton />;
+  }
+
+  if (!isFeatureEnabled(FeatureNames.FeatureContainer)) {
+    return <DisabledFeature />;
+  }
 
   return (
     <div className="min-h-screen">
@@ -139,7 +172,7 @@ export default function ContainersPage() {
                               {container.image}
                             </p>
                             <div className="mt-4 flex gap-2">
-                              {container.status !== 'running' && (
+                              {container.status !== 'running' && canUpdate && (
                                 <Button
                                   variant="outline"
                                   onClick={(e) => {
@@ -151,7 +184,7 @@ export default function ContainersPage() {
                                   Start
                                 </Button>
                               )}
-                              {container.status === 'running' && (
+                              {container.status === 'running' && canUpdate && (
                                 <Button
                                   variant="outline"
                                   onClick={(e) => {
@@ -163,16 +196,18 @@ export default function ContainersPage() {
                                   Stop
                                 </Button>
                               )}
-                              <Button
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleContainerAction(container.id, 'remove');
-                                }}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Remove
-                              </Button>
+                              {canDelete && (
+                                <Button
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleContainerAction(container.id, 'remove');
+                                  }}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Remove
+                                </Button>
+                              )}
                             </div>
                           </div>
                           <div className="">
@@ -233,7 +268,7 @@ export default function ContainersPage() {
                         </Badge>
                       </div>
                       <div className="flex gap-2">
-                        {container.status !== 'running' && (
+                        {container.status !== 'running' && canUpdate && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -245,7 +280,7 @@ export default function ContainersPage() {
                             <Play className="h-4 w-4" />
                           </Button>
                         )}
-                        {container.status === 'running' && (
+                        {container.status === 'running' && canUpdate && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -257,16 +292,18 @@ export default function ContainersPage() {
                             <StopCircle className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleContainerAction(container.id, 'remove');
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleContainerAction(container.id, 'remove');
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                     <div className="mt-4 space-y-2">

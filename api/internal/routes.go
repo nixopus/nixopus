@@ -230,6 +230,12 @@ func (router *Router) Routes() {
 
 	containerController := container.NewContainerController(router.app.Store, router.app.Ctx, l, notificationManager)
 	containerGroup := fuego.Group(server, apiV1.Path+"/container")
+	fuego.Use(containerGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "container")
+	})
+	fuego.Use(containerGroup, func(next http.Handler) http.Handler {
+		return middleware.FeatureFlagMiddleware(next, router.app, "container", router.cache)
+	})
 	router.ContainerRoutes(containerGroup, containerController)
 
 	server.Run()

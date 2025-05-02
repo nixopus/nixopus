@@ -196,6 +196,10 @@
           "title": "Domain",
           "description": "Access to the domain feature"
         },
+        "container": {
+          "title": "Container",
+          "description": "Access to the container feature"
+        },
         "monitoring": {
           "title": "Monitoring",
           "description": "Access to the monitoring feature"

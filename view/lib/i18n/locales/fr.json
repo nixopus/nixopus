@@ -188,6 +188,10 @@
           "title": "Gestionnaire de Fichiers",
           "description": "Accès à la caractéristique de gestionnaire de fichiers"
         },
+        "container": {
+          "title": "Conteneur",
+          "description": "Accès à la caractéristique de conteneur"
+        },
         "self_hosted": {
           "title": "Self Hosted",
           "description": "Accès à la caractéristique de self hosted"

@@ -32,6 +32,7 @@ const (
 	FeatureNotifications   FeatureName = "notifications"
 	FeatureDomain          FeatureName = "domain"
 	FeatureSelfHosted      FeatureName = "self_hosted"
+	FeatureContainer       FeatureName = "container"
 )
 
 type UpdateFeatureFlagRequest struct {
