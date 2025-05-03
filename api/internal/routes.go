@@ -395,4 +395,7 @@ func (router *Router) ContainerRoutes(s *fuego.Server, containerController *cont
 	fuego.Post(s, "/{container_id}/stop", containerController.StopContainer)
 	fuego.Post(s, "/{container_id}/restart", containerController.RestartContainer)
 	fuego.Post(s, "/{container_id}/logs", containerController.GetContainerLogs)
+	fuego.Post(s, "/prune/build-cache", containerController.PruneBuildCache)
+	fuego.Post(s, "/prune/images", containerController.PruneImages)
+	fuego.Post(s, "/images", containerController.ListImages)
 }
