@@ -61,7 +61,7 @@ const Page: React.FC = () => {
   if (!isFeatureEnabled(FeatureNames.FeatureNotifications)) {
     return <DisabledFeature />;
   }
-  
+
   const handleSave = (data: SMTPFormData) => {
     if (smtpConfigs) {
       if (canUpdate) {

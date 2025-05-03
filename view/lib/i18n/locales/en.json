@@ -91,7 +91,7 @@
     "tabs": {
       "account": "Account",
       "security": "Security",
-      "featureFlags" : "Features"
+      "featureFlags": "Features"
     },
     "preferences": {
       "language": {
@@ -117,7 +117,7 @@
         "select": "Select auto update"
       }
     },
-    "featureFlags": { 
+    "featureFlags": {
       "title": "Features",
       "description": "Enable or disable specific features for your organization",
       "groups": {

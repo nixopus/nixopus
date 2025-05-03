@@ -64,7 +64,7 @@ function AccountSection({
   handleThemeChange,
   handleLanguageChange,
   handleAutoUpdateChange,
-  handleFontUpdate  
+  handleFontUpdate
 }: AccountSectionProps) {
   const { t } = useTranslation();
   const [sendVerificationEmail, { isLoading: isSendingVerification }] =
@@ -198,8 +198,8 @@ function AccountSection({
           </div>
           <div className="flex justify-between items-center">
             <p className="text-muted-foreground text-sm">{t('settings.preferences.font')}</p>
-            <Select 
-              value={userSettings.font_family || 'outfit'} 
+            <Select
+              value={userSettings.font_family || 'outfit'}
               onValueChange={handleFontChange}
               disabled={isUpdatingFont}
             >

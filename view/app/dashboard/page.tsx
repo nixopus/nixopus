@@ -53,7 +53,15 @@ function DashboardPage() {
 
 export default DashboardPage;
 
-const MonitoringSection = ({ systemStats, containersData, t }: { systemStats: any, containersData: any, t: any }) => {
+const MonitoringSection = ({
+  systemStats,
+  containersData,
+  t
+}: {
+  systemStats: any;
+  containersData: any;
+  t: any;
+}) => {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

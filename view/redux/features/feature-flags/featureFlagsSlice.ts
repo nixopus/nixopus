@@ -27,7 +27,7 @@ const featureFlagsSlice = createSlice({
       state.error = action.payload;
     },
     updateFeature: (state, action: PayloadAction<{ featureName: string; isEnabled: boolean }>) => {
-      const feature = state.features.find(f => f.feature_name === action.payload.featureName);
+      const feature = state.features.find((f) => f.feature_name === action.payload.featureName);
       if (feature) {
         feature.is_enabled = action.payload.isEnabled;
       }
@@ -36,4 +36,4 @@ const featureFlagsSlice = createSlice({
 });
 
 export const { setFeatures, setLoading, setError, updateFeature } = featureFlagsSlice.actions;
-export default featureFlagsSlice.reducer; 
+export default featureFlagsSlice.reducer;

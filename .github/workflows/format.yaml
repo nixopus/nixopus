@@ -35,10 +35,14 @@ jobs:
       
       - name: Run gofmt
         working-directory: api
-        run: gofmt -l -w .
+        run: |
+          echo "Running gofmt..."
+          gofmt -l -w .
+          git status
       
       - name: Commit API changes
         id: api-commit
+        if: github.event_name == 'pull_request'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'style(api): format Go code'
@@ -46,10 +50,10 @@ jobs:
           file_pattern: 'api/**/*.go'
           commit_user_name: 'github-actions[bot]'
           commit_user_email: 'github-actions[bot]@users.noreply.github.com'
-          skip_dirty_check: true
+          skip_dirty_check: false
           skip_fetch: true
           skip_checkout: true
-          disable_globbing: true
+          disable_globbing: false
 
   format-view:
     name: Format View
@@ -79,14 +83,15 @@ jobs:
       
       - name: Commit View changes
         id: view-commit
+        if: github.event_name == 'pull_request'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'style(view): format frontend code'
           branch: ${{ github.head_ref }}
-          file_pattern: 'view/**/*.js view/**/*.jsx view/**/*.ts view/**/*.tsx view/**/*.css view/**/*.md view/**/*.json'
+          file_pattern: 'view/**'
           commit_user_name: 'github-actions[bot]'
           commit_user_email: 'github-actions[bot]@users.noreply.github.com'
-          skip_dirty_check: true
+          skip_dirty_check: false
           skip_fetch: true
           skip_checkout: true
-          disable_globbing: true
+          disable_globbing: false

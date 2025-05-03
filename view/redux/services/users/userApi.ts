@@ -12,7 +12,13 @@ import {
   UserOrganization
 } from '@/redux/types/orgs';
 import { baseQueryWithReauth } from '@/redux/base-query';
-import { UserSettings, UpdateFontRequest, UpdateThemeRequest, UpdateLanguageRequest, UpdateAutoUpdateRequest } from '@/redux/types/user';
+import {
+  UserSettings,
+  UpdateFontRequest,
+  UpdateThemeRequest,
+  UpdateLanguageRequest,
+  UpdateAutoUpdateRequest
+} from '@/redux/types/user';
 
 export const userApi = createApi({
   reducerPath: 'userApi',
