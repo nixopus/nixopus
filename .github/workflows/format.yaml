@@ -49,6 +49,7 @@ jobs:
           skip_dirty_check: true
           skip_fetch: true
           skip_checkout: true
+          disable_globbing: true
 
   format-view:
     name: Format View
@@ -82,9 +83,10 @@ jobs:
         with:
           commit_message: 'style(view): format frontend code'
           branch: ${{ github.head_ref }}
-          file_pattern: 'view/**/*.{js,jsx,ts,tsx,css,md,json}'
+          file_pattern: 'view/**/*.js view/**/*.jsx view/**/*.ts view/**/*.tsx view/**/*.css view/**/*.md view/**/*.json'
           commit_user_name: 'github-actions[bot]'
           commit_user_email: 'github-actions[bot]@users.noreply.github.com'
           skip_dirty_check: true
           skip_fetch: true
           skip_checkout: true
+          disable_globbing: true
