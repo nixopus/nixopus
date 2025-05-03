@@ -72,3 +72,4 @@ export interface UpdateLanguageRequest {
 export interface UpdateAutoUpdateRequest {
   auto_update: boolean;
 }
+

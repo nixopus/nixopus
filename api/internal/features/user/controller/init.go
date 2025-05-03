@@ -4,13 +4,13 @@ import (
 	"context"
 	"net/http"
 
+	cache "github.com/raghavyuva/nixopus-api/internal/cache"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/user/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/user/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/user/validation"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-	cache "github.com/raghavyuva/nixopus-api/internal/cache"
 )
 
 type UserController struct {

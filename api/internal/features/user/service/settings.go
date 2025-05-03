@@ -7,7 +7,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-
 func (s *UserService) GetSettings(userID string) (*types.UserSettings, error) {
 	s.logger.Log(logger.Info, "getting user settings", "")
 	return s.storage.GetUserSettings(userID)

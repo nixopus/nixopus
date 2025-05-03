@@ -74,7 +74,6 @@ func TestUpdateDomain(t *testing.T) {
 		assert.ErrorIs(t, err, domainTypes.ErrDomainNotFound)
 	})
 
-
 	t.Run("should update domain that belongs to server", func(t *testing.T) {
 		setup := testutils.NewTestSetup()
 		storage := &domainStorage.DomainStorage{DB: setup.DB, Ctx: setup.Ctx}

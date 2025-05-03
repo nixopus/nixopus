@@ -59,7 +59,9 @@ function page() {
   }
 
   if (!isFeatureEnabled(FeatureNames.FeatureSelfHosted)) {
-    return <DisabledFeature />;
+    return (
+      <DisabledFeature />
+    );
   }
 
   const renderContent = () => {

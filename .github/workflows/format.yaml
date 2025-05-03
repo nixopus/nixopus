@@ -12,6 +12,10 @@ on:
       - 'api/**'
       - 'view/**'
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   format-api:
     name: Format API
@@ -20,6 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - uses: actions/setup-go@v5
         with:
@@ -33,12 +38,17 @@ jobs:
         run: gofmt -l -w .
       
       - name: Commit API changes
-        if: github.event_name == 'pull_request'
+        id: api-commit
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'style(api): format Go code'
           branch: ${{ github.head_ref }}
           file_pattern: 'api/**/*.go'
+          commit_user_name: 'github-actions[bot]'
+          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
+          skip_dirty_check: true
+          skip_fetch: true
+          skip_checkout: true
 
   format-view:
     name: Format View
@@ -47,6 +57,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - uses: actions/setup-node@v4
         with:
@@ -66,9 +77,14 @@ jobs:
         run: yarn format
       
       - name: Commit View changes
-        if: github.event_name == 'pull_request'
+        id: view-commit
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'style(view): format frontend code'
           branch: ${{ github.head_ref }}
           file_pattern: 'view/**/*.{js,jsx,ts,tsx,css,md,json}'
+          commit_user_name: 'github-actions[bot]'
+          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
+          skip_dirty_check: true
+          skip_fetch: true
+          skip_checkout: true
