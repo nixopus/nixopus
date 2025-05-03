@@ -1,21 +1,18 @@
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useTranslation } from "@/hooks/use-translation";
-import { formatBytes, formatDate } from "@/lib/utils";
-import { useGetImagesQuery } from "@/redux/services/container/imagesApi";
-import { Loader2 } from "lucide-react";
+  TableRow
+} from '@/components/ui/table';
+import { useTranslation } from '@/hooks/use-translation';
+import { formatBytes, formatDate } from '@/lib/utils';
+import { useGetImagesQuery } from '@/redux/services/container/imagesApi';
+import { Loader2 } from 'lucide-react';
 
 interface Image {
   id: string;
@@ -28,10 +25,10 @@ interface Image {
   labels: Record<string, string>;
 }
 
-export function Images({ containerId, imagePrefix }: { containerId: string, imagePrefix: string }) {
+export function Images({ containerId, imagePrefix }: { containerId: string; imagePrefix: string }) {
   const { data: images = [], isLoading } = useGetImagesQuery({ containerId, imagePrefix });
   const { t } = useTranslation();
-  
+
   if (isLoading) {
     return <ImagesSectionSkeleton />;
   }
@@ -42,10 +39,10 @@ export function Images({ containerId, imagePrefix }: { containerId: string, imag
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t("containers.images.id")}</TableHead>
-              <TableHead>{t("containers.images.tags")}</TableHead>
-              <TableHead>{t("containers.images.created")}</TableHead>
-              <TableHead>{t("containers.images.size")}</TableHead>
+              <TableHead>{t('containers.images.id')}</TableHead>
+              <TableHead>{t('containers.images.tags')}</TableHead>
+              <TableHead>{t('containers.images.created')}</TableHead>
+              <TableHead>{t('containers.images.size')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -59,9 +56,7 @@ export function Images({ containerId, imagePrefix }: { containerId: string, imag
               images?.map((image: Image) => (
                 <TableRow key={image.id}>
                   <TableCell className="font-mono">{image.id.slice(0, 12)}</TableCell>
-                  <TableCell>
-                    {image.repo_tags?.join(", ") || "<none>"}
-                  </TableCell>
+                  <TableCell>{image.repo_tags?.join(', ') || '<none>'}</TableCell>
                   <TableCell>{formatDate(new Date(image.created * 1000))}</TableCell>
                   <TableCell>{formatBytes(image.size)}</TableCell>
                 </TableRow>
@@ -73,7 +68,6 @@ export function Images({ containerId, imagePrefix }: { containerId: string, imag
     </Card>
   );
 }
-
 
 export function ImagesSectionSkeleton() {
   return (
@@ -112,4 +106,4 @@ export function ImagesSectionSkeleton() {
       </CardContent>
     </Card>
   );
-} 
+}

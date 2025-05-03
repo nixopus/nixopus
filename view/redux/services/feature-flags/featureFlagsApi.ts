@@ -47,4 +47,4 @@ export const {
   useGetAllFeatureFlagsQuery,
   useUpdateFeatureFlagMutation,
   useCheckFeatureEnabledQuery
-} = FeatureFlagsApi; 
+} = FeatureFlagsApi;

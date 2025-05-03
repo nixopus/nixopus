@@ -27,7 +27,11 @@ function useGeneralSettings() {
   const [requestPasswordResetLink, { isLoading: isRequestingPasswordReset }] =
     useRequestPasswordResetLinkMutation();
 
-  const { data: userSettings, isLoading: isGettingUserSettings,refetch: refetchUserSettings } = useGetUserSettingsQuery();
+  const {
+    data: userSettings,
+    isLoading: isGettingUserSettings,
+    refetch: refetchUserSettings
+  } = useGetUserSettingsQuery();
   const [updateFont, { isLoading: isUpdatingFont }] = useUpdateFontMutation();
   const [updateTheme, { isLoading: isUpdatingTheme }] = useUpdateThemeMutation();
   const [updateLanguage, { isLoading: isUpdatingLanguage }] = useUpdateLanguageMutation();
@@ -131,7 +135,7 @@ function useGeneralSettings() {
     handleThemeChange,
     handleLanguageChange,
     handleAutoUpdateChange,
-    handleFontUpdate:handleFontChange
+    handleFontUpdate: handleFontChange
   };
 }
 

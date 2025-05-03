@@ -29,6 +29,12 @@
     "restart": "Restart",
     "start_success": "Container started successfully",
     "stop_success": "Container stopped successfully",
+    "prune_images": "Prune Images",
+    "prune_build_cache": "Prune Build Cache",
+    "prune_images_success": "Images pruned successfully",
+    "prune_build_cache_success": "Build cache pruned successfully",
+    "prune_images_error": "Failed to prune images",
+    "prune_build_cache_error": "Failed to prune build cache",
     "remove_success": "Container removed successfully",
     "start_error": "Failed to start container",
     "stop_error": "Failed to stop container",
@@ -52,6 +58,18 @@
       "title": "Delete Container",
       "description": "Are you sure you want to delete this container?",
       "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "pruneImagesDialog": {
+      "title": "Prune Images",
+      "description": "Are you sure you want to prune all images?",
+      "confirm": "Prune",
+      "cancel": "Cancel"
+    },
+    "pruneBuildCacheDialog": {
+      "title": "Prune Build Cache",
+      "description": "Are you sure you want to prune all build cache?",
+      "confirm": "Prune",
       "cancel": "Cancel"
     },
     "images": {
@@ -141,7 +159,7 @@
     "tabs": {
       "account": "Account",
       "security": "Security",
-      "featureFlags" : "Features"
+      "featureFlags": "Features"
     },
     "preferences": {
       "language": {
@@ -167,7 +185,7 @@
         "select": "Select auto update"
       }
     },
-    "featureFlags": { 
+    "featureFlags": {
       "title": "Features",
       "description": "Enable or disable specific features for your organization",
       "groups": {
@@ -680,7 +698,8 @@
         },
         "noContainers": "No containers found",
         "morePorts": "+{count} more"
-      }
+      },
+      "viewAll": "View All"
     },
     "disk": {
       "title": "Disk Usage",

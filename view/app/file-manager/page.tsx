@@ -77,7 +77,7 @@ function FileManager() {
   }
 
   if (!isFeatureEnabled(FeatureNames.FeatureFileManager)) {
-    return <DisabledFeature />; 
+    return <DisabledFeature />;
   }
 
   if (!canRead) {

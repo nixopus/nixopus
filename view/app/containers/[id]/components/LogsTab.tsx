@@ -21,15 +21,11 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
         </pre>
       </ScrollArea>
       <div className="flex justify-center">
-        <Button
-          variant="outline"
-          onClick={onLoadMore}
-          className="w-full max-w-[200px]"
-        >
+        <Button variant="outline" onClick={onLoadMore} className="w-full max-w-[200px]">
           <Loader2 className="mr-2 h-4 w-4" />
           {t('containers.load_more_logs')}
         </Button>
       </div>
     </div>
   );
-} 
+}

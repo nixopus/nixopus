@@ -58,7 +58,9 @@ export function OverviewTab({ container }: OverviewTabProps) {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">{t('containers.memory')}</span>
-              <span className="text-sm">{(container.host_config.memory / (1024 * 1024)).toFixed(2)} MB</span>
+              <span className="text-sm">
+                {(container.host_config.memory / (1024 * 1024)).toFixed(2)} MB
+              </span>
             </div>
           </div>
         </CardContent>
@@ -97,4 +99,4 @@ export function OverviewTab({ container }: OverviewTabProps) {
       </Card>
     </div>
   );
-} 
+}

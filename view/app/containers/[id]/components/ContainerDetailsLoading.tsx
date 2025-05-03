@@ -1,7 +1,7 @@
-import { Card, CardContent } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import React from 'react'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function ContainerDetailsLoading() {
   return (
@@ -92,7 +92,7 @@ function ContainerDetailsLoading() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
 
-export default ContainerDetailsLoading
+export default ContainerDetailsLoading;

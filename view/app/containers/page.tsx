@@ -1,101 +1,218 @@
 'use client';
 
-import { RefreshCw, Play, StopCircle, Trash2, Loader2 } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { RefreshCw, Play, StopCircle, Trash2, Loader2, Scissors } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import {
-  useGetContainersQuery,
-  useStartContainerMutation,
-  useStopContainerMutation,
-  useRemoveContainerMutation
-} from '@/redux/services/container/containerApi';
 import { cn } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
 import ContainersLoading from './skeleton';
 import Autoplay from 'embla-carousel-autoplay';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
-import { useState } from 'react';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { FeatureNames } from '@/types/feature-flags';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useFeatureFlags } from '@/hooks/features_provider';
 import DisabledFeature from '@/components/features/disabled-feature';
-import { useAppSelector } from '@/redux/hooks';
-import { hasPermission } from '@/lib/permission';
+import useContainerList from './hooks/use-container-list';
 
-const getGradientFromName = (name: string) => {
-  const colors = [
-    'from-blue-500/20 to-purple-500/20',
-    'from-green-500/20 to-teal-500/20',
-    'from-yellow-500/20 to-orange-500/20',
-    'from-red-500/20 to-pink-500/20',
-    'from-indigo-500/20 to-violet-500/20',
-    'from-emerald-500/20 to-cyan-500/20'
-  ];
-  const index = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
-  return colors[index];
+interface ContainerActionsProps {
+  container: any;
+  canUpdate: boolean;
+  canDelete: boolean;
+  onAction: (id: string, action: 'start' | 'stop' | 'remove') => void;
+}
+
+const ContainerActions = ({ container, canUpdate, canDelete, onAction }: ContainerActionsProps) => {
+  return (
+    <div className="flex gap-2">
+      {container.status !== 'running' && canUpdate && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction(container.id, 'start');
+          }}
+        >
+          <Play className="h-4 w-4" />
+        </Button>
+      )}
+      {container.status === 'running' && canUpdate && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction(container.id, 'stop');
+          }}
+        >
+          <StopCircle className="h-4 w-4" />
+        </Button>
+      )}
+      {canDelete && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction(container.id, 'remove');
+          }}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+};
+
+interface ContainerInfoProps {
+  container: any;
+}
+
+const ContainerInfo = ({ container }: ContainerInfoProps) => {
+  return (
+    <div className="mt-4 space-y-2">
+      <div className="text-sm">
+        <span className="font-medium">Ports:</span>
+        <div className="flex flex-wrap gap-2 mt-1">
+          {container?.ports?.map((port: any) => (
+            <Badge key={`${port.private_port}-${port.public_port}`} variant="outline">
+              {port.public_port} → {port.private_port}
+            </Badge>
+          ))}
+        </div>
+      </div>
+      <div className="text-sm">
+        <span className="font-medium">Memory:</span>
+        <span className="ml-2">{(container.host_config.memory / (1024 * 1024)).toFixed(2)} MB</span>
+      </div>
+    </div>
+  );
+};
+
+interface ContainerCardProps {
+  container: any;
+  onClick: () => void;
+  getGradientFromName: (name: string) => string;
+  canUpdate: boolean;
+  canDelete: boolean;
+  onAction: (id: string, action: 'start' | 'stop' | 'remove') => void;
+}
+
+const ContainerCard = ({
+  container,
+  onClick,
+  getGradientFromName,
+  canUpdate,
+  canDelete,
+  onAction
+}: ContainerCardProps) => {
+  return (
+    <Card
+      className={cn(
+        'group relative overflow-hidden transition-all duration-300 hover:shadow-lg cursor-pointer',
+        getGradientFromName(container.name)
+      )}
+      onClick={onClick}
+    >
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f1a_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f1a_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
+      <div className="absolute inset-0 bg-gradient-to-br opacity-20 transition-opacity duration-300 group-hover:opacity-30" />
+      <CardContent className="relative p-6 z-10">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold">{container.name}</h3>
+            <p className="text-sm text-muted-foreground truncate">{container.image}</p>
+            <Badge variant={container.status === 'running' ? 'default' : 'secondary'}>
+              {container.status}
+            </Badge>
+          </div>
+          <ContainerActions
+            container={container}
+            canUpdate={canUpdate}
+            canDelete={canDelete}
+            onAction={onAction}
+          />
+        </div>
+        <ContainerInfo container={container} />
+      </CardContent>
+    </Card>
+  );
+};
+
+interface FeaturedContainersProps {
+  containers: any[];
+  getGradientFromName: (name: string) => string;
+  canUpdate: boolean;
+  canDelete: boolean;
+  onAction: (id: string, action: 'start' | 'stop' | 'remove') => void;
+  router: any;
+}
+
+const FeaturedContainers = ({
+  containers,
+  getGradientFromName,
+  canUpdate,
+  canDelete,
+  onAction,
+  router
+}: FeaturedContainersProps) => {
+  return (
+    <Carousel
+      className="mx-auto mb-10 w-full"
+      opts={{
+        loop: true
+      }}
+      plugins={[
+        Autoplay({
+          delay: 3000
+        })
+      ]}
+    >
+      <CarouselContent>
+        {containers.map((container) => (
+          <CarouselItem key={container.id}>
+            <div className="p-0">
+              <ContainerCard
+                container={container}
+                onClick={() => router.push(`/containers/${container.id}`)}
+                getGradientFromName={getGradientFromName}
+                canUpdate={canUpdate}
+                canDelete={canDelete}
+                onAction={onAction}
+              />
+            </div>
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+    </Carousel>
+  );
 };
 
 export default function ContainersPage() {
-  const { t } = useTranslation();
-  const router = useRouter();
-  const user = useAppSelector((state) => state.auth.user);
-  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const { data: containers = [], isLoading, refetch } = useGetContainersQuery();
-  const [startContainer] = useStartContainerMutation();
-  const [stopContainer] = useStopContainerMutation();
-  const [removeContainer] = useRemoveContainerMutation();
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [containerToDelete, setContainerToDelete] = useState<string | null>(null);
-  const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
-
-  const canRead = hasPermission(user, 'container', 'read', activeOrg?.id);
-  const canCreate = hasPermission(user, 'container', 'create', activeOrg?.id);
-  const canUpdate = hasPermission(user, 'container', 'update', activeOrg?.id);
-  const canDelete = hasPermission(user, 'container', 'delete', activeOrg?.id);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  const handleContainerAction = async (containerId: string, action: 'start' | 'stop' | 'remove') => {
-    try {
-      switch (action) {
-        case 'start':
-          await startContainer(containerId).unwrap();
-          toast.success(t(`containers.${action}_success`));
-          break;
-        case 'stop':
-          await stopContainer(containerId).unwrap();
-          toast.success(t(`containers.${action}_success`));
-          break;
-        case 'remove':
-          setContainerToDelete(containerId);
-          break;
-      }
-    } catch (error) {
-      toast.error(t(`containers.${action}_error`));
-    }
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!containerToDelete) return;
-    try {
-      await removeContainer(containerToDelete).unwrap();
-      toast.success(t('containers.remove_success'));
-      setContainerToDelete(null);
-    } catch (error) {
-      toast.error(t('containers.remove_error'));
-    }
-  };
+  const {
+    containers,
+    isLoading,
+    handleRefresh,
+    handleContainerAction,
+    handleDeleteConfirm,
+    handlePruneImages,
+    handlePruneBuildCache,
+    showPruneImagesConfirm,
+    showPruneBuildCacheConfirm,
+    canRead,
+    canCreate,
+    canUpdate,
+    canDelete,
+    isFeatureFlagsLoading,
+    isRefreshing,
+    isFeatureEnabled,
+    t,
+    router,
+    containerToDelete,
+    setContainerToDelete,
+    getGradientFromName,
+    setShowPruneImagesConfirm,
+    setShowPruneBuildCacheConfirm
+  } = useContainerList();
 
   if (isLoading) {
     return <ContainersLoading />;
@@ -129,203 +246,51 @@ export default function ContainersPage() {
         <div className="container mx-auto py-6 relative z-10">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold">{t('containers.title')}</h1>
-            <Button onClick={handleRefresh} variant="outline" size="sm" disabled={isRefreshing}>
-              {
-                isRefreshing ? (
+            <div className="flex items-center gap-2">
+              <Button onClick={handleRefresh} variant="outline" size="sm" disabled={isRefreshing}>
+                {isRefreshing ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <RefreshCw className="mr-2 h-4 w-4" />
-                )
-              }
-              {t('containers.refresh')}
-            </Button>
+                )}
+                {t('containers.refresh')}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowPruneImagesConfirm(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t('containers.prune_images')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPruneBuildCacheConfirm(true)}
+              >
+                <Scissors className="mr-2 h-4 w-4" />
+                {t('containers.prune_build_cache')}
+              </Button>
+            </div>
           </div>
-
           {featuredContainers.length > 0 && (
-            <Carousel
-              className="mx-auto mb-10 w-full"
-              opts={{
-                loop: true,
-              }}
-              plugins={[
-                Autoplay({
-                  delay: 3000,
-                }),
-              ]}
-            >
-              <CarouselContent>
-                {featuredContainers.map((container) => (
-                  <CarouselItem key={container.id}>
-                    <div className="p-0">
-                      <Card 
-                        className={cn('overflow-hidden w-full relative cursor-pointer', getGradientFromName(container.name))}
-                        onClick={() => router.push(`/containers/${container.id}`)}
-                      >
-                        <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f1a_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f1a_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
-                        <div className="absolute inset-0 bg-gradient-to-br opacity-20 transition-opacity duration-300 group-hover:opacity-30" />
-                        <CardContent className="flex flex-col items-center p-6 md:flex-row md:justify-between md:items-start relative z-10">
-                          <div className="mb-4 md:mb-0 md:w-1/2">
-                            <h2 className="mb-2 text-2xl font-bold text-primary">
-                              {container.name}
-                            </h2>
-                            <p className="text-secondary-foreground">
-                              {container.image}
-                            </p>
-                            <div className="mt-4 flex gap-2">
-                              {container.status !== 'running' && canUpdate && (
-                                <Button
-                                  variant="outline"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleContainerAction(container.id, 'start');
-                                  }}
-                                >
-                                  <Play className="mr-2 h-4 w-4" />
-                                  Start
-                                </Button>
-                              )}
-                              {container.status === 'running' && canUpdate && (
-                                <Button
-                                  variant="outline"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleContainerAction(container.id, 'stop');
-                                  }}
-                                >
-                                  <StopCircle className="mr-2 h-4 w-4" />
-                                  Stop
-                                </Button>
-                              )}
-                              {canDelete && (
-                                <Button
-                                  variant="outline"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleContainerAction(container.id, 'remove');
-                                  }}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Remove
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                          <div className="">
-                            <div className="space-y-2">
-                              <div className="text-sm">
-                                <span className="font-medium">Status:</span>
-                                <Badge variant={container.status === 'running' ? 'default' : 'secondary'} className="ml-2">
-                                  {container.status}
-                                </Badge>
-                              </div>
-                              <div className="text-sm">
-                                <span className="font-medium">Ports:</span>
-                                <div className="flex flex-wrap gap-2 mt-1">
-                                  {container?.ports?.map((port: any) => (
-                                    <Badge key={`${port.private_port}-${port.public_port}`} variant="outline">
-                                      {port.public_port} → {port.private_port}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                              <div className="text-sm">
-                                <span className="font-medium">Memory:</span>
-                                <span className="ml-2">
-                                  {(container.host_config.memory / (1024 * 1024)).toFixed(2)} MB
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
+            <FeaturedContainers
+              containers={featuredContainers}
+              getGradientFromName={getGradientFromName}
+              canUpdate={canUpdate}
+              canDelete={canDelete}
+              onAction={handleContainerAction}
+              router={router}
+            />
           )}
-
           {remainingContainers.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {remainingContainers.map((container) => (
-                <Card
+                <ContainerCard
                   key={container.id}
-                  className={cn(
-                    'group relative overflow-hidden transition-all duration-300 hover:shadow-lg cursor-pointer',
-                    getGradientFromName(container.name)
-                  )}
+                  container={container}
                   onClick={() => router.push(`/containers/${container.id}`)}
-                >
-                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f1a_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f1a_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
-                  <div className="absolute inset-0 bg-gradient-to-br opacity-20 transition-opacity duration-300 group-hover:opacity-30" />
-                  <CardContent className="relative p-6 z-10">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <h3 className="text-xl font-semibold">{container.name}</h3>
-                        <p className="text-sm text-muted-foreground truncate">{container.image}</p>
-                        <Badge variant={container.status === 'running' ? 'default' : 'secondary'}>
-                          {container.status}
-                        </Badge>
-                      </div>
-                      <div className="flex gap-2">
-                        {container.status !== 'running' && canUpdate && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleContainerAction(container.id, 'start');
-                            }}
-                          >
-                            <Play className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {container.status === 'running' && canUpdate && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleContainerAction(container.id, 'stop');
-                            }}
-                          >
-                            <StopCircle className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {canDelete && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleContainerAction(container.id, 'remove');
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <div className="text-sm">
-                        <span className="font-medium">Ports:</span>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {container?.ports?.map((port: any) => (
-                            <Badge key={`${port.private_port}-${port.public_port}`} variant="outline">
-                              {port.public_port} → {port.private_port}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="text-sm">
-                        <span className="font-medium">Memory:</span>
-                        <span className="ml-2">
-                          {(container.host_config.memory / (1024 * 1024)).toFixed(2)} MB
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  getGradientFromName={getGradientFromName}
+                  canUpdate={canUpdate}
+                  canDelete={canDelete}
+                  onAction={handleContainerAction}
+                />
               ))}
             </div>
           )}
@@ -341,6 +306,28 @@ export default function ContainersPage() {
         confirmText={t('containers.deleteDialog.confirm')}
         cancelText={t('containers.deleteDialog.cancel')}
         icon={Trash2}
+      />
+      <DeleteDialog
+        title={t('containers.pruneImagesDialog.title')}
+        description={t('containers.pruneImagesDialog.description')}
+        onConfirm={handlePruneImages}
+        open={showPruneImagesConfirm}
+        onOpenChange={setShowPruneImagesConfirm}
+        variant="destructive"
+        confirmText={t('containers.pruneImagesDialog.confirm')}
+        cancelText={t('containers.pruneImagesDialog.cancel')}
+        icon={Trash2}
+      />
+      <DeleteDialog
+        title={t('containers.pruneBuildCacheDialog.title')}
+        description={t('containers.pruneBuildCacheDialog.description')}
+        onConfirm={handlePruneBuildCache}
+        open={showPruneBuildCacheConfirm}
+        onOpenChange={setShowPruneBuildCacheConfirm}
+        variant="destructive"
+        confirmText={t('containers.pruneBuildCacheDialog.confirm')}
+        cancelText={t('containers.pruneBuildCacheDialog.cancel')}
+        icon={Scissors}
       />
     </div>
   );

@@ -56,7 +56,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [TerminalPosition, setTerminalPosition] = React.useState(TERMINAL_POSITION.BOTTOM);
   const [fitAddonRef, setFitAddonRef] = React.useState<any | null>(null);
   const { startTour } = useTour();
-  const { data: updateCheck, refetch: checkForUpdates, isFetching: isCheckingForUpdates } = useCheckForUpdatesQuery();
+  const {
+    data: updateCheck,
+    refetch: checkForUpdates,
+    isFetching: isCheckingForUpdates
+  } = useCheckForUpdatesQuery();
   const [performUpdate, { isLoading: isPerformingUpdate }] = usePerformUpdateMutation();
 
   useEffect(() => {

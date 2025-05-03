@@ -13,7 +13,7 @@ const FeatureFlagsContext = createContext<FeatureFlagsContextType>({
   features: [],
   isLoading: false,
   error: null,
-  isFeatureEnabled: () => false,
+  isFeatureEnabled: () => false
 });
 
 export const FeatureFlagsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -21,23 +21,22 @@ export const FeatureFlagsProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const isFeatureEnabled = useMemo(() => {
     return (featureName: string): boolean => {
-      const feature = features.find(f => f.feature_name === featureName);
+      const feature = features.find((f) => f.feature_name === featureName);
       return feature?.is_enabled || false;
     };
   }, [features]);
 
-  const value = useMemo(() => ({
-    features,
-    isLoading,
-    error,
-    isFeatureEnabled
-  }), [features, isLoading, error, isFeatureEnabled]);
-
-  return (
-    <FeatureFlagsContext.Provider value={value}>
-      {children}
-    </FeatureFlagsContext.Provider>
+  const value = useMemo(
+    () => ({
+      features,
+      isLoading,
+      error,
+      isFeatureEnabled
+    }),
+    [features, isLoading, error, isFeatureEnabled]
   );
+
+  return <FeatureFlagsContext.Provider value={value}>{children}</FeatureFlagsContext.Provider>;
 };
 
-export const useFeatureFlags = () => useContext(FeatureFlagsContext); 
+export const useFeatureFlags = () => useContext(FeatureFlagsContext);

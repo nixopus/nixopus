@@ -57,7 +57,7 @@ const rootReducer = combineReducers({
   [auditApi.reducerPath]: auditApi.reducer,
   [FeatureFlagsApi.reducerPath]: FeatureFlagsApi.reducer,
   [containerApi.reducerPath]: containerApi.reducer,
-  [imagesApi.reducerPath]: imagesApi.reducer,
+  [imagesApi.reducerPath]: imagesApi.reducer
 });
 
 type RootReducer = ReturnType<typeof rootReducer>;
@@ -91,7 +91,7 @@ const storeOptions: ConfigureStoreOptions = {
       auditApi.middleware,
       FeatureFlagsApi.middleware,
       containerApi.middleware,
-      imagesApi.middleware,
+      imagesApi.middleware
     ]),
   devTools: process.env.NODE_ENV === 'development'
 };

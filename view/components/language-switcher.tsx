@@ -19,7 +19,11 @@ interface LanguageSwitcherProps {
   userSettings: UserSettings;
 }
 
-export function LanguageSwitcher({ handleLanguageChange, isUpdatingLanguage, userSettings }: LanguageSwitcherProps) {
+export function LanguageSwitcher({
+  handleLanguageChange,
+  isUpdatingLanguage,
+  userSettings
+}: LanguageSwitcherProps) {
   const { t } = useTranslation();
   const [currentLocale, setCurrentLocale] = useState(userSettings?.language || 'en');
   const [updateLanguage] = useUpdateLanguageMutation();

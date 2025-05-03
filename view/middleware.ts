@@ -62,7 +62,7 @@ export async function middleware(request: NextRequest) {
     if (decoded['2fa_enabled'] && !decoded['2fa_verified']) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
-  } catch (error) {;
+  } catch (error) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 

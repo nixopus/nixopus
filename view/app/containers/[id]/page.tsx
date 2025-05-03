@@ -1,6 +1,16 @@
 'use client';
 
-import { Play, StopCircle, Trash2, Info, Terminal, HardDrive, RotateCw, ShipIcon, Layers } from 'lucide-react';
+import {
+  Play,
+  StopCircle,
+  Trash2,
+  Info,
+  Terminal,
+  HardDrive,
+  RotateCw,
+  ShipIcon,
+  Layers
+} from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -31,14 +41,14 @@ export default function ContainerDetailsPage() {
   const [stopContainer] = useStopContainerMutation();
   const [removeContainer] = useRemoveContainerMutation();
   const [logsTail, setLogsTail] = useState(100);
-  const [allLogs, setAllLogs] = useState<string>("");
+  const [allLogs, setAllLogs] = useState<string>('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: logs, refetch: refetchLogs } = useGetContainerLogsQuery(
     { containerId, tail: logsTail },
     {
       skip: !containerId,
-      refetchOnMountOrArgChange: true,
+      refetchOnMountOrArgChange: true
     }
   );
 
@@ -85,7 +95,7 @@ export default function ContainerDetailsPage() {
   };
 
   if (isLoading || !container) {
-    return <ContainerDetailsLoading />
+    return <ContainerDetailsLoading />;
   }
 
   return (
@@ -160,25 +170,19 @@ export default function ContainerDetailsPage() {
               <OverviewTab container={container} />
             </TabsContent>
             <TabsContent value="logs" className="mt-4">
-              <LogsTab
-                container={container}
-                logs={allLogs}
-                onLoadMore={handleLoadMoreLogs}
-              />
+              <LogsTab container={container} logs={allLogs} onLoadMore={handleLoadMoreLogs} />
             </TabsContent>
             <TabsContent value="details" className="mt-4">
               <DetailsTab container={container} />
             </TabsContent>
             <TabsContent value="images" className="mt-4">
-              {
-                container.image ? (
-                  <Images containerId={containerId} imagePrefix={container.image + "*"} />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p>{t('containers.images.none')}</p>
-                  </div>
-                )
-              }
+              {container.image ? (
+                <Images containerId={containerId} imagePrefix={container.image + '*'} />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p>{t('containers.images.none')}</p>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>
@@ -196,4 +200,4 @@ export default function ContainerDetailsPage() {
       />
     </div>
   );
-} 
+}
