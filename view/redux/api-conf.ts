@@ -115,3 +115,9 @@ export enum CONTAINERURLS {
   REMOVE_CONTAINER = 'v1/container/{container_id}',
   GET_CONTAINER_LOGS = 'v1/container/{container_id}/logs'
 }
+
+export enum IMAGEURLS {
+  GET_IMAGES = 'v1/container/images',
+  PRUNE_IMAGES = 'v1/container/prune/images',
+  PRUNE_BUILD_CACHE = 'v1/container/prune/build-cache'
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Play, StopCircle, Trash2, Info, Terminal, HardDrive, RotateCw } from 'lucide-react';
+import { Play, StopCircle, Trash2, Info, Terminal, HardDrive, RotateCw, ShipIcon, Layers } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -17,9 +17,9 @@ import { useEffect, useState } from 'react';
 import { OverviewTab } from './components/OverviewTab';
 import { LogsTab } from './components/LogsTab';
 import { DetailsTab } from './components/DetailsTab';
-import ContainersLoading from '../skeleton';
 import ContainerDetailsLoading from './components/ContainerDetailsLoading';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
+import { Images } from './components/images';
 
 export default function ContainerDetailsPage() {
   const { t } = useTranslation();
@@ -138,10 +138,14 @@ export default function ContainerDetailsPage() {
 
         <div className="space-y-4">
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="overview">
                 <Info className="mr-2 h-4 w-4" />
                 {t('containers.overview')}
+              </TabsTrigger>
+              <TabsTrigger value="images">
+                <Layers className="mr-2 h-4 w-4" />
+                {t('containers.images.title')}
               </TabsTrigger>
               <TabsTrigger value="logs">
                 <Terminal className="mr-2 h-4 w-4" />
@@ -156,14 +160,25 @@ export default function ContainerDetailsPage() {
               <OverviewTab container={container} />
             </TabsContent>
             <TabsContent value="logs" className="mt-4">
-              <LogsTab 
-                container={container} 
-                logs={allLogs} 
-                onLoadMore={handleLoadMoreLogs} 
+              <LogsTab
+                container={container}
+                logs={allLogs}
+                onLoadMore={handleLoadMoreLogs}
               />
             </TabsContent>
             <TabsContent value="details" className="mt-4">
               <DetailsTab container={container} />
+            </TabsContent>
+            <TabsContent value="images" className="mt-4">
+              {
+                container.image ? (
+                  <Images containerId={containerId} imagePrefix={container.image + "*"} />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p>{t('containers.images.none')}</p>
+                  </div>
+                )
+              }
             </TabsContent>
           </Tabs>
         </div>

@@ -9,7 +9,6 @@ type Image struct {
 	SharedSize  int64             `json:"shared_size"`
 	VirtualSize int64             `json:"virtual_size"`
 	Labels      map[string]string `json:"labels"`
-	Containers  int64             `json:"containers"`
 }
 
 type ContainerReference struct {

@@ -53,6 +53,15 @@
       "description": "Are you sure you want to delete this container?",
       "confirm": "Delete",
       "cancel": "Cancel"
+    },
+    "images": {
+      "title": "Images",
+      "id": "ID",
+      "tags": "Tags",
+      "created": "Created",
+      "size": "Size",
+      "containers": "Containers",
+      "none": "<none>"
     }
   },
   "auth": {

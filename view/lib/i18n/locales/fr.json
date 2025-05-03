@@ -53,6 +53,15 @@
       "description": "Êtes-vous sûr de vouloir supprimer ce conteneur ?",
       "confirm": "Supprimer",
       "cancel": "Annuler"
+    },
+    "images": {
+      "title": "Images",
+      "id": "ID",
+      "tags": "Étiquettes",
+      "created": "Créé",
+      "size": "Taille",
+      "containers": "Conteneurs",
+      "none": "<aucun>"
     }
   },
   "auth": {

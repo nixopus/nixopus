@@ -173,9 +173,13 @@ func (s *DockerService) GetContainerById(containerID string) (container.InspectR
 //
 // The returned list is a slice of image.Summary structs, which contain the
 // image ID, repository name, tags, and size of each image on the host. If
-// an error occurs while listing the images, it panics with the error.
+// an error occurs while listing the images, it returns an empty slice.
 func (s *DockerService) ListAllImages(opts image.ListOptions) []image.Summary {
-	images, _ := s.Cli.ImageList(s.Ctx, opts)
+	images, err := s.Cli.ImageList(s.Ctx, opts)
+	if err != nil {
+		s.logger.Log(logger.Error, "Failed to list images", err.Error())
+		return []image.Summary{}
+	}
 	return images
 }
 
