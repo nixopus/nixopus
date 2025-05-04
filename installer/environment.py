@@ -19,6 +19,7 @@ class EnvironmentSetup:
         self.ssh_dir = self.config_dir / "ssh"
         self.env = env
         self.context_name = f"nixopus-{self.env}"
+        self.source_dir = self.config_dir / "source"
 
     def generate_random_string(self, length=12):
         alphabet = string.ascii_letters + string.digits
@@ -343,7 +344,7 @@ class EnvironmentSetup:
 
         api_env_vars = base_env_vars.copy()
         api_env_vars["PORT"] = str(api_port)
-        api_env_file = self.config_dir / "api" / ".env"
+        api_env_file = self.source_dir / "api" / ".env"
         api_env_file.parent.mkdir(parents=True, exist_ok=True)
         with open(api_env_file, 'w') as f:
             for key, value in api_env_vars.items():
@@ -351,7 +352,7 @@ class EnvironmentSetup:
         
         view_env_vars = base_env_vars.copy()
         view_env_vars["PORT"] = str(next_public_port)
-        view_env_file = self.config_dir / "view" / ".env"
+        view_env_file = self.source_dir / "view" / ".env"
         view_env_file.parent.mkdir(parents=True, exist_ok=True)
         with open(view_env_file, 'w') as f:
             for key, value in view_env_vars.items():
