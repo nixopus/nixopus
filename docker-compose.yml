@@ -8,7 +8,7 @@ services:
       - "${API_PORT:-8443}:${API_PORT:-8443}"
     restart: unless-stopped
     env_file:
-      - .env
+      - /etc/nixopus/source/api/.env
     environment:
       - HOST_NAME=nixopus-db
     volumes:
@@ -17,6 +17,7 @@ services:
       - ${SSH_PRIVATE_KEY}:/etc/nixopus/ssh/id_rsa
       - ${MOUNT_PATH:-/etc/nixopus/configs}:/etc/nixopus/configs
       - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/nixopus/source/api/.env:/app/.env
     networks:
       - nixopus-network
     depends_on:
@@ -84,9 +85,10 @@ services:
       - "${NEXT_PUBLIC_PORT:-7443}:${NEXT_PUBLIC_PORT:-7443}"
     restart: unless-stopped
     env_file:
-      - view/.env
+      - /etc/nixopus/source/view/.env
     volumes:
       - ./logs:/app/logs
+      - /etc/nixopus/source/view/.env:/app/.env
     networks:
       - nixopus-network
 
