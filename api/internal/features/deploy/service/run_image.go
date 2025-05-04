@@ -66,13 +66,7 @@ func (s *DeployService) prepareContainerConfig(
 }
 
 // prepareHostConfig creates Docker host configuration with port bindings
-func (s *DeployService) prepareHostConfig(port nat.Port) container.HostConfig {
-	availablePort, err := s.getAvailablePort()
-	if err != nil {
-		s.logger.Log(logger.Error, types.ErrFailedToGetAvailablePort.Error(), err.Error())
-		return container.HostConfig{}
-	}
-
+func (s *DeployService) prepareHostConfig(port nat.Port, availablePort string) container.HostConfig {
 	return container.HostConfig{
 		NetworkMode: "bridge",
 		PortBindings: map[nat.Port][]nat.PortBinding{
@@ -140,7 +134,7 @@ func (s *DeployService) getRunningContainers(r DeployerConfig) ([]container.Summ
 	return currentContainers, nil
 }
 
-func (s *DeployService) createContainerConfigs(r DeployerConfig) (container.Config, container.HostConfig, network.NetworkingConfig) {
+func (s *DeployService) createContainerConfigs(r DeployerConfig) (container.Config, container.HostConfig, network.NetworkingConfig, string) {
 	port_str := fmt.Sprintf("%d", r.application.Port)
 	port, _ := nat.NewPort("tcp", port_str)
 
@@ -159,16 +153,21 @@ func (s *DeployService) createContainerConfigs(r DeployerConfig) (container.Conf
 		env_vars,
 		r.application.ID.String(),
 	)
-	host_config := s.prepareHostConfig(port)
+	availablePort, err := s.getAvailablePort()
+	if err != nil {
+		s.logger.Log(logger.Error, types.ErrFailedToGetAvailablePort.Error(), err.Error())
+		return container.Config{}, container.HostConfig{}, network.NetworkingConfig{}, ""
+	}
+	host_config := s.prepareHostConfig(port, availablePort)
 	network_config := s.prepareNetworkConfig()
 
-	return container_config, host_config, network_config
+	return container_config, host_config, network_config, availablePort
 }
 
 // AtomicUpdateContainer performs a zero-downtime update of a running container
-func (s *DeployService) AtomicUpdateContainer(r DeployerConfig) (string, error) {
+func (s *DeployService) AtomicUpdateContainer(r DeployerConfig) (string, string, error) {
 	if r.application.Name == "" {
-		return "", types.ErrMissingImageName
+		return "", "", types.ErrMissingImageName
 	}
 
 	s.logger.Log(logger.Info, types.LogUpdatingContainer, r.application.Name)
@@ -177,16 +176,16 @@ func (s *DeployService) AtomicUpdateContainer(r DeployerConfig) (string, error) 
 
 	currentContainers, err := s.getRunningContainers(r)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	container_config, host_config, network_config := s.createContainerConfigs(r)
+	container_config, host_config, network_config, availablePort := s.createContainerConfigs(r)
 
 	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogCreatingNewContainer)
 	resp, err := s.dockerRepo.CreateContainer(container_config, host_config, network_config, "")
 	if err != nil {
 		fmt.Printf("Failed to create container: %v\n", err)
-		return "", types.ErrFailedToCreateContainer
+		return "", "", types.ErrFailedToCreateContainer
 	}
 	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogNewContainerCreated+"%s", resp.ID)
 
@@ -209,7 +208,7 @@ func (s *DeployService) AtomicUpdateContainer(r DeployerConfig) (string, error) 
 	if err != nil {
 		fmt.Printf("Failed to start container: %v\n", err)
 		s.dockerRepo.RemoveContainer(resp.ID, container.RemoveOptions{Force: true})
-		return "", types.ErrFailedToStartNewContainer
+		return "", "", types.ErrFailedToStartNewContainer
 	}
 	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogNewContainerStartedSuccessfully)
 
@@ -219,7 +218,7 @@ func (s *DeployService) AtomicUpdateContainer(r DeployerConfig) (string, error) 
 	if err != nil || containerInfo.State.Status != "running" {
 		s.dockerRepo.StopContainer(resp.ID, container.StopOptions{})
 		s.dockerRepo.RemoveContainer(resp.ID, container.RemoveOptions{Force: true})
-		return "", types.ErrFailedToUpdateContainer
+		return "", "", types.ErrFailedToUpdateContainer
 	}
 
 	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogContainerUpdateCompleted)
@@ -242,7 +241,7 @@ func (s *DeployService) AtomicUpdateContainer(r DeployerConfig) (string, error) 
 
 	go s.collectContainerLogs(log_collection_config)
 
-	return resp.ID, nil
+	return resp.ID, availablePort, nil
 }
 
 // Helper function to create a pointer to an integer

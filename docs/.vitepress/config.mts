@@ -51,7 +51,7 @@ export default defineConfigWithTheme({
       { text: 'Get Started', link: '/install/index.md' }
     ],
     footer: {
-      message: 'Released under the Fair-Code Sustainable Use License',
+      message: 'Released under the Functional Source License (FSL)',
       copyright: 'Copyright © 2025-present Nixopus'
     },
     sidebar: [
