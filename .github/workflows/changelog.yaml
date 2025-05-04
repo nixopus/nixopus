@@ -19,7 +19,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-          ref: release/${{ github.ref_name }}
+          ref: master
       
       - name: Setup Node.js
         uses: actions/setup-node@v4

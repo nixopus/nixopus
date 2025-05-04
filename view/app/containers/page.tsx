@@ -157,7 +157,7 @@ const FeaturedContainers = ({
 }: FeaturedContainersProps) => {
   return (
     <Carousel
-      className="mx-auto mb-10 w-full"
+      className="mx-auto mb-10 w-full max-w-[calc(100vw-2rem)] sm:max-w-[calc(100vw-3rem)] lg:max-w-[calc(100vw-4rem)]"
       opts={{
         loop: true
       }}
@@ -167,9 +167,9 @@ const FeaturedContainers = ({
         })
       ]}
     >
-      <CarouselContent>
+      <CarouselContent className="-ml-2 md:-ml-4">
         {containers.map((container) => (
-          <CarouselItem key={container.id}>
+          <CarouselItem key={container.id} className="pl-2 md:pl-4">
             <div className="p-0">
               <ContainerCard
                 container={container}
@@ -241,12 +241,12 @@ export default function ContainersPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="relative">
-        <div className="container mx-auto py-6 relative z-10">
-          <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen w-full overflow-x-hidden">
+      <div className="relative w-full">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 relative z-10">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
             <h1 className="text-2xl font-bold">{t('containers.title')}</h1>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Button onClick={handleRefresh} variant="outline" size="sm" disabled={isRefreshing}>
                 {isRefreshing ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -280,7 +280,7 @@ export default function ContainersPage() {
             />
           )}
           {remainingContainers.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3  gap-4 md:gap-6">
               {remainingContainers.map((container) => (
                 <ContainerCard
                   key={container.id}
