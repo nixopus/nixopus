@@ -7,6 +7,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
@@ -42,6 +43,8 @@ type DockerRepository interface {
 	ComposeDown(composeFilePath string) error
 	ComposeBuild(composeFilePath string, envVars map[string]string) error
 	RemoveImage(imageName string, opts image.RemoveOptions) error
+	PruneBuildCache(opts types.BuildCachePruneOptions) error
+	PruneImages(opts filters.Args) (image.PruneReport, error)
 }
 
 type DockerClient struct {
@@ -170,9 +173,13 @@ func (s *DockerService) GetContainerById(containerID string) (container.InspectR
 //
 // The returned list is a slice of image.Summary structs, which contain the
 // image ID, repository name, tags, and size of each image on the host. If
-// an error occurs while listing the images, it panics with the error.
+// an error occurs while listing the images, it returns an empty slice.
 func (s *DockerService) ListAllImages(opts image.ListOptions) []image.Summary {
-	images, _ := s.Cli.ImageList(s.Ctx, opts)
+	images, err := s.Cli.ImageList(s.Ctx, opts)
+	if err != nil {
+		s.logger.Log(logger.Error, "Failed to list images", err.Error())
+		return []image.Summary{}
+	}
 	return images
 }
 
@@ -298,6 +305,19 @@ func (s *DockerService) ComposeBuild(composeFilePath string, envVars map[string]
 	return nil
 }
 
+// RemoveImage removes an image from the Docker host.
+//
+// This function removes an image from the Docker host using the Docker client.
+// It takes an image name and an optional set of options for the removal process.
+//
+// Parameters:
+//
+//	imageName - the name of the image to remove.
+//	opts - an optional set of options for the removal process.
+//
+// Returns:
+//
+//	error - an error if the image removal fails.
 func (s *DockerService) RemoveImage(imageName string, opts image.RemoveOptions) error {
 	ctx := context.Background()
 	_, err := s.Cli.ImageRemove(ctx, imageName, image.RemoveOptions{
@@ -305,4 +325,25 @@ func (s *DockerService) RemoveImage(imageName string, opts image.RemoveOptions) 
 		PruneChildren: true,
 	})
 	return err
+}
+
+// PruneImages prunes the images on the Docker host.
+//
+// This function prunes the images on the Docker host using the Docker client.
+// It takes an optional set of options for the pruning process.
+//
+// Parameters:
+
+func (s *DockerService) PruneBuildCache(opts types.BuildCachePruneOptions) error {
+	_, err := s.Cli.BuildCachePrune(s.Ctx, opts)
+	return err
+}
+
+func (s *DockerService) PruneImages(opts filters.Args) (image.PruneReport, error) {
+	pruneReport, err := s.Cli.ImagesPrune(s.Ctx, opts)
+	if err != nil {
+		return image.PruneReport{}, err
+	}
+
+	return pruneReport, nil
 }

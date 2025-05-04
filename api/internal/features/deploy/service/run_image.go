@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -66,18 +67,51 @@ func (s *DeployService) prepareContainerConfig(
 
 // prepareHostConfig creates Docker host configuration with port bindings
 func (s *DeployService) prepareHostConfig(port nat.Port) container.HostConfig {
+	availablePort, err := s.getAvailablePort()
+	if err != nil {
+		s.logger.Log(logger.Error, types.ErrFailedToGetAvailablePort.Error(), err.Error())
+		return container.HostConfig{}
+	}
+
 	return container.HostConfig{
 		NetworkMode: "bridge",
 		PortBindings: map[nat.Port][]nat.PortBinding{
 			port: {
 				{
 					HostIP:   "0.0.0.0",
-					HostPort: port.Port(),
+					HostPort: availablePort,
 				},
 			},
 		},
 		PublishAllPorts: true,
 	}
+}
+
+func (s *DeployService) getAvailablePort() (string, error) {
+	ssh := ssh.NewSSH()
+	client, err := ssh.Connect()
+	if err != nil {
+		return "", err
+	}
+	defer client.Close()
+
+	generatePorts := "seq 49152 65535"
+
+	getUsedPorts := "command -v ss >/dev/null 2>&1 && ss -tan | awk '{print $4}' | cut -d':' -f2 | grep '[0-9]\\{1,5\\}' | sort -u || netstat -tan | awk '{print $4}' | grep ':[0-9]' | cut -d':' -f2 | sort -u"
+
+	cmd := fmt.Sprintf("comm -23 <(%s) <(%s) | sort -R | head -n 1 | tr -d '\\n'", generatePorts, getUsedPorts)
+
+	output, err := client.Run(cmd)
+	if err != nil {
+		return "", fmt.Errorf("failed to find available port: %w", err)
+	}
+
+	port := string(output)
+	if port == "" {
+		return "", fmt.Errorf("no available ports found in range 49152-65535")
+	}
+
+	return port, nil
 }
 
 // prepareNetworkConfig creates Docker network configuration

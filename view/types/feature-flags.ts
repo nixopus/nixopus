@@ -26,7 +26,8 @@ export enum FeatureNames {
   FeatureAudit = 'audit',
   FeatureNotifications = 'notifications',
   FeatureDomain = 'domain',
-  FeatureSelfHosted = 'self_hosted'
+  FeatureSelfHosted = 'self_hosted',
+  FeatureContainer = 'container'
 }
 
 export const featureGroups: Record<string, FeatureName[]> = {
@@ -36,7 +37,11 @@ export const featureGroups: Record<string, FeatureName[]> = {
     FeatureNames.FeatureFileManager,
     FeatureNames.FeatureProxyConfig
   ],
-  development: [FeatureNames.FeatureGithubConnector, FeatureNames.FeatureSelfHosted],
+  development: [
+    FeatureNames.FeatureGithubConnector,
+    FeatureNames.FeatureSelfHosted,
+    FeatureNames.FeatureContainer
+  ],
   monitoring: [FeatureNames.FeatureMonitoring, FeatureNames.FeatureAudit],
   notifications: [FeatureNames.FeatureNotifications]
 };

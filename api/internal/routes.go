@@ -14,6 +14,7 @@ import (
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
 	authService "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
+	container "github.com/raghavyuva/nixopus-api/internal/features/container/controller"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
 	domain "github.com/raghavyuva/nixopus-api/internal/features/domain/controller"
 	feature_flags_controller "github.com/raghavyuva/nixopus-api/internal/features/feature-flags/controller"
@@ -227,6 +228,16 @@ func (router *Router) Routes() {
 	})
 	router.FeatureFlagRoutes(featureFlagGroup, featureFlagController)
 
+	containerController := container.NewContainerController(router.app.Store, router.app.Ctx, l, notificationManager)
+	containerGroup := fuego.Group(server, apiV1.Path+"/container")
+	fuego.Use(containerGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "container")
+	})
+	fuego.Use(containerGroup, func(next http.Handler) http.Handler {
+		return middleware.FeatureFlagMiddleware(next, router.app, "container", router.cache)
+	})
+	router.ContainerRoutes(containerGroup, containerController)
+
 	server.Run()
 }
 
@@ -374,4 +385,17 @@ func (router *Router) FeatureFlagRoutes(s *fuego.Server, featureFlagController *
 	fuego.Get(s, "", featureFlagController.GetFeatureFlags)
 	fuego.Put(s, "", featureFlagController.UpdateFeatureFlag)
 	fuego.Get(s, "/check", featureFlagController.IsFeatureEnabled)
+}
+
+func (router *Router) ContainerRoutes(s *fuego.Server, containerController *container.ContainerController) {
+	fuego.Get(s, "", containerController.ListContainers)
+	fuego.Get(s, "/{container_id}", containerController.GetContainer)
+	fuego.Delete(s, "/{container_id}", containerController.RemoveContainer)
+	fuego.Post(s, "/{container_id}/start", containerController.StartContainer)
+	fuego.Post(s, "/{container_id}/stop", containerController.StopContainer)
+	fuego.Post(s, "/{container_id}/restart", containerController.RestartContainer)
+	fuego.Post(s, "/{container_id}/logs", containerController.GetContainerLogs)
+	fuego.Post(s, "/prune/build-cache", containerController.PruneBuildCache)
+	fuego.Post(s, "/prune/images", containerController.PruneImages)
+	fuego.Post(s, "/images", containerController.ListImages)
 }

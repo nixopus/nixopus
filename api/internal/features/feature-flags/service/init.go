@@ -42,7 +42,7 @@ func (s *FeatureFlagService) GetFeatureFlags(organizationID uuid.UUID) ([]types.
 		defer tx.Rollback()
 
 		txStorage := s.storage.WithTx(tx)
-		defaultFeatures := []types.FeatureName{types.FeatureDomain, types.FeatureTerminal, types.FeatureNotifications, types.FeatureFileManager, types.FeatureSelfHosted, types.FeatureAudit, types.FeatureGithubConnector, types.FeatureMonitoring}
+		defaultFeatures := []types.FeatureName{types.FeatureDomain, types.FeatureTerminal, types.FeatureNotifications, types.FeatureFileManager, types.FeatureSelfHosted, types.FeatureAudit, types.FeatureGithubConnector, types.FeatureMonitoring, types.FeatureContainer}
 		defaultFlags := make([]types.FeatureFlag, 0, len(defaultFeatures))
 
 		for _, feature := range defaultFeatures {

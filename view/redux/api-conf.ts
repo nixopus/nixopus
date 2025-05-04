@@ -106,3 +106,18 @@ export const FEATURE_FLAGS = {
   UPDATE_FEATURE_FLAG: 'v1/feature-flags',
   CHECK_FEATURE_ENABLED: 'v1/feature-flags/check'
 };
+
+export enum CONTAINERURLS {
+  GET_CONTAINERS = 'v1/container',
+  GET_CONTAINER = 'v1/container/{container_id}',
+  START_CONTAINER = 'v1/container/{container_id}/start',
+  STOP_CONTAINER = 'v1/container/{container_id}/stop',
+  REMOVE_CONTAINER = 'v1/container/{container_id}',
+  GET_CONTAINER_LOGS = 'v1/container/{container_id}/logs'
+}
+
+export enum IMAGEURLS {
+  GET_IMAGES = 'v1/container/images',
+  PRUNE_IMAGES = 'v1/container/prune/images',
+  PRUNE_BUILD_CACHE = 'v1/container/prune/build-cache'
+}

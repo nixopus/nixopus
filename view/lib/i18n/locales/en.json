@@ -14,6 +14,74 @@
     "refreshPage": "Refresh Page",
     "loading": "Loading..."
   },
+  "containers": {
+    "title": "Containers",
+    "list": "Container List",
+    "name": "Name",
+    "image": "Image",
+    "status": "Status",
+    "ports": "Ports",
+    "actions": "Actions",
+    "refresh": "Refresh",
+    "start": "Start",
+    "stop": "Stop",
+    "remove": "Remove",
+    "restart": "Restart",
+    "start_success": "Container started successfully",
+    "stop_success": "Container stopped successfully",
+    "prune_images": "Prune Images",
+    "prune_build_cache": "Prune Build Cache",
+    "prune_images_success": "Images pruned successfully",
+    "prune_build_cache_success": "Build cache pruned successfully",
+    "prune_images_error": "Failed to prune images",
+    "prune_build_cache_error": "Failed to prune build cache",
+    "remove_success": "Container removed successfully",
+    "start_error": "Failed to start container",
+    "stop_error": "Failed to stop container",
+    "remove_error": "Failed to remove container",
+    "fetch_error": "Failed to fetch containers",
+    "overview": "Overview",
+    "logs": "Logs",
+    "details": "Details",
+    "basic_info": "Basic Info",
+    "resources": "Resources",
+    "cpu_shares": "CPU Shares",
+    "memory": "Memory",
+    "command": "Command",
+    "created": "Created",
+    "ip_address": "IP Address",
+    "load_more_logs": "Load More Logs",
+    "no_logs": "No logs found",
+    "no_containers": "No containers found",
+    "more_ports": "+{count} more",
+    "deleteDialog": {
+      "title": "Delete Container",
+      "description": "Are you sure you want to delete this container?",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "pruneImagesDialog": {
+      "title": "Prune Images",
+      "description": "Are you sure you want to prune all images?",
+      "confirm": "Prune",
+      "cancel": "Cancel"
+    },
+    "pruneBuildCacheDialog": {
+      "title": "Prune Build Cache",
+      "description": "Are you sure you want to prune all build cache?",
+      "confirm": "Prune",
+      "cancel": "Cancel"
+    },
+    "images": {
+      "title": "Images",
+      "id": "ID",
+      "tags": "Tags",
+      "created": "Created",
+      "size": "Size",
+      "containers": "Containers",
+      "none": "<none>"
+    }
+  },
   "auth": {
     "login": {
       "title": "Welcome back",
@@ -154,6 +222,10 @@
         "domain": {
           "title": "Domain",
           "description": "Access to the domain feature"
+        },
+        "container": {
+          "title": "Container",
+          "description": "Access to the container feature"
         },
         "monitoring": {
           "title": "Monitoring",
@@ -626,7 +698,8 @@
         },
         "noContainers": "No containers found",
         "morePorts": "+{count} more"
-      }
+      },
+      "viewAll": "View All"
     },
     "disk": {
       "title": "Disk Usage",
@@ -1139,7 +1212,8 @@
     "notifications": "Notifications",
     "team": "Team",
     "domains": "Domains",
-    "update": "Update"
+    "update": "Update",
+    "containers": "Containers"
   },
   "layout": {
     "breadcrumbs": {
