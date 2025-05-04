@@ -49,7 +49,6 @@ function LogViewer({
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold">{t('selfHost.logViewer.title')}</h3>
-            <CardDescription>{t('selfHost.logViewer.description')}</CardDescription>
           </div>
           <div className="flex items-center space-x-2">
             <Button variant="outline" onClick={() => setCurrentPage(currentPage + 1)}>

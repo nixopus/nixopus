@@ -94,7 +94,6 @@ var (
 	ErrDockerComposeFileNotFound    = errors.New("docker-compose file not found")
 	ErrDockerComposeCommandFailed   = errors.New("docker-compose command failed")
 	ErrDockerComposeInvalidConfig   = errors.New("invalid docker-compose configuration")
-	ErrFailedToGetAvailablePort     = errors.New("failed to get available port")
 )
 
 const (
