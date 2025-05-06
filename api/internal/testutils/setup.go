@@ -213,7 +213,7 @@ func NewTestSetup() *TestSetup {
 // CreateTestUserAndOrg creates a test user and organization
 // This should be called by individual test cases when needed
 func (s *TestSetup) CreateTestUserAndOrg() (*types.User, *types.Organization, error) {
-	authResponse, org, err := s.RegistrationHelper("test@example.com", "password123", "testuser", "test-org", "Test organization", "admin")
+	authResponse, org, err := s.RegistrationHelper("test@example.com", "Password123@", "testuser", "test-org", "Test organization", "admin")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create test user: %w", err)
 	}
@@ -222,7 +222,7 @@ func (s *TestSetup) CreateTestUserAndOrg() (*types.User, *types.Organization, er
 }
 
 func (s *TestSetup) GetTestAuthResponse() (*authTypes.AuthResponse, *types.Organization, error) {
-	authResponse, org, err := s.RegistrationHelper("test@example.com", "password123", "testuser", "test-org", "Test organization", "admin")
+	authResponse, org, err := s.RegistrationHelper("test@example.com", "Password123@", "testuser", "test-org", "Test organization", "admin")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create test user: %w", err)
 	}

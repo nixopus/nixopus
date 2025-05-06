@@ -9,3 +9,7 @@ func GetHealthURL() string {
 func GetRegisterURL() string {
 	return baseURL + "/auth/register"
 }
+
+func GetLoginURL() string {
+	return baseURL + "/auth/login"
+}
