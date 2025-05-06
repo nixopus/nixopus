@@ -23,29 +23,70 @@ func (c *ContainerController) GetContainer(f fuego.ContextNoBody) (*shared_types
 	}
 
 	containerData := types.Container{
-		ID:        containerInfo.ID,
-		Name:      containerInfo.Name[1:],
-		Image:     containerInfo.Config.Image,
-		Status:    containerInfo.State.Status,
-		State:     containerInfo.State.Status,
-		Created:   containerInfo.Created,
-		Labels:    containerInfo.Config.Labels,
-		Command:   containerInfo.Config.Cmd[0],
-		IPAddress: containerInfo.NetworkSettings.IPAddress,
-		HostConfig: types.HostConfig{
+		ID:      containerInfo.ID,
+		Name:    containerInfo.Name,
+		Image:   "",
+		Status:  "",
+		State:   "",
+		Created: containerInfo.Created,
+		Labels:  make(map[string]string),
+		Command: "",
+	}
+
+	if len(containerInfo.Name) > 0 {
+		containerData.Name = containerInfo.Name[1:]
+	}
+
+	if containerInfo.Config != nil {
+		containerData.Image = containerInfo.Config.Image
+		if containerInfo.Config.Labels != nil {
+			containerData.Labels = containerInfo.Config.Labels
+		}
+		if len(containerInfo.Config.Cmd) > 0 {
+			containerData.Command = containerInfo.Config.Cmd[0]
+		}
+	}
+
+	if containerInfo.State != nil {
+		containerData.Status = containerInfo.State.Status
+		containerData.State = containerInfo.State.Status
+	}
+
+	if containerInfo.NetworkSettings != nil {
+		containerData.IPAddress = containerInfo.NetworkSettings.IPAddress
+
+		if containerInfo.NetworkSettings.Ports != nil {
+			for port, bindings := range containerInfo.NetworkSettings.Ports {
+				for _, binding := range bindings {
+					containerData.Ports = append(containerData.Ports, types.Port{
+						PrivatePort: int(port.Int()),
+						PublicPort:  func() int { p, _ := strconv.Atoi(binding.HostPort); return p }(),
+						Type:        port.Proto(),
+					})
+				}
+			}
+		}
+
+		if containerInfo.NetworkSettings.Networks != nil {
+			for name, network := range containerInfo.NetworkSettings.Networks {
+				if network != nil {
+					containerData.Networks = append(containerData.Networks, types.Network{
+						Name:       name,
+						IPAddress:  network.IPAddress,
+						Gateway:    network.Gateway,
+						MacAddress: network.MacAddress,
+						Aliases:    network.Aliases,
+					})
+				}
+			}
+		}
+	}
+
+	if containerInfo.HostConfig != nil {
+		containerData.HostConfig = types.HostConfig{
 			Memory:     containerInfo.HostConfig.Memory,
 			MemorySwap: containerInfo.HostConfig.MemorySwap,
 			CPUShares:  containerInfo.HostConfig.CPUShares,
-		},
-	}
-
-	for port, bindings := range containerInfo.NetworkSettings.Ports {
-		for _, binding := range bindings {
-			containerData.Ports = append(containerData.Ports, types.Port{
-				PrivatePort: int(port.Int()),
-				PublicPort:  func() int { p, _ := strconv.Atoi(binding.HostPort); return p }(),
-				Type:        port.Proto(),
-			})
 		}
 	}
 
@@ -55,16 +96,6 @@ func (c *ContainerController) GetContainer(f fuego.ContextNoBody) (*shared_types
 			Source:      mount.Source,
 			Destination: mount.Destination,
 			Mode:        mount.Mode,
-		})
-	}
-
-	for name, network := range containerInfo.NetworkSettings.Networks {
-		containerData.Networks = append(containerData.Networks, types.Network{
-			Name:       name,
-			IPAddress:  network.IPAddress,
-			Gateway:    network.Gateway,
-			MacAddress: network.MacAddress,
-			Aliases:    network.Aliases,
 		})
 	}
 
