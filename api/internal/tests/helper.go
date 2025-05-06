@@ -13,3 +13,7 @@ func GetRegisterURL() string {
 func GetLoginURL() string {
 	return baseURL + "/auth/login"
 }
+
+func GetRefreshTokenURL() string {
+	return baseURL + "/auth/refresh-token"
+}
