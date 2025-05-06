@@ -17,3 +17,11 @@ func GetLoginURL() string {
 func GetRefreshTokenURL() string {
 	return baseURL + "/auth/refresh-token"
 }
+
+func GetRequestPasswordResetURL() string {
+	return baseURL + "/auth/request-password-reset"
+}
+
+func GetResetPasswordURL() string {
+	return baseURL + "/auth/reset-password"
+}
