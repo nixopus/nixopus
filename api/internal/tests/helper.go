@@ -25,3 +25,35 @@ func GetRequestPasswordResetURL() string {
 func GetResetPasswordURL() string {
 	return baseURL + "/auth/reset-password"
 }
+
+func GetCreateUserURL() string {
+	return baseURL + "/auth/create-user"
+}
+
+func GetSendVerificationEmailURL() string {
+	return baseURL + "/auth/send-verification-email"
+}
+
+func GetSetup2FAURL() string {
+	return baseURL + "/auth/setup-2fa"
+}
+
+func GetVerify2FAURL() string {
+	return baseURL + "/auth/verify-2fa"
+}
+
+func GetDisable2FAURL() string {
+	return baseURL + "/auth/disable-2fa"
+}
+
+func Get2FALoginURL() string {
+	return baseURL + "/auth/2fa-login"
+}
+
+func GetVerifyEmailURL() string {
+	return baseURL + "/auth/verify-email"
+}
+
+func GetLogoutURL() string {
+	return baseURL + "/auth/logout"
+}
