@@ -57,3 +57,7 @@ func GetVerifyEmailURL() string {
 func GetLogoutURL() string {
 	return baseURL + "/auth/logout"
 }
+
+func GetUserDetailsURL() string {
+	return baseURL + "/user"
+}
