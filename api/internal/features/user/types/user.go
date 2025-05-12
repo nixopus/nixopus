@@ -15,6 +15,14 @@ type UpdateUserNameRequest struct {
 	Name string `json:"name"`
 }
 
+type UpdateAvatarRequest struct {
+	AvatarData string `json:"avatarData"`
+}
+
+type AvatarResponse struct {
+	AvatarURL string `json:"avatarUrl"`
+}
+
 var (
 	ErrUserDoesNotExist       = errors.New("user does not exist")
 	ErrFailedToUpdateUser     = errors.New("failed to update user")
@@ -25,4 +33,7 @@ var (
 	ErrUserNameTooLong        = errors.New("user name is too long")
 	ErrUserNameContainsSpaces = errors.New("user name contains spaces")
 	ErrUsernameTooShort       = errors.New("user name is too short")
+	ErrInvalidAvatarData      = errors.New("invalid avatar data")
+	ErrAvatarTooLarge         = errors.New("avatar file is too large")
+	ErrUnsupportedImageFormat = errors.New("unsupported image format")
 )

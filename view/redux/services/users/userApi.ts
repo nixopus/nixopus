@@ -17,7 +17,8 @@ import {
   UpdateFontRequest,
   UpdateThemeRequest,
   UpdateLanguageRequest,
-  UpdateAutoUpdateRequest
+  UpdateAutoUpdateRequest,
+  UpdateAvatarRequest
 } from '@/redux/types/user';
 
 export const userApi = createApi({
@@ -210,6 +211,19 @@ export const userApi = createApi({
         url: USERURLS.PERFORM_UPDATE,
         method: 'POST'
       })
+    }),
+    updateAvatar: builder.mutation<string, UpdateAvatarRequest>({
+      query(payload) {
+        return {
+          url: USERURLS.UPDATE_AVATAR,
+          method: 'PATCH',
+          body: payload
+        };
+      },
+      invalidatesTags: [{ type: 'User', id: 'LIST' }],
+      transformResponse: (response: { data: string }) => {
+        return response.data;
+      }
     })
   })
 });
@@ -233,5 +247,6 @@ export const {
   useUpdateLanguageMutation,
   useUpdateAutoUpdateMutation,
   useCheckForUpdatesQuery,
-  usePerformUpdateMutation
+  usePerformUpdateMutation,
+  useUpdateAvatarMutation
 } = userApi;

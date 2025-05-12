@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,6 +22,7 @@ type UserRepository interface {
 	GetUserOrganizationsWithRolesAndPermissions(userID string) ([]types.UserOrganizationsResponse, error)
 	GetUserSettings(userID string) (*shared_types.UserSettings, error)
 	UpdateUserSettings(userID string, updates map[string]interface{}) (*shared_types.UserSettings, error)
+	UpdateUserAvatar(ctx context.Context, userID string, avatarData string) error
 }
 
 func CreateNewUserStorage(db *bun.DB, ctx context.Context) *UserStorage {
@@ -172,4 +174,20 @@ func (s *UserStorage) UpdateUserSettings(userID string, updates map[string]inter
 		return nil, err
 	}
 	return &settings, nil
+}
+
+
+func (s *UserStorage) UpdateUserAvatar(ctx context.Context, userID string, avatarData string) error {
+	_, err := s.DB.NewUpdate().
+		Table("users").
+		Set("avatar = ?", avatarData).
+		Set("updated_at = NOW()").
+		Where("id = ?", userID).
+		Exec(ctx)
+
+	if err != nil {
+		return fmt.Errorf("failed to update user avatar: %w", err)
+	}
+
+	return nil
 }

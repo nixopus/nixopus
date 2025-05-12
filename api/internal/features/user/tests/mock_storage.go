@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"context"
+
 	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
 	"github.com/stretchr/testify/mock"
 
@@ -35,4 +37,9 @@ func (m *MockUserStorage) GetUserSettings(userID string) (*shared_types.UserSett
 func (m *MockUserStorage) UpdateUserSettings(userID string, updates map[string]interface{}) (*shared_types.UserSettings, error) {
 	args := m.Called(userID, updates)
 	return args.Get(0).(*shared_types.UserSettings), args.Error(1)
+}
+
+func (m *MockUserStorage) UpdateUserAvatar(ctx context.Context, userID string, avatarData string) error {
+	args := m.Called(ctx, userID, avatarData)
+	return args.Error(0)
 }

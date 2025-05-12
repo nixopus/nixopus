@@ -30,7 +30,8 @@ export enum USERURLS {
   UPDATE_LANGUAGE = 'v1/user/settings/language',
   UPDATE_AUTO_UPDATE = 'v1/user/settings/auto-update',
   CHECK_FOR_UPDATES = 'v1/update/check',
-  PERFORM_UPDATE = 'v1/update'
+  PERFORM_UPDATE = 'v1/update',
+  UPDATE_AVATAR = 'v1/user/avatar'
 }
 
 export enum USER_NOTIFICATION_SETTINGS {

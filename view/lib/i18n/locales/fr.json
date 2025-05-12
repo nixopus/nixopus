@@ -282,7 +282,10 @@
       },
       "avatar": {
         "title": "Profil",
-        "description": "Gérez votre profil public"
+        "description": "Gérez votre profil public",
+        "upload": "Télécharger l'avatar",
+        "uploadSuccess": "Avatar téléchargé avec succès",
+        "uploadError": "Erreur lors du téléchargement de l'avatar"
       },
       "errors": {
         "emptyUsername": "Le nom d'utilisateur ne peut pas être vide",

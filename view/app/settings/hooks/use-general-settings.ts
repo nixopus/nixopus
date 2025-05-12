@@ -6,7 +6,8 @@ import {
   useUpdateAutoUpdateMutation,
   useUpdateLanguageMutation,
   useUpdateThemeMutation,
-  useUpdateUserNameMutation
+  useUpdateUserNameMutation,
+  useUpdateAvatarMutation
 } from '@/redux/services/users/userApi';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -26,6 +27,7 @@ function useGeneralSettings() {
   const [updateUserName, { isLoading: isUpdatingUsername }] = useUpdateUserNameMutation();
   const [requestPasswordResetLink, { isLoading: isRequestingPasswordReset }] =
     useRequestPasswordResetLinkMutation();
+  const [updateAvatar, { isLoading: isUpdatingAvatar }] = useUpdateAvatarMutation();
 
   const {
     data: userSettings,
@@ -72,9 +74,21 @@ function useGeneralSettings() {
     }
   };
 
-  const onImageChange = (imageUrl: string | null) => {
-    console.log('Image URL:', imageUrl);
-    toast.error(t('settings.account.errors.imageNotImplemented'));
+  const onImageChange = async (imageUrl: string | null) => {
+    if (!imageUrl) {
+      toast.error(t('settings.account.errors.noImageSelected'));
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await updateAvatar({ avatarData: imageUrl }).unwrap();
+      toast.success(t('settings.account.success.avatarUpdated'));
+    } catch (error) {
+      toast.error(t('settings.account.errors.avatarUpdateFailed'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleFontChange = async (fontFamily: string, fontSize: number) => {
@@ -120,7 +134,7 @@ function useGeneralSettings() {
     usernameSuccess,
     email,
     emailSent,
-    isLoading: isLoading || isUpdatingUsername || isRequestingPasswordReset,
+    isLoading: isLoading || isUpdatingUsername || isRequestingPasswordReset || isUpdatingAvatar,
     handleUsernameChange,
     handlePasswordResetRequest,
     setUsername,

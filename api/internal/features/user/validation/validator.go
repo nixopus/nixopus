@@ -25,6 +25,8 @@ func (v *Validator) ValidateRequest(req interface{}, user shared_types.User) err
 	switch r := req.(type) {
 	case *types.UpdateUserNameRequest:
 		return v.ValidateUpdateUserNameRequest(*r, user)
+	case *types.UpdateAvatarRequest:
+		return v.ValidateUpdateAvatarRequest(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}
@@ -52,4 +54,37 @@ func (v *Validator) ValidateUpdateUserNameRequest(req types.UpdateUserNameReques
 	}
 
 	return nil
+}
+
+// validateUpdateAvatarRequest checks if the avatar data is valid
+func (v *Validator) ValidateUpdateAvatarRequest(req types.UpdateAvatarRequest) error {
+	if req.AvatarData == "" {
+		return types.ErrInvalidAvatarData
+	}
+
+	if !strings.HasPrefix(req.AvatarData, "data:image/") {
+		return types.ErrInvalidAvatarData
+	}
+
+	parts := strings.Split(req.AvatarData, ";base64,")
+	if len(parts) != 2 {
+		return types.ErrInvalidAvatarData
+	}
+
+	imageType := strings.TrimPrefix(parts[0], "data:image/")
+	if !isValidImageType(imageType) {
+		return types.ErrUnsupportedImageFormat
+	}
+
+	return nil
+}
+
+func isValidImageType(imageType string) bool {
+	validTypes := map[string]bool{
+		"jpeg": true,
+		"jpg":  true,
+		"png":  true,
+		"gif":  true,
+	}
+	return validTypes[imageType]
 }

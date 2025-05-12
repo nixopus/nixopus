@@ -222,20 +222,15 @@ class EnvironmentSetup:
             json.dump(daemon_config, f, indent=2)
         
         try:
-            result = subprocess.run(["systemctl", "reload", "docker"], 
-                                    capture_output=True, text=True)
+            result = subprocess.run(["systemctl", "restart", "docker"], 
+                                  capture_output=True, text=True)
             if result.returncode != 0:
-                result = subprocess.run(["systemctl", "restart", "docker"], 
-                                        capture_output=True, text=True)
-                if result.returncode != 0:
-                    print("Error restarting Docker service:")
-                    print(result.stderr)
-                    raise Exception("Failed to restart Docker service")
-            
-            time.sleep(3)
+                print("Error restarting Docker service:")
+                print(result.stderr)
+                raise Exception("Failed to restart Docker service")
             
             result = subprocess.run(["systemctl", "status", "docker"], 
-                                    capture_output=True, text=True)
+                                  capture_output=True, text=True)
             if result.returncode != 0:
                 print("Error checking Docker service status:")
                 print(result.stderr)
@@ -243,7 +238,7 @@ class EnvironmentSetup:
             
         except Exception as e:
             result = subprocess.run(["journalctl", "-u", "docker", "-n", "50"], 
-                                    capture_output=True, text=True)
+                                  capture_output=True, text=True)
             print("\nDocker service error logs:")
             print(result.stdout)
             raise Exception(f"Failed to manage Docker service. Error: {str(e)}")
@@ -254,14 +249,16 @@ class EnvironmentSetup:
         
         try:
             result = subprocess.run(["docker", "context", "ls"], 
-                                    capture_output=True, text=True)
+                                  capture_output=True, text=True)
             if result.returncode != 0:
                 print("Error: Docker doesn't seem to be running or doesn't support contexts")
                 print(result.stderr)
                 raise Exception("Docker not available or doesn't support contexts")
                 
             subprocess.run(["docker", "context", "rm", "-f", self.context_name], 
-                           capture_output=True, check=False)
+                         capture_output=True, check=False)
+            
+            self.copy_certs_to_docker_dir()
             
             result = subprocess.run([
                 "docker", "context", "create", self.context_name,
@@ -277,24 +274,27 @@ class EnvironmentSetup:
                 
             print(f"Successfully created Docker context '{self.context_name}'")
             
+            subprocess.run(["docker", "context", "use", self.context_name],
+                         capture_output=True, text=True)
+            
             test_result = subprocess.run(
-                ["docker", "--context", self.context_name, "version", "--format", "{{.Server.Version}}"],
+                ["docker", "version", "--format", "{{.Server.Version}}"],
                 capture_output=True, text=True
             )
             
             if test_result.returncode != 0:
                 print(f"Warning: Docker context created but connection test failed: {test_result.stderr}")
-                print("Attempting to fix TLS configuration...")
                 
-                self.copy_certs_to_docker_dir()
+                for cert_file in self.docker_certs_dir.glob("*"):
+                    cert_file.chmod(0o600)
                 
                 subprocess.run(["systemctl", "restart", "docker"], 
-                              capture_output=True, check=False)
+                             capture_output=True, check=False)
                 
                 time.sleep(5)
                 
                 test_result = subprocess.run(
-                    ["docker", "--context", self.context_name, "version", "--format", "{{.Server.Version}}"],
+                    ["docker", "version", "--format", "{{.Server.Version}}"],
                     capture_output=True, text=True
                 )
                 
