@@ -7,7 +7,7 @@ toolchain go1.23.7
 require (
 	github.com/docker/docker v28.0.1+incompatible
 	github.com/docker/go-connections v0.5.0
-	github.com/getkin/kin-openapi v0.129.0
+    github.com/getkin/kin-openapi v0.131.0
 	github.com/go-fuego/fuego v0.18.6
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/golang-jwt/jwt v3.2.2+incompatible
