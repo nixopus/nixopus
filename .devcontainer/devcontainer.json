@@ -3,8 +3,9 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
+  // Mount the /nixopus/ directory from the host to the container
   "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind"
+    "source=/nixopus,target=/nixopus,type=bind"
   ],
   "customizations": {
     "vscode": {

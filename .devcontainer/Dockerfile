@@ -20,5 +20,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
 
 # Set up Go tools if needed
 RUN go install golang.org/x/tools/gopls@latest
+RUN go install github.com/air-verse/air/v2@latest
 
 WORKDIR /workspace/nixopus
