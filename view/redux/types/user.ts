@@ -72,7 +72,3 @@ export interface UpdateLanguageRequest {
 export interface UpdateAutoUpdateRequest {
   auto_update: boolean;
 }
-
-export interface UpdateAvatarRequest {
-  avatarData: string;
-}

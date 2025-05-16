@@ -24,13 +24,6 @@ func (ar *AuthController) Login(c fuego.ContextWithBody[types.LoginRequest]) (*s
 		}
 	}
 
-	if err := ar.validator.ValidateRequest(&loginRequest); err != nil {
-		return nil, fuego.HTTPError{
-			Err:    err,
-			Status: http.StatusBadRequest,
-		}
-	}
-
 	user, err := ar.service.GetUserByEmail(loginRequest.Email)
 	if err != nil {
 		return nil, fuego.HTTPError{

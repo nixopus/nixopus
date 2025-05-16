@@ -213,30 +213,12 @@ func NewTestSetup() *TestSetup {
 // CreateTestUserAndOrg creates a test user and organization
 // This should be called by individual test cases when needed
 func (s *TestSetup) CreateTestUserAndOrg() (*types.User, *types.Organization, error) {
-	authResponse, org, err := s.RegistrationHelper("test@example.com", "Password123@", "testuser", "test-org", "Test organization", "admin")
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create test user: %w", err)
-	}
-
-	return &authResponse.User, org, nil
-}
-
-func (s *TestSetup) GetTestAuthResponse() (*authTypes.AuthResponse, *types.Organization, error) {
-	authResponse, org, err := s.RegistrationHelper("test@example.com", "Password123@", "testuser", "test-org", "Test organization", "admin")
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create test user: %w", err)
-	}
-
-	return authResponse, org, nil
-}
-
-func (s *TestSetup) RegistrationHelper(email, password, username, orgName, orgDescription string, userType string) (*authTypes.AuthResponse, *types.Organization, error) {
 	// Create test user
 	registrationRequest := authTypes.RegisterRequest{
-		Email:    email,
-		Password: password,
-		Username: username,
-		Type:     userType,
+		Email:    "test@example.com",
+		Password: "password123",
+		Username: "testuser",
+		Type:     "admin",
 	}
 
 	authResponse, err := s.AuthService.Register(registrationRequest, "admin")
@@ -272,5 +254,5 @@ func (s *TestSetup) RegistrationHelper(email, password, username, orgName, orgDe
 		return nil, nil, fmt.Errorf("failed to add user to organization: %w", err)
 	}
 
-	return &authResponse, org, nil
+	return &authResponse.User, org, nil
 }

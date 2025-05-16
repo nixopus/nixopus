@@ -281,10 +281,7 @@
       },
       "avatar": {
         "title": "Perfil",
-        "description": "Administra tu perfil público",
-        "upload": "Subir avatar",
-        "uploadSuccess": "Avatar subido exitosamente",
-        "uploadError": "Error al subir avatar"
+        "description": "Administra tu perfil público"
       },
       "errors": {
         "emptyUsername": "El nombre de usuario no puede estar vacío",

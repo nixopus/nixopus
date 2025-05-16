@@ -296,7 +296,6 @@ func (router *Router) UserRoutes(s *fuego.Server, userController *user.UserContr
 	fuego.Patch(s, "/settings/theme", userController.UpdateTheme)
 	fuego.Patch(s, "/settings/language", userController.UpdateLanguage)
 	fuego.Patch(s, "/settings/auto-update", userController.UpdateAutoUpdate)
-	fuego.Patch(s, "/avatar", userController.UpdateAvatar)
 }
 
 func (router *Router) NotificationRoutes(s *fuego.Server, notificationController *notificationController.NotificationController) {

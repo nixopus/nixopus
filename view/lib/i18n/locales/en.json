@@ -282,10 +282,7 @@
       },
       "avatar": {
         "title": "Profile",
-        "description": "Manage your public profile",
-        "upload": "Upload Avatar",
-        "uploadSuccess": "Avatar uploaded successfully",
-        "uploadError": "Failed to upload avatar"
+        "description": "Manage your public profile"
       },
       "errors": {
         "emptyUsername": "Username cannot be empty",
