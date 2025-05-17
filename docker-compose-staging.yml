@@ -13,7 +13,7 @@ services:
       - "${PORT:-8444}:${PORT:-8444}"
     restart: unless-stopped
     env_file:
-      - /etc/nixopus-staging/api/.env
+      - /etc/nixopus-staging/source/api/.env
     environment:
       - HOST_NAME=nixopus-staging-db
     volumes:
@@ -21,7 +21,7 @@ services:
       - ${SSH_PRIVATE_KEY}:/etc/nixopus-staging/ssh/id_rsa
       - ${MOUNT_PATH:-/etc/nixopus-staging/configs}:/etc/nixopus-staging/configs
       - /var/run/docker.sock:/var/run/docker.sock
-      - /etc/nixopus-staging/api/.env:/app/.env
+      - /etc/nixopus-staging/source/api/.env:/app/.env
     networks:
       - nixopus-network
     depends_on:
@@ -76,9 +76,9 @@ services:
       - "${NEXT_PUBLIC_PORT:-7444}:${NEXT_PUBLIC_PORT:-7444}"
     restart: unless-stopped
     env_file:
-      - /etc/nixopus-staging/view/.env
+      - /etc/nixopus-staging/source/view/.env
     volumes:
-      - /etc/nixopus-staging/view/.env:/app/.env
+      - /etc/nixopus-staging/source/view/.env:/app/.env
     networks:
       - nixopus-network
 

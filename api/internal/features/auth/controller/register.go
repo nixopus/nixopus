@@ -12,9 +12,30 @@ import (
 )
 
 func (c *AuthController) Register(f fuego.ContextWithBody[types.RegisterRequest]) (*shared_types.Response, error) {
-	w, _ := f.Response(), f.Request()
+	w, r := f.Response(), f.Request()
 	registration_request, err := f.Body()
 	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	if registration_request.Organization != "" {
+		return nil, fuego.HTTPError{
+			Err:    errors.New("organization is not supported in admin registration"),
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	if registration_request.Type != shared_types.UserTypeAdmin {
+		return nil, fuego.HTTPError{
+			Err:    errors.New("type must be admin"),
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	if err := c.parseAndValidate(w, r, &registration_request); err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusBadRequest,

@@ -74,9 +74,10 @@ class ServiceManager:
                 print("Error: Docker daemon is not running. Please start the Docker service and try again.")
                 sys.exit(1)
 
-            os.environ["DOCKER_HOST"] = "tcp://localhost:2376"
+            docker_port = "2376" if env == "production" else "2377"
+            os.environ["DOCKER_HOST"] = f"tcp://localhost:{docker_port}"
             os.environ["DOCKER_TLS_VERIFY"] = "1"
-            os.environ["DOCKER_CERT_PATH"] = "/etc/nixopus/docker-certs"
+            os.environ["DOCKER_CERT_PATH"] = "/etc/nixopus/docker-certs" if env == "production" else "/etc/nixopus-staging/docker-certs"
             os.environ["DOCKER_CONTEXT"] = "nixopus" if env == "production" else "nixopus-staging"
             compose_cmd = ["docker", "compose"] if shutil.which("docker") else ["docker-compose"]
             if env == "staging":
@@ -193,25 +194,32 @@ class ServiceManager:
             if current_config and 'apps' in current_config and 'http' in current_config['apps'] and 'servers' in current_config['apps']['http'] and 'nixopus' in current_config['apps']['http']['servers']:
                 new_routes = new_config['apps']['http']['servers']['nixopus'].get('routes', [])
                 if new_routes:
-                    for route in new_routes:
-                        response = requests.post(
-                            'http://localhost:2019/config/apps/http/servers/nixopus/routes/...',
-                            json=[route],
-                            headers={'Content-Type': 'application/json'}
-                        )
-                        if response.status_code != 200:
-                            print(f"Failed to append route: {response.text}")
-                            raise Exception("Failed to append route to Caddy configuration")
+                    existing_routes = current_config['apps']['http']['servers']['nixopus'].get('routes', [])
+                    env_domains = [domains['app_domain'], domains['api_domain']]
+                    for route in existing_routes:
+                        if any(domain in str(route.get('match', [])) for domain in env_domains):
+                            route_id = route.get('@id', '')
+                            if route_id:
+                                requests.delete(f'http://localhost:2019/config/apps/http/servers/nixopus/routes/{route_id}')
+                    
+                    response = requests.post(
+                        'http://localhost:2019/config/apps/http/servers/nixopus/routes/...',
+                        json=new_routes,
+                        headers={'Content-Type': 'application/json'}
+                    )
+                    if response.status_code != 200:
+                        print(f"Failed to update routes: {response.text}")
+                        raise Exception("Failed to update routes in Caddy configuration")
             else:
                 response = requests.post(
-                    'http://localhost:2019/load',
-                    json=new_config,
+                    'http://localhost:2019/config/apps/http/servers/nixopus',
+                    json=new_config['apps']['http']['servers']['nixopus'],
                     headers={'Content-Type': 'application/json'}
                 )
                 if response.status_code != 200:
-                    print("Failed to load Caddy configuration:")
+                    print("Failed to create server configuration:")
                     print(response.text)
-                    raise Exception("Failed to load Caddy configuration")
+                    raise Exception("Failed to create server configuration")
 
             print("Caddy configuration loaded successfully")
         except requests.exceptions.RequestException as e:
