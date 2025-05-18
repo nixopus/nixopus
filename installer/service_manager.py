@@ -78,10 +78,13 @@ class ServiceManager:
             os.environ["DOCKER_HOST"] = f"tcp://localhost:{docker_port}"
             os.environ["DOCKER_TLS_VERIFY"] = "1"
             os.environ["DOCKER_CERT_PATH"] = "/etc/nixopus/docker-certs" if env == "production" else "/etc/nixopus-staging/docker-certs"
-            os.environ["DOCKER_CONTEXT"] = "nixopus" if env == "production" else "nixopus-staging"
+            os.environ["DOCKER_CONTEXT"] = "nixopus-production" if env == "production" else "nixopus-staging"
             compose_cmd = ["docker", "compose"] if shutil.which("docker") else ["docker-compose"]
             
-            compose_file = os.path.join(self.project_root, "docker-compose.yml" if env == "production" else "docker-compose-staging.yml")
+            source_dir = "/etc/nixopus/source" if env == "production" else "/etc/nixopus-staging/source"
+            compose_file = os.path.join(source_dir, "docker-compose.yml" if env == "production" else "docker-compose-staging.yml")
+            
+            print(f"Using Docker Compose file: {compose_file}")
             if not os.path.exists(compose_file):
                 print(f"Error: Docker Compose file not found at {compose_file}")
                 sys.exit(1)
