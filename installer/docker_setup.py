@@ -10,6 +10,7 @@ class DockerSetup:
     def __init__(self, env="staging"):
         self.env = env
         self.context_name = f"nixopus-{self.env}"
+        # store all the docker config in their respective docker-certs dir
         self.config_dir = Path("/etc/nixopus-staging") if env == "staging" else Path("/etc/nixopus")
         self.docker_certs_dir = self.config_dir / "docker-certs"
 
@@ -101,19 +102,6 @@ class DockerSetup:
         except Exception as e:
             raise Exception(f"Error setting up Docker certificates: {str(e)}")
 
-    def copy_certs_to_docker_dir(self):
-        docker_certs_dir = Path("/etc/docker")
-        docker_certs_dir.mkdir(parents=True, exist_ok=True)
-        
-        certs_to_copy = ["ca.pem", "server-cert.pem", "server-key.pem", "cert.pem", "key.pem"]
-        
-        for cert in certs_to_copy:
-            src = self.docker_certs_dir / cert
-            dst = docker_certs_dir / cert
-            if src.exists():
-                shutil.copy2(src, dst)
-                dst.chmod(0o600)
-
     def setup_docker_daemon_for_tcp(self):
         docker_config_dir = Path("/etc/docker")
         docker_config_dir.mkdir(parents=True, exist_ok=True)
@@ -189,8 +177,6 @@ class DockerSetup:
             subprocess.run(["docker", "context", "rm", "-f", self.context_name], 
                          capture_output=True, check=False)
             
-            self.copy_certs_to_docker_dir()
-            
             result = subprocess.run([
                 "docker", "context", "create", self.context_name,
                 "--docker", f"host=tcp://{local_ip}:{docker_port}",
@@ -234,6 +220,5 @@ class DockerSetup:
 
     def setup(self):
         self.setup_docker_certs()
-        self.copy_certs_to_docker_dir()
         self.setup_docker_daemon_for_tcp()
         return self.create_docker_context() 
