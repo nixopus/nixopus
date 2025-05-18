@@ -102,6 +102,26 @@ class DockerSetup:
         except Exception as e:
             raise Exception(f"Error setting up Docker certificates: {str(e)}")
 
+    def setup_docker_systemd_override(self):
+        override_dir = Path("/etc/systemd/system/docker.service.d")
+        override_file = override_dir / "override.conf"
+        
+        try:
+            override_dir.mkdir(parents=True, exist_ok=True)
+            
+            override_content = """# Disable flags to dockerd, all settings are done in /etc/docker/daemon.json
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd"""
+            
+            override_file.write_text(override_content)
+            
+            subprocess.run(["systemctl", "daemon-reload"], check=True)
+            subprocess.run(["systemctl", "restart", "docker"], check=True)
+            
+        except Exception as e:
+            raise Exception(f"Failed to setup Docker systemd override: {str(e)}")
+
     def setup_docker_daemon_for_tcp(self):
         docker_config_dir = Path("/etc/docker")
         docker_config_dir.mkdir(parents=True, exist_ok=True)
@@ -220,5 +240,6 @@ class DockerSetup:
 
     def setup(self):
         self.setup_docker_certs()
+        self.setup_docker_systemd_override()
         self.setup_docker_daemon_for_tcp()
         return self.create_docker_context() 
