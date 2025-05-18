@@ -1,5 +1,57 @@
-# [](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.4...v) (2025-05-04)
+# [](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.5...v) (2025-05-18)
 
+# 📦 Changelog Highlights
+
+## ✨ Features
+
+- **Avatar Upload**
+  - Users can now upload a profile avatar to personalize their account.
+
+- **DevContainer Restructure**
+  - Improved Dockerfile structure.
+  - `air` tool added for hot reloads.
+  - Workspace config now uses `localWorkspaceFolder` for better volume mapping.
+
+
+## 🧪 Tests
+
+- **Integration Test Suite**
+  - Set up integration tests using the `go-hit` framework.
+  - Covered endpoints:
+    - `POST /register`
+    - `POST /login`
+    - `POST /refresh-token`
+    - `POST /reset-password`
+    - `GET /user-details`
+    - 2FA, email verification, and more.
+  - Ensures end-to-end correctness of the authentication flow and user management.
+
+
+## 🐛 Fixes
+
+- **Docker-Compose & ENV Handling**
+  - `.env` file now correctly referenced relative to the source directory.
+  - Fixed repeated issues with environment path mismatches.
+
+- **TLS and Port Conflicts**
+  - Resolved Docker TLS configuration bugs during install.
+  - Updated installer to avoid hardcoded Docker context ports (`2376`).
+  - Ensured services start reliably with corrected Docker context.
+
+- **Self-Host Port Mapping**
+  - Corrected Caddy port mapping issues.
+  - Prevented accidental overwrites of Caddy configs on staging reloads.
+
+
+## 🔧 Chores
+
+- **Changelog Automation**
+  - Automated changelog updates integrated via GitHub Actions.
+
+- **License**
+  - Updated license to FSL and added documentation accordingly.
+
+_Contributors: @raghavyuva, @kishore1919, @github-actions_
 
 
 # [](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.4...v) (2025-05-04)

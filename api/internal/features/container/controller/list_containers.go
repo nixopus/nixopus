@@ -29,19 +29,27 @@ func (c *ContainerController) ListContainers(f fuego.ContextNoBody) (*shared_typ
 
 		containerData := types.Container{
 			ID:        container.ID,
-			Name:      container.Names[0][1:],
+			Name:      "",
 			Image:     container.Image,
 			Status:    container.Status,
 			State:     container.State,
 			Created:   containerInfo.Created,
 			Labels:    container.Labels,
-			Command:   containerInfo.Config.Cmd[0],
+			Command:   "",
 			IPAddress: containerInfo.NetworkSettings.IPAddress,
 			HostConfig: types.HostConfig{
 				Memory:     containerInfo.HostConfig.Memory,
 				MemorySwap: containerInfo.HostConfig.MemorySwap,
 				CPUShares:  containerInfo.HostConfig.CPUShares,
 			},
+		}
+
+		if container.Names != nil && len(container.Names) > 0 && len(container.Names[0]) > 1 {
+			containerData.Name = container.Names[0][1:]
+		}
+
+		if containerInfo.Config != nil && containerInfo.Config.Cmd != nil && len(containerInfo.Config.Cmd) > 0 {
+			containerData.Command = containerInfo.Config.Cmd[0]
 		}
 
 		for _, port := range container.Ports {

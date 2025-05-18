@@ -182,14 +182,6 @@ class ServiceManager:
     def setup_caddy(self, domains, env):
         print("\nSetting up Proxy...")
         try:
-            current_config = None
-            try:
-                response = requests.get('http://localhost:2019/config')
-                if response.status_code == 200:
-                    current_config = response.json()
-            except requests.exceptions.RequestException:
-                current_config = None
-
             with open('../helpers/caddy.json', 'r') as f:
                 config_str = f.read()
                 config_str = config_str.replace('{env.APP_DOMAIN}', domains['app_domain'])
@@ -199,37 +191,15 @@ class ServiceManager:
                 config_str = config_str.replace('{env.APP_REVERSE_PROXY_URL}', app_reverse_proxy_url)
                 config_str = config_str.replace('{env.API_REVERSE_PROXY_URL}', api_reverse_proxy_url)
                 new_config = json.loads(config_str)
-
-            if current_config and 'apps' in current_config and 'http' in current_config['apps'] and 'servers' in current_config['apps']['http'] and 'nixopus' in current_config['apps']['http']['servers']:
-                new_routes = new_config['apps']['http']['servers']['nixopus'].get('routes', [])
-                if new_routes:
-                    existing_routes = current_config['apps']['http']['servers']['nixopus'].get('routes', [])
-                    env_domains = [domains['app_domain'], domains['api_domain']]
-                    for route in existing_routes:
-                        if any(domain in str(route.get('match', [])) for domain in env_domains):
-                            route_id = route.get('@id', '')
-                            if route_id:
-                                requests.delete(f'http://localhost:2019/config/apps/http/servers/nixopus/routes/{route_id}')
-                    
-                    response = requests.post(
-                        'http://localhost:2019/config/apps/http/servers/nixopus/routes/...',
-                        json=new_routes,
-                        headers={'Content-Type': 'application/json'}
-                    )
-                    if response.status_code != 200:
-                        print(f"Failed to update routes: {response.text}")
-                        raise Exception("Failed to update routes in Caddy configuration")
-            else:
                 response = requests.post(
-                    'http://localhost:2019/config/apps/http/servers/nixopus',
-                    json=new_config['apps']['http']['servers']['nixopus'],
+                    'http://localhost:2019/load',
+                    json=new_config,
                     headers={'Content-Type': 'application/json'}
                 )
                 if response.status_code != 200:
                     print("Failed to create server configuration:")
                     print(response.text)
                     raise Exception("Failed to create server configuration")
-
             print("Caddy configuration loaded successfully")
         except requests.exceptions.RequestException as e:
             print(f"Error connecting to Caddy: {str(e)}")
