@@ -1,9 +1,11 @@
 import os
+import sys
+import json
 import secrets
 import string
 from pathlib import Path
 import subprocess
-from .docker_setup import DockerSetup
+from docker_setup import DockerSetup
 
 class EnvironmentSetup:
     def __init__(self, domains, env="staging"):

@@ -23,7 +23,7 @@ done
 if [ "$ENV" == "staging" ]; then
     NIXOPUS_DIR="/etc/nixopus-staging"
     SOURCE_DIR="$NIXOPUS_DIR/source"
-    BRANCH="feat/develop"
+    BRANCH="feat/installer"
 else
     NIXOPUS_DIR="/etc/nixopus"
     SOURCE_DIR="$NIXOPUS_DIR/source"
@@ -67,6 +67,6 @@ pip install --upgrade pip > /dev/null 2>&1
 pip install -r requirements.txt > /dev/null 2>&1
 
 echo "Starting Nixopus Installation..."
-python3 install.py "$@"
+PYTHONPATH=$SOURCE_DIR/installer python3 install.py "$@"
 
 deactivate > /dev/null 2>&1
