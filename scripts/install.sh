@@ -23,7 +23,7 @@ done
 if [ "$ENV" == "staging" ]; then
     NIXOPUS_DIR="/etc/nixopus-staging"
     SOURCE_DIR="$NIXOPUS_DIR/source"
-    BRANCH="feat/installer"
+    BRANCH="feat/develop"
 else
     NIXOPUS_DIR="/etc/nixopus"
     SOURCE_DIR="$NIXOPUS_DIR/source"
