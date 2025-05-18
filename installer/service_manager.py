@@ -80,8 +80,15 @@ class ServiceManager:
             os.environ["DOCKER_CERT_PATH"] = "/etc/nixopus/docker-certs" if env == "production" else "/etc/nixopus-staging/docker-certs"
             os.environ["DOCKER_CONTEXT"] = "nixopus" if env == "production" else "nixopus-staging"
             compose_cmd = ["docker", "compose"] if shutil.which("docker") else ["docker-compose"]
+            
+            compose_file = os.path.join(self.project_root, "docker-compose.yml" if env == "production" else "docker-compose-staging.yml")
+            if not os.path.exists(compose_file):
+                print(f"Error: Docker Compose file not found at {compose_file}")
+                sys.exit(1)
+                
+            compose_cmd += ["-f", compose_file]
+            
             if env == "staging":
-                compose_cmd += ["-f", "../docker-compose-staging.yml"]
                 print("Building and starting staging services...")
                 result = subprocess.run(
                     compose_cmd + ["up", "--build", "-d"],
@@ -94,7 +101,6 @@ class ServiceManager:
                     print(result.stderr)
                     raise Exception("Failed to build and start services")
             else:
-                compose_cmd += ["-f", "../docker-compose.yml"]
                 print("Pulling production images...")
                 pull_result = subprocess.run(
                     compose_cmd + ["pull"],
