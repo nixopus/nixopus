@@ -44,8 +44,13 @@ func (c *ContainerController) ListContainers(f fuego.ContextNoBody) (*shared_typ
 			},
 		}
 
-		if container.Names != nil && len(container.Names) > 0 && len(container.Names[0]) > 1 {
-			containerData.Name = container.Names[0][1:]
+		if container.Names != nil && len(container.Names) > 0 {
+			name := container.Names[0]
+			if len(name) > 1 {
+				containerData.Name = name[1:]
+			} else {
+				containerData.Name = name
+			}
 		}
 
 		if containerInfo.Config != nil && containerInfo.Config.Cmd != nil && len(containerInfo.Config.Cmd) > 0 {
