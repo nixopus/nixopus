@@ -72,29 +72,31 @@ func (c *Caddy) Serve() error {
 		Handle: []interface{}{handle},
 	}
 
-	jsonData, err := json.Marshal([]Route{routeConfig})
+	// Get current config
+	config, err := c.GetConfig()
 	if err != nil {
-		return fmt.Errorf("failed to marshal route config: %w", err)
+		return fmt.Errorf("failed to get current config: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", c.Endpoint+"/config/apps/http/servers/nixopus/routes/...", bytes.NewBuffer(jsonData))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("failed to append route: %s - %s", resp.Status, string(body))
+	// Replace the route for our domain
+	server := config.Apps.HTTP.Servers["nixopus"]
+	var newRoutes []Route
+	for _, route := range server.Routes {
+		if len(route.Match) > 0 && len(route.Match[0].Host) > 0 && route.Match[0].Host[0] != c.Domain {
+			newRoutes = append(newRoutes, route)
+		}
 	}
 
-	c.Logger.Log(logger.Info, "Caddy server started successfully", "")
+	newRoutes = append(newRoutes, routeConfig)
+	server.Routes = newRoutes
+	config.Apps.HTTP.Servers["nixopus"] = server
+
+	// Update the configuration
+	if err := c.UpdateConfig(config); err != nil {
+		return fmt.Errorf("failed to update caddy configuration: %w", err)
+	}
+
+	c.Logger.Log(logger.Info, "Caddy server configuration updated successfully", "")
 	return nil
 }
 
@@ -107,33 +109,6 @@ func (c *Caddy) checkCaddyRunning() error {
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("caddy is not running or not accessible: %s", resp.Status)
-	}
-
-	return nil
-}
-
-func (c *Caddy) loadConfig(config CaddyConfig) error {
-	jsonData, err := json.Marshal(config)
-	if err != nil {
-		return fmt.Errorf("failed to marshal config: %w", err)
-	}
-
-	req, err := http.NewRequest("POST", c.Endpoint+"/load", bytes.NewBuffer(jsonData))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Cache-Control", "must-revalidate")
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("failed to load config: %s - %s", resp.Status, string(body))
 	}
 
 	return nil
