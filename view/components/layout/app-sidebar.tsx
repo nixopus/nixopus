@@ -89,7 +89,7 @@ export function AppSidebar({
   const dispatch = useAppDispatch();
 
   const hasAnyPermission = React.useMemo(() => {
-    const allowedResources = ['dashboard', 'settings', 'container'];
+    const allowedResources = ['dashboard', 'settings'];
 
     return (resource: string) => {
       if (!user || !activeOrg) return false;

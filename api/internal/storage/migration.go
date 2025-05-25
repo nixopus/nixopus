@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -49,56 +48,45 @@ func NewMigrator(db *bun.DB) *Migrator {
 
 // LoadMigrationsFromFS loads migration files from the file system.
 func (m *Migrator) LoadMigrationsFromFS(path string) error {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return fmt.Errorf("failed to read migrations directory: %w", err)
+	}
+
 	upFiles := make(map[string]string)
 	downFiles := make(map[string]string)
 
-	// Walk through all directories recursively
-	err := filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
 		}
 
-		if info.IsDir() {
-			return nil
+		name := entry.Name()
+		if !strings.HasSuffix(name, ".sql") {
+			continue
 		}
 
-		if !strings.HasSuffix(info.Name(), ".sql") {
-			return nil
+		parts := strings.Split(name, "_")
+		if len(parts) < 2 {
+			continue
 		}
 
-		// Get relative path from migrations root
-		relPath, err := filepath.Rel(path, filePath)
-
-		if err != nil {
-			fmt.Println("Error getting relative path:", relPath)
-			return fmt.Errorf("failed to get relative path: %w", err)
-		}
-
-		// Read file content
-		content, err := os.ReadFile(filePath)
-		if err != nil {
-			return fmt.Errorf("failed to read migration file %s: %w", filePath, err)
-		}
-
-		// Extract base name and determine if it's up or down migration
-		fileName := info.Name()
 		var baseName string
 		var isUp bool
 
-		if strings.HasSuffix(fileName, "_up.sql") {
-			baseName = strings.TrimSuffix(fileName, "_up.sql")
+		if strings.HasSuffix(name, "_up.sql") {
+			baseName = strings.TrimSuffix(name, "_up.sql")
 			isUp = true
-		} else if strings.HasSuffix(fileName, "_down.sql") {
-			baseName = strings.TrimSuffix(fileName, "_down.sql")
+		} else if strings.HasSuffix(name, "_down.sql") {
+			baseName = strings.TrimSuffix(name, "_down.sql")
 			isUp = false
 		} else {
-			return nil
+			continue
 		}
 
-		// Extract migration ID from the base name
-		parts := strings.Split(baseName, "_")
-		if len(parts) < 1 {
-			return fmt.Errorf("invalid migration filename format: %s", fileName)
+		content, err := os.ReadFile(fmt.Sprintf("%s/%s", path, name))
+		if err != nil {
+			return fmt.Errorf("failed to read migration file %s: %w", name, err)
 		}
 
 		if isUp {
@@ -106,15 +94,8 @@ func (m *Migrator) LoadMigrationsFromFS(path string) error {
 		} else {
 			downFiles[baseName] = string(content)
 		}
-
-		return nil
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to walk migrations directory: %w", err)
 	}
 
-	// Process migrations
 	for baseName, upSQL := range upFiles {
 		downSQL := downFiles[baseName]
 
@@ -129,13 +110,12 @@ func (m *Migrator) LoadMigrationsFromFS(path string) error {
 			return fmt.Errorf("invalid migration ID format in %s: %w", baseName, err)
 		}
 
-		m.migrations = append(m.migrations,
-			&Migration{
-				ID:   id,
-				Name: baseName,
-				Up:   upSQL,
-				Down: downSQL,
-			})
+		m.migrations = append(m.migrations, &Migration{
+			ID:   id,
+			Name: baseName,
+			Up:   upSQL,
+			Down: downSQL,
+		})
 	}
 
 	// Sort migrations by ID
