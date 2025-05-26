@@ -1,7 +1,21 @@
-# [](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.5...v) (2025-05-18)
+# Changelog
+All notable changes to this project will be documented in this file.
 
-# 📦 Changelog Highlights
+# [](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.6...v) (2025-05-25)
+## Fixes
+* Fixes Caddy Server Route Duplication #101
 
+## Chore
+* [fix(sidebar): remove container feature from allowed resource in sidebar permission checking](https://github.com/raghavyuva/nixopus/pull/106/commits/1cec95d8cf1f5e25e179c1b206e56f648ec02b05) 
+* [chore(version): update version for v0.1.0.alpha.6](https://github.com/raghavyuva/nixopus/pull/106/commits/52f2755d9690b8a6ab2498b9d88d3ed302e88dc5)
+## Test
+* #102 - test(makefile): update test target to run only unit tests from features directory 
+* #107 - Test : Add Unit Test for Feature Flags
+
+## Contributors
+@raghavyuva @shravan20 
+
+# [](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.5...v) (2025-05-04)
 ## ✨ Features
 
 - **Avatar Upload**
@@ -56,13 +70,7 @@ _Contributors: @raghavyuva, @kishore1919, @github-actions_
 
 # [](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.4...v) (2025-05-04)
 
-
-
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-## [v0.1.0-alpha.4] - Unreleased
+## [v0.1.0-alpha.4]
 
 ### Features
 - Users can enable or disable features in Nixopus as needed, giving them full control based on their individual preferences and use cases (#66)
