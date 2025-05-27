@@ -1,0 +1,28 @@
+version: 1
+
+review:
+  enabled: true
+  trigger: pull_request
+  paths:
+    - "**/*"
+  exclude:
+    - "**/*.md"
+    - "**/*.txt"
+    - "**/node_modules/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/.git/**"
+    - "**/tmp/**"
+    - "**/logs/**"
+
+settings:
+  code_quality: true
+  security: true
+  performance: true
+  best_practices: true
+  documentation: true
+
+comments:
+  inline: true
+  summary: true
+  suggestions: true 
