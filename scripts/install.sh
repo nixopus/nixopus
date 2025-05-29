@@ -36,10 +36,11 @@ function check_dependencies() {
 function parse_command_line_arguments() {
     local env="production"
     for arg in "$@"; do
-        if [[ $arg == "--env"* ]]; then
-            env=$(echo "$arg" | cut -d'=' -f2)
-            break
-        fi
+        case "$arg" in
+            --env=*)
+                env="${arg#*=}"
+                ;;
+        esac
     done
     echo "$env"
 }

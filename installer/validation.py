@@ -4,6 +4,8 @@ import socket
 import string
 
 class Validation:
+    SPECIAL_CHARS = '!@#$%^&*()_+-=[]{}|;:,.<>?'
+    
     def __init__(self): 
         pass
     
@@ -24,7 +26,7 @@ class Validation:
         has_uppercase = any(char.isupper() for char in password)
         has_lowercase = any(char.islower() for char in password)
         has_digit = any(char.isdigit() for char in password)
-        has_special = any(char in string.punctuation for char in password)
+        has_special = any(char in self.SPECIAL_CHARS for char in password)
         
         if not (has_uppercase and has_lowercase and has_digit and has_special):
             print("Error: Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
