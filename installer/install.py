@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
+import os
+import sys
 import time
 from pathlib import Path
+from validation import Validation
 from environment import EnvironmentSetup
 from input_parser import InputParser
 from service_manager import ServiceManager
@@ -15,6 +18,19 @@ class Installer:
         self.env_sample = self.project_root / ".env.sample"
         self.input_parser = InputParser()
         self.service_manager = ServiceManager(self.project_root)
+    
+    # this script will only work with root privileges
+    def ask_for_sudo(self):
+        if os.geteuid() != 0:
+            print("Please run the script with sudo privileges")
+            sys.exit(1)
+
+    def setup_environment(self, domain, env):
+        print("\nSetting up environment...")
+        env_setup = EnvironmentSetup(domain,env) # TODO: make this dynamic 
+        env_vars = env_setup.setup_environment()
+        print("Environment setup completed!")
+        return env_vars
 
 def main():
     installer = Installer()
@@ -33,6 +49,7 @@ def main():
     print("This wizard will guide you through the installation process of Nixopus.")
     print("Please follow the prompts carefully to complete the setup.\n")
     
+    installer.ask_for_sudo()
     env = installer.input_parser.get_env_from_args(args)
     domains = installer.input_parser.get_domains_from_args(args)
     if not domains:
@@ -43,9 +60,7 @@ def main():
         email, password = installer.input_parser.ask_admin_credentials()
     
     installer.service_manager.check_system_requirements()
-    env_setup = EnvironmentSetup(domains,env) # TODO: make this dynamic 
-    env_vars = env_setup.setup_environment()
-    print("Environment setup completed!")
+    env_vars = installer.setup_environment(domains,env)
     installer.service_manager.start_services(env)
     installer.service_manager.verify_installation(env) 
     installer.service_manager.setup_caddy(domains,env)
@@ -62,7 +77,9 @@ def main():
             print(f"Retrying API status check (attempt {retry_count + 1}/{max_retries})...")
     
     print("\n\033[1mInstallation Complete!\033[0m")
-    print(f"• Nixopus is accessible at: {domains['app_domain']}")
+    print("\n\033[1mAccess Information:\033[0m")
+    print(f"• API is accessible at: {domains['api_domain']}")
+    print(f"• App is accessible at: {domains['app_domain']}")
     
     print("\n\033[1mAdmin Credentials:\033[0m")
     print(f"• Email: {email}")

@@ -1,13 +1,11 @@
 import argparse
-from installer.validation import Validation
+from validation import Validation
 import secrets
 import string
-import sys
 
 class InputParser:
     def __init__(self):
         self.parser = self._setup_arg_parser()
-        self.validation = Validation()
     
     def _setup_arg_parser(self):
         parser = argparse.ArgumentParser(description='Nixopus Installation Wizard')
@@ -21,12 +19,12 @@ class InputParser:
     def generate_strong_password(self):
         while True:
             password = ''.join(secrets.choice(
-                string.ascii_letters + string.digits + self.validation.SPECIAL_CHARS
+                string.ascii_letters + string.digits + string.punctuation
             ) for _ in range(16))
             if (any(c.isupper() for c in password) and
                 any(c.islower() for c in password) and
                 any(c.isdigit() for c in password) and
-                any(c in self.validation.SPECIAL_CHARS for c in password)):
+                any(c in string.punctuation for c in password)):
                 return password
 
     def get_env_from_args(self, args):
@@ -34,9 +32,6 @@ class InputParser:
         Get the environment from the command line arguments
         """
         if args.env:
-            if args.env not in ['production', 'staging']:
-                print("Error: Environment must be either 'production' or 'staging'")
-                sys.exit(1)
             return args.env
         else:
             # default to production environment if no environment is specified
@@ -138,14 +133,14 @@ class InputParser:
         validation = Validation()
         while True:
             domain = input("Please enter the base domain (if domain is example.com, then api domain will be nixopusapi.example.com and app domain will be nixopus.example.com) : ")
-            if not domain:
-                continue
             try:
                 validation.validate_domain(domain)
-                return {
+                domains = {
                     "api_domain": f"nixopusapi.{domain}",
                     "app_domain": f"nixopus.{domain}",
                 }
+                break
             except SystemExit:
                 print("Please enter a valid domain name")
                 continue
+        return domains
