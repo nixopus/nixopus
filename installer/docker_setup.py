@@ -5,6 +5,7 @@ import time
 import shutil
 from pathlib import Path
 import socket
+import requests
 
 class DockerSetup:
     def __init__(self, env="staging"):
@@ -14,19 +15,15 @@ class DockerSetup:
         self.config_dir = Path("/etc/nixopus-staging") if env == "staging" else Path("/etc/nixopus")
         self.docker_certs_dir = self.config_dir / "docker-certs"
 
-    def get_local_ip(self):
+    def get_public_ip(self):
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            local_ip = s.getsockname()[0]
-            s.close()
-            return local_ip
+            return requests.get('https://api.ipify.org').content.decode('utf8')
         except Exception:
             return "localhost"
 
     def setup_docker_certs(self):
         self.docker_certs_dir.mkdir(parents=True, exist_ok=True)
-        local_ip = self.get_local_ip()
+        local_ip = self.get_public_ip()
         
         try:
             result = subprocess.run([
@@ -186,7 +183,7 @@ ExecStart=/usr/bin/dockerd"""
 
     def create_docker_context(self):
         docker_port = 2376 if self.env == "production" else 2377
-        local_ip = self.get_local_ip()
+        local_ip = self.get_public_ip()
         
         try:
             result = subprocess.run(["docker", "context", "ls"], 

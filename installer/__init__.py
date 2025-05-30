@@ -1,3 +1,3 @@
 """
-Nixopus Installer Package
+Installer package for Nixopus.
 """ 

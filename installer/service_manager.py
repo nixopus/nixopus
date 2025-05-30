@@ -7,12 +7,14 @@ import sys
 import platform
 import re
 from pathlib import Path
+from .docker_setup import DockerSetup
 
 class ServiceManager:
-    def __init__(self, project_root):
+    def __init__(self, project_root, env="staging"):
         self.project_root = project_root
         self.required_docker_version = "20.10.0"
         self.required_compose_version = "2.0.0"
+        self.docker_setup = DockerSetup(env)
 
     def check_system_requirements(self):
         print("Checking system requirements...")

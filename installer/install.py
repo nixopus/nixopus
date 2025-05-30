@@ -14,7 +14,7 @@ class Installer:
         self.env_file = self.project_root / ".env"
         self.env_sample = self.project_root / ".env.sample"
         self.input_parser = InputParser()
-        self.service_manager = ServiceManager(self.project_root)
+        self.service_manager = None  # Will be initialized with environment later
 
 def main():
     installer = Installer()
@@ -35,20 +35,24 @@ def main():
     
     env = installer.input_parser.get_env_from_args(args)
     domains = installer.input_parser.get_domains_from_args(args)
-    if not domains:
-        domains = installer.input_parser.ask_for_domain()
+    
+    # enable this when domain is a required field, we can use ip address for now
+    # if not domains:
+    #     domains = installer.input_parser.ask_for_domain()
     
     email, password = installer.input_parser.get_admin_credentials_from_args(args)
     if email is None and password is None:
         email, password = installer.input_parser.ask_admin_credentials()
     
+    installer.service_manager = ServiceManager(installer.project_root, env)
     installer.service_manager.check_system_requirements()
     env_setup = EnvironmentSetup(domains,env) # TODO: make this dynamic 
     env_vars = env_setup.setup_environment()
     print("Environment setup completed!")
     installer.service_manager.start_services(env)
-    installer.service_manager.verify_installation(env) 
-    installer.service_manager.setup_caddy(domains,env)
+    installer.service_manager.verify_installation(env)
+    if domains is not None:
+        installer.service_manager.setup_caddy(domains,env)
     time.sleep(10)
     max_retries = 3
     retry_count = 0
@@ -61,8 +65,10 @@ def main():
             time.sleep(2)
             print(f"Retrying API status check (attempt {retry_count + 1}/{max_retries})...")
     
+    docker_setup = installer.service_manager.docker_setup
+    nixopus_accessible_at = domains['app_domain'] if domains and 'app_domain' in domains else docker_setup.get_public_ip()
     print("\n\033[1mInstallation Complete!\033[0m")
-    print(f"• Nixopus is accessible at: {domains['app_domain']}")
+    print(f"• Nixopus is accessible at: {nixopus_accessible_at}")
     
     print("\n\033[1mAdmin Credentials:\033[0m")
     print(f"• Email: {email}")
