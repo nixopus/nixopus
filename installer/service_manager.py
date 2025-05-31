@@ -7,7 +7,7 @@ import sys
 import platform
 import re
 from pathlib import Path
-from .docker_setup import DockerSetup
+from docker_setup import DockerSetup
 
 class ServiceManager:
     def __init__(self, project_root, env="staging"):
