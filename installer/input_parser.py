@@ -43,37 +43,16 @@ class InputParser:
             return "production"
     
     def get_domains_from_args(self, args):
-        """
-        Get the domains from the command line arguments
-        """
-        if args.api_domain or args.app_domain:
+        if args.api_domain and args.app_domain:
             validation = Validation()
-            
             try:
-                # If both api and app domains are provided, validate them and we're good to go
-                if args.api_domain and args.app_domain:
-                    validation.validate_domain(args.api_domain)
-                    validation.validate_domain(args.app_domain)
-                    return {
-                        "api_domain": args.api_domain,
-                        "app_domain": args.app_domain,
-                    }
-                # If only api domain is provided, validate it and generate the app domain as default
-                elif args.api_domain:
-                    validation.validate_domain(args.api_domain)
-                    return {
-                        "api_domain": args.api_domain,
-                        "app_domain": f"nixopus.{args.api_domain.split('.', 1)[1]}",
-                    }
-                # If only app domain is provided, validate it and generate the api domain as default
-                elif args.app_domain:
-                    validation.validate_domain(args.app_domain)
-                    return {
-                        "api_domain": f"nixopusapi.{args.app_domain.split('.', 1)[1]}",
-                        "app_domain": args.app_domain,
-                    }
+                validation.validate_domain(args.api_domain)
+                validation.validate_domain(args.app_domain)
+                return {
+                    "api_domain": args.api_domain,
+                    "app_domain": args.app_domain,
+                }
             except SystemExit:
-                print("Invalid domain provided. Please try again with valid domains.")
                 return None
         return None
     
