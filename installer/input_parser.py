@@ -3,7 +3,7 @@ import secrets
 import string
 import sys
 
-from installer.validation import Validation
+from validation import Validation
 
 
 class InputParser:
