@@ -30,7 +30,7 @@ function check_dependencies() {
     check_command "python3"
     check_command "pip3"
     check_command "git"
-    check_python_version
+    # check_python_version
 }
 
 function parse_command_line_arguments() {
