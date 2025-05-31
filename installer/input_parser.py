@@ -131,21 +131,21 @@ class InputParser:
         validation.validate_password(password)
         return email, password 
     
-    def ask_for_domain(self):
-        """
-        Ask for the domain
-        """
-        validation = Validation()
-        while True:
-            domain = input("Please enter the base domain (if domain is example.com, then api domain will be nixopusapi.example.com and app domain will be nixopus.example.com) : ")
-            if not domain:
-                continue
-            try:
-                validation.validate_domain(domain)
-                return {
-                    "api_domain": f"nixopusapi.{domain}",
-                    "app_domain": f"nixopus.{domain}",
-                }
-            except SystemExit:
-                print("Please enter a valid domain name")
-                continue
+    # def ask_for_domain(self):
+    #     """
+    #     Ask for the domain
+    #     """
+    #     validation = Validation()
+    #     while True:
+    #         domain = input("Please enter the base domain (if domain is example.com, then api domain will be nixopusapi.example.com and app domain will be nixopus.example.com) : ")
+    #         if not domain:
+    #             continue
+    #         try:
+    #             validation.validate_domain(domain)
+    #             return {
+    #                 "api_domain": f"nixopusapi.{domain}",
+    #                 "app_domain": f"nixopus.{domain}",
+    #             }
+    #         except SystemExit:
+    #             print("Please enter a valid domain name")
+    #             continue

@@ -182,39 +182,39 @@ class TestInputParser(unittest.TestCase):
         self.assertEqual(email, 'test@example.com')
         self.assertEqual(password, 'Test123!')
 
-    @patch('builtins.input')
-    @patch('installer.input_parser.Validation')
-    def test_ask_for_domain(self, mock_validation, mock_input):
-        mock_validation_instance = MagicMock()
-        mock_validation.return_value = mock_validation_instance
-        mock_input.return_value = 'example.com'
+    # @patch('builtins.input')
+    # @patch('installer.input_parser.Validation')
+    # def test_ask_for_domain(self, mock_validation, mock_input):
+    #     mock_validation_instance = MagicMock()
+    #     mock_validation.return_value = mock_validation_instance
+    #     mock_input.return_value = 'example.com'
         
-        domains = self.parser.ask_for_domain()
-        self.assertEqual(domains['api_domain'], 'nixopusapi.example.com')
-        self.assertEqual(domains['app_domain'], 'nixopus.example.com')
+    #     domains = self.parser.ask_for_domain()
+    #     self.assertEqual(domains['api_domain'], 'nixopusapi.example.com')
+    #     self.assertEqual(domains['app_domain'], 'nixopus.example.com')
 
-    @patch('builtins.input')
-    @patch('installer.input_parser.Validation')
-    def test_ask_for_domain_invalid_retry(self, mock_validation, mock_input):
-        mock_validation_instance = MagicMock()
-        mock_validation.return_value = mock_validation_instance
-        mock_validation_instance.validate_domain.side_effect = [SystemExit(), None]
-        mock_input.side_effect = ['invalid.domain', 'example.com']
+    # @patch('builtins.input')
+    # @patch('installer.input_parser.Validation')
+    # def test_ask_for_domain_invalid_retry(self, mock_validation, mock_input):
+    #     mock_validation_instance = MagicMock()
+    #     mock_validation.return_value = mock_validation_instance
+    #     mock_validation_instance.validate_domain.side_effect = [SystemExit(), None]
+    #     mock_input.side_effect = ['invalid.domain', 'example.com']
         
-        domains = self.parser.ask_for_domain()
-        self.assertEqual(domains['api_domain'], 'nixopusapi.example.com')
-        self.assertEqual(domains['app_domain'], 'nixopus.example.com')
+    #     domains = self.parser.ask_for_domain()
+    #     self.assertEqual(domains['api_domain'], 'nixopusapi.example.com')
+    #     self.assertEqual(domains['app_domain'], 'nixopus.example.com')
 
-    @patch('builtins.input')
-    @patch('installer.input_parser.Validation')
-    def test_ask_for_domain_empty_input(self, mock_validation, mock_input):
-        mock_validation_instance = MagicMock()
-        mock_validation.return_value = mock_validation_instance
-        mock_input.side_effect = ['', 'example.com']
+    # @patch('builtins.input')
+    # @patch('installer.input_parser.Validation')
+    # def test_ask_for_domain_empty_input(self, mock_validation, mock_input):
+    #     mock_validation_instance = MagicMock()
+    #     mock_validation.return_value = mock_validation_instance
+    #     mock_input.side_effect = ['', 'example.com']
         
-        domains = self.parser.ask_for_domain()
-        self.assertEqual(domains['api_domain'], 'nixopusapi.example.com')
-        self.assertEqual(domains['app_domain'], 'nixopus.example.com')
+    #     domains = self.parser.ask_for_domain()
+    #     self.assertEqual(domains['api_domain'], 'nixopusapi.example.com')
+    #     self.assertEqual(domains['app_domain'], 'nixopus.example.com')
 
 if __name__ == '__main__':
     unittest.main() 
