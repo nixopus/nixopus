@@ -17,8 +17,11 @@ class DockerSetup:
 
     def get_public_ip(self):
         try:
-            return requests.get('https://api.ipify.org').content.decode('utf8')
-        except Exception:
+            response = requests.get('https://api.ipify.org', timeout=10)
+            response.raise_for_status()  # fail on non-2xx
+            return response.text.strip()
+        except requests.RequestException:
+            print("Failed to get public IP, falling back to localhost")
             return "localhost"
 
     def setup_docker_certs(self):
