@@ -5,7 +5,7 @@ import secrets
 import string
 from pathlib import Path
 import subprocess
-from .docker_setup import DockerSetup
+from docker_setup import DockerSetup
 from dataclasses import dataclass
 from typing import Dict, Optional
 

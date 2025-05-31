@@ -2,9 +2,9 @@
 
 import time
 from pathlib import Path
-from environment import EnvironmentSetup
-from input_parser import InputParser
-from service_manager import ServiceManager
+from installer.environment import EnvironmentSetup
+from installer.input_parser import InputParser
+from installer.service_manager import ServiceManager
 
 class Installer:
     def __init__(self):
