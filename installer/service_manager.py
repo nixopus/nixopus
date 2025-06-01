@@ -45,7 +45,11 @@ class ServiceManager:
             
     def check_docker_compose_version(self):
         try:
-            result = subprocess.run(["docker-compose", "--version"], check=True, capture_output=True, text=True)
+            try:
+                result = subprocess.run(["docker", "compose", "--version"], check=True, capture_output=True, text=True)
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                result = subprocess.run(["docker-compose", "--version"], check=True, capture_output=True, text=True)
+            
             version_string = result.stdout.strip()
             if not self._version_check(version_string, self.required_compose_version):
                 print(f"Error: Docker Compose version {self.required_compose_version} or higher is required")
@@ -81,7 +85,6 @@ class ServiceManager:
             os.environ["DOCKER_TLS_VERIFY"] = "1"
             os.environ["DOCKER_CERT_PATH"] = "/etc/nixopus/docker-certs" if env == "production" else "/etc/nixopus-staging/docker-certs"
             os.environ["DOCKER_CONTEXT"] = "nixopus-production" if env == "production" else "nixopus-staging"
-            compose_cmd = ["docker", "compose"] if shutil.which("docker") else ["docker-compose"]
             
             source_dir = "/etc/nixopus/source" if env == "production" else "/etc/nixopus-staging/source"
             compose_file = os.path.join(source_dir, "docker-compose.yml" if env == "production" else "docker-compose-staging.yml")
@@ -91,7 +94,7 @@ class ServiceManager:
                 print(f"Error: Docker Compose file not found at {compose_file}")
                 sys.exit(1)
                 
-            compose_cmd += ["-f", compose_file]
+            compose_cmd = ["docker", "compose", "-f", compose_file]
             
             if env == "staging":
                 print("Building and starting staging services...")
