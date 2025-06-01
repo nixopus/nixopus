@@ -10,6 +10,9 @@ on:
 jobs:
   qemu:
     runs-on: ubuntu-latest
+    env:
+      ADMIN_EMAIL: admin@nixopus.local
+      ADMIN_PASSWORD: Nixopus@123!Secure
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,4 +36,4 @@ jobs:
 
       - name: Run install script
         run: |
-          sudo ./scripts/install.sh
+          sudo ./scripts/install.sh --email="${{ env.ADMIN_EMAIL }}" --password="${{ env.ADMIN_PASSWORD }}"
