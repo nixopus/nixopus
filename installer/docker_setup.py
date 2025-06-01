@@ -211,6 +211,11 @@ ExecStart=/usr/bin/dockerd"""
             subprocess.run(["docker", "context", "use", self.context_name],
                          capture_output=True, text=True)
             
+            current_context = subprocess.run(["docker", "context", "ls", "--format", "{{.Name}} {{.Current}}"],
+                                           capture_output=True, text=True)
+            if f"{self.context_name} *" not in current_context.stdout:
+                raise Exception(f"Failed to switch to context {self.context_name}. Current contexts:\n{current_context.stdout}")
+            
             test_result = subprocess.run(
                 ["docker", "version", "--format", "{{.Server.Version}}"],
                 capture_output=True, text=True
