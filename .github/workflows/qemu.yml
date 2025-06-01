@@ -44,7 +44,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3 python3-pip git
+          sudo apt-get install -y python3 python3-pip git openssl
 
       - name: Make install script executable
         run: chmod +x scripts/install.sh
