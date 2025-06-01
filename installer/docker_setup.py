@@ -277,5 +277,5 @@ ExecStart=/usr/bin/dockerd"""
         self.setup_docker_certs()
         self.setup_docker_systemd_override()
         self.setup_docker_daemon_for_tcp()
-        self.test_docker_context_output()
-        return self.create_docker_context()
+        self.create_docker_context()
+        return self.test_docker_context_output()
