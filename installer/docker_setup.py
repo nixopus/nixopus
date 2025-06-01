@@ -237,9 +237,51 @@ ExecStart=/usr/bin/dockerd"""
             
         except Exception as e:
             raise Exception(f"Error setting up Docker context: {str(e)}")
+    
+    def test_docker_context_output(self):
+        try:
+            context_result = subprocess.run(
+                ["docker", "context", "ls"],
+                capture_output=True,
+                text=True
+            )
+            
+            daemon_result = subprocess.run(
+                ["docker", "info"],
+                capture_output=True,
+                text=True
+            )
+            
+            if context_result.returncode != 0:
+                return {
+                    "status": "error",
+                    "message": "Failed to list Docker contexts",
+                    "error": context_result.stderr
+                }
+                
+            if daemon_result.returncode != 0:
+                return {
+                    "status": "error",
+                    "message": "Docker daemon is not running",
+                    "error": daemon_result.stderr
+                }
+                
+            return {
+                "status": "success",
+                "contexts": context_result.stdout,
+                "daemon_info": daemon_result.stdout
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": "Failed to test Docker context",
+                "error": str(e)
+            }
 
     def setup(self):
         self.setup_docker_certs()
         self.setup_docker_systemd_override()
         self.setup_docker_daemon_for_tcp()
+        self.test_docker_context_output()
         return self.create_docker_context() 
