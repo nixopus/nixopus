@@ -213,30 +213,9 @@ ExecStart=/usr/bin/dockerd"""
             
             current_context = subprocess.run(["docker", "context", "ls", "--format", "{{.Name}} {{.Current}}"],
                                            capture_output=True, text=True)
-            if f"{self.context_name} *" not in current_context.stdout:
+            
+            if f"{self.context_name} true" not in current_context.stdout:
                 raise Exception(f"Failed to switch to context {self.context_name}. Current contexts:\n{current_context.stdout}")
-            
-            test_result = subprocess.run(
-                ["docker", "version", "--format", "{{.Server.Version}}"],
-                capture_output=True, text=True
-            )
-            
-            if test_result.returncode != 0:
-                for cert_file in self.docker_certs_dir.glob("*"):
-                    cert_file.chmod(0o600)
-                
-                subprocess.run(["systemctl", "restart", "docker"], 
-                             capture_output=True, check=False)
-                
-                time.sleep(5)
-                
-                test_result = subprocess.run(
-                    ["docker", "version", "--format", "{{.Server.Version}}"],
-                    capture_output=True, text=True
-                )
-                
-                if test_result.returncode != 0:
-                    raise Exception("Failed to establish secure connection to Docker daemon")
                 
             return self.context_name
             
