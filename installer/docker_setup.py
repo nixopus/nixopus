@@ -240,12 +240,14 @@ ExecStart=/usr/bin/dockerd"""
     
     def test_docker_context_output(self):
         try:
+            print("\nChecking Docker contexts...")
             context_result = subprocess.run(
                 ["docker", "context", "ls"],
                 capture_output=True,
                 text=True
             )
             
+            print("\nChecking Docker daemon status...")
             daemon_result = subprocess.run(
                 ["docker", "info"],
                 capture_output=True,
@@ -253,6 +255,7 @@ ExecStart=/usr/bin/dockerd"""
             )
             
             if context_result.returncode != 0:
+                print(f"\nError listing Docker contexts:\n{context_result.stderr}")
                 return {
                     "status": "error",
                     "message": "Failed to list Docker contexts",
@@ -260,11 +263,17 @@ ExecStart=/usr/bin/dockerd"""
                 }
                 
             if daemon_result.returncode != 0:
+                print(f"\nError checking Docker daemon:\n{daemon_result.stderr}")
                 return {
                     "status": "error",
                     "message": "Docker daemon is not running",
                     "error": daemon_result.stderr
                 }
+            
+            print("\nDocker contexts:")
+            print(context_result.stdout)
+            print("\nDocker daemon info:")
+            print(daemon_result.stdout)
                 
             return {
                 "status": "success",
@@ -273,6 +282,7 @@ ExecStart=/usr/bin/dockerd"""
             }
             
         except Exception as e:
+            print(f"\nError testing Docker context: {str(e)}")
             return {
                 "status": "error",
                 "message": "Failed to test Docker context",
@@ -284,4 +294,4 @@ ExecStart=/usr/bin/dockerd"""
         self.setup_docker_systemd_override()
         self.setup_docker_daemon_for_tcp()
         self.test_docker_context_output()
-        return self.create_docker_context() 
+        return self.create_docker_context()
