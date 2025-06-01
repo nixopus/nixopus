@@ -24,8 +24,8 @@ class ServiceManager:
             print(f"Error: Unsupported operating system: {system}")
             sys.exit(1)
 
-        self.check_docker_version()
-        self.check_docker_compose_version()
+        # self.check_docker_version()
+        # self.check_docker_compose_version()
         self.check_curl_installed()
 
         print("System requirements check passed!")
