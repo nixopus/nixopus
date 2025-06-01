@@ -1,0 +1,36 @@
+name: QEMU Setup and Installation
+
+on:
+  push:
+    branches: [feat/ip_port__installation]
+  pull_request:
+    branches: [feat/ip_port__installation]
+  workflow_dispatch:
+
+jobs:
+  qemu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip git
+
+      - name: Make install script executable
+        run: chmod +x scripts/install.sh
+
+      - name: Run install script
+        run: |
+          sudo ./scripts/install.sh
