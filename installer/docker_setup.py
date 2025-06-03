@@ -189,10 +189,6 @@ ExecStart=/usr/bin/dockerd"""
         local_ip = self.get_public_ip()
         
         try:
-            os.environ["DOCKER_HOST"] = f"tcp://{local_ip}:{docker_port}"
-            os.environ["DOCKER_TLS_VERIFY"] = "1"
-            os.environ["DOCKER_CERT_PATH"] = str(self.docker_certs_dir)
-            
             result = subprocess.run(["docker", "context", "ls"], 
                                   capture_output=True, text=True)
             if result.returncode != 0:
