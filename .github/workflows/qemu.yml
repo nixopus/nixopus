@@ -2,9 +2,9 @@ name: QEMU Setup and Installation
 
 on:
   push:
-    branches: [feat/ip_port__installation]
+    branches: [feat/develop]
   pull_request:
-    branches: [feat/ip_port__installation]
+    branches: [feat/develop]
   workflow_dispatch:
 
 jobs:
