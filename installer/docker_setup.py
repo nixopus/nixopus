@@ -23,10 +23,18 @@ class DockerSetup:
         except requests.RequestException:
             print("Failed to get public IP, falling back to localhost")
             return "localhost"
+    
+    def get_local_ip(self):
+        try:
+            response = socket.gethostbyname(socket.gethostname())
+            return response
+        except socket.gaierror:
+            print("Failed to get local IP, falling back to localhost")
+            return "localhost"
 
     def setup_docker_certs(self):
         self.docker_certs_dir.mkdir(parents=True, exist_ok=True)
-        local_ip = self.get_public_ip()
+        local_ip = self.get_local_ip()
         
         try:
             result = subprocess.run([
@@ -186,7 +194,7 @@ ExecStart=/usr/bin/dockerd"""
 
     def create_docker_context(self):
         docker_port = 2376 if self.env == "production" else 2377
-        local_ip = self.get_public_ip()
+        local_ip = self.get_local_ip()
         
         try:
             result = subprocess.run(["docker", "context", "ls"], 
@@ -224,7 +232,7 @@ ExecStart=/usr/bin/dockerd"""
     
     def test_docker_context_output(self):
         try:
-            local_ip = self.get_public_ip()
+            local_ip = self.get_local_ip()
             docker_port = 2376 if self.env == "production" else 2377
             
             os.environ["DOCKER_HOST"] = f"tcp://{local_ip}:{docker_port}"
