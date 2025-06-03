@@ -231,6 +231,14 @@ ExecStart=/usr/bin/dockerd"""
                 text=True
             )
             
+            print(f"\checking systemd")
+            systemd_result = subprocess.run(
+                ["systemctl", "status", "docker"],
+                capture_output=True,
+                text=True
+            )
+            print(f"\n{systemd_result.stdout}")
+            
             print("\nChecking Docker daemon status...")
             daemon_result = subprocess.run(
                 ["docker", "info"],
@@ -278,4 +286,5 @@ ExecStart=/usr/bin/dockerd"""
         self.setup_docker_systemd_override()
         self.setup_docker_daemon_for_tcp()
         self.create_docker_context()
+        time.sleep(20)
         return self.test_docker_context_output()
