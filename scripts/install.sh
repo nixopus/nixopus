@@ -86,8 +86,9 @@ function setup_caddy_configuration() {
     echo "Setting up Caddy configuration..."
     rm -rf "${NIXOPUS_DIR:?}/caddy"
     mkdir -p "${NIXOPUS_DIR:?}/caddy"
+    # todo : take the port from the config file instead of hardcoding it
     echo '{
-        admin 0.0.0.0:2019
+        admin 0.0.0.0:2019 
         log {
             format json
             level INFO

@@ -2,9 +2,9 @@ name: QEMU Setup and Installation
 
 on:
   push:
-    branches: [feat/develop]
+    branches: [feat/port_decouple]
   pull_request:
-    branches: [feat/develop]
+    branches: [feat/port_decouple]
   workflow_dispatch:
 
 jobs:
