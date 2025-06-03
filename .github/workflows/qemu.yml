@@ -9,7 +9,26 @@ on:
 
 jobs:
   qemu:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, debian-latest, centos-latest, rhel-latest, alpine-latest]
+        include:
+          - os: ubuntu-latest
+            package_manager: apt-get
+            docker_repo: debian
+          - os: debian-latest
+            package_manager: apt-get
+            docker_repo: debian
+          - os: centos-latest
+            package_manager: yum
+            docker_repo: centos
+          - os: rhel-latest
+            package_manager: yum
+            docker_repo: centos
+          - os: alpine-latest
+            package_manager: apk
+            docker_repo: alpine
     env:
       ADMIN_EMAIL: admin@nixopus.local
       ADMIN_PASSWORD: Nixopus@123!Secure
@@ -28,23 +47,37 @@ jobs:
 
       - name: Install Docker Compose
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ca-certificates curl gnupg
-          sudo install -m 0755 -d /etc/apt/keyrings
-          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-          sudo chmod a+r /etc/apt/keyrings/docker.gpg
-          echo \
-            "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-            "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-            sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-          sudo apt-get update
-          sudo apt-get install -y docker-compose-plugin
+          if [ "${{ matrix.package_manager }}" = "apt-get" ]; then
+            sudo apt-get update
+            sudo apt-get install -y ca-certificates curl gnupg
+            sudo install -m 0755 -d /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/${{ matrix.docker_repo }}/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            sudo chmod a+r /etc/apt/keyrings/docker.gpg
+            echo \
+              "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${{ matrix.docker_repo }} \
+              "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+              sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+            sudo apt-get install -y docker-compose-plugin
+          elif [ "${{ matrix.package_manager }}" = "yum" ]; then
+            sudo yum install -y yum-utils
+            sudo yum-config-manager --add-repo https://download.docker.com/linux/${{ matrix.docker_repo }}/docker-ce.repo
+            sudo yum install -y docker-compose-plugin
+          elif [ "${{ matrix.package_manager }}" = "apk" ]; then
+            sudo apk add --no-cache docker-cli-compose
+          fi
           docker compose version
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y python3 python3-pip git openssl
+          if [ "${{ matrix.package_manager }}" = "apt-get" ]; then
+            sudo apt-get update
+            sudo apt-get install -y python3 python3-pip git openssl
+          elif [ "${{ matrix.package_manager }}" = "yum" ]; then
+            sudo yum install -y python3 python3-pip git openssl
+          elif [ "${{ matrix.package_manager }}" = "apk" ]; then
+            sudo apk add --no-cache python3 py3-pip git openssl
+          fi
 
       - name: Make install script executable
         run: chmod +x scripts/install.sh
