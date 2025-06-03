@@ -7,12 +7,14 @@ import sys
 import platform
 import re
 from pathlib import Path
+from docker_setup import DockerSetup
 
 class ServiceManager:
-    def __init__(self, project_root):
+    def __init__(self, project_root, env="staging"):
         self.project_root = project_root
         self.required_docker_version = "20.10.0"
         self.required_compose_version = "2.0.0"
+        self.docker_setup = DockerSetup(env)
 
     def check_system_requirements(self):
         print("Checking system requirements...")
@@ -22,8 +24,8 @@ class ServiceManager:
             print(f"Error: Unsupported operating system: {system}")
             sys.exit(1)
 
-        self.check_docker_version()
-        self.check_docker_compose_version()
+        # self.check_docker_version()
+        # self.check_docker_compose_version()
         self.check_curl_installed()
 
         print("System requirements check passed!")
@@ -43,7 +45,11 @@ class ServiceManager:
             
     def check_docker_compose_version(self):
         try:
-            result = subprocess.run(["docker-compose", "--version"], check=True, capture_output=True, text=True)
+            try:
+                result = subprocess.run(["docker", "compose", "--version"], check=True, capture_output=True, text=True)
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                result = subprocess.run(["docker-compose", "--version"], check=True, capture_output=True, text=True)
+            
             version_string = result.stdout.strip()
             if not self._version_check(version_string, self.required_compose_version):
                 print(f"Error: Docker Compose version {self.required_compose_version} or higher is required")
@@ -79,7 +85,6 @@ class ServiceManager:
             os.environ["DOCKER_TLS_VERIFY"] = "1"
             os.environ["DOCKER_CERT_PATH"] = "/etc/nixopus/docker-certs" if env == "production" else "/etc/nixopus-staging/docker-certs"
             os.environ["DOCKER_CONTEXT"] = "nixopus-production" if env == "production" else "nixopus-staging"
-            compose_cmd = ["docker", "compose"] if shutil.which("docker") else ["docker-compose"]
             
             source_dir = "/etc/nixopus/source" if env == "production" else "/etc/nixopus-staging/source"
             compose_file = os.path.join(source_dir, "docker-compose.yml" if env == "production" else "docker-compose-staging.yml")
@@ -89,7 +94,7 @@ class ServiceManager:
                 print(f"Error: Docker Compose file not found at {compose_file}")
                 sys.exit(1)
                 
-            compose_cmd += ["-f", compose_file]
+            compose_cmd = ["docker", "compose", "-f", compose_file]
             
             if env == "staging":
                 print("Building and starting staging services...")
