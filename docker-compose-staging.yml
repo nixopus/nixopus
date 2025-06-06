@@ -7,10 +7,10 @@ services:
       context: ./api
       dockerfile: Dockerfile
       args:
-        - PORT=${PORT:-8444}
+        - PORT=${PORT}
     container_name: nixopus-staging-api
     ports:
-      - "${PORT:-8444}:${PORT:-8444}"
+      - "${PORT}:${PORT}"
     restart: unless-stopped
     env_file:
       - /etc/nixopus-staging/source/api/.env
@@ -19,7 +19,7 @@ services:
     volumes:
       - ${DOCKER_CERT_PATH}:/etc/nixopus-staging/docker-certs
       - ${SSH_PRIVATE_KEY}:/etc/nixopus-staging/ssh/id_rsa
-      - ${MOUNT_PATH:-/etc/nixopus-staging/configs}:/etc/nixopus-staging/configs
+      - ${MOUNT_PATH}:/etc/nixopus-staging/configs
       - /var/run/docker.sock:/var/run/docker.sock
       - /etc/nixopus-staging/source/api/.env:/app/.env
     networks:
@@ -37,15 +37,15 @@ services:
       - POSTGRES_PASSWORD=${PASSWORD}
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_HOST_AUTH_METHOD=trust
-    command: postgres -p 5433
+    command: postgres -p ${DB_PORT}
     ports:
-      - "5433:5433"
+      - "${DB_PORT}:${DB_PORT}"
     volumes:
       - ${DB_VOLUME:-/etc/nixopus-staging/db}:/var/lib/postgresql/data
     networks:
       - nixopus-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${USERNAME} -d ${DB_NAME} -p 5433" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${USERNAME} -d ${DB_NAME} -p ${DB_PORT}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -55,7 +55,7 @@ services:
     container_name: nixopus-staging-redis
     restart: unless-stopped
     ports:
-      - "6380:6379"
+      - "${REDIS_PORT}:${REDIS_PORT}"
     volumes:
       - ${REDIS_VOLUME:-/etc/nixopus-staging/redis}:/data
     networks:
@@ -73,7 +73,7 @@ services:
       dockerfile: Dockerfile
     container_name: nixopus-staging-view
     ports:
-      - "${NEXT_PUBLIC_PORT:-7444}:${NEXT_PUBLIC_PORT:-7444}"
+      - "${NEXT_PUBLIC_PORT}:${NEXT_PUBLIC_PORT}"
     restart: unless-stopped
     env_file:
       - /etc/nixopus-staging/source/view/.env

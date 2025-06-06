@@ -5,6 +5,7 @@ import time
 import shutil
 from pathlib import Path
 import socket
+import requests
 
 class DockerSetup:
     def __init__(self, env="staging"):
@@ -14,14 +15,21 @@ class DockerSetup:
         self.config_dir = Path("/etc/nixopus-staging") if env == "staging" else Path("/etc/nixopus")
         self.docker_certs_dir = self.config_dir / "docker-certs"
 
+    def get_public_ip(self):
+        try:
+            response = requests.get('https://api.ipify.org', timeout=10)
+            response.raise_for_status()  # fail on non-2xx
+            return response.text.strip()
+        except requests.RequestException:
+            print("Failed to get public IP, falling back to localhost")
+            return "localhost"
+    
     def get_local_ip(self):
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            local_ip = s.getsockname()[0]
-            s.close()
-            return local_ip
-        except Exception:
+            response = socket.gethostbyname(socket.gethostname())
+            return response
+        except socket.gaierror:
+            print("Failed to get local IP, falling back to localhost")
             return "localhost"
 
     def setup_docker_certs(self):
@@ -211,35 +219,86 @@ ExecStart=/usr/bin/dockerd"""
             subprocess.run(["docker", "context", "use", self.context_name],
                          capture_output=True, text=True)
             
-            test_result = subprocess.run(
-                ["docker", "version", "--format", "{{.Server.Version}}"],
-                capture_output=True, text=True
-            )
+            current_context = subprocess.run(["docker", "context", "ls", "--format", "{{.Name}} {{.Current}}"],
+                                           capture_output=True, text=True)
             
-            if test_result.returncode != 0:
-                for cert_file in self.docker_certs_dir.glob("*"):
-                    cert_file.chmod(0o600)
-                
-                subprocess.run(["systemctl", "restart", "docker"], 
-                             capture_output=True, check=False)
-                
-                time.sleep(5)
-                
-                test_result = subprocess.run(
-                    ["docker", "version", "--format", "{{.Server.Version}}"],
-                    capture_output=True, text=True
-                )
-                
-                if test_result.returncode != 0:
-                    raise Exception("Failed to establish secure connection to Docker daemon")
+            if f"{self.context_name} true" not in current_context.stdout:
+                raise Exception(f"Failed to switch to context {self.context_name}. Current contexts:\n{current_context.stdout}")
                 
             return self.context_name
             
         except Exception as e:
             raise Exception(f"Error setting up Docker context: {str(e)}")
+    
+    def test_docker_context_output(self):
+        try:
+            local_ip = self.get_local_ip()
+            docker_port = 2376 if self.env == "production" else 2377
+            
+            os.environ["DOCKER_HOST"] = f"tcp://{local_ip}:{docker_port}"
+            os.environ["DOCKER_TLS_VERIFY"] = "1"
+            os.environ["DOCKER_CERT_PATH"] = str(self.docker_certs_dir)
+            print("\nChecking Docker contexts...")
+            context_result = subprocess.run(
+                ["docker", "context", "ls"],
+                capture_output=True,
+                text=True
+            )
+            
+            print(f"\checking systemd")
+            systemd_result = subprocess.run(
+                ["systemctl", "status", "docker"],
+                capture_output=True,
+                text=True
+            )
+            print(f"\n{systemd_result.stdout}")
+            
+            print("\nChecking Docker daemon status...")
+            daemon_result = subprocess.run(
+                ["docker", "info"],
+                capture_output=True,
+                text=True
+            )
+            
+            if context_result.returncode != 0:
+                print(f"\nError listing Docker contexts:\n{context_result.stderr}")
+                return {
+                    "status": "error",
+                    "message": "Failed to list Docker contexts",
+                    "error": context_result.stderr
+                }
+                
+            if daemon_result.returncode != 0:
+                print(f"\nError checking Docker daemon:\n{daemon_result.stderr}")
+                return {
+                    "status": "error",
+                    "message": "Docker daemon is not running",
+                    "error": daemon_result.stderr
+                }
+            
+            print("\nDocker contexts:")
+            print(context_result.stdout)
+            print("\nDocker daemon info:")
+            print(daemon_result.stdout)
+                
+            return {
+                "status": "success",
+                "contexts": context_result.stdout,
+                "daemon_info": daemon_result.stdout
+            }
+            
+        except Exception as e:
+            print(f"\nError testing Docker context: {str(e)}")
+            return {
+                "status": "error",
+                "message": "Failed to test Docker context",
+                "error": str(e)
+            }
 
     def setup(self):
         self.setup_docker_certs()
         self.setup_docker_systemd_override()
         self.setup_docker_daemon_for_tcp()
-        return self.create_docker_context() 
+        self.create_docker_context()
+        time.sleep(20)
+        return self.test_docker_context_output()

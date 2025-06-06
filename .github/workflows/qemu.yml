@@ -1,0 +1,54 @@
+name: QEMU Setup and Installation
+
+on:
+  push:
+    branches: [feat/port_decouple]
+  pull_request:
+    branches: [feat/port_decouple]
+  workflow_dispatch:
+
+jobs:
+  qemu:
+    runs-on: ubuntu-latest
+    env:
+      ADMIN_EMAIL: admin@nixopus.local
+      ADMIN_PASSWORD: Nixopus@123!Secure
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ca-certificates curl gnupg
+          sudo install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          sudo chmod a+r /etc/apt/keyrings/docker.gpg
+          echo \
+            "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+            "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+            sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+          docker compose version
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip git openssl
+
+      - name: Make install script executable
+        run: chmod +x scripts/install.sh
+
+      - name: Run install script
+        run: |
+          sudo ./scripts/install.sh --email="${{ env.ADMIN_EMAIL }}" --password="${{ env.ADMIN_PASSWORD }}"
