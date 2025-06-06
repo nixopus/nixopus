@@ -3,7 +3,8 @@ import spec from '../src/openapi.json' with { type: 'json' }
 import { defineConfigWithTheme } from 'vitepress'
 
 const sidebar = useSidebar({
-  spec,
+  spec: spec as any,
+  linkPrefix: '/api'
 })
 
 export default defineConfigWithTheme({
@@ -48,7 +49,8 @@ export default defineConfigWithTheme({
     },
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Get Started', link: '/install/index.md' }
+      { text: 'Get Started', link: '/install/index.md' },
+      { text: 'Blog', link: '/blog/' }
     ],
     footer: {
       message: 'Released under the Functional Source License (FSL)',
@@ -70,6 +72,12 @@ export default defineConfigWithTheme({
           { text: 'Terminal', link: '/terminal/index.md' },
           { text: "File Manager", link: "/file-manager/index.md" },
           { text: "Notifications", link: "/notifications/index.md" }
+        ]
+      },
+      {
+        text: 'Blog',
+        items: [
+          { text: 'Latest Posts', link: '/blog/' }
         ]
       },
       {
