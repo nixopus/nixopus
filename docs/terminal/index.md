@@ -96,6 +96,7 @@ The terminal inherits your application's theme and font settings. Customize them
 When the terminal is focused, application shortcuts are disabled to prevent conflicts with terminal commands. For example, `CTRL + C` sends SIGINT instead of copying.
 
 ## What's Coming Next
+
 * Command sanitization and System protection against harmful commands
 * Privacy safeguards and following best practices
 * Prompt customization
