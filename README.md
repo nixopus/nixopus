@@ -19,6 +19,10 @@
 [![YouTube Video Views](https://img.shields.io/youtube/views/DrDGWNq4JM4?style=social&label=View%20Demo)](https://www.youtube.com/watch?v=DrDGWNq4JM4)
 ‎ ‎ ‎ [![Discord](https://img.shields.io/discord/1358854056642347180?label=Join%20Community&logo=discord&style=social)](https://discord.gg/skdcq39Wpv)
 
+<p align="center">
+    <img src="https://madewithlove.now.sh/in?heart=true&colorA=%23ff671f&colorB=%23046a38&text=India" alt="Made with love with Open Source" />
+</p>
+
 [Website](https://nixopus.com) | [Documentation](https://docs.nixopus.com)
 
 </div>
@@ -71,6 +75,7 @@ Nixopus is a powerful platform designed to simplify VPS management. Whether you'
 - [Acknowledgments](#acknowledgments)
 - [About the Name](#about-the-name)
 - [Contributors](#contributors)
+- [Sponsors](#sponsors)
 
 ## Demo / Screenshots
 
@@ -274,3 +279,7 @@ Nixopus is derived from the combination of "octopus" and the Linux penguin (Tux)
 </a>
 
 Made with [contrib.rocks](https://contrib.rocks).
+
+## Sponsors
+
+<!-- sponsors --><!-- sponsors -->
