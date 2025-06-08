@@ -141,7 +141,10 @@ export const authApi = createApi({
       query: () => ({
         url: AUTHURLS.IS_ADMIN_REGISTERED,
         method: 'GET'
-      })
+      }),
+      transformResponse: (response: { data: { admin_registered: boolean } }) => {
+        return response.data.admin_registered;
+      }
     })
   })
 });
