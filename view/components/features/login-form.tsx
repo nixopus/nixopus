@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import nixopusLogo from '@/public/nixopus_logo_transparent.png';
 import { useTranslation } from '@/hooks/use-translation';
+import Link from 'next/link';
 
 export interface LoginFormProps {
   email: string;
@@ -97,12 +98,12 @@ export function LoginForm({ ...props }: LoginFormProps) {
                     ? t('auth.login.loading')
                     : t('auth.login.submit')}
               </Button>
-              {/* <div className="text-center text-sm">
+              <div className="text-center text-sm">
                 Don&apos;t have an account?{' '}
-                <a href="#" className="underline underline-offset-4">
-                  Sign up
-                </a>
-              </div> */}
+                <Link href="/register" className="underline underline-offset-4">
+                  {t('auth.register.title')}
+                </Link>
+              </div>
             </div>
           </div>
           <div className="bg-muted relative hidden md:block">

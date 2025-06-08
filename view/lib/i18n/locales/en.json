@@ -110,7 +110,40 @@
         "verifying": "Verifying..."
       }
     },
-    "register": "Register",
+    "register": {
+      "title": "Register",
+      "description": "Create a new account",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Register",
+      "emailPlaceholder": "m@example.com",
+      "loading": "Loading...",
+      "terms": "By clicking continue, you agree to our",
+      "termsOfService": "Terms of Service",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy",
+      "alreadyHaveAccount": "Already have an account?",
+      "success": "Registration successful! Please check your email to verify your account.",
+      "errors": {
+        "invalidEmail": "Invalid email",
+        "passwordMismatch": "Passwords don't match",
+        "passwordRequirements": {
+          "minLength": "Password must be at least 8 characters",
+          "uppercase": "Password must contain at least one uppercase letter",
+          "lowercase": "Password must contain at least one lowercase letter",
+          "number": "Password must contain at least one number",
+          "specialChar": "Password must contain at least one special character"
+        },
+        "adminAlreadyRegistered": "Admin already registered",
+        "adminAlreadyRegisteredDescription": "Please contact the administrator to get access.",
+        "loginButton": "Login",
+        "somethingWentWrong": "Something went wrong",
+        "loadingAdminRegistration": "Checking if admin is registered...",
+        "tryAgain": "Try again",
+        "registerFailed": "Failed to register"
+      }
+    },
     "email": "Email",
     "password": "Password",
     "resetPassword": {

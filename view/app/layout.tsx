@@ -62,7 +62,7 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         <WebSocketProvider>
           <FeatureFlagsProvider>
-            {pathname === '/' || pathname === '/login' ? (
+            {pathname === '/' || pathname === '/login' || pathname === '/register' ? (
               <>{children}</>
             ) : (
               <DashboardLayout>{children}</DashboardLayout>
