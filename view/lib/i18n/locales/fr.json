@@ -110,7 +110,40 @@
         "verifying": "Vérification en cours..."
       }
     },
-    "register": "S'inscrire",
+    "register": {
+      "title": "S'inscrire",
+      "description": "Créez un nouveau compte",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le Mot de Passe",
+      "submit": "S'inscrire",
+      "emailPlaceholder": "m@exemple.com",
+      "loading": "Chargement...",
+      "terms": "En cliquant sur continuer, vous acceptez nos",
+      "termsOfService": "Conditions d'Utilisation",
+      "and": "et",
+      "privacyPolicy": "Politique de Confidentialité",
+      "alreadyHaveAccount": "Vous avez déjà un compte ?",
+      "success": "Inscription réussie ! Veuillez vérifier votre e-mail pour vérifier votre compte.",
+      "errors": {
+        "invalidEmail": "E-mail invalide",
+        "passwordMismatch": "Les mots de passe ne correspondent pas",
+        "passwordRequirements": {
+          "minLength": "Le mot de passe doit contenir au moins 8 caractères",
+          "uppercase": "Le mot de passe doit contenir au moins une lettre majuscule",
+          "lowercase": "Le mot de passe doit contenir au moins une lettre minuscule",
+          "number": "Le mot de passe doit contenir au moins un chiffre",
+          "specialChar": "Le mot de passe doit contenir au moins un caractère spécial"
+        },
+        "adminAlreadyRegistered": "Administrateur déjà enregistré",
+        "adminAlreadyRegisteredDescription": "Veuillez contacter l'administrateur pour obtenir l'accès.",
+        "loginButton": "Se connecter",
+        "somethingWentWrong": "Une erreur est survenue",
+        "loadingAdminRegistration": "Vérification de l'enregistrement de l'administrateur...",
+        "tryAgain": "Réessayer",
+        "registerFailed": "Échec de l'inscription"
+      }
+    },
     "email": "E-mail",
     "password": "Mot de passe",
     "resetPassword": {

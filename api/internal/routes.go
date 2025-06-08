@@ -272,6 +272,7 @@ func (router *Router) AuthRoutes(authController *auth.AuthController, s *fuego.S
 	fuego.Post(s, "/register", authController.Register)
 	fuego.Post(s, "/login", authController.Login)
 	fuego.Post(s, "/refresh-token", authController.RefreshToken)
+	fuego.Get(s, "/is-admin-registered", authController.IsAdminRegistered)
 }
 
 func (router *Router) AuthenticatedAuthRoutes(s *fuego.Server, authController *auth.AuthController) {

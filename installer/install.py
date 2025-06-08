@@ -41,8 +41,8 @@ def main():
     #     domains = installer.input_parser.ask_for_domain()
     
     email, password = installer.input_parser.get_admin_credentials_from_args(args)
-    if email is None and password is None:
-        email, password = installer.input_parser.ask_admin_credentials()
+    # if email is None and password is None:
+    #     email, password = installer.input_parser.ask_admin_credentials()
     
     installer.service_manager = ServiceManager(installer.project_root, env)
     installer.service_manager.check_system_requirements()
@@ -56,24 +56,27 @@ def main():
     time.sleep(10)
     max_retries = 3
     retry_count = 0
-    while retry_count < max_retries:
-        if installer.service_manager.check_api_up_status(env_vars["API_PORT"]):
-            installer.service_manager.setup_admin(email, password, env_vars["API_PORT"])
-            break
-        retry_count += 1
-        if retry_count < max_retries:
-            time.sleep(2)
-            print(f"Retrying API status check (attempt {retry_count + 1}/{max_retries})...")
+    
+    # setup admin if email and password are provided through args
+    if email is not None and password is not None:
+        while retry_count < max_retries:
+            if installer.service_manager.check_api_up_status(env_vars["API_PORT"]):
+                installer.service_manager.setup_admin(email, password, env_vars["API_PORT"])
+                break
+            retry_count += 1
+            if retry_count < max_retries:
+                time.sleep(2)
+                print(f"Retrying API status check (attempt {retry_count + 1}/{max_retries})...")
     
     docker_setup = installer.service_manager.docker_setup
     nixopus_accessible_at = domains['app_domain'] if domains and 'app_domain' in domains else docker_setup.get_public_ip()
     print("\n\033[1mInstallation Complete!\033[0m")
     print(f"• Nixopus is accessible at: {nixopus_accessible_at}")
     
-    print("\n\033[1mAdmin Credentials:\033[0m")
-    print(f"• Email: {email}")
-    print(f"• Password: {password}")
-    print("\n\033[1mImportant:\033[0m Please save these credentials securely. You will need them to log in.")
+    # print("\n\033[1mAdmin Credentials:\033[0m")
+    # print(f"• Email: {email}")
+    # print(f"• Password: {password}")
+    # print("\n\033[1mImportant:\033[0m Please save these credentials securely. You will need them to log in.")
     print("\n\033[1mThank you for installing Nixopus!\033[0m")
     print("\n\033[1mPlease visit the documentation at https://docs.nixopus.com for more information.\033[0m")
     print("\n\033[1mIf you have any questions, please visit the community forum at https://discord.gg/skdcq39Wpv\033[0m")

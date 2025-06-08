@@ -109,7 +109,40 @@
         "verifying": "Verificando..."
       }
     },
-    "register": "Registrarse",
+    "register": {
+      "title": "Registrarse",
+      "description": "Crea una nueva cuenta",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar Contraseña",
+      "submit": "Registrarse",
+      "emailPlaceholder": "m@ejemplo.com",
+      "loading": "Cargando...",
+      "terms": "Al hacer clic en continuar, aceptas nuestros",
+      "termsOfService": "Términos de Servicio",
+      "and": "y",
+      "privacyPolicy": "Política de Privacidad",
+      "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+      "success": "¡Registro exitoso! Por favor revisa tu correo electrónico para verificar tu cuenta.",
+      "errors": {
+        "invalidEmail": "Correo electrónico inválido",
+        "passwordMismatch": "Las contraseñas no coinciden",
+        "passwordRequirements": {
+          "minLength": "La contraseña debe tener al menos 8 caracteres",
+          "uppercase": "La contraseña debe contener al menos una letra mayúscula",
+          "lowercase": "La contraseña debe contener al menos una letra minúscula",
+          "number": "La contraseña debe contener al menos un número",
+          "specialChar": "La contraseña debe contener al menos un carácter especial"
+        },
+        "adminAlreadyRegistered": "Administrador ya registrado",
+        "adminAlreadyRegisteredDescription": "Por favor contacta al administrador para obtener acceso.",
+        "loginButton": "Iniciar sesión",
+        "somethingWentWrong": "Algo salió mal",
+        "loadingAdminRegistration": "Verificando si el administrador está registrado...",
+        "tryAgain": "Intentar de nuevo",
+        "registerFailed": "Error al registrarse"
+      }
+    },
     "email": "Correo electrónico",
     "password": "Contraseña",
     "resetPassword": {

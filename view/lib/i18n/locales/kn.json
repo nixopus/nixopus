@@ -110,7 +110,40 @@
         "verifying": "ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ..."
       }
     },
-    "register": "ನೋಂದಣಿ",
+    "register": {
+      "title": "ನೋಂದಣಿ",
+      "description": "ನೀವು ನಿಮ್ಮ ಖಾತೆಯನ್ನು ಸೃಷ್ಟಿಸಿ",
+      "email": "ಇಮೇಲ್",
+      "password": "ಪಾಸ್ವರ್ಡ್",
+      "confirmPassword": "ಪಾಸ್ವರ್ಡ್ ದೃಢೀಕರಿಸಿ",
+      "submit": "ನೋಂದಣಿ",
+      "emailPlaceholder": "m@example.com",
+      "loading": "ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
+      "terms": "ಮುಂದುವರೆಯುವ ಮೂಲಕ, ನೀವು ನಮ್ಮ",
+      "termsOfService": "ಸೇವಾ ನಿಯಮಗಳು",
+      "and": "ಮತ್ತು",
+      "privacyPolicy": "ಗೌಪ್ಯತಾ ನೀತಿ",
+      "alreadyHaveAccount": "ನೀವು ಇದಕ್ಕೆ ಖಾತೆ ಹೊಂದಿದ್ದಾಗಿರಬೇಕು?",
+      "success": "ನೋಂದಿಸಲಾಗಿದೆ! ದಯವಿಟ್ಟು ನಿಮ್ಮ ಇಮೇಲ್ ಪರಿಶೀಲನೆ ಮಾಡಿ ಖಾತೆಯನ್ನು ಪರಿಶೀಲಿಸಿ.",
+      "errors": {
+        "invalidEmail": "ಅಮಾನ್ಯ ಇಮೇಲ್",
+        "passwordMismatch": "ಪಾಸ್ವರ್ಡ್ಗಳು ಹೊಂದಿಕೆಯಾಗುವುದಿಲ್ಲ",
+        "passwordRequirements": {
+          "minLength": "ಪಾಸ್ವರ್ಡ್ ಕನಿಷ್ಠ 8 ಅಕ್ಷರಗಳನ್ನು ಹೊಂದಿರಬೇಕು",
+          "uppercase": "ಪಾಸ್ವರ್ಡ್ ಕನಿಷ್ಠ ಒಂದು ದೊಡ್ಡ ಅಕ್ಷರವನ್ನು ಹೊಂದಿರಬೇಕು",
+          "lowercase": "ಪಾಸ್ವರ್ಡ್ ಕನಿಷ್ಠ ಒಂದು ಸಣ್ಣ ಅಕ್ಷರವನ್ನು ಹೊಂದಿರಬೇಕು",
+          "number": "ಪಾಸ್ವರ್ಡ್ ಕನಿಷ್ಠ ಒಂದು ಸಂಖ್ಯೆಯನ್ನು ಹೊಂದಿರಬೇಕು",
+          "specialChar": "ಪಾಸ್ವರ್ಡ್ ಕನಿಷ್ಠ ಒಂದು ವಿಶೇಷ ಅಕ್ಷರವನ್ನು ಹೊಂದಿರಬೇಕು"
+        },
+        "adminAlreadyRegistered": "ಆದ್ಯತೆ ಮತ್ತೆ ನೋಂದಿಸಲಾಗಿದೆ",
+        "adminAlreadyRegisteredDescription": "ದಯವಿಟ್ಟು ಪ್ರವೇಶಕ್ಕಾಗಿ ನಿರ್ವಾಹಕರನ್ನು ಸಂಪರ್ಕಿಸಿ.",
+        "loginButton": "ಲಾಗಿನ್",
+        "somethingWentWrong": "ಏನೋ ತಪ್ಪು ಸಂಭವಿಸಿದೆ",
+        "loadingAdminRegistration": "ಆದ್ಯತೆ ನೋಂದಿಸಲಾಗಿದೆ ಎಂದು ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...",
+        "tryAgain": "ಮರುಪ್ರಯತ್ನಿಸಿ",
+        "registerFailed": "ನೋಂದಣಿ ವಿಫಲವಾಗಿದೆ"
+      }
+    },
     "email": "ಇಮೇಲ್",
     "password": "ಪಾಸ್ವರ್ಡ್",
     "resetPassword": {
