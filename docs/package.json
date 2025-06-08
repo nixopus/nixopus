@@ -1,7 +1,9 @@
 {
   "devDependencies": {
+    "@mermaid-js/mermaid-mindmap": "^9.3.0",
     "@types/node": "^22.7.6",
-    "vitepress": "^1.4.0"
+    "vitepress": "^1.4.0",
+    "vitepress-plugin-mermaid": "^2.0.17"
   },
   "scripts": {
     "docs:dev": "vitepress dev",
@@ -10,6 +12,7 @@
   },
   "dependencies": {
     "cross-spawn": "7.0.5",
+    "mermaid": "^11.6.0",
     "vitepress-openapi": "^0.0.3-alpha.43"
   }
 }

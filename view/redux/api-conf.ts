@@ -1,6 +1,5 @@
 export enum AUTHURLS {
   USER_LOGIN = 'v1/auth/login',
-  USER_REGISTER = 'v1/auth/register',
   USER_DETAILS = 'v1/user',
   REFRESH_TOKEN = 'v1/auth/refresh-token',
   REQUEST_PASSWORD_RESET = 'v1/auth/request-password-reset',
@@ -11,8 +10,7 @@ export enum AUTHURLS {
   SETUP_TWO_FACTOR = 'v1/auth/setup-2fa',
   VERIFY_TWO_FACTOR = 'v1/auth/verify-2fa',
   DISABLE_TWO_FACTOR = 'v1/auth/disable-2fa',
-  TWO_FACTOR_LOGIN = 'v1/auth/2fa-login',
-  IS_ADMIN_REGISTERED = 'v1/auth/is-admin-registered'
+  TWO_FACTOR_LOGIN = 'v1/auth/2fa-login'
 }
 
 export enum USERURLS {

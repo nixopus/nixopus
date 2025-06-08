@@ -61,7 +61,3 @@ func GetLogoutURL() string {
 func GetUserDetailsURL() string {
 	return baseURL + "/user"
 }
-
-func GetIsAdminRegisteredURL() string {
-	return baseURL + "/auth/is-admin-registered"
-}

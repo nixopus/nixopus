@@ -1,0 +1,31 @@
+name: Generate Sponsors README
+on:
+  workflow_dispatch: # Manual trigger
+  pull_request: # On MR events
+    types: [opened, reopened, synchronize]
+    branches: [main, master, feature-develop, feat/develop]
+  push: # On merge/push
+    branches: [main, master, feature-develop, feat/develop]
+  schedule:
+    - cron: "30 15 * * 0-6" # Daily at 15:30 UTC
+
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Generate Sponsors
+        uses: JamesIves/github-sponsors-readme-action@v1
+        with:
+          token: ${{ secrets.PAT }}
+          file: "README.md"
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: main
+          folder: "."

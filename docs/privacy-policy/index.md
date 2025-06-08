@@ -15,6 +15,7 @@ At Nixopus, we take your privacy seriously. This Privacy Policy explains how we 
 We only collect analytics about user behavior on our landing page and documentation pages to better understand and serve our users.
 
 ### Website Analytics
+
 - Page views and navigation patterns
 - Time spent on pages
 - Referral sources
@@ -22,6 +23,7 @@ We only collect analytics about user behavior on our landing page and documentat
 - Geographic location (country level)
 
 ### Documentation Usage
+
 - Search queries
 - Most viewed pages
 - Time spent on documentation
@@ -30,6 +32,7 @@ We only collect analytics about user behavior on our landing page and documentat
 ## How We Use Your Information
 
 We use the collected information to:
+
 - Improve our website and documentation
 - Understand user needs and preferences
 - Optimize content organization
@@ -39,6 +42,7 @@ We use the collected information to:
 ## Data Security
 
 We implement appropriate security measures to protect your information:
+
 - Secure storage of analytics data
 - Regular security audits
 - Access controls and authentication
@@ -53,6 +57,7 @@ We implement appropriate security measures to protect your information:
 ## Your Rights
 
 You have the right to:
+
 - Access your personal data
 - Request data deletion
 - Opt-out of analytics collection
@@ -61,11 +66,13 @@ You have the right to:
 ## Third-Party Services
 
 We use the following third-party services:
+
 - Analytics tools for website statistics
 
 ## Cookies and Tracking
 
 We use cookies and similar technologies to:
+
 - Maintain session state
 - Remember preferences
 - Analyze website usage patterns

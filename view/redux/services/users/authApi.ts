@@ -15,24 +15,6 @@ export const authApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ['Authentication'],
   endpoints: (builder) => ({
-    registerUser: builder.mutation<AuthResponse, { email: string; password: string }>({
-      query(credentials) {
-        return {
-          url: AUTHURLS.USER_REGISTER,
-          method: 'POST',
-          body: {
-            ...credentials,
-            type: 'admin',
-            username: credentials.email.split('@')[0],
-            organization: ''
-          }
-        };
-      },
-      transformResponse: (response: { data: AuthResponse }) => {
-        return { ...response.data };
-      },
-      invalidatesTags: [{ type: 'Authentication', id: 'LIST' }]
-    }),
     loginUser: builder.mutation<AuthResponse, LoginPayload>({
       query(credentials) {
         return {
@@ -136,21 +118,11 @@ export const authApi = createApi({
         return { ...response.data };
       },
       invalidatesTags: [{ type: 'Authentication', id: 'LIST' }]
-    }),
-    isAdminRegistered: builder.query<boolean, void>({
-      query: () => ({
-        url: AUTHURLS.IS_ADMIN_REGISTERED,
-        method: 'GET'
-      }),
-      transformResponse: (response: { data: { admin_registered: boolean } }) => {
-        return response.data.admin_registered;
-      }
     })
   })
 });
 
 export const {
-  useRegisterUserMutation,
   useLoginUserMutation,
   useLogoutMutation,
   useGetUserDetailsQuery,
@@ -161,6 +133,5 @@ export const {
   useSetupTwoFactorMutation,
   useVerifyTwoFactorMutation,
   useDisableTwoFactorMutation,
-  useTwoFactorLoginMutation,
-  useIsAdminRegisteredQuery
+  useTwoFactorLoginMutation
 } = authApi;
