@@ -4,6 +4,7 @@ from pathlib import Path
 
 @dataclass
 class ServiceConfig:
+    config_dir: Path
     docker: Dict[str, str]
     source: str
     compose: Dict[str, str]
