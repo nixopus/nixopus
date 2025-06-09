@@ -40,6 +40,9 @@ class BaseConfig(Generic[T]):
         self.validate_config(config)
         
         try:
-            return config_class(**config[self.env])
+            env_config = config[self.env].copy()
+            if 'config_dir' in env_config:
+                env_config['config_dir'] = Path(env_config['config_dir'])
+            return config_class(**env_config)
         except (ValueError, TypeError) as e:
             raise Exception(f"Invalid configuration type for environment '{self.env}': {str(e)}") from e 
