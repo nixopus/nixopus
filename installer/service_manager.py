@@ -23,7 +23,7 @@ class ServiceManager:
             config_path=config_path,
             env=env,
             required_keys=[
-                "config_dir", "docker", "source", "compose", "containers", "caddy", "api", "system"
+                "docker", "source", "compose", "containers", "caddy", "api", "system"
             ],
             valid_environments=["production", "staging"]
         )

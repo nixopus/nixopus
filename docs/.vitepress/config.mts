@@ -9,7 +9,6 @@ const sidebar = useSidebar({
   linkPrefix: '/api'
 })
 
-
 export default withMermaid(
   defineConfig({
     title: "Nixopus Docs",

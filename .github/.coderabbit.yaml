@@ -14,9 +14,6 @@ review:
     - "**/.git/**"
     - "**/tmp/**"
     - "**/logs/**"
-  branches:
-    exclude:
-      - "feat/develop"
 
 settings:
   code_quality: true

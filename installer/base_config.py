@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Dict, Any, TypeVar, Generic, Type
-import inspect
 
 T = TypeVar('T')
 
@@ -41,13 +40,6 @@ class BaseConfig(Generic[T]):
         self.validate_config(config)
         
         try:
-            env_config = config[self.env].copy()
-            if 'config_dir' in env_config:
-                env_config['config_dir'] = Path(env_config['config_dir'])
-            
-            config_fields = inspect.signature(config_class).parameters.keys()
-            filtered_config = {k: v for k, v in env_config.items() if k in config_fields}
-            
-            return config_class(**filtered_config)
+            return config_class(**config[self.env])
         except (ValueError, TypeError) as e:
             raise Exception(f"Invalid configuration type for environment '{self.env}': {str(e)}") from e 
