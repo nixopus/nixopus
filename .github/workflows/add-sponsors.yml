@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: write
-  sponsorships: read
 
 jobs:
   update-sponsors:
