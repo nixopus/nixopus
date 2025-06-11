@@ -3,7 +3,7 @@ name: Update Sponsors
 on:
   workflow_dispatch: # Manual trigger
   push: # Trigger on every push
-    branches: [main, master, feature-develop, feat/develop, shravan20-patch-1]
+    branches: [main, master, feature-develop, feat/develop]
   schedule:
     - cron: '0 0 * * *' # Daily automatic update
 
@@ -73,7 +73,7 @@ jobs:
             ' README.md > README.tmp && mv README.tmp README.md
             
             echo "--- Updated README Preview ---"
-            grep -A15 "🎗️ Sponsors" README.md || echo "Sponsors section not found"
+            grep -A15 "Sponsors" README.md || echo "Sponsors section not found"
           else
             echo "No sponsors data found in sponsors.md"
             exit 0
