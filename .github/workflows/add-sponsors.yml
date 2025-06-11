@@ -27,22 +27,26 @@ jobs:
         run: |
           SPONSORS_JSON=$(curl -s -H "Authorization: token ${{ secrets.PAT }}" \
             -X POST -d '{
-              "query": "query { user(login:\"${{ github.repository_owner }}\") { sponsorshipsAsMaintainer(first: 100) { nodes { sponsor { login, avatarUrl, url } tier { name } } } } }"
+              "query": "query { user(login:\"${{ github.repository_owner }}\") { sponsorshipsAsMaintainer(first: 100) { nodes { sponsor { login, avatarUrl, url } } } } }"
             }' https://api.github.com/graphql)
-
-          # Save formatted sponsors
-          echo "$SPONSORS_JSON" | jq -r '
-            "## 🎗️ Sponsors\n",
-            (.data.user.sponsorshipsAsMaintainer.nodes[] | 
-              "- [![@\(.sponsor.login)](\(.sponsor.avatarUrl)&size=32)](\(.sponsor.url)) **\(.sponsor.login)** (\(.tier.name))"
-            ),
-            "\n❤️ Thank you for your support!"
-          ' > sponsors.md
-
+      
+          # Save sponsors as markdown table (avatar and login with hyperlink)
+          echo "## 🎗️ Sponsors" > sponsors.md
+          echo "" >> sponsors.md
+          echo "| Avatar | Sponsor |" >> sponsors.md
+          echo "| ------ | ------- |" >> sponsors.md
+      
+          echo "$SPONSORS_JSON" | jq -r '.data.user.sponsorshipsAsMaintainer.nodes[] | 
+            "| [![](\(.sponsor.avatarUrl)?s=32)](\(.sponsor.url)) | [\(.sponsor.login)](\(.sponsor.url)) |"' >> sponsors.md
+      
+          echo "" >> sponsors.md
+          echo "❤️ Thank you for your support!" >> sponsors.md
+      
           # Count sponsors for conditional update
           SPONSOR_COUNT=$(echo "$SPONSORS_JSON" | jq '.data.user.sponsorshipsAsMaintainer.nodes | length')
           echo "sponsor_count=$SPONSOR_COUNT" >> $GITHUB_OUTPUT
 
+      
       - name: Update README
         if: steps.fetch-sponsors.outputs.sponsor_count > 0
         run: |
