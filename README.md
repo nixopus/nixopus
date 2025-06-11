@@ -282,4 +282,5 @@ Made with [contrib.rocks](https://contrib.rocks).
 
 ## Sponsors
 
-<!-- sponsors --><!-- sponsors -->
+<!-- SPONSORSHIP-DATA:START -->
+<!-- SPONSORSHIP-DATA:END -->
