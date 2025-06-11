@@ -280,8 +280,6 @@ Nixopus is derived from the combination of "octopus" and the Linux penguin (Tux)
 
 Made with [contrib.rocks](https://contrib.rocks).
 
-## Sponsors
-
-<!-- SPONSORSHIP-DATA:START -->
-
-<!-- SPONSORSHIP-DATA:END -->
+## Supporters
+<!-- sponsors-start -->
+<!-- sponsors-end -->
