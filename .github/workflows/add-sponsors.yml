@@ -1,11 +1,11 @@
-name: Generate Sponsors README
+name: Update Sponsors
 
 on:
   workflow_dispatch: # Manual trigger
-  push: # On merge/push
+  push: # Trigger on every push
     branches: [main, master, feature-develop, feat/develop, shravan20-patch-1]
   schedule:
-    - cron: '0 0 * * *' # Runs every day at midnight
+    - cron: '0 0 * * *' # Daily automatic update
 
 permissions:
   contents: write
@@ -18,43 +18,49 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.PAT }}  # PAT with repo + read:user
+          token: ${{ secrets.PAT }}
 
-      - name: Fetch and Update Sponsors
+      - name: Setup environment
+        run: sudo apt-get install -y jq
+
+      - name: Fetch sponsors
+        id: fetch-sponsors
         run: |
-          # Install jq for JSON parsing
-          sudo apt-get install -y jq
-
-          # GraphQL query to fetch sponsors
           SPONSORS_JSON=$(curl -s -H "Authorization: token ${{ secrets.PAT }}" \
             -X POST -d '{
-              "query": "query { user(login:\"YOUR_GITHUB_USERNAME\") { sponsorshipsAsMaintainer(first: 100) { nodes { sponsor { login, avatarUrl, url } tier { name } } } } }"
+              "query": "query { user(login:\"${{ github.repository_owner }}\") { sponsorshipsAsMaintainer(first: 100) { nodes { sponsor { login, avatarUrl, url } tier { name } } } } }"
             }' https://api.github.com/graphql)
 
-          # Parse JSON and generate markdown
+          # Save formatted sponsors
           echo "$SPONSORS_JSON" | jq -r '
             "## 🎗️ Sponsors\n",
             (.data.user.sponsorshipsAsMaintainer.nodes[] | 
-              "- [![@\(.sponsor.login)](\(.sponsor.avatarUrl&size=32))](\(.sponsor.url)) **\(.sponsor.login)** (\(.tier.name))"
+              "- [![@\(.sponsor.login)](\(.sponsor.avatarUrl)&size=32)](\(.sponsor.url)) **\(.sponsor.login)** (\(.tier.name))"
             ),
             "\n❤️ Thank you for your support!"
           ' > sponsors.md
 
-          # Update README (preserves other content)
+          # Count sponsors for conditional update
+          SPONSOR_COUNT=$(echo "$SPONSORS_JSON" | jq '.data.user.sponsorshipsAsMaintainer.nodes | length')
+          echo "sponsor_count=$SPONSOR_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Update README
+        if: steps.fetch-sponsors.outputs.sponsor_count > 0
+        run: |
           awk -v new="$(cat sponsors.md)" '
             /<!-- sponsors-start -->/ { print; print new; f=1 }
             /<!-- sponsors-end -->/ { f=0 }
             !f { print }
           ' README.md > README.tmp && mv README.tmp README.md
 
-          # Debug output
-          echo "--- Updated README ---"
-          cat README.md | grep -A10 "Sponsors"
+          echo "--- README Preview ---"
+          head -n 20 README.md | grep -A10 "Sponsors"
 
-      - name: Commit Changes
+      - name: Commit changes
+        if: steps.fetch-sponsors.outputs.sponsor_count > 0
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add README.md
-          git diff --cached --quiet || git commit -m "Update sponsors"
+          git diff --cached --quiet || git commit -m "📌 Update sponsors [skip ci]"
           git push
