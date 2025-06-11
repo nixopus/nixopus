@@ -1,10 +1,11 @@
-name: Generate Sponsors README
+name: Update Sponsors
+
 on:
   workflow_dispatch: # Manual trigger
-  push: # On merge/push
+  push: # Trigger on every push
     branches: [main, master, feature-develop, feat/develop]
   schedule:
-    - cron: "30 15 * * 0-6" # Daily at 15:30 UTC
+    - cron: '0 0 * * *' # Daily automatic update
 
 permissions:
   contents: write
@@ -13,27 +14,76 @@ jobs:
   update-sponsors:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          token: ${{ secrets.PAT }}
 
-      - name: Generate Sponsors
-        uses: JamesIves/github-sponsors-readme-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          active-only: false
-          file: "README.md"
-          template: "* :heart: {link}"
+      - name: Setup environment
+        run: sudo apt-get install -y jq
 
-      - name: Commit and push if changed
+      - name: Fetch sponsors
+        id: fetch-sponsors
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add README.md
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
+          SPONSORS_JSON=$(curl -s -H "Authorization: token ${{ secrets.PAT }}" \
+            -X POST -d '{
+              "query": "query { user(login:\"${{ github.repository_owner }}\") { sponsorshipsAsMaintainer(first: 100) { nodes { sponsor { login, avatarUrl, url } } } } }"
+            }' https://api.github.com/graphql)
+      
+          # Save sponsors as markdown table (avatar and login with hyperlink)
+          echo "## 🎗️ Sponsors" > sponsors.md
+          echo "" >> sponsors.md
+          echo "| Avatar | Sponsor |" >> sponsors.md
+          echo "| ------ | ------- |" >> sponsors.md
+      
+          echo "$SPONSORS_JSON" | jq -r '.data.user.sponsorshipsAsMaintainer.nodes[] | 
+            "| [![](\(.sponsor.avatarUrl)&s=150)](\(.sponsor.url)) | [\(.sponsor.login)](\(.sponsor.url)) |"' >> sponsors.md
+      
+          echo "" >> sponsors.md
+          echo "❤️ Thank you for your support!" >> sponsors.md
+      
+          # Count sponsors for conditional update
+          SPONSOR_COUNT=$(echo "$SPONSORS_JSON" | jq '.data.user.sponsorshipsAsMaintainer.nodes | length')
+          echo "sponsor_count=$SPONSOR_COUNT" >> $GITHUB_OUTPUT
+
+      
+      - name: Update README
+        if: steps.fetch-sponsors.outputs.sponsor_count > 0
+        run: |
+          if [ -s sponsors.md ]; then
+            echo "Found sponsors data:"
+            cat sponsors.md
+            
+            # Create a temporary README with updated sponsors
+            awk -v new_content="$(cat sponsors.md)" '
+              BEGIN { in_sponsor_section = 0; printed = 0 }
+              /<!-- sponsors-start -->/ { 
+                print; 
+                in_sponsor_section = 1
+                if (!printed) {
+                  print new_content
+                  printed = 1
+                }
+                next
+              }
+              /<!-- sponsors-end -->/ { 
+                in_sponsor_section = 0 
+              }
+              !in_sponsor_section { print }
+            ' README.md > README.tmp && mv README.tmp README.md
+            
+            echo "--- Updated README Preview ---"
+            grep -A15 "Sponsors" README.md || echo "Sponsors section not found"
           else
-            git commit -m "docs: update sponsors in README"
-            git push
+            echo "No sponsors data found in sponsors.md"
+            exit 0
           fi
+
+      - name: Commit changes
+        if: steps.fetch-sponsors.outputs.sponsor_count > 0
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add README.md
+          git diff --cached --quiet || git commit -m "Update sponsors [skip ci]"
+          git push
