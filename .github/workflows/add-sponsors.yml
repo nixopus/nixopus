@@ -85,5 +85,5 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add README.md
-          git diff --cached --quiet || git commit -m "📌 Update sponsors [skip ci]"
+          git diff --cached --quiet || git commit -m "Update sponsors [skip ci]"
           git push
