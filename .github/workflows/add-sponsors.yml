@@ -17,6 +17,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug Sponsors API
+        run: |
+          curl -s -H "Authorization: token ${{ secrets.PAT }}" \
+          -H "Content-Type: application/json" \
+          -d '{"query":"query { user(login:\"your-username\") { sponsorshipsAsMaintainer(first: 100) { nodes { sponsor { login } tier { name } } } } }"}' \
+          https://api.github.com/graphql | jq .
+
       - name: Fetch Sponsorships and Commit
         uses: santoshyadavdev/sponsorship-green-squares@main
         with:
