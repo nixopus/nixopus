@@ -31,7 +31,7 @@ This guide provides detailed instructions for contributing to the Nixopus fronte
    yarn dev
    ```
 
-   The development server will start on [http://localhost:3000](http://localhost:3000) by default.
+   The development server will start on `http://localhost:3000` by default.
 
 ## Project Structure
 

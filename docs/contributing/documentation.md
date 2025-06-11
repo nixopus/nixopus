@@ -46,7 +46,7 @@ docs/
    yarn dev
    ```
    
-   This will start a local server, typically at [http://localhost:3001](http://localhost:3001).
+   This will start a local server, typically at `http://localhost:3001`
 
 ## Documentation Standards
 
@@ -70,8 +70,8 @@ Nixopus documentation uses Markdown with some extended features:
    ```
 
 3. **Links**
-   - Internal links: `[Link text](/path/to/page)`
-   - External links: `[Link text](https://example.com)`
+   - Internal links: `[Link text] (/path/to/page)`
+   - External links: `[Link text] (https://example.com)`
 
 4. **Images**
    - Store images in `/docs/public/`
@@ -195,8 +195,8 @@ If you encounter [issue], try:
 
 ## Related Features
 
-- [Related Feature 1](/path/to/related-feature)
-- [Related Feature 2](/path/to/another-feature)
+- [Related Feature 1] (/path/to/related-feature)
+- [Related Feature 2] (/path/to/another-feature)
 ```
 
 ## Updating Existing Documentation
