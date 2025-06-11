@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  sponsorships: read
   
 jobs:
   update-sponsors:
@@ -16,6 +17,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT }}
+
 
       - name: Debug Sponsors API
         run: |
@@ -28,6 +33,8 @@ jobs:
         uses: santoshyadavdev/sponsorship-green-squares@main
         with:
           allow-add-to-readme: 'true' # Default value, set to 'true' to enable README updates
+          github-username: 'raghavyuva'
+          readme-path: 'README.md'
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
           # do not use GITHUB_TOKEN as it lacks the permission to call graphql APIs,
