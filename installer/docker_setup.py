@@ -245,7 +245,7 @@ ExecStart=/usr/bin/dockerd"""
                 text=True
             )
             
-            print(f"\checking systemd")
+            print("Checking systemd")
             systemd_result = subprocess.run(
                 ["systemctl", "status", "docker"],
                 capture_output=True,

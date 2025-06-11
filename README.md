@@ -40,7 +40,7 @@ Nixopus is a powerful platform designed to simplify VPS management. Whether you'
   - *Integrated Web-Based Terminal*: Access your server's terminal directly from the browser, allowing you to manage your server with ease.
   - *Intuitive File Manager*: Navigate and manage server files through a user-friendly interface.
   - *Real Time Monitoring*: Monitor your server's CPU, RAM, containers, processes and resource usage in real-time.
-  - *Built in TLS Management*: Configura & manage TLS certificates for your domains directly within dashboard.
+  - *Built in TLS Management*: Configure & manage TLS certificates for your domains directly within the dashboard.
   - *GitHub Integration for CI/CD*: Seamlessly integrate GitHub repositories for continuous integration and deployment.
   - *Proxy Management via Caddy*: Configure and manage reverse proxies for your applications, streamlining the process of hosting multiple services.
   - *Notification Integration*: Configure to send real-time alerts for critical server events directly to your preferred channels, including Slack, Discord, or Email.
@@ -250,7 +250,7 @@ Thank you for your interest in contributing to Nixopus! This [guide](docs/contri
 We've dedicated significant time to making Nixopus free and accessible. Your support helps us continue our development and vision for open source. Consider becoming a sponsor and join our community of supporters.
 
 - ![GitHub Sponsors](https://img.shields.io/github/sponsors/raghavyuva?label=Github%20Sponsor)
-- <a href="https://liberapay.com/raghavyuva/donate"><img src="https://img.shields.io/liberapay/goal/raghavyuva.svg?logo=liberapay"></a>
+- <a href="https://liberapay.com/raghavyuva/donate"><img src="https://img.shields.io/liberapay/goal/raghavyuva.svg?logo=liberapay" alt="Donate to raghavyuva via Liberapay"></a>
 
 ## Community & Support
 
@@ -275,7 +275,7 @@ Nixopus is derived from the combination of "octopus" and the Linux penguin (Tux)
 ## Contributors
 
 <a href="https://github.com/raghavyuva/nixopus/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=raghavyuva/nixopus" />
+  <img src="https://contrib.rocks/image?repo=raghavyuva/nixopus" alt="Nixopus project contributors" />
 </a>
 
 Made with [contrib.rocks](https://contrib.rocks).

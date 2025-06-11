@@ -97,7 +97,7 @@
         },
         "system": {
             "supported_os": ["Linux"],
-            "required_tools": ["curl", "docker", "docker-compose"]
+            "required_tools": ["curl", "docker"]
         },
         "api": {
             "health_endpoint": "/api/v1/health",
@@ -231,7 +231,7 @@
         },
         "system": {
             "supported_os": ["Linux"],
-            "required_tools": ["curl", "docker", "docker-compose"]
+            "required_tools": ["curl", "docker"]
         },
         "api": {
             "health_endpoint": "/api/v1/health",

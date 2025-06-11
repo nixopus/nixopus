@@ -1,9 +1,6 @@
 name: Generate Sponsors README
 on:
   workflow_dispatch: # Manual trigger
-  pull_request: # On MR events
-    types: [opened, reopened, synchronize]
-    branches: [main, master, feature-develop, feat/develop]
   push: # On merge/push
     branches: [main, master, feature-develop, feat/develop]
   schedule:
@@ -11,21 +8,32 @@ on:
 
 permissions:
   contents: write
+
 jobs:
-  deploy:
+  update-sponsors:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate Sponsors
         uses: JamesIves/github-sponsors-readme-action@v1
         with:
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          active-only: false
           file: "README.md"
+          template: "* :heart: {link}"
 
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: main
-          folder: "."
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add README.md
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "docs: update sponsors in README"
+            git push
+          fi

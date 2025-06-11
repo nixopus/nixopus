@@ -23,7 +23,7 @@ export const authApi = createApi({
           body: {
             ...credentials,
             type: 'admin',
-            username: credentials.email.split('@')[0],
+            username: credentials.email?.split('@')[0] || 'admin',
             organization: ''
           }
         };
