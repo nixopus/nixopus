@@ -282,4 +282,9 @@ Made with [contrib.rocks](https://contrib.rocks).
 
 ## Supporters
 <!-- sponsors-start -->
+## 🎗️ Sponsors
+
+- [![@shravan20](https://avatars.githubusercontent.com/u/47430686?u=4185ecc1ab0fb92dd3f722f0d3a34ed044de0aec&v=4&size=32)](https://github.com/shravan20) **shravan20** ($70 one time)
+
+❤️ Thank you for your support!
 <!-- sponsors-end -->
