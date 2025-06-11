@@ -21,7 +21,7 @@ jobs:
         run: |
           curl -s -H "Authorization: token ${{ secrets.PAT }}" \
           -H "Content-Type: application/json" \
-          -d '{"query":"query { user(login:\"your-username\") { sponsorshipsAsMaintainer(first: 100) { nodes { sponsor { login } tier { name } } } } }"}' \
+          -d '{"query":"query { user(login:\"raghavyuva\") { sponsorshipsAsMaintainer(first: 100) { nodes { sponsor { login } tier { name } } } } }"}' \
           https://api.github.com/graphql | jq .
 
       - name: Fetch Sponsorships and Commit
