@@ -3,7 +3,7 @@ name: Generate Sponsors README
 on:
   workflow_dispatch: # Manual trigger
   push: # On merge/push
-    branches: [main, master, feature-develop, feat/develop]
+    branches: [main, master, feature-develop, feat/develop, shravan20-patch-1]
   schedule:
     - cron: '0 0 * * *' # Runs every day at midnight
 
