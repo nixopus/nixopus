@@ -37,7 +37,7 @@ jobs:
           echo "| ------ | ------- |" >> sponsors.md
       
           echo "$SPONSORS_JSON" | jq -r '.data.user.sponsorshipsAsMaintainer.nodes[] | 
-            "| [![](\(.sponsor.avatarUrl)?s=16)](\(.sponsor.url)) | [\(.sponsor.login)](\(.sponsor.url)) |"' >> sponsors.md
+            "| [![](\(.sponsor.avatarUrl)&s=150)](\(.sponsor.url)) | [\(.sponsor.login)](\(.sponsor.url)) |"' >> sponsors.md
       
           echo "" >> sponsors.md
           echo "❤️ Thank you for your support!" >> sponsors.md
