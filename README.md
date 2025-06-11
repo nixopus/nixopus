@@ -280,7 +280,7 @@ Nixopus is derived from the combination of "octopus" and the Linux penguin (Tux)
 
 Made with [contrib.rocks](https://contrib.rocks).
 
-<!-- sponsors-start --><!-- sponsors-end -->
+<!-- sponsors-start -->
 ## 🎗️ Sponsors
 
 | Avatar | Sponsor |
@@ -288,3 +288,4 @@ Made with [contrib.rocks](https://contrib.rocks).
 | [![](https://avatars.githubusercontent.com/u/47430686?u=4185ecc1ab0fb92dd3f722f0d3a34ed044de0aec&v=4&s=150)](https://github.com/shravan20) | [shravan20](https://github.com/shravan20) |
 
 ❤️ Thank you for your support!
+<!-- sponsors-end -->
