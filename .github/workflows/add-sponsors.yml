@@ -1,39 +1,29 @@
 name: Generate Sponsors README
+
 on:
   workflow_dispatch: # Manual trigger
   push: # On merge/push
     branches: [main, master, feature-develop, feat/develop]
   schedule:
-    - cron: "30 15 * * 0-6" # Daily at 15:30 UTC
+    - cron: '0 0 * * *' # Runs every day at midnight
 
 permissions:
   contents: write
-
+  
 jobs:
   update-sponsors:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate Sponsors
-        uses: JamesIves/github-sponsors-readme-action@v1
+      - name: Fetch Sponsorships and Commit
+        uses: santoshyadavdev/sponsorship-green-squares@main
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          active-only: false
-          file: "README.md"
-          template: "* :heart: {link}"
-
-      - name: Commit and push if changed
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add README.md
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "docs: update sponsors in README"
-            git push
-          fi
+          allow-add-to-readme: 'true' # Default value, set to 'true' to enable README updates
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # do not use GITHUB_TOKEN as it lacks the permission to call graphql APIs,
+          #create a new Personal Access TOKEN and provide read:org access to read to sponsorship data
