@@ -22,6 +22,6 @@ jobs:
         with:
           allow-add-to-readme: 'true' # Default value, set to 'true' to enable README updates
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
           # do not use GITHUB_TOKEN as it lacks the permission to call graphql APIs,
           #create a new Personal Access TOKEN and provide read:org access to read to sponsorship data
