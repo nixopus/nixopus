@@ -10,32 +10,51 @@ on:
 permissions:
   contents: write
   sponsorships: read
-  
+
 jobs:
   update-sponsors:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.PAT }}  # PAT with repo + read:user
 
-
-      - name: Debug Sponsors API
+      - name: Fetch and Update Sponsors
         run: |
-          curl -s -H "Authorization: token ${{ secrets.PAT }}" \
-          -H "Content-Type: application/json" \
-          -d '{"query":"query { user(login:\"raghavyuva\") { sponsorshipsAsMaintainer(first: 100) { nodes { sponsor { login } tier { name } } } } }"}' \
-          https://api.github.com/graphql | jq .
+          # Install jq for JSON parsing
+          sudo apt-get install -y jq
 
-      - name: Fetch Sponsorships and Commit
-        uses: santoshyadavdev/sponsorship-green-squares@main
-        with:
-          allow-add-to-readme: 'true' # Default value, set to 'true' to enable README updates
-          github-username: 'raghavyuva'
-          readme-path: 'README.md'
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
-          # do not use GITHUB_TOKEN as it lacks the permission to call graphql APIs,
-          #create a new Personal Access TOKEN and provide read:org access to read to sponsorship data
+          # GraphQL query to fetch sponsors
+          SPONSORS_JSON=$(curl -s -H "Authorization: token ${{ secrets.PAT }}" \
+            -X POST -d '{
+              "query": "query { user(login:\"YOUR_GITHUB_USERNAME\") { sponsorshipsAsMaintainer(first: 100) { nodes { sponsor { login, avatarUrl, url } tier { name } } } } }"
+            }' https://api.github.com/graphql)
+
+          # Parse JSON and generate markdown
+          echo "$SPONSORS_JSON" | jq -r '
+            "## 🎗️ Sponsors\n",
+            (.data.user.sponsorshipsAsMaintainer.nodes[] | 
+              "- [![@\(.sponsor.login)](\(.sponsor.avatarUrl&size=32))](\(.sponsor.url)) **\(.sponsor.login)** (\(.tier.name))"
+            ),
+            "\n❤️ Thank you for your support!"
+          ' > sponsors.md
+
+          # Update README (preserves other content)
+          awk -v new="$(cat sponsors.md)" '
+            /<!-- sponsors-start -->/ { print; print new; f=1 }
+            /<!-- sponsors-end -->/ { f=0 }
+            !f { print }
+          ' README.md > README.tmp && mv README.tmp README.md
+
+          # Debug output
+          echo "--- Updated README ---"
+          cat README.md | grep -A10 "Sponsors"
+
+      - name: Commit Changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add README.md
+          git diff --cached --quiet || git commit -m "Update sponsors"
+          git push
