@@ -2,9 +2,9 @@ name: QEMU Setup and Installation
 
 on:
   push:
-    branches: [feat/develop]
+    branches: [feat/develop,feat/fix_domain_deployment]
   pull_request:
-    branches: [feat/develop]
+    branches: [feat/develop,feat/fix_domain_deployment]
   workflow_dispatch:
 
 jobs:
@@ -52,3 +52,7 @@ jobs:
       - name: Run install script
         run: |
           sudo ./scripts/install.sh --email="${{ env.ADMIN_EMAIL }}" --password="${{ env.ADMIN_PASSWORD }}"
+
+      - name: Run install script with domain name
+        run: |
+          sudo ./scripts/install.sh --email="${{ env.ADMIN_EMAIL }}" --password="${{ env.ADMIN_PASSWORD }}" --api-domain="api.nixopus.local" --app-domain="app.nixopus.local"

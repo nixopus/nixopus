@@ -56,7 +56,7 @@ function setup_config_based_on_environment() {
     else
         NIXOPUS_DIR="/etc/nixopus"
         SOURCE_DIR="$NIXOPUS_DIR/source"
-        BRANCH="feat/develop" # TODO: change to master
+        BRANCH="feat/fix_domain_deployment" # TODO: change to master
     fi
 }
 

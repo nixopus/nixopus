@@ -50,12 +50,8 @@ class Validation:
             if server_ip != domain_ip:
                 print(f"Warning: Domain {domain} does not point to this server's IP ({server_ip})")
                 print("Please ensure your DNS records are properly configured before proceeding.")
-                if input("Do you want to continue anyway? (y/n): ").lower() != 'y':
-                    sys.exit(1)
         except socket.gaierror:
             print(f"Warning: Could not resolve domain {domain}")
             print("Please ensure your DNS records are properly configured before proceeding.")
-            if input("Do you want to continue anyway? (y/n): ").lower() != 'y':
-                sys.exit(1)
             
         return domain
