@@ -65,9 +65,10 @@ export default withMermaid(
             />
             <br />
             Released under the Functional Source License (FSL)
+            <br />
+            Copyright © 2025-present Nixopus
           </p>
         `,
-        copyright: 'Copyright © 2025-present Nixopus'
       },
       sidebar: [
         {
