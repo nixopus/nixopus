@@ -69,7 +69,15 @@ def main():
                 print(f"Retrying API status check (attempt {retry_count + 1}/{max_retries})...")
     
     docker_setup = installer.service_manager.docker_setup
-    nixopus_accessible_at = domains['app_domain'] if domains and 'app_domain' in domains else docker_setup.get_public_ip()
+    if domains and isinstance(domains, dict) and domains.get("app_domain"):
+        nixopus_accessible_at = domains["app_domain"]
+    else:
+        app_port = str(env_vars.get("APP_PORT", ""))
+        nixopus_accessible_at = (
+            docker_setup.get_public_ip()
+            if app_port in {"80", "443"}
+            else f"{docker_setup.get_public_ip()}:{app_port}"
+        )
     print("\n\033[1mInstallation Complete!\033[0m")
     print(f"• Nixopus is accessible at: {nixopus_accessible_at}")
     

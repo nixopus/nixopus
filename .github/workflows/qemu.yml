@@ -7,12 +7,13 @@ on:
     branches: [feat/develop]
   workflow_dispatch:
 
+env:
+  ADMIN_EMAIL: admin@nixopus.local
+  ADMIN_PASSWORD: Nixopus@123!Secure
+
 jobs:
-  qemu:
+  setup-environment:
     runs-on: ubuntu-latest
-    env:
-      ADMIN_EMAIL: admin@nixopus.local
-      ADMIN_PASSWORD: Nixopus@123!Secure
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -49,6 +50,115 @@ jobs:
       - name: Make install script executable
         run: chmod +x scripts/install.sh
 
+  test-installation:
+    needs: setup-environment
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Basic combinations
+          - name: minimal
+            env: production
+            email: ""
+            password: ""
+            api_domain: ""
+            app_domain: ""
+          - name: email-only
+            env: production
+            email: admin@nixopus.local
+            password: ""
+            api_domain: ""
+            app_domain: ""
+          - name: password-only
+            env: production
+            email: ""
+            password: Nixopus@123!Secure
+            api_domain: ""
+            app_domain: ""
+          - name: email-password
+            env: production
+            email: admin@nixopus.local
+            password: Nixopus@123!Secure
+            api_domain: ""
+            app_domain: ""
+
+          # Domain combinations
+          - name: api-domain-only
+            env: production
+            email: admin@nixopus.local
+            password: Nixopus@123!Secure
+            api_domain: api.nixopus.local
+            app_domain: ""
+          - name: app-domain-only
+            env: production
+            email: admin@nixopus.local
+            password: Nixopus@123!Secure
+            api_domain: ""
+            app_domain: app.nixopus.local
+          - name: both-domains
+            env: production
+            email: admin@nixopus.local
+            password: Nixopus@123!Secure
+            api_domain: api.nixopus.local
+            app_domain: app.nixopus.local
+
+          # # Staging combinations
+          # - name: staging-minimal
+          #   env: staging
+          #   email: ""
+          #   password: ""
+          #   api_domain: ""
+          #   app_domain: ""
+          # - name: staging-email-password
+          #   env: staging
+          #   email: admin@nixopus.local
+          #   password: Nixopus@123!Secure
+          #   api_domain: ""
+          #   app_domain: ""
+          # - name: staging-api-domain-only
+          #   env: staging
+          #   email: admin@nixopus.local
+          #   password: Nixopus@123!Secure
+          #   api_domain: api.staging.nixopus.local
+          #   app_domain: ""
+          # - name: staging-app-domain-only
+          #   env: staging
+          #   email: admin@nixopus.local
+          #   password: Nixopus@123!Secure
+          #   api_domain: ""
+          #   app_domain: app.staging.nixopus.local
+          # - name: staging-both-domains
+          #   env: staging
+          #   email: admin@nixopus.local
+          #   password: Nixopus@123!Secure
+          #   api_domain: api.staging.nixopus.local
+          #   app_domain: app.staging.nixopus.local
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Run install script
         run: |
-          sudo ./scripts/install.sh --email="${{ env.ADMIN_EMAIL }}" --password="${{ env.ADMIN_PASSWORD }}"
+          cmd="./scripts/install.sh"
+          
+          if [ -n "${{ matrix.email }}" ]; then
+            cmd="$cmd --email=${{ matrix.email }}"
+          fi
+          
+          if [ -n "${{ matrix.password }}" ]; then
+            cmd="$cmd --password=${{ matrix.password }}"
+          fi
+          
+          if [ -n "${{ matrix.api_domain }}" ]; then
+            cmd="$cmd --api-domain=${{ matrix.api_domain }}"
+          fi
+          
+          if [ -n "${{ matrix.app_domain }}" ]; then
+            cmd="$cmd --app-domain=${{ matrix.app_domain }}"
+          fi
+          
+          cmd="$cmd --env=${{ matrix.env }}"
+          
+          echo "Running command: $cmd"
+          sudo $cmd

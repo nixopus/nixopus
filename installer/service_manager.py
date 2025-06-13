@@ -145,7 +145,7 @@ class ServiceManager:
     def setup_caddy(self, domains, env):
         print("\nSetting up Proxy...")
         try:
-            with open(self.config.caddy['config_path'], 'r') as f:
+            with open(self.project_root / self.config.caddy['config_path'], 'r') as f:
                 config_str = f.read()
                 config_str = config_str.replace('{env.APP_DOMAIN}', domains['app_domain'])
                 config_str = config_str.replace('{env.API_DOMAIN}', domains['api_domain'])
