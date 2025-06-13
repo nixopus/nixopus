@@ -59,51 +59,33 @@ class InputParser:
         return None
     
     def get_admin_credentials_from_args(self, args):
-        if not args.email and not args.password:
-            return None, None
-
+        # if email and password are provided, validate them and return them
         if args.email and args.password:
             self.validation.validate_email(args.email)
             self.validation.validate_password(args.password)
             return args.email, args.password
 
-        if args.email:
-            self.validation.validate_email(args.email)
-            password = getpass.getpass("Please enter the password for the admin(generates a strong password if left blank): ")
-            if not password:
-                password = self.generate_strong_password()
-            self.validation.validate_password(password)
-            return args.email, password
-
-        if args.password:
-            self.validation.validate_password(args.password)
-            email = input("Please enter the email for the admin: ")
-            if not email:
-                print("Error: Email is required")
-                sys.exit(1)
-            self.validation.validate_email(email)
-            return email, args.password
-
+        # return None if only one of email or password is provided or if both are not provided
         return None, None
     
-    def ask_admin_credentials(self):
-        """
-        Ask for admin credentials
-        """
-        while True:
-            email = input("Please enter the email for the admin: ")
-            try:
-                self.validation.validate_email(email)
-                break
-            except SystemExit:
-                print("Please enter a valid email address")
-                continue
+    # def ask_admin_credentials(self):
+    #     """
+    #     Ask for admin credentials
+    #     """
+    #     while True:
+    #         email = input("Please enter the email for the admin: ")
+    #         try:
+    #             self.validation.validate_email(email)
+    #             break
+    #         except SystemExit:
+    #             print("Please enter a valid email address")
+    #             continue
                 
-        password = input("Please enter the password for the admin(generates a strong password if left blank): ")
-        if not password:
-            password = self.generate_strong_password()
-        self.validation.validate_password(password)
-        return email, password
+    #     password = input("Please enter the password for the admin(generates a strong password if left blank): ")
+    #     if not password:
+    #         password = self.generate_strong_password()
+    #     self.validation.validate_password(password)
+    #     return email, password
     
     # def ask_for_domain(self):
     #     """
