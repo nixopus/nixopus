@@ -1,3 +1,17 @@
+# [](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.8...v) (2025-06-13)
+
+
+### Bug Fixes
+
+* Domain deployment fails due to unresolved helpers/caddy.json path ([b3bb53c](https://github.com/raghavyuva/nixopus/commit/b3bb53c340f459aadc82ea4117388e43c653cba9))
+* installation message to print out ip:port format ([12f0354](https://github.com/raghavyuva/nixopus/commit/12f0354010e0ef4467e961759b14d9d374afde42))
+* remove asking for confirmation from user when domain validation fails ([0014e84](https://github.com/raghavyuva/nixopus/commit/0014e846972c3a1f9751e91078688c2e55cb11ce))
+* remove interactive admin credential asking through installation wizard ([cfdb159](https://github.com/raghavyuva/nixopus/commit/cfdb1592bfdce041a64b2706a9c101f3c0885925))
+* remove string quotes on parameter passing in qemu steps ([73746af](https://github.com/raghavyuva/nixopus/commit/73746af599526c40b202942e05491c256ccf30f8))
+* seperate jobs for domain based installation and ip based installation ([b0736ad](https://github.com/raghavyuva/nixopus/commit/b0736ad5fd31c65aeb87d5157a19e282fdcaaeb9))
+
+
+
 # [](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.7...v) (2025-06-11)
 
 

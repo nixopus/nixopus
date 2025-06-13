@@ -12,12 +12,18 @@ from service_config import ServiceConfig
 import time
 
 class ServiceManager:
-    def __init__(self, project_root, env="staging"):
+    def __init__(self, project_root, env="staging", debug=False):
         self.project_root = project_root
-        self.docker_setup = DockerSetup(env)
+        self.debug = debug
+        self.docker_setup = DockerSetup(env, debug)
         self.config = self._load_config(env)
 
+    def debug_print(self, message):
+        if self.debug:
+            print(f"[DEBUG] {message}")
+
     def _load_config(self, env: str) -> ServiceConfig:
+        self.debug_print("Loading service configuration...")
         config_path = Path(__file__).parent.parent / "helpers" / "config.json"
         base_config = BaseConfig[ServiceConfig](
             config_path=config_path,
@@ -30,7 +36,7 @@ class ServiceManager:
         return base_config.create(ServiceConfig)
 
     def check_system_requirements(self):
-        print("Checking system requirements...")
+        self.debug_print("Checking system requirements...")
         
         system = platform.system()
         if system not in self.config.system['supported_os']:
@@ -39,16 +45,17 @@ class ServiceManager:
 
         self.check_required_tools()
 
-        print("System requirements check passed!")
+        self.debug_print("System requirements check passed!")
             
     def check_required_tools(self):
+        self.debug_print("Checking required tools...")
         for tool in self.config.system['required_tools']:
             if not shutil.which(tool):
                 print(f"Error: {tool} is not installed")
                 sys.exit(1)
 
     def start_services(self, env):
-        print("\nStarting services...")
+        self.debug_print("Starting services...")
         try:
             try:
                 subprocess.run(["docker", "info"], check=True, capture_output=True)
@@ -63,7 +70,7 @@ class ServiceManager:
             
             compose_file = os.path.join(self.config.source, self.config.compose['file'])
             
-            print(f"Using Docker Compose file: {compose_file}")
+            self.debug_print(f"Using Docker Compose file: {compose_file}")
             if not os.path.exists(compose_file):
                 print(f"Error: Docker Compose file not found at {compose_file}")
                 sys.exit(1)
@@ -71,7 +78,7 @@ class ServiceManager:
             compose_cmd = ["docker", "compose", "-f", compose_file]
             
             if env == "staging":
-                print("Building and starting staging services...")
+                self.debug_print("Building and starting staging services...")
                 result = subprocess.run(
                     compose_cmd + ["up", "--build", "-d"],
                     capture_output=True,
@@ -83,7 +90,7 @@ class ServiceManager:
                     print(result.stderr)
                     raise Exception("Failed to build and start services")
             else:
-                print("Pulling production images...")
+                self.debug_print("Pulling production images...")
                 pull_result = subprocess.run(
                     compose_cmd + ["pull"],
                     capture_output=True,
@@ -95,7 +102,7 @@ class ServiceManager:
                     print(pull_result.stderr)
                     raise Exception("Failed to pull images")
                 
-                print("Starting services...")
+                self.debug_print("Starting services...")
                 result = subprocess.run(
                     compose_cmd + ["up", "-d"],
                     capture_output=True,
@@ -111,7 +118,7 @@ class ServiceManager:
             sys.exit(1)
             
     def verify_installation(self, env):
-        print("\nVerifying installation...")
+        self.debug_print("Verifying installation...")
         try:
             result = subprocess.run(["docker", "ps", "--format", "{{.Names}} {{.Status}}"], capture_output=True, text=True)
             if result.returncode != 0:
@@ -137,13 +144,13 @@ class ServiceManager:
                     print(f"  - {service}")
                 sys.exit(1)
 
-            print("All services are running successfully!")
+            self.debug_print("All services are running successfully!")
         except Exception as e:
             print(f"Error verifying installation: {str(e)}")
             sys.exit(1)
     
     def setup_caddy(self, domains, env):
-        print("\nSetting up Proxy...")
+        self.debug_print("Setting up Proxy...")
         try:
             with open(self.project_root / self.config.caddy['config_path'], 'r') as f:
                 config_str = f.read()
@@ -154,6 +161,7 @@ class ServiceManager:
                 config_str = config_str.replace('{env.APP_REVERSE_PROXY_URL}', app_reverse_proxy_url)
                 config_str = config_str.replace('{env.API_REVERSE_PROXY_URL}', api_reverse_proxy_url)
                 new_config = json.loads(config_str)
+                self.debug_print("Loading Caddy configuration...")
                 response = requests.post(
                     f'http://localhost:{self.config.caddy["admin_port"]}/load',
                     json=new_config,
@@ -163,28 +171,31 @@ class ServiceManager:
                     print("Failed to create server configuration:")
                     print(response.text)
                     raise Exception("Failed to create server configuration")
-            print("Caddy configuration loaded successfully")
+            self.debug_print("Caddy configuration loaded successfully")
         except requests.exceptions.RequestException as e:
             print(f"Error connecting to Caddy: {str(e)}")
         except Exception as e:
             print(f"Error setting up Caddy: {str(e)}")
     
     def check_api_up_status(self, port):
-        print(f"Checking API status on port {port}...")
+        self.debug_print(f"Checking API status on port {port}...")
         try:
             response = requests.get(f"http://localhost:{port}{self.config.api['health_endpoint']}", verify=False)
             if response.status_code == 200:
+                self.debug_print("API is up and running")
                 return True
+            self.debug_print("API is not responding")
             return False
         except requests.exceptions.RequestException as e:
-            print(f"Error checking API status: {str(e)}")
+            self.debug_print(f"Error checking API status: {str(e)}")
             return False
     
     def setup_admin(self, email, password, port):
-        print("\nSetting up admin...")
+        self.debug_print("Setting up admin...")
         username = email.split('@')[0]
         
         try:
+            self.debug_print(f"Creating admin account for {email}...")
             response = requests.post(
                 f"http://localhost:{port}{self.config.api['register_endpoint']}",
                 json={
@@ -198,11 +209,11 @@ class ServiceManager:
             )
             
             if response.status_code == 200:
-                print("Admin setup completed successfully")
+                self.debug_print("Admin setup completed successfully")
                 return
                 
             if response.status_code == 400 and "admin already registered" in response.text:
-                print("Admin already registered")
+                self.debug_print("Admin already registered")
                 return
                 
             error_msg = response.json().get("message", "Unknown error")
