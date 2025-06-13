@@ -56,8 +56,12 @@ export default withMermaid(
         { text: 'Blog', link: '/blog/' }
       ],
       footer: {
-        message: `<p align="center"><p align="center"><img src="https://madewithlove.now.sh/in?heart=true&colorA=%23ff671f&colorB=%23046a38&text=Open Source" alt="Made with love with Open Source" /></p><br>
-    Released under the Functional Source License (FSL)</p>`,
+        message: `
+          <p style="text-align:center">
+            <img src="https://madewithlove.now.sh/in?heart=true&colorA=%23ff671f&colorB=%23046a38&text=Open Source" alt="Made with love with Open Source" /><br/>
+            Released under the Functional Source License (FSL)
+          </p>
+        `,
         copyright: 'Copyright © 2025-present Nixopus'
       },
       sidebar: [
