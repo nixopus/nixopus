@@ -14,7 +14,7 @@ export default withMermaid(
     title: "Nixopus Docs",
     description: "documentation",
     head: [['link', { rel: 'icon', href: '/favicon.png' }]],
-    base: '/',
+    base: '/nixopus/',
     themeConfig: {
       search: {
         provider: 'local',
@@ -56,10 +56,8 @@ export default withMermaid(
         { text: 'Blog', link: '/blog/' }
       ],
       footer: {
-        message: `<p align="center"><img src="https://madewithlove.now.sh/in?heart=true&colorA=%23ff671f&colorB=%23046a38&text=Open Source" alt="Made with love with Open Source" /></p>
-          Released under the Functional Source License (FSL)
-        `,
-        copyright: 'Copyright © 2025-present Nixopus'
+        message: `<img src="https://madewithlove.now.sh/in?heart=true&colorA=%23ff671f&colorB=%23046a38&text=Open%20Source" alt="Made with love" style="display:block;margin:0 auto;" /><br>Released under the Functional Source License (FSL)`,
+        copyright: 'Copyright © 2025–present Nixopus'
       },
       sidebar: [
         {
