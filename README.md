@@ -75,7 +75,7 @@ Nixopus is a powerful platform designed to simplify VPS management. Whether you'
 - [Acknowledgments](#acknowledgments)
 - [About the Name](#about-the-name)
 - [Contributors](#contributors)
-- [🎗️ Sponsors](#️-sponsors)
+- [Sponsors](#sponsors)
 
 ## Demo / Screenshots
 
