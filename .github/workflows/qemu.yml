@@ -102,37 +102,37 @@ jobs:
             api_domain: api.nixopus.local
             app_domain: app.nixopus.local
 
-          # # Staging combinations
-          # - name: staging-minimal
-          #   env: staging
-          #   email: ""
-          #   password: ""
-          #   api_domain: ""
-          #   app_domain: ""
-          # - name: staging-email-password
-          #   env: staging
-          #   email: admin@nixopus.local
-          #   password: Nixopus@123!Secure
-          #   api_domain: ""
-          #   app_domain: ""
-          # - name: staging-api-domain-only
-          #   env: staging
-          #   email: admin@nixopus.local
-          #   password: Nixopus@123!Secure
-          #   api_domain: api.staging.nixopus.local
-          #   app_domain: ""
-          # - name: staging-app-domain-only
-          #   env: staging
-          #   email: admin@nixopus.local
-          #   password: Nixopus@123!Secure
-          #   api_domain: ""
-          #   app_domain: app.staging.nixopus.local
-          # - name: staging-both-domains
-          #   env: staging
-          #   email: admin@nixopus.local
-          #   password: Nixopus@123!Secure
-          #   api_domain: api.staging.nixopus.local
-          #   app_domain: app.staging.nixopus.local
+          # Staging combinations
+          - name: staging-minimal
+            env: staging
+            email: ""
+            password: ""
+            api_domain: ""
+            app_domain: ""
+          - name: staging-email-password
+            env: staging
+            email: admin@nixopus.local
+            password: Nixopus@123!Secure
+            api_domain: ""
+            app_domain: ""
+          - name: staging-api-domain-only
+            env: staging
+            email: admin@nixopus.local
+            password: Nixopus@123!Secure
+            api_domain: api.staging.nixopus.local
+            app_domain: ""
+          - name: staging-app-domain-only
+            env: staging
+            email: admin@nixopus.local
+            password: Nixopus@123!Secure
+            api_domain: ""
+            app_domain: app.staging.nixopus.local
+          - name: staging-both-domains
+            env: staging
+            email: admin@nixopus.local
+            password: Nixopus@123!Secure
+            api_domain: api.staging.nixopus.local
+            app_domain: app.staging.nixopus.local
 
     steps:
       - name: Checkout repository

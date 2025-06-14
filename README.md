@@ -75,7 +75,7 @@ Nixopus is a powerful platform designed to simplify VPS management. Whether you'
 - [Acknowledgments](#acknowledgments)
 - [About the Name](#about-the-name)
 - [Contributors](#contributors)
-- [Sponsors](#sponsors)
+- [🎗️ Sponsors](#️-sponsors)
 
 ## Demo / Screenshots
 
@@ -94,7 +94,7 @@ This section will help you set up Nixopus on your VPS quickly.
 To install Nixopus on your VPS, ensure you have sudo access and run the following command:
 
 ```
-sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/main/scripts/install.sh)"
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install.sh)"
 ```
 
 #### Optional Parameters
@@ -109,7 +109,7 @@ You can customize your installation by providing the following optional paramete
 Example with optional parameters:
 
 ```
-sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/main/scripts/install.sh)" -- \
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install.sh)" -- \
   --api-domain nixopusapi.example.tld \
   --app-domain nixopus.example.tld \
   --email admin@example.tld \

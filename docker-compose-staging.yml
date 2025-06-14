@@ -50,21 +50,21 @@ services:
       timeout: 5s
       retries: 5
 
-  nixopus-staging-redis:
-    image: redis:7-alpine
-    container_name: nixopus-staging-redis
-    restart: unless-stopped
-    ports:
-      - "${REDIS_PORT}:${REDIS_PORT}"
-    volumes:
-      - ${REDIS_VOLUME:-/etc/nixopus-staging/redis}:/data
-    networks:
-      - nixopus-network
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+  # nixopus-staging-redis:
+  #   image: redis:7-alpine
+  #   container_name: nixopus-staging-redis
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${REDIS_PORT}:${REDIS_PORT}"
+  #   volumes:
+  #     - ${REDIS_VOLUME:-/etc/nixopus-staging/redis}:/data
+  #   networks:
+  #     - nixopus-network
+  #   healthcheck:
+  #     test: [ "CMD", "redis-cli", "ping" ]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
 
   nixopus-staging-view:
     image: nixopus-staging-view:latest

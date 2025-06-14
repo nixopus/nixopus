@@ -72,12 +72,7 @@ def main():
     if domains and isinstance(domains, dict) and domains.get("app_domain"):
         nixopus_accessible_at = domains["app_domain"]
     else:
-        app_port = str(env_vars.get("APP_PORT", ""))
-        nixopus_accessible_at = (
-            docker_setup.get_public_ip()
-            if app_port in {"80", "443"}
-            else f"{docker_setup.get_public_ip()}:{app_port}"
-        )
+        nixopus_accessible_at = f"{docker_setup.get_public_ip()}:{env_vars.get("NEXT_PUBLIC_PORT", "3000")}"
     print("\n\033[1mInstallation Complete!\033[0m")
     print(f"• Nixopus is accessible at: {nixopus_accessible_at}")
     
