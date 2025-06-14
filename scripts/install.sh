@@ -27,6 +27,7 @@ function check_python_version() {
 
 # check if the required dependencies are installed
 function check_dependencies() {
+    echo "Checking dependencies..."
     check_command "python3"
     check_command "pip3"
     check_command "git"
@@ -47,6 +48,7 @@ function parse_command_line_arguments() {
 
 function setup_config_based_on_environment() {
     local env="$1"
+    echo "Setting up environment: $env"
     if [ "$env" == "staging" ]; then
         NIXOPUS_DIR="/etc/nixopus-staging"
         SOURCE_DIR="$NIXOPUS_DIR/source"
@@ -54,31 +56,34 @@ function setup_config_based_on_environment() {
     else
         NIXOPUS_DIR="/etc/nixopus"
         SOURCE_DIR="$NIXOPUS_DIR/source"
-        BRANCH="feat/installation_debug_mode" # TODO: change to master
+        BRANCH="master" # TODO: change to master
     fi
 }
 
 function create_nixopus_directories() {
+    echo "Creating Nixopus directories..."
     mkdir -p "${NIXOPUS_DIR:?}"
     mkdir -p "${SOURCE_DIR:?}"
 }
 
 function clone_nixopus_repository() {
+    echo "Cloning Nixopus repository..."
     if [ -d "${SOURCE_DIR:?}/.git" ]; then
         cd "${SOURCE_DIR:?}" || exit 1
-        git fetch --all > /dev/null 2>&1
-        git reset --hard "origin/${BRANCH:?}" > /dev/null 2>&1
-        git checkout "${BRANCH:?}" > /dev/null 2>&1
-        git pull > /dev/null 2>&1
+        git fetch --all
+        git reset --hard "origin/${BRANCH:?}"
+        git checkout "${BRANCH:?}"
+        git pull
     else
         rm -rf "${SOURCE_DIR:?}"/* "${SOURCE_DIR:?}"/.[!.]*
         git clone https://github.com/raghavyuva/nixopus.git "${SOURCE_DIR:?}"
         cd "${SOURCE_DIR:?}" || exit 1
-        git checkout "${BRANCH:?}" > /dev/null 2>&1
+        git checkout "${BRANCH:?}"
     fi
 }
 
 function setup_caddy_configuration() {
+    echo "Setting up Caddy configuration..."
     rm -rf "${NIXOPUS_DIR:?}/caddy"
     mkdir -p "${NIXOPUS_DIR:?}/caddy"
     # todo : take the port from the config file instead of hardcoding it
@@ -92,22 +97,28 @@ function setup_caddy_configuration() {
 }
 
 function setup_nixopus_installation_environment() {
+    echo "Setting up Python virtual environment..."
     cd "${SOURCE_DIR:?}/installer" || exit 1
     python3 -m venv venv
     source venv/bin/activate
-    pip install --upgrade pip > /dev/null 2>&1
-    pip install -r requirements.txt > /dev/null 2>&1
+    echo "Upgrading pip..."
+    pip install --upgrade pip
+    echo "Installing requirements..."
+    pip install -r requirements.txt
 }
 
 function run_installer() {
+    echo "Running installer..."
     PYTHONPATH="${SOURCE_DIR:?}/installer" python3 install.py "$@"
 }
 
 function deactivate_virtual_environment() {
+    echo "Deactivating virtual environment..."
     deactivate
 }
 
 function main() {
+    echo "Starting Nixopus installation..."
     check_dependencies
     ENV=$(parse_command_line_arguments "$@")
     setup_config_based_on_environment "$ENV"
@@ -117,6 +128,7 @@ function main() {
     setup_nixopus_installation_environment
     run_installer "$@"
     deactivate_virtual_environment
+    echo "Installation completed successfully!"
 }
 
 main "$@"
