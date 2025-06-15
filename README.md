@@ -1,6 +1,6 @@
-<a href="https://nixopus.com"><img align="right" src="./assets/nixopus_logo_transparent.png" alt="Nixopus Logo" width="300" /></a>
-
 # Nixopus
+
+<a href="https://nixopus.com"><img align="right" src="./assets/nixopus_logo_transparent.png" alt="Nixopus Logo" width="300" /></a>
 
 **Streamline Your Entire Server Workflow — ServerOps with No Fuss**
 
@@ -13,7 +13,9 @@
     <img src="https://madewithlove.now.sh/in?heart=true&colorA=%23ff671f&colorB=%23046a38&text=India" alt="Made with love with Open Source"/>
     <br><br>
 [Website](https://nixopus.com) | [Documentation](https://docs.nixopus.com)
-<br><br>
+
+<br><br><br>
+
 ## Project Overview
 
 Nixopus is a powerful platform designed to simplify VPS management. Whether you're a DevOps engineer, system administrator, or developer, Nixopus streamlines your workflow with comprehensive tools for deployment, monitoring, and maintenance.
