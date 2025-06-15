@@ -12,7 +12,12 @@
 ‎ ‎ ‎ [![Discord](https://img.shields.io/discord/1358854056642347180?label=Join%20Community&logo=discord&style=social)](https://discord.gg/skdcq39Wpv)
     <img src="https://madewithlove.now.sh/in?heart=true&colorA=%23ff671f&colorB=%23046a38&text=India" alt="Made with love with Open Source"/>
     <br><br>
+
+<div align="center">
+
 [Website](https://nixopus.com) | [Documentation](https://docs.nixopus.com)
+
+</div>
 
 <!-- Discord CTA Start -->
 <p align="left">
