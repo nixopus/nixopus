@@ -14,7 +14,19 @@
     <br><br>
 [Website](https://nixopus.com) | [Documentation](https://docs.nixopus.com)
 
-<br><br><br>
+<!-- Discord CTA Start -->
+<p align="left">
+  <a href="https://discord.gg/your-invite-link" target="_blank">
+    <img src="https://user-images.githubusercontent.com/31022056/158916278-4504b838-7ecb-4ab9-a900-7dc002aade78.png" 
+         alt="Join our Discord Community" 
+         width="200" 
+         style="border-radius: 12px; box-shadow: 0px 4px 12px rgba(0,0,0,0.15);" />
+  </a>
+</p>
+<!-- Discord CTA End -->
+
+
+
 
 ## Project Overview
 
