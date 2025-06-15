@@ -16,7 +16,7 @@
 
 <!-- Discord CTA Start -->
 <p align="left">
-  <a href="https://discord.gg/your-invite-link" target="_blank">
+  <a href="https://discord.gg/skdcq39Wpv" target="_blank">
     <img src="https://user-images.githubusercontent.com/31022056/158916278-4504b838-7ecb-4ab9-a900-7dc002aade78.png" 
          alt="Join our Discord Community" 
          width="200" 
