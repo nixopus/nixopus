@@ -26,9 +26,7 @@
       <a href="https://www.youtube.com/watch?v=DrDGWNq4JM4">
         <img src="https://img.shields.io/youtube/views/DrDGWNq4JM4?style=social&label=View%20Demo" alt="YouTube Video Views" />
       </a>
-      <a href="https://discord.gg/skdcq39Wpv">
-        <img src="https://img.shields.io/discord/1358854056642347180?label=Join%20Community&logo=discord&style=social" alt="Join Discord" />
-      </a>
+     <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/y/raghavyuva/nixopus">
       <img src="https://madewithlove.now.sh/in?heart=true&colorA=%23ff671f&colorB=%23046a38&text=India" alt="Made with love in India" />
       <br><br>
       <div align="center">
