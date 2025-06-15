@@ -13,25 +13,15 @@
     <img src="https://madewithlove.now.sh/in?heart=true&colorA=%23ff671f&colorB=%23046a38&text=India" alt="Made with love with Open Source"/>
     <br><br>
 
-<div align="center">
-
 [Website](https://nixopus.com) | [Documentation](https://docs.nixopus.com)
-
-</div>
 
 <!-- Discord CTA Start -->
 <p align="left">
   <a href="https://discord.gg/skdcq39Wpv" target="_blank">
-    <img src="https://user-images.githubusercontent.com/31022056/158916278-4504b838-7ecb-4ab9-a900-7dc002aade78.png" 
-         alt="Join our Discord Community" 
-         width="200" 
-         style="border-radius: 12px; box-shadow: 0px 4px 12px rgba(0,0,0,0.15);" />
+    <img src="https://user-images.githubusercontent.com/31022056/158916278-4504b838-7ecb-4ab9-a900-7dc002aade78.png" alt="Join our Discord Community" width="200" style="border-radius: 12px; box-shadow: 0px 4px 12px rgba(0,0,0,0.15);" />
   </a>
 </p>
 <!-- Discord CTA End -->
-
-
-
 
 ## Project Overview
 
