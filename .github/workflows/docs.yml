@@ -49,12 +49,8 @@ jobs:
 
       - name: Ensure CNAME exists
         run: |
-          if [ ! -f docs/.vitepress/dist/CNAME ] && [ -f CNAME ]; then
-            cp CNAME docs/.vitepress/dist/CNAME
-          # Fallback to docs-level CNAME
-          elif [ ! -f docs/.vitepress/dist/CNAME ] && [ -f docs/CNAME ]; then
-            cp docs/CNAME docs/.vitepress/dist/CNAME
-          fi
+          if [ ! -f docs/.vitepress/dist/CNAME ]; thenAdd commentMore actions
+            cp docs/public/CNAME docs/.vitepress/dist/CNAME
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
