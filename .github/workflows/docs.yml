@@ -51,6 +51,7 @@ jobs:
         run: |
           if [ ! -f docs/.vitepress/dist/CNAME ]; then
             cp docs/public/CNAME docs/.vitepress/dist/CNAME
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
