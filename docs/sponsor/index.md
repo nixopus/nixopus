@@ -1,44 +1,24 @@
-# Sponsor
+# Sponsors
 
-Nixopus is an open-source project that thrives on community support. Your sponsorship helps us maintain and improve the project, ensuring it remains a valuable tool for everyone.
+Support the development of Nixopus and join our community of amazing sponsors.
 
-## Ways to Support
+<script setup>
+import SponsorsShowcase from '../.vitepress/components/SponsorsShowcase.vue'
+import SponsorshipTiers from '../.vitepress/components/SponsorshipTiers.vue'
+</script>
 
-### Community Sponsorship
-- Show your support through GitHub Sponsors
-- Help us maintain and improve the project
-- Get recognition for your contribution
-- Join our community of supporters
+<SponsorshipTiers />
 
-### Recognition
-As a sponsor, you'll receive:
-- Your logo on our main page
-- Listing in our README
-- Social media shoutouts
-- Priority support for your contributions
-- Custom recognition based on your level of support
+## Our Amazing Sponsors
 
-## How to Support
+<SponsorsShowcase />
 
-1. Visit our GitHub Sponsors page to make a contribution
-2. Contact us at [raghavyuva@gmail.com](mailto:raghavyuva@gmail.com) for custom sponsorship arrangements
-3. We'll work with you to determine the best way to recognize your support
+## Why Sponsor Nixopus?
 
-[![Sponsor on GitHub](https://img.shields.io/badge/Sponsor%20on%20GitHub-%2300A67E?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sponsors/raghavyuva)
+Your sponsorship helps us:
 
-## Why Support Nixopus?
+- Commit more dedicated effort to advancing the Nixopus open-source ecosystem
+- Sustainably fund our infrastructure and hosting expenses
+- Keep delivering top-quality features for Nixopus as product
 
-By supporting Nixopus, you:
-- Help maintain and improve a valuable open-source tool
-- Contribute to the growth of the developer ecosystem
-- Support sustainable open-source development
-- Join a community of like-minded developers
-- Get recognition for your contribution to the project
-
-## Contact Us
-
-For more information about supporting Nixopus, please contact us at [raghavyuva@gmail.com](mailto:raghavyuva@gmail.com).
-
----
-
-*Note: We value all contributions and work with sponsors to provide appropriate recognition based on their level of support.*
+Interested to support Nixopus? Choose a sponsorship tier above or [contact us](/contact/) for custom sponsorship opportunities.
