@@ -329,7 +329,7 @@ function install_air_hot_reload(){
         return 0
     fi
     
-    echo "Installing Air hot reload..."
+    echo "Installing Air hot reload "
     sudo -u "${SUDO_USER:-$USER}" env GOPATH="$user_home/go" go install github.com/air-verse/air@latest
     export PATH="$PATH:$user_home/go/bin"
     
@@ -450,7 +450,7 @@ function setup_ssh(){
     
     # Check SSH daemon availability on macOS
     if [[ "$OS" == "Darwin" ]]; then
-        echo "Checking SSH daemon (Remote Login) status on macOS..."
+        echo "Checking SSH daemon (Remote Login) status on macOS "
         
         # Check if SSH daemon is running
         if ! sudo launchctl list | grep -q "com.openssh.sshd"; then
@@ -470,7 +470,7 @@ function setup_ssh(){
             echo ""
             echo "after enabling Remote Login, please run this setup script again."
             echo ""
-            read -p "press Enter to continue with SSH key generation (you'll still need to enable Remote Login)..."
+            read -p "press Enter to continue with SSH key generation (you'll still need to enable Remote Login) "
         else
             echo "SSH Remote Login is already enabled on macOS"
         fi
@@ -500,7 +500,7 @@ function update_ssh_env_config(){
     local private_key="$ssh_dir/id_ed25519_nixopus"
     local current_user=$(whoami)
     
-    echo "Updating SSH configuration in environment files..."
+    echo "Updating SSH configuration in environment files "
     
     # Update API environment file
     if [[ -f "api/.env" ]]; then
@@ -541,7 +541,7 @@ function update_ssh_env_config(){
 
 # Update environment files with custom port configurations
 function update_port_configurations(){
-    echo "Updating port configurations..."
+    echo "Updating port configurations "
     
     # Update API environment file
     if [[ -f "api/.env" ]]; then
@@ -724,15 +724,15 @@ function show_usage() {
     echo "  --db-port PORT       Set database port (default: $DEFAULT_DB_PORT)"
     echo "  --help, -h           Show this help message"
     echo ""
-    echo "Examples:"
-    echo "  $0                                    # Use default ports"
-    echo "  $0 --api-port 8081 --view-port 3001  # Use custom API and view ports"
-    echo "  $0 --db-port 5433                    # Use custom database port"
+    echo "After setup completion, default admin credentials will be created:"
+    echo "  Email: \$USER@example.com (where \$USER is your system username)"
+    echo "  Password: Nixopus123!"
+    echo ""
 }
 
 # Check availability of all required ports
 function check_port_availability() {
-    echo "Checking port availability..."
+    echo "Checking port availability "
     
     # Check API port
     if ! is_port_available "$API_PORT"; then
@@ -767,7 +767,7 @@ function ssh_health_check(){
     local private_key="$ssh_dir/id_ed25519_nixopus"
     local current_user=$(whoami)
     
-    echo "Running SSH health check..."
+    echo "Running SSH health check "
     
     # 1. Check SSH keys exist
     if [[ ! -f "$private_key" || ! -f "$private_key.pub" ]]; then
@@ -797,6 +797,53 @@ function get_user_home(){
         user_home=$(eval echo ~${SUDO_USER:-$USER})
     fi
     echo "$user_home"
+}
+
+function create_admin_credentials() {
+    echo "Creating default admin credentials "
+    
+    # Simple wait for API to be ready
+    local retries=3
+    while [ $retries -gt 0 ]; do
+        if curl -s "http://localhost:$API_PORT/api/v1/health" >/dev/null 2>&1; then
+            break
+        fi
+        echo "Waiting for API server  ($retries attempts left)"
+        sleep 2
+        retries=$((retries - 1))
+    done
+    
+    if [ $retries -eq 0 ]; then
+        echo "Warning: API server not responding, skipping admin creation"
+        return 1
+    fi
+    
+    # Check if admin already exists
+    if curl -s "http://localhost:$API_PORT/api/v1/auth/is-admin-registered" | grep -q '"admin_registered":true'; then
+        echo "Admin already registered, skipping"
+        return 0
+    fi
+    
+    # Create admin user
+    local username=${USER:-"admin"}
+    local email="${username}@example.com"
+    local password="Nixopus123!"
+    
+    echo "Creating admin: $email"
+    
+    if curl -s "http://localhost:$API_PORT/api/v1/auth/register" \
+        -H 'content-type: application/json' \
+        -d "{\"email\":\"$email\",\"password\":\"$password\",\"username\":\"$username\",\"type\":\"admin\"}" \
+        | grep -q '"status":"success"'; then
+        
+        echo "Admin credentials created successfully!"
+        echo "Email: $email | Password: $password"
+        echo "Login at: http://localhost:$VIEW_PORT"
+    else
+        echo "Failed to create admin credentials"
+        echo "Manual command:"
+        echo "curl -v 'http://localhost:$API_PORT/api/v1/auth/register' -H 'content-type: application/json' -d '{\"email\":\"$email\",\"password\":\"$password\",\"username\":\"$username\",\"type\":\"admin\"}'"
+    fi
 }
 
 # main function
@@ -832,7 +879,7 @@ function main() {
     update_port_configurations
     
     # Perform SSH health checks
-    echo "Running SSH health checks..."
+    echo "Running SSH health checks "
     if ! ssh_health_check; then
         echo ""
         echo "SSH setup failed health checks. Please resolve the issues above before continuing."
@@ -847,6 +894,28 @@ function main() {
     move_to_folder ".."
     start_view
     echo "View server started successfully"
+    
+    echo "WAaiting for appluications to fully initialize"
+    sleep 3
+
+    RED='\e[31m'
+    GREEN='\e[32m'
+    YELLOW='\e[33m'
+    BLUE='\e[34m'
+    MAGENTA='\e[35m'
+    CYAN='\e[36m'
+    RESET='\e[0m'
+
+    printf "${CYAN}    _   __    ____   _  __   ____     ____    __  __   _____${RESET}\n"
+    printf "${GREEN}   / | / /   /  _/  | |/ /  / __ \\\\   / __ \\\\  / / / /  / ___/${RESET}\n"
+    printf "${YELLOW}  /  |/ /    / /    |   /  / / / /  / /_/ / / / / /   \\\\__ \\\\ ${RESET}\n"
+    printf "${BLUE} / /|  /   _/ /    /   |  / /_/ /  / ____/ / /_/ /   ___/ / ${RESET}\n"
+    printf "${MAGENTA}/_/ |_/   /___/   /_/|_|  \\\\____/  /_/      \\\\____/   /____/  ${RESET}\n"
+    printf "\n"
+
+
+    # Create default admin credentials
+    create_admin_credentials
     echo "Nixopus development environment setup completed successfully"
     echo "-------------------------------------------------------------"    
     echo ""
@@ -855,12 +924,20 @@ function main() {
     echo "API: http://localhost:$API_PORT"
     echo "Database: localhost:$DB_PORT"
     echo ""
+    echo "=== Default Login Credentials ==="
+    echo "Email: ${USER:-admin}@example.com"
+    echo "Password: Nixopus123!"
+    echo "Change these credentials after first login!"
+    echo ""
     echo "=== Troubleshooting ==="
     echo "If you encounter database connection issues:"
     echo "1. Check if Docker container is running: docker ps | grep nixopus-db"
     echo "2. Check database logs: docker logs nixopus-db"
     echo "3. Verify connection: docker exec nixopus-db psql -U postgres -d postgres -c 'SELECT 1;'"
     echo "4. Restart the database: docker restart nixopus-db"
+    echo ""
+    echo "To manually create admin credentials later:"
+    echo "  Use the curl command shown above"
     echo ""
     echo "Log files:"
     echo "- API logs: nixopus/api/api.log"
