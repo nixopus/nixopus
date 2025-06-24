@@ -87,7 +87,17 @@ export default withMermaid(
         {
           text: 'Development',
           items: [
-            { text: 'Contribution', link: '/contributing/index.md' },
+            {
+              text: 'Contribution',
+              items: [
+                { text: 'Overview', link: '/contributing/index.md' },
+                { text: 'Backend', link: '/contributing/backend.md' },
+                { text: 'Frontend', link: '/contributing/frontend.md' },
+                { text: 'Documentation', link: '/contributing/documentation.md' },
+                { text: 'Docker', link: '/contributing/docker.md' },
+                { text: 'Self Hosting', link: '/contributing/self-hosting.md' }
+              ]
+            },
             { text: "Code of Conduct", link: "/code-of-conduct/index.md" },
             { text: "Change Log", link: "https://github.com/raghavyuva/nixopus/releases" },
             { text: "License", link: "/license/index.md" },
