@@ -1,0 +1,22 @@
+- model: Role
+  rows:
+    - _id: admin
+      id: "{{ uuid }}"
+      name: "admin"
+      description: "Administrator with full access"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: member
+      id: "{{ uuid }}"
+      name: "member"
+      description: "Regular organization member"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: viewer
+      id: "{{ uuid }}"
+      name: "viewer"
+      description: "Read-only access to resources"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}" 

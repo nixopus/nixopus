@@ -1,0 +1,145 @@
+- model: FeatureFlag
+  rows:
+    - _id: nixopus_domain
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.nixopus_org.ID }}"
+      feature_name: "domain"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: nixopus_terminal
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.nixopus_org.ID }}"
+      feature_name: "terminal"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: nixopus_notifications
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.nixopus_org.ID }}"
+      feature_name: "notifications"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: nixopus_file_manager
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.nixopus_org.ID }}"
+      feature_name: "file_manager"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: nixopus_self_hosted
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.nixopus_org.ID }}"
+      feature_name: "self_hosted"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: nixopus_audit
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.nixopus_org.ID }}"
+      feature_name: "audit"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: nixopus_github_connector
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.nixopus_org.ID }}"
+      feature_name: "github_connector"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: nixopus_monitoring
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.nixopus_org.ID }}"
+      feature_name: "monitoring"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: nixopus_container
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.nixopus_org.ID }}"
+      feature_name: "container"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: demo_domain
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.demo_org.ID }}"
+      feature_name: "domain"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: demo_terminal
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.demo_org.ID }}"
+      feature_name: "terminal"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: demo_notifications
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.demo_org.ID }}"
+      feature_name: "notifications"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: demo_file_manager
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.demo_org.ID }}"
+      feature_name: "file_manager"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: demo_self_hosted
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.demo_org.ID }}"
+      feature_name: "self_hosted"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: demo_audit
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.demo_org.ID }}"
+      feature_name: "audit"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: demo_github_connector
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.demo_org.ID }}"
+      feature_name: "github_connector"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: demo_monitoring
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.demo_org.ID }}"
+      feature_name: "monitoring"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: demo_container
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.demo_org.ID }}"
+      feature_name: "container"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}" 

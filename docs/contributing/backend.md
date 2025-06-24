@@ -39,6 +39,38 @@ Currently **the migration works automatically when starting the server**. Howeve
    go run migrations/main.go
    ```
 
+4. **Loading Development Fixtures**
+
+The project includes a comprehensive fixtures system for development and testing. You can load sample data using the following commands:
+
+   ```bash
+   cd api
+   
+   # Load fixtures without affecting existing data
+   make fixtures-load
+   
+   # Drop and recreate all tables, then load fixtures (clean slate)
+   make fixtures-recreate
+   
+   # Truncate all tables, then load fixtures
+   make fixtures-clean
+   
+   # Get help on fixtures commands
+   make fixtures-help
+   ```
+
+   **Available Fixture Files:**
+   - `fixtures/development/complete.yml` - Loads all fixtures (uses imports)
+   - `fixtures/development/users.yml` - User data only
+   - `fixtures/development/organizations.yml` - Organization data only
+   - `fixtures/development/roles.yml` - Role data only
+   - `fixtures/development/permissions.yml` - Permission data only
+   - `fixtures/development/role_permissions.yml` - Role-permission mappings
+   - `fixtures/development/feature_flags.yml` - Feature flags
+   - `fixtures/development/organization_users.yml` - User-organization relationships
+
+   The `complete.yml` file uses import statements to load all individual files, making it easy to get a full development environment set up quickly.
+
 *Note: [air](https://github.com/air-verse/air) as a dev-dependency so you can start the backend with the air command.*
 
 ## Project Structure

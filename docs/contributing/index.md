@@ -26,6 +26,7 @@ We provide detailed guides for specific types of contributions:
 - [Documentation Guide](documentation.md) - For improving or extending documentation
 - [Self-Hosting Guide](self-hosting.md) - For improving installation and self-hosting
 - [Docker Guide](docker.md) - For Docker builds and container optimization
+- [Development Fixtures Guide](fixtures.md) - For working with development data and fixtures
 
 ## Code of Conduct
 
@@ -67,6 +68,23 @@ go mod download
 cd ../view
 yarn install
 ```
+
+6. Load development fixtures (optional but recommended):
+
+```bash
+cd api
+
+# Load fixtures without affecting existing data
+make fixtures-load
+
+# Or for a clean slate (drops and recreates tables)
+make fixtures-recreate
+
+# Get help on fixtures commands
+make fixtures-help
+```
+
+The fixtures system provides sample data including users, organizations, roles, permissions, and feature flags to help you get started quickly with development.
 
 ## Running the Application
 
