@@ -486,7 +486,6 @@ function setup_ssh(){
             case $(detect_package_manager) in
                 "apt") 
                     install_package "openssh-client"
-                    # Also install SSH server for local connections
                     install_package "openssh-server"
                     ;;
                 "dnf"|"yum") 
@@ -500,7 +499,7 @@ function setup_ssh(){
         fi
     fi
     
-    # Setup SSH daemon for different platforms
+    # Setup SSH daemon for both macOS and LInux OSes
     if [[ "$OS" == "Darwin" ]]; then
         echo "Checking SSH daemon (Remote Login) status on macOS "
         
@@ -1100,7 +1099,6 @@ function main() {
     echo ">>>> Raise issues on GitHub Issues: https://github.com/raghavyuva/nixopus/issues"
     open_discord_gh_link
     
-    # Mark successful completion to prevent cleanup
     NIXOPUS_CLONED=false
 
 }
