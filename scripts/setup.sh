@@ -20,6 +20,46 @@
 
 set -euo pipefail
 
+# Global variable to track if we need cleanup
+NIXOPUS_CLONED=false
+ORIGINAL_DIR=$(pwd)
+
+# Cleanup function to remove cloned repository on error
+function cleanup_on_error() {
+    local exit_code=$?
+    
+    # Only cleanup if we're exiting with an error and we cloned the repo
+    if [[ $exit_code -ne 0 && "$NIXOPUS_CLONED" == "true" ]]; then
+        echo ""
+        echo "Error occurred during setup (exit code: $exit_code)"
+        echo "Cleaning up cloned repository to ensure clean retry..."
+        
+        # Go back to original directory
+        cd "$ORIGINAL_DIR" 2>/dev/null || true
+        
+        # Remove nixopus directory if it exists
+        if [[ -d "nixopus" ]]; then
+            echo "Removing nixopus directory..."
+            rm -rf nixopus
+            echo "Removed nixopus directory for clean retry"
+        fi
+        
+        echo ""
+        echo "You can now re-run the setup script without manual cleanup"
+        echo "The error above should help identify what needs to be fixed"
+    fi
+    
+    # Don't exit 0 on successful completion when called by trap
+    if [[ $exit_code -eq 0 ]]; then
+        exit 0
+    else
+        exit $exit_code
+    fi
+}
+
+# Set up error trap
+trap cleanup_on_error ERR EXIT
+
 
 BRANCH="feat/dev_environment"
 OS="$(uname)"
@@ -190,6 +230,9 @@ function clone_nixopus() {
         echo "Error: Failed to clone nixopus repository" >&2
         exit 1
     fi
+    # Mark that we successfully cloned the repository
+    NIXOPUS_CLONED=true
+    echo "Repository cloned successfully"
 }   
 
 # checkout to the branch
@@ -441,14 +484,23 @@ function setup_ssh(){
             install_package "openssh"
         else
             case $(detect_package_manager) in
-                "apt") install_package "openssh-client" ;;
-                "dnf"|"yum") install_package "openssh-clients" ;;
-                "pacman") install_package "openssh" ;;
+                "apt") 
+                    install_package "openssh-client"
+                    # Also install SSH server for local connections
+                    install_package "openssh-server"
+                    ;;
+                "dnf"|"yum") 
+                    install_package "openssh-clients"
+                    install_package "openssh-server"
+                    ;;
+                "pacman") 
+                    install_package "openssh"
+                    ;;
             esac
         fi
     fi
     
-    # Check SSH daemon availability on macOS
+    # Setup SSH daemon for different platforms
     if [[ "$OS" == "Darwin" ]]; then
         echo "Checking SSH daemon (Remote Login) status on macOS "
         
@@ -473,6 +525,38 @@ function setup_ssh(){
             read -p "press Enter to continue with SSH key generation (you'll still need to enable Remote Login) "
         else
             echo "SSH Remote Login is already enabled on macOS"
+        fi
+    else
+        # Linux SSH daemon setup
+        echo "Checking SSH daemon status on Linux "
+        
+        # Ensure SSH server is installed
+        if ! command -v sshd &>/dev/null; then
+            echo "Installing SSH server..."
+            case $(detect_package_manager) in
+                "apt") install_package "openssh-server" ;;
+                "dnf"|"yum") install_package "openssh-server" ;;
+                "pacman") install_package "openssh" ;;
+            esac
+        fi
+        
+        # Start and enable SSH service
+        if command -v systemctl &>/dev/null; then
+            echo "Starting SSH service..."
+            if [[ "$EUID" -eq 0 ]]; then
+                systemctl start ssh || systemctl start sshd || true
+                systemctl enable ssh || systemctl enable sshd || true
+            else
+                sudo systemctl start ssh || sudo systemctl start sshd || true
+                sudo systemctl enable ssh || sudo systemctl enable sshd || true
+            fi
+            
+            # Verify service is running
+            if systemctl is-active --quiet ssh || systemctl is-active --quiet sshd; then
+                echo "SSH service is running"
+            else
+                echo "Warning: SSH service may not be running properly"
+            fi
         fi
     fi
     
@@ -775,12 +859,75 @@ function ssh_health_check(){
         return 1
     fi
     
-    # 2. Quick SSH connection test
-    if timeout 10 ssh -o ConnectTimeout=5 -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "$private_key" "$current_user@localhost" "exit" &>/dev/null; then
-        echo "SSH connection successful"
+    # 2. Check if SSH service is running (Linux only)
+    if [[ "$OS" == "Linux" ]]; then
+        echo "Verifying SSH service status..."
+        local ssh_service_running=false
+        
+        if command -v systemctl &>/dev/null; then
+            if systemctl is-active --quiet ssh; then
+                ssh_service_running=true
+                echo "SSH service (ssh) is active"
+            elif systemctl is-active --quiet sshd; then
+                ssh_service_running=true
+                echo "SSH service (sshd) is active"
+            fi
+            
+            if [[ "$ssh_service_running" == "false" ]]; then
+                echo "Error: SSH service is not running"
+                echo "Attempting to start SSH service..."
+                
+                if [[ "$EUID" -eq 0 ]]; then
+                    if systemctl start ssh 2>/dev/null || systemctl start sshd 2>/dev/null; then
+                        ssh_service_running=true
+                        echo "SSH service started successfully"
+                    fi
+                else
+                    if sudo systemctl start ssh 2>/dev/null || sudo systemctl start sshd 2>/dev/null; then
+                        ssh_service_running=true
+                        echo "SSH service started successfully"
+                    fi
+                fi
+                
+                if [[ "$ssh_service_running" == "false" ]]; then
+                    echo "Error: Failed to start SSH service"
+                    echo "SSH service status:"
+                    systemctl status ssh --no-pager 2>/dev/null || systemctl status sshd --no-pager 2>/dev/null || true
+                    return 1
+                fi
+            fi
+        else
+            echo "Warning: systemctl not available, cannot verify SSH service status"
+        fi
+    fi
+    
+    # 3. Test SSH connection to localhost
+    echo "Testing SSH connection to localhost..."
+    local ssh_test_output
+    if ssh_test_output=$(timeout 10 ssh -o ConnectTimeout=5 -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "$private_key" "$current_user@localhost" "echo 'SSH test successful'" 2>&1); then
+        echo "SSH connection test passed: $ssh_test_output"
         return 0
     else
-        echo "SSH connection failed - please enable Remote Login in System Settings → Sharing (macOS) or start SSH service (Linux)"
+        echo "Error: SSH connection test failed"
+        echo "SSH test output: $ssh_test_output"
+        
+        # Provide detailed debugging information
+        echo "Debug information:"
+        echo "- Current user: $current_user"
+        echo "- SSH private key: $private_key"
+        echo "- SSH private key permissions: $(ls -la "$private_key" 2>/dev/null || echo 'Key not found')"
+        echo "- SSH public key: $private_key.pub"
+        echo "- SSH public key permissions: $(ls -la "$private_key.pub" 2>/dev/null || echo 'Key not found')"
+        echo "- SSH directory permissions: $(ls -lad "$ssh_dir" 2>/dev/null || echo 'Directory not found')"
+        echo "- Authorized keys file: $(ls -la "$ssh_dir/authorized_keys" 2>/dev/null || echo 'Authorized keys not found')"
+        
+        if [[ "$OS" == "Linux" ]]; then
+            echo "- SSH service status:"
+            systemctl status ssh --no-pager 2>/dev/null || systemctl status sshd --no-pager 2>/dev/null || echo "Could not get SSH service status"
+            echo "- SSH daemon process:"
+            pgrep -f sshd || echo "No SSH daemon process found"
+        fi
+        
         return 1
     fi
 }
@@ -861,6 +1008,7 @@ function main() {
     # Check if ports are available before proceeding
     if ! check_port_availability; then
         echo "Setup cannot continue due to port conflicts. Please resolve them and try again."
+        echo "Repository cleanup will be handled automatically."
         exit 1
     fi
     
@@ -884,6 +1032,7 @@ function main() {
         echo ""
         echo "SSH setup failed health checks. Please resolve the issues above before continuing."
         echo "You can re-run this setup script after fixing the SSH configuration."
+        echo "The cloned repository will be automatically cleaned up for a fresh retry."
         exit 1
     fi
     
@@ -950,6 +1099,9 @@ function main() {
     echo ">>>> Star us on GitHub: https://github.com/raghavyuva/nixopus/"
     echo ">>>> Raise issues on GitHub Issues: https://github.com/raghavyuva/nixopus/issues"
     open_discord_gh_link
+    
+    # Mark successful completion to prevent cleanup
+    NIXOPUS_CLONED=false
 
 }
 
