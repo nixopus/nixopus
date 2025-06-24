@@ -187,6 +187,16 @@ cd ../view
 yarn install
 ```
 
+6. Load development fixtures (optional but recommended):
+
+```bash
+cd ../api
+# Load fixtures without affecting existing data
+make fixtures-load
+```
+
+The fixtures system provides sample data including users, organizations, roles, permissions, and feature flags to help you get started quickly with development. Make Changes to Fixtures data in `/api/fixtures/development` directory if required. [Read More About Fixtures](https://docs.nixopus.com/contributing/fixtures)
+
 ### Running the Application
 
 1. Start the API service:

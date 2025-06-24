@@ -41,12 +41,12 @@ This Code of Conduct applies to all Nixopus project spaces, both online and offl
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the Nixopus project team at raghavyuva@gmail.com. All complaints will be reviewed, investigated, and addressed as deemed necessary and appropriate. The project team is committed to maintaining confidentiality regarding incident reporters.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the Nixopus project team at <raghavyuva@gmail.com>. All complaints will be reviewed, investigated, and addressed as deemed necessary and appropriate. The project team is committed to maintaining confidentiality regarding incident reporters.
 
 Project maintainers who fail to uphold or enforce the Code of Conduct may face temporary or permanent consequences, as determined by the project's leadership.
 
 ## Attribution
 
-This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 1.4, available at https://www.contributor-covenant.org/version/1/4/code-of-conduct.html
+This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 1.4, available at <https://www.contributor-covenant.org/version/1/4/code-of-conduct.html>
 
-For answers to common questions about this Code of Conduct, see https://www.contributor-covenant.org/faq
+For answers to common questions about this Code of Conduct, see <https://www.contributor-covenant.org/faq>

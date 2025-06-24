@@ -27,24 +27,3 @@ export const hasPermission = (
     );
   });
 };
-
-/**
- * Custom hook to check multiple permissions at once
- *
- * @param user - The user object from Redux state
- * @param resource - The resource type (e.g., "organization", "user", "role", etc.)
- * @param organizationId - Optional organization ID to check permissions for a specific organization
- * @returns An object with boolean flags for different permission types
- */
-export const useResourcePermissions = (
-  user: User | null | undefined,
-  resource: string,
-  organizationId: string
-) => {
-  return {
-    canCreate: hasPermission(user, resource, 'create', organizationId),
-    canRead: hasPermission(user, resource, 'read', organizationId),
-    canUpdate: hasPermission(user, resource, 'update', organizationId),
-    canDelete: hasPermission(user, resource, 'delete', organizationId)
-  };
-};

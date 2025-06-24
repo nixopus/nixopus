@@ -21,18 +21,12 @@ import { DeleteDialog } from './delete-dialog';
 import useTeamSwitcher from '@/hooks/use-team-switcher';
 import { useAppSelector } from '@/redux/hooks';
 import { UserOrganization } from '@/redux/types/orgs';
-import { useResourcePermissions } from '@/lib/permission';
 
 export function TeamSwitcher({ refetch }: { refetch: () => void }) {
   const { isMobile } = useSidebar();
   const teams = useAppSelector((state) => state.user.organizations);
   const user = useAppSelector((state) => state.auth.user);
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
-  const { canDelete: canDeleteOrg } = useResourcePermissions(
-    user,
-    'organization',
-    activeOrganization?.id
-  );
   const {
     toggleAddTeamModal,
     handleTeamChange,

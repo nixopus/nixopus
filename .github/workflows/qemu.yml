@@ -2,9 +2,11 @@ name: QEMU Setup and Installation
 
 on:
   push:
-    branches: [feat/develop]
-  pull_request:
-    branches: [feat/develop]
+    branches: [master, feat/develop]
+    paths:
+      - 'scripts/install.sh'
+      - 'installer/**'
+      - '.github/workflows/qemu.yml'
   workflow_dispatch:
 
 env:

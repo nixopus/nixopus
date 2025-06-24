@@ -1,8 +1,7 @@
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/use-translation';
-import React, { use, useState } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { useAppSelector } from '@/redux/hooks';
 import {
   useRemoveContainerMutation,
   useStartContainerMutation,
@@ -10,15 +9,12 @@ import {
 } from '@/redux/services/container/containerApi';
 import { useGetContainersQuery } from '@/redux/services/container/containerApi';
 import { useFeatureFlags } from '@/hooks/features_provider';
-import { hasPermission } from '@/lib/permission';
 import { usePruneBuildCacheMutation } from '@/redux/services/container/imagesApi';
 import { usePruneImagesMutation } from '@/redux/services/container/imagesApi';
 
 function useContainerList() {
   const { t } = useTranslation();
   const router = useRouter();
-  const user = useAppSelector((state) => state.auth.user);
-  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const { data: containers = [], isLoading, refetch } = useGetContainersQuery();
   const [startContainer] = useStartContainerMutation();
   const [stopContainer] = useStopContainerMutation();
@@ -28,11 +24,6 @@ function useContainerList() {
   const [showPruneImagesConfirm, setShowPruneImagesConfirm] = useState(false);
   const [showPruneBuildCacheConfirm, setShowPruneBuildCacheConfirm] = useState(false);
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
-
-  const canRead = hasPermission(user, 'container', 'read', activeOrg?.id);
-  const canCreate = hasPermission(user, 'container', 'create', activeOrg?.id);
-  const canUpdate = hasPermission(user, 'container', 'update', activeOrg?.id);
-  const canDelete = hasPermission(user, 'container', 'delete', activeOrg?.id);
 
   const [pruneImages] = usePruneImagesMutation();
   const [pruneBuildCache] = usePruneBuildCacheMutation();
@@ -128,10 +119,6 @@ function useContainerList() {
     showPruneBuildCacheConfirm,
     setShowPruneImagesConfirm,
     setShowPruneBuildCacheConfirm,
-    canRead,
-    canCreate,
-    canUpdate,
-    canDelete,
     isFeatureFlagsLoading,
     isRefreshing,
     isFeatureEnabled,

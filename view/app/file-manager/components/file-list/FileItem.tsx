@@ -4,11 +4,11 @@ import { FileData, FileType } from '@/redux/types/files';
 import FileInfo from './FileInfo';
 import { getFileIcons } from '@/app/self-host/utils/getFileIcons';
 import { formatFileSize } from '@/app/self-host/utils/formatFileSize';
-import { useFileOperations } from '../../hooks/file-operations/useOperations';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { FileContextMenu } from '../context-menu/FileContextMenu';
 import { useTranslation } from '@/hooks/use-translation';
 import { TrashIcon } from 'lucide-react';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 
 interface FileItemProps {
   file: FileData;
@@ -21,8 +21,6 @@ interface FileItemProps {
   setFileToCopy: React.Dispatch<React.SetStateAction<FileData | undefined>>;
   setFileToMove: React.Dispatch<React.SetStateAction<FileData | undefined>>;
   index: number;
-  canUpdate: boolean;
-  canDelete: boolean;
   isEditing: boolean;
   editedFileName: string;
   setEditedFileName: React.Dispatch<React.SetStateAction<string>>;
@@ -49,8 +47,6 @@ export function FileItem({
   setFileToCopy,
   setFileToMove,
   index,
-  canUpdate,
-  canDelete,
   isEditing,
   editedFileName,
   setEditedFileName,
@@ -133,40 +129,50 @@ export function FileItem({
   );
 
   return (
-    <FileContextMenu
-      isItem
-      canUpdate={canUpdate}
-      canDelete={canDelete}
-      onInfo={() => setIsDialogOpen(true)}
-      onRename={() => startRenaming(file)}
-      onCopy={() => {
-        setFileToCopy(file);
-        handleCopy(file.path, file.path);
-      }}
-      onMoveItem={() => setFileToMove(file)}
-      onDelete={() => setIsDeleteDialogOpen(true)}
+    <ResourceGuard 
+      resource="file-manager" 
+      action="read"
+      loadingFallback={null}
     >
-      <div onClick={() => onFolderClickActive(file.path)} className="cursor-pointer">
-        {layout === 'grid' ? gridLayout : listLayout}
-      </div>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <FileInfo file={file} isLoading={isSizeLoading} fileSize={fileSize || null} />
-      </Dialog>
-      <DeleteDialog
-        title={t('fileManager.deleteDialog.title')}
-        description={
-          type === 'folder'
-            ? t('fileManager.deleteDialog.descriptionDirectory', { name: file.name })
-            : t('fileManager.deleteDialog.descriptionFile', { name: file.name })
-        }
-        onConfirm={() => handleDelete(file.path)}
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        variant="destructive"
-        confirmText={t('fileManager.deleteDialog.confirm')}
-        cancelText={t('fileManager.deleteDialog.cancel')}
-        icon={TrashIcon}
-      />
-    </FileContextMenu>
+      <FileContextMenu
+        isItem
+        onInfo={() => setIsDialogOpen(true)}
+        onRename={() => startRenaming(file)}
+        onCopy={() => {
+          setFileToCopy(file);
+          handleCopy(file.path, file.path);
+        }}
+        onMoveItem={() => setFileToMove(file)}
+        onDelete={() => setIsDeleteDialogOpen(true)}
+      >
+        <div onClick={() => onFolderClickActive(file.path)} className="cursor-pointer">
+          {layout === 'grid' ? gridLayout : listLayout}
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <FileInfo file={file} isLoading={isSizeLoading} fileSize={fileSize || null} />
+        </Dialog>
+        <ResourceGuard 
+          resource="file-manager" 
+          action="delete"
+          loadingFallback={null}
+        >
+          <DeleteDialog
+            title={t('fileManager.deleteDialog.title')}
+            description={
+              type === 'folder'
+                ? t('fileManager.deleteDialog.descriptionDirectory', { name: file.name })
+                : t('fileManager.deleteDialog.descriptionFile', { name: file.name })
+            }
+            onConfirm={() => handleDelete(file.path)}
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+            variant="destructive"
+            confirmText={t('fileManager.deleteDialog.confirm')}
+            cancelText={t('fileManager.deleteDialog.cancel')}
+            icon={TrashIcon}
+          />
+        </ResourceGuard>
+      </FileContextMenu>
+    </ResourceGuard>
   );
 }

@@ -21,12 +21,12 @@ import { TrashIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from 'lucide-re
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAppSelector } from '@/redux/hooks';
-import { useResourcePermissions } from '@/lib/permission';
 import EditUserDialog from './EditUserDialog';
 import { OrganizationUsers, UserTypes } from '@/redux/types/orgs';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { useTranslation } from '@/hooks/use-translation';
 import { User } from '@/redux/types/user';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 
 type EditUser = {
   id: string;
@@ -64,11 +64,6 @@ function TeamMembers({
   const { t } = useTranslation();
   const loggedInUser = useAppSelector((state) => state.auth.user) as User;
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
-  const { canUpdate: canUpdateUser, canDelete: canDeleteUser } = useResourcePermissions(
-    loggedInUser,
-    'user',
-    activeOrganization?.id
-  );
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [editingUser, setEditingUser] = useState<EditUser | null>(null);
   const [userToRemove, setUserToRemove] = useState<EditUser | null>(null);
@@ -173,10 +168,7 @@ function TeamMembers({
     if (loggedInUser.id === user.id) {
       return false;
     }
-    const canUpdate = canUpdateUser && canModifyUser(user);
-    const canDelete = canDeleteUser && canModifyUser(user);
-    const hasActions = canUpdate || canDelete;
-    return hasActions;
+    return canModifyUser(user);
   };
 
   return (
@@ -233,29 +225,33 @@ function TeamMembers({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {canUpdateUser && canModifyUser(user) && (
-                            <>
+                          <ResourceGuard resource="user" action="update">
+                            {canModifyUser(user) && (
                               <DropdownMenuItem onClick={() => handleEditUser(user)}>
                                 <PencilIcon className="h-4 w-4 mr-2" />
                                 {t('settings.teams.members.actions.edit')}
                               </DropdownMenuItem>
-                            </>
-                          )}
-                          {canUpdateUser && canDeleteUser && canModifyUser(user) && (
-                            <DropdownMenuSeparator />
-                          )}
-                          {canDeleteUser && canModifyUser(user) && (
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => {
-                                setUserToRemove(user);
-                                setIsDeleteDialogOpen(true);
-                              }}
-                            >
-                              <TrashIcon className="h-4 w-4 mr-2" />
-                              {t('settings.teams.members.actions.remove')}
-                            </DropdownMenuItem>
-                          )}
+                            )}
+                          </ResourceGuard>
+                          <ResourceGuard resource="user" action="update">
+                            <ResourceGuard resource="user" action="delete">
+                              {canModifyUser(user) && <DropdownMenuSeparator />}
+                            </ResourceGuard>
+                          </ResourceGuard>
+                          <ResourceGuard resource="user" action="delete">
+                            {canModifyUser(user) && (
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => {
+                                  setUserToRemove(user);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                              >
+                                <TrashIcon className="h-4 w-4 mr-2" />
+                                {t('settings.teams.members.actions.remove')}
+                              </DropdownMenuItem>
+                            )}
+                          </ResourceGuard>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

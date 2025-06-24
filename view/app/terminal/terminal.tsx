@@ -9,6 +9,9 @@ import { useFeatureFlags } from '@/hooks/features_provider';
 import DisabledFeature from '@/components/features/disabled-feature';
 import Skeleton from '@/app/file-manager/components/skeleton/Skeleton';
 import { FeatureNames } from '@/types/feature-flags';
+import { AnyPermissionGuard, ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { useRBAC } from '@/lib/rbac';
+
 const globalStyles = `
   .xterm-viewport::-webkit-scrollbar {
     display: none;
@@ -36,11 +39,16 @@ export const Terminal: React.FC<TerminalProps> = ({
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const { canAccessResource } = useRBAC();
+
+  const canCreate = canAccessResource('terminal', 'create');
+  const canUpdate = canAccessResource('terminal', 'update');
 
   const { terminalRef, fitAddonRef, initializeTerminal, destroyTerminal } = useTerminal(
     isTerminalOpen,
     dimensions.width,
-    dimensions.height
+    dimensions.height,
+    canCreate || canUpdate // Only allow input if user can create or update
   ) as {
     terminalRef: React.RefObject<HTMLDivElement>;
     fitAddonRef: any;
@@ -113,40 +121,46 @@ export const Terminal: React.FC<TerminalProps> = ({
   if (!isFeatureEnabled(FeatureNames.FeatureTerminal)) {
     return <DisabledFeature />;
   }
+
   return (
-    <div
-      className="flex h-full flex-col overflow-hidden bg-[#1e1e1e]"
-      ref={containerRef}
-      data-slot="terminal"
+    <AnyPermissionGuard 
+      permissions={['terminal:create', 'terminal:read', 'terminal:update']}
+      loadingFallback={<Skeleton />}
     >
-      <div className="flex h-8 items-center justify-between border-b border-[#2d2d2d] px-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-[#cccccc]">{t('terminal.title')}</span>
-          <span className="text-xs text-[#666666]">{t('terminal.shortcut')}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            className="flex h-4 w-4 items-center justify-center rounded hover:bg-[#2d2d2d]"
-            onClick={toggleTerminal}
-            title={t('terminal.close')}
-          >
-            <X className="h-3 w-3 text-[#666666] hover:text-[#cccccc]" />
-          </button>
-        </div>
-      </div>
       <div
-        ref={terminalRef}
-        className="flex-1 relative"
-        style={{
-          visibility: isTerminalOpen ? 'visible' : 'hidden',
-          minHeight: '200px',
-          padding: '4px',
-          overflow: 'hidden',
-          backgroundColor: '#1e1e1e',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none'
-        }}
-      />
-    </div>
+        className="flex h-full flex-col overflow-hidden bg-[#1e1e1e]"
+        ref={containerRef}
+        data-slot="terminal"
+      >
+        <div className="flex h-8 items-center justify-between border-b border-[#2d2d2d] px-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-[#cccccc]">{t('terminal.title')}</span>
+            <span className="text-xs text-[#666666]">{t('terminal.shortcut')}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              className="flex h-4 w-4 items-center justify-center rounded hover:bg-[#2d2d2d]"
+              onClick={toggleTerminal}
+              title={t('terminal.close')}
+            >
+              <X className="h-3 w-3 text-[#666666] hover:text-[#cccccc]" />
+            </button>
+          </div>
+        </div>
+        <div
+          ref={terminalRef}
+          className="flex-1 relative"
+          style={{
+            visibility: isTerminalOpen ? 'visible' : 'hidden',
+            minHeight: '200px',
+            padding: '4px',
+            overflow: 'hidden',
+            backgroundColor: '#1e1e1e',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        />
+      </div>
+    </AnyPermissionGuard>
   );
 };

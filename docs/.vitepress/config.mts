@@ -95,7 +95,8 @@ export default withMermaid(
                 { text: 'Frontend', link: '/contributing/frontend.md' },
                 { text: 'Documentation', link: '/contributing/documentation.md' },
                 { text: 'Docker', link: '/contributing/docker.md' },
-                { text: 'Self Hosting', link: '/contributing/self-hosting.md' }
+                { text: 'Self Hosting', link: '/contributing/self-hosting.md' },
+                { text: 'Fixtures', link: '/contributing/fixtures.md' }
               ]
             },
             { text: "Code of Conduct", link: "/code-of-conduct/index.md" },

@@ -7,9 +7,9 @@ import { FormSelectTagInputField } from '@/components/ui/form-select-tag-field';
 import { BuildPack, Environment } from '@/redux/types/deploy-form';
 import useUpdateDeployment from '../../hooks/use_update_deployment';
 import { parsePort } from '../../utils/parsePort';
-import { useAppSelector } from '@/redux/hooks';
-import { hasPermission } from '@/lib/permission';
 import { useTranslation } from '@/hooks/use-translation';
+import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface DeployConfigureProps {
   application_name?: string;
@@ -45,9 +45,6 @@ export const DeployConfigureForm = ({
   base_path = '/'
 }: DeployConfigureProps) => {
   const { t } = useTranslation();
-  const user = useAppSelector((state) => state.auth.user);
-  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const canUpdate = hasPermission(user, 'deploy', 'update', activeOrg?.id);
 
   const { validateEnvVar, form, onSubmit, isLoading, domains } = useUpdateDeployment({
     name: application_name,
@@ -86,211 +83,224 @@ export const DeployConfigureForm = ({
     );
   };
 
-  if (!canUpdate) {
-    return (
-      <div className="space-y-8">
-        <div className="grid sm:grid-cols-2 gap-4">
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.applicationName.label'),
-            application_name,
-            t('selfHost.configuration.fields.applicationName.description')
-          )}
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.port.label'),
-            port,
-            t('selfHost.configuration.fields.port.description')
-          )}
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.basePath.label'),
-            base_path,
-            t('selfHost.configuration.fields.basePath.description')
-          )}
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.dockerfilePath.label'),
-            dockerFilePath,
-            t('selfHost.configuration.fields.dockerfilePath.description')
-          )}
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.environmentVariables.label'),
-            Object.entries(env_variables)
-              .map(([key, value]) => `${key}=${value}`)
-              .join('\n'),
-            t('selfHost.configuration.fields.environmentVariables.description')
-          )}
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.buildVariables.label'),
-            Object.entries(build_variables)
-              .map(([key, value]) => `${key}=${value}`)
-              .join('\n'),
-            t('selfHost.configuration.fields.buildVariables.description')
-          )}
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.preRunCommands.label'),
-            pre_run_commands,
-            t('selfHost.configuration.fields.preRunCommands.description')
-          )}
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.postRunCommands.label'),
-            post_run_commands,
-            t('selfHost.configuration.fields.postRunCommands.description')
-          )}
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.environment.label'),
-            environment,
-            t('selfHost.configuration.fields.environment.description')
-          )}
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.branch.label'),
-            branch,
-            t('selfHost.configuration.fields.branch.description')
-          )}
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.domain.label'),
-            domain,
-            t('selfHost.configuration.fields.domain.description')
-          )}
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.buildPack.label'),
-            build_pack,
-            t('selfHost.configuration.fields.buildPack.description')
-          )}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid sm:grid-cols-2 gap-4">
-          <FormInputField
-            form={form}
-            label={t('selfHost.configuration.fields.applicationName.label')}
-            name="name"
-            description={t('selfHost.configuration.fields.applicationName.description')}
-            placeholder={t('selfHost.configuration.fields.applicationName.label')}
-          />
-          {build_pack !== BuildPack.Static && (
-            <FormInputField
-              form={form}
-              label={t('selfHost.configuration.fields.port.label')}
-              name="port"
-              description={t('selfHost.configuration.fields.port.description')}
-              placeholder="3000"
-              validator={(value) => parsePort(value) !== null}
-            />
-          )}
-        </div>
-
-        {build_pack !== BuildPack.Static && (
-          <>
+    <ResourceGuard 
+      resource="deploy" 
+      action="read"
+      loadingFallback={<Skeleton className="h-96" />}
+    >
+      <AnyPermissionGuard 
+        permissions={['deploy:update']}
+        loadingFallback={null}
+      >
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="grid sm:grid-cols-2 gap-4">
               <FormInputField
                 form={form}
-                label={t('selfHost.configuration.fields.basePath.label')}
-                name="base_path"
-                description={t('selfHost.configuration.fields.basePath.description')}
-                placeholder="/"
-                required={false}
+                label={t('selfHost.configuration.fields.applicationName.label')}
+                name="name"
+                description={t('selfHost.configuration.fields.applicationName.description')}
+                placeholder={t('selfHost.configuration.fields.applicationName.label')}
               />
-              <FormInputField
-                form={form}
-                label={t('selfHost.configuration.fields.dockerfilePath.label')}
-                name="DockerfilePath"
-                description={t('selfHost.configuration.fields.dockerfilePath.description')}
-                placeholder="Dockerfile"
-                required={false}
-              />
+              {build_pack !== BuildPack.Static && (
+                <FormInputField
+                  form={form}
+                  label={t('selfHost.configuration.fields.port.label')}
+                  name="port"
+                  description={t('selfHost.configuration.fields.port.description')}
+                  placeholder="3000"
+                  validator={(value) => parsePort(value) !== null}
+                />
+              )}
+            </div>
+
+            {build_pack !== BuildPack.Static && (
+              <>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <FormInputField
+                    form={form}
+                    label={t('selfHost.configuration.fields.basePath.label')}
+                    name="base_path"
+                    description={t('selfHost.configuration.fields.basePath.description')}
+                    placeholder="/"
+                    required={false}
+                  />
+                  <FormInputField
+                    form={form}
+                    label={t('selfHost.configuration.fields.dockerfilePath.label')}
+                    name="DockerfilePath"
+                    description={t('selfHost.configuration.fields.dockerfilePath.description')}
+                    placeholder="Dockerfile"
+                    required={false}
+                  />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <FormSelectTagInputField
+                    form={form}
+                    label={t('selfHost.configuration.fields.environmentVariables.label')}
+                    name="environment_variables"
+                    description={t('selfHost.configuration.fields.environmentVariables.description')}
+                    placeholder={t('selfHost.configuration.fields.environmentVariables.placeholder')}
+                    required={false}
+                    validator={validateEnvVar}
+                    defaultValues={env_variables}
+                  />
+                  <FormSelectTagInputField
+                    form={form}
+                    label={t('selfHost.configuration.fields.buildVariables.label')}
+                    name="build_variables"
+                    description={t('selfHost.configuration.fields.buildVariables.description')}
+                    placeholder={t('selfHost.configuration.fields.buildVariables.placeholder')}
+                    required={false}
+                    validator={validateEnvVar}
+                    defaultValues={build_variables}
+                  />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <FormInputField
+                    form={form}
+                    label={t('selfHost.configuration.fields.preRunCommands.label')}
+                    name="pre_run_command"
+                    description={t('selfHost.configuration.fields.preRunCommands.description')}
+                    placeholder={t('selfHost.configuration.fields.preRunCommands.placeholder')}
+                    required={false}
+                  />
+                  <FormInputField
+                    form={form}
+                    label={t('selfHost.configuration.fields.postRunCommands.label')}
+                    name="post_run_command"
+                    description={t('selfHost.configuration.fields.postRunCommands.description')}
+                    placeholder={t('selfHost.configuration.fields.postRunCommands.placeholder')}
+                    required={false}
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              {renderReadOnlyField(
+                t('selfHost.configuration.fields.environment.label'),
+                environment,
+                t('selfHost.configuration.fields.environment.description')
+              )}
+              {renderReadOnlyField(
+                t('selfHost.configuration.fields.branch.label'),
+                branch,
+                t('selfHost.configuration.fields.branch.description')
+              )}
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <FormSelectTagInputField
-                form={form}
-                label={t('selfHost.configuration.fields.environmentVariables.label')}
-                name="environment_variables"
-                description={t('selfHost.configuration.fields.environmentVariables.description')}
-                placeholder={t('selfHost.configuration.fields.environmentVariables.placeholder')}
-                required={false}
-                validator={validateEnvVar}
-                defaultValues={env_variables}
-              />
-              <FormSelectTagInputField
-                form={form}
-                label={t('selfHost.configuration.fields.buildVariables.label')}
-                name="build_variables"
-                description={t('selfHost.configuration.fields.buildVariables.description')}
-                placeholder={t('selfHost.configuration.fields.buildVariables.placeholder')}
-                required={false}
-                validator={validateEnvVar}
-                defaultValues={build_variables}
-              />
+              {renderReadOnlyField(
+                t('selfHost.configuration.fields.domain.label'),
+                domain,
+                t('selfHost.configuration.fields.domain.description')
+              )}
+              {renderReadOnlyField(
+                t('selfHost.configuration.fields.buildPack.label'),
+                build_pack,
+                t('selfHost.configuration.fields.buildPack.description')
+              )}
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              <FormInputField
-                form={form}
-                label={t('selfHost.configuration.fields.preRunCommands.label')}
-                name="pre_run_command"
-                description={t('selfHost.configuration.fields.preRunCommands.description')}
-                placeholder={t('selfHost.configuration.fields.preRunCommands.placeholder')}
-                required={false}
-              />
-              <FormInputField
-                form={form}
-                label={t('selfHost.configuration.fields.postRunCommands.label')}
-                name="post_run_command"
-                description={t('selfHost.configuration.fields.postRunCommands.description')}
-                placeholder={t('selfHost.configuration.fields.postRunCommands.placeholder')}
-                required={false}
-              />
-            </div>
-          </>
-        )}
+            <Button type="submit" className="w-full cursor-pointer" disabled={isLoading}>
+              {isLoading
+                ? t('selfHost.configuration.buttons.updating')
+                : t('selfHost.configuration.buttons.update')}
+            </Button>
+          </form>
+        </Form>
+      </AnyPermissionGuard>
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.environment.label'),
-            environment,
-            t('selfHost.configuration.fields.environment.description')
-          )}
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.branch.label'),
-            branch,
-            t('selfHost.configuration.fields.branch.description')
-          )}
+      <ResourceGuard 
+        resource="deploy" 
+        action="read"
+        loadingFallback={null}
+      >
+        <div className="space-y-8">
+          <div className="grid sm:grid-cols-2 gap-4">
+            {renderReadOnlyField(
+              t('selfHost.configuration.fields.applicationName.label'),
+              application_name,
+              t('selfHost.configuration.fields.applicationName.description')
+            )}
+            {renderReadOnlyField(
+              t('selfHost.configuration.fields.port.label'),
+              port,
+              t('selfHost.configuration.fields.port.description')
+            )}
+            {renderReadOnlyField(
+              t('selfHost.configuration.fields.basePath.label'),
+              base_path,
+              t('selfHost.configuration.fields.basePath.description')
+            )}
+            {renderReadOnlyField(
+              t('selfHost.configuration.fields.dockerfilePath.label'),
+              dockerFilePath,
+              t('selfHost.configuration.fields.dockerfilePath.description')
+            )}
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            {renderReadOnlyField(
+              t('selfHost.configuration.fields.environmentVariables.label'),
+              Object.entries(env_variables)
+                .map(([key, value]) => `${key}=${value}`)
+                .join('\n'),
+              t('selfHost.configuration.fields.environmentVariables.description')
+            )}
+            {renderReadOnlyField(
+              t('selfHost.configuration.fields.buildVariables.label'),
+              Object.entries(build_variables)
+                .map(([key, value]) => `${key}=${value}`)
+                .join('\n'),
+              t('selfHost.configuration.fields.buildVariables.description')
+            )}
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            {renderReadOnlyField(
+              t('selfHost.configuration.fields.preRunCommands.label'),
+              pre_run_commands,
+              t('selfHost.configuration.fields.preRunCommands.description')
+            )}
+            {renderReadOnlyField(
+              t('selfHost.configuration.fields.postRunCommands.label'),
+              post_run_commands,
+              t('selfHost.configuration.fields.postRunCommands.description')
+            )}
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            {renderReadOnlyField(
+              t('selfHost.configuration.fields.environment.label'),
+              environment,
+              t('selfHost.configuration.fields.environment.description')
+            )}
+            {renderReadOnlyField(
+              t('selfHost.configuration.fields.branch.label'),
+              branch,
+              t('selfHost.configuration.fields.branch.description')
+            )}
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            {renderReadOnlyField(
+              t('selfHost.configuration.fields.domain.label'),
+              domain,
+              t('selfHost.configuration.fields.domain.description')
+            )}
+            {renderReadOnlyField(
+              t('selfHost.configuration.fields.buildPack.label'),
+              build_pack,
+              t('selfHost.configuration.fields.buildPack.description')
+            )}
+          </div>
         </div>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.domain.label'),
-            domain,
-            t('selfHost.configuration.fields.domain.description')
-          )}
-          {renderReadOnlyField(
-            t('selfHost.configuration.fields.buildPack.label'),
-            build_pack,
-            t('selfHost.configuration.fields.buildPack.description')
-          )}
-        </div>
-
-        <Button type="submit" className="w-full cursor-pointer" disabled={isLoading}>
-          {isLoading
-            ? t('selfHost.configuration.buttons.updating')
-            : t('selfHost.configuration.buttons.update')}
-        </Button>
-      </form>
-    </Form>
+      </ResourceGuard>
+    </ResourceGuard>
   );
 };

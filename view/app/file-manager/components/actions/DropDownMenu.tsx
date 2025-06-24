@@ -13,6 +13,7 @@ import { FileData } from '@/redux/types/files';
 import { useCreateDirectoryMutation } from '@/redux/services/file-manager/fileManagersApi';
 import { useTranslation } from '@/hooks/use-translation';
 import { toast } from 'sonner';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 
 interface DropDownMenuProps {
   refetch: () => void;
@@ -22,9 +23,6 @@ interface DropDownMenuProps {
   setSelectedPath: React.Dispatch<React.SetStateAction<string>>;
   selectedPath: string;
   files: FileData[];
-  canCreate: boolean;
-  canUpdate: boolean;
-  canDelete: boolean;
 }
 
 const FileManagerDropDownMenu: React.FC<DropDownMenuProps> = ({
@@ -34,17 +32,13 @@ const FileManagerDropDownMenu: React.FC<DropDownMenuProps> = ({
   currentPath,
   setSelectedPath,
   selectedPath,
-  files,
-  canCreate,
-  canUpdate,
-  canDelete
+  files
 }) => {
   const { t } = useTranslation();
   const [isUploadOpen, setIsUploadOpen] = React.useState(false);
   const [createDirectory] = useCreateDirectoryMutation();
 
   const handleCreateDirectory = async () => {
-    if (!canCreate) return;
     try {
       const newFolderNumber = files.filter((f) => f.name.startsWith('New Folder')).length + 1;
       const newFolderName = `New Folder ${newFolderNumber}`;
@@ -65,24 +59,22 @@ const FileManagerDropDownMenu: React.FC<DropDownMenuProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {canCreate && (
-            <>
-              <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-                <DialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    {t('fileManager.actions.upload')}
-                  </DropdownMenuItem>
-                </DialogTrigger>
-                <FileUpload setIsDialogOpen={setIsUploadOpen} currentPath={currentPath} />
-              </Dialog>
+          <ResourceGuard resource="file-manager" action="create">
+            <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+              <DialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  {t('fileManager.actions.upload')}
+                </DropdownMenuItem>
+              </DialogTrigger>
+              <FileUpload setIsDialogOpen={setIsUploadOpen} currentPath={currentPath} />
+            </Dialog>
 
-              <DropdownMenuItem onSelect={handleCreateDirectory}>
-                <FolderPlus className="mr-2 h-4 w-4" />
-                {t('fileManager.actions.createDirectory')}
-              </DropdownMenuItem>
-            </>
-          )}
+            <DropdownMenuItem onSelect={handleCreateDirectory}>
+              <FolderPlus className="mr-2 h-4 w-4" />
+              {t('fileManager.actions.createDirectory')}
+            </DropdownMenuItem>
+          </ResourceGuard>
 
           <DropdownMenuItem onSelect={() => setShowHidden(!showHidden)}>
             {showHidden ? (

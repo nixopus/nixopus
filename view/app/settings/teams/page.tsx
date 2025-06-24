@@ -6,9 +6,8 @@ import useTeamSettings from '../hooks/use-team-settings';
 import AddMember from './components/AddMember';
 import TeamMembers from './components/TeamMembers';
 import EditTeam from './components/EditTeam';
-import { useResourcePermissions } from '@/lib/permission';
-import { useAppSelector } from '@/redux/hooks';
 import { useTranslation } from '@/hooks/use-translation';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 
 function Page() {
   const { t } = useTranslation();
@@ -32,66 +31,58 @@ function Page() {
     handleUpdateUser
   } = useTeamSettings();
 
-  const user = useAppSelector((state) => state.auth.user);
-  const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
-
-  const { canCreate: canCreateUser } = useResourcePermissions(user, 'user', activeOrganization?.id);
-  const { canRead: canReadOrg, canUpdate: canUpdateOrg } = useResourcePermissions(
-    user,
-    'organization',
-    activeOrganization?.id
-  );
-
   return (
-    <div className="container mx-auto py-6 space-y-8 max-w-4xl">
-      <div className={'flex items-center justify-between space-y-2'}>
-        <div className="flex items-center">
-          <span className="">
-            <h2 className="text-2xl font-bold tracking-tight">{teamName}</h2>
-            <p className="text-muted-foreground">{teamDescription}</p>
-          </span>
+    <ResourceGuard resource="organization" action="read">
+      <div className="container mx-auto py-6 space-y-8 max-w-4xl">
+        <div className={'flex items-center justify-between space-y-2'}>
+          <div className="flex items-center">
+            <span className="">
+              <h2 className="text-2xl font-bold tracking-tight">{teamName}</h2>
+              <p className="text-muted-foreground">{teamDescription}</p>
+            </span>
 
-          {canUpdateOrg && (
-            <EditTeam
-              teamName={teamName || ''}
-              teamDescription={teamDescription || ''}
-              setEditTeamDialogOpen={setEditTeamDialogOpen}
-              handleUpdateTeam={handleUpdateTeam}
-              setTeamName={setTeamName}
-              setTeamDescription={setTeamDescription}
-              isEditTeamDialogOpen={isEditTeamDialogOpen}
-              isUpdating={isUpdating}
+            <ResourceGuard resource="organization" action="update">
+              <EditTeam
+                teamName={teamName || ''}
+                teamDescription={teamDescription || ''}
+                setEditTeamDialogOpen={setEditTeamDialogOpen}
+                handleUpdateTeam={handleUpdateTeam}
+                setTeamName={setTeamName}
+                setTeamDescription={setTeamDescription}
+                isEditTeamDialogOpen={isEditTeamDialogOpen}
+                isUpdating={isUpdating}
+              />
+            </ResourceGuard>
+          </div>
+
+          <ResourceGuard resource="user" action="create">
+            <AddMember
+              isAddUserDialogOpen={isAddUserDialogOpen}
+              setIsAddUserDialogOpen={setIsAddUserDialogOpen}
+              newUser={newUser}
+              setNewUser={setNewUser}
+              handleAddUser={handleAddUser}
             />
-          )}
+          </ResourceGuard>
         </div>
 
-        {canCreateUser && (
-          <AddMember
-            isAddUserDialogOpen={isAddUserDialogOpen}
-            setIsAddUserDialogOpen={setIsAddUserDialogOpen}
-            newUser={newUser}
-            setNewUser={setNewUser}
-            handleAddUser={handleAddUser}
+        {users.length > 0 ? (
+          <TeamMembers
+            users={users}
+            handleRemoveUser={handleRemoveUser}
+            getRoleBadgeVariant={getRoleBadgeVariant}
+            onUpdateUser={handleUpdateUser}
           />
+        ) : (
+          <div className="text-center text-muted-foreground">{t('settings.teams.noMembers')}</div>
         )}
-      </div>
 
-      {canReadOrg && users.length > 0 ? (
-        <TeamMembers
-          users={users}
-          handleRemoveUser={handleRemoveUser}
-          getRoleBadgeVariant={getRoleBadgeVariant}
-          onUpdateUser={handleUpdateUser}
-        />
-      ) : (
-        <div className="text-center text-muted-foreground">{t('settings.teams.noMembers')}</div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TeamStats users={users} />
-        <RecentActivity />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TeamStats users={users} />
+          <RecentActivity />
+        </div>
       </div>
-    </div>
+    </ResourceGuard>
   );
 }
 

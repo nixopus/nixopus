@@ -15,9 +15,9 @@ import {
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import { useGetUserOrganizationsQuery } from '@/redux/services/users/userApi';
 import { useNavigationState } from '@/hooks/use_navigation_state';
-import { hasPermission } from '@/lib/permission';
 import { setActiveOrganization } from '@/redux/features/users/userSlice';
 import { useTranslation } from '@/hooks/use-translation';
+import { useRBAC } from '@/lib/rbac';
 
 const data = {
   navMain: [
@@ -87,6 +87,7 @@ export function AppSidebar({
   const { activeNav, setActiveNav } = useNavigationState();
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const dispatch = useAppDispatch();
+  const { canAccessResource } = useRBAC();
 
   const hasAnyPermission = React.useMemo(() => {
     const allowedResources = ['dashboard', 'settings'];
@@ -99,13 +100,13 @@ export function AppSidebar({
       }
 
       return (
-        hasPermission(user, resource, 'read', activeOrg.id) ||
-        hasPermission(user, resource, 'create', activeOrg.id) ||
-        hasPermission(user, resource, 'update', activeOrg.id) ||
-        hasPermission(user, resource, 'delete', activeOrg.id)
+        canAccessResource(resource as any, 'read') ||
+        canAccessResource(resource as any, 'create') ||
+        canAccessResource(resource as any, 'update') ||
+        canAccessResource(resource as any, 'delete')
       );
     };
-  }, [user, activeOrg]);
+  }, [user, activeOrg, canAccessResource]);
 
   const filteredNavItems = React.useMemo(
     () =>

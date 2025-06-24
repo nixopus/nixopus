@@ -3,6 +3,7 @@ import sys
 import json
 import secrets
 import string
+import logging
 from pathlib import Path
 import subprocess
 from docker_setup import DockerSetup
@@ -204,7 +205,7 @@ class EnvironmentConfig:
             raise Exception(env_config["errors"]["invalid_type"].format(env=env, error=str(e))) from e
 
 class EnvironmentSetup:
-    def __init__(self, domains: Optional[Dict[str, str]], env: str = "staging"):
+    def __init__(self, domains: Optional[Dict[str, str]], env: str = "staging", debug: bool = False):
         self.domains = domains
         self.project_root = Path(__file__).parent.parent
         self.config = EnvironmentConfig.create(env)
@@ -213,7 +214,10 @@ class EnvironmentSetup:
         self.ssh_dir = self.config.get_path("ssh")
         self.context_name = f"nixopus-{self.config.env}"
         self.source_dir = self.config.get_path("source")
-        self.docker_setup = DockerSetup(env)
+        self.logger = logging.getLogger("nixopus")
+        if debug:
+            self.logger.setLevel(logging.DEBUG)
+        self.docker_setup = DockerSetup(env, debug)
         self.ssh_setup = SSHSetup(
             SSHConfig(
                 port=self.config.ssh_port,
@@ -233,40 +237,54 @@ class EnvironmentSetup:
         return ''.join(secrets.choice(alphabet) for _ in range(length))
     
     def get_version(self):
+        self.logger.debug("Getting version from version file")
         version_file = self.project_root / self.config.version_file_path
         if version_file.exists():
             try:
                 with open(version_file, 'r') as f:
-                    return f.read().strip()
+                    version = f.read().strip()
+                    self.logger.debug(f"Version: {version}")
+                    return version
             except IOError as e:
+                self.logger.debug(f"Error reading version file: {e}")
                 raise Exception(self.config.errors.file_read_error.format(error=str(e)))
+        self.logger.debug("Version file not found, returning 'unknown'")
         return "unknown"
 
     def setup_environment(self):
         try:
+            self.logger.debug("Starting environment setup")
             db_name = f"{self.config.db_name_prefix}{self.generate_random_string(self.config.db_name_length)}"
             username = f"{self.config.db_user_prefix}{self.generate_random_string(self.config.db_user_length)}"
             password = self.generate_random_string(self.config.db_password_length)
             
+            self.logger.debug("Generating SSH keys")
             private_key_path, public_key_path = self.ssh_setup.generate_key()
             self.ssh_setup.setup_authorized_keys(public_key_path, self.config.files.permissions)
+            
+            self.logger.debug("Getting public IP")
             local_ip = self.docker_setup.get_public_ip()
+            self.logger.debug(f"Public IP: {local_ip}")
 
+            self.logger.debug("Setting up Docker context")
             docker_context = self.docker_setup.setup()
 
             domain_not_provided = self.domains is None
             if not domain_not_provided:
+                self.logger.debug("Validating domains")
                 if not all(isinstance(domain, str) and '.' in domain for domain in self.domains.values()):
                     raise ValueError(self.config.errors.invalid_domain)
 
             api_host = self.domains['api_domain'] if not domain_not_provided else f"{local_ip}:{self.config.api_port}"
             app_host = self.domains['app_domain'] if not domain_not_provided else f"{local_ip}:{self.config.next_public_port}"
             
+            self.logger.debug("Generating URLs")
             api_url = self.config.get_url("api", api_host, not domain_not_provided)
             websocket_url = self.config.get_url("websocket", api_host, not domain_not_provided)
             webhook_url = self.config.get_url("webhook", api_host, not domain_not_provided)
             allowed_origin = self.config.get_url("app", app_host, not domain_not_provided)
             
+            self.logger.debug("Setting up environment variables")
             base_env_vars = {
                 "DB_NAME": db_name,
                 "USERNAME": username,
@@ -299,6 +317,7 @@ class EnvironmentSetup:
             }
 
             try:
+                self.logger.debug("Writing environment files")
                 with open(self.env_file, 'w') as f:
                     for key, value in base_env_vars.items():
                         f.write(f"{key}={value}\n")
@@ -319,13 +338,18 @@ class EnvironmentSetup:
                     for key, value in view_env_vars.items():
                         f.write(f"{key}={value}\n")
                 
+                self.logger.debug("Setting file permissions")
                 self.env_file.chmod(self.config.get_permission("env"))
                 private_key_path.chmod(self.config.get_permission("private_key"))
                 public_key_path.chmod(self.config.get_permission("public_key"))
+                self.logger.debug("Environment setup completed successfully")
                 return base_env_vars
             except IOError as e:
+                self.logger.debug(f"Error writing environment files: {e}")
                 raise Exception(self.config.errors.file_write_error.format(error=str(e)))
         except ValueError as e:
+            self.logger.debug(f"Validation error: {e}")
             raise e
         except Exception as e:
+            self.logger.debug(f"Setup error: {e}")
             raise Exception(self.config.errors.setup_error.format(error=str(e)))

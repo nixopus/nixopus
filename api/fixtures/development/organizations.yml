@@ -1,0 +1,15 @@
+- model: Organization
+  rows:
+    - _id: nixopus_org
+      id: "{{ uuid }}"
+      name: "Nixopus Inc"
+      description: "Main organization for Nixopus platform"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: demo_org
+      id: "{{ uuid }}"
+      name: "Demo Organization"
+      description: "Demo organization for testing purposes"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}" 

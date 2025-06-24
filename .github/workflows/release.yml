@@ -1,107 +1,66 @@
-name: Release
+name: Create Release
 
 on:
   push:
     tags:
-      - 'v*.*.*'
-      - 'v*.*.*-alpha.*'
-      - 'v*.*.*-beta.*'
-      - 'v*.*.*-rc.*'
-
-env:
-  REGISTRY: ghcr.io
-  API_IMAGE: ${{ github.repository }}-api
-  VIEW_IMAGE: ${{ github.repository }}-view
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
-  pre-release:
-    name: Pre-release Checks
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Verify Tag Format
-        run: |
-          if ! [[ ${{ github.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$ ]]; then
-            echo "Error: Tag format must be vX.Y.Z or vX.Y.Z-alpha.N (e.g., v0.1.0-alpha.1)"
-            exit 1
-          fi
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-          cache: true
-          cache-dependency-path: api/go.sum
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'yarn'
-          cache-dependency-path: view/yarn.lock
-
-      - name: Install Yarn
-        run: npm install -g yarn
-
-      - name: Install Dependencies
-        run: |
-          cd api && go mod download
-          cd ../view && yarn install --frozen-lockfile
-
-      # - name: Run Tests
-      #   run: |
-      #     cd api && go test ./...
-      #     cd ../view && yarn test
-
   create-release:
-    name: Create Release
-    needs: pre-release
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: read
-      issues: write
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Generate Release Notes
-        id: release_notes
-        uses: release-drafter/release-drafter@v5
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Conventional Changelog Action
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          git-message: 'chore(release): {version}'
+          git-user-name: 'github-actions[bot]'
+          git-user-email: 'github-actions[bot]@users.noreply.github.com'
+          preset: 'angular'
+          tag-prefix: 'v'
+          output-file: 'false'
+          version-file: 'package.json'
+          skip-on-empty: 'true'
+          skip-version-file: 'false'
+          skip-commit: 'false'
+          skip-tag: 'false'
+          skip-ci: 'true'
+          create-summary: 'true'
+          pre-release: 'true'
+          pre-release-identifier: 'alpha'
+      
+      - name: Update version.txt
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        run: echo "${{ steps.changelog.outputs.tag }}" > version.txt
+      
+      - name: Commit version.txt update
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add version.txt
+          git commit -m "chore(release): update version.txt to ${{ steps.changelog.outputs.tag }}"
+          git push
+      
+      - name: Create Release
+        uses: actions/create-release@v1
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
         with:
-          name: ${{ github.ref_name }}
-          body: ${{ steps.release_notes.outputs.body }}
+          tag_name: ${{ steps.changelog.outputs.tag }}
+          release_name: ${{ steps.changelog.outputs.tag }}
+          body: ${{ steps.changelog.outputs.clean_changelog }}
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-alpha.') || contains(github.ref_name, '-beta.') || contains(github.ref_name, '-rc.') }}
-          generate_release_notes: false
-
-      - name: Notify Release
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const isPrerelease = ${{ contains(github.ref_name, '-alpha.') || contains(github.ref_name, '-beta.') || contains(github.ref_name, '-rc.') }};
-            const releaseType = isPrerelease ? 'pre-release' : 'release';
-            const message = `🎉 ${releaseType} ${{ github.ref_name }} has been created!\n\nContainer images will be built and pushed to ${process.env.REGISTRY}/${process.env.API_IMAGE} and ${process.env.REGISTRY}/${process.env.VIEW_IMAGE}`;
-            
-            if (context.issue && context.issue.number) {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: message
-              });
-            } else {
-              console.log(message);
-            } 
+          prerelease: true 
