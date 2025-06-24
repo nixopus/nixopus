@@ -55,35 +55,33 @@ jobs:
       - name: Start SSH service (Linux)
         if: runner.os == 'Linux'
         run: |
-          # Install and configure SSH service
+
           sudo apt-get install -y openssh-server
-          
-          # Configure SSH daemon
           sudo mkdir -p /var/run/sshd
-          
+
           # Ensure SSH configuration allows key-based authentication
           sudo sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
           sudo sed -i 's/#AuthorizedKeysFile/AuthorizedKeysFile/' /etc/ssh/sshd_config
-          
+
           # Start SSH service
           sudo systemctl start ssh
           sudo systemctl enable ssh
-          
+
           # Verify SSH service is running and wait for it to be ready
           sudo systemctl status ssh --no-pager
           sleep 2
-          
-          # Test that SSH daemon is listening
+
+          # Check if SSH daemon is listening or not
           sudo netstat -tlnp | grep :22 || sudo ss -tlnp | grep :22
-          
-          # Ensure SSH directory exists with correct permissions
+
+          # verify if the SSH directory exists with correct permissions
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          
+
           # Create authorized_keys if it doesn't exist
           touch ~/.ssh/authorized_keys
           chmod 600 ~/.ssh/authorized_keys
-          
+
           echo "SSH service setup completed successfully"
 
       - name: Install deps (macOS-13)
