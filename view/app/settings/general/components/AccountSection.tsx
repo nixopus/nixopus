@@ -120,7 +120,7 @@ function AccountSection({
               />
               <Button
                 onClick={handleUsernameChange}
-                disabled={isLoading || username === user.username}
+                disabled={isLoading || username === user?.username}
               >
                 {t('settings.account.username.update')}
               </Button>
@@ -146,7 +146,7 @@ function AccountSection({
             </Label>
             <div className="flex flex-col gap-2">
               <Input id="email" value={email} readOnly disabled className="bg-muted/50" />
-              {!user.is_verified && (
+              {user && !user.is_verified && (
                 <div className="space-y-2">
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
