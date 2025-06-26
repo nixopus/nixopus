@@ -607,6 +607,12 @@ function start_api(){
 }
 
 open_discord_gh_link() {
+  # Skip opening links in CI/automated environments
+  if [[ -n "${CI:-}" || -n "${GITHUB_ACTIONS:-}" || -n "${GITHUB_WORKFLOW:-}" ]]; then
+    echo "Skipping browser launch (running in CI environment)"
+    return 0
+  fi
+
   local url="https://discord.com/invite/skdcq39Wpv"
   local gh_url="https://github.com/raghavyuva/nixopus/"
 
