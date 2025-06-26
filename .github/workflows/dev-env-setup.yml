@@ -54,30 +54,30 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y python3 python3-pip git openssl openssh-server
-      - name: Start SSH service (Linux)
-        if: runner.os == 'Linux' || runner.os == 'linux'
-        run: |
+      # - name: Start SSH service (Linux)
+      #   if: runner.os == 'Linux' || runner.os == 'linux'
+      #   run: |
           
-          sudo mkdir -p /var/run/sshd
-          sudo sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
-          sudo sed -i 's/#AuthorizedKeysFile/AuthorizedKeysFile/' /etc/ssh/sshd_config
+      #     sudo mkdir -p /var/run/sshd
+      #     sudo sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+      #     sudo sed -i 's/#AuthorizedKeysFile/AuthorizedKeysFile/' /etc/ssh/sshd_config
 
-          sudo systemctl enable ssh.socket
-          sudo systemctl start  ssh.socket
+      #     sudo systemctl enable ssh.socket
+      #     sudo systemctl start  ssh.socket
 
-          sudo systemctl enable ssh.service
-          sudo systemctl start  ssh.service
+      #     sudo systemctl enable ssh.service
+      #     sudo systemctl start  ssh.service
 
-          sudo systemctl status ssh --no-pager
-          sleep 2
-          sudo netstat -tlnp | grep :22
+      #     sudo systemctl status ssh --no-pager
+      #     sleep 2
+      #     sudo netstat -tlnp | grep :22
 
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          touch ~/.ssh/authorized_keys
-          chmod 600 ~/.ssh/authorized_keys
+      #     mkdir -p ~/.ssh
+      #     chmod 700 ~/.ssh
+      #     touch ~/.ssh/authorized_keys
+      #     chmod 600 ~/.ssh/authorized_keys
 
-          echo "SSH service setup completed successfully"
+      #     echo "SSH service setup completed successfully"
 
       # - name: Install deps (macOS-13)
       #   if: runner.os == 'macOS'
