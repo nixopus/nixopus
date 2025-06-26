@@ -2,7 +2,7 @@ name: QEMU Setup and Installation
 
 on:
   push:
-    branches: [master, feat/develop]
+    branches: [master, feat/develop,feat/hosted_action_runner]
     paths:
       - 'scripts/install.sh'
       - 'installer/**'
