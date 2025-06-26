@@ -780,7 +780,7 @@ function ssh_health_check(){
         echo "SSH connection successful"
         return 0
     else
-        echo "SSH connection failed - please enable Remote Login in System Settings → Sharing (macOS) or start SSH service (Linux)"
+        echo "SSH connection failed - please enable Remote Login in System Settings → Sharing (macOS) or start SSH service (Linux) "
         return 1
     fi
 }
