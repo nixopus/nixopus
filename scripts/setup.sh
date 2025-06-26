@@ -607,24 +607,19 @@ function start_api(){
 }
 
 open_discord_gh_link() {
-  # Skip opening links in CI/automated environments
-  if [[ -n "${CI:-}" || -n "${GITHUB_ACTIONS:-}" || -n "${GITHUB_WORKFLOW:-}" ]]; then
-    echo "Skipping browser launch (running in CI environment)"
-    return 0
-  fi
 
   local url="https://discord.com/invite/skdcq39Wpv"
   local gh_url="https://github.com/raghavyuva/nixopus/"
 
   case "$OS" in
     Darwin)
-      open "$url"
-      open "$gh_url"
+      open "$url" 2>/dev/null || echo "Could not open browser on macOS"
+      open "$gh_url" 2>/dev/null || echo "Could not open browser on macOS"
       ;;
     Linux)
       if command -v xdg-open &>/dev/null; then
-        xdg-open "$url"
-        xdg-open "$gh_url"
+        xdg-open "$url" 2>/dev/null || echo "Could not open Discord link"
+        xdg-open "$gh_url" 2>/dev/null || echo "Could not open GitHub link"
       else
         echo "Warning: Could not auto-open browser." >&2
       fi
