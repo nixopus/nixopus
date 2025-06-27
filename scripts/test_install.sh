@@ -234,9 +234,6 @@ function test_distribution_with_params() {
     # Reset container name for this test
     CONTAINER_NAME=""
     
-    # Setup cleanup trap for this test
-    trap cleanup_container EXIT
-    
     if ! create_lxd_container "$distro"; then
         TEST_RESULTS+=("$distro-$test_name: SKIPPED (not available)")
         return 0
@@ -249,9 +246,6 @@ function test_distribution_with_params() {
     fi
     
     cleanup_container
-    
-    # Remove the trap for this test
-    trap - EXIT
     
     TEST_RESULTS+=("$distro-$test_name: $test_result")
     echo "Test result for $distro-$test_name: $test_result"
