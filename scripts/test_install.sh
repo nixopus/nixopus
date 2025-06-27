@@ -133,7 +133,7 @@ function install_dependencies() {
 # Generate a random string and add it to the test-container- prefix
 function get_lxd_container_name() {
     local distro="$1"
-    echo "test-container-$distro"
+    echo "test-container-$(date +%s%N | md5sum | cut -c1-8)"
 }
 
 
