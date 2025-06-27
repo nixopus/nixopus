@@ -130,25 +130,17 @@ function install_dependencies() {
     done
 }
 
-# Generate a random string
-function generate_random_string() {
-    local random_string
-    random_string=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-    echo "$random_string"
-}
-
 # Generate a random string and add it to the test-container- prefix
 function get_lxd_container_name() {
-    local random_string
-    random_string=$(generate_random_string)
-    echo "test-container-$random_string"
+    local distro="$1"
+    echo "test-container-$distro"
 }
 
 
 # Create a new lxd container for a specific distribution
 function create_lxd_container() {
     local distro="$1"
-    CONTAINER_NAME=$(get_lxd_container_name)
+    CONTAINER_NAME=$(get_lxd_container_name "$distro")
     
     echo "Creating container: $CONTAINER_NAME with image: $distro"
     lxc launch images:"$distro" "$CONTAINER_NAME"
