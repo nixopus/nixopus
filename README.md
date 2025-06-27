@@ -3,7 +3,7 @@
     <summary>
       <h1>Nixopus</h1>
       <h6>Streamline Your Entire Server Workflow — ServerOps with No Fuss</h6>
-      <a href="https://nixopus.com"><img align="right" src="./assets/nixopus_logo_transparent.png" alt="Nixopus Logo" width="300" /></a>
+      <a href="https://nixopus.com"><img align="right" src="./assets/nixopus_logo_transparent.png" alt="Nixopus Logo" width="250" /></a>
     </summary>
   </ul>
 </div>
