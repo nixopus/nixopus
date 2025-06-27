@@ -85,11 +85,11 @@ function detect_package_manager() {
 
 # Check if LXD is installed
 function is_lxd_installed() {
-    if ! command -v lxc --version &>/dev/null; then
+    if ! command -v sudo lxc --version &>/dev/null; then
         echo "Error: LXD not found. Please install LXD first: https://canonical.com/lxd" >&2
         exit 1
     fi
-}
+}   
 
 # Install the package
 function install_package() {
@@ -143,11 +143,11 @@ function create_lxd_container() {
     CONTAINER_NAME=$(get_lxd_container_name "$distro")
     
     echo "Creating container: $CONTAINER_NAME with image: $distro"
-    lxc launch images:"$distro" "$CONTAINER_NAME"
+    sudo lxc launch images:"$distro" "$CONTAINER_NAME"
     
     # Wait for container to be ready
     echo "Waiting for container to be ready..."
-    lxc exec "$CONTAINER_NAME" -- cloud-init status --wait 2>/dev/null || true
+    sudo lxc exec "$CONTAINER_NAME" -- cloud-init status --wait 2>/dev/null || true
 }
 
 # Build installation command
@@ -184,17 +184,17 @@ function build_installation_command() {
 # Run installation script
 function run_installation_script() {
     local command="$1"
-    lxc exec "$CONTAINER_NAME" -- bash -c "$command"
+    sudo lxc exec "$CONTAINER_NAME" -- bash -c "$command"
 }
 
 # Stop and delete container
 function cleanup_container() {
     if [ -n "$CONTAINER_NAME" ]; then
         echo "Stopping container: $CONTAINER_NAME"
-        lxc stop "$CONTAINER_NAME" 2>/dev/null || true
+        sudo lxc stop "$CONTAINER_NAME" 2>/dev/null || true
         
         echo "Deleting container: $CONTAINER_NAME"
-        lxc delete "$CONTAINER_NAME" 2>/dev/null || true
+        sudo lxc delete "$CONTAINER_NAME" 2>/dev/null || true
     fi
 }
 
