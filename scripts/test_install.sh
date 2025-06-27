@@ -171,11 +171,6 @@ function get_lxd_container_name() {
     echo "test-container-$random_string"
 }
 
-# Check if distribution is available
-function is_distro_available() {
-    local distro="$1"
-    lxc image list images:"$distro" --format=csv | grep -q ',CONTAINER,'
-}
 
 # Create a new lxd container for a specific distribution
 function create_lxd_container() {
@@ -270,12 +265,6 @@ function test_distribution_with_params() {
     echo "API Domain: ${api_domain:-<not set>}"
     echo "App Domain: ${app_domain:-<not set>}"
     echo "=========================================="
-    
-    if ! is_distro_available "$distro"; then
-        echo "Distribution $distro is not available, skipping..."
-        TEST_RESULTS+=("$distro-$test_name: SKIPPED (not available)")
-        return 0
-    fi
     
     # Reset container name for this test
     CONTAINER_NAME=""
