@@ -1,12 +1,11 @@
 import { useSidebar } from 'vitepress-openapi'
 import spec from '../src/openapi.json' with { type: 'json' }
-import { defineConfigWithTheme } from 'vitepress'
 import { defineConfig } from 'vitepress'
 import { withMermaid } from "vitepress-plugin-mermaid";
 
 const sidebar = useSidebar({
-  spec: spec as any,
-  linkPrefix: '/api'
+  spec: spec,
+  linkPrefix: '/operations/'
 })
 
 export default withMermaid(
@@ -87,18 +86,7 @@ export default withMermaid(
         {
           text: 'Development',
           items: [
-            {
-              text: 'Contribution',
-              items: [
-                { text: 'Overview', link: '/contributing/index.md' },
-                { text: 'Backend', link: '/contributing/backend.md' },
-                { text: 'Frontend', link: '/contributing/frontend.md' },
-                { text: 'Documentation', link: '/contributing/documentation.md' },
-                { text: 'Docker', link: '/contributing/docker.md' },
-                { text: 'Self Hosting', link: '/contributing/self-hosting.md' },
-                { text: 'Fixtures', link: '/contributing/fixtures.md' }
-              ]
-            },
+            { text: 'Contribution', link: '/contributing/index.md' },
             { text: "Code of Conduct", link: "/code-of-conduct/index.md" },
             { text: "Change Log", link: "https://github.com/raghavyuva/nixopus/releases" },
             { text: "License", link: "/license/index.md" },
@@ -120,10 +108,13 @@ export default withMermaid(
               ...group,
               collapsed: true,
               items: group.items.map((item) => {
-                const endpoint = item.link.split('/').pop();
+                const operationId = item.link.split('/').pop() || '';
+                const endpointMatch = operationId.match(/^[A-Z]+_(.+)$/);
+                const endpoint = endpointMatch ? endpointMatch[1] : operationId;
+                const httpMethod = extractHttpMethods(item.link);
                 const methodSpan = `
                 <span class="OASidebarItem group/oaSidebarItem">
-                  <span class="OASidebarItem-badge OAMethodBadge--${extractHttpMethods(item.text)}">${extractHttpMethods(item.text)}</span>
+                  <span class="OASidebarItem-badge OAMethodBadge--${httpMethod}">${httpMethod.toUpperCase()}</span>
                   <span class="OASidebarItem-text text">${endpoint}</span>
                 </span>`;
 
@@ -145,14 +136,17 @@ export default withMermaid(
   })
 )
 
-function extractHttpMethods(text) {
-  const methodRegex = /OAMethodBadge--(\w+)/g;
-  const methods: string[] = [];
-  let match;
+/**
+ * Extracts the HTTP method from an operation link string.
+ *
+ * Parses the given link to identify standard HTTP method prefixes (e.g., GET_, POST_) and returns the method in lowercase. Returns 'METHOD_MISSING' if no method prefix is found.
+ *
+ * @param link - The operation link string to parse
+ * @returns The HTTP method in lowercase, or 'METHOD_MISSING' if not found
+ */
+function extractHttpMethods(link: string): string {
+  const operationPath = link.replace('/operations/', '');
+  const methodMatch = operationPath.match(/^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)_/);
 
-  while ((match = methodRegex.exec(text)) !== null) {
-    methods.push(match[1].toUpperCase());
-  }
-
-  return methods[0]
+  return methodMatch?.[1].toLowerCase() || 'METHOD_MISSING';
 }
