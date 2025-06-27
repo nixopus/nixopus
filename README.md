@@ -1,9 +1,7 @@
 <div id="user-content-toc">
   <ul style="list-style: none;">
     <summary>
-      <samp>
       <h1>Nixopus</h1>
-      </samp>
       <h6>Streamline Your Entire Server Workflow — ServerOps with No Fuss</h6>
       <a href="https://nixopus.com"><img align="right" src="./assets/nixopus_logo_transparent.png" alt="Nixopus Logo" width="300" /></a>
     </summary>
