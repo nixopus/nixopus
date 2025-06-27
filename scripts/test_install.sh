@@ -130,33 +130,6 @@ function install_dependencies() {
     done
 }
 
-# Get first standard container alias for a distribution
-function get_first_standard_container_alias() {
-    local distro="$1"
-    
-    # List all images for the given distro in CSV format
-    local all_images
-    all_images=$(lxc image list images:"$distro" --format=csv)
-    
-    # Filter only CONTAINER entries
-    local containers
-    containers=$(echo "$all_images" | grep ',CONTAINER,')
-    
-    # Exclude cloud images
-    local non_cloud
-    non_cloud=$(echo "$containers" | grep -v 'cloud')
-    
-    # Extract the alias column (first field) and remove ' (n more)'
-    local aliases
-    aliases=$(echo "$non_cloud" | awk -F',' '{print $1}' | sed 's/ .*//')
-    
-    # Pick the first available alias
-    local first_alias
-    first_alias=$(echo "$aliases" | head -n1)
-    
-    echo "$first_alias"
-}
-
 # Generate a random string
 function generate_random_string() {
     local random_string
@@ -175,18 +148,10 @@ function get_lxd_container_name() {
 # Create a new lxd container for a specific distribution
 function create_lxd_container() {
     local distro="$1"
-    local distro_alias
-    distro_alias=$(get_first_standard_container_alias "$distro")
     CONTAINER_NAME=$(get_lxd_container_name)
     
-    # if empty alias then skip
-    if [ -z "$distro_alias" ]; then
-        echo "Distribution $distro is not available, skipping..."
-        return 1
-    fi
-
-    echo "Creating container: $CONTAINER_NAME with image: $distro_alias"
-    lxc launch images:"$distro_alias" "$CONTAINER_NAME"
+    echo "Creating container: $CONTAINER_NAME with image: $distro"
+    lxc launch images:"$distro" "$CONTAINER_NAME"
     
     # Wait for container to be ready
     echo "Waiting for container to be ready..."
