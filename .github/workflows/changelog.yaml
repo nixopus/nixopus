@@ -33,9 +33,24 @@ jobs:
           version-file: 'package.json'
           skip-on-empty: 'true'
           skip-version-file: 'false'
-          skip-commit: 'false'
-          skip-tag: 'false'
+          skip-commit: 'true'
+          skip-tag: 'true'
           skip-ci: 'true'
           create-summary: 'true'
           pre-release: 'true'
-          pre-release-identifier: 'alpha' 
+          pre-release-identifier: 'alpha'
+      
+      - name: Create Pull Request
+        if: steps.changelog.outputs.skipped == 'false'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(release): update changelog'
+          title: 'chore(release): update changelog'
+          body: |
+            This PR updates the changelog with the latest changes.
+            
+            Generated automatically by the changelog workflow.
+          branch: 'chore/update-changelog'
+          delete-branch: true
+          base: 'master'
