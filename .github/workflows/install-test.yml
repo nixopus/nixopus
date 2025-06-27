@@ -1,0 +1,23 @@
+name: Installation Test
+
+on:
+  push:
+    branches: [ master, feat/develop, feat/hosted_action_runner ]
+    paths:
+      - 'scripts/install.sh'
+      - 'scripts/test_install.sh'
+      - '.github/workflows/install-test.yml'
+      - "installer/**"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run installation test
+        run: |
+          chmod +x scripts/test_install.sh
+          ./scripts/test_install.sh 
