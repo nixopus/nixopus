@@ -184,6 +184,12 @@ function create_lxd_container() {
     distro_alias=$(get_first_standard_container_alias "$distro")
     CONTAINER_NAME=$(get_lxd_container_name)
     
+    # if empty alias then skip
+    if [ -z "$distro_alias" ]; then
+        echo "Distribution $distro is not available, skipping..."
+        return 1
+    fi
+
     echo "Creating container: $CONTAINER_NAME with image: $distro_alias"
     lxc launch images:"$distro_alias" "$CONTAINER_NAME"
     
@@ -277,8 +283,12 @@ function test_distribution_with_params() {
     # Setup cleanup trap for this test
     trap cleanup_container EXIT
     
-    if create_lxd_container "$distro" && \
-       run_installation_script "$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")"; then
+    if ! create_lxd_container "$distro"; then
+        TEST_RESULTS+=("$distro-$test_name: SKIPPED (not available)")
+        return 0
+    fi
+
+    if run_installation_script "$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")"; then
         test_result="PASSED"
     else
         test_result="FAILED"
