@@ -137,17 +137,59 @@ function get_lxd_container_name() {
 }
 
 
-# Create a new lxd container for a specific distribution
-function create_lxd_container() {
+# Create a new LXD container with Docker privileges
+create_lxd_container() {
     local distro="$1"
     CONTAINER_NAME=$(get_lxd_container_name "$distro")
-    
+
     echo "Creating container: $CONTAINER_NAME with image: $distro"
     sudo lxc launch images:"$distro" "$CONTAINER_NAME"
-    
-    # Wait for container to be ready
+    sudo lxc config set "$CONTAINER_NAME" security.privileged true
+    sudo lxc config set "$CONTAINER_NAME" security.nesting true
+    sudo lxc restart "$CONTAINER_NAME"
     echo "Waiting for container to be ready..."
+    sleep 10
     sudo lxc exec "$CONTAINER_NAME" -- cloud-init status --wait 2>/dev/null || true
+}
+
+# Install dependencies in the container
+function install_dependencies_in_container() {
+    local container_name="$1"
+    local distro="$2"
+    echo "Installing dependencies in container: $container_name"
+    # Install the dependencies based on the distro
+    case $distro in
+        "alpine")
+            echo "Installing dependencies for Alpine"
+            sudo lxc exec "$container_name" -- apk add --no-cache python3 docker py3-pip git openssl
+            ;;
+        "fedora")
+            echo "Installing dependencies for Fedora"
+            sudo lxc exec "$container_name" -- dnf install -y python3 docker python3-pip git openssl
+            ;;
+        "debian")
+            echo "Installing dependencies for Debian"
+            sudo lxc exec "$container_name" -- apt-get update
+            sudo lxc exec "$container_name" -- apt-get install -y python3 docker python3-pip git openssl
+            ;;
+        "archlinux")
+            echo "Installing dependencies for Arch Linux"
+            sudo lxc exec "$container_name" -- pacman -Sy --noconfirm python3 docker python3-pip git openssl
+            ;;
+        "centos")
+            echo "Installing dependencies for CentOS"
+            sudo lxc exec "$container_name" -- yum install -y python3 docker python3-pip git openssl
+            ;;
+        "gentoo")
+            echo "Installing dependencies for Gentoo"
+            sudo lxc exec "$container_name" -- emerge --ask nix python3 docker python3-pip git openssl
+            ;;
+        "ubuntu")
+            echo "Installing dependencies for Ubuntu"
+            sudo lxc exec "$container_name" -- apt-get update
+            sudo lxc exec "$container_name" -- apt-get install -y python3 docker python3-pip git openssl
+            ;;
+    esac
 }
 
 # Build installation command
@@ -230,6 +272,8 @@ function test_distribution_with_params() {
         TEST_RESULTS+=("$distro-$test_name: SKIPPED (not available)")
         return 0
     fi
+
+    install_dependencies_in_container "$CONTAINER_NAME" "$distro"
 
     if run_installation_script "$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")"; then
         test_result="PASSED"
