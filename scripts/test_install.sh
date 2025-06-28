@@ -176,7 +176,7 @@ function install_dependencies_in_container() {
         "debian")
             echo "Installing dependencies for Debian"
             sudo lxc exec "$container_name" -- apt-get update
-            sudo lxc exec "$container_name" -- apt-get install -y python3 docker docker-compose python3-pip git openssl curl
+            sudo lxc exec "$container_name" -- apt-get install -y python3 docker docker-compose python3-pip git openssl curl python3-venv
             ;;
         "archlinux")
             echo "Installing dependencies for Arch Linux"
@@ -193,7 +193,7 @@ function install_dependencies_in_container() {
         "ubuntu")
             echo "Installing dependencies for Ubuntu"
             sudo lxc exec "$container_name" -- apt-get update
-            sudo lxc exec "$container_name" -- apt-get install -y python3 docker docker-compose python3-pip git openssl curl
+            sudo lxc exec "$container_name" -- apt-get install -y python3 docker docker-compose python3-pip git openssl curl python3-venv
             ;;
         *)
             echo "Unknown distribution: $base_distro"
