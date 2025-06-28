@@ -1,11 +1,12 @@
 import { useSidebar } from 'vitepress-openapi'
 import spec from '../src/openapi.json' with { type: 'json' }
+import { defineConfigWithTheme } from 'vitepress'
 import { defineConfig } from 'vitepress'
 import { withMermaid } from "vitepress-plugin-mermaid";
 
 const sidebar = useSidebar({
-  spec: spec,
-  linkPrefix: '/operations/'
+  spec: spec as any,
+  linkPrefix: '/api'
 })
 
 export default withMermaid(
@@ -119,13 +120,10 @@ export default withMermaid(
               ...group,
               collapsed: true,
               items: group.items.map((item) => {
-                const operationId = item.link.split('/').pop() || '';
-                const endpointMatch = operationId.match(/^[A-Z]+_(.+)$/);
-                const endpoint = endpointMatch ? endpointMatch[1] : operationId;
-                const httpMethod = extractHttpMethods(item.link);
+                const endpoint = item.link.split('/').pop();
                 const methodSpan = `
                 <span class="OASidebarItem group/oaSidebarItem">
-                  <span class="OASidebarItem-badge OAMethodBadge--${httpMethod}">${httpMethod.toUpperCase()}</span>
+                  <span class="OASidebarItem-badge OAMethodBadge--${extractHttpMethods(item.text)}">${extractHttpMethods(item.text)}</span>
                   <span class="OASidebarItem-text text">${endpoint}</span>
                 </span>`;
 
@@ -147,9 +145,14 @@ export default withMermaid(
   })
 )
 
-function extractHttpMethods(link: string): string {
-  const operationPath = link.replace('/operations/', '');
-  const methodMatch = operationPath.match(/^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)_/);
+function extractHttpMethods(text) {
+  const methodRegex = /OAMethodBadge--(\w+)/g;
+  const methods: string[] = [];
+  let match;
 
-  return methodMatch?.[1].toLowerCase() || 'METHOD_MISSING';
+  while ((match = methodRegex.exec(text)) !== null) {
+    methods.push(match[1].toUpperCase());
+  }
+
+  return methods[0]
 }
