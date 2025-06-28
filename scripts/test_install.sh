@@ -229,7 +229,22 @@ function build_installation_command() {
 # Run installation script
 function run_installation_script() {
     local command="$1"
-    sudo lxc exec "$CONTAINER_NAME" -- bash -c "$command"
+    echo "Running installation script in container: $CONTAINER_NAME"
+    echo "This may take several minutes..."
+    
+    # Run with timeout of 10 minutes (600 seconds)
+    if timeout 600 sudo lxc exec "$CONTAINER_NAME" -- bash -c "set -x; $command"; then
+        echo "Installation script completed successfully"
+        return 0
+    else
+        local exit_code=$?
+        if [ $exit_code -eq 124 ]; then
+            echo "Installation script timed out after 30 minutes"
+        else
+            echo "Installation script failed with exit code: $exit_code"
+        fi
+        return $exit_code
+    fi
 }
 
 # Stop and delete container
@@ -278,11 +293,13 @@ function test_distribution_with_params() {
 
     install_dependencies_in_container "$CONTAINER_NAME" "$distro"
 
+    echo "Starting installation script..."
     if run_installation_script "$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")"; then
         test_result="PASSED"
     else
         test_result="FAILED"
     fi
+    echo "Installation script completed with result: $test_result"
     
     cleanup_container
     
