@@ -228,7 +228,7 @@ ExecStart=/usr/bin/dockerd"""
                 raise Exception("Docker not available or doesn't support contexts")
                 
             self.debug_print(f"Removing existing context {self.context_name} if it exists...")
-            subprocess.run(["docker", "context", "rm", "-f", self.context_name], 
+            subprocess.run(["docker", "context", "rm", self.context_name], 
                          capture_output=True, check=False)
             
             self.debug_print("Creating new Docker context...")
