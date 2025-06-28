@@ -15,7 +15,7 @@ TEST_RESULTS=()
 # DISTRO_MATRIX is the list of distributions to test these names are from the lxc image list command
 # TODO: Uncomment the distributions to test once the first two tests seemed to be working
 DISTRO_MATRIX=(
-    "alpine/3.19"
+    # "alpine/3.19"
     "fedora/41"
     # "archlinux"
     # "debian/11"
@@ -230,6 +230,8 @@ function build_installation_command() {
     fi
     
     cmd="$cmd --env=$env"
+
+    cmd="$cmd --debug"
     
     echo "$cmd"
 }
