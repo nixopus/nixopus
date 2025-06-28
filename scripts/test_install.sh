@@ -268,11 +268,6 @@ function cleanup_container() {
     fi
 }
 
-# Setup trap for cleanup
-function setup_cleanup_trap() {
-    trap cleanup_container EXIT
-}
-
 # Test installation on a single distribution with specific parameters
 function test_distribution_with_params() {
     local distro="$1"
@@ -330,45 +325,6 @@ function test_distribution() {
     test_distribution_with_params "$distro" "$test_name" "$env" "$email" "$password" "$api_domain" "$app_domain"
 }
 
-# Print test results summary
-function print_test_summary() {
-    echo ""
-    echo "=========================================="
-    echo "TEST RESULTS SUMMARY"
-    echo "=========================================="
-    
-    local passed=0
-    local failed=0
-    local skipped=0
-    
-    for result in "${TEST_RESULTS[@]}"; do
-        echo "$result"
-        if [[ "$result" == *": PASSED" ]]; then
-            ((passed++))
-        elif [[ "$result" == *": FAILED" ]]; then
-            ((failed++))
-        elif [[ "$result" == *": SKIPPED" ]]; then
-            ((skipped++))
-        fi
-    done
-    
-    echo ""
-    echo "Summary:"
-    echo "  Passed: $passed"
-    echo "  Failed: $failed"
-    echo "  Skipped: $skipped"
-    echo "  Total: ${#TEST_RESULTS[@]}"
-    
-    if [ "$failed" -gt 0 ]; then
-        echo ""
-        echo "Some tests failed. Please check the logs above."
-        exit 1
-    else
-        echo ""
-        echo "All tests passed successfully!"
-    fi
-}
-
 function main() {
     # Parse command line arguments
     local args
@@ -392,8 +348,6 @@ function main() {
     for distro in "${DISTRO_MATRIX[@]}"; do
         test_distribution "$distro" "$email" "$password" "$api_domain" "$app_domain" "$env"
     done
-    
-    print_test_summary
 }
 
 main "$@"
