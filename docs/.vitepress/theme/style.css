@@ -11,6 +11,53 @@
   pointer-events: none;
 }
 
+.OASidebarItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.OASidebarItem-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.OAMethodBadge--get {
+  background-color: #006507 !important;
+  color: white;
+}
+
+.OAMethodBadge--post {
+  background-color: #1f009a !important;
+  color: white;
+}
+
+.OAMethodBadge--put {
+  background-color: #7e5d00 !important;
+  color: white;
+}
+
+.OAMethodBadge--delete {
+  background-color: #640200 !important;
+  color: white;
+}
+
+.OAMethodBadge--patch {
+  background-color: #005744 !important;
+  color: white;
+}
+
+.OASidebarItem-text {
+  font-family: var(--vp-font-family-mono);
+  font-size: 13px;
+=======
 /* Center align hero section */
 .VPHero .container {
   text-align: center;
@@ -55,4 +102,5 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+
 }

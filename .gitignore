@@ -11,3 +11,4 @@ docs/.vitepress/cache
 .DS_Store
 .env.staging
 !api/.env.sample
+**.log
