@@ -167,33 +167,33 @@ function install_dependencies_in_container() {
     case $base_distro in
         "alpine")
             echo "Installing dependencies for Alpine"
-            sudo lxc exec "$container_name" -- apk add --no-cache python3 docker py3-pip git openssl curl
+            sudo lxc exec "$container_name" -- apk add --no-cache python3 docker docker-compose py3-pip git openssl curl
             ;;
         "fedora")
             echo "Installing dependencies for Fedora"
-            sudo lxc exec "$container_name" -- dnf install -y python3 docker python3-pip git openssl curl
+            sudo lxc exec "$container_name" -- dnf install -y python3 docker docker-compose python3-pip git openssl curl
             ;;
         "debian")
             echo "Installing dependencies for Debian"
             sudo lxc exec "$container_name" -- apt-get update
-            sudo lxc exec "$container_name" -- apt-get install -y python3 docker python3-pip git openssl curl
+            sudo lxc exec "$container_name" -- apt-get install -y python3 docker docker-compose python3-pip git openssl curl
             ;;
         "archlinux")
             echo "Installing dependencies for Arch Linux"
-            sudo lxc exec "$container_name" -- pacman -Sy --noconfirm python3 docker python3-pip git openssl curl
+            sudo lxc exec "$container_name" -- pacman -Sy --noconfirm python3 docker docker-compose python3-pip git openssl curl
             ;;
         "centos")
             echo "Installing dependencies for CentOS"
-            sudo lxc exec "$container_name" -- yum install -y python3 docker python3-pip git openssl curl
+            sudo lxc exec "$container_name" -- yum install -y python3 docker docker-compose python3-pip git openssl curl
             ;;
         "gentoo")
             echo "Installing dependencies for Gentoo"
-            sudo lxc exec "$container_name" -- emerge --ask nix python3 docker python3-pip git openssl curl
+            sudo lxc exec "$container_name" -- emerge --ask nix python3 docker docker-compose python3-pip git openssl curl
             ;;
         "ubuntu")
             echo "Installing dependencies for Ubuntu"
             sudo lxc exec "$container_name" -- apt-get update
-            sudo lxc exec "$container_name" -- apt-get install -y python3 docker python3-pip git openssl curl
+            sudo lxc exec "$container_name" -- apt-get install -y python3 docker docker-compose python3-pip git openssl curl
             ;;
         *)
             echo "Unknown distribution: $base_distro"
