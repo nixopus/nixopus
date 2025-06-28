@@ -16,9 +16,9 @@ TEST_RESULTS=()
 # TODO: Uncomment the distributions to test once the first two tests seemed to be working
 DISTRO_MATRIX=(
     # "alpine/3.19"
-    "fedora/41"
+    # "fedora/41"
     # "archlinux"
-    # "debian/11"
+    "debian/11"
     # "centos/9-Stream"
     # "gentoo/openrc"
     # "ubuntu/22.04"
