@@ -149,7 +149,7 @@ create_lxd_container() {
     sudo lxc restart "$CONTAINER_NAME"
     echo "Waiting for container to be ready..."
     sleep 60
-    sudo lxc exec "$CONTAINER_NAME" -- cloud-init status --wait 2>/dev/null || true
+    sudo lxc exec "$CONTAINER_NAME" -- cloud-init status --wait || true
 }
 
 # Install dependencies in the container
@@ -157,6 +157,8 @@ function install_dependencies_in_container() {
     local container_name="$1"
     local distro="$2"
     echo "Installing dependencies in container: $container_name"
+
+    sudo lxc exec "$container_name" -- sh -c 'set -x'
     # Install the dependencies based on the distro
     case $distro in
         "alpine")
@@ -190,6 +192,7 @@ function install_dependencies_in_container() {
             sudo lxc exec "$container_name" -- apt-get install -y python3 docker python3-pip git openssl
             ;;
     esac
+    echo "Finished installing dependencies in container: $container_name"
 }
 
 # Build installation command
