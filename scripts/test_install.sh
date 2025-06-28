@@ -158,9 +158,13 @@ function install_dependencies_in_container() {
     local distro="$2"
     echo "Installing dependencies in container: $container_name"
 
+    # Extract base distribution name (e.g., "alpine" from "alpine/3.19")
+    local base_distro=$(echo "$distro" | cut -d'/' -f1)
+    echo "Base distribution: $base_distro"
+
     sudo lxc exec "$container_name" -- sh -c 'set -x'
     # Install the dependencies based on the distro
-    case $distro in
+    case $base_distro in
         "alpine")
             echo "Installing dependencies for Alpine"
             sudo lxc exec "$container_name" -- apk add --no-cache python3 docker py3-pip git openssl
@@ -190,6 +194,10 @@ function install_dependencies_in_container() {
             echo "Installing dependencies for Ubuntu"
             sudo lxc exec "$container_name" -- apt-get update
             sudo lxc exec "$container_name" -- apt-get install -y python3 docker python3-pip git openssl
+            ;;
+        *)
+            echo "Unknown distribution: $base_distro"
+            return 1
             ;;
     esac
     echo "Finished installing dependencies in container: $container_name"
