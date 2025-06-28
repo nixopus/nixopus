@@ -148,7 +148,7 @@ create_lxd_container() {
     sudo lxc config set "$CONTAINER_NAME" security.nesting true
     sudo lxc restart "$CONTAINER_NAME"
     echo "Waiting for container to be ready..."
-    sleep 1000
+    sleep 60
     sudo lxc exec "$CONTAINER_NAME" -- cloud-init status --wait 2>/dev/null || true
 }
 
