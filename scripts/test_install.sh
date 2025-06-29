@@ -16,12 +16,12 @@ TEST_RESULTS=()
 # TODO: Uncomment the distributions to test once the first two tests seemed to be working
 DISTRO_MATRIX=(
     # "alpine/3.19"
-    # "fedora/41"
+    # "fedora/41" = working distribution
     # "archlinux"
     # "debian/11"
-    # "centos/9-Stream"
+    "centos/9-Stream"
     # "gentoo/openrc"
-    "ubuntu/22.04"
+    # "ubuntu/22.04"
 )
 
 # Parse command line arguments
@@ -116,6 +116,38 @@ function install_package() {
     esac
 }
 
+# check if the required commands are installed
+function check_command_installed() {
+    local cmd="$1"
+    if ! command -v "$cmd" &>/dev/null; then
+        echo "Command '$cmd' not found. Attempting to install"
+        case "$cmd" in
+            "git")
+                install_package "git"
+                ;;
+            "python3")
+                install_package "python3"
+                ;;
+            "python3-pip")
+                install_package "python3-pip"
+                ;;
+            "openssl")
+                install_package "openssl"
+                ;;
+            "curl")
+                install_package "curl"
+                ;;
+            "docker")
+                install_package "docker"
+                ;;
+            *)
+                echo "Error: Automatic installation not supported for '$cmd'" >&2
+                exit 1
+                ;;
+        esac
+    fi
+}
+
 # Install the dependencies
 function install_dependencies() {
     local dependencies
@@ -124,9 +156,11 @@ function install_dependencies() {
         "python3-pip"
         "git"
         "openssl"
+        "curl"
+        "docker"
     )
     for dependency in "${dependencies[@]}"; do
-        install_package "$dependency"
+        check_command_installed "$dependency"
     done
 }
 
