@@ -18,8 +18,8 @@ DISTRO_MATRIX=(
     # "alpine/3.19"
     # "fedora/41" = working distribution
     # "archlinux"
-    # "debian/11"
-    "centos/9-Stream"
+    "debian/11"
+    # "centos/9-Stream" # working distribution
     # "gentoo/openrc"
     # "ubuntu/22.04"
 )
