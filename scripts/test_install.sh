@@ -218,7 +218,7 @@ function install_dependencies_in_container() {
             ;;
         "centos")
             echo "Installing dependencies for CentOS"
-            sudo lxc exec "$container_name" -- yum install -y python3 docker docker-compose python3-pip git openssl curl
+            sudo lxc exec "$container_name" -- yum install -y python3 docker python3-pip git openssl curl
             ;;
         "gentoo")
             echo "Installing dependencies for Gentoo"
