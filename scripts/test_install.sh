@@ -18,10 +18,10 @@ DISTRO_MATRIX=(
     # "alpine/3.19"
     # "fedora/41"
     # "archlinux"
-    "debian/11"
+    # "debian/11"
     # "centos/9-Stream"
     # "gentoo/openrc"
-    # "ubuntu/22.04"
+    "ubuntu/22.04"
 )
 
 # Parse command line arguments
