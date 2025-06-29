@@ -212,7 +212,7 @@ function install_docker_official_apt() {
     
     sudo lxc exec "$container_name" -- bash -c "
         sudo apt-get update
-        sudo apt-get install ca-certificates curl
+        sudo apt-get install -y ca-certificates curl
         sudo install -m 0755 -d /etc/apt/keyrings
         sudo curl -fsSL $gpg_url -o /etc/apt/keyrings/docker.asc
         sudo chmod a+r /etc/apt/keyrings/docker.asc
@@ -223,7 +223,7 @@ function install_docker_official_apt() {
           \$(. /etc/os-release && echo \"\${$codename_var:-\$VERSION_CODENAME}\") stable\" | \\
           sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
         sudo apt-get update
-        sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     "
 }
 
