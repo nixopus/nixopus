@@ -1,0 +1,25 @@
+- model: OrganizationUsers
+  rows:
+    - _id: admin_nixopus
+      id: "{{ uuid }}"
+      user_id: "{{ $.User.admin.ID }}"
+      organization_id: "{{ $.Organization.nixopus_org.ID }}"
+      role_id: "{{ $.Role.admin.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: developer1_nixopus
+      id: "{{ uuid }}"
+      user_id: "{{ $.User.developer1.ID }}"
+      organization_id: "{{ $.Organization.nixopus_org.ID }}"
+      role_id: "{{ $.Role.member.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: developer2_demo
+      id: "{{ uuid }}"
+      user_id: "{{ $.User.developer2.ID }}"
+      organization_id: "{{ $.Organization.demo_org.ID }}"
+      role_id: "{{ $.Role.admin.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}" 

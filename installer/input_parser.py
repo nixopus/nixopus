@@ -3,6 +3,7 @@ import secrets
 import string
 import sys
 import getpass
+import logging
 
 from validation import Validation
 
@@ -11,6 +12,7 @@ class InputParser:
     def __init__(self):
         self.parser = self._setup_arg_parser()
         self.validation = Validation()
+        self.logger = logging.getLogger("nixopus")
     
     def _setup_arg_parser(self):
         parser = argparse.ArgumentParser(description='Nixopus Installation Wizard')
@@ -19,7 +21,14 @@ class InputParser:
         parser.add_argument('--email', '-e', help='The email to create the admin account with')
         parser.add_argument('--password', '-p', help='The password to create the admin account with')
         parser.add_argument('--env', choices=['production', 'staging'], default='production', help='The environment to install in (production or staging)')
+        parser.add_argument("--debug", action='store_true', help='Enable debug mode')
         return parser
+    
+    def parse_args(self):
+        args = self.parser.parse_args()
+        if args.debug:
+            self.logger.setLevel(logging.DEBUG)
+        return args
     
     def generate_strong_password(self):
         while True:
@@ -30,6 +39,7 @@ class InputParser:
                 any(c.islower() for c in password) and
                 any(c.isdigit() for c in password) and
                 any(c in self.validation.SPECIAL_CHARS for c in password)):
+                self.logger.debug(f"Generated password: {password}")
                 return password
 
     def get_env_from_args(self, args):
@@ -40,14 +50,16 @@ class InputParser:
             if args.env not in ['production', 'staging']:
                 print("Error: Environment must be either 'production' or 'staging'")
                 sys.exit(1)
+            self.logger.debug(f"Using environment: {args.env}")
             return args.env
         else:
-            # default to production environment if no environment is specified
+            self.logger.debug("No environment specified, defaulting to production")
             return "production"
     
     def get_domains_from_args(self, args):
         if args.api_domain and args.app_domain:
             try:
+                self.logger.debug(f"Validating domains - API: {args.api_domain}, App: {args.app_domain}")
                 self.validation.validate_domain(args.api_domain)
                 self.validation.validate_domain(args.app_domain)
                 return {
@@ -56,52 +68,17 @@ class InputParser:
                 }
             except SystemExit:
                 return None
+        self.logger.debug("No domains provided")
         return None
     
     def get_admin_credentials_from_args(self, args):
         # if email and password are provided, validate them and return them
         if args.email and args.password:
+            self.logger.debug(f"Validating admin credentials for email: {args.email}")
             self.validation.validate_email(args.email)
             self.validation.validate_password(args.password)
             return args.email, args.password
 
         # return None if only one of email or password is provided or if both are not provided
+        self.logger.debug("No admin credentials provided")
         return None, None
-    
-    # def ask_admin_credentials(self):
-    #     """
-    #     Ask for admin credentials
-    #     """
-    #     while True:
-    #         email = input("Please enter the email for the admin: ")
-    #         try:
-    #             self.validation.validate_email(email)
-    #             break
-    #         except SystemExit:
-    #             print("Please enter a valid email address")
-    #             continue
-                
-    #     password = input("Please enter the password for the admin(generates a strong password if left blank): ")
-    #     if not password:
-    #         password = self.generate_strong_password()
-    #     self.validation.validate_password(password)
-    #     return email, password
-    
-    # def ask_for_domain(self):
-    #     """
-    #     Ask for the domain
-    #     """
-    #     validation = Validation()
-    #     while True:
-    #         domain = input("Please enter the base domain (if domain is example.com, then api domain will be nixopusapi.example.com and app domain will be nixopus.example.com) : ")
-    #         if not domain:
-    #             continue
-    #         try:
-    #             validation.validate_domain(domain)
-    #             return {
-    #                 "api_domain": f"nixopusapi.{domain}",
-    #                 "app_domain": f"nixopus.{domain}",
-    #             }
-    #         except SystemExit:
-    #             print("Please enter a valid domain name")
-    #             continue

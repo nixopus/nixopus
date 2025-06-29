@@ -18,7 +18,12 @@ type TerminalOutput = {
   topic: string;
 };
 
-export const useTerminal = (isTerminalOpen: boolean, width: number, height: number) => {
+export const useTerminal = (
+  isTerminalOpen: boolean, 
+  width: number, 
+  height: number,
+  allowInput: boolean = true
+) => {
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const fitAddonRef = useRef<any | null>(null);
   const { isStopped, setIsStopped } = StopExecution();
@@ -109,7 +114,7 @@ export const useTerminal = (isTerminalOpen: boolean, width: number, height: numb
         },
         allowTransparency: true,
         rightClickSelectsWord: true,
-        disableStdin: false,
+        disableStdin: !allowInput,
         convertEol: true,
         scrollback: 1000,
         tabStopWidth: 8,
@@ -128,14 +133,14 @@ export const useTerminal = (isTerminalOpen: boolean, width: number, height: numb
         terminalRef.current.innerHTML = '';
         term.open(terminalRef.current);
         fitAddon.activate(term);
-        sendJsonMessage({
-          action: 'terminal',
-          data: '\r'
-        });
-        // sendJsonMessage({
-        //   action: 'terminal',
-        //   data: 'export TERM=xterm-256color\r'
-        // });
+        
+        if (allowInput) {
+          sendJsonMessage({
+            action: 'terminal',
+            data: '\r'
+          });
+        }
+        
         requestAnimationFrame(() => {
           fitAddon.fit();
           const dimensions = fitAddon.proposeDimensions();
@@ -150,12 +155,14 @@ export const useTerminal = (isTerminalOpen: boolean, width: number, height: numb
           }
         });
 
-        term.onData((data) => {
-          sendJsonMessage({
-            action: 'terminal',
-            data
+        if (allowInput) {
+          term.onData((data) => {
+            sendJsonMessage({
+              action: 'terminal',
+              data
+            });
           });
-        });
+        }
 
         term.onResize((size) => {
           sendJsonMessage({
@@ -172,7 +179,7 @@ export const useTerminal = (isTerminalOpen: boolean, width: number, height: numb
     } catch (error) {
       console.error('Error initializing terminal:', error);
     }
-  }, [sendJsonMessage, isReady, terminalRef, terminalInstance]);
+  }, [sendJsonMessage, isReady, terminalRef, terminalInstance, allowInput]);
 
   useEffect(() => {
     return () => {

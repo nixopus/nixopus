@@ -14,6 +14,7 @@ Each specialized guide provides detailed instructions for contributing to specif
 | [Documentation](documentation.md) | Documentation improvements | Markdown formatting, content guidelines, API docs |
 | [Self-Hosting](self-hosting.md) | Installation and self-hosting | Installer improvements, environment support |
 | [Docker Builds](docker.md) | Container optimization | Image optimization, security, orchestration |
+| [Development Fixtures](fixtures.md) | Development data management | Sample data, testing fixtures, data setup |
 
 ## Getting Started
 

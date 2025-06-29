@@ -17,7 +17,9 @@ import DisabledFeature from '@/components/features/disabled-feature';
 import { FeatureNames } from '@/types/feature-flags';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 
+// for dashboard page, we need to check if the user has the dashboard:read permission
 function DashboardPage() {
   const { t } = useTranslation();
   const { containersData, systemStats } = useMonitor();
@@ -35,20 +37,26 @@ function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-8 max-w-6xl">
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold">{t('dashboard.title')}</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">
-              {t('dashboard.description')}
-            </p>
+    <ResourceGuard
+      resource="dashboard"
+      action="read"
+      // fallback={<div>You are not authorized to access this page</div>}
+    >
+      <div className="container mx-auto py-6 space-y-8 max-w-6xl">
+        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold">{t('dashboard.title')}</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                {t('dashboard.description')}
+              </p>
+            </div>
           </div>
+          {!smtpConfig && <SMTPBanner />}
+          <MonitoringSection systemStats={systemStats} containersData={containersData} t={t} />
         </div>
-        {!smtpConfig && <SMTPBanner />}
-        <MonitoringSection systemStats={systemStats} containersData={containersData} t={t} />
       </div>
-    </div>
+    </ResourceGuard>
   );
 }
 

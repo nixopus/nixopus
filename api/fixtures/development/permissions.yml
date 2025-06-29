@@ -1,0 +1,329 @@
+- model: Permission
+  rows:
+    - _id: create_user
+      id: "{{ uuid }}"
+      name: "create"
+      description: "Create users"
+      resource: "user"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: read_user
+      id: "{{ uuid }}"
+      name: "read"
+      description: "Read user information"
+      resource: "user"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: update_user
+      id: "{{ uuid }}"
+      name: "update"
+      description: "Update user information"
+      resource: "user"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: delete_user
+      id: "{{ uuid }}"
+      name: "delete"
+      description: "Delete users"
+      resource: "user"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: create_organization
+      id: "{{ uuid }}"
+      name: "create"
+      description: "Create organizations"
+      resource: "organization"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: read_organization
+      id: "{{ uuid }}"
+      name: "read"
+      description: "Read organization information"
+      resource: "organization"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: update_organization
+      id: "{{ uuid }}"
+      name: "update"
+      description: "Update organization information"
+      resource: "organization"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: delete_organization
+      id: "{{ uuid }}"
+      name: "delete"
+      description: "Delete organizations"
+      resource: "organization"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: create_role
+      id: "{{ uuid }}"
+      name: "create"
+      description: "Create roles"
+      resource: "role"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: read_role
+      id: "{{ uuid }}"
+      name: "read"
+      description: "Read role information"
+      resource: "role"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: update_role
+      id: "{{ uuid }}"
+      name: "update"
+      description: "Update role information"
+      resource: "role"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: delete_role
+      id: "{{ uuid }}"
+      name: "delete"
+      description: "Delete roles"
+      resource: "role"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: create_permission
+      id: "{{ uuid }}"
+      name: "create"
+      description: "Create permissions"
+      resource: "permission"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: read_permission
+      id: "{{ uuid }}"
+      name: "read"
+      description: "Read permission information"
+      resource: "permission"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: update_permission
+      id: "{{ uuid }}"
+      name: "update"
+      description: "Update permission information"
+      resource: "permission"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: delete_permission
+      id: "{{ uuid }}"
+      name: "delete"
+      description: "Delete permissions"
+      resource: "permission"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: read_feature_flags
+      id: "{{ uuid }}"
+      name: "read"
+      description: "Read feature flags"
+      resource: "feature_flags"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: update_feature_flags
+      id: "{{ uuid }}"
+      name: "update"
+      description: "Update feature flags"
+      resource: "feature_flags"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: read_dashboard
+      id: "{{ uuid }}"
+      name: "read"
+      description: "Read dashboard information"
+      resource: "dashboard"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: create_deploy
+      id: "{{ uuid }}"
+      name: "create"
+      description: "Create deployments"
+      resource: "deploy"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: read_deploy
+      id: "{{ uuid }}"
+      name: "read"
+      description: "Read deployment information"
+      resource: "deploy"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: update_deploy
+      id: "{{ uuid }}"
+      name: "update"
+      description: "Update deployment information"
+      resource: "deploy"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: delete_deploy
+      id: "{{ uuid }}"
+      name: "delete"
+      description: "Delete deployments"
+      resource: "deploy"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: create_container
+      id: "{{ uuid }}"
+      name: "create"
+      description: "Create containers"
+      resource: "container"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: read_container
+      id: "{{ uuid }}"
+      name: "read"
+      description: "Read container information"
+      resource: "container"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: update_container
+      id: "{{ uuid }}"
+      name: "update"
+      description: "Update container information"
+      resource: "container"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: delete_container
+      id: "{{ uuid }}"
+      name: "delete"
+      description: "Delete containers"
+      resource: "container"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: create_file_manager
+      id: "{{ uuid }}"
+      name: "create"
+      description: "Create files and directories"
+      resource: "file-manager"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: read_file_manager
+      id: "{{ uuid }}"
+      name: "read"
+      description: "Read files and directories"
+      resource: "file-manager"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: update_file_manager
+      id: "{{ uuid }}"
+      name: "update"
+      description: "Update files and directories"
+      resource: "file-manager"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: delete_file_manager
+      id: "{{ uuid }}"
+      name: "delete"
+      description: "Delete files and directories"
+      resource: "file-manager"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: read_settings
+      id: "{{ uuid }}"
+      name: "read"
+      description: "Read settings information"
+      resource: "settings"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: update_settings
+      id: "{{ uuid }}"
+      name: "update"
+      description: "Update settings information"
+      resource: "settings"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: create_notification
+      id: "{{ uuid }}"
+      name: "create"
+      description: "Create notifications"
+      resource: "notification"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: read_notification
+      id: "{{ uuid }}"
+      name: "read"
+      description: "Read notification information"
+      resource: "notification"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: update_notification
+      id: "{{ uuid }}"
+      name: "update"
+      description: "Update notification information"
+      resource: "notification"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: delete_notification
+      id: "{{ uuid }}"
+      name: "delete"
+      description: "Delete notifications"
+      resource: "notification"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: create_domain
+      id: "{{ uuid }}"
+      name: "create"
+      description: "Create domains"
+      resource: "domain"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: read_domain
+      id: "{{ uuid }}"
+      name: "read"
+      description: "Read domain information"
+      resource: "domain"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: update_domain
+      id: "{{ uuid }}"
+      name: "update"
+      description: "Update domain information"
+      resource: "domain"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: delete_domain
+      id: "{{ uuid }}"
+      name: "delete"
+      description: "Delete domains"
+      resource: "domain"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}" 

@@ -1,0 +1,37 @@
+- model: User
+  rows:
+    - _id: admin
+      id: "{{ uuid }}"
+      username: "admin"
+      email: "admin@nixopus.com"
+      password: "{{ hashPassword \"Admin123!\" }}"
+      avatar: ""
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+      is_verified: true
+      type: "admin"
+      two_factor_enabled: false
+
+    - _id: developer1
+      id: "{{ uuid }}"
+      username: "john_doe"
+      email: "john.doe@example.com"
+      password: "{{ hashPassword \"Password123!\" }}"
+      avatar: ""
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+      is_verified: true
+      type: "app_user"
+      two_factor_enabled: false
+
+    - _id: developer2
+      id: "{{ uuid }}"
+      username: "jane_smith"
+      email: "jane.smith@example.com"
+      password: "{{ hashPassword \"Password123!\" }}"
+      avatar: ""
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+      is_verified: true
+      type: "app_user"
+      two_factor_enabled: false 

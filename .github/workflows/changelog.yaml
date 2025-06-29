@@ -2,10 +2,8 @@ name: Generate Changelog
 
 on:
   push:
-    tags:
-      - 'v*'
-  release:
-    types: [published]
+    branches:
+      - master
 
 jobs:
   generate-changelog:
@@ -19,35 +17,40 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-          ref: master
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Conventional Changelog Action
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v5
         with:
-          node-version: '20'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          git-message: 'chore(release): {version}'
+          git-user-name: 'github-actions[bot]'
+          git-user-email: 'github-actions[bot]@users.noreply.github.com'
+          preset: 'angular'
+          tag-prefix: 'v'
+          output-file: 'CHANGELOG.md'
+          release-count: '10'
+          version-file: 'package.json'
+          skip-on-empty: 'true'
+          skip-version-file: 'false'
+          skip-commit: 'true'
+          skip-tag: 'true'
+          skip-ci: 'true'
+          create-summary: 'true'
+          pre-release: 'true'
+          pre-release-identifier: 'alpha'
       
-      - name: Setup Git
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-      
-      - name: Generate Changelog
-        run: |
-          if [ ! -f CHANGELOG.md ]; then
-            echo "# Changelog" > CHANGELOG.md
-            echo "" >> CHANGELOG.md
-            echo "All notable changes to this project will be documented in this file." >> CHANGELOG.md
-            echo "" >> CHANGELOG.md
-            echo "The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)," >> CHANGELOG.md
-            echo "and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)." >> CHANGELOG.md
-            echo "" >> CHANGELOG.md
-          fi
-
-          npm install -g conventional-changelog-cli
-          conventional-changelog -p angular -i CHANGELOG.md -s
-
-          git add CHANGELOG.md
-          git commit -m "chore: update changelog"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+      - name: Create Pull Request
+        if: steps.changelog.outputs.skipped == 'false'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(release): update changelog'
+          title: 'chore(release): update changelog'
+          body: |
+            This PR updates the changelog with the latest changes.
+            
+            Generated automatically by the changelog workflow.
+          branch: 'chore/update-changelog'
+          delete-branch: true
+          base: 'master'

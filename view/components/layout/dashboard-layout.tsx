@@ -14,7 +14,7 @@ import { CreateTeam } from '@/components/features/create-team';
 import { KeyboardShortcuts } from '@/components/features/keyboard-shortcuts';
 import useTeamSwitcher from '@/hooks/use-team-switcher';
 import useBreadCrumbs from '@/hooks/use-bread-crumbs';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Terminal } from '@/app/terminal/terminal';
 import { useTerminalState } from '@/app/terminal/utils/useTerminalState';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
@@ -23,11 +23,12 @@ import Link from 'next/link';
 import { Tour } from '@/components/Tour';
 import { useTour } from '@/hooks/useTour';
 import { Button } from '@/components/ui/button';
-import { HelpCircle, Loader2 } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import { UpdateIcon } from '@radix-ui/react-icons';
 import { useAppSelector } from '@/redux/hooks';
 import { useCheckForUpdatesQuery, usePerformUpdateMutation } from '@/redux/services/users/userApi';
 import { toast } from 'sonner';
+import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 
 enum TERMINAL_POSITION {
   BOTTOM = 'bottom',
@@ -38,7 +39,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const { t } = useTranslation();
   const user = useAppSelector((state) => state.auth.user);
-  const isAdmin = user?.type === 'admin';
   const {
     addTeamModalOpen,
     setAddTeamModalOpen,
@@ -65,7 +65,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 't' && e.ctrlKey && isAdmin) {
+      if (e.key === 't' && e.ctrlKey) {
         e.preventDefault();
         setTerminalPosition((prevPosition) =>
           prevPosition === TERMINAL_POSITION.BOTTOM
@@ -76,7 +76,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isAdmin]);
+  }, []);
 
   const handleUpdate = async () => {
     try {
@@ -182,12 +182,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                   <div className="h-full overflow-y-auto no-scrollbar">{children}</div>
                 </ResizablePanel>
-                {isTerminalOpen && isAdmin && <ResizableHandle draggable withHandle />}
+                {isTerminalOpen && <ResizableHandle draggable withHandle />}
                 <ResizablePanel
                   defaultSize={20}
                   minSize={15}
                   maxSize={50}
-                  hidden={!isTerminalOpen || !isAdmin}
+                  hidden={!isTerminalOpen}
                   onResize={() => {
                     if (fitAddonRef?.current) {
                       requestAnimationFrame(() => {
@@ -197,12 +197,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   }}
                   className="min-h-[200px] flex flex-col"
                 >
-                  <Terminal
-                    isOpen={isTerminalOpen}
-                    toggleTerminal={toggleTerminal}
-                    isTerminalOpen={isTerminalOpen}
-                    setFitAddonRef={setFitAddonRef}
-                  />
+                  <AnyPermissionGuard
+                    permissions={['terminal:create', 'terminal:read', 'terminal:update']}
+                    loadingFallback={null}
+                  >
+                    <Terminal
+                      isOpen={isTerminalOpen}
+                      toggleTerminal={toggleTerminal}
+                      isTerminalOpen={isTerminalOpen}
+                      setFitAddonRef={setFitAddonRef}
+                    />
+                  </AnyPermissionGuard>
                 </ResizablePanel>
               </ResizablePanelGroup>
             </div>

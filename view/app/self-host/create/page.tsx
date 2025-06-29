@@ -1,31 +1,23 @@
 'use client';
 import React from 'react';
 import ListRepositories from '../components/github-repositories/list-repositories';
-import { useAppSelector } from '@/redux/hooks';
-import { hasPermission } from '@/lib/permission';
 import { useTranslation } from '@/hooks/use-translation';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function page() {
-  const user = useAppSelector((state) => state.auth.user);
-  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const canCreate = hasPermission(user, 'deploy', 'create', activeOrg?.id);
   const { t } = useTranslation();
 
-  if (!canCreate) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold">{t('selfHost.create.accessDenied.title')}</h2>
-          <p className="text-muted-foreground">{t('selfHost.create.accessDenied.description')}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto py-6 space-y-8 max-w-4xl">
-      <ListRepositories />
-    </div>
+    <ResourceGuard 
+      resource="deploy" 
+      action="create"
+      loadingFallback={<Skeleton className="h-96" />}
+    >
+      <div className="container mx-auto py-6 space-y-8 max-w-4xl">
+        <ListRepositories />
+      </div>
+    </ResourceGuard>
   );
 }
 

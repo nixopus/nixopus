@@ -1,6 +1,12 @@
 name: Deploy Docs
 
 on:
+  push:
+    branches:
+      - master
+      - feat/develop
+    paths:
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:

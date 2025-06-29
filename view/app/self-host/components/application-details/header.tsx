@@ -18,27 +18,17 @@ import {
 import { useDeleteApplicationMutation } from '@/redux/services/deploy/applicationsApi';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useAppSelector } from '@/redux/hooks';
-import { hasPermission } from '@/lib/permission';
 import { useTranslation } from '@/hooks/use-translation';
+import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 
 const ApplicationDetailsHeader = ({ application }: { application?: Application }) => {
   const { t } = useTranslation();
-  const user = useAppSelector((state) => state.auth.user);
-  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const [redeployApplication, { isLoading: isRedeploying }] = useRedeployApplicationMutation();
   const [deleteApplication, { isLoading: isDeleting }] = useDeleteApplicationMutation();
   const router = useRouter();
   const [restartApplication, { isLoading: isRestarting }] = useRestartApplicationMutation();
 
-  const canUpdate = hasPermission(user, 'deploy', 'update', activeOrg?.id);
-  const canDelete = hasPermission(user, 'deploy', 'delete', activeOrg?.id);
-
   const handleDelete = async () => {
-    if (!canDelete) {
-      toast.error(t('selfHost.applicationDetails.header.actions.delete.permissionError'));
-      return;
-    }
     try {
       await deleteApplication({
         id: application?.id || ''
@@ -51,10 +41,6 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
   };
 
   const handleRestart = async () => {
-    if (!canUpdate) {
-      toast.error(t('selfHost.applicationDetails.header.actions.restart.permissionError'));
-      return;
-    }
     try {
       await restartApplication({ id: application?.deployments?.[0]?.id || '' }).unwrap();
       toast.success(t('selfHost.applicationDetails.header.actions.restart.success'));
@@ -64,10 +50,6 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
   };
 
   const handleRedeploy = async (forceWithoutCache: boolean) => {
-    if (!canUpdate) {
-      toast.error(t('selfHost.applicationDetails.header.actions.redeploy.permissionError'));
-      return;
-    }
     try {
       await redeployApplication({
         id: application?.id || '',
@@ -82,81 +64,96 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
   };
 
   return (
-    <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-      <div className="flex items-start">
-        <div className="mr-2">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold capitalize sm:text-3xl">{application?.name}</h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => window.open('https://' + application?.domain, '_blank')}
-              aria-label={t('selfHost.applicationDetails.header.actions.open')}
-            >
-              <ExternalLink className="h-5 w-5" />
-            </Button>
+    <ResourceGuard 
+      resource="deploy" 
+      action="read"
+      loadingFallback={null}
+    >
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="flex items-start">
+          <div className="mr-2">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold capitalize sm:text-3xl">{application?.name}</h1>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => window.open('https://' + application?.domain, '_blank')}
+                aria-label={t('selfHost.applicationDetails.header.actions.open')}
+              >
+                <ExternalLink className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="flex items-center gap-2">
-        {canUpdate && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  disabled={isRestarting}
-                  onClick={handleRestart}
-                >
-                  <RotateCcw className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          <AnyPermissionGuard 
+            permissions={['deploy:update']}
+            loadingFallback={null}
+          >
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    disabled={isRestarting}
+                    onClick={handleRestart}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('selfHost.applicationDetails.header.actions.restart.button')}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </AnyPermissionGuard>
+          <AnyPermissionGuard 
+            permissions={['deploy:delete']}
+            loadingFallback={null}
+          >
+            <DeleteDialog
+              title={t('selfHost.applicationDetails.header.actions.delete.dialog.title').replace(
+                '{name}',
+                application?.name || ''
+              )}
+              description={t(
+                'selfHost.applicationDetails.header.actions.delete.dialog.description'
+              ).replace('{name}', application?.name || '')}
+              onConfirm={handleDelete}
+              trigger={
+                <Button variant="outline" size="icon">
+                  <TrashIcon className="h-4 w-4" />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t('selfHost.applicationDetails.header.actions.restart.button')}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-        {canDelete && (
-          <DeleteDialog
-            title={t('selfHost.applicationDetails.header.actions.delete.dialog.title').replace(
-              '{name}',
-              application?.name || ''
-            )}
-            description={t(
-              'selfHost.applicationDetails.header.actions.delete.dialog.description'
-            ).replace('{name}', application?.name || '')}
-            onConfirm={handleDelete}
-            trigger={
-              <Button variant="outline" size="icon">
-                <TrashIcon className="h-4 w-4" />
-              </Button>
-            }
-            isDeleting={isDeleting}
-            variant="destructive"
-            icon={TrashIcon}
-          />
-        )}
-        {canUpdate && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleRedeploy(true)} disabled={isRedeploying}>
-                {t('selfHost.applicationDetails.header.actions.redeploy.button')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleRedeploy(false)} disabled={isRedeploying}>
-                {t('selfHost.applicationDetails.header.actions.redeploy.forceButton')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+              }
+              isDeleting={isDeleting}
+              variant="destructive"
+              icon={TrashIcon}
+            />
+          </AnyPermissionGuard>
+          <AnyPermissionGuard 
+            permissions={['deploy:update']}
+            loadingFallback={null}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleRedeploy(true)} disabled={isRedeploying}>
+                  {t('selfHost.applicationDetails.header.actions.redeploy.button')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleRedeploy(false)} disabled={isRedeploying}>
+                  {t('selfHost.applicationDetails.header.actions.redeploy.forceButton')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </AnyPermissionGuard>
+        </div>
       </div>
-    </div>
+    </ResourceGuard>
   );
 };
 

@@ -13,3 +13,6 @@ hero:
       text: Installation
       link: /install/index.md
 ---
+
+
+<SponsorsMarquee />

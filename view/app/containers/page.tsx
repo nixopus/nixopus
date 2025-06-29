@@ -12,43 +12,52 @@ import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { FeatureNames } from '@/types/feature-flags';
 import { Skeleton } from '@/components/ui/skeleton';
 import DisabledFeature from '@/components/features/disabled-feature';
+import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import useContainerList from './hooks/use-container-list';
 
 interface ContainerActionsProps {
   container: any;
-  canUpdate: boolean;
-  canDelete: boolean;
   onAction: (id: string, action: 'start' | 'stop' | 'remove') => void;
 }
 
-const ContainerActions = ({ container, canUpdate, canDelete, onAction }: ContainerActionsProps) => {
+const ContainerActions = ({ container, onAction }: ContainerActionsProps) => {
   return (
     <div className="flex gap-2">
-      {container.status !== 'running' && canUpdate && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAction(container.id, 'start');
-          }}
-        >
-          <Play className="h-4 w-4" />
-        </Button>
-      )}
-      {container.status === 'running' && canUpdate && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAction(container.id, 'stop');
-          }}
-        >
-          <StopCircle className="h-4 w-4" />
-        </Button>
-      )}
-      {canDelete && (
+      <ResourceGuard
+        resource="container"
+        action="update"
+        loadingFallback={<Skeleton className="h-8 w-8" />}
+      >
+        {container.status !== 'running' && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAction(container.id, 'start');
+            }}
+          >
+            <Play className="h-4 w-4" />
+          </Button>
+        )}
+        {container.status === 'running' && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAction(container.id, 'stop');
+            }}
+          >
+            <StopCircle className="h-4 w-4" />
+          </Button>
+        )}
+      </ResourceGuard>
+      <ResourceGuard
+        resource="container"
+        action="delete"
+        loadingFallback={<Skeleton className="h-8 w-8" />}
+      >
         <Button
           variant="ghost"
           size="icon"
@@ -59,7 +68,7 @@ const ContainerActions = ({ container, canUpdate, canDelete, onAction }: Contain
         >
           <Trash2 className="h-4 w-4" />
         </Button>
-      )}
+      </ResourceGuard>
     </div>
   );
 };
@@ -93,8 +102,6 @@ interface ContainerCardProps {
   container: any;
   onClick: () => void;
   getGradientFromName: (name: string) => string;
-  canUpdate: boolean;
-  canDelete: boolean;
   onAction: (id: string, action: 'start' | 'stop' | 'remove') => void;
 }
 
@@ -102,8 +109,6 @@ const ContainerCard = ({
   container,
   onClick,
   getGradientFromName,
-  canUpdate,
-  canDelete,
   onAction
 }: ContainerCardProps) => {
   return (
@@ -127,8 +132,6 @@ const ContainerCard = ({
           </div>
           <ContainerActions
             container={container}
-            canUpdate={canUpdate}
-            canDelete={canDelete}
             onAction={onAction}
           />
         </div>
@@ -141,8 +144,6 @@ const ContainerCard = ({
 interface FeaturedContainersProps {
   containers: any[];
   getGradientFromName: (name: string) => string;
-  canUpdate: boolean;
-  canDelete: boolean;
   onAction: (id: string, action: 'start' | 'stop' | 'remove') => void;
   router: any;
 }
@@ -150,8 +151,6 @@ interface FeaturedContainersProps {
 const FeaturedContainers = ({
   containers,
   getGradientFromName,
-  canUpdate,
-  canDelete,
   onAction,
   router
 }: FeaturedContainersProps) => {
@@ -175,8 +174,6 @@ const FeaturedContainers = ({
                 container={container}
                 onClick={() => router.push(`/containers/${container.id}`)}
                 getGradientFromName={getGradientFromName}
-                canUpdate={canUpdate}
-                canDelete={canDelete}
                 onAction={onAction}
               />
             </div>
@@ -198,10 +195,6 @@ export default function ContainersPage() {
     handlePruneBuildCache,
     showPruneImagesConfirm,
     showPruneBuildCacheConfirm,
-    canRead,
-    canCreate,
-    canUpdate,
-    canDelete,
     isFeatureFlagsLoading,
     isRefreshing,
     isFeatureEnabled,
@@ -218,20 +211,6 @@ export default function ContainersPage() {
     return <ContainersLoading />;
   }
 
-  if (!canRead) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold">{t('common.accessDenied')}</h2>
-          <p className="text-muted-foreground">{t('common.noPermissionView')}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const featuredContainers = containers.slice(0, 3);
-  const remainingContainers = containers.slice(3);
-
   if (isFeatureFlagsLoading) {
     return <Skeleton />;
   }
@@ -240,95 +219,110 @@ export default function ContainersPage() {
     return <DisabledFeature />;
   }
 
+  const featuredContainers = containers.slice(0, 3);
+  const remainingContainers = containers.slice(3);
+
   return (
-    <div className="min-h-screen w-full overflow-x-hidden">
-      <div className="relative w-full">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 relative z-10">
-          <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-            <h1 className="text-2xl font-bold">{t('containers.title')}</h1>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button onClick={handleRefresh} variant="outline" size="sm" disabled={isRefreshing}>
-                {isRefreshing ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                )}
-                {t('containers.refresh')}
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowPruneImagesConfirm(true)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t('containers.prune_images')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPruneBuildCacheConfirm(true)}
-              >
-                <Scissors className="mr-2 h-4 w-4" />
-                {t('containers.prune_build_cache')}
-              </Button>
+    <ResourceGuard
+      resource="container"
+      action="read"
+      loadingFallback={<ContainersLoading />}
+    >
+      <div className="min-h-screen w-full overflow-x-hidden">
+        <div className="relative w-full">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 relative z-10">
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+              <h1 className="text-2xl font-bold">{t('containers.title')}</h1>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button onClick={handleRefresh} variant="outline" size="sm" disabled={isRefreshing}>
+                  {isRefreshing ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                  )}
+                  {t('containers.refresh')}
+                </Button>
+                <AnyPermissionGuard
+                  permissions={['container:delete']}
+                  loadingFallback={<Skeleton className="h-8 w-20" />}
+                >
+                  <Button variant="outline" size="sm" onClick={() => setShowPruneImagesConfirm(true)}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {t('containers.prune_images')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPruneBuildCacheConfirm(true)}
+                  >
+                    <Scissors className="mr-2 h-4 w-4" />
+                    {t('containers.prune_build_cache')}
+                  </Button>
+                </AnyPermissionGuard>
+              </div>
             </div>
+            {featuredContainers.length > 0 && (
+              <FeaturedContainers
+                containers={featuredContainers}
+                getGradientFromName={getGradientFromName}
+                onAction={handleContainerAction}
+                router={router}
+              />
+            )}
+            {remainingContainers.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3  gap-4 md:gap-6">
+                {remainingContainers.map((container) => (
+                  <ContainerCard
+                    key={container.id}
+                    container={container}
+                    onClick={() => router.push(`/containers/${container.id}`)}
+                    getGradientFromName={getGradientFromName}
+                    onAction={handleContainerAction}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-          {featuredContainers.length > 0 && (
-            <FeaturedContainers
-              containers={featuredContainers}
-              getGradientFromName={getGradientFromName}
-              canUpdate={canUpdate}
-              canDelete={canDelete}
-              onAction={handleContainerAction}
-              router={router}
-            />
-          )}
-          {remainingContainers.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3  gap-4 md:gap-6">
-              {remainingContainers.map((container) => (
-                <ContainerCard
-                  key={container.id}
-                  container={container}
-                  onClick={() => router.push(`/containers/${container.id}`)}
-                  getGradientFromName={getGradientFromName}
-                  canUpdate={canUpdate}
-                  canDelete={canDelete}
-                  onAction={handleContainerAction}
-                />
-              ))}
-            </div>
-          )}
         </div>
+        <AnyPermissionGuard
+          permissions={['container:delete']}
+          loadingFallback={null}
+        >
+          <DeleteDialog
+            title={t('containers.deleteDialog.title')}
+            description={t('containers.deleteDialog.description')}
+            onConfirm={handleDeleteConfirm}
+            open={!!containerToDelete}
+            onOpenChange={(open) => !open && setContainerToDelete(null)}
+            variant="destructive"
+            confirmText={t('containers.deleteDialog.confirm')}
+            cancelText={t('containers.deleteDialog.cancel')}
+            icon={Trash2}
+          />
+          <DeleteDialog
+            title={t('containers.pruneImagesDialog.title')}
+            description={t('containers.pruneImagesDialog.description')}
+            onConfirm={handlePruneImages}
+            open={showPruneImagesConfirm}
+            onOpenChange={setShowPruneImagesConfirm}
+            variant="destructive"
+            confirmText={t('containers.pruneImagesDialog.confirm')}
+            cancelText={t('containers.pruneImagesDialog.cancel')}
+            icon={Trash2}
+          />
+          <DeleteDialog
+            title={t('containers.pruneBuildCacheDialog.title')}
+            description={t('containers.pruneBuildCacheDialog.description')}
+            onConfirm={handlePruneBuildCache}
+            open={showPruneBuildCacheConfirm}
+            onOpenChange={setShowPruneBuildCacheConfirm}
+            variant="destructive"
+            confirmText={t('containers.pruneBuildCacheDialog.confirm')}
+            cancelText={t('containers.pruneBuildCacheDialog.cancel')}
+            icon={Scissors}
+          />
+        </AnyPermissionGuard>
       </div>
-      <DeleteDialog
-        title={t('containers.deleteDialog.title')}
-        description={t('containers.deleteDialog.description')}
-        onConfirm={handleDeleteConfirm}
-        open={!!containerToDelete}
-        onOpenChange={(open) => !open && setContainerToDelete(null)}
-        variant="destructive"
-        confirmText={t('containers.deleteDialog.confirm')}
-        cancelText={t('containers.deleteDialog.cancel')}
-        icon={Trash2}
-      />
-      <DeleteDialog
-        title={t('containers.pruneImagesDialog.title')}
-        description={t('containers.pruneImagesDialog.description')}
-        onConfirm={handlePruneImages}
-        open={showPruneImagesConfirm}
-        onOpenChange={setShowPruneImagesConfirm}
-        variant="destructive"
-        confirmText={t('containers.pruneImagesDialog.confirm')}
-        cancelText={t('containers.pruneImagesDialog.cancel')}
-        icon={Trash2}
-      />
-      <DeleteDialog
-        title={t('containers.pruneBuildCacheDialog.title')}
-        description={t('containers.pruneBuildCacheDialog.description')}
-        onConfirm={handlePruneBuildCache}
-        open={showPruneBuildCacheConfirm}
-        onOpenChange={setShowPruneBuildCacheConfirm}
-        variant="destructive"
-        confirmText={t('containers.pruneBuildCacheDialog.confirm')}
-        cancelText={t('containers.pruneBuildCacheDialog.cancel')}
-        icon={Scissors}
-      />
-    </div>
+    </ResourceGuard>
   );
 }

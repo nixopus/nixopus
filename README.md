@@ -1,50 +1,50 @@
 <div id="user-content-toc">
   <ul style="list-style: none;">
     <summary>
-      <samp>
-      <h1>Nixopus</h1>
-      </samp>
+      <h1><samp>Nixopus</samp></h1><br>
       <h6>Streamline Your Entire Server Workflow — ServerOps with No Fuss</h6>
-      <a href="https://nixopus.com"><img align="right" src="./assets/nixopus_logo_transparent.png" alt="Nixopus Logo" width="300" /></a>
+      <a href="https://nixopus.com"><img align="right" src="./assets/nixopus_logo_transparent.png" alt="Nixopus Logo" width="250" /></a>
     </summary>
   </ul>
 </div>
 
-<table>
-  <tr>
-    <td>
-      <a href="https://github.com/raghavyuva/nixopus/actions/workflows/security.yml">
-        <img src="https://github.com/raghavyuva/nixopus/actions/workflows/security.yml/badge.svg" alt="Security Scan" />
-      </a>
-      <a href="https://github.com/raghavyuva/nixopus/actions/workflows/build_container.yml">
-        <img src="https://github.com/raghavyuva/nixopus/actions/workflows/build_container.yml/badge.svg" alt="Package Manager" />
-      </a>
-      <a href="https://github.com/raghavyuva/nixopus/actions/workflows/release.yml">
-        <img src="https://github.com/raghavyuva/nixopus/actions/workflows/release.yml/badge.svg" alt="Release" />
-      </a>
-      <br />
-      <a href="https://www.youtube.com/watch?v=DrDGWNq4JM4">
-        <img src="https://img.shields.io/youtube/views/DrDGWNq4JM4?style=social&label=View%20Demo" alt="YouTube Video Views" />
-      </a>
-     <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/y/raghavyuva/nixopus">
-      <img src="https://madewithlove.now.sh/in?heart=true&colorA=%23ff671f&colorB=%23046a38&text=India" alt="Made with love in India" />
-      <br><br>
-      <div align="center">
-        <strong>
-          <a href="https://nixopus.com"> Website</a> |
-          <a href="https://docs.nixopus.com"> Documentation</a> | 
-          <a href="https://docs.nixopus.com/blog/"> Blogs</a>
-        </strong>
-      </div>
-      <br>
-      <p align="center">
-        <a href="https://discord.gg/skdcq39Wpv" target="_blank">
-          <img src="https://user-images.githubusercontent.com/31022056/158916278-4504b838-7ecb-4ab9-a900-7dc002aade78.png" alt="Join our Discord Community" width="200" style="border-radius: 12px; box-shadow: 0px 4px 12px rgba(0,0,0,0.15);" />
+<samp>
+  <table>  
+    <tr>
+      <td>
+        <a href="https://github.com/raghavyuva/nixopus/actions/workflows/security.yml">
+          <img src="https://github.com/raghavyuva/nixopus/actions/workflows/security.yml/badge.svg" alt="Security Scan" />
         </a>
-      </p>
-    </td>
-  </tr>
-</table>
+        <a href="https://github.com/raghavyuva/nixopus/actions/workflows/build_container.yml">
+          <img src="https://github.com/raghavyuva/nixopus/actions/workflows/build_container.yml/badge.svg" alt="Package Manager" />
+        </a>
+        <a href="https://github.com/raghavyuva/nixopus/actions/workflows/release.yml">
+          <img src="https://github.com/raghavyuva/nixopus/actions/workflows/release.yml/badge.svg" alt="Release" />
+        </a>
+        <br />
+        <a href="https://www.youtube.com/watch?v=DrDGWNq4JM4">
+          <img src="https://img.shields.io/youtube/views/DrDGWNq4JM4?style=social&label=View%20Demo" alt="YouTube Video Views" />
+        </a>
+       <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/y/raghavyuva/nixopus">
+        <img src="https://madewithlove.now.sh/in?heart=true&colorA=%23ff671f&colorB=%23046a38&text=India" alt="Made with love in India" />
+        <br><br>
+        <div align="center">
+          <strong>
+            <a href="https://nixopus.com"> Website</a> |
+            <a href="https://docs.nixopus.com"> Documentation</a> | 
+            <a href="https://docs.nixopus.com/blog/"> Blogs</a>
+          </strong>
+        </div>
+        <br>
+        <p align="center">
+          <a href="https://discord.gg/skdcq39Wpv" target="_blank">
+            <img src="https://user-images.githubusercontent.com/31022056/158916278-4504b838-7ecb-4ab9-a900-7dc002aade78.png" alt="Join our Discord Community" width="200" style="border-radius: 12px; box-shadow: 0px 4px 12px rgba(0,0,0,0.15);" />
+          </a>
+        </p>
+      </td>
+    </tr>
+  </table>
+</samp>
 
 ## Project Overview
 
@@ -186,6 +186,16 @@ go mod download
 cd ../view
 yarn install
 ```
+
+6. Load development fixtures (optional but recommended):
+
+```bash
+cd ../api
+# Load fixtures without affecting existing data
+make fixtures-load
+```
+
+The fixtures system provides sample data including users, organizations, roles, permissions, and feature flags to help you get started quickly with development. Make Changes to Fixtures data in `/api/fixtures/development` directory if required. [Read More About Fixtures](https://docs.nixopus.com/contributing/fixtures)
 
 ### Running the Application
 

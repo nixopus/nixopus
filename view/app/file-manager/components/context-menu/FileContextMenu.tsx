@@ -22,12 +22,10 @@ import { toast } from 'sonner';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import FileUpload from '../actions/Upload';
 import { useCreateDirectoryMutation } from '@/redux/services/file-manager/fileManagersApi';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 
 interface FileContextMenuProps {
   children: React.ReactNode;
-  canCreate?: boolean;
-  canUpdate?: boolean;
-  canDelete?: boolean;
   showHidden?: boolean;
   setShowHidden?: (show: boolean) => void;
   fileToMove?: FileData;
@@ -49,9 +47,6 @@ interface FileContextMenuProps {
 
 export function FileContextMenu({
   children,
-  canCreate,
-  canUpdate,
-  canDelete,
   showHidden,
   setShowHidden,
   fileToMove,
@@ -75,10 +70,6 @@ export function FileContextMenu({
   const [createDirectory] = useCreateDirectoryMutation();
 
   const handleCreateDirectory = async () => {
-    if (!canCreate) {
-      toast.error(t('fileManager.noPermissionCreate'));
-      return;
-    }
     try {
       const newFolderNumber = files.filter((f) => f.name.startsWith('New Folder')).length + 1;
       const newFolderName = `New Folder ${newFolderNumber}`;
@@ -92,18 +83,10 @@ export function FileContextMenu({
   };
 
   const handleMove = () => {
-    if (!canUpdate) {
-      toast.error(t('fileManager.noPermissionUpdate'));
-      return;
-    }
     onMove?.();
   };
 
   const handlePaste = () => {
-    if (!canUpdate) {
-      toast.error(t('fileManager.noPermissionUpdate'));
-      return;
-    }
     onPaste?.();
   };
 
@@ -116,57 +99,55 @@ export function FileContextMenu({
             <ContextMenuItem onSelect={onInfo}>
               <Info className="mr-2 h-4 w-4" /> {t('fileManager.item.actions.info')}
             </ContextMenuItem>
-            {canUpdate && (
-              <>
-                <ContextMenuItem onSelect={onRename}>
-                  <Pencil className="mr-2 h-4 w-4" /> {t('fileManager.item.actions.rename')}
-                </ContextMenuItem>
-                <ContextMenuItem onSelect={onCopy}>
-                  <Copy className="mr-2 h-4 w-4" /> {t('fileManager.item.actions.copy')}
-                </ContextMenuItem>
-                <ContextMenuItem onSelect={onMoveItem}>
-                  <MoveIcon className="mr-2 h-4 w-4" /> {t('fileManager.item.actions.move')}
-                </ContextMenuItem>
-              </>
-            )}
-            {canDelete && (
+            <ResourceGuard resource="file-manager" action="update">
+              <ContextMenuItem onSelect={onRename}>
+                <Pencil className="mr-2 h-4 w-4" /> {t('fileManager.item.actions.rename')}
+              </ContextMenuItem>
+              <ContextMenuItem onSelect={onCopy}>
+                <Copy className="mr-2 h-4 w-4" /> {t('fileManager.item.actions.copy')}
+              </ContextMenuItem>
+              <ContextMenuItem onSelect={onMoveItem}>
+                <MoveIcon className="mr-2 h-4 w-4" /> {t('fileManager.item.actions.move')}
+              </ContextMenuItem>
+            </ResourceGuard>
+            <ResourceGuard resource="file-manager" action="delete">
               <ContextMenuItem onSelect={onDelete}>
                 <TrashIcon className="mr-2 h-4 w-4" /> {t('fileManager.item.actions.delete')}
               </ContextMenuItem>
-            )}
+            </ResourceGuard>
           </>
         ) : (
           <>
-            {canCreate && (
-              <>
-                <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-                  <DialogTrigger asChild>
-                    <ContextMenuItem onSelect={(e) => e.preventDefault()}>
-                      <UploadCloudIcon className="mr-2 h-5 w-5" />
-                      <span>{t('fileManager.actions.upload')}</span>
-                    </ContextMenuItem>
-                  </DialogTrigger>
-                  <FileUpload setIsDialogOpen={setIsUploadOpen} currentPath={currentPath || ''} />
-                </Dialog>
+            <ResourceGuard resource="file-manager" action="create">
+              <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+                <DialogTrigger asChild>
+                  <ContextMenuItem onSelect={(e) => e.preventDefault()}>
+                    <UploadCloudIcon className="mr-2 h-5 w-5" />
+                    <span>{t('fileManager.actions.upload')}</span>
+                  </ContextMenuItem>
+                </DialogTrigger>
+                <FileUpload setIsDialogOpen={setIsUploadOpen} currentPath={currentPath || ''} />
+              </Dialog>
 
-                <ContextMenuItem onSelect={handleCreateDirectory}>
-                  <FolderPlusIcon className="mr-2 h-5 w-5" />
-                  <span>{t('fileManager.actions.createDirectory')}</span>
+              <ContextMenuItem onSelect={handleCreateDirectory}>
+                <FolderPlusIcon className="mr-2 h-5 w-5" />
+                <span>{t('fileManager.actions.createDirectory')}</span>
+              </ContextMenuItem>
+            </ResourceGuard>
+            <ResourceGuard resource="file-manager" action="update">
+              {fileToMove && (
+                <ContextMenuItem onSelect={handleMove}>
+                  <MoveIcon className="mr-2 h-5 w-5" />
+                  <span>{t('fileManager.item.actions.moveHere')}</span>
                 </ContextMenuItem>
-              </>
-            )}
-            {canUpdate && fileToMove && (
-              <ContextMenuItem onSelect={handleMove}>
-                <MoveIcon className="mr-2 h-5 w-5" />
-                <span>{t('fileManager.item.actions.moveHere')}</span>
-              </ContextMenuItem>
-            )}
-            {canUpdate && fileToCopy && (
-              <ContextMenuItem onSelect={handlePaste}>
-                <Copy className="mr-2 h-5 w-5" />
-                <span>{t('fileManager.item.actions.pasteHere')}</span>
-              </ContextMenuItem>
-            )}
+              )}
+              {fileToCopy && (
+                <ContextMenuItem onSelect={handlePaste}>
+                  <Copy className="mr-2 h-5 w-5" />
+                  <span>{t('fileManager.item.actions.pasteHere')}</span>
+                </ContextMenuItem>
+              )}
+            </ResourceGuard>
             <ContextMenuItem onSelect={() => setShowHidden?.(!showHidden)}>
               {showHidden ? (
                 <EyeOffIcon className="mr-2 h-5 w-5" />

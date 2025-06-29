@@ -2,6 +2,8 @@
 import { Application } from '@/redux/types/applications';
 import React from 'react';
 import { DeploymentStatusChart } from './deploymentStatusChart';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function Monitor({ application }: { application?: Application }) {
   if (!application) {
@@ -11,11 +13,17 @@ function Monitor({ application }: { application?: Application }) {
   const deployments = application.deployments || [];
 
   return (
-    <div className="space-y-6">
-      <div className="">
-        <DeploymentStatusChart deployments={deployments} />
+    <ResourceGuard 
+      resource="deploy" 
+      action="read"
+      loadingFallback={<Skeleton className="h-96" />}
+    >
+      <div className="space-y-6">
+        <div className="">
+          <DeploymentStatusChart deployments={deployments} />
+        </div>
       </div>
-    </div>
+    </ResourceGuard>
   );
 }
 

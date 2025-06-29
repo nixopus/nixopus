@@ -70,15 +70,21 @@ func (c *AuthService) Register(registrationRequest types.RegisterRequest, userTy
 		return types.AuthResponse{}, types.ErrFailedToCreateToken
 	}
 
-	organization, err := c.createDefaultOrganization(user, tx)
-	if err != nil {
-		c.logger.Log(logger.Error, types.ErrFailedToCreateDefaultOrganization.Error(), err.Error())
-		return types.AuthResponse{}, types.ErrFailedToCreateDefaultOrganization
-	}
+	// If the user is an admin, create a default organization and add the user to it,
+	// else add the user to the requested organization
+	// this makes sure that newly registered admin users always have an organization to work with
+	// and if the user is not an admin, add them to the requested organization so that they can start working on their projects without having to create an organization first
+	if userType == shared_types.RoleAdmin {
+		organization, err := c.createDefaultOrganization(user, tx)
+		if err != nil {
+			c.logger.Log(logger.Error, types.ErrFailedToCreateDefaultOrganization.Error(), err.Error())
+			return types.AuthResponse{}, types.ErrFailedToCreateDefaultOrganization
+		}
 
-	if err := c.addUserToOrganizationWithRole(user, organization, "admin", tx); err != nil {
-		c.logger.Log(logger.Error, types.ErrFailedToAddUserToOrganization.Error(), err.Error())
-		return types.AuthResponse{}, types.ErrFailedToAddUserToOrganization
+		if err := c.addUserToOrganizationWithRole(user, organization, "admin", tx); err != nil {
+			c.logger.Log(logger.Error, types.ErrFailedToAddUserToOrganization.Error(), err.Error())
+			return types.AuthResponse{}, types.ErrFailedToAddUserToOrganization
+		}
 	}
 
 	if registrationRequest.Organization != "" {

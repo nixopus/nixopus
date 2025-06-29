@@ -1,16 +1,14 @@
 name: Format Nixopus
 
 on:
-  pull_request:
-    paths:
-      - 'api/**'
-      - 'view/**'
   push:
     branches:
-      - '*'
+      - master
+      - feat/develop
     paths:
       - 'api/**'
       - 'view/**'
+  workflow_dispatch:
 
 permissions:
   contents: write

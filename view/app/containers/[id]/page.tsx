@@ -8,7 +8,6 @@ import {
   Terminal,
   HardDrive,
   RotateCw,
-  ShipIcon,
   Layers
 } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
@@ -30,6 +29,8 @@ import { DetailsTab } from './components/DetailsTab';
 import ContainerDetailsLoading from './components/ContainerDetailsLoading';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { Images } from './components/images';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ContainerDetailsPage() {
   const { t } = useTranslation();
@@ -99,105 +100,129 @@ export default function ContainerDetailsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 max-w-5xl">
-      <div className="space-y-8">
-        <div className="flex items-center justify-between mb-6 pb-4 border-b">
-          <div>
-            <h1 className="text-2xl font-bold">{container.name}</h1>
-            <p className="text-muted-foreground">{container.id.slice(0, 12)}...</p>
+    <ResourceGuard 
+      resource="container" 
+      action="read"
+      loadingFallback={<ContainerDetailsLoading />}
+    >
+      <div className="container mx-auto py-8 max-w-5xl">
+        <div className="space-y-8">
+          <div className="flex items-center justify-between mb-6 pb-4 border-b">
+            <div>
+              <h1 className="text-2xl font-bold">{container.name}</h1>
+              <p className="text-muted-foreground">{container.id.slice(0, 12)}...</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <ResourceGuard 
+                resource="container" 
+                action="update"
+                loadingFallback={<Skeleton className="h-8 w-16" />}
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleContainerAction('start')}
+                  disabled={isLoading}
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  {t('containers.start')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleContainerAction('stop')}
+                  disabled={isLoading}
+                >
+                  <StopCircle className="mr-2 h-4 w-4" />
+                  {t('containers.stop')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleContainerAction('restart')}
+                  disabled={isLoading}
+                >
+                  <RotateCw className="mr-2 h-4 w-4" />
+                  {t('containers.restart')}
+                </Button>
+              </ResourceGuard>
+              <ResourceGuard 
+                resource="container" 
+                action="delete"
+                loadingFallback={<Skeleton className="h-8 w-20" />}
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleContainerAction('remove')}
+                  disabled={isLoading}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {t('containers.remove')}
+                </Button>
+              </ResourceGuard>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleContainerAction('start')}
-              disabled={isLoading}
-            >
-              <Play className="mr-2 h-4 w-4" />
-              {t('containers.start')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleContainerAction('stop')}
-              disabled={isLoading}
-            >
-              <StopCircle className="mr-2 h-4 w-4" />
-              {t('containers.stop')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleContainerAction('restart')}
-              disabled={isLoading}
-            >
-              <RotateCw className="mr-2 h-4 w-4" />
-              {t('containers.restart')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleContainerAction('remove')}
-              disabled={isLoading}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              {t('containers.remove')}
-            </Button>
-          </div>
-        </div>
 
-        <div className="space-y-4">
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">
-                <Info className="mr-2 h-4 w-4" />
-                {t('containers.overview')}
-              </TabsTrigger>
-              <TabsTrigger value="images">
-                <Layers className="mr-2 h-4 w-4" />
-                {t('containers.images.title')}
-              </TabsTrigger>
-              <TabsTrigger value="logs">
-                <Terminal className="mr-2 h-4 w-4" />
-                {t('containers.logs')}
-              </TabsTrigger>
-              <TabsTrigger value="details">
-                <HardDrive className="mr-2 h-4 w-4" />
-                {t('containers.details')}
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="overview" className="mt-4">
-              <OverviewTab container={container} />
-            </TabsContent>
-            <TabsContent value="logs" className="mt-4">
-              <LogsTab container={container} logs={allLogs} onLoadMore={handleLoadMoreLogs} />
-            </TabsContent>
-            <TabsContent value="details" className="mt-4">
-              <DetailsTab container={container} />
-            </TabsContent>
-            <TabsContent value="images" className="mt-4">
-              {container.image ? (
-                <Images containerId={containerId} imagePrefix={container.image + '*'} />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <p>{t('containers.images.none')}</p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+          <div className="space-y-4">
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="overview">
+                  <Info className="mr-2 h-4 w-4" />
+                  {t('containers.overview')}
+                </TabsTrigger>
+                <TabsTrigger value="images">
+                  <Layers className="mr-2 h-4 w-4" />
+                  {t('containers.images.title')}
+                </TabsTrigger>
+                <TabsTrigger value="logs">
+                  <Terminal className="mr-2 h-4 w-4" />
+                  {t('containers.logs')}
+                </TabsTrigger>
+                <TabsTrigger value="details">
+                  <HardDrive className="mr-2 h-4 w-4" />
+                  {t('containers.details')}
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="overview" className="mt-4">
+                <OverviewTab container={container} />
+              </TabsContent>
+              <TabsContent value="logs" className="mt-4">
+                <LogsTab container={container} logs={allLogs} onLoadMore={handleLoadMoreLogs} />
+              </TabsContent>
+              <TabsContent value="details" className="mt-4">
+                <DetailsTab container={container} />
+              </TabsContent>
+              <TabsContent value="images" className="mt-4">
+                {container.image ? (
+                  <Images containerId={containerId} imagePrefix={container.image + '*'} />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p>{t('containers.images.none')}</p>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
+        <ResourceGuard 
+          resource="container" 
+          action="delete"
+          loadingFallback={null}
+        >
+          <DeleteDialog
+            title={t('containers.deleteDialog.title')}
+            description={t('containers.deleteDialog.description')}
+            onConfirm={handleDeleteConfirm}
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+            variant="destructive"
+            confirmText={t('containers.deleteDialog.confirm')}
+            cancelText={t('containers.deleteDialog.cancel')}
+            icon={Trash2}
+          />
+        </ResourceGuard>
       </div>
-      <DeleteDialog
-        title={t('containers.deleteDialog.title')}
-        description={t('containers.deleteDialog.description')}
-        onConfirm={handleDeleteConfirm}
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        variant="destructive"
-        confirmText={t('containers.deleteDialog.confirm')}
-        cancelText={t('containers.deleteDialog.cancel')}
-        icon={Trash2}
-      />
-    </div>
+    </ResourceGuard>
   );
 }

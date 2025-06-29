@@ -1,0 +1,19 @@
+[
+  {
+    "name": "HostUp",
+    "avatar": "https://media.licdn.com/dms/image/v2/D4D0BAQFC-65aZcu-8g/company-logo_200_200/company-logo_200_200/0/1711678709605/hostup_logo?e=2147483647&v=beta&t=KEegISV4VeuBUSWlLQz4h-kM2BLJz0tGhmOUtrp8two",
+    "type": "Organization",
+    "contribution": "Discount Coupon",
+    "description": "Offering 10% discount on all Hostup VPS plans",
+    "website": "https://hostup.se/en/"
+  },
+  {
+    "name": "@shravan20",
+    "avatar": "https://avatars.githubusercontent.com/u/47430686?v=4",
+    "type": "Individual",
+    "contribution": "",
+    "description": "Technology enthusiast and open source supporter",
+    "github": "https://github.com/shravan20",
+    "website": "https://ohmyscript.com/"
+  }
+]
