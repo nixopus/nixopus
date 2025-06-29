@@ -15,10 +15,10 @@ TEST_RESULTS=()
 # DISTRO_MATRIX is the list of distributions to test these names are from the lxc image list command
 # TODO: Uncomment the distributions to test once the first two tests seemed to be working
 DISTRO_MATRIX=(
-    # "alpine/3.19"
+    "alpine/3.19"
     # "fedora/41" = working distribution
     # "archlinux"
-    "debian/11"
+    # "debian/11" - fails to start database
     # "centos/9-Stream" # working distribution
     # "gentoo/openrc"
     # "ubuntu/22.04"
