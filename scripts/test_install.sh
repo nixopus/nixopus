@@ -231,13 +231,29 @@ function install_docker_official_fedora_centos() {
     echo "Installing Docker using official dnf repository in container: $container_name"
     container_name="$1"
     distro="$2"
+    base_distro="$3"
     echo "Installing Docker using official dnf repository in container: $container_name"
-    sudo lxc exec "$container_name" -- bash -c '
+    
+    sudo lxc exec "$container_name" -- bash -c "
+        # Remove old Docker packages first
+        sudo dnf remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine || true
+        
+        # Install dnf-plugins-core
         sudo dnf -y install dnf-plugins-core
-        sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-        sudo dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-        sudo systemctl enable --now docker
-    '
+        
+        # Add the appropriate repository based on distribution
+        if [[ \"$base_distro\" == \"centos\" ]]; then
+            sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+        else
+            sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+        fi
+        
+        # Install Docker packages
+        sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        
+        # Enable Docker service
+        sudo systemctl enable docker || true
+    "
 }
 
 # Install dependencies in the container
@@ -260,7 +276,7 @@ function install_dependencies_in_container() {
         "fedora")
             echo "Installing dependencies for Fedora"
             sudo lxc exec "$container_name" -- dnf install -y python3 python3-pip git openssl curl
-            install_docker_official_fedora_centos "$container_name" "$distro"
+            install_docker_official_fedora_centos "$container_name" "$distro" "$base_distro"
             ;;
         "debian")
             echo "Installing dependencies for Debian"
@@ -275,7 +291,7 @@ function install_dependencies_in_container() {
         "centos")
             echo "Installing dependencies for CentOS"
             sudo lxc exec "$container_name" -- yum install -y python3 python3-pip git openssl curl
-            install_docker_official_fedora_centos "$container_name" "$distro"
+            install_docker_official_fedora_centos "$container_name" "$distro" "$base_distro"
             ;;
         "gentoo")
             echo "Installing dependencies for Gentoo"
