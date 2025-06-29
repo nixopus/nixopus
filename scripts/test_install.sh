@@ -21,7 +21,7 @@ DISTRO_MATRIX=(
     # "debian/11" - fails to start database
     # "centos/9-Stream" # working distribution
     # "gentoo/openrc"
-    "ubuntu:18.04/amd64"
+    "ubuntu:18.04"
 )
 
 # Parse command line arguments
