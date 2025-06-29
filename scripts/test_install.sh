@@ -137,9 +137,6 @@ function check_command_installed() {
             "curl")
                 install_package "curl"
                 ;;
-            "docker")
-                install_package "docker"
-                ;;
             *)
                 echo "Error: Automatic installation not supported for '$cmd'" >&2
                 exit 1
@@ -157,7 +154,6 @@ function install_dependencies() {
         "git"
         "openssl"
         "curl"
-        "docker"
     )
     for dependency in "${dependencies[@]}"; do
         check_command_installed "$dependency"
@@ -186,6 +182,51 @@ create_lxd_container() {
     sudo lxc exec "$CONTAINER_NAME" -- cloud-init status --wait || true
 }
 
+function install_docker_official_apt() {
+    local container_name="$1"
+    local distro="$2"
+    local distro_type="$3"
+    
+    echo "Installing Docker using official apt repository in container: $container_name for $distro_type"
+    
+    local gpg_url=""
+    local repo_url=""
+    local codename_var=""
+    
+    case "$distro_type" in
+        "debian")
+            gpg_url="https://download.docker.com/linux/debian/gpg"
+            repo_url="https://download.docker.com/linux/debian"
+            codename_var="VERSION_CODENAME"
+            ;;
+        "ubuntu")
+            gpg_url="https://download.docker.com/linux/ubuntu/gpg"
+            repo_url="https://download.docker.com/linux/ubuntu"
+            codename_var="UBUNTU_CODENAME"
+            ;;
+        *)
+            echo "Unsupported distribution type: $distro_type"
+            return 1
+            ;;
+    esac
+    
+    sudo lxc exec "$container_name" -- bash -c "
+        sudo apt-get update
+        sudo apt-get install ca-certificates curl
+        sudo install -m 0755 -d /etc/apt/keyrings
+        sudo curl -fsSL $gpg_url -o /etc/apt/keyrings/docker.asc
+        sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+        # Add the repository to Apt sources:
+        echo \\
+          \"deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] $repo_url \\
+          \$(. /etc/os-release && echo \"\${$codename_var:-\$VERSION_CODENAME}\") stable\" | \\
+          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        sudo apt-get update
+        sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    "
+}
+
 # Install dependencies in the container
 function install_dependencies_in_container() {
     local container_name="$1"
@@ -205,12 +246,14 @@ function install_dependencies_in_container() {
             ;;
         "fedora")
             echo "Installing dependencies for Fedora"
-            sudo lxc exec "$container_name" -- dnf install -y python3 docker docker-compose python3-pip git openssl curl
+            sudo lxc exec "$container_name" -- dnf install -y python3 python3-pip git openssl curl
+            install_docker_official_fedora_centos "$container_name" "$distro"
             ;;
         "debian")
             echo "Installing dependencies for Debian"
             sudo lxc exec "$container_name" -- apt-get update
-            sudo lxc exec "$container_name" -- apt-get install -y python3 docker docker-compose python3-pip git openssl curl python3-venv
+            sudo lxc exec "$container_name" -- apt-get install -y python3 python3-pip git openssl curl python3-venv
+            install_docker_official_apt "$container_name" "$distro" "debian"
             ;;
         "archlinux")
             echo "Installing dependencies for Arch Linux"
@@ -218,7 +261,8 @@ function install_dependencies_in_container() {
             ;;
         "centos")
             echo "Installing dependencies for CentOS"
-            sudo lxc exec "$container_name" -- yum install -y python3 docker python3-pip git openssl curl
+            sudo lxc exec "$container_name" -- yum install -y python3 python3-pip git openssl curl
+            install_docker_official_fedora_centos "$container_name" "$distro"
             ;;
         "gentoo")
             echo "Installing dependencies for Gentoo"
@@ -227,7 +271,8 @@ function install_dependencies_in_container() {
         "ubuntu")
             echo "Installing dependencies for Ubuntu"
             sudo lxc exec "$container_name" -- apt-get update
-            sudo lxc exec "$container_name" -- apt-get install -y python3 docker docker-compose python3-pip git openssl curl python3-venv
+            sudo lxc exec "$container_name" -- apt-get install -y python3 python3-pip git openssl curl python3-venv
+            install_docker_official_apt "$container_name" "$distro" "ubuntu"
             ;;
         *)
             echo "Unknown distribution: $base_distro"
