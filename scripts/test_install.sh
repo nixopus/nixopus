@@ -227,6 +227,19 @@ function install_docker_official_apt() {
     "
 }
 
+function install_docker_official_fedora_centos() {
+    echo "Installing Docker using official dnf repository in container: $container_name"
+    container_name="$1"
+    distro="$2"
+    echo "Installing Docker using official dnf repository in container: $container_name"
+    sudo lxc exec "$container_name" -- bash -c '
+        sudo dnf -y install dnf-plugins-core
+        sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+        sudo dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        sudo systemctl enable --now docker
+    '
+}
+
 # Install dependencies in the container
 function install_dependencies_in_container() {
     local container_name="$1"
