@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import UploadAvatar from '@/components/ui/upload_avatar';
 import { User } from '@/redux/types/user';
 import { useTranslation } from '@/hooks/use-translation';
+import { RBACGuard } from '@/components/rbac/RBACGuard';
 
 interface AvatarSectionProps {
   onImageChange: (imageUrl: string | null) => void;
@@ -20,11 +21,13 @@ function AvatarSection({ onImageChange, user }: AvatarSectionProps) {
           <CardDescription>{t('settings.account.avatar.description')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center pt-6">
-          <UploadAvatar
-            onImageChange={onImageChange}
-            username={user?.username}
-            initialImage={user?.avatar}
-          />
+          <RBACGuard resource="user" action="update">
+            <UploadAvatar
+              onImageChange={onImageChange}
+              username={user?.username}
+              initialImage={user?.avatar}
+            />
+          </RBACGuard>
         </CardContent>
       </Card>
     </div>

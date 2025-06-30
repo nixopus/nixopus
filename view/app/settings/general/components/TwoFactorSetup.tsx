@@ -16,6 +16,7 @@ import { useAppSelector } from '@/redux/hooks';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { setTwoFactorEnabled } from '@/redux/features/users/authSlice';
 import { useAppDispatch } from '@/redux/hooks';
+import { RBACGuard } from '@/components/rbac/RBACGuard';
 
 export function TwoFactorSetup() {
   const { t } = useTranslation();
@@ -70,9 +71,11 @@ export function TwoFactorSetup() {
               <AlertDescription>{t('settings.2fa.enabledDescription')}</AlertDescription>
             </Alert>
 
-            <Button onClick={handleDisable} variant="destructive" className="w-full">
-              {t('settings.2fa.disableButton')}
-            </Button>
+            <RBACGuard resource="user" action="update">
+              <Button onClick={handleDisable} variant="destructive" className="w-full">
+                {t('settings.2fa.disableButton')}
+              </Button>
+            </RBACGuard>
           </div>
         ) : !setupData ? (
           <div className="space-y-4">
@@ -81,9 +84,11 @@ export function TwoFactorSetup() {
               <AlertTitle>{t('settings.2fa.title')}</AlertTitle>
               <AlertDescription>{t('settings.2fa.description')}</AlertDescription>
             </Alert>
-            <Button onClick={handleSetup} className="w-full">
-              {t('settings.2fa.setupButton')}
-            </Button>
+            <RBACGuard resource="user" action="update">
+              <Button onClick={handleSetup} className="w-full">
+                {t('settings.2fa.setupButton')}
+              </Button>
+            </RBACGuard>
           </div>
         ) : (
           <div className="space-y-6">
@@ -106,13 +111,15 @@ export function TwoFactorSetup() {
                   className="w-full"
                 />
               </div>
-              <Button
-                onClick={handleVerify}
-                className="w-full"
-                disabled={!code || code.length !== 6}
-              >
-                {t('settings.2fa.verifyButton')}
-              </Button>
+              <RBACGuard resource="user" action="update">
+                <Button
+                  onClick={handleVerify}
+                  className="w-full"
+                  disabled={!code || code.length !== 6}
+                >
+                  {t('settings.2fa.verifyButton')}
+                </Button>
+              </RBACGuard>
             </div>
           </div>
         )}

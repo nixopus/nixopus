@@ -9,6 +9,7 @@ import { TabsContent } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useTranslation } from '@/hooks/use-translation';
 import { TwoFactorSetup } from '@/app/settings/general/components/TwoFactorSetup';
+import { RBACGuard } from '@/components/rbac/RBACGuard';
 
 interface SecuritySectionProps {
   emailSent: boolean;
@@ -50,14 +51,16 @@ function SecuritySection({
               </AlertDescription>
             </Alert>
           ) : (
-            <Button
-              onClick={handlePasswordResetRequest}
-              disabled={isLoading}
-              variant="outline"
-              className="w-full lg:w-auto"
-            >
-              {t('settings.security.password.reset.button')}
-            </Button>
+            <RBACGuard resource="user" action="update">
+              <Button
+                onClick={handlePasswordResetRequest}
+                disabled={isLoading}
+                variant="outline"
+                className="w-full lg:w-auto"
+              >
+                {t('settings.security.password.reset.button')}
+              </Button>
+            </RBACGuard>
           )}
         </CardContent>
       </Card>

@@ -5,7 +5,6 @@ import NotificationPreferencesTab from './components/preferenceTab';
 import NotificationChannelsTab from './components/channelTab';
 import useNotificationSettings from '../hooks/use-notification-settings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 import { SMTPFormData } from '@/redux/types/notification';
 import { useFeatureFlags } from '@/hooks/features_provider';
@@ -13,6 +12,7 @@ import Skeleton from '@/app/file-manager/components/skeleton/Skeleton';
 import DisabledFeature from '@/components/features/disabled-feature';
 import { FeatureNames } from '@/types/feature-flags';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { useRBAC } from '@/lib/rbac';
 
 export type NotificationChannelConfig = {
   [key: string]: string;
@@ -33,6 +33,8 @@ const Page: React.FC = () => {
     handleUpdatePreference
   } = useNotificationSettings();
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
+  const { canAccessResource } = useRBAC();
+  const hasFeatureFlagsReadPermission = canAccessResource('feature-flags', 'read');
 
   if (isFeatureFlagsLoading) {
     return <Skeleton />;
@@ -91,8 +93,8 @@ const Page: React.FC = () => {
           label={t('settings.notifications.page.title')}
           description={t('settings.notifications.page.description')}
         />
-        <Tabs defaultValue="channels" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs defaultValue={hasFeatureFlagsReadPermission ? "channels" : "preferences"} className="w-full">
+          <TabsList className={`grid w-full ${hasFeatureFlagsReadPermission ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <ResourceGuard resource="notification" action="create">
               <TabsTrigger value="channels">
                 {t('settings.notifications.page.tabs.channels')}
