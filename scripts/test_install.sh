@@ -319,7 +319,7 @@ function build_installation_command() {
     local app_domain="$4"
     local env="$5"
     
-    local cmd="sudo bash -c \"\$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install.sh)\""
+    local cmd="sudo bash -c \"\$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/feat/hosted_action_runner/scripts/install.sh)\""
     
     if [ -n "$email" ]; then
         cmd="$cmd --email=$email"
