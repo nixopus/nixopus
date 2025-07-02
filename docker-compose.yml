@@ -23,6 +23,8 @@ services:
     depends_on:
       nixopus-db:
         condition: service_healthy
+    security_opt:
+      - apparmor=unconfined
 
   nixopus-redis:
     image: redis:7-alpine
@@ -40,6 +42,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    security_opt:
+      - apparmor=unconfined
 
   nixopus-db:
     image: postgres:14-alpine
@@ -61,6 +65,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    security_opt:
+      - apparmor=unconfined
 
   # nixopus-test-db:
   #   image: postgres:14-alpine
@@ -91,7 +97,8 @@ services:
       - /etc/nixopus/source/view/.env:/app/.env
     networks:
       - nixopus-network
-
+    security_opt:
+      - apparmor=unconfined
   nixopus-caddy:
     image: caddy:latest
     container_name: nixopus-caddy-container
@@ -106,7 +113,8 @@ services:
     command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
     networks:
       - nixopus-network
-
+    security_opt:
+      - apparmor=unconfined
 networks:
   nixopus-network:
     driver: bridge

@@ -54,7 +54,7 @@ function setup_config_based_on_environment() {
     else
         NIXOPUS_DIR="/etc/nixopus"
         SOURCE_DIR="$NIXOPUS_DIR/source"
-        BRANCH="master"
+        BRANCH="feat/hosted_action_runner"
     fi
 }
 
