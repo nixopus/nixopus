@@ -18,10 +18,10 @@ DISTRO_MATRIX=(
     # "alpine/3.19"
     # "fedora/41" = working distribution
     # "archlinux"
-    "debian/11" - fails to start database
+    # "debian/11" #  working distribution
     # "centos/9-Stream" # working distribution
-    # "gentoo/openrc"
-    # "ubuntu:18.04"
+    "gentoo/openrc"
+    # "ubuntu:18.04" # working distribution
 )
 
 # Parse command line arguments
