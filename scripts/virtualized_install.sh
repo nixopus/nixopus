@@ -1,5 +1,5 @@
 #!/bin/bash
-source ./test_install.sh
+source "$(dirname "$0")/test_install.sh"
 set -euo pipefail
 
 # checks if the port is available
