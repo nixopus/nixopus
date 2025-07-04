@@ -1,0 +1,22 @@
+name: Demo Test
+
+on:
+  push:
+    branches: [ master,feat/lxd_nixopus_installer ]
+    paths:
+      - 'scripts/virtualized_install.sh'
+      - '.github/workflows/demo_test.yml'
+      - "installer/**"
+  workflow_dispatch:
+
+jobs:
+  demo:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run demo test
+        run: |
+          chmod +x scripts/virtualized_install.sh
+          ./scripts/virtualized_install.sh 
