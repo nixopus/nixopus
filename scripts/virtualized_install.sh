@@ -108,7 +108,7 @@ function main() {
     local app_domain="$3"
     local container_name="$4"
     local proxy_url="$5"
-
+ 
     # these are used to set the proxy for the app and api from the host machine 
     # e.g. irrespective of what port is used inside the container for app and api, we will use these ports from the host machine to container as a reverse proxy
     local app_port="$6" 
