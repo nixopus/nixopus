@@ -107,12 +107,12 @@ function main() {
     local api_domain="$2"
     local app_domain="$3"
     # local container_name="$4"
-    local proxy_url="$5"
+    local proxy_url="$4"
  
     # these are used to set the proxy for the app and api from the host machine 
     # e.g. irrespective of what port is used inside the container for app and api, we will use these ports from the host machine to container as a reverse proxy
-    local app_port="$6" 
-    local api_port="$7" 
+    local app_port="$5" 
+    local api_port="$6" 
     
     # Set default values for missing parameters
     local email="admin@nixopus.com"
