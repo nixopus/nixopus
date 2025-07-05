@@ -18,6 +18,6 @@ jobs:
 
       - name: Run demo test
         run: |
-          pwd
+          set -x
           chmod +x scripts/virtualized_install.sh
           ./scripts/virtualized_install.sh "debian/11" "api.nixopus.com" "app.nixopus.com" "nixopus-dev" "127.0.0.1" "9984" "9985"
