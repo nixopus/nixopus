@@ -458,4 +458,7 @@ function main() {
     done
 }
 
-main "$@"
+# Only run main if this script is executed directly, not when sourced
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
