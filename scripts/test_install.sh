@@ -180,6 +180,7 @@ create_lxd_container() {
     echo "Waiting for container to be ready..."
     sleep 60
     sudo lxc exec "$CONTAINER_NAME" -- cloud-init status --wait || true
+    echo $CONTAINER_NAME
 }
 
 function install_docker_official_apt() {

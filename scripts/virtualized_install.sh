@@ -106,7 +106,7 @@ function main() {
     local distro="$1"
     local api_domain="$2"
     local app_domain="$3"
-    local container_name="$4"
+    # local container_name="$4"
     local proxy_url="$5"
  
     # these are used to set the proxy for the app and api from the host machine 
@@ -119,9 +119,9 @@ function main() {
     local password="admin123"
     local env="production"
     
-    if [[ ! "$container_name" ]]; then
-        container_name="nixopus-dev"
-    fi
+    # if [[ ! "$container_name" ]]; then
+    #     container_name="nixopus-dev"
+    # fi
     if [[ ! "$distro" ]]; then
         distro="debian/11"
     fi
@@ -146,7 +146,7 @@ function main() {
     echo "Installing dependencies..."
     install_dependencies
     echo "Creating LXD container..."
-    create_lxd_container "$distro"
+    container_name=$(create_lxd_container "$distro")
     echo "Installing dependencies in container..."
     install_dependencies_in_container "$container_name" "$distro"
     echo "Starting installation script..."
