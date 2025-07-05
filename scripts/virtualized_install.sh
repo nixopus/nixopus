@@ -1,13 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# Debug: Print current directory and check if test_install.sh exists
-echo "Current directory: $(pwd)"
-echo "Script directory: $(dirname "$0")"
-echo "Checking if test_install.sh exists:"
-ls -la "$(dirname "$0")/test_install.sh" || echo "test_install.sh not found!"
-
-source "$(dirname "$0")/test_install.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/test_install.sh"
 
 # checks if the port is available
 function is_port_available() {
