@@ -152,15 +152,16 @@ function main() {
     echo "Installing dependencies in container..."
     install_dependencies_in_container "$container_name" "$distro"
     echo "Starting installation script..." 
-    local install_cmd
-    install_cmd=$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")
-    echo "Installation command: $install_cmd"
-    if run_installation_script "$install_cmd"; then
+    if run_installation_script "$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")"; then
         test_result="PASSED"
     else
         test_result="FAILED"
     fi
     echo "Installation script completed with result: $test_result"
+    if [[ "$test_result" != "PASSED" ]]; then
+        echo "Installation failed, exiting..."
+        exit 1
+    fi
     override_env_variables "$container_name" "$app_domain" "$api_domain"
     set_proxy_for_lxd "$container_name" "$proxy_url" "$app_port" "app"
     set_proxy_for_lxd "$container_name" "$proxy_url" "$api_port" "api"
