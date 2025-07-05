@@ -1,11 +1,18 @@
 #!/bin/bash
-source "$(dirname "$0")/test_install.sh"
 set -euo pipefail
+
+# Debug: Print current directory and check if test_install.sh exists
+echo "Current directory: $(pwd)"
+echo "Script directory: $(dirname "$0")"
+echo "Checking if test_install.sh exists:"
+ls -la "$(dirname "$0")/test_install.sh" || echo "test_install.sh not found!"
+
+source "$(dirname "$0")/test_install.sh"
 
 # checks if the port is available
 function is_port_available() {
     local port="$1"
-    if lsof -i :"$port" > /dev/null; then
+    if sudo lsof -i :"$port" > /dev/null; then
         echo "Port $port is already in use"
         exit 1
     fi
@@ -18,7 +25,7 @@ function set_proxy_for_lxd() {
     local proxy_url="$2"
     local proxy_port="$3"
     local proxy_name="$4"
-    lxc config device add "$container_name" "$proxy_name" proxy listen=tcp:0.0.0.0:"$proxy_port" connect=tcp:"$proxy_url":"$proxy_port"
+    sudo lxc config device add "$container_name" "$proxy_name" proxy listen=tcp:0.0.0.0:"$proxy_port" connect=tcp:"$proxy_url":"$proxy_port"
 }
 
 # checks if the file is present
@@ -73,11 +80,29 @@ function override_env_variables() {
     local app_env_file="/etc/nixopus/source/view/.env"
     local api_env_file="/etc/nixopus/source/api/.env"
 
-    is_file_present "$app_env_file"
-    is_file_present "$api_env_file"
-
-    replace_env_variable_in_view "$app_env_file" "$app_domain" "$api_domain"
-    replace_env_variable_in_api "$api_env_file" "$app_domain"
+    echo "Overriding environment variables in container: $container_name"
+    
+    # Execute the file operations inside the container
+    sudo lxc exec "$container_name" -- bash -c "
+        if [[ ! -f \"$app_env_file\" ]]; then
+            echo \"File not found: $app_env_file\"
+            exit 1
+        fi
+        if [[ ! -f \"$api_env_file\" ]]; then
+            echo \"File not found: $api_env_file\"
+            exit 1
+        fi
+        
+        # Replace environment variables in view file
+        sed -i \"s|^WEBSOCKET_URL=.*|WEBSOCKET_URL=wss://$app_domain/ws|\" \"$app_env_file\"
+        sed -i \"s|^WEBHOOK_URL=.*|WEBHOOK_URL=https://$app_domain/api/v1/webhook|\" \"$app_env_file\"
+        sed -i \"s|^API_URL=.*|API_URL=https://$api_domain/api|\" \"$app_env_file\"
+        
+        # Replace environment variables in api file
+        sed -i \"s|^ALLOWED_ORIGIN=.*|ALLOWED_ORIGIN=https://$app_domain|\" \"$api_env_file\"
+        
+        echo \"Environment variables updated successfully\"
+    "
 }
 
 
@@ -93,6 +118,11 @@ function main() {
     # e.g. irrespective of what port is used inside the container for app and api, we will use these ports from the host machine to container as a reverse proxy
     local app_port="$6" 
     local api_port="$7" 
+    
+    # Set default values for missing parameters
+    local email="admin@nixopus.com"
+    local password="admin123"
+    local env="production"
     
     if [[ ! "$container_name" ]]; then
         container_name="nixopus-dev"
@@ -120,16 +150,21 @@ function main() {
 
     echo "Installing dependencies..."
     install_dependencies
+    echo "Creating LXD container..."
     create_lxd_container "$distro"
+    echo "Installing dependencies in container..."
     install_dependencies_in_container "$container_name" "$distro"
     echo "Starting installation script..."
-    if run_installation_script "$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")"; then
+    local install_cmd
+    install_cmd=$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")
+    echo "Installation command: $install_cmd"
+    if run_installation_script "$install_cmd"; then
         test_result="PASSED"
     else
         test_result="FAILED"
     fi
     echo "Installation script completed with result: $test_result"
-    override_env_variables "$container_name" "$app_domain" "$api_domain" "$proxy_url"
+    override_env_variables "$container_name" "$app_domain" "$api_domain"
     set_proxy_for_lxd "$container_name" "$proxy_url" "$app_port" "app"
     set_proxy_for_lxd "$container_name" "$proxy_url" "$api_port" "api"
     echo "Proxy set for container: $container_name"
