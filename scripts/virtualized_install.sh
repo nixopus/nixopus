@@ -146,7 +146,8 @@ function main() {
     echo "Installing dependencies..."
     install_dependencies
     echo "Creating LXD container..."
-    container_name=$(create_lxd_container "$distro")
+    container_name=get_lxd_container_name "$distro"
+    create_lxd_container "$distro" "$container_name" 
     echo "Created Container name: '$container_name'" 
     echo "Installing dependencies in container..."
     install_dependencies_in_container "$container_name" "$distro"
