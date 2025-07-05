@@ -172,12 +172,12 @@ create_lxd_container() {
     local distro="$1"
     CONTAINER_NAME=$(get_lxd_container_name "$distro")
 
-    echo "Creating container: $CONTAINER_NAME with image: $distro"
+    echo "Creating container: $CONTAINER_NAME with image: $distro" >&2
     sudo lxc launch images:"$distro" "$CONTAINER_NAME"
     sudo lxc config set "$CONTAINER_NAME" security.privileged true
     sudo lxc config set "$CONTAINER_NAME" security.nesting true
     sudo lxc restart "$CONTAINER_NAME"
-    echo "Waiting for container to be ready..."
+    echo "Waiting for container to be ready..." >&2
     sleep 60
     sudo lxc exec "$CONTAINER_NAME" -- cloud-init status --wait || true
     echo "$CONTAINER_NAME"
