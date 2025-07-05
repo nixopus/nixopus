@@ -170,13 +170,14 @@ function get_lxd_container_name() {
 # Create a new LXD container with Docker privileges
 create_lxd_container() {
     local distro="$1"
-    CONTAINER_NAME="$2"
-    sudo lxc launch images:"$distro" "$CONTAINER_NAME"
-    sudo lxc config set "$CONTAINER_NAME" security.privileged true
-    sudo lxc config set "$CONTAINER_NAME" security.nesting true
-    sudo lxc restart "$CONTAINER_NAME"
+    local container_name="$2"
+    sudo lxc launch images:"$distro" "$container_name"
+    sudo lxc config set "$container_name" security.privileged true
+    sudo lxc config set "$container_name" security.nesting true
+    sudo lxc restart "$container_name"
     sleep 60
-    sudo lxc exec "$CONTAINER_NAME" -- cloud-init status --wait || true
+    sudo lxc exec "$container_name" -- cloud-init status --wait || true
+    echo "$container_name"
 }
 
 function install_docker_official_apt() {
@@ -394,7 +395,7 @@ function test_distribution_with_params() {
     echo "=========================================="
     
     # Reset container name for this test
-    CONTAINER_NAME= get_lxd_container_name "$distro"
+    CONTAINER_NAME=$(get_lxd_container_name "$distro")
     if ! create_lxd_container "$distro" "$CONTAINER_NAME"; then
         TEST_RESULTS+=("$distro-$test_name: SKIPPED (not available)")
         return 0
