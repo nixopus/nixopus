@@ -150,7 +150,7 @@ function main() {
     echo "Created Container name: '$container_name'"
     echo "Installing dependencies in container..."
     install_dependencies_in_container "$container_name" "$distro"
-    echo "Starting installation script..."
+    echo "Starting installation script..." 
     local install_cmd
     install_cmd=$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")
     echo "Installation command: $install_cmd"
