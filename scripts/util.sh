@@ -174,13 +174,13 @@ function validate_environment() {
 
 # Validate LXD installation and status
 function validate_lxd() {
-    if ! command -v lxc &>/dev/null; then
+    if ! command -v sudo lxc &>/dev/null; then
         echo "Error: LXD not found. Please install LXD first: https://canonical.com/lxd" >&2
         return 1
     fi
     echo "LXD: installed"
     
-    if ! lxc list &>/dev/null; then
+    if ! sudo lxc list &>/dev/null; then
         echo "Error: LXD is not running. Please start LXD first: lxc start" >&2
         return 1
     fi
