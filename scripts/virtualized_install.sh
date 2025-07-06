@@ -184,21 +184,31 @@ function setup_caddy_config_directory() {
     local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     local project_root="$(dirname "$script_dir")"
     
-    log_message "INFO" "Setting up Caddy configuration directory: $caddy_config_dir"
+    log_message "INFO" "Setting up Caddy configuration directory: $caddy_config_dir" >&2
     
     sudo mkdir -p "$caddy_config_dir"
     
     local caddyfile_source="$project_root/helpers/Caddyfile"
     local caddy_json_source="$project_root/helpers/caddy.json"
     
-    validate_file "$caddyfile_source" "Caddyfile" || return 1
-    validate_file "$caddy_json_source" "caddy.json" || return 1
+    if ! validate_file "$caddyfile_source" "Caddyfile" >&2; then
+        return 1
+    fi
+    
+    if ! validate_file "$caddy_json_source" "caddy.json" >&2; then
+        return 1
+    fi
     
     sudo cp "$caddyfile_source" "$caddy_config_dir/"
     sudo cp "$caddy_json_source" "$caddy_config_dir/caddy.json"
     
-    validate_file "$caddy_config_dir/Caddyfile" "Caddyfile" || return 1
-    validate_file "$caddy_config_dir/caddy.json" "caddy.json" || return 1
+    if ! validate_file "$caddy_config_dir/Caddyfile" "Caddyfile" >&2; then
+        return 1
+    fi
+    
+    if ! validate_file "$caddy_config_dir/caddy.json" "caddy.json" >&2; then
+        return 1
+    fi
     
     echo "$caddy_config_dir"
 }
@@ -398,7 +408,6 @@ function setup_caddy_reverse_proxy() {
         local caddy_config_dir
         caddy_config_dir=$(setup_caddy_config_directory) || return 1
         merge_caddy_configuration "$caddy_config_dir" || return 1
-        load_caddy_configuration "$caddy_config_dir" || return 1
     else
         log_message "INFO" "Setting up Caddy for first time..."
         local caddy_config_dir
