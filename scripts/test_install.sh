@@ -1,7 +1,6 @@
 #!/bin/bash
-
-# Requirements:
-# - LXD should be installed
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/util.sh"
 
 # This script is used for testing the installation script across multiple distributions.
 # It will create containers for each distribution, run the installation, and report results.
@@ -9,8 +8,8 @@
 set -euo pipefail
 OS="$(uname)"
 
-CONTAINER_NAME=""
-TEST_RESULTS=()
+# Base URL for GitHub raw content
+GITHUB_RAW_BASE="https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/feat/hosted_action_runner"
 
 # DISTRO_MATRIX is the list of distributions to test these names are from the lxc image list command
 # TODO: Uncomment the distributions to test once the first two tests seemed to be working
@@ -24,6 +23,46 @@ DISTRO_MATRIX=(
     # "ubuntu:18.04" # working distribution
 )
 
+# Maximum timeout for the installation script to run in seconds
+TIMEOUT=600
+
+# Configuration for the test to run all the params
+declare -A CONFIG
+
+# Initialize  configuration with default values
+function init_config() {
+    local email="$1"
+    local password="$2"
+    local api_domain="$3"
+    local app_domain="$4"
+    local env="$5"
+    local show_in_console="$6"
+    
+    CONFIG=(
+        ["email"]="${email:-}"
+        ["password"]="${password:-}"
+        ["api_domain"]="${api_domain:-}"
+        ["app_domain"]="${app_domain:-}"
+        ["env"]="${env:-production}"
+        ["distro"]=""
+        ["base_distro"]=""
+        ["container_name"]=""
+        ["test_name"]=""
+        ["show_in_console"]="${show_in_console:-false}"
+    )
+}
+
+# Set current test parameters
+function set_test_params() {
+    local distro="$1"
+    local test_name="${2:-custom}"
+    
+    CONFIG["distro"]="$distro"
+    CONFIG["test_name"]="$test_name"
+    CONFIG["container_name"]=$(generate_container_name)
+    CONFIG["base_distro"]=$(echo "$distro" | cut -d'/' -f1)
+}
+
 # Parse command line arguments
 function parse_arguments() {
     local email=""
@@ -31,7 +70,7 @@ function parse_arguments() {
     local api_domain=""
     local app_domain=""
     local env="production"
-    
+    local show_in_console="false"
     while [[ $# -gt 0 ]]; do
         case $1 in
             --email=*)
@@ -50,8 +89,8 @@ function parse_arguments() {
                 app_domain="${1#*=}"
                 shift
                 ;;
-            --env=*)
-                env="${1#*=}"
+            --show-in-console=*)
+                show_in_console="${1#*=}"
                 shift
                 ;;
             *)
@@ -61,282 +100,97 @@ function parse_arguments() {
         esac
     done
     
-    echo "$email:$password:$api_domain:$app_domain:$env"
-}
-
-# DETECT THE PACKAGE MANAGER FOR THE OS
-function detect_package_manager() {
-    if [[ "$OS" == "Darwin" ]]; then
-        echo "This script is not supported on macOS" >&2
-        exit 1
-    elif command -v apt-get &>/dev/null; then
-        echo "apt"
-    elif command -v dnf &>/dev/null; then
-        echo "dnf"
-    elif command -v yum &>/dev/null; then
-        echo "yum"
-    elif command -v pacman &>/dev/null; then
-        echo "pacman"
-    else
-        echo "Error: Unsupported package manager" >&2
-        exit 1
-    fi
-}
-
-# Check if LXD is installed
-function is_lxd_installed() {
-    if ! command -v sudo lxc --version &>/dev/null; then
-        echo "Error: LXD not found. Please install LXD first: https://canonical.com/lxd" >&2
-        exit 1
-    fi
-}   
-
-# Install the package
-function install_package() {
-    local pkg_manager
-    pkg_manager=$(detect_package_manager)
-    
-    case $pkg_manager in
-        "brew")
-            brew install "$1"
-            ;;
-        "apt")
-            sudo apt-get update
-            sudo apt-get install -y "$1"
-            ;;
-        "dnf")
-            sudo dnf install -y "$1"
-            ;;
-        "yum")
-            sudo yum install -y "$1"
-            ;;
-        "pacman")
-            sudo pacman -Sy --noconfirm "$1"
-            ;;
-    esac
-}
-
-# check if the required commands are installed
-function check_command_installed() {
-    local cmd="$1"
-    if ! command -v "$cmd" &>/dev/null; then
-        echo "Command '$cmd' not found. Attempting to install"
-        case "$cmd" in
-            "git")
-                install_package "git"
-                ;;
-            "python3")
-                install_package "python3"
-                ;;
-            "python3-pip")
-                install_package "python3-pip"
-                ;;
-            "openssl")
-                install_package "openssl"
-                ;;
-            "curl")
-                install_package "curl"
-                ;;
-            *)
-                echo "Error: Automatic installation not supported for '$cmd'" >&2
-                exit 1
-                ;;
-        esac
-    fi
-}
-
-# Install the dependencies
-function install_dependencies() {
-    local dependencies
-    dependencies=(
-        "python3"
-        "python3-pip"
-        "git"
-        "openssl"
-        "curl"
-    )
-    for dependency in "${dependencies[@]}"; do
-        check_command_installed "$dependency"
-    done
+    echo "$email:$password:$api_domain:$app_domain:$env:$show_in_console"
 }
 
 # Generate a random string and add it to the test-container- prefix
-function get_lxd_container_name() {
-    local distro="$1"
+function generate_container_name() {
     echo "test-container-$(date +%s%N | md5sum | cut -c1-8)"
 }
 
-
 # Create a new LXD container with Docker privileges
-create_lxd_container() {
-    local distro="$1"
-    local container_name="$2"
-    sudo lxc launch images:"$distro" "$container_name"
-    sudo lxc config set "$container_name" security.privileged true
-    sudo lxc config set "$container_name" security.nesting true
-    sudo lxc restart "$container_name"
-    sleep 60
-    sudo lxc exec "$container_name" -- cloud-init status --wait || true
-    echo "$container_name"
-}
-
-function install_docker_official_apt() {
-    local container_name="$1"
-    local distro="$2"
-    local distro_type="$3"
+function create_lxd_container() {
+    log_message "INFO" "Creating LXD container: ${CONFIG[container_name]} with distro: ${CONFIG[distro]}" "${CONFIG[show_in_console]}"
     
-    echo "Installing Docker using official apt repository in container: $container_name for $distro_type"
-    
-    local gpg_url=""
-    local repo_url=""
-    local codename_var=""
-    
-    case "$distro_type" in
-        "debian")
-            gpg_url="https://download.docker.com/linux/debian/gpg"
-            repo_url="https://download.docker.com/linux/debian"
-            codename_var="VERSION_CODENAME"
-            ;;
-        "ubuntu")
-            gpg_url="https://download.docker.com/linux/ubuntu/gpg"
-            repo_url="https://download.docker.com/linux/ubuntu"
-            codename_var="UBUNTU_CODENAME"
-            ;;
-        *)
-            echo "Unsupported distribution type: $distro_type"
-            return 1
-            ;;
-    esac
-    
-    sudo lxc exec "$container_name" -- bash -c "
-        sudo apt-get update
-        sudo apt-get install -y ca-certificates curl
-        sudo install -m 0755 -d /etc/apt/keyrings
-        sudo curl -fsSL $gpg_url -o /etc/apt/keyrings/docker.asc
-        sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-        # Add the repository to Apt sources:
-        echo \\
-          \"deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] $repo_url \\
-          \$(. /etc/os-release && echo \"\${$codename_var:-\$VERSION_CODENAME}\") stable\" | \\
-          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-        sudo apt-get update
-        sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-    "
-}
-
-function install_docker_official_fedora_centos() {
-    echo "Installing Docker using official dnf repository in container: $container_name"
-    container_name="$1"
-    distro="$2"
-    base_distro="$3"
-    echo "Installing Docker using official dnf repository in container: $container_name"
-    
-    sudo lxc exec "$container_name" -- bash -c "
-        # Remove old Docker packages first
-        sudo dnf remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine || true
-        
-        # Install dnf-plugins-core
-        sudo dnf -y install dnf-plugins-core
-        
-        # Add the appropriate repository based on distribution
-        if [[ \"$base_distro\" == \"centos\" ]]; then
-            sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-        else
-            sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-        fi
-        
-        # Install Docker packages
-        sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-        
-        # Enable Docker service
-        sudo systemctl enable docker || true
-    "
+    if sudo lxc launch images:"${CONFIG[distro]}" "${CONFIG[container_name]}"; then
+        sudo lxc config set "${CONFIG[container_name]}" security.privileged true
+        sudo lxc config set "${CONFIG[container_name]}" security.nesting true
+        sudo lxc restart "${CONFIG[container_name]}"
+        sleep 60
+        sudo lxc exec "${CONFIG[container_name]}" -- cloud-init status --wait || true
+        log_message "INFO" "Container ${CONFIG[container_name]} created successfully" "${CONFIG[show_in_console]}"
+        return 0
+    else
+        log_message "ERROR" "Failed to create container ${CONFIG[container_name]}" "${CONFIG[show_in_console]}"
+        return 1
+    fi
 }
 
 # Install dependencies in the container
 function install_dependencies_in_container() {
-    local container_name="$1"
-    local distro="$2"
-    echo "Installing dependencies in container: $container_name"
+    log_message "INFO" "Installing dependencies in container: ${CONFIG[container_name]}" "${CONFIG[show_in_console]}"
+    log_message "DEBUG" "Base distribution: ${CONFIG[base_distro]}" "${CONFIG[show_in_console]}"
 
-    # Extract base distribution name (e.g., "alpine" from "alpine/3.19")
-    local base_distro=$(echo "$distro" | cut -d'/' -f1)
-    echo "Base distribution: $base_distro"
-
-    sudo lxc exec "$container_name" -- sh -c 'set -x'
-    # Install the dependencies based on the distro
-    case $base_distro in
-        "alpine")
-            echo "Installing dependencies for Alpine"
-            sudo lxc exec "$container_name" -- apk add --no-cache python3 docker docker-compose py3-pip git openssl curl
-            ;;
-        "fedora")
-            echo "Installing dependencies for Fedora"
-            sudo lxc exec "$container_name" -- dnf install -y python3 python3-pip git openssl curl
-            install_docker_official_fedora_centos "$container_name" "$distro" "$base_distro"
-            ;;
-        "debian")
-            echo "Installing dependencies for Debian"
-            sudo lxc exec "$container_name" -- apt-get update
-            sudo lxc exec "$container_name" -- apt-get install -y python3 python3-pip git openssl curl python3-venv
-            install_docker_official_apt "$container_name" "$distro" "debian"
-            ;;
-        "archlinux")
-            echo "Installing dependencies for Arch Linux"
-            sudo lxc exec "$container_name" -- pacman -Sy --noconfirm python3 docker docker-compose python3-pip git openssl curl
-            ;;
-        "centos")
-            echo "Installing dependencies for CentOS"
-            sudo lxc exec "$container_name" -- yum install -y python3 python3-pip git openssl curl
-            install_docker_official_fedora_centos "$container_name" "$distro" "$base_distro"
+    # Push the util.sh script to the container
+    log_message "DEBUG" "Pushing util.sh to container..." "${CONFIG[show_in_console]}"
+    sudo lxc file push "$SCRIPT_DIR/util.sh" "${CONFIG[container_name]}/tmp/util.sh"
+    
+    # Set the package manager for the container
+    sudo lxc exec "${CONFIG[container_name]}" -- env OS=Linux bash -c "
+        source /tmp/util.sh
+        ensure_command_installed 'python3' 'python3'
+        ensure_command_installed 'pip3' 'python3-pip'
+        ensure_command_installed 'git' 'git'
+        ensure_command_installed 'openssl' 'openssl'
+        ensure_command_installed 'curl' 'curl'
+    "
+    
+    # Install additional distro-specific packages
+    case ${CONFIG[base_distro]} in
+        "debian"|"ubuntu")
+            log_message "DEBUG" "Installing additional packages for ${CONFIG[base_distro]}" "${CONFIG[show_in_console]}"
+            sudo lxc exec "${CONFIG[container_name]}" -- apt-get install -y python3-venv
             ;;
         "gentoo")
-            echo "Installing dependencies for Gentoo"
-            sudo lxc exec "$container_name" -- emerge --ask nix python3 docker docker-compose python3-pip git openssl curl
-            ;;
-        "ubuntu")
-            echo "Installing dependencies for Ubuntu"
-            sudo lxc exec "$container_name" -- apt-get update
-            sudo lxc exec "$container_name" -- apt-get install -y python3 python3-pip git openssl curl python3-venv
-            install_docker_official_apt "$container_name" "$distro" "ubuntu"
-            ;;
-        *)
-            echo "Unknown distribution: $base_distro"
-            return 1
+            log_message "DEBUG" "Installing additional packages for ${CONFIG[base_distro]}" "${CONFIG[show_in_console]}"
+            sudo lxc exec "${CONFIG[container_name]}" -- emerge --noreplace nix
             ;;
     esac
-    echo "Finished installing dependencies in container: $container_name"
+    
+    # Install Docker using the utility function
+    log_message "INFO" "Installing Docker..." "${CONFIG[show_in_console]}"
+    sudo lxc exec "${CONFIG[container_name]}" -- bash -c "
+        source /tmp/util.sh
+        install_docker
+    "
+    
+    # Clean up the temporary file
+    sudo lxc exec "${CONFIG[container_name]}" -- rm -f /tmp/util.sh
+    
+    log_message "INFO" "Finished installing dependencies in container: ${CONFIG[container_name]}" "${CONFIG[show_in_console]}"
 }
 
-# Build installation command
+# Build installation command using global config
 function build_installation_command() {
-    local email="$1"
-    local password="$2"
-    local api_domain="$3"
-    local app_domain="$4"
-    local env="$5"
+    local cmd="sudo bash -c \"\$(curl -sSL $GITHUB_RAW_BASE/scripts/install.sh)\""
     
-    local cmd="sudo bash -c \"\$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/feat/hosted_action_runner/scripts/install.sh)\""
-    
-    if [ -n "$email" ]; then
-        cmd="$cmd --email=$email"
+    if [ -n "${CONFIG[email]}" ]; then
+        cmd="$cmd --email=${CONFIG[email]}"
     fi
     
-    if [ -n "$password" ]; then
-        cmd="$cmd --password=$password"
+    if [ -n "${CONFIG[password]}" ]; then
+        cmd="$cmd --password=${CONFIG[password]}"
     fi
     
-    if [ -n "$api_domain" ]; then
-        cmd="$cmd --api-domain=$api_domain"
+    if [ -n "${CONFIG[api_domain]}" ]; then
+        cmd="$cmd --api-domain=${CONFIG[api_domain]}"
     fi
     
-    if [ -n "$app_domain" ]; then
-        cmd="$cmd --app-domain=$app_domain"
+    if [ -n "${CONFIG[app_domain]}" ]; then
+        cmd="$cmd --app-domain=${CONFIG[app_domain]}"
     fi
     
-    cmd="$cmd --env=$env"
-
+    cmd="$cmd --env=${CONFIG[env]}"
     cmd="$cmd --debug"
     
     echo "$cmd"
@@ -346,117 +200,156 @@ function build_installation_command() {
 function run_installation_script() {
     local command="$1"
     local container_name="$2"
-    echo "Running installation script in container: $container_name"
-    echo "This may take several minutes..."
+    local start_time=$(date +%s)
+    local error_message=""
     
-    # Run with timeout of 10 minutes (600 seconds)
-    if timeout 600 sudo lxc exec "$container_name" -- bash -c "set -x; $command"; then
-        echo "Installation script completed successfully"
+    log_message "INFO" "Running installation script in container: $container_name" "${CONFIG[show_in_console]}"
+    log_message "INFO" "This may take several minutes..." "${CONFIG[show_in_console]}"
+    
+    if timeout "$TIMEOUT" sudo lxc exec "$container_name" -- bash -c "set -x; $command" 2>&1; then
+        local end_time=$(date +%s)
+        local duration=$((end_time - start_time))
+        log_message "INFO" "Installation script completed successfully in ${duration}s" "${CONFIG[show_in_console]}"
         return 0
     else
         local exit_code=$?
+        local end_time=$(date +%s)
+        local duration=$((end_time - start_time))
+        
         if [ $exit_code -eq 124 ]; then
-            echo "Installation script timed out after 30 minutes"
+            error_message="Installation script timed out after $TIMEOUT seconds"
+            log_message "ERROR" "$error_message" "${CONFIG[show_in_console]}"
         else
-            echo "Installation script failed with exit code: $exit_code"
+            error_message="Installation script failed with exit code: $exit_code"
+            log_message "ERROR" "$error_message" "${CONFIG[show_in_console]}"
         fi
+        
+        CONFIG["error_message"]="$error_message"
+        CONFIG["exit_code"]="$exit_code"
+        CONFIG["duration"]="$duration"
+        
         return $exit_code
     fi
 }
 
 # Stop and delete container
 function cleanup_container() {
-    if [ -n "$CONTAINER_NAME" ]; then
-        echo "Stopping container: $CONTAINER_NAME"
-        sudo lxc stop "$CONTAINER_NAME" 2>/dev/null || true
+    if [ -n "${CONFIG[container_name]}" ]; then
+        log_message "INFO" "Stopping container: ${CONFIG[container_name]}" "${CONFIG[show_in_console]}"
+        sudo lxc stop "${CONFIG[container_name]}" 2>/dev/null || true
         
-        echo "Deleting container: $CONTAINER_NAME"
-        sudo lxc delete "$CONTAINER_NAME" 2>/dev/null || true
+        log_message "INFO" "Deleting container: ${CONFIG[container_name]}" "${CONFIG[show_in_console]}"
+        sudo lxc delete "${CONFIG[container_name]}" 2>/dev/null || true
     fi
 }
 
 # Test installation on a single distribution with specific parameters
 function test_distribution_with_params() {
-    local distro="$1"
-    local test_name="$2"
-    local env="$3"
-    local email="$4"
-    local password="$5"
-    local api_domain="$6"
-    local app_domain="$7"
+    local test_start_time=$(date +%s)
     local test_result=""
+    local exit_code=0
+    local error_message=""
+    local test_name="${CONFIG[distro]}-${CONFIG[test_name]}"
+    local metadata="container:${CONFIG[container_name]},base_distro:${CONFIG[base_distro]}"
     
-    echo "=========================================="
-    echo "Testing: $distro - $test_name"
-    echo "Environment: $env"
-    echo "Email: ${email:-<not set>}"
-    echo "Password: ${password:+<set>}"
-    echo "API Domain: ${api_domain:-<not set>}"
-    echo "App Domain: ${app_domain:-<not set>}"
-    echo "=========================================="
+    log_message "INFO" "==========================================" "${CONFIG[show_in_console]}"
+    log_message "INFO" "Testing: ${CONFIG[distro]} - ${CONFIG[test_name]}" "${CONFIG[show_in_console]}"
+    log_message "INFO" "Base Distro: ${CONFIG[base_distro]}" "${CONFIG[show_in_console]}"
+    log_message "INFO" "Container: ${CONFIG[container_name]}" "${CONFIG[show_in_console]}"
+    log_message "INFO" "Environment: ${CONFIG[env]}" "${CONFIG[show_in_console]}"
+    log_message "INFO" "Email: ${CONFIG[email]:-<not set>}" "${CONFIG[show_in_console]}"
+    log_message "INFO" "Password: ${CONFIG[password]:+<set>}" "${CONFIG[show_in_console]}"
+    log_message "INFO" "API Domain: ${CONFIG[api_domain]:-<not set>}" "${CONFIG[show_in_console]}"
+    log_message "INFO" "App Domain: ${CONFIG[app_domain]:-<not set>}" "${CONFIG[show_in_console]}"
+    log_message "INFO" "==========================================" "${CONFIG[show_in_console]}"
     
-    # Reset container name for this test
-    CONTAINER_NAME=$(get_lxd_container_name "$distro")
-    if ! create_lxd_container "$distro" "$CONTAINER_NAME"; then
-        TEST_RESULTS+=("$distro-$test_name: SKIPPED (not available)")
-        return 0
-    fi
-
-    install_dependencies_in_container "$CONTAINER_NAME" "$distro"
-
-    echo "Starting installation script..."
-    if run_installation_script "$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")" "$container_name"; then
-        test_result="PASSED"
+    if ! create_lxd_container; then
+        test_result="SKIPPED"
+        error_message="Failed to create container"
+        exit_code=1
     else
-        test_result="FAILED"
+        install_dependencies_in_container
+
+        log_message "INFO" "Starting installation script..." "${CONFIG[show_in_console]}"
+        if run_installation_script "$(build_installation_command)" "${CONFIG[container_name]}"; then
+            test_result="PASSED"
+            exit_code=0
+            error_message=""
+        else
+            test_result="FAILED"
+            exit_code="${CONFIG[exit_code]:-1}"
+            error_message="${CONFIG[error_message]:-Unknown error}"
+        fi
     fi
-    echo "Installation script completed with result: $test_result"
+    
+    local test_end_time=$(date +%s)
+    local test_duration=$((test_end_time - test_start_time))
+    
+    log_message "INFO" "Installation script completed with result: $test_result" "${CONFIG[show_in_console]}"
     
     cleanup_container
     
-    TEST_RESULTS+=("$distro-$test_name: $test_result")
-    echo "Test result for $distro-$test_name: $test_result"
+    return $exit_code
 }
 
-# Test installation on a single distribution
-function test_distribution() {
-    local distro="$1"
-    local email="$2"
-    local password="$3"
-    local api_domain="$4"
-    local app_domain="$5"
-    local env="$6"
+# Validate all the parameters for the test
+function validate_test_params() {
+    log_message "INFO" "Validating environment and arguments..." "${CONFIG[show_in_console]}"
+    local validation_failed=false
     
-    local test_name="custom"
-    test_distribution_with_params "$distro" "$test_name" "$env" "$email" "$password" "$api_domain" "$app_domain"
+    validate_environment "${CONFIG[env]}" || validation_failed=true
+    validate_lxd || validation_failed=true
+    validate_sudo || validation_failed=true
+    validate_file "${SCRIPT_DIR}/util.sh" "util.sh" || validation_failed=true
+    validate_array "Distro matrix" "${DISTRO_MATRIX[@]}" || validation_failed=true
+
+    local email_strict="false"      
+    local password_strict="false"   
+    local api_domain_strict="false" 
+    local app_domain_strict="false" 
+    local url_strict="false"        
+    
+    validate_email "${CONFIG[email]}" "$email_strict" || validation_failed=true
+    validate_password "${CONFIG[password]}" "$password_strict" || validation_failed=true
+    validate_domain "${CONFIG[api_domain]}" "API" "$api_domain_strict" || validation_failed=true
+    validate_domain "${CONFIG[app_domain]}" "App" "$app_domain_strict" || validation_failed=true
+    validate_url "${GITHUB_RAW_BASE}/scripts/install.sh" "Installation script" "$url_strict" || validation_failed=true
+    
+    if [ "$validation_failed" = true ]; then
+        log_message "ERROR" "Validation failed!" "${CONFIG[show_in_console]}"
+        return 1
+    fi
+    
+    log_message "INFO" "All validations passed!" "${CONFIG[show_in_console]}"
+    return 0
 }
 
 function main() {
-    # Parse command line arguments
     local args
     args=$(parse_arguments "$@")
-    IFS=':' read -r email password api_domain app_domain env <<< "$args"
+    IFS=':' read -r email password api_domain app_domain env show_in_console <<< "$args"
+    init_config "$email" "$password" "$api_domain" "$app_domain" "$env" "$show_in_console"
+
+    log_message "INFO" "Starting Nixopus installation test suite" "${CONFIG[show_in_console]}"
+    log_message "INFO" "Testing ${#DISTRO_MATRIX[@]} distributions with timeout: ${TIMEOUT}s" "${CONFIG[show_in_console]}"
+    log_message "INFO" "Show in console: ${CONFIG[show_in_console]}" "${CONFIG[show_in_console]}"
     
-    echo "Starting Nixopus installation matrix test..."
-    echo "Environment: $env"
-    echo "Email: ${email:-<not set>}"
-    echo "Password: ${password:+<set>}"
-    echo "API Domain: ${api_domain:-<not set>}"
-    echo "App Domain: ${app_domain:-<not set>}"
+    if ! validate_test_params; then
+        log_message "ERROR" "Parameter validation failed, exiting" "${CONFIG[show_in_console]}"
+        exit 1
+    fi
     
-    echo "Testing distributions: ${DISTRO_MATRIX[*]}"
-    
-    echo ""
-    
-    is_lxd_installed
     install_dependencies
-    
+
+    # TODO: Enable parallel testing
     for distro in "${DISTRO_MATRIX[@]}"; do
-        test_distribution "$distro" "$email" "$password" "$api_domain" "$app_domain" "$env"
+        set_test_params "$distro" "custom"
+        test_distribution_with_params
     done
+    
+    exit 0
 }
 
-# Only run main if this script is executed directly, not when sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi
