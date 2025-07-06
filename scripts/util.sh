@@ -300,8 +300,51 @@ function log_message() {
 # checks if the port is available
 function is_port_available() {
     local port="$1"
-    if sudo lsof -i :"$port" > /dev/null; then
+    if sudo lsof -i :"$port" > /dev/null 2>&1; then
         log_message "ERROR" "Port $port is already in use"
         exit 1
     fi
+}
+
+# Generate a random available port between 1024 and 65535
+function generate_random_available_port() {
+    local min_port="${1:-1024}"
+    local max_port="${2:-65535}"
+    local max_attempts="${3:-100}"
+    local attempt=0
+    
+    if ! [[ "$min_port" =~ ^[0-9]+$ ]] || ! [[ "$max_port" =~ ^[0-9]+$ ]]; then
+        log_message "ERROR" "Invalid port range: min=$min_port, max=$max_port"
+        return 1
+    fi
+    
+    if [ "$min_port" -gt "$max_port" ]; then
+        log_message "ERROR" "Min port ($min_port) cannot be greater than max port ($max_port)"
+        return 1
+    fi
+    
+    if [ "$min_port" -lt 1 ] || [ "$max_port" -gt 65535 ]; then
+        log_message "ERROR" "Port range must be between 1 and 65535"
+        return 1
+    fi
+    
+    local used_ports
+    used_ports=$(sudo lsof -i -P -n | grep LISTEN | awk '{print $9}' | sed 's/.*://' | sort -u 2>/dev/null)
+    
+    while [ $attempt -lt $max_attempts ]; do
+        local random_port=$((RANDOM % (max_port - min_port + 1) + min_port))
+        
+        if ! echo "$used_ports" | grep -q "^$random_port$"; then
+            if ! sudo lsof -i :"$random_port" >/dev/null 2>&1; then
+                log_message "INFO" "Generated random available port: $random_port"
+                echo "$random_port"
+                return 0
+            fi
+        fi
+        
+        attempt=$((attempt + 1))
+    done
+    
+    log_message "ERROR" "Failed to find available port after $max_attempts attempts"
+    return 1
 }
