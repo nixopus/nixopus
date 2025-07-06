@@ -179,7 +179,7 @@ function main() {
     if [[ "$test_result" != "PASSED" ]]; then
         log_message "ERROR" "Installation failed, exiting..." "${CONFIG[show_in_console]}"
         exit 1
-    fi
+    fi 
     
     override_env_variables "${CONFIG[container_name]}" "${CONFIG[app_domain]}" "${CONFIG[api_domain]}"
     set_proxy_for_lxd "${CONFIG[container_name]}" "${CONFIG[proxy_url]}" "7443" "${CONFIG[app_port]}" "app"
