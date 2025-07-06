@@ -253,12 +253,20 @@ function validate_array() {
 }
 
 # Log message to console if show_in_console is true
-# default to false
+# If no third parameter is provided and CONFIG[show_in_console] exists, use that value
 function log_message() {
     local level="$1"
     local message="$2"
-    local show_in_console="${3:-false}"
+    local show_in_console="${3:-}"
     local timestamp="$(date -Iseconds)"
+
+    # If no third parameter provided, try to use CONFIG[show_in_console] if it exists
+    if [ -z "$show_in_console" ] && [ -n "${CONFIG[show_in_console]:-}" ]; then
+        show_in_console="${CONFIG[show_in_console]}"
+    fi
+    
+    # Default to false if still not set
+    show_in_console="${show_in_console:-false}"
 
     if [ "$show_in_console" = "false" ]; then
         return 0
@@ -297,3 +305,5 @@ function is_port_available() {
         exit 1
     fi
 }
+
+

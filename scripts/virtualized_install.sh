@@ -42,7 +42,7 @@ function init_virtualized_config() {
 # sets the proxy for the container
 function set_proxy_for_lxd() {
     local container_name="$1"
-    echo "Setting proxy for container: $container_name"
+    log_message "INFO" "Setting proxy for container: $container_name"
     local proxy_url="$2"
     local proxy_internal_port="$3"
     local proxy_external_port="$4"
@@ -60,7 +60,7 @@ function override_env_variables() {
     local app_env_file="/etc/nixopus/source/view/.env"
     local api_env_file="/etc/nixopus/source/api/.env"
 
-    log_message "INFO" "Overriding environment variables in container: $container_name" "${CONFIG[show_in_console]}"
+    log_message "INFO" "Overriding environment variables in container: $container_name"
     
     sudo lxc exec "$container_name" -- bash -c "
         if [[ ! -f \"$app_env_file\" ]]; then
@@ -84,7 +84,7 @@ function override_env_variables() {
 
 # Validate  installation parameters
 function validate_virtualized_params() {
-    log_message "INFO" "Validating virtualized installation parameters..." "${CONFIG[show_in_console]}"
+    log_message "INFO" "Validating virtualized installation parameters..."
     local validation_failed=false
     
     validate_environment "${CONFIG[env]}" || validation_failed=true
@@ -93,7 +93,7 @@ function validate_virtualized_params() {
     validate_file "${SCRIPT_DIR}/util.sh" "util.sh" || validation_failed=true
     
     # Check if ports are available
-    log_message "INFO" "Checking if ports are available..." "${CONFIG[show_in_console]}"
+    log_message "INFO" "Checking if ports are available..."
     is_port_available "${CONFIG[app_port]}" || validation_failed=true
     is_port_available "${CONFIG[api_port]}" || validation_failed=true
     
@@ -106,11 +106,11 @@ function validate_virtualized_params() {
     fi
     
     if [ "$validation_failed" = true ]; then
-        log_message "ERROR" "Validation failed!" "${CONFIG[show_in_console]}"
+        log_message "ERROR" "Validation failed!"
         return 1
     fi
     
-    log_message "INFO" "All validations passed!" "${CONFIG[show_in_console]}"
+    log_message "INFO" "All validations passed!"
     return 0
 }
 
@@ -142,42 +142,42 @@ function main() {
 
     init_virtualized_config "$distro" "$api_domain" "$app_domain" "$proxy_url" "$app_port" "$api_port" "$email" "$password" "$env"
 
-    log_message "INFO" "Starting Nixopus virtualized installation" "${CONFIG[show_in_console]}"
-    log_message "INFO" "Distribution: ${CONFIG[distro]}" "${CONFIG[show_in_console]}"
-    log_message "INFO" "Container: ${CONFIG[container_name]}" "${CONFIG[show_in_console]}"
-    log_message "INFO" "Environment: ${CONFIG[env]}" "${CONFIG[show_in_console]}"
-    log_message "INFO" "App Port: ${CONFIG[app_port]}" "${CONFIG[show_in_console]}"
-    log_message "INFO" "API Port: ${CONFIG[api_port]}" "${CONFIG[show_in_console]}"
+    log_message "INFO" "Starting Nixopus virtualized installation" 
+    log_message "INFO" "Distribution: ${CONFIG[distro]}"
+    log_message "INFO" "Container: ${CONFIG[container_name]}"
+    log_message "INFO" "Environment: ${CONFIG[env]}"
+    log_message "INFO" "App Port: ${CONFIG[app_port]}"
+    log_message "INFO" "API Port: ${CONFIG[api_port]}"
 
     if ! validate_virtualized_params; then
-        log_message "ERROR" "Parameter validation failed, exiting" "${CONFIG[show_in_console]}"
+        log_message "ERROR" "Parameter validation failed, exiting"
         exit 1
     fi
 
-    log_message "INFO" "Installing dependencies..." "${CONFIG[show_in_console]}"
+    log_message "INFO" "Installing dependencies..."
     install_dependencies
     
-    log_message "INFO" "Creating LXD container..." "${CONFIG[show_in_console]}"
+    log_message "INFO" "Creating LXD container..."
     if ! create_lxd_container; then
-        log_message "ERROR" "Failed to create container, exiting..." "${CONFIG[show_in_console]}"
+        log_message "ERROR" "Failed to create container, exiting..."
         exit 1
     fi
     
-    log_message "INFO" "Created Container name: '${CONFIG[container_name]}'" "${CONFIG[show_in_console]}"
+    log_message "INFO" "Created Container name: '${CONFIG[container_name]}'"
     
-    log_message "INFO" "Installing dependencies in container..." "${CONFIG[show_in_console]}"
+    log_message "INFO" "Installing dependencies in container..."
     install_dependencies_in_container
     
-    log_message "INFO" "Starting installation script..." "${CONFIG[show_in_console]}"
+    log_message "INFO" "Starting installation script..."
     if run_installation_script "$(build_installation_command)" "${CONFIG[container_name]}"; then
         test_result="PASSED"
     else
         test_result="FAILED"
     fi
     
-    log_message "INFO" "Installation script completed with result: $test_result" "${CONFIG[show_in_console]}"
+    log_message "INFO" "Installation script completed with result: $test_result"
     if [[ "$test_result" != "PASSED" ]]; then
-        log_message "ERROR" "Installation failed, exiting..." "${CONFIG[show_in_console]}"
+        log_message "ERROR" "Installation failed, exiting..."
         exit 1
     fi 
     
@@ -185,8 +185,8 @@ function main() {
     set_proxy_for_lxd "${CONFIG[container_name]}" "${CONFIG[proxy_url]}" "7443" "${CONFIG[app_port]}" "app"
     set_proxy_for_lxd "${CONFIG[container_name]}" "${CONFIG[proxy_url]}" "8443" "${CONFIG[api_port]}" "api"
     
-    log_message "INFO" "Proxy set for container: ${CONFIG[container_name]}" "${CONFIG[show_in_console]}"
-    log_message "INFO" "Virtualized installation completed successfully!" "${CONFIG[show_in_console]}"
+    log_message "INFO" "Proxy set for container: ${CONFIG[container_name]}"
+    log_message "INFO" "Virtualized installation completed successfully!"
 }
 
 main "$@"
