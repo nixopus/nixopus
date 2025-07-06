@@ -3,7 +3,7 @@
 # DETECT THE PACKAGE MANAGER FOR THE OS
 function detect_package_manager() {
     if [[ "$OS" == "Darwin" ]]; then
-        log_message "ERROR" "This script is not supported on macOS" true
+        log_message "ERROR" "This script is not supported on macOS"
         exit 1
     elif command -v apt-get &>/dev/null; then
         echo "apt"
@@ -14,7 +14,7 @@ function detect_package_manager() {
     elif command -v pacman &>/dev/null; then
         echo "pacman"
     else
-        log_message "ERROR" "Unsupported package manager" true
+        log_message "ERROR" "Unsupported package manager"
         exit 1
     fi
 }
@@ -47,9 +47,9 @@ function ensure_command_installed() {
     local package_name="$2"
     
     if ! command -v "$cmd" &>/dev/null; then
-        log_message "INFO" "Command '$cmd' not found. Attempting to install..." true
+        log_message "INFO" "Command '$cmd' not found. Attempting to install..."
         install_package "$package_name"
-        log_message "INFO" "Successfully installed $cmd" true
+        log_message "INFO" "Successfully installed $cmd"
     fi
 }
 
@@ -66,22 +66,22 @@ function install_dependencies() {
 # This script handles different distros and different package managers automatically
 function install_docker(){    
     if command -v docker &>/dev/null; then
-        log_message "INFO" "Docker is already installed." true
+        log_message "INFO" "Docker is already installed."
         return 0
     fi
     
     if curl -fsSL https://get.docker.com -o /tmp/get-docker.sh; then
         if sh /tmp/get-docker.sh; then            
             rm -f /tmp/get-docker.sh
-            log_message "INFO" "Docker installed successfully!" true
+            log_message "INFO" "Docker installed successfully!"
             return 0
         else
-            log_message "ERROR" "Docker installation failed!" true
+            log_message "ERROR" "Docker installation failed!"
             rm -f /tmp/get-docker.sh
             return 1
         fi
     else
-        log_message "ERROR" "Failed to download Docker installation script!" true
+        log_message "ERROR" "Failed to download Docker installation script!"
         return 1
     fi
 }
@@ -93,15 +93,15 @@ function validate_email() {
     
     if [ -n "$email" ]; then
         if [[ "$email" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
-            log_message "INFO" "Email: valid" true
+            log_message "INFO" "Email: valid"
             return 0
         else
-            log_message "ERROR" "Invalid email format: $email" true
+            log_message "ERROR" "Invalid email format: $email"
             return 1
         fi
     else
         if [ "$strict" = "true" ]; then
-            log_message "ERROR" "Email is required" true
+            log_message "ERROR" "Email is required"
             return 1
         else
             return 0
@@ -116,15 +116,15 @@ function validate_password() {
     
     if [ -n "$password" ]; then
         if [ ${#password} -ge 6 ]; then
-            log_message "INFO" "Password: provided (length: ${#password})" true
+            log_message "INFO" "Password: provided (length: ${#password})"
             return 0
         else
-            log_message "ERROR" "Password too short (minimum 6 characters)" true
+            log_message "ERROR" "Password too short (minimum 6 characters)"
             return 1
         fi
     else
         if [ "$strict" = "true" ]; then
-            log_message "ERROR" "Password is required" true
+            log_message "ERROR" "Password is required"
             return 1
         else
             return 0
@@ -140,15 +140,15 @@ function validate_domain() {
     
     if [ -n "$domain" ]; then
         if [[ "$domain" =~ ^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
-            log_message "INFO" "$domain_type Domain: $domain" true
+            log_message "INFO" "$domain_type Domain: $domain"   
             return 0
         else
-            log_message "ERROR" "Invalid $domain_type domain format: $domain" true
+            log_message "ERROR" "Invalid $domain_type domain format: $domain"
             return 1
         fi
     else
         if [ "$strict" = "true" ]; then
-            log_message "ERROR" "$domain_type domain is required" true
+            log_message "ERROR" "$domain_type domain is required"
             return 1
         else
             return 0
@@ -162,11 +162,11 @@ function validate_environment() {
     
     case "$env" in
         "development"|"staging"|"production"|"test")
-            log_message "INFO" "Environment: $env" true
+            log_message "INFO" "Environment: $env"
             return 0
             ;;
         *)
-            log_message "ERROR" "Invalid environment '$env'. Must be one of: development, staging, production, test" true
+            log_message "ERROR" "Invalid environment '$env'. Must be one of: development, staging, production, test"
             return 1
             ;;
     esac
@@ -175,26 +175,26 @@ function validate_environment() {
 # Validate LXD installation and status
 function validate_lxd() {
     if ! command -v sudo lxc &>/dev/null; then
-        log_message "ERROR" "LXD not found. Please install LXD first: https://canonical.com/lxd" true
+        log_message "ERROR" "LXD not found. Please install LXD first: https://canonical.com/lxd"
         return 1
     fi
-    log_message "INFO" "LXD: installed" true
+    log_message "INFO" "LXD: installed"
     
     if ! sudo lxc list &>/dev/null; then
-        log_message "ERROR" "LXD is not running. Please start LXD first: lxc start" true
+        log_message "ERROR" "LXD is not running. Please start LXD first: lxc start"
         return 1
     fi
-    log_message "INFO" "LXD: running" true
+    log_message "INFO" "LXD: running"
     return 0
 }
 
 # Validate sudo access
 function validate_sudo() {
     if ! sudo -n true 2>/dev/null; then
-        log_message "ERROR" "Sudo access required for LXD operations" true
+        log_message "ERROR" "Sudo access required for LXD operations"
         return 1
     fi
-    log_message "INFO" "Sudo: available" true
+    log_message "INFO" "Sudo: available"
     return 0
 }
 
@@ -204,10 +204,10 @@ function validate_file() {
     local file_name="$2"
     
     if [ ! -f "$file_path" ]; then
-        log_message "ERROR" "$file_name not found at $file_path" true
+        log_message "ERROR" "$file_name not found at $file_path"
         return 1
     fi
-    log_message "INFO" "$file_name: found" true
+    log_message "INFO" "$file_name: found"
     return 0
 }
 
@@ -220,18 +220,18 @@ function validate_url() {
     if [ -n "$url" ]; then
         if ! curl -fsSL --head "$url" &>/dev/null; then
             if [ "$strict" = "true" ]; then
-                log_message "ERROR" "$url_name not accessible at $url" true
+                log_message "ERROR" "$url_name not accessible at $url"
                 return 1
             else
-                log_message "WARN" "$url_name not accessible at $url (continuing anyway)" true
+                log_message "WARN" "$url_name not accessible at $url (continuing anyway)"
                 return 0
             fi
         fi
-        log_message "INFO" "$url_name: accessible" true
+        log_message "INFO" "$url_name: accessible"
         return 0
     else
         if [ "$strict" = "true" ]; then
-            log_message "ERROR" "$url_name is required" true
+            log_message "ERROR" "$url_name is required"
             return 1
         else
             return 0
@@ -245,10 +245,10 @@ function validate_array() {
     local array_ref="$2"
     
     if [ ${#array_ref[@]} -eq 0 ]; then
-        log_message "ERROR" "$array_name is empty" true
+        log_message "ERROR" "$array_name is empty"
         return 1
     fi
-    log_message "INFO" "$array_name: ${#array_ref[@]} items configured" true
+    log_message "INFO" "$array_name: ${#array_ref[@]} items configured"
     return 0
 }
 
@@ -301,7 +301,7 @@ function log_message() {
 function is_port_available() {
     local port="$1"
     if sudo lsof -i :"$port" > /dev/null; then
-        log_message "ERROR" "Port $port is already in use" true
+        log_message "ERROR" "Port $port is already in use"
         exit 1
     fi
 }
