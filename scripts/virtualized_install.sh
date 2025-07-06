@@ -115,7 +115,7 @@ function validate_virtualized_params() {
 }
 
 function main() {
-    echo "Installing Nixopus through virtualizer"
+    log_message "Installing Nixopus through virtualizer"
     local distro="$1"
     local api_domain="$2"
     local app_domain="$3"

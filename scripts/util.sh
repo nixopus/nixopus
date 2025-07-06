@@ -3,7 +3,7 @@
 # DETECT THE PACKAGE MANAGER FOR THE OS
 function detect_package_manager() {
     if [[ "$OS" == "Darwin" ]]; then
-        echo "This script is not supported on macOS" >&2
+        log_message "ERROR" "This script is not supported on macOS" true
         exit 1
     elif command -v apt-get &>/dev/null; then
         echo "apt"
@@ -14,7 +14,7 @@ function detect_package_manager() {
     elif command -v pacman &>/dev/null; then
         echo "pacman"
     else
-        echo "Error: Unsupported package manager" >&2
+        log_message "ERROR" "Unsupported package manager" true
         exit 1
     fi
 }
@@ -47,9 +47,9 @@ function ensure_command_installed() {
     local package_name="$2"
     
     if ! command -v "$cmd" &>/dev/null; then
-        echo "Command '$cmd' not found. Attempting to install..."
+        log_message "INFO" "Command '$cmd' not found. Attempting to install..." true
         install_package "$package_name"
-        echo "Successfully installed $cmd"
+        log_message "INFO" "Successfully installed $cmd" true
     fi
 }
 
@@ -66,22 +66,22 @@ function install_dependencies() {
 # This script handles different distros and different package managers automatically
 function install_docker(){    
     if command -v docker &>/dev/null; then
-        echo "Docker is already installed."
+        log_message "INFO" "Docker is already installed." true
         return 0
     fi
     
     if curl -fsSL https://get.docker.com -o /tmp/get-docker.sh; then
         if sh /tmp/get-docker.sh; then            
             rm -f /tmp/get-docker.sh
-            echo "Docker installed successfully!"
+            log_message "INFO" "Docker installed successfully!" true
             return 0
         else
-            echo "Error: Docker installation failed!" >&2
+            log_message "ERROR" "Docker installation failed!" true
             rm -f /tmp/get-docker.sh
             return 1
         fi
     else
-        echo "Error: Failed to download Docker installation script!" >&2
+        log_message "ERROR" "Failed to download Docker installation script!" true
         return 1
     fi
 }
@@ -93,15 +93,15 @@ function validate_email() {
     
     if [ -n "$email" ]; then
         if [[ "$email" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
-            echo "Email: valid"
+            log_message "INFO" "Email: valid" true
             return 0
         else
-            echo "Error: Invalid email format: $email" >&2
+            log_message "ERROR" "Invalid email format: $email" true
             return 1
         fi
     else
         if [ "$strict" = "true" ]; then
-            echo "Error: Email is required" >&2
+            log_message "ERROR" "Email is required" true
             return 1
         else
             return 0
@@ -116,15 +116,15 @@ function validate_password() {
     
     if [ -n "$password" ]; then
         if [ ${#password} -ge 6 ]; then
-            echo "Password: provided (length: ${#password})"
+            log_message "INFO" "Password: provided (length: ${#password})" true
             return 0
         else
-            echo "Error: Password too short (minimum 6 characters)" >&2
+            log_message "ERROR" "Password too short (minimum 6 characters)" true
             return 1
         fi
     else
         if [ "$strict" = "true" ]; then
-            echo "Error: Password is required" >&2
+            log_message "ERROR" "Password is required" true
             return 1
         else
             return 0
@@ -140,15 +140,15 @@ function validate_domain() {
     
     if [ -n "$domain" ]; then
         if [[ "$domain" =~ ^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
-            echo "$domain_type Domain: $domain"
+            log_message "INFO" "$domain_type Domain: $domain" true
             return 0
         else
-            echo "Error: Invalid $domain_type domain format: $domain" >&2
+            log_message "ERROR" "Invalid $domain_type domain format: $domain" true
             return 1
         fi
     else
         if [ "$strict" = "true" ]; then
-            echo "Error: $domain_type domain is required" >&2
+            log_message "ERROR" "$domain_type domain is required" true
             return 1
         else
             return 0
@@ -162,11 +162,11 @@ function validate_environment() {
     
     case "$env" in
         "development"|"staging"|"production"|"test")
-            echo "Environment: $env"
+            log_message "INFO" "Environment: $env" true
             return 0
             ;;
         *)
-            echo "Error: Invalid environment '$env'. Must be one of: development, staging, production, test" >&2
+            log_message "ERROR" "Invalid environment '$env'. Must be one of: development, staging, production, test" true
             return 1
             ;;
     esac
@@ -175,26 +175,26 @@ function validate_environment() {
 # Validate LXD installation and status
 function validate_lxd() {
     if ! command -v sudo lxc &>/dev/null; then
-        echo "Error: LXD not found. Please install LXD first: https://canonical.com/lxd" >&2
+        log_message "ERROR" "LXD not found. Please install LXD first: https://canonical.com/lxd" true
         return 1
     fi
-    echo "LXD: installed"
+    log_message "INFO" "LXD: installed" true
     
     if ! sudo lxc list &>/dev/null; then
-        echo "Error: LXD is not running. Please start LXD first: lxc start" >&2
+        log_message "ERROR" "LXD is not running. Please start LXD first: lxc start" true
         return 1
     fi
-    echo "LXD: running"
+    log_message "INFO" "LXD: running" true
     return 0
 }
 
 # Validate sudo access
 function validate_sudo() {
     if ! sudo -n true 2>/dev/null; then
-        echo "Error: Sudo access required for LXD operations" >&2
+        log_message "ERROR" "Sudo access required for LXD operations" true
         return 1
     fi
-    echo "Sudo: available"
+    log_message "INFO" "Sudo: available" true
     return 0
 }
 
@@ -204,10 +204,10 @@ function validate_file() {
     local file_name="$2"
     
     if [ ! -f "$file_path" ]; then
-        echo "Error: $file_name not found at $file_path" >&2
+        log_message "ERROR" "$file_name not found at $file_path" true
         return 1
     fi
-    echo "$file_name: found"
+    log_message "INFO" "$file_name: found" true
     return 0
 }
 
@@ -220,18 +220,18 @@ function validate_url() {
     if [ -n "$url" ]; then
         if ! curl -fsSL --head "$url" &>/dev/null; then
             if [ "$strict" = "true" ]; then
-                echo "Error: $url_name not accessible at $url" >&2
+                log_message "ERROR" "$url_name not accessible at $url" true
                 return 1
             else
-                echo "Warning: $url_name not accessible at $url (continuing anyway)"
+                log_message "WARN" "$url_name not accessible at $url (continuing anyway)" true
                 return 0
             fi
         fi
-        echo "$url_name: accessible"
+        log_message "INFO" "$url_name: accessible" true
         return 0
     else
         if [ "$strict" = "true" ]; then
-            echo "Error: $url_name is required" >&2
+            log_message "ERROR" "$url_name is required" true
             return 1
         else
             return 0
@@ -245,10 +245,10 @@ function validate_array() {
     local array_ref="$2"
     
     if [ ${#array_ref[@]} -eq 0 ]; then
-        echo "Error: $array_name is empty" >&2
+        log_message "ERROR" "$array_name is empty" true
         return 1
     fi
-    echo "$array_name: ${#array_ref[@]} items configured"
+    log_message "INFO" "$array_name: ${#array_ref[@]} items configured" true
     return 0
 }
 
@@ -293,7 +293,7 @@ function log_message() {
 function is_port_available() {
     local port="$1"
     if sudo lsof -i :"$port" > /dev/null; then
-        echo "Port $port is already in use"
+        log_message "ERROR" "Port $port is already in use" true
         exit 1
     fi
 }
