@@ -31,6 +31,12 @@ function init_virtualized_config() {
     [[ -z "$api_port" ]] && api_port=$(generate_random_available_port)
     [[ -z "$env" ]] && env="production"
     [[ -z "$show_in_console" ]] && show_in_console="true"
+    if [[ -z "$app_domain" ]]; then
+        app_domain=$(generate_random_string 10).nixopus.com
+    fi
+    if [[ -z "$api_domain" ]]; then
+        api_domain=$(generate_random_string 10).nixopus.com
+    fi
     
     local container_name=$(generate_container_name)
     local app_proxy_name="app-proxy-${container_name}"

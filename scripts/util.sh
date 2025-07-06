@@ -348,3 +348,15 @@ function generate_random_available_port() {
     log_message "ERROR" "Failed to find available port after $max_attempts attempts"
     return 1
 }
+
+# Generate a random string of a given length
+function generate_random_string() {
+    local length="${1:-10}"
+    local charset="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local result=""
+    
+    for ((i=0; i<length; i++)); do
+        result+="${charset:$((RANDOM % ${#charset})):1}"
+    done
+    echo "$result"
+}
