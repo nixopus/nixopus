@@ -35,9 +35,8 @@ function init_virtualized_config() {
         ["show_in_console"]="true"
     )
     
-    # Set derived values
     CONFIG["base_distro"]=$(echo "${CONFIG[distro]}" | cut -d'/' -f1)
-    CONFIG["container_name"]=$(get_lxd_container_name "${CONFIG[distro]}")
+    CONFIG["container_name"]=$(generate_container_name)
 }
 
 # sets the proxy for the container
