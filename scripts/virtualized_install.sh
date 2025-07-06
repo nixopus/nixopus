@@ -138,12 +138,10 @@ function validate_virtualized_params() {
     validate_sudo || validation_failed=true
     validate_file "${SCRIPT_DIR}/util.sh" "util.sh" || validation_failed=true
     
-    # Check if ports are available
     log_message "INFO" "Checking if ports are available..."
     is_port_available "${CONFIG[app_port]}" || validation_failed=true
     is_port_available "${CONFIG[api_port]}" || validation_failed=true
     
-    # Validate domains if provided
     if [ -n "${CONFIG[api_domain]}" ]; then
         validate_domain "${CONFIG[api_domain]}" "API" "false" || validation_failed=true
     fi
@@ -189,8 +187,18 @@ function setup_caddy_config_directory() {
     log_message "INFO" "Setting up Caddy configuration directory: $caddy_config_dir"
     
     sudo mkdir -p "$caddy_config_dir"
-    sudo cp "$project_root/helpers/Caddyfile" "$caddy_config_dir/"
-    sudo cp "$project_root/helpers/caddy.json" "$caddy_config_dir/caddy.json"
+    
+    local caddyfile_source="$project_root/helpers/Caddyfile"
+    local caddy_json_source="$project_root/helpers/caddy.json"
+    
+    validate_file "$caddyfile_source" "Caddyfile" || return 1
+    validate_file "$caddy_json_source" "caddy.json" || return 1
+    
+    sudo cp "$caddyfile_source" "$caddy_config_dir/"
+    sudo cp "$caddy_json_source" "$caddy_config_dir/caddy.json"
+    
+    validate_file "$caddy_config_dir/Caddyfile" "Caddyfile" || return 1
+    validate_file "$caddy_config_dir/caddy.json" "caddy.json" || return 1
     
     echo "$caddy_config_dir"
 }
@@ -207,6 +215,8 @@ function update_caddy_configuration() {
     local caddy_config_file="$caddy_config_dir/caddy.json"
     local app_proxy_url="$proxy_url:$app_port"
     local api_proxy_url="$proxy_url:$api_port"
+    
+    validate_file "$caddy_config_file" "Caddy configuration" || return 1
     
     log_message "INFO" "Updating Caddy configuration:"
     log_message "INFO" "  App Domain: $app_domain -> $app_proxy_url"
@@ -320,6 +330,8 @@ function merge_caddy_configuration() {
     local app_port="${CONFIG[app_port]}"
     local api_port="${CONFIG[api_port]}"
     local proxy_url="${CONFIG[proxy_url]}"
+    
+    validate_file "$caddy_config_file" "Caddy configuration" || return 1
     
     local app_proxy_url="$proxy_url:$app_port"
     local api_proxy_url="$proxy_url:$api_port"
