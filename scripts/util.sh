@@ -305,5 +305,3 @@ function is_port_available() {
         exit 1
     fi
 }
-
-
