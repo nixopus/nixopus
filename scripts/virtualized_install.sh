@@ -18,9 +18,10 @@ function set_proxy_for_lxd() {
     local container_name="$1"
     echo "Setting proxy for container: $container_name"
     local proxy_url="$2"
-    local proxy_port="$3"
-    local proxy_name="$4"
-    sudo lxc config device add "$container_name" "$proxy_name" proxy listen=tcp:0.0.0.0:"$proxy_port" connect=tcp:"$proxy_url":"$proxy_port"
+    local proxy_internal_port="$3"
+    local proxy_external_port="$4"
+    local proxy_name="$5"
+    sudo lxc config device add "$container_name" "$proxy_name" proxy listen=tcp:0.0.0.0:"$proxy_external_port" connect=tcp:"$proxy_url":"$proxy_internal_port"
 }
 
 # checks if the file is present
@@ -163,8 +164,8 @@ function main() {
         exit 1
     fi
     override_env_variables "$container_name" "$app_domain" "$api_domain"
-    set_proxy_for_lxd "$container_name" "$proxy_url" "$app_port" "app"
-    set_proxy_for_lxd "$container_name" "$proxy_url" "$api_port" "api"
+    set_proxy_for_lxd "$container_name" "$proxy_url" "7443" "$app_port" "app"
+    set_proxy_for_lxd "$container_name" "$proxy_url" "8443" "$api_port" "api"
     echo "Proxy set for container: $container_name"
 
     # we need to reverse proxy to the domain from host machine for the app and api to be accessible from the host machine using caddy here
