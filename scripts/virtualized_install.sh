@@ -152,7 +152,7 @@ function main() {
     echo "Installing dependencies in container..."
     install_dependencies_in_container "$container_name" "$distro"
     echo "Starting installation script..." 
-    if run_installation_script "$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")"; then
+    if run_installation_script "$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")" "$container_name"; then
         test_result="PASSED"
     else
         test_result="FAILED"

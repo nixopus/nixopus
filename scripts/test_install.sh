@@ -345,11 +345,12 @@ function build_installation_command() {
 # Run installation script
 function run_installation_script() {
     local command="$1"
-    echo "Running installation script in container: $CONTAINER_NAME"
+    local container_name="$2"
+    echo "Running installation script in container: $container_name"
     echo "This may take several minutes..."
     
     # Run with timeout of 10 minutes (600 seconds)
-    if timeout 600 sudo lxc exec "$CONTAINER_NAME" -- bash -c "set -x; $command"; then
+    if timeout 600 sudo lxc exec "$container_name" -- bash -c "set -x; $command"; then
         echo "Installation script completed successfully"
         return 0
     else
@@ -404,7 +405,7 @@ function test_distribution_with_params() {
     install_dependencies_in_container "$CONTAINER_NAME" "$distro"
 
     echo "Starting installation script..."
-    if run_installation_script "$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")"; then
+    if run_installation_script "$(build_installation_command "$email" "$password" "$api_domain" "$app_domain" "$env")" "$container_name"; then
         test_result="PASSED"
     else
         test_result="FAILED"
