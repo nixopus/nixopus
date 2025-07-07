@@ -132,66 +132,130 @@ function get_existing_caddy_config() {
 
 # Check if domain already exists in configuration
 function domain_exists_in_config() {
-    local config_json="$1"
-    local domain="$2"
+    local domain="$1"
     
-    echo "$config_json" | jq -e --arg domain "$domain" '
-        .apps.http.servers.nixopus.routes[] | 
-        select(.match[0].host[] == $domain)
+    local existing_routes
+    existing_routes=$(curl -s "${CONFIG[caddy_admin_url]}/config/apps/http/servers/nixopus/routes")
+    
+    echo "$existing_routes" | jq -e --arg domain "$domain" '
+        .[] | select(.match[0].host[] == $domain)
     ' > /dev/null 2>&1
 }
 
-# Merge new domains with existing configuration
-function merge_caddy_configuration() {
-    local caddy_config_dir="${CONFIG[caddy_config_dir]}"
-    local caddy_config_file="$caddy_config_dir/caddy.json"
+# Add new route to Caddy configuration
+function add_caddy_route() {
+    local domain="$1"
+    local upstream_port="$2"
+    local route_config
+    
+    route_config=$(cat <<EOF
+{
+  "handle": [
+    {
+      "handler": "reverse_proxy",
+      "upstreams": [
+        {
+          "dial": "localhost:$upstream_port"
+        }
+      ]
+    }
+  ],
+  "match": [
+    {
+      "host": ["$domain"]
+    }
+  ]
+}
+EOF
+)
+    
+    curl -s -X POST "${CONFIG[caddy_admin_url]}/config/apps/http/servers/nixopus/routes" \
+        -H "Content-Type: application/json" \
+        -d "$route_config" > /dev/null 2>&1
+}
+
+# Update existing route in Caddy configuration
+function update_caddy_route() {
+    local domain="$1"
+    local upstream_port="$2"
+    local route_index="$3"
+    local route_config
+    
+    route_config=$(cat <<EOF
+{
+  "handle": [
+    {
+      "handler": "reverse_proxy",
+      "upstreams": [
+        {
+          "dial": "localhost:$upstream_port"
+        }
+      ]
+    }
+  ],
+  "match": [
+    {
+      "host": ["$domain"]
+    }
+  ]
+}
+EOF
+)
+    
+    curl -s -X PUT "${CONFIG[caddy_admin_url]}/config/apps/http/servers/nixopus/routes/$route_index" \
+        -H "Content-Type: application/json" \
+        -d "$route_config" > /dev/null 2>&1
+}
+
+# Delete route from Caddy configuration
+function delete_caddy_route() {
+    local route_index="$1"
+    
+    curl -s -X DELETE "${CONFIG[caddy_admin_url]}/config/apps/http/servers/nixopus/routes/$route_index" > /dev/null 2>&1
+}
+
+# Get route index by domain
+function get_route_index_by_domain() {
+    local domain="$1"
+    
+    local existing_routes
+    existing_routes=$(curl -s "${CONFIG[caddy_admin_url]}/config/apps/http/servers/nixopus/routes")
+    
+    echo "$existing_routes" | jq -r --arg domain "$domain" '
+        to_entries[] | select(.value.match[0].host[] == $domain) | .key
+    '
+}
+
+# Setup or update Caddy routes for domains
+function setup_caddy_routes() {
     local app_domain="${CONFIG[app_domain]}"
     local api_domain="${CONFIG[api_domain]}"
     local app_port="${CONFIG[app_port]}"
     local api_port="${CONFIG[api_port]}"
-    local proxy_url="${CONFIG[proxy_url]}"
     
-    validate_file "$caddy_config_file" "Caddy configuration" || return 1
+    log_info "$SETTING_UP_CADDY_ROUTES"
     
-    local app_proxy_url="$proxy_url:$app_port"
-    local api_proxy_url="$proxy_url:$api_port"
-    
-    log_info "$MERGING_CADDY_CONFIG"
-    
-    local existing_config
-    existing_config=$(get_existing_caddy_config)
-    
-    if domain_exists_in_config "$existing_config" "$app_domain"; then
-        log_warn "$APP_DOMAIN_ALREADY_EXISTS '$app_domain' $ALREADY_EXISTS_IN_CONFIG"
+    if domain_exists_in_config "$app_domain"; then
+        local app_route_index
+        app_route_index=$(get_route_index_by_domain "$app_domain")
+        log_info "$UPDATING_APP_ROUTE $app_domain -> localhost:$app_port"
+        update_caddy_route "$app_domain" "$app_port" "$app_route_index"
+    else
+        log_info "$ADDING_APP_ROUTE $app_domain -> localhost:$app_port"
+        add_caddy_route "$app_domain" "$app_port"
     fi
     
-    if domain_exists_in_config "$existing_config" "$api_domain"; then
-        log_warn "$API_DOMAIN_ALREADY_EXISTS '$api_domain' $ALREADY_EXISTS_IN_CONFIG"
+    if domain_exists_in_config "$api_domain"; then
+        local api_route_index
+        api_route_index=$(get_route_index_by_domain "$api_domain")
+        log_info "$UPDATING_API_ROUTE $api_domain -> localhost:$api_port"
+        update_caddy_route "$api_domain" "$api_port" "$api_route_index"
+    else
+        log_info "$ADDING_API_ROUTE $api_domain -> localhost:$api_port"
+        add_caddy_route "$api_domain" "$api_port"
     fi
     
-    local temp_config_file="$caddy_config_dir/temp_caddy.json"
-    sudo cp "$caddy_config_file" "$temp_config_file"
-    
-    sudo sed -i "s/{env.APP_DOMAIN}/$app_domain/g" "$temp_config_file"
-    sudo sed -i "s/{env.API_DOMAIN}/$api_domain/g" "$temp_config_file"
-    sudo sed -i "s/{env.APP_REVERSE_PROXY_URL}/$app_proxy_url/g" "$temp_config_file"
-    sudo sed -i "s/{env.API_REVERSE_PROXY_URL}/$api_proxy_url/g" "$temp_config_file"
-    
-    local existing_json=$(echo "$existing_config" | jq -c '.')
-    local new_json=$(sudo cat "$temp_config_file" | jq -c '.')
-    
-    local merged_config
-    merged_config=$(echo "$existing_json" | jq --argjson new "$new_json" '
-        .apps.http.servers.nixopus.routes += $new.apps.http.servers.nixopus.routes
-    ')
-    
-    echo "$merged_config" | curl -s -X POST "${CONFIG[caddy_admin_url]}/load" \
-        -H "Content-Type: application/json" \
-        -d @- > /dev/null 2>&1
-    
-    sudo rm -f "$temp_config_file"
-    
-    log_info "$CONFIGURATION_MERGED"
+    log_info "$CADDY_ROUTES_SETUP_COMPLETED"
 }
 
 # Load configuration into Caddy
@@ -215,8 +279,7 @@ function setup_caddy_reverse_proxy() {
 
     if is_caddy_running; then
         log_info "$CADDY_ALREADY_RUNNING"
-        setup_caddy_config_directory || return 1
-        merge_caddy_configuration || return 1
+        setup_caddy_routes || return 1
     else
         log_info "$SETTING_UP_CADDY_FIRST_TIME"
         setup_caddy_config_directory || return 1

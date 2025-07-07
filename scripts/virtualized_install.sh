@@ -102,7 +102,7 @@ function init_virtualized_config() {
     
     local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     local project_root="$(dirname "$script_dir")"
-    
+
     CONFIG=(
         ["distro"]="$distro"
         ["api_domain"]="${api_domain:-}"
