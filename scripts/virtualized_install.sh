@@ -139,7 +139,12 @@ function init_virtualized_config() {
 # improving the installation time, 
 function check_base_image_exists() {
     local image_name="${CONFIG[base_image_name]}"
-    if sudo lxc image list | grep -q "$image_name"; then
+    log_info "Inside function - image_name: '$image_name'"
+    log_info "Running: sudo lxc image list | grep -q '$image_name'"
+    sudo lxc image list | grep -q "$image_name"
+    local grep_result=$?
+    log_info "grep returned: $grep_result"
+    if [ $grep_result -eq 0 ]; then
         log_info "$BASE_IMAGE_EXISTS"
         return 0
     fi
