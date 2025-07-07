@@ -20,6 +20,8 @@ function set_default_values() {
     local api_port="${6:-}"
     local env="${7:-}"
     local show_in_console="${8:-}"
+    local force_rebuild="${9:-}"
+    local base_image_name="${10:-}"
     
     [[ -z "$internal_app_proxy_port" ]] && internal_app_proxy_port="7443"
     [[ -z "$internal_api_proxy_port" ]] && internal_api_proxy_port="8443"
@@ -29,8 +31,15 @@ function set_default_values() {
     [[ -z "$api_port" ]] && api_port=$(generate_random_available_port)
     [[ -z "$env" ]] && env="production"
     [[ -z "$show_in_console" ]] && show_in_console="true"
+    [[ -z "$force_rebuild" ]] && force_rebuild="false"
     
-    echo "$internal_app_proxy_port $internal_api_proxy_port $distro $proxy_url $app_port $api_port $env $show_in_console"
+    # Generate base image name if not provided
+    if [[ -z "$base_image_name" ]]; then
+        local base_distro=$(echo "$distro" | cut -d'/' -f1)
+        base_image_name="nixopus-base-${base_distro}"
+    fi
+    
+    echo "$internal_app_proxy_port $internal_api_proxy_port $distro $proxy_url $app_port $api_port $env $show_in_console $force_rebuild $base_image_name"
 }
 
 # Generate domains and container names
@@ -67,9 +76,11 @@ function init_virtualized_config() {
     local show_in_console="${10:-}"
     local internal_app_proxy_port="${11:-}"
     local internal_api_proxy_port="${12:-}"
+    local force_rebuild="${13:-false}"
+    local base_image_name="${14:-}"
     
     local defaults
-    defaults=$(set_default_values "$internal_app_proxy_port" "$internal_api_proxy_port" "$distro" "$proxy_url" "$app_port" "$api_port" "$env" "$show_in_console")
+    defaults=$(set_default_values "$internal_app_proxy_port" "$internal_api_proxy_port" "$distro" "$proxy_url" "$app_port" "$api_port" "$env" "$show_in_console" "$force_rebuild" "$base_image_name")
     internal_app_proxy_port=$(echo "$defaults" | cut -d' ' -f1)
     internal_api_proxy_port=$(echo "$defaults" | cut -d' ' -f2)
     distro=$(echo "$defaults" | cut -d' ' -f3)
@@ -78,6 +89,8 @@ function init_virtualized_config() {
     api_port=$(echo "$defaults" | cut -d' ' -f6)
     env=$(echo "$defaults" | cut -d' ' -f7)
     show_in_console=$(echo "$defaults" | cut -d' ' -f8)
+    force_rebuild=$(echo "$defaults" | cut -d' ' -f9)
+    base_image_name=$(echo "$defaults" | cut -d' ' -f10)
     
     local names
     names=$(generate_names "$app_domain" "$api_domain" ".nixopus.com")
@@ -114,9 +127,118 @@ function init_virtualized_config() {
         ["caddy_json_template"]="$project_root/helpers/caddy.json"
         ["caddy_admin_url"]="http://localhost:2019"
         ["default_domain"]=".nixopus.com"
+        ["force_rebuild"]="$force_rebuild"
+        ["base_image_name"]="$base_image_name"
+        ["base_image_ready"]="false"
     )
     
     CONFIG["base_distro"]=$(echo "${CONFIG[distro]}" | cut -d'/' -f1)
+}
+
+# Check if base image exists so we can skip building the base image and installing nixopus in the container, thus by 
+# improving the installation time, 
+function check_base_image_exists() {
+    local image_name="${CONFIG[base_image_name]}"
+    if ! sudo lxc image list | grep -q "$image_name"; then
+        log_info "Base image does not exist, building..."
+        return 1
+    fi
+    log_info "Base image exists, skipping build..."
+    return 0
+}
+
+# Build base image with Nixopus pre-installed, this is only done if the base image does not exist
+function build_base_image() {
+    local image_name="${CONFIG[base_image_name]}"
+    local temp_container="temp-build-$(date +%s%N | md5sum | cut -c1-8)"
+    local distro="${CONFIG[distro]}"
+    
+    log_info "Building base image: $image_name from distro: $distro"
+    
+    local original_container_name="${CONFIG[container_name]}"
+    CONFIG["container_name"]="$temp_container"
+    
+    if ! setup_container_with_nixopus "minimal"; then
+        log_error "Failed to setup container for base image"
+        CONFIG["container_name"]="$original_container_name"
+        return 1
+    fi
+    
+    log_info "Creating base image from container"
+    if sudo lxc publish "$temp_container" --alias "$image_name"; then
+        log_info "Base image created successfully: $image_name"
+        CONFIG["base_image_ready"]="true"
+    else
+        log_error "Failed to create base image"
+        cleanup_container
+        CONFIG["container_name"]="$original_container_name"
+        return 1
+    fi
+    
+    log_info "Cleaning up temporary build container"
+    cleanup_container
+    CONFIG["container_name"]="$original_container_name"
+    return 0
+}
+
+# Unified function to setup container with Nixopus installation
+function setup_container_with_nixopus() {
+    local config_type="${1:-full}" 
+    
+    log_info "Setting up container with Nixopus ($config_type config)"
+    
+    if ! create_lxd_container; then
+        log_error "Failed to create container"
+        return 1
+    fi
+    
+    log_info "Installing dependencies in container"
+    install_dependencies_in_container
+    
+    log_info "Installing Nixopus in container"
+    local install_cmd
+    if [ "$config_type" = "minimal" ]; then
+        install_cmd="sudo bash -c \"\$(curl -sSL $GITHUB_RAW_BASE/scripts/install.sh)\" --env=production --debug"
+    else
+        install_cmd="$(build_installation_command)"
+    fi
+    
+    if ! run_installation_script "$install_cmd" "${CONFIG[container_name]}"; then
+        log_error "Failed to install Nixopus"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Handle base image management - check existence, force rebuild, and build when needed
+function manage_base_image() {
+    local force_rebuild="${CONFIG[force_rebuild]}"
+    local image_name="${CONFIG[base_image_name]}"
+    
+    log_info "Managing base image: $image_name"
+    
+    if check_base_image_exists; then
+        if [ "$force_rebuild" = "true" ]; then
+            log_info "Force rebuild requested, rebuilding base image: $image_name"
+            sudo lxc image delete "$image_name" 2>/dev/null || true
+            if ! build_base_image; then
+                log_error "Failed to rebuild base image"
+                return 1
+            fi
+        else
+            log_info "Using existing base image: $image_name"
+            CONFIG["base_image_ready"]="true"
+        fi
+    else
+        log_info "Base image not found, building new image: $image_name"
+        if ! build_base_image; then
+            log_error "Failed to build base image"
+            return 1
+        fi
+    fi
+    
+    return 0
 }
 
 # Set up proxy for a specific service (app or api)
@@ -225,6 +347,8 @@ function display_config_summary() {
     log_info "  $INTERNAL_API_PROXY_PORT ${CONFIG[internal_api_proxy_port]}"
     log_info "  $APP_PROXY_NAME ${CONFIG[app_proxy_name]}"
     log_info "  $API_PROXY_NAME ${CONFIG[api_proxy_name]}"
+    log_info "  Base Image: ${CONFIG[base_image_name]}"
+    log_info "  Force Rebuild: ${CONFIG[force_rebuild]}"
     if [ -n "${CONFIG[api_domain]}" ]; then
         log_info "  $API_DOMAIN ${CONFIG[api_domain]}"
     fi
@@ -233,6 +357,57 @@ function display_config_summary() {
     fi
 }
 
+# Launch container from base image
+function launch_from_base_image() {
+    local container_name="${CONFIG[container_name]}"
+    local image_name="${CONFIG[base_image_name]}"
+    
+    log_info "Launching container from base image: $image_name"
+    
+    if sudo lxc launch "$image_name" "$container_name"; then
+        log_info "Container launched successfully from base image: $container_name"
+        log_info "Configuring container with Docker privileges"
+        sudo lxc config set "$container_name" security.privileged true
+        sudo lxc config set "$container_name" security.nesting true
+        sudo lxc restart "$container_name"
+        sleep 60
+        
+        log_info "Container configured successfully"
+        return 0
+    else
+        log_error "Failed to launch container from base image"
+        return 1
+    fi
+}
+
+# Handle container creation - either use base image or traditional approach
+function create_or_launch_container() {
+    local force_rebuild="${CONFIG[force_rebuild]}"
+    local image_name="${CONFIG[base_image_name]}"
+    
+    log_info "Handling container creation for: ${CONFIG[container_name]}"
+    
+    if ! manage_base_image; then
+        log_error "Failed to manage base image"
+        return 1
+    fi
+    
+    if [ "${CONFIG[base_image_ready]}" = "true" ]; then
+        log_info "Launching from pre-built image"
+        if ! launch_from_base_image; then
+            log_error "Failed to launch container from base image"
+            return 1
+        fi
+    else
+        log_info "Creating new container and installing from scratch"
+        if ! setup_container_with_nixopus "full"; then
+            log_error "Failed to setup container with Nixopus"
+            return 1
+        fi
+    fi
+    
+    return 0
+}
 
 
 function main() {
@@ -249,28 +424,12 @@ function main() {
     install_dependencies
     
     log_info "$CREATING_CONTAINER"
-    if ! create_lxd_container; then
+    if ! create_or_launch_container; then
         log_error "$FAILED_CREATE_CONTAINER ${CONFIG[container_name]}, exiting..."
         exit 1
     fi
     
     log_info "$CREATED_CONTAINER_NAME '${CONFIG[container_name]}'"
-    
-    log_info "$INSTALLING_DEPENDENCIES"
-    install_dependencies_in_container
-    
-    log_info "$STARTING_INSTALLATION_SCRIPT"
-    if run_installation_script "$(build_installation_command)" "${CONFIG[container_name]}"; then
-        test_result="PASSED"
-    else
-        test_result="FAILED"
-    fi
-    
-    log_info "$INSTALLATION_SCRIPT_COMPLETED_RESULT $test_result"
-    if [[ "$test_result" != "PASSED" ]]; then
-        log_error "$INSTALLATION_FAILED_EXITING"
-        exit 1
-    fi 
     
     override_env_variables
     setup_all_proxies
