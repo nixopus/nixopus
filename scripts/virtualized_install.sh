@@ -139,12 +139,12 @@ function init_virtualized_config() {
 # improving the installation time, 
 function check_base_image_exists() {
     local image_name="${CONFIG[base_image_name]}"
-    if ! sudo lxc image list | grep -q "$image_name"; then
-        log_info "$BASE_IMAGE_DOES_NOT_EXIST"
-        return 1
+    if sudo lxc image list | grep -q "$image_name"; then
+        log_info "$BASE_IMAGE_EXISTS"
+        return 0
     fi
-    log_info "$BASE_IMAGE_EXISTS"
-    return 0
+    log_info "$BASE_IMAGE_DOES_NOT_EXIST"
+    return 1
 }
 
 # Build base image with Nixopus pre-installed, this is only done if the base image does not exist
@@ -220,6 +220,10 @@ function manage_base_image() {
     local image_name="${CONFIG[base_image_name]}"
     
     log_info "$MANAGING_BASE_IMAGE $image_name"
+    
+    log_info "About to call check_base_image_exists"
+    check_base_image_exists
+    log_info "check_base_image_exists returned: $?"
     
     if check_base_image_exists; then
         if [ "$force_rebuild" = "true" ]; then
