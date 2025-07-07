@@ -412,7 +412,6 @@ function create_or_launch_container() {
     return 0
 }
 
-
 function main() {
     log_info "$INSTALLING_NIXOPUS_VIRTUALIZER"
     init_virtualized_config "$@"
