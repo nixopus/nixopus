@@ -1,9 +1,11 @@
 #!/bin/bash
 
+source "$(dirname "$0")/messages.sh"
+
 # DETECT THE PACKAGE MANAGER FOR THE OS
 function detect_package_manager() {
     if [[ "$OS" == "Darwin" ]]; then
-        log_message "ERROR" "This script is not supported on macOS"
+        log_error "$MACOS_UNSUPPORTED"
         exit 1
     elif command -v apt-get &>/dev/null; then
         echo "apt"
@@ -14,7 +16,7 @@ function detect_package_manager() {
     elif command -v pacman &>/dev/null; then
         echo "pacman"
     else
-        log_message "ERROR" "Unsupported package manager"
+        log_error "$UNSUPPORTED_PACKAGE_MANAGER"
         exit 1
     fi
 }
@@ -47,9 +49,9 @@ function ensure_command_installed() {
     local package_name="$2"
     
     if ! command -v "$cmd" &>/dev/null; then
-        log_message "INFO" "Command '$cmd' not found. Attempting to install..."
+        log_info "$COMMAND_NOT_FOUND '$cmd' $ATTEMPTING_INSTALL"
         install_package "$package_name"
-        log_message "INFO" "Successfully installed $cmd"
+        log_info "$SUCCESSFULLY_INSTALLED $cmd"
     fi
 }
 
@@ -66,22 +68,22 @@ function install_dependencies() {
 # This script handles different distros and different package managers automatically
 function install_docker(){    
     if command -v docker &>/dev/null; then
-        log_message "INFO" "Docker is already installed."
+        log_info "$DOCKER_ALREADY_INSTALLED"
         return 0
     fi
     
     if curl -fsSL https://get.docker.com -o /tmp/get-docker.sh; then
         if sh /tmp/get-docker.sh; then            
             rm -f /tmp/get-docker.sh
-            log_message "INFO" "Docker installed successfully!"
+            log_info "$DOCKER_INSTALLED_SUCCESSFULLY"
             return 0
         else
-            log_message "ERROR" "Docker installation failed!"
+            log_error "$DOCKER_INSTALLATION_FAILED"
             rm -f /tmp/get-docker.sh
             return 1
         fi
     else
-        log_message "ERROR" "Failed to download Docker installation script!"
+        log_error "$DOCKER_DOWNLOAD_FAILED"
         return 1
     fi
 }
@@ -93,15 +95,15 @@ function validate_email() {
     
     if [ -n "$email" ]; then
         if [[ "$email" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
-            log_message "INFO" "Email: valid"
+            log_info "$EMAIL_VALID"
             return 0
         else
-            log_message "ERROR" "Invalid email format: $email"
+            log_error "$INVALID_EMAIL_FORMAT $email"
             return 1
         fi
     else
         if [ "$strict" = "true" ]; then
-            log_message "ERROR" "Email is required"
+            log_error "$EMAIL_REQUIRED"
             return 1
         else
             return 0
@@ -116,15 +118,15 @@ function validate_password() {
     
     if [ -n "$password" ]; then
         if [ ${#password} -ge 6 ]; then
-            log_message "INFO" "Password: provided (length: ${#password})"
+            log_info "$PASSWORD_PROVIDED ${#password})"
             return 0
         else
-            log_message "ERROR" "Password too short (minimum 6 characters)"
+            log_error "$PASSWORD_TOO_SHORT"
             return 1
         fi
     else
         if [ "$strict" = "true" ]; then
-            log_message "ERROR" "Password is required"
+            log_error "$PASSWORD_REQUIRED"
             return 1
         else
             return 0
@@ -140,15 +142,15 @@ function validate_domain() {
     
     if [ -n "$domain" ]; then
         if [[ "$domain" =~ ^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
-            log_message "INFO" "$domain_type Domain: $domain"   
+            log_info "$domain_type $DOMAIN_VALID $domain"   
             return 0
         else
-            log_message "ERROR" "Invalid $domain_type domain format: $domain"
+            log_error "$INVALID_DOMAIN_FORMAT $domain_type domain format: $domain"
             return 1
         fi
     else
         if [ "$strict" = "true" ]; then
-            log_message "ERROR" "$domain_type domain is required"
+            log_error "$domain_type $DOMAIN_REQUIRED"
             return 1
         else
             return 0
@@ -162,11 +164,11 @@ function validate_environment() {
     
     case "$env" in
         "development"|"staging"|"production"|"test")
-            log_message "INFO" "Environment: $env"
+            log_info "$ENVIRONMENT_VALID $env"
             return 0
             ;;
         *)
-            log_message "ERROR" "Invalid environment '$env'. Must be one of: development, staging, production, test"
+            log_error "$INVALID_ENVIRONMENT '$env'. $ENVIRONMENT_OPTIONS"
             return 1
             ;;
     esac
@@ -175,26 +177,26 @@ function validate_environment() {
 # Validate LXD installation and status
 function validate_lxd() {
     if ! command -v sudo lxc &>/dev/null; then
-        log_message "ERROR" "LXD not found. Please install LXD first: https://canonical.com/lxd"
+        log_error "$LXD_NOT_FOUND"
         return 1
     fi
-    log_message "INFO" "LXD: installed"
+    log_info "$LXD_INSTALLED"
     
     if ! sudo lxc list &>/dev/null; then
-        log_message "ERROR" "LXD is not running. Please start LXD first: lxc start"
+        log_error "$LXD_NOT_RUNNING"
         return 1
     fi
-    log_message "INFO" "LXD: running"
+    log_info "$LXD_RUNNING"
     return 0
 }
 
 # Validate sudo access
 function validate_sudo() {
     if ! sudo -n true 2>/dev/null; then
-        log_message "ERROR" "Sudo access required for LXD operations"
+        log_error "$SUDO_ACCESS_REQUIRED"
         return 1
     fi
-    log_message "INFO" "Sudo: available"
+    log_info "$SUDO_AVAILABLE"
     return 0
 }
 
@@ -204,10 +206,10 @@ function validate_file() {
     local file_name="$2"
     
     if [ ! -f "$file_path" ]; then
-        log_message "ERROR" "$file_name not found at $file_path"
+        log_error "$file_name $FILE_NOT_FOUND $file_path"
         return 1
     fi
-    log_message "INFO" "$file_name: found"
+    log_info "$file_name: $FILE_FOUND"
     return 0
 }
 
@@ -220,18 +222,18 @@ function validate_url() {
     if [ -n "$url" ]; then
         if ! curl -fsSL --head "$url" &>/dev/null; then
             if [ "$strict" = "true" ]; then
-                log_message "ERROR" "$url_name not accessible at $url"
+                log_error "$url_name $URL_NOT_ACCESSIBLE $url"
                 return 1
             else
-                log_message "WARN" "$url_name not accessible at $url (continuing anyway)"
+                log_warn "$url_name $URL_NOT_ACCESSIBLE_CONTINUING $url $CONTINUING_ANYWAY"
                 return 0
             fi
         fi
-        log_message "INFO" "$url_name: accessible"
+        log_info "$url_name: $URL_ACCESSIBLE"
         return 0
     else
         if [ "$strict" = "true" ]; then
-            log_message "ERROR" "$url_name is required"
+            log_error "$url_name $URL_REQUIRED"
             return 1
         else
             return 0
@@ -245,10 +247,10 @@ function validate_array() {
     local array_ref="$2"
     
     if [ ${#array_ref[@]} -eq 0 ]; then
-        log_message "ERROR" "$array_name is empty"
+        log_error "$array_name $ARRAY_EMPTY"
         return 1
     fi
-    log_message "INFO" "$array_name: ${#array_ref[@]} items configured"
+    log_info "$array_name: ${#array_ref[@]} $ARRAY_CONFIGURED"
     return 0
 }
 
@@ -297,11 +299,35 @@ function log_message() {
     esac
 }
 
+# Log info message to console if show_in_console is true
+# If no second parameter is provided and CONFIG[show_in_console] exists, use that value
+function log_info() {
+    log_message "INFO" "$1"
+}
+
+# Log error message to console if show_in_console is true
+# If no second parameter is provided and CONFIG[show_in_console] exists, use that value
+function log_error() {
+    log_message "ERROR" "$1"
+}
+
+# Log warning message to console if show_in_console is true
+# If no second parameter is provided and CONFIG[show_in_console] exists, use that value
+function log_warn() {
+    log_message "WARN" "$1"
+}
+
+# Log debug message to console if show_in_console is true
+# If no second parameter is provided and CONFIG[show_in_console] exists, use that value
+function log_debug() {
+    log_message "DEBUG" "$1"
+}
+
 # checks if the port is available
 function is_port_available() {
     local port="$1"
     if sudo lsof -i :"$port" > /dev/null 2>&1; then
-        log_message "ERROR" "Port $port is already in use"
+        log_error "$PORT_IN_USE $port $PORT_ALREADY_IN_USE"
         exit 1
     fi
 }
@@ -314,17 +340,17 @@ function generate_random_available_port() {
     local attempt=0
     
     if ! [[ "$min_port" =~ ^[0-9]+$ ]] || ! [[ "$max_port" =~ ^[0-9]+$ ]]; then
-        log_message "ERROR" "Invalid port range: min=$min_port, max=$max_port"
+        log_error "$INVALID_PORT_RANGE$min_port, max=$max_port"
         return 1
     fi
     
     if [ "$min_port" -gt "$max_port" ]; then
-        log_message "ERROR" "Min port ($min_port) cannot be greater than max port ($max_port)"
+        log_error "$MIN_PORT_GREATER ($min_port) $CANNOT_BE_GREATER ($max_port)"
         return 1
     fi
     
     if [ "$min_port" -lt 1 ] || [ "$max_port" -gt 65535 ]; then
-        log_message "ERROR" "Port range must be between 1 and 65535"
+        log_error "$PORT_RANGE_LIMITS"
         return 1
     fi
     
@@ -336,7 +362,7 @@ function generate_random_available_port() {
         
         if ! echo "$used_ports" | grep -q "^$random_port$"; then
             if ! sudo lsof -i :"$random_port" >/dev/null 2>&1; then
-                log_message "INFO" "Generated random available port: $random_port"
+                log_info "$GENERATED_RANDOM_PORT $random_port"
                 echo "$random_port"
                 return 0
             fi
@@ -345,7 +371,7 @@ function generate_random_available_port() {
         attempt=$((attempt + 1))
     done
     
-    log_message "ERROR" "Failed to find available port after $max_attempts attempts"
+    log_error "$FAILED_FIND_PORT $max_attempts"
     return 1
 }
 

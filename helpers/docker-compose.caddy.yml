@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  nixopus-caddy:
+    image: caddy:latest
+    container_name: nixopus-caddy-virtualized
+    ports:
+      - "2019:2019"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${CADDY_CONFIG_DIR}/Caddyfile:/etc/caddy/Caddyfile
+      - ${CADDY_CONFIG_DIR}:/data
+      - ${CADDY_CONFIG_DIR}:/config
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+    restart: unless-stopped
+    networks:
+      - nixopus-network
+
+networks:
+  nixopus-network:
+    driver: bridge 

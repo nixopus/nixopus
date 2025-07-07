@@ -1,6 +1,7 @@
 #!/bin/bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/util.sh"
+source "$SCRIPT_DIR/messages.sh"
 
 # This script is used for testing the installation script across multiple distributions.
 # It will create containers for each distribution, run the installation, and report results.
@@ -110,7 +111,7 @@ function generate_container_name() {
 
 # Create a new LXD container with Docker privileges
 function create_lxd_container() {
-    log_message "INFO" "Creating LXD container: ${CONFIG[container_name]} with distro: ${CONFIG[distro]}"
+    log_info "$CREATING_CONTAINER ${CONFIG[container_name]} with distro: ${CONFIG[distro]}"
     
     if sudo lxc launch images:"${CONFIG[distro]}" "${CONFIG[container_name]}"; then
         sudo lxc config set "${CONFIG[container_name]}" security.privileged true
@@ -118,21 +119,21 @@ function create_lxd_container() {
         sudo lxc restart "${CONFIG[container_name]}"
         sleep 60
         sudo lxc exec "${CONFIG[container_name]}" -- cloud-init status --wait || true
-        log_message "INFO" "Container ${CONFIG[container_name]} created successfully"
+        log_info "$CONTAINER_CREATED_SUCCESSFULLY ${CONFIG[container_name]} $CONTAINER_CREATED_SUCCESSFULLY_SUFFIX"
         return 0
     else
-        log_message "ERROR" "Failed to create container ${CONFIG[container_name]}"
+        log_error "$FAILED_CREATE_CONTAINER ${CONFIG[container_name]}"
         return 1
     fi
 }
 
 # Install dependencies in the container
 function install_dependencies_in_container() {
-    log_message "INFO" "Installing dependencies in container: ${CONFIG[container_name]}"
-    log_message "DEBUG" "Base distribution: ${CONFIG[base_distro]}"
+    log_info "$INSTALLING_DEPENDENCIES ${CONFIG[container_name]}"
+    log_debug "$DEBUG_BASE_DISTRIBUTION ${CONFIG[base_distro]}"
 
     # Push the util.sh script to the container
-    log_message "DEBUG" "Pushing util.sh to container..."
+    log_debug "$DEBUG_PUSHING_UTIL"
     sudo lxc file push "$SCRIPT_DIR/util.sh" "${CONFIG[container_name]}/tmp/util.sh"
     
     # Set the package manager for the container
@@ -148,17 +149,17 @@ function install_dependencies_in_container() {
     # Install additional distro-specific packages
     case ${CONFIG[base_distro]} in
         "debian"|"ubuntu")
-            log_message "DEBUG" "Installing additional packages for ${CONFIG[base_distro]}"
+            log_debug "$DEBUG_INSTALLING_PACKAGES ${CONFIG[base_distro]}"
             sudo lxc exec "${CONFIG[container_name]}" -- apt-get install -y python3-venv
             ;;
         "gentoo")
-            log_message "DEBUG" "Installing additional packages for ${CONFIG[base_distro]}"
+            log_debug "$DEBUG_INSTALLING_PACKAGES ${CONFIG[base_distro]}"
             sudo lxc exec "${CONFIG[container_name]}" -- emerge --noreplace nix
             ;;
     esac
     
     # Install Docker using the utility function
-    log_message "INFO" "Installing Docker..."
+    log_info "$INSTALLING_DOCKER"
     sudo lxc exec "${CONFIG[container_name]}" -- bash -c "
         source /tmp/util.sh
         install_docker
@@ -167,7 +168,7 @@ function install_dependencies_in_container() {
     # Clean up the temporary file
     sudo lxc exec "${CONFIG[container_name]}" -- rm -f /tmp/util.sh
     
-    log_message "INFO" "Finished installing dependencies in container: ${CONFIG[container_name]}"
+    log_info "$FINISHED_INSTALLING_DEPENDENCIES ${CONFIG[container_name]}"
 }
 
 # Build installation command using global config
@@ -203,13 +204,13 @@ function run_installation_script() {
     local start_time=$(date +%s)
     local error_message=""
     
-    log_message "INFO" "Running installation script in container: $container_name"
-    log_message "INFO" "This may take several minutes..."
+    log_info "$RUNNING_INSTALLATION_SCRIPT $container_name"
+    log_info "$MAY_TAKE_MINUTES"
     
     if timeout "$TIMEOUT" sudo lxc exec "$container_name" -- bash -c "set -x; $command" 2>&1; then
         local end_time=$(date +%s)
         local duration=$((end_time - start_time))
-        log_message "INFO" "Installation script completed successfully in ${duration}s"
+        log_info "$INSTALLATION_COMPLETED_SUCCESSFULLY ${duration}s"
         return 0
     else
         local exit_code=$?
@@ -218,10 +219,10 @@ function run_installation_script() {
         
         if [ $exit_code -eq 124 ]; then
             error_message="Installation script timed out after $TIMEOUT seconds"
-            log_message "ERROR" "$error_message"
+            log_error "$error_message"
         else
             error_message="Installation script failed with exit code: $exit_code"
-            log_message "ERROR" "$error_message"
+            log_error "$error_message"
         fi
         
         CONFIG["error_message"]="$error_message"
@@ -235,10 +236,10 @@ function run_installation_script() {
 # Stop and delete container
 function cleanup_container() {
     if [ -n "${CONFIG[container_name]}" ]; then
-        log_message "INFO" "Stopping container: ${CONFIG[container_name]}"
+        log_info "$STOPPING_CONTAINER ${CONFIG[container_name]}"
         sudo lxc stop "${CONFIG[container_name]}" 2>/dev/null || true
         
-        log_message "INFO" "Deleting container: ${CONFIG[container_name]}"
+        log_info "$DELETING_CONTAINER ${CONFIG[container_name]}"
         sudo lxc delete "${CONFIG[container_name]}" 2>/dev/null || true
     fi
 }
@@ -252,14 +253,14 @@ function test_distribution_with_params() {
     local test_name="${CONFIG[distro]}-${CONFIG[test_name]}"
     local metadata="container:${CONFIG[container_name]},base_distro:${CONFIG[base_distro]}"
     
-    log_message "INFO" "=========================================="
-    log_message "INFO" "Testing: ${CONFIG[distro]} - ${CONFIG[test_name]}"
-    log_message "INFO" "Base Distro: ${CONFIG[base_distro]}"
-    log_message "INFO" "Container: ${CONFIG[container_name]}"
-    log_message "INFO" "Environment: ${CONFIG[env]}"
-    log_message "INFO" "API Domain: ${CONFIG[api_domain]:-<not set>}"
-    log_message "INFO" "App Domain: ${CONFIG[app_domain]:-<not set>}"
-    log_message "INFO" "=========================================="
+    log_info "$SEPARATOR"
+    log_info "$TESTING ${CONFIG[distro]} - ${CONFIG[test_name]}"
+    log_info "$BASE_DISTRO ${CONFIG[base_distro]}"
+    log_info "$CONTAINER ${CONFIG[container_name]}"
+    log_info "$ENVIRONMENT ${CONFIG[env]}"
+    log_info "$API_DOMAIN ${CONFIG[api_domain]:-$NOT_SET}"
+    log_info "$APP_DOMAIN ${CONFIG[app_domain]:-$NOT_SET}"
+    log_info "$SEPARATOR"
     
     if ! create_lxd_container; then
         test_result="SKIPPED"
@@ -268,7 +269,7 @@ function test_distribution_with_params() {
     else
         install_dependencies_in_container
 
-        log_message "INFO" "Starting installation script..."
+        log_info "$STARTING_INSTALLATION_SCRIPT"
         if run_installation_script "$(build_installation_command)" "${CONFIG[container_name]}"; then
             test_result="PASSED"
             exit_code=0
@@ -283,7 +284,7 @@ function test_distribution_with_params() {
     local test_end_time=$(date +%s)
     local test_duration=$((test_end_time - test_start_time))
     
-    log_message "INFO" "Installation script completed with result: $test_result"
+    log_info "$INSTALLATION_COMPLETED_RESULT $test_result"
     
     cleanup_container
     
@@ -292,7 +293,7 @@ function test_distribution_with_params() {
 
 # Validate all the parameters for the test
 function validate_test_params() {
-    log_message "INFO" "Validating environment and arguments..."
+    log_info "$VALIDATING_ENVIRONMENT"
     local validation_failed=false
     
     validate_environment "${CONFIG[env]}" || validation_failed=true
@@ -314,11 +315,11 @@ function validate_test_params() {
     validate_url "${GITHUB_RAW_BASE}/scripts/install.sh" "Installation script" "$url_strict" || validation_failed=true
     
     if [ "$validation_failed" = true ]; then
-        log_message "ERROR" "Validation failed!"
+        log_error "$VALIDATION_FAILED"
         return 1
     fi
     
-    log_message "INFO" "All validations passed!"
+    log_info "$ALL_VALIDATIONS_PASSED"
     return 0
 }
 
@@ -328,12 +329,12 @@ function main() {
     IFS=':' read -r email password api_domain app_domain env show_in_console <<< "$args"
     init_config "$email" "$password" "$api_domain" "$app_domain" "$env" "$show_in_console"
 
-    log_message "INFO" "Starting Nixopus installation test suite"
-    log_message "INFO" "Testing ${#DISTRO_MATRIX[@]} distributions with timeout: ${TIMEOUT}s"
-    log_message "INFO" "Show in console: ${CONFIG[show_in_console]}"
+    log_info "$STARTING_NIXOPUS"
+    log_info "$TESTING_DISTRIBUTIONS ${#DISTRO_MATRIX[@]} $DISTRIBUTIONS_WITH_TIMEOUT ${TIMEOUT}s"
+    log_info "$SHOW_IN_CONSOLE ${CONFIG[show_in_console]}"
     
     if ! validate_test_params; then
-        log_message "ERROR" "Parameter validation failed, exiting"
+        log_error "$PARAMETER_VALIDATION_FAILED"
         exit 1
     fi
     
