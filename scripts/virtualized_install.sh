@@ -140,8 +140,11 @@ function init_virtualized_config() {
 function check_base_image_exists() {
     local image_name="${CONFIG[base_image_name]}"
     log_info "Inside function - image_name: '$image_name'"
-    log_info "Running: sudo lxc image list | grep -q '$image_name'"
-    sudo lxc image list | grep -q "$image_name"
+    log_info "Running: sudo lxc image list"
+    local lxc_output=$(sudo lxc image list 2>&1)
+    log_info "lxc image list output: $lxc_output"
+    log_info "Running: echo '$lxc_output' | grep -q '$image_name'"
+    echo "$lxc_output" | grep -q "$image_name"
     local grep_result=$?
     log_info "grep returned: $grep_result"
     if [ $grep_result -eq 0 ]; then
