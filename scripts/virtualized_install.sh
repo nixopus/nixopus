@@ -140,10 +140,10 @@ function init_virtualized_config() {
 function check_base_image_exists() {
     local image_name="${CONFIG[base_image_name]}"
     if ! sudo lxc image list | grep -q "$image_name"; then
-        log_info "Base image does not exist, building..."
+        log_info "$BASE_IMAGE_DOES_NOT_EXIST"
         return 1
     fi
-    log_info "Base image exists, skipping build..."
+    log_info "$BASE_IMAGE_EXISTS"
     return 0
 }
 
@@ -153,32 +153,32 @@ function build_base_image() {
     local temp_container="temp-build-$(date +%s%N | md5sum | cut -c1-8)"
     local distro="${CONFIG[distro]}"
     
-    log_info "Building base image: $image_name from distro: $distro"
+    log_info "$BUILDING_BASE_IMAGE $image_name $FROM_DISTRO $distro"
     
     local original_container_name="${CONFIG[container_name]}"
     CONFIG["container_name"]="$temp_container"
     
     if ! setup_container_with_nixopus "minimal"; then
-        log_error "Failed to setup container for base image"
+        log_error "$FAILED_TO_SETUP_CONTAINER_FOR_BASE_IMAGE"
         CONFIG["container_name"]="$original_container_name"
         return 1
     fi
     
-    log_info "Creating base image from container"
-    log_info "Stopping container for image creation"
+    log_info "$CREATING_BASE_IMAGE_FROM_CONTAINER"
+    log_info "$STOPPING_CONTAINER_FOR_IMAGE_CREATION"
     sudo lxc stop "$temp_container"
     
     if sudo lxc publish "$temp_container" --alias "$image_name"; then
-        log_info "Base image created successfully: $image_name"
+        log_info "$BASE_IMAGE_CREATED_SUCCESSFULLY $image_name"
         CONFIG["base_image_ready"]="true"
     else
-        log_error "Failed to create base image"
+        log_error "$FAILED_TO_CREATE_BASE_IMAGE"
         cleanup_container
         CONFIG["container_name"]="$original_container_name"
         return 1
     fi
     
-    log_info "Cleaning up temporary build container"
+    log_info "$CLEANING_UP_TEMPORARY_BUILD_CONTAINER"
     cleanup_container
     CONFIG["container_name"]="$original_container_name"
     return 0
@@ -188,17 +188,17 @@ function build_base_image() {
 function setup_container_with_nixopus() {
     local config_type="${1:-full}" 
     
-    log_info "Setting up container with Nixopus ($config_type config)"
+    log_info "$SETTING_UP_CONTAINER_WITH_NIXOPUS ($config_type $CONFIG_TYPE)"
     
     if ! create_lxd_container; then
-        log_error "Failed to create container"
+        log_error "$FAILED_TO_CREATE_CONTAINER"
         return 1
     fi
     
-    log_info "Installing dependencies in container"
+    log_info "$INSTALLING_DEPENDENCIES_IN_CONTAINER"
     install_dependencies_in_container
     
-    log_info "Installing Nixopus in container"
+    log_info "$INSTALLING_NIXOPUS_IN_CONTAINER"
     local install_cmd
     if [ "$config_type" = "minimal" ]; then
         install_cmd="sudo bash -c \"\$(curl -sSL $GITHUB_RAW_BASE/scripts/install.sh)\" --env=production --debug"
@@ -207,7 +207,7 @@ function setup_container_with_nixopus() {
     fi
     
     if ! run_installation_script "$install_cmd" "${CONFIG[container_name]}"; then
-        log_error "Failed to install Nixopus"
+        log_error "$FAILED_TO_INSTALL_NIXOPUS"
         return 1
     fi
     
@@ -219,24 +219,24 @@ function manage_base_image() {
     local force_rebuild="${CONFIG[force_rebuild]}"
     local image_name="${CONFIG[base_image_name]}"
     
-    log_info "Managing base image: $image_name"
+    log_info "$MANAGING_BASE_IMAGE $image_name"
     
     if check_base_image_exists; then
         if [ "$force_rebuild" = "true" ]; then
-            log_info "Force rebuild requested, rebuilding base image: $image_name"
+            log_info "$FORCE_REBUILD_REQUESTED $image_name"
             sudo lxc image delete "$image_name" 2>/dev/null || true
             if ! build_base_image; then
-                log_error "Failed to rebuild base image"
+                log_error "$FAILED_TO_REBUILD_BASE_IMAGE"
                 return 1
             fi
         else
-            log_info "Using existing base image: $image_name"
+            log_info "$USING_EXISTING_BASE_IMAGE $image_name"
             CONFIG["base_image_ready"]="true"
         fi
     else
-        log_info "Base image not found, building new image: $image_name"
+        log_info "$BASE_IMAGE_NOT_FOUND $image_name"
         if ! build_base_image; then
-            log_error "Failed to build base image"
+            log_error "$FAILED_TO_BUILD_BASE_IMAGE"
             return 1
         fi
     fi
@@ -350,8 +350,8 @@ function display_config_summary() {
     log_info "  $INTERNAL_API_PROXY_PORT ${CONFIG[internal_api_proxy_port]}"
     log_info "  $APP_PROXY_NAME ${CONFIG[app_proxy_name]}"
     log_info "  $API_PROXY_NAME ${CONFIG[api_proxy_name]}"
-    log_info "  Base Image: ${CONFIG[base_image_name]}"
-    log_info "  Force Rebuild: ${CONFIG[force_rebuild]}"
+    log_info "  $BASE_IMAGE_LABEL ${CONFIG[base_image_name]}"
+    log_info "  $FORCE_REBUILD_LABEL ${CONFIG[force_rebuild]}"
     if [ -n "${CONFIG[api_domain]}" ]; then
         log_info "  $API_DOMAIN ${CONFIG[api_domain]}"
     fi
@@ -365,20 +365,20 @@ function launch_from_base_image() {
     local container_name="${CONFIG[container_name]}"
     local image_name="${CONFIG[base_image_name]}"
     
-    log_info "Launching container from base image: $image_name"
+    log_info "$LAUNCHING_CONTAINER_FROM_BASE_IMAGE $image_name"
     
     if sudo lxc launch "$image_name" "$container_name"; then
-        log_info "Container launched successfully from base image: $container_name"
-        log_info "Configuring container with Docker privileges"
+        log_info "$CONTAINER_LAUNCHED_SUCCESSFULLY $container_name"
+        log_info "$CONFIGURING_CONTAINER_WITH_DOCKER_PRIVILEGES"
         sudo lxc config set "$container_name" security.privileged true
         sudo lxc config set "$container_name" security.nesting true
         sudo lxc restart "$container_name"
         sleep 60
         
-        log_info "Container configured successfully"
+        log_info "$CONTAINER_CONFIGURED_SUCCESSFULLY"
         return 0
     else
-        log_error "Failed to launch container from base image"
+        log_error "$FAILED_TO_LAUNCH_CONTAINER_FROM_BASE_IMAGE"
         return 1
     fi
 }
@@ -388,23 +388,23 @@ function create_or_launch_container() {
     local force_rebuild="${CONFIG[force_rebuild]}"
     local image_name="${CONFIG[base_image_name]}"
     
-    log_info "Handling container creation for: ${CONFIG[container_name]}"
+    log_info "$HANDLING_CONTAINER_CREATION ${CONFIG[container_name]}"
     
     if ! manage_base_image; then
-        log_error "Failed to manage base image"
+        log_error "$FAILED_TO_MANAGE_BASE_IMAGE"
         return 1
     fi
     
     if [ "${CONFIG[base_image_ready]}" = "true" ]; then
-        log_info "Launching from pre-built image"
+        log_info "$LAUNCHING_FROM_PRE_BUILT_IMAGE"
         if ! launch_from_base_image; then
-            log_error "Failed to launch container from base image"
+            log_error "$FAILED_TO_LAUNCH_CONTAINER_FROM_BASE_IMAGE_AGAIN"
             return 1
         fi
     else
-        log_info "Creating new container and installing from scratch"
+        log_info "$CREATING_NEW_CONTAINER_AND_INSTALLING"
         if ! setup_container_with_nixopus "full"; then
-            log_error "Failed to setup container with Nixopus"
+            log_error "$FAILED_TO_SETUP_CONTAINER_WITH_NIXOPUS"
             return 1
         fi
     fi
