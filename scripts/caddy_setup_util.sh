@@ -130,6 +130,19 @@ function get_existing_caddy_config() {
     curl -s "${CONFIG[caddy_admin_url]}/config"
 }
 
+# Get server IP address
+function get_server_ip() {
+    local server_ip
+    
+    server_ip=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null || hostname -I | awk '{print $1}' 2>/dev/null)
+    
+    if [ -z "$server_ip" ] || [ "$server_ip" = "127.0.0.1" ]; then
+        server_ip=$(ip route get 1.1.1.1 | awk '{print $7}' | head -n1 2>/dev/null)
+    fi
+    
+    echo "$server_ip"
+}
+
 # Check if domain already exists in configuration
 function domain_exists_in_config() {
     local domain="$1"
@@ -146,6 +159,8 @@ function domain_exists_in_config() {
 function add_caddy_route() {
     local domain="$1"
     local upstream_port="$2"
+    local server_ip
+    server_ip=$(get_server_ip)
     local route_config
     
     route_config=$(cat <<EOF
@@ -155,7 +170,7 @@ function add_caddy_route() {
       "handler": "reverse_proxy",
       "upstreams": [
         {
-          "dial": "localhost:$upstream_port"
+          "dial": "$server_ip:$upstream_port"
         }
       ]
     }
@@ -179,6 +194,8 @@ function update_caddy_route() {
     local domain="$1"
     local upstream_port="$2"
     local route_index="$3"
+    local server_ip
+    server_ip=$(get_server_ip)
     local route_config
     
     route_config=$(cat <<EOF
@@ -188,7 +205,7 @@ function update_caddy_route() {
       "handler": "reverse_proxy",
       "upstreams": [
         {
-          "dial": "localhost:$upstream_port"
+          "dial": "$server_ip:$upstream_port"
         }
       ]
     }

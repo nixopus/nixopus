@@ -22,7 +22,7 @@ function set_default_values() {
     local show_in_console="${8:-}"
     local force_rebuild="${9:-}"
     local base_image_name="${10:-}"
-    
+
     [[ -z "$internal_app_proxy_port" ]] && internal_app_proxy_port="7443"
     [[ -z "$internal_api_proxy_port" ]] && internal_api_proxy_port="8443"
     [[ -z "$distro" ]] && distro="debian/11"
