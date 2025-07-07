@@ -165,6 +165,9 @@ function build_base_image() {
     fi
     
     log_info "Creating base image from container"
+    log_info "Stopping container for image creation"
+    sudo lxc stop "$temp_container"
+    
     if sudo lxc publish "$temp_container" --alias "$image_name"; then
         log_info "Base image created successfully: $image_name"
         CONFIG["base_image_ready"]="true"
