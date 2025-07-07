@@ -139,14 +139,9 @@ function init_virtualized_config() {
 # improving the installation time, 
 function check_base_image_exists() {
     local image_name="${CONFIG[base_image_name]}"
-    log_info "Inside function - image_name: '$image_name'"
-    log_info "Running: sudo lxc image list"
     local lxc_output=$(sudo lxc image list 2>&1)
-    log_info "lxc image list output: $lxc_output"
-    log_info "Running: echo '$lxc_output' | grep -q '$image_name'"
     echo "$lxc_output" | grep -q "$image_name"
-    local grep_result=$?
-    log_info "grep returned: $grep_result"
+    local grep_result=$?    
     if [ $grep_result -eq 0 ]; then
         log_info "$BASE_IMAGE_EXISTS"
         return 0
@@ -228,10 +223,6 @@ function manage_base_image() {
     local image_name="${CONFIG[base_image_name]}"
     
     log_info "$MANAGING_BASE_IMAGE $image_name"
-    
-    log_info "About to call check_base_image_exists"
-    check_base_image_exists
-    log_info "check_base_image_exists returned: $?"
     
     if check_base_image_exists; then
         if [ "$force_rebuild" = "true" ]; then
