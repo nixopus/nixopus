@@ -32,7 +32,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --cov=core --cov=utils --cov-report=term-missing"
+addopts = "-v --cov=commands --cov=utils --cov-report=term-missing"
 
 [tool.black]
 line-length = 127

@@ -1,5 +1,5 @@
 import typer
-from core.test.test import test_command
+from .test import TestCommand
 from .messages import test_app_help
 
 test_app = typer.Typer(
@@ -11,4 +11,5 @@ test_app = typer.Typer(
 def test_callback(ctx: typer.Context, target: str = typer.Argument(None, help="Test target (e.g., version)")):
     """Run tests (only in DEVELOPMENT environment)"""
     if ctx.invoked_subcommand is None:
-        test_command(target) 
+        test_command = TestCommand()
+        test_command.run(target) 

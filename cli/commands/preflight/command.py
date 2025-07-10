@@ -1,6 +1,8 @@
 import typer
-from .messages import running_preflight_checks
-from .port import PortConfig, PortCheckResult    
+from .messages import error_checking_deps, error_checking_ports
+from .port import PortConfig, PortService
+from .deps import Deps, DepsConfig
+from utils.lib import HostInformation
 from utils.logger import Logger
 
 preflight_app = typer.Typer(no_args_is_help=False)
@@ -17,8 +19,7 @@ def check(
     output: str = typer.Option("text", "--output", "-o", help="Output format, text,json"),
 ):
     """Run all preflight checks"""
-    logger = Logger(verbose=verbose)
-    logger.info(PortConfig.format(running_preflight_checks, output))
+    pass
 
 @preflight_app.command()
 def ports(
@@ -27,15 +28,40 @@ def ports(
     timeout: int = typer.Option(1, "--timeout", "-t", help="The timeout in seconds for each port check"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
-) -> list[PortCheckResult]:
+) -> None:
     """Check if list of ports are available on a host"""
     try:
         logger = Logger(verbose=verbose)
         logger.debug(f"Checking ports: {ports}")
         config = PortConfig(ports=ports, host=host, timeout=timeout, verbose=verbose)
-        results = PortConfig.check_ports(config)
-        logger.success(PortConfig.format(results, output))
-        return results
+        port_service = PortService(config, logger=logger)
+        results = port_service.check_ports()
+        logger.success(port_service.formatter.format_output(results, output))
     except Exception as e:
-        logger.error(f"Error checking ports: {e}")
+        logger.error(error_checking_ports.format(error=e))
+        raise typer.Exit(1)
+
+@preflight_app.command()    
+def deps(
+    deps: list[str] = typer.Argument(..., help="The list of dependencies to check"),
+    timeout: int = typer.Option(1, "--timeout", "-t", help="The timeout in seconds for each dependency check"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
+    output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
+) -> None:
+    """Check if list of dependencies are available on the system"""
+    try:
+        logger = Logger(verbose=verbose)      
+        config = DepsConfig(
+            deps=deps,
+            timeout=timeout,
+            verbose=verbose,
+            output=output,
+            os=HostInformation.get_os_name(),
+            package_manager=HostInformation.get_package_manager()
+        )
+        deps_checker = Deps(logger=logger)
+        results = deps_checker.check(config)
+        logger.success(deps_checker.format_output(results, output))
+    except Exception as e:
+        logger.error(error_checking_deps.format(error=e))
         raise typer.Exit(1)

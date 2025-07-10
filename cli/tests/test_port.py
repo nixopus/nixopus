@@ -1,6 +1,6 @@
 import pytest
 from typing import List
-from cli.commands.preflight.port import PortConfig, PortCheckResult
+from commands.preflight.port import PortConfig, PortCheckResult, PortService
 
 class TestPort:
     def test_valid_ports(self):
@@ -50,7 +50,8 @@ class TestPort:
 
     def test_check_ports_basic(self):
         config = PortConfig(ports=[80, 443], host="localhost", timeout=1, verbose=False)
-        results = PortConfig.check_ports(config)
+        port_service = PortService(config)
+        results = port_service.check_ports()
         assert len(results) == 2
         assert all("port" in result for result in results)
         assert all("status" in result for result in results)
@@ -60,7 +61,8 @@ class TestPort:
 
     def test_check_ports_verbose(self):
         config = PortConfig(ports=[80, 443], host="localhost", timeout=1, verbose=True)
-        results = PortConfig.check_ports(config)
+        port_service = PortService(config)
+        results = port_service.check_ports()
         assert len(results) == 2
         assert all("port" in result for result in results)
         assert all("status" in result for result in results)
@@ -88,7 +90,8 @@ def test_port_check_result_type():
 def test_check_ports_return_type():
     """Test that check_ports returns correct type"""
     config = PortConfig(ports=[8080, 3000], host="localhost", timeout=1, verbose=False)
-    results: List[PortCheckResult] = PortConfig.check_ports(config)
+    port_service = PortService(config)
+    results: List[PortCheckResult] = port_service.check_ports()
     
     assert isinstance(results, list)
     for result in results:

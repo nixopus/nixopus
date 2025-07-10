@@ -2,7 +2,7 @@ import typer
 from commands.version.command import version_app, main_version_callback
 from commands.preflight.command import preflight_app
 from commands.test.command import test_app
-from utils.message import application_name, application_description, application_no_args_is_help, application_add_completion, application_version_help
+from utils.message import application_name, application_description, application_add_completion, application_version_help
 
 app = typer.Typer(
     name=application_name,
