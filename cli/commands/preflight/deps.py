@@ -120,7 +120,7 @@ class DepsService:
             error=error
         )
     
-    def _check_single_dependency(self, dep: str) -> DepsCheckResult:
+    def _check_dependency(self, dep: str) -> DepsCheckResult:
         try:
             is_available = self.checker.check_dependency(dep)
             return self._create_result(dep, is_available)
@@ -131,7 +131,7 @@ class DepsService:
         self.logger.debug(f"Checking dependencies: {self.config.deps}")
         
         def process_dep(dep: str) -> DepsCheckResult:
-            return self._check_single_dependency(dep)
+            return self._check_dependency(dep)
         
         def error_handler(dep: str, error: Exception) -> DepsCheckResult:
             self.logger.error(error_checking_dependency.format(dep=dep, error=error))
