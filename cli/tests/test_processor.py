@@ -1,6 +1,6 @@
 import unittest
 import time
-from utils.lib import ParallelProcessor
+from app.utils.lib import ParallelProcessor
 
 class TestParallelProcessor(unittest.TestCase):
     

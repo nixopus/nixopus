@@ -1,14 +1,14 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from importlib.metadata import version
-from commands.version.version import VersionCommand
+from app.commands.version.version import VersionCommand
 
 
 class TestVersionCommand:
     """Test cases for the VersionCommand class"""
 
-    @patch('commands.version.version.Console')
-    @patch('commands.version.version.version')
+    @patch('app.commands.version.version.Console')
+    @patch('app.commands.version.version.version')
     def test_version_command_success(self, mock_version, mock_console_class):
         """Test successful version display"""
         mock_version.return_value = "1.0.0"
@@ -26,8 +26,8 @@ class TestVersionCommand:
         assert call_args.border_style == "blue"
         assert call_args.padding == (0, 1)
 
-    @patch('commands.version.version.Console')
-    @patch('commands.version.version.version')
+    @patch('app.commands.version.version.Console')
+    @patch('app.commands.version.version.version')
     def test_version_command_with_different_versions(self, mock_version, mock_console_class):
         """Test version display with different version numbers"""
         test_versions = ["0.1.0", "2.3.4", "1.0.0-beta"]
@@ -44,8 +44,8 @@ class TestVersionCommand:
             mock_version.assert_called_with('nixopus')
             mock_console.print.assert_called_once()
 
-    @patch('commands.version.version.Console')
-    @patch('commands.version.version.version')
+    @patch('app.commands.version.version.Console')
+    @patch('app.commands.version.version.version')
     def test_version_command_panel_content(self, mock_version, mock_console_class):
         """Test that panel contains correct text content"""
         mock_version.return_value = "1.2.3"
@@ -61,8 +61,8 @@ class TestVersionCommand:
         assert "Nixopus CLI" in str(panel_content)
         assert "v1.2.3" in str(panel_content)
 
-    @patch('commands.version.version.Console')
-    @patch('commands.version.version.version')
+    @patch('app.commands.version.version.Console')
+    @patch('app.commands.version.version.version')
     def test_version_command_handles_version_error(self, mock_version, mock_console_class):
         """Test handling of version import error"""
         mock_version.side_effect = Exception("Version not found")
@@ -75,8 +75,8 @@ class TestVersionCommand:
         
         mock_version.assert_called_once_with('nixopus')
 
-    @patch('commands.version.version.Console')
-    @patch('commands.version.version.version')
+    @patch('app.commands.version.version.Console')
+    @patch('app.commands.version.version.version')
     def test_version_command_console_error_handling(self, mock_version, mock_console_class):
         """Test handling of console print errors"""
         mock_version.return_value = "1.0.0"
@@ -97,21 +97,21 @@ class TestVersionCommandClass:
 
     def test_version_command_initialization(self):
         """Test that VersionCommand can be instantiated"""
-        with patch('commands.version.version.Console'):
+        with patch('app.commands.version.version.Console'):
             version_command = VersionCommand()
             assert hasattr(version_command, 'console')
 
     def test_version_command_run_method(self):
         """Test that VersionCommand has a run method"""
-        with patch('commands.version.version.Console'):
+        with patch('app.commands.version.version.Console'):
             version_command = VersionCommand()
             assert hasattr(version_command, 'run')
             assert callable(version_command.run)
 
     def test_version_command_run_returns_none(self):
         """Test that run method returns None"""
-        with patch('commands.version.version.Console'):
-            with patch('commands.version.version.version', return_value="1.0.0"):
+        with patch('app.commands.version.version.Console'):
+            with patch('app.commands.version.version.version', return_value="1.0.0"):
                 version_command = VersionCommand()
                 result = version_command.run()
                 assert result is None
@@ -158,14 +158,14 @@ class TestVersionCommandSignature:
 
     def test_version_command_is_instantiable(self):
         """Test that VersionCommand can be instantiated"""
-        with patch('commands.version.version.Console'):
+        with patch('app.commands.version.version.Console'):
             version_command = VersionCommand()
             assert isinstance(version_command, VersionCommand)
 
     def test_run_method_no_parameters(self):
         """Test that run method takes no parameters"""
         import inspect
-        with patch('commands.version.version.Console'):
+        with patch('app.commands.version.version.Console'):
             version_command = VersionCommand()
             sig = inspect.signature(version_command.run)
             assert len(sig.parameters) == 0

@@ -1,6 +1,6 @@
 import pytest
 from typing import List
-from commands.preflight.port import PortConfig, PortCheckResult, PortService
+from app.commands.preflight.port import PortConfig, PortCheckResult, PortService
 
 class TestPort:
     def test_valid_ports(self):

@@ -2,8 +2,8 @@ import typer
 from .messages import error_checking_deps, error_checking_ports
 from .port import PortConfig, PortService
 from .deps import Deps, DepsConfig
-from utils.lib import HostInformation
-from utils.logger import Logger
+from app.utils.lib import HostInformation
+from app.utils.logger import Logger
 
 preflight_app = typer.Typer(no_args_is_help=False)
 

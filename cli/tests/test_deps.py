@@ -4,7 +4,7 @@ import subprocess
 import json
 from typing import List
 
-from commands.preflight.deps import (
+from app.commands.preflight.deps import (
     DependencyChecker,
     DependencyValidator,
     DependencyFormatter,
@@ -13,8 +13,8 @@ from commands.preflight.deps import (
     DepsService,
     Deps
 )
-from utils.lib import Supported
-from utils.logger import Logger
+from app.utils.lib import Supported
+from app.utils.logger import Logger
 
 
 class MockLogger:
@@ -326,7 +326,7 @@ class TestDepsService(unittest.TestCase):
     def test_check_single_dependency_success(self):
         self.mock_checker.check_dependency.return_value = True
         
-        result = self.service._check_single_dependency("docker")
+        result = self.service._check_dependency("docker")
         
         self.assertTrue(result.is_available)
         self.mock_checker.check_dependency.assert_called_once_with("docker")
@@ -334,7 +334,7 @@ class TestDepsService(unittest.TestCase):
     def test_check_single_dependency_failure(self):
         self.mock_checker.check_dependency.return_value = False
         
-        result = self.service._check_single_dependency("nonexistent")
+        result = self.service._check_dependency("nonexistent")
         
         self.assertFalse(result.is_available)
         self.mock_checker.check_dependency.assert_called_once_with("nonexistent")
@@ -342,12 +342,12 @@ class TestDepsService(unittest.TestCase):
     def test_check_single_dependency_exception(self):
         self.mock_checker.check_dependency.side_effect = Exception("Test error")
         
-        result = self.service._check_single_dependency("failing_dep")
+        result = self.service._check_dependency("failing_dep")
         
         self.assertFalse(result.is_available)
         self.assertEqual(result.error, "Test error")
     
-    @patch('commands.preflight.deps.ParallelProcessor')
+    @patch('app.commands.preflight.deps.ParallelProcessor')
     def test_check_dependencies(self, mock_parallel_processor):
         mock_results = [
             self.service._create_result("docker", True),
@@ -386,7 +386,7 @@ class TestDeps(unittest.TestCase):
             package_manager="apt"
         )
         
-        with patch('commands.preflight.deps.DepsService') as mock_service_class:
+        with patch('app.commands.preflight.deps.DepsService') as mock_service_class:
             mock_service = Mock()
             mock_results = [Mock()]
             mock_service.check_dependencies.return_value = mock_results

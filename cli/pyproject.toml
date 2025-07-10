@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "A CLI for Nixopus"
 authors = ["Nixopus <raghavyuva@gmail.com>"]
 readme = "README.md"
-packages = [{include = "cli"}]
+packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
 python = "^3.9.0"
@@ -21,7 +21,7 @@ black = "^25.1.0"
 isort = "^6.0.1"
 
 [tool.poetry.scripts]
-nixopus = "cli.main:main"
+nixopus = "app.main:app"
 
 [build-system]
 requires = ["poetry-core"]
@@ -32,7 +32,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --cov=commands --cov=utils --cov-report=term-missing"
+addopts = "-v --cov=app --cov-report=term-missing"
 
 [tool.black]
 line-length = 127

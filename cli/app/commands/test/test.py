@@ -1,7 +1,7 @@
 import typer
 import subprocess
-from utils.config import Config
-from utils.logger import Logger
+from app.utils.config import Config
+from app.utils.logger import Logger
 from .messages import development_only_error, running_command
 
 class TestCommand:
