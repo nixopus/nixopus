@@ -15,18 +15,35 @@ from app.commands.preflight.deps import (
 )
 from app.utils.lib import Supported
 from app.utils.logger import Logger
+from app.utils.protocols import LoggerProtocol
 
 
 class MockLogger:
     def __init__(self):
         self.debug_calls = []
         self.error_calls = []
+        self.info_calls = []
+        self.warning_calls = []
+        self.success_calls = []
+        self.highlight_calls = []
     
     def debug(self, message: str) -> None:
         self.debug_calls.append(message)
     
     def error(self, message: str) -> None:
         self.error_calls.append(message)
+    
+    def info(self, message: str) -> None:
+        self.info_calls.append(message)
+    
+    def warning(self, message: str) -> None:
+        self.warning_calls.append(message)
+    
+    def success(self, message: str) -> None:
+        self.success_calls.append(message)
+    
+    def highlight(self, message: str) -> None:
+        self.highlight_calls.append(message)
 
 
 class TestDependencyChecker(unittest.TestCase):

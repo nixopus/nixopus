@@ -4,16 +4,11 @@ from typing import Protocol, Optional
 from pydantic import BaseModel, Field, field_validator
 from app.utils.lib import Supported, ParallelProcessor
 from app.utils.logger import Logger
+from app.utils.protocols import LoggerProtocol
 from .messages import invalid_os, invalid_package_manager, invalid_output_format, error_checking_dependency, timeout_checking_dependency
 
 class DependencyCheckerProtocol(Protocol):
     def check_dependency(self, dep: str) -> bool:
-        ...
-
-class LoggerProtocol(Protocol):
-    def debug(self, message: str) -> None:
-        ...
-    def error(self, message: str) -> None:
         ...
 
 class DependencyChecker:
