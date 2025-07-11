@@ -163,29 +163,6 @@ class TestDependencyFormatter(unittest.TestCase):
             )
         ]
     
-    def test_format_text(self):
-        result = self.formatter.format_text(self.sample_results)
-        
-        expected_lines = [
-            "docker is available",
-            "kubectl is not available"
-        ]
-        
-        for line in expected_lines:
-            self.assertIn(line, result)
-    
-    def test_format_json(self):
-        result = self.formatter.format_json(self.sample_results)
-        
-        parsed = json.loads(result)
-        self.assertEqual(len(parsed), 2)
-        
-        docker_result = next(r for r in parsed if r["dependency"] == "docker")
-        kubectl_result = next(r for r in parsed if r["dependency"] == "kubectl")
-        
-        self.assertTrue(docker_result["is_available"])
-        self.assertFalse(kubectl_result["is_available"])
-    
     def test_format_output_text(self):
         result = self.formatter.format_output(self.sample_results, "text")
         self.assertIn("docker is available", result)
@@ -195,12 +172,12 @@ class TestDependencyFormatter(unittest.TestCase):
         result = self.formatter.format_output(self.sample_results, "json")
         parsed = json.loads(result)
         self.assertEqual(len(parsed), 2)
+        self.assertTrue(parsed[0]["success"])
+        self.assertFalse(parsed[1]["success"])
     
     def test_format_output_invalid(self):
-        with self.assertRaises(ValueError) as context:
+        with self.assertRaises(ValueError):
             self.formatter.format_output(self.sample_results, "invalid")
-        
-        self.assertIn("invalid", str(context.exception))
 
 
 class TestDepsCheckResult(unittest.TestCase):

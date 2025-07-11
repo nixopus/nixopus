@@ -1,11 +1,11 @@
-import json
 import subprocess
 from typing import Protocol, Optional
 from pydantic import BaseModel, Field, field_validator
 from app.utils.lib import Supported, ParallelProcessor
 from app.utils.logger import Logger
 from app.utils.protocols import LoggerProtocol
-from .messages import invalid_os, invalid_package_manager, invalid_output_format, error_checking_dependency, timeout_checking_dependency
+from app.utils.output_formatter import OutputFormatter
+from .messages import invalid_os, invalid_package_manager, error_checking_dependency, timeout_checking_dependency
 
 class DependencyCheckerProtocol(Protocol):
     def check_dependency(self, dep: str) -> bool:
@@ -47,24 +47,26 @@ class DependencyValidator:
         return package_manager
 
 class DependencyFormatter:
-    def format_text(self, results: list["DepsCheckResult"]) -> str:
-        formatted_results = []
-        for result in results:
-            dep = result.dependency
-            status = "available" if result.is_available else "not available"
-            formatted_results.append(f"{dep} is {status}")
-        return "\n".join(formatted_results)
-    
-    def format_json(self, results: list["DepsCheckResult"]) -> str:
-        return json.dumps([result.model_dump() for result in results], indent=2)
+    def __init__(self):
+        self.output_formatter = OutputFormatter()
     
     def format_output(self, results: list["DepsCheckResult"], output: str) -> str:
-        if output == "text":
-            return self.format_text(results)
-        elif output == "json":
-            return self.format_json(results)
-        else:
-            raise ValueError(invalid_output_format.format(output=output))
+        if not results:
+            return self.output_formatter.format_output(
+                self.output_formatter.create_success_message("No dependencies to check"), 
+                output
+            )
+        
+        messages = []
+        for result in results:
+            if result.is_available:
+                message = f"{result.dependency} is available"
+                messages.append(self.output_formatter.create_success_message(message, result.model_dump()))
+            else:
+                error = f"{result.dependency} is not available"
+                messages.append(self.output_formatter.create_error_message(error, result.model_dump()))
+        
+        return self.output_formatter.format_output(messages, output)
 
 class DepsCheckResult(BaseModel):
     dependency:str
