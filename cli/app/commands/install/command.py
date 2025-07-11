@@ -32,7 +32,9 @@ def clone(
     dry_run: bool = typer.Option(False, help="Dry run"),
 ):
     """Clone a repository"""
-    config = CloneConfig(
+    try:
+        logger = Logger(verbose=verbose)
+        config = CloneConfig(
         repo=repo,
         branch=branch,
         path=path,
@@ -41,6 +43,9 @@ def clone(
         output=output,
         dry_run=dry_run
     )
-    clone_operation = Clone()
-    result = clone_operation.clone(config)
-    print(clone_operation.format_output(result, output))
+        clone_operation = Clone(logger=logger)
+        result = clone_operation.clone(config)
+        logger.success(result.output)
+    except Exception as e:
+        logger.error(e)
+        raise typer.Exit(1)
