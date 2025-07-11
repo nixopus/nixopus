@@ -23,9 +23,9 @@ def main_install_callback(value: bool):
 
 @install_app.command()
 def clone(
-    repo: str = typer.Option(..., help="The repository to clone"),
-    branch: str = typer.Option(..., help="The branch to clone"),
-    path: str = typer.Option(..., help="The path to clone the repository to"),
+    repo: str = typer.Option("https://github.com/raghavyuva/nixopus", help="The repository to clone"),
+    branch: str = typer.Option("master", help="The branch to clone"),
+    path: str = typer.Option("/etc/nixopus", help="The path to clone the repository to"),
     force: bool = typer.Option(False, help="Force the clone"),
     verbose: bool = typer.Option(False, help="Verbose output"),
     output: str = typer.Option("text", help="Output format, text, json"),
@@ -41,5 +41,6 @@ def clone(
         output=output,
         dry_run=dry_run
     )
-    clone_operation = Clone(config)
-    clone_operation.run()
+    clone_operation = Clone()
+    result = clone_operation.clone(config)
+    print(clone_operation.format_output(result, output))
