@@ -1,6 +1,6 @@
 import typer
 from .version import VersionCommand
-from utils.message import application_version_help
+from app.utils.message import application_version_help
 
 version_app = typer.Typer(
     help=application_version_help,

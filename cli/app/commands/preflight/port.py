@@ -2,17 +2,12 @@ import re, json, socket
 from typing import List, TypedDict, Union, Any, Optional, Protocol
 from pydantic import BaseModel, Field, field_validator
 from .messages import available, not_available, error_checking_port, host_must_be_localhost_or_valid_ip_or_domain
-from utils.logger import Logger
-from utils.lib import ParallelProcessor
+from app.utils.logger import Logger
+from app.utils.protocols import LoggerProtocol
+from app.utils.lib import ParallelProcessor
 
 class PortCheckerProtocol(Protocol):
     def check_port(self, port: int, config: "PortConfig") -> "PortCheckResult":
-        ...
-
-class LoggerProtocol(Protocol):
-    def debug(self, message: str) -> None:
-        ...
-    def error(self, message: str) -> None:
         ...
 
 class PortCheckResult(TypedDict):
