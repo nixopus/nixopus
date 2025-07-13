@@ -1,10 +1,11 @@
-import re, json, socket
+import re, socket
 from typing import List, TypedDict, Union, Any, Optional, Protocol
 from pydantic import BaseModel, Field, field_validator
 from .messages import available, not_available, error_checking_port, host_must_be_localhost_or_valid_ip_or_domain
 from app.utils.logger import Logger
 from app.utils.protocols import LoggerProtocol
 from app.utils.lib import ParallelProcessor
+from app.utils.output_formatter import OutputFormatter
 
 class PortCheckerProtocol(Protocol):
     def check_port(self, port: int, config: "PortConfig") -> "PortCheckResult":
@@ -37,11 +38,20 @@ class PortConfig(BaseModel):
         raise ValueError(host_must_be_localhost_or_valid_ip_or_domain)
 
 class PortFormatter:
+    def __init__(self):
+        self.output_formatter = OutputFormatter()
+    
     def format_output(self, data: Union[str, List[PortCheckResult], Any], output_type: str) -> str:
-        if output_type == "json":
-            return json.dumps(data, indent=4)
-        elif output_type == "text" and isinstance(data, list):
-            return "\n".join([f"Port {item['port']}: {item['status']}" for item in data])
+        if isinstance(data, list):
+            messages = []
+            for item in data:
+                if item.get('is_available', False):
+                    message = f"Port {item['port']}: {item['status']}"
+                    messages.append(self.output_formatter.create_success_message(message, item))
+                else:
+                    error = f"Port {item['port']}: {item['status']}"
+                    messages.append(self.output_formatter.create_error_message(error, item))
+            return self.output_formatter.format_output(messages, output_type)
         else:
             return str(data)
 

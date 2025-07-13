@@ -1,8 +1,11 @@
 from enum import Enum
 import platform
 import subprocess
-from typing import TypeVar, Callable, List, Any
+import os
+import shutil
+from typing import TypeVar, Callable, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from app.utils.message import REMOVED_DIRECTORY_MESSAGE, FAILED_TO_REMOVE_DIRECTORY_MESSAGE
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -103,3 +106,24 @@ class ParallelProcessor:
                         error_result = error_handler(item, e)
                         results.append(error_result)
         return results
+
+class DirectoryManager:
+    @staticmethod
+    def path_exists(path: str) -> bool:
+        return os.path.exists(path)
+    
+    @staticmethod
+    def path_exists_and_not_force(path: str, force: bool) -> bool:
+        return os.path.exists(path) and not force
+    
+    @staticmethod
+    def remove_directory(path: str, logger=None) -> bool:
+        try:
+            shutil.rmtree(path)
+            if logger:
+                logger.info(REMOVED_DIRECTORY_MESSAGE.format(path=path))
+            return True
+        except Exception as e:
+            if logger:
+                logger.error(FAILED_TO_REMOVE_DIRECTORY_MESSAGE.format(path=path, error=e))
+            return False
