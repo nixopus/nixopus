@@ -2,8 +2,8 @@ name: Create Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
@@ -39,19 +39,20 @@ jobs:
           create-summary: 'true'
           pre-release: 'true'
           pre-release-identifier: 'alpha'
-      
+          git-push: 'false'
+
       - name: Update version.txt
         if: ${{ steps.changelog.outputs.skipped == 'false' }}
         run: echo "${{ steps.changelog.outputs.tag }}" > version.txt
       
-      - name: Commit version.txt update
-        if: ${{ steps.changelog.outputs.skipped == 'false' }}
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add version.txt
-          git commit -m "chore(release): update version.txt to ${{ steps.changelog.outputs.tag }}"
-          git push
+      # - name: Commit version.txt update
+      #   if: ${{ steps.changelog.outputs.skipped == 'false' }}
+      #   run: |
+      #     git config user.name 'github-actions[bot]'
+      #     git config user.email 'github-actions[bot]@users.noreply.github.com'
+      #     git add version.txt
+      #     git commit -m "chore(release): update version.txt to ${{ steps.changelog.outputs.tag }}"
+      #     git push
       
       - name: Create Release
         uses: actions/create-release@v1
@@ -64,3 +65,19 @@ jobs:
           body: ${{ steps.changelog.outputs.clean_changelog }}
           draft: false
           prerelease: true 
+      
+      - name: Create Pull Request
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        uses: peter-evans/create-pull-request@v5
+        with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+            commit-message: 'chore(release): update release'
+            title: 'chore(release): update release'
+            body: |
+              This PR updates the release with the latest changes.
+              
+              Generated automatically by the release workflow.
+            branch: 'chore/update-release'
+            delete-branch: true
+            base: 'master'
+  
