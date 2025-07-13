@@ -85,6 +85,7 @@ var (
 	ErrFailedToDecodeRequest                      = errors.New("failed to decode request body")
 	ErrMissingRequiredFields                      = errors.New("missing required fields")
 	ErrUserWithEmailAlreadyExists                 = errors.New("user with email already exists")
+	ErrUserWithUsernameAlreadyExists              = errors.New("user with username already exists")
 	ErrFailedToRegisterUser                       = errors.New("failed to register user")
 	ErrFailedToHashPassword                       = errors.New("failed to hash password")
 	ErrFailedToCreateToken                        = errors.New("failed to create token")

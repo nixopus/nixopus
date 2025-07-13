@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
 import { useWebSocket } from '@/hooks/socket-provider';
 import { useRouter } from 'next/navigation';
 import { useCreateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';

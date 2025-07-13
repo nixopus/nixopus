@@ -20,9 +20,10 @@ type TermSize struct {
 }
 
 type TerminalMessage struct {
-	Type string    `json:"type"`
-	Data string    `json:"data,omitempty"`
-	Size *TermSize `json:"size,omitempty"`
+	TerminalId string    `json:"terminal_id"`
+	Type       string    `json:"type"`
+	Data       string    `json:"data,omitempty"`
+	Size       *TermSize `json:"size,omitempty"`
 }
 
 type Terminal struct {
@@ -38,9 +39,11 @@ type Terminal struct {
 	client  *goph.Client
 	session *ssh.Session
 	stdin   io.WriteCloser
+
+	TerminalId string
 }
 
-func NewTerminal(conn *websocket.Conn, log *logger.Logger) (*Terminal, error) {
+func NewTerminal(conn *websocket.Conn, log *logger.Logger, terminalId string) (*Terminal, error) {
 	ssh_client := sshpkg.NewSSH()
 	terminal := &Terminal{
 		ssh:        ssh_client,
@@ -49,6 +52,7 @@ func NewTerminal(conn *websocket.Conn, log *logger.Logger) (*Terminal, error) {
 		outputBuf:  make([]byte, 0, 4096),
 		bufferTime: 10 * time.Millisecond,
 		log:        *log,
+		TerminalId: terminalId,
 	}
 
 	terminal.bufferTick = time.NewTicker(terminal.bufferTime)
@@ -163,8 +167,13 @@ func (t *Terminal) readOutput(r io.Reader) {
 				t.outputBuf = append(t.outputBuf, buf[:n]...)
 			}()
 
+			msg := TerminalMessage{
+				TerminalId: t.TerminalId,
+				Type:       "stdout",
+				Data:       string(buf[:n]),
+			}
 			t.wsLock.Lock()
-			err = t.conn.WriteMessage(websocket.TextMessage, buf[:n])
+			err = t.conn.WriteJSON(msg)
 			t.wsLock.Unlock()
 
 			if err != nil {
@@ -194,19 +203,15 @@ func (t *Terminal) flushBuffer() {
 	defer t.wsLock.Unlock()
 
 	if len(t.outputBuf) > 0 {
-		err := t.conn.WriteJSON(map[string]interface{}{
-			"data": map[string]interface{}{
-				"output_type": "stdout",
-				"content":     string(t.outputBuf),
-				"timestamp":   time.Now().Unix(),
-			},
-			"topic": "terminal",
-		})
-
+		msg := TerminalMessage{
+			TerminalId: t.TerminalId,
+			Type:       "stdout",
+			Data:       string(t.outputBuf),
+		}
+		err := t.conn.WriteJSON(msg)
 		if err != nil {
 			t.log.Log(logger.Error, "Error writing websocket message", err.Error())
 		}
-
 		t.outputBuf = t.outputBuf[:0]
 	}
 }

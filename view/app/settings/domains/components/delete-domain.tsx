@@ -26,7 +26,7 @@ const DeleteDomain = ({ open, setOpen, id }: DeleteDomainProps) => {
   const handleDelete = async () => {
     setIsLoading(true);
     try {
-      await deleteDomain(id);
+      await deleteDomain({ id });
       toast.success(t('settings.domains.delete.success'));
     } catch (error) {
       toast.error(t('settings.domains.delete.error'));

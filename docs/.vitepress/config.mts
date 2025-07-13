@@ -98,6 +98,14 @@ export default withMermaid(
                 { text: 'Fixtures', link: '/contributing/fixtures.md' }
               ]
             },
+            {
+              text: 'Database',
+              items: [
+                { text: 'Migrations Guide', link: '/migrations/index.md' },
+                { text: 'Quick Reference', link: '/migrations/quick-reference.md' },
+                { text: 'Templates', link: '/migrations/templates.md' }
+              ]
+            },
             { text: "Code of Conduct", link: "/code-of-conduct/index.md" },
             { text: "Change Log", link: "https://github.com/raghavyuva/nixopus/releases" },
             { text: "License", link: "/license/index.md" },

@@ -22,7 +22,8 @@ export const useTerminal = (
   isTerminalOpen: boolean, 
   width: number, 
   height: number,
-  allowInput: boolean = true
+  allowInput: boolean = true,
+  terminalId: string = 'terminal_id'
 ) => {
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const fitAddonRef = useRef<any | null>(null);
@@ -39,20 +40,14 @@ export const useTerminal = (
     if (resizeTimeoutRef.current) {
       clearTimeout(resizeTimeoutRef.current);
     }
-  }, [terminalInstance]);
+  }, [terminalInstance, terminalId]);
 
   useEffect(() => {
     if (isStopped && terminalInstance) {
-      sendJsonMessage({ action: 'terminal', data: CTRL_C });
+      sendJsonMessage({ action: 'terminal', data: { value: CTRL_C, terminalId } });
       setIsStopped(false);
     }
-  }, [isStopped, sendJsonMessage, setIsStopped, terminalInstance]);
-
-  useEffect(() => {
-    if (!isTerminalOpen) {
-      destroyTerminal();
-    }
-  }, [isTerminalOpen, destroyTerminal]);
+  }, [isStopped, sendJsonMessage, setIsStopped, terminalInstance, terminalId]);
 
   useEffect(() => {
     if (!message || !terminalInstance) return;
@@ -61,23 +56,27 @@ export const useTerminal = (
       const parsedMessage =
         typeof message === 'string' && message.startsWith('{') ? JSON.parse(message) : message;
 
+      if (parsedMessage.terminal_id !== terminalId) {
+        console.log('Message is not for this terminal session');
+        return;
+      }
+
       if (parsedMessage.action === 'error') {
         console.error('Terminal error:', parsedMessage.data);
         return;
       }
 
-      if (parsedMessage.data && parsedMessage.data.output_type) {
-        const { output_type, content } = parsedMessage.data;
-        if (output_type === OutputType.EXIT) {
+      if (parsedMessage.type) {
+        if (parsedMessage.type === OutputType.EXIT) {
           destroyTerminal();
-        } else {
-          terminalInstance.write(content);
+        } else if (parsedMessage.data) {
+          terminalInstance.write(parsedMessage.data);
         }
       }
     } catch (error) {
       console.error('Error processing WebSocket message:', error);
     }
-  }, [message, terminalInstance, destroyTerminal]);
+  }, [message, terminalInstance, destroyTerminal, terminalId]);
 
   const initializeTerminal = useCallback(async () => {
     if (!terminalRef.current || terminalInstance || !isReady) return;
@@ -133,14 +132,14 @@ export const useTerminal = (
         terminalRef.current.innerHTML = '';
         term.open(terminalRef.current);
         fitAddon.activate(term);
-        
+
         if (allowInput) {
           sendJsonMessage({
             action: 'terminal',
-            data: '\r'
+            data: { value: '\r', terminalId }
           });
         }
-        
+
         requestAnimationFrame(() => {
           fitAddon.fit();
           const dimensions = fitAddon.proposeDimensions();
@@ -149,7 +148,8 @@ export const useTerminal = (
               action: 'terminal_resize',
               data: {
                 cols: dimensions.cols,
-                rows: dimensions.rows
+                rows: dimensions.rows,
+                terminalId
               }
             });
           }
@@ -159,7 +159,7 @@ export const useTerminal = (
           term.onData((data) => {
             sendJsonMessage({
               action: 'terminal',
-              data
+              data: { value: data, terminalId }
             });
           });
         }
@@ -169,7 +169,8 @@ export const useTerminal = (
             action: 'terminal_resize',
             data: {
               cols: size.cols,
-              rows: size.rows
+              rows: size.rows,
+              terminalId
             }
           });
         });
@@ -179,13 +180,7 @@ export const useTerminal = (
     } catch (error) {
       console.error('Error initializing terminal:', error);
     }
-  }, [sendJsonMessage, isReady, terminalRef, terminalInstance, allowInput]);
-
-  useEffect(() => {
-    return () => {
-      destroyTerminal();
-    };
-  }, [destroyTerminal]);
+  }, [sendJsonMessage, isReady, terminalRef, terminalInstance, allowInput, terminalId]);
 
   return {
     terminalRef,

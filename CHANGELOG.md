@@ -1,4 +1,4 @@
-# [0.1.0-alpha.10](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.9...v0.1.0-alpha.10) (2025-06-27)
+# [0.1.0-alpha.10](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.9...v0.1.0-alpha.10) (2025-06-30)
 
 
 ### Bug Fixes
@@ -6,6 +6,10 @@
 * add permissions for dashboard, and terminal features, wrapped under rbac guard' ([69c37c1](https://github.com/raghavyuva/nixopus/commit/69c37c138af965292041fe84402cc75d62ee51e1))
 * changelog push to pull request ([cc35929](https://github.com/raghavyuva/nixopus/commit/cc3592943fe609b0a0eb9a2505c46a8746a028e7))
 * command chaining in contributing docs ([7799d4d](https://github.com/raghavyuva/nixopus/commit/7799d4d02569b36346a051fc90f3fb3e0cc78020))
+* **docs:** fix incorrect method display, correct extraction logic, and update VitePress sidebar link ([#220](https://github.com/raghavyuva/nixopus/issues/220)) ([2c5d490](https://github.com/raghavyuva/nixopus/commit/2c5d490217a8bc50f182dc954964bb2368e6b693))
+* **docs:** preview open API docs in documentation ([#224](https://github.com/raghavyuva/nixopus/issues/224)) ([24d196c](https://github.com/raghavyuva/nixopus/commit/24d196ca706278d47101114918da90ec3949ea23))
+* notification feature broken due to rbac guard implementation ([be1c1f8](https://github.com/raghavyuva/nixopus/commit/be1c1f8480b5fb09c999567e3aaf64a86bffeba3))
+* remove fallback to access denied component when something is not passed to rbac related guard as props ([c1b6ad4](https://github.com/raghavyuva/nixopus/commit/c1b6ad426ccf7608583765c117848b23d349faa0))
 * remove macos related inconsistency in dev env setup action file ([fb812af](https://github.com/raghavyuva/nixopus/commit/fb812affbf12f02e879b5b02b8681428147e1df0))
 * update changelog workflow to include only master branch push ([b0e38dc](https://github.com/raghavyuva/nixopus/commit/b0e38dccc18de00301abcc6b87400deeee0731c6))
 * update workflows to be more specific on the events thus by making better use of actions' ([a1a144b](https://github.com/raghavyuva/nixopus/commit/a1a144b71d363f818868474e89eba3673a866a33))
@@ -20,6 +24,7 @@
 
 ### Reverts
 
+* Revert "fix(docs): fix incorrect method display, correct extraction logic, an…" (#223) ([4249422](https://github.com/raghavyuva/nixopus/commit/4249422b64a0e22945f50b5e64e1e0471c5ffe4f)), closes [#223](https://github.com/raghavyuva/nixopus/issues/223)
 * temporary changes to install branch ([e4b6759](https://github.com/raghavyuva/nixopus/commit/e4b6759b1b58a5993c33410e839a71be319054cf))
 
 

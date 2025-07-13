@@ -12,3 +12,4 @@ docs/.vitepress/cache
 .env.staging
 !api/.env.sample
 **.log
+.vscode

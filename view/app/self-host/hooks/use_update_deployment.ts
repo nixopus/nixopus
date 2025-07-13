@@ -42,7 +42,7 @@ function useUpdateDeployment({
   const [updateDeployment, { isLoading }] = useUpdateDeploymentMutation();
   const router = useRouter();
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const { data: domains } = useGetAllDomainsQuery(activeOrg?.id);
+  const { data: domains } = useGetAllDomainsQuery();
 
   const deploymentFormSchema = z.object({
     name: z

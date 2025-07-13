@@ -244,6 +244,8 @@ func (router *Router) Routes() {
 	})
 	router.ContainerRoutes(containerGroup, containerController)
 
+	log.Printf("Server starting on port %s", PORT)
+	log.Printf("Swagger UI available at: http://localhost:%s/swagger/", PORT)
 	server.Run()
 }
 

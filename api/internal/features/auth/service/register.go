@@ -29,6 +29,11 @@ func (c *AuthService) Register(registrationRequest types.RegisterRequest, userTy
 		return types.AuthResponse{}, types.ErrUserWithEmailAlreadyExists
 	}
 
+	if dbUser, err := c.storage.FindUserByUsername(registrationRequest.Username); err == nil && dbUser.ID != uuid.Nil {
+		c.logger.Log(logger.Error, types.ErrUserWithUsernameAlreadyExists.Error(), "")
+		return types.AuthResponse{}, types.ErrUserWithUsernameAlreadyExists
+	}
+
 	hashedPassword, err := utils.HashPassword(registrationRequest.Password)
 	if err != nil {
 		c.logger.Log(logger.Error, types.ErrFailedToHashPassword.Error(), err.Error())
