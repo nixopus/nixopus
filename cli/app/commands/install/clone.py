@@ -29,7 +29,9 @@ from .messages import (
     invalid_path,
     invalid_repo,
     prerequisites_validation_failed,
-    failed_to_prepare_target_directory
+    failed_to_prepare_target_directory,
+    unknown_error,
+    default_branch
 )
 
 class GitCloneProtocol(Protocol):
@@ -54,7 +56,7 @@ class CloneFormatter:
             message = successfully_cloned.format(repo=result.repo, path=result.path)
             output_message = self.output_formatter.create_success_message(message, result.model_dump())
         else:
-            error = result.error or "Unknown error"
+            error = result.error or unknown_error
             output_message = self.output_formatter.create_error_message(error, result.model_dump())
         
         return self.output_formatter.format_output(output_message, output)
@@ -67,7 +69,7 @@ class CloneFormatter:
         output.append(dry_run_command_would_be_executed)
         output.append(dry_run_command.format(command=' '.join(cmd)))
         output.append(dry_run_repository.format(repo=config.repo))
-        output.append(dry_run_branch.format(branch=config.branch or "default"))
+        output.append(dry_run_branch.format(branch=config.branch or default_branch))
         output.append(dry_run_target_path.format(path=config.path))
         output.append(dry_run_force_mode.format(force=config.force))
         

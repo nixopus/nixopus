@@ -3,7 +3,8 @@ import platform
 import subprocess
 import os
 import shutil
-from typing import TypeVar, Callable, List
+import stat
+from typing import TypeVar, Callable, List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from app.utils.message import REMOVED_DIRECTORY_MESSAGE, FAILED_TO_REMOVE_DIRECTORY_MESSAGE
 
@@ -127,3 +128,76 @@ class DirectoryManager:
             if logger:
                 logger.error(FAILED_TO_REMOVE_DIRECTORY_MESSAGE.format(path=path, error=e))
             return False
+
+class FileManager:
+    @staticmethod
+    def set_permissions(file_path: str, mode: int, logger=None) -> Tuple[bool, Optional[str]]:
+        try:
+            if logger:
+                logger.debug(f"Setting permissions {oct(mode)} on {file_path}")
+            
+            os.chmod(file_path, mode)
+            
+            if logger:
+                logger.debug("File permissions set successfully")
+            return True, None
+        except Exception as e:
+            error_msg = f"Failed to set permissions on {file_path}: {e}"
+            if logger:
+                logger.error(error_msg)
+            return False, error_msg
+    
+    @staticmethod
+    def create_directory(path: str, mode: int = stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR, logger=None) -> Tuple[bool, Optional[str]]:
+        try:
+            if not os.path.exists(path):
+                os.makedirs(path, mode=mode)
+                if logger:
+                    logger.debug(f"Created directory: {path}")
+            return True, None
+        except Exception as e:
+            error_msg = f"Failed to create directory {path}: {e}"
+            if logger:
+                logger.error(error_msg)
+            return False, error_msg
+    
+    @staticmethod
+    def append_to_file(file_path: str, content: str, mode: int = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH, logger=None) -> Tuple[bool, Optional[str]]:
+        try:
+            with open(file_path, 'a') as f:
+                f.write(f"\n{content}\n")
+            
+            FileManager.set_permissions(file_path, mode, logger)
+            
+            if logger:
+                logger.debug(f"Content appended to {file_path}")
+            return True, None
+        except Exception as e:
+            error_msg = f"Failed to append to {file_path}: {e}"
+            if logger:
+                logger.error(error_msg)
+            return False, error_msg
+    
+    @staticmethod
+    def read_file_content(file_path: str, logger=None) -> Tuple[bool, Optional[str], Optional[str]]:
+        try:
+            with open(file_path, 'r') as f:
+                content = f.read().strip()
+            return True, content, None
+        except Exception as e:
+            error_msg = f"Failed to read {file_path}: {e}"
+            if logger:
+                logger.error(error_msg)
+            return False, None, error_msg
+    
+    @staticmethod
+    def expand_user_path(path: str) -> str:
+        return os.path.expanduser(path)
+    
+    @staticmethod
+    def get_directory_path(file_path: str) -> str:
+        return os.path.dirname(file_path)
+    
+    @staticmethod
+    def get_public_key_path(private_key_path: str) -> str:
+        return f"{private_key_path}.pub"
