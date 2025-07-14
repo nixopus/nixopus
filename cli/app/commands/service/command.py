@@ -1,5 +1,9 @@
 import typer
 from app.utils.logger import Logger
+from .up import Up, UpConfig
+from .down import Down, DownConfig
+from .ps import Ps, PsConfig
+from .restart import Restart, RestartConfig
 
 service_app = typer.Typer(
     help="Manage Nixopus services"
@@ -7,103 +11,142 @@ service_app = typer.Typer(
 
 @service_app.command()
 def up(
-    name: str = typer.Option("all", "--name", "-n", help="The name of the service"),
+    name: str = typer.Option("all", "--name", "-n", help="The name of the service to start, defaults to all"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
-    dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
-    detach: bool = typer.Option(True, "--detach", "-d", help="Detach from the service and run in the background"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
+    detach: bool = typer.Option(False, "--detach", "-d", help="Detach from the service and run in the background"),
     env_file: str = typer.Option(None, "--env-file", "-e", help="Path to the environment file"),
+    compose_file: str = typer.Option(None, "--compose-file", "-f", help="Path to the compose file"),
 ):
     """Start Nixopus services"""
+    logger = Logger(verbose=verbose)
+    
     try:
-        logger = Logger(verbose=verbose)
-        logger.info(f"Starting service: {name}")
-        if dry_run:
-            logger.info("Dry run - would start service")
+        config = UpConfig(
+            name=name,
+            detach=detach,
+            env_file=env_file,
+            verbose=verbose,
+            output=output,
+            dry_run=dry_run,
+            compose_file=compose_file
+        )
+        
+        up_service = Up(logger=logger)
+        result = up_service.up(config)
+        
+        if result.success:
+            logger.success(up_service.format_output(result, output))
         else:
-            logger.success(f"Service {name} started successfully")
+            logger.error(result.error)
+            raise typer.Exit(1)
+            
     except Exception as e:
-        logger.error(e)
+        logger.error(str(e))
         raise typer.Exit(1)
 
 @service_app.command()
 def down(
-    name: str = typer.Option("all", "--name", "-n", help="The name of the service"),
+    name: str = typer.Option("all", "--name", "-n", help="The name of the service to stop, defaults to all"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
-    dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
+    env_file: str = typer.Option(None, "--env-file", "-e", help="Path to the environment file"),
+    compose_file: str = typer.Option(None, "--compose-file", "-f", help="Path to the compose file"),
 ):
     """Stop Nixopus services"""
-    try:
-        logger = Logger(verbose=verbose)
-        logger.info(f"Stopping service: {name}")
-        if dry_run:
-            logger.info("Dry run - would stop service")
+    logger = Logger(verbose=verbose)
+    
+    try:        
+        config = DownConfig(
+            name=name,
+            env_file=env_file,
+            verbose=verbose,
+            output=output,
+            dry_run=dry_run,
+            compose_file=compose_file
+        )
+        
+        down_service = Down(logger=logger)
+        result = down_service.down(config)
+        
+        if result.success:
+            logger.success(down_service.format_output(result, output))
         else:
-            logger.success(f"Service {name} stopped successfully")
+            logger.error(result.error)
+            raise typer.Exit(1)
+            
     except Exception as e:
-        logger.error(e)
+        logger.error(str(e))
         raise typer.Exit(1)
 
 @service_app.command()
 def ps(
-    all: bool = typer.Option(False, "--all", "-a", help="Show all services"),
+    name: str = typer.Option("all", "--name", "-n", help="The name of the service to show, defaults to all"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
+    env_file: str = typer.Option(None, "--env-file", "-e", help="Path to the environment file"),
+    compose_file: str = typer.Option(None, "--compose-file", "-f", help="Path to the compose file"),
 ):
     """Show status of Nixopus services"""
+    logger = Logger(verbose=verbose)
+    
     try:
-        logger = Logger(verbose=verbose)
-        logger.info(f"Checking status of services")
-        if dry_run:
-            logger.info("Dry run - would check service status")
+        config = PsConfig(
+            name=name,
+            env_file=env_file,
+            verbose=verbose,
+            output=output,
+            dry_run=dry_run,
+            compose_file=compose_file
+        )
+        
+        ps_service = Ps(logger=logger)
+        result = ps_service.ps(config)
+        
+        if result.success:
+            logger.success(ps_service.format_output(result, output))
         else:
-            logger.success(f"Services status retrieved")
+            logger.error(result.error)
+            raise typer.Exit(1)
+            
     except Exception as e:
-        logger.error(e)
-        raise typer.Exit(1)
-
-@service_app.command()
-def pull(
-    name: str = typer.Option("all", "--name", "-n", help="The name of the service"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
-    output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
-    dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
-    version: str = typer.Option(None, "--version", "-v", help="Version to pull"),
-    force: bool = typer.Option(False, "--force", "-f", help="Force pull even if the image already exists"),
-):
-    """Pull latest images for Nixopus services"""
-    try:
-        logger = Logger(verbose=verbose)
-        logger.info(f"Pulling images for service: {name}")
-        if dry_run:
-            logger.info("Dry run - would pull images")
-        elif force:
-            logger.info("Force pull - would pull images even if the image already exists")
-        else:
-            logger.success(f"Images for service {name} pulled successfully")
-            if version:
-                logger.info(f"Version {version} pulled successfully")
-    except Exception as e:
-        logger.error(e)
+        logger.error(str(e))
         raise typer.Exit(1)
 
 @service_app.command()
 def restart(
-    name: str = typer.Option("all", "--name", "-n", help="The name of the service"),
+    name: str = typer.Option("all", "--name", "-n", help="The name of the service to restart, defaults to all"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
+    env_file: str = typer.Option(None, "--env-file", "-e", help="Path to the environment file"),
+    compose_file: str = typer.Option(None, "--compose-file", "-f", help="Path to the compose file"),
 ):
     """Restart Nixopus services"""
+    logger = Logger(verbose=verbose)
+    
     try:
-        logger = Logger(verbose=verbose)
-        logger.info(f"Restarting service: {name}")
-        if dry_run:
-            logger.info("Dry run - would restart service")
+        config = RestartConfig(
+            name=name,
+            env_file=env_file,
+            verbose=verbose,
+            output=output,
+            dry_run=dry_run,
+            compose_file=compose_file
+        )
+        
+        restart_service = Restart(logger=logger)
+        result = restart_service.restart(config)
+        
+        if result.success:
+            logger.success(restart_service.format_output(result, output))
         else:
-            logger.success(f"Service {name} restarted successfully")
+            logger.error(result.error)
+            raise typer.Exit(1)
+            
     except Exception as e:
-        logger.error(e)
+        logger.error(str(e))
         raise typer.Exit(1)
