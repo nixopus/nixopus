@@ -25,7 +25,7 @@ class TestSSHKeyGeneration(unittest.TestCase):
         cmd = SSHCommandBuilder.build_ssh_keygen_command(
             self.test_key_path, "ed25519", 256
         )
-        expected = ["ssh-keygen", "-t", "ed25519", "-f", self.tet_key_path, "-N", ""]
+        expected = ["ssh-keygen", "-t", "ed25519", "-f", self.test_key_path, "-N", ""]
         self.assertEqual(cmd, expected)
     
     def test_ssh_command_builder_ecdsa(self):
