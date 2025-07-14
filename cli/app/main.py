@@ -4,6 +4,8 @@ from app.commands.preflight.command import preflight_app
 from app.commands.test.command import test_app
 from app.commands.install.command import install_app
 from app.commands.service.command import service_app
+from app.commands.conf.command import conf_app
+from app.commands.proxy.command import proxy_app
 from app.utils.message import application_name, application_description, application_add_completion, application_version_help
 
 app = typer.Typer(
@@ -24,11 +26,13 @@ def main(
 ):
     pass
 
-app.add_typer(test_app, name="test")
 app.add_typer(preflight_app, name="preflight")
-app.add_typer(version_app, name="version")
-app.add_typer(install_app, name="install")
+app.add_typer(conf_app, name="conf")
 app.add_typer(service_app, name="service")
+app.add_typer(proxy_app, name="proxy")
+app.add_typer(install_app, name="install")
+app.add_typer(version_app, name="version")
+app.add_typer(test_app, name="test")
 
 if __name__ == "__main__":
     app()
