@@ -100,11 +100,8 @@ deps:
   python3-venv: { version: "" }
 
 nixopus-config-dir: /etc/nixopus
-
+compose-file-path: docker-compose.yml
 clone:
   repo: "https://github.com/raghavyuva/nixopus"
   branch: "master"
   source-path: source
-
-services:
-  compose-file-path: docker-compose.yml
