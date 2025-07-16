@@ -66,6 +66,11 @@ services:
       CADDY_PORTS: "2019:2019,80:80,443:443"
       API_DOMAIN: ${API_DOMAIN:-}
       VIEW_DOMAIN: ${VIEW_DOMAIN:-}
+      BASE_URL: ${BASE_URL:-}
+      PROXY_PORT: ${PROXY_PORT:-2019}
+      CONFIG_ENDPOINT: ${CONFIG_ENDPOINT:-/config}
+      LOAD_ENDPOINT: ${LOAD_ENDPOINT:-/load}
+      STOP_ENDPOINT: ${STOP_ENDPOINT:-/stop}
       CADDY_COMMAND: [
         "caddy",
         "run",

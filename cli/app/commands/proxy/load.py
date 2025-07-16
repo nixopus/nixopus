@@ -3,6 +3,7 @@ from typing import Optional, Protocol
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.utils.config import Config, PROXY_PORT
 from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
@@ -21,14 +22,17 @@ from .messages import (
     proxy_initialized_successfully,
 )
 
+config = Config()
+proxy_port = config.get_yaml_value(PROXY_PORT)
+
 
 class CaddyServiceProtocol(Protocol):
-    def load_config(self, config_file: str, port: int = 2019) -> tuple[bool, str]: ...
+    def load_config(self, config_file: str, port: int = proxy_port) -> tuple[bool, str]: ...
 
 
 class CaddyCommandBuilder(BaseCaddyCommandBuilder):
     @staticmethod
-    def build_load_command(config_file: str, port: int = 2019) -> list[str]:
+    def build_load_command(config_file: str, port: int = proxy_port) -> list[str]:
         return BaseCaddyCommandBuilder.build_load_command(config_file, port)
 
 
@@ -52,7 +56,7 @@ class CaddyService(BaseCaddyService):
     def __init__(self, logger: LoggerProtocol):
         super().__init__(logger)
 
-    def load_config_file(self, config_file: str, port: int = 2019) -> tuple[bool, str]:
+    def load_config_file(self, config_file: str, port: int = proxy_port) -> tuple[bool, str]:
         return self.load_config(config_file, port)
 
 

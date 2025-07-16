@@ -1,5 +1,6 @@
 import typer
 
+from app.utils.config import Config, PROXY_PORT
 from app.utils.logger import Logger
 
 from .load import Load, LoadConfig
@@ -11,10 +12,12 @@ proxy_app = typer.Typer(
     help="Manage Nixopus proxy (Caddy) configuration",
 )
 
+config = Config()
+proxy_port = config.get_yaml_value(PROXY_PORT)
 
 @proxy_app.command()
 def load(
-    proxy_port: int = typer.Option(2019, "--proxy-port", "-p", help="Caddy admin port"),
+    proxy_port: int = typer.Option(proxy_port, "--proxy-port", "-p", help="Caddy admin port"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format: text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
@@ -42,7 +45,7 @@ def load(
 
 @proxy_app.command()
 def status(
-    proxy_port: int = typer.Option(2019, "--proxy-port", "-p", help="Caddy admin port"),
+    proxy_port: int = typer.Option(proxy_port, "--proxy-port", "-p", help="Caddy admin port"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format: text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
@@ -69,7 +72,7 @@ def status(
 
 @proxy_app.command()
 def stop(
-    proxy_port: int = typer.Option(2019, "--proxy-port", "-p", help="Caddy admin port"),
+    proxy_port: int = typer.Option(proxy_port, "--proxy-port", "-p", help="Caddy admin port"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format: text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),

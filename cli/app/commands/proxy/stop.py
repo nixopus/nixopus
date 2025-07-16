@@ -2,6 +2,7 @@ from typing import Protocol
 
 from pydantic import BaseModel
 
+from app.utils.config import Config, PROXY_PORT
 from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
@@ -18,14 +19,17 @@ from .messages import (
     proxy_stopped_successfully,
 )
 
+config = Config()
+proxy_port = config.get_yaml_value(PROXY_PORT)
+
 
 class CaddyServiceProtocol(Protocol):
-    def stop_proxy(self, port: int = 2019) -> tuple[bool, str]: ...
+    def stop_proxy(self, port: int = proxy_port) -> tuple[bool, str]: ...
 
 
 class CaddyCommandBuilder(BaseCaddyCommandBuilder):
     @staticmethod
-    def build_stop_command(port: int = 2019) -> list[str]:
+    def build_stop_command(port: int = proxy_port) -> list[str]:
         return BaseCaddyCommandBuilder.build_stop_command(port)
 
 
@@ -48,7 +52,7 @@ class CaddyService(BaseCaddyService):
     def __init__(self, logger: LoggerProtocol):
         super().__init__(logger)
 
-    def stop_caddy(self, port: int = 2019) -> tuple[bool, str]:
+    def stop_caddy(self, port: int = proxy_port) -> tuple[bool, str]:
         return self.stop_proxy(port)
 
 
