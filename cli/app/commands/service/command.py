@@ -1,5 +1,6 @@
 import typer
 
+from app.utils.config import Config, DEFAULT_COMPOSE_FILE, NIXOPUS_CONFIG_DIR
 from app.utils.logger import Logger
 
 from .down import Down, DownConfig
@@ -9,6 +10,10 @@ from .up import Up, UpConfig
 
 service_app = typer.Typer(help="Manage Nixopus services")
 
+config = Config()
+nixopus_config_dir = config.get_yaml_value(NIXOPUS_CONFIG_DIR)
+compose_file = config.get_yaml_value(DEFAULT_COMPOSE_FILE)
+compose_file_path = nixopus_config_dir + "/" + compose_file
 
 @service_app.command()
 def up(
@@ -18,7 +23,7 @@ def up(
     dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
     detach: bool = typer.Option(False, "--detach", "-d", help="Detach from the service and run in the background"),
     env_file: str = typer.Option(None, "--env-file", "-e", help="Path to the environment file"),
-    compose_file: str = typer.Option(None, "--compose-file", "-f", help="Path to the compose file"),
+    compose_file: str = typer.Option(compose_file_path, "--compose-file", "-f", help="Path to the compose file"),
 ):
     """Start Nixopus services"""
     logger = Logger(verbose=verbose)
@@ -55,7 +60,7 @@ def down(
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
     env_file: str = typer.Option(None, "--env-file", "-e", help="Path to the environment file"),
-    compose_file: str = typer.Option(None, "--compose-file", "-f", help="Path to the compose file"),
+    compose_file: str = typer.Option(compose_file_path, "--compose-file", "-f", help="Path to the compose file"),
 ):
     """Stop Nixopus services"""
     logger = Logger(verbose=verbose)
@@ -86,7 +91,7 @@ def ps(
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
     env_file: str = typer.Option(None, "--env-file", "-e", help="Path to the environment file"),
-    compose_file: str = typer.Option(None, "--compose-file", "-f", help="Path to the compose file"),
+    compose_file: str = typer.Option(compose_file_path, "--compose-file", "-f", help="Path to the compose file"),
 ):
     """Show status of Nixopus services"""
     logger = Logger(verbose=verbose)
@@ -117,7 +122,7 @@ def restart(
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
     env_file: str = typer.Option(None, "--env-file", "-e", help="Path to the environment file"),
-    compose_file: str = typer.Option(None, "--compose-file", "-f", help="Path to the compose file"),
+    compose_file: str = typer.Option(compose_file_path, "--compose-file", "-f", help="Path to the compose file"),
 ):
     """Restart Nixopus services"""
     logger = Logger(verbose=verbose)

@@ -1,14 +1,15 @@
 import typer
 
 from app.utils.logger import Logger
-from app.utils.config import Config, DEFAULT_REPO, DEFAULT_BRANCH, DEFAULT_PATH
+from app.utils.config import Config, DEFAULT_REPO, DEFAULT_BRANCH, DEFAULT_PATH, NIXOPUS_CONFIG_DIR
 
 from .clone import Clone, CloneConfig
 
 config = Config()
+nixopus_config_dir = config.get_yaml_value(NIXOPUS_CONFIG_DIR)
 repo = config.get_yaml_value(DEFAULT_REPO)
 branch = config.get_yaml_value(DEFAULT_BRANCH)
-path = config.get_yaml_value(DEFAULT_PATH)
+path = nixopus_config_dir + "/" + config.get_yaml_value(DEFAULT_PATH)
 
 clone_app = typer.Typer(help="Clone a repository", invoke_without_command=True)
 

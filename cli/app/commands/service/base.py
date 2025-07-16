@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
+from .messages import service_action_info, service_action_success, service_action_failed, service_action_unexpected_error, environment_file_not_found, compose_file_not_found
 
 TConfig = TypeVar("TConfig", bound=BaseModel)
 TResult = TypeVar("TResult", bound=BaseModel)
@@ -96,28 +97,21 @@ class BaseDockerService:
         self.logger = logger
         self.action = action
 
-    def _past_tense(self):
-        if self.action == "up":
-            return "upped"
-        elif self.action == "down":
-            return "downed"
-        return f"{self.action}ed"
-
     def execute_services(
         self, name: str = "all", env_file: str = None, compose_file: str = None, **kwargs
     ) -> tuple[bool, str]:
         cmd = BaseDockerCommandBuilder.build_command(self.action, name, env_file, compose_file, **kwargs)
 
         try:
-            self.logger.info(f"{self.action.capitalize()}ing services: {name}")
+            self.logger.info(service_action_info.format(action=self.action, name=name))
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            self.logger.success(f"Services {self._past_tense()} successfully: {name}")
+            self.logger.success(service_action_success.format(action=self.action, name=name))
             return True, None
         except subprocess.CalledProcessError as e:
-            self.logger.error(f"Service {self.action} failed: {e.stderr}")
+            self.logger.error(service_action_failed.format(action=self.action, error=e.stderr))
             return False, e.stderr
         except Exception as e:
-            self.logger.error(f"Unexpected error during {self.action}: {e}")
+            self.logger.error(service_action_unexpected_error.format(action=self.action, error=e))
             return False, str(e)
 
 
@@ -138,7 +132,7 @@ class BaseConfig(BaseModel):
         if not stripped_env_file:
             return None
         if not os.path.exists(stripped_env_file):
-            raise ValueError(f"Environment file not found: {stripped_env_file}")
+            raise ValueError(environment_file_not_found.format(path=stripped_env_file))
         return stripped_env_file
 
     @field_validator("compose_file")
@@ -150,7 +144,7 @@ class BaseConfig(BaseModel):
         if not stripped_compose_file:
             return None
         if not os.path.exists(stripped_compose_file):
-            raise ValueError(f"Compose file not found: {stripped_compose_file}")
+            raise ValueError(compose_file_not_found.format(path=stripped_compose_file))
         return stripped_compose_file
 
 
