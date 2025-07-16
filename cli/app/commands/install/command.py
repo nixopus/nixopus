@@ -2,7 +2,6 @@ import typer
 
 from app.utils.logger import Logger
 
-from .clone import Clone, CloneConfig
 from .run import Install
 from .ssh import SSH, SSHConfig
 
@@ -22,29 +21,6 @@ def main_install_callback(value: bool):
         install = Install()
         install.run()
         raise typer.Exit()
-
-
-@install_app.command()
-def clone(
-    repo: str = typer.Option("https://github.com/raghavyuva/nixopus", "--repo", "-r", help="The repository to clone"),
-    branch: str = typer.Option("master", "--branch", "-b", help="The branch to clone"),
-    path: str = typer.Option("/etc/nixopus", "--path", "-p", help="The path to clone the repository to"),
-    force: bool = typer.Option(False, "--force", "-f", help="Force the clone"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
-    output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
-    dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
-):
-    """Clone a repository"""
-    try:
-        logger = Logger(verbose=verbose)
-        config = CloneConfig(repo=repo, branch=branch, path=path, force=force, verbose=verbose, output=output, dry_run=dry_run)
-        clone_operation = Clone(logger=logger)
-        result = clone_operation.clone(config)
-        logger.success(result.output)
-    except Exception as e:
-        logger.error(e)
-        raise typer.Exit(1)
-
 
 def ssh(
     path: str = typer.Option("~/.ssh/nixopus_ed25519", "--path", "-p", help="The SSH key path to generate"),

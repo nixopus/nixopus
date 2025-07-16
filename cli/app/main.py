@@ -1,5 +1,6 @@
 import typer
 
+from app.commands.clone.command import clone_app
 from app.commands.conf.command import conf_app
 from app.commands.install.command import install_app
 from app.commands.preflight.command import preflight_app
@@ -30,6 +31,7 @@ def main(
 
 
 app.add_typer(preflight_app, name="preflight")
+app.add_typer(clone_app, name="clone")
 app.add_typer(conf_app, name="conf")
 app.add_typer(service_app, name="service")
 app.add_typer(proxy_app, name="proxy")

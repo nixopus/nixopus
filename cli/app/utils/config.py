@@ -45,3 +45,6 @@ def expand_env_placeholders(value: str) -> str:
 
 VIEW_ENV_FILE = "services.view.env.VIEW_ENV_FILE"
 API_ENV_FILE = "services.api.env.API_ENV_FILE"
+DEFAULT_REPO = "clone.repo"
+DEFAULT_BRANCH = "clone.branch"
+DEFAULT_PATH = "clone.path"

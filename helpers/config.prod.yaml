@@ -95,3 +95,8 @@ deps:
   python3-venv: { version: "" }
 
 nixopus-config-dir: /etc/nixopus
+
+clone:
+  repo: "https://github.com/raghavyuva/nixopus"
+  branch: "master"
+  path: /etc/nixopus/source

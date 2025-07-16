@@ -9,7 +9,7 @@ from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
-from .messages import (
+from ..install.messages import (
     cloning_repo_into_path,
     default_branch,
     dry_run_branch,
