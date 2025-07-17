@@ -118,8 +118,8 @@ class TestDockerService:
 
         assert success is True
         assert error is None
-        self.logger.info.assert_called_once_with("Downing services: web")
-        self.logger.success.assert_called_once_with("Services downed successfully: web")
+        self.logger.info.assert_called_once_with("down services: web")
+        self.logger.success.assert_called_once_with("Service down successful: web")
 
     @patch("subprocess.run")
     def test_stop_services_with_env_file(self, mock_run):

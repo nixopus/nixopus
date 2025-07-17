@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from pydantic import ValidationError
 
-from cli.app.commands.clone.clone import (
+from ..clone import (
     Clone,
     CloneConfig,
     CloneFormatter,
