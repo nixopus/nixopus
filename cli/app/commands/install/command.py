@@ -1,6 +1,8 @@
 import typer
 
+from app.utils.config import Config
 from app.utils.logger import Logger
+from .deps import install_all_deps
 
 from .run import Install
 from .ssh import SSH, SSHConfig
@@ -58,6 +60,23 @@ def ssh(
         ssh_operation = SSH(logger=logger)
         result = ssh_operation.generate(config)
         logger.success(result.output)
+    except Exception as e:
+        logger.error(e)
+        raise typer.Exit(1)
+
+def deps(
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
+    output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
+    dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
+):
+    """Install dependencies"""
+    try:
+        logger = Logger(verbose=verbose)
+        result = install_all_deps(verbose=verbose, output=output, dry_run=dry_run)
+        if output == "json":
+            print(result)
+        else:
+            logger.success("All dependencies installed successfully.")
     except Exception as e:
         logger.error(e)
         raise typer.Exit(1)
