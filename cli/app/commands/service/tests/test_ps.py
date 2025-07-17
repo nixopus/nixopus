@@ -115,8 +115,8 @@ class TestDockerService:
 
         assert success is True
         assert error is None
-        self.logger.info.assert_called_once_with("Psing services: web")
-        self.logger.success.assert_called_once_with("Services psed successfully: web")
+        self.logger.info.assert_called_once_with("ps services: web")
+        self.logger.success.assert_called_once_with("Service ps successful: web")
 
     @patch("subprocess.run")
     def test_show_services_status_with_env_file(self, mock_run):
