@@ -12,17 +12,17 @@ services:
       MOUNT_PATH: ${MOUNT_PATH:-/etc/nixopus/configs}
       SSH_HOST: ${SSH_HOST:-localhost}
       SSH_PORT: ${SSH_PORT:-22}
-      SSH_USER: ${SSH_USER:-}
-      SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:-}
+      SSH_USER: ${SSH_USER:-root}
+      SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:-~/.ssh/nixopus_ssh_key}
       SSH_PASSWORD: ${SSH_PASSWORD:-}
       DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
       DOCKER_TLS_VERIFY: ${DOCKER_TLS_VERIFY:-1}
-      DOCKER_CERT_PATH: ${DOCKER_CERT_PATH:-}
+      DOCKER_CERT_PATH: ${DOCKER_CERT_PATH:-/etc/nixopus/docker/certs}
       REDIS_URL: ${REDIS_URL:-redis://nixopus-redis:6379}
       CADDY_ENDPOINT: ${CADDY_ENDPOINT:-http://nixopus-caddy:2019}
       ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:3000}
       ENV: ${ENV:-production}
-      LOGS_PATH: ${LOGS_PATH:-./logs}
+      LOGS_PATH: ${LOGS_PATH:-/etc/nixopus/logs}
       API_ENV_FILE: ${API_ENV_FILE:-/etc/nixopus/source/api/.env}
       API_VOLUME: ${API_VOLUME:-/etc/nixopus/configs}
       API_IMAGE: ${API_IMAGE:-ghcr.io/raghavyuva/nixopus-api:latest}
@@ -86,14 +86,12 @@ networks:
     driver: bridge
 
 deps:
-  curl: { version: "1" }
-  go: { version: "1" }
-  air: { version: "" }
+  curl: { version: "" }
   python: { version: "" }
   poetry: { version: "" }
   docker: { version: "" }
-  open-ssh: { version: "" }
-  open-sshserver: { version: "" }
+  openssh: { version: "" }
+  openssh-server: { version: "" }
   git: { version: "" }
   openssl: { version: "" }
   python3-venv: { version: "" }
@@ -104,3 +102,5 @@ clone:
   repo: "https://github.com/raghavyuva/nixopus"
   branch: "master"
   source-path: source
+
+ports: [2019, 80, 443, 7443, 8443, 6379, 5432]
