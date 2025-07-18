@@ -8,7 +8,20 @@ from enum import Enum
 from typing import Callable, List, Optional, Tuple, TypeVar
 import requests
 
-from app.utils.message import FAILED_TO_GET_PUBLIC_IP_MESSAGE, FAILED_TO_REMOVE_DIRECTORY_MESSAGE, REMOVED_DIRECTORY_MESSAGE
+from app.utils.message import (
+    FAILED_TO_GET_PUBLIC_IP_MESSAGE,
+    FAILED_TO_REMOVE_DIRECTORY_MESSAGE,
+    REMOVED_DIRECTORY_MESSAGE,
+    SETTING_PERMISSIONS_MESSAGE,
+    PERMISSIONS_SET_SUCCESS_MESSAGE,
+    FAILED_TO_SET_PERMISSIONS_MESSAGE,
+    CREATED_DIRECTORY_MESSAGE,
+    FAILED_TO_CREATE_DIRECTORY_MESSAGE,
+    CONTENT_APPENDED_MESSAGE,
+    FAILED_TO_APPEND_MESSAGE,
+    FAILED_TO_READ_FILE_MESSAGE,
+    FAILED_TO_CREATE_FILE_MESSAGE
+)
 
 T = TypeVar("T")
 R = TypeVar("R")
@@ -149,18 +162,30 @@ class DirectoryManager:
 
 class FileManager:
     @staticmethod
+    def create_file(file_path: str, mode: int = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH, logger=None) -> Tuple[bool, Optional[str]]:
+        try:
+            with open(file_path, "w") as f:
+                f.write("")
+            return True, None
+        except Exception as e:
+            error_msg = FAILED_TO_CREATE_FILE_MESSAGE.format(file_path=file_path, error=e)
+            if logger:
+                logger.error(error_msg)
+            return False, error_msg
+
+    @staticmethod
     def set_permissions(file_path: str, mode: int, logger=None) -> Tuple[bool, Optional[str]]:
         try:
             if logger:
-                logger.debug(f"Setting permissions {oct(mode)} on {file_path}")
+                logger.debug(SETTING_PERMISSIONS_MESSAGE.format(mode=oct(mode), file_path=file_path))
 
             os.chmod(file_path, mode)
 
             if logger:
-                logger.debug("File permissions set successfully")
+                logger.debug(PERMISSIONS_SET_SUCCESS_MESSAGE)
             return True, None
         except Exception as e:
-            error_msg = f"Failed to set permissions on {file_path}: {e}"
+            error_msg = FAILED_TO_SET_PERMISSIONS_MESSAGE.format(file_path=file_path, error=e)
             if logger:
                 logger.error(error_msg)
             return False, error_msg
@@ -173,10 +198,10 @@ class FileManager:
             if not os.path.exists(path):
                 os.makedirs(path, mode=mode)
                 if logger:
-                    logger.debug(f"Created directory: {path}")
+                    logger.debug(CREATED_DIRECTORY_MESSAGE.format(path=path))
             return True, None
         except Exception as e:
-            error_msg = f"Failed to create directory {path}: {e}"
+            error_msg = FAILED_TO_CREATE_DIRECTORY_MESSAGE.format(path=path, error=e)
             if logger:
                 logger.error(error_msg)
             return False, error_msg
@@ -192,10 +217,10 @@ class FileManager:
             FileManager.set_permissions(file_path, mode, logger)
 
             if logger:
-                logger.debug(f"Content appended to {file_path}")
+                logger.debug(CONTENT_APPENDED_MESSAGE.format(file_path=file_path))
             return True, None
         except Exception as e:
-            error_msg = f"Failed to append to {file_path}: {e}"
+            error_msg = FAILED_TO_APPEND_MESSAGE.format(file_path=file_path, error=e)
             if logger:
                 logger.error(error_msg)
             return False, error_msg
@@ -207,7 +232,7 @@ class FileManager:
                 content = f.read().strip()
             return True, content, None
         except Exception as e:
-            error_msg = f"Failed to read {file_path}: {e}"
+            error_msg = FAILED_TO_READ_FILE_MESSAGE.format(file_path=file_path, error=e)
             if logger:
                 logger.error(error_msg)
             return False, None, error_msg

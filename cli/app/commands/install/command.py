@@ -14,16 +14,11 @@ install_app = typer.Typer(help="Install Nixopus", invoke_without_command=True)
 def install_callback(ctx: typer.Context):
     """Install Nixopus"""
     if ctx.invoked_subcommand is None:
-        install = Install()
+        logger = Logger()
+        install = Install(logger=logger)
         install.run()
 
-
-def main_install_callback(value: bool):
-    if value:
-        install = Install()
-        install.run()
-        raise typer.Exit()
-
+@install_app.command(name="ssh")
 def ssh(
     path: str = typer.Option("~/.ssh/nixopus_ed25519", "--path", "-p", help="The SSH key path to generate"),
     key_type: str = typer.Option("ed25519", "--key-type", "-t", help="The SSH key type (rsa, ed25519, ecdsa)"),

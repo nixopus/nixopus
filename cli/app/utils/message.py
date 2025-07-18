@@ -1,6 +1,3 @@
-# Global messages for the application
-
-# Application
 application_name = "nixopus"
 application_description = "Nixopus CLI - A powerful deployment and management tool"
 application_no_args_is_help = True
@@ -10,9 +7,18 @@ INFO_MESSAGE = "INFO: {message}"
 DEBUG_MESSAGE = "DEBUG: {message}"
 WARNING_MESSAGE = "WARNING: {message}"
 ERROR_MESSAGE = "ERROR: {message}"
-SUCCESS_MESSAGE = "SUCCESS: {message}"
-HIGHLIGHT_MESSAGE = "HIGHLIGHT: {message}"
+SUCCESS_MESSAGE = "{message}"
+HIGHLIGHT_MESSAGE = "{message}"
 REMOVED_DIRECTORY_MESSAGE = "Removed existing directory: {path}"
 FAILED_TO_REMOVE_DIRECTORY_MESSAGE = "Failed to remove directory: {path}"
-MISSING_CONFIG_KEY_MESSAGE = "Missing config key: {path} (failed at '{key}')"
 FAILED_TO_GET_PUBLIC_IP_MESSAGE = "Failed to get public IP"
+MISSING_CONFIG_KEY_MESSAGE = "Missing config key: {path} (failed at '{key}')"
+SETTING_PERMISSIONS_MESSAGE = "Setting permissions {mode} on {file_path}"
+PERMISSIONS_SET_SUCCESS_MESSAGE = "File permissions set successfully"
+FAILED_TO_SET_PERMISSIONS_MESSAGE = "Failed to set permissions on {file_path}: {error}"
+CREATED_DIRECTORY_MESSAGE = "Created directory: {path}"
+FAILED_TO_CREATE_DIRECTORY_MESSAGE = "Failed to create directory {path}: {error}"
+CONTENT_APPENDED_MESSAGE = "Content appended to {file_path}"
+FAILED_TO_APPEND_MESSAGE = "Failed to append to {file_path}: {error}"
+FAILED_TO_READ_FILE_MESSAGE = "Failed to read {file_path}: {error}"
+FAILED_TO_CREATE_FILE_MESSAGE = "Failed to create file {file_path}: {error}"

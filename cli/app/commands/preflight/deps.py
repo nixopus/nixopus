@@ -8,8 +8,8 @@ from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
-from .messages import error_checking_dependency, invalid_os, invalid_package_manager, timeout_checking_dependency
-
+from .messages import all_dependencies_are_available, error_checking_dependency, invalid_os, invalid_package_manager, invalid_output_format, missing_dependencies, missing_dependencies_need_to_be_installed, no_dependencies_to_check, timeout_checking_dependency
+import json
 
 class DependencyCheckerProtocol(Protocol):
     def check_dependency(self, dep: str) -> bool: ...
@@ -54,19 +54,45 @@ class DependencyFormatter:
     def format_output(self, results: list["DepsCheckResult"], output: str) -> str:
         if not results:
             return self.output_formatter.format_output(
-                self.output_formatter.create_success_message("No dependencies to check"), output
+                self.output_formatter.create_success_message(no_dependencies_to_check   ), output
             )
 
-        messages = []
-        for result in results:
-            if result.is_available:
-                message = f"{result.dependency} is available"
-                messages.append(self.output_formatter.create_success_message(message, result.model_dump()))
-            else:
-                error = f"{result.dependency} is not available"
-                messages.append(self.output_formatter.create_error_message(error, result.model_dump()))
+        if output == "text":
+            return self._format_text_output(results)
+        elif output == "json":
+            return self._format_json_output(results)
+        else:
+            raise ValueError(invalid_output_format.format(output=output))
 
-        return self.output_formatter.format_output(messages, output)
+    def _format_text_output(self, results: list["DepsCheckResult"]) -> str:
+        missing_deps = [r for r in results if not r.is_available]
+        output_lines = []
+        if missing_deps:
+            output_lines.append("Missing Dependencies:")
+            for result in sorted(missing_deps, key=lambda x: x.dependency):
+                error_msg = f" ({result.error})" if result.error else ""
+                output_lines.append(f"  • {result.dependency}{error_msg}")
+        
+        if missing_deps:
+            output_lines.append(missing_dependencies_need_to_be_installed)
+        else:
+            output_lines.append(all_dependencies_are_available)
+        
+        return "\n".join(output_lines)
+
+    def _format_json_output(self, results: list["DepsCheckResult"]) -> str:
+        available_deps = [r for r in results if r.is_available]
+        missing_deps = [r for r in results if not r.is_available]
+        
+        summary = {
+            "total_dependencies": len(results),
+            "available_count": len(available_deps),
+            "missing_count": len(missing_deps),
+            "missing_dependencies": [r.dependency for r in missing_deps],
+            "available_dependencies": [r.dependency for r in available_deps],
+        }
+        
+        return json.dumps(summary, indent=2)
 
 
 class DepsCheckResult(BaseModel):
@@ -163,3 +189,7 @@ class Deps:
 
     def format_output(self, results: list[DepsCheckResult], output: str) -> str:
         return self.formatter.format_output(results, output)
+
+    def format_missing_dependencies(self, results: list[DepsCheckResult]) -> str:
+        missing_deps = [r for r in results if not r.is_available]
+        return missing_dependencies.format(missing_dependencies=", ".join([r.dependency for r in missing_deps]))

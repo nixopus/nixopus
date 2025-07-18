@@ -155,19 +155,68 @@ class TestDependencyFormatter(unittest.TestCase):
 
     def test_format_output_text(self):
         result = self.formatter.format_output(self.sample_results, "text")
-        self.assertIn("docker is available", result)
-        self.assertIn("kubectl is not available", result)
+        self.assertIn("Missing Dependencies:", result)
+        self.assertIn("• kubectl", result)
+        self.assertIn("Install the missing dependencies listed above.", result)
 
     def test_format_output_json(self):
         result = self.formatter.format_output(self.sample_results, "json")
         parsed = json.loads(result)
-        self.assertEqual(len(parsed), 2)
-        self.assertTrue(parsed[0]["success"])
-        self.assertFalse(parsed[1]["success"])
+        self.assertEqual(parsed["total_dependencies"], 2)
+        self.assertEqual(parsed["available_count"], 1)
+        self.assertEqual(parsed["missing_count"], 1)
+        self.assertIn("docker", parsed["available_dependencies"])
+        self.assertIn("kubectl", parsed["missing_dependencies"])
 
     def test_format_output_invalid(self):
         with self.assertRaises(ValueError):
             self.formatter.format_output(self.sample_results, "invalid")
+
+    def test_format_output_all_available(self):
+        all_available_results = [
+            DepsCheckResult(
+                dependency="docker",
+                timeout=5,
+                verbose=False,
+                output="text",
+                os="linux",
+                package_manager="apt",
+                is_available=True,
+            ),
+            DepsCheckResult(
+                dependency="kubectl",
+                timeout=5,
+                verbose=False,
+                output="text",
+                os="linux",
+                package_manager="apt",
+                is_available=True,
+            ),
+        ]
+        
+        result = self.formatter.format_output(all_available_results, "text")
+        self.assertIn("All dependencies are available.", result)
+
+    def test_format_output_empty_results(self):
+        result = self.formatter.format_output([], "text")
+        self.assertIn("No dependencies to check.", result)
+
+    def test_format_output_with_errors(self):
+        results_with_errors = [
+            DepsCheckResult(
+                dependency="kubectl",
+                timeout=5,
+                verbose=False,
+                output="text",
+                os="linux",
+                package_manager="apt",
+                is_available=False,
+                error="Command not found",
+            ),
+        ]
+        
+        result = self.formatter.format_output(results_with_errors, "text")
+        self.assertIn("• kubectl (Command not found)", result)
 
 
 class TestDepsCheckResult(unittest.TestCase):
@@ -311,8 +360,9 @@ class TestDepsService(unittest.TestCase):
         with patch.object(self.service, "check_dependencies", return_value=mock_results):
             result = self.service.check_and_format()
 
-        self.assertIn("docker is available", result)
-        self.assertIn("kubectl is not available", result)
+        self.assertIn("Missing Dependencies:", result)
+        self.assertIn("• kubectl", result)
+        self.assertIn("Install the missing dependencies listed above.", result)
 
 
 class TestDeps(unittest.TestCase):
@@ -343,6 +393,42 @@ class TestDeps(unittest.TestCase):
 
             self.assertEqual(result, "formatted")
             mock_format.assert_called_once_with(mock_results, "text")
+
+    def test_format_missing_dependencies(self):
+        mock_results = [
+            DepsCheckResult(
+                dependency="docker",
+                timeout=5,
+                verbose=False,
+                output="text",
+                os="linux",
+                package_manager="apt",
+                is_available=True,
+            ),
+            DepsCheckResult(
+                dependency="kubectl",
+                timeout=5,
+                verbose=False,
+                output="text",
+                os="linux",
+                package_manager="apt",
+                is_available=False,
+            ),
+            DepsCheckResult(
+                dependency="helm",
+                timeout=5,
+                verbose=False,
+                output="text",
+                os="linux",
+                package_manager="apt",
+                is_available=False,
+            ),
+        ]
+
+        result = self.deps.format_missing_dependencies(mock_results)
+        self.assertIn("kubectl", result)
+        self.assertIn("helm", result)
+        self.assertNotIn("docker", result)
 
 
 if __name__ == "__main__":

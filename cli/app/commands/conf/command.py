@@ -1,15 +1,26 @@
 import typer
 
+from app.utils.config import API_SERVICE, Config, VIEW_SERVICE, API_ENV_FILE, VIEW_ENV_FILE
 from app.utils.logger import Logger
+from app.utils.lib import FileManager
+from app.commands.conf.base import BaseEnvironmentManager
 
 from .delete import Delete, DeleteConfig
 from .list import List, ListConfig
-from .messages import argument_must_be_in_form
+from .messages import all_env_vars_set_successfully, argument_must_be_in_form, failed_to_set_env_vars
 from .set import Set, SetConfig
+from .run import conf_run
 
 conf_app = typer.Typer(help="Manage configuration")
+config = Config()
+api_env_file = config.get_yaml_value(API_ENV_FILE)
+view_env_file = config.get_yaml_value(VIEW_ENV_FILE)
 
-
+@conf_app.callback(invoke_without_command=True)
+def conf_callback(ctx: typer.Context, output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"), verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output")):
+    if ctx.invoked_subcommand is None:
+        conf_run(verbose=verbose, output=output)
+        
 @conf_app.command()
 def list(
     service: str = typer.Option(

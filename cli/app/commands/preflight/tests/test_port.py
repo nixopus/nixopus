@@ -1,8 +1,9 @@
 from typing import List
 
 import pytest
+import json
 
-from app.commands.preflight.port import PortCheckResult, PortConfig, PortService
+from app.commands.preflight.port import PortCheckResult, PortConfig, PortService, PortFormatter
 
 
 class TestPort:
@@ -105,3 +106,94 @@ def test_check_ports_return_type():
         assert isinstance(result["host"], str) or result["host"] is None
         assert isinstance(result["error"], str) or result["error"] is None
         assert isinstance(result["is_available"], bool)
+
+
+class TestPortFormatter:
+    def test_format_text_output_all_available(self):
+        formatter = PortFormatter()
+        results = [
+            {"port": 80, "status": "available", "host": None, "error": None, "is_available": True},
+            {"port": 443, "status": "available", "host": None, "error": None, "is_available": True}
+        ]
+        output = formatter.format_output(results, "text")
+        assert "All ports are available" in output
+        assert "Available Ports:" not in output
+        assert "Port 80: available" not in output
+        assert "Port 443: available" not in output
+
+    def test_format_text_output_some_unavailable(self):
+        formatter = PortFormatter()
+        results = [
+            {"port": 80, "status": "available", "host": None, "error": None, "is_available": True},
+            {"port": 8080, "status": "not available", "host": None, "error": "Connection refused", "is_available": False}
+        ]
+        output = formatter.format_output(results, "text")
+        assert "Available Ports:" not in output
+        assert "Unavailable Ports:" in output
+        assert "Port 80: available" not in output
+        assert "Port 8080: not available (Connection refused)" in output
+
+    def test_format_text_output_all_unavailable(self):
+        formatter = PortFormatter()
+        results = [
+            {"port": 8080, "status": "not available", "host": None, "error": "Connection refused", "is_available": False},
+            {"port": 3000, "status": "not available", "host": None, "error": None, "is_available": False}
+        ]
+        output = formatter.format_output(results, "text")
+        assert "Unavailable Ports:" in output
+        assert "Port 8080: not available (Connection refused)" in output
+        assert "Port 3000: not available" in output
+        assert "No ports are available" not in output
+
+    def test_format_json_output(self):
+        formatter = PortFormatter()
+        results = [
+            {"port": 80, "status": "available", "host": None, "error": None, "is_available": True},
+            {"port": 8080, "status": "not available", "host": None, "error": "Connection refused", "is_available": False}
+        ]
+        output = formatter.format_output(results, "json")
+        data = json.loads(output)
+        assert data["total_ports"] == 2
+        assert data["available_count"] == 1
+        assert data["unavailable_count"] == 1
+        assert data["available_ports"] == [80]
+        assert data["unavailable_ports"] == [{"port": 8080, "error": "Connection refused"}]
+        assert "results" in data
+
+    def test_format_invalid_output_format(self):
+        formatter = PortFormatter()
+        results = [{"port": 80, "status": "available", "host": None, "error": None, "is_available": True}]
+        with pytest.raises(ValueError, match="Invalid output format: invalid"):
+            formatter.format_output(results, "invalid")
+
+
+class TestPortConfig:
+    def test_output_format_default(self):
+        config = PortConfig(ports=[80])
+        assert config.output == "text"
+
+    def test_output_format_text(self):
+        config = PortConfig(ports=[80], output="text")
+        assert config.output == "text"
+
+    def test_output_format_json(self):
+        config = PortConfig(ports=[80], output="json")
+        assert config.output == "json"
+
+
+class TestPortServiceFormatting:
+    def test_check_and_format_text(self):
+        config = PortConfig(ports=[80, 443], output="text")
+        service = PortService(config)
+        output = service.check_and_format()
+        assert "Available Ports:" not in output
+        assert "All ports are available" in output
+
+    def test_check_and_format_json(self):
+        config = PortConfig(ports=[80, 443], output="json")
+        service = PortService(config)
+        output = service.check_and_format()
+        data = json.loads(output)
+        assert "total_ports" in data
+        assert "available_count" in data
+        assert "unavailable_count" in data

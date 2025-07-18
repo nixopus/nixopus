@@ -1,5 +1,6 @@
 import re
 import socket
+import json
 from typing import Any, List, Optional, Protocol, TypedDict, Union
 
 from pydantic import BaseModel, Field, field_validator
@@ -9,7 +10,7 @@ from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
-from .messages import available, error_checking_port, host_must_be_localhost_or_valid_ip_or_domain, not_available
+from .messages import available, error_checking_port, host_must_be_localhost_or_valid_ip_or_domain, not_available, invalid_output_format
 
 
 class PortCheckerProtocol(Protocol):
@@ -29,6 +30,7 @@ class PortConfig(BaseModel):
     host: str = Field("localhost", min_length=1, description="Host to check")
     timeout: int = Field(1, gt=0, le=60, description="Timeout in seconds")
     verbose: bool = Field(False, description="Verbose output")
+    output: str = Field("text", description="Output format, text, json")
 
     @field_validator("host")
     @classmethod
@@ -48,19 +50,41 @@ class PortFormatter:
     def __init__(self):
         self.output_formatter = OutputFormatter()
 
-    def format_output(self, data: Union[str, List[PortCheckResult], Any], output_type: str) -> str:
-        if isinstance(data, list):
-            messages = []
-            for item in data:
-                if item.get("is_available", False):
-                    message = f"Port {item['port']}: {item['status']}"
-                    messages.append(self.output_formatter.create_success_message(message, item))
-                else:
-                    error = f"Port {item['port']}: {item['status']}"
-                    messages.append(self.output_formatter.create_error_message(error, item))
-            return self.output_formatter.format_output(messages, output_type)
+    def format_output(self, results: List[PortCheckResult], output: str) -> str:
+        if output == "text":
+            return self._format_text_output(results)
+        elif output == "json":
+            return self._format_json_output(results)
         else:
-            return str(data)
+            raise ValueError(invalid_output_format.format(output=output))
+
+    def _format_text_output(self, results: List[PortCheckResult]) -> str:   
+        unavailable_ports = [r for r in results if not r["is_available"]]
+        
+        if not unavailable_ports:
+            return "All ports are available"
+        
+        output_lines = ["Unavailable Ports:"]
+        for result in sorted(unavailable_ports, key=lambda x: x["port"]):
+            error_msg = f" ({result['error']})" if result.get("error") else ""
+            output_lines.append(f"  • Port {result['port']}: {result['status']}{error_msg}")
+        
+        return "\n".join(output_lines)
+
+    def _format_json_output(self, results: List[PortCheckResult]) -> str:
+        available_ports = [r for r in results if r["is_available"]]
+        unavailable_ports = [r for r in results if not r["is_available"]]
+        
+        summary = {
+            "total_ports": len(results),
+            "available_count": len(available_ports),
+            "unavailable_count": len(unavailable_ports),
+            "available_ports": [r["port"] for r in available_ports],
+            "unavailable_ports": [{"port": r["port"], "error": r.get("error")} for r in unavailable_ports],
+            "results": results
+        }
+        
+        return json.dumps(summary, indent=2)
 
 
 class PortChecker:
@@ -121,6 +145,6 @@ class PortService:
         )
         return sorted(results, key=lambda x: x["port"])
 
-    def check_and_format(self, output_type: str) -> str:
+    def check_and_format(self) -> str:
         results = self.check_ports()
-        return self.formatter.format_output(results, output_type)
+        return self.formatter.format_output(results, self.config.output)

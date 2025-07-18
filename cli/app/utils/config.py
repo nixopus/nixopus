@@ -32,7 +32,10 @@ class Config:
         if isinstance(config, str):
             config = expand_env_placeholders(config)
         return config
-
+    
+    def get_service_env_values(self,service: str):
+        config = self.get_yaml_value(f"{service}.env")
+        return {key: expand_env_placeholders(value) for key, value in config.items()}
 
 def expand_env_placeholders(value: str) -> str:
     # Expand environment placeholders in the form ${ENV_VAR:-default}
@@ -56,3 +59,6 @@ CONFIG_ENDPOINT = "services.caddy.env.CONFIG_ENDPOINT"
 LOAD_ENDPOINT = "services.caddy.env.LOAD_ENDPOINT"
 STOP_ENDPOINT = "services.caddy.env.STOP_ENDPOINT"
 DEPS = "deps"
+PORTS = "ports"
+API_SERVICE = "services.api"
+VIEW_SERVICE = "services.view"
