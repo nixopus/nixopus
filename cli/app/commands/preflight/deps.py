@@ -16,15 +16,14 @@ class DependencyCheckerProtocol(Protocol):
 
 
 class DependencyChecker:
-    def __init__(self, timeout: int, logger: LoggerProtocol):
-        self.timeout = timeout
+    def __init__(self, logger: LoggerProtocol):
         self.logger = logger
 
     def check_dependency(self, dep: str) -> bool:
         self.logger.debug(f"Checking dependency: {dep}")
 
         try:
-            result = subprocess.run(["command", "-v", dep], capture_output=True, text=True, timeout=self.timeout)
+            result = subprocess.run(["command", "-v", dep], capture_output=True, text=True, timeout=1)
             return result.returncode == 0
 
         except subprocess.TimeoutExpired:
@@ -71,7 +70,6 @@ class DependencyFormatter:
 
 class DepsCheckResult(BaseModel):
     dependency: str
-    timeout: int
     verbose: bool
     output: str
     os: str
@@ -82,7 +80,6 @@ class DepsCheckResult(BaseModel):
 
 class DepsConfig(BaseModel):
     deps: list[str] = Field(..., min_length=1, description="The list of dependencies to check")
-    timeout: int = Field(1, gt=0, le=60, description="The timeout in seconds")
     verbose: bool = Field(False, description="Verbose output")
     output: str = Field("text", description="Output format, text, json")
     os: str = Field(..., description=f"The operating system to check, available: {Supported.get_os()}")
@@ -105,13 +102,12 @@ class DepsService:
     def __init__(self, config: DepsConfig, logger: LoggerProtocol = None, checker: DependencyCheckerProtocol = None):
         self.config = config
         self.logger = logger or Logger(verbose=config.verbose)
-        self.checker = checker or DependencyChecker(config.timeout, self.logger)
+        self.checker = checker or DependencyChecker(self.logger)
         self.formatter = DependencyFormatter()
 
     def _create_result(self, dep: str, is_available: bool, error: str = None) -> DepsCheckResult:
         return DepsCheckResult(
             dependency=dep,
-            timeout=self.config.timeout,
             verbose=self.config.verbose,
             output=self.config.output,
             os=self.config.os,

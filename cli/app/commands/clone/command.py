@@ -2,6 +2,7 @@ import typer
 
 from app.utils.logger import Logger
 from app.utils.config import Config, DEFAULT_REPO, DEFAULT_BRANCH, DEFAULT_PATH, NIXOPUS_CONFIG_DIR
+from app.utils.timeout import TimeoutWrapper
 
 from .clone import Clone, CloneConfig
 from .messages import (
@@ -39,6 +40,7 @@ def clone_callback(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
+    timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Clone a repository"""
     try:
@@ -56,23 +58,27 @@ def clone_callback(
         
         clone_operation = Clone(logger=logger)
         
-        if config.dry_run:
-            logger.debug(debug_executing_dry_run)
-            formatted_output = clone_operation.clone_and_format(config)
-            logger.info(formatted_output)
-            logger.debug(debug_dry_run_completed)
-        else:
-            result = clone_operation.clone(config)
-            logger.debug(debug_clone_operation_result.format(success=result.success))
-            
-            if not result.success:
-                logger.error(result.output)
-                logger.debug(debug_clone_operation_failed)
-                raise typer.Exit(1)
-            
-            logger.debug(debug_clone_operation_completed)
-            logger.info(result.output)
-
+        with TimeoutWrapper(timeout):
+            if config.dry_run:
+                logger.debug(debug_executing_dry_run)
+                formatted_output = clone_operation.clone_and_format(config)
+                logger.info(formatted_output)
+                logger.debug(debug_dry_run_completed)
+            else:
+                result = clone_operation.clone(config)
+                logger.debug(debug_clone_operation_result.format(success=result.success))
+                
+                if not result.success:
+                    logger.error(result.output)
+                    logger.debug(debug_clone_operation_failed)
+                    raise typer.Exit(1)
+                
+                logger.debug(debug_clone_operation_completed)
+                logger.info(result.output)
+                
+    except TimeoutError as e:
+        logger.error(e)
+        raise typer.Exit(1)
     except Exception as e:
         logger.debug(debug_exception_caught.format(error_type=type(e).__name__, error=str(e)))
         logger.debug(debug_exception_details.format(error=e))
