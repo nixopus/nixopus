@@ -2,6 +2,7 @@ import typer
 
 from app.utils.config import Config
 from app.utils.logger import Logger
+from app.utils.timeout import TimeoutWrapper
 from .deps import install_all_deps
 
 from .run import Install
@@ -40,6 +41,7 @@ def ssh(
     create_ssh_directory: bool = typer.Option(
         True, "--create-ssh-directory", "-c", help="Create .ssh directory if it doesn't exist"
     ),
+    timeout: int = typer.Option(10, "--timeout", "-T", help="Timeout in seconds"),
 ):
     """Generate an SSH key pair with proper permissions and optional authorized_keys integration"""
     try:
@@ -58,8 +60,14 @@ def ssh(
             create_ssh_directory=create_ssh_directory,
         )
         ssh_operation = SSH(logger=logger)
-        result = ssh_operation.generate(config)
+        
+        with TimeoutWrapper(timeout):
+            result = ssh_operation.generate(config)
+        
         logger.success(result.output)
+    except TimeoutError as e:
+        logger.error(e)
+        raise typer.Exit(1)
     except Exception as e:
         logger.error(e)
         raise typer.Exit(1)
@@ -69,15 +77,22 @@ def deps(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
+    timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Install dependencies"""
     try:
         logger = Logger(verbose=verbose)
-        result = install_all_deps(verbose=verbose, output=output, dry_run=dry_run)
+        
+        with TimeoutWrapper(timeout):
+            result = install_all_deps(verbose=verbose, output=output, dry_run=dry_run)
+        
         if output == "json":
             print(result)
         else:
             logger.success("All dependencies installed successfully.")
+    except TimeoutError as e:
+        logger.error(e)
+        raise typer.Exit(1)
     except Exception as e:
         logger.error(e)
         raise typer.Exit(1)

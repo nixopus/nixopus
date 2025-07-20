@@ -27,7 +27,6 @@ class PortCheckResult(TypedDict):
 class PortConfig(BaseModel):
     ports: List[int] = Field(..., min_length=1, max_length=65535, description="List of ports to check")
     host: str = Field("localhost", min_length=1, description="Host to check")
-    timeout: int = Field(1, gt=0, le=60, description="Timeout in seconds")
     verbose: bool = Field(False, description="Verbose output")
 
     @field_validator("host")
@@ -64,14 +63,13 @@ class PortFormatter:
 
 
 class PortChecker:
-    def __init__(self, logger: LoggerProtocol, timeout: int):
+    def __init__(self, logger: LoggerProtocol):
         self.logger = logger
-        self.timeout = timeout
 
     def is_port_available(self, host: str, port: int) -> bool:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sock.settimeout(self.timeout)
+                sock.settimeout(1)
                 result = sock.connect_ex((host, port))
                 return result != 0
         except Exception:
@@ -100,7 +98,7 @@ class PortService:
     def __init__(self, config: PortConfig, logger: LoggerProtocol = None, checker: PortCheckerProtocol = None):
         self.config = config
         self.logger = logger or Logger(verbose=config.verbose)
-        self.checker = checker or PortChecker(self.logger, config.timeout)
+        self.checker = checker or PortChecker(self.logger)
         self.formatter = PortFormatter()
 
     def check_ports(self) -> List[PortCheckResult]:

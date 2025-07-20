@@ -2,6 +2,7 @@ import typer
 
 from app.utils.logger import Logger
 from app.utils.config import Config, DEFAULT_REPO, DEFAULT_BRANCH, DEFAULT_PATH, NIXOPUS_CONFIG_DIR
+from app.utils.timeout import TimeoutWrapper
 
 from .clone import Clone, CloneConfig
 
@@ -22,14 +23,21 @@ def clone_callback(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
+    timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Clone a repository"""
     try:
         logger = Logger(verbose=verbose)
         config = CloneConfig(repo=repo, branch=branch, path=path, force=force, verbose=verbose, output=output, dry_run=dry_run)
         clone_operation = Clone(logger=logger)
-        result = clone_operation.clone(config)
-        logger.success(result.output)
+        
+        with TimeoutWrapper(timeout):
+            result = clone_operation.clone(config)
+            logger.success(result.output)
+                
+    except TimeoutError as e:
+        logger.error(e)
+        raise typer.Exit(1)
     except Exception as e:
         logger.error(e)
         raise typer.Exit(1)
