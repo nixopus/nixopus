@@ -136,13 +136,20 @@ class DirectoryManager:
 
     @staticmethod
     def remove_directory(path: str, logger=None) -> bool:
+        if logger:
+            logger.debug(f"Attempting to remove directory: {path}")
+            logger.debug(f"Directory exists: {os.path.exists(path)}")
+            logger.debug(f"Directory is directory: {os.path.isdir(path) if os.path.exists(path) else 'N/A'}")
+        
         try:
             shutil.rmtree(path)
             if logger:
                 logger.info(REMOVED_DIRECTORY_MESSAGE.format(path=path))
+                logger.debug(f"Directory {path} removed successfully")
             return True
         except Exception as e:
             if logger:
+                logger.debug(f"Exception during directory removal: {type(e).__name__}: {str(e)}")
                 logger.error(FAILED_TO_REMOVE_DIRECTORY_MESSAGE.format(path=path, error=e))
             return False
 
