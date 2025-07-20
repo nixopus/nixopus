@@ -2,6 +2,7 @@ import typer
 
 from app.utils.config import Config, PROXY_PORT
 from app.utils.logger import Logger
+from app.utils.timeout import TimeoutWrapper
 
 from .load import Load, LoadConfig
 from .status import Status, StatusConfig
@@ -22,6 +23,7 @@ def load(
     output: str = typer.Option("text", "--output", "-o", help="Output format: text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
     config_file: str = typer.Option(None, "--config-file", "-c", help="Path to Caddy config file"),
+    timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Load Caddy proxy configuration"""
     logger = Logger(verbose=verbose)
@@ -30,7 +32,9 @@ def load(
         config = LoadConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run, config_file=config_file)
 
         load_service = Load(logger=logger)
-        result = load_service.load(config)
+        
+        with TimeoutWrapper(timeout):
+            result = load_service.load(config)
 
         if result.success:
             logger.success(load_service.format_output(result, output))
@@ -38,6 +42,9 @@ def load(
             logger.error(result.error)
             raise typer.Exit(1)
 
+    except TimeoutError as e:
+        logger.error(e)
+        raise typer.Exit(1)
     except Exception as e:
         logger.error(str(e))
         raise typer.Exit(1)
@@ -49,6 +56,7 @@ def status(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format: text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
+    timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Check Caddy proxy status"""
     logger = Logger(verbose=verbose)
@@ -57,7 +65,9 @@ def status(
         config = StatusConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run)
 
         status_service = Status(logger=logger)
-        result = status_service.status(config)
+        
+        with TimeoutWrapper(timeout):
+            result = status_service.status(config)
 
         if result.success:
             logger.success(status_service.format_output(result, output))
@@ -65,6 +75,9 @@ def status(
             logger.error(result.error)
             raise typer.Exit(1)
 
+    except TimeoutError as e:
+        logger.error(e)
+        raise typer.Exit(1)
     except Exception as e:
         logger.error(str(e))
         raise typer.Exit(1)
@@ -76,6 +89,7 @@ def stop(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format: text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
+    timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Stop Caddy proxy"""
     logger = Logger(verbose=verbose)
@@ -84,7 +98,9 @@ def stop(
         config = StopConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run)
 
         stop_service = Stop(logger=logger)
-        result = stop_service.stop(config)
+        
+        with TimeoutWrapper(timeout):
+            result = stop_service.stop(config)
 
         if result.success:
             logger.success(stop_service.format_output(result, output))
@@ -92,6 +108,9 @@ def stop(
             logger.error(result.error)
             raise typer.Exit(1)
 
+    except TimeoutError as e:
+        logger.error(e)
+        raise typer.Exit(1)
     except Exception as e:
         logger.error(str(e))
         raise typer.Exit(1)

@@ -4,6 +4,7 @@ from app.utils.config import API_SERVICE, Config, VIEW_SERVICE, API_ENV_FILE, VI
 from app.utils.logger import Logger
 from app.utils.lib import FileManager
 from app.commands.conf.base import BaseEnvironmentManager
+from app.utils.timeout import TimeoutWrapper
 
 from .delete import Delete, DeleteConfig
 from .list import List, ListConfig
@@ -30,6 +31,7 @@ def list(
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
     env_file: str = typer.Option(None, "--env-file", "-e", help="Path to the environment file"),
+    timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """List all configuration"""
     logger = Logger(verbose=verbose)
@@ -38,7 +40,9 @@ def list(
         config = ListConfig(service=service, verbose=verbose, output=output, dry_run=dry_run, env_file=env_file)
 
         list_action = List(logger=logger)
-        result = list_action.list(config)
+        
+        with TimeoutWrapper(timeout):
+            result = list_action.list(config)
 
         if result.success:
             logger.success(list_action.format_output(result, output))
@@ -46,6 +50,9 @@ def list(
             logger.error(result.error)
             raise typer.Exit(1)
 
+    except TimeoutError as e:
+        logger.error(e)
+        raise typer.Exit(1)
     except Exception as e:
         logger.error(str(e))
         raise typer.Exit(1)
@@ -61,6 +68,7 @@ def delete(
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
     env_file: str = typer.Option(None, "--env-file", "-e", help="Path to the environment file"),
+    timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Delete a configuration"""
     logger = Logger(verbose=verbose)
@@ -69,7 +77,9 @@ def delete(
         config = DeleteConfig(service=service, key=key, verbose=verbose, output=output, dry_run=dry_run, env_file=env_file)
 
         delete_action = Delete(logger=logger)
-        result = delete_action.delete(config)
+        
+        with TimeoutWrapper(timeout):
+            result = delete_action.delete(config)
 
         if result.success:
             logger.success(delete_action.format_output(result, output))
@@ -77,6 +87,9 @@ def delete(
             logger.error(result.error)
             raise typer.Exit(1)
 
+    except TimeoutError as e:
+        logger.error(e)
+        raise typer.Exit(1)
     except Exception as e:
         logger.error(str(e))
         raise typer.Exit(1)
@@ -92,6 +105,7 @@ def set(
     output: str = typer.Option("text", "--output", "-o", help="Output format, text, json"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Dry run"),
     env_file: str = typer.Option(None, "--env-file", "-e", help="Path to the environment file"),
+    timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Set a configuration"""
     logger = Logger(verbose=verbose)
@@ -107,7 +121,9 @@ def set(
         )
 
         set_action = Set(logger=logger)
-        result = set_action.set(config)
+        
+        with TimeoutWrapper(timeout):
+            result = set_action.set(config)
 
         if result.success:
             logger.success(set_action.format_output(result, output))
@@ -115,6 +131,9 @@ def set(
             logger.error(result.error)
             raise typer.Exit(1)
 
+    except TimeoutError as e:
+        logger.error(e)
+        raise typer.Exit(1)
     except Exception as e:
         logger.error(str(e))
         raise typer.Exit(1)
