@@ -450,5 +450,6 @@ class TestClone:
         # Patch only GitClone.clone_repository to simulate a successful clone
         with patch("app.commands.clone.clone.GitClone.clone_repository", return_value=(True, None)):
             result = clone_operation.clone(config)
+            
             # Verify that debug logging was called
             assert logger.debug.called

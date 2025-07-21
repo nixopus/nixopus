@@ -75,4 +75,7 @@ debug_config_listed = "Configuration listed successfully: {count} entries"
 debug_no_config_to_list = "No configuration entries to list"
 debug_dry_run_simulation = "Simulating operation in dry run mode"
 debug_dry_run_simulation_complete = "Dry run simulation completed"
+<<<<<<< HEAD
 configuration_list_title = "Configuration listed for {service}"
+=======
+>>>>>>> feat/cli

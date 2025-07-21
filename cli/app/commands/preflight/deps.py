@@ -35,10 +35,12 @@ class DependencyChecker:
             return is_available
 
         except subprocess.TimeoutExpired:
-            self.logger.error(timeout_checking_dependency.format(dep=dep))
+            if self.logger.verbose:
+                self.logger.error(timeout_checking_dependency.format(dep=dep))
             return False
         except Exception as e:
-            self.logger.error(error_subprocess_execution_failed.format(dep=dep, error=e))
+            if self.logger.verbose:
+                self.logger.error(error_subprocess_execution_failed.format(dep=dep, error=e))
             return False
 
 
@@ -68,9 +70,19 @@ class DependencyFormatter:
             result = results[0]
             message = f"{result.dependency} is {'available' if result.is_available else 'not available'}"
             if result.is_available:
+<<<<<<< HEAD
                 return self.output_formatter.create_success_message(message).message
             else:
                 return f"Error: {message}"
+=======
+                message = f"{result.dependency} is available"
+                data = {"dependency": result.dependency, "is_available": result.is_available}
+                messages.append(self.output_formatter.create_success_message(message, data))
+            else:
+                error = f"{result.dependency} is not available"
+                data = {"dependency": result.dependency, "is_available": result.is_available, "error": result.error}
+                messages.append(self.output_formatter.create_error_message(error, data))
+>>>>>>> feat/cli
 
         if output == "text":
             table_data = []
@@ -166,7 +178,8 @@ class DepsService:
             return self._check_dependency(dep)
 
         def error_handler(dep: str, error: Exception) -> DepsCheckResult:
-            self.logger.error(error_checking_dependency.format(dep=dep, error=error))
+            if self.logger.verbose:
+                self.logger.error(error_checking_dependency.format(dep=dep, error=error))
             return self._create_result(dep, False, str(error))
 
         results = ParallelProcessor.process_items(

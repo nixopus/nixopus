@@ -113,7 +113,8 @@ class PortChecker:
                 result = sock.connect_ex((host, port))
                 return result != 0
         except Exception as e:
-            self.logger.error(error_socket_connection_failed.format(port=port, error=e))
+            if self.logger.verbose:
+                self.logger.error(error_socket_connection_failed.format(port=port, error=e))
             return False
 
     def check_port(self, port: int, config: PortConfig) -> PortCheckResult:
@@ -122,7 +123,8 @@ class PortChecker:
             self.logger.debug(debug_port_check_result.format(port=port, status=status))
             return self._create_result(port, config, status)
         except Exception as e:
-            self.logger.error(error_checking_port.format(port=port, error=str(e)))
+            if self.logger.verbose:
+                self.logger.error(error_checking_port.format(port=port, error=str(e)))
             return self._create_result(port, config, not_available, str(e))
 
     def _create_result(self, port: int, config: PortConfig, status: str, error: Optional[str] = None) -> PortCheckResult:
@@ -149,7 +151,8 @@ class PortService:
             return self.checker.check_port(port, self.config)
 
         def error_handler(port: int, error: Exception) -> PortCheckResult:
-            self.logger.error(error_checking_port.format(port=port, error=str(error)))
+            if self.logger.verbose:
+                self.logger.error(error_checking_port.format(port=port, error=str(error)))
             return self.checker._create_result(port, self.config, not_available, str(error))
 
         results = ParallelProcessor.process_items(

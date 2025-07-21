@@ -100,6 +100,10 @@ class ListService(BaseService[ListConfig, ListResult]):
             else:
                 self.logger.debug(debug_no_config_to_list)
             
+<<<<<<< HEAD
+=======
+            self.logger.info(configuration_listed.format(service=self.config.service))
+>>>>>>> feat/cli
             return self._create_result(True, config_dict=config_dict)
         else:
             self.logger.error(configuration_list_failed.format(service=self.config.service, error=error))
@@ -122,6 +126,23 @@ class ListService(BaseService[ListConfig, ListResult]):
         return "\n".join(lines)
 
     def _format_output(self, result: ListResult, output_format: str) -> str:
+<<<<<<< HEAD
+=======
+        if output_format == "json":
+            formatted = self._format_json(result)
+        else:
+            formatted = self._format_text(result)
+        
+        return formatted
+
+    def _format_json(self, result: ListResult) -> str:
+        import json
+
+        output = {"service": result.service, "success": result.success, "error": result.error, "config": result.config}
+        return json.dumps(output, indent=2)
+
+    def _format_text(self, result: ListResult) -> str:
+>>>>>>> feat/cli
         if not result.success:
             return configuration_list_failed.format(service=result.service, error=result.error)
 
