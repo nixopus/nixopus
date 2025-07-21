@@ -143,7 +143,7 @@ class TestGitClone:
 
         assert success is True
         assert error is None
-        self.logger.info.assert_called_once()
+        self.logger.debug.assert_called()
 
     @patch("subprocess.run")
     def test_clone_repository_without_branch(self, mock_run):
@@ -247,7 +247,7 @@ class TestDirectoryManager:
 
         assert success is True
         mock_rmtree.assert_called_once_with("/path/to/remove")
-        self.logger.info.assert_called_once()
+        self.logger.debug.assert_called()
 
     @patch("shutil.rmtree")
     def test_remove_directory_failure(self, mock_rmtree):
@@ -447,19 +447,8 @@ class TestClone:
         logger = Mock(spec=Logger)
         clone_operation = Clone(logger=logger)
         
-        with patch.object(CloneService, "clone") as mock_clone:
-            mock_result = CloneResult(
-                repo=config.repo,
-                path=config.path,
-                branch=config.branch,
-                force=config.force,
-                verbose=config.verbose,
-                output=config.output,
-                success=True,
-            )
-            mock_clone.return_value = mock_result
-            
+        # Patch only GitClone.clone_repository to simulate a successful clone
+        with patch("app.commands.clone.clone.GitClone.clone_repository", return_value=(True, None)):
             result = clone_operation.clone(config)
-            
             # Verify that debug logging was called
             assert logger.debug.called

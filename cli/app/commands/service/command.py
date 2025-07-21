@@ -1,10 +1,13 @@
+import json
 import typer
 
 from app.utils.config import Config, DEFAULT_COMPOSE_FILE, NIXOPUS_CONFIG_DIR
 from app.utils.logger import Logger
+from app.utils.output_formatter import OutputFormatter
 from app.utils.timeout import TimeoutWrapper
 
 from .down import Down, DownConfig
+from .messages import services_started_successfully, services_stopped_successfully, services_status_retrieved, services_restarted_successfully
 from .ps import Ps, PsConfig
 from .restart import Restart, RestartConfig
 from .up import Up, UpConfig
@@ -44,10 +47,21 @@ def up(
         up_service = Up(logger=logger)
         
         with TimeoutWrapper(timeout):
-            result = up_service.up(config)
+            if config.dry_run:
+                formatted_output = up_service.format_dry_run(config)
+                logger.info(formatted_output)
+                return
+            else:
+                result = up_service.up(config)
 
         if result.success:
-            logger.success(up_service.format_output(result, output))
+            formatted_output = up_service.format_output(result, output)
+            if output == "json":
+                logger.info(formatted_output)
+            else:
+                logger.success(services_started_successfully.format(services=result.name))
+                if formatted_output:
+                    logger.info(formatted_output)
         else:
             logger.error(result.error)
             raise typer.Exit(1)
@@ -81,10 +95,21 @@ def down(
         down_service = Down(logger=logger)
         
         with TimeoutWrapper(timeout):
-            result = down_service.down(config)
+            if config.dry_run:
+                formatted_output = down_service.format_dry_run(config)
+                logger.info(formatted_output)
+                return
+            else:
+                result = down_service.down(config)
 
         if result.success:
-            logger.success(down_service.format_output(result, output))
+            formatted_output = down_service.format_output(result, output)
+            if output == "json":
+                logger.info(formatted_output)
+            else:
+                logger.success(services_stopped_successfully.format(services=result.name))
+                if formatted_output:
+                    logger.info(formatted_output)
         else:
             logger.error(result.error)
             raise typer.Exit(1)
@@ -118,10 +143,16 @@ def ps(
         ps_service = Ps(logger=logger)
         
         with TimeoutWrapper(timeout):
-            result = ps_service.ps(config)
+            if config.dry_run:
+                formatted_output = ps_service.format_dry_run(config)
+                logger.info(formatted_output)
+                return
+            else:
+                result = ps_service.ps(config)
 
         if result.success:
-            logger.success(ps_service.format_output(result, output))
+            formatted_output = ps_service.format_output(result, output)
+            logger.info(formatted_output)
         else:
             logger.error(result.error)
             raise typer.Exit(1)
@@ -155,10 +186,21 @@ def restart(
         restart_service = Restart(logger=logger)
         
         with TimeoutWrapper(timeout):
-            result = restart_service.restart(config)
+            if config.dry_run:
+                formatted_output = restart_service.format_dry_run(config)
+                logger.info(formatted_output)
+                return
+            else:
+                result = restart_service.restart(config)
 
         if result.success:
-            logger.success(restart_service.format_output(result, output))
+            formatted_output = restart_service.format_output(result, output)
+            if output == "json":
+                logger.info(formatted_output)
+            else:
+                logger.success(services_restarted_successfully.format(services=result.name))
+                if formatted_output:
+                    logger.info(formatted_output)
         else:
             logger.error(result.error)
             raise typer.Exit(1)

@@ -144,7 +144,7 @@ class DirectoryManager:
         try:
             shutil.rmtree(path)
             if logger:
-                logger.info(REMOVED_DIRECTORY_MESSAGE.format(path=path))
+                logger.debug(REMOVED_DIRECTORY_MESSAGE.format(path=path))
                 logger.debug(f"Directory {path} removed successfully")
             return True
         except Exception as e:

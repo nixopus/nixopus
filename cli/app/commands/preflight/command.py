@@ -59,7 +59,8 @@ def check(
         logger.error(error_timeout_occurred.format(timeout=timeout))
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(f"Unexpected error during preflight check: {e}")
+        if not isinstance(e, typer.Exit):
+            logger.error(f"Unexpected error during preflight check: {e}")
         raise typer.Exit(1)
 
 
@@ -100,7 +101,8 @@ def ports(
         logger.error(error_timeout_occurred.format(timeout=timeout))
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(error_checking_ports.format(error=e))
+        if not isinstance(e, typer.Exit):
+            logger.error(error_checking_ports.format(error=e))
         raise typer.Exit(1)
 
 
@@ -146,5 +148,6 @@ def deps(
         logger.error(error_timeout_occurred.format(timeout=timeout))
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(error_checking_deps.format(error=e))
+        if not isinstance(e, typer.Exit):
+            logger.error(error_checking_deps.format(error=e))
         raise typer.Exit(1)

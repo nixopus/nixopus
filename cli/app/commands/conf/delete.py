@@ -112,10 +112,8 @@ class DeleteService(BaseService[DeleteConfig, DeleteResult]):
         success, error = self.environment_service.delete_config(self.config.service, self.config.key, self.config.env_file)
 
         if success:
-            self.logger.info(configuration_deleted.format(service=self.config.service, key=self.config.key))
             return self._create_result(True)
         else:
-            self.logger.error(configuration_delete_failed.format(service=self.config.service, error=error))
             return self._create_result(False, error=error)
 
     def delete_and_format(self) -> str:

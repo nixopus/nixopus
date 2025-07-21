@@ -35,7 +35,14 @@ class CaddyCommandBuilder(BaseCaddyCommandBuilder):
 
 class StopFormatter(BaseFormatter):
     def format_output(self, result: "StopResult", output: str) -> str:
-        return super().format_output(result, output, proxy_stopped_successfully, proxy_stop_failed)
+        if output == "json":
+            success_msg = "Caddy stopped successfully" if result.success else "Failed to stop Caddy"
+            return super().format_output(result, output, success_msg, result.error or "Unknown error")
+        
+        if result.success:
+            return "Caddy stopped successfully"
+        else:
+            return result.error or "Failed to stop Caddy"
 
     def format_dry_run(self, config: "StopConfig") -> str:
         dry_run_messages = {
@@ -83,11 +90,8 @@ class StopService(BaseService[StopConfig, StopResult]):
         return self.execute()
 
     def execute(self) -> StopResult:
-        self.logger.debug(debug_stop_proxy.format(port=self.config.proxy_port))
-
-        success, error = self.caddy_service.stop_caddy(self.config.proxy_port)
-
-        return self._create_result(success, error)
+        success, message = self.caddy_service.stop_caddy(self.config.proxy_port)
+        return self._create_result(success, None if success else message)
 
     def stop_and_format(self) -> str:
         return self.execute_and_format()

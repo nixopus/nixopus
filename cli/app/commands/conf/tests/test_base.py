@@ -92,7 +92,7 @@ class TestBaseEnvironmentManager:
 
             assert success is False
             assert backup_path is None
-            assert "Backup creation failed" in error
+            assert "Failed to create backup" in error
 
     @patch("os.path.exists")
     def test_restore_backup_success(self, mock_exists):
@@ -204,7 +204,7 @@ class TestBaseEnvironmentManager:
             assert error is None
             mock_copy.assert_called_once_with("/path/to/.env", "/path/to/.env.backup")
             mock_remove.assert_called_once_with("/path/to/.env.backup")
-            self.logger.info.assert_called()
+            self.logger.debug.assert_called()
 
     @patch("os.path.exists")
     @patch("tempfile.NamedTemporaryFile")
@@ -239,7 +239,7 @@ class TestBaseEnvironmentManager:
         success, error = self.manager.write_env_file("/path/to/.env", config)
 
         assert success is False
-        assert "Backup creation failed" in error
+        assert "Failed to create backup" in error
 
     @patch("os.path.exists")
     @patch("shutil.copy2")
@@ -259,7 +259,7 @@ class TestBaseEnvironmentManager:
             assert "Failed to write environment file" in error
             mock_restore.assert_called_once_with("/path/to/.env.backup", "/path/to/.env")
             self.logger.warning.assert_called()
-            self.logger.info.assert_called()
+            self.logger.debug.assert_called()
 
     def test_get_service_env_file_with_custom_env_file(self):
         env_file = self.manager.get_service_env_file("api", "/custom/.env")

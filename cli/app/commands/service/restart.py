@@ -1,8 +1,3 @@
-from typing import Optional
-
-from pydantic import Field
-
-from app.utils.logger import Logger
 from app.utils.protocols import DockerServiceProtocol, LoggerProtocol
 
 from .base import BaseAction, BaseConfig, BaseDockerCommandBuilder, BaseDockerService, BaseFormatter, BaseResult, BaseService
@@ -12,10 +7,9 @@ from .messages import (
     dry_run_env_file,
     dry_run_mode,
     dry_run_service,
-    end_dry_run,
+    end_dry_run,    
     service_restart_failed,
     services_restarted_successfully,
-    unknown_error,
 )
 
 
@@ -63,7 +57,7 @@ class RestartService(BaseService[RestartConfig, RestartResult]):
         self.docker_service = docker_service or DockerService(self.logger)
         self.formatter = RestartFormatter()
 
-    def _create_result(self, success: bool, error: str = None) -> RestartResult:
+    def _create_result(self, success: bool, error: str = None, docker_output: str = None) -> RestartResult:
         return RestartResult(
             name=self.config.name,
             env_file=self.config.env_file,
@@ -71,6 +65,7 @@ class RestartService(BaseService[RestartConfig, RestartResult]):
             output=self.config.output,
             success=success,
             error=error,
+            docker_output=docker_output,
         )
 
     def restart(self) -> RestartResult:
@@ -79,9 +74,10 @@ class RestartService(BaseService[RestartConfig, RestartResult]):
     def execute(self) -> RestartResult:
         self.logger.debug(f"Restarting services: {self.config.name}")
 
-        success, error = self.docker_service.restart_services(self.config.name, self.config.env_file, self.config.compose_file)
-
-        return self._create_result(success, error)
+        success, docker_output = self.docker_service.restart_services(self.config.name, self.config.env_file, self.config.compose_file)
+        
+        error = None if success else docker_output
+        return self._create_result(success, error, docker_output)
 
     def restart_and_format(self) -> str:
         return self.execute_and_format()
@@ -108,3 +104,6 @@ class Restart(BaseAction[RestartConfig, RestartResult]):
 
     def format_output(self, result: RestartResult, output: str) -> str:
         return self.formatter.format_output(result, output)
+    
+    def format_dry_run(self, config: RestartConfig) -> str:
+        return self.formatter.format_dry_run(config)

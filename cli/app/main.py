@@ -24,6 +24,7 @@ app = typer.Typer(
 
 @app.callback(invoke_without_command=True)
 def main(
+    ctx: typer.Context,
     version: bool = typer.Option(
         None,
         "--version",
@@ -32,9 +33,10 @@ def main(
         help=application_version_help,
     )
 ):
-    console = Console()
-    
-    ascii_art = """
+    if ctx.invoked_subcommand is None:
+        console = Console()
+        
+        ascii_art = """
   _   _ _ _                           
  | \\ | (_)                          
  |  \\| |___  _____  _ __  _   _ ___ 
@@ -43,31 +45,31 @@ def main(
  |_| \\_|_/_/\\_\\___/| .__/ \\__,_|___/
                    | |              
                    |_|              
-    """
-    
-    text = Text(ascii_art, style="bold cyan")
-    panel = Panel(text, title="[bold white]Welcome to[/bold white]", border_style="cyan", padding=(1, 2))
-    
-    console.print(panel)
-    
-    cli_version = get_version("nixopus")
-    version_text = Text()
-    version_text.append("Version: ", style="bold white")
-    version_text.append(f"v{cli_version}", style="green")
-    
-    description_text = Text()
-    description_text.append(application_description, style="dim")
-    
-    console.print(version_text)
-    console.print(description_text)
-    console.print()
-    
-    help_text = Text()
-    help_text.append("Run ", style="dim")
-    help_text.append("nixopus --help", style="bold green")
-    help_text.append(" to explore all available commands", style="dim")
-    console.print(help_text)
-    console.print()
+        """
+        
+        text = Text(ascii_art, style="bold cyan")
+        panel = Panel(text, title="[bold white]Welcome to[/bold white]", border_style="cyan", padding=(1, 2))
+        
+        console.print(panel)
+        
+        cli_version = get_version("nixopus")
+        version_text = Text()
+        version_text.append("Version: ", style="bold white")
+        version_text.append(f"v{cli_version}", style="green")
+        
+        description_text = Text()
+        description_text.append(application_description, style="dim")
+        
+        console.print(version_text)
+        console.print(description_text)
+        console.print()
+        
+        help_text = Text()
+        help_text.append("Run ", style="dim")
+        help_text.append("nixopus --help", style="bold green")
+        help_text.append(" to explore all available commands", style="dim")
+        console.print(help_text)
+        console.print()
 
 app.add_typer(preflight_app, name="preflight")
 app.add_typer(clone_app, name="clone")

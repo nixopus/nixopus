@@ -20,6 +20,7 @@ from app.utils.logger import Logger
 class TestEnvironmentManager:
     def setup_method(self):
         self.logger = Mock(spec=Logger)
+        self.logger.verbose = False  # Add verbose attribute to mock
         self.manager = EnvironmentManager(self.logger)
 
     @patch("app.commands.conf.base.BaseEnvironmentManager.read_env_file")
@@ -193,7 +194,6 @@ class TestSetService:
 
         assert result.success is True
         assert result.error is None
-        self.logger.info.assert_called_once_with(configuration_set.format(service="api", key="TEST_KEY", value="test_value"))
         self.environment_service.set_config.assert_called_once_with("api", "TEST_KEY", "test_value", None)
 
     def test_set_failure(self):
@@ -203,7 +203,6 @@ class TestSetService:
 
         assert result.success is False
         assert result.error == "Write error"
-        self.logger.error.assert_called_once_with(configuration_set_failed.format(service="api", error="Write error"))
 
     def test_set_dry_run(self):
         self.config.dry_run = True

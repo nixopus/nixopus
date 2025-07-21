@@ -19,6 +19,7 @@ from app.utils.logger import Logger
 class TestEnvironmentManager:
     def setup_method(self):
         self.logger = Mock(spec=Logger)
+        self.logger.verbose = False  # Add verbose attribute to mock
         self.manager = EnvironmentManager(self.logger)
 
     @patch("app.commands.conf.base.BaseEnvironmentManager.read_env_file")
@@ -177,7 +178,6 @@ class TestDeleteService:
 
         assert result.success is True
         assert result.error is None
-        self.logger.info.assert_called_once_with(configuration_deleted.format(service="api", key="TEST_KEY"))
         self.environment_service.delete_config.assert_called_once_with("api", "TEST_KEY", None)
 
     def test_delete_failure(self):
@@ -187,7 +187,6 @@ class TestDeleteService:
 
         assert result.success is False
         assert result.error == "Delete error"
-        self.logger.error.assert_called_once_with(configuration_delete_failed.format(service="api", error="Delete error"))
 
     def test_delete_dry_run(self):
         self.config.dry_run = True

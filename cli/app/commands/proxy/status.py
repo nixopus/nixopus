@@ -1,23 +1,15 @@
 from typing import Protocol
 
-from pydantic import BaseModel
-
 from app.utils.config import Config, PROXY_PORT
-from app.utils.logger import Logger
-from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
 from .base import BaseAction, BaseCaddyCommandBuilder, BaseCaddyService, BaseConfig, BaseFormatter, BaseResult, BaseService
 from .messages import (
-    debug_check_status,
     dry_run_command,
     dry_run_command_would_be_executed,
     dry_run_mode,
     dry_run_port,
     end_dry_run,
-    proxy_status_failed,
-    proxy_status_running,
-    proxy_status_stopped,
 )
 
 config = Config()
@@ -35,12 +27,14 @@ class CaddyCommandBuilder(BaseCaddyCommandBuilder):
 
 class StatusFormatter(BaseFormatter):
     def format_output(self, result: "StatusResult", output: str) -> str:
+        if output == "json":
+            status_msg = "Caddy is running" if result.success else (result.error or "Caddy not running")
+            return super().format_output(result, output, status_msg, result.error or "Caddy not running")
+        
         if result.success:
-            message = proxy_status_running.format(port=result.proxy_port)
+            return "Caddy is running"
         else:
-            message = proxy_status_stopped.format(port=result.proxy_port)
-
-        return super().format_output(result, output, message, proxy_status_failed)
+            return result.error or "Caddy not running"
 
     def format_dry_run(self, config: "StatusConfig") -> str:
         dry_run_messages = {
@@ -88,11 +82,8 @@ class StatusService(BaseService[StatusConfig, StatusResult]):
         return self.execute()
 
     def execute(self) -> StatusResult:
-        self.logger.debug(debug_check_status.format(port=self.config.proxy_port))
-
-        success, error = self.caddy_service.get_status(self.config.proxy_port)
-
-        return self._create_result(success, error)
+        success, message = self.caddy_service.get_status(self.config.proxy_port)
+        return self._create_result(success, None if success else message)
 
     def status_and_format(self) -> str:
         return self.execute_and_format()

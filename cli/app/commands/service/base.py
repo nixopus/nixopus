@@ -7,7 +7,20 @@ from pydantic import BaseModel, Field, field_validator
 from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
-from .messages import service_action_info, service_action_success, service_action_failed, service_action_unexpected_error, environment_file_not_found, compose_file_not_found
+from .messages import (
+    service_action_info, 
+    service_action_success, 
+    service_action_failed, 
+    service_action_unexpected_error, 
+    environment_file_not_found, 
+    compose_file_not_found,
+    docker_command_executing,
+    docker_command_completed,
+    docker_command_failed,
+    docker_command_stdout,
+    docker_command_stderr,
+    docker_unexpected_error,
+)
 
 TConfig = TypeVar("TConfig", bound=BaseModel)
 TResult = TypeVar("TResult", bound=BaseModel)
@@ -27,7 +40,7 @@ class BaseDockerCommandBuilder:
             cmd.extend(["-f", compose_file])
         cmd.append(action)
 
-        if action == "up" and kwargs.get("detach", True):
+        if action == "up" and kwargs.get("detach", False):
             cmd.append("-d")
 
         if env_file:
@@ -45,13 +58,21 @@ class BaseFormatter:
 
     def format_output(self, result: TResult, output: str, success_message: str, error_message: str) -> str:
         if result.success:
-            message = success_message.format(services=result.name)
-            output_message = self.output_formatter.create_success_message(message, result.model_dump())
+            if output == "json":
+                # For JSON, return formatted data structure
+                message = success_message.format(services=result.name)
+                output_message = self.output_formatter.create_success_message(message, result.model_dump())
+                return self.output_formatter.format_output(output_message, output)
+            else:
+                # For text format, return only docker output or empty (command.py handles success message)
+                if result.verbose and result.docker_output and result.docker_output.strip():
+                    return f"Docker Command Output:\n{result.docker_output.strip()}"
+                return ""
         else:
+            # Always format errors the same way
             error = result.error or "Unknown error occurred"
             output_message = self.output_formatter.create_error_message(error, result.model_dump())
-
-        return self.output_formatter.format_output(output_message, output)
+            return self.output_formatter.format_output(output_message, output)
 
     def format_dry_run(self, config: TConfig, command_builder, dry_run_messages: dict) -> str:
         if hasattr(command_builder, "build_up_command"):
@@ -101,16 +122,64 @@ class BaseDockerService:
         self, name: str = "all", env_file: str = None, compose_file: str = None, **kwargs
     ) -> tuple[bool, str]:
         cmd = BaseDockerCommandBuilder.build_command(self.action, name, env_file, compose_file, **kwargs)
-
+        
+        self.logger.debug(docker_command_executing.format(command=' '.join(cmd)))
+        
         try:
             self.logger.info(service_action_info.format(action=self.action, name=name))
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            self.logger.success(service_action_success.format(action=self.action, name=name))
-            return True, None
+            
+            if self.action == "up" and not kwargs.get("detach", False):
+                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, universal_newlines=True)
+                
+                output_lines = []
+                self.logger.info("Docker container logs:")
+                self.logger.info("-" * 50)
+                
+                for line in process.stdout:
+                    self.logger.info(line.rstrip())  # Stream logs through logger
+                    output_lines.append(line.rstrip())
+                
+                return_code = process.wait()
+                
+                full_output = '\n'.join(output_lines)
+                
+                if return_code == 0:
+                    self.logger.debug(docker_command_completed.format(action=self.action))
+                    if full_output.strip():
+                        self.logger.debug(docker_command_stdout.format(output=full_output.strip()))
+                    return True, full_output
+                else:
+                    self.logger.debug(docker_command_failed.format(return_code=return_code))
+                    if full_output.strip():
+                        self.logger.debug(docker_command_stderr.format(output=full_output.strip()))
+                    self.logger.error(service_action_failed.format(action=self.action, error=full_output or f"Process exited with code {return_code}"))
+                    return False, full_output or f"Process exited with code {return_code}"
+            else:
+                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                
+                self.logger.debug(docker_command_completed.format(action=self.action))
+                
+                if result.stdout.strip():
+                    self.logger.debug(docker_command_stdout.format(output=result.stdout.strip()))
+                
+                if result.stderr.strip():
+                    self.logger.debug(docker_command_stderr.format(output=result.stderr.strip()))
+                
+                return True, result.stdout or result.stderr
+                
         except subprocess.CalledProcessError as e:
-            self.logger.error(service_action_failed.format(action=self.action, error=e.stderr))
-            return False, e.stderr
+            self.logger.debug(docker_command_failed.format(return_code=e.returncode))
+            
+            if e.stdout and e.stdout.strip():
+                self.logger.debug(docker_command_stdout.format(output=e.stdout.strip()))
+            
+            if e.stderr and e.stderr.strip():
+                self.logger.debug(docker_command_stderr.format(output=e.stderr.strip()))
+            
+            self.logger.error(service_action_failed.format(action=self.action, error=e.stderr or str(e)))
+            return False, e.stderr or e.stdout or str(e)
         except Exception as e:
+            self.logger.debug(docker_unexpected_error.format(action=self.action, error=str(e)))
             self.logger.error(service_action_unexpected_error.format(action=self.action, error=e))
             return False, str(e)
 
@@ -155,6 +224,7 @@ class BaseResult(BaseModel):
     output: str
     success: bool = False
     error: Optional[str] = None
+    docker_output: Optional[str] = None
 
 
 class BaseService(Generic[TConfig, TResult]):

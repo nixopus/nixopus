@@ -1,11 +1,7 @@
-import os
-import subprocess
-from typing import Optional, Protocol
+from typing import Protocol
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import Field
 
-from app.utils.logger import Logger
-from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
 from .base import BaseAction, BaseConfig, BaseDockerCommandBuilder, BaseDockerService, BaseFormatter, BaseResult, BaseService
@@ -56,7 +52,7 @@ class DockerService(BaseDockerService):
         super().__init__(logger, "up")
 
     def start_services(
-        self, name: str = "all", detach: bool = True, env_file: str = None, compose_file: str = None
+        self, name: str = "all", detach: bool = False, env_file: str = None, compose_file: str = None
     ) -> tuple[bool, str]:
         return self.execute_services(name, env_file, compose_file, detach=detach)
 
@@ -66,7 +62,7 @@ class UpResult(BaseResult):
 
 
 class UpConfig(BaseConfig):
-    detach: bool = Field(True, description="Run services in detached mode")
+    detach: bool = Field(False, description="Run services in detached mode")
 
 
 class UpService(BaseService[UpConfig, UpResult]):
@@ -75,7 +71,7 @@ class UpService(BaseService[UpConfig, UpResult]):
         self.docker_service = docker_service or DockerService(self.logger)
         self.formatter = UpFormatter()
 
-    def _create_result(self, success: bool, error: str = None) -> UpResult:
+    def _create_result(self, success: bool, error: str = None, docker_output: str = None) -> UpResult:
         return UpResult(
             name=self.config.name,
             detach=self.config.detach,
@@ -84,6 +80,7 @@ class UpService(BaseService[UpConfig, UpResult]):
             output=self.config.output,
             success=success,
             error=error,
+            docker_output=docker_output,
         )
 
     def up(self) -> UpResult:
@@ -92,11 +89,12 @@ class UpService(BaseService[UpConfig, UpResult]):
     def execute(self) -> UpResult:
         self.logger.debug(f"Starting services: {self.config.name}")
 
-        success, error = self.docker_service.start_services(
+        success, docker_output = self.docker_service.start_services(
             self.config.name, self.config.detach, self.config.env_file, self.config.compose_file
         )
-
-        return self._create_result(success, error)
+        
+        error = None if success else docker_output
+        return self._create_result(success, error, docker_output)
 
     def up_and_format(self) -> str:
         return self.execute_and_format()
@@ -123,3 +121,6 @@ class Up(BaseAction[UpConfig, UpResult]):
 
     def format_output(self, result: UpResult, output: str) -> str:
         return self.formatter.format_output(result, output)
+    
+    def format_dry_run(self, config: UpConfig) -> str:
+        return self.formatter.format_dry_run(config)

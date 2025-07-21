@@ -128,7 +128,7 @@ class BaseEnvironmentManager:
                 return False, error
 
             backup_created_flag = True
-            self.logger.info(backup_created.format(backup_path=backup_path))
+            self.logger.debug(backup_created.format(backup_path=backup_path))
 
             success, error = self._atomic_write(file_path, config)
             if not success:
@@ -136,7 +136,7 @@ class BaseEnvironmentManager:
                     self.logger.warning(backup_restore_attempt)
                     restore_success, restore_error = self._restore_backup(backup_path, file_path)
                     if restore_success:
-                        self.logger.info(backup_restore_success)
+                        self.logger.debug(backup_restore_success)
                     else:
                         self.logger.error(backup_restore_failed.format(error=restore_error))
                 return False, error
@@ -144,7 +144,7 @@ class BaseEnvironmentManager:
             if backup_created_flag and backup_path and os.path.exists(backup_path):
                 try:
                     os.remove(backup_path)
-                    self.logger.info(backup_removed)
+                    self.logger.debug(backup_removed)
                 except Exception as e:
                     self.logger.warning(backup_remove_failed.format(error=e))
 

@@ -14,6 +14,13 @@ from .messages import (
     debug_verbose_param,
     debug_output_param,
     debug_dry_run_param,
+    debug_timeout_param,
+    debug_config_created,
+    debug_action_created,
+    debug_timeout_wrapper_created,
+    debug_executing_with_timeout,
+    debug_timeout_completed,
+    debug_timeout_error,
     debug_executing_dry_run,
     debug_dry_run_completed,
     debug_clone_operation_result,
@@ -53,16 +60,22 @@ def clone_callback(
         logger.debug(debug_verbose_param.format(verbose=verbose))
         logger.debug(debug_output_param.format(output=output))
         logger.debug(debug_dry_run_param.format(dry_run=dry_run))
+        logger.debug(debug_timeout_param.format(timeout=timeout))
         
         config = CloneConfig(repo=repo, branch=branch, path=path, force=force, verbose=verbose, output=output, dry_run=dry_run)
+        logger.debug(debug_config_created.format(config_type="CloneConfig"))
         
         clone_operation = Clone(logger=logger)
+        logger.debug(debug_action_created.format(action_type="Clone"))
+        
+        logger.debug(debug_timeout_wrapper_created.format(timeout=timeout))
+        logger.debug(debug_executing_with_timeout.format(timeout=timeout))
         
         with TimeoutWrapper(timeout):
             if config.dry_run:
                 logger.debug(debug_executing_dry_run)
                 formatted_output = clone_operation.clone_and_format(config)
-                logger.info(formatted_output)
+                logger.success(formatted_output)
                 logger.debug(debug_dry_run_completed)
             else:
                 result = clone_operation.clone(config)
@@ -74,13 +87,18 @@ def clone_callback(
                     raise typer.Exit(1)
                 
                 logger.debug(debug_clone_operation_completed)
-                logger.info(result.output)
+                logger.success(result.output)
+                
+        logger.debug(debug_timeout_completed)
                 
     except TimeoutError as e:
-        logger.error(e)
+        logger.debug(debug_timeout_error.format(error=str(e)))
+        if not isinstance(e, typer.Exit):
+            logger.error(str(e))
         raise typer.Exit(1)
     except Exception as e:
         logger.debug(debug_exception_caught.format(error_type=type(e).__name__, error=str(e)))
         logger.debug(debug_exception_details.format(error=e))
-        logger.error(str(e))
+        if not isinstance(e, typer.Exit):
+            logger.error(str(e))
         raise typer.Exit(1)

@@ -1,25 +1,19 @@
 import os
 from typing import Optional, Protocol
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import Field, field_validator
 
 from app.utils.config import Config, PROXY_PORT
-from app.utils.logger import Logger
-from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
 from .base import BaseAction, BaseCaddyCommandBuilder, BaseCaddyService, BaseConfig, BaseFormatter, BaseResult, BaseService
 from .messages import (
-    config_file_required,
-    debug_init_proxy,
     dry_run_command,
     dry_run_command_would_be_executed,
     dry_run_config_file,
     dry_run_mode,
     dry_run_port,
     end_dry_run,
-    proxy_init_failed,
-    proxy_initialized_successfully,
 )
 
 config = Config()
@@ -38,7 +32,14 @@ class CaddyCommandBuilder(BaseCaddyCommandBuilder):
 
 class LoadFormatter(BaseFormatter):
     def format_output(self, result: "LoadResult", output: str) -> str:
-        return super().format_output(result, output, proxy_initialized_successfully, proxy_init_failed)
+        if output == "json":
+            success_msg = "Configuration loaded successfully" if result.success else "Failed to load configuration"
+            return super().format_output(result, output, success_msg, result.error or "Unknown error")
+        
+        if result.success:
+            return "Configuration loaded successfully"
+        else:
+            return result.error or "Failed to load configuration"
 
     def format_dry_run(self, config: "LoadConfig") -> str:
         dry_run_messages = {
@@ -100,15 +101,11 @@ class LoadService(BaseService[LoadConfig, LoadResult]):
         return self.execute()
 
     def execute(self) -> LoadResult:
-        self.logger.debug(debug_init_proxy.format(port=self.config.proxy_port))
-
         if not self.config.config_file:
-            self.logger.error(config_file_required)
-            return self._create_result(False, config_file_required)
+            return self._create_result(False, "Configuration file is required")
 
-        success, error = self.caddy_service.load_config_file(self.config.config_file, self.config.proxy_port)
-
-        return self._create_result(success, error)
+        success, message = self.caddy_service.load_config_file(self.config.config_file, self.config.proxy_port)
+        return self._create_result(success, None if success else message)
 
     def load_and_format(self) -> str:
         return self.execute_and_format()

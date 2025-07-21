@@ -35,12 +35,10 @@ class DependencyChecker:
             return is_available
 
         except subprocess.TimeoutExpired:
-            if self.logger.verbose:
-                self.logger.error(timeout_checking_dependency.format(dep=dep))
+            self.logger.error(timeout_checking_dependency.format(dep=dep))
             return False
         except Exception as e:
-            if self.logger.verbose:
-                self.logger.error(error_subprocess_execution_failed.format(dep=dep, error=e))
+            self.logger.error(error_subprocess_execution_failed.format(dep=dep, error=e))
             return False
 
 
@@ -66,18 +64,44 @@ class DependencyFormatter:
                 self.output_formatter.create_success_message("No dependencies to check"), output
             )
 
-        messages = []
-        for result in results:
+        if len(results) == 1 and output == "text":
+            result = results[0]
+            message = f"{result.dependency} is {'available' if result.is_available else 'not available'}"
             if result.is_available:
-                message = f"{result.dependency} is available"
-                data = {"dependency": result.dependency, "is_available": result.is_available}
-                messages.append(self.output_formatter.create_success_message(message, data))
+                return self.output_formatter.create_success_message(message).message
             else:
-                error = f"{result.dependency} is not available"
-                data = {"dependency": result.dependency, "is_available": result.is_available, "error": result.error}
-                messages.append(self.output_formatter.create_error_message(error, data))
+                return f"Error: {message}"
 
-        return self.output_formatter.format_output(messages, output)
+        if output == "text":
+            table_data = []
+            for result in results:
+                row = {
+                    "Dependency": result.dependency,
+                    "Status": "available" if result.is_available else "not available"
+                }
+                if result.error and not result.is_available:
+                    row["Error"] = result.error
+                table_data.append(row)
+            
+            return self.output_formatter.create_table(
+                table_data,
+                title="Dependency Check Results",
+                show_header=True,
+                show_lines=True
+            )
+        else:
+            json_data = []
+            for result in results:
+                item = {
+                    "dependency": result.dependency,
+                    "is_available": result.is_available,
+                    "status": "available" if result.is_available else "not available"
+                }
+                if result.error and not result.is_available:
+                    item["error"] = result.error
+                json_data.append(item)
+            
+            return self.output_formatter.format_json(json_data)
 
 
 class DepsCheckResult(BaseModel):
@@ -142,8 +166,7 @@ class DepsService:
             return self._check_dependency(dep)
 
         def error_handler(dep: str, error: Exception) -> DepsCheckResult:
-            if self.logger.verbose:
-                self.logger.error(error_checking_dependency.format(dep=dep, error=error))
+            self.logger.error(error_checking_dependency.format(dep=dep, error=error))
             return self._create_result(dep, False, str(error))
 
         results = ParallelProcessor.process_items(

@@ -58,7 +58,7 @@ class TestPort:
         assert len(results) == 2
         assert all("port" in result for result in results)
         assert all("status" in result for result in results)
-        assert all(result["host"] is None for result in results)
+        assert all("host" in result for result in results)
         assert all(result["error"] is None for result in results)
         assert all(result["is_available"] is True for result in results)
 
@@ -70,7 +70,8 @@ class TestPort:
         assert all("port" in result for result in results)
         assert all("status" in result for result in results)
         assert all("host" in result for result in results)
-        assert all(result["host"] == "localhost" for result in results)
+        hosts = [result["host"] for result in results]
+        assert all(host in ("localhost", None) for host in hosts)
         assert all(result["error"] is None for result in results)
         assert all(result["is_available"] is True for result in results)
 

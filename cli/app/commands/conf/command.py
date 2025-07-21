@@ -74,7 +74,7 @@ def list(
             if config.dry_run:
                 logger.debug(debug_executing_dry_run)
                 formatted_output = list_action.list_and_format(config)
-                logger.info(formatted_output)
+                print(formatted_output)
                 logger.debug(debug_dry_run_completed)
             else:
                 result = list_action.list(config)
@@ -82,7 +82,7 @@ def list(
 
                 if result.success:
                     formatted_output = list_action.format_output(result, output)
-                    logger.success(formatted_output)
+                    print(formatted_output)
                     logger.debug(debug_conf_operation_completed)
                 else:
                     logger.error(result.error)
@@ -98,7 +98,8 @@ def list(
     except Exception as e:
         logger.debug(debug_exception_caught.format(error_type=type(e).__name__, error=str(e)))
         logger.debug(debug_exception_details.format(error=e))
-        logger.error(str(e))
+        if not isinstance(e, typer.Exit):
+            logger.error(str(e))
         raise typer.Exit(1)
 
 
@@ -140,7 +141,7 @@ def delete(
             if config.dry_run:
                 logger.debug(debug_executing_dry_run)
                 formatted_output = delete_action.delete_and_format(config)
-                logger.info(formatted_output)
+                print(formatted_output)
                 logger.debug(debug_dry_run_completed)
             else:
                 result = delete_action.delete(config)
@@ -148,7 +149,7 @@ def delete(
 
                 if result.success:
                     formatted_output = delete_action.format_output(result, output)
-                    logger.success(formatted_output)
+                    print(formatted_output)
                     logger.debug(debug_conf_operation_completed)
                 else:
                     logger.error(result.error)
@@ -164,7 +165,8 @@ def delete(
     except Exception as e:
         logger.debug(debug_exception_caught.format(error_type=type(e).__name__, error=str(e)))
         logger.debug(debug_exception_details.format(error=e))
-        logger.error(str(e))
+        if not isinstance(e, typer.Exit):
+            logger.error(str(e))
         raise typer.Exit(1)
 
 
@@ -216,7 +218,7 @@ def set(
             if config.dry_run:
                 logger.debug(debug_executing_dry_run)
                 formatted_output = set_action.set_and_format(config)
-                logger.info(formatted_output)
+                print(formatted_output)
                 logger.debug(debug_dry_run_completed)
             else:
                 result = set_action.set(config)
@@ -224,7 +226,7 @@ def set(
 
                 if result.success:
                     formatted_output = set_action.format_output(result, output)
-                    logger.success(formatted_output)
+                    print(formatted_output)
                     logger.debug(debug_conf_operation_completed)
                 else:
                     logger.error(result.error)
@@ -240,5 +242,6 @@ def set(
     except Exception as e:
         logger.debug(debug_exception_caught.format(error_type=type(e).__name__, error=str(e)))
         logger.debug(debug_exception_details.format(error=e))
-        logger.error(str(e))
+        if not isinstance(e, typer.Exit):
+            logger.error(str(e))
         raise typer.Exit(1)

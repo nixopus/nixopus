@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from app.utils.logger import Logger
 from app.utils.protocols import LoggerProtocol
+from app.utils.output_formatter import OutputFormatter
 
 from .base import BaseAction, BaseConfig, BaseEnvironmentManager, BaseResult, BaseService
 from .messages import (
@@ -24,6 +25,7 @@ from .messages import (
     debug_config_file_read_failed,
     debug_dry_run_simulation,
     debug_dry_run_simulation_complete,
+    configuration_list_title,
 )
 
 
@@ -66,6 +68,7 @@ class ListService(BaseService[ListConfig, ListResult]):
     ):
         super().__init__(config, logger, environment_service)
         self.environment_service = environment_service or EnvironmentManager(self.logger)
+        self.formatter = OutputFormatter()
 
     def _create_result(self, success: bool, error: str = None, config_dict: Dict[str, str] = None) -> ListResult:
         return ListResult(
@@ -97,7 +100,6 @@ class ListService(BaseService[ListConfig, ListResult]):
             else:
                 self.logger.debug(debug_no_config_to_list)
             
-            self.logger.info(configuration_listed.format(service=self.config.service))
             return self._create_result(True, config_dict=config_dict)
         else:
             self.logger.error(configuration_list_failed.format(service=self.config.service, error=error))
@@ -120,30 +122,30 @@ class ListService(BaseService[ListConfig, ListResult]):
         return "\n".join(lines)
 
     def _format_output(self, result: ListResult, output_format: str) -> str:
-        if output_format == "json":
-            formatted = self._format_json(result)
-        else:
-            formatted = self._format_text(result)
-        
-        return formatted
-
-    def _format_json(self, result: ListResult) -> str:
-        import json
-
-        output = {"service": result.service, "success": result.success, "error": result.error, "config": result.config}
-        return json.dumps(output, indent=2)
-
-    def _format_text(self, result: ListResult) -> str:
         if not result.success:
             return configuration_list_failed.format(service=result.service, error=result.error)
 
         if result.config:
-            lines = [configuration_listed.format(service=result.service)]
-            for key, value in sorted(result.config.items()):
-                lines.append(f"  {key}={value}")
-            return "\n".join(lines)
-
-        return no_configuration_found.format(service=result.service)
+            success_message = configuration_listed.format(service=result.service)
+            title = configuration_list_title.format(service=result.service)
+            headers = ("Key", "Value")
+            
+            return self.formatter.format_table_output(
+                data=result.config,
+                output_format=output_format,
+                success_message=success_message,
+                title=title,
+                headers=headers
+            )
+        else:   
+            if output_format == "json":
+                return self.formatter.format_json({
+                    "service": result.service,
+                    "success": result.success,
+                    "message": no_configuration_found.format(service=result.service),
+                    "config": {}
+                })
+            return no_configuration_found.format(service=result.service)
 
 
 class List(BaseAction[ListConfig, ListResult]):

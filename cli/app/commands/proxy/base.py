@@ -1,6 +1,4 @@
 import json
-import os
-import subprocess
 from typing import Generic, Optional, Protocol, TypeVar
 
 import requests
@@ -13,14 +11,32 @@ from app.utils.protocols import LoggerProtocol
 
 from .messages import (
     caddy_connection_failed,
-    caddy_load_failed,
-    caddy_status_code_error,
     config_file_not_found,
-    info_caddy_running,
-    info_caddy_stopped,
-    info_config_loaded,
-    invalid_json_config,
     port_must_be_between_1_and_65535,
+    debug_checking_caddy_status,
+    debug_caddy_response,
+    debug_caddy_config_accessible,
+    debug_caddy_non_200,
+    debug_connection_refused,
+    debug_request_failed,
+    debug_unexpected_error,
+    debug_loading_config_file,
+    debug_config_parsed,
+    debug_posting_config,
+    debug_caddy_load_response,
+    debug_config_loaded_success,
+    debug_caddy_load_failed,
+    debug_stopping_caddy,
+    debug_caddy_stop_response,
+    debug_caddy_stopped_success,
+    debug_caddy_stop_failed,
+    caddy_is_running,
+    caddy_not_running,
+    invalid_json_error,
+    cannot_connect_to_caddy,
+    request_failed_error,
+    http_error,
+    unexpected_error,
 )
 
 TConfig = TypeVar("TConfig", bound=BaseModel)
@@ -111,49 +127,95 @@ class BaseCaddyService:
     def check_status(self, port: int = proxy_port) -> tuple[bool, str]:
         try:
             url = self._get_caddy_url(port, caddy_config_endpoint)
+            self.logger.debug(debug_checking_caddy_status.format(url=url))
+            
             response = requests.get(url, timeout=5)
+            self.logger.debug(debug_caddy_response.format(code=response.status_code))
+            
             if response.status_code == 200:
-                return True, info_caddy_running
+                self.logger.debug(debug_caddy_config_accessible)
+                return True, caddy_is_running
             else:
-                return False, caddy_status_code_error.format(code=response.status_code)
+                self.logger.debug(debug_caddy_non_200.format(code=response.status_code))
+                return False, http_error.format(code=response.status_code)
+        except requests.exceptions.ConnectionError:
+            self.logger.debug(debug_connection_refused.format(port=port))
+            return False, caddy_not_running
         except requests.exceptions.RequestException as e:
-            return False, caddy_connection_failed.format(error=str(e))
+            self.logger.debug(debug_request_failed.format(error=str(e)))
+            return False, request_failed_error.format(error=str(e))
         except Exception as e:
-            return False, f"Unexpected error: {str(e)}"
+            self.logger.debug(debug_unexpected_error.format(error=str(e)))
+            return False, unexpected_error.format(error=str(e))
 
     def load_config(self, config_file: str, port: int = proxy_port) -> tuple[bool, str]:
         try:
+            self.logger.debug(debug_loading_config_file.format(file=config_file))
             with open(config_file, "r") as f:
                 config_data = json.load(f)
+            self.logger.debug(debug_config_parsed)
 
             url = self._get_caddy_url(port, caddy_load_endpoint)
+            self.logger.debug(debug_posting_config.format(url=url))
+            
             response = requests.post(url, json=config_data, headers={"Content-Type": "application/json"}, timeout=10)
+            self.logger.debug(debug_caddy_load_response.format(code=response.status_code))
 
             if response.status_code == 200:
-                return True, info_config_loaded
+                self.logger.debug(debug_config_loaded_success)
+                return True, "Configuration loaded"
             else:
-                return False, caddy_load_failed.format(code=response.status_code, response=response.text)
+                error_msg = response.text.strip() if response.text else http_error.format(code=response.status_code)
+                self.logger.debug(debug_caddy_load_failed.format(error=error_msg))
+                return False, error_msg
         except FileNotFoundError:
-            return False, config_file_not_found.format(file=config_file)
+            error_msg = config_file_not_found.format(file=config_file)
+            self.logger.debug(error_msg)
+            return False, error_msg
         except json.JSONDecodeError as e:
-            return False, invalid_json_config.format(error=str(e))
+            error_msg = invalid_json_error.format(error=str(e))
+            self.logger.debug(error_msg)
+            return False, error_msg
+        except requests.exceptions.ConnectionError:
+            error_msg = caddy_connection_failed.format(error=str(e))
+            self.logger.debug(error_msg)
+            return False, error_msg
         except requests.exceptions.RequestException as e:
-            return False, caddy_connection_failed.format(error=str(e))
+            error_msg = request_failed_error.format(error=str(e))
+            self.logger.debug(error_msg)
+            return False, error_msg
         except Exception as e:
-            return False, f"Unexpected error: {str(e)}"
+            error_msg = unexpected_error.format(error=str(e))
+            self.logger.debug(error_msg)
+            return False, error_msg
 
     def stop_proxy(self, port: int = proxy_port) -> tuple[bool, str]:
         try:
             url = self._get_caddy_url(port, caddy_stop_endpoint)
+            self.logger.debug(debug_stopping_caddy.format(url=url))
+            
             response = requests.post(url, timeout=5)
+            self.logger.debug(debug_caddy_stop_response.format(code=response.status_code))
+            
             if response.status_code == 200:
-                return True, info_caddy_stopped
+                self.logger.debug(debug_caddy_stopped_success)
+                return True, "Caddy stopped"
             else:
-                return False, f"Failed to stop Caddy: {response.status_code}"
+                error_msg = http_error.format(code=response.status_code)
+                self.logger.debug(debug_caddy_stop_failed.format(error=error_msg))
+                return False, error_msg
+        except requests.exceptions.ConnectionError:
+            error_msg = cannot_connect_to_caddy.format(port=port)
+            self.logger.debug(error_msg)
+            return False, error_msg
         except requests.exceptions.RequestException as e:
-            return False, caddy_connection_failed.format(error=str(e))
+            error_msg = request_failed_error.format(error=str(e))
+            self.logger.debug(error_msg)
+            return False, error_msg
         except Exception as e:
-            return False, f"Unexpected error: {str(e)}"
+            error_msg = unexpected_error.format(error=str(e))
+            self.logger.debug(error_msg)
+            return False, error_msg
 
 
 class BaseConfig(BaseModel):

@@ -68,7 +68,7 @@ class DownService(BaseService[DownConfig, DownResult]):
         self.docker_service = docker_service or DockerService(self.logger)
         self.formatter = DownFormatter()
 
-    def _create_result(self, success: bool, error: str = None) -> DownResult:
+    def _create_result(self, success: bool, error: str = None, docker_output: str = None) -> DownResult:
         return DownResult(
             name=self.config.name,
             env_file=self.config.env_file,
@@ -76,6 +76,7 @@ class DownService(BaseService[DownConfig, DownResult]):
             output=self.config.output,
             success=success,
             error=error,
+            docker_output=docker_output,
         )
 
     def down(self) -> DownResult:
@@ -84,9 +85,10 @@ class DownService(BaseService[DownConfig, DownResult]):
     def execute(self) -> DownResult:
         self.logger.debug(f"Stopping services: {self.config.name}")
 
-        success, error = self.docker_service.stop_services(self.config.name, self.config.env_file, self.config.compose_file)
-
-        return self._create_result(success, error)
+        success, docker_output = self.docker_service.stop_services(self.config.name, self.config.env_file, self.config.compose_file)
+        
+        error = None if success else docker_output
+        return self._create_result(success, error, docker_output)
 
     def down_and_format(self) -> str:
         return self.execute_and_format()
@@ -113,3 +115,6 @@ class Down(BaseAction[DownConfig, DownResult]):
 
     def format_output(self, result: DownResult, output: str) -> str:
         return self.formatter.format_output(result, output)
+    
+    def format_dry_run(self, config: DownConfig) -> str:
+        return self.formatter.format_dry_run(config)

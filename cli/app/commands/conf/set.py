@@ -115,12 +115,8 @@ class SetService(BaseService[SetConfig, SetResult]):
         )
 
         if success:
-            self.logger.info(
-                configuration_set.format(service=self.config.service, key=self.config.key, value=self.config.value)
-            )
             return self._create_result(True)
         else:
-            self.logger.error(configuration_set_failed.format(service=self.config.service, error=error))
             return self._create_result(False, error=error)
 
     def set_and_format(self) -> str:

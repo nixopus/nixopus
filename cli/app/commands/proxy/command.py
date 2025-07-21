@@ -7,6 +7,7 @@ from app.utils.timeout import TimeoutWrapper
 from .load import Load, LoadConfig
 from .status import Status, StatusConfig
 from .stop import Stop, StopConfig
+from .messages import operation_timed_out, unexpected_error
 
 proxy_app = typer.Typer(
     name="proxy",
@@ -27,26 +28,30 @@ def load(
 ):
     """Load Caddy proxy configuration"""
     logger = Logger(verbose=verbose)
-
+    
     try:
         config = LoadConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run, config_file=config_file)
-
         load_service = Load(logger=logger)
         
         with TimeoutWrapper(timeout):
             result = load_service.load(config)
 
+        output_text = load_service.format_output(result, output)
         if result.success:
-            logger.success(load_service.format_output(result, output))
+            logger.success(output_text)
         else:
-            logger.error(result.error)
+            logger.error(output_text)
             raise typer.Exit(1)
 
-    except TimeoutError as e:
-        logger.error(e)
+    except TimeoutError:
+        logger.error(operation_timed_out.format(timeout=timeout))
+        raise typer.Exit(1)
+    except ValueError as e:
+        logger.error(str(e))
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(str(e))
+        if not isinstance(e, typer.Exit):
+            logger.error(unexpected_error.format(error=str(e)))
         raise typer.Exit(1)
 
 
@@ -63,23 +68,27 @@ def status(
 
     try:
         config = StatusConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run)
-
         status_service = Status(logger=logger)
         
         with TimeoutWrapper(timeout):
             result = status_service.status(config)
 
+        output_text = status_service.format_output(result, output)
         if result.success:
-            logger.success(status_service.format_output(result, output))
+            logger.success(output_text)
         else:
-            logger.error(result.error)
+            logger.error(output_text)
             raise typer.Exit(1)
 
-    except TimeoutError as e:
-        logger.error(e)
+    except TimeoutError:
+        logger.error(operation_timed_out.format(timeout=timeout))
+        raise typer.Exit(1)
+    except ValueError as e:
+        logger.error(str(e))
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(str(e))
+        if not isinstance(e, typer.Exit):
+            logger.error(unexpected_error.format(error=str(e)))
         raise typer.Exit(1)
 
 
@@ -96,21 +105,25 @@ def stop(
 
     try:
         config = StopConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run)
-
         stop_service = Stop(logger=logger)
         
         with TimeoutWrapper(timeout):
             result = stop_service.stop(config)
 
+        output_text = stop_service.format_output(result, output)
         if result.success:
-            logger.success(stop_service.format_output(result, output))
+            logger.success(output_text)
         else:
-            logger.error(result.error)
+            logger.error(output_text)
             raise typer.Exit(1)
 
-    except TimeoutError as e:
-        logger.error(e)
+    except TimeoutError:
+        logger.error(operation_timed_out.format(timeout=timeout))
+        raise typer.Exit(1)
+    except ValueError as e:
+        logger.error(str(e))
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(str(e))
+        if not isinstance(e, typer.Exit):
+            logger.error(unexpected_error.format(error=str(e)))
         raise typer.Exit(1)

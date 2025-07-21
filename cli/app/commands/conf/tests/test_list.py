@@ -19,6 +19,7 @@ from app.utils.logger import Logger
 class TestEnvironmentManager:
     def setup_method(self):
         self.logger = Mock(spec=Logger)
+        self.logger.verbose = False  # Add verbose attribute to mock
         self.manager = EnvironmentManager(self.logger)
 
     @patch("app.commands.conf.base.BaseEnvironmentManager.read_env_file")
@@ -138,7 +139,6 @@ class TestListService:
         assert result.success is True
         assert result.config == {"KEY1": "value1"}
         assert result.error is None
-        self.logger.info.assert_called_once_with(configuration_listed.format(service="api"))
 
     def test_list_failure(self):
         self.environment_service.list_config.return_value = (False, {}, "File not found")
@@ -163,8 +163,10 @@ class TestListService:
 
         output = self.service.list_and_format()
 
-        assert configuration_listed.format(service="api") in output
-        assert "  KEY1=value1" in output
+        assert "KEY1" in output
+        assert "value1" in output
+        assert "Key" in output
+        assert "Value" in output
 
     def test_list_and_format_failure(self):
         self.environment_service.list_config.return_value = (False, {}, "File not found")
@@ -188,9 +190,9 @@ class TestListService:
         output = self.service._format_output(result, "json")
         data = json.loads(output)
 
-        assert data["service"] == "api"
         assert data["success"] is True
-        assert data["config"] == {"KEY1": "value1"}
+        assert data["message"] == "Configuration listed successfully for service: api"
+        assert data["data"] == {"KEY1": "value1"}
 
     def test_format_output_text_success(self):
         result = ListResult(
@@ -199,9 +201,12 @@ class TestListService:
 
         output = self.service._format_output(result, "text")
 
-        assert configuration_listed.format(service="api") in output
-        assert "  KEY1=value1" in output
-        assert "  KEY2=value2" in output
+        assert "KEY1" in output
+        assert "value1" in output
+        assert "KEY2" in output
+        assert "value2" in output
+        assert "Key" in output
+        assert "Value" in output
 
     def test_format_output_text_failure(self):
         result = ListResult(service="api", success=False, error="Test error", verbose=False, output="text")
