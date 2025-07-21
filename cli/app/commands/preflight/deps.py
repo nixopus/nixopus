@@ -8,7 +8,15 @@ from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
-from .messages import error_checking_dependency, invalid_os, invalid_package_manager, timeout_checking_dependency
+from .messages import (
+    error_checking_dependency,
+    invalid_os,
+    invalid_package_manager,
+    timeout_checking_dependency,
+    debug_processing_deps,
+    debug_dep_check_result,
+    error_subprocess_execution_failed,
+)
 
 
 class DependencyCheckerProtocol(Protocol):
@@ -20,17 +28,19 @@ class DependencyChecker:
         self.logger = logger
 
     def check_dependency(self, dep: str) -> bool:
-        self.logger.debug(f"Checking dependency: {dep}")
-
         try:
             result = subprocess.run(["command", "-v", dep], capture_output=True, text=True, timeout=1)
-            return result.returncode == 0
+            is_available = result.returncode == 0
+            self.logger.debug(debug_dep_check_result.format(dep=dep, status="available" if is_available else "not available"))
+            return is_available
 
         except subprocess.TimeoutExpired:
-            self.logger.error(timeout_checking_dependency.format(dep=dep))
+            if self.logger.verbose:
+                self.logger.error(timeout_checking_dependency.format(dep=dep))
             return False
         except Exception as e:
-            self.logger.error(error_checking_dependency.format(dep=dep, error=e))
+            if self.logger.verbose:
+                self.logger.error(error_subprocess_execution_failed.format(dep=dep, error=e))
             return False
 
 
@@ -60,10 +70,12 @@ class DependencyFormatter:
         for result in results:
             if result.is_available:
                 message = f"{result.dependency} is available"
-                messages.append(self.output_formatter.create_success_message(message, result.model_dump()))
+                data = {"dependency": result.dependency, "is_available": result.is_available}
+                messages.append(self.output_formatter.create_success_message(message, data))
             else:
                 error = f"{result.dependency} is not available"
-                messages.append(self.output_formatter.create_error_message(error, result.model_dump()))
+                data = {"dependency": result.dependency, "is_available": result.is_available, "error": result.error}
+                messages.append(self.output_formatter.create_error_message(error, data))
 
         return self.output_formatter.format_output(messages, output)
 
@@ -124,13 +136,14 @@ class DepsService:
             return self._create_result(dep, False, str(e))
 
     def check_dependencies(self) -> list[DepsCheckResult]:
-        self.logger.debug(f"Checking dependencies: {self.config.deps}")
+        self.logger.debug(debug_processing_deps.format(count=len(self.config.deps)))
 
         def process_dep(dep: str) -> DepsCheckResult:
             return self._check_dependency(dep)
 
         def error_handler(dep: str, error: Exception) -> DepsCheckResult:
-            self.logger.error(error_checking_dependency.format(dep=dep, error=error))
+            if self.logger.verbose:
+                self.logger.error(error_checking_dependency.format(dep=dep, error=error))
             return self._create_result(dep, False, str(error))
 
         results = ParallelProcessor.process_items(
