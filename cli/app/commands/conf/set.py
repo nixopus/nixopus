@@ -1,3 +1,4 @@
+import os
 from typing import Dict, Optional, Protocol
 
 from pydantic import BaseModel, Field
@@ -14,6 +15,17 @@ from .messages import (
     end_dry_run,
     key_required,
     value_required,
+    debug_updating_config,
+    debug_config_updated,
+    debug_service_env_file_resolved,
+    debug_config_file_exists,
+    debug_config_file_not_exists,
+    debug_config_file_read_success,
+    debug_config_file_read_failed,
+    debug_config_file_write_failed,
+    debug_dry_run_simulation,
+    debug_dry_run_simulation_complete,
+    debug_validation_failed,
 )
 
 
@@ -24,13 +36,32 @@ class EnvironmentServiceProtocol(Protocol):
 class EnvironmentManager(BaseEnvironmentManager):
     def set_config(self, service: str, key: str, value: str, env_file: Optional[str] = None) -> tuple[bool, Optional[str]]:
         file_path = self.get_service_env_file(service, env_file)
+        self.logger.debug(debug_service_env_file_resolved.format(file_path=file_path))
+        
+        if self.logger.verbose:
+            if os.path.exists(file_path):
+                self.logger.debug(debug_config_file_exists.format(file_path=file_path))
+            else:
+                self.logger.debug(debug_config_file_not_exists.format(file_path=file_path))
 
         success, config, error = self.read_env_file(file_path)
         if not success:
+            self.logger.debug(debug_config_file_read_failed.format(error=error))
             return False, error
 
+        self.logger.debug(debug_config_file_read_success.format(count=len(config)))
+
+        self.logger.debug(debug_updating_config.format(key=key, value=value))
         config[key] = value
-        return self.write_env_file(file_path, config)
+        
+        success, error = self.write_env_file(file_path, config)
+        
+        if success:
+            self.logger.debug(debug_config_updated)
+        else:
+            self.logger.debug(debug_config_file_write_failed.format(error=error))
+        
+        return success, error
 
 
 class SetResult(BaseResult):
@@ -66,13 +97,18 @@ class SetService(BaseService[SetConfig, SetResult]):
 
     def execute(self) -> SetResult:
         if not self.config.key:
+            self.logger.debug(debug_validation_failed.format(error="Key is required"))
             return self._create_result(False, error=key_required)
 
         if not self.config.value:
+            self.logger.debug(debug_validation_failed.format(error="Value is required"))
             return self._create_result(False, error=value_required)
 
         if self.config.dry_run:
-            return self._create_result(True)
+            self.logger.debug(debug_dry_run_simulation)
+            result = self._create_result(True)
+            self.logger.debug(debug_dry_run_simulation_complete)
+            return result
 
         success, error = self.environment_service.set_config(
             self.config.service, self.config.key, self.config.value, self.config.env_file
@@ -105,9 +141,11 @@ class SetService(BaseService[SetConfig, SetResult]):
 
     def _format_output(self, result: SetResult, output_format: str) -> str:
         if output_format == "json":
-            return self._format_json(result)
+            formatted = self._format_json(result)
         else:
-            return self._format_text(result)
+            formatted = self._format_text(result)
+        
+        return formatted
 
     def _format_json(self, result: SetResult) -> str:
         import json
@@ -142,3 +180,7 @@ class Set(BaseAction[SetConfig, SetResult]):
     def format_output(self, result: SetResult, output: str) -> str:
         service = SetService(result, logger=self.logger)
         return service._format_output(result, output)
+
+    def set_and_format(self, config: SetConfig) -> str:
+        service = SetService(config, logger=self.logger)
+        return service.execute_and_format()

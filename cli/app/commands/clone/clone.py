@@ -9,8 +9,16 @@ from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
-from ..install.messages import (
-    cloning_repo_into_path,
+from .messages import (
+    debug_cloning_repo,
+    debug_executing_git_clone,
+    debug_git_clone_success,
+    debug_git_clone_failed,
+    debug_unexpected_error,
+    debug_removing_directory,
+    debug_directory_removal_failed,
+    debug_path_exists_force_disabled,
+    debug_clone_completed,
     default_branch,
     dry_run_branch,
     dry_run_command,
@@ -20,9 +28,7 @@ from ..install.messages import (
     dry_run_repository,
     dry_run_target_path,
     end_dry_run,
-    executing_command,
     failed_to_prepare_target_directory,
-    git_clone_failed,
     invalid_path,
     invalid_repo,
     invalid_repository_url,
@@ -32,7 +38,6 @@ from ..install.messages import (
     prerequisites_validation_failed,
     successfully_cloned,
     target_path_not_exists,
-    unexpected_error_during_clone,
     unknown_error,
 )
 
@@ -98,17 +103,18 @@ class GitClone:
 
     def clone_repository(self, repo: str, path: str, branch: str = None) -> tuple[bool, str]:
         cmd = GitCommandBuilder.build_clone_command(repo, path, branch)
+        
+        self.logger.debug(debug_executing_git_clone.format(command=' '.join(cmd)))
 
         try:
-            self.logger.info(executing_command.format(command=" ".join(cmd)))
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            self.logger.success(successfully_cloned.format(repo=repo, path=path))
+            self.logger.debug(debug_git_clone_success)
             return True, None
         except subprocess.CalledProcessError as e:
-            self.logger.error(git_clone_failed.format(error=e.stderr))
+            self.logger.debug(debug_git_clone_failed.format(code=e.returncode, error=e.stderr))
             return False, e.stderr
         except Exception as e:
-            self.logger.error(unexpected_error_during_clone.format(error=e))
+            self.logger.debug(debug_unexpected_error.format(error_type=type(e).__name__, error=str(e)))
             return False, str(e)
 
 
@@ -118,7 +124,7 @@ class CloneResult(BaseModel):
     branch: Optional[str]
     force: bool
     verbose: bool
-    output: str
+    output: str = ""
     success: bool = False
     error: Optional[str] = None
 
@@ -180,17 +186,22 @@ class CloneService:
 
     def _prepare_target_directory(self) -> bool:
         if self.config.force and os.path.exists(self.config.path):
-            return self.dir_manager.remove_directory(self.config.path, self.logger)
+            self.logger.debug(debug_removing_directory.format(path=self.config.path))
+            success = self.dir_manager.remove_directory(self.config.path, self.logger)
+            if not success:
+                self.logger.debug(debug_directory_removal_failed)
+            return success
         return True
 
     def _validate_prerequisites(self) -> bool:
         if self.dir_manager.path_exists_and_not_force(self.config.path, self.config.force):
+            self.logger.debug(debug_path_exists_force_disabled.format(path=self.config.path))
             self.logger.error(path_already_exists_use_force.format(path=self.config.path))
             return False
         return True
 
     def _create_result(self, success: bool, error: str = None) -> CloneResult:
-        return CloneResult(
+        result = CloneResult(
             repo=self.config.repo,
             path=self.config.path,
             branch=self.config.branch,
@@ -200,9 +211,14 @@ class CloneService:
             success=success,
             error=error,
         )
+        result.output = self.formatter.format_output(result, self.config.output)
+        return result
 
     def clone(self) -> CloneResult:
-        self.logger.debug(cloning_repo_into_path.format(repo=self.config.repo, path=self.config.path))
+        import time
+        start_time = time.time()
+        
+        self.logger.debug(debug_cloning_repo.format(repo=self.config.repo, path=self.config.path, force=self.config.force))
 
         if not self._validate_prerequisites():
             return self._create_result(False, prerequisites_validation_failed)
@@ -211,6 +227,9 @@ class CloneService:
             return self._create_result(False, failed_to_prepare_target_directory)
 
         success, error = self.cloner.clone_repository(self.config.repo, self.config.path, self.config.branch)
+        
+        duration = time.time() - start_time
+        self.logger.debug(debug_clone_completed.format(duration=f"{duration:.2f}", success=success))
 
         return self._create_result(success, error)
 
@@ -219,7 +238,7 @@ class CloneService:
             return self.formatter.format_dry_run(self.config)
 
         result = self.clone()
-        return self.formatter.format_output(result, self.config.output)
+        return result.output
 
 
 class Clone:
@@ -230,6 +249,10 @@ class Clone:
     def clone(self, config: CloneConfig) -> CloneResult:
         service = CloneService(config, logger=self.logger)
         return service.clone()
+
+    def clone_and_format(self, config: CloneConfig) -> str:
+        service = CloneService(config, logger=self.logger)
+        return service.clone_and_format()
 
     def format_output(self, result: CloneResult, output: str) -> str:
         return self.formatter.format_output(result, output)

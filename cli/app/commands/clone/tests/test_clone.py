@@ -1,5 +1,5 @@
 import subprocess
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -12,6 +12,14 @@ from ..clone import (
     CloneService,
     GitClone,
     GitCommandBuilder,
+)
+from ..messages import (
+    successfully_cloned,
+    dry_run_mode,
+    dry_run_command,
+    dry_run_force_mode,
+    path_exists_will_overwrite,
+    path_exists_would_fail,
 )
 from app.utils.lib import DirectoryManager
 from app.utils.logger import Logger
@@ -46,9 +54,7 @@ class TestCloneFormatter:
             success=True,
         )
         formatted = self.formatter.format_output(result, "text")
-        assert "Successfully cloned" in formatted
-        assert "https://github.com/user/repo" in formatted
-        assert "/path/to/clone" in formatted
+        assert successfully_cloned.format(repo="https://github.com/user/repo", path="/path/to/clone") in formatted
 
     def test_format_output_failure(self):
         result = CloneResult(
@@ -79,7 +85,7 @@ class TestCloneFormatter:
 
         data = json.loads(formatted)
         assert data["success"] is True
-        assert data["message"] == "Successfully cloned https://github.com/user/repo to /path/to/clone"
+        assert data["message"] == successfully_cloned.format(repo="https://github.com/user/repo", path="/path/to/clone")
 
     def test_format_output_invalid(self):
         result = CloneResult(
@@ -101,9 +107,9 @@ class TestCloneFormatter:
             repo="https://github.com/user/repo", path="/path/to/clone", branch="main", force=True, dry_run=True
         )
         formatted = self.formatter.format_dry_run(config)
-        assert "=== DRY RUN MODE ===" in formatted
-        assert "git clone -b main https://github.com/user/repo /path/to/clone" in formatted
-        assert "Force mode: True" in formatted
+        assert dry_run_mode in formatted
+        assert dry_run_command.format(command="git clone -b main https://github.com/user/repo /path/to/clone") in formatted
+        assert dry_run_force_mode.format(force=True) in formatted
 
     @patch("os.path.exists")
     def test_format_dry_run_path_exists_force(self, mock_exists):
@@ -112,7 +118,7 @@ class TestCloneFormatter:
             repo="https://github.com/user/repo", path="/path/to/clone", branch="main", force=True, dry_run=True
         )
         formatted = self.formatter.format_dry_run(config)
-        assert "will be overwritten" in formatted
+        assert path_exists_will_overwrite.format(path="/path/to/clone") in formatted
 
     @patch("os.path.exists")
     def test_format_dry_run_path_exists_no_force(self, mock_exists):
@@ -121,7 +127,7 @@ class TestCloneFormatter:
             repo="https://github.com/user/repo", path="/path/to/clone", branch="main", force=False, dry_run=True
         )
         formatted = self.formatter.format_dry_run(config)
-        assert "would fail without --force" in formatted
+        assert path_exists_would_fail.format(path="/path/to/clone") in formatted
 
 
 class TestGitClone:
@@ -138,7 +144,6 @@ class TestGitClone:
         assert success is True
         assert error is None
         self.logger.info.assert_called_once()
-        self.logger.success.assert_called_once()
 
     @patch("subprocess.run")
     def test_clone_repository_without_branch(self, mock_run):
@@ -160,7 +165,6 @@ class TestGitClone:
 
         assert success is False
         assert error == "Repository not found"
-        self.logger.error.assert_called_once()
 
     @patch("subprocess.run")
     def test_clone_repository_unexpected_error(self, mock_run):
@@ -170,7 +174,6 @@ class TestGitClone:
 
         assert success is False
         assert error == "Unexpected error"
-        self.logger.error.assert_called_once()
 
 
 class TestCloneConfig:
@@ -362,14 +365,14 @@ class TestCloneService:
 
         result = self.service.clone_and_format()
 
-        assert "=== DRY RUN MODE ===" in result
+        assert dry_run_mode in result
 
     def test_clone_and_format_success(self):
         self.cloner.clone_repository.return_value = (True, None)
 
         result = self.service.clone_and_format()
 
-        assert "Successfully cloned" in result
+        assert successfully_cloned.format(repo=self.config.repo, path=self.config.path) in result
 
 
 class TestClone:
@@ -409,4 +412,54 @@ class TestClone:
 
         formatted = self.clone.format_output(result, "text")
 
-        assert "Successfully cloned" in formatted
+        assert successfully_cloned.format(repo="https://github.com/user/repo", path="/path/to/clone") in formatted
+
+    def test_clone_and_format(self):
+        config = CloneConfig(
+            repo="https://github.com/user/repo",
+            path="/path/to/clone",
+            branch="main",
+            force=False,
+            verbose=False,
+            output="text",
+            dry_run=True,
+        )
+        
+        with patch.object(CloneService, "clone_and_format") as mock_clone_and_format:
+            mock_clone_and_format.return_value = dry_run_mode
+            
+            formatted = self.clone.clone_and_format(config)
+            
+            assert dry_run_mode in formatted
+
+    def test_debug_logging_enabled(self):
+        """Test that debug logging is properly enabled when verbose=True"""
+        config = CloneConfig(
+            repo="https://github.com/user/repo",
+            path="/path/to/clone",
+            branch="main",
+            force=False,
+            verbose=True,
+            output="text",
+            dry_run=False,
+        )
+        
+        logger = Mock(spec=Logger)
+        clone_operation = Clone(logger=logger)
+        
+        with patch.object(CloneService, "clone") as mock_clone:
+            mock_result = CloneResult(
+                repo=config.repo,
+                path=config.path,
+                branch=config.branch,
+                force=config.force,
+                verbose=config.verbose,
+                output=config.output,
+                success=True,
+            )
+            mock_clone.return_value = mock_result
+            
+            result = clone_operation.clone(config)
+            
+            # Verify that debug logging was called
+            assert logger.debug.called
