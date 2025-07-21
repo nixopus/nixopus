@@ -9,7 +9,15 @@ from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
-from .messages import available, error_checking_port, host_must_be_localhost_or_valid_ip_or_domain, not_available
+from .messages import (
+    available,
+    error_checking_port,
+    host_must_be_localhost_or_valid_ip_or_domain,
+    not_available,
+    debug_processing_ports,
+    debug_port_check_result,
+    error_socket_connection_failed,
+)
 
 
 class PortCheckerProtocol(Protocol):
@@ -53,10 +61,14 @@ class PortFormatter:
             for item in data:
                 if item.get("is_available", False):
                     message = f"Port {item['port']}: {item['status']}"
-                    messages.append(self.output_formatter.create_success_message(message, item))
+                    data = {"port": item['port'], "status": item['status'], "is_available": item['is_available']}
+                    messages.append(self.output_formatter.create_success_message(message, data))
                 else:
                     error = f"Port {item['port']}: {item['status']}"
-                    messages.append(self.output_formatter.create_error_message(error, item))
+                    data = {"port": item['port'], "status": item['status'], "is_available": item['is_available']}
+                    if item.get('error'):
+                        data['error'] = item['error']
+                    messages.append(self.output_formatter.create_error_message(error, data))
             return self.output_formatter.format_output(messages, output_type)
         else:
             return str(data)
@@ -72,16 +84,19 @@ class PortChecker:
                 sock.settimeout(1)
                 result = sock.connect_ex((host, port))
                 return result != 0
-        except Exception:
+        except Exception as e:
+            if self.logger.verbose:
+                self.logger.error(error_socket_connection_failed.format(port=port, error=e))
             return False
 
     def check_port(self, port: int, config: PortConfig) -> PortCheckResult:
-        self.logger.debug(f"Checking port {port} on host {config.host}")
         try:
             status = available if self.is_port_available(config.host, port) else not_available
+            self.logger.debug(debug_port_check_result.format(port=port, status=status))
             return self._create_result(port, config, status)
         except Exception as e:
-            self.logger.error(error_checking_port.format(port=port, error=str(e)))
+            if self.logger.verbose:
+                self.logger.error(error_checking_port.format(port=port, error=str(e)))
             return self._create_result(port, config, not_available, str(e))
 
     def _create_result(self, port: int, config: PortConfig, status: str, error: Optional[str] = None) -> PortCheckResult:
@@ -102,13 +117,14 @@ class PortService:
         self.formatter = PortFormatter()
 
     def check_ports(self) -> List[PortCheckResult]:
-        self.logger.debug(f"Checking ports: {self.config.ports}")
+        self.logger.debug(debug_processing_ports.format(count=len(self.config.ports)))
 
         def process_port(port: int) -> PortCheckResult:
             return self.checker.check_port(port, self.config)
 
         def error_handler(port: int, error: Exception) -> PortCheckResult:
-            self.logger.error(error_checking_port.format(port=port, error=str(error)))
+            if self.logger.verbose:
+                self.logger.error(error_checking_port.format(port=port, error=str(error)))
             return self.checker._create_result(port, self.config, not_available, str(error))
 
         results = ParallelProcessor.process_items(
