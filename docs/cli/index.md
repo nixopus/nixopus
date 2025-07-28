@@ -1,28 +1,115 @@
 # Nixopus CLI
 
-The Nixopus CLI is a powerful command-line interface for managing and deploying applications with Nixopus. Built with Python and Typer, it provides an intuitive way to interact with the Nixopus platform.
+Command line interface for managing Nixopus applications and services. Built with Python and Typer, providing an intuitive terminal experience for deployment and management.
 
 ## Quick Start
 
-Get started with the Nixopus CLI check [Installation Guide](installation.md) on how to setup nixopus cli
-
 ```bash
+# Install CLI
+curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/master/cli/install.sh | bash
+
+# Verify installation
 nixopus --help
-nixopus version
+
+# Check system requirements
+nixopus preflight check
+
+# Install Nixopus
+nixopus install
 ```
 
-## Commands Overview
+## Available Commands
 
-The Nixopus CLI provides essential commands for managing your Nixopus deployments:
+| Command | Description | Key Subcommands |
+|---------|-------------|-----------------|
+| **[preflight](./commands/preflight.md)** | System readiness checks | check, ports, deps |
+| **[install](./commands/install.md)** | Complete Nixopus installation | ssh, deps |
+| **[uninstall](./commands/uninstall.md)** | Remove Nixopus from system | - |
+| **[service](./commands/service.md)** | Control Docker services | up, down, ps, restart |
+| **[conf](./commands/conf.md)** | Manage application settings | list, set, delete |
+| **[proxy](./commands/proxy.md)** | Caddy proxy management | load, status, stop |
+| **[clone](./commands/clone.md)** | Repository cloning with Git | - |
+| **[version](./commands/version.md)** | Display CLI version information | - |
+| **[test](./commands/test.md)** | Run CLI tests (development only) | - |
 
-| Command | Description | Usage |
-|---------|-------------|-------|
-| `version` | Display CLI version | `nixopus version` |
+## Common Workflows
 
-For detailed command documentation, see the [Commands Reference](commands.md).
+### Initial Setup
+```bash
+# 1. Check system requirements
+nixopus preflight check
 
-## Next Steps
+# 2. Install with custom domains
+nixopus install --api-domain api.example.com --view-domain app.example.com
 
-- [Installation Guide](installation.md) - Complete setup instructions
-- [Commands Reference](commands.md) - Detailed command usage
-- [Development Guide](development.md) - Contributing to the CLI
+# 3. Start services
+nixopus service up --detach
+
+# 4. Load proxy configuration
+nixopus proxy load
+
+# 5. Verify everything is running
+nixopus service ps
+```
+
+### Configuration Management
+```bash
+# View current configuration
+nixopus conf list --service api
+
+# Update settings
+nixopus conf set DATABASE_URL=postgresql://user:pass@localhost:5432/nixopus
+
+# Restart services to apply changes
+nixopus service restart
+```
+
+### Development Setup
+```bash
+# Clone repository
+nixopus clone --branch develop
+
+# Preview installation
+nixopus install --dry-run
+
+# Start development environment
+nixopus service up --env-file .env.development
+
+# Run tests
+export ENV=DEVELOPMENT
+nixopus test
+```
+
+## Global Options
+
+Most commands support these options:
+
+| Option | Description |
+|--------|-------------|
+| `--verbose, -v` | Show detailed output |
+| `--output, -o` | Output format (text, json) |
+| `--dry-run, -d` | Preview without executing |
+| `--timeout, -t` | Operation timeout in seconds |
+| `--help` | Show command help |
+
+## Getting Help
+
+```bash
+# General help
+nixopus --help
+
+# Command-specific help
+nixopus install --help
+nixopus service --help
+
+# Subcommand help
+nixopus service up --help
+```
+
+## Installation
+
+See the [Installation Guide](./installation.md) for detailed setup instructions including binary installation, Poetry setup, and development environment configuration.
+
+## Development
+
+See the [Development Guide](./development.md) for information on contributing to the CLI, project structure, and testing procedures.

@@ -1,58 +1,103 @@
-# CLI Installation Guide
+# CLI Installation
 
-This guide provides detailed instructions for installing and setting up the Nixopus CLI.
+Installation guide for the Nixopus CLI with multiple installation options.
 
 ## Prerequisites
 
-Before installing the Nixopus CLI, ensure you have:
+- **Python 3.9 or higher** (supports up to Python 3.13)
+- **Git** (for source installation)
 
-- **Python 3.8 or higher**
-- **pip** (Python package installer)
-- **Git** (for cloning the repository)
-
-### Check Python Version
-
+Verify your Python version:
 ```bash
 python3 --version
 ```
 
-### Check pip Installation
+## Installation Options
+
+### Option 1: Binary Installation (Recommended)
+
+Download and install the pre-built binary for your platform:
 
 ```bash
-pip --version
+# Download and run the install script
+curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/master/cli/install.sh | bash
+
+# Or for local installation (no sudo required)
+curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/master/cli/install.sh | bash -s -- --local
 ```
 
-## Installation Methods
+**Install script options:**
+- `--local`: Install to `~/.local/bin` (no sudo required)
+- `--dir DIR`: Install to custom directory
+- `--no-path`: Don't update PATH automatically
 
-### Method 1: Install from Source (Recommended)
+**Manual binary installation:**
+```bash
+# Download the appropriate binary for your platform
+wget https://github.com/raghavyuva/nixopus/releases/latest/download/nixopus_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m)
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/raghavyuva/nixopus.git
-   cd nixopus
-   ```
+# Make executable and install
+chmod +x nixopus_*
+sudo mv nixopus_* /usr/local/bin/nixopus
 
-2. **Navigate to CLI Directory**
-   ```bash
-   cd cli
-   ```
+# Or install locally without sudo
+mkdir -p ~/.local/bin
+mv nixopus_* ~/.local/bin/nixopus
+```
 
-3. **Install in Development Mode**
-   ```bash
-   pip install -e .
-   ```
+### Option 2: Poetry Installation (For Development)
 
-### Method 2: Install Dependencies
-
-For development work, install additional dependencies:
+Using Poetry for development work:
 
 ```bash
-pip install -e ".[dev]"
+# Clone repository
+git clone https://github.com/raghavyuva/nixopus.git
+cd nixopus/cli
+
+# Install with Poetry
+poetry install
+
+# Activate virtual environment
+poetry shell
+
+# Verify installation
+nixopus --help
 ```
 
-This installs:
-- **pytest**: Testing framework
-- **pytest-cov**: Coverage reporting
+### Option 3: Python Package Installation
+
+Install from source using pip:
+
+```bash
+# Clone repository
+git clone https://github.com/raghavyuva/nixopus.git
+cd nixopus/cli
+
+# Install in development mode
+pip install -e .
+
+# Or install from wheel (if available)
+pip install dist/nixopus-0.1.0-py3-none-any.whl
+```
+
+### Option 4: Build from Source
+
+Build your own binary:
+
+```bash
+# Clone repository
+git clone https://github.com/raghavyuva/nixopus.git
+cd nixopus/cli
+
+# Install Poetry dependencies
+poetry install --with dev
+
+# Build binary
+./build.sh
+
+# Install the built binary
+./install.sh --local
+```
 
 ## Verification
 
@@ -60,74 +105,109 @@ After installation, verify the CLI is working:
 
 ```bash
 nixopus --help
-
 nixopus version
 ```
 
 Expected output:
 ```
-┌───────────────── Version Info ───────────────── ┐
-│ Nixopus CLI version                             │
+┌───────────────── Version Info ─────────────────┐
+│ Nixopus CLI v0.1.0                            │
 └─────────────────────────────────────────────────┘
 ```
 
 ## Troubleshooting
 
-### Common Issues
+### Command Not Found
 
-1. **Command Not Found**
-   - Ensure you're in the correct directory (`cli/`)
-   - Verify Python and pip are properly installed
-   - Try reinstalling: `pip install -e .`
-
-2. **Permission Errors**
-   - Use `pip install -e . --user` for user installation
-   - Or use a virtual environment
-
-3. **Import Errors**
-   - Check that all dependencies are installed
-   - Verify Python version compatibility
-
-### Virtual Environment (Optional)
-
-For isolated installation:
+If `nixopus` command is not found:
 
 ```bash
-python3 -m venv venv
+# Check if binary is in PATH
+which nixopus
 
-# Activate virtual environment
-source venv/bin/activate  # On macOS/Linux
-# or
-venv\Scripts\activate     # On Windows
+# For local installation, add to PATH
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
 
-# Install CLI
-pip install -e .
+# Or for zsh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
 ```
 
-## Development Setup
+### Permission Errors
 
-For contributors who want to develop the CLI:
+For permission issues during installation:
 
-1. **Clone and Install**
-   ```bash
-   git clone https://github.com/raghavyuva/nixopus.git
-   cd nixopus/cli
-   pip install -e ".[dev]"
-   ```
+```bash
+# Use local installation
+curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/cli/install.sh | bash -s -- --local
 
-2. **Run Tests**
-   ```bash
-   pytest
-   ```
+# Or install to custom directory
+curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/cli/install.sh | bash -s -- --dir ~/bin
+```
 
-3. **Check Coverage**
-   ```bash
-   pytest --cov=core --cov=utils --cov-report=term-missing
-   ```
+### Python Version Issues
 
-## Next Steps
+For Python version compatibility issues:
 
-After successful installation:
+```bash
+# Check Python version
+python3 --version
 
-- [Commands Reference](../cli/commands.md) - Learn available commands
-- [Development Guide](../cli/development.md) - Contribute to the CLI
+# Install specific Python version if needed (example for Ubuntu)
+sudo apt update
+sudo apt install python3.9
+
+# Or use pyenv for version management
+curl https://pyenv.run | bash
+pyenv install 3.9.0
+pyenv local 3.9.0
+```
+
+## Development Installation
+
+For contributing to the CLI:
+
+```bash
+# Clone and setup
+git clone https://github.com/raghavyuva/nixopus.git
+cd nixopus/cli
+
+# Install with development dependencies
+poetry install --with dev
+
+# Activate environment
+poetry shell
+
+# Run tests to verify setup
+make test
+```
+
+Available development commands:
+```bash
+make help          # Show available commands
+make test          # Run test suite
+make test-cov      # Run tests with coverage
+make build         # Build binary
+make format        # Format code
+make lint          # Run linting
+make clean         # Clean build artifacts
+```
+
+## Uninstallation
+
+To uninstall the CLI:
+
+```bash
+# For binary installation
+sudo rm /usr/local/bin/nixopus
+# Or for local installation
+rm ~/.local/bin/nixopus
+
+# For Poetry installation
+cd nixopus/cli
+poetry env remove python
+
+# For pip installation
+pip uninstall nixopus
+```

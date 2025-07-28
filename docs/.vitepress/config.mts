@@ -82,7 +82,59 @@ export default withMermaid(
           items: [
             { text: 'Overview', link: '/cli/index.md' },
             { text: 'Installation', link: '/cli/installation.md' },
-            { text: 'Commands', link: '/cli/commands.md' },
+            { text: 'Configuration', link: '/cli/config.md' },
+            {
+              text: 'Commands',
+              collapsed: true,
+              items: [
+                { text: 'Quick Reference', link: '/cli/commands/index.md' },
+                {
+                  text: 'Installation & Setup',
+                  collapsed: true,
+                  items: [
+                    { text: 'preflight', link: '/cli/commands/preflight.md' },
+                    { text: 'install', link: '/cli/commands/install.md' },
+                    { text: 'uninstall', link: '/cli/commands/uninstall.md' }
+                  ]
+                },
+                {
+                  text: 'Service Management',
+                  collapsed: true,
+                  items: [
+                    { text: 'service', link: '/cli/commands/service.md' }
+                  ]
+                },
+                {
+                  text: 'Configuration',
+                  collapsed: true,
+                  items: [
+                    { text: 'conf', link: '/cli/commands/conf.md' }
+                  ]
+                },
+                {
+                  text: 'Proxy Management', 
+                  collapsed: true,
+                  items: [
+                    { text: 'proxy', link: '/cli/commands/proxy.md' }
+                  ]
+                },
+                {
+                  text: 'Repository Management',
+                  collapsed: true,
+                  items: [
+                    { text: 'clone', link: '/cli/commands/clone.md' }
+                  ]
+                },
+                {
+                  text: 'Utilities',
+                  collapsed: true,
+                  items: [
+                    { text: 'version', link: '/cli/commands/version.md' },
+                    { text: 'test', link: '/cli/commands/test.md' }
+                  ]
+                }
+              ]
+            },
             { text: 'Development', link: '/cli/development.md' }
           ]
         },
