@@ -50,9 +50,9 @@ export default withMermaid(
         text: "Edit this page on Github"
       },
       nav: [
-        { text: 'Home', link: '/' },
         { text: 'Get Started', link: '/install/index.md' },
-        { text: 'Blog', link: '/blog/' }
+        { text: "CLI", link: '/cli/index.md' },
+        { text: 'Blog', link: '/blog/' },
       ],
       footer: {
         message: `<img src="https://madewithlove.now.sh/in?heart=true&colorA=%23ff671f&colorB=%23046a38&text=Open%20Source" alt="Made with love" style="display:block;margin:0 auto;" /><br>Released under the Functional Source License (FSL)`,
@@ -87,52 +87,15 @@ export default withMermaid(
               text: 'Commands',
               collapsed: true,
               items: [
-                { text: 'Quick Reference', link: '/cli/commands/index.md' },
-                {
-                  text: 'Installation & Setup',
-                  collapsed: true,
-                  items: [
-                    { text: 'preflight', link: '/cli/commands/preflight.md' },
-                    { text: 'install', link: '/cli/commands/install.md' },
-                    { text: 'uninstall', link: '/cli/commands/uninstall.md' }
-                  ]
-                },
-                {
-                  text: 'Service Management',
-                  collapsed: true,
-                  items: [
-                    { text: 'service', link: '/cli/commands/service.md' }
-                  ]
-                },
-                {
-                  text: 'Configuration',
-                  collapsed: true,
-                  items: [
-                    { text: 'conf', link: '/cli/commands/conf.md' }
-                  ]
-                },
-                {
-                  text: 'Proxy Management', 
-                  collapsed: true,
-                  items: [
-                    { text: 'proxy', link: '/cli/commands/proxy.md' }
-                  ]
-                },
-                {
-                  text: 'Repository Management',
-                  collapsed: true,
-                  items: [
-                    { text: 'clone', link: '/cli/commands/clone.md' }
-                  ]
-                },
-                {
-                  text: 'Utilities',
-                  collapsed: true,
-                  items: [
-                    { text: 'version', link: '/cli/commands/version.md' },
-                    { text: 'test', link: '/cli/commands/test.md' }
-                  ]
-                }
+                { text: 'preflight', link: '/cli/commands/preflight.md' },
+                { text: 'install', link: '/cli/commands/install.md' },
+                { text: 'uninstall', link: '/cli/commands/uninstall.md' },
+                { text: 'service', link: '/cli/commands/service.md' },
+                { text: 'conf', link: '/cli/commands/conf.md' },
+                { text: 'proxy', link: '/cli/commands/proxy.md' },
+                { text: 'clone', link: '/cli/commands/clone.md' },
+                { text: 'version', link: '/cli/commands/version.md' },
+                { text: 'test', link: '/cli/commands/test.md' }
               ]
             },
             { text: 'Development', link: '/cli/development.md' }
