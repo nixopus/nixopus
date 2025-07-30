@@ -65,3 +65,71 @@ func GetUserDetailsURL() string {
 func GetIsAdminRegisteredURL() string {
 	return baseURL + "/auth/is-admin-registered"
 }
+
+func GetContainersURL() string {
+	return baseURL + "/container"
+}
+
+func GetContainerURL(containerID string) string {
+	return baseURL + "/container/" + containerID
+}
+
+func GetContainerLogsURL(containerID string) string {
+	return baseURL + "/container/" + containerID + "/logs"
+}
+
+func GetDomainURL() string {
+	return baseURL + "/domain"
+}
+
+func GetDomainsURL() string {
+	return baseURL + "/domains"
+}
+
+func GetDomainGenerateURL() string {
+	return baseURL + "/domain/generate"
+}
+
+func GetFeatureFlagsURL() string {
+	return baseURL + "/feature-flags"
+}
+
+func GetFeatureFlagCheckURL() string {
+	return baseURL + "/feature-flags/check"
+}
+
+func GetDeployApplicationURL() string {
+	return baseURL + "/deploy/application"
+}
+
+func GetDeployApplicationsURL() string {
+	return baseURL + "/deploy/applications"
+}
+
+func GetDeployApplicationRedeployURL() string {
+	return baseURL + "/deploy/application/redeploy"
+}
+
+func GetDeployApplicationRestartURL() string {
+	return baseURL + "/deploy/application/restart"
+}
+
+func GetDeployApplicationRollbackURL() string {
+	return baseURL + "/deploy/application/rollback"
+}
+
+func GetDeployApplicationDeploymentsURL() string {
+	return baseURL + "/deploy/application/deployments"
+}
+
+func GetDeployApplicationDeploymentByIDURL(deploymentID string) string {
+	return baseURL + "/deploy/application/deployments/" + deploymentID
+}
+
+func GetDeployApplicationDeploymentLogsURL(deploymentID string) string {
+	return baseURL + "/deploy/application/deployments/" + deploymentID + "/logs"
+}
+
+func GetDeployApplicationLogsURL(applicationID string) string {
+	return baseURL + "/deploy/application/logs/" + applicationID
+}

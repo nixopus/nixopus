@@ -22,6 +22,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { RBACGuard } from '@/components/rbac/RBACGuard';
 
 interface AccountSectionProps {
   username: string;
@@ -118,12 +119,14 @@ function AccountSection({
                 }}
                 placeholder={t('settings.account.username.placeholder')}
               />
-              <Button
-                onClick={handleUsernameChange}
-                disabled={isLoading || username === user?.username}
-              >
-                {t('settings.account.username.update')}
-              </Button>
+              <RBACGuard resource="user" action="update">
+                <Button
+                  onClick={handleUsernameChange}
+                  disabled={isLoading || username === user?.username}
+                >
+                  {t('settings.account.username.update')}
+                </Button>
+              </RBACGuard>
             </div>
 
             {usernameError && <p className="text-sm text-red-500">{usernameError}</p>}
@@ -155,18 +158,20 @@ function AccountSection({
                       {t('settings.account.email.notVerified.description')}
                     </AlertDescription>
                   </Alert>
-                  <Button
-                    onClick={handleSendVerification}
-                    disabled={isSendingVerification || verificationSent}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    {isSendingVerification
-                      ? t('settings.account.email.notVerified.sending')
-                      : verificationSent
-                        ? t('settings.account.email.notVerified.sent')
-                        : t('settings.account.email.notVerified.sendButton')}
-                  </Button>
+                  <RBACGuard resource="user" action="update">
+                    <Button
+                      onClick={handleSendVerification}
+                      disabled={isSendingVerification || verificationSent}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {isSendingVerification
+                        ? t('settings.account.email.notVerified.sending')
+                        : verificationSent
+                          ? t('settings.account.email.notVerified.sent')
+                          : t('settings.account.email.notVerified.sendButton')}
+                    </Button>
+                  </RBACGuard>
                   {verificationError && <p className="text-sm text-red-500">{verificationError}</p>}
                   {verificationSent && (
                     <Alert variant="default">
@@ -194,44 +199,48 @@ function AccountSection({
             <p className="text-muted-foreground text-sm">
               {t('settings.account.preferences.appearance')}
             </p>
-            <ModeToggle />
+            <RBACGuard resource="user" action="update">
+              <ModeToggle />
+            </RBACGuard>
           </div>
           <div className="flex justify-between items-center">
             <p className="text-muted-foreground text-sm">{t('settings.preferences.font')}</p>
-            <Select
-              value={userSettings.font_family || 'outfit'}
-              onValueChange={handleFontChange}
-              disabled={isUpdatingFont}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder={t('settings.preferences.font')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="geist">{t('settings.preferences.fontOptions.geist')}</SelectItem>
-                <SelectItem value="inter">{t('settings.preferences.fontOptions.inter')}</SelectItem>
-                <SelectItem value="roboto">
-                  {t('settings.preferences.fontOptions.roboto')}
-                </SelectItem>
-                <SelectItem value="poppins">
-                  {t('settings.preferences.fontOptions.poppins')}
-                </SelectItem>
-                <SelectItem value="montserrat">
-                  {t('settings.preferences.fontOptions.montserrat')}
-                </SelectItem>
-                <SelectItem value="space-grotesk">
-                  {t('settings.preferences.fontOptions.spaceGrotesk')}
-                </SelectItem>
-                <SelectItem value="outfit">
-                  {t('settings.preferences.fontOptions.outfit')}
-                </SelectItem>
-                <SelectItem value="jakarta">
-                  {t('settings.preferences.fontOptions.jakarta')}
-                </SelectItem>
-                <SelectItem value="system">
-                  {t('settings.preferences.fontOptions.system')}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <RBACGuard resource="user" action="update">
+              <Select
+                value={userSettings.font_family || 'outfit'}
+                onValueChange={handleFontChange}
+                disabled={isUpdatingFont}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={t('settings.preferences.font')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="geist">{t('settings.preferences.fontOptions.geist')}</SelectItem>
+                  <SelectItem value="inter">{t('settings.preferences.fontOptions.inter')}</SelectItem>
+                  <SelectItem value="roboto">
+                    {t('settings.preferences.fontOptions.roboto')}
+                  </SelectItem>
+                  <SelectItem value="poppins">
+                    {t('settings.preferences.fontOptions.poppins')}
+                  </SelectItem>
+                  <SelectItem value="montserrat">
+                    {t('settings.preferences.fontOptions.montserrat')}
+                  </SelectItem>
+                  <SelectItem value="space-grotesk">
+                    {t('settings.preferences.fontOptions.spaceGrotesk')}
+                  </SelectItem>
+                  <SelectItem value="outfit">
+                    {t('settings.preferences.fontOptions.outfit')}
+                  </SelectItem>
+                  <SelectItem value="jakarta">
+                    {t('settings.preferences.fontOptions.jakarta')}
+                  </SelectItem>
+                  <SelectItem value="system">
+                    {t('settings.preferences.fontOptions.system')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </RBACGuard>
           </div>
         </CardContent>
       </Card>
@@ -245,11 +254,13 @@ function AccountSection({
           <CardContent>
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-500">{t('settings.preferences.language.select')}</p>
-              <LanguageSwitcher
-                handleLanguageChange={handleLanguageChange}
-                isUpdatingLanguage={isUpdatingLanguage}
-                userSettings={userSettings}
-              />
+              <RBACGuard resource="user" action="update">
+                <LanguageSwitcher
+                  handleLanguageChange={handleLanguageChange}
+                  isUpdatingLanguage={isUpdatingLanguage}
+                  userSettings={userSettings}
+                />
+              </RBACGuard>
             </div>
           </CardContent>
         </Card>
@@ -263,11 +274,13 @@ function AccountSection({
           <CardContent>
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-500">{t('settings.preferences.autoUpdate.select')}</p>
-              <Switch
-                checked={userSettings.auto_update}
-                onCheckedChange={handleAutoUpdateChange}
-                disabled={isUpdatingAutoUpdate}
-              />
+              <RBACGuard resource="user" action="update">
+                <Switch
+                  checked={userSettings.auto_update}
+                  onCheckedChange={handleAutoUpdateChange}
+                  disabled={isUpdatingAutoUpdate}
+                />
+              </RBACGuard>
             </div>
           </CardContent>
         </Card>

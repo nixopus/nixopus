@@ -9,9 +9,12 @@ import AccountSection from './components/AccountSection';
 import SecuritySection from './components/SecuritySection';
 import { useTranslation } from '@/hooks/use-translation';
 import FeatureFlagsSettings from './components/FeatureFlagsSettings';
+import { RBACGuard } from '@/components/rbac/RBACGuard';
+import { useRBAC } from '@/lib/rbac';
 
 function Page() {
   const { t, isLoading } = useTranslation();
+  const { canAccessResource } = useRBAC();
   const {
     onImageChange,
     user,
@@ -37,6 +40,9 @@ function Page() {
     handleFontUpdate
   } = useGeneralSettings();
 
+  const hasFeatureFlagsReadPermission = canAccessResource('feature-flags', 'read');
+  const totalTabs = hasFeatureFlagsReadPermission ? 3 : 2;
+
   return (
     <div className="container mx-auto py-6 space-y-8 max-w-4xl">
       <DashboardPageHeader label={t('settings.title')} description={t('settings.description')} />
@@ -44,10 +50,12 @@ function Page() {
         <AvatarSection onImageChange={onImageChange} user={user} />
         <div className="col-span-1 lg:col-span-2">
           <Tabs defaultValue="account" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className={`grid w-full ${hasFeatureFlagsReadPermission ? 'grid-cols-3' : 'grid-cols-2'}`}>
               <TabsTrigger value="account">{t('settings.tabs.account')}</TabsTrigger>
               <TabsTrigger value="security">{t('settings.tabs.security')}</TabsTrigger>
-              <TabsTrigger value="feature-flags">{t('settings.tabs.featureFlags')}</TabsTrigger>
+              {hasFeatureFlagsReadPermission && (
+                <TabsTrigger value="feature-flags">{t('settings.tabs.featureFlags')}</TabsTrigger>
+              )}
             </TabsList>
             <AccountSection
               username={username}
@@ -87,7 +95,7 @@ function Page() {
               isLoading={settingsLoading}
               handlePasswordResetRequest={handlePasswordResetRequest}
             />
-            <FeatureFlagsSettings />
+            {hasFeatureFlagsReadPermission && <FeatureFlagsSettings />}
           </Tabs>
         </div>
       </div>

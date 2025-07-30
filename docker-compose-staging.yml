@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   nixopus-staging-api:
@@ -45,7 +45,8 @@ services:
     networks:
       - nixopus-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${USERNAME} -d ${DB_NAME} -p ${DB_PORT}" ]
+      test:
+        ["CMD-SHELL", "pg_isready -U ${USERNAME} -d ${DB_NAME} -p ${DB_PORT}"]
       interval: 5s
       timeout: 5s
       retries: 5
