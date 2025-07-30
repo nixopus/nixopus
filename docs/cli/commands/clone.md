@@ -64,7 +64,7 @@ nixopus clone --timeout 30
 
 ## Configuration
 
-The clone command reads configuration values from the built-in `config.prod.yaml` file. Command-line options override these defaults.
+The clone command reads configuration values from the built-in [`config.prod.yaml`](https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/helpers/config.prod.yaml) file. Command-line options override these defaults.
 
 ### Default Configuration Values
 
@@ -78,10 +78,10 @@ The clone command reads configuration values from the built-in `config.prod.yaml
 
 ### Configuration Source
 
-The configuration is loaded from the built-in `config.prod.yaml` file packaged with the CLI. This file contains environment variable placeholders that can be overridden:
+The configuration is loaded from the built-in [`config.prod.yaml`](https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/helpers/config.prod.yaml) file packaged with the CLI. This file contains environment variable placeholders that can be overridden:
 
 ```yaml
-# Built-in configuration
+# Built-in configuration (from config.prod.yaml)
 nixopus-config-dir: /etc/nixopus
 clone:
   repo: "https://github.com/raghavyuva/nixopus"

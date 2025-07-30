@@ -84,13 +84,13 @@ nixopus test
 
 Most commands support these options:
 
-| Option | Description |
-|--------|-------------|
-| `--verbose, -v` | Show detailed output |
-| `--output, -o` | Output format (text, json) |
-| `--dry-run, -d` | Preview without executing |
-| `--timeout, -t` | Operation timeout in seconds |
-| `--help` | Show command help |
+| Option | Shorthand | Description |
+|--------|-----------|-------------|
+| `--verbose` | `-v` | Show detailed output |
+| `--output` | `-o` | Output format (text, json) |
+| `--dry-run` | `-d` | Preview without executing |
+| `--timeout` | `-t` | Operation timeout in seconds |
+| `--help` | | Show command help |
 
 ## Getting Help
 
