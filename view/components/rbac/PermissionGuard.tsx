@@ -1,6 +1,5 @@
 import React from 'react';
 import { RBACGuard } from './RBACGuard';
-import { AccessDenied } from './AccessDenied';
 import { Action, Permission, Resource } from '@/lib/rbac';
 
 interface BasePermissionGuardProps {
@@ -32,7 +31,7 @@ export const PermissionGuard: React.FC<SinglePermissionGuardProps> = ({
 }) => (
     <RBACGuard
         permission={permission}
-        fallback={fallback || <AccessDenied />}
+        fallback={fallback}
         loadingFallback={loadingFallback}
         errorFallback={errorFallback}
     >
@@ -50,7 +49,7 @@ export const AnyPermissionGuard: React.FC<MultiplePermissionGuardProps> = ({
     <RBACGuard
         permissions={permissions}
         requireAll={false}
-        fallback={fallback || <AccessDenied />}
+        fallback={fallback}
         loadingFallback={loadingFallback}
         errorFallback={errorFallback}
     >
@@ -68,7 +67,7 @@ export const AllPermissionsGuard: React.FC<MultiplePermissionGuardProps> = ({
     <RBACGuard
         permissions={permissions}
         requireAll={true}
-        fallback={fallback || <AccessDenied />}
+        fallback={fallback}
         loadingFallback={loadingFallback}
         errorFallback={errorFallback}
     >
@@ -87,7 +86,7 @@ export const ResourceGuard: React.FC<ResourceGuardProps> = ({
     <RBACGuard
         resource={resource}
         action={action}
-        fallback={fallback || <AccessDenied />}
+        fallback={fallback}
         loadingFallback={loadingFallback}
         errorFallback={errorFallback}
     >

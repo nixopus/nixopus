@@ -49,7 +49,7 @@ type SocketServer struct {
 	ctx                 context.Context
 	postgres_listener   PostgresListener
 	terminalMutex       sync.RWMutex
-	terminals           map[*websocket.Conn]*terminal.Terminal
+	terminals           map[*websocket.Conn]map[string]*terminal.Terminal // conn -> terminalId -> terminal session for handling multiple terminal sessions per connection
 	dashboardMonitors   map[*websocket.Conn]*dashboard.DashboardMonitor
 	dashboardMutex      sync.Mutex
 	applicationMonitors map[*websocket.Conn]*realtime.ApplicationMonitor
@@ -73,7 +73,7 @@ func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx 
 		ctx:                 ctx,
 		topics:              make(map[string]map[*websocket.Conn]bool),
 		postgres_listener:   *pgListener,
-		terminals:           make(map[*websocket.Conn]*terminal.Terminal),
+		terminals:           make(map[*websocket.Conn]map[string]*terminal.Terminal),
 		dashboardMonitors:   make(map[*websocket.Conn]*dashboard.DashboardMonitor),
 		applicationMonitors: make(map[*websocket.Conn]*realtime.ApplicationMonitor),
 	}
@@ -155,8 +155,10 @@ func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
 	s.topicsMu.Unlock()
 
 	s.terminalMutex.Lock()
-	if term, exists := s.terminals[conn]; exists {
-		term.Close()
+	if terminalSessions, exists := s.terminals[conn]; exists {
+		for _, terminalSession := range terminalSessions {
+			terminalSession.Close()
+		}
 		delete(s.terminals, conn)
 	}
 	s.terminalMutex.Unlock()

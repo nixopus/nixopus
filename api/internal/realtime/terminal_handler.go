@@ -17,26 +17,40 @@ func (s *SocketServer) handleTerminal(conn *websocket.Conn, msg types.Payload) {
 	s.terminalMutex.Lock()
 	defer s.terminalMutex.Unlock()
 
-	term, exists := s.terminals[conn]
-	if exists {
-		term.WriteMessage(msg.Data.(string))
+	dataMap, ok := msg.Data.(map[string]interface{})
+	if !ok {
+		s.sendError(conn, "Invalid terminal data")
+		return
+	}
+	terminalId, ok := dataMap["terminalId"].(string)
+	if !ok {
+		s.sendError(conn, "Missing terminalId")
+		return
+	}
+	input, ok := dataMap["value"].(string)
+	if !ok {
+		s.sendError(conn, "Invalid terminal input")
 		return
 	}
 
-	newTerminal, err := terminal.NewTerminal(conn, &logger.Logger{})
-	if err != nil {
-		s.sendError(conn, "Failed to start terminal")
-		return
+	// Ensure map exists for this connection
+	if s.terminals[conn] == nil {
+		s.terminals[conn] = make(map[string]*terminal.Terminal)
 	}
 
-	if existingTerm, exists := s.terminals[conn]; exists {
-		existingTerm.WriteMessage(msg.Data.(string))
-		return
+	term, exists := s.terminals[conn][terminalId]
+	if !exists {
+		newTerminal, err := terminal.NewTerminal(conn, &logger.Logger{}, terminalId)
+		if err != nil {
+			s.sendError(conn, "Failed to start terminal")
+			return
+		}
+		s.terminals[conn][terminalId] = newTerminal
+		go newTerminal.Start()
+		term = newTerminal
 	}
 
-	s.terminals[conn] = newTerminal
-	newTerminal.WriteMessage(msg.Data.(string))
-	go newTerminal.Start()
+	term.WriteMessage(input)
 }
 
 // handleTerminalResize handles the terminal resize.
@@ -49,15 +63,21 @@ func (s *SocketServer) handleTerminalResize(conn *websocket.Conn, msg types.Payl
 	s.terminalMutex.Lock()
 	defer s.terminalMutex.Unlock()
 
-	term, exists := s.terminals[conn]
-	if !exists {
-		s.sendError(conn, "Terminal not started")
-		return
-	}
-
 	data, ok := msg.Data.(map[string]interface{})
 	if !ok {
 		s.sendError(conn, "Invalid resize data")
+		return
+	}
+
+	terminalId, ok := data["terminalId"].(string)
+	if !ok {
+		s.sendError(conn, "Missing terminalId")
+		return
+	}
+
+	term, exists := s.terminals[conn][terminalId]
+	if !exists {
+		s.sendError(conn, "Terminal not started")
 		return
 	}
 

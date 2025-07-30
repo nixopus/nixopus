@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  nixopus-test-db:
+    image: postgres:14-alpine
+    container_name: nixopus-test-db-container
+    ports:
+      - "${TEST_DB_PORT:-5433}:5432"
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${TEST_DB_USERNAME:-nixopus}
+      - POSTGRES_PASSWORD=${TEST_DB_PASSWORD:-nixopus}
+      - POSTGRES_DB=${TEST_DB_NAME:-nixopus_test}
+    networks:
+      - nixopus-network
+
+networks:
+  nixopus-network:
+    driver: bridge

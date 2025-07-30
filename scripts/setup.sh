@@ -607,18 +607,19 @@ function start_api(){
 }
 
 open_discord_gh_link() {
+
   local url="https://discord.com/invite/skdcq39Wpv"
   local gh_url="https://github.com/raghavyuva/nixopus/"
 
   case "$OS" in
     Darwin)
-      open "$url"
-      open "$gh_url"
+      open "$url" 2>/dev/null || echo "Could not open browser on macOS"
+      open "$gh_url" 2>/dev/null || echo "Could not open browser on macOS"
       ;;
     Linux)
       if command -v xdg-open &>/dev/null; then
-        xdg-open "$url"
-        xdg-open "$gh_url"
+        xdg-open "$url" 2>/dev/null || echo "Could not open Discord link"
+        xdg-open "$gh_url" 2>/dev/null || echo "Could not open GitHub link"
       else
         echo "Warning: Could not auto-open browser." >&2
       fi
@@ -881,10 +882,20 @@ function main() {
     # Perform SSH health checks
     echo "Running SSH health checks "
     if ! ssh_health_check; then
-        echo ""
-        echo "SSH setup failed health checks. Please resolve the issues above before continuing."
-        echo "You can re-run this setup script after fixing the SSH configuration."
-        exit 1
+        if [[ "$OS" == "Darwin" ]]; then
+            echo "Enabling SSH Remote Login..."
+            sudo systemsetup -setremotelogin on &>/dev/null
+        else
+            echo "Starting SSH service..."
+            sudo systemctl start ssh &>/dev/null || sudo systemctl start sshd &>/dev/null
+        fi
+        
+        sleep 2
+        if ssh_health_check; then
+            echo "SSH working!"
+        else
+            echo "SSH still not working, continuing setup..."
+        fi
     fi
     
     echo "SSH setup completed successfully"

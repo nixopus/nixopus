@@ -3,7 +3,7 @@ name: Test Nixopus Development Environment Setup
 on:
   push:
     branches:
-      [master, feat/develop, feat/dev_environment, feat/dev_environment-macos]
+      [master, feat/develop, feat/dev_environment, feat/dev_environment-macos, test-feat]
     paths:
       - 'scripts/setup.sh'
       - '.github/workflows/dev-env-setup.yml'
@@ -53,7 +53,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3 python3-pip git openssl
+          sudo apt-get install -y python3 python3-pip git openssl openssh-server
 
       # - name: Install deps (macOS-13)
       #   if: runner.os == 'macOS'

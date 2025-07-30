@@ -222,11 +222,17 @@ func (router *Router) Routes() {
 	featureFlagStorage := &feature_flags_storage.FeatureFlagStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	featureFlagService := feature_flags_service.NewFeatureFlagService(featureFlagStorage, l, router.app.Ctx)
 	featureFlagController := feature_flags_controller.NewFeatureFlagController(featureFlagService, l, router.app.Ctx, router.cache)
-	featureFlagGroup := fuego.Group(server, apiV1.Path+"/feature-flags")
-	fuego.Use(featureFlagGroup, func(next http.Handler) http.Handler {
+
+	// We need to allow everyone to read feature flags
+	featureFlagReadGroup := fuego.Group(server, apiV1.Path+"/feature-flags")
+	featureFlagWriteGroup := fuego.Group(server, apiV1.Path+"/feature-flags")
+
+	// Apply RBAC middleware only to write operations (update feature flags)
+	fuego.Use(featureFlagWriteGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "feature_flags")
 	})
-	router.FeatureFlagRoutes(featureFlagGroup, featureFlagController)
+
+	router.FeatureFlagRoutes(featureFlagReadGroup, featureFlagWriteGroup, featureFlagController)
 
 	containerController := container.NewContainerController(router.app.Store, router.app.Ctx, l, notificationManager)
 	containerGroup := fuego.Group(server, apiV1.Path+"/container")
@@ -238,6 +244,8 @@ func (router *Router) Routes() {
 	})
 	router.ContainerRoutes(containerGroup, containerController)
 
+	log.Printf("Server starting on port %s", PORT)
+	log.Printf("Swagger UI available at: http://localhost:%s/swagger/", PORT)
 	server.Run()
 }
 
@@ -383,10 +391,10 @@ func (router *Router) UpdateRoutes(s *fuego.Server, updateController *update.Upd
 	fuego.Post(s, "", updateController.PerformUpdate)
 }
 
-func (router *Router) FeatureFlagRoutes(s *fuego.Server, featureFlagController *feature_flags_controller.FeatureFlagController) {
-	fuego.Get(s, "", featureFlagController.GetFeatureFlags)
-	fuego.Put(s, "", featureFlagController.UpdateFeatureFlag)
-	fuego.Get(s, "/check", featureFlagController.IsFeatureEnabled)
+func (router *Router) FeatureFlagRoutes(readGroup *fuego.Server, writeGroup *fuego.Server, featureFlagController *feature_flags_controller.FeatureFlagController) {
+	fuego.Get(readGroup, "", featureFlagController.GetFeatureFlags)
+	fuego.Put(writeGroup, "", featureFlagController.UpdateFeatureFlag)
+	fuego.Get(readGroup, "/check", featureFlagController.IsFeatureEnabled)
 }
 
 func (router *Router) ContainerRoutes(s *fuego.Server, containerController *container.ContainerController) {
