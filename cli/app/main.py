@@ -72,6 +72,7 @@ def main(
 from app.commands.clone.command import clone_app
 from app.commands.conf.command import conf_app
 from app.commands.install.command import install_app
+from app.commands.lxc.command import lxc_app
 from app.commands.preflight.command import preflight_app
 from app.commands.proxy.command import proxy_app
 from app.commands.service.command import service_app
@@ -85,6 +86,7 @@ app.add_typer(conf_app, name="conf")
 app.add_typer(service_app, name="service")
 app.add_typer(proxy_app, name="proxy")
 app.add_typer(install_app, name="install")
+app.add_typer(lxc_app, name="lxc")
 app.add_typer(uninstall_app, name="uninstall")
 app.add_typer(version_app, name="version")
 
