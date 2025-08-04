@@ -88,6 +88,7 @@ export default withMermaid(
               collapsed: true,
               items: [
                 { text: 'preflight', link: '/cli/commands/preflight.md' },
+                { text: 'conflict', link: '/cli/commands/conflict.md' },
                 { text: 'install', link: '/cli/commands/install.md' },
                 { text: 'uninstall', link: '/cli/commands/uninstall.md' },
                 { text: 'service', link: '/cli/commands/service.md' },
