@@ -17,13 +17,13 @@ $ nixopus [OPTIONS] COMMAND [ARGS]...
 
 * `preflight`: Preflight checks for system compatibility
 * `clone`: Clone a repository
+* `conflict`: Check for tool version conflicts
 * `conf`: Manage configuration
 * `service`: Manage Nixopus services
 * `proxy`: Manage Nixopus proxy (Caddy) configuration
 * `install`: Install Nixopus
 * `uninstall`: Uninstall Nixopus
 * `version`: Show version information
-* `test`: Run tests (only in DEVELOPMENT environment)
 
 ## `nixopus preflight`
 
@@ -125,6 +125,24 @@ $ nixopus clone [OPTIONS] COMMAND [ARGS]...
 * `-o, --output TEXT`: Output format, text, json  [default: text]
 * `-d, --dry-run`: Dry run
 * `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
+* `--help`: Show this message and exit.
+
+## `nixopus conflict`
+
+Check for tool version conflicts
+
+**Usage**:
+
+```console
+$ nixopus conflict [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `-c, --config-file TEXT`: Path to configuration file  [default: helpers/config.prod.yaml]
+* `-t, --timeout INTEGER`: Timeout for tool checks in seconds  [default: 5]
+* `-v, --verbose`: Verbose output
+* `-o, --output TEXT`: Output format (text/json)  [default: text]
 * `--help`: Show this message and exit.
 
 ## `nixopus conf`
@@ -496,24 +514,6 @@ Show version information
 ```console
 $ nixopus version [OPTIONS] COMMAND [ARGS]...
 ```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-## `nixopus test`
-
-Run tests (only in DEVELOPMENT environment)
-
-**Usage**:
-
-```console
-$ nixopus test [OPTIONS] [TARGET] COMMAND [ARGS]...
-```
-
-**Arguments**:
-
-* `[TARGET]`: Test target (e.g., version)
 
 **Options**:
 
