@@ -3,7 +3,8 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-	"os"
+
+	"github.com/raghavyuva/nixopus-api/internal/config"
 )
 
 // CorsMiddleware sets the necessary CORS headers for the response. If the request
@@ -17,7 +18,7 @@ func CorsMiddleware(next http.Handler) http.Handler {
 		}
 
 		origin := r.Header.Get("Origin")
-		allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
+		allowedOrigin := config.AppConfig.CORS.AllowedOrigin
 		fmt.Println("allowedOrigin", allowedOrigin)
 
 		allowedOrigins := []string{

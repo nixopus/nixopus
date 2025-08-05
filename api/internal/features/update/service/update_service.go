@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
@@ -50,7 +51,7 @@ func NewUpdateService(storage *storage.App, logger *logger.Logger, ctx context.C
 }
 
 func getEnvironment() Environment {
-	if os.Getenv("DOCKER_CONTEXT") == "nixopus-staging" {
+	if config.AppConfig.Docker.Context == "nixopus-staging" {
 		return Staging
 	}
 	return Production
@@ -95,7 +96,7 @@ func (s *UpdateService) CheckForUpdates() (*types.UpdateCheckResponse, error) {
 
 // getCurrentVersion gets the current version from the .env file
 func (s *UpdateService) getCurrentVersion() (string, error) {
-	version := os.Getenv("APP_VERSION")
+	version := config.AppConfig.App.Version
 	if version != "" {
 		return version, nil
 	}

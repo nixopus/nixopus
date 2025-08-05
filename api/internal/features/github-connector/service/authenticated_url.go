@@ -3,9 +3,10 @@ package service
 import (
 	"fmt"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/raghavyuva/nixopus-api/internal/config"
 )
 
 // createAuthenticatedRepoURL creates an authenticated URL for repository access
@@ -47,7 +48,7 @@ func (s *GithubConnectorService) CreateAuthenticatedRepoURL(repoURL, accessToken
 //	bool - whether to pull the repository instead of cloning.
 //	error - any error that occurred.
 func (s *GithubConnectorService) GetClonePath(userID, environment, applicationID string) (string, bool, error) {
-	repoBaseURL := os.Getenv("MOUNT_PATH")
+	repoBaseURL := config.AppConfig.Deployment.MountPath
 	clonePath := filepath.Join(repoBaseURL, userID, environment, applicationID)
 	var shouldPull bool
 
