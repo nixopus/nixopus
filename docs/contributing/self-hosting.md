@@ -281,7 +281,7 @@ When enhancing the installation process:
            self._stop_services()
            
            print(f"Restoring database from {backup_path}...")
-           container_name = "nixopus-db-container"
+           container_name = "nixopus-db"
            command = [
                "docker", "exec", "-i", container_name,
                "pg_restore", "-U", "nixopus", "-d", "nixopus", 
