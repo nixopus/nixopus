@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SystemStatsType } from '@/redux/types/monitor';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/use-translation';
+import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 interface SystemInfoCardProps {
   systemStats: SystemStatsType;
@@ -19,43 +20,43 @@ const SystemInfoCard: React.FC<SystemInfoCardProps> = ({ systemStats }) => {
     <Card className="overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
-          <Server className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-          {t('dashboard.system.title')}
+          <Server className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
+          <TypographySmall>{t('dashboard.system.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-1 sm:space-y-2">
           <div className="flex justify-between">
-            <span className="text-xs sm:text-sm text-muted-foreground">
+            <TypographyMuted className="text-xs sm:text-sm">
               {t('dashboard.system.osType')}
-            </span>
-            <span className="text-xs sm:text-sm font-medium truncate max-w-[60%] text-right">
+            </TypographyMuted>
+            <TypographySmall className="truncate max-w-[60%] text-right">
               {systemStats.os_type}
-            </span>
+            </TypographySmall>
           </div>
           <div className="flex justify-between">
-            <span className="text-xs sm:text-sm text-muted-foreground">
+            <TypographyMuted className="text-xs sm:text-sm">
               {t('dashboard.system.cpu')}
-            </span>
-            <span className="text-xs sm:text-sm font-medium truncate max-w-[60%] text-right">
+            </TypographyMuted>
+            <TypographySmall className="truncate max-w-[60%] text-right">
               {systemStats.cpu_info}
-            </span>
+            </TypographySmall>
           </div>
           <div className="flex justify-between">
-            <span className="text-xs sm:text-sm text-muted-foreground">
+            <TypographyMuted className="text-xs sm:text-sm">
               {t('dashboard.system.uptime')}
-            </span>
-            <span className="text-xs sm:text-sm font-medium truncate max-w-[60%] text-right">
+            </TypographyMuted>
+            <TypographySmall className="truncate max-w-[60%] text-right">
               {load.uptime}
-            </span>
+            </TypographySmall>
           </div>
           <div className="flex justify-between">
-            <span className="text-xs sm:text-sm text-muted-foreground">
+            <TypographyMuted className="text-xs sm:text-sm">
               {t('dashboard.system.lastUpdated')}
-            </span>
-            <span className="text-xs sm:text-sm font-medium truncate max-w-[60%] text-right">
+            </TypographyMuted>
+            <TypographySmall className="truncate max-w-[60%] text-right">
               {new Date(systemStats.timestamp).toLocaleTimeString()}
-            </span>
+            </TypographySmall>
           </div>
         </div>
       </CardContent>
@@ -73,33 +74,33 @@ export function SystemInfoCardSkeleton() {
       <CardHeader className="pb-2">
         <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
           <Server className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-          {t('dashboard.system.title')}
+          <TypographySmall>{t('dashboard.system.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-1 sm:space-y-2">
           <div className="flex justify-between">
-            <span className="text-xs sm:text-sm text-muted-foreground">
+            <TypographyMuted className="text-xs sm:text-sm">
               {t('dashboard.system.osType')}
-            </span>
+            </TypographyMuted>
             <Skeleton className="h-4 w-24" />
           </div>
           <div className="flex justify-between">
-            <span className="text-xs sm:text-sm text-muted-foreground">
+            <TypographyMuted className="text-xs sm:text-sm">
               {t('dashboard.system.cpu')}
-            </span>
+            </TypographyMuted>
             <Skeleton className="h-4 w-32" />
           </div>
           <div className="flex justify-between">
-            <span className="text-xs sm:text-sm text-muted-foreground">
+            <TypographyMuted className="text-xs sm:text-sm">
               {t('dashboard.system.uptime')}
-            </span>
+            </TypographyMuted>
             <Skeleton className="h-4 w-20" />
           </div>
           <div className="flex justify-between">
-            <span className="text-xs sm:text-sm text-muted-foreground">
+            <TypographyMuted className="text-xs sm:text-sm">
               {t('dashboard.system.lastUpdated')}
-            </span>
+            </TypographyMuted>
             <Skeleton className="h-4 w-24" />
           </div>
         </div>

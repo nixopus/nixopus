@@ -1,10 +1,11 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useGetRecentAuditLogsQuery } from '@/redux/services/audit';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { AuditAction, AuditLog } from '@/redux/types/audit';
 import { useTranslation } from '@/hooks/use-translation';
+import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 const getActionColor = (action: AuditAction) => {
   switch (action) {
@@ -38,8 +39,8 @@ function RecentActivity() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('settings.teams.recentActivity.title')}</CardTitle>
-        <CardDescription>{t('settings.teams.recentActivity.description')}</CardDescription>
+        <TypographySmall>{t('settings.teams.recentActivity.title')}</TypographySmall>
+        <TypographyMuted>{t('settings.teams.recentActivity.description')}</TypographyMuted>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -54,10 +55,10 @@ function RecentActivity() {
               <div key={log.id} className="flex items-start gap-4">
                 <div className={`h-2 w-2 mt-2 rounded-full ${getActionColor(log.action)}`}></div>
                 <div>
-                  <p className="text-sm font-medium">{getActionMessage(log, t)}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <TypographySmall>{getActionMessage(log, t)}</TypographySmall>
+                  <TypographyMuted>
                     {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
-                  </p>
+                  </TypographyMuted>
                 </div>
               </div>
             ))}
