@@ -267,9 +267,8 @@ jobs:
 
           This PR was automatically created by the CLI release workflow." \
             --base master \
-            --head "$BRANCH_NAME" \
-            --label "automated" \
-            --label "cli" || echo "Failed to create PR, but continuing with release"
+            --head "$BRANCH_NAME" || echo "Failed to create PR, but continuing with release"
+            
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
