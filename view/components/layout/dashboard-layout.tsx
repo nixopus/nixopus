@@ -29,6 +29,8 @@ import { useAppSelector } from '@/redux/hooks';
 import { useCheckForUpdatesQuery, usePerformUpdateMutation } from '@/redux/services/users/userApi';
 import { toast } from 'sonner';
 import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
+import { ModeToggler } from '@/components/ui/theme-toggler';
+import { RBACGuard } from '@/components/rbac/RBACGuard';
 
 enum TERMINAL_POSITION {
   BOTTOM = 'bottom',
@@ -127,7 +129,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {t('navigation.update')}
               </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 className="ml-auto"
                 onClick={startTour}
@@ -136,21 +138,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <HelpCircle className="h-5 w-5" />
               </Button>
               <KeyboardShortcuts />
-              <img
-                src="/nixopus_logo_transparent.png"
-                className="hover:animate-bounce"
-                alt=""
-                width={50}
-                height={50}
-              />
-              <Link
-                href="https://nixopus.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden md:block text-2xl font-mono"
-              >
-                Nixopus
-              </Link>
+              <RBACGuard resource="user" action="update">
+              <ModeToggler />
+            </RBACGuard>
             </div>
           </div>
         </header>

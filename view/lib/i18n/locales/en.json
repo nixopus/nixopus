@@ -16,6 +16,7 @@
   },
   "containers": {
     "title": "Containers",
+    "description": "Preview all the containers",
     "list": "Container List",
     "name": "Name",
     "image": "Image",
@@ -54,6 +55,7 @@
     "no_logs": "No logs found",
     "no_containers": "No containers found",
     "more_ports": "+{count} more",
+    "no_ports_exposed": "No ports exposed",
     "deleteDialog": {
       "title": "Delete Container",
       "description": "Are you sure you want to delete this container?",
@@ -320,12 +322,22 @@
         "uploadSuccess": "Avatar uploaded successfully",
         "uploadError": "Failed to upload avatar"
       },
+      "success": {
+        "avatarUpdated": "Avatar updated successfully",
+        "usernameUpdated": "Username updated successfully"
+      },
       "errors": {
         "emptyUsername": "Username cannot be empty",
         "sameUsername": "Please enter a different username",
         "updateFailed": "Failed to update username. Please try again.",
         "resetEmailFailed": "Failed to send reset email",
-        "imageNotImplemented": "Not yet implemented"
+        "imageNotImplemented": "Not yet implemented",
+        "noImageSelected": "No image selected",
+        "avatarUpdateFailed": "Failed to update avatar",
+        "fontUpdateFailed": "Failed to update font settings",
+        "themeUpdateFailed": "Failed to update theme",
+        "languageUpdateFailed": "Failed to update language",
+        "autoUpdateUpdateFailed": "Failed to update auto-update setting"
       }
     },
     "security": {

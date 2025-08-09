@@ -8,6 +8,7 @@ import TeamMembers from './components/TeamMembers';
 import EditTeam from './components/EditTeam';
 import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { TypographyH2, TypographyMuted } from '@/components/ui/typography';
 
 function Page() {
   const { t } = useTranslation();
@@ -37,8 +38,8 @@ function Page() {
         <div className={'flex items-center justify-between space-y-2'}>
           <div className="flex items-center">
             <span className="">
-              <h2 className="text-2xl font-bold tracking-tight">{teamName}</h2>
-              <p className="text-muted-foreground">{teamDescription}</p>
+              <TypographyH2>{teamName}</TypographyH2>
+              <TypographyMuted>{teamDescription}</TypographyMuted>
             </span>
 
             <ResourceGuard resource="organization" action="update">

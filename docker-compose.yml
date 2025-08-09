@@ -13,8 +13,8 @@ services:
       - HOST_NAME=nixopus-db
     volumes:
       - ./logs:/app/logs
-      - ${DOCKER_CERT_PATH}:/etc/nixopus/docker-certs
-      - ${SSH_PRIVATE_KEY}:/etc/nixopus/ssh/id_rsa
+      - ${DOCKER_CERT_PATH:-/etc/nixopus/docker-certs}:/etc/nixopus/docker-certs
+      - ${SSH_PRIVATE_KEY:-/etc/nixopus/ssh/id_rsa}:/etc/nixopus/ssh/id_rsa
       - ${MOUNT_PATH:-/etc/nixopus/configs}:/etc/nixopus/configs
       - /var/run/docker.sock:/var/run/docker.sock
       - /etc/nixopus/source/api/.env:/app/.env
@@ -100,7 +100,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /etc/nixopus/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - /etc/nixopus/source/helpers/Caddyfile:/etc/caddy/Caddyfile
       - ${CADDY_DATA_VOLUME:-/etc/nixopus/caddy}:/data
       - ${CADDY_CONFIG_VOLUME:-/etc/nixopus/caddy}:/config
     command:

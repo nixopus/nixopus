@@ -3,6 +3,7 @@ import React from 'react';
 import { SortOption, SortSelect } from '@/components/ui/sort-selector';
 import { SearchBar } from '@/components/ui/search-bar';
 import { SortConfig } from '@/hooks/use-searchable';
+import { TypographyH1, TypographyH2, TypographyMuted } from '@/components/ui/typography';
 
 interface DashboardPageHeaderProps {
   className?: string;
@@ -13,9 +14,9 @@ interface DashboardPageHeaderProps {
 function DashboardPageHeader({ className, label, description }: DashboardPageHeaderProps) {
   return (
     <div className={cn('flex items-center justify-between space-y-2', className)}>
-      <span className="">
-        <h2 className="text-2xl font-bold tracking-tight">{label}</h2>
-        <p className="text-muted-foreground">{description}</p>
+      <span className=''>
+        <TypographyH1 className='text-primary'>{label}</TypographyH1>
+        <TypographyMuted>{description}</TypographyMuted>
       </span>
     </div>
   );
@@ -48,7 +49,7 @@ export function DahboardUtilityHeader<T>({
 }: DashboardUtilityHeaderProps<T>) {
   return (
     <div className={'space-y-6' + className}>
-      <h1 className="text-3xl font-bold">{label}</h1>
+      <TypographyH2>{label}</TypographyH2>
       <div className="flex flex-col gap-4 sm:flex-row mt-4 justify-between items-center">
         <div className="flex-grow">
           <SearchBar

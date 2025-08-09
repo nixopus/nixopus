@@ -61,7 +61,7 @@ export function setAuthTokens(tokens: AuthTokens, ctx?: any): void {
       maxAge: expires_in || 7 * 24 * 60 * 60,
       path: '/',
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      sameSite: 'lax'
     });
 
     if (refresh_token) {
@@ -69,7 +69,7 @@ export function setAuthTokens(tokens: AuthTokens, ctx?: any): void {
         maxAge: 14 * 24 * 60 * 60,
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
+        sameSite: 'lax'
       });
     }
   } else {
@@ -77,7 +77,7 @@ export function setAuthTokens(tokens: AuthTokens, ctx?: any): void {
       maxAge: expires_in || 7 * 24 * 60 * 60,
       path: '/',
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      sameSite: 'lax'
     });
 
     if (refresh_token) {
@@ -85,7 +85,7 @@ export function setAuthTokens(tokens: AuthTokens, ctx?: any): void {
         maxAge: 14 * 24 * 60 * 60,
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
+        sameSite: 'lax'
       });
     }
   }

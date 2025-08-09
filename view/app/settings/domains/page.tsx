@@ -14,6 +14,7 @@ import Skeleton from '@/app/file-manager/components/skeleton/Skeleton';
 import DisabledFeature from '@/components/features/disabled-feature';
 import { FeatureNames } from '@/types/feature-flags';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { TypographyH2 } from '@/components/ui/typography';
 
 const Page = () => {
   const { t } = useTranslation();
@@ -72,9 +73,9 @@ const Page = () => {
         ) : domains && domains.length > 0 ? (
           <>
             <div className="flex justify-between items-center mt-8">
-              <h2 className="text-xl font-medium text-foreground">
+              <TypographyH2 className="text-xl font-medium text-foreground">
                 {t('settings.domains.page.domainsList.title')}
-              </h2>
+              </TypographyH2>
               <ResourceGuard resource="domain" action="create">
                 <Button variant="default" onClick={() => setAddDomainDialogOpen(true)}>
                   {t('settings.domains.page.domainsList.addButton')}

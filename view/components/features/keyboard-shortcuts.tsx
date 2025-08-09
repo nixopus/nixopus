@@ -52,7 +52,7 @@ export function KeyboardShortcuts() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9" data-slot="keyboard-shortcuts">
+        <Button variant="outline" size="icon" className="h-9 w-9" data-slot="keyboard-shortcuts">
           <Keyboard className="h-4 w-4" />
         </Button>
       </DialogTrigger>

@@ -8,6 +8,7 @@ on:
     paths:
       - 'api/**'
       - 'view/**'
+      - 'cli/**'
   workflow_dispatch:
 
 permissions:
@@ -87,6 +88,50 @@ jobs:
           commit_message: 'style(view): format frontend code'
           branch: ${{ github.head_ref }}
           file_pattern: 'view/**'
+          commit_user_name: 'github-actions[bot]'
+          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
+          skip_dirty_check: false
+          skip_fetch: true
+          skip_checkout: true
+          disable_globbing: false
+
+  format-cli:
+    name: Format CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      
+      - name: Install dependencies
+        working-directory: cli
+        run: poetry install --with dev --quiet
+      
+      - name: Run formatting
+        working-directory: cli
+        run: make format
+      
+      - name: Commit CLI changes
+        id: cli-commit
+        if: github.event_name == 'pull_request'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'style(cli): format Python code'
+          branch: ${{ github.head_ref }}
+          file_pattern: 'cli/**/*.py'
           commit_user_name: 'github-actions[bot]'
           commit_user_email: 'github-actions[bot]@users.noreply.github.com'
           skip_dirty_check: false

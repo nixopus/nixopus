@@ -16,6 +16,7 @@
   },
   "containers": {
     "title": "Conteneurs",
+    "description": "Prévisualiser tous les conteneurs",
     "list": "Liste des Conteneurs",
     "name": "Nom",
     "image": "Image",
@@ -54,6 +55,7 @@
     "no_logs": "Aucun log trouvé",
     "no_containers": "Aucun conteneur trouvé",
     "more_ports": "+{count} plus",
+    "no_ports_exposed": "Aucun port exposé",
     "deleteDialog": {
       "title": "Supprimer le Conteneur",
       "description": "Êtes-vous sûr de vouloir supprimer ce conteneur ?",
@@ -320,12 +322,22 @@
         "uploadSuccess": "Avatar téléchargé avec succès",
         "uploadError": "Erreur lors du téléchargement de l'avatar"
       },
+      "success": {
+        "avatarUpdated": "Avatar mis à jour avec succès",
+        "usernameUpdated": "Nom d'utilisateur mis à jour avec succès"
+      },
       "errors": {
         "emptyUsername": "Le nom d'utilisateur ne peut pas être vide",
         "sameUsername": "Veuillez entrer un nom d'utilisateur différent",
         "updateFailed": "Échec de la mise à jour du nom d'utilisateur. Veuillez réessayer.",
         "resetEmailFailed": "Échec de l'envoi de l'e-mail de réinitialisation",
-        "imageNotImplemented": "Pas encore implémenté"
+        "imageNotImplemented": "Pas encore implémenté",
+        "noImageSelected": "Aucune image sélectionnée",
+        "avatarUpdateFailed": "Échec de la mise à jour de l'avatar",
+        "fontUpdateFailed": "Échec de la mise à jour des paramètres de police",
+        "themeUpdateFailed": "Échec de la mise à jour du thème",
+        "languageUpdateFailed": "Échec de la mise à jour de la langue",
+        "autoUpdateUpdateFailed": "Échec de la mise à jour du paramètre de mise à jour automatique"
       }
     },
     "security": {

@@ -13,6 +13,7 @@ import { usePathname } from 'next/navigation';
 import { WebSocketProvider } from '@/hooks/socket-provider';
 import DashboardLayout from '@/components/layout/dashboard-layout';
 import { FeatureFlagsProvider } from '@/hooks/features_provider';
+import { palette } from '@/components/colors';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -59,7 +60,7 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange  themes={palette}>
         <WebSocketProvider>
           <FeatureFlagsProvider>
             {pathname === '/' || pathname === '/login' || pathname === '/register' ? (

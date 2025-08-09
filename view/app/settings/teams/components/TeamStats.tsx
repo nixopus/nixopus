@@ -1,6 +1,7 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/use-translation';
+import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 interface TeamStatsProps {
   users: {
@@ -16,33 +17,33 @@ function TeamStats({ users }: TeamStatsProps) {
   return (
     <Card className="col-span-1">
       <CardHeader>
-        <CardTitle>{t('settings.teams.stats.title')}</CardTitle>
-        <CardDescription>{t('settings.teams.stats.description')}</CardDescription>
+        <TypographySmall>{t('settings.teams.stats.title')}</TypographySmall>
+        <TypographyMuted>{t('settings.teams.stats.description')}</TypographyMuted>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
+            <TypographyMuted>
               {t('settings.teams.stats.totalMembers')}
-            </span>
+            </TypographyMuted>
             <span className="font-medium">{users.length}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
+            <TypographyMuted>
               {t('settings.teams.stats.owners')}
-            </span>
+            </TypographyMuted>
             <span className="font-medium">{users.filter((u) => u.role === 'admin').length}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
+            <TypographyMuted>
               {t('settings.teams.stats.members')}
-            </span>
+            </TypographyMuted>
             <span className="font-medium">{users.filter((u) => u.role === 'member').length}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
+            <TypographyMuted>
               {t('settings.teams.stats.viewers')}
-            </span>
+            </TypographyMuted>
             <span className="font-medium">{users.filter((u) => u.role === 'viewer').length}</span>
           </div>
         </div>

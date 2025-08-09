@@ -13,6 +13,7 @@ import { ContainerData } from '@/redux/types/monitor';
 import getStatusColor from '../utils/get-status-color';
 import truncateId from '../utils/truncate-id';
 import { useTranslation } from '@/hooks/use-translation';
+import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 const ContainersTable = ({ containersData }: { containersData: ContainerData[] }) => {
   const { t } = useTranslation();
@@ -24,13 +25,23 @@ const ContainersTable = ({ containersData }: { containersData: ContainerData[] }
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">
-              {t('dashboard.containers.table.headers.id')}
+              <TypographySmall>{t('dashboard.containers.table.headers.id')}</TypographySmall>
             </TableHead>
-            <TableHead>{t('dashboard.containers.table.headers.name')}</TableHead>
-            <TableHead>{t('dashboard.containers.table.headers.image')}</TableHead>
-            <TableHead>{t('dashboard.containers.table.headers.status')}</TableHead>
-            <TableHead>{t('dashboard.containers.table.headers.ports')}</TableHead>
-            <TableHead>{t('dashboard.containers.table.headers.created')}</TableHead>
+            <TableHead>
+              <TypographySmall>{t('dashboard.containers.table.headers.name')}</TypographySmall>
+            </TableHead>
+            <TableHead>
+              <TypographySmall>{t('dashboard.containers.table.headers.image')}</TypographySmall>
+            </TableHead>
+            <TableHead>
+              <TypographySmall>{t('dashboard.containers.table.headers.status')}</TypographySmall>
+            </TableHead>
+            <TableHead>
+              <TypographySmall>{t('dashboard.containers.table.headers.ports')}</TypographySmall>
+            </TableHead>
+            <TableHead>
+              <TypographySmall>{t('dashboard.containers.table.headers.created')}</TypographySmall>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -44,15 +55,21 @@ const ContainersTable = ({ containersData }: { containersData: ContainerData[] }
               const hasPorts = container.Ports && container.Ports.length > 0;
               const formattedDate = container.Created
                 ? new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'long' }).format(
-                    new Date(container.Created * 1000)
-                  )
+                  new Date(container.Created * 1000)
+                )
                 : '-';
 
               return (
                 <TableRow key={container.Id}>
-                  <TableCell className="font-mono text-xs">{truncateId(container.Id)}</TableCell>
-                  <TableCell>{containerName}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">{container.Image}</TableCell>
+                  <TableCell className="font-mono">
+                    <TypographySmall>{truncateId(container.Id)}</TypographySmall>
+                  </TableCell>
+                  <TableCell>
+                    <TypographySmall>{containerName}</TypographySmall>
+                  </TableCell>
+                  <TableCell className="max-w-[200px] overflow-hidden">
+                    <TypographySmall className='truncate whitespace-nowrap max-w-full block'>{container.Image}</TypographySmall>
+                  </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(container.Status)}>
                       {container.State || 'Unknown'}
@@ -62,32 +79,34 @@ const ContainersTable = ({ containersData }: { containersData: ContainerData[] }
                     {hasPorts ? (
                       <div className="flex flex-col gap-1">
                         {container.Ports.slice(0, 2).map((port, index) => (
-                          <span key={index} className="text-xs">
+                          <TypographySmall key={index}>
                             {port.PrivatePort}
                             {port.PublicPort ? `:${port.PublicPort}` : ''}
-                          </span>
+                          </TypographySmall>
                         ))}
                         {container.Ports.length > 2 && (
-                          <span className="text-xs text-gray-500">
+                          <TypographyMuted>
                             {t('dashboard.containers.table.morePorts').replace(
                               '{count}',
                               String(container.Ports.length - 2)
                             )}
-                          </span>
+                          </TypographyMuted>
                         )}
                       </div>
                     ) : (
-                      '-'
+                      <TypographySmall>-</TypographySmall>
                     )}
                   </TableCell>
-                  <TableCell>{formattedDate}</TableCell>
+                  <TableCell>
+                    <TypographySmall>{formattedDate}</TypographySmall>
+                  </TableCell>
                 </TableRow>
               );
             })
           ) : (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-6 text-gray-500">
-                {t('dashboard.containers.table.noContainers')}
+              <TableCell colSpan={7} className="text-center py-6">
+                <TypographyMuted>{t('dashboard.containers.table.noContainers')}</TypographyMuted>
               </TableCell>
             </TableRow>
           )}

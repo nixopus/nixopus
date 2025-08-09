@@ -1,0 +1,157 @@
+version: 1
+services:
+  api:
+    env:
+      PORT: ${API_PORT:-8080}
+      DB_NAME: ${DB_NAME:-postgres}
+      USERNAME: ${USERNAME:-postgres}
+      PASSWORD: ${PASSWORD:-changeme}
+      HOST_NAME: ${DB_HOST:-localhost}
+      DB_PORT: ${DB_PORT:-5432}
+      SSL_MODE: ${DB_SSL_MODE:-disable}
+      MOUNT_PATH: ${MOUNT_PATH:-./configs}
+      SSH_HOST: ${SSH_HOST:-localhost}
+      SSH_PORT: ${SSH_PORT:-22}
+      SSH_USER: ${SSH_USER:-$USER}
+      SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:-~/.ssh/id_ed25519_nixopus}
+      SSH_PASSWORD: ${SSH_PASSWORD:-}
+      DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
+      REDIS_URL: ${REDIS_URL:-redis://localhost:6379}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:7443}
+      ENV: ${ENV:-development}
+      LOGS_PATH: ${LOGS_PATH:-./logs}
+      API_VOLUME: ${API_VOLUME:-./configs}
+      DOCKER_PORT: ${DOCKER_PORT:-2376}
+      APP_VERSION: ${APP_VERSION:-0.1.0-alpha.11}
+
+  view:
+    env:
+      PORT: ${VIEW_PORT:-7443}
+      WEBSOCKET_URL: ${WEBSOCKET_URL:-}
+      API_URL: ${API_URL:-}
+      WEBHOOK_URL: ${WEBHOOK_URL:-}
+      NEXT_PUBLIC_PORT: ${NEXT_PUBLIC_PORT:-7443}
+      LOGS_PATH: ${LOGS_PATH:-./logs}
+
+  redis:
+    env:
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_VOLUME: ${REDIS_VOLUME:-./redis}
+      REDIS_IMAGE: ${REDIS_IMAGE:-redis:7-alpine}
+      REDIS_CONTAINER_NAME: ${REDIS_CONTAINER_NAME:-nixopus-redis-container}
+
+  db:
+    env:
+      DB_PORT: ${DB_PORT:-5432}
+      DB_VOLUME: ${DB_VOLUME:-./db}
+      DB_IMAGE: ${DB_IMAGE:-postgres:14-alpine}
+      DB_CONTAINER_NAME: ${DB_CONTAINER_NAME:-nixopus-db-container}
+      POSTGRES_USER: ${USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${PASSWORD:-changeme}
+      POSTGRES_DB: ${DB_NAME:-postgres}
+      POSTGRES_HOST_AUTH_METHOD: trust
+
+networks:
+  default:
+    name: nixopus-network
+    driver: bridge
+
+deps:
+  curl:
+    package: "curl"
+    command: "curl"
+    version: ">=7.80.0, <8.0.0"
+    version-command: ["curl", "--version"]
+  python3:
+    package: "python3"
+    command: "python3"
+    version: ">=3.8, <3.13"
+    version-command: ["python3", "--version"]
+  python3-venv:
+    package: "python3-venv"
+    command: ""
+    version: ">=3.8, <3.13"
+    version-command: ["python3", "--version"]
+  poetry:
+    package: "poetry"
+    command: "poetry"
+    version: ">=1.2.0, <2.0.0"
+    version-command: ["poetry", "--version"]
+  redis:
+    package: "redis-server"
+    command: "redis-server"
+    version: ">=7.0.0, <8.0.0"
+    version-command: ["redis-server", "--version"]
+  git:
+    package: "git"
+    command: "git"
+    version: ">=2.30.0, <3.0.0"
+    version-command: ["git", "--version"]
+  docker.io:
+    package: "docker.io"
+    command: "docker"
+    install_command: |
+      curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+    version: ">=20.10.0, <26.0.0"
+    version-command: ["docker", "--version"]
+  openssl:
+    package: "openssl"
+    command: "openssl"
+    version: ">=1.1.1, <4.0.0"
+    version-command: ["openssl", "version"]
+  open-ssh:
+    version: ">=8.0, <10.0"
+    version-command: ["ssh", "-V"]
+  openssh-client:
+    package: "openssh-client"
+    command: "ssh"
+    version-command: ["ssh", "-V"]
+  openssh-server:
+    package: "openssh-server"
+    command: "sshd"
+    version: ">=8.0, <10.0"
+    version-command: ["sshd", "-V"]
+  go:
+    package: "go"
+    command: "go"
+    version: ">=1.23.0, <2.0.0"
+    version-command: ["go", "version"]
+  node:
+    package: "node"
+    command: "node"
+    version: ">=18.0.0, <22.0.0"
+    version-command: ["node", "--version"]
+  npm:
+    package: "npm"
+    command: "npm"
+    version-command: ["npm", "--version"]
+  yarn:
+    package: "yarn"
+    command: "yarn"
+    version-command: ["yarn", "--version"]
+  python:
+    package: "python"
+    command: "python"
+    version-command: ["python", "--version"]
+  postgresql:
+    package: "postgresql"
+    command: "psql"
+    version-command: ["psql", "--version"]
+  air:
+    package: "air"
+    command: "air"
+    version: ">=1.40.0, <2.0.0"
+    version-command: ["air", "-v"]
+
+nixopus-config-dir: ./nixopus-dev
+compose-file-path: docker-compose.yml
+clone:
+  repo: "https://github.com/raghavyuva/nixopus"
+  branch: "feat/dev_environment"
+  source-path: .
+
+ports: [8080, 7443, 6379, 5432, 22]
+ssh_key_size: 4096
+ssh_key_type: ed25519
+ssh_passphrase:
+ssh_file_path: ~/.ssh/id_ed25519_nixopus

@@ -1,0 +1,144 @@
+version: 1
+services:
+  api:
+    env:
+      PORT: ${API_PORT:-8443}
+      DB_NAME: ${DB_NAME:-postgres}
+      USERNAME: ${USERNAME:-postgres}
+      PASSWORD: ${PASSWORD:-changeme}
+      HOST_NAME: ${DB_HOST:-nixopus-db}
+      DB_PORT: ${DB_PORT:-5432}
+      SSL_MODE: ${DB_SSL_MODE:-disable}
+      MOUNT_PATH: ${MOUNT_PATH:-/etc/nixopus/configs}
+      SSH_HOST: ${SSH_HOST:-localhost}
+      SSH_PORT: ${SSH_PORT:-22}
+      SSH_USER: ${SSH_USER:-root}
+      SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:-/etc/nixopus/ssh/id_rsa}
+      SSH_PASSWORD: ${SSH_PASSWORD:-}
+      DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
+      REDIS_URL: ${REDIS_URL:-redis://nixopus-redis:6379}
+      CADDY_ENDPOINT: ${CADDY_ENDPOINT:-http://nixopus-caddy:2019}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:3000}
+      ENV: ${ENV:-production}
+      LOGS_PATH: ${LOGS_PATH:-./logs}
+      API_ENV_FILE: ${API_ENV_FILE:-/etc/nixopus/source/api/.env}
+      API_VOLUME: ${API_VOLUME:-/etc/nixopus/configs}
+      API_IMAGE: ${API_IMAGE:-ghcr.io/raghavyuva/nixopus-api:latest}
+      API_CONTAINER_NAME: ${API_CONTAINER_NAME:-nixopus-api-container}
+      DOCKER_PORT: ${DOCKER_PORT:-2376}
+      APP_VERSION: ${APP_VERSION:-0.1.0-alpha.11}
+  view:
+    env:
+      PORT: ${VIEW_PORT:-7443}
+      WEBSOCKET_URL: ${WEBSOCKET_URL:-}
+      API_URL: ${API_URL:-}
+      WEBHOOK_URL: ${WEBHOOK_URL:-}
+      NEXT_PUBLIC_PORT: ${NEXT_PUBLIC_PORT:-7443}
+      LOGS_PATH: ${LOGS_PATH:-./logs}
+      VIEW_ENV_FILE: ${VIEW_ENV_FILE:-/etc/nixopus/source/view/.env}
+      VIEW_IMAGE: ${VIEW_IMAGE:-ghcr.io/raghavyuva/nixopus-view:latest}
+      VIEW_CONTAINER_NAME: ${VIEW_CONTAINER_NAME:-nixopus-view-container}
+
+  redis:
+    env:
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_VOLUME: ${REDIS_VOLUME:-/etc/nixopus/redis}
+      REDIS_IMAGE: ${REDIS_IMAGE:-redis:7-alpine}
+      REDIS_CONTAINER_NAME: ${REDIS_CONTAINER_NAME:-nixopus-redis-container}
+
+  db:
+    env:
+      DB_PORT: ${DB_PORT:-5432}
+      DB_VOLUME: ${DB_VOLUME:-/etc/nixopus/db}
+      DB_IMAGE: ${DB_IMAGE:-postgres:14-alpine}
+      DB_CONTAINER_NAME: ${DB_CONTAINER_NAME:-nixopus-db-container}
+      POSTGRES_USER: ${USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${PASSWORD:-changeme}
+      POSTGRES_DB: ${DB_NAME:-postgres}
+      POSTGRES_HOST_AUTH_METHOD: trust
+
+  caddy:
+    env:
+      CADDY_IMAGE: ${CADDY_IMAGE:-caddy:latest}
+      CADDY_CONTAINER_NAME: ${CADDY_CONTAINER_NAME:-nixopus-caddy-container}
+      CADDY_DATA_VOLUME: ${CADDY_DATA_VOLUME:-/etc/nixopus/caddy}
+      CADDY_CONFIG_VOLUME: ${CADDY_CONFIG_VOLUME:-/etc/nixopus/caddy}
+      CADDY_PORTS: "2019:2019,80:80,443:443"
+      API_DOMAIN: ${API_DOMAIN:-}
+      VIEW_DOMAIN: ${VIEW_DOMAIN:-}
+      BASE_URL: ${BASE_URL:-http://localhost:2019}
+      PROXY_PORT: ${PROXY_PORT:-2019}
+      CONFIG_ENDPOINT: ${CONFIG_ENDPOINT:-/config}
+      LOAD_ENDPOINT: ${LOAD_ENDPOINT:-/load}
+      STOP_ENDPOINT: ${STOP_ENDPOINT:-/stop}
+      CADDY_COMMAND:
+        [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile",
+        ]
+
+networks:
+  default:
+    name: nixopus-network
+    driver: bridge
+
+deps:
+  python3:
+    package: "python3"
+    command: "python3"
+    version: ">=3.8, <3.13"
+    version-command: ["python3", "--version"]
+  python3-venv:
+    package: "python3-venv"
+    command: ""
+    version: ">=3.8, <3.13"
+    version-command: ["python3", "--version"]
+  git:
+    package: "git"
+    command: "git"
+    version: ">=2.30.0, <3.0.0"
+    version-command: ["git", "--version"]
+  curl:
+    package: "curl"
+    command: "curl"
+    version: ">=7.80.0, <8.0.0"
+    version-command: ["curl", "--version"]
+  docker.io:
+    package: "docker.io"
+    command: "docker"
+    install_command: |
+      curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+    version: ">=20.10.0, <26.0.0"
+    version-command: ["docker", "--version"]
+  openssl:
+    package: "openssl"
+    command: "openssl"
+    version: ">=1.1.1, <4.0.0"
+    version-command: ["openssl", "version"]
+  openssh-client:
+    package: "openssh-client"
+    command: "ssh"
+    version: ">=8.0, <10.0"
+    version-command: ["ssh", "-V"]
+  openssh-server:
+    package: "openssh-server"
+    command: "sshd"
+    version: ">=8.0, <10.0"
+    version-command: ["sshd", "-V"]
+
+nixopus-config-dir: /etc/nixopus
+compose-file-path: source/docker-compose.yml
+clone:
+  repo: "https://github.com/raghavyuva/nixopus"
+  branch: "master"
+  source-path: source
+
+ports: [2019, 80, 443, 7443, 8443, 6379, 5432]
+ssh_key_size: 4096
+ssh_key_type: ed25519
+ssh_passphrase:
+ssh_file_path: ssh/id_rsa

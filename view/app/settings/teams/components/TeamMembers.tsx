@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -27,6 +27,7 @@ import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { useTranslation } from '@/hooks/use-translation';
 import { User } from '@/redux/types/user';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 type EditUser = {
   id: string;
@@ -135,7 +136,7 @@ function TeamMembers({
       <div className="flex items-center gap-2">
         <div className="flex flex-wrap gap-1.5">
           {visiblePermissions.map((permission, index) => (
-            <Badge key={index} variant="outline" className="bg-background">
+            <Badge key={index} variant="outline" className="bg-primary/10 text-primary rounded-full">
               {permission}
             </Badge>
           ))}
@@ -175,8 +176,8 @@ function TeamMembers({
     <>
       <Card>
         <CardHeader>
-          <CardTitle>{t('settings.teams.members.title')}</CardTitle>
-          <CardDescription>{t('settings.teams.members.description')}</CardDescription>
+          <TypographySmall>{t('settings.teams.members.title')}</TypographySmall>
+          <TypographyMuted>{t('settings.teams.members.description')}</TypographyMuted>
         </CardHeader>
         <CardContent>
           <Table>
@@ -208,7 +209,7 @@ function TeamMembers({
                       </Avatar>
                       <div>
                         <div className="font-medium">{user.name}</div>
-                        <div className="text-sm text-muted-foreground">{user.email}</div>
+                        <TypographyMuted>{user.email}</TypographyMuted>
                       </div>
                     </div>
                   </TableCell>
