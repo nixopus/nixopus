@@ -59,6 +59,12 @@ export function TypographyLarge({ children, className }: { children: React.React
 }
 
 export function TypographySmall({ children, className }: { children: React.ReactNode, className?: string }) {
+
+    let tooltip: string | undefined = undefined;
+    if (typeof children === "string" || typeof children === "number") {
+        tooltip = String(children);
+    }
+
     return (
         <small className={`text-sm leading-none font-medium ${className}`}>{children}</small>
     )

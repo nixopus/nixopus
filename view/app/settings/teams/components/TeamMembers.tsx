@@ -136,7 +136,7 @@ function TeamMembers({
       <div className="flex items-center gap-2">
         <div className="flex flex-wrap gap-1.5">
           {visiblePermissions.map((permission, index) => (
-            <Badge key={index} variant="outline" className="bg-background">
+            <Badge key={index} variant="outline" className="bg-primary/10 text-primary rounded-full">
               {permission}
             </Badge>
           ))}
