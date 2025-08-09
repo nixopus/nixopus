@@ -2,7 +2,7 @@ name: Build and Package CLI
 
 on:
   push:
-    branches: [feat/cli_releaser]
+    branches: [feat/cli_releaser, master]
     paths:
       - "cli/**"
       - ".github/workflows/build-and-package-cli.yml"
