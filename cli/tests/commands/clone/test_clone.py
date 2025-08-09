@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 import pytest
 from pydantic import ValidationError
 
-from ..clone import (
+from app.commands.clone.clone import (
     Clone,
     CloneConfig,
     CloneFormatter,
@@ -13,7 +13,7 @@ from ..clone import (
     GitClone,
     GitCommandBuilder,
 )
-from ..messages import (
+from app.commands.clone.messages import (
     successfully_cloned,
     dry_run_mode,
     dry_run_command,
