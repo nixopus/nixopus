@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
+import { TypographyMuted } from '@/components/ui/typography';
 
 function FileManagerHeader() {
   const { t } = useTranslation();
@@ -10,9 +11,8 @@ function FileManagerHeader() {
         <h1 className="text-md font-bold capitalize leading-normal text-primary sm:text-lg md:text-xl lg:text-3xl">
           {t('fileManager.header.title')}
         </h1>
-        <h2 className="text-xs leading-normal text-muted-foreground sm:text-sm lg:text-xl">
-          {t('fileManager.header.subtitle')}
-        </h2>
+        <TypographyMuted>{t('fileManager.header.subtitle')}</TypographyMuted>
+
       </div>
     </div>
   );

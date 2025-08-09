@@ -13,10 +13,11 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Shield, Smartphone, CheckCircle2 } from 'lucide-react';
 import { useAppSelector } from '@/redux/hooks';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { setTwoFactorEnabled } from '@/redux/features/users/authSlice';
 import { useAppDispatch } from '@/redux/hooks';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
+import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 export function TwoFactorSetup() {
   const { t } = useTranslation();
@@ -57,10 +58,10 @@ export function TwoFactorSetup() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <TypographySmall className="flex items-center gap-2">
           <Shield className="h-5 w-5" />
           {t('settings.2fa.title')}
-        </CardTitle>
+        </TypographySmall>
       </CardHeader>
       <CardContent>
         {user?.two_factor_enabled ? (
@@ -79,11 +80,6 @@ export function TwoFactorSetup() {
           </div>
         ) : !setupData ? (
           <div className="space-y-4">
-            <Alert>
-              <Smartphone className="h-4 w-4" />
-              <AlertTitle>{t('settings.2fa.title')}</AlertTitle>
-              <AlertDescription>{t('settings.2fa.description')}</AlertDescription>
-            </Alert>
             <RBACGuard resource="user" action="update">
               <Button onClick={handleSetup} className="w-full">
                 {t('settings.2fa.setupButton')}
@@ -96,9 +92,9 @@ export function TwoFactorSetup() {
               <div className="rounded-lg border p-4">
                 <QRCodeSVG value={setupData.qr_code} size={200} level="H" includeMargin={true} />
               </div>
-              <p className="text-sm text-muted-foreground text-center">
+              <TypographyMuted className="text-center">
                 {t('settings.2fa.description')}
-              </p>
+              </TypographyMuted>
             </div>
 
             <div className="space-y-4">

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import UploadAvatar from '@/components/ui/upload_avatar';
 import { User } from '@/redux/types/user';
 import { useTranslation } from '@/hooks/use-translation';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
+import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 interface AvatarSectionProps {
   onImageChange: (imageUrl: string | null) => void;
@@ -17,8 +18,8 @@ function AvatarSection({ onImageChange, user }: AvatarSectionProps) {
     <div className="col-span-1">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle>{t('settings.account.avatar.title')}</CardTitle>
-          <CardDescription>{t('settings.account.avatar.description')}</CardDescription>
+          <TypographySmall>{t('settings.account.avatar.title')}</TypographySmall>
+          <TypographyMuted>{t('settings.account.avatar.description')}</TypographyMuted>
         </CardHeader>
         <CardContent className="flex flex-col items-center pt-6">
           <RBACGuard resource="user" action="update">
