@@ -1,6 +1,6 @@
 import { useAppSelector } from '@/redux/hooks';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/use-translation';
 import { toast } from 'sonner';
 import { TabsContent } from '@/components/ui/tabs';
@@ -11,6 +11,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { FeatureFlag, FeatureName, featureGroups } from '@/types/feature-flags';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
+import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 export default function FeatureFlagsSettings() {
   const { t } = useTranslation();
@@ -59,16 +60,16 @@ export default function FeatureFlagsSettings() {
       <TabsContent value="feature-flags" className="space-y-6 mt-4">
         <Card>
           <CardHeader>
-            <CardTitle>{t('settings.featureFlags.title')}</CardTitle>
-            <CardDescription>{t('settings.featureFlags.description')}</CardDescription>
+            <TypographySmall>{t('settings.featureFlags.title')}</TypographySmall>
+            <TypographyMuted>{t('settings.featureFlags.description')}</TypographyMuted>
           </CardHeader>
           <CardContent className="space-y-6">
             {Array.from(groupedFeatures.entries()).map(([group, features], index) => (
               <div key={group} className="space-y-4">
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold">
+                  <TypographySmall>
                     {t(`settings.featureFlags.groups.${group}.title`)}
-                  </h3>
+                  </TypographySmall>
                 </div>
                 <div className="space-y-4">
                   {features?.map((feature) => (
@@ -77,12 +78,12 @@ export default function FeatureFlagsSettings() {
                       className="flex items-center justify-between p-2 rounded-lg"
                     >
                       <div className="space-y-1">
-                        <h4 className="text-sm font-medium">
+                        <TypographySmall>
                           {t(`settings.featureFlags.features.${feature.feature_name}.title`)}
-                        </h4>
-                        <p className="text-sm text-muted-foreground">
+                        </TypographySmall>
+                        <TypographyMuted>
                           {t(`settings.featureFlags.features.${feature.feature_name}.description`)}
-                        </p>
+                        </TypographyMuted>
                       </div>
                       <RBACGuard resource="feature-flags" action="update">
                         <Switch

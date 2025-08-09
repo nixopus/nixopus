@@ -80,7 +80,7 @@ export function FileItem({
     ) : (
       <span
         className={`px-2 py-1 ${layout === 'grid' ? 'text-center' : 'text-left'} 
-                ${activePath === file.path ? 'bg-secondary text-white' : ''} break-words rounded-md leading-normal`}
+                ${activePath === file.path ? 'bg-secondary text-primary' : 'text-primary'} break-words rounded-md leading-normal`}
         title={file.name}
         onDoubleClick={handleTextDoubleClick}
       >
@@ -129,8 +129,8 @@ export function FileItem({
   );
 
   return (
-    <ResourceGuard 
-      resource="file-manager" 
+    <ResourceGuard
+      resource="file-manager"
       action="read"
       loadingFallback={null}
     >
@@ -151,8 +151,8 @@ export function FileItem({
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <FileInfo file={file} isLoading={isSizeLoading} fileSize={fileSize || null} />
         </Dialog>
-        <ResourceGuard 
-          resource="file-manager" 
+        <ResourceGuard
+          resource="file-manager"
           action="delete"
           loadingFallback={null}
         >

@@ -4,12 +4,13 @@ import React from 'react';
 import { Lock, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { TabsContent } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useTranslation } from '@/hooks/use-translation';
 import { TwoFactorSetup } from '@/app/settings/general/components/TwoFactorSetup';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
+import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 interface SecuritySectionProps {
   emailSent: boolean;
@@ -28,8 +29,8 @@ function SecuritySection({
     <TabsContent value="security" className="space-y-4 mt-4">
       <Card>
         <CardHeader>
-          <CardTitle>{t('settings.security.password.title')}</CardTitle>
-          <CardDescription>{t('settings.security.password.description')}</CardDescription>
+          <TypographySmall>{t('settings.security.password.title')}</TypographySmall>
+          <TypographyMuted>{t('settings.security.password.description')}</TypographyMuted>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -37,9 +38,9 @@ function SecuritySection({
               <Lock size={16} />
               {t('settings.security.password.reset.label')}
             </Label>
-            <p className="text-sm text-muted-foreground">
+            <TypographyMuted>
               {t('settings.security.password.reset.description')}
-            </p>
+            </TypographyMuted>
           </div>
 
           {emailSent ? (
