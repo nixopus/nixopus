@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 
-from ..ssh import SSH, SSHCommandBuilder, SSHConfig, SSHKeyManager
+from app.commands.install.ssh import SSH, SSHCommandBuilder, SSHConfig, SSHKeyManager
 
 
 class TestSSHKeyGeneration(unittest.TestCase):

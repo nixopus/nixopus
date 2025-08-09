@@ -14,6 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import DisabledFeature from '@/components/features/disabled-feature';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import useContainerList from './hooks/use-container-list';
+import { TypographyH1, TypographyMuted } from '@/components/ui/typography';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface ContainerActionsProps {
   container: any;
@@ -78,21 +80,28 @@ interface ContainerInfoProps {
 }
 
 const ContainerInfo = ({ container }: ContainerInfoProps) => {
+  const { t } = useTranslation();
   return (
-    <div className="mt-4 space-y-2">
+    <div className="space-y-3">
       <div className="text-sm">
         <span className="font-medium">Ports:</span>
         <div className="flex flex-wrap gap-2 mt-1">
-          {container?.ports?.map((port: any) => (
-            <Badge key={`${port.private_port}-${port.public_port}`} variant="outline">
-              {port.public_port} → {port.private_port}
-            </Badge>
-          ))}
+          {container?.ports?.length > 0 ? (
+            container.ports.map((port: any) => (
+              <Badge key={`${port.private_port}-${port.public_port}`} variant="outline">
+                {port.public_port} → {port.private_port}
+              </Badge>
+            ))
+          ) : (
+            <span className="text-xs text-muted-foreground">{t("containers.no_ports_exposed")}</span>
+          )}
         </div>
       </div>
       <div className="text-sm">
         <span className="font-medium">Memory:</span>
-        <span className="ml-2">{(container.host_config.memory / (1024 * 1024)).toFixed(2)} MB</span>
+        <span className="ml-2">
+          {`${(container.host_config.memory / (1024 * 1024)).toFixed(2)} MB`}
+        </span>
       </div>
     </div>
   );
@@ -114,28 +123,32 @@ const ContainerCard = ({
   return (
     <Card
       className={cn(
-        'group relative overflow-hidden transition-all duration-300 hover:shadow-lg cursor-pointer',
+        'group relative overflow-hidden transition-all duration-300 hover:shadow-lg cursor-pointer h-full flex flex-col',
         getGradientFromName(container.name)
       )}
       onClick={onClick}
     >
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f1a_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f1a_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
       <div className="absolute inset-0 bg-gradient-to-br opacity-20 transition-opacity duration-300 group-hover:opacity-30" />
-      <CardContent className="relative p-6 z-10">
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <h3 className="text-xl font-semibold">{container.name}</h3>
-            <p className="text-sm text-muted-foreground truncate">{container.image}</p>
+      <CardContent className="relative p-6 z-10 flex-1 flex flex-col">
+        <div className="flex items-start justify-between mb-4">
+          <div className="space-y-2 flex-1 min-w-0">
+            <h3 className="text-xl font-semibold truncate">{container.name}</h3>
+            <p className="text-sm text-muted-foreground truncate" title={container.image}>{container.image}</p>
             <Badge variant={container.status === 'running' ? 'default' : 'secondary'}>
               {container.status}
             </Badge>
           </div>
-          <ContainerActions
-            container={container}
-            onAction={onAction}
-          />
+          <div className="flex-shrink-0 ml-4">
+            <ContainerActions
+              container={container}
+              onAction={onAction}
+            />
+          </div>
         </div>
-        <ContainerInfo container={container} />
+        <div className="mt-auto">
+          <ContainerInfo container={container} />
+        </div>
       </CardContent>
     </Card>
   );
@@ -232,7 +245,10 @@ export default function ContainersPage() {
         <div className="relative w-full">
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 relative z-10">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-              <h1 className="text-2xl font-bold">{t('containers.title')}</h1>
+              <span>
+                <TypographyH1 className="text-2xl font-bold">{t('containers.title')}</TypographyH1>
+                <TypographyMuted>{t('containers.description')}</TypographyMuted>
+              </span>
               <div className="flex items-center gap-2 flex-wrap">
                 <Button onClick={handleRefresh} variant="outline" size="sm" disabled={isRefreshing}>
                   {isRefreshing ? (

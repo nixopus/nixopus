@@ -224,6 +224,20 @@ class TestConfig(unittest.TestCase):
         config.flatten_config(nested, flattened, "prefix")
         self.assertEqual(flattened, {"prefix.a": 1})
 
+    def test_unflatten_config_simple(self):
+        config = Config()
+        flattened = {"a": 1, "b": 2}
+        result = config.unflatten_config(flattened)
+        expected = {"a": 1, "b": 2}
+        self.assertEqual(result, expected)
+
+    def test_unflatten_config_nested(self):
+        config = Config()
+        flattened = {"a.b.c": 1, "a.b.d": 2, "a.e": 3, "f": 4}
+        result = config.unflatten_config(flattened)
+        expected = {"a": {"b": {"c": 1, "d": 2}, "e": 3}, "f": 4}
+        self.assertEqual(result, expected)
+
     def test_get_config_value_cached(self):
         config = Config()
         user_config = {"test.key": "value"}

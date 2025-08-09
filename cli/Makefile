@@ -1,59 +1,73 @@
-.PHONY: help install install-dev test test-cov lint clean format check build publish dev run
+.PHONY: help setup test test-cov lint clean format check build publish dev nixopus
 
-help: 
-	@echo "Available commands:"
+help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-install: 
-	poetry install
+setup: ## Setup Python environment and install dependencies
+	@if command -v poetry >/dev/null 2>&1; then \
+		echo "Poetry found. Installing dependencies..."; \
+		poetry install --with dev --quiet; \
+		echo "Environment ready! Use: make nixopus ARGS=\"command\""; \
+	else \
+		echo "Poetry not found. Installing Poetry..."; \
+		curl -sSL https://install.python-poetry.org | python3 - >/dev/null 2>&1; \
+		echo "Poetry installed. Please restart your shell or run: source ~/.bashrc (or ~/.zshrc)"; \
+		echo "Then run 'make setup' again to install dependencies."; \
+	fi
 
-install-dev: 
-	poetry install --with dev --no-root
+test: ## Run tests
+	@poetry run pytest
 
-test: 
-	poetry run pytest
+test-cov: ## Run tests with coverage
+	@poetry run pytest --cov=app --cov-report=term-missing --cov-report=html
 
-test-cov: 
-	poetry run pytest --cov=core --cov=utils --cov-report=term-missing --cov-report=html
+lint: ## Run linting
+	@poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+	@poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-test-watch: 
-	poetry run pytest-watch
+format: ## Format code
+	@poetry run black . --quiet
+	@poetry run isort . --quiet
 
-lint: 
-	poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-	poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+check: ## Run linting and tests
+	$(MAKE) lint && $(MAKE) test
 
-format: 
-	poetry run black .
-	poetry run isort .
+clean: ## Clean build artifacts
+	@rm -rf build/ dist/ *.egg-info/ .pytest_cache/ htmlcov/ .coverage
+	@find . -type d -name __pycache__ -delete
+	@find . -type f -name "*.pyc" -delete
 
-check: 
-	$(MAKE) lint
-	$(MAKE) test
+build: ## Build the package
+	@poetry build
 
-clean: 
-	rm -rf build/
-	rm -rf dist/
-	rm -rf *.egg-info/
-	rm -rf .pytest_cache/
-	rm -rf htmlcov/
-	rm -rf .coverage
-	find . -type d -name __pycache__ -delete
-	find . -type f -name "*.pyc" -delete
+publish: ## Publish to PyPI
+	@poetry publish
 
-build: 
-	poetry build
+dev: ## Activate development shell
+	@poetry shell
 
-publish: 
-	poetry publish
 
-dev: 
-	poetry shell
+# -----------------------------------------------------------------------------
+# Nixopus test CLI commands
+# -----------------------------------------------------------------------------
+nixopus: ## Run nixopus CLI
+	@if [ -z "$(ARGS)" ]; then \
+		poetry run nixopus --help; \
+	else \
+		poetry run nixopus $(ARGS); \
+	fi
 
-run: 
+conflict: ## Run conflict command
+	@poetry run nixopus conflict $(ARGS)
+
+preflight: ## Run preflight command
+	@poetry run nixopus preflight $(ARGS)
+
+version: ## Show version
+	@poetry run nixopus version
+
+run: ## Run nixopus CLI directly
 	poetry run nixopus
 
-generate-docs:
-	typer app.main utils docs --output
-      ../docs/cli/cli-reference.md --name
-      nixopus
+generate-docs: ## Generate CLI documentation
+	typer app.main utils docs --output ../docs/cli/cli-reference.md --name nixopus

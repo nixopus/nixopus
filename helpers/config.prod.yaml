@@ -71,14 +71,15 @@ services:
       CONFIG_ENDPOINT: ${CONFIG_ENDPOINT:-/config}
       LOAD_ENDPOINT: ${LOAD_ENDPOINT:-/load}
       STOP_ENDPOINT: ${STOP_ENDPOINT:-/stop}
-      CADDY_COMMAND: [
-        "caddy",
-        "run",
-        "--config",
-        "/etc/caddy/Caddyfile",
-        "--adapter",
-        "caddyfile"
-      ]
+      CADDY_COMMAND:
+        [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile",
+        ]
 
 networks:
   default:
@@ -86,18 +87,48 @@ networks:
     driver: bridge
 
 deps:
-  curl:           { package: "curl",           command: "curl" }
-  python3:        { package: "python3",        command: "python3" }
-  python3-venv:   { package: "python3-venv",   command: "" }
-  git:            { package: "git",            command: "git" }
+  python3:
+    package: "python3"
+    command: "python3"
+    version: ">=3.8, <3.13"
+    version-command: ["python3", "--version"]
+  python3-venv:
+    package: "python3-venv"
+    command: ""
+    version: ">=3.8, <3.13"
+    version-command: ["python3", "--version"]
+  git:
+    package: "git"
+    command: "git"
+    version: ">=2.30.0, <3.0.0"
+    version-command: ["git", "--version"]
+  curl:
+    package: "curl"
+    command: "curl"
+    version: ">=7.80.0, <8.0.0"
+    version-command: ["curl", "--version"]
   docker.io:
     package: "docker.io"
     command: "docker"
     install_command: |
       curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
-  openssl:        { package: "openssl",        command: "openssl" }
-  openssh-client: { package: "openssh-client", command: "ssh" }
-  openssh-server: { package: "openssh-server", command: "sshd" }
+    version: ">=20.10.0, <26.0.0"
+    version-command: ["docker", "--version"]
+  openssl:
+    package: "openssl"
+    command: "openssl"
+    version: ">=1.1.1, <4.0.0"
+    version-command: ["openssl", "version"]
+  openssh-client:
+    package: "openssh-client"
+    command: "ssh"
+    version: ">=8.0, <10.0"
+    version-command: ["ssh", "-V"]
+  openssh-server:
+    package: "openssh-server"
+    command: "sshd"
+    version: ">=8.0, <10.0"
+    version-command: ["sshd", "-V"]
 
 nixopus-config-dir: /etc/nixopus
 compose-file-path: source/docker-compose.yml
@@ -109,5 +140,5 @@ clone:
 ports: [2019, 80, 443, 7443, 8443, 6379, 5432]
 ssh_key_size: 4096
 ssh_key_type: ed25519
-ssh_passphrase: 
+ssh_passphrase:
 ssh_file_path: ssh/id_rsa

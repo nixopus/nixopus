@@ -11,7 +11,8 @@ python = ">=3.9.0,<3.14"
 typer = "^0.16.0"
 rich = "^14.0.0"
 pydantic = "^2.0.0"
-requests = "^2.32.3"
+packaging = "^23.0"
+requests = "^2.32.4"
 pyyaml = "^6.0.2"
 
 [tool.poetry.group.dev.dependencies]
@@ -31,7 +32,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-testpaths = ["app"]
+testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

@@ -19,6 +19,7 @@ nixopus_config_dir = config.get_yaml_value(NIXOPUS_CONFIG_DIR)
 compose_file = config.get_yaml_value(DEFAULT_COMPOSE_FILE)
 compose_file_path = nixopus_config_dir + "/" + compose_file
 
+
 @service_app.command()
 def up(
     name: str = typer.Option("all", "--name", "-n", help="The name of the service to start, defaults to all"),
@@ -63,7 +64,7 @@ def up(
                 if formatted_output:
                     logger.info(formatted_output)
         else:
-            logger.error(result.error)
+            logger.error(result.error if result.error is not None else "Unknown error")
             raise typer.Exit(1)
 
     except TimeoutError as e:
