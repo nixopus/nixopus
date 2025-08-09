@@ -2,10 +2,10 @@ name: Build and Package CLI
 
 on:
   push:
-    branches: [feat/cli_releaser, master]
+    branches: [master]
     paths:
       - "cli/**"
-      - ".github/workflows/build-and-package-cli.yml"
+      - ".github/workflows/release-cli.yml"
   workflow_dispatch:
 
 jobs:
@@ -173,7 +173,7 @@ jobs:
   create-release:
     needs: build-and-package
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/feat/cli_releaser' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     steps:
       - name: Checkout code
