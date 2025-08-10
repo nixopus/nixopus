@@ -65,7 +65,7 @@ clone:
 ### SSH Configuration
 ```yaml
 ssh_key_size: 4096
-ssh_key_type: ed25519
+ssh_key_type: rsa
 ssh_file_path: ssh/id_rsa
 ```
 

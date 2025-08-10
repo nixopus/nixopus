@@ -13,7 +13,7 @@ services:
       SSH_HOST: ${SSH_HOST:-localhost}
       SSH_PORT: ${SSH_PORT:-22}
       SSH_USER: ${SSH_USER:-$USER}
-      SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:-~/.ssh/id_ed25519_nixopus}
+      SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:-~/.ssh/id_rsa_nixopus}
       SSH_PASSWORD: ${SSH_PASSWORD:-}
       DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
       REDIS_URL: ${REDIS_URL:-redis://localhost:6379}
@@ -152,6 +152,6 @@ clone:
 
 ports: [8080, 7443, 6379, 5432, 22]
 ssh_key_size: 4096
-ssh_key_type: ed25519
+ssh_key_type: rsa
 ssh_passphrase:
-ssh_file_path: ~/.ssh/id_ed25519_nixopus
+ssh_file_path: ~/.ssh/id_rsa_nixopus

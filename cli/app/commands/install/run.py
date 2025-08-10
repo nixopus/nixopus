@@ -309,7 +309,7 @@ class Install:
             'ALLOWED_ORIGIN': f"{protocol}://{view_host}",
             'SSH_HOST': host_ip,
             'SSH_PRIVATE_KEY': self._get_config('ssh_key_path'),
-            'WEBSOCKET_URL': f"{ws_protocol}://{view_host}/ws",
+            'WEBSOCKET_URL': f"{ws_protocol}://{api_host}/ws",
             'API_URL': f"{protocol}://{api_host}/api",
             'WEBHOOK_URL': f"{protocol}://{api_host}/api/v1/webhook",
         }

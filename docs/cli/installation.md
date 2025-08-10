@@ -19,11 +19,7 @@ python3 --version
 Download and install the pre-built binary for your platform:
 
 ```bash
-# Download and run the install script
-curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/master/cli/install.sh | bash
-
-# Or for local installation (no sudo required)
-curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/master/cli/install.sh | bash -s -- --local
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install-cli.sh)"
 ```
 
 **Install script options:**
@@ -114,6 +110,29 @@ Expected output:
 │ Nixopus CLI v0.1.0                            │
 └─────────────────────────────────────────────────┘
 ```
+
+## Next Steps: Installing Nixopus
+
+Once the CLI is installed, you can use it to install Nixopus on your VPS:
+
+```bash
+# Basic installation
+nixopus install
+
+# Installation with custom domains
+nixopus install \
+  --api-domain api.example.com \
+  --view-domain app.example.com \
+  --verbose
+
+# Check system requirements first
+nixopus preflight
+
+# Install only dependencies
+nixopus install deps
+```
+
+For detailed installation options, see the [Installation Guide](../install/index.md).
 
 ## Troubleshooting
 

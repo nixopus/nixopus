@@ -171,7 +171,6 @@ main() {
     # Verify installation
     verify_installation
 }
-}
 
 # Check if running as root for package managers that need it
 check_permissions() {

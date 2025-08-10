@@ -62,8 +62,8 @@ nixopus install ssh [OPTIONS]
 
 | Option | Short | Description | Default |
 |--------|-------|-------------|---------|
-| `--path` | `-p` | SSH key file path | `~/.ssh/nixopus_ed25519` |
-| `--key-type` | `-t` | Key type (rsa, ed25519, ecdsa) | `ed25519` |
+| `--path` | `-p` | SSH key file path | `~/.ssh/nixopus_rsa` |
+| `--key-type` | `-t` | Key type (rsa, ed25519, ecdsa) | `rsa` |
 | `--key-size` | `-s` | Key size in bits | `4096` |
 | `--passphrase` | `-P` | Passphrase for key encryption | None |
 | `--force` | `-f` | Overwrite existing SSH keys | `false` |
@@ -78,7 +78,7 @@ nixopus install ssh [OPTIONS]
 **Examples:**
 
 ```bash
-# Generate default Ed25519 key
+# Generate default RSA key
 nixopus install ssh
 
 # Generate RSA key with custom path and size
@@ -125,8 +125,8 @@ The install command reads configuration values from the built-in `config.prod.ya
 | Setting | Default Value | Description |
 |---------|---------------|-------------|
 | Timeout | `300` seconds | Maximum time to wait for installation steps |
-| SSH Key Path | `~/.ssh/nixopus_ed25519` | Default SSH key location |
-| SSH Key Type | `ed25519` | Default SSH key algorithm |
+| SSH Key Path | `~/.ssh/nixopus_rsa` | Default SSH key location |
+| SSH Key Type | `rsa` | Default SSH key algorithm |
 | SSH Key Size | `4096` bits | Default key size for RSA keys |
 
 ### Configuration Source

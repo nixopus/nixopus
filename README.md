@@ -76,31 +76,55 @@ Nixopus streamlines your workflow with comprehensive tools for deployment, monit
 
 This section will help you set up Nixopus on your VPS quickly.
 
-To install Nixopus on your VPS, ensure you have sudo access and run the following command:
+### Install the Nixopus CLI
 
+First, install the Nixopus CLI tool:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install-cli.sh | sudo bash
 ```
-sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install.sh)"
+
+### Self Host Nixopus on your VPS
+
+Once the CLI is installed, you can self host Nixopus on your VPS:
+
+```bash
+nixopus install
 ```
 
 #### Optional Parameters
 
 You can customize your installation by providing the following optional parameters:
 
-- `--api-domain`: Specify the domain where the Nixopus API will be accessible (e.g., `nixopusapi.example.tld`)
-- `--app-domain`: Specify the domain where the Nixopus app will be accessible (e.g., `nixopus.example.tld`)
-- `--email` or `-e`: Set the email for the admin account
-- `--password` or `-p`: Set the password for the admin account
+- `--api-domain` or `-ad`: Specify the domain where the Nixopus API will be accessible (e.g., `nixopusapi.example.tld`)
+- `--view-domain` or `-vd`: Specify the domain where the Nixopus app will be accessible (e.g., `nixopus.example.tld`)
+- `--verbose` or `-v`: Show more details while installing
+- `--timeout` or `-t`: Set timeout for each step (default: 300 seconds)
+- `--force` or `-f`: Replace files if they already exist
+- `--dry-run` or `-d`: See what would happen without making changes
+- `--config-file` or `-c`: Path to custom config file (defaults to built-in [`config.prod.yaml`](https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/helpers/config.prod.yaml)) 
 
 Example with optional parameters:
 
-```
-sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install.sh)" -- \
+```bash
+nixopus install \
   --api-domain nixopusapi.example.tld \
-  --app-domain nixopus.example.tld \
-  --email admin@example.tld \
-  --password Adminpassword@123 \
-  --env production
+  --view-domain nixopus.example.tld \
+  --verbose \
+  --timeout 600
 ```
+
+#### Additional CLI Commands
+
+The Nixopus CLI provides several other useful commands:
+
+- `nixopus preflight` - Check system requirements before installation
+- `nixopus install deps` - Install only dependencies
+- `nixopus install ssh` - Generate SSH keys for deployment
+- `nixopus service` - Manage Nixopus services
+- `nixopus uninstall` - Remove Nixopus from your system
+
+Run `nixopus --help` to see all available commands.
 
 ## About the Name
 

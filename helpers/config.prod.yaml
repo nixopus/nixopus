@@ -139,6 +139,6 @@ clone:
 
 ports: [2019, 80, 443, 7443, 8443, 6379, 5432]
 ssh_key_size: 4096
-ssh_key_type: ed25519
+ssh_key_type: rsa
 ssh_passphrase:
 ssh_file_path: ssh/id_rsa
