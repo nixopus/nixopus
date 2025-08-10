@@ -2,30 +2,49 @@
 
 Welcome to the Nixopus installation guide. This section will help you set up Nixopus on your VPS quickly.
 
-To install Nixopus on your VPS, ensure you have sudo access and run the following command:
+## Prerequisites
 
-```
-sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install.sh)"
+- **VPS with sudo access**
+- **Nixopus CLI installed** (see [CLI Installation Guide](../cli/installation.md))
+
+## Quick Installation
+
+### Step 1: Install the Nixopus CLI
+
+First, install the Nixopus CLI tool:
+
+```bash
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install-cli.sh)"
 ```
 
-## Optional Parameters
+### Step 2: Install Nixopus on your VPS
+
+Once the CLI is installed, you can install Nixopus on your VPS:
+
+```bash
+nixopus install
+```
+
+## Installation Options
 
 You can customize your installation by providing the following optional parameters:
 
-- `--api-domain`: Specify the domain where the Nixopus API will be accessible (e.g., `nixopusapi.example.tld`)
-- `--app-domain`: Specify the domain where the Nixopus app will be accessible (e.g., `nixopus.example.tld`)
-- `--email` or `-e`: Set the email for the admin account
-- `--password` or `-p`: Set the password for the admin account
+- `--api-domain` or `-ad`: Specify the domain where the Nixopus API will be accessible (e.g., `nixopusapi.example.tld`)
+- `--view-domain` or `-vd`: Specify the domain where the Nixopus app will be accessible (e.g., `nixopus.example.tld`)
+- `--verbose` or `-v`: Show more details while installing
+- `--timeout` or `-t`: Set timeout for each step (default: 300 seconds)
+- `--force` or `-f`: Replace files if they already exist
+- `--dry-run` or `-d`: See what would happen without making changes
+- `--config-file` or `-c`: Path to custom config file (defaults to built-in [`config.prod.yaml`](https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/helpers/config.prod.yaml))
 
 Example with optional parameters:
 
-```
-sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install.sh)" -- \
+```bash
+nixopus install \
   --api-domain nixopusapi.example.tld \
-  --app-domain nixopus.example.tld \
-  --email admin@example.tld \
-  --password Adminpassword@123 \
-  --env production
+  --view-domain nixopus.example.tld \
+  --verbose \
+  --timeout 600
 ```
 
 ## Accessing Nixopus
