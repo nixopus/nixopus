@@ -107,9 +107,3 @@ The conflict checker includes built-in support for common tools:
 - **Redis**: Verifies Redis server version
 - **Python**: Checks Python interpreter version
 
-### Custom Tool Support
-
-For tools not in the built-in list, the checker will:
-1. Try `<tool> --version` first
-2. Fall back to `<tool> -v` if the first fails
-3. Parse common version output patterns
