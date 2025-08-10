@@ -46,8 +46,8 @@ def main_install_callback(value: bool):
 
 @install_app.command(name="ssh")
 def ssh(
-    path: str = typer.Option("~/.ssh/nixopus_ed25519", "--path", "-p", help="The SSH key path to generate"),
-    key_type: str = typer.Option("ed25519", "--key-type", "-t", help="The SSH key type (rsa, ed25519, ecdsa)"),
+    path: str = typer.Option("~/.ssh/nixopus_rsa", "--path", "-p", help="The SSH key path to generate"),
+    key_type: str = typer.Option("rsa", "--key-type", "-t", help="The SSH key type (rsa, ed25519, ecdsa)"),
     key_size: int = typer.Option(4096, "--key-size", "-s", help="The SSH key size"),
     passphrase: str = typer.Option(None, "--passphrase", "-P", help="The passphrase to use for the SSH key"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),

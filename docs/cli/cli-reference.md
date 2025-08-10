@@ -437,8 +437,8 @@ $ nixopus install ssh [OPTIONS]
 
 **Options**:
 
-* `-p, --path TEXT`: The SSH key path to generate  [default: ~/.ssh/nixopus_ed25519]
-* `-t, --key-type TEXT`: The SSH key type (rsa, ed25519, ecdsa)  [default: ed25519]
+* `-p, --path TEXT`: The SSH key path to generate  [default: ~/.ssh/nixopus_rsa]
+* `-t, --key-type TEXT`: The SSH key type (rsa, ed25519, ecdsa)  [default: rsa]
 * `-s, --key-size INTEGER`: The SSH key size  [default: 4096]
 * `-P, --passphrase TEXT`: The passphrase to use for the SSH key
 * `-v, --verbose`: Verbose output
