@@ -173,6 +173,9 @@ jobs:
   create-release:
     needs: build-and-package
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     steps:
@@ -216,61 +219,23 @@ jobs:
           jq '.["cli-version"], .["cli-packages"]' package.json
 
       - name: Create Pull Request for package.json update
-        run: |
-          CLI_VERSION="${{ needs.build-and-package.outputs.version }}"
-          BRANCH_NAME="update-cli-version-$CLI_VERSION"
+        if: ${{ needs.build-and-package.outputs.version != '' }}
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update cli-version to ${{ needs.build-and-package.outputs.version }} and cli-packages array"
+          title: "chore: update cli-version to ${{ needs.build-and-package.outputs.version }}"
+          body: |
+            This PR updates the `cli-version` field and `cli-packages` array in the root package.json to match the current CLI version (${{ needs.build-and-package.outputs.version }}) from the pyproject.toml file.
 
-          # Configure git
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+            **Changes:**
+            - Updated `cli-version` field to `${{ needs.build-and-package.outputs.version }}`
+            - Updated `cli-packages` array with available package files
 
-          # Check if changes exist
-          if git diff --quiet package.json; then
-            echo "No changes to package.json, skipping PR creation"
-            exit 0
-          fi
-
-          # Create new branch
-          git checkout -b "$BRANCH_NAME"
-
-          # Add and commit changes
-          git add package.json
-          git commit -m "chore: update cli-version to $CLI_VERSION and cli-packages array
-
-          - Updated cli-version to $CLI_VERSION
-          - Updated cli-packages array with available package files
-
-          This PR was automatically created by the CLI release workflow to keep the root package.json in sync with the CLI version from pyproject.toml."
-
-          # Push branch
-          git push origin "$BRANCH_NAME"
-
-          # Create PR (only if branch doesn't exist)
-          if ! gh pr list --head "$BRANCH_NAME" --json number --jq '. | length' | grep -q "0"; then
-            echo "PR already exists for branch $BRANCH_NAME"
-            exit 0
-          fi
-
-          gh pr create \
-            --title "chore: update cli-version to $CLI_VERSION" \
-            --body "This PR updates the \`cli-version\` field and \`cli-packages\` array in the root package.json to match the current CLI version ($CLI_VERSION) from the pyproject.toml file.
-
-          **Changes:**
-          - Updated \`cli-version\` field to \`$CLI_VERSION\`
-          - Updated \`cli-packages\` array with available package files
-
-          **Available Packages:**
-          $(jq -r '.["cli-packages"][]' package.json | sed 's/^/- /')
-
-          **Download URLs:**
-          $(jq -r '.["cli-packages"][]' package.json | sed "s|^|- https://github.com/raghavyuva/nixopus/releases/download/nixopus-$CLI_VERSION/|")
-
-          This PR was automatically created by the CLI release workflow." \
-            --base master \
-            --head "$BRANCH_NAME" || echo "Failed to create PR, but continuing with release"
-            
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            This PR was automatically created by the CLI release workflow.
+          branch: "chore/update-cli-version-${{ needs.build-and-package.outputs.version }}"
+          delete-branch: true
+          base: "master"
 
       - name: Create GitHub Release
         run: |
