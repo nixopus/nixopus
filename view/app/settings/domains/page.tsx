@@ -72,10 +72,7 @@ const Page = () => {
           </Alert>
         ) : domains && domains.length > 0 ? (
           <>
-            <div className="flex justify-between items-center mt-8">
-              <TypographyH2 className="text-xl font-medium text-foreground">
-                {t('settings.domains.page.domainsList.title')}
-              </TypographyH2>
+            <div className="flex justify-end items-center mt-8">
               <ResourceGuard resource="domain" action="create">
                 <Button variant="default" onClick={() => setAddDomainDialogOpen(true)}>
                   {t('settings.domains.page.domainsList.addButton')}
