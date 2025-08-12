@@ -121,7 +121,6 @@ const Page: React.FC = () => {
             <NotificationPreferencesTab
               activityPreferences={preferences?.activity}
               securityPreferences={preferences?.security}
-              updatePreferences={preferences?.update}
               onUpdatePreference={handleUpdate}
             />
           </TabsContent>

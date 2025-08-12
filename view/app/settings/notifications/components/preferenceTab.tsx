@@ -7,14 +7,12 @@ import { useTranslation } from '@/hooks/use-translation';
 interface NotificationPreferencesTabProps {
   activityPreferences?: PreferenceType[];
   securityPreferences?: PreferenceType[];
-  updatePreferences?: PreferenceType[];
   onUpdatePreference: (id: string, enabled: boolean) => void;
 }
 
 export const NotificationPreferencesTab: React.FC<NotificationPreferencesTabProps> = ({
   activityPreferences,
   securityPreferences,
-  updatePreferences,
   onUpdatePreference
 }) => {
   const { t } = useTranslation();
@@ -32,13 +30,6 @@ export const NotificationPreferencesTab: React.FC<NotificationPreferencesTabProp
         title={t('settings.notifications.preferences.security.title')}
         description={t('settings.notifications.preferences.security.description')}
         preferences={securityPreferences}
-        onUpdate={onUpdatePreference}
-      />
-
-      <NotificationPreferenceCard
-        title={t('settings.notifications.preferences.updates.title')}
-        description={t('settings.notifications.preferences.updates.description')}
-        preferences={updatePreferences}
         onUpdate={onUpdatePreference}
       />
     </div>
