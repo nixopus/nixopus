@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import FormInputField from '@/components/ui/form-input-field';
@@ -65,6 +65,7 @@ export const DeployForm = ({
   });
 
   const [currentStepId, setCurrentStepId] = useState('basic-info');
+  const stepperMethodsRef = useRef<any>(null);
 
   const isStaticBuildPack = form.watch('build_pack') === BuildPack.Static;
 
@@ -81,11 +82,17 @@ export const DeployForm = ({
           { id: 'variables', title: 'Variables & Commands' }
         ], [isStaticBuildPack]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isStaticBuildPack && (currentStepId === 'configuration' || currentStepId === 'variables')) {
       setCurrentStepId('repository');
     }
   }, [isStaticBuildPack, currentStepId]);
+
+  useEffect(() => {
+    if (stepperMethodsRef.current && stepperMethodsRef.current.current.id !== currentStepId) {
+      stepperMethodsRef.current.goTo(currentStepId);
+    }
+  }, [currentStepId]);
 
   const { Stepper } = useMemo(() => defineStepper(...stepperSteps), [stepperSteps]);
 
@@ -117,50 +124,19 @@ export const DeployForm = ({
     return isValid;
   }, [currentStepId, form, isStaticBuildPack]);
 
-  const validateAllStepsAndFindErrors = useCallback(async (): Promise<{ isValid: boolean; errorStep?: string }> => {
-    const stepsToValidate = [
-      {
-        id: 'basic-info',
-        fields: isStaticBuildPack 
-          ? ['application_name', 'environment', 'build_pack']
-          : ['application_name', 'environment', 'build_pack', 'port']
-      },
-      {
-        id: 'repository',
-        fields: ['branch', 'domain']
-      }
-    ];
 
-    if (!isStaticBuildPack) {
-      stepsToValidate.push(
-        {
-          id: 'configuration',
-          fields: ['base_path', 'DockerfilePath']
-        },
-        {
-          id: 'variables',
-          fields: ['env_variables', 'build_variables', 'pre_run_commands', 'post_run_commands']
-        }
-      );
+
+  const handleNext = useCallback(async () => {
+    const isValid = await validateCurrentStep();
+    if (!isValid) {
+      toast.warning('Please fix the errors before proceeding');
+      return;
     }
-
-    for (const step of stepsToValidate) {
-      const isStepValid = await form.trigger(step.fields as any);
-      if (!isStepValid) {
-        const stepTitle = stepperSteps.find(s => s.id === step.id)?.title || step.id;
-        return { isValid: false, errorStep: stepTitle };
-      }
-    }
-
-    return { isValid: true };
-  }, [form, isStaticBuildPack, stepperSteps]);
-
-  const handleNext = useCallback(() => {
     const currentIndex = stepperSteps.findIndex(step => step.id === currentStepId);
     if (currentIndex < stepperSteps.length - 1) {
       setCurrentStepId(stepperSteps[currentIndex + 1].id);
     }
-  }, [currentStepId, stepperSteps]);
+  }, [currentStepId, stepperSteps, validateCurrentStep]);
 
   const handlePrev = useCallback(() => {
     const currentIndex = stepperSteps.findIndex(step => step.id === currentStepId);
@@ -328,6 +304,10 @@ export const DeployForm = ({
     }
   }, [currentStepId, form, t, isStaticBuildPack, parsePort, validateEnvVar]);
 
+  const setStepperMethods = useCallback((methods: any) => {
+    stepperMethodsRef.current = methods;
+  }, []);
+
   return (
     <ResourceGuard 
       resource="deploy" 
@@ -340,11 +320,7 @@ export const DeployForm = ({
         className="sm:space-y-4 space-y-2"
       >
         {({ methods }) => {
-          React.useEffect(() => {
-            if (methods.current.id !== currentStepId) {
-              methods.goTo(currentStepId);
-            }
-          }, [currentStepId, methods]);
+          setStepperMethods(methods);
 
           return (
             <>
@@ -392,15 +368,6 @@ export const DeployForm = ({
                         <Button 
                           type="submit" 
                           className="cursor-pointer"
-                          onClick={async (e) => {
-                            e.preventDefault();
-                            const validation = await validateAllStepsAndFindErrors();
-                            if (validation.isValid) {
-                              form.handleSubmit(onSubmit)();
-                            } else {
-                              toast.warning(`Fix errors in ${validation.errorStep} step`);
-                            }
-                          }}
                         >
                           {t('selfHost.deployForm.submit')}
                         </Button>

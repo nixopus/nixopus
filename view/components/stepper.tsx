@@ -53,17 +53,19 @@ const defineStepper = <const Steps extends Stepperize.Step[]>(
         tracking = false,
         children,
         className,
-        ...props
+        initialStep,
+        initialMetadata,
+        ...divProps
       }) => {
         return (
           <StepperContext.Provider
             value={{ variant, labelOrientation, tracking }}
           >
             <Scoped
-              initialStep={props.initialStep}
-              initialMetadata={props.initialMetadata}
+              initialStep={initialStep}
+              initialMetadata={initialMetadata}
             >
-              <StepperContainer className={className} {...props}>
+              <StepperContainer className={className} {...divProps}>
                 {children}
               </StepperContainer>
             </Scoped>
@@ -86,6 +88,7 @@ const defineStepper = <const Steps extends Stepperize.Step[]>(
             <ol
               date-component="stepper-navigation-list"
               className={classForNavigationList({ variant: variant })}
+              aria-orientation={variant === "vertical" ? "vertical" : "horizontal"}
             >
               {children}
             </ol>
