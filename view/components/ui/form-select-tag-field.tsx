@@ -14,7 +14,7 @@ import { X } from 'lucide-react';
 interface FormSelectTagField {
   label: string;
   name: string;
-  description: string;
+  description?: string;
   placeholder: string;
   form: any;
   required?: boolean;
