@@ -17,36 +17,15 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.VERSION }}
-    strategy:
-      matrix:
-        include:
-          - arch: x86_64
-            python-arch: x64
-          - arch: aarch64
-            python-arch: x64
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      # dev builds run on host, prod uses PyInstaller on host
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-          architecture: ${{ matrix.python-arch }}
-
-      - name: Set up QEMU for cross-compilation
-        if: matrix.arch == 'aarch64'
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
@@ -79,16 +58,22 @@ jobs:
           sudo apt-get install -y ruby ruby-dev rubygems build-essential
           sudo gem install --no-document fpm
 
-      - name: Build CLI binary
+      - name: Build CLI binary (PRs use dev mode / pushes build production)
         working-directory: cli
         env:
-          NIXOPUS_DISABLE_DOCKER: ${{ github.event_name == 'pull_request' && '1' || '' }}
+          NIXOPUS_DISABLE_DOCKER: "1"
         run: |
           chmod +x build.sh
           if [ ! -d "helpers" ]; then
             ln -s ../helpers helpers
           fi
-          ./build.sh --no-test --no-cleanup
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Running dev-mode build (no PyInstaller)"
+            ./build.sh --dev --no-test --no-cleanup
+          else
+            echo "Running production build (PyInstaller)"
+          ./build.sh --no-test --no-cleanup --no-archive
+          fi
 
       - name: Prepare binary for packaging
         working-directory: cli
@@ -110,8 +95,14 @@ jobs:
 
       - name: Set architecture variables
         run: |
-          echo "ARCH=${{ matrix.arch }}" >> $GITHUB_ENV
-          echo "PKG_ARCH=${{ matrix.arch == 'aarch64' && 'arm64' || 'amd64' }}" >> $GITHUB_ENV
+          ARCH=$(uname -m)
+          case "$ARCH" in
+            x86_64) PKG_ARCH=amd64 ;;
+            aarch64|arm64) PKG_ARCH=arm64 ;;
+            *) PKG_ARCH=$ARCH ;;
+          esac
+          echo "ARCH=$ARCH" >> $GITHUB_ENV
+          echo "PKG_ARCH=$PKG_ARCH" >> $GITHUB_ENV
 
       - name: Create DEB package
         working-directory: cli
@@ -175,7 +166,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: nixopus-packages-${{ matrix.arch }}
+          name: nixopus-packages-${{ env.ARCH }}
           path: |
             cli/*.deb
             cli/*.rpm
