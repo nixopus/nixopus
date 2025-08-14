@@ -918,6 +918,13 @@
       }
     },
     "configuration": {
+      "sections": {
+        "basicConfiguration": "Basic Configuration",
+        "dockerConfiguration": "Docker Configuration",
+        "environmentVariables": "Environment Variables",
+        "commands": "Commands",
+        "deploymentInformation": "Deployment Information"
+      },
       "fields": {
         "applicationName": {
           "label": "Application Name",

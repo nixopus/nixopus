@@ -895,6 +895,13 @@
       }
     },
     "configuration": {
+      "sections": {
+        "basicConfiguration": "ಮೂಲಭೂತ ಕಾನ್ಫಿಗರೇಶನ್",
+        "dockerConfiguration": "ಡಾಕರ್ ಕಾನ್ಫಿಗರೇಶನ್",
+        "environmentVariables": "ಪರಿಸರ ವೇರಿಯೇಬಲ್‌ಗಳು",
+        "commands": "ಆಜ್ಞೆಗಳು",
+        "deploymentInformation": "ನಿಯೋಜನೆ ಮಾಹಿತಿ"
+      },
       "fields": {
         "applicationName": {
           "label": "ಅಪ್ಲಿಕೇಶನ್ ಹೆಸರು",

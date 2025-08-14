@@ -899,6 +899,13 @@
       }
     },
     "configuration": {
+      "sections": {
+        "basicConfiguration": "Configuration de Base",
+        "dockerConfiguration": "Configuration Docker",
+        "environmentVariables": "Variables d'Environnement",
+        "commands": "Commandes",
+        "deploymentInformation": "Informations de Déploiement"
+      },
       "fields": {
         "applicationName": {
           "label": "Nom de l'Application",
