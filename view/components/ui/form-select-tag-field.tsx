@@ -88,10 +88,12 @@ export const FormSelectTagInputField = ({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>
-            {label}
-            {required && ' *'}
-          </FormLabel>
+          <div className="flex gap-2">
+            {label && <FormLabel>{label}</FormLabel>}
+            <span className="text-destructive w-3 flex-shrink-0 text-right">
+              {required ? '*' : ''}
+            </span>
+          </div>
           <FormControl>
             <div className="space-y-2">
               <Input

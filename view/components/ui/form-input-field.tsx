@@ -46,8 +46,10 @@ function FormInputField({
         render={({ field }) => (
           <FormItem>
             <div className="flex gap-2">
-              {label && <FormLabel>{label}</FormLabel>}{' '}
-              {required && <span className="text-destructive">*</span>}
+              {label && <FormLabel>{label}</FormLabel>}
+              <span className="text-destructive w-3 flex-shrink-0 text-right">
+                {required ? '*' : ''}
+              </span>
             </div>
             <FormControl>
               <Input placeholder={placeholder} {...field} />

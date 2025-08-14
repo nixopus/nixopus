@@ -18,10 +18,11 @@ function page() {
       action="create"
       loadingFallback={<Skeleton className="h-96" />}
     >
-      <div className="container mx-auto py-6 space-y-8 max-w-4xl">
+      <div className="container mx-auto py-6 space-y-8 max-w-4xl justify-center items-center h-screen flex-col flex">
         <DashboardPageHeader
           label={repository?.name || t('selfHost.create.title')}
           description={t('selfHost.create.description')}
+          className='justify-center text-center mb-16'
         />
         <DeployForm
           repository={repository?.id.toString() || ''}
