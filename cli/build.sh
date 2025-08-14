@@ -164,19 +164,19 @@ run_pyinstaller_build() {
                 ;;
         esac
 
-        if [[ -n "$MANYLINUX_IMAGE" ]]; then
-            log_info "Building with PyInstaller inside $MANYLINUX_IMAGE for wide glibc compatibility..."
-            docker run --rm -v "$(cd .. && pwd)":/work -w /work/cli "$MANYLINUX_IMAGE" bash -lc \
-"export PATH=/opt/python/$PYTAG/bin:\$PATH && \
-python3 -m pip install -U pip && \
+		# Use official PyInstaller image to ensure presence of libpython shared library
+		PYI_IMAGE="ghcr.io/pyinstaller/pyinstaller:py3.11"
+		log_info "Building with PyInstaller inside $PYI_IMAGE for reliable shared-lib Python..."
+		docker run --rm -v "$(cd .. && pwd)":/work -w /work/cli "$PYI_IMAGE" bash -lc \
+"python3 -m pip install -U pip && \
 python3 -m pip install 'poetry==1.8.3' && \
+poetry config virtualenvs.in-project true && \
 poetry install --with dev && \
 poetry run pyinstaller --clean --noconfirm $SPEC_FILE" || {
-                log_error "Dockerized build failed"
-                exit 1
-            }
-            return
-        fi
+				log_error "Dockerized build failed"
+				exit 1
+			}
+        return
 
         log_warning "Unsupported arch $ARCH for manylinux; building on host (may require newer glibc)"
     fi
