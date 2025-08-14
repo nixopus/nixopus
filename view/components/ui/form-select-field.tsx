@@ -19,9 +19,10 @@ type FormSelectFieldProps = {
   form: any;
   label: string;
   name: string;
-  description: string;
+  description?: string;
   placeholder?: string;
   selectOptions?: { label: string; value: string }[];
+  required?: boolean;
 };
 
 function FormSelectField({
@@ -30,7 +31,8 @@ function FormSelectField({
   name,
   description,
   placeholder,
-  selectOptions
+  selectOptions,
+  required = true
 }: FormSelectFieldProps) {
   return (
     <FormField
@@ -38,7 +40,12 @@ function FormSelectField({
       name={name}
       render={({ field }) => (
         <FormItem>
-          {label && <FormLabel>{label}</FormLabel>}
+          <div className="flex gap-2">
+            {label && <FormLabel>{label}</FormLabel>}
+            <span className="text-destructive w-3 flex-shrink-0 text-right">
+              {required ? '*' : ''}
+            </span>
+          </div>
           <Select onValueChange={field.onChange} defaultValue={field.value}>
             <FormControl>
               <SelectTrigger>
