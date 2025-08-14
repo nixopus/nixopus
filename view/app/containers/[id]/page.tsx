@@ -31,6 +31,7 @@ import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { Images } from './components/images';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { isNixopusContainer } from '@/lib/utils';
 
 export default function ContainerDetailsPage() {
   const { t } = useTranslation();
@@ -99,9 +100,11 @@ export default function ContainerDetailsPage() {
     return <ContainerDetailsLoading />;
   }
 
+  const isProtected = isNixopusContainer(container?.name);
+
   return (
-    <ResourceGuard 
-      resource="container" 
+    <ResourceGuard
+      resource="container"
       action="read"
       loadingFallback={<ContainerDetailsLoading />}
     >
@@ -113,8 +116,8 @@ export default function ContainerDetailsPage() {
               <p className="text-muted-foreground">{container.id.slice(0, 12)}...</p>
             </div>
             <div className="flex items-center gap-2">
-              <ResourceGuard 
-                resource="container" 
+              <ResourceGuard
+                resource="container"
                 action="update"
                 loadingFallback={<Skeleton className="h-8 w-16" />}
               >
@@ -122,7 +125,7 @@ export default function ContainerDetailsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => handleContainerAction('start')}
-                  disabled={isLoading}
+                  disabled={isLoading || isProtected}
                 >
                   <Play className="mr-2 h-4 w-4" />
                   {t('containers.start')}
@@ -131,7 +134,7 @@ export default function ContainerDetailsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => handleContainerAction('stop')}
-                  disabled={isLoading}
+                  disabled={isLoading || isProtected}
                 >
                   <StopCircle className="mr-2 h-4 w-4" />
                   {t('containers.stop')}
@@ -140,14 +143,14 @@ export default function ContainerDetailsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => handleContainerAction('restart')}
-                  disabled={isLoading}
+                  disabled={isLoading || isProtected}
                 >
                   <RotateCw className="mr-2 h-4 w-4" />
                   {t('containers.restart')}
                 </Button>
               </ResourceGuard>
-              <ResourceGuard 
-                resource="container" 
+              <ResourceGuard
+                resource="container"
                 action="delete"
                 loadingFallback={<Skeleton className="h-8 w-20" />}
               >
@@ -155,7 +158,7 @@ export default function ContainerDetailsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => handleContainerAction('remove')}
-                  disabled={isLoading}
+                  disabled={isLoading || isProtected}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   {t('containers.remove')}
@@ -205,8 +208,8 @@ export default function ContainerDetailsPage() {
             </Tabs>
           </div>
         </div>
-        <ResourceGuard 
-          resource="container" 
+        <ResourceGuard
+          resource="container"
           action="delete"
           loadingFallback={null}
         >

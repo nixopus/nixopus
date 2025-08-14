@@ -62,3 +62,8 @@ poetry.lock
 
 **/.DS_Store
 .DS_Store
+
+artifacts/
+cli/nixopus.spec
+
+**/.DS_Store

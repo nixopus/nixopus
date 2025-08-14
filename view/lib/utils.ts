@@ -22,3 +22,8 @@ export function formatDate(date: Date): string {
     minute: '2-digit'
   }).format(date);
 }
+
+export function isNixopusContainer(name: unknown): boolean {
+  if (typeof name !== 'string') return false;
+  return name.toLowerCase().includes('nixopus');
+}

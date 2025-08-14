@@ -2,6 +2,9 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -136,6 +139,52 @@ EOF
     log_success "Spec file created: $SPEC_FILE"
 }
 
+run_pyinstaller_build() {
+    # Ensure spec file exists even if manually deleted
+    if [[ ! -f "$SPEC_FILE" ]]; then
+        log_warning "Spec file missing; regenerating..."
+        create_spec_file
+    fi
+
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    ARCH=$(uname -m)
+
+    if [[ "$OS" == "linux" ]] && command -v docker &> /dev/null && [[ -z "$NIXOPUS_DISABLE_DOCKER" ]]; then
+        case $ARCH in
+            x86_64)
+                MANYLINUX_IMAGE="quay.io/pypa/manylinux2014_x86_64"
+                PYTAG="cp311-cp311"
+                ;;
+            aarch64|arm64)
+                MANYLINUX_IMAGE="quay.io/pypa/manylinux2014_aarch64"
+                PYTAG="cp311-cp311"
+                ;;
+            *)
+                MANYLINUX_IMAGE=""
+                ;;
+        esac
+
+        if [[ -n "$MANYLINUX_IMAGE" ]]; then
+            log_info "Building with PyInstaller inside $MANYLINUX_IMAGE for wide glibc compatibility..."
+            docker run --rm -v "$PWD":/work -w /work "$MANYLINUX_IMAGE" bash -lc \
+"export PATH=/opt/python/$PYTAG/bin:\$PATH && \
+python3 -m pip install -U pip && \
+python3 -m pip install 'poetry==1.8.3' && \
+poetry install --with dev && \
+poetry run pyinstaller --clean --noconfirm $SPEC_FILE" || {
+                log_error "Dockerized build failed"
+                exit 1
+            }
+            return
+        fi
+
+        log_warning "Unsupported arch $ARCH for manylinux; building on host (may require newer glibc)"
+    fi
+
+    log_info "Building with PyInstaller on host..."
+    poetry run pyinstaller --clean --noconfirm $SPEC_FILE
+}
+
 build_wheel() {
     log_info "Building wheel package..."
     
@@ -147,7 +196,7 @@ build_wheel() {
 build_binary() {
     log_info "Building binary"
     
-    poetry run pyinstaller --clean --noconfirm $SPEC_FILE
+    run_pyinstaller_build
     
     OS=$(uname -s | tr '[:upper:]' '[:lower:]')
     ARCH=$(uname -m)
