@@ -2,10 +2,8 @@ name: Update Sponsors
 
 on:
   workflow_dispatch: # Manual trigger
-  push: # Trigger on every push
-    branches: [main, master, feature-develop, feat/develop]
   schedule:
-    - cron: '0 0 * * *' # Daily automatic update
+    - cron: "0 0 * * *" # Daily automatic update
 
 permissions:
   contents: write
@@ -29,24 +27,23 @@ jobs:
             -X POST -d '{
               "query": "query { user(login:\"${{ github.repository_owner }}\") { sponsorshipsAsMaintainer(first: 100) { nodes { sponsor { login, avatarUrl, url } } } } }"
             }' https://api.github.com/graphql)
-      
+
           # Save sponsors as markdown table (avatar and login with hyperlink)
           echo "## 🎗️ Sponsors" > sponsors.md
           echo "" >> sponsors.md
           echo "| Avatar | Sponsor |" >> sponsors.md
           echo "| ------ | ------- |" >> sponsors.md
-      
+
           echo "$SPONSORS_JSON" | jq -r '.data.user.sponsorshipsAsMaintainer.nodes[] | 
             "| [![](\(.sponsor.avatarUrl)&s=150)](\(.sponsor.url)) | [\(.sponsor.login)](\(.sponsor.url)) |"' >> sponsors.md
-      
+
           echo "" >> sponsors.md
           echo "❤️ Thank you for your support!" >> sponsors.md
-      
+
           # Count sponsors for conditional update
           SPONSOR_COUNT=$(echo "$SPONSORS_JSON" | jq '.data.user.sponsorshipsAsMaintainer.nodes | length')
           echo "sponsor_count=$SPONSOR_COUNT" >> $GITHUB_OUTPUT
 
-      
       - name: Update README
         if: steps.fetch-sponsors.outputs.sponsor_count > 0
         run: |

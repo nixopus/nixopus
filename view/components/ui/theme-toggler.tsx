@@ -16,6 +16,7 @@ export function ModeToggler() {
     const [open, setOpen] = React.useState(false);
     const { setTheme, theme } = useTheme();
     const [prevTheme, setPrevTheme] = React.useState<string>(theme || 'light');
+    const startThemeRef = React.useRef<string>(theme || 'light');
 
     React.useEffect(() => {
         const down = (e: KeyboardEvent) => {
@@ -27,6 +28,25 @@ export function ModeToggler() {
 
         document.addEventListener('keydown', down);
         return () => document.removeEventListener('keydown', down);
+    }, []);
+
+    React.useEffect(() => {
+        const up = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                const currentSelected = document.querySelector(
+                    '[aria-selected="true"]',
+                );
+                if (currentSelected) {
+                    const theme = currentSelected.getAttribute('data-theme');
+                    if (theme) {
+                        handleOnFocus(theme);
+                    }
+                }
+            }
+        };
+
+        document.addEventListener('keyup', up);
+        return () => document.removeEventListener('keyup', up);
     }, []);
 
     const handleOnFocus = (theme: string) => {
@@ -60,10 +80,22 @@ export function ModeToggler() {
                         <Palette className="h-4 w-4 text-primary" />
                     </Button>
                 </div>
-        </div>
-            <CommandDialog open={open} onOpenChange={setOpen}>
+            </div>
+            <CommandDialog
+                open={open}
+                onOpenChange={(nextOpen) => {
+                    if (nextOpen) {
+                        // capture the theme at dialog open for preview revert
+                        startThemeRef.current = theme || prevTheme;
+                    } else {
+                        // if dialog is closed without confirming selection, revert to start theme
+                        setTheme(prevTheme);
+                    }
+                    setOpen(nextOpen);
+                }}
+            >
                 <CommandInput placeholder="Search for a theme" />
-                <CommandList>
+                <CommandList onMouseLeave={() => setTheme(startThemeRef.current)}>
                     <CommandEmpty>No results found.</CommandEmpty>
                     <CommandGroup heading="Themes">
                         {palette.map((themeName) => (
@@ -71,7 +103,7 @@ export function ModeToggler() {
                                 key={themeName}
                                 onSelect={() => handleSelected(themeName)}
                                 onMouseEnter={() => handleOnFocus(themeName)}
-                                onMouseLeave={() => setTheme(prevTheme)}
+                                data-theme={themeName}
                                 className="flex cursor-pointer items-center justify-between"
                             >
                                 <div className="flex items-center">

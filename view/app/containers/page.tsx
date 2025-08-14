@@ -4,17 +4,15 @@ import { RefreshCw, Play, StopCircle, Trash2, Loader2, Scissors } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { cn, isNixopusContainer } from '@/lib/utils';
 import ContainersLoading from './skeleton';
-import Autoplay from 'embla-carousel-autoplay';
-import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { FeatureNames } from '@/types/feature-flags';
 import { Skeleton } from '@/components/ui/skeleton';
 import DisabledFeature from '@/components/features/disabled-feature';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import useContainerList from './hooks/use-container-list';
-import { TypographyH1, TypographyMuted } from '@/components/ui/typography';
+import { TypographyH1, TypographyH2, TypographyMuted } from '@/components/ui/typography';
 import { useTranslation } from '@/hooks/use-translation';
 
 interface ContainerActionsProps {
@@ -23,6 +21,9 @@ interface ContainerActionsProps {
 }
 
 const ContainerActions = ({ container, onAction }: ContainerActionsProps) => {
+  const containerName: string = typeof container?.name === 'string' ? container.name : '';
+  const isProtected = isNixopusContainer(containerName);
+
   return (
     <div className="flex gap-2">
       <ResourceGuard
@@ -34,6 +35,7 @@ const ContainerActions = ({ container, onAction }: ContainerActionsProps) => {
           <Button
             variant="ghost"
             size="icon"
+            disabled={isProtected}
             onClick={(e) => {
               e.stopPropagation();
               onAction(container.id, 'start');
@@ -46,6 +48,7 @@ const ContainerActions = ({ container, onAction }: ContainerActionsProps) => {
           <Button
             variant="ghost"
             size="icon"
+            disabled={isProtected}
             onClick={(e) => {
               e.stopPropagation();
               onAction(container.id, 'stop');
@@ -63,6 +66,7 @@ const ContainerActions = ({ container, onAction }: ContainerActionsProps) => {
         <Button
           variant="ghost"
           size="icon"
+          disabled={isProtected}
           onClick={(e) => {
             e.stopPropagation();
             onAction(container.id, 'remove');
@@ -154,48 +158,6 @@ const ContainerCard = ({
   );
 };
 
-interface FeaturedContainersProps {
-  containers: any[];
-  getGradientFromName: (name: string) => string;
-  onAction: (id: string, action: 'start' | 'stop' | 'remove') => void;
-  router: any;
-}
-
-const FeaturedContainers = ({
-  containers,
-  getGradientFromName,
-  onAction,
-  router
-}: FeaturedContainersProps) => {
-  return (
-    <Carousel
-      className="mx-auto mb-10 w-full max-w-[calc(100vw-2rem)] sm:max-w-[calc(100vw-3rem)] lg:max-w-[calc(100vw-4rem)]"
-      opts={{
-        loop: true
-      }}
-      plugins={[
-        Autoplay({
-          delay: 3000
-        })
-      ]}
-    >
-      <CarouselContent className="-ml-2 md:-ml-4">
-        {containers.map((container) => (
-          <CarouselItem key={container.id} className="pl-2 md:pl-4">
-            <div className="p-0">
-              <ContainerCard
-                container={container}
-                onClick={() => router.push(`/containers/${container.id}`)}
-                getGradientFromName={getGradientFromName}
-                onAction={onAction}
-              />
-            </div>
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-    </Carousel>
-  );
-};
 
 export default function ContainersPage() {
   const {
@@ -232,8 +194,7 @@ export default function ContainersPage() {
     return <DisabledFeature />;
   }
 
-  const featuredContainers = containers.slice(0, 3);
-  const remainingContainers = containers.slice(3);
+  // TODO: Add pagination for containers listing
 
   return (
     <ResourceGuard
@@ -277,17 +238,16 @@ export default function ContainersPage() {
                 </AnyPermissionGuard>
               </div>
             </div>
-            {featuredContainers.length > 0 && (
-              <FeaturedContainers
-                containers={featuredContainers}
-                getGradientFromName={getGradientFromName}
-                onAction={handleContainerAction}
-                router={router}
-              />
+            {containers.length === 0 && (
+              <div className="flex justify-center items-center h-full">
+                <TypographyH2 className="text-muted-foreground">
+                  {t('containers.no_containers')}
+                </TypographyH2>
+              </div>
             )}
-            {remainingContainers.length > 0 && (
+            {containers.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3  gap-4 md:gap-6">
-                {remainingContainers.map((container) => (
+                {containers.map((container) => (
                   <ContainerCard
                     key={container.id}
                     container={container}
