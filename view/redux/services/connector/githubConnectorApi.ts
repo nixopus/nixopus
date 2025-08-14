@@ -6,6 +6,7 @@ import {
   GitHubAppCredentials,
   GithubConnector,
   GithubRepository,
+  GithubRepositoryBranch,
   UpdateGithubConnectorRequest
 } from '@/redux/types/github';
 
@@ -66,6 +67,17 @@ export const GithubConnectorApi = createApi({
       transformResponse: (response: { data: any[] }) => {
         return response.data;
       }
+    }),
+    getGithubRepositoryBranches: builder.mutation<GithubRepositoryBranch[], string>({
+      query: (repository_name) => ({
+        url: GITHUB_CONNECTOR.GET_REPOSITORY_BRANCHES,
+        method: 'POST',
+        body: { repository_name }
+      }),
+      invalidatesTags: [{ type: 'GithubConnector', id: 'LIST' }],
+      transformResponse: (response: { data: any[] }) => {
+        return response.data;
+      }
     })
   })
 });
@@ -75,5 +87,6 @@ export const {
   useUpdateGithubConnectorMutation,
   useDeleteGithubConnectorMutation,
   useGetAllGithubConnectorQuery,
-  useGetAllGithubRepositoriesQuery
+  useGetAllGithubRepositoriesQuery,
+  useGetGithubRepositoryBranchesMutation
 } = GithubConnectorApi;

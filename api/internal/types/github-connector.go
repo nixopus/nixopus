@@ -141,3 +141,12 @@ type License struct {
 	URL    *string `json:"url,omitempty"`
 	NodeID string  `json:"node_id"`
 }
+
+type GithubRepositoryBranch struct {
+	Name string `json:"name"`
+	Commit struct {
+		Sha string `json:"sha"`
+		URL string `json:"url"`
+	} `json:"commit"`
+	Protected bool `json:"protected"`
+}

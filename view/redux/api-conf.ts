@@ -64,7 +64,8 @@ export enum GITHUB_CONNECTOR {
   GET_GITHUB_CONNECTORS = 'v1/github-connector/all',
   UPDATE_GITHUB_CONNECTOR = 'v1/github-connector',
   DELETE_GITHUB_CONNECTOR = 'v1/github-connector',
-  ALL_REPOSITORIES = 'v1/github-connector/repositories'
+  ALL_REPOSITORIES = 'v1/github-connector/repositories',
+  GET_REPOSITORY_BRANCHES = 'v1/github-connector/repository/branches'
 }
 
 export enum DEPLOY {

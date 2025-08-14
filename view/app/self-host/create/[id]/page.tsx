@@ -27,6 +27,7 @@ function page() {
         <DeployForm
           repository={repository?.id.toString() || ''}
           application_name={repository?.name || ''}
+          repository_full_name={repository?.full_name || ''}
           environment={Environment.Production}
           branch="main"
           port={'3000'}
