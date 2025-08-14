@@ -166,7 +166,7 @@ run_pyinstaller_build() {
 
         if [[ -n "$MANYLINUX_IMAGE" ]]; then
             log_info "Building with PyInstaller inside $MANYLINUX_IMAGE for wide glibc compatibility..."
-            docker run --rm -v "$PWD":/work -w /work "$MANYLINUX_IMAGE" bash -lc \
+            docker run --rm -v "$(cd .. && pwd)":/work -w /work/cli "$MANYLINUX_IMAGE" bash -lc \
 "export PATH=/opt/python/$PYTAG/bin:\$PATH && \
 python3 -m pip install -U pip && \
 python3 -m pip install 'poetry==1.8.3' && \
