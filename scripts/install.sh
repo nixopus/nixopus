@@ -7,7 +7,8 @@ readonly NC='\033[0m'
 
 # GitHub repository info
 readonly REPO_URL="https://github.com/raghavyuva/nixopus"
-readonly PACKAGE_JSON_URL="$REPO_URL/raw/master/package.json"
+
+readonly PACKAGE_JSON_URL_MASTER="https://raw.githubusercontent.com/raghavyuva/nixopus/master/package.json"
 
 # Logging functions
 log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
@@ -49,15 +50,16 @@ detect_os() {
 # Get CLI version and package list
 get_package_info() {
     local package_json
-    package_json=$(curl -s "$PACKAGE_JSON_URL" || {
-        log_error "Failed to fetch package.json from repository"
+    package_json=$(curl -fsSL "$PACKAGE_JSON_URL_MASTER" 2>/dev/null || true)
+    if [[ -z "$package_json" || "$package_json" != \{* ]]; then
+        log_error "Failed to fetch package.json from master branch"
         exit 1
-    })
-    
+    fi
+
     # Extract version and packages
     CLI_VERSION=$(echo "$package_json" | grep -o '"cli-version":[[:space:]]*"[^"]*"' | cut -d'"' -f4)
-    CLI_PACKAGES=$(echo "$package_json" | grep -A 100 '"cli-packages"' | sed -n '/\[/,/\]/p' | grep -o '"[^"]*\..*"' | tr -d '"')
-    
+    CLI_PACKAGES=$(echo "$package_json" | grep -A 200 '"cli-packages"' | sed -n '/\[/,/\]/p' | grep -o '"[^"]*\..*"' | tr -d '"')
+
     if [[ -z "$CLI_VERSION" ]]; then
         log_error "Could not find cli-version in package.json"
         exit 1
