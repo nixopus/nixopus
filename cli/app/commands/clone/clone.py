@@ -49,7 +49,7 @@ class GitCloneProtocol(Protocol):
 class GitCommandBuilder:
     @staticmethod
     def build_clone_command(repo: str, path: str, branch: str = None) -> list[str]:
-        cmd = ["git", "clone"]
+        cmd = ["git", "clone", "--depth=1"]
         if branch:
             cmd.extend(["-b", branch])
         cmd.extend([repo, path])
@@ -103,8 +103,8 @@ class GitClone:
 
     def clone_repository(self, repo: str, path: str, branch: str = None) -> tuple[bool, str]:
         cmd = GitCommandBuilder.build_clone_command(repo, path, branch)
-        
-        self.logger.debug(debug_executing_git_clone.format(command=' '.join(cmd)))
+
+        self.logger.debug(debug_executing_git_clone.format(command=" ".join(cmd)))
 
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -216,8 +216,9 @@ class CloneService:
 
     def clone(self) -> CloneResult:
         import time
+
         start_time = time.time()
-        
+
         self.logger.debug(debug_cloning_repo.format(repo=self.config.repo, path=self.config.path, force=self.config.force))
 
         if not self._validate_prerequisites():
@@ -227,7 +228,7 @@ class CloneService:
             return self._create_result(False, failed_to_prepare_target_directory)
 
         success, error = self.cloner.clone_repository(self.config.repo, self.config.path, self.config.branch)
-        
+
         duration = time.time() - start_time
         self.logger.debug(debug_clone_completed.format(duration=f"{duration:.2f}", success=success))
 

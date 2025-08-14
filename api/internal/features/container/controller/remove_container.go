@@ -12,6 +12,10 @@ import (
 func (c *ContainerController) RemoveContainer(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	containerID := f.PathParam("container_id")
 
+    if resp, skipped := c.isProtectedContainer(containerID, "remove"); skipped {
+        return resp, nil
+    }
+
 	err := c.dockerService.RemoveContainer(containerID, container.RemoveOptions{Force: true})
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
