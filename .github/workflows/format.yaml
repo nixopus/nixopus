@@ -1,7 +1,7 @@
 name: Format Nixopus
 
 on:
-  push:
+  pull_request:
     branches:
       - master
       - feat/develop
@@ -24,6 +24,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
       
       - uses: actions/setup-go@v5
         with:
@@ -41,7 +42,7 @@ jobs:
       
       - name: Commit API changes
         id: api-commit
-        if: github.event_name == 'pull_request'
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'style(api): format Go code'
@@ -62,6 +63,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
       
       - uses: actions/setup-node@v4
         with:
@@ -82,7 +84,7 @@ jobs:
       
       - name: Commit View changes
         id: view-commit
-        if: github.event_name == 'pull_request'
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'style(view): format frontend code'
@@ -103,6 +105,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
       
       - uses: actions/setup-python@v5
         with:
@@ -126,7 +129,7 @@ jobs:
       
       - name: Commit CLI changes
         id: cli-commit
-        if: github.event_name == 'pull_request'
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'style(cli): format Python code'
