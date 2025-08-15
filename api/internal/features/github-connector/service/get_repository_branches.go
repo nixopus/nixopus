@@ -10,6 +10,12 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+var githubAPIBaseURL = "https://api.github.com"
+
+func SetGithubAPIBaseURL(url string) {
+	githubAPIBaseURL = url
+}
+
 func (c *GithubConnectorService) GetGithubRepositoryBranches(user_id string, repository_name string) ([]shared_types.GithubRepositoryBranch, error) {
 	connectors, err := c.storage.GetAllConnectors(user_id)
 	if err != nil {
@@ -33,7 +39,7 @@ func (c *GithubConnectorService) GetGithubRepositoryBranches(user_id string, rep
 	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/branches", repository_name), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/branches", githubAPIBaseURL, repository_name), nil)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, err
