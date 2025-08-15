@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { defineStepper } from '@/components/stepper';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
+import { useGetGithubRepositoryBranchesMutation } from '@/redux/services/connector/githubConnectorApi';
 
 interface DeployFormProps {
   application_name?: string;
@@ -21,6 +22,7 @@ interface DeployFormProps {
   port?: string;
   domain?: string;
   repository?: string;
+  repository_full_name?: string;
   build_pack?: BuildPack;
   env_variables?: Record<string, string>;
   build_variables?: Record<string, string>;
@@ -37,6 +39,7 @@ export const DeployForm = ({
   port = '3000',
   domain = '',
   repository,
+  repository_full_name,
   build_pack = BuildPack.Dockerfile,
   env_variables = {},
   build_variables = {},
@@ -47,6 +50,9 @@ export const DeployForm = ({
 }: DeployFormProps) => {
   const { t } = useTranslation();
   const isMobileView = useIsMobile();
+  
+  const [getGithubRepositoryBranches, { isLoading: isLoadingBranches }] = useGetGithubRepositoryBranchesMutation();
+  const [availableBranches, setAvailableBranches] = useState<{ label: string; value: string }[]>([]);
 
   const { validateEnvVar, form, onSubmit, parsePort } = useCreateDeployment({
     application_name,
@@ -82,11 +88,50 @@ export const DeployForm = ({
           { id: 'variables', title: 'Variables & Commands' }
         ], [isStaticBuildPack]);
 
+  const fetchRepositoryBranches = useCallback(async () => {
+    if (!repository_full_name) {
+      return;
+    }
+    
+    try {
+      const result = await getGithubRepositoryBranches(repository_full_name).unwrap();
+      const branchOptions = result.map((branch) => ({
+        label: branch.name,
+        value: branch.name
+      }));
+      setAvailableBranches(branchOptions);
+      
+      const current = form.getValues('branch');
+      const defaultBranch =
+        branchOptions.find(b => b.value === 'main') ||
+        branchOptions.find(b => b.value === 'master') ||
+        branchOptions[0];
+      if (!current || !branchOptions.some(b => b.value === current)) {
+        if (defaultBranch) {
+          form.setValue('branch', defaultBranch.value);
+        } else {
+          form.setValue('branch', '');
+        }
+      }
+    } catch (error) {
+      toast.error('Failed to fetch repository branches');
+    }
+  }, [getGithubRepositoryBranches, form, repository_full_name]);
+
   useEffect(() => {
     if (isStaticBuildPack && (currentStepId === 'configuration' || currentStepId === 'variables')) {
       setCurrentStepId('repository');
     }
   }, [isStaticBuildPack, currentStepId]);
+
+  useEffect(() => {
+    if (repository_full_name) {
+      fetchRepositoryBranches();
+    } else {
+      setAvailableBranches([]);
+      form.setValue('branch', '');
+    }
+  }, [repository_full_name, fetchRepositoryBranches, form]);
 
   useEffect(() => {
     if (stepperMethodsRef.current && stepperMethodsRef.current.current.id !== currentStepId) {
@@ -226,13 +271,24 @@ export const DeployForm = ({
                 placeholder={t('selfHost.deployForm.fields.domain.placeholder')}
                 required={true}
               />
-              <FormInputField
-                form={form}
-                label={t('selfHost.deployForm.fields.branch.label')}
-                name="branch"
-                placeholder={t('selfHost.deployForm.fields.branch.placeholder')}
-                required={true}
-              />
+              {isLoadingBranches ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <label className="text-sm font-medium">{t('selfHost.deployForm.fields.branch.label')}</label>
+                    <span className="text-destructive">*</span>
+                  </div>
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : (
+                <FormSelectField
+                  form={form}
+                  label={t('selfHost.deployForm.fields.branch.label')}
+                  name="branch"
+                  placeholder={availableBranches.length === 0 ? "No branches available" : t('selfHost.deployForm.fields.branch.placeholder')}
+                  selectOptions={availableBranches}
+                  required={true}
+                />
+              )}
             </div>
           </div>
         );

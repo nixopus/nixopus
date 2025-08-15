@@ -13,7 +13,7 @@ import (
 )
 
 func (c *GithubConnectorService) getInstallationToken(jwt string, installation_id string) (string, error) {
-	url := fmt.Sprintf("https://api.github.com/app/installations/%s/access_tokens", installation_id)
+	url := fmt.Sprintf("%s/app/installations/%s/access_tokens", githubAPIBaseURL, installation_id)
 
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", url, nil)

@@ -339,6 +339,7 @@ func (router *Router) GithubConnectorRoutes(s *fuego.Server, githubConnectorCont
 	fuego.Put(s, "", githubConnectorController.UpdateGithubConnectorRequest)
 	fuego.Get(s, "/all", githubConnectorController.GetGithubConnectors)
 	fuego.Get(s, "/repositories", githubConnectorController.GetGithubRepositories)
+	fuego.Post(s, "/repository/branches", githubConnectorController.GetGithubRepositoryBranches)
 }
 
 func (router *Router) DeployRoutes(f *fuego.Server, deployController *deploy.DeployController) {

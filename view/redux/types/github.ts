@@ -180,3 +180,12 @@ interface Permissions {
   triage: boolean;
   pull: boolean;
 }
+
+export interface GithubRepositoryBranch {
+  name: string;
+  commit: {
+    sha: string;
+    url: string;
+  };
+  protected: boolean;
+}
