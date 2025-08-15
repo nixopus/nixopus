@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -29,6 +31,13 @@ func (c *GithubConnectorController) GetGithubRepositoryBranches(f fuego.ContextW
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	if strings.TrimSpace(body.RepositoryName) == "" {
+		return nil, fuego.HTTPError{
+			Err:    fmt.Errorf("repository_name is required"),
 			Status: http.StatusBadRequest,
 		}
 	}

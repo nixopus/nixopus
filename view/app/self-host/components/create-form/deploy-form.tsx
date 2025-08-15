@@ -95,17 +95,23 @@ export const DeployForm = ({
     
     try {
       const result = await getGithubRepositoryBranches(repository_full_name).unwrap();
-      const branchOptions = result.map((branch: any) => ({
+      const branchOptions = result.map((branch) => ({
         label: branch.name,
         value: branch.name
       }));
       setAvailableBranches(branchOptions);
       
-      if (branchOptions.length > 0 && !form.getValues('branch')) {
-        const defaultBranch = branchOptions.find(b => b.value === 'main') || 
-                             branchOptions.find(b => b.value === 'master') || 
-                             branchOptions?.[0];
-        form.setValue('branch', defaultBranch.value);
+      const current = form.getValues('branch');
+      const defaultBranch =
+        branchOptions.find(b => b.value === 'main') ||
+        branchOptions.find(b => b.value === 'master') ||
+        branchOptions[0];
+      if (!current || !branchOptions.some(b => b.value === current)) {
+        if (defaultBranch) {
+          form.setValue('branch', defaultBranch.value);
+        } else {
+          form.setValue('branch', '');
+        }
       }
     } catch (error) {
       toast.error('Failed to fetch repository branches');
@@ -121,8 +127,11 @@ export const DeployForm = ({
   useEffect(() => {
     if (repository_full_name) {
       fetchRepositoryBranches();
+    } else {
+      setAvailableBranches([]);
+      form.setValue('branch', '');
     }
-  }, [repository_full_name, fetchRepositoryBranches]);
+  }, [repository_full_name, fetchRepositoryBranches, form]);
 
   useEffect(() => {
     if (stepperMethodsRef.current && stepperMethodsRef.current.current.id !== currentStepId) {

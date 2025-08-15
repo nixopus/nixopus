@@ -111,7 +111,7 @@ func TestGetGithubRepositoryBranches(t *testing.T) {
 					w.WriteHeader(http.StatusNotFound)
 				}))
 			},
-			expectedBranches: nil,
+			expectedBranches: []shared_types.GithubRepositoryBranch{},
 			expectedError:    false,
 		},
 		{
@@ -228,6 +228,24 @@ func TestGetGithubRepositoryBranches(t *testing.T) {
 			},
 			expectedBranches: []shared_types.GithubRepositoryBranch{},
 			expectedError:    false,
+		},
+		{
+			name:           "JWT generation fails with invalid PEM",
+			userID:         userID,
+			repositoryName: repositoryName,
+			mockStorageSetup: func(mockStorage *MockGithubConnectorStorage) {
+				invalidConnector := validGithubConnector
+				invalidConnector.Pem = "invalid-pem-data"
+				mockStorage.On("GetAllConnectors", userID).Return([]shared_types.GithubConnector{invalidConnector}, nil).Once()
+			},
+			mockServerSetup: func() *httptest.Server {
+				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusNotFound)
+				}))
+			},
+			expectedBranches: nil,
+			expectedError:    true,
+			expectedErrorMsg: "failed to generate app JWT",
 		},
 	}
 

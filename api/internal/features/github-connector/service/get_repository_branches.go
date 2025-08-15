@@ -25,12 +25,16 @@ func (c *GithubConnectorService) GetGithubRepositoryBranches(user_id string, rep
 
 	if len(connectors) == 0 {
 		c.logger.Log(logger.Error, "No connectors found for user", user_id)
-		return nil, nil
+		return []shared_types.GithubRepositoryBranch{}, nil
 	}
 
 	installation_id := connectors[0].InstallationID
 
 	jwt := GenerateJwt(&connectors[0])
+	if jwt == "" {
+		c.logger.Log(logger.Error, "Failed to generate app JWT", "")
+		return nil, fmt.Errorf("failed to generate app JWT")
+	}
 
 	accessToken, err := c.getInstallationToken(jwt, installation_id)
 	if err != nil {
