@@ -14,7 +14,7 @@ on:
 
 jobs:
   build-and-package:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       version: ${{ steps.version.outputs.VERSION }}
 
@@ -176,7 +176,7 @@ jobs:
 
   create-release:
     needs: build-and-package
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
       pull-requests: write
