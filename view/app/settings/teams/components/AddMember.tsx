@@ -1,7 +1,9 @@
 'use client';
 import React from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInputField } from '@/components/ui/password-input-field';
 import {
   Dialog,
   DialogContent,
@@ -50,6 +52,7 @@ function AddMember({
   handleAddUser
 }: AddMemberProps) {
   const { t } = useTranslation();
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
@@ -120,13 +123,13 @@ function AddMember({
             <Label htmlFor="password" className="text-right">
               {t('settings.teams.addMember.dialog.fields.password.label')}
             </Label>
-            <Input
+            <PasswordInputField
               id="password"
-              type="password"
               value={newUser.password}
               onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-              className="col-span-3"
+              containerClassName="col-span-3"
               placeholder={t('settings.teams.addMember.dialog.fields.password.placeholder')}
+              autoComplete="new-password"
             />
           </div>
         </div>
