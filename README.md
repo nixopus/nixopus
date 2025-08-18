@@ -81,7 +81,7 @@ This section will help you set up Nixopus on your VPS quickly.
 First, install the Nixopus CLI tool:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install-cli.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install.sh | sudo bash
 ```
 
 ### Self Host Nixopus on your VPS
