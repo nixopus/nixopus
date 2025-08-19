@@ -11,7 +11,7 @@ hero:
         <div style="flex: 1; padding: 1.2em 1.5em; font-family: 'Fira Code', 'Monaco', 'Consolas', monospace; font-size: 1.05em; color: #fff; background: rgba(0,0,0,0.18); overflow-x: auto; white-space: nowrap; max-width: 600px;">
       sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install.sh)"
     </div>
-    <button onclick="navigator.clipboard.writeText('sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install.sh)"'); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy',1200);" style="color: #fff; border: none; padding: 1.2em 1.5em; font-weight: 600; font-size: 0.9em; cursor: pointer; transition: all 0.2s; outline: none; border-left: 1px solid #a78bfa; min-width: 80px; display: flex; align-items: center; justify-content: center;">Copy</button>
+    <button onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent.trim()); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy',1200);" style="color: #fff; border: none; padding: 1.2em 1.5em; font-weight: 600; font-size: 0.9em; cursor: pointer; transition: all 0.2s; outline: none; border-left: 1px solid #a78bfa; min-width: 80px; display: flex; align-items: center; justify-content: center;">Copy</button>
   </div>
 </div>
 <SponsorsMarquee />
