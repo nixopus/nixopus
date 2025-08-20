@@ -1,9 +1,26 @@
-# [0.1.0-alpha.13](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.12...v0.1.0-alpha.13) (2025-08-09)
+# [0.1.0-alpha.13](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.12...v0.1.0-alpha.13) (2025-08-19)
 
 
 ### Bug Fixes
 
+* ([#325](https://github.com/raghavyuva/nixopus/issues/325)) typography showing borders for h2 tags and remove domains as the title from the domain page ([bfc7c6e](https://github.com/raghavyuva/nixopus/commit/bfc7c6e1f24e89c990696d1c6bef9dbcdac292cc))
+* **build:** mount repo root and set work/cli to include helpers/config.prod.yaml ([#330](https://github.com/raghavyuva/nixopus/issues/330)) ([ed2f63f](https://github.com/raghavyuva/nixopus/commit/ed2f63f4b321464b1fd633ed4351385a0d4845cc))
+* **ci:** add wrapper venv for python cli as release version ([#333](https://github.com/raghavyuva/nixopus/issues/333)) ([f14b42a](https://github.com/raghavyuva/nixopus/commit/f14b42aea1e575fcb29781c782100031c1ec1c08))
+* **ci:** fix PyInstaller build and run PR builds ([#331](https://github.com/raghavyuva/nixopus/issues/331)) ([130b920](https://github.com/raghavyuva/nixopus/commit/130b92058681148af3e6f56189bee1622f9b9ecc))
+* deployment edit page showing duplicate form fields ([5c07f68](https://github.com/raghavyuva/nixopus/commit/5c07f6816493e0ce049722667de0d5f4e72d64ba))
+* login with ip address deployments ([da08719](https://github.com/raghavyuva/nixopus/commit/da08719306bb821bbbc5999c6328de0833c1b575))
+* resolve vitepress build by modifying copy button to avoid invalid vue attribute quoting ([#345](https://github.com/raghavyuva/nixopus/issues/345)) ([250a967](https://github.com/raghavyuva/nixopus/commit/250a967b3b50ca795a3ed49d75228046a15bb5f9))
+* support older glibc versions ([#338](https://github.com/raghavyuva/nixopus/issues/338)) ([ac17507](https://github.com/raghavyuva/nixopus/commit/ac1750753c9be90eb2c74205edc9d8f67e41d1d0))
+* syntax issue extra braces removed ([dbe1f7a](https://github.com/raghavyuva/nixopus/commit/dbe1f7abe1100cd525e1522bb703806420eafe3d))
 * update release cli workflow ([38075dd](https://github.com/raghavyuva/nixopus/commit/38075dd853281eb3954964a6d25f01fd160c7686))
+* websocket connection issues in production ([f7a649a](https://github.com/raghavyuva/nixopus/commit/f7a649af57a44fe1d8b6c88d44b0c71ac77ca7d9))
+
+
+### Features
+
+* add fetching branches for repository during self hosting  ([#332](https://github.com/raghavyuva/nixopus/issues/332)) ([c480e8b](https://github.com/raghavyuva/nixopus/commit/c480e8be26563ba14babc7d3f712688e22c1ea94))
+* add multi stepper form for deployment form ([#327](https://github.com/raghavyuva/nixopus/issues/327)) ([1a161e3](https://github.com/raghavyuva/nixopus/commit/1a161e33189de631b5549f6f807bfbfe45faf426))
+* merge install scripts, improve theme handling, and enhance container UI ([#328](https://github.com/raghavyuva/nixopus/issues/328)) ([8310aa8](https://github.com/raghavyuva/nixopus/commit/8310aa8fc0fffa0a9410cf6f0b2624d46cfd5b01))
 
 
 

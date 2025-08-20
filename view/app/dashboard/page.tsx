@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { TypographyH1, TypographyMuted, TypographySmall } from '@/components/ui/typography';
 import { Skeleton } from '@/components/ui/skeleton';
+import PageLayout from '@/components/layout/page-layout';
 
 // for dashboard page, we need to check if the user has the dashboard:read permission
 function DashboardPage() {
@@ -45,9 +46,8 @@ function DashboardPage() {
       action="read"
       // fallback={<div>You are not authorized to access this page</div>}
     >
-      <div className="container mx-auto py-6 space-y-8 max-w-6xl">
-        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+      <PageLayout maxWidth="6xl" padding="md" spacing="lg">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
             <div>
               <TypographyH1>{t('dashboard.title')}</TypographyH1>
               <TypographyMuted>{t('dashboard.description')}</TypographyMuted>
@@ -55,8 +55,7 @@ function DashboardPage() {
           </div>
           {!smtpConfig && <SMTPBanner />}
           <MonitoringSection systemStats={systemStats} containersData={containersData} t={t} />
-        </div>
-      </div>
+      </PageLayout>
     </ResourceGuard>
   );
 }

@@ -9,6 +9,7 @@ import EditTeam from './components/EditTeam';
 import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { TypographyH2, TypographyMuted } from '@/components/ui/typography';
+import PageLayout from '@/components/layout/page-layout';
 
 function Page() {
   const { t } = useTranslation();
@@ -34,7 +35,7 @@ function Page() {
 
   return (
     <ResourceGuard resource="organization" action="read">
-      <div className="container mx-auto py-6 space-y-8 max-w-4xl">
+      <PageLayout maxWidth="6xl" padding="md" spacing="lg">
         <div className={'flex items-center justify-between space-y-2'}>
           <div className="flex items-center">
             <span className="">
@@ -82,7 +83,7 @@ function Page() {
           <TeamStats users={users} />
           <RecentActivity />
         </div>
-      </div>
+      </PageLayout>
     </ResourceGuard>
   );
 }

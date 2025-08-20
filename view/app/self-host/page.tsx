@@ -14,6 +14,9 @@ import Skeleton from '../file-manager/components/skeleton/Skeleton';
 import { FeatureNames } from '@/types/feature-flags';
 import DisabledFeature from '@/components/features/disabled-feature';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
+import PageLayout from '@/components/layout/page-layout';
+import { TypographyH2 } from '@/components/ui/typography';
+import { TypographyMuted } from '@/components/ui/typography';
 
 function page() {
   const { t } = useTranslation();
@@ -76,13 +79,13 @@ function page() {
       fallback={
         <div className="flex h-full items-center justify-center">
           <div className="text-center">
-            <h2 className="text-2xl font-bold">{t('selfHost.page.accessDenied.title')}</h2>
-            <p className="text-muted-foreground">{t('selfHost.page.accessDenied.description')}</p>
+            <TypographyH2>{t('selfHost.page.accessDenied.title')}</TypographyH2>
+            <TypographyMuted>{t('selfHost.page.accessDenied.description')}</TypographyMuted>
           </div>
         </div>
       }
     >
-      <div className="container mx-auto py-6 space-y-8 max-w-4xl">
+      <PageLayout maxWidth="6xl" padding="md" spacing="lg">
         {renderContent()}
         
         {showApplications && (
@@ -136,7 +139,7 @@ function page() {
             )}
           </>
         )}
-      </div>
+      </PageLayout>
     </ResourceGuard>
   );
 }

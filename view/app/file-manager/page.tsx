@@ -19,6 +19,7 @@ import { useFeatureFlags } from '@/hooks/features_provider';
 import DisabledFeature from '@/components/features/disabled-feature';
 import { FeatureNames } from '@/types/feature-flags';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
+import PageLayout from '@/components/layout/page-layout';
 
 function FileManager() {
   const { t } = useTranslation();
@@ -109,8 +110,7 @@ function FileManager() {
           }
         }}
       >
-        <div onDragOver={(e) => e.preventDefault()} className="min-h-[calc(100vh-100px)]">
-          <div className="mx-auto max-w-7xl">
+        <PageLayout maxWidth="6xl" padding="md" spacing="lg" className="min-h-[calc(100vh-100px)]">
             {showCopyFeedback && (
               <div className="fixed bottom-4 right-4 flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground shadow-lg animate-in fade-in slide-in-from-bottom-4">
                 <CheckIcon className="h-4 w-4" />
@@ -222,8 +222,7 @@ function FileManager() {
                 icon={TrashIcon}
               />
             </ResourceGuard>
-          </div>
-        </div>
+        </PageLayout>
       </FileContextMenu>
     </ResourceGuard>
   );
