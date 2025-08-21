@@ -11,6 +11,7 @@ import ApplicationDetailsHeader from '../../components/application-details/heade
 import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
+import PageLayout from '@/components/layout/page-layout';
 
 function Page() {
   const { t } = useTranslation();
@@ -35,7 +36,7 @@ function Page() {
       action="read"
       loadingFallback={<Skeleton className="h-96" />}
     >
-      <div className="container mx-auto py-6 space-y-8 max-w-4xl 2xl:max-w-7xl">
+      <PageLayout maxWidth="6xl" padding="md" spacing="lg">
         <ApplicationDetailsHeader application={application} />
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList>
@@ -85,7 +86,7 @@ function Page() {
             <Monitor application={application} />
           </TabsContent>
         </Tabs>
-      </div>
+      </PageLayout>
     </ResourceGuard>
   );
 }
