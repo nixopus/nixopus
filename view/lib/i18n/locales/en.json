@@ -862,6 +862,16 @@
       "confirm": "Delete",
       "cancel": "Cancel"
     },
+    "contextMenu": {
+      "info": "Details",
+      "rename": "Rename",
+      "copy": "Copy",
+      "move": "Move",
+      "share": "Share",
+      "download": "Download",
+      "delete": "Delete",
+      "cancel": "Cancel"
+    },
     "noPermissionCreate": "You don't have permission to create files",
     "noPermissionUpdate": "You don't have permission to update files",
     "copiedToClipboard": "Copied to clipboard",
