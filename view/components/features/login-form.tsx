@@ -2,10 +2,12 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { PasswordInputField } from '@/components/ui/password-input-field';
 import { Label } from '@/components/ui/label';
 import nixopusLogo from '@/public/nixopus_logo_transparent.png';
 import { useTranslation } from '@/hooks/use-translation';
 import Link from 'next/link';
+import { useState } from 'react';
 
 export interface LoginFormProps {
   email: string;
@@ -23,6 +25,7 @@ export interface LoginFormProps {
 
 export function LoginForm({ ...props }: LoginFormProps) {
   const { t } = useTranslation();
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className={cn('flex flex-col gap-6')}>
@@ -61,9 +64,8 @@ export function LoginForm({ ...props }: LoginFormProps) {
                       </a>
                     </div> */}
                     <Label htmlFor="password">{t('auth.password')}</Label>
-                    <Input
+                    <PasswordInputField
                       id="password"
-                      type="password"
                       required
                       value={props.password}
                       onChange={props.handlePasswordChange}
