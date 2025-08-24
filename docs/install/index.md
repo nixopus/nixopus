@@ -14,7 +14,7 @@ Welcome to the Nixopus installation guide. This section will help you set up Nix
 First, install the Nixopus CLI tool:
 
 ```bash
-sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install-cli.sh)"
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install.sh)"
 ```
 
 ### Step 2: Install Nixopus on your VPS

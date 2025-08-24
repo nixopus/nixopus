@@ -787,6 +787,16 @@
       "title": "Gestor de Archivos",
       "subtitle": "Administra tus archivos aquí"
     },
+    "contextMenu": {
+      "info": "Detalles",
+      "rename": "Renombrar",
+      "copy": "Copiar",
+      "move": "Mover",
+      "share": "Compartir",
+      "download": "Descargar",
+      "delete": "Eliminar",
+      "cancel": "Cancelar"
+    },
     "actions": {
       "upload": "Subir Archivo",
       "createDirectory": "Crear Directorio",

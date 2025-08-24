@@ -788,6 +788,16 @@
       "title": "Gestionnaire de Fichiers",
       "subtitle": "Gérez vos fichiers ici"
     },
+    "contextMenu": {
+      "info": "Détails",
+      "rename": "Renommer",
+      "copy": "Copier",
+      "move": "Déplacer",
+      "share": "Partager",
+      "download": "Télécharger",
+      "delete": "Supprimer",
+      "cancel": "Annuler"
+    },
     "actions": {
       "upload": "Télécharger un Fichier",
       "createDirectory": "Créer un Répertoire",
