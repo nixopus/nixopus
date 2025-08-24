@@ -30,6 +30,6 @@ func main() {
 
 	router := internal.NewRouter(app)
 	router.Routes()
-	log.Printf("Server starting on port %s", config.AppConfig.Port)
-	log.Fatal(http.ListenAndServe(":"+config.AppConfig.Port, nil))
+	log.Printf("Server starting on port %s", config.AppConfig.Server.Port)
+	log.Fatal(http.ListenAndServe(":"+config.AppConfig.Server.Port, nil))
 }
