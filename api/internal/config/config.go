@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+
 	"github.com/joho/godotenv"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
@@ -33,9 +34,16 @@ func Init() *storage.Store {
 		log.Fatalf("Failed to unmarshal config: %v", err)
 	}
 
+	log.Printf("Configuration loaded successfully for environment: %s", AppConfig.App.Environment)
+
 	if err := validateConfig(AppConfig); err != nil {
 		log.Fatalf("Configuration validation failed: %v", err)
 	}
+
+	// Log key configuration values (without sensitive data)
+	log.Printf("Server will start on port: %s", AppConfig.Server.Port)
+	log.Printf("Database host: %s:%s", AppConfig.Database.Host, AppConfig.Database.Port)
+	log.Printf("Redis URL configured: %t", AppConfig.Redis.URL != "")
 
 	storage_config := storage.Config{
 		Host:           AppConfig.Database.Host,
@@ -83,18 +91,27 @@ func initViper() {
 	viper.SetConfigName(configName)
 	viper.SetConfigType("yaml")
 
-	configPaths := []string{
-		"../helpers",           // Relative to api directory
-		"../../helpers",        // From subdirectories
-		"/etc/nixopus/configs", // Docker mounted path
-		".",                    // Current directory
+	// Check for custom config path from environment variable first
+	configPaths := []string{}
+	if customConfigPath := os.Getenv("NIXOPUS_CONFIG_PATH"); customConfigPath != "" {
+		configPaths = append(configPaths, customConfigPath)
+		log.Printf("Using custom config path from NIXOPUS_CONFIG_PATH: %s", customConfigPath)
 	}
+
+	// default fallback paths
+	defaultPaths := []string{
+		"../helpers",                  // Relative to api directory
+		"/etc/nixopus/source/helpers", // Docker mounted path
+		"./helpers",                   // Current directory helpers
+		".",                           // Current directory
+	}
+
+	configPaths = append(configPaths, defaultPaths...)
 
 	for _, path := range configPaths {
 		viper.AddConfigPath(path)
 	}
 
-	viper.SetEnvPrefix("NIXOPUS")
 	viper.AutomaticEnv()
 
 	setupEnvVarMappings()
