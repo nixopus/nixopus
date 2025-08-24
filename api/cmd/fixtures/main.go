@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -13,6 +12,7 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/fixtures/loader"
 )
 
@@ -29,12 +29,15 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	host := os.Getenv("HOST_NAME")
-	port := os.Getenv("DB_PORT")
-	username := os.Getenv("USERNAME")
-	password := os.Getenv("PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-	sslMode := os.Getenv("SSL_MODE")
+	// Initialize config
+	config.Init()
+
+	host := config.AppConfig.Database.Host
+	port := config.AppConfig.Database.Port
+	username := config.AppConfig.Database.Username
+	password := config.AppConfig.Database.Password
+	dbName := config.AppConfig.Database.Name
+	sslMode := config.AppConfig.Database.SSLMode
 
 	if sslMode == "" {
 		sslMode = "disable"

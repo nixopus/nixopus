@@ -19,7 +19,7 @@ python3 --version
 Download and install the pre-built binary for your platform:
 
 ```bash
-sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install-cli.sh)"
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install.sh)"
 ```
 
 **Install script options:**

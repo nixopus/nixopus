@@ -32,6 +32,7 @@ import { Images } from './components/images';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { isNixopusContainer } from '@/lib/utils';
+import PageLayout from '@/components/layout/page-layout';
 
 export default function ContainerDetailsPage() {
   const { t } = useTranslation();
@@ -108,8 +109,7 @@ export default function ContainerDetailsPage() {
       action="read"
       loadingFallback={<ContainerDetailsLoading />}
     >
-      <div className="container mx-auto py-8 max-w-5xl">
-        <div className="space-y-8">
+      <PageLayout maxWidth="6xl" padding="md" spacing="lg">
           <div className="flex items-center justify-between mb-6 pb-4 border-b">
             <div>
               <h1 className="text-2xl font-bold">{container.name}</h1>
@@ -205,14 +205,13 @@ export default function ContainerDetailsPage() {
                   </div>
                 )}
               </TabsContent>
-            </Tabs>
-          </div>
+          </Tabs>
         </div>
         <ResourceGuard
           resource="container"
           action="delete"
           loadingFallback={null}
-        >
+        > 
           <DeleteDialog
             title={t('containers.deleteDialog.title')}
             description={t('containers.deleteDialog.description')}
@@ -225,7 +224,7 @@ export default function ContainerDetailsPage() {
             icon={Trash2}
           />
         </ResourceGuard>
-      </div>
+      </PageLayout>
     </ResourceGuard>
   );
 }

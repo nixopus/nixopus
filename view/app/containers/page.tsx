@@ -14,6 +14,7 @@ import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionG
 import useContainerList from './hooks/use-container-list';
 import { TypographyH1, TypographyH2, TypographyMuted } from '@/components/ui/typography';
 import { useTranslation } from '@/hooks/use-translation';
+import PageLayout from '@/components/layout/page-layout';
 
 interface ContainerActionsProps {
   container: any;
@@ -202,9 +203,7 @@ export default function ContainersPage() {
       action="read"
       loadingFallback={<ContainersLoading />}
     >
-      <div className="min-h-screen w-full overflow-x-hidden">
-        <div className="relative w-full">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 relative z-10">
+        <PageLayout maxWidth="6xl" padding="md" spacing="lg" className="relative z-10">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
               <span>
                 <TypographyH1 className="text-2xl font-bold">{t('containers.title')}</TypographyH1>
@@ -258,8 +257,6 @@ export default function ContainersPage() {
                 ))}
               </div>
             )}
-          </div>
-        </div>
         <AnyPermissionGuard
           permissions={['container:delete']}
           loadingFallback={null}
@@ -298,7 +295,7 @@ export default function ContainersPage() {
             icon={Scissors}
           />
         </AnyPermissionGuard>
-      </div>
+        </PageLayout>
     </ResourceGuard>
   );
 }
