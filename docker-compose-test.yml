@@ -3,7 +3,7 @@ version: "3.8"
 services:
   nixopus-test-db:
     image: postgres:14-alpine
-    container_name: nixopus-test-db-container
+    container_name: nixopus-test-db
     ports:
       - "${TEST_DB_PORT:-5433}:5432"
     restart: unless-stopped

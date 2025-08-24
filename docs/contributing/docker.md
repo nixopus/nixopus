@@ -514,7 +514,7 @@ Create specialized image variants:
    time docker-compose up -d api
    
    # Check resource usage
-   docker stats nixopus-api-container
+   docker stats nixopus-api
    ```
 
 3. **Security Scanning**

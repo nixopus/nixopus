@@ -24,7 +24,7 @@ services:
       API_ENV_FILE: ${API_ENV_FILE:-/etc/nixopus/source/api/.env}
       API_VOLUME: ${API_VOLUME:-/etc/nixopus/configs}
       API_IMAGE: ${API_IMAGE:-ghcr.io/raghavyuva/nixopus-api:latest}
-      API_CONTAINER_NAME: ${API_CONTAINER_NAME:-nixopus-api-container}
+      API_CONTAINER_NAME: ${API_CONTAINER_NAME:-nixopus-api}
       DOCKER_PORT: ${DOCKER_PORT:-2376}
       APP_VERSION: ${APP_VERSION:-0.1.0-alpha.11}
   view:
@@ -37,21 +37,21 @@ services:
       LOGS_PATH: ${LOGS_PATH:-./logs}
       VIEW_ENV_FILE: ${VIEW_ENV_FILE:-/etc/nixopus/source/view/.env}
       VIEW_IMAGE: ${VIEW_IMAGE:-ghcr.io/raghavyuva/nixopus-view:latest}
-      VIEW_CONTAINER_NAME: ${VIEW_CONTAINER_NAME:-nixopus-view-container}
+      VIEW_CONTAINER_NAME: ${VIEW_CONTAINER_NAME:-nixopus-view}
 
   redis:
     env:
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_VOLUME: ${REDIS_VOLUME:-/etc/nixopus/redis}
       REDIS_IMAGE: ${REDIS_IMAGE:-redis:7-alpine}
-      REDIS_CONTAINER_NAME: ${REDIS_CONTAINER_NAME:-nixopus-redis-container}
+      REDIS_CONTAINER_NAME: ${REDIS_CONTAINER_NAME:-nixopus-redis}
 
   db:
     env:
       DB_PORT: ${DB_PORT:-5432}
       DB_VOLUME: ${DB_VOLUME:-/etc/nixopus/db}
       DB_IMAGE: ${DB_IMAGE:-postgres:14-alpine}
-      DB_CONTAINER_NAME: ${DB_CONTAINER_NAME:-nixopus-db-container}
+      DB_CONTAINER_NAME: ${DB_CONTAINER_NAME:-nixopus-db}
       POSTGRES_USER: ${USERNAME:-postgres}
       POSTGRES_PASSWORD: ${PASSWORD:-changeme}
       POSTGRES_DB: ${DB_NAME:-postgres}
@@ -60,7 +60,7 @@ services:
   caddy:
     env:
       CADDY_IMAGE: ${CADDY_IMAGE:-caddy:latest}
-      CADDY_CONTAINER_NAME: ${CADDY_CONTAINER_NAME:-nixopus-caddy-container}
+      CADDY_CONTAINER_NAME: ${CADDY_CONTAINER_NAME:-nixopus-caddy}
       CADDY_DATA_VOLUME: ${CADDY_DATA_VOLUME:-/etc/nixopus/caddy}
       CADDY_CONFIG_VOLUME: ${CADDY_CONFIG_VOLUME:-/etc/nixopus/caddy}
       CADDY_PORTS: "2019:2019,80:80,443:443"
