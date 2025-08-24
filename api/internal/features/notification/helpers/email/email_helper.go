@@ -12,6 +12,7 @@ import (
 	"net/smtp"
 
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification/helpers/preferences"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -140,7 +141,7 @@ func (m *EmailManager) SendEmailWithTemplate(userID string, data EmailData) erro
 }
 
 func (m *EmailManager) SendPasswordResetEmail(userID string, token string) error {
-	viewURL := os.Getenv("ALLOWED_ORIGIN")
+	viewURL := config.AppConfig.CORS.AllowedOrigin
 	resetURL := fmt.Sprintf("%s/reset-password?token=%s", viewURL, token)
 	data := ResetEmailData{
 		ResetURL: resetURL,
@@ -174,7 +175,7 @@ func (m *EmailManager) SendVerificationEmail(userID string, token string) error 
 		return nil
 	}
 
-	viewURL := os.Getenv("ALLOWED_ORIGIN")
+	viewURL := config.AppConfig.CORS.AllowedOrigin
 	verifyURL := fmt.Sprintf("%s/verify-email?token=%s", viewURL, token)
 	data := VerificationEmailData{
 		VerifyURL: verifyURL,

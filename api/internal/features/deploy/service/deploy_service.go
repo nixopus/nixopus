@@ -2,13 +2,13 @@ package service
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strconv"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -167,7 +167,7 @@ func (s *DeployService) DeleteDeployment(deployment *types.DeleteDeploymentReque
 		}
 	}
 
-	repoPath := filepath.Join(os.Getenv("MOUNT_PATH"), userID.String(), string(application.Environment), application.ID.String())
+	repoPath := filepath.Join(config.AppConfig.Deployment.MountPath, userID.String(), string(application.Environment), application.ID.String())
 	s.logger.Log(logger.Info, "Cleaning up repository directory", repoPath)
 
 	err = s.github_service.RemoveRepository(repoPath)

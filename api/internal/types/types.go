@@ -1,17 +1,68 @@
 package types
 
 type Config struct {
-	Port        string
-	HostName    string
-	Password    string
-	DBName      string
-	Username    string
-	SSLMode     string
-	MaxOpenConn int
-	Debug       bool
-	MaxIdleConn int
-	DB_PORT     string
-	RedisURL    string
+	Server     ServerConfig     `mapstructure:"server"`
+	Database   DatabaseConfig   `mapstructure:"database"`
+	Redis      RedisConfig      `mapstructure:"redis"`
+	SSH        SSHConfig        `mapstructure:"ssh"`
+	Deployment DeploymentConfig `mapstructure:"deployment"`
+	Docker     DockerConfig     `mapstructure:"docker"`
+	Proxy      ProxyConfig      `mapstructure:"proxy"`
+	CORS       CORSConfig       `mapstructure:"cors"`
+	App        AppConfig        `mapstructure:"app"`
+}
+
+type ServerConfig struct {
+	Port string `mapstructure:"port" validate:"required"`
+}
+
+type DatabaseConfig struct {
+	Host        string `mapstructure:"host" validate:"required"`
+	Port        string `mapstructure:"port" validate:"required"`
+	Username    string `mapstructure:"username" validate:"required"`
+	Password    string `mapstructure:"password" validate:"required"`
+	Name        string `mapstructure:"name" validate:"required"`
+	SSLMode     string `mapstructure:"ssl_mode"`
+	MaxOpenConn int    `mapstructure:"max_open_conn"`
+	MaxIdleConn int    `mapstructure:"max_idle_conn"`
+	Debug       bool   `mapstructure:"debug"`
+}
+
+type RedisConfig struct {
+	URL string `mapstructure:"url" validate:"required"`
+}
+
+type SSHConfig struct {
+	Host                string `mapstructure:"host" validate:"required"`
+	Port                uint   `mapstructure:"port"`
+	User                string `mapstructure:"user" validate:"required"`
+	Password            string `mapstructure:"password"`
+	PrivateKey          string `mapstructure:"private_key"`
+	PrivateKeyProtected string `mapstructure:"private_key_protected"`
+}
+
+type DeploymentConfig struct {
+	MountPath string `mapstructure:"mount_path" validate:"required"`
+}
+
+type DockerConfig struct {
+	Host    string `mapstructure:"host"`
+	Port    string `mapstructure:"port"`
+	Context string `mapstructure:"context"`
+}
+
+type ProxyConfig struct {
+	CaddyEndpoint string `mapstructure:"caddy_endpoint" validate:"required"`
+}
+
+type CORSConfig struct {
+	AllowedOrigin string `mapstructure:"allowed_origin" validate:"required"`
+}
+
+type AppConfig struct {
+	Environment string `mapstructure:"environment"`
+	Version     string `mapstructure:"version"`
+	LogsPath    string `mapstructure:"logs_path"`
 }
 
 type ClientContext string

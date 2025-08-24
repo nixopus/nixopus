@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/melbahja/goph"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -22,12 +23,12 @@ type SSH struct {
 
 func NewSSH() *SSH {
 	return &SSH{
-		PrivateKey:          os.Getenv("SSH_PRIVATE_KEY"),
-		Host:                os.Getenv("SSH_HOST"),
-		User:                os.Getenv("SSH_USER"),
-		Port:                uint(parsePort(os.Getenv("SSH_PORT"))),
-		Password:            os.Getenv("SSH_PASSWORD"),
-		PrivateKeyProtected: os.Getenv("SSH_PRIVATE_KEY_PROTECTED"),
+		PrivateKey:          config.AppConfig.SSH.PrivateKey,
+		Host:                config.AppConfig.SSH.Host,
+		User:                config.AppConfig.SSH.User,
+		Port:                config.AppConfig.SSH.Port,
+		Password:            config.AppConfig.SSH.Password,
+		PrivateKeyProtected: config.AppConfig.SSH.PrivateKeyProtected,
 	}
 }
 

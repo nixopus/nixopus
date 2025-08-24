@@ -2,9 +2,9 @@ package controller
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/update/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/update/types"
@@ -35,7 +35,7 @@ func (c *UpdateController) CheckForUpdates(s fuego.ContextNoBody) (*types.Update
 	}
 
 	// If the environment is development, we will not check for updates
-	if os.Getenv("ENV") == "development" {
+	if config.AppConfig.App.Environment == "development" {
 		return &types.UpdateCheckResponse{
 			UpdateAvailable: false,
 		}, nil
@@ -75,7 +75,7 @@ func (c *UpdateController) PerformUpdate(s fuego.ContextWithBody[types.UpdateReq
 	user := utils.GetUser(w, r)
 
 	// If the environment is development, we will not perform updates
-	if os.Getenv("ENV") == "development" {
+	if config.AppConfig.App.Environment == "development" {
 		return &types.UpdateResponse{
 			Success: true,
 			Message: "Update completed successfully",

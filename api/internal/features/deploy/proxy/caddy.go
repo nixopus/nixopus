@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"time"
 
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
 func NewCaddy(logger *logger.Logger, rootDir string, domain string, port string, fileServerType FileServerType) *Caddy {
-	endpoint := os.Getenv("CADDY_ENDPOINT")
+	endpoint := config.AppConfig.Proxy.CaddyEndpoint
 	if endpoint == "" {
 		endpoint = "http://127.0.0.1:2019"
 	}
@@ -52,7 +52,7 @@ func (c *Caddy) Serve() error {
 							Handler: string(c.FileServerType),
 							Upstreams: []Upstream{
 								{
-									Dial: os.Getenv("SSH_HOST") + ":" + c.Port,
+									Dial: config.AppConfig.SSH.Host + ":" + c.Port,
 								},
 							},
 						},

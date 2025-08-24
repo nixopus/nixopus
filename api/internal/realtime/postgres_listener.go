@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -24,18 +24,7 @@ type PostgresNotification struct {
 
 func NewPostgresListener() *PostgresListener {
 	return &PostgresListener{
-		config: types.Config{
-			DB_PORT:     os.Getenv("DB_PORT"),
-			Port:        os.Getenv("PORT"),
-			HostName:    os.Getenv("HOST_NAME"),
-			Password:    os.Getenv("PASSWORD"),
-			DBName:      os.Getenv("DB_NAME"),
-			Username:    os.Getenv("USERNAME"),
-			SSLMode:     os.Getenv("SSL_MODE"),
-			MaxOpenConn: 10,
-			Debug:       true,
-			MaxIdleConn: 5,
-		},
+		config:           config.AppConfig,
 		notificationChan: make(chan *PostgresNotification, 100),
 	}
 }
@@ -43,12 +32,12 @@ func NewPostgresListener() *PostgresListener {
 func getConnString(c types.Config) string {
 	return fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		c.HostName,
-		c.DB_PORT,
-		c.Username,
-		c.Password,
-		c.DBName,
-		c.SSLMode,
+		c.Database.Host,
+		c.Database.Port,
+		c.Database.Username,
+		c.Database.Password,
+		c.Database.Name,
+		c.Database.SSLMode,
 	)
 }
 

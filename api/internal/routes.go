@@ -3,13 +3,13 @@ package internal
 import (
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
 	"github.com/joho/godotenv"
 	"github.com/raghavyuva/nixopus-api/internal/cache"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	audit "github.com/raghavyuva/nixopus-api/internal/features/audit/controller"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
 	authService "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
@@ -49,7 +49,7 @@ type Router struct {
 
 func NewRouter(app *storage.App) *Router {
 	// Initialize cache
-	cache, err := cache.NewCache(os.Getenv("REDIS_URL"))
+	cache, err := cache.NewCache(config.AppConfig.Redis.URL)
 	if err != nil {
 		log.Fatal("Error creating cache", err)
 	}
@@ -64,7 +64,7 @@ func (router *Router) Routes() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	PORT := os.Getenv("PORT")
+	PORT := config.AppConfig.Server.Port
 
 	docs := api.NewVersionDocumentation()
 	if err := docs.Save("api/versions.json"); err != nil {
@@ -122,7 +122,7 @@ func (router *Router) Routes() {
 	// Auth middleware for development environment will be bypassed for swagger UI
 	fuego.Use(server, func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if os.Getenv("ENV") == "development" && strings.HasPrefix(r.URL.Path, "/swagger") {
+			if config.AppConfig.App.Environment == "development" && strings.HasPrefix(r.URL.Path, "/swagger") {
 				next.ServeHTTP(w, r)
 				return
 			}

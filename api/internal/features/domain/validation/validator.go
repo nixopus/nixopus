@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
 )
@@ -113,12 +114,12 @@ func (v *Validator) ValidateDeleteDomainRequest(req types.DeleteDomainRequest) e
 
 // ValidateDomainBelongsToServer checks if the domain belongs to the current server by resolving its IP
 func (v *Validator) ValidateDomainBelongsToServer(domainName string) error {
-	development := os.Getenv("ENV") == "development"
+	development := config.AppConfig.App.Environment == "development"
 	if development {
 		return nil
 	}
 
-	serverHost := os.Getenv("SSH_HOST")
+	serverHost := config.AppConfig.SSH.Host
 	if serverHost == "" {
 		var err error
 		serverHost, err = os.Hostname()
