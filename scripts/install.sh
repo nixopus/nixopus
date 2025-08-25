@@ -3,6 +3,8 @@
 set -e
 
 readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly BLUE='\033[0;34m'
 readonly NC='\033[0m'
 
 # GitHub repository info
@@ -253,27 +255,80 @@ check_permissions() {
 main() {
     # Default behavior
     SKIP_NIXOPUS_INSTALL=false
+    NIXOPUS_INSTALL_ARGS=()
+    SUBCOMMAND=""
 
     # Parse arguments
-    for arg in "$@"; do
-        case $arg in
+    while [[ $# -gt 0 ]]; do
+        case $1 in
             --skip-nixopus-install)
-            SKIP_NIXOPUS_INSTALL=true
-            shift # Remove --skip-nixopus-install from processing
-            ;;
+                SKIP_NIXOPUS_INSTALL=true
+                shift
+                ;;
+            --verbose|-v)
+                NIXOPUS_INSTALL_ARGS+=("$1")
+                shift
+                ;;
+            --timeout|-t)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --force|-f)
+                NIXOPUS_INSTALL_ARGS+=("$1")
+                shift
+                ;;
+            --dry-run|-d)
+                NIXOPUS_INSTALL_ARGS+=("$1")
+                shift
+                ;;
+            --config-file|-c)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --api-domain|-ad)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --view-domain|-vd)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --help|-h)
+                show_usage
+                exit 0
+                ;;
+            ssh|deps)
+                # encounter a subcommand, capture it and all remaining args
+                SUBCOMMAND="$1"
+                shift
+                # add all remaining args to the nixopus install command
+                NIXOPUS_INSTALL_ARGS+=("$SUBCOMMAND" "$@")
+                break
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
         esac
     done
 
     # Run main function with permission check
     pkg_type=$(detect_os)
     check_permissions "$pkg_type"
-    install_cli "$@"
+    install_cli
 
     if [ "$SKIP_NIXOPUS_INSTALL" = false ]; then
-        echo "Running 'nixopus install'..."
-        nixopus install
+        if [ -n "$SUBCOMMAND" ]; then
+            log_info "Running 'nixopus install' with subcommand and options: ${NIXOPUS_INSTALL_ARGS[*]}"
+        else
+            log_info "Running 'nixopus install' with options: ${NIXOPUS_INSTALL_ARGS[*]}"
+        fi
+        nixopus install "${NIXOPUS_INSTALL_ARGS[@]}"
+        log_success "nixopus install completed successfully!"
     else
-        echo "Skipping 'nixopus install'..."
+        log_info "Skipping 'nixopus install' as requested..."
+        log_success "CLI installation completed! You can now run 'nixopus install' manually with your preferred options."
     fi
 }
 
