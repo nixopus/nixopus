@@ -12,6 +12,61 @@ readonly PACKAGE_JSON_URL_MASTER="https://raw.githubusercontent.com/raghavyuva/n
 
 # Logging functions
 log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
+log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+
+# Show usage information
+show_usage() {
+    cat << EOF
+Usage: $0 [OPTIONS] [SUBCOMMAND] [SUBCOMMAND_OPTIONS]
+
+This script installs the nixopus CLI and optionally runs 'nixopus install' with the provided options.
+
+CLI Installation Options:
+  --skip-nixopus-install    Skip running 'nixopus install' after CLI installation
+
+nixopus install Options (passed through to 'nixopus install'):
+  -v, --verbose             Show more details while installing
+  -t, --timeout SECONDS     How long to wait for each step (default: 300)
+  -f, --force               Replace files if they already exist
+  -d, --dry-run             See what would happen, but don't make changes
+  -c, --config-file PATH    Path to custom config file (defaults to built-in config)
+  -ad, --api-domain DOMAIN  The domain where the nixopus api will be accessible
+                           (e.g. api.nixopus.com), if not provided you can use
+                           the ip address and port (e.g. 192.168.1.100:8443)
+  -vd, --view-domain DOMAIN The domain where the nixopus view will be accessible
+                           (e.g. nixopus.com), if not provided you can use
+                           the ip address and port (e.g. 192.168.1.100:80)
+  -h, --help               Show this help message
+
+Subcommands (passed through to 'nixopus install SUBCOMMAND'):
+  ssh                       Generate SSH key pair with proper permissions
+  deps                      Install dependencies
+
+For subcommand-specific options, use: $0 SUBCOMMAND --help (after CLI installation)
+
+Quick Install (one-liner):
+  curl -sSL https://install.nixopus.com | bash
+  curl -sSL https://install.nixopus.com | sudo bash
+
+Quick Install with Options:
+  curl -sSL https://install.nixopus.com | bash -s -- --verbose
+  curl -sSL https://install.nixopus.com | bash -s -- --dry-run
+  curl -sSL https://install.nixopus.com | bash -s -- --api-domain api.example.com
+  curl -sSL https://install.nixopus.com | bash -s -- ssh --verbose
+
+Local Examples:
+  $0                                           # Install CLI and run 'nixopus install'
+  $0 --skip-nixopus-install                    # Only install CLI, skip 'nixopus install'
+  $0 --verbose                                 # Install CLI and run 'nixopus install' with verbose output
+  $0 --force --timeout 600                     # Install CLI and run 'nixopus install' with force and custom timeout
+  $0 --api-domain api.example.com --view-domain example.com  # Install CLI and run 'nixopus install' with custom domains
+  $0 --dry-run --config-file /path/to/config   # Install CLI and run 'nixopus install' in dry-run mode with custom config
+  $0 ssh --verbose                             # Install CLI and run 'nixopus install ssh --verbose'
+  $0 deps --dry-run                            # Install CLI and run 'nixopus install deps --dry-run'
+
+EOF
+}
 
 # Detect system architecture
 detect_arch() {
