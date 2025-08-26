@@ -2,26 +2,22 @@ version: "3.8"
 
 services:
   nixopus-staging-api:
-    image: nixopus-staging-api:latest
     build:
       context: ./api
       dockerfile: Dockerfile
-      args:
-        - PORT=${PORT}
     container_name: nixopus-staging-api
     ports:
-      - "${PORT}:${PORT}"
+      - "${API_PORT:-8443}:${API_PORT:-8443}"
     restart: unless-stopped
     env_file:
-      - /etc/nixopus-staging/source/api/.env
+      - ${NIXOPUS_HOME:-/etc/nixopus}/source/api/.env
     environment:
       - HOST_NAME=nixopus-staging-db
     volumes:
-      - ${DOCKER_CERT_PATH}:/etc/nixopus-staging/docker-certs
-      - ${SSH_PRIVATE_KEY}:/etc/nixopus-staging/ssh/id_rsa
-      - ${MOUNT_PATH}:/etc/nixopus-staging/configs
+      - ./logs:/app/logs
+      - ${NIXOPUS_HOME:-/etc/nixopus}:/etc/nixopus
       - /var/run/docker.sock:/var/run/docker.sock
-      - /etc/nixopus-staging/source/api/.env:/app/.env
+      - ${NIXOPUS_HOME:-/etc/nixopus}/source/api/.env:/app/.env
     networks:
       - nixopus-network
     depends_on:
@@ -37,49 +33,56 @@ services:
       - POSTGRES_PASSWORD=${PASSWORD}
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_HOST_AUTH_METHOD=trust
-    command: postgres -p ${DB_PORT}
     ports:
-      - "${DB_PORT}:${DB_PORT}"
+      - "${DB_PORT:-5432}:5432"
     volumes:
-      - ${DB_VOLUME:-/etc/nixopus-staging/db}:/var/lib/postgresql/data
+      - ${NIXOPUS_HOME:-/etc/nixopus}/db:/var/lib/postgresql/data
     networks:
       - nixopus-network
     healthcheck:
-      test:
-        ["CMD-SHELL", "pg_isready -U ${USERNAME} -d ${DB_NAME} -p ${DB_PORT}"]
+      test: ["CMD-SHELL", "pg_isready -U ${USERNAME} -d ${DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  # nixopus-staging-redis:
-  #   image: redis:7-alpine
-  #   container_name: nixopus-staging-redis
-  #   restart: unless-stopped
-  #   ports:
-  #     - "${REDIS_PORT}:${REDIS_PORT}"
-  #   volumes:
-  #     - ${REDIS_VOLUME:-/etc/nixopus-staging/redis}:/data
-  #   networks:
-  #     - nixopus-network
-  #   healthcheck:
-  #     test: [ "CMD", "redis-cli", "ping" ]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
-
   nixopus-staging-view:
-    image: nixopus-staging-view:latest
     build:
       context: ./view
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_PORT=${NEXT_PUBLIC_PORT}
     container_name: nixopus-staging-view
     ports:
-      - "${NEXT_PUBLIC_PORT}:${NEXT_PUBLIC_PORT}"
+      - "${NEXT_PUBLIC_PORT:-7443}:${NEXT_PUBLIC_PORT:-7443}"
     restart: unless-stopped
     env_file:
-      - /etc/nixopus-staging/source/view/.env
+      - ${NIXOPUS_HOME:-/etc/nixopus}/source/view/.env
     volumes:
-      - /etc/nixopus-staging/source/view/.env:/app/.env
+      - ./logs:/app/logs
+      - ${NIXOPUS_HOME:-/etc/nixopus}/source/view/.env:/app/.env
+    networks:
+      - nixopus-network
+
+  nixopus-staging-caddy:
+    image: caddy:latest
+    container_name: nixopus-staging-caddy
+    ports:
+      - "2019:2019"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${NIXOPUS_HOME:-/etc/nixopus}/source/helpers/Caddyfile:/etc/caddy/Caddyfile
+      - ${NIXOPUS_HOME:-/etc/nixopus}/caddy:/data
+      - ${NIXOPUS_HOME:-/etc/nixopus}/caddy:/config
+    command:
+      [
+        "caddy",
+        "run",
+        "--config",
+        "/etc/caddy/Caddyfile",
+        "--adapter",
+        "caddyfile"
+      ]
     networks:
       - nixopus-network
 

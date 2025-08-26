@@ -17,67 +17,44 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
       
       - name: Conventional Changelog Action
         id: changelog
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          git-message: 'chore(release): {version}'
           git-user-name: 'github-actions[bot]'
           git-user-email: 'github-actions[bot]@users.noreply.github.com'
+          git-message: 'chore(release): {version}'
           preset: 'angular'
           tag-prefix: 'v'
-          output-file: 'false'
           version-file: 'package.json'
           skip-on-empty: 'true'
-          skip-version-file: 'false'
-          skip-commit: 'false'
-          skip-tag: 'false'
           skip-ci: 'true'
           create-summary: 'true'
           pre-release: 'true'
           pre-release-identifier: 'alpha'
-          git-push: 'false'
+          git-push: 'true'
 
       - name: Update version.txt
         if: ${{ steps.changelog.outputs.skipped == 'false' }}
         run: echo "${{ steps.changelog.outputs.tag }}" > version.txt
-      
-      # - name: Commit version.txt update
-      #   if: ${{ steps.changelog.outputs.skipped == 'false' }}
-      #   run: |
-      #     git config user.name 'github-actions[bot]'
-      #     git config user.email 'github-actions[bot]@users.noreply.github.com'
-      #     git add version.txt
-      #     git commit -m "chore(release): update version.txt to ${{ steps.changelog.outputs.tag }}"
-      #     git push
-      
-      - name: Create Release
-        uses: actions/create-release@v1
+
+      - name: Commit version.txt update
         if: ${{ steps.changelog.outputs.skipped == 'false' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add version.txt
+          git commit -m "chore(release): update version.txt to ${{ steps.changelog.outputs.tag }}" || echo "No changes to commit"
+          git push origin HEAD:master
+
+      - name: Create GitHub Pre-Release
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.changelog.outputs.tag }}
-          release_name: ${{ steps.changelog.outputs.tag }}
+          name: ${{ steps.changelog.outputs.tag }}
           body: ${{ steps.changelog.outputs.clean_changelog }}
-          draft: false
-          prerelease: true 
-      
-      - name: Create Pull Request
-        if: ${{ steps.changelog.outputs.skipped == 'false' }}
-        uses: peter-evans/create-pull-request@v5
-        with:
-            token: ${{ secrets.GITHUB_TOKEN }}
-            commit-message: 'chore(release): update release'
-            title: 'chore(release): update release'
-            body: |
-              This PR updates the release with the latest changes.
-              
-              Generated automatically by the release workflow.
-            branch: 'chore/update-release'
-            delete-branch: true
-            base: 'master'
-  
+          prerelease: true
