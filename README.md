@@ -31,7 +31,7 @@
         <div align="center">
           <strong>
             <a href="https://nixopus.com"> Website</a> |
-            <a href="https://docs.nixopus.com"> Documentation</a> | 
+            <a href="https://docs.nixopus.com"> Documentation</a> |
             <a href="https://docs.nixopus.com/blog/"> Blogs</a>
           </strong>
         </div>
@@ -47,6 +47,7 @@
 </samp>
 
 ## Project Overview
+
 Nixopus streamlines your workflow with comprehensive tools for deployment, monitoring, and maintenance.
 
 > ⚠️ **Important Note**: Nixopus is currently in alpha/pre-release stage and is not yet ready for production use. While you're welcome to try it out, we recommend waiting for the beta or stable release before using it in production environments. The platform is still undergoing testing and development.
@@ -81,7 +82,13 @@ This section will help you set up Nixopus on your VPS quickly.
 First, install the Nixopus CLI tool:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/install.sh | sudo bash
+curl -sSL https://install.nixopus.com | bash
+```
+
+**To install only the CLI tool without running `nixopus install`:**
+
+```bash
+curl -sSL https://install.nixopus.com | bash -s -- --skip-nixopus-install
 ```
 
 ### Self Host Nixopus on your VPS
@@ -102,7 +109,7 @@ You can customize your installation by providing the following optional paramete
 - `--timeout` or `-t`: Set timeout for each step (default: 300 seconds)
 - `--force` or `-f`: Replace files if they already exist
 - `--dry-run` or `-d`: See what would happen without making changes
-- `--config-file` or `-c`: Path to custom config file (defaults to built-in [`config.prod.yaml`](https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/helpers/config.prod.yaml)) 
+- `--config-file` or `-c`: Path to custom config file (defaults to built-in [`config.prod.yaml`](https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/helpers/config.prod.yaml))
 
 Example with optional parameters:
 
@@ -112,6 +119,24 @@ nixopus install \
   --view-domain nixopus.example.tld \
   --verbose \
   --timeout 600
+```
+
+#### Installation with Options
+
+You can also install the CLI and run `nixopus install` with options in a single command, refer [installation documentation](https://docs.nixopus.com/install/#installation-options) for more details on options:
+
+```bash
+# Basic installation with verbose output
+curl -sSL https://install.nixopus.com | bash -s -- --verbose
+
+# Installation with custom domains
+curl -sSL https://install.nixopus.com | bash -s -- --api-domain api.example.com --view-domain app.example.com
+
+# Dry-run to see what would happen
+curl -sSL https://install.nixopus.com | bash -s -- --dry-run
+
+# Install CLI only, skip nixopus install
+curl -sSL https://install.nixopus.com | bash -s -- --skip-nixopus-install
 ```
 
 #### Additional CLI Commands

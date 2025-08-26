@@ -38,14 +38,14 @@ services:
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_VOLUME: ${REDIS_VOLUME:-./redis}
       REDIS_IMAGE: ${REDIS_IMAGE:-redis:7-alpine}
-      REDIS_CONTAINER_NAME: ${REDIS_CONTAINER_NAME:-nixopus-redis-container}
+      REDIS_CONTAINER_NAME: ${REDIS_CONTAINER_NAME:-nixopus-redis}
 
   db:
     env:
       DB_PORT: ${DB_PORT:-5432}
       DB_VOLUME: ${DB_VOLUME:-./db}
       DB_IMAGE: ${DB_IMAGE:-postgres:14-alpine}
-      DB_CONTAINER_NAME: ${DB_CONTAINER_NAME:-nixopus-db-container}
+      DB_CONTAINER_NAME: ${DB_CONTAINER_NAME:-nixopus-db}
       POSTGRES_USER: ${USERNAME:-postgres}
       POSTGRES_PASSWORD: ${PASSWORD:-changeme}
       POSTGRES_DB: ${DB_NAME:-postgres}
