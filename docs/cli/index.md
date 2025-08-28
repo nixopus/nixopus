@@ -23,6 +23,7 @@ nixopus install
 | Command | Description | Key Subcommands |
 |---------|-------------|-----------------|
 | **[preflight](./commands/preflight.md)** | System readiness checks | check, ports, deps |
+| **[conflict](./commands/conflict.md)** | Tool version conflict detection | - |
 | **[install](./commands/install.md)** | Complete Nixopus installation | ssh, deps |
 | **[uninstall](./commands/uninstall.md)** | Remove Nixopus from system | - |
 | **[service](./commands/service.md)** | Control Docker services | up, down, ps, restart |
@@ -39,16 +40,19 @@ nixopus install
 # 1. Check system requirements
 nixopus preflight check
 
-# 2. Install with custom domains
+# 2. Verify tool versions
+nixopus conflict
+
+# 3. Install with custom domains
 nixopus install --api-domain api.example.com --view-domain app.example.com
 
-# 3. Start services
+# 4. Start services
 nixopus service up --detach
 
-# 4. Load proxy configuration
+# 5. Load proxy configuration
 nixopus proxy load
 
-# 5. Verify everything is running
+# 6. Verify everything is running
 nixopus service ps
 ```
 
@@ -68,6 +72,9 @@ nixopus service restart
 ```bash
 # Clone repository
 nixopus clone --branch develop
+
+# Check for version conflicts
+nixopus conflict --config-file config.dev.yaml
 
 # Preview installation
 nixopus install --dry-run
