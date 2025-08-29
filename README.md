@@ -77,9 +77,10 @@ Nixopus streamlines your workflow with comprehensive tools for deployment, monit
 
 This section will help you set up Nixopus on your VPS quickly.
 
-### Install Nixopus:
+### Install the Nixopus CLI
 
-**To get started without domain names, and to try out over ip:port deployment:**
+First, install the Nixopus CLI tool:
+
 ```bash
 curl -sSL https://install.nixopus.com | bash
 ```
@@ -137,6 +138,16 @@ curl -sSL https://install.nixopus.com | bash -s -- --dry-run
 # Install CLI only, skip nixopus install
 curl -sSL https://install.nixopus.com | bash -s -- --skip-nixopus-install
 ```
+
+#### Additional CLI Commands
+
+The Nixopus CLI provides several other useful commands:
+
+- `nixopus preflight` - Check system requirements before installation
+- `nixopus install deps` - Install only dependencies
+- `nixopus install ssh` - Generate SSH keys for deployment
+- `nixopus service` - Manage Nixopus services
+- `nixopus uninstall` - Remove Nixopus from your system
 
 Run `nixopus --help` to see all available commands.
 

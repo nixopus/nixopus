@@ -28,15 +28,15 @@ from app.utils.logger import Logger
 class TestGitCommandBuilder:
     def test_build_clone_command_without_branch(self):
         cmd = GitCommandBuilder.build_clone_command("https://github.com/user/repo", "/path/to/clone")
-        assert cmd == ["git", "clone", "https://github.com/user/repo", "/path/to/clone"]
+        assert cmd == ["git", "clone", "--depth=1", "https://github.com/user/repo", "/path/to/clone"]
 
     def test_build_clone_command_with_branch(self):
         cmd = GitCommandBuilder.build_clone_command("https://github.com/user/repo", "/path/to/clone", "main")
-        assert cmd == ["git", "clone", "-b", "main", "https://github.com/user/repo", "/path/to/clone"]
+        assert cmd == ["git", "clone", "--depth=1", "-b", "main", "https://github.com/user/repo", "/path/to/clone"]
 
     def test_build_clone_command_with_empty_branch(self):
         cmd = GitCommandBuilder.build_clone_command("https://github.com/user/repo", "/path/to/clone", "")
-        assert cmd == ["git", "clone", "https://github.com/user/repo", "/path/to/clone"]
+        assert cmd == ["git", "clone", "--depth=1", "https://github.com/user/repo", "/path/to/clone"]
 
 
 class TestCloneFormatter:
@@ -108,7 +108,10 @@ class TestCloneFormatter:
         )
         formatted = self.formatter.format_dry_run(config)
         assert dry_run_mode in formatted
-        assert dry_run_command.format(command="git clone -b main https://github.com/user/repo /path/to/clone") in formatted
+        assert (
+            dry_run_command.format(command="git clone --depth=1 -b main https://github.com/user/repo /path/to/clone")
+            in formatted
+        )
         assert dry_run_force_mode.format(force=True) in formatted
 
     @patch("os.path.exists")
@@ -155,7 +158,7 @@ class TestGitClone:
         assert error is None
         mock_run.assert_called_once()
         cmd = mock_run.call_args[0][0]
-        assert cmd == ["git", "clone", "https://github.com/user/repo", "/path/to/clone"]
+        assert cmd == ["git", "clone", "--depth=1", "https://github.com/user/repo", "/path/to/clone"]
 
     @patch("subprocess.run")
     def test_clone_repository_failure(self, mock_run):
@@ -424,12 +427,12 @@ class TestClone:
             output="text",
             dry_run=True,
         )
-        
+
         with patch.object(CloneService, "clone_and_format") as mock_clone_and_format:
             mock_clone_and_format.return_value = dry_run_mode
-            
+
             formatted = self.clone.clone_and_format(config)
-            
+
             assert dry_run_mode in formatted
 
     def test_debug_logging_enabled(self):
@@ -443,13 +446,13 @@ class TestClone:
             output="text",
             dry_run=False,
         )
-        
+
         logger = Mock(spec=Logger)
         clone_operation = Clone(logger=logger)
-        
+
         # Patch only GitClone.clone_repository to simulate a successful clone
         with patch("app.commands.clone.clone.GitClone.clone_repository", return_value=(True, None)):
             result = clone_operation.clone(config)
-            
+
             # Verify that debug logging was called
             assert logger.debug.called

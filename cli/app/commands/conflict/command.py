@@ -16,7 +16,12 @@ conflict_app = typer.Typer(help=conflict_check_help, no_args_is_help=False)
 @conflict_app.callback(invoke_without_command=True)
 def conflict_callback(
     ctx: typer.Context,
-    config_file: str = typer.Option("helpers/config.prod.yaml", "--config-file", "-c", help="Path to configuration file"),
+    config_file: str = typer.Option(
+        None,
+        "--config-file",
+        "-c",
+        help="Path to configuration file (defaults to built-in config)",
+    ),
     timeout: int = typer.Option(5, "--timeout", "-t", help="Timeout for tool checks in seconds"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     output: str = typer.Option("text", "--output", "-o", help="Output format (text/json)"),

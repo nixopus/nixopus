@@ -18,6 +18,8 @@ class ConflictCheckResult(BaseModel):
 
 class ConflictConfig(BaseModel):
     """Configuration for conflict checking."""
-    config_file: str = Field("helpers/config.prod.yaml", description="Path to configuration file")
+    config_file: Optional[str] = Field(
+        None, description="Path to configuration file (defaults to built-in config)"
+    )
     verbose: bool = Field(False, description="Verbose output")
     output: str = Field("text", description="Output format (text/json)")

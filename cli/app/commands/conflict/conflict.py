@@ -285,18 +285,22 @@ class ConflictChecker:
 
         return results
 
-    def _load_user_config(self, config_path: str) -> Dict[str, Any]:
-        """Load user configuration file using standardized Config class."""
-        self.logger.debug(conflict_loading_config.format(path=config_path))
-
+    def _load_user_config(self, config_path: Optional[str]) -> Dict[str, Any]:
+        """Load configuration.
+        - If config_path is provided, load it as user config (overrides only what it contains).
+        - If None, fall back to the built-in config used by Config (same as install command).
+        """
         try:
-            # Use standardized Config class for loading user config
+            if not config_path:
+                # Built-in config (nested dict) as default
+                self.logger.debug("Loading built-in configuration (no --config-file provided)")
+                return self.yaml_config.load_yaml_config()
+
+            # Load user config and unflatten to nested structure
+            self.logger.debug(conflict_loading_config.format(path=config_path))
             flattened_config = self.yaml_config.load_user_config(config_path)
             self.logger.debug(conflict_config_loaded)
-
-            # Convert flattened config back to nested structure for backward compatibility
-            nested_config = self.yaml_config.unflatten_config(flattened_config)
-            return nested_config
+            return self.yaml_config.unflatten_config(flattened_config)
 
         except FileNotFoundError:
             raise FileNotFoundError(conflict_config_not_found.format(path=config_path))
