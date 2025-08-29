@@ -14,7 +14,6 @@ import Skeleton from '@/app/file-manager/components/skeleton/Skeleton';
 import DisabledFeature from '@/components/features/disabled-feature';
 import { FeatureNames } from '@/types/feature-flags';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
-import { TypographyH2 } from '@/components/ui/typography';
 import PageLayout from '@/components/layout/page-layout';
 
 const Page = () => {
