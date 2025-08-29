@@ -1,46 +1,53 @@
 import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useGetRecentAuditLogsQuery } from '@/redux/services/audit';
 import { formatDistanceToNow } from 'date-fns';
-import { Loader2 } from 'lucide-react';
-import { AuditAction, AuditLog } from '@/redux/types/audit';
+import { Loader2, ArrowRight } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
+import { useRouter } from 'next/navigation';
 
-const getActionColor = (action: AuditAction) => {
-  switch (action) {
-    case 'create':
+const getActionColor = (actionColor: string) => {
+  switch (actionColor) {
+    case 'green':
       return 'bg-green-500';
-    case 'update':
+    case 'blue':
       return 'bg-blue-500';
-    case 'delete':
+    case 'red':
       return 'bg-red-500';
     default:
       return 'bg-gray-500';
   }
 };
 
-const getActionMessage = (log: AuditLog, t: (key: string) => string) => {
-  const username = log.user?.username || t('settings.teams.recentActivity.actions.defaultUser');
-  const resource = log.resource_type
-    .split('_')
-    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-    .toLowerCase();
-
-  const actionKey = `settings.teams.recentActivity.actions.${log.action}`;
-  return t(actionKey).replace('{username}', username).replace('{resource}', resource);
-};
-
 function RecentActivity() {
   const { t } = useTranslation();
-  const { data: auditLogs, isLoading, error } = useGetRecentAuditLogsQuery();
+  const router = useRouter();
+  const { data: activities, isLoading, error } = useGetRecentAuditLogsQuery();
+
+  const handleViewAll = () => {
+    router.push('/activities');
+  };
 
   return (
     <Card>
       <CardHeader>
-        <TypographySmall>{t('settings.teams.recentActivity.title')}</TypographySmall>
-        <TypographyMuted>{t('settings.teams.recentActivity.description')}</TypographyMuted>
+        <div className="flex items-center justify-between">
+          <div>
+            <TypographySmall>{t('settings.teams.recentActivity.title')}</TypographySmall>
+            <TypographyMuted>{t('settings.teams.recentActivity.description')}</TypographyMuted>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleViewAll}
+            className="flex items-center gap-1"
+          >
+            {t('settings.teams.recentActivity.viewAll')}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -49,15 +56,15 @@ function RecentActivity() {
           </div>
         ) : error ? (
           <div className="p-4 text-red-600">{t('settings.teams.recentActivity.error')}</div>
-        ) : auditLogs && auditLogs.length > 0 ? (
+        ) : activities && activities.length > 0 ? (
           <div className="space-y-4">
-            {auditLogs.map((log) => (
-              <div key={log.id} className="flex items-start gap-4">
-                <div className={`h-2 w-2 mt-2 rounded-full ${getActionColor(log.action)}`}></div>
+            {activities.map((activity) => (
+              <div key={activity.id} className="flex items-start gap-4">
+                <div className={`h-2 w-2 mt-2 rounded-full ${getActionColor(activity.action_color)}`}></div>
                 <div>
-                  <TypographySmall>{getActionMessage(log, t)}</TypographySmall>
+                  <TypographySmall>{activity.message}</TypographySmall>
                   <TypographyMuted>
-                    {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
                   </TypographyMuted>
                 </div>
               </div>

@@ -28,6 +28,13 @@ const (
 	AuditResourceDomain          AuditResourceType = "domain"
 	AuditResourceGithubConnector AuditResourceType = "github_connector"
 	AuditResourceSmtpConfig      AuditResourceType = "smtp_config"
+	AuditResourceNotification    AuditResourceType = "notification"
+	AuditResourceFeatureFlag     AuditResourceType = "feature_flag"
+	AuditResourceFileManager     AuditResourceType = "file_manager"
+	AuditResourceContainer       AuditResourceType = "container"
+	AuditResourceAudit           AuditResourceType = "audit"
+	AuditResourceTerminal        AuditResourceType = "terminal"
+	AuditResourceIntegration     AuditResourceType = "integration"
 )
 
 type AuditLog struct {

@@ -637,6 +637,7 @@
         "loading": "Loading recent activities...",
         "error": "Failed to load recent activities",
         "noActivities": "No recent activities found",
+        "viewAll": "View All",
         "actions": {
           "create": "{username} created a new {resource}",
           "update": "{username} updated a {resource}",
@@ -722,6 +723,14 @@
       "disableButton": "Disable 2FA",
       "disableSuccess": "2FA has been disabled",
       "disableError": "Failed to disable 2FA"
+    }
+  },
+  "activities": {
+    "title": "Activities",
+    "description": "View all activities and changes in your organization",
+    "list": {
+      "title": "Team Activities",
+      "description": "Recent activities in your organization"
     }
   },
   "languages": {

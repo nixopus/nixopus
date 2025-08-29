@@ -12,7 +12,14 @@ export type AuditResourceType =
   | 'deployment'
   | 'domain'
   | 'github_connector'
-  | 'smtp_config';
+  | 'smtp_config'
+  | 'notification'
+  | 'feature_flag'
+  | 'file_manager'
+  | 'container'
+  | 'audit'
+  | 'terminal'
+  | 'integration';
 
 export interface AuditLog {
   id: string;
@@ -36,4 +43,34 @@ export interface AuditLogsResponse {
   status: string;
   message: string;
   data: AuditLog[];
+}
+
+export interface ActivityMessage {
+  id: string;
+  message: string;
+  action: AuditAction;
+  actor: string;
+  resource: string;
+  resource_id: string;
+  timestamp: string;
+  metadata?: Record<string, any>;
+  action_color: string;
+}
+
+export interface PaginationMeta {
+  current_page: number;
+  page_size: number;
+  total_count: number;
+  total_pages: number;
+  has_next: boolean;
+  has_prev: boolean;
+}
+
+export interface ActivitiesResponse {
+  status: string;
+  message: string;
+  data: {
+    activities: ActivityMessage[];
+    pagination: PaginationMeta;
+  };
 }
