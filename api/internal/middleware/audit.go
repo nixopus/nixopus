@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -13,7 +16,8 @@ import (
 )
 
 // AuditMiddleware is a middleware that captures audit logs for all authenticated requests
-func AuditMiddleware(next http.Handler, app *storage.App, l logger.Logger) http.Handler {
+// resourceType explicitly defines what type of resource this route group operates on
+func AuditMiddleware(next http.Handler, app *storage.App, l logger.Logger, resourceType string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auditService := service.NewAuditService(app.Store.DB, app.Ctx, l)
 
@@ -39,15 +43,30 @@ func AuditMiddleware(next http.Handler, app *storage.App, l logger.Logger) http.
 		}
 
 		auditAction := getAuditActionFromMethod(r.Method)
-		auditResourceType := getResourceTypeFromPath(r.URL.Path)
 
-		if auditAction == "access" {
+		// Skip audit logging for GET requests (access operations)
+		if auditAction == types.AuditActionAccess {
 			next.ServeHTTP(w, r)
 			return
 		}
 
+		var requestBody map[string]interface{}
+		if r.Body != nil && (r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodPatch) {
+			bodyBytes, err := io.ReadAll(r.Body)
+			if err == nil {
+				r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+				if len(bodyBytes) > 0 {
+					json.Unmarshal(bodyBytes, &requestBody)
+				}
+			}
+		}
+
+		resourceID := extractResourceIDFromPath(r.URL.Path)
+
+		auditResourceType := mapResourceType(resourceType)
+
 		rw := &auditResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
-		resourceID := getResourceIDFromPath(r.URL.Path)
 
 		next.ServeHTTP(rw, r)
 
@@ -55,28 +74,33 @@ func AuditMiddleware(next http.Handler, app *storage.App, l logger.Logger) http.
 			auditReq := &service.AuditLogRequest{
 				UserID:         user.ID,
 				OrganizationID: orgID,
-				Action:         types.AuditAction(auditAction),
-				ResourceType:   types.AuditResourceType(auditResourceType),
+				Action:         auditAction,
+				ResourceType:   auditResourceType,
 				ResourceID:     resourceID,
 				OldValues:      nil,
-				NewValues:      nil,
+				NewValues:      requestBody,
 				Metadata: map[string]interface{}{
-					"path":   r.URL.Path,
-					"method": r.Method,
-					"status": rw.statusCode,
+					"path":          r.URL.Path,
+					"method":        r.Method,
+					"status":        rw.statusCode,
+					"resource_type": resourceType,
+					"endpoint":      getEndpointName(r.URL.Path),
 				},
 				IPAddress: r.RemoteAddr,
 				UserAgent: r.UserAgent(),
 				RequestID: uuid.New(),
 			}
 
-			if err := auditService.LogAction(auditReq); err != nil {
-				l.Log(logger.Warning, "Failed to create audit log", fmt.Sprintf("path: %s, method: %s, user_id: %s, org_id: %s, error: %s",
-					r.URL.Path, r.Method, user.ID, orgID, err.Error()))
-			} else {
-				l.Log(logger.Debug, "Audit log created", fmt.Sprintf("path: %s, method: %s, user_id: %s, org_id: %s",
-					r.URL.Path, r.Method, user.ID, orgID))
-			}
+			// Fire audit logging asynchronously to not affect API response time
+			go func() {
+				if err := auditService.LogAction(auditReq); err != nil {
+					l.Log(logger.Warning, "Failed to create audit log", fmt.Sprintf("path: %s, method: %s, user_id: %s, org_id: %s, error: %s",
+						r.URL.Path, r.Method, user.ID, orgID, err.Error()))
+				} else {
+					l.Log(logger.Debug, "Audit log created", fmt.Sprintf("path: %s, method: %s, user_id: %s, org_id: %s",
+						r.URL.Path, r.Method, user.ID, orgID))
+				}
+			}()
 		}
 	})
 }
@@ -92,83 +116,82 @@ func (rw *auditResponseWriter) WriteHeader(code int) {
 	rw.ResponseWriter.WriteHeader(code)
 }
 
-// getResourceIDFromPath extracts the resource ID from the URL path
-func getResourceIDFromPath(path string) uuid.UUID {
+// getAuditActionFromMethod maps HTTP methods to audit actions
+func getAuditActionFromMethod(method string) types.AuditAction {
+	switch method {
+	case http.MethodGet:
+		return types.AuditActionAccess
+	case http.MethodPost:
+		return types.AuditActionCreate
+	case http.MethodPut, http.MethodPatch:
+		return types.AuditActionUpdate
+	case http.MethodDelete:
+		return types.AuditActionDelete
+	default:
+		return types.AuditActionAccess
+	}
+}
+
+// extractResourceIDFromPath extracts any UUID from the path (simple approach)
+func extractResourceIDFromPath(path string) uuid.UUID {
 	segments := strings.Split(path, "/")
-	for i, segment := range segments {
-		if i > 0 && isUUID(segments[i-1]) {
-			if id, err := uuid.Parse(segment); err == nil {
-				return id
-			}
+	for _, segment := range segments {
+		if id, err := uuid.Parse(segment); err == nil {
+			return id
 		}
 	}
 	return uuid.Nil
 }
 
-// isUUID checks if a string is a valid UUID
-func isUUID(s string) bool {
-	_, err := uuid.Parse(s)
-	return err == nil
-}
-
-func getAuditActionFromMethod(method string) string {
-	switch method {
-	case http.MethodGet:
-		return "access"
-	case http.MethodPost:
-		return "create"
-	case http.MethodPut, http.MethodPatch:
-		return "update"
-	case http.MethodDelete:
-		return "delete"
-	default:
-		return "access"
-	}
-}
-
-// getResourceTypeFromPath extracts the resource type from the URL path
-func getResourceTypeFromPath(path string) string {
-	if len(path) > 8 && path[:8] == "/api/v1/" {
-		path = path[8:]
-	}
-	segments := strings.Split(path, "/")
-	if len(segments) == 0 {
-		return "application"
-	}
-	switch segments[0] {
-	case "auth":
-		return "user"
+// mapResourceType converts string resource types to audit resource types
+func mapResourceType(resourceType string) types.AuditResourceType {
+	switch resourceType {
 	case "user":
-		if len(segments) > 1 && segments[1] == "organizations" {
-			return "organization"
-		}
-		return "user"
-	case "organizations":
-		if len(segments) > 1 && segments[1] == "users" {
-			return "user"
-		}
-		return "organization"
-	case "roles":
-		return "role"
-	case "permissions":
-		return "permission"
-	case "applications":
-		return "application"
-	case "deploy":
-		return "deployment"
-	case "deployments":
-		return "deployment"
-	case "domains":
-		return "domain"
-	case "github-connector":
-		return "github_connector"
-	case "smtp":
-		return "smtp_config"
-	case "file-manager":
-		return "application"
+		return types.AuditResourceUser
+	case "organization":
+		return types.AuditResourceOrganization
+	case "role":
+		return types.AuditResourceRole
+	case "permission":
+		return types.AuditResourcePermission
+	case "application":
+		return types.AuditResourceApplication
+	case "deploy", "deployment":
+		return types.AuditResourceDeployment
+	case "domain":
+		return types.AuditResourceDomain
+	case "github-connector", "github_connector":
+		return types.AuditResourceGithubConnector
+	case "smtp", "smtp_config":
+		return types.AuditResourceSmtpConfig
+	case "notification", "notifications":
+		return types.AuditResourceNotification
+	case "feature_flags", "feature-flags", "feature_flag":
+		return types.AuditResourceFeatureFlag
+	case "file-manager", "file_manager":
+		return types.AuditResourceFileManager
+	case "container":
+		return types.AuditResourceContainer
 	case "audit":
-		return "application"
+		return types.AuditResourceAudit
+	case "terminal":
+		return types.AuditResourceTerminal
+	case "integration", "integrations":
+		return types.AuditResourceIntegration
 	default:
-		return "application"
+		return types.AuditResourceOrganization // Default fallback
 	}
+}
+
+// getEndpointName extracts a human-readable endpoint name from path
+func getEndpointName(path string) string {
+	// Remove /api/v1/ prefix
+	path = strings.TrimPrefix(path, "/api/v1/")
+
+	// Take the first segment as endpoint name
+	segments := strings.Split(path, "/")
+	if len(segments) > 0 && segments[0] != "" {
+		return segments[0]
+	}
+	return "unknown"
 }

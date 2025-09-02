@@ -37,7 +37,7 @@ function Page() {
     isUpdatingAutoUpdate,
     handleThemeChange,
     handleLanguageChange,
-    handleAutoUpdateChange,
+    // handleAutoUpdateChange,
     handleFontUpdate
   } = useGeneralSettings();
 
@@ -88,7 +88,7 @@ function Page() {
               isUpdatingAutoUpdate={isUpdatingAutoUpdate}
               handleThemeChange={handleThemeChange}
               handleLanguageChange={handleLanguageChange}
-              handleAutoUpdateChange={handleAutoUpdateChange}
+              // handleAutoUpdateChange={handleAutoUpdateChange}
               handleFontUpdate={handleFontUpdate}
             />
             <SecuritySection

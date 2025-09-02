@@ -629,6 +629,7 @@
         "loading": "Cargando actividades recientes...",
         "error": "Error al cargar las actividades recientes",
         "noActivities": "No se encontraron actividades recientes",
+        "viewAll": "Ver Todo",
         "actions": {
           "create": "{username} creó un nuevo {resource}",
           "update": "{username} actualizó un {resource}",
@@ -709,6 +710,14 @@
       "verifyButton": "Verificar",
       "verifySuccess": "Verificación de 2FA exitosa",
       "verifyError": "Código de verificación inválido"
+    }
+  },
+  "activities": {
+    "title": "Actividades",
+    "description": "Ver todas las actividades y cambios en tu organización",
+    "list": {
+      "title": "Actividades del Equipo",
+      "description": "Actividades recientes en tu organización"
     }
   },
   "languages": {

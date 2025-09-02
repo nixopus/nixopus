@@ -130,15 +130,16 @@ func (router *Router) Routes() {
 		})
 	})
 
-	fuego.Use(server, func(next http.Handler) http.Handler {
-		return middleware.AuditMiddleware(next, router.app, l)
-	})
+	// Remove generic audit middleware - will be applied per route group with explicit resource types
 
 	authProtectedGroup := fuego.Group(server, apiV1.Path+"/auth")
 	router.AuthenticatedAuthRoutes(authProtectedGroup, authController)
 
 	userController := user.NewUserController(router.app.Store, router.app.Ctx, l, router.cache)
 	userGroup := fuego.Group(server, apiV1.Path+"/user")
+	fuego.Use(userGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "user")
+	})
 	router.UserRoutes(userGroup, userController)
 
 	domainController := domain.NewDomainsController(router.app.Store, router.app.Ctx, l, notificationManager)
@@ -156,6 +157,12 @@ func (router *Router) Routes() {
 	fuego.Use(domainsAllGroup, func(next http.Handler) http.Handler {
 		return middleware.FeatureFlagMiddleware(next, router.app, "domain", router.cache)
 	})
+	fuego.Use(domainGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "domain")
+	})
+	fuego.Use(domainsAllGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "domain")
+	})
 	router.DomainRoutes(domainGroup, domainsAllGroup, domainController)
 
 	githubConnectorController := githubConnector.NewGithubConnectorController(router.app.Store, router.app.Ctx, l, notificationManager)
@@ -165,6 +172,9 @@ func (router *Router) Routes() {
 	})
 	fuego.Use(githubConnectorGroup, func(next http.Handler) http.Handler {
 		return middleware.FeatureFlagMiddleware(next, router.app, "github_connector", router.cache)
+	})
+	fuego.Use(githubConnectorGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "github-connector")
 	})
 	router.GithubConnectorRoutes(githubConnectorGroup, githubConnectorController)
 
@@ -176,12 +186,18 @@ func (router *Router) Routes() {
 	fuego.Use(notificationGroup, func(next http.Handler) http.Handler {
 		return middleware.FeatureFlagMiddleware(next, router.app, "notifications", router.cache)
 	})
+	fuego.Use(notificationGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "notification")
+	})
 	router.NotificationRoutes(notificationGroup, notifController)
 
 	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager, router.cache)
 	organizationGroup := fuego.Group(server, apiV1.Path+"/organizations")
 	fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "organization")
+	})
+	fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "organization")
 	})
 	router.OrganizationRoutes(organizationGroup, organizationController)
 
@@ -193,6 +209,9 @@ func (router *Router) Routes() {
 	fuego.Use(fileManagerGroup, func(next http.Handler) http.Handler {
 		return middleware.FeatureFlagMiddleware(next, router.app, "file_manager", router.cache)
 	})
+	fuego.Use(fileManagerGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "file-manager")
+	})
 	router.FileManagerRoutes(fileManagerGroup, fileManagerController)
 
 	deployGroup := fuego.Group(server, apiV1.Path+"/deploy")
@@ -201,6 +220,9 @@ func (router *Router) Routes() {
 	})
 	fuego.Use(deployGroup, func(next http.Handler) http.Handler {
 		return middleware.FeatureFlagMiddleware(next, router.app, "deploy", router.cache)
+	})
+	fuego.Use(deployGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "deploy")
 	})
 	router.DeployRoutes(deployGroup, deployController)
 
@@ -241,6 +263,9 @@ func (router *Router) Routes() {
 	})
 	fuego.Use(containerGroup, func(next http.Handler) http.Handler {
 		return middleware.FeatureFlagMiddleware(next, router.app, "container", router.cache)
+	})
+	fuego.Use(containerGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "container")
 	})
 	router.ContainerRoutes(containerGroup, containerController)
 

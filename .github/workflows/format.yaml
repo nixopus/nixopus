@@ -17,9 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-go@v5
         with:
@@ -37,11 +34,10 @@ jobs:
 
       - name: Commit API changes
         id: api-commit
-        if: github.event_name == 'pull_request'
+        if: github.actor != 'github-actions[bot]'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "style(api): format Go code"
-          branch: ${{ github.head_ref }}
+          commit_message: "style(api): format Go code [skip ci]"
           file_pattern: "api/**/*.go"
           commit_user_name: "github-actions[bot]"
           commit_user_email: "github-actions[bot]@users.noreply.github.com"
@@ -55,9 +51,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v4
         with:
@@ -78,11 +71,10 @@ jobs:
 
       - name: Commit View changes
         id: view-commit
-        if: github.event_name == 'pull_request'
+        if: github.actor != 'github-actions[bot]'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "style(view): format frontend code"
-          branch: ${{ github.head_ref }}
+          commit_message: "style(view): format frontend code [skip ci]"
           file_pattern: "view/**"
           commit_user_name: "github-actions[bot]"
           commit_user_email: "github-actions[bot]@users.noreply.github.com"
@@ -96,9 +88,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
@@ -122,11 +111,10 @@ jobs:
 
       - name: Commit CLI changes
         id: cli-commit
-        if: github.event_name == 'pull_request'
+        if: github.actor != 'github-actions[bot]'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "style(cli): format Python code"
-          branch: ${{ github.head_ref }}
+          commit_message: "style(cli): format Python code [skip ci]"
           file_pattern: "cli/**/*.py"
           commit_user_name: "github-actions[bot]"
           commit_user_email: "github-actions[bot]@users.noreply.github.com"

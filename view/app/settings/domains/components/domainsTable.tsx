@@ -20,14 +20,14 @@ function DomainsTable({ domains }: DomainsTableProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="bg-secondary shadow-md rounded-lg overflow-hidden p-4">
+    <div className="border rounded-lg overflow-hidden p-4">
       <Table>
-        <TableHeader className="bg-muted/50">
+        <TableHeader>
           <TableRow>
-            <TableHead className="text-xs font-medium text-muted-foreground">
+            <TableHead >
               {t('settings.domains.table.headers.domain')}
             </TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground">
+            <TableHead>
               {t('settings.domains.table.headers.type')}
             </TableHead>
             <TableHead className="text-right text-xs font-medium text-muted-foreground">
@@ -35,7 +35,7 @@ function DomainsTable({ domains }: DomainsTableProps) {
             </TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody className="bg-secondary divide-y divide-border">
+        <TableBody className="divide-y divide-border">
           {domains?.flatMap((domain) => (
             <TableRow key={domain.id}>
               <TableCell className="whitespace-nowrap font-medium text-foreground">

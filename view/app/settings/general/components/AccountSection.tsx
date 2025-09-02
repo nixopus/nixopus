@@ -10,7 +10,7 @@ import { TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { UserSettings, User as UserType } from '@/redux/types/user';
-import { ModeToggler } from '@/components/ui/theme-toggler';
+// import { ModeToggler } from '@/components/ui/theme-toggler';
 import { useSendVerificationEmailMutation } from '@/redux/services/users/authApi';
 import { useTranslation } from '@/hooks/use-translation';
 import { LanguageSwitcher } from '@/components/language-switcher';
@@ -43,7 +43,7 @@ interface AccountSectionProps {
   isUpdatingAutoUpdate: boolean;
   handleThemeChange: (theme: string) => void;
   handleLanguageChange: (language: string) => void;
-  handleAutoUpdateChange: (autoUpdate: boolean) => void;
+  // handleAutoUpdateChange: (autoUpdate: boolean) => void;
   handleFontUpdate: (fontFamily: string, fontSize: number) => Promise<void>;
 }
 
@@ -65,7 +65,7 @@ function AccountSection({
   isUpdatingAutoUpdate,
   handleThemeChange,
   handleLanguageChange,
-  handleAutoUpdateChange,
+  // handleAutoUpdateChange,
   handleFontUpdate
 }: AccountSectionProps) {
   const { t } = useTranslation();
@@ -258,7 +258,7 @@ function AccountSection({
           </CardContent>
         </Card>
       </div>
-      <div className="mt-6">
+      {/* <div className="mt-6">
         <Card>
           <CardHeader>
             <TypographySmall>{t('settings.preferences.autoUpdate.title')}</TypographySmall>
@@ -277,7 +277,7 @@ function AccountSection({
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
     </TabsContent>
   );
 }
