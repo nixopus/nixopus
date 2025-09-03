@@ -1,6 +1,7 @@
 'use client';
 
-import { RefreshCw, Trash2, Loader2, Scissors } from 'lucide-react';
+import React from 'react';
+import { RefreshCw, Trash2, Loader2, Scissors, Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ContainersLoading from './skeleton';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
@@ -11,13 +12,25 @@ import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionG
 import useContainerList from './hooks/use-container-list';
 import { TypographyH1, TypographyH2, TypographyMuted } from '@/components/ui/typography';
 import PageLayout from '@/components/layout/page-layout';
-// import { ContainerCard } from './components/card';
 import ContainersTable from './components/table';
+import PaginationWrapper from '@/components/ui/pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchBar } from '@/components/ui/search-bar';
+import { ContainerCard } from './components/card';
 
 export default function ContainersPage() {
+  const [viewMode, setViewMode] = React.useState<'table' | 'card'>(() => {
+    if (typeof window !== 'undefined') {
+      const existing = window.localStorage.getItem('containers_view');
+      return (existing as 'table' | 'card') || 'table';
+    }
+    return 'table';
+  });
   const {
     containers,
     isLoading,
+    isFetching,
+    initialized,
     handleRefresh,
     handleContainerAction,
     handleDeleteConfirm,
@@ -34,10 +47,22 @@ export default function ContainersPage() {
     setContainerToDelete,
     getGradientFromName,
     setShowPruneImagesConfirm,
-    setShowPruneBuildCacheConfirm
+    setShowPruneBuildCacheConfirm,
+    page,
+    setPage,
+    totalPages,
+    totalCount,
+    pageSize,
+    setPageSize,
+    search,
+    searchInput,
+    setSearchInput,
+    sortBy,
+    sortOrder,
+    handleSort
   } = useContainerList();
 
-  if (isLoading) {
+  if (!initialized && isLoading) {
     return <ContainersLoading />;
   }
 
@@ -48,8 +73,6 @@ export default function ContainersPage() {
   if (!isFeatureEnabled(FeatureNames.FeatureContainer)) {
     return <DisabledFeature />;
   }
-
-  // TODO: Add pagination for containers listing
 
   return (
     <ResourceGuard
@@ -63,8 +86,8 @@ export default function ContainersPage() {
             <TypographyH1 className="text-2xl font-bold">{t('containers.title')}</TypographyH1>
           </span>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button onClick={handleRefresh} variant="outline" size="sm" disabled={isRefreshing}>
-              {isRefreshing ? (
+            <Button onClick={handleRefresh} variant="outline" size="sm" disabled={isRefreshing || isFetching}>
+              {isRefreshing || isFetching ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <RefreshCw className="mr-2 h-4 w-4" />
@@ -90,6 +113,50 @@ export default function ContainersPage() {
             </AnyPermissionGuard>
           </div>
         </div>
+
+        <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
+          <div className="flex-1 min-w-[220px]">
+            <SearchBar
+              searchTerm={searchInput}
+              handleSearchChange={(e) => setSearchInput(e.target.value)}
+              label={t('common.searchFiles')}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => {
+                const num = parseInt(v, 10);
+                setPageSize(num);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[110px]">
+                <SelectValue placeholder="Page size" />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 20, 50, 100].map((s) => (
+                  <SelectItem key={s} value={String(s)}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="hidden sm:flex items-center gap-2 ml-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const next = viewMode === 'table' ? 'card' : 'table';
+                  setViewMode(next);
+                  if (typeof window !== 'undefined') window.localStorage.setItem('containers_view', next);
+                }}
+              >
+                {viewMode === 'table' ? <Grid className="h-4 w-4" /> : <List className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        </div>
         {containers.length === 0 && (
           <div className="flex justify-center items-center h-full">
             <TypographyH2 className="text-muted-foreground">
@@ -97,20 +164,38 @@ export default function ContainersPage() {
             </TypographyH2>
           </div>
         )}
-        {/* {containers.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3  gap-4 md:gap-6">
-            {containers.map((container) => (
-              <ContainerCard
-                key={container.id}
-                container={container}
-                onClick={() => router.push(`/containers/${container.id}`)}
-                getGradientFromName={getGradientFromName}
-                onAction={handleContainerAction}
-              />
-            ))}
+        {viewMode === 'card' ? (
+          <>
+            {containers.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3  gap-4 md:gap-6">
+                {containers.map((container) => (
+                  <ContainerCard
+                    key={container.id}
+                    container={container}
+                    onClick={() => router.push(`/containers/${container.id}`)}
+                    getGradientFromName={getGradientFromName}
+                    onAction={handleContainerAction}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <ContainersTable
+            containersData={containers}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSort={handleSort}
+            onAction={handleContainerAction}
+          />
+        )}
+
+        {totalCount > 0 && (
+          <div className="mt-4 flex items-center justify-between flex-wrap gap-2">
+            <TypographyMuted>{totalCount} containers</TypographyMuted>
+            <PaginationWrapper currentPage={page} totalPages={totalPages} onPageChange={setPage} />
           </div>
-        )} */}
-        <ContainersTable containersData={containers} />
+        )}
         <AnyPermissionGuard
           permissions={['container:delete']}
           loadingFallback={null}
