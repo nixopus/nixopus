@@ -6,10 +6,10 @@ on:
       - master
       - feat/develop
     paths:
-      - 'api/**'
-      - 'view/**'
-      - 'cli/**'
-      - '.github/workflows/format.yaml'
+      - "api/**"
+      - "view/**"
+      - "cli/**"
+      - ".github/workflows/format.yaml"
   workflow_dispatch:
 
 concurrency:
@@ -36,16 +36,24 @@ jobs:
           git pull --rebase origin "${{ github.ref_name }}"
 
       - name: Detect changed paths
-        env:
-          BEFORE: ${{ github.event.before }}
-          AFTER: ${{ github.sha }}
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.event.before || 'HEAD~1' }}
+          ref: ${{ github.sha }}
+          filters: |
+            api:
+              - 'api/**/*.go'
+            view:
+              - 'view/**'
+            cli:
+              - 'cli/**/*.py'
+
+      - name: Export change flags
         run: |
-          echo "Diff range: $BEFORE..$AFTER"
-          CHANGED_FILES=$(git diff --name-only "$BEFORE" "$AFTER" || true)
-          echo "Changed files:\n$CHANGED_FILES"
-          if echo "$CHANGED_FILES" | grep -E '^api/.*\.go$' >/dev/null; then echo 'CHANGED_API=true' >> $GITHUB_ENV; else echo 'CHANGED_API=false' >> $GITHUB_ENV; fi
-          if echo "$CHANGED_FILES" | grep -E '^view/' >/dev/null; then echo 'CHANGED_VIEW=true' >> $GITHUB_ENV; else echo 'CHANGED_VIEW=false' >> $GITHUB_ENV; fi
-          if echo "$CHANGED_FILES" | grep -E '^cli/.*\.py$' >/dev/null; then echo 'CHANGED_CLI=true' >> $GITHUB_ENV; else echo 'CHANGED_CLI=false' >> $GITHUB_ENV; fi
+          echo "CHANGED_API=${{ steps.changes.outputs.api }}" >> $GITHUB_ENV
+          echo "CHANGED_VIEW=${{ steps.changes.outputs.view }}" >> $GITHUB_ENV
+          echo "CHANGED_CLI=${{ steps.changes.outputs.cli }}" >> $GITHUB_ENV
 
       # Go formatting (API)
       - uses: actions/setup-go@v5
@@ -128,8 +136,7 @@ jobs:
           else
             echo "Skipping CLI formatting (no CLI changes)"
           fi
-
-      # Single commit for all changes
+      
       - name: Commit formatting changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
