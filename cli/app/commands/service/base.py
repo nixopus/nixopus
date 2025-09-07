@@ -51,6 +51,28 @@ class BaseDockerCommandBuilder:
 
         return cmd
 
+    @staticmethod
+    def build_cleanup_command(
+        compose_file: str,
+        remove_images: str = "all",
+        remove_volumes: bool = True,
+        remove_orphans: bool = True,
+    ) -> list[str]:
+        """Build a docker compose cleanup command (down with prune flags)."""
+        cmd = ["docker", "compose"]
+        if compose_file:
+            cmd.extend(["-f", compose_file])
+        cmd.append("down")
+
+        if remove_images:
+            cmd.extend(["--rmi", remove_images])
+        if remove_volumes:
+            cmd.append("--volumes")
+        if remove_orphans:
+            cmd.append("--remove-orphans")
+
+        return cmd
+
 
 class BaseFormatter:
     def __init__(self):
@@ -181,6 +203,38 @@ class BaseDockerService:
         except Exception as e:
             self.logger.debug(docker_unexpected_error.format(action=self.action, error=str(e)))
             self.logger.error(service_action_unexpected_error.format(action=self.action, error=e))
+            return False, str(e)
+
+    @staticmethod
+    def cleanup_docker_resources(
+        logger: LoggerProtocol,
+        compose_file: str,
+        remove_images: str = "all",
+        remove_volumes: bool = True,
+        remove_orphans: bool = True,
+    ) -> tuple[bool, str]:
+        """Run docker compose down with prune flags, returning (success, output)."""
+        cmd = BaseDockerCommandBuilder.build_cleanup_command(
+            compose_file, remove_images=remove_images, remove_volumes=remove_volumes, remove_orphans=remove_orphans
+        )
+
+        logger.debug(docker_command_executing.format(command=" ".join(cmd)))
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+
+            if result.stdout and result.stdout.strip():
+                logger.debug(docker_command_stdout.format(output=result.stdout.strip()))
+            if result.stderr and result.stderr.strip():
+                logger.debug(docker_command_stderr.format(output=result.stderr.strip()))
+
+            if result.returncode == 0:
+                logger.debug(docker_command_completed.format(action="cleanup"))
+                return True, result.stdout or result.stderr
+            else:
+                logger.debug(docker_command_failed.format(return_code=result.returncode))
+                return False, result.stderr or result.stdout
+        except Exception as e:
+            logger.debug(docker_unexpected_error.format(action="cleanup", error=str(e)))
             return False, str(e)
 
 
