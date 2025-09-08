@@ -2,6 +2,7 @@ import typer
 
 from app.utils.logger import Logger
 from app.utils.timeout import TimeoutWrapper
+
 from .run import Uninstall
 
 uninstall_app = typer.Typer(help="Uninstall Nixopus", invoke_without_command=True)
@@ -18,11 +19,5 @@ def uninstall_callback(
     """Uninstall Nixopus completely from the system"""
     if ctx.invoked_subcommand is None:
         logger = Logger(verbose=verbose)
-        uninstall = Uninstall(
-            logger=logger, 
-            verbose=verbose, 
-            timeout=timeout, 
-            dry_run=dry_run,
-            force=force
-        )
+        uninstall = Uninstall(logger=logger, verbose=verbose, timeout=timeout, dry_run=dry_run, force=force)
         uninstall.run()

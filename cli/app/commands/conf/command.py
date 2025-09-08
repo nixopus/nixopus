@@ -7,31 +7,31 @@ from .delete import Delete, DeleteConfig
 from .list import List, ListConfig
 from .messages import (
     argument_must_be_in_form,
+    debug_action_created,
     debug_conf_command_invoked,
-    debug_service_param,
-    debug_key_param,
-    debug_value_param,
-    debug_verbose_param,
-    debug_output_param,
+    debug_conf_operation_completed,
+    debug_conf_operation_failed,
+    debug_conf_operation_result,
+    debug_config_created,
+    debug_dry_run_completed,
     debug_dry_run_param,
     debug_env_file_param,
-    debug_timeout_param,
-    debug_executing_dry_run,
-    debug_dry_run_completed,
-    debug_conf_operation_result,
-    debug_conf_operation_failed,
-    debug_conf_operation_completed,
     debug_exception_caught,
     debug_exception_details,
-    debug_parsing_key_value,
-    debug_key_value_parsed,
-    debug_key_value_parse_failed,
-    debug_config_created,
-    debug_action_created,
-    debug_timeout_wrapper_created,
+    debug_executing_dry_run,
     debug_executing_with_timeout,
+    debug_key_param,
+    debug_key_value_parse_failed,
+    debug_key_value_parsed,
+    debug_output_param,
+    debug_parsing_key_value,
+    debug_service_param,
     debug_timeout_completed,
     debug_timeout_error,
+    debug_timeout_param,
+    debug_timeout_wrapper_created,
+    debug_value_param,
+    debug_verbose_param,
 )
 from .set import Set, SetConfig
 
@@ -52,7 +52,7 @@ def list(
     """List all configuration"""
     try:
         logger = Logger(verbose=verbose)
-        
+
         logger.debug(debug_conf_command_invoked)
         logger.debug(debug_service_param.format(service=service))
         logger.debug(debug_verbose_param.format(verbose=verbose))
@@ -66,10 +66,10 @@ def list(
 
         list_action = List(logger=logger)
         logger.debug(debug_action_created.format(action_type="List"))
-        
+
         logger.debug(debug_timeout_wrapper_created.format(timeout=timeout))
         logger.debug(debug_executing_with_timeout.format(timeout=timeout))
-        
+
         with TimeoutWrapper(timeout):
             if config.dry_run:
                 logger.debug(debug_executing_dry_run)
@@ -118,7 +118,7 @@ def delete(
     """Delete a configuration"""
     try:
         logger = Logger(verbose=verbose)
-        
+
         logger.debug(debug_conf_command_invoked)
         logger.debug(debug_service_param.format(service=service))
         logger.debug(debug_key_param.format(key=key))
@@ -133,10 +133,10 @@ def delete(
 
         delete_action = Delete(logger=logger)
         logger.debug(debug_action_created.format(action_type="Delete"))
-        
+
         logger.debug(debug_timeout_wrapper_created.format(timeout=timeout))
         logger.debug(debug_executing_with_timeout.format(timeout=timeout))
-        
+
         with TimeoutWrapper(timeout):
             if config.dry_run:
                 logger.debug(debug_executing_dry_run)
@@ -185,7 +185,7 @@ def set(
     """Set a configuration"""
     try:
         logger = Logger(verbose=verbose)
-        
+
         logger.debug(debug_conf_command_invoked)
         logger.debug(debug_service_param.format(service=service))
         logger.debug(debug_verbose_param.format(verbose=verbose))
@@ -199,7 +199,7 @@ def set(
             logger.debug(debug_key_value_parse_failed.format(key_value=key_value))
             logger.error(argument_must_be_in_form)
             raise typer.Exit(1)
-        
+
         key, value = key_value.split("=", 1)
         logger.debug(debug_key_value_parsed.format(key=key, value=value))
 
@@ -210,10 +210,10 @@ def set(
 
         set_action = Set(logger=logger)
         logger.debug(debug_action_created.format(action_type="Set"))
-        
+
         logger.debug(debug_timeout_wrapper_created.format(timeout=timeout))
         logger.debug(debug_executing_with_timeout.format(timeout=timeout))
-        
+
         with TimeoutWrapper(timeout):
             if config.dry_run:
                 logger.debug(debug_executing_dry_run)

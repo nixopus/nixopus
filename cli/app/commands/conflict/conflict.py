@@ -1,18 +1,20 @@
 import os
-import subprocess
 import re
-from typing import Dict, List, Optional, Any, Tuple
+import subprocess
+from typing import Any, Dict, List, Optional, Tuple
+
 from packaging import version
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from app.utils.logger import Logger
-from app.utils.protocols import LoggerProtocol
-from app.utils.output_formatter import OutputFormatter
+from app.utils.config import DEPS, Config
 from app.utils.lib import ParallelProcessor
-from app.utils.config import Config, DEPS
-from .models import ConflictCheckResult, ConflictConfig
+from app.utils.logger import Logger
+from app.utils.output_formatter import OutputFormatter
+from app.utils.protocols import LoggerProtocol
+
 from .messages import *
+from .models import ConflictCheckResult, ConflictConfig
 
 
 class VersionParser:

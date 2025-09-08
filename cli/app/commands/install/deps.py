@@ -1,19 +1,20 @@
-import subprocess
-import shutil
 import json
-from app.utils.config import Config
-from app.utils.lib import HostInformation
+import shutil
+import subprocess
+
+from app.utils.config import DEPS, Config
+from app.utils.lib import HostInformation, ParallelProcessor
 from app.utils.logger import Logger
-from app.utils.config import DEPS
+
 from .messages import (
-    unsupported_package_manager,
-    no_supported_package_manager,
+    dry_run_install_cmd,
+    dry_run_update_cmd,
     failed_to_install,
     installing_dep,
-    dry_run_update_cmd,
-    dry_run_install_cmd,
+    no_supported_package_manager,
+    unsupported_package_manager,
 )
-from app.utils.lib import ParallelProcessor
+
 
 def get_deps_from_config():
     config = Config()
@@ -23,14 +24,16 @@ def get_deps_from_config():
             "name": name,
             "package": dep.get("package", name),
             "command": dep.get("command", ""),
-            "install_command": dep.get("install_command", "")
+            "install_command": dep.get("install_command", ""),
         }
         for name, dep in deps.items()
     ]
 
+
 def get_installed_deps(deps, os_name, package_manager, timeout=2, verbose=False):
     checker = DependencyChecker(Logger(verbose=verbose))
     return {dep["name"]: checker.check_dependency(dep, package_manager) for dep in deps}
+
 
 def update_system_packages(package_manager, logger, dry_run=False):
     if package_manager == "apt":
@@ -48,9 +51,10 @@ def update_system_packages(package_manager, logger, dry_run=False):
     else:
         raise Exception(unsupported_package_manager.format(package_manager=package_manager))
     if dry_run:
-        logger.info(dry_run_update_cmd.format(cmd=' '.join(cmd)))
+        logger.info(dry_run_update_cmd.format(cmd=" ".join(cmd)))
     else:
         subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
 
 def install_dep(dep, package_manager, logger, dry_run=False):
     package = dep["package"]
@@ -78,13 +82,14 @@ def install_dep(dep, package_manager, logger, dry_run=False):
             raise Exception(unsupported_package_manager.format(package_manager=package_manager))
         logger.info(installing_dep.format(dep=package))
         if dry_run:
-            logger.info(dry_run_install_cmd.format(cmd=' '.join(cmd)))
+            logger.info(dry_run_install_cmd.format(cmd=" ".join(cmd)))
             return True
         subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except Exception as e:
         logger.error(failed_to_install.format(dep=package, error=e))
         return False
+
 
 class DependencyChecker:
     def __init__(self, logger=None):
@@ -98,6 +103,7 @@ class DependencyChecker:
             return True
         except Exception:
             return False
+
 
 def install_all_deps(verbose=False, output="text", dry_run=False):
     logger = Logger(verbose=verbose)
@@ -128,7 +134,7 @@ def install_all_deps(verbose=False, output="text", dry_run=False):
     installed_after = get_installed_deps(deps, os_name, package_manager, verbose=verbose)
     failed = [dep["name"] for dep in deps if not installed_after.get(dep["name"])]
     if failed and not dry_run:
-        raise Exception(failed_to_install.format(dep=','.join(failed), error=''))
+        raise Exception(failed_to_install.format(dep=",".join(failed), error=""))
     if output == "json":
         return json.dumps({"installed": results, "failed": failed, "dry_run": dry_run})
     return True

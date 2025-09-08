@@ -48,4 +48,4 @@ path_exists_will_overwrite = "Path {path} exists and will be overwritten (force 
 path_exists_would_fail = "Path {path} exists - clone would fail without --force"
 target_path_not_exists = "Target path {path} does not exist"
 end_dry_run = "=== END DRY RUN ==="
-default_branch = "default" 
+default_branch = "default"

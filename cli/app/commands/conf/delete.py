@@ -11,22 +11,22 @@ from .messages import (
     config_key_not_found,
     configuration_delete_failed,
     configuration_deleted,
+    debug_config_file_exists,
+    debug_config_file_not_exists,
+    debug_config_file_read_failed,
+    debug_config_file_read_success,
+    debug_config_file_write_failed,
+    debug_config_key_deleted,
+    debug_config_key_not_found_delete,
+    debug_deleting_config_key,
+    debug_dry_run_simulation,
+    debug_dry_run_simulation_complete,
+    debug_service_env_file_resolved,
+    debug_validation_failed,
     dry_run_delete_config,
     dry_run_mode,
     end_dry_run,
     key_required_delete,
-    debug_deleting_config_key,
-    debug_config_key_deleted,
-    debug_config_key_not_found_delete,
-    debug_service_env_file_resolved,
-    debug_config_file_exists,
-    debug_config_file_not_exists,
-    debug_config_file_read_success,
-    debug_config_file_read_failed,
-    debug_config_file_write_failed,
-    debug_dry_run_simulation,
-    debug_dry_run_simulation_complete,
-    debug_validation_failed,
 )
 
 
@@ -38,7 +38,7 @@ class EnvironmentManager(BaseEnvironmentManager):
     def delete_config(self, service: str, key: str, env_file: Optional[str] = None) -> tuple[bool, Optional[str]]:
         file_path = self.get_service_env_file(service, env_file)
         self.logger.debug(debug_service_env_file_resolved.format(file_path=file_path))
-        
+
         if self.logger.verbose:
             if os.path.exists(file_path):
                 self.logger.debug(debug_config_file_exists.format(file_path=file_path))
@@ -58,14 +58,14 @@ class EnvironmentManager(BaseEnvironmentManager):
 
         self.logger.debug(debug_deleting_config_key.format(key=key))
         del config[key]
-        
+
         success, error = self.write_env_file(file_path, config)
-        
+
         if success:
             self.logger.debug(debug_config_key_deleted.format(key=key))
         else:
             self.logger.debug(debug_config_file_write_failed.format(error=error))
-        
+
         return success, error
 
 
@@ -137,7 +137,7 @@ class DeleteService(BaseService[DeleteConfig, DeleteResult]):
             formatted = self._format_json(result)
         else:
             formatted = self._format_text(result)
-        
+
         return formatted
 
     def _format_json(self, result: DeleteResult) -> str:

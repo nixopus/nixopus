@@ -377,15 +377,15 @@ class SSHService:
         self.file_manager = FileManager()
 
     def _validate_prerequisites(self) -> bool:
-        self.logger.debug(debug_ssh_config_validation.format(
-            path=self.config.path, 
-            key_type=self.config.key_type, 
-            key_size=self.config.key_size
-        ))
-        
+        self.logger.debug(
+            debug_ssh_config_validation.format(
+                path=self.config.path, key_type=self.config.key_type, key_size=self.config.key_size
+            )
+        )
+
         expanded_key_path = self.file_manager.expand_user_path(self.config.path)
         self.logger.debug(debug_ssh_path_expansion.format(original=self.config.path, expanded=expanded_key_path))
-        
+
         if os.path.exists(expanded_key_path):
             self.logger.debug(debug_ssh_key_exists.format(path=expanded_key_path))
             if not self.config.force:
@@ -396,7 +396,7 @@ class SSHService:
                 self.logger.debug(debug_ssh_force_enabled)
         else:
             self.logger.debug(debug_ssh_key_not_exists.format(path=expanded_key_path))
-        
+
         self.logger.debug(debug_ssh_prerequisites_completed)
         return True
 

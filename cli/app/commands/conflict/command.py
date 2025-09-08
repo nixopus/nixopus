@@ -1,14 +1,16 @@
 import typer
-from .conflict import ConflictConfig, ConflictService
-from .messages import (
-    conflict_check_help,
-    error_checking_conflicts,
-    conflicts_found_warning,
-    no_conflicts_info,
-    checking_conflicts_info,
-)
+
 from app.utils.logger import Logger
 from app.utils.timeout import TimeoutWrapper
+
+from .conflict import ConflictConfig, ConflictService
+from .messages import (
+    checking_conflicts_info,
+    conflict_check_help,
+    conflicts_found_warning,
+    error_checking_conflicts,
+    no_conflicts_info,
+)
 
 conflict_app = typer.Typer(help=conflict_check_help, no_args_is_help=False)
 
@@ -30,7 +32,7 @@ def conflict_callback(
     if ctx.invoked_subcommand is None:
         # Initialize logger once and reuse throughout
         logger = Logger(verbose=verbose)
-        
+
         try:
             logger.info(checking_conflicts_info)
 
@@ -41,7 +43,7 @@ def conflict_callback(
             )
 
             service = ConflictService(config, logger=logger)
-            
+
             with TimeoutWrapper(timeout):
                 result = service.check_and_format(output)
                 # Check if there are any conflicts and exit with appropriate code

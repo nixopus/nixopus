@@ -10,15 +10,15 @@ from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
 from .messages import (
-    debug_cloning_repo,
-    debug_executing_git_clone,
-    debug_git_clone_success,
-    debug_git_clone_failed,
-    debug_unexpected_error,
-    debug_removing_directory,
-    debug_directory_removal_failed,
-    debug_path_exists_force_disabled,
     debug_clone_completed,
+    debug_cloning_repo,
+    debug_directory_removal_failed,
+    debug_executing_git_clone,
+    debug_git_clone_failed,
+    debug_git_clone_success,
+    debug_path_exists_force_disabled,
+    debug_removing_directory,
+    debug_unexpected_error,
     default_branch,
     dry_run_branch,
     dry_run_command,

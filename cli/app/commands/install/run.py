@@ -1,56 +1,59 @@
-import typer
-import os
-import subprocess
-import yaml
 import json
-import shutil
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
-from app.utils.protocols import LoggerProtocol
-from app.utils.config import (
-    Config,
-    VIEW_ENV_FILE,
-    API_ENV_FILE,
-    DEFAULT_REPO,
-    DEFAULT_BRANCH,
-    DEFAULT_PATH,
-    NIXOPUS_CONFIG_DIR,
-    PORTS,
-    DEFAULT_COMPOSE_FILE,
-    PROXY_PORT,
-    SSH_KEY_TYPE,
-    SSH_KEY_SIZE,
-    SSH_FILE_PATH,
-    VIEW_PORT,
-    API_PORT,
-    DOCKER_PORT,
-    CADDY_CONFIG_VOLUME,
-)
-from app.utils.timeout import TimeoutWrapper
-from app.commands.preflight.run import PreflightRunner
-from app.commands.clone.clone import Clone, CloneConfig
-from app.utils.lib import HostInformation, FileManager
-from app.commands.conf.base import BaseEnvironmentManager
+import os
 import re
-from app.commands.service.up import Up, UpConfig
+import shutil
+import subprocess
+
+import typer
+import yaml
+from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
+
+from app.commands.clone.clone import Clone, CloneConfig
+from app.commands.conf.base import BaseEnvironmentManager
+from app.commands.preflight.run import PreflightRunner
 from app.commands.proxy.load import Load, LoadConfig
 from app.commands.service.base import BaseDockerService
-from .ssh import SSH, SSHConfig
+from app.commands.service.up import Up, UpConfig
+from app.utils.config import (
+    API_ENV_FILE,
+    API_PORT,
+    CADDY_CONFIG_VOLUME,
+    DEFAULT_BRANCH,
+    DEFAULT_COMPOSE_FILE,
+    DEFAULT_PATH,
+    DEFAULT_REPO,
+    DOCKER_PORT,
+    NIXOPUS_CONFIG_DIR,
+    PORTS,
+    PROXY_PORT,
+    SSH_FILE_PATH,
+    SSH_KEY_SIZE,
+    SSH_KEY_TYPE,
+    VIEW_ENV_FILE,
+    VIEW_PORT,
+    Config,
+)
+from app.utils.lib import FileManager, HostInformation
+from app.utils.protocols import LoggerProtocol
+from app.utils.timeout import TimeoutWrapper
+
+from .deps import install_all_deps
 from .messages import (
-    installation_failed,
-    installing_nixopus,
-    dependency_installation_timeout,
     clone_failed,
+    configuration_key_has_no_default_value,
+    created_env_file,
+    dependency_installation_timeout,
     env_file_creation_failed,
     env_file_permissions_failed,
-    proxy_config_created,
-    ssh_setup_failed,
-    services_start_failed,
-    proxy_load_failed,
+    installation_failed,
+    installing_nixopus,
     operation_timed_out,
-    created_env_file,
-    configuration_key_has_no_default_value,
+    proxy_config_created,
+    proxy_load_failed,
+    services_start_failed,
+    ssh_setup_failed,
 )
-from .deps import install_all_deps
+from .ssh import SSH, SSHConfig
 
 _config = Config()
 _config_dir = _config.get_yaml_value(NIXOPUS_CONFIG_DIR)

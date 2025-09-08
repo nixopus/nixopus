@@ -1,7 +1,9 @@
 import os
-import sys
-import yaml
 import re
+import sys
+
+import yaml
+
 from app.utils.message import MISSING_CONFIG_KEY_MESSAGE
 
 

@@ -92,7 +92,7 @@ class UpService(BaseService[UpConfig, UpResult]):
         success, docker_output = self.docker_service.start_services(
             self.config.name, self.config.detach, self.config.env_file, self.config.compose_file
         )
-        
+
         error = None if success else docker_output
         return self._create_result(success, error, docker_output)
 
@@ -121,6 +121,6 @@ class Up(BaseAction[UpConfig, UpResult]):
 
     def format_output(self, result: UpResult, output: str) -> str:
         return self.formatter.format_output(result, output)
-    
+
     def format_dry_run(self, config: UpConfig) -> str:
         return self.formatter.format_dry_run(config)

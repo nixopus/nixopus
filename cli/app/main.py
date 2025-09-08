@@ -1,14 +1,15 @@
 import os
 import time
-import typer
-
 from importlib.metadata import version as get_version
+
+import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
 from app.commands.clone.command import clone_app
 from app.commands.conf.command import conf_app
+from app.commands.conflict.command import conflict_app
 from app.commands.install.command import install_app
 from app.commands.preflight.command import preflight_app
 from app.commands.proxy.command import proxy_app
@@ -16,11 +17,9 @@ from app.commands.service.command import service_app
 from app.commands.test.command import test_app
 from app.commands.uninstall.command import uninstall_app
 from app.commands.version.command import main_version_callback, version_app
-from app.commands.conflict.command import conflict_app
 from app.commands.version.version import VersionCommand
-from app.utils.message import application_add_completion, application_description, application_name, application_version_help
 from app.utils.config import Config
-
+from app.utils.message import application_add_completion, application_description, application_name, application_version_help
 
 app = typer.Typer(
     name=application_name,

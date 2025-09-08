@@ -11,12 +11,12 @@ from app.utils.protocols import LoggerProtocol
 
 from .messages import (
     available,
+    debug_port_check_result,
+    debug_processing_ports,
     error_checking_port,
+    error_socket_connection_failed,
     host_must_be_localhost_or_valid_ip_or_domain,
     not_available,
-    debug_processing_ports,
-    debug_port_check_result,
-    error_socket_connection_failed,
 )
 
 
@@ -64,38 +64,32 @@ class PortFormatter:
                     return self.output_formatter.create_success_message(message).message
                 else:
                     return f"Error: {message}"
-            
+
             if output_type == "text":
                 table_data = []
                 for item in data:
-                    row = {
-                        "Port": str(item['port']),
-                        "Status": item['status']
-                    }
-                    if item.get('host') and item['host'] != "localhost":
-                        row["Host"] = item['host']
-                    if item.get('error'):
-                        row["Error"] = item['error']
+                    row = {"Port": str(item["port"]), "Status": item["status"]}
+                    if item.get("host") and item["host"] != "localhost":
+                        row["Host"] = item["host"]
+                    if item.get("error"):
+                        row["Error"] = item["error"]
                     table_data.append(row)
-                
+
                 return self.output_formatter.create_table(
-                    table_data,
-                    title="Port Check Results",
-                    show_header=True,
-                    show_lines=True
+                    table_data, title="Port Check Results", show_header=True, show_lines=True
                 )
             else:
                 json_data = []
                 for item in data:
                     port_data = {
-                        "port": item['port'],
-                        "status": item['status'],
-                        "is_available": item.get('is_available', False)
+                        "port": item["port"],
+                        "status": item["status"],
+                        "is_available": item.get("is_available", False),
                     }
-                    if item.get('host'):
-                        port_data["host"] = item['host']
-                    if item.get('error'):
-                        port_data["error"] = item['error']
+                    if item.get("host"):
+                        port_data["host"] = item["host"]
+                    if item.get("error"):
+                        port_data["error"] = item["error"]
                     json_data.append(port_data)
                 return self.output_formatter.format_json(json_data)
         else:

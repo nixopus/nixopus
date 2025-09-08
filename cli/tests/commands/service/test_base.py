@@ -112,7 +112,7 @@ class TestBaseDockerService:
         mock_process.stdout = ["line1\n", "line2\n"]
         mock_process.wait.return_value = 0
         mock_popen.return_value = mock_process
-        
+
         docker_service = BaseDockerService(self.logger, "up")
 
         success, error = docker_service.execute_services("web")

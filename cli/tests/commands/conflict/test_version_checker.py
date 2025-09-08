@@ -1,11 +1,12 @@
-import unittest
-from unittest.mock import Mock, patch, call
 import subprocess
-from app.commands.conflict.models import ConflictConfig
+import unittest
+from unittest.mock import Mock, call, patch
+
 from app.commands.conflict.conflict import (
-    ToolVersionChecker,
     ConflictChecker,
+    ToolVersionChecker,
 )
+from app.commands.conflict.models import ConflictConfig
 from app.utils.logger import Logger
 
 
@@ -14,9 +15,7 @@ class TestVersionChecker(unittest.TestCase):
 
     def setUp(self):
         self.logger = Logger(verbose=False)
-        self.config = ConflictConfig(
-            config_file="test_config.yaml", verbose=False, output="text"
-        )
+        self.config = ConflictConfig(config_file="test_config.yaml", verbose=False, output="text")
 
     @patch("subprocess.run")
     def test_tool_version_checker_successful(self, mock_run):
@@ -59,7 +58,9 @@ class TestVersionChecker(unittest.TestCase):
     def test_tool_mapping(self, mock_load_config):
         """Test tool name mapping for system commands"""
         # Provide a dummy config for ConflictChecker
-        mock_load_config.return_value = {"deps": {"docker": {"version": "20.10.0"}, "go": {"version": "1.18.0"}, "python": {"version": "3.9.0"}}}
+        mock_load_config.return_value = {
+            "deps": {"docker": {"version": "20.10.0"}, "go": {"version": "1.18.0"}, "python": {"version": "3.9.0"}}
+        }
         deps = {"docker": {"version": "20.10.0"}, "go": {"version": "1.18.0"}, "python": {"version": "3.9.0"}}
 
         conflict_checker = ConflictChecker(self.config, self.logger)
@@ -83,10 +84,11 @@ class TestVersionChecker(unittest.TestCase):
 
     def test_version_requirement_none_or_empty(self):
         """Test handling of tools with no version requirements"""
-        import yaml
-        import tempfile
         import os
-        
+        import tempfile
+
+        import yaml
+
         config_data = {"deps": {"docker": {"version": ""}, "git": {"version": None}, "python": {}}}  # No version key
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
@@ -118,16 +120,16 @@ class TestVersionChecker(unittest.TestCase):
     def test_tool_version_check_integration(self):
         """Test the integration of tool version checking"""
         checker = ToolVersionChecker(self.logger, timeout=5)
-        
+
         # Test that the tool version checking works with mocked subprocess
         with patch("subprocess.run") as mock_run:
             mock_result = Mock()
             mock_result.returncode = 0
             mock_result.stdout = "Test version 1.0.0"
             mock_run.return_value = mock_result
-            
+
             version = checker.get_tool_version("test_tool")
-            
+
             # Should extract version from output
             self.assertEqual(version, "1.0.0")
 

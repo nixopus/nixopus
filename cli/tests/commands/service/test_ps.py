@@ -39,7 +39,17 @@ class TestDockerCommandBuilder:
 
     def test_build_ps_command_with_all_parameters(self):
         cmd = DockerCommandBuilder.build_ps_command("api", "/path/to/.env", "/path/to/docker-compose.yml")
-        assert cmd == ["docker", "compose", "-f", "/path/to/docker-compose.yml", "config", "--format", "json", "--env-file", "/path/to/.env"]
+        assert cmd == [
+            "docker",
+            "compose",
+            "-f",
+            "/path/to/docker-compose.yml",
+            "config",
+            "--format",
+            "json",
+            "--env-file",
+            "/path/to/.env",
+        ]
 
 
 class TestPsFormatter:

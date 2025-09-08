@@ -6,11 +6,7 @@ separated by concerns for better maintainability.
 """
 
 from .test_config_and_models import TestConfigAndModels
-from .test_version_checker import TestVersionChecker
 from .test_service_integration import TestServiceIntegration
+from .test_version_checker import TestVersionChecker
 
-__all__ = [
-    'TestConfigAndModels',
-    'TestVersionChecker', 
-    'TestServiceIntegration'
-]
+__all__ = ["TestConfigAndModels", "TestVersionChecker", "TestServiceIntegration"]

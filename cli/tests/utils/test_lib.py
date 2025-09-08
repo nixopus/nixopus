@@ -4,18 +4,19 @@ import shutil
 import stat
 import tempfile
 import unittest
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import Mock, mock_open, patch
+
 import requests
 
 from app.utils.lib import (
-    SupportedOS,
-    SupportedDistribution,
-    SupportedPackageManager,
-    Supported,
-    HostInformation,
-    ParallelProcessor,
     DirectoryManager,
     FileManager,
+    HostInformation,
+    ParallelProcessor,
+    Supported,
+    SupportedDistribution,
+    SupportedOS,
+    SupportedPackageManager,
 )
 from app.utils.message import (
     FAILED_TO_GET_PUBLIC_IP_MESSAGE,
@@ -126,7 +127,7 @@ class TestHostInformation(unittest.TestCase):
     @patch("app.utils.lib.HostInformation.command_exists")
     def test_get_package_manager_linux_apt(self, mock_command_exists, mock_get_os_name):
         mock_get_os_name.return_value = "linux"
-        
+
         def command_exists_side_effect(command):
             return command == "apt"
 
@@ -139,7 +140,7 @@ class TestHostInformation(unittest.TestCase):
     @patch("app.utils.lib.HostInformation.command_exists")
     def test_get_package_manager_linux_yum(self, mock_command_exists, mock_get_os_name):
         mock_get_os_name.return_value = "linux"
-        
+
         def command_exists_side_effect(command):
             return command == "yum"
 
@@ -156,7 +157,7 @@ class TestHostInformation(unittest.TestCase):
 
         with self.assertRaises(RuntimeError) as context:
             HostInformation.get_package_manager()
-        
+
         self.assertIn("No supported package manager found", str(context.exception))
 
     @patch("shutil.which")
@@ -186,7 +187,7 @@ class TestHostInformation(unittest.TestCase):
 
         with self.assertRaises(Exception) as context:
             HostInformation.get_public_ip()
-        
+
         self.assertEqual(str(context.exception), FAILED_TO_GET_PUBLIC_IP_MESSAGE)
 
     @patch("requests.get")
@@ -195,7 +196,7 @@ class TestHostInformation(unittest.TestCase):
 
         with self.assertRaises(Exception) as context:
             HostInformation.get_public_ip()
-        
+
         self.assertEqual(str(context.exception), FAILED_TO_GET_PUBLIC_IP_MESSAGE)
 
     @patch("requests.get")
@@ -204,7 +205,7 @@ class TestHostInformation(unittest.TestCase):
 
         with self.assertRaises(Exception) as context:
             HostInformation.get_public_ip()
-        
+
         self.assertEqual(str(context.exception), FAILED_TO_GET_PUBLIC_IP_MESSAGE)
 
 
@@ -242,10 +243,10 @@ class TestParallelProcessor(unittest.TestCase):
 
         results = ParallelProcessor.process_items([1, 2, 3, 4, 5], processor, error_handler=error_handler)
         self.assertEqual(len(results), 5)
-        
+
         error_results = [r for r in results if "Error processing 3" in str(r)]
         normal_results = [r for r in results if isinstance(r, int)]
-        
+
         self.assertEqual(len(error_results), 1)
         self.assertEqual(set(normal_results), {2, 4, 8, 10})
 
@@ -311,7 +312,7 @@ class TestDirectoryManager(unittest.TestCase):
         mock_logger = Mock()
 
         result = DirectoryManager.remove_directory("/test/path", mock_logger)
-        
+
         self.assertTrue(result)
         mock_rmtree.assert_called_once_with("/test/path")
         mock_logger.debug.assert_called()
@@ -322,7 +323,7 @@ class TestDirectoryManager(unittest.TestCase):
         mock_exists.return_value = True
 
         result = DirectoryManager.remove_directory("/test/path")
-        
+
         self.assertTrue(result)
         mock_rmtree.assert_called_once_with("/test/path")
 
@@ -334,7 +335,7 @@ class TestDirectoryManager(unittest.TestCase):
         mock_logger = Mock()
 
         result = DirectoryManager.remove_directory("/test/path", mock_logger)
-        
+
         self.assertFalse(result)
         mock_logger.debug.assert_called()
         mock_logger.error.assert_called_once()
@@ -346,7 +347,7 @@ class TestDirectoryManager(unittest.TestCase):
         mock_rmtree.side_effect = OSError("Directory not found")
 
         result = DirectoryManager.remove_directory("/test/path")
-        
+
         self.assertFalse(result)
 
 
@@ -361,12 +362,12 @@ class TestFileManager(unittest.TestCase):
     @patch("os.chmod")
     def test_set_permissions_success(self, mock_chmod):
         mock_logger = Mock()
-        
+
         with open(self.test_file, "w") as f:
             f.write("test content")
 
         success, error = FileManager.set_permissions(self.test_file, 0o644, mock_logger)
-        
+
         self.assertTrue(success)
         self.assertIsNone(error)
         mock_chmod.assert_called_once_with(self.test_file, 0o644)
@@ -378,7 +379,7 @@ class TestFileManager(unittest.TestCase):
         mock_logger = Mock()
 
         success, error = FileManager.set_permissions(self.test_file, 0o644, mock_logger)
-        
+
         self.assertFalse(success)
         self.assertIn("Failed to set permissions", error)
         mock_logger.error.assert_called_once()
@@ -389,7 +390,7 @@ class TestFileManager(unittest.TestCase):
             f.write("test content")
 
         success, error = FileManager.set_permissions(self.test_file, 0o644)
-        
+
         self.assertTrue(success)
         self.assertIsNone(error)
         mock_chmod.assert_called_once_with(self.test_file, 0o644)
@@ -400,7 +401,7 @@ class TestFileManager(unittest.TestCase):
         test_dir = os.path.join(self.temp_dir, "new_dir")
 
         success, error = FileManager.create_directory(test_dir, 0o755, mock_logger)
-        
+
         self.assertTrue(success)
         self.assertIsNone(error)
         mock_makedirs.assert_called_once_with(test_dir, mode=0o755)
@@ -414,7 +415,7 @@ class TestFileManager(unittest.TestCase):
         mock_exists.return_value = True
 
         success, error = FileManager.create_directory(test_dir, 0o755, mock_logger)
-        
+
         self.assertTrue(success)
         self.assertIsNone(error)
         mock_makedirs.assert_not_called()
@@ -426,7 +427,7 @@ class TestFileManager(unittest.TestCase):
         test_dir = "/root/restricted_dir"
 
         success, error = FileManager.create_directory(test_dir, 0o755, mock_logger)
-        
+
         self.assertFalse(success)
         self.assertIn("Failed to create directory", error)
         mock_logger.error.assert_called_once()
@@ -436,23 +437,23 @@ class TestFileManager(unittest.TestCase):
         content = "new content"
 
         success, error = FileManager.append_to_file(self.test_file, content, 0o644, mock_logger)
-        
+
         self.assertTrue(success)
         self.assertIsNone(error)
-        
+
         with open(self.test_file, "r") as f:
             file_content = f.read()
-        
+
         self.assertIn(content, file_content)
         mock_logger.debug.assert_called()
 
     def test_append_to_file_failure_permission(self):
         mock_logger = Mock()
         content = "new content"
-        
+
         with patch("builtins.open", side_effect=PermissionError("Permission denied")):
             success, error = FileManager.append_to_file(self.test_file, content, 0o644, mock_logger)
-        
+
         self.assertFalse(success)
         self.assertIn("Failed to append to", error)
         mock_logger.error.assert_called_once()
@@ -463,17 +464,17 @@ class TestFileManager(unittest.TestCase):
             f.write(content)
 
         success, file_content, error = FileManager.read_file_content(self.test_file)
-        
+
         self.assertTrue(success)
         self.assertEqual(file_content, content)
         self.assertIsNone(error)
 
     def test_read_file_content_failure(self):
         mock_logger = Mock()
-        
+
         with patch("builtins.open", side_effect=FileNotFoundError("File not found")):
             success, file_content, error = FileManager.read_file_content(self.test_file, mock_logger)
-        
+
         self.assertFalse(success)
         self.assertIsNone(file_content)
         self.assertIn("Failed to read", error)
@@ -485,7 +486,7 @@ class TestFileManager(unittest.TestCase):
             f.write(content)
 
         success, file_content, error = FileManager.read_file_content(self.test_file)
-        
+
         self.assertTrue(success)
         self.assertEqual(file_content, "test content")
         self.assertIsNone(error)
@@ -493,27 +494,27 @@ class TestFileManager(unittest.TestCase):
     @patch("os.path.expanduser")
     def test_expand_user_path(self, mock_expanduser):
         mock_expanduser.return_value = "/home/user/test"
-        
+
         result = FileManager.expand_user_path("~/test")
-        
+
         self.assertEqual(result, "/home/user/test")
         mock_expanduser.assert_called_once_with("~/test")
 
     @patch("os.path.dirname")
     def test_get_directory_path(self, mock_dirname):
         mock_dirname.return_value = "/path/to"
-        
+
         result = FileManager.get_directory_path("/path/to/file.txt")
-        
+
         self.assertEqual(result, "/path/to")
         mock_dirname.assert_called_once_with("/path/to/file.txt")
 
     def test_get_public_key_path(self):
         private_key_path = "/path/to/id_rsa"
         expected_public_key_path = "/path/to/id_rsa.pub"
-        
+
         result = FileManager.get_public_key_path(private_key_path)
-        
+
         self.assertEqual(result, expected_public_key_path)
 
     def test_get_public_key_path_empty_string(self):
@@ -523,11 +524,11 @@ class TestFileManager(unittest.TestCase):
     def test_get_public_key_path_with_spaces(self):
         private_key_path = "/path with spaces/id_rsa"
         expected_public_key_path = "/path with spaces/id_rsa.pub"
-        
+
         result = FileManager.get_public_key_path(private_key_path)
-        
+
         self.assertEqual(result, expected_public_key_path)
 
 
 if __name__ == "__main__":
-    unittest.main() 
+    unittest.main()

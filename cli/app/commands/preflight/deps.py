@@ -10,13 +10,13 @@ from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
 from .messages import (
+    debug_dep_check_result,
+    debug_processing_deps,
     error_checking_dependency,
+    error_subprocess_execution_failed,
     invalid_os,
     invalid_package_manager,
     timeout_checking_dependency,
-    debug_processing_deps,
-    debug_dep_check_result,
-    error_subprocess_execution_failed,
 )
 
 
@@ -82,19 +82,13 @@ class DependencyFormatter:
         if output == "text":
             table_data = []
             for result in results:
-                row = {
-                    "Dependency": result.dependency,
-                    "Status": "available" if result.is_available else "not available"
-                }
+                row = {"Dependency": result.dependency, "Status": "available" if result.is_available else "not available"}
                 if result.error and not result.is_available:
                     row["Error"] = result.error
                 table_data.append(row)
-            
+
             return self.output_formatter.create_table(
-                table_data,
-                title="Dependency Check Results",
-                show_header=True,
-                show_lines=True
+                table_data, title="Dependency Check Results", show_header=True, show_lines=True
             )
         else:
             json_data = []
@@ -102,12 +96,12 @@ class DependencyFormatter:
                 item = {
                     "dependency": result.dependency,
                     "is_available": result.is_available,
-                    "status": "available" if result.is_available else "not available"
+                    "status": "available" if result.is_available else "not available",
                 }
                 if result.error and not result.is_available:
                     item["error"] = result.error
                 json_data.append(item)
-            
+
             return self.output_formatter.format_json(json_data)
 
 

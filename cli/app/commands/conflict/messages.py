@@ -1,4 +1,4 @@
-no_version_conflicts_message = "No version conflicts to check"# Message constants for conflict command
+no_version_conflicts_message = "No version conflicts to check"  # Message constants for conflict command
 
 # General messages
 conflict_check_help = "Check for tool version conflicts"

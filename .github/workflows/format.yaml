@@ -5,19 +5,58 @@ on:
     branches:
       - master
       - feat/develop
+    paths:
+      - "api/**"
+      - "view/**"
+      - "cli/**"
+      - ".github/workflows/format.yaml"
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  format-api:
-    name: Format API
+  format-all:
+    name: Format All
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
 
+      - name: Sync with latest changes (rebase)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin "${{ github.ref_name }}"
+
+      - name: Detect changed paths
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.event.before || 'HEAD~1' }}
+          ref: ${{ github.sha }}
+          filters: |
+            api:
+              - 'api/**/*.go'
+            view:
+              - 'view/**'
+            cli:
+              - 'cli/**/*.py'
+
+      - name: Export change flags
+        run: |
+          echo "CHANGED_API=${{ steps.changes.outputs.api }}" >> $GITHUB_ENV
+          echo "CHANGED_VIEW=${{ steps.changes.outputs.view }}" >> $GITHUB_ENV
+          echo "CHANGED_CLI=${{ steps.changes.outputs.cli }}" >> $GITHUB_ENV
+
+      # Go formatting (API)
       - uses: actions/setup-go@v5
         with:
           go-version: "1.22"
@@ -25,97 +64,88 @@ jobs:
           cache: true
           cache-dependency-path: api/go.sum
 
-      - name: Run gofmt
+      - name: Run gofmt (only if API changed)
         working-directory: api
         run: |
-          echo "Running gofmt..."
-          gofmt -l -w .
-          git status
+          if [ "${CHANGED_API:-true}" = "true" ]; then
+            echo "Running gofmt..."
+            gofmt -l -w .
+          else
+            echo "Skipping gofmt (no API changes)"
+          fi
 
-      - name: Commit API changes
-        id: api-commit
-        if: github.actor != 'github-actions[bot]'
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "style(api): format Go code [skip ci]"
-          file_pattern: "api/**/*.go"
-          commit_user_name: "github-actions[bot]"
-          commit_user_email: "github-actions[bot]@users.noreply.github.com"
-          skip_dirty_check: false
-          skip_fetch: true
-          skip_checkout: true
-          disable_globbing: false
-
-  format-view:
-    name: Format View
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
+      # Node/Prettier formatting (View)
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "yarn"
           cache-dependency-path: view/yarn.lock
 
-      - name: Install Yarn
-        run: npm install -g yarn
+      - name: Install Yarn (only if View changed)
+        run: |
+          if [ "${CHANGED_VIEW:-true}" = "true" ]; then
+            npm install -g yarn
+          else
+            echo "Skipping Yarn install (no View changes)"
+          fi
 
-      - name: Install dependencies
+      - name: Install frontend dependencies (only if View changed)
         working-directory: view
-        run: yarn install --frozen-lockfile
+        run: |
+          if [ "${CHANGED_VIEW:-true}" = "true" ]; then
+            if [ -f yarn.lock ]; then yarn install --frozen-lockfile; else yarn install; fi
+          else
+            echo "Skipping frontend deps install (no View changes)"
+          fi
 
-      - name: Run Prettier
+      - name: Run Prettier (only if View changed)
         working-directory: view
-        run: yarn format
+        run: |
+          if [ "${CHANGED_VIEW:-true}" = "true" ]; then
+            yarn format
+          else
+            echo "Skipping Prettier (no View changes)"
+          fi
 
-      - name: Commit View changes
-        id: view-commit
-        if: github.actor != 'github-actions[bot]'
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "style(view): format frontend code [skip ci]"
-          file_pattern: "view/**"
-          commit_user_name: "github-actions[bot]"
-          commit_user_email: "github-actions[bot]@users.noreply.github.com"
-          skip_dirty_check: false
-          skip_fetch: true
-          skip_checkout: true
-          disable_globbing: false
-
-  format-cli:
-    name: Format CLI
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
+      # Python formatting (CLI)
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Install Poetry
+      - name: Install Poetry (only if CLI changed)
         uses: snok/install-poetry@v1
         with:
           version: latest
           virtualenvs-create: true
           virtualenvs-in-project: true
 
-      - name: Install dependencies
+      - name: Install CLI dependencies (only if CLI changed)
         working-directory: cli
-        run: poetry install --with dev --quiet
+        run: |
+          if [ "${CHANGED_CLI:-true}" = "true" ]; then
+            poetry install --with dev --quiet
+          else
+            echo "Skipping CLI deps install (no CLI changes)"
+          fi
 
-      - name: Run formatting
+      - name: Run CLI formatting (only if CLI changed)
         working-directory: cli
-        run: make format
-
-      - name: Commit CLI changes
-        id: cli-commit
-        if: github.actor != 'github-actions[bot]'
+        run: |
+          if [ "${CHANGED_CLI:-true}" = "true" ]; then
+            make format
+          else
+            echo "Skipping CLI formatting (no CLI changes)"
+          fi
+      
+      - name: Commit formatting changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "style(cli): format Python code [skip ci]"
-          file_pattern: "cli/**/*.py"
+          commit_message: "style: format code [skip ci]"
+          file_pattern: |
+            api/**/*.go
+            view/**
+            cli/**/*.py
           commit_user_name: "github-actions[bot]"
           commit_user_email: "github-actions[bot]@users.noreply.github.com"
           skip_dirty_check: false
