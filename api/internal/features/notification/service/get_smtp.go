@@ -13,7 +13,7 @@ func (s *NotificationService) GetSmtp(ID string, organizationID string) (*shared
 	s.logger.Log(logger.Info, "Getting SMTP configuration", "")
 
 	smtp, err := s.storage.GetSmtp(ID)
-	if err != nil { // does not swallow db-errors, also assumes that dbErr.noRows is already handled
+	if err != nil {
 		return nil, err
 	}
 	if smtp != nil {
