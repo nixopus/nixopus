@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nixopus"
-version = "0.1.3"
+version = "0.1.4"
 description = "A CLI for Nixopus"
 authors = ["Nixopus <raghavyuva@gmail.com>"]
 readme = "README.md"

@@ -36,6 +36,7 @@ jobs:
           pre-release: 'true'
           pre-release-identifier: 'alpha'
           git-push: 'true'
+          release-count: 0
 
       - name: Update version.txt
         if: ${{ steps.changelog.outputs.skipped == 'false' }}
