@@ -26,8 +26,8 @@ export const notificationApi = createApi({
         params: { id: organizationId }
       }),
       providesTags: [{ type: 'Notification', id: 'LIST' }],
-      transformResponse: (response: { data: SMTPConfig }) => {
-        return response.data;
+      transformResponse: (response: { data: SMTPConfig | null }) => {
+        return response.data ?? undefined; // assumes undefined behaviour is handled
       }
     }),
     createSMPTConfiguration: builder.mutation<SMTPConfig, CreateSMTPConfigRequest>({

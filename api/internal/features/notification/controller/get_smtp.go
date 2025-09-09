@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -46,6 +47,14 @@ func (c *NotificationController) GetSmtp(f fuego.ContextNoBody) (*shared_types.R
 
 	SMTPConfigs, err := c.service.GetSmtp(user.ID.String(), orgID)
 	if err != nil {
+		if errors.Is(err, notification.ErrSMTPConfigNotFound) {
+			return &shared_types.Response{
+				Status:  "success",
+				Message: "No SMTP configs were found",
+				Data:    nil,
+			}, nil
+		}
+
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
