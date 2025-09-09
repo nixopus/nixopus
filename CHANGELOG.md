@@ -1,3 +1,12 @@
+# [0.1.0-alpha.21](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.20...v0.1.0-alpha.21) (2025-09-08)
+
+
+### Bug Fixes
+
+* **ci:** format workflow to single-commit, sequential and use dorny/paths-filter ([#374](https://github.com/raghavyuva/nixopus/issues/374)) ([c74e074](https://github.com/raghavyuva/nixopus/commit/c74e07456796fa36331dfa32bba5035cb73712c7))
+
+
+
 # [0.1.0-alpha.20](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.19...v0.1.0-alpha.20) (2025-09-07)
 
 
@@ -38,25 +47,6 @@
 * default --config-file to None in command ([62583f7](https://github.com/raghavyuva/nixopus/commit/62583f7d14a157235f3a130fc69c46ddbdefcebf))
 * fallback to built-in config when no --config-file is provided ([cd6eafd](https://github.com/raghavyuva/nixopus/commit/cd6eafd56a7bdb10ff1c605677e2fd231c4092fe))
 * load built-in config via Config.load_yaml_config() when config_file is None. ([885dbf2](https://github.com/raghavyuva/nixopus/commit/885dbf28b4496f018b29d221d96f7dede970404c))
-
-
-
-# [0.1.0-alpha.16](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.15...v0.1.0-alpha.16) (2025-08-29)
-
-
-### Bug Fixes
-
-* audit log rendering logic ([#359](https://github.com/raghavyuva/nixopus/issues/359)) ([42cc81e](https://github.com/raghavyuva/nixopus/commit/42cc81e63abb7c01e52b6978b5a498afd8d21144))
-
-
-### Features
-
-* add table component for containers listing and component seggregation ([#356](https://github.com/raghavyuva/nixopus/issues/356)) ([9674ad0](https://github.com/raghavyuva/nixopus/commit/9674ad0446c3afc1ed723aaa44dc51c833a77bd3))
-
-
-### Reverts
-
-* auto update feature from dashboard ([#360](https://github.com/raghavyuva/nixopus/issues/360)) ([af22103](https://github.com/raghavyuva/nixopus/commit/af2210364f7ab28a6efc621af73afa41e5d127c7))
 
 
 
