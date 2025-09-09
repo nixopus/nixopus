@@ -17,6 +17,7 @@ import { useResetPasswordMutation } from '@/redux/services/users/authApi';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/use-translation';
+import { PasswordInputField } from '@/components/ui/password-input-field';
 
 const resetPasswordSchema = (t: (key: string) => string) =>
   z
@@ -104,7 +105,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                 <FormItem>
                   <FormLabel>{t('auth.resetPassword.newPassword')}</FormLabel>
                   <FormControl>
-                    <Input
+                    <PasswordInputField
                       type="password"
                       placeholder={t('auth.resetPassword.newPassword')}
                       {...field}
@@ -121,7 +122,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                 <FormItem>
                   <FormLabel>{t('auth.resetPassword.confirmPassword')}</FormLabel>
                   <FormControl>
-                    <Input
+                    <PasswordInputField
                       type="password"
                       placeholder={t('auth.resetPassword.confirmPassword')}
                       {...field}

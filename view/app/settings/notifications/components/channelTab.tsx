@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/form';
 import { toast } from 'sonner';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
+import { PasswordInputField } from '@/components/ui/password-input-field';
 
 interface ChannelTabProps {
   smtpConfigs?: SMTPConfig;
@@ -232,7 +233,7 @@ const ChannelTab: React.FC<ChannelTabProps> = ({
                         {t('settings.notifications.channels.email.fields.smtp_password.label')}
                       </FormLabel>
                       <FormControl>
-                        <Input
+                        <PasswordInputField
                           type="password"
                           {...field}
                           placeholder={t(
