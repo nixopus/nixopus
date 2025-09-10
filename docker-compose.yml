@@ -60,6 +60,23 @@ services:
     networks:
       - nixopus-network
 
+  nixopus-redis:
+    image: redis:7-alpine
+    container_name: nixopus-redis-container
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - ${NIXOPUS_HOME:-/etc/nixopus}/redis:/data
+    command: redis-server --appendonly yes
+    networks:
+      - nixopus-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   nixopus-caddy:
     image: caddy:latest
     container_name: nixopus-caddy
