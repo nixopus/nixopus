@@ -48,11 +48,7 @@ func (c *NotificationController) GetSmtp(f fuego.ContextNoBody) (*shared_types.R
 	SMTPConfigs, err := c.service.GetSmtp(user.ID.String(), orgID)
 	if err != nil {
 		if errors.Is(err, notification.ErrSMTPConfigNotFound) {
-			return &shared_types.Response{
-				Status:  "success",
-				Message: "No SMTP configs were found",
-				Data:    nil,
-			}, nil
+			return smtpNotFoundResp(), nil
 		}
 
 		c.logger.Log(logger.Error, err.Error(), "")
@@ -62,9 +58,21 @@ func (c *NotificationController) GetSmtp(f fuego.ContextNoBody) (*shared_types.R
 		}
 	}
 
+	if SMTPConfigs == nil {
+		return smtpNotFoundResp(), nil
+	}
+
 	return &shared_types.Response{
 		Status:  "success",
 		Message: "SMTP configs fetched successfully",
 		Data:    SMTPConfigs,
 	}, nil
+}
+
+func smtpNotFoundResp() *shared_types.Response {
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "No SMTP configs were found",
+		Data:    nil,
+	}
 }
