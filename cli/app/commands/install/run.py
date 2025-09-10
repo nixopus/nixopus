@@ -96,6 +96,8 @@ class Install:
         config_file: str = None,
         api_domain: str = None,
         view_domain: str = None,
+        repo: str = None,
+        branch: str = None,
     ):
         self.logger = logger
         self.verbose = verbose
@@ -105,12 +107,32 @@ class Install:
         self.config_file = config_file
         self.api_domain = api_domain
         self.view_domain = view_domain
+        self.repo = repo
+        self.branch = branch
         self._user_config = _config.load_user_config(self.config_file)
         self.progress = None
         self.main_task = None
         self._validate_domains()
+        self._validate_repo()
+        
+        # Log when using custom repository/branch and staging compose file
+        if self._is_custom_repo_or_branch():
+            if self.logger:
+                self.logger.info("Custom repository/branch detected - will use docker-compose-staging.yml")
 
     def _get_config(self, key: str):
+        # Override repo_url and branch_name if provided via command line
+        if key == "repo_url" and self.repo is not None:
+            return self.repo
+        if key == "branch_name" and self.branch is not None:
+            return self.branch
+            
+        # Override compose_file_path to use docker-compose-staging.yml when custom repo/branch is provided
+        if key == "compose_file_path" and self._is_custom_repo_or_branch():
+            # Get the base directory and replace docker-compose.yml with docker-compose-staging.yml
+            default_compose_path = _config.get_config_value(key, self._user_config, DEFAULTS)
+            return default_compose_path.replace("docker-compose.yml", "docker-compose-staging.yml")
+            
         try:
             return _config.get_config_value(key, self._user_config, DEFAULTS)
         except ValueError:
@@ -126,6 +148,27 @@ class Install:
             )
             if not domain_pattern.match(self.api_domain) or not domain_pattern.match(self.view_domain):
                 raise ValueError("Invalid domain format. Domains must be valid hostnames")
+
+    def _validate_repo(self):
+        if self.repo:
+            # Basic validation for repository URL format
+            if not (
+                self.repo.startswith(("http://", "https://", "git://", "ssh://"))
+                or (self.repo.endswith(".git") and not self.repo.startswith("github.com:"))
+                or ("@" in self.repo and ":" in self.repo and self.repo.count("@") == 1)
+            ):
+                raise ValueError("Invalid repository URL format")
+
+    def _is_custom_repo_or_branch(self):
+        """Check if custom repository or branch is provided (different from defaults)"""
+        default_repo = _config.get_yaml_value(DEFAULT_REPO)  # "https://github.com/raghavyuva/nixopus"
+        default_branch = _config.get_yaml_value(DEFAULT_BRANCH)  # "master"
+        
+        # Check if either repo or branch differs from defaults
+        repo_differs = self.repo is not None and self.repo != default_repo
+        branch_differs = self.branch is not None and self.branch != default_branch
+        
+        return repo_differs or branch_differs
 
     def run(self):
         steps = [

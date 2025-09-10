@@ -1,3 +1,12 @@
+# [0.1.0-alpha.26](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.25...v0.1.0-alpha.26) (2025-09-10)
+
+
+### Features
+
+* add redis service in docker compose for taskQ ([#386](https://github.com/raghavyuva/nixopus/issues/386)) ([f0a55f1](https://github.com/raghavyuva/nixopus/commit/f0a55f1bef0f1b3119a7ccbabe37030bb4b3ffe6))
+
+
+
 # [0.1.0-alpha.25](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.24...v0.1.0-alpha.25) (2025-09-10)
 
 

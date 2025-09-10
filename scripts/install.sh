@@ -7,15 +7,36 @@ readonly GREEN='\033[0;32m'
 readonly BLUE='\033[0;34m'
 readonly NC='\033[0m'
 
-# GitHub repository info
-readonly REPO_URL="https://github.com/raghavyuva/nixopus"
+# Default GitHub repository info
+DEFAULT_REPO_URL="https://github.com/raghavyuva/nixopus"
+DEFAULT_BRANCH="master"
 
-readonly PACKAGE_JSON_URL_MASTER="https://raw.githubusercontent.com/raghavyuva/nixopus/master/package.json"
+# Variables for custom repository and branch
+REPO_URL="$DEFAULT_REPO_URL"
+BRANCH="$DEFAULT_BRANCH"
 
 # Logging functions
 log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
 log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
 log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+
+# Validate repository URL format
+validate_repo_url() {
+    local repo_url="$1"
+    if [[ ! "$repo_url" =~ ^https://github\.com/[^/]+/[^/]+/?$ ]]; then
+        log_error "Invalid repository URL format. Expected: https://github.com/owner/repo"
+        exit 1
+    fi
+}
+
+# Validate branch name
+validate_branch() {
+    local branch="$1"
+    if [[ ! "$branch" =~ ^[a-zA-Z0-9._/-]+$ ]]; then
+        log_error "Invalid branch name. Branch names can only contain letters, numbers, dots, underscores, slashes, and hyphens."
+        exit 1
+    fi
+}
 
 # Show usage information
 show_usage() {
@@ -26,6 +47,8 @@ This script installs the nixopus CLI and optionally runs 'nixopus install' with 
 
 CLI Installation Options:
   --skip-nixopus-install    Skip running 'nixopus install' after CLI installation
+  --repo REPOSITORY         GitHub repository URL for CLI installation and passed to 'nixopus install' (default: https://github.com/raghavyuva/nixopus). When custom repo/branch is used, docker-compose-staging.yml will be used instead of docker-compose.yml
+  --branch BRANCH           Git branch to use for CLI installation and passed to 'nixopus install' (default: master). When custom repo/branch is used, docker-compose-staging.yml will be used instead of docker-compose.yml
 
 nixopus install Options (passed through to 'nixopus install'):
   -v, --verbose             Show more details while installing
@@ -56,6 +79,7 @@ Quick Install with Options:
   curl -sSL https://install.nixopus.com | bash -s -- --dry-run
   curl -sSL https://install.nixopus.com | bash -s -- --api-domain api.example.com
   curl -sSL https://install.nixopus.com | bash -s -- ssh --verbose
+  curl -sSL https://install.nixopus.com | bash -s -- --repo https://github.com/user/fork --branch develop
 
 Local Examples:
   $0                                           # Install CLI and run 'nixopus install'
@@ -64,6 +88,7 @@ Local Examples:
   $0 --force --timeout 600                     # Install CLI and run 'nixopus install' with force and custom timeout
   $0 --api-domain api.example.com --view-domain example.com  # Install CLI and run 'nixopus install' with custom domains
   $0 --dry-run --config-file /path/to/config   # Install CLI and run 'nixopus install' in dry-run mode with custom config
+  $0 --repo https://github.com/user/fork --branch develop  # Install CLI from custom repository and branch
   $0 ssh --verbose                             # Install CLI and run 'nixopus install ssh --verbose'
   $0 deps --dry-run                            # Install CLI and run 'nixopus install deps --dry-run'
 
@@ -107,9 +132,16 @@ detect_os() {
 # Get CLI version and package list
 get_package_info() {
     local package_json
-    package_json=$(curl -fsSL "$PACKAGE_JSON_URL_MASTER" 2>/dev/null || true)
+    local package_json_url
+    
+    # Extract repository owner and name from URL
+    local repo_owner_name
+    repo_owner_name=$(echo "$REPO_URL" | sed 's|https://github.com/||')
+    package_json_url="https://raw.githubusercontent.com/$repo_owner_name/$BRANCH/package.json"
+    
+    package_json=$(curl -fsSL "$package_json_url" 2>/dev/null || true)
     if [[ -z "$package_json" || "$package_json" != \{* ]]; then
-        log_error "Failed to fetch package.json from master branch"
+        log_error "Failed to fetch package.json from $BRANCH branch of $REPO_URL"
         exit 1
     fi
 
@@ -265,6 +297,16 @@ main() {
                 SKIP_NIXOPUS_INSTALL=true
                 shift
                 ;;
+            --repo)
+                REPO_URL="$2"
+                validate_repo_url "$REPO_URL"
+                shift 2
+                ;;
+            --branch)
+                BRANCH="$2"
+                validate_branch "$BRANCH"
+                shift 2
+                ;;
             --verbose|-v)
                 NIXOPUS_INSTALL_ARGS+=("$1")
                 shift
@@ -313,18 +355,32 @@ main() {
         esac
     done
 
+    # Show repository and branch info
+    log_info "Using repository: $REPO_URL"
+    log_info "Using branch: $BRANCH"
+    
     # Run main function with permission check
     pkg_type=$(detect_os)
     check_permissions "$pkg_type"
     install_cli
 
     if [ "$SKIP_NIXOPUS_INSTALL" = false ]; then
-        if [ -n "$SUBCOMMAND" ]; then
-            log_info "Running 'nixopus install' with subcommand and options: ${NIXOPUS_INSTALL_ARGS[*]}"
-        else
-            log_info "Running 'nixopus install' with options: ${NIXOPUS_INSTALL_ARGS[*]}"
+        # Add repository and branch info to nixopus install command
+        local cli_args=()
+        if [ "$REPO_URL" != "$DEFAULT_REPO_URL" ]; then
+            cli_args+=("--repo" "$REPO_URL")
         fi
-        nixopus install "${NIXOPUS_INSTALL_ARGS[@]}"
+        if [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then
+            cli_args+=("--branch" "$BRANCH")
+        fi
+        cli_args+=("${NIXOPUS_INSTALL_ARGS[@]}")
+        
+        if [ -n "$SUBCOMMAND" ]; then
+            log_info "Running 'nixopus install' with subcommand and options: ${cli_args[*]}"
+        else
+            log_info "Running 'nixopus install' with options: ${cli_args[*]}"
+        fi
+        nixopus install "${cli_args[@]}"
         log_success "nixopus install completed successfully!"
     else
         log_info "Skipping 'nixopus install' as requested..."

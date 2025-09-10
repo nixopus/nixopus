@@ -33,6 +33,12 @@ def install_callback(
         "-vd",
         help="The domain where the nixopus view will be accessible (e.g. nixopus.com), if not provided you can use the ip address of the server and the port (e.g. 192.168.1.100:80)",
     ),
+    repo: str = typer.Option(
+        None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"
+    ),
+    branch: str = typer.Option(
+        None, "--branch", "-b", help="Git branch to clone (defaults to config value)"
+    ),
 ):
     """Install Nixopus"""
     if ctx.invoked_subcommand is None:
@@ -46,6 +52,8 @@ def install_callback(
             config_file=config_file,
             api_domain=api_domain,
             view_domain=view_domain,
+            repo=repo,
+            branch=branch,
         )
         install.run()
 
