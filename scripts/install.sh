@@ -14,6 +14,7 @@ DEFAULT_BRANCH="master"
 # Variables for custom repository and branch
 REPO_URL="$DEFAULT_REPO_URL"
 BRANCH="$DEFAULT_BRANCH"
+readonly PACKAGE_JSON_URL_MASTER="https://raw.githubusercontent.com/raghavyuva/nixopus/master/package.json"
 
 # Logging functions
 log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
@@ -132,16 +133,9 @@ detect_os() {
 # Get CLI version and package list
 get_package_info() {
     local package_json
-    local package_json_url
-    
-    # Extract repository owner and name from URL
-    local repo_owner_name
-    repo_owner_name=$(echo "$REPO_URL" | sed 's|https://github.com/||')
-    package_json_url="https://raw.githubusercontent.com/$repo_owner_name/$BRANCH/package.json"
-    
-    package_json=$(curl -fsSL "$package_json_url" 2>/dev/null || true)
+    package_json=$(curl -fsSL "$PACKAGE_JSON_URL_MASTER" 2>/dev/null || true)
     if [[ -z "$package_json" || "$package_json" != \{* ]]; then
-        log_error "Failed to fetch package.json from $BRANCH branch of $REPO_URL"
+        log_error "Failed to fetch package.json from master branch"
         exit 1
     fi
 

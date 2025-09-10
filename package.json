@@ -1,13 +1,13 @@
 {
   "name": "nixopus",
-  "version": "0.1.0-alpha.26",
+  "version": "0.1.0-alpha.27",
   "description": "A modern container management platform",
   "private": false,
-  "cli-version": "0.1.4",
+  "cli-version": "0.1.5",
   "cli-packages": [
-    "nixopus-0.1.4-1.x86_64.rpm",
-    "nixopus.tar",
-    "nixopus_0.1.4_amd64.apk",
-    "nixopus_0.1.4_amd64.deb"
+    "nixopus_0.1.5_amd64.apk",
+    "nixopus_0.1.5_amd64.deb",
+    "nixopus-0.1.5-1.x86_64.rpm",
+    "nixopus.tar"
   ]
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+
 	"github.com/google/uuid"
 	"github.com/raghavyuva/caddygo"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
@@ -72,7 +73,7 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 	taskCtx.AddLog("Container updated successfully for application " + TaskPayload.Application.Name + " with container id " + containerResult.ContainerID)
 	taskCtx.LogAndUpdateStatus("Deployment completed successfully", shared_types.Deployed)
 
-	client := caddygo.NewClient("http://localhost:2019")
+	client := GetCaddyClient()
 	port, err := strconv.Atoi(containerResult.AvailablePort)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
@@ -100,28 +101,28 @@ func (t *TaskService) HandleCreateStaticDeployment(ctx context.Context, TaskPayl
 
 // TODOD: Shravan implement types and get back
 func (t *TaskService) ReDeployApplication(request *types.ReDeployApplicationRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
-    application, err := t.Storage.GetApplicationById(request.ID.String(), organizationID)
-    if err != nil {
-        return shared_types.Application{}, err
-    }
+	application, err := t.Storage.GetApplicationById(request.ID.String(), organizationID)
+	if err != nil {
+		return shared_types.Application{}, err
+	}
 
-    contextTask := ContextTask{
-        TaskService:    t,
-        ContextConfig:  request,
-        UserId:         userID,
-        OrganizationId: organizationID,
-        Application:    &application,
-    }
+	contextTask := ContextTask{
+		TaskService:    t,
+		ContextConfig:  request,
+		UserId:         userID,
+		OrganizationId: organizationID,
+		Application:    &application,
+	}
 
-    TaskPayload, err := contextTask.PrepareReDeploymentContext()
-    if err != nil {
-        return shared_types.Application{}, err
-    }
+	TaskPayload, err := contextTask.PrepareReDeploymentContext()
+	if err != nil {
+		return shared_types.Application{}, err
+	}
 
-    err = ReDeployQueue.Add(TaskReDeploy.WithArgs(context.Background(), TaskPayload))
-    if err != nil {
-        fmt.Printf("error enqueuing redeploy: %v\n", err)
-    }
+	err = ReDeployQueue.Add(TaskReDeploy.WithArgs(context.Background(), TaskPayload))
+	if err != nil {
+		fmt.Printf("error enqueuing redeploy: %v\n", err)
+	}
 
-    return application, nil
+	return application, nil
 }
