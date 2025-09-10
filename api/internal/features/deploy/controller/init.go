@@ -9,6 +9,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/validation"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
@@ -27,6 +28,7 @@ type DeployController struct {
 	ctx          context.Context
 	logger       logger.Logger
 	notification *notification.NotificationManager
+	taskService  *tasks.TaskService
 }
 
 func NewDeployController(
@@ -36,8 +38,12 @@ func NewDeployController(
 	notificationManager *notification.NotificationManager,
 ) *DeployController {
 	storage := storage.DeployStorage{DB: store.DB, Ctx: ctx}
-	docker_repo := docker.NewDockerService()
+	docker_repo := docker.NewDockerService()	
 	github_service := github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx})
+	taskService := tasks.NewTaskService(&storage, l, docker_repo, github_service, store)
+	taskService.SetupCreateDeploymentQueue()
+	taskService.StartConsumers(ctx)
+
 	return &DeployController{
 		store:        store,
 		validator:    validation.NewValidator(),
@@ -45,6 +51,7 @@ func NewDeployController(
 		ctx:          ctx,
 		logger:       l,
 		notification: notificationManager,
+		taskService:  taskService,
 	}
 }
 

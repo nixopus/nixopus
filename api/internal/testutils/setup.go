@@ -186,7 +186,7 @@ func NewTestSetup() *TestSetup {
 	orgStorage := &organization_storage.OrganizationStore{DB: testDB, Ctx: ctx}
 	cache, err := cache.NewCache(getEnvOrDefault("REDIS_URL", "redis://localhost:6379"))
 	if err != nil {
-		panic(fmt.Sprintf("failed to create cache: %v", err))
+		panic(fmt.Sprintf("failed to create redis client: %v", err))
 	}
 	// Create services
 	permService := permissions_service.NewPermissionService(store, ctx, l, permStorage)

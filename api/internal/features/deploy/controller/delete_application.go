@@ -61,7 +61,16 @@ func (c *DeployController) DeleteApplication(f fuego.ContextWithBody[types.Delet
 
 	c.logger.Log(logger.Info, "attempting to delete application", "id: "+data.ID.String()+", user_id: "+user.ID.String())
 
-	err = c.service.DeleteDeployment(&data, user.ID, organizationID)
+	// err = c.service.DeleteDeployment(&data, user.ID, organizationID)
+	// if err != nil {
+	// 	c.logger.Log(logger.Error, "failed to delete application", "id: "+data.ID.String()+", error: "+err.Error())
+	// 	return nil, fuego.HTTPError{
+	// 		Err:    err,
+	// 		Status: http.StatusInternalServerError,
+	// 	}
+	// }
+
+	err = c.taskService.DeleteDeployment(&data, user.ID, organizationID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to delete application", "id: "+data.ID.String()+", error: "+err.Error())
 		return nil, fuego.HTTPError{

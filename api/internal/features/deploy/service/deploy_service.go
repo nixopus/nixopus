@@ -17,7 +17,11 @@ import (
 
 // CreateDeployment creates a new application deployment in the database
 // and starts the deployment process in a separate goroutine.
+//
+// Deprecated: This method is deprecated and will be removed in a future version.
+// Use TaskService.CreateDeploymentTask instead for better queue-based deployment handling.
 func (s *DeployService) CreateDeployment(deployment *types.CreateDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
+	// TODO: Remove this method in next major version
 	application := createApplicationFromDeploymentRequest(deployment, userID, organizationID, nil)
 
 	deploy_config, err := s.prepareDeploymentConfig(application, userID, shared_types.DeploymentTypeCreate, false, false)
@@ -32,6 +36,9 @@ func (s *DeployService) CreateDeployment(deployment *types.CreateDeploymentReque
 
 // UpdateDeployment updates an existing application deployment
 // in the database and starts the deployment process in a separate goroutine.
+//
+// Deprecated: This method is deprecated and will be removed in a future version.
+// Use TaskService.UpdateDeployment instead for better queue-based deployment handling.
 func (s *DeployService) UpdateDeployment(deployment *types.UpdateDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
 	application, err := s.storage.GetApplicationById(deployment.ID.String(), organizationID)
 	if err != nil {
@@ -50,7 +57,10 @@ func (s *DeployService) UpdateDeployment(deployment *types.UpdateDeploymentReque
 	return application, nil
 }
 
-// ReDeployApplication redeploys an existing application
+// ReDeployApplication redeploys an existing application.
+//
+// Deprecated: This method is deprecated and will be removed in a future version.
+// Use TaskService.ReDeployApplication instead for queue-based handling.
 func (s *DeployService) ReDeployApplication(redeployRequest *types.ReDeployApplicationRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
 	application, err := s.storage.GetApplicationById(redeployRequest.ID.String(), organizationID)
 	if err != nil {
@@ -58,6 +68,7 @@ func (s *DeployService) ReDeployApplication(redeployRequest *types.ReDeployAppli
 	}
 
 	deploy_config, err := s.prepareDeploymentConfig(application, userID, shared_types.DeploymentTypeReDeploy, redeployRequest.Force, redeployRequest.ForceWithoutCache)
+
 	if err != nil {
 		return shared_types.Application{}, err
 	}
@@ -68,6 +79,9 @@ func (s *DeployService) ReDeployApplication(redeployRequest *types.ReDeployAppli
 }
 
 // StartDeploymentInBackground starts the deployment process in a separate goroutine.
+//
+// Deprecated: This method is part of the legacy goroutine-based deploy path
+// and will be removed after full migration to TaskQ handlers.
 // It takes the application, deployment request, user ID, application status, and
 // deployment configuration as parameters.
 // It logs any errors that occur during the deployment process and updates the
@@ -135,6 +149,12 @@ func (s *DeployService) GetDeploymentById(deploymentID string) (shared_types.App
 	return s.storage.GetApplicationDeploymentById(deploymentID)
 }
 
+// DeleteDeployment deletes a deployment and its associated resources.
+// It stops and removes the container, image, and repository.
+// It returns an error if any operation fails.
+//
+// Deprecated: This method is deprecated and will be removed in a future version.
+// Use TaskService.DeleteDeployment instead for better queue-based deployment handling.
 func (s *DeployService) DeleteDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) error {
 	application, err := s.storage.GetApplicationById(deployment.ID.String(), organizationID)
 	if err != nil {
@@ -178,6 +198,9 @@ func (s *DeployService) DeleteDeployment(deployment *types.DeleteDeploymentReque
 	return s.storage.DeleteDeployment(deployment, userID)
 }
 
+// RollbackDeployment triggers a rollback via the legacy service flow.
+//
+// Deprecated: Use TaskService.RollbackDeployment instead for queue-based rollback.
 func (s *DeployService) RollbackDeployment(deployment *types.RollbackDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) error {
 	deployment_details, err := s.storage.GetApplicationDeploymentById(deployment.ID.String())
 	if err != nil {
@@ -201,6 +224,9 @@ func (s *DeployService) RollbackDeployment(deployment *types.RollbackDeploymentR
 	return nil
 }
 
+// RestartDeployment restarts containers via the legacy service flow.
+//
+// Deprecated: Use TaskService.RestartDeployment instead for queue-based restart.
 func (s *DeployService) RestartDeployment(deployment *types.RestartDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) error {
 	deployment_details, err := s.storage.GetApplicationDeploymentById(deployment.ID.String())
 	if err != nil {
@@ -225,6 +251,7 @@ func (s *DeployService) RestartDeployment(deployment *types.RestartDeploymentReq
 }
 
 func (s *DeployService) prepareDeploymentConfig(application shared_types.Application, userID uuid.UUID, deploymentType shared_types.DeploymentType, force, forceWithoutCache bool) (DeployerConfig, error) {
+
 	deployRequest, deployStatus, deployment_config, err := s.createAndPrepareDeployment(application, shared_types.DeploymentRequestConfig{
 		Type:              deploymentType,
 		Force:             force,

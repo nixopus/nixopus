@@ -51,7 +51,7 @@ func NewRouter(app *storage.App) *Router {
 	// Initialize cache
 	cache, err := cache.NewCache(config.AppConfig.Redis.URL)
 	if err != nil {
-		log.Fatal("Error creating cache", err)
+		log.Fatal("Error creating redis client", err)
 	}
 	return &Router{
 		app:   app,

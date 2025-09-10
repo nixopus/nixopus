@@ -902,6 +902,25 @@
           "next": "Next",
           "page": "Page {current} of {total}"
         }
+      },
+      "list": {
+        "title": "Deployments",
+        "noDeployments": "No deployments found",
+        "card": {
+          "runTime": "Run Time",
+          "viewButton": "View Details",
+          "rollback": {
+            "title": "Rollback"
+          }
+        },
+        "table": {
+          "status": "Status",
+          "container": "Container",
+          "created": "Created",
+          "runTime": "Run Time",
+          "actions": "Actions",
+          "unknown": "Unknown"
+        }
       }
     },
     "application": {
