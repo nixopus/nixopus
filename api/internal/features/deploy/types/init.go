@@ -114,6 +114,8 @@ const (
 	LogFailedToCreateApplicationDeployment       = "Failed to create application deployment: %s"
 	LogFailedToCreateApplicationDeploymentStatus = "Failed to create application deployment status: %s"
 	LogFailedToCreateApplicationLogs             = "Failed to create application logs: %s"
+	LogFailedToUpdateApplicationRecord           = "Failed to update application record"
+	LogFailedToUpdateApplicationDeployment       = "Failed to update application deployment"
 	LogFailedToParseRepositoryID                 = "Failed to parse repository ID: %s"
 	LogFailedToCloneRepository                   = "Failed to clone repository: %s"
 	LogFailedToCreateDeployment                  = "Failed to create deployment: %s"

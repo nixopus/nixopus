@@ -61,9 +61,18 @@ func (c *DeployController) UpdateApplication(f fuego.ContextWithBody[types.Updat
 
 	c.logger.Log(logger.Info, "attempting to update application", "id: "+data.ID.String()+", user_id: "+user.ID.String())
 
-	application, err := c.service.UpdateDeployment(&data, user.ID, organizationID)
+	// application, err := c.service.UpdateDeployment(&data, user.ID, organizationID)
+	// if err != nil {
+	// 	c.logger.Log(logger.Error, "failed to update application", "id: "+data.ID.String()+", error: "+err.Error())
+	// 	return nil, fuego.HTTPError{
+	// 		Err:    err,
+	// 		Status: http.StatusInternalServerError,
+	// 	}
+	// }
+
+	application, err := c.taskService.UpdateDeployment(&data, user.ID, organizationID)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to update application", "id: "+data.ID.String()+", error: "+err.Error())
+		c.logger.Log(logger.Error, "failed to create deployment", "name: "+data.Name+", error: "+err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,

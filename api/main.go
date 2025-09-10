@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"log"
 	"net/http"
 
@@ -9,8 +10,11 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	_ "github.com/raghavyuva/nixopus-api/internal/log"
+	"github.com/raghavyuva/nixopus-api/internal/queue"
+	"github.com/raghavyuva/nixopus-api/internal/redisclient"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/vmihailenco/taskq/v3"
 )
 
 func main() {
@@ -23,11 +27,13 @@ func main() {
 	ctx := context.Background()
 	app := storage.NewApp(&types.Config{}, store, ctx)
 
-	// cacheClient, err := cache.NewCache(config.AppConfig.RedisURL)
-	// if err != nil {
-	// 	log.Fatalf("Failed to initialize cache: %v", err)
-	// }
-
+	// Initialize task queue (Redis) and start consumers alongside the server
+	redisClient, err := redisclient.New(config.AppConfig.Redis.URL)
+	if err != nil {
+		log.Fatalf("failed to create redis client for queue due to %v", err)
+	}
+	taskq.SetLogger(log.New(io.Discard, "", 0))
+	queue.Init(redisClient)
 	router := internal.NewRouter(app)
 	router.Routes()
 	log.Printf("Server starting on port %s", config.AppConfig.Server.Port)

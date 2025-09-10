@@ -51,9 +51,9 @@ func (c *DeployController) HandleDeploy(f fuego.ContextWithBody[types.CreateDepl
 		}
 	}
 
-	c.logger.Log(logger.Info, "attempting to create deployment", "name: "+data.Name+", user_id: "+user.ID.String())
+	c.logger.Log(logger.Info, "attempting to create deployment", "name: "+data.Name+", user_id: "+user.ID.String())	
 
-	application, err := c.service.CreateDeployment(&data, user.ID, organizationID)
+	application, err := c.taskService.CreateDeploymentTask(&data, user.ID, organizationID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to create deployment", "name: "+data.Name+", error: "+err.Error())
 		return nil, fuego.HTTPError{
@@ -61,6 +61,15 @@ func (c *DeployController) HandleDeploy(f fuego.ContextWithBody[types.CreateDepl
 			Status: http.StatusInternalServerError,
 		}
 	}
+
+	// application, err := c.service.CreateDeployment(&data, user.ID, organizationID)
+	// if err != nil {
+	// 	c.logger.Log(logger.Error, "failed to create deployment", "name: "+data.Name+", error: "+err.Error())
+	// 	return nil, fuego.HTTPError{
+	// 		Err:    err,
+	// 		Status: http.StatusInternalServerError,
+	// 	}
+	// }
 
 	c.logger.Log(logger.Info, "deployment created successfully", "name: "+data.Name)
 	return &shared_types.Response{

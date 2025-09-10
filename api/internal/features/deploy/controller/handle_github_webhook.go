@@ -54,14 +54,23 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*shared_t
 		}
 	}
 
-	err = c.service.HandleGithubWebhook(webhookPayload)
+	// err = c.service.HandleGithubWebhook(webhookPayload)
+	// if err != nil {
+	// 	c.logger.Log(logger.Error, "failed to handle github webhook", err.Error())
+	// 	return nil, fuego.HTTPError{
+	// 		Err:    err,
+	// 		Status: http.StatusInternalServerError,
+	// 	}
+	// }
+	err = c.taskService.EnqueueWebhookTask(webhookPayload)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to handle github webhook", err.Error())
+		c.logger.Log(logger.Error, "failed to enqueue webhook task", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,
 		}
 	}
+
 	c.logger.Log(logger.Info, "github webhook handled successfully", webhookPayload.Repository.FullName)
 	return &shared_types.Response{
 		Status:  "success",

@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/redisclient"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -35,18 +36,16 @@ type CacheRepository interface {
 }
 
 func NewCache(redisURL string) (*Cache, error) {
-	opt, err := redis.ParseURL(redisURL)
+	client, err := redisclient.New(redisURL)
 	if err != nil {
 		return nil, err
 	}
-
-	client := redis.NewClient(opt)
 	return &Cache{client: client}, nil
 }
 
 func (c *Cache) GetUser(ctx context.Context, email string) (*types.User, error) {
 	key := UserCacheKeyPrefix + email
-	data, err := c.client.Get(key).Bytes()
+	data, err := c.client.Get(ctx, key).Bytes()
 	if err == redis.Nil {
 		return nil, nil
 	}
@@ -82,12 +81,12 @@ func (c *Cache) SetUser(ctx context.Context, email string, user *types.User) err
 		return err
 	}
 
-	return c.client.Set(key, data, UserCacheTTL).Err()
+	return c.client.Set(ctx, key, data, UserCacheTTL).Err()
 }
 
 func (c *Cache) GetOrgMembership(ctx context.Context, userID, orgID string) (bool, error) {
 	key := OrgMembershipCacheKeyPrefix + userID + ":" + orgID
-	val, err := c.client.Get(key).Result()
+	val, err := c.client.Get(ctx, key).Result()
 	if err == redis.Nil {
 		return false, nil
 	}
@@ -103,22 +102,22 @@ func (c *Cache) SetOrgMembership(ctx context.Context, userID, orgID string, belo
 	if belongs {
 		val = "true"
 	}
-	return c.client.Set(key, val, OrgMembershipCacheTTL).Err()
+	return c.client.Set(ctx, key, val, OrgMembershipCacheTTL).Err()
 }
 
 func (c *Cache) InvalidateUser(ctx context.Context, email string) error {
 	key := UserCacheKeyPrefix + email
-	return c.client.Del(key).Err()
+	return c.client.Del(ctx, key).Err()
 }
 
 func (c *Cache) InvalidateOrgMembership(ctx context.Context, userID, orgID string) error {
 	key := OrgMembershipCacheKeyPrefix + userID + ":" + orgID
-	return c.client.Del(key).Err()
+	return c.client.Del(ctx, key).Err()
 }
 
 func (c *Cache) GetFeatureFlag(ctx context.Context, orgID, featureName string) (bool, error) {
 	key := fmt.Sprintf("%s:%s:%s", FeatureFlagCacheKeyPrefix, orgID, featureName)
-	val, err := c.client.Get(key).Result()
+	val, err := c.client.Get(ctx, key).Result()
 	if err == redis.Nil {
 		return false, redis.Nil
 	}
@@ -134,10 +133,10 @@ func (c *Cache) SetFeatureFlag(ctx context.Context, orgID, featureName string, e
 	if enabled {
 		val = "true"
 	}
-	return c.client.Set(key, val, FeatureFlagCacheTTL).Err()
+	return c.client.Set(ctx, key, val, FeatureFlagCacheTTL).Err()
 }
 
 func (c *Cache) InvalidateFeatureFlag(ctx context.Context, orgID, featureName string) error {
 	key := fmt.Sprintf("%s:%s:%s", FeatureFlagCacheKeyPrefix, orgID, featureName)
-	return c.client.Del(key).Err()
+	return c.client.Del(ctx, key).Err()
 }
