@@ -1,6 +1,6 @@
 'use client';
 
-import { Play, StopCircle, Trash2 } from 'lucide-react';
+import { Play, Pause, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { isNixopusContainer } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,7 +26,7 @@ interface ContainerActionsProps {
 export const ContainerActions = ({ container, onAction }: ContainerActionsProps) => {
     const containerName: string = typeof container?.name === 'string' ? container.name : '';
     const isProtected = isNixopusContainer(containerName);
-    const isContainerRunning = container.status === containerStatusRunning
+    const isContainerRunning = (container.state || '').toLowerCase() === containerStatusRunning || (container.status || '').toLowerCase() === containerStatusRunning
     const containerId = container.id
 
     function onClickHandler(e: any, action: Action) {
@@ -68,8 +68,21 @@ export const ContainerActions = ({ container, onAction }: ContainerActionsProps)
 };
 
 function ActionIconsRenderer({ onClickHandler, isContainerRunning, isProtected }: { onClickHandler(e: any, action: Action): void, isContainerRunning: boolean, isProtected: boolean }) {
+    // toggle: show Play when not running, Pause when running
     if (isContainerRunning) {
-        return <Button
+        return (
+            <Button
+                variant={ghostVariant}
+                size={iconSize}
+                disabled={isProtected}
+                onClick={(e) => onClickHandler(e, Action.STOP)}
+            >
+                <Pause className={iconStyle} />
+            </Button>
+        );
+    }
+    return (
+        <Button
             variant={ghostVariant}
             size={iconSize}
             disabled={isProtected}
@@ -77,15 +90,7 @@ function ActionIconsRenderer({ onClickHandler, isContainerRunning, isProtected }
         >
             <Play className={iconStyle} />
         </Button>
-    }
-    return <Button
-        variant={ghostVariant}
-        size={iconSize}
-        disabled={isProtected}
-        onClick={(e) => onClickHandler(e, Action.STOP)}
-    >
-        <StopCircle className={iconStyle} />
-    </Button>
+    );
 }
 
 function LoadingFallback() {

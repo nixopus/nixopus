@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from app.utils.config import Config, PROXY_PORT
+from app.utils.config import PROXY_PORT, Config
 from app.utils.protocols import LoggerProtocol
 
 from .base import BaseAction, BaseCaddyCommandBuilder, BaseCaddyService, BaseConfig, BaseFormatter, BaseResult, BaseService
@@ -14,6 +14,7 @@ from .messages import (
 
 config = Config()
 proxy_port = config.get_yaml_value(PROXY_PORT)
+
 
 class CaddyServiceProtocol(Protocol):
     def check_status(self, port: int = proxy_port) -> tuple[bool, str]: ...
@@ -30,7 +31,7 @@ class StatusFormatter(BaseFormatter):
         if output == "json":
             status_msg = "Caddy is running" if result.success else (result.error or "Caddy not running")
             return super().format_output(result, output, status_msg, result.error or "Caddy not running")
-        
+
         if result.success:
             return "Caddy is running"
         else:

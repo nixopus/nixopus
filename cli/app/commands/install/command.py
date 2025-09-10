@@ -3,8 +3,8 @@ import typer
 from app.utils.config import Config
 from app.utils.logger import Logger
 from app.utils.timeout import TimeoutWrapper
-from .deps import install_all_deps
 
+from .deps import install_all_deps
 from .run import Install
 from .ssh import SSH, SSHConfig
 
@@ -18,24 +18,37 @@ def install_callback(
     timeout: int = typer.Option(300, "--timeout", "-t", help="How long to wait for each step (in seconds)"),
     force: bool = typer.Option(False, "--force", "-f", help="Replace files if they already exist"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="See what would happen, but don't make changes"),
-    config_file: str = typer.Option(None, "--config-file", "-c", help="Path to custom config file (defaults to built-in config)"),
-    api_domain: str = typer.Option(None, "--api-domain", "-ad", help="The domain where the nixopus api will be accessible (e.g. api.nixopus.com), if not provided you can use the ip address of the server and the port (e.g. 192.168.1.100:8443)"),
-    view_domain: str = typer.Option(None, "--view-domain", "-vd", help="The domain where the nixopus view will be accessible (e.g. nixopus.com), if not provided you can use the ip address of the server and the port (e.g. 192.168.1.100:80)"),
+    config_file: str = typer.Option(
+        None, "--config-file", "-c", help="Path to custom config file (defaults to built-in config)"
+    ),
+    api_domain: str = typer.Option(
+        None,
+        "--api-domain",
+        "-ad",
+        help="The domain where the nixopus api will be accessible (e.g. api.nixopus.com), if not provided you can use the ip address of the server and the port (e.g. 192.168.1.100:8443)",
+    ),
+    view_domain: str = typer.Option(
+        None,
+        "--view-domain",
+        "-vd",
+        help="The domain where the nixopus view will be accessible (e.g. nixopus.com), if not provided you can use the ip address of the server and the port (e.g. 192.168.1.100:80)",
+    ),
 ):
     """Install Nixopus"""
     if ctx.invoked_subcommand is None:
         logger = Logger(verbose=verbose)
         install = Install(
-            logger=logger, 
-            verbose=verbose, 
-            timeout=timeout, 
-            force=force, 
-            dry_run=dry_run, 
+            logger=logger,
+            verbose=verbose,
+            timeout=timeout,
+            force=force,
+            dry_run=dry_run,
             config_file=config_file,
             api_domain=api_domain,
-            view_domain=view_domain
+            view_domain=view_domain,
         )
         install.run()
+
 
 def main_install_callback(value: bool):
     if value:
@@ -43,6 +56,7 @@ def main_install_callback(value: bool):
         install = Install(logger=logger, verbose=False, timeout=300, force=False, dry_run=False, config_file=None)
         install.run()
         raise typer.Exit()
+
 
 @install_app.command(name="ssh")
 def ssh(
@@ -80,10 +94,10 @@ def ssh(
             create_ssh_directory=create_ssh_directory,
         )
         ssh_operation = SSH(logger=logger)
-        
+
         with TimeoutWrapper(timeout):
             result = ssh_operation.generate(config)
-        
+
         logger.success(result.output)
     except TimeoutError as e:
         logger.error(e)
@@ -91,6 +105,7 @@ def ssh(
     except Exception as e:
         logger.error(e)
         raise typer.Exit(1)
+
 
 @install_app.command(name="deps")
 def deps(
@@ -102,10 +117,10 @@ def deps(
     """Install dependencies"""
     try:
         logger = Logger(verbose=verbose)
-        
+
         with TimeoutWrapper(timeout):
             result = install_all_deps(verbose=verbose, output=output, dry_run=dry_run)
-        
+
         if output == "json":
             print(result)
         else:

@@ -5,23 +5,23 @@ from app.utils.protocols import DockerServiceProtocol, LoggerProtocol
 
 from .base import BaseAction, BaseConfig, BaseDockerCommandBuilder, BaseDockerService, BaseFormatter, BaseResult, BaseService
 from .messages import (
+    docker_command_completed,
+    docker_command_executing,
+    docker_command_failed,
+    docker_command_stderr,
+    docker_command_stdout,
+    docker_unexpected_error,
     dry_run_command,
     dry_run_command_would_be_executed,
     dry_run_env_file,
     dry_run_mode,
     dry_run_service,
     end_dry_run,
+    service_action_failed,
+    service_action_info,
+    service_action_unexpected_error,
     service_status_failed,
     services_status_retrieved,
-    docker_command_executing,
-    docker_command_completed,
-    docker_command_failed,
-    docker_command_stdout,
-    docker_command_stderr,
-    docker_unexpected_error,
-    service_action_info,
-    service_action_failed,
-    service_action_unexpected_error,
 )
 
 
@@ -49,7 +49,7 @@ class PsFormatter(BaseFormatter):
                     try:
                         config_data = json.loads(result.docker_output)
                         services = config_data.get("services", {})
-                        
+
                         if services:
                             table_data = []
                             for service_name, service_config in services.items():
@@ -62,21 +62,29 @@ class PsFormatter(BaseFormatter):
                                         port_mappings.append(f"{published}:{target}")
                                     else:
                                         port_mappings.append(str(port))
-                                
+
                                 networks = list(service_config.get("networks", {}).keys())
-                                
-                                table_data.append({
-                                    "Service": service_name,
-                                    "Image": service_config.get("image", ""),
-                                    "Ports": ", ".join(port_mappings) if port_mappings else "",
-                                    "Networks": ", ".join(networks) if networks else "default",
-                                    "Command": str(service_config.get("command", "")) if service_config.get("command") else "",
-                                    "Entrypoint": str(service_config.get("entrypoint", "")) if service_config.get("entrypoint") else "",
-                                })
-                            
+
+                                table_data.append(
+                                    {
+                                        "Service": service_name,
+                                        "Image": service_config.get("image", ""),
+                                        "Ports": ", ".join(port_mappings) if port_mappings else "",
+                                        "Networks": ", ".join(networks) if networks else "default",
+                                        "Command": (
+                                            str(service_config.get("command", "")) if service_config.get("command") else ""
+                                        ),
+                                        "Entrypoint": (
+                                            str(service_config.get("entrypoint", ""))
+                                            if service_config.get("entrypoint")
+                                            else ""
+                                        ),
+                                    }
+                                )
+
                             if result.name != "all":
                                 table_data = [row for row in table_data if row["Service"] == result.name]
-                            
+
                             if table_data:
                                 headers = ["Service", "Image", "Ports", "Networks", "Command", "Entrypoint"]
                                 return self.output_formatter.create_table(
@@ -84,10 +92,14 @@ class PsFormatter(BaseFormatter):
                                     title="Docker Compose Services Configuration",
                                     headers=headers,
                                     show_header=True,
-                                    show_lines=True
+                                    show_lines=True,
                                 ).strip()
                             else:
-                                return f"No service found with name: {result.name}" if result.name != "all" else "No services found"
+                                return (
+                                    f"No service found with name: {result.name}"
+                                    if result.name != "all"
+                                    else "No services found"
+                                )
                         else:
                             return "No services found in compose file"
                     except json.JSONDecodeError as e:
@@ -115,31 +127,31 @@ class DockerService(BaseDockerService):
 
     def show_services_status(self, name: str = "all", env_file: str = None, compose_file: str = None) -> tuple[bool, str]:
         cmd = DockerCommandBuilder.build_ps_command(name, env_file, compose_file)
-        
-        self.logger.debug(docker_command_executing.format(command=' '.join(cmd)))
-        
+
+        self.logger.debug(docker_command_executing.format(command=" ".join(cmd)))
+
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            
+
             self.logger.debug(docker_command_completed.format(action="ps"))
-            
+
             if result.stdout.strip():
                 self.logger.debug(docker_command_stdout.format(output=result.stdout.strip()))
-            
+
             if result.stderr.strip():
                 self.logger.debug(docker_command_stderr.format(output=result.stderr.strip()))
-            
+
             return True, result.stdout or result.stderr
-            
+
         except subprocess.CalledProcessError as e:
             self.logger.debug(docker_command_failed.format(return_code=e.returncode))
-            
+
             if e.stdout and e.stdout.strip():
                 self.logger.debug(docker_command_stdout.format(output=e.stdout.strip()))
-            
+
             if e.stderr and e.stderr.strip():
                 self.logger.debug(docker_command_stderr.format(output=e.stderr.strip()))
-            
+
             self.logger.error(service_action_failed.format(action="ps", error=e.stderr or str(e)))
             return False, e.stderr or e.stdout or str(e)
         except Exception as e:
@@ -182,7 +194,7 @@ class PsService(BaseService[PsConfig, PsResult]):
         success, docker_output = self.docker_service.show_services_status(
             self.config.name, self.config.env_file, self.config.compose_file
         )
-        
+
         error = None if success else docker_output
         return self._create_result(success, error, docker_output)
 
@@ -211,6 +223,6 @@ class Ps(BaseAction[PsConfig, PsResult]):
 
     def format_output(self, result: PsResult, output: str) -> str:
         return self.formatter.format_output(result, output)
-    
+
     def format_dry_run(self, config: PsConfig) -> str:
         return self.formatter.format_dry_run(config)

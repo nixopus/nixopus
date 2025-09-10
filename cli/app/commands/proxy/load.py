@@ -3,7 +3,7 @@ from typing import Optional, Protocol
 
 from pydantic import Field, field_validator
 
-from app.utils.config import Config, PROXY_PORT
+from app.utils.config import PROXY_PORT, Config
 from app.utils.protocols import LoggerProtocol
 
 from .base import BaseAction, BaseCaddyCommandBuilder, BaseCaddyService, BaseConfig, BaseFormatter, BaseResult, BaseService
@@ -35,7 +35,7 @@ class LoadFormatter(BaseFormatter):
         if output == "json":
             success_msg = "Configuration loaded successfully" if result.success else "Failed to load configuration"
             return super().format_output(result, output, success_msg, result.error or "Unknown error")
-        
+
         if result.success:
             return "Configuration loaded successfully"
         else:

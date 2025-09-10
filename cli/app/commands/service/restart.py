@@ -7,7 +7,7 @@ from .messages import (
     dry_run_env_file,
     dry_run_mode,
     dry_run_service,
-    end_dry_run,    
+    end_dry_run,
     service_restart_failed,
     services_restarted_successfully,
 )
@@ -74,8 +74,10 @@ class RestartService(BaseService[RestartConfig, RestartResult]):
     def execute(self) -> RestartResult:
         self.logger.debug(f"Restarting services: {self.config.name}")
 
-        success, docker_output = self.docker_service.restart_services(self.config.name, self.config.env_file, self.config.compose_file)
-        
+        success, docker_output = self.docker_service.restart_services(
+            self.config.name, self.config.env_file, self.config.compose_file
+        )
+
         error = None if success else docker_output
         return self._create_result(success, error, docker_output)
 
@@ -104,6 +106,6 @@ class Restart(BaseAction[RestartConfig, RestartResult]):
 
     def format_output(self, result: RestartResult, output: str) -> str:
         return self.formatter.format_output(result, output)
-    
+
     def format_dry_run(self, config: RestartConfig) -> str:
         return self.formatter.format_dry_run(config)

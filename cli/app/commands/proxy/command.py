@@ -1,13 +1,13 @@
 import typer
 
-from app.utils.config import Config, PROXY_PORT
+from app.utils.config import PROXY_PORT, Config
 from app.utils.logger import Logger
 from app.utils.timeout import TimeoutWrapper
 
 from .load import Load, LoadConfig
+from .messages import operation_timed_out, unexpected_error
 from .status import Status, StatusConfig
 from .stop import Stop, StopConfig
-from .messages import operation_timed_out, unexpected_error
 
 proxy_app = typer.Typer(
     name="proxy",
@@ -16,6 +16,7 @@ proxy_app = typer.Typer(
 
 config = Config()
 proxy_port = config.get_yaml_value(PROXY_PORT)
+
 
 @proxy_app.command()
 def load(
@@ -28,11 +29,11 @@ def load(
 ):
     """Load Caddy proxy configuration"""
     logger = Logger(verbose=verbose)
-    
+
     try:
         config = LoadConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run, config_file=config_file)
         load_service = Load(logger=logger)
-        
+
         with TimeoutWrapper(timeout):
             result = load_service.load(config)
 
@@ -69,7 +70,7 @@ def status(
     try:
         config = StatusConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run)
         status_service = Status(logger=logger)
-        
+
         with TimeoutWrapper(timeout):
             result = status_service.status(config)
 
@@ -106,7 +107,7 @@ def stop(
     try:
         config = StopConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run)
         stop_service = Stop(logger=logger)
-        
+
         with TimeoutWrapper(timeout):
             result = stop_service.stop(config)
 

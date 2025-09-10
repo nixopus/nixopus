@@ -1,33 +1,33 @@
 import typer
 
+from app.utils.config import DEFAULT_BRANCH, DEFAULT_PATH, DEFAULT_REPO, NIXOPUS_CONFIG_DIR, Config
 from app.utils.logger import Logger
-from app.utils.config import Config, DEFAULT_REPO, DEFAULT_BRANCH, DEFAULT_PATH, NIXOPUS_CONFIG_DIR
 from app.utils.timeout import TimeoutWrapper
 
 from .clone import Clone, CloneConfig
 from .messages import (
-    debug_clone_command_invoked,
-    debug_repo_param,
-    debug_branch_param,
-    debug_path_param,
-    debug_force_param,
-    debug_verbose_param,
-    debug_output_param,
-    debug_dry_run_param,
-    debug_timeout_param,
-    debug_config_created,
     debug_action_created,
-    debug_timeout_wrapper_created,
-    debug_executing_with_timeout,
-    debug_timeout_completed,
-    debug_timeout_error,
-    debug_executing_dry_run,
-    debug_dry_run_completed,
-    debug_clone_operation_result,
-    debug_clone_operation_failed,
+    debug_branch_param,
+    debug_clone_command_invoked,
     debug_clone_operation_completed,
+    debug_clone_operation_failed,
+    debug_clone_operation_result,
+    debug_config_created,
+    debug_dry_run_completed,
+    debug_dry_run_param,
     debug_exception_caught,
     debug_exception_details,
+    debug_executing_dry_run,
+    debug_executing_with_timeout,
+    debug_force_param,
+    debug_output_param,
+    debug_path_param,
+    debug_repo_param,
+    debug_timeout_completed,
+    debug_timeout_error,
+    debug_timeout_param,
+    debug_timeout_wrapper_created,
+    debug_verbose_param,
 )
 
 config = Config()
@@ -37,6 +37,7 @@ branch = config.get_yaml_value(DEFAULT_BRANCH)
 path = nixopus_config_dir + "/" + config.get_yaml_value(DEFAULT_PATH)
 
 clone_app = typer.Typer(help="Clone a repository", invoke_without_command=True)
+
 
 @clone_app.callback()
 def clone_callback(
@@ -61,16 +62,16 @@ def clone_callback(
         logger.debug(debug_output_param.format(output=output))
         logger.debug(debug_dry_run_param.format(dry_run=dry_run))
         logger.debug(debug_timeout_param.format(timeout=timeout))
-        
+
         config = CloneConfig(repo=repo, branch=branch, path=path, force=force, verbose=verbose, output=output, dry_run=dry_run)
         logger.debug(debug_config_created.format(config_type="CloneConfig"))
-        
+
         clone_operation = Clone(logger=logger)
         logger.debug(debug_action_created.format(action_type="Clone"))
-        
+
         logger.debug(debug_timeout_wrapper_created.format(timeout=timeout))
         logger.debug(debug_executing_with_timeout.format(timeout=timeout))
-        
+
         with TimeoutWrapper(timeout):
             if config.dry_run:
                 logger.debug(debug_executing_dry_run)
@@ -80,17 +81,17 @@ def clone_callback(
             else:
                 result = clone_operation.clone(config)
                 logger.debug(debug_clone_operation_result.format(success=result.success))
-                
+
                 if not result.success:
                     logger.error(result.output)
                     logger.debug(debug_clone_operation_failed)
                     raise typer.Exit(1)
-                
+
                 logger.debug(debug_clone_operation_completed)
                 logger.success(result.output)
-                
+
         logger.debug(debug_timeout_completed)
-                
+
     except TimeoutError as e:
         logger.debug(debug_timeout_error.format(error=str(e)))
         if not isinstance(e, typer.Exit):

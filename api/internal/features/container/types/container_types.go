@@ -108,3 +108,24 @@ type VolumeCreateRequest struct {
 type VolumeListOptions struct {
 	Filters map[string][]string `json:"filters"`
 }
+
+type ContainerListParams struct {
+	Page      int    `json:"page"`
+	PageSize  int    `json:"page_size"`
+	Search    string `json:"search"`
+	SortBy    string `json:"sort_by"`
+	SortOrder string `json:"sort_order"`
+	Status    string `json:"status"`
+	Name      string `json:"name"`
+	Image     string `json:"image"`
+}
+
+type ContainerListRow struct {
+	ID      string            `json:"id"`
+	Name    string            `json:"name"`
+	Image   string            `json:"image"`
+	Status  string            `json:"status"`
+	State   string            `json:"state"`
+	Created int64             `json:"created"`
+	Labels  map[string]string `json:"labels"`
+}

@@ -7,19 +7,20 @@ from pydantic import BaseModel, Field, field_validator
 from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
+
 from .messages import (
-    service_action_info, 
-    service_action_success, 
-    service_action_failed, 
-    service_action_unexpected_error, 
-    environment_file_not_found, 
     compose_file_not_found,
-    docker_command_executing,
     docker_command_completed,
+    docker_command_executing,
     docker_command_failed,
-    docker_command_stdout,
     docker_command_stderr,
+    docker_command_stdout,
     docker_unexpected_error,
+    environment_file_not_found,
+    service_action_failed,
+    service_action_info,
+    service_action_success,
+    service_action_unexpected_error,
 )
 
 TConfig = TypeVar("TConfig", bound=BaseModel)
@@ -48,6 +49,28 @@ class BaseDockerCommandBuilder:
 
         if name != "all":
             cmd.append(name)
+
+        return cmd
+
+    @staticmethod
+    def build_cleanup_command(
+        compose_file: str,
+        remove_images: str = "all",
+        remove_volumes: bool = True,
+        remove_orphans: bool = True,
+    ) -> list[str]:
+        """Build a docker compose cleanup command (down with prune flags)."""
+        cmd = ["docker", "compose"]
+        if compose_file:
+            cmd.extend(["-f", compose_file])
+        cmd.append("down")
+
+        if remove_images:
+            cmd.extend(["--rmi", remove_images])
+        if remove_volumes:
+            cmd.append("--volumes")
+        if remove_orphans:
+            cmd.append("--remove-orphans")
 
         return cmd
 
@@ -122,27 +145,29 @@ class BaseDockerService:
         self, name: str = "all", env_file: str = None, compose_file: str = None, **kwargs
     ) -> tuple[bool, str]:
         cmd = BaseDockerCommandBuilder.build_command(self.action, name, env_file, compose_file, **kwargs)
-        
-        self.logger.debug(docker_command_executing.format(command=' '.join(cmd)))
-        
+
+        self.logger.debug(docker_command_executing.format(command=" ".join(cmd)))
+
         try:
             self.logger.debug(service_action_info.format(action=self.action, name=name))
-            
+
             if self.action == "up" and not kwargs.get("detach", False):
-                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, universal_newlines=True)
-                
+                process = subprocess.Popen(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, universal_newlines=True
+                )
+
                 output_lines = []
                 self.logger.debug("Docker container logs:")
                 self.logger.debug("-" * 50)
-                
+
                 for line in process.stdout:
                     self.logger.debug(line.rstrip())  # Stream logs through logger
                     output_lines.append(line.rstrip())
-                
+
                 return_code = process.wait()
-                
-                full_output = '\n'.join(output_lines)
-                
+
+                full_output = "\n".join(output_lines)
+
                 if return_code == 0:
                     self.logger.debug(docker_command_completed.format(action=self.action))
                     if full_output.strip():
@@ -152,35 +177,71 @@ class BaseDockerService:
                     self.logger.debug(docker_command_failed.format(return_code=return_code))
                     if full_output.strip():
                         self.logger.debug(docker_command_stderr.format(output=full_output.strip()))
-                    self.logger.error(service_action_failed.format(action=self.action, error=full_output or f"Process exited with code {return_code}"))
+                    self.logger.error(
+                        service_action_failed.format(
+                            action=self.action, error=full_output or f"Process exited with code {return_code}"
+                        )
+                    )
                     return False, full_output or f"Process exited with code {return_code}"
             else:
                 result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                
+
                 self.logger.debug(docker_command_completed.format(action=self.action))
-                
+
                 if result.stdout.strip():
                     self.logger.debug(docker_command_stdout.format(output=result.stdout.strip()))
-                
+
                 if result.stderr.strip():
                     self.logger.debug(docker_command_stderr.format(output=result.stderr.strip()))
-                
+
                 return True, result.stdout or result.stderr
-                
+
         except subprocess.CalledProcessError as e:
             self.logger.debug(docker_command_failed.format(return_code=e.returncode))
-            
+
             if e.stdout and e.stdout.strip():
                 self.logger.debug(docker_command_stdout.format(output=e.stdout.strip()))
-            
+
             if e.stderr and e.stderr.strip():
                 self.logger.debug(docker_command_stderr.format(output=e.stderr.strip()))
-            
+
             self.logger.error(service_action_failed.format(action=self.action, error=e.stderr or str(e)))
             return False, e.stderr or e.stdout or str(e)
         except Exception as e:
             self.logger.debug(docker_unexpected_error.format(action=self.action, error=str(e)))
             self.logger.error(service_action_unexpected_error.format(action=self.action, error=e))
+            return False, str(e)
+
+    @staticmethod
+    def cleanup_docker_resources(
+        logger: LoggerProtocol,
+        compose_file: str,
+        remove_images: str = "all",
+        remove_volumes: bool = True,
+        remove_orphans: bool = True,
+    ) -> tuple[bool, str]:
+        """Run docker compose down with prune flags, returning (success, output)."""
+        cmd = BaseDockerCommandBuilder.build_cleanup_command(
+            compose_file, remove_images=remove_images, remove_volumes=remove_volumes, remove_orphans=remove_orphans
+        )
+
+        logger.debug(docker_command_executing.format(command=" ".join(cmd)))
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+
+            if result.stdout and result.stdout.strip():
+                logger.debug(docker_command_stdout.format(output=result.stdout.strip()))
+            if result.stderr and result.stderr.strip():
+                logger.debug(docker_command_stderr.format(output=result.stderr.strip()))
+
+            if result.returncode == 0:
+                logger.debug(docker_command_completed.format(action="cleanup"))
+                return True, result.stdout or result.stderr
+            else:
+                logger.debug(docker_command_failed.format(return_code=result.returncode))
+                return False, result.stderr or result.stdout
+        except Exception as e:
+            logger.debug(docker_unexpected_error.format(action="cleanup", error=str(e)))
             return False, str(e)
 
 

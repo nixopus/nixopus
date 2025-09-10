@@ -5,9 +5,9 @@ from typing import Dict, Generic, Optional, Protocol, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.utils.config import API_ENV_FILE, VIEW_ENV_FILE, Config
 from app.utils.logger import Logger
 from app.utils.protocols import LoggerProtocol
-from app.utils.config import Config, API_ENV_FILE, VIEW_ENV_FILE
 
 from .messages import (
     backup_created,

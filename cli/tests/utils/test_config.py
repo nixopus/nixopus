@@ -2,10 +2,11 @@ import os
 import sys
 import tempfile
 import unittest
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import Mock, mock_open, patch
 
 from app.utils.config import Config, expand_env_placeholders
 from app.utils.message import MISSING_CONFIG_KEY_MESSAGE
+
 
 class TestConfig(unittest.TestCase):
     def setUp(self):
@@ -13,32 +14,17 @@ class TestConfig(unittest.TestCase):
         self.test_config_path = os.path.join(self.temp_dir, "test_config.yaml")
         self.sample_config = {
             "services": {
-                "api": {
-                    "env": {
-                        "PORT": "${API_PORT:-8443}",
-                        "DB_NAME": "${DB_NAME:-postgres}"
-                    }
-                },
-                "view": {
-                    "env": {
-                        "PORT": "${VIEW_PORT:-7443}"
-                    }
-                }
+                "api": {"env": {"PORT": "${API_PORT:-8443}", "DB_NAME": "${DB_NAME:-postgres}"}},
+                "view": {"env": {"PORT": "${VIEW_PORT:-7443}"}},
             },
-            "clone": {
-                "repo": "https://github.com/test/repo",
-                "branch": "main",
-                "source-path": "/tmp/source"
-            },
-            "deps": {
-                "curl": {"package": "curl", "command": "curl"},
-                "docker": {"package": "docker.io", "command": "docker"}
-            },
-            "ports": [2019, 80, 443, 7443, 8443]
+            "clone": {"repo": "https://github.com/test/repo", "branch": "main", "source-path": "/tmp/source"},
+            "deps": {"curl": {"package": "curl", "command": "curl"}, "docker": {"package": "docker.io", "command": "docker"}},
+            "ports": [2019, 80, 443, 7443, 8443],
         }
 
     def tearDown(self):
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_get_env_default(self):
@@ -47,32 +33,32 @@ class TestConfig(unittest.TestCase):
         config = Config()
         self.assertEqual(config.get_env(), "PRODUCTION")
 
-    @patch('os.environ.get')
+    @patch("os.environ.get")
     def test_get_env_custom(self, mock_environ_get):
         mock_environ_get.return_value = "DEVELOPMENT"
         config = Config()
         self.assertEqual(config.get_env(), "DEVELOPMENT")
 
-    @patch('os.environ.get')
+    @patch("os.environ.get")
     def test_is_development_true(self, mock_environ_get):
         mock_environ_get.return_value = "DEVELOPMENT"
         config = Config()
         self.assertTrue(config.is_development())
 
-    @patch('os.environ.get')
+    @patch("os.environ.get")
     def test_is_development_false(self, mock_environ_get):
         mock_environ_get.return_value = "PRODUCTION"
         config = Config()
         self.assertFalse(config.is_development())
 
-    @patch('os.environ.get')
+    @patch("os.environ.get")
     def test_is_development_case_insensitive(self, mock_environ_get):
         mock_environ_get.return_value = "development"
         config = Config()
         self.assertTrue(config.is_development())
 
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('yaml.safe_load')
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("yaml.safe_load")
     def test_load_yaml_config_success(self, mock_yaml_load, mock_file):
         mock_yaml_load.return_value = self.sample_config
         config = Config()
@@ -80,15 +66,15 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(result, self.sample_config)
         mock_file.assert_called_once()
 
-    @patch('builtins.open')
+    @patch("builtins.open")
     def test_load_yaml_config_file_not_found(self, mock_open):
         mock_open.side_effect = FileNotFoundError("File not found")
         config = Config()
         with self.assertRaises(FileNotFoundError):
             config.load_yaml_config()
 
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('yaml.safe_load')
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("yaml.safe_load")
     def test_load_yaml_config_cached(self, mock_yaml_load, mock_file):
         mock_yaml_load.return_value = self.sample_config
         config = Config()
@@ -97,9 +83,9 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(result1, result2)
         self.assertEqual(mock_yaml_load.call_count, 1)
 
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('yaml.safe_load')
-    @patch('app.utils.config.expand_env_placeholders')
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("yaml.safe_load")
+    @patch("app.utils.config.expand_env_placeholders")
     def test_get_yaml_value_success(self, mock_expand, mock_yaml_load, mock_file):
         mock_yaml_load.return_value = self.sample_config
         mock_expand.return_value = "8443"
@@ -108,75 +94,56 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(result, "8443")
         mock_expand.assert_called_once_with("${API_PORT:-8443}")
 
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('yaml.safe_load')
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("yaml.safe_load")
     def test_get_yaml_value_non_string(self, mock_yaml_load, mock_file):
         mock_yaml_load.return_value = self.sample_config
         config = Config()
         result = config.get_yaml_value("ports")
         self.assertEqual(result, [2019, 80, 443, 7443, 8443])
 
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('yaml.safe_load')
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("yaml.safe_load")
     def test_get_yaml_value_missing_key(self, mock_yaml_load, mock_file):
         mock_yaml_load.return_value = self.sample_config
         config = Config()
         with self.assertRaises(KeyError) as context:
             config.get_yaml_value("services.api.env.NONEXISTENT")
-        expected_message = MISSING_CONFIG_KEY_MESSAGE.format(
-            path="services.api.env.NONEXISTENT", 
-            key="NONEXISTENT"
-        )
+        expected_message = MISSING_CONFIG_KEY_MESSAGE.format(path="services.api.env.NONEXISTENT", key="NONEXISTENT")
         self.assertEqual(context.exception.args[0], expected_message)
 
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('yaml.safe_load')
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("yaml.safe_load")
     def test_get_yaml_value_missing_path(self, mock_yaml_load, mock_file):
         mock_yaml_load.return_value = self.sample_config
         config = Config()
         with self.assertRaises(KeyError) as context:
             config.get_yaml_value("nonexistent.path")
-        expected_message = MISSING_CONFIG_KEY_MESSAGE.format(
-            path="nonexistent.path", 
-            key="nonexistent"
-        )
+        expected_message = MISSING_CONFIG_KEY_MESSAGE.format(path="nonexistent.path", key="nonexistent")
         self.assertEqual(context.exception.args[0], expected_message)
 
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('yaml.safe_load')
-    @patch('app.utils.config.expand_env_placeholders')
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("yaml.safe_load")
+    @patch("app.utils.config.expand_env_placeholders")
     def test_get_service_env_values(self, mock_expand, mock_yaml_load, mock_file):
         mock_yaml_load.return_value = self.sample_config
         mock_expand.side_effect = lambda x: x.replace("${API_PORT:-8443}", "8443")
         config = Config()
         result = config.get_service_env_values("services.api.env")
-        expected = {
-            "PORT": "8443",
-            "DB_NAME": "${DB_NAME:-postgres}"
-        }
+        expected = {"PORT": "8443", "DB_NAME": "${DB_NAME:-postgres}"}
         self.assertEqual(result, expected)
 
-    @patch('yaml.safe_load')
+    @patch("yaml.safe_load")
     def test_load_user_config_success(self, mock_yaml_load):
-        user_config = {
-            "services": {
-                "api": {
-                    "env": {
-                        "PORT": "9000"
-                    }
-                }
-            }
-        }
+        user_config = {"services": {"api": {"env": {"PORT": "9000"}}}}
         mock_yaml_load.return_value = user_config
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write("dummy content")
             config_file = f.name
         try:
             config = Config()
             result = config.load_user_config(config_file)
-            expected = {
-                "services.api.env.PORT": "9000"
-            }
+            expected = {"services.api.env.PORT": "9000"}
             self.assertEqual(result, expected)
         finally:
             os.unlink(config_file)
@@ -201,20 +168,10 @@ class TestConfig(unittest.TestCase):
 
     def test_flatten_config_nested(self):
         config = Config()
-        nested = {
-            "services": {
-                "api": {
-                    "env": {
-                        "PORT": "8443"
-                    }
-                }
-            }
-        }
+        nested = {"services": {"api": {"env": {"PORT": "8443"}}}}
         flattened = {}
         config.flatten_config(nested, flattened)
-        expected = {
-            "services.api.env.PORT": "8443"
-        }
+        expected = {"services.api.env.PORT": "8443"}
         self.assertEqual(flattened, expected)
 
     def test_flatten_config_with_prefix(self):
@@ -282,7 +239,7 @@ class TestConfig(unittest.TestCase):
         user_config = {
             "clone.repo": "https://github.com/test/repo",
             "clone.branch": "main",
-            "clone.source-path": "/tmp/source"
+            "clone.source-path": "/tmp/source",
         }
         defaults = {}
         repo_result = config.get_config_value("repo_url", user_config, defaults)
@@ -295,7 +252,7 @@ class TestConfig(unittest.TestCase):
     def test_config_pyinstaller_bundle(self):
         sys.frozen = True
         sys._MEIPASS = "/bundle"
-        with patch('os.path.join') as mock_join:
+        with patch("os.path.join") as mock_join:
             mock_join.return_value = "/bundle/helpers/config.prod.yaml"
             config = Config()
             self.assertEqual(config._yaml_path, "/bundle/helpers/config.prod.yaml")
@@ -303,14 +260,15 @@ class TestConfig(unittest.TestCase):
         del sys._MEIPASS
 
     def test_config_normal_python(self):
-        if hasattr(sys, 'frozen'):
+        if hasattr(sys, "frozen"):
             del sys.frozen
-        if hasattr(sys, '_MEIPASS'):
+        if hasattr(sys, "_MEIPASS"):
             del sys._MEIPASS
-        with patch('os.path.abspath') as mock_abspath:
+        with patch("os.path.abspath") as mock_abspath:
             mock_abspath.return_value = "/normal/path/helpers/config.prod.yaml"
             config = Config()
             self.assertNotIn("_MEIPASS", config._yaml_path)
+
 
 class TestExpandEnvPlaceholders(unittest.TestCase):
     def setUp(self):
@@ -402,5 +360,6 @@ class TestExpandEnvPlaceholders(unittest.TestCase):
         result = expand_env_placeholders("${API_PORT:-8443} and ${DB_NAME:-postgres}")
         self.assertEqual(result, "9000 and production_db")
 
+
 if __name__ == "__main__":
-    unittest.main() 
+    unittest.main()

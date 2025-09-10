@@ -23,18 +23,37 @@ export interface Container {
   };
 }
 
+export type ContainerListParams = {
+  page: number;
+  page_size: number;
+  search?: string;
+  sort_by?: 'name' | 'status';
+  sort_order?: 'asc' | 'desc';
+};
+
 export const containerApi = createApi({
   reducerPath: 'containerApi',
   baseQuery: baseQueryWithReauth,
   tagTypes: ['Container'],
   endpoints: (builder) => ({
-    getContainers: builder.query<Container[], void>({
-      query: () => ({
+    getContainers: builder.query<
+      { containers: Container[]; total_count: number; page: number; page_size: number },
+      ContainerListParams
+    >({
+      query: ({ page, page_size, search, sort_by, sort_order }) => ({
         url: CONTAINERURLS.GET_CONTAINERS,
-        method: 'GET'
+        method: 'GET',
+        params: { page, page_size, search, sort_by, sort_order }
       }),
       providesTags: [{ type: 'Container', id: 'LIST' }],
-      transformResponse: (response: { data: Container[] }) => {
+      transformResponse: (response: {
+        data: {
+          containers: Container[];
+          total_count: number;
+          page: number;
+          page_size: number;
+        };
+      }) => {
         return response.data;
       }
     }),

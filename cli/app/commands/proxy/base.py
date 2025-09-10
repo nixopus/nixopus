@@ -4,38 +4,38 @@ from typing import Generic, Optional, Protocol, TypeVar
 import requests
 from pydantic import BaseModel, Field, field_validator
 
-from app.utils.config import Config, PROXY_PORT, CONFIG_ENDPOINT, LOAD_ENDPOINT, STOP_ENDPOINT, CADDY_BASE_URL
+from app.utils.config import CADDY_BASE_URL, CONFIG_ENDPOINT, LOAD_ENDPOINT, PROXY_PORT, STOP_ENDPOINT, Config
 from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
 from .messages import (
     caddy_connection_failed,
-    config_file_not_found,
-    port_must_be_between_1_and_65535,
-    debug_checking_caddy_status,
-    debug_caddy_response,
-    debug_caddy_config_accessible,
-    debug_caddy_non_200,
-    debug_connection_refused,
-    debug_request_failed,
-    debug_unexpected_error,
-    debug_loading_config_file,
-    debug_config_parsed,
-    debug_posting_config,
-    debug_caddy_load_response,
-    debug_config_loaded_success,
-    debug_caddy_load_failed,
-    debug_stopping_caddy,
-    debug_caddy_stop_response,
-    debug_caddy_stopped_success,
-    debug_caddy_stop_failed,
     caddy_is_running,
     caddy_not_running,
-    invalid_json_error,
     cannot_connect_to_caddy,
-    request_failed_error,
+    config_file_not_found,
+    debug_caddy_config_accessible,
+    debug_caddy_load_failed,
+    debug_caddy_load_response,
+    debug_caddy_non_200,
+    debug_caddy_response,
+    debug_caddy_stop_failed,
+    debug_caddy_stop_response,
+    debug_caddy_stopped_success,
+    debug_checking_caddy_status,
+    debug_config_loaded_success,
+    debug_config_parsed,
+    debug_connection_refused,
+    debug_loading_config_file,
+    debug_posting_config,
+    debug_request_failed,
+    debug_stopping_caddy,
+    debug_unexpected_error,
     http_error,
+    invalid_json_error,
+    port_must_be_between_1_and_65535,
+    request_failed_error,
     unexpected_error,
 )
 
@@ -48,6 +48,7 @@ caddy_config_endpoint = config.get_yaml_value(CONFIG_ENDPOINT)
 caddy_load_endpoint = config.get_yaml_value(LOAD_ENDPOINT)
 caddy_stop_endpoint = config.get_yaml_value(STOP_ENDPOINT)
 caddy_base_url = config.get_yaml_value(CADDY_BASE_URL)
+
 
 class CaddyServiceProtocol(Protocol):
     def check_status(self, port: int = proxy_port) -> tuple[bool, str]: ...
@@ -98,7 +99,9 @@ class BaseFormatter:
         if hasattr(command_builder, "build_status_command"):
             cmd = command_builder.build_status_command(getattr(config, "proxy_port", proxy_port))
         elif hasattr(command_builder, "build_load_command"):
-            cmd = command_builder.build_load_command(getattr(config, "config_file", ""), getattr(config, "proxy_port", proxy_port))
+            cmd = command_builder.build_load_command(
+                getattr(config, "config_file", ""), getattr(config, "proxy_port", proxy_port)
+            )
         elif hasattr(command_builder, "build_stop_command"):
             cmd = command_builder.build_stop_command(getattr(config, "proxy_port", proxy_port))
         else:
@@ -128,10 +131,10 @@ class BaseCaddyService:
         try:
             url = self._get_caddy_url(port, caddy_config_endpoint)
             self.logger.debug(debug_checking_caddy_status.format(url=url))
-            
+
             response = requests.get(url, timeout=5)
             self.logger.debug(debug_caddy_response.format(code=response.status_code))
-            
+
             if response.status_code == 200:
                 self.logger.debug(debug_caddy_config_accessible)
                 return True, caddy_is_running
@@ -157,7 +160,7 @@ class BaseCaddyService:
 
             url = self._get_caddy_url(port, caddy_load_endpoint)
             self.logger.debug(debug_posting_config.format(url=url))
-            
+
             response = requests.post(url, json=config_data, headers={"Content-Type": "application/json"}, timeout=10)
             self.logger.debug(debug_caddy_load_response.format(code=response.status_code))
 
@@ -193,10 +196,10 @@ class BaseCaddyService:
         try:
             url = self._get_caddy_url(port, caddy_stop_endpoint)
             self.logger.debug(debug_stopping_caddy.format(url=url))
-            
+
             response = requests.post(url, timeout=5)
             self.logger.debug(debug_caddy_stop_response.format(code=response.status_code))
-            
+
             if response.status_code == 200:
                 self.logger.debug(debug_caddy_stopped_success)
                 return True, "Caddy stopped"

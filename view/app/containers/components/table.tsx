@@ -15,8 +15,25 @@ import truncateId from '@/app/dashboard/components/utils/truncate-id';
 import getStatusColor from '@/app/dashboard/components/utils/get-status-color';
 import { Container } from '@/redux/services/container/containerApi';
 import { useRouter } from 'next/navigation';
+import { ArrowUpDown } from 'lucide-react';
+import { ContainerActions } from './actions';
+import { Action } from './card';
 
-const ContainersTable = ({ containersData }: { containersData: Container[] }) => {
+type SortField = 'name' | 'status';
+
+const ContainersTable = ({
+    containersData,
+    sortBy = 'name',
+    sortOrder = 'asc',
+    onSort,
+    onAction
+}: {
+    containersData: Container[];
+    sortBy?: SortField;
+    sortOrder?: 'asc' | 'desc';
+    onSort?: (field: SortField) => void;
+    onAction?: (id: string, action: Action) => void;
+}) => {
     const { t } = useTranslation();
     const hasContainers = containersData && containersData.length > 0;
     const router = useRouter();
@@ -29,14 +46,22 @@ const ContainersTable = ({ containersData }: { containersData: Container[] }) =>
                         <TableHead className="w-[100px]">
                             <TypographySmall>{t('dashboard.containers.table.headers.id')}</TypographySmall>
                         </TableHead>
-                        <TableHead>
-                            <TypographySmall>{t('dashboard.containers.table.headers.name')}</TypographySmall>
+                        <TableHead onClick={() => onSort && onSort('name')} className={`select-none ${onSort ? 'cursor-pointer' : ''}`}>
+                            <div className="flex items-center gap-1">
+                                <TypographySmall>{t('dashboard.containers.table.headers.name')}</TypographySmall>
+                                <ArrowUpDown className={`h-3 w-3 ${sortBy === 'name' ? 'opacity-100' : 'opacity-40'}`} />
+                                <span className="sr-only">Sort</span>
+                            </div>
                         </TableHead>
                         <TableHead>
                             <TypographySmall>{t('dashboard.containers.table.headers.image')}</TypographySmall>
                         </TableHead>
-                        <TableHead>
-                            <TypographySmall>{t('dashboard.containers.table.headers.status')}</TypographySmall>
+                        <TableHead onClick={() => onSort && onSort('status')} className={`select-none ${onSort ? 'cursor-pointer' : ''}`}>
+                            <div className="flex items-center gap-1">
+                                <TypographySmall>{t('dashboard.containers.table.headers.status')}</TypographySmall>
+                                <ArrowUpDown className={`h-3 w-3 ${sortBy === 'status' ? 'opacity-100' : 'opacity-40'}`} />
+                                <span className="sr-only">Sort</span>
+                            </div>
                         </TableHead>
                         <TableHead>
                             <TypographySmall>{t('dashboard.containers.table.headers.ports')}</TypographySmall>
@@ -44,6 +69,11 @@ const ContainersTable = ({ containersData }: { containersData: Container[] }) =>
                         <TableHead>
                             <TypographySmall>{t('dashboard.containers.table.headers.created')}</TypographySmall>
                         </TableHead>
+                        {onAction && (
+                            <TableHead>
+                                <TypographySmall>Actions</TypographySmall>
+                            </TableHead>
+                        )}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -101,6 +131,11 @@ const ContainersTable = ({ containersData }: { containersData: Container[] }) =>
                                     <TableCell>
                                         <TypographySmall>{formattedDate}</TypographySmall>
                                     </TableCell>
+                                    {onAction && (
+                                        <TableCell onClick={(e) => e.stopPropagation()}>
+                                            <ContainerActions container={container} onAction={onAction} />
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             );
                         })

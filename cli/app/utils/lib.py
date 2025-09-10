@@ -5,6 +5,7 @@ import stat
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import Enum
 from typing import Callable, List, Optional, Tuple, TypeVar
+
 import requests
 
 from app.utils.message import FAILED_TO_GET_PUBLIC_IP_MESSAGE, FAILED_TO_REMOVE_DIRECTORY_MESSAGE, REMOVED_DIRECTORY_MESSAGE
@@ -79,11 +80,11 @@ class HostInformation:
     @staticmethod
     def command_exists(command):
         return shutil.which(command) is not None
-    
+
     @staticmethod
     def get_public_ip():
         try:
-            response = requests.get('https://api.ipify.org', timeout=10)
+            response = requests.get("https://api.ipify.org", timeout=10)
             response.raise_for_status()  # fail on non-2xx
             return response.text.strip()
         except requests.RequestException:
@@ -134,7 +135,7 @@ class DirectoryManager:
             logger.debug(f"Attempting to remove directory: {path}")
             logger.debug(f"Directory exists: {os.path.exists(path)}")
             logger.debug(f"Directory is directory: {os.path.isdir(path) if os.path.exists(path) else 'N/A'}")
-        
+
         try:
             shutil.rmtree(path)
             if logger:

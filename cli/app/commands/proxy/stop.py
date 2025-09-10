@@ -2,7 +2,7 @@ from typing import Protocol
 
 from pydantic import BaseModel
 
-from app.utils.config import Config, PROXY_PORT
+from app.utils.config import PROXY_PORT, Config
 from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
@@ -38,7 +38,7 @@ class StopFormatter(BaseFormatter):
         if output == "json":
             success_msg = "Caddy stopped successfully" if result.success else "Failed to stop Caddy"
             return super().format_output(result, output, success_msg, result.error or "Unknown error")
-        
+
         if result.success:
             return "Caddy stopped successfully"
         else:

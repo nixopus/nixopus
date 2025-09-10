@@ -1,13 +1,14 @@
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/use-translation';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   useRemoveContainerMutation,
   useStartContainerMutation,
-  useStopContainerMutation
+  useStopContainerMutation,
+  useGetContainersQuery,
+  Container
 } from '@/redux/services/container/containerApi';
-import { useGetContainersQuery } from '@/redux/services/container/containerApi';
 import { useFeatureFlags } from '@/hooks/features_provider';
 import { usePruneBuildCacheMutation } from '@/redux/services/container/imagesApi';
 import { usePruneImagesMutation } from '@/redux/services/container/imagesApi';
@@ -15,7 +16,18 @@ import { usePruneImagesMutation } from '@/redux/services/container/imagesApi';
 function useContainerList() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { data: containers = [], isLoading, refetch } = useGetContainersQuery();
+  // Params state for pagination, sorting, and search
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [sortBy, setSortBy] = useState<'name' | 'status'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  const { data, isLoading, refetch, isFetching } = useGetContainersQuery(
+    { page, page_size: pageSize, search, sort_by: sortBy, sort_order: sortOrder },
+    { refetchOnMountOrArgChange: true }
+  );
   const [startContainer] = useStartContainerMutation();
   const [stopContainer] = useStopContainerMutation();
   const [removeContainer] = useRemoveContainerMutation();
@@ -34,6 +46,42 @@ function useContainerList() {
       await refetch();
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  // Debounce search input to avoid fetching on every keystroke
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [searchInput]);
+
+  // Keep previous data to avoid page flash on param changes
+  const [lastData, setLastData] = useState<
+    { containers: Container[]; total_count: number; page: number; page_size: number } | undefined
+  >(undefined);
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (data) {
+      setLastData(data);
+      if (!initialized) setInitialized(true);
+    }
+  }, [data]);
+
+  const effectiveData = data ?? lastData;
+  const containers = useMemo(() => effectiveData?.containers ?? [], [effectiveData]);
+  const totalCount = effectiveData?.total_count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
+  const handleSort = (field: 'name' | 'status') => {
+    if (sortBy === field) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
     }
   };
 
@@ -109,6 +157,8 @@ function useContainerList() {
   return {
     containers,
     isLoading,
+    isFetching,
+    initialized,
     refetch,
     handleRefresh,
     handleContainerAction,
@@ -126,7 +176,20 @@ function useContainerList() {
     router,
     containerToDelete,
     setContainerToDelete,
-    getGradientFromName
+    getGradientFromName,
+    // order for ref: pagination/sort/search
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    totalCount,
+    search,
+    searchInput,
+    setSearchInput,
+    sortBy,
+    sortOrder,
+    handleSort
   };
 }
 

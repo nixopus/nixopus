@@ -206,9 +206,7 @@ class TestDepsCheckResult(unittest.TestCase):
 class TestDepsConfig(unittest.TestCase):
 
     def test_valid_config(self):
-        config = DepsConfig(
-            deps=["docker", "kubectl"], verbose=True, output="json", os="linux", package_manager="apt"
-        )
+        config = DepsConfig(deps=["docker", "kubectl"], verbose=True, output="json", os="linux", package_manager="apt")
 
         self.assertEqual(config.deps, ["docker", "kubectl"])
         self.assertTrue(config.verbose)
@@ -235,9 +233,7 @@ class TestDepsConfig(unittest.TestCase):
 class TestDepsService(unittest.TestCase):
 
     def setUp(self):
-        self.config = DepsConfig(
-            deps=["docker", "kubectl"], verbose=False, output="text", os="linux", package_manager="apt"
-        )
+        self.config = DepsConfig(deps=["docker", "kubectl"], verbose=False, output="text", os="linux", package_manager="apt")
         self.mock_logger = MockLogger()
         self.mock_checker = Mock()
         self.service = DepsService(config=self.config, logger=self.mock_logger, checker=self.mock_checker)

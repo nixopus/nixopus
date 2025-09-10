@@ -1,14 +1,16 @@
+import os
+import tempfile
 import unittest
 from unittest.mock import patch
+
 import yaml
-import tempfile
-import os
-from app.commands.conflict.models import (
-    ConflictConfig,
-    ConflictCheckResult,
-)
+
 from app.commands.conflict.conflict import (
     ConflictService,
+)
+from app.commands.conflict.models import (
+    ConflictCheckResult,
+    ConflictConfig,
 )
 from app.utils.logger import Logger
 
@@ -18,9 +20,7 @@ class TestServiceIntegration(unittest.TestCase):
 
     def setUp(self):
         self.logger = Logger(verbose=False)
-        self.config = ConflictConfig(
-            config_file="test_config.yaml", verbose=False, output="text"
-        )
+        self.config = ConflictConfig(config_file="test_config.yaml", verbose=False, output="text")
 
     def test_conflict_service_integration(self):
         """Test ConflictService integration with YAML config"""
@@ -113,7 +113,7 @@ class TestServiceIntegration(unittest.TestCase):
                 "docker": {"version": "20.10.0"},
                 "go": {"version": "1.18.0"},
                 "python": {"version": "3.9.0"},
-                "nodejs": {"version": "16.0.0"}
+                "nodejs": {"version": "16.0.0"},
             }
         }
 
@@ -129,7 +129,9 @@ class TestServiceIntegration(unittest.TestCase):
             # Mock the checker to return mixed results
             with patch.object(service.checker, "check_conflicts") as mock_check:
                 mock_check.return_value = [
-                    ConflictCheckResult(tool="docker", expected="20.10.0", current="20.10.5", status="compatible", conflict=False),
+                    ConflictCheckResult(
+                        tool="docker", expected="20.10.0", current="20.10.5", status="compatible", conflict=False
+                    ),
                     ConflictCheckResult(tool="go", expected="1.18.0", current="1.17.0", status="conflict", conflict=True),
                     ConflictCheckResult(tool="python", expected="3.9.0", current="3.9.2", status="compatible", conflict=False),
                     ConflictCheckResult(tool="nodejs", expected="16.0.0", current=None, status="missing", conflict=True),
@@ -137,11 +139,11 @@ class TestServiceIntegration(unittest.TestCase):
 
                 results = service.check_conflicts()
                 self.assertEqual(len(results), 4)
-                
+
                 # Check that we have both compatible and conflict results
                 compatible_results = [r for r in results if not r.conflict]
                 conflict_results = [r for r in results if r.conflict]
-                
+
                 self.assertEqual(len(compatible_results), 2)
                 self.assertEqual(len(conflict_results), 2)
         finally:

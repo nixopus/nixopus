@@ -1,13 +1,15 @@
-import unittest
-import yaml
-import tempfile
 import os
-from app.commands.conflict.models import (
-    ConflictConfig,
-    ConflictCheckResult,
-)
+import tempfile
+import unittest
+
+import yaml
+
 from app.commands.conflict.conflict import (
     ConflictChecker,
+)
+from app.commands.conflict.models import (
+    ConflictCheckResult,
+    ConflictConfig,
 )
 from app.utils.logger import Logger
 

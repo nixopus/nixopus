@@ -5,21 +5,20 @@ from app.utils.logger import Logger
 from app.utils.timeout import TimeoutWrapper
 
 from .deps import Deps, DepsConfig
-from .run import PreflightRunner
 from .messages import (
-    debug_starting_preflight_check,
-    debug_preflight_check_completed,
-    debug_starting_ports_check,
-    debug_ports_check_completed,
-    debug_starting_deps_check,
-    debug_deps_check_completed,
-    debug_creating_port_config,
     debug_creating_deps_config,
-    debug_initializing_port_service,
-    debug_initializing_deps_service,
-    debug_timeout_wrapper_start,
-    debug_timeout_wrapper_end,
+    debug_creating_port_config,
+    debug_deps_check_completed,
     debug_formatting_output,
+    debug_initializing_deps_service,
+    debug_initializing_port_service,
+    debug_ports_check_completed,
+    debug_preflight_check_completed,
+    debug_starting_deps_check,
+    debug_starting_ports_check,
+    debug_starting_preflight_check,
+    debug_timeout_wrapper_end,
+    debug_timeout_wrapper_start,
     error_checking_deps,
     error_checking_ports,
     error_timeout_occurred,
@@ -27,6 +26,7 @@ from .messages import (
     running_preflight_checks,
 )
 from .port import PortConfig, PortService
+from .run import PreflightRunner
 
 preflight_app = typer.Typer(no_args_is_help=False)
 
@@ -49,14 +49,14 @@ def check(
         logger = Logger(verbose=verbose)
         logger.debug(debug_starting_preflight_check)
         logger.info(running_preflight_checks)
-        
+
         logger.debug(debug_timeout_wrapper_start.format(timeout=timeout))
         with TimeoutWrapper(timeout):
             preflight_runner = PreflightRunner(logger=logger, verbose=verbose)
             preflight_runner.check_ports_from_config()
             logger.debug(debug_timeout_wrapper_end)
             logger.debug(debug_preflight_check_completed)
-        
+
         logger.success("All preflight checks completed successfully")
     except TimeoutError as e:
         logger.error(error_timeout_occurred.format(timeout=timeout))
@@ -65,6 +65,7 @@ def check(
         if not isinstance(e, typer.Exit):
             logger.error(f"Unexpected error during preflight check: {e}")
         raise typer.Exit(1)
+
 
 @preflight_app.command()
 def ports(
@@ -78,24 +79,24 @@ def ports(
     try:
         logger = Logger(verbose=verbose)
         logger.debug(debug_starting_ports_check)
-        
+
         logger.debug(debug_creating_port_config)
         config = PortConfig(ports=ports, host=host, verbose=verbose)
-        
+
         logger.debug(debug_initializing_port_service)
         port_service = PortService(config, logger=logger)
-        
+
         logger.debug(debug_timeout_wrapper_start.format(timeout=timeout))
         with TimeoutWrapper(timeout):
             results = port_service.check_ports()
         logger.debug(debug_timeout_wrapper_end)
-        
+
         logger.debug(debug_formatting_output.format(format=output))
         formatted_output = port_service.formatter.format_output(results, output)
-        
+
         logger.success(formatted_output)
         logger.debug(debug_ports_check_completed)
-        
+
     except ValueError as e:
         logger.error(error_validation_failed.format(error=e))
         raise typer.Exit(1)
@@ -119,7 +120,7 @@ def deps(
     try:
         logger = Logger(verbose=verbose)
         logger.debug(debug_starting_deps_check)
-        
+
         logger.debug(debug_creating_deps_config)
         config = DepsConfig(
             deps=deps,
@@ -128,21 +129,21 @@ def deps(
             os=HostInformation.get_os_name(),
             package_manager=HostInformation.get_package_manager(),
         )
-        
+
         logger.debug(debug_initializing_deps_service)
         deps_checker = Deps(logger=logger)
-        
+
         logger.debug(debug_timeout_wrapper_start.format(timeout=timeout))
         with TimeoutWrapper(timeout):
             results = deps_checker.check(config)
         logger.debug(debug_timeout_wrapper_end)
-        
+
         logger.debug(debug_formatting_output.format(format=output))
         formatted_output = deps_checker.format_output(results, output)
-        
+
         logger.success(formatted_output)
         logger.debug(debug_deps_check_completed)
-        
+
     except ValueError as e:
         logger.error(error_validation_failed.format(error=e))
         raise typer.Exit(1)

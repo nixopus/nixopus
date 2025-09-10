@@ -1,13 +1,19 @@
 import json
+
 import typer
 
-from app.utils.config import Config, DEFAULT_COMPOSE_FILE, NIXOPUS_CONFIG_DIR
+from app.utils.config import DEFAULT_COMPOSE_FILE, NIXOPUS_CONFIG_DIR, Config
 from app.utils.logger import Logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.timeout import TimeoutWrapper
 
 from .down import Down, DownConfig
-from .messages import services_started_successfully, services_stopped_successfully, services_status_retrieved, services_restarted_successfully
+from .messages import (
+    services_restarted_successfully,
+    services_started_successfully,
+    services_status_retrieved,
+    services_stopped_successfully,
+)
 from .ps import Ps, PsConfig
 from .restart import Restart, RestartConfig
 from .up import Up, UpConfig
@@ -46,7 +52,7 @@ def up(
         )
 
         up_service = Up(logger=logger)
-        
+
         with TimeoutWrapper(timeout):
             if config.dry_run:
                 formatted_output = up_service.format_dry_run(config)
@@ -94,7 +100,7 @@ def down(
         )
 
         down_service = Down(logger=logger)
-        
+
         with TimeoutWrapper(timeout):
             if config.dry_run:
                 formatted_output = down_service.format_dry_run(config)
@@ -142,7 +148,7 @@ def ps(
         )
 
         ps_service = Ps(logger=logger)
-        
+
         with TimeoutWrapper(timeout):
             if config.dry_run:
                 formatted_output = ps_service.format_dry_run(config)
@@ -185,7 +191,7 @@ def restart(
         )
 
         restart_service = Restart(logger=logger)
-        
+
         with TimeoutWrapper(timeout):
             if config.dry_run:
                 formatted_output = restart_service.format_dry_run(config)
