@@ -19,16 +19,14 @@ export const notificationApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ['Notification'],
   endpoints: (builder) => ({
-    getSMTPConfigurations: builder.query<SMTPConfig, string>({
+    getSMTPConfigurations: builder.query<SMTPConfig | null, string>({
       query: (organizationId) => ({
         url: USER_NOTIFICATION_SETTINGS.GET_SMTP,
         method: 'GET',
         params: { id: organizationId }
       }),
       providesTags: [{ type: 'Notification', id: 'LIST' }],
-      transformResponse: (response: { data: SMTPConfig }) => {
-        return response.data;
-      }
+      transformResponse: ({ data }: { data: SMTPConfig | null }) => data || null
     }),
     createSMPTConfiguration: builder.mutation<SMTPConfig, CreateSMTPConfigRequest>({
       query: (data) => ({

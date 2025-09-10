@@ -1,9 +1,8 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -14,7 +13,10 @@ func (s *NotificationService) GetSmtp(ID string, organizationID string) (*shared
 	s.logger.Log(logger.Info, "Getting SMTP configuration", "")
 
 	smtp, err := s.storage.GetSmtp(ID)
-	if err == nil && smtp != nil {
+	if err != nil {
+		return nil, err
+	}
+	if smtp != nil {
 		return smtp, nil
 	}
 
@@ -24,7 +26,7 @@ func (s *NotificationService) GetSmtp(ID string, organizationID string) (*shared
 	}
 
 	if len(smtpConfigs) == 0 {
-		return nil, fmt.Errorf("no SMTP configurations found for organization ID=%s", organizationID)
+		return nil, notification.ErrSMTPConfigNotFound
 	}
 
 	return &smtpConfigs[0], nil
