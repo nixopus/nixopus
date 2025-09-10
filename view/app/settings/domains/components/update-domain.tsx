@@ -13,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from '@/components/ui/dialog';
 import {
   useCreateDomainMutation,
@@ -81,11 +80,6 @@ function UpdateDomainDialog({ open, setOpen, id, data }: UpdateDomainDialogProps
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {!id && (
-        <DialogTrigger asChild>
-          <Button variant="outline">{t('settings.domains.update.addButton')}</Button>
-        </DialogTrigger>
-      )}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
