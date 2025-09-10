@@ -1,3 +1,12 @@
+# [0.1.0-alpha.23](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.22...v0.1.0-alpha.23) (2025-09-10)
+
+
+### Features
+
+* **notification:** handle smtpConfigs not found ([#384](https://github.com/raghavyuva/nixopus/issues/384)) ([3a3a2a8](https://github.com/raghavyuva/nixopus/commit/3a3a2a897623e729f2680c60425403045d12d125))
+
+
+
 # [0.1.0-alpha.22](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.21...v0.1.0-alpha.22) (2025-09-09)
 
 
