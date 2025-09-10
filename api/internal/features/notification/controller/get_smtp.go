@@ -62,13 +62,6 @@ func (c *NotificationController) GetSmtp(f fuego.ContextNoBody) (*shared_types.R
 		}
 	}
 
-	if SMTPConfigs == nil {
-		return nil, fuego.HTTPError{
-			Err:    notification.ErrSMTPConfigNotFound,
-			Status: http.StatusNotFound,
-		}
-	}
-
 	return &shared_types.Response{
 		Status:  "success",
 		Message: "SMTP configs fetched successfully",
