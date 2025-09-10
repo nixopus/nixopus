@@ -1,4 +1,4 @@
-FROM golang:1.23.6-alpine AS builder
+FROM golang:1.25-alpine AS builder
 ARG API_PORT
 RUN apk add --no-cache make git
 

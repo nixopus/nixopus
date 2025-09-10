@@ -108,7 +108,7 @@ const Page: React.FC = () => {
           <ResourceGuard resource="notification" action="create">
             <TabsContent value="channels">
               <NotificationChannelsTab
-                smtpConfigs={smtpConfigs}
+                smtpConfigs={smtpConfigs || undefined}
                 slackConfig={slackConfig}
                 discordConfig={discordConfig}
                 isLoading={isLoading}
