@@ -56,20 +56,24 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			Name:                QUEUE_CREATE_DEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
 			MinNumWorker:        1,
-			MaxNumWorker:        10,
-			ReservationSize:     10,
-			ReservationTimeout:  10 * time.Second,
+			MaxNumWorker:        4,
+			ReservationSize:     1,
+			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
 			BufferSize:          100,
 		})
 
 		TaskCreateDeployment = taskq.RegisterTask(&taskq.TaskOptions{
-			Name: TASK_CREATE_DEPLOYMENT,
+			Name:       TASK_CREATE_DEPLOYMENT,
+			RetryLimit: 5,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
+				fmt.Printf("[%s] start: correlation_id=%s\n", TASK_CREATE_DEPLOYMENT, data.CorrelationID)
 				err := t.BuildPack(ctx, data)
 				if err != nil {
+					fmt.Print("error handling create deployment: ", err)
 					return err
 				}
+				fmt.Printf("[%s] done: correlation_id=%s\n", TASK_CREATE_DEPLOYMENT, data.CorrelationID)
 				return nil
 			},
 		})
@@ -78,15 +82,16 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			Name:                QUEUE_UPDATE_DEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
 			MinNumWorker:        1,
-			MaxNumWorker:        10,
-			ReservationSize:     10,
-			ReservationTimeout:  10 * time.Second,
+			MaxNumWorker:        4,
+			ReservationSize:     1,
+			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
 			BufferSize:          100,
 		})
 
 		TaskUpdateDeployment = taskq.RegisterTask(&taskq.TaskOptions{
-			Name: TASK_UPDATE_DEPLOYMENT,
+			Name:       TASK_UPDATE_DEPLOYMENT,
+			RetryLimit: 5,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Updating deployment")
 				err := t.HandleUpdateDeployment(ctx, data)
@@ -102,15 +107,16 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			Name:                QUEUE_REDEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
 			MinNumWorker:        1,
-			MaxNumWorker:        10,
-			ReservationSize:     10,
-			ReservationTimeout:  10 * time.Second,
+			MaxNumWorker:        4,
+			ReservationSize:     1,
+			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
 			BufferSize:          100,
 		})
 
 		TaskReDeploy = taskq.RegisterTask(&taskq.TaskOptions{
-			Name: TASK_REDEPLOYMENT,
+			Name:       TASK_REDEPLOYMENT,
+			RetryLimit: 5,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Redeploying application")
 				err := t.HandleReDeploy(ctx, data)
@@ -126,15 +132,16 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			Name:                QUEUE_ROLLBACK,
 			ConsumerIdleTimeout: 10 * time.Minute,
 			MinNumWorker:        1,
-			MaxNumWorker:        10,
-			ReservationSize:     10,
-			ReservationTimeout:  10 * time.Second,
+			MaxNumWorker:        4,
+			ReservationSize:     1,
+			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
 			BufferSize:          100,
 		})
 
 		TaskRollback = taskq.RegisterTask(&taskq.TaskOptions{
-			Name: TASK_ROLLBACK,
+			Name:       TASK_ROLLBACK,
+			RetryLimit: 10,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Rolling back deployment")
 				err := t.HandleRollback(ctx, data)
@@ -150,15 +157,16 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			Name:                QUEUE_RESTART,
 			ConsumerIdleTimeout: 10 * time.Minute,
 			MinNumWorker:        1,
-			MaxNumWorker:        10,
-			ReservationSize:     10,
-			ReservationTimeout:  10 * time.Second,
+			MaxNumWorker:        4,
+			ReservationSize:     1,
+			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
 			BufferSize:          100,
 		})
 
 		TaskRestart = taskq.RegisterTask(&taskq.TaskOptions{
-			Name: TASK_RESTART,
+			Name:       TASK_RESTART,
+			RetryLimit: 5,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Restarting deployment")
 				err := t.HandleRestart(ctx, data)

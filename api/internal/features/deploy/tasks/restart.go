@@ -35,6 +35,8 @@ func (t *TaskService) RestartDeployment(request *types.RestartDeploymentRequest,
         return err
     }
 
+    payload.CorrelationID = uuid.NewString()
+
     return RestartQueue.Add(TaskRestart.WithArgs(context.Background(), payload))
 }
 
@@ -66,4 +68,3 @@ func (s *TaskService) HandleRestart(ctx context.Context, TaskPayload shared_type
     taskCtx.LogAndUpdateStatus("Application containers restarted", shared_types.Running)
     return nil
 }
-

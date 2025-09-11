@@ -1,6 +1,7 @@
 package types
 
 type TaskPayload struct {
+	CorrelationID         string // trace a single logical enqueue
 	Application           Application
 	ApplicationDeployment ApplicationDeployment
 	Status                *ApplicationDeploymentStatus

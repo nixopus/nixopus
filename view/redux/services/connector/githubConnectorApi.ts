@@ -58,14 +58,23 @@ export const GithubConnectorApi = createApi({
         return response.data;
       }
     }),
-    getAllGithubRepositories: builder.query<GithubRepository[], void>({
-      query: () => ({
-        url: GITHUB_CONNECTOR.ALL_REPOSITORIES,
-        method: 'GET'
-      }),
+    getAllGithubRepositories: builder.query<
+      { repositories: GithubRepository[]; total_count: number; page: number; page_size: number },
+      { page?: number; page_size?: number } | void
+    >({
+      query: (args) => {
+        const page = args && args.page ? args.page : 1;
+        const page_size = args && args.page_size ? args.page_size : 10;
+        return {
+          url: `${GITHUB_CONNECTOR.ALL_REPOSITORIES}?page=${page}&page_size=${page_size}`,
+          method: 'GET'
+        };
+      },
       providesTags: [{ type: 'GithubConnector', id: 'LIST' }],
-      transformResponse: (response: { data: any[] }) => {
-        return response.data;
+      transformResponse: (response: { data: any }) => {
+        // Expecting shape: { total_count, repositories, page, page_size }
+        const { total_count, repositories, page, page_size } = response.data || {};
+        return { repositories, total_count, page, page_size };
       }
     }),
     getGithubRepositoryBranches: builder.mutation<GithubRepositoryBranch[], string>({

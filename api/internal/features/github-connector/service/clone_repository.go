@@ -31,12 +31,13 @@ type CloneRepositoryConfig struct {
 // If any errors occur during the process, the method logs the error and
 // returns the error.
 func (s *GithubConnectorService) CloneRepository(c CloneRepositoryConfig, commitHash *string) (string, error) {
-	// we have to optimize the code here
-	_, repo_url, err := s.GetRepositoryDetailsFromId(c.RepoID, c.UserID)
+	// Fetch repository directly by ID based on installation
+	repo, err := s.GetGithubRepositoryByID(c.UserID, c.RepoID)
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("Failed to get repository details: %s", err.Error()), "")
 		return "", err
 	}
+	repo_url := repo.CloneURL
 
 	s.logger.Log(logger.Info, fmt.Sprintf("Cloning repository %s", repo_url), c.UserID)
 

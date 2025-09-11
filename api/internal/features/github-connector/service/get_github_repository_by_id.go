@@ -10,34 +10,38 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// GetGithubRepositoriesPaginated fetches repositories for the user's GitHub installation with pagination.
-func (c *GithubConnectorService) GetGithubRepositoriesPaginated(userID string, page int, pageSize int) ([]shared_types.GithubRepository, int, error) {
+// GetGithubRepositoryByID gets repository details from GitHub by repository ID.
+func (c *GithubConnectorService) GetGithubRepositoryByID(userID string, repoID uint64) (*shared_types.GithubRepository, error) {
 	connectors, err := c.storage.GetAllConnectors(userID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		return nil, 0, err
+		return nil, err
 	}
 
 	if len(connectors) == 0 {
 		c.logger.Log(logger.Error, "No connectors found for user", userID)
-		return []shared_types.GithubRepository{}, 0, nil
+		return nil, fmt.Errorf("no connectors found for user")
 	}
 
-	installation_id := connectors[0].InstallationID
+	installationID := connectors[0].InstallationID
 	jwt := GenerateJwt(&connectors[0])
+	if jwt == "" {
+		c.logger.Log(logger.Error, "Failed to generate app JWT", "")
+		return nil, fmt.Errorf("failed to generate app JWT")
+	}
 
-	accessToken, err := c.getInstallationToken(jwt, installation_id)
+	accessToken, err := c.getInstallationToken(jwt, installationID)
 	if err != nil {
 		c.logger.Log(logger.Error, fmt.Sprintf("Failed to get installation token: %s", err.Error()), "")
-		return nil, 0, err
+		return nil, err
 	}
 
 	client := &http.Client{}
-	url := fmt.Sprintf("https://api.github.com/installation/repositories?per_page=%d&page=%d", pageSize, page)
+	url := fmt.Sprintf("%s/repositories/%d", githubAPIBaseURL, repoID)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		return nil, 0, err
+		return nil, err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", accessToken))
@@ -47,25 +51,21 @@ func (c *GithubConnectorService) GetGithubRepositoriesPaginated(userID string, p
 	resp, err := client.Do(req)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		return nil, 0, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		c.logger.Log(logger.Error, fmt.Sprintf("GitHub API error: %s - %s", resp.Status, string(bodyBytes)), "")
-		return nil, 0, fmt.Errorf("GitHub API error: %s", resp.Status)
+		return nil, fmt.Errorf("GitHub API error: %s", resp.Status)
 	}
 
-	var response struct {
-		TotalCount   int                             `json:"total_count"`
-		Repositories []shared_types.GithubRepository `json:"repositories"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	var repo shared_types.GithubRepository
+	if err := json.NewDecoder(resp.Body).Decode(&repo); err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		return nil, 0, err
+		return nil, err
 	}
 
-	return response.Repositories, response.TotalCount, nil
+	return &repo, nil
 }

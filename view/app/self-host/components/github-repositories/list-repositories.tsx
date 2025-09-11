@@ -28,7 +28,7 @@ function ListRepositories() {
       return <GithubRepositoriesSkeletonLoader />;
     }
 
-    if (paginatedApplications?.length === 0 && !isLoading) {
+  if (paginatedApplications?.length === 0 && !isLoading) {
       return <div className="text-center">{t('selfHost.repositories.noRepositories')}</div>;
     }
     return (

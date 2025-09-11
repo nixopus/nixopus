@@ -34,6 +34,8 @@ func (t *TaskService) RollbackDeployment(request *types.RollbackDeploymentReques
         return err
     }
 
+    payload.CorrelationID = uuid.NewString()
+
     return RollbackQueue.Add(TaskRollback.WithArgs(context.Background(), payload))
 }
 
@@ -82,4 +84,3 @@ func (s *TaskService) HandleRollback(ctx context.Context, TaskPayload shared_typ
 
     return nil
 }
-

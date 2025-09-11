@@ -51,7 +51,7 @@ func (c *DeployController) HandleDeploy(f fuego.ContextWithBody[types.CreateDepl
 		}
 	}
 
-	c.logger.Log(logger.Info, "attempting to create deployment", "name: "+data.Name+", user_id: "+user.ID.String())	
+	c.logger.Log(logger.Info, "attempting to create deployment", "name: "+data.Name+", user_id: "+user.ID.String())
 
 	application, err := c.taskService.CreateDeploymentTask(&data, user.ID, organizationID)
 	if err != nil {

@@ -24,6 +24,8 @@ func (t *TaskService) CreateDeploymentTask(deployment *types.CreateDeploymentReq
 		return shared_types.Application{}, err
 	}
 
+	TaskPayload.CorrelationID = uuid.NewString()
+
 	err = CreateDeploymentQueue.Add(TaskCreateDeployment.WithArgs(context.Background(), TaskPayload))
 	if err != nil {
 		fmt.Printf("error enqueuing create deployment: %v\n", err)
@@ -118,6 +120,8 @@ func (t *TaskService) ReDeployApplication(request *types.ReDeployApplicationRequ
 	if err != nil {
 		return shared_types.Application{}, err
 	}
+
+	TaskPayload.CorrelationID = uuid.NewString()
 
 	err = ReDeployQueue.Add(TaskReDeploy.WithArgs(context.Background(), TaskPayload))
 	if err != nil {

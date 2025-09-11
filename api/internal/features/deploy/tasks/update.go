@@ -1,10 +1,10 @@
 package tasks
 
 import (
-	"context"
-	"fmt"
+    "context"
+    "fmt"
 
-	"github.com/google/uuid"
+    "github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
@@ -29,6 +29,8 @@ func (s *TaskService) UpdateDeployment(deployment *types.UpdateDeploymentRequest
 	if err != nil {
 		return shared_types.Application{}, err
 	}
+
+    TaskPayload.CorrelationID = uuid.NewString()
 
 	err = UpdateDeploymentQueue.Add(TaskUpdateDeployment.WithArgs(context.Background(), TaskPayload))
 	if err != nil {

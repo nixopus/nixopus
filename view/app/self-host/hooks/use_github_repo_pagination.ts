@@ -33,35 +33,36 @@ import { SortOption } from '@/components/ui/sort-selector';
  */
 function useGithubRepoPagination() {
   const searchParams = useSearchParams();
-  const { data: githubRepositories, isLoading } = useGetAllGithubRepositoriesQuery();
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
+  // We'll define searchTerm via useSearchable below, so temporarily initialize hook then call API with it
   const router = useRouter();
   const [selectedRepository, setSelectedRepository] = React.useState<string | null>(null);
   const {
-    filteredAndSortedData: filteredAndSortedApplications,
+    filteredAndSortedData: _ignored,
     searchTerm,
     handleSearchChange,
     handleSortChange,
     sortConfig
   } = useSearchable<GithubRepository>(
-    githubRepositories || [],
+    [],
     ['name', 'description', 'stargazers_count'],
     { key: 'name', direction: 'asc' }
   );
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = React.useMemo(() => 9, []);
-
-  const paginatedApplications = React.useMemo(
-    () =>
-      filteredAndSortedApplications.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
-      ),
-    [currentPage, filteredAndSortedApplications]
+  const { data, isLoading } = useGetAllGithubRepositoriesQuery({ page: currentPage, page_size: PAGE_SIZE });
+  // Re-wire the searchable array to API data
+  const {
+    filteredAndSortedData: filteredAndSortedApplications,
+  } = useSearchable<GithubRepository>(
+    data?.repositories || [],
+    ['name', 'description', 'stargazers_count'],
+    { key: 'name', direction: 'asc' }
   );
-
+  // Server-side pagination: the API already returns one page with page_size=10
+  const paginatedApplications = filteredAndSortedApplications;
   const totalPages = React.useMemo(
-    () => Math.ceil(filteredAndSortedApplications.length / ITEMS_PER_PAGE),
-    [filteredAndSortedApplications]
+    () => Math.max(1, Math.ceil((data?.total_count || 0) / PAGE_SIZE)),
+    [data?.total_count]
   );
 
   const handlePageChange = (pageNumber: number) => {
@@ -92,7 +93,7 @@ function useGithubRepoPagination() {
   };
 
   return {
-    githubRepositories,
+  githubRepositories: data?.repositories,
     selectedRepository,
     setSelectedRepository,
     filteredAndSortedApplications,
