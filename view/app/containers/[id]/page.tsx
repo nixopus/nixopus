@@ -26,6 +26,7 @@ import { useEffect, useState } from 'react';
 import { OverviewTab } from './components/OverviewTab';
 import { LogsTab } from './components/LogsTab';
 import { DetailsTab } from './components/DetailsTab';
+import { Terminal as TerminalComponent } from './components/Terminal';
 import ContainerDetailsLoading from './components/ContainerDetailsLoading';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { Images } from './components/images';
@@ -169,7 +170,7 @@ export default function ContainerDetailsPage() {
 
           <div className="space-y-4">
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="overview">
                   <Info className="mr-2 h-4 w-4" />
                   {t('containers.overview')}
@@ -177,6 +178,10 @@ export default function ContainerDetailsPage() {
                 <TabsTrigger value="images">
                   <Layers className="mr-2 h-4 w-4" />
                   {t('containers.images.title')}
+                </TabsTrigger>
+                <TabsTrigger value="terminal" disabled={container.status !== 'running'}>
+                  <Terminal className="mr-2 h-4 w-4" />
+                  {t('terminal.title')}
                 </TabsTrigger>
                 <TabsTrigger value="logs">
                   <Terminal className="mr-2 h-4 w-4" />
@@ -195,6 +200,15 @@ export default function ContainerDetailsPage() {
               </TabsContent>
               <TabsContent value="details" className="mt-4">
                 <DetailsTab container={container} />
+              </TabsContent>
+              <TabsContent value="terminal" className="mt-4">
+                {container.status === 'running' ? (
+                  <TerminalComponent containerId={containerId} />
+                ) : (
+                  <div className="flex items-center justify-center h-48 text-muted-foreground">
+                    Start the container to use the terminal
+                  </div>
+                )}
               </TabsContent>
               <TabsContent value="images" className="mt-4">
                 {container.image ? (

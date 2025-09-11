@@ -75,8 +75,8 @@ export function OverviewTab({ container }: OverviewTabProps) {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {container?.ports?.map((port) => (
-              <Badge key={`${port.private_port}-${port.public_port}`} variant="outline">
+            {container?.ports?.map((port, index) => (
+              <Badge key={`${port.private_port}-${port.public_port}-${index}`} variant="outline">
                 {port.public_port} → {port.private_port} ({port.type})
               </Badge>
             ))}
