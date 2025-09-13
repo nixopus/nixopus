@@ -1,3 +1,13 @@
+# [0.1.0-alpha.28](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.27...v0.1.0-alpha.28) (2025-09-11)
+
+
+### Features
+
+* exec commands on container ([#399](https://github.com/raghavyuva/nixopus/issues/399)) ([3cb776d](https://github.com/raghavyuva/nixopus/commit/3cb776daa77dc8df7817df19ff1e0e8a2727788d))
+* TaskQ tuning for complete deployment lifecycle ([#393](https://github.com/raghavyuva/nixopus/issues/393)) ([49fe8e1](https://github.com/raghavyuva/nixopus/commit/49fe8e191e9e0a8c0a4480e5d36a21cb3dbf8d11))
+
+
+
 # [0.1.0-alpha.27](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.26...v0.1.0-alpha.27) (2025-09-10)
 
 
