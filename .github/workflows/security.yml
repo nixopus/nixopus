@@ -1,8 +1,12 @@
+# Workflow: Security Scan
+# Description: Runs Trivy and TruffleHog to detect vulnerabilities and secrets
+# Why: Proactively ensures security
+
 name: Security Scan
 
 on:
   schedule:
-    - cron: '0 0 * * 0' 
+    - cron: '0 0 * * 0' # Weekly
   push:
     branches:
       - master
