@@ -1,6 +1,6 @@
 # ⚙️ GitHub Workflows
 
-This document provides an overview of all GitHub Actions workflows defined in this repository under [`.github/workflows/`](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows).
+This document provides an overview of all GitHub Actions workflows defined in this repository under [`.github/workflows/`](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows).
 
 The goal is to explain:
 - **What each workflow does** (raw descriptions from issue)
@@ -12,7 +12,7 @@ The goal is to explain:
 ---
 
 ## 📂 Location
-All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows) folder.
+All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows) folder.
 
 ---
 
@@ -26,8 +26,12 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   2. Log in to GitHub Container Registry (GHCR)  
   3. Build Docker images (API + Web UI)  
   4. Push images to GHCR  
-- **Secrets/Dependencies:** `GHCR_TOKEN` (or `GITHUB_TOKEN` with package write permissions).  
-- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/build_container.yml)  
+- **Secrets/Dependencies:** `GITHUB_TOKEN` (ensure `permissions: packages: write`) or a PAT with `write:packages` if publishing from a fork or across orgs.
+- Example (in the workflow):
+    - permissions:
+        contents: read
+        packages: write
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows/build_container.yml)  
 
 ---
 
@@ -39,19 +43,19 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   2. Trigger Coderabbit API call  
   3. Post review results as PR comments  
 - **Secrets/Dependencies:** `CODERABBIT_API_KEY` (if required).  
-- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/coderabbit.yml)  
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows/coderabbit.yml)  
 
 ---
 
 ### 3. `docs.yml`
 - **Description:** Builds the documentation site with VitePress and deploys it to GitHub Pages on pushes affecting the `docs/**` folder or on manual dispatch.  
-- **Why:** Keeps [docs.nixopus.com](https://docs.nixopus.com) up to date automatically.  
+- **Why:** Keeps the documentation site (GitHub Pages) up to date automatically.
 - **Executed Flow:**  
   1. Checkout repository  
   2. Install Node.js + dependencies  
   3. Run VitePress build  
   4. Deploy static site to GitHub Pages  
-- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/docs.yml)  
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows/docs.yml)  
 
 ---
 
@@ -64,7 +68,10 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   3. Run `prettier` on frontend code  
   4. Run formatter on CLI  
   5. Auto-commit changes (if any)  
-- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/format.yaml)  
+  - Note: use a commit message containing `[skip ci]` and/or guard with
+    `if: github.actor != 'github-actions[bot]'`, plus `concurrency:` to avoid commit loops.
+  - Requires `permissions: contents: write`.
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows/format.yaml)  
 
 ---
 
@@ -76,7 +83,8 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   2. Load `.github/labeler.yml` rules  
   3. Apply matching labels to PR  
 - **Dependencies:** `.github/labeler.yml` configuration file.  
-- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/labeler.yml)  
+- **Permissions:** `permissions: pull-requests: write`.
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows/labeler.yml)  
 
 ---
 
@@ -89,7 +97,8 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   3. Build CLI packages (`.deb`, `.rpm`, etc.) with `fpm`  
   4. Upload release artifacts to GitHub Releases  
 - **Artifacts:** Release artifacts uploaded to GitHub Releases.  
-- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/release-cli.yml)  
+- **Secrets/Permissions:** `GITHUB_TOKEN` with `permissions: contents: write` (and any signing keys/envs if packages are signed).
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows/release-cli.yml)  
 
 ---
 
@@ -101,7 +110,8 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   2. Generate changelog  
   3. Create prerelease tag  
   4. Publish GitHub prerelease  
-- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/release.yml)  
+- **Permissions:** `GITHUB_TOKEN` with `permissions: contents: write`.
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows/release.yml)
 
 ---
 
@@ -112,8 +122,8 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   1. Checkout repository  
   2. Run Trivy scan for dependencies  
   3. Run TruffleHog scan for secrets  
-  4. Upload scan results to workflow logs  
-- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/security.yml)  
+  4. Upload SARIF results to GitHub Code scanning (Security tab)
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows/security.yml)  
 
 ---
 
@@ -125,16 +135,20 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   2. Set up Go environment  
   3. Run `go test ./...`  
   4. Report test results in workflow logs  
-- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/test.yaml)  
+  - Tip: enable module/build cache to reduce CI time.
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows/test.yaml)  
 
 ---
 
 ## 🔑 Secrets & Environment Variables
 Workflows may rely on:
 - `GITHUB_TOKEN` → default GitHub token with repo access.
-- `GHCR_TOKEN` → for pushing Docker images.
+- For actions that write (releases, labels, packages), set workflow/job `permissions:` explicitly (e.g., `contents: write`, `pull-requests: write`, `packages: write`).
+- Prefer `GITHUB_TOKEN` for registry pushes and labeling (set minimal `permissions`).
 - `CODERABBIT_API_KEY` → for Coderabbit integration.
 - Other repository secrets as defined in `Settings > Secrets and variables`.
+Notes:
+- Avoid Personal Access Tokens unless necessary; scope minimally and rotate regularly.
 
 ---
 
@@ -143,3 +157,5 @@ Workflows may rely on:
 - **Rerun:** Use the “Re-run jobs” option if a transient error occurs.  
 - **Secrets:** Ensure required secrets are set in repository settings.  
 - **Permissions:** Verify tokens have the required scopes (e.g., `package:write` for GHCR).  
+- **Workflow permissions:** Check `permissions:` at workflow/job level (defaults can be read-only).
+- **Concurrency/loops:** Ensure auto-commit workflows avoid re-trigger loops (`[skip ci]`, actor guard, `concurrency:`).
