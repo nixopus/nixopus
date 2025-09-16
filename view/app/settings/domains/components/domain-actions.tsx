@@ -1,7 +1,5 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Edit, Trash2 } from 'lucide-react';
 import UpdateDomainDialog from './update-domain';
 import { Domain } from '@/redux/types/domain';
 import DeleteDomain from './delete-domain';
@@ -28,38 +26,14 @@ export function DomainActions({ domain }: DomainActionsProps) {
   return (
     <div className="flex justify-end gap-2">
       <ResourceGuard resource="domain" action="update">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="h-8 w-8 p-0 text-primary hover:text-primary/80 hover:bg-primary/10" 
-              onClick={handleEdit}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{t('settings.domains.actions.edit')}</p>
-          </TooltipContent>
-        </Tooltip>
+        <Button variant="ghost" className="text-primary p-0 m-0" onClick={handleEdit}>
+          {t('settings.domains.actions.edit')}
+        </Button>
       </ResourceGuard>
       <ResourceGuard resource="domain" action="delete">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50" 
-              onClick={handleDelete}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{t('settings.domains.actions.delete')}</p>
-          </TooltipContent>
-        </Tooltip>
+        <Button variant="ghost" className="text-red-500 p-0 m-0" onClick={handleDelete}>
+          {t('settings.domains.actions.delete')}
+        </Button>
       </ResourceGuard>
       {isEditModalOpen && (
         <UpdateDomainDialog

@@ -1,3 +1,7 @@
+# Workflow: CLI Release
+# Description: Builds and packages CLI component using Poetry and fpm
+# Why: Produces installable CLI packages
+
 name: Build and Package CLI
 
 on:
