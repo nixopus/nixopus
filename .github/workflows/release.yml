@@ -1,7 +1,3 @@
-# Workflow: Release
-# Description: Generates a prerelease tag and GitHub pre-release
-# Why: Provides prerelease builds for early testing
-
 name: Create Release
 
 on:
