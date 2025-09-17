@@ -1,8 +1,4 @@
-# Workflow: Build and Deploy Docs
-# Description: Builds documentation with VitePress and deploys to GitHub Pages
-# Why: Keeps docs.nixopus.com up to date
-
-name: Docs Build & Deploy
+name: Deploy Docs
 
 on:
   push:

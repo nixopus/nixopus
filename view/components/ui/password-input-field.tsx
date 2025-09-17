@@ -9,17 +9,17 @@ export interface PasswordInputFieldProps extends React.ComponentProps<'input'> {
 }
 
 const PasswordInputField = React.forwardRef<HTMLInputElement, PasswordInputFieldProps>(
-  function PasswordInputField({ className, containerClassName, autoComplete, ...props }, ref) {
+  function PasswordInputField({ className, containerClassName, ...props }, ref) {
     const [showPassword, setShowPassword] = React.useState(false);
 
     return (
       <div className={cn('relative', containerClassName)}>
         <Input
           ref={ref}
-          {...props}
           type={showPassword ? 'text' : 'password'}
           className={cn('pr-10', className)}
-          autoComplete={autoComplete ?? 'current-password'}
+          autoComplete={props.autoComplete ?? 'current-password'}
+          {...props}
         />
         <button
           type="button"
