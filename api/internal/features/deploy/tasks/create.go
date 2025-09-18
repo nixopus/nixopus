@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/caddygo"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
@@ -81,7 +82,9 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 		taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
 		return err
 	}
-	err = client.AddDomainWithAutoTLS(TaskPayload.Application.Domain, TaskPayload.Application.Domain, port, caddygo.DomainOptions{})
+	upstreamHost := config.AppConfig.SSH.Host
+
+	err = client.AddDomainWithAutoTLS(TaskPayload.Application.Domain, upstreamHost, port, caddygo.DomainOptions{})
 	if err != nil {
 		fmt.Println("Failed to add domain: ", err)
 		taskCtx.LogAndUpdateStatus("Failed to add domain: "+err.Error(), shared_types.Failed)

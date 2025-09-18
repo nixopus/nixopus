@@ -62,7 +62,7 @@ services:
 
   nixopus-redis:
     image: redis:7-alpine
-    container_name: nixopus-redis-container
+    container_name: nixopus-redis
     restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6379}:6379"

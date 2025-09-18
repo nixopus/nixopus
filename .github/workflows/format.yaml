@@ -1,3 +1,7 @@
+# Workflow: Code Formatting
+# Description: Runs gofmt, Prettier, and CLI formatter on pushes
+# Why: Enforces consistent code style across all components
+
 name: Format Nixopus
 
 on:

@@ -17,6 +17,7 @@ services:
       SSH_PASSWORD: ${SSH_PASSWORD:-}
       DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
       REDIS_URL: ${REDIS_URL:-redis://localhost:6379}
+      CADDY_ENDPOINT: ${CADDY_ENDPOINT:-http://127.0.0.1:2019}
       ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:7443}
       ENV: ${ENV:-development}
       LOGS_PATH: ${LOGS_PATH:-./logs}

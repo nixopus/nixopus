@@ -1,3 +1,12 @@
+# [0.1.0-alpha.29](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.28...v0.1.0-alpha.29) (2025-09-15)
+
+
+### Bug Fixes
+
+* **ui:** Open Channels tab by default in Notification Settings ([#398](https://github.com/raghavyuva/nixopus/issues/398)) ([3689cd3](https://github.com/raghavyuva/nixopus/commit/3689cd3ca91a3525e1dddc88fd74338c195d5477))
+
+
+
 # [0.1.0-alpha.28](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.27...v0.1.0-alpha.28) (2025-09-11)
 
 

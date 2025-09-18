@@ -1,15 +1,21 @@
-name: Coderabbit Review
+# Workflow: Coderabbit AI PR Review
+# Description: Automatically reviews PRs using Coderabbit AI
+# Why: Automates PR review to save time and enforce consistency
+
+name: Coderabbit PR Review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, reopened, synchronize]
 
 jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Coderabbit Review
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Coderabbit Review
         uses: coderabbitai/ai-pr-reviewer@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
