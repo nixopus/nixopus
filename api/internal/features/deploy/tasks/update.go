@@ -3,7 +3,10 @@ package tasks
 import (
     "context"
     "fmt"
+	"strconv"
 
+	"github.com/raghavyuva/caddygo"
+	"github.com/raghavyuva/nixopus-api/internal/config"
     "github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -80,6 +83,22 @@ func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload sh
 
 	taskCtx.AddLog("Container updated successfully for application " + TaskPayload.Application.Name + " with container id " + containerResult.ContainerID)
 	taskCtx.LogAndUpdateStatus("Deployment completed successfully", shared_types.Deployed)
+
+	client := GetCaddyClient()
+	port, err := strconv.Atoi(containerResult.AvailablePort)
+	if err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
+		return err
+	}
+	upstreamHost := config.AppConfig.SSH.Host
+
+	err = client.AddDomainWithAutoTLS(TaskPayload.Application.Domain, upstreamHost, port, caddygo.DomainOptions{})
+	if err != nil {
+		fmt.Println("Failed to add domain: ", err)
+		taskCtx.LogAndUpdateStatus("Failed to add domain: "+err.Error(), shared_types.Failed)
+		return err
+	}
+	client.Reload()
 
 	return nil
 }

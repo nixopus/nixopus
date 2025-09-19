@@ -7,9 +7,12 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/swarm"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -23,9 +26,9 @@ type DockerService struct {
 }
 
 type DockerRepository interface {
-    ListAllContainers() ([]container.Summary, error)
-    ListContainers(opts container.ListOptions) ([]container.Summary, error)
-    ListAllImages(opts image.ListOptions) []image.Summary
+	ListAllContainers() ([]container.Summary, error)
+	ListContainers(opts container.ListOptions) ([]container.Summary, error)
+	ListAllImages(opts image.ListOptions) []image.Summary
 
 	StopContainer(containerID string, opts container.StopOptions) error
 	RemoveContainer(containerID string, opts container.RemoveOptions) error
@@ -46,6 +49,28 @@ type DockerRepository interface {
 	RemoveImage(imageName string, opts image.RemoveOptions) error
 	PruneBuildCache(opts types.BuildCachePruneOptions) error
 	PruneImages(opts filters.Args) (image.PruneReport, error)
+
+	InitCluster() error
+	JoinCluster() error
+	LeaveCluster(force bool) error
+	GetClusterInfo() (swarm.ClusterInfo, error)
+	GetClusterNodes() ([]swarm.Node, error)
+	GetClusterServices() ([]swarm.Service, error)
+	GetClusterTasks() ([]swarm.Task, error)
+	GetClusterSecrets() ([]swarm.Secret, error)
+	GetClusterConfigs() ([]swarm.Config, error)
+	GetClusterVolumes() ([]*volume.Volume, error)
+	GetClusterNetworks() ([]network.Summary, error)
+	UpdateNodeAvailability(nodeID string, availability swarm.NodeAvailability) error
+	ScaleService(serviceID string, replicas uint64, rollback string) error
+	ListenEvents(opts events.ListOptions) (<-chan events.Message, <-chan error)
+	GetServiceHealth(service swarm.Service) (int, int, error)
+	GetTaskHealth(task swarm.Task) swarm.TaskState
+	CreateService(service swarm.Service) error
+	UpdateService(serviceID string, serviceSpec swarm.ServiceSpec, rollback string) error
+	DeleteService(serviceID string) error
+	RollbackService(serviceID string) error
+	GetServiceByID(serviceID string) (swarm.Service, error)
 }
 
 type DockerClient struct {
@@ -54,11 +79,35 @@ type DockerClient struct {
 
 // NewDockerService creates a new instance of DockerService using the default docker client.
 func NewDockerService() *DockerService {
-	return &DockerService{
-		Cli:    NewDockerClient(),
+	client := NewDockerClient()
+	service := &DockerService{
+		Cli:    client,
 		Ctx:    context.Background(),
 		logger: logger.NewLogger(),
 	}
+
+	// Initialize cluster if not already initialized, this should be run on master node only
+	// TODO: Add a check to see if the node is the master node
+	// WARNING: This should be thought again during multi-server architecture feature
+	if !isClusterInitialized(client) {
+		if err := service.InitCluster(); err != nil {
+			service.logger.Log(logger.Warning, "Failed to initialize cluster", err.Error())
+		} else {
+			service.logger.Log(logger.Info, "Cluster initialized successfully", "")
+		}
+	} else {
+		service.logger.Log(logger.Info, "Cluster already initialized", "")
+	}
+
+	return service
+}
+
+func isClusterInitialized(cli *client.Client) bool {
+	info, err := cli.Info(context.Background())
+	if err != nil {
+		return false
+	}
+	return info.Swarm.LocalNodeState == swarm.LocalNodeStateActive
 }
 
 func NewDockerServiceWithClient(cli *client.Client, ctx context.Context, logger logger.Logger) *DockerService {
@@ -101,24 +150,24 @@ func NewDockerClient() *client.Client {
 //
 // If an error occurs while listing the containers, it returns the error (no panic).
 func (s *DockerService) ListAllContainers() ([]container.Summary, error) {
-    containers, err := s.Cli.ContainerList(s.Ctx, container.ListOptions{
-        All: true,
-    })
-    if err != nil {
-        return nil, err
-    }
+	containers, err := s.Cli.ContainerList(s.Ctx, container.ListOptions{
+		All: true,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-    return containers, nil
+	return containers, nil
 }
 
 // ListContainers returns containers using the provided docker list options
 // (including native filters like name/status/ancestor and optional limits).
 func (s *DockerService) ListContainers(opts container.ListOptions) ([]container.Summary, error) {
-    containers, err := s.Cli.ContainerList(s.Ctx, opts)
-    if err != nil {
-        return nil, err
-    }
-    return containers, nil
+	containers, err := s.Cli.ContainerList(s.Ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	return containers, nil
 }
 
 // StopContainer stops the container with the given ID. If the container does not exist,

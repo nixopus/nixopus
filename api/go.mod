@@ -18,7 +18,7 @@ require (
 	github.com/moby/term v0.5.2
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/pkg/sftp v1.13.5
-	github.com/raghavyuva/caddygo v0.0.0-20250820132249-3db4bc273996
+	github.com/raghavyuva/caddygo v0.0.0-20250919125030-03449d9e9252
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/sirupsen/logrus v1.9.3
 	github.com/slack-go/slack v0.16.0
