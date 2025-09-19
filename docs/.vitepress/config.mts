@@ -13,7 +13,6 @@ export default withMermaid(
     title: "Nixopus Docs",
     description: "documentation",
     head: [['link', { rel: 'icon', href: '/favicon.png' }]],
-    // base: '/',
     themeConfig: {
       search: {
         provider: 'local',
@@ -133,7 +132,7 @@ export default withMermaid(
               ]
             },
             { text: "Code of Conduct", link: "/code-of-conduct/index.md" },
-            { text: "Change Log", link: "https://github.com/raghavyuva/nixopus/releases" },
+            { text: "Changelogs", link: "https://github.com/raghavyuva/nixopus/releases" },
             { text: "License", link: "/license/index.md" },
             { text: "Privacy Policy", link: "/privacy-policy/index.md" },
             { text: "Credits", link: "/credits/index.md" }

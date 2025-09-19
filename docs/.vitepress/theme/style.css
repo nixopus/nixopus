@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&display=swap');
+
 .VPHome::after,
 .VPDoc::after {
   content: '';
@@ -25,21 +27,34 @@
   text-align: center;
   margin-left: auto;
   margin-right: auto;
+  font-family: 'Cinzel Decorative', serif;
+}
+
+.VPHero .name {
+  font-size: 2.45rem;
+  line-height: 1.1;
 }
 
 .VPHero .text {
-  font-size: 3rem;
+  font-size: 2.25rem;
+  line-height: 1.2;
 }
 
 .VPHero .tagline {
   text-align: center;
   margin-left: auto;
   margin-right: auto;
-  max-width: 600px;
+  /* max-width: 600px; */
+  display: block;
+  font-size: 1rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .VPHero .actions {
+  display: flex;
   justify-content: center;
+  gap: 0.75rem;
 }
 
 /* Ensure the hero content is centered */
@@ -103,4 +118,12 @@ OASidebarItem {
 .OASidebarItem-text {
   font-family: var(--vp-font-family-mono);
   font-size: 13px;
+}
+
+:root {
+  --vp-c-brand: #00bf63;
+  --vp-c-brand-1: #00bf63;
+  --vp-c-brand-2: #00a85a;
+  --vp-c-brand-3: #008f4d;
+  --vp-c-brand-soft: rgba(0, 191, 99, 0.14);
 }
