@@ -125,3 +125,9 @@ export enum IMAGEURLS {
   PRUNE_IMAGES = 'v1/container/prune/images',
   PRUNE_BUILD_CACHE = 'v1/container/prune/build-cache'
 }
+
+export enum EXTENSIONURLS {
+  GET_EXTENSIONS = 'v1/extensions',
+  GET_EXTENSION = 'v1/extensions/{id}',
+  GET_EXTENSION_BY_ID = 'v1/extensions/by-extension-id/{extension_id}'
+}
