@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Folder, Home, Package, SettingsIcon, Container, Puzzle } from 'lucide-react';
+import { Folder, Home, Package, SettingsIcon, Container } from 'lucide-react';
 import { NavMain } from '@/components/layout/nav-main';
 import { NavUser } from '@/components/layout/nav-user';
 import { TeamSwitcher } from '@/components/ui/team-switcher';
@@ -44,12 +44,6 @@ const data = {
       url: '/file-manager',
       icon: Folder,
       resource: 'file-manager'
-    },
-    {
-      title: 'navigation.extensions',
-      url: '/extensions',
-      icon: Puzzle,
-      resource: 'extensions'
     },
     {
       title: 'navigation.settings',
@@ -96,7 +90,7 @@ export function AppSidebar({
   const { canAccessResource } = useRBAC();
 
   const hasAnyPermission = React.useMemo(() => {
-    const allowedResources = ['dashboard', 'settings',];
+    const allowedResources = ['dashboard', 'settings'];
 
     return (resource: string) => {
       if (!user || !activeOrg) return false;
