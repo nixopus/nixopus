@@ -1,0 +1,113 @@
+name: Auto-Generate API Types
+
+on:
+  push:
+    paths:
+      - 'api/**'
+    branches: [ master, develop ]
+  pull_request:
+    paths:
+      - 'api/**'
+
+jobs:
+  generate-api-types:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: view/package-lock.json
+          
+      - name: Install Go dependencies
+        run: |
+          cd api
+          go mod download
+          
+      - name: Build API server
+        run: |
+          cd api
+          go build -o nixopus-api
+          
+      - name: Start API server in background
+        run: |
+          cd api
+          ./nixopus-api &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          
+          # Wait for server to start
+          for i in {1..30}; do
+            if curl -f http://localhost:8080/api/v1/health > /dev/null 2>&1; then
+              echo "Server is running"
+              break
+            fi
+            echo "Waiting for server to start... ($i/30)"
+            sleep 2
+          done
+          
+      - name: Generate OpenAPI spec
+        run: |
+          curl http://localhost:8080/api/openapi.json > api/doc/openapi.json
+          
+      - name: Install frontend dependencies  
+        run: |
+          cd view
+          npm ci --legacy-peer-deps
+          
+      - name: Generate TypeScript API client
+        run: |
+          cd view
+          npm run generate:api
+          
+      - name: Stop API server
+        run: |
+          if [ ! -z "$SERVER_PID" ]; then
+            kill $SERVER_PID || true
+          fi
+          
+      - name: Check for changes
+        id: verify-changed-files
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Commit generated types
+        if: steps.verify-changed-files.outputs.changed == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add view/src/generated/ api/doc/openapi.json
+          git commit -m "chore: update generated API types and OpenAPI spec [skip ci]"
+          
+      - name: Push changes
+        if: steps.verify-changed-files.outputs.changed == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.verify-changed-files.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🤖 API types have been automatically updated based on OpenAPI spec changes.'
+            });

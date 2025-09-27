@@ -4,12 +4,14 @@
   "private": true,
   "license": "Fair-Code Sustainable Use License",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
+    "generate:api": "orval --config orval.config.ts",
+    "dev": "npm run generate:api && next dev --turbopack",
+    "build": "npm run generate:api && next build",
     "start": "next start -p ${PORT:=7443}",
     "lint": "next lint",
     "format": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc",
-    "analyze": "ANALYZE=true next build"
+    "analyze": "ANALYZE=true next build",
+    "generate:watch": "orval --config orval.config.ts --watch"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -36,7 +38,9 @@
     "@stepperize/react": "^5.1.6",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
+    "ajv": "^8.17.1",
     "async-mutex": "^0.5.0",
+    "axios": "^1.12.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -81,6 +85,7 @@
     "eslint-plugin-prettier": "^5.2.3",
     "eslint-plugin-react": "^7.37.4",
     "globals": "^16.0.0",
+    "orval": "^7.12.2",
     "prettier": "^3.5.2",
     "tailwindcss": "^4",
     "typescript": "^5",
