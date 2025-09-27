@@ -26,7 +26,7 @@ This project now includes a fully functional auto-generated TypeScript API clien
 
 ## 📁 Generated Files Structure
 
-```
++```text
 src/
 ├── generated/          # Auto-generated (don't edit manually)
 │   ├── api.ts          # Main API client with all endpoint functions (2721 lines)
@@ -39,7 +39,7 @@ src/
 │   └── nixopus-api.ts  # Convenient API client export
 └── examples/
     └── api-usage-examples.tsx  # Complete usage examples
-```
++```
 
 ## 🚀 Quick Start
 

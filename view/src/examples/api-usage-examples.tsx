@@ -111,11 +111,7 @@ export const typedApiExample = async () => {
 
   try {
     // TypeScript will provide full IntelliSense and type checking
-    const response = await nixopusApi.pOSTApiV1AuthRegister({ 
-  email: 'user@example.com', 
-  password: 'password123', 
-  username: 'user123' 
-});
+    const response = await nixopusApi.pOSTApiV1AuthRegister(registerData);
     
     // Response is properly typed based on OpenAPI spec
     console.log('Registration successful:', response.data);
