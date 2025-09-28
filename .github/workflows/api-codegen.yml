@@ -76,6 +76,10 @@ jobs:
             kill $SERVER_PID || true
           fi
           
+      - name: Clean up build artifacts
+        run: |
+          rm -f api/nixopus-api
+          
       - name: Check for changes
         id: verify-changed-files
         run: |
