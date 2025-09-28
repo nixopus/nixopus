@@ -16,7 +16,7 @@
   },
   "containers": {
     "title": "Containers",
-    "description": "Preview all the containers",
+    "description": "View and manage your running or stopped containers",
     "list": "Container List",
     "name": "Name",
     "image": "Image",
@@ -190,7 +190,7 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Manage your account",
+    "description": "Manage your account preferences and security options",
     "tabs": {
       "account": "Account",
       "security": "Security",
@@ -375,7 +375,7 @@
     "domains": {
       "page": {
         "title": "Domains",
-        "description": "Domains are used to deploy your applications",
+        "description": "Manage and configure your domains for deployment",
         "noOrganization": {
           "title": "No Organization Selected",
           "description": "Please select an organization to view and manage domains."
@@ -807,7 +807,7 @@
   "fileManager": {
     "header": {
       "title": "File Manager",
-      "subtitle": "Manage your files here"
+      "subtitle": "Browse, manage, and organize your files and directories"
     },
     "actions": {
       "upload": "Upload File",
