@@ -94,7 +94,7 @@ jobs:
           git commit -m "chore: update generated API types and OpenAPI spec [skip ci]"
           
       - name: Push changes
-        if: steps.verify-changed-files.outputs.changed == 'true'
+        if: github.event_name == 'push' && steps.verify-changed-files.outputs.changed == 'true'
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
