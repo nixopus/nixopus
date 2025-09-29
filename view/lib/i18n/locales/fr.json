@@ -16,7 +16,7 @@
   },
   "containers": {
     "title": "Conteneurs",
-    "description": "Prévisualiser tous les conteneurs",
+    "description": "Afficher et gérer vos conteneurs en cours d’exécution ou arrêtés",
     "list": "Liste des Conteneurs",
     "name": "Nom",
     "image": "Image",
@@ -190,7 +190,7 @@
   },
   "settings": {
     "title": "Paramètres",
-    "description": "Gérez votre compte",
+    "description": "Gérer vos préférences de compte et vos options de sécurité",
     "tabs": {
       "account": "Compte",
       "security": "Sécurité",
@@ -375,7 +375,7 @@
     "domains": {
       "page": {
         "title": "Serveur et Domaines",
-        "description": "Configurez vos domaines",
+        "description": "Gérer et configurer vos domaines pour le déploiement",
         "noOrganization": {
           "title": "Aucune Organisation Sélectionnée",
           "description": "Veuillez sélectionner une organisation pour voir et gérer les domaines."
@@ -795,7 +795,7 @@
   "fileManager": {
     "header": {
       "title": "Gestionnaire de Fichiers",
-      "subtitle": "Gérez vos fichiers ici"
+      "subtitle": "Parcourir, gérer et organiser vos fichiers et répertoires"
     },
     "contextMenu": {
       "info": "Détails",

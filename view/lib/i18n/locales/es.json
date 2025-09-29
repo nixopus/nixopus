@@ -15,7 +15,7 @@
   },
   "containers": {
     "title": "Contenedores",
-    "description": "Vista previa de todos los contenedores",
+    "description": "Ver y administrar sus contenedores en ejecución o detenidos",
     "list": "Lista de Contenedores",
     "name": "Nombre",
     "image": "Imagen",
@@ -189,7 +189,7 @@
   },
   "settings": {
     "title": "Configuración",
-    "description": "Administra tu cuenta",
+    "description": "Administre sus preferencias de cuenta y opciones de seguridad",
     "tabs": {
       "account": "Cuenta",
       "security": "Seguridad",
@@ -418,7 +418,7 @@
       },
       "page": {
         "title": "Servidor y Dominios",
-        "description": "Configura tus dominios",
+        "description": "Administre y configure sus dominios para la implementación",
         "noOrganization": {
           "title": "No hay Organización Seleccionada",
           "description": "Por favor selecciona una organización para ver y gestionar dominios."
@@ -794,7 +794,7 @@
   "fileManager": {
     "header": {
       "title": "Gestor de Archivos",
-      "subtitle": "Administra tus archivos aquí"
+      "subtitle": "Navegue, administre y organice sus archivos y directorios"
     },
     "contextMenu": {
       "info": "Detalles",
