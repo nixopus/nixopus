@@ -66,7 +66,7 @@ jobs:
 
       - name: Notify Discord about Pre-Release
         if: ${{ steps.changelog.outputs.skipped == 'false' }}
-        uses: appleboy/discord-action@master
+        uses: appleboy/discord-action@v1.2.0
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           username: "Release Bot"
