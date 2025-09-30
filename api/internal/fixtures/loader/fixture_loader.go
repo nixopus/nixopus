@@ -144,11 +144,9 @@ func (fl *FixtureLoader) LoadFixturesWithTruncate(ctx context.Context, fixturePa
 // it will register the models with the database so that the fixtures can be loaded
 func (fl *FixtureLoader) registerModels() {
 	fl.db.RegisterModel((*types.OrganizationUsers)(nil))
-	fl.db.RegisterModel((*types.RolePermissions)(nil))
 	fl.db.RegisterModel((*types.User)(nil))
 	fl.db.RegisterModel((*types.Organization)(nil))
 	fl.db.RegisterModel((*types.Role)(nil))
-	fl.db.RegisterModel((*types.Permission)(nil))
 	fl.db.RegisterModel((*types.Domain)(nil))
 	fl.db.RegisterModel((*types.Application)(nil))
 	fl.db.RegisterModel((*types.ApplicationStatus)(nil))

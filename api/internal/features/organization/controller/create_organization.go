@@ -47,26 +47,10 @@ func (c *OrganizationsController) CreateOrganization(f fuego.ContextWithBody[typ
 		}
 	}
 
-	roles, err := c.role_service.GetRoleByName(shared_types.RoleAdmin)
-	if err != nil {
-		c.logger.Log(logger.Error, "failed to get role by name", err.Error())
-		return nil, fuego.HTTPError{
-			Err:    err,
-			Status: http.StatusInternalServerError,
-		}
-	}
-
-	if roles == nil {
-		return nil, fuego.HTTPError{
-			Err:    err,
-			Status: http.StatusInternalServerError,
-		}
-	}
-
 	c.service.AddUserToOrganization(types.AddUserToOrganizationRequest{
 		UserID:         loggedInUser.ID.String(),
 		OrganizationID: createdOrganization.ID.String(),
-		RoleId:         roles.ID.String(),
+		RoleId:         shared_types.RoleAdmin,
 	})
 
 	// c.Notify(notification.NortificationPayloadTypeCreateOrganization, loggedInUser, r, createdOrganization)

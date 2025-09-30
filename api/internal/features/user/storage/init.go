@@ -104,19 +104,8 @@ func (s *UserStorage) GetUserOrganizationsWithRolesAndPermissions(userID string)
 			continue
 		}
 
-		var role shared_types.Role
-		err = s.DB.NewSelect().
-			Model(&role).
-			Relation("Permissions").
-			Where("id = ?", ou.RoleID).
-			Scan(s.Ctx)
-		if err != nil {
-			continue
-		}
-
 		orgResponse := types.UserOrganizationsResponse{
 			Organization: organization,
-			Role:         role,
 		}
 
 		response = append(response, orgResponse)

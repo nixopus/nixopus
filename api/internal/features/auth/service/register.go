@@ -12,6 +12,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
+// Deprecated: Use SupertokensRegister instead
 func (c *AuthService) Register(registrationRequest types.RegisterRequest, userTypeype string) (types.AuthResponse, error) {
 	c.logger.Log(logger.Info, "registering user", registrationRequest.Email)
 	userType := registrationRequest.Type
@@ -117,7 +118,7 @@ func (c *AuthService) Register(registrationRequest types.RegisterRequest, userTy
 		User:         user,
 	}, nil
 }
-
+// Deprecated: Use SupertokensRegister instead
 func (c *AuthService) createDefaultOrganization(user shared_types.User, tx bun.Tx) (shared_types.Organization, error) {
 	c.logger.Log(logger.Info, "creating default organization for user", user.Email)
 
@@ -139,21 +140,10 @@ func (c *AuthService) createDefaultOrganization(user shared_types.User, tx bun.T
 func (c *AuthService) addUserToOrganizationWithRole(user shared_types.User, organization shared_types.Organization, roleName string, tx bun.Tx) error {
 	c.logger.Log(logger.Info, "adding user to organization with role", roleName)
 
-	roles, err := c.role_service.GetRoleByName(roleName)
-	if err != nil {
-		c.logger.Log(logger.Error, "failed to get role by name", err.Error())
-		return err
-	}
-
-	if roles == nil {
-		c.logger.Log(logger.Error, types.ErrNoRolesFound.Error(), "")
-		return types.ErrNoRolesFound
-	}
-
 	userOrganization := organization_types.AddUserToOrganizationRequest{
 		OrganizationID: organization.ID.String(),
 		UserID:         user.ID.String(),
-		RoleId:         roles.ID.String(),
+		RoleId:         roleName,
 	}
 
 	return c.organization_service.AddUserToOrganization(userOrganization, tx)

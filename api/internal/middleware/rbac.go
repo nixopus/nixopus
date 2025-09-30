@@ -1,57 +1,32 @@
 package middleware
 
 import (
-	appStorage "github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
 	"net/http"
+
+	appStorage "github.com/raghavyuva/nixopus-api/internal/storage"
+
+	"github.com/supertokens/supertokens-golang/recipe/session"
+	"github.com/supertokens/supertokens-golang/recipe/session/claims"
+	"github.com/supertokens/supertokens-golang/recipe/session/sessmodels"
+	"github.com/supertokens/supertokens-golang/recipe/userroles/userrolesclaims"
+	"github.com/supertokens/supertokens-golang/supertokens"
 )
 
-// RBACMiddleware is a middleware that checks if the user has the required permissions
-// to access a specific resource in the organization.
-func RBACMiddleware(next http.Handler, app *appStorage.App, resource string) http.Handler {
+// RBACMiddleware validates SuperTokens permission claims for the given resource based on HTTP method.
+// It appends a PermissionClaim validator dynamically via VerifySession.
+func RBACMiddleware(next http.Handler, _ *appStorage.App, resource string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, ok := r.Context().Value(types.UserContextKey).(*types.User)
-		if !ok {
-			utils.SendErrorResponse(w, "User not found in context", http.StatusUnauthorized)
-			return
-		}
-
-		orgID, ok := r.Context().Value(types.OrganizationIDKey).(string)
-		if !ok {
-			utils.SendErrorResponse(w, "Organization ID not found in context", http.StatusBadRequest)
-			return
-		}
-
-		var userRole *types.Role
-		for _, orgUser := range user.OrganizationUsers {
-			if orgUser.OrganizationID.String() == orgID {
-				userRole = orgUser.Role
-				break
-			}
-		}
-
-		if userRole == nil {
-			utils.SendErrorResponse(w, "User does not have a role in this organization", http.StatusForbidden)
-			return
-		}
 		requiredAction := getActionFromMethod(r.Method)
+		requiredPermission := resource + ":" + requiredAction
 
-		hasPermission := false
-		for _, rp := range userRole.Permissions {
-			if rp.Resource == resource &&
-				rp.Name == requiredAction {
-				hasPermission = true
-				break
-			}
-		}
+		handler := session.VerifySession(&sessmodels.VerifySessionOptions{
+			OverrideGlobalClaimValidators: func(globalClaimValidators []claims.SessionClaimValidator, sessionContainer sessmodels.SessionContainer, userContext supertokens.UserContext) ([]claims.SessionClaimValidator, error) {
+				globalClaimValidators = append(globalClaimValidators, userrolesclaims.PermissionClaimValidators.Includes(requiredPermission, nil, nil))
+				return globalClaimValidators, nil
+			},
+		}, func(w http.ResponseWriter, r *http.Request) { next.ServeHTTP(w, r) })
 
-		if !hasPermission {
-			utils.SendErrorResponse(w, "User does not have permission to "+requiredAction+" "+resource, http.StatusForbidden)
-			return
-		}
-
-		next.ServeHTTP(w, r)
+		handler.ServeHTTP(w, r)
 	})
 }
 

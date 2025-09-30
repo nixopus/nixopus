@@ -26,13 +26,9 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	notificationController "github.com/raghavyuva/nixopus-api/internal/features/notification/controller"
-	organization "github.com/raghavyuva/nixopus-api/internal/features/organization/controller"
 	organization_service "github.com/raghavyuva/nixopus-api/internal/features/organization/service"
 	organization_storage "github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
-	permissions_service "github.com/raghavyuva/nixopus-api/internal/features/permission/service"
-	permissions_storage "github.com/raghavyuva/nixopus-api/internal/features/permission/storage"
-	role_service "github.com/raghavyuva/nixopus-api/internal/features/role/service"
-	role_storage "github.com/raghavyuva/nixopus-api/internal/features/role/storage"
+
 	"github.com/raghavyuva/nixopus-api/internal/features/supertokens"
 	update "github.com/raghavyuva/nixopus-api/internal/features/update/controller"
 	update_service "github.com/raghavyuva/nixopus-api/internal/features/update/service"
@@ -112,13 +108,9 @@ func (router *Router) Routes() {
 	router.WebSocketServer(server, deployController)
 
 	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
-	permStorage := &permissions_storage.PermissionStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
-	roleStorage := &role_storage.RoleStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	orgStorage := &organization_storage.OrganizationStore{DB: router.app.Store.DB, Ctx: router.app.Ctx}
-	permService := permissions_service.NewPermissionService(router.app.Store, router.app.Ctx, l, permStorage)
-	roleService := role_service.NewRoleService(router.app.Store, router.app.Ctx, l, roleStorage)
 	orgService := organization_service.NewOrganizationService(router.app.Store, router.app.Ctx, l, orgStorage, router.cache)
-	authService := authService.NewAuthService(userStorage, l, permService, roleService, orgService, router.app.Ctx)
+	authService := authService.NewAuthService(userStorage, l, orgService, router.app.Ctx)
 	authController := auth.NewAuthController(router.app.Ctx, l, notificationManager, *authService)
 	authGroup := fuego.Group(server, apiV1.Path+"/auth")
 	router.AuthRoutes(authController, authGroup)
@@ -195,15 +187,15 @@ func (router *Router) Routes() {
 	})
 	router.NotificationRoutes(notificationGroup, notifController)
 
-	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager, router.cache)
-	organizationGroup := fuego.Group(server, apiV1.Path+"/organizations")
-	fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
-		return middleware.RBACMiddleware(next, router.app, "organization")
-	})
-	fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
-		return middleware.AuditMiddleware(next, router.app, l, "organization")
-	})
-	router.OrganizationRoutes(organizationGroup, organizationController)
+	// organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager, router.cache)
+	// organizationGroup := fuego.Group(server, apiV1.Path+"/organizations")
+	// fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
+	// 	return middleware.RBACMiddleware(next, router.app, "organization")
+	// })
+	// fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
+	// 	return middleware.AuditMiddleware(next, router.app, l, "organization")
+	// })
+	// router.OrganizationRoutes(organizationGroup, organizationController)
 
 	fileManagerController := file_manager.NewFileManagerController(router.app.Ctx, l, notificationManager)
 	fileManagerGroup := fuego.Group(server, apiV1.Path+"/file-manager")
@@ -393,18 +385,6 @@ func (router *Router) FileManagerRoutes(f *fuego.Server, fileManagerController *
 	fuego.Post(f, "/copy-directory", fileManagerController.CopyDirectory)
 	fuego.Post(f, "/upload", fileManagerController.UploadFile)
 	fuego.Delete(f, "/delete-directory", fileManagerController.DeleteDirectory)
-}
-
-func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController *organization.OrganizationsController) {
-	fuego.Get(f, "/users", organizationController.GetOrganizationUsers)
-	fuego.Post(f, "/add-user", organizationController.AddUserToOrganization)
-	fuego.Post(f, "/remove-user", organizationController.RemoveUserFromOrganization)
-	fuego.Post(f, "/update-user-role", organizationController.UpdateUserRole)
-	fuego.Get(f, "/roles", organizationController.GetRoles)
-	fuego.Get(f, "/resources", organizationController.GetResources)
-	fuego.Put(f, "", organizationController.UpdateOrganization)
-	fuego.Post(f, "", organizationController.CreateOrganization)
-	fuego.Delete(f, "", organizationController.DeleteOrganization)
 }
 
 func (router *Router) AuditRoutes(s *fuego.Server, auditController *audit.AuditController) {
