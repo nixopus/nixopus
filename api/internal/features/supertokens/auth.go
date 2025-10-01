@@ -17,6 +17,7 @@ import (
 	"github.com/supertokens/supertokens-golang/recipe/session"
 	"github.com/supertokens/supertokens-golang/recipe/session/sessmodels"
 	"github.com/supertokens/supertokens-golang/recipe/userroles"
+	"github.com/supertokens/supertokens-golang/recipe/userroles/userrolesclaims"
 	"github.com/supertokens/supertokens-golang/recipe/userroles/userrolesmodels"
 	"github.com/supertokens/supertokens-golang/supertokens"
 	"github.com/uptrace/bun"
@@ -67,6 +68,15 @@ func Init(appInstance *storage.App) {
 							// If sign up was successful, create user in our database
 							if err == nil && response.OK != nil {
 								createUserInDatabase(response.OK.User.ID, response.OK.User.Email)
+
+								// Add roles and permissions to the newly created session
+								if options.Req != nil {
+									ctx := options.Req.Context()
+									sessContainer := session.GetSessionFromRequestContext(ctx)
+									if sessContainer != nil {
+										_ = addRolesAndPermissionsToSession(sessContainer)
+									}
+								}
 							}
 
 							return response, err
@@ -89,6 +99,17 @@ func Init(appInstance *storage.App) {
 	if seedErr := seedDefaultRolesAndPermissions(); seedErr != nil {
 		log.Printf("Failed to seed roles and permissions via SuperTokens: %v", seedErr)
 	}
+}
+
+// addRolesAndPermissionsToSession fetches and sets the user's roles and permissions claims in the session
+func addRolesAndPermissionsToSession(sessionContainer sessmodels.SessionContainer) error {
+	if err := sessionContainer.FetchAndSetClaim(userrolesclaims.UserRoleClaim); err != nil {
+		return err
+	}
+	if err := sessionContainer.FetchAndSetClaim(userrolesclaims.PermissionClaim); err != nil {
+		return err
+	}
+	return nil
 }
 
 // createUserInDatabase creates a user in our database when they sign up through SuperTokens
