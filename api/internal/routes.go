@@ -26,6 +26,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	notificationController "github.com/raghavyuva/nixopus-api/internal/features/notification/controller"
+	organization "github.com/raghavyuva/nixopus-api/internal/features/organization/controller"
 	organization_service "github.com/raghavyuva/nixopus-api/internal/features/organization/service"
 	organization_storage "github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 
@@ -187,15 +188,15 @@ func (router *Router) Routes() {
 	})
 	router.NotificationRoutes(notificationGroup, notifController)
 
-	// organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager, router.cache)
-	// organizationGroup := fuego.Group(server, apiV1.Path+"/organizations")
-	// fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
-	// 	return middleware.RBACMiddleware(next, router.app, "organization")
-	// })
-	// fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
-	// 	return middleware.AuditMiddleware(next, router.app, l, "organization")
-	// })
-	// router.OrganizationRoutes(organizationGroup, organizationController)
+	organizationController := organization.NewOrganizationsController(router.app.Store, router.app.Ctx, l, notificationManager, router.cache)
+	organizationGroup := fuego.Group(server, apiV1.Path+"/organizations")
+	fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "organization")
+	})
+	fuego.Use(organizationGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "organization")
+	})
+	router.OrganizationRoutes(organizationGroup, organizationController)
 
 	fileManagerController := file_manager.NewFileManagerController(router.app.Ctx, l, notificationManager)
 	fileManagerGroup := fuego.Group(server, apiV1.Path+"/file-manager")
@@ -413,4 +414,16 @@ func (router *Router) ContainerRoutes(s *fuego.Server, containerController *cont
 	fuego.Post(s, "/prune/build-cache", containerController.PruneBuildCache)
 	fuego.Post(s, "/prune/images", containerController.PruneImages)
 	fuego.Post(s, "/images", containerController.ListImages)
+}
+
+func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController *organization.OrganizationsController) {
+	fuego.Get(f, "/users", organizationController.GetOrganizationUsers)
+	// fuego.Post(f, "/add-user", organizationController.AddUserToOrganization)
+	// fuego.Post(f, "/remove-user", organizationController.RemoveUserFromOrganization)
+	// // fuego.Post(f, "/update-user-role", organizationController.UpdateUserRole)
+	// fuego.Get(f, "/roles", organizationController.GetRoles)
+	// fuego.Get(f, "/resources", organizationController.GetResources)
+	// fuego.Put(f, "", organizationController.UpdateOrganization)
+	// fuego.Post(f, "", organizationController.CreateOrganization)
+	// fuego.Delete(f, "", organizationController.DeleteOrganization)
 }
