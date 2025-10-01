@@ -16,10 +16,10 @@ Fixes #(issue number)
 ## Type of Change
 <!-- Check the type of change this PR represents -->
 
-- [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
-- [ ] ✨ Feature (new functionality)
-- [ ] 💥 Breaking change (existing functionality will be affected)
-- [ ] 📚 Documentation only
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] Feature (new functionality)
+- [ ] Breaking change (existing functionality will be affected)
+- [ ] Documentation only
 
 ## Testing Steps
 <!-- Describe how reviewers can test these changes -->
@@ -30,11 +30,11 @@ Fixes #(issue number)
 
 ## Checklist
 <!-- Ensure all items are completed before requesting review -->
-
-- [ ] Code builds successfully
-- [ ] All tests pass
-- [ ] Documentation has been updated (if applicable)
-- [ ] Self-review completed
+ad
+- Code builds successfully
+- All tests pass
+- Documentation has been updated (if applicable)
+- Self-review completed
 
 ## Optional Notes
 <!-- Screenshots, additional context, or anything else reviewers should know -->
