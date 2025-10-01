@@ -84,7 +84,7 @@ export function LoginForm({ ...props }: LoginFormProps) {
                       value={props.email}
                       onChange={props.handleEmailChange}
                     />
-                    {emailError && <span className="text-red-500 txt-xs">{emailError}</span>}
+                    {emailError && <span className="text-red-500 text-xs">{emailError}</span>}
                   </div>
                   <div className="grid gap-3">
                     {/* <div className="flex items-center">

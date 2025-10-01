@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&display=swap');
+
 .VPHome::after,
 .VPDoc::after {
   content: '';
@@ -25,21 +27,34 @@
   text-align: center;
   margin-left: auto;
   margin-right: auto;
+  font-family: 'Cinzel Decorative', serif;
+}
+
+.VPHero .name {
+  font-size: 2.45rem;
+  line-height: 1.1;
 }
 
 .VPHero .text {
-  font-size: 3rem;
+  font-size: 2.25rem;
+  line-height: 1.2;
 }
 
 .VPHero .tagline {
   text-align: center;
   margin-left: auto;
   margin-right: auto;
-  max-width: 600px;
+  /* max-width: 600px; */
+  display: block;
+  font-size: 1rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .VPHero .actions {
+  display: flex;
   justify-content: center;
+  gap: 0.75rem;
 }
 
 /* Ensure the hero content is centered */
@@ -103,4 +118,190 @@ OASidebarItem {
 .OASidebarItem-text {
   font-family: var(--vp-font-family-mono);
   font-size: 13px;
+}
+
+:root {
+  --vp-c-brand: #9be935;
+  --vp-c-brand-1: #9be935;
+  --vp-c-brand-2: #00a85a;
+  --vp-c-brand-3: #008f4d;
+  --vp-c-brand-soft: rgba(0, 191, 99, 0.14);
+}
+
+/* Command block styles */
+.command-block-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1.5em 0;
+}
+
+/* Light mode styles (default) */
+.command-block {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: #f8f8f8;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+  min-width: 400px;
+  max-width: 90vw;
+}
+
+.command-text {
+  flex: 1;
+  padding: 1.2em 1.5em;
+  font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+  font-size: 1.05em;
+  color: #333;
+  background: #f8f8f8;
+  overflow-x: auto;
+  white-space: nowrap;
+  max-width: 600px;
+  display: flex;
+  align-items: center;
+}
+
+.command-text .prompt {
+  color: #22c55e;
+  font-weight: bold;
+  margin-right: 0.5em;
+  user-select: none;
+}
+
+.copy-button {
+  color: #666;
+  background: transparent;
+  border: none;
+  padding: 1.2em 1.5em;
+  font-weight: 600;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+  border-left: 1px solid #e0e0e0;
+  width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Dark mode styles */
+.dark .command-block {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.dark .command-text {
+  color: #e0e0e0;
+  background: #1a1a1a;
+}
+
+.dark .command-text .prompt {
+  color: #9be935;
+}
+
+.dark .copy-button {
+  color: #888;
+  border-left: 1px solid #333;
+}
+
+.copy-button:hover {
+  cursor: pointer;
+}
+
+.copy-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.copy-button.copied {
+  color: #22c55e;
+  transform: scale(1.02);
+}
+
+.copy-button.copied:hover {
+  cursor: pointer;
+}
+
+/* Dark mode copy button states */
+.dark .copy-button.copied {
+  color: #9be935;
+}
+
+.copy-icon {
+  font-size: 1em;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.copy-text {
+  font-size: 0.85em;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+
+.copy-button.copied .copy-icon {
+  transform: scale(1.2) rotate(360deg);
+}
+
+/* Responsive styles for mobile */
+@media (max-width: 420px) {
+  .VPHero .name {
+    font-size: 2rem;
+  }
+
+  .VPHero .text {
+    font-size: 1.75rem;
+  }
+
+  .VPHero .tagline {
+    white-space: normal;
+    font-size: 0.9rem;
+  }
+
+  .command-block {
+    min-width: 0;
+    width: 90vw;
+  }
+
+  .command-text {
+    font-size: 0.9em;
+    padding: 1em;
+    text-align: left;
+  }
+
+  .copy-button {
+    padding: 1em;
+    width: 80px;
+    gap: 0.3em;
+  }
+  
+  .copy-text {
+    font-size: 0.8em;
+  }
+  
+  .copy-icon {
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 320px) {
+    .VPHero .name {
+        font-size: 1.8rem;
+    }
+    .VPHero .text {
+        font-size: 1.6rem;
+    }
+    .command-text {
+        font-size: 0.8em;
+    }
 }
