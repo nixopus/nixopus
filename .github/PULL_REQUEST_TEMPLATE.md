@@ -1,7 +1,9 @@
 # Pull Request
 
-## Purpose / Linked Issue
-<!-- Link to related issue or describe the purpose of this PR -->
+## Brief Title of the Pull Request Here
+
+## Description / Linked Issue
+<!-- Link to related issue or describe what this PR does -->
 
 Fixes #(issue number)
 <!-- OR describe the purpose if no issue exists -->
@@ -17,9 +19,9 @@ Fixes #(issue number)
 <!-- Check the type of change this PR represents -->
 
 - [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] Feature (new functionality)
-- [ ] Breaking change (existing functionality will be affected)
-- [ ] Documentation only
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Documentation update
 
 ## Testing Steps
 <!-- Describe how reviewers can test these changes -->
@@ -30,16 +32,17 @@ Fixes #(issue number)
 
 ## Checklist
 <!-- Ensure all items are completed before requesting review -->
-ad
-- Code builds successfully
-- All tests pass
-- Documentation has been updated (if applicable)
-- Self-review completed
 
-## Optional Notes
-<!-- Screenshots, additional context, or anything else reviewers should know -->
+- [ ] Code formatting is consistent
+- [ ] Code passes linting checks
+- [ ] All tests pass
+- [ ] Documentation has been updated (if applicable)
+- [ ] This is a small, focused PR
+- [ ] Self-review completed
 
-### Screenshots (if applicable)
+## Screenshots / Screen recordings
+<!-- Add screenshots for UI changes, terminal outputs for CLI changes, etc. -->
 
 
-### Additional Context
+## Additional Notes
+<!-- Any additional context, concerns, or information for reviewers -->
