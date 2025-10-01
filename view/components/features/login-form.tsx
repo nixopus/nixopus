@@ -27,8 +27,8 @@ export interface LoginFormProps {
 export function LoginForm({ ...props }: LoginFormProps) {
   const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
-  const [emailError,setEmailError] = useState('');
-  const [passwordError,setPasswordError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   /**
    * Validates email format using regex pattern
@@ -39,12 +39,10 @@ export function LoginForm({ ...props }: LoginFormProps) {
    * - \. : Must contain a literal dot
    * - [^\s@]+$ : End with one or more characters that are not whitespace or @ (domain extension)
    */
-  const isValidEmail = (email: string): boolean => 
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isValidEmail = (email: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const validateEmail = (email: string): string => {
-    return !email ? 'Email is required' : 
-           !isValidEmail(email) ? 'Please enter a valid Email' : '';
+    return !email ? 'Email is required' : !isValidEmail(email) ? 'Please enter a valid Email' : '';
   };
 
   const validatePassword = (password: string): string => {
@@ -56,7 +54,6 @@ export function LoginForm({ ...props }: LoginFormProps) {
     setEmailError('');
     setPasswordError('');
 
-
     const emailValidationError = validateEmail(props.email);
     if (emailValidationError) {
       setEmailError(emailValidationError);
@@ -67,6 +64,7 @@ export function LoginForm({ ...props }: LoginFormProps) {
     if (passwordValidationError) {
       setPasswordError(passwordValidationError);
       return;
+    }
 
     props.handleLogin();
   };
@@ -143,7 +141,7 @@ export function LoginForm({ ...props }: LoginFormProps) {
               <Button
                 type="submit"
                 className="w-full"
-                onClick={props.showTwoFactor ? props.handleTwoFactorLogin :handleLoginClick}
+                onClick={props.showTwoFactor ? props.handleTwoFactorLogin : handleLoginClick}
                 disabled={props.showTwoFactor ? props.isTwoFactorLoading : props.isLoading}
               >
                 {props.showTwoFactor
