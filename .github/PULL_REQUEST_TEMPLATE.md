@@ -1,6 +1,4 @@
-# Pull Request
-
-## Brief Title of the Pull Request Here
+# Brief Title of the Pull Request Here
 
 ## Description / Linked Issue
 <!-- Link to related issue or describe what this PR does -->
