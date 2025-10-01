@@ -26,6 +26,35 @@ export interface LoginFormProps {
 export function LoginForm({ ...props }: LoginFormProps) {
   const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
+  const [emailError,setEmailError] = useState('');
+  const [passwordError,setPasswordError] = useState('');
+
+  function isValidEmail(email:string){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  const handleLoginClick=()=>{
+  let valid=true;
+  setEmailError('');
+  setPasswordError('');
+
+  if(!props.email){
+    setEmailError('Email is required');
+    valid=false;
+  }else if(!isValidEmail(props.email)){
+    setEmailError('Please enter a valid Email');
+    valid=false;
+  }
+
+  if(!props.password){
+    setPasswordError('Password is required');
+    valid=false;
+  }
+
+  if(valid){
+    props.handleLogin();
+  }
+}
 
   return (
     <div className={cn('flex flex-col gap-6')}>
@@ -55,6 +84,7 @@ export function LoginForm({ ...props }: LoginFormProps) {
                       value={props.email}
                       onChange={props.handleEmailChange}
                     />
+                    {emailError && <span className="text-red-500 text-xs">{emailError}</span>}
                   </div>
                   <div className="grid gap-3">
                     {/* <div className="flex items-center">
@@ -70,6 +100,7 @@ export function LoginForm({ ...props }: LoginFormProps) {
                       value={props.password}
                       onChange={props.handlePasswordChange}
                     />
+                    {passwordError && <span className="text-red-500 txt-xs">{passwordError}</span>}
                   </div>
                 </>
               )}
@@ -89,7 +120,7 @@ export function LoginForm({ ...props }: LoginFormProps) {
               <Button
                 type="submit"
                 className="w-full"
-                onClick={props.showTwoFactor ? props.handleTwoFactorLogin : props.handleLogin}
+                onClick={props.showTwoFactor ? props.handleTwoFactorLogin :handleLoginClick}
                 disabled={props.showTwoFactor ? props.isTwoFactorLoading : props.isLoading}
               >
                 {props.showTwoFactor
