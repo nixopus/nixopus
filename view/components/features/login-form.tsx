@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PasswordInputField } from '@/components/ui/password-input-field';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import nixopusLogo from '@/public/nixopus_logo_transparent.png';
 import { useTranslation } from '@/hooks/use-translation';
 import Link from 'next/link';
@@ -29,32 +30,35 @@ export function LoginForm({ ...props }: LoginFormProps) {
   const [emailError,setEmailError] = useState('');
   const [passwordError,setPasswordError] = useState('');
 
-  function isValidEmail(email:string){
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
+  const isValidEmail = (email: string): boolean => 
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleLoginClick=()=>{
-  let valid=true;
-  setEmailError('');
-  setPasswordError('');
+  const validateEmail = (email: string): string => {
+    return !email ? 'Email is required' : 
+           !isValidEmail(email) ? 'Please enter a valid Email' : '';
+  };
 
-  if(!props.email){
-    setEmailError('Email is required');
-    valid=false;
-  }else if(!isValidEmail(props.email)){
-    setEmailError('Please enter a valid Email');
-    valid=false;
-  }
+  const validatePassword = (password: string): string => {
+    return !password ? 'Password is required' : '';
+  };
 
-  if(!props.password){
-    setPasswordError('Password is required');
-    valid=false;
-  }
+  const handleLoginClick = (): void => {
+    // Reset errors
+    setEmailError('');
+    setPasswordError('');
 
-  if(valid){
-    props.handleLogin();
-  }
-}
+    // Validate inputs
+    const emailValidationError = validateEmail(props.email);
+    const passwordValidationError = validatePassword(props.password);
+
+    // Set errors if any
+    setEmailError(emailValidationError);
+    setPasswordError(passwordValidationError);
+
+    // Proceed with login only if no validation errors
+    const hasErrors = emailValidationError || passwordValidationError;
+    !hasErrors && props.handleLogin();
+  };
 
   return (
     <div className={cn('flex flex-col gap-6')}>
@@ -84,7 +88,11 @@ export function LoginForm({ ...props }: LoginFormProps) {
                       value={props.email}
                       onChange={props.handleEmailChange}
                     />
-                    {emailError && <span className="text-red-500 text-xs">{emailError}</span>}
+                    {emailError && (
+                      <Alert variant="destructive">
+                        <AlertDescription className="text-xs">{emailError}</AlertDescription>
+                      </Alert>
+                    )}
                   </div>
                   <div className="grid gap-3">
                     {/* <div className="flex items-center">
@@ -100,7 +108,11 @@ export function LoginForm({ ...props }: LoginFormProps) {
                       value={props.password}
                       onChange={props.handlePasswordChange}
                     />
-                    {passwordError && <span className="text-red-500 txt-xs">{passwordError}</span>}
+                    {passwordError && (
+                      <Alert variant="destructive">
+                        <AlertDescription className="text-xs">{passwordError}</AlertDescription>
+                      </Alert>
+                    )}
                   </div>
                 </>
               )}
