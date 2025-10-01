@@ -99,7 +99,7 @@ export function LoginForm({ ...props }: LoginFormProps) {
                     />
                     {emailError && (
                       <Alert variant="destructive">
-                        <AlertDescription className="text-xs">{emailError}</AlertDescription>
+                        <AlertDescription className="text-xs !text-red-400" >{emailError}</AlertDescription>
                       </Alert>
                     )}
                   </div>
@@ -119,7 +119,7 @@ export function LoginForm({ ...props }: LoginFormProps) {
                     />
                     {passwordError && (
                       <Alert variant="destructive">
-                        <AlertDescription className="text-xs">{passwordError}</AlertDescription>
+                        <AlertDescription className="text-xs !text-red-400">{passwordError}</AlertDescription>
                       </Alert>
                     )}
                   </div>
