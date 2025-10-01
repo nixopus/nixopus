@@ -30,6 +30,15 @@ export function LoginForm({ ...props }: LoginFormProps) {
   const [emailError,setEmailError] = useState('');
   const [passwordError,setPasswordError] = useState('');
 
+  /**
+   * Validates email format using regex pattern
+   * Pattern breakdown:
+   * - ^[^\s@]+ : Start with one or more characters that are not whitespace or @
+   * - @ : Must contain exactly one @ symbol
+   * - [^\s@]+ : One or more characters that are not whitespace or @ (domain name)
+   * - \. : Must contain a literal dot
+   * - [^\s@]+$ : End with one or more characters that are not whitespace or @ (domain extension)
+   */
   const isValidEmail = (email: string): boolean => 
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -43,21 +52,23 @@ export function LoginForm({ ...props }: LoginFormProps) {
   };
 
   const handleLoginClick = (): void => {
-    // Reset errors
+    // Reset errors first
     setEmailError('');
     setPasswordError('');
 
-    // Validate inputs
+
     const emailValidationError = validateEmail(props.email);
+    if (emailValidationError) {
+      setEmailError(emailValidationError);
+      return;
+    }
+
     const passwordValidationError = validatePassword(props.password);
+    if (passwordValidationError) {
+      setPasswordError(passwordValidationError);
+      return;
 
-    // Set errors if any
-    setEmailError(emailValidationError);
-    setPasswordError(passwordValidationError);
-
-    // Proceed with login only if no validation errors
-    const hasErrors = emailValidationError || passwordValidationError;
-    !hasErrors && props.handleLogin();
+    props.handleLogin();
   };
 
   return (
