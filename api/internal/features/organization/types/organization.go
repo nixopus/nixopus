@@ -47,6 +47,18 @@ type RemoveUserFromOrganizationRequest struct {
 	OrganizationID string `json:"organization_id"`
 }
 
+type InviteSendRequest struct {
+	Email          string `json:"email"`
+	OrganizationID string `json:"organization_id"`
+	Role           string `json:"role"`
+}
+
+type InviteResendRequest struct {
+	Email          string `json:"email"`
+	OrganizationID string `json:"organization_id"`
+	Role           string `json:"role"`
+}
+
 func NewOrganization(name string, description string) shared_types.Organization {
 	return shared_types.Organization{
 		ID:          uuid.New(),

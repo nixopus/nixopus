@@ -425,4 +425,6 @@ func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController
 	fuego.Delete(f, "", organizationController.DeleteOrganization)
 	fuego.Get(f, "", organizationController.GetOrganization)
 	fuego.Get(f, "/all", organizationController.GetOrganizations)
+	fuego.Post(f, "/invite/send", organizationController.SendInvite)
+	fuego.Post(f, "/invite/resend", organizationController.ResendInvite)
 }
