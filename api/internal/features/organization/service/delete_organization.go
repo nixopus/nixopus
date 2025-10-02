@@ -44,5 +44,7 @@ func (o *OrganizationService) DeleteOrganization(organizationID uuid.UUID) error
 		return types.ErrFailedToDeleteOrganization
 	}
 
+	//TODO: deleting organization should send a notification to all the users in the organization
+
 	return nil
 }

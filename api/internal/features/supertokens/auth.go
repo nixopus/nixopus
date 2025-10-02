@@ -12,8 +12,11 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/supertokens/supertokens-golang/ingredients/emaildelivery"
 	"github.com/supertokens/supertokens-golang/recipe/emailpassword"
 	"github.com/supertokens/supertokens-golang/recipe/emailpassword/epmodels"
+	"github.com/supertokens/supertokens-golang/recipe/passwordless"
+	"github.com/supertokens/supertokens-golang/recipe/passwordless/plessmodels"
 	"github.com/supertokens/supertokens-golang/recipe/session"
 	"github.com/supertokens/supertokens-golang/recipe/session/sessmodels"
 	"github.com/supertokens/supertokens-golang/recipe/userroles"
@@ -82,6 +85,36 @@ func Init(appInstance *storage.App) {
 							return response, err
 						}
 						originalImplementation.SignUpPOST = &newSignUpPOST
+						return originalImplementation
+					},
+				},
+			}),
+			passwordless.Init(plessmodels.TypeInput{
+				FlowType: "MAGIC_LINK",
+				ContactMethodEmail: plessmodels.ContactMethodEmailConfig{
+					Enabled: true,
+				},
+				EmailDelivery: &emaildelivery.TypeInput{
+					Override: func(originalImplementation emaildelivery.EmailDeliveryInterface) emaildelivery.EmailDeliveryInterface {
+						ogSendEmail := *originalImplementation.SendEmail
+						(*originalImplementation.SendEmail) = func(input emaildelivery.EmailType, userContext supertokens.UserContext) error {
+							// Customize magic link URL for organization invitations
+							if input.PasswordlessLogin != nil && input.PasswordlessLogin.UrlWithLinkCode != nil {
+								// Check if this is an organization invitation by looking for custom data
+								if userContext != nil {
+									if orgID, exists := (*userContext)["organization_id"]; exists {
+										newUrl := strings.Replace(
+											*input.PasswordlessLogin.UrlWithLinkCode,
+											"/auth/verify",
+											fmt.Sprintf("/auth/organization-invite?org_id=%s", orgID),
+											1,
+										)
+										input.PasswordlessLogin.UrlWithLinkCode = &newUrl
+									}
+								}
+							}
+							return ogSendEmail(input, userContext)
+						}
 						return originalImplementation
 					},
 				},

@@ -50,7 +50,6 @@ func (c *OrganizationsController) CreateOrganization(f fuego.ContextWithBody[typ
 	c.service.AddUserToOrganization(types.AddUserToOrganizationRequest{
 		UserID:         loggedInUser.ID.String(),
 		OrganizationID: createdOrganization.ID.String(),
-		RoleId:         shared_types.RoleAdmin,
 	})
 
 	// c.Notify(notification.NortificationPayloadTypeCreateOrganization, loggedInUser, r, createdOrganization)

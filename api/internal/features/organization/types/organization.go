@@ -40,7 +40,6 @@ type DeleteOrganizationRequest struct {
 type AddUserToOrganizationRequest struct {
 	UserID         string `json:"user_id"`
 	OrganizationID string `json:"organization_id"`
-	RoleId         string `json:"role_id"`
 }
 
 type RemoveUserFromOrganizationRequest struct {

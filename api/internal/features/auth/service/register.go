@@ -93,18 +93,18 @@ func (c *AuthService) Register(registrationRequest types.RegisterRequest, userTy
 		}
 	}
 
-	if registrationRequest.Organization != "" {
-		requestedOrganization, err := c.organization_service.GetOrganization(registrationRequest.Organization)
-		if err != nil {
-			c.logger.Log(logger.Error, types.ErrFailedToGetOrganization.Error(), err.Error())
-			return types.AuthResponse{}, types.ErrFailedToGetOrganization
-		}
+	// if registrationRequest.Organization != "" {
+	// 	requestedOrganization, err := c.organization_service.GetOrganization(registrationRequest.Organization)
+	// 	if err != nil {
+	// 		c.logger.Log(logger.Error, types.ErrFailedToGetOrganization.Error(), err.Error())
+	// 		return types.AuthResponse{}, types.ErrFailedToGetOrganization
+	// 	}
 
-		if err := c.addUserToOrganizationWithRole(user, requestedOrganization, userType, tx); err != nil {
-			c.logger.Log(logger.Error, types.ErrFailedToAddUserToOrganization.Error(), err.Error())
-			return types.AuthResponse{}, types.ErrFailedToAddUserToOrganization
-		}
-	}
+	// 	if err := c.addUserToOrganizationWithRole(user, requestedOrganization, userType, tx); err != nil {
+	// 		c.logger.Log(logger.Error, types.ErrFailedToAddUserToOrganization.Error(), err.Error())
+	// 		return types.AuthResponse{}, types.ErrFailedToAddUserToOrganization
+	// 	}
+	// }
 
 	if err := tx.Commit(); err != nil {
 		c.logger.Log(logger.Error, "failed to commit transaction", err.Error())
@@ -143,7 +143,6 @@ func (c *AuthService) addUserToOrganizationWithRole(user shared_types.User, orga
 	userOrganization := organization_types.AddUserToOrganizationRequest{
 		OrganizationID: organization.ID.String(),
 		UserID:         user.ID.String(),
-		RoleId:         roleName,
 	}
 
 	return c.organization_service.AddUserToOrganization(userOrganization, tx)

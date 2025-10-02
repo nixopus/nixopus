@@ -1,4 +1,4 @@
-package service
+package service_deprecated
 
 import (
 	"github.com/google/uuid"

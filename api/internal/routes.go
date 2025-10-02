@@ -417,13 +417,12 @@ func (router *Router) ContainerRoutes(s *fuego.Server, containerController *cont
 }
 
 func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController *organization.OrganizationsController) {
-	fuego.Get(f, "/users", organizationController.GetOrganizationUsers)
+	// fuego.Get(f, "/users", organizationController.GetOrganizationUsers)
 	// fuego.Post(f, "/add-user", organizationController.AddUserToOrganization)
 	// fuego.Post(f, "/remove-user", organizationController.RemoveUserFromOrganization)
-	// // fuego.Post(f, "/update-user-role", organizationController.UpdateUserRole)
-	// fuego.Get(f, "/roles", organizationController.GetRoles)
-	// fuego.Get(f, "/resources", organizationController.GetResources)
-	// fuego.Put(f, "", organizationController.UpdateOrganization)
-	// fuego.Post(f, "", organizationController.CreateOrganization)
-	// fuego.Delete(f, "", organizationController.DeleteOrganization)
+	fuego.Put(f, "", organizationController.UpdateOrganization)
+	fuego.Post(f, "", organizationController.CreateOrganization)
+	fuego.Delete(f, "", organizationController.DeleteOrganization)
+	fuego.Get(f, "", organizationController.GetOrganization)
+	fuego.Get(f, "/all", organizationController.GetOrganizations)
 }

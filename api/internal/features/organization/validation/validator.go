@@ -163,7 +163,7 @@ func (v *Validator) validateAddUser(req types.AddUserToOrganizationRequest) erro
 		return types.ErrOrganizationNotFound
 	}
 
-	return v.ValidateID(req.RoleId, types.ErrMissingRoleID)
+	return nil
 }
 
 // validateRemoveUser validates a RemoveUserFromOrganizationRequest object.
