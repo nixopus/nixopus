@@ -32,7 +32,9 @@ export enum USERURLS {
   UPDATE_AUTO_UPDATE = 'v1/user/settings/auto-update',
   CHECK_FOR_UPDATES = 'v1/update/check',
   PERFORM_UPDATE = 'v1/update',
-  UPDATE_AVATAR = 'v1/user/avatar'
+  UPDATE_AVATAR = 'v1/user/avatar',
+  SEND_INVITE = 'v1/organizations/invite/send',
+  RESEND_INVITE = 'v1/organizations/invite/resend'
 }
 
 export enum USER_NOTIFICATION_SETTINGS {

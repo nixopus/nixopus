@@ -64,7 +64,7 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
     dispatch(initializeAuth() as any);
   }, [dispatch]);
 
-  const PUBLIC_ROUTES = ['/login', '/register', '/auth', '/reset-password', '/verify-email'];
+  const PUBLIC_ROUTES = ['/login', '/register', '/auth', '/reset-password', '/verify-email', '/auth/organization-invite'];
   const isPublicRoute = PUBLIC_ROUTES.some(route => 
     pathname === route || pathname.startsWith(route + '/')
   );

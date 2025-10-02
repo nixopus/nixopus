@@ -1,10 +1,10 @@
 import { useAppSelector } from '@/redux/hooks';
 import {
-  useCreateUserMutation,
   useGetOrganizationUsersQuery,
   useRemoveUserFromOrganizationMutation,
   useUpdateOrganizationDetailsMutation,
-  useUpdateUserRoleMutation
+  useUpdateUserRoleMutation,
+  useSendInviteMutation
 } from '@/redux/services/users/userApi';
 import { UserTypes } from '@/redux/types/orgs';
 import { useState, useEffect } from 'react';
@@ -15,13 +15,13 @@ function useTeamSettings() {
   const { t } = useTranslation();
   const [users, setUsers] = useState<any>([]);
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Member', password: '' });
+  const [newUser, setNewUser] = useState({ email: '', role: 'member' });
   const [isEditTeamDialogOpen, setEditTeamDialogOpen] = useState(false);
   const [teamName, setTeamName] = useState('');
   const [teamDescription, setTeamDescription] = useState('');
-  const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [removeUserFromOrganization] = useRemoveUserFromOrganizationMutation();
   const [updateUserRole] = useUpdateUserRoleMutation();
+  const [sendInvite, { isLoading: isInviteLoading }] = useSendInviteMutation();
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
   const {
     data: apiUsers,
@@ -62,26 +62,25 @@ function useTeamSettings() {
     }
   }, [activeOrganization]);
 
-  const handleAddUser = async () => {
-    const newId = crypto.randomUUID();
-    const tempUser = {
-      username: newUser.name || '',
-      email: newUser.email || '',
-      password: newUser.password || '',
-      organization: activeOrganization?.id || '',
-      type: newUser.role.toLowerCase() as UserTypes
-    };
-    const permissions = newUser.role === 'Member' ? ['READ', 'UPDATE'] : ['READ'];
-    setUsers([...users, { id: newId, ...tempUser, name: newUser.name, permissions }]);
-    try {
-      const user = await createUser(tempUser as any);
-      await refetchUsers();
-      toast.success(t('settings.teams.messages.userAdded'));
-    } catch (error) {
-      toast.error(t('settings.teams.messages.userAddFailed'));
+
+  const handleSendInvite = async () => {
+    if (!newUser.email || !newUser.role || !activeOrganization?.id) {
+      toast.error('Please fill in all required fields');
+      return;
     }
-    setNewUser({ name: '', email: '', role: 'Member', password: '' });
-    setIsAddUserDialogOpen(false);
+
+    try {
+      await sendInvite({
+        email: newUser.email,
+        organization_id: activeOrganization.id,
+        role: newUser.role.toLowerCase()
+      });
+      toast.success(`Invitation sent to ${newUser.email}`);
+      setNewUser({ email: '', role: 'member' });
+      setIsAddUserDialogOpen(false);
+    } catch (error) {
+      toast.error('Failed to send invitation');
+    }
   };
 
   const handleRemoveUser = async (userId: string) => {
@@ -163,7 +162,7 @@ function useTeamSettings() {
     setIsAddUserDialogOpen,
     newUser,
     setNewUser,
-    handleAddUser,
+    handleSendInvite,
     handleRemoveUser,
     handleUpdateUser,
     getRoleBadgeVariant,
@@ -174,7 +173,8 @@ function useTeamSettings() {
     isEditTeamDialogOpen,
     teamName,
     teamDescription,
-    isUpdating
+    isUpdating,
+    isInviteLoading
   };
 }
 

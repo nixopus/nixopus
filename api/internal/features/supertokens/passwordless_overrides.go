@@ -2,15 +2,16 @@ package supertokens
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
-	"log"
+	"io"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/supertokens/supertokens-golang/ingredients/emaildelivery"
 	"github.com/supertokens/supertokens-golang/recipe/passwordless/plessmodels"
 	"github.com/supertokens/supertokens-golang/recipe/userroles"
 	"github.com/supertokens/supertokens-golang/supertokens"
@@ -26,13 +27,17 @@ func createPasswordlessUser(supertokensUserID, email string) (*shared_types.User
 	userStorage := &user_storage.UserStorage{DB: app.Store.DB, Ctx: app.Ctx}
 	existingUser, err := userStorage.FindUserBySupertokensID(supertokensUserID)
 	if err == nil && existingUser != nil {
-		log.Printf("User with SuperTokens ID %s already exists", supertokensUserID)
 		return existingUser, nil
 	}
 
+	if err != nil {
+		// Continue to create new user
+	}
+
 	// Create new user
+	userID := uuid.New()
 	user := &shared_types.User{
-		ID:                uuid.New(),
+		ID:                userID,
 		SupertokensUserID: supertokensUserID,
 		Email:             email,
 		Username:          strings.Split(email, "@")[0], // Use email prefix as username
@@ -46,8 +51,6 @@ func createPasswordlessUser(supertokensUserID, email string) (*shared_types.User
 		return nil, fmt.Errorf("failed to create user in database: %w", err)
 	}
 
-	log.Printf("Successfully created user %s (ID: %s) in database with SuperTokens ID %s",
-		email, user.ID, supertokensUserID)
 	return user, nil
 }
 
@@ -84,7 +87,6 @@ func addPasswordlessUserToOrganization(userID, email, organizationID, role strin
 
 	// Assign SuperTokens role to the user in the default tenant
 	if _, roleErr := userroles.AddRoleToUser("public", userID, role, nil); roleErr != nil {
-		log.Printf("Failed to assign SuperTokens role to user: %v", roleErr)
 		// Don't fail the entire operation for role assignment failure
 	}
 
@@ -92,8 +94,6 @@ func addPasswordlessUserToOrganization(userID, email, organizationID, role strin
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	log.Printf("Successfully added user %s to organization %s with role %s",
-		email, organization.Name, role)
 	return nil
 }
 
@@ -126,6 +126,7 @@ func isOrganizationInvitation(userContext supertokens.UserContext) bool {
 		return false
 	}
 
+	// Check for organization_id and role in userContext
 	_, hasOrgID := (*userContext)["organization_id"]
 	_, hasRole := (*userContext)["role"]
 
@@ -134,58 +135,75 @@ func isOrganizationInvitation(userContext supertokens.UserContext) bool {
 
 // extractInvitationData extracts organization invitation data from user context
 func extractInvitationData(userContext supertokens.UserContext) (orgID, role, email string, ok bool) {
-	if userContext == nil {
-		return "", "", "", false
+	// Extract from _default.request if it exists
+	if userContext != nil {
+		if defaultData, exists := (*userContext)["_default"]; exists {
+			if castData, ok := defaultData.(map[string]interface{}); ok {
+				if requestVal, reqExists := castData["request"]; reqExists {
+					// Try to extract from request body
+					if request, reqOk := requestVal.(*http.Request); reqOk {
+						// Read the request body
+						bodyBytes, err := io.ReadAll(request.Body)
+						if err != nil {
+							return "", "", "", false
+						}
+
+						// Parse JSON body
+						var bodyData map[string]interface{}
+						if err := json.Unmarshal(bodyBytes, &bodyData); err != nil {
+							return "", "", "", false
+						}
+
+						// Extract organization data
+						if orgIDVal, orgExists := bodyData["organization_id"]; orgExists {
+							if roleVal, roleExists := bodyData["role"]; roleExists {
+								if emailVal, emailExists := bodyData["email"]; emailExists {
+									orgID, orgOk := orgIDVal.(string)
+									role, roleOk := roleVal.(string)
+									email, emailOk := emailVal.(string)
+
+									if orgOk && roleOk && emailOk {
+										return orgID, role, email, true
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
-	orgIDVal, orgExists := (*userContext)["organization_id"]
-	roleVal, roleExists := (*userContext)["role"]
-	emailVal, emailExists := (*userContext)["email"]
-
-	if !orgExists || !roleExists || !emailExists {
-		return "", "", "", false
-	}
-
-	orgID, orgOk := orgIDVal.(string)
-	role, roleOk := roleVal.(string)
-	email, emailOk := emailVal.(string)
-
-	return orgID, role, email, orgOk && roleOk && emailOk
+	return "", "", "", false
 }
 
 // handleNewUserSignup processes organization assignment for new users
 func handleNewUserSignup(user plessmodels.User, userContext supertokens.UserContext) {
 	orgID, role, email, ok := extractInvitationData(userContext)
 	if !ok {
-		log.Printf("Failed to extract invitation data for new user: %s", user.ID)
 		return
 	}
 
-	err := addPasswordlessUserToOrganization(user.ID, email, orgID, role)
-	if err != nil {
-		log.Printf("Failed to add new user to organization: %v", err)
-	}
+	addPasswordlessUserToOrganization(user.ID, email, orgID, role)
 }
 
 // handleExistingUserSignin processes organization access verification for existing users
 func handleExistingUserSignin(user plessmodels.User, userContext supertokens.UserContext) {
 	orgID, role, email, ok := extractInvitationData(userContext)
 	if !ok {
-		log.Printf("Failed to extract invitation data for existing user: %s", user.ID)
 		return
 	}
 
-	err := ensurePasswordlessUserOrganizationAccess(user.ID, email, orgID, role)
-	if err != nil {
-		log.Printf("Failed to verify user organization access: %v", err)
-	}
+	ensurePasswordlessUserOrganizationAccess(user.ID, email, orgID, role)
 }
 
 // createCodeOverride returns the CreateCode override function
 func createCodeOverride(originalCreateCode func(email *string, phoneNumber *string, userInputCode *string, tenantId string, userContext supertokens.UserContext) (plessmodels.CreateCodeResponse, error)) func(email *string, phoneNumber *string, userInputCode *string, tenantId string, userContext supertokens.UserContext) (plessmodels.CreateCodeResponse, error) {
 	return func(email *string, phoneNumber *string, userInputCode *string, tenantId string, userContext supertokens.UserContext) (plessmodels.CreateCodeResponse, error) {
 		// Check if this is an organization invitation by checking the user context that we will set in the send invite endpoint
-		if isOrganizationInvitation(userContext) {
+		isOrgInvite := isOrganizationInvitation(userContext)
+
+		if isOrgInvite {
 			// This is an organization invitation, allow it
 			return originalCreateCode(email, phoneNumber, userInputCode, tenantId, userContext)
 		}
@@ -195,10 +213,10 @@ func createCodeOverride(originalCreateCode func(email *string, phoneNumber *stri
 	}
 }
 
-// consumeCodeOverride returns the ConsumeCode override function
+// consumeCodeOverride overrides the ConsumeCode function based on SuperTokens documentation
 func consumeCodeOverride(originalConsumeCode func(userInput *plessmodels.UserInputCodeWithDeviceID, linkCode *string, preAuthSessionID string, tenantId string, userContext supertokens.UserContext) (plessmodels.ConsumeCodeResponse, error)) func(userInput *plessmodels.UserInputCodeWithDeviceID, linkCode *string, preAuthSessionID string, tenantId string, userContext supertokens.UserContext) (plessmodels.ConsumeCodeResponse, error) {
 	return func(userInput *plessmodels.UserInputCodeWithDeviceID, linkCode *string, preAuthSessionID string, tenantId string, userContext supertokens.UserContext) (plessmodels.ConsumeCodeResponse, error) {
-		// First call the original implementation
+		// First call the original ConsumeCode implementation
 		response, err := originalConsumeCode(userInput, linkCode, preAuthSessionID, tenantId, userContext)
 		if err != nil {
 			return plessmodels.ConsumeCodeResponse{}, err
@@ -208,10 +226,10 @@ func consumeCodeOverride(originalConsumeCode func(userInput *plessmodels.UserInp
 			user := response.OK.User
 
 			if response.OK.CreatedNewUser {
-				// New user signup - assign to organization with role
+				// Post sign up logic
 				handleNewUserSignup(user, userContext)
 			} else {
-				// Existing user signin - ensure they have access to the organization
+				// Post sign in logic
 				handleExistingUserSignin(user, userContext)
 			}
 		}
@@ -224,8 +242,8 @@ func consumeCodeOverride(originalConsumeCode func(userInput *plessmodels.UserInp
 func createPasswordlessOverrides() *plessmodels.OverrideStruct {
 	return &plessmodels.OverrideStruct{
 		Functions: func(originalImplementation plessmodels.RecipeInterface) plessmodels.RecipeInterface {
-			originalConsumeCode := *originalImplementation.ConsumeCode
 			originalCreateCode := *originalImplementation.CreateCode
+			originalConsumeCode := *originalImplementation.ConsumeCode
 
 			// Override CreateCode to prevent unauthorized signups
 			(*originalImplementation.CreateCode) = createCodeOverride(originalCreateCode)
@@ -233,34 +251,6 @@ func createPasswordlessOverrides() *plessmodels.OverrideStruct {
 			// Override ConsumeCode to handle organization assignment
 			(*originalImplementation.ConsumeCode) = consumeCodeOverride(originalConsumeCode)
 
-			return originalImplementation
-		},
-	}
-}
-
-// createPasswordlessEmailDeliveryOverride returns the email delivery override for organization invitations
-func createPasswordlessEmailDeliveryOverride() *emaildelivery.TypeInput {
-	return &emaildelivery.TypeInput{
-		Override: func(originalImplementation emaildelivery.EmailDeliveryInterface) emaildelivery.EmailDeliveryInterface {
-			ogSendEmail := *originalImplementation.SendEmail
-			(*originalImplementation.SendEmail) = func(input emaildelivery.EmailType, userContext supertokens.UserContext) error {
-				// Customize magic link URL for organization invitations
-				if input.PasswordlessLogin != nil && input.PasswordlessLogin.UrlWithLinkCode != nil {
-					// Check if this is an organization invitation by looking for custom data
-					if userContext != nil {
-						if orgID, exists := (*userContext)["organization_id"]; exists {
-							newUrl := strings.Replace(
-								*input.PasswordlessLogin.UrlWithLinkCode,
-								"/auth/verify",
-								fmt.Sprintf("/auth/organization-invite?org_id=%s", orgID),
-								1,
-							)
-							input.PasswordlessLogin.UrlWithLinkCode = &newUrl
-						}
-					}
-				}
-				return ogSendEmail(input, userContext)
-			}
 			return originalImplementation
 		},
 	}

@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -11,6 +13,24 @@ import (
 
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
+
+func (c *OrganizationsController) customizeInviteLink(inviteLink string, orgID string, email string, role string) string {
+	if strings.Contains(inviteLink, "/auth/verify") {
+		parts := strings.Split(inviteLink, "/auth/verify")
+		if len(parts) == 2 {
+			queryAndHash := parts[1]
+			if strings.HasPrefix(queryAndHash, "?") {
+				queryAndHash = "&" + queryAndHash[1:]
+			}
+			customInviteLink := fmt.Sprintf("%s/auth/organization-invite?org_id=%s&email=%s&role=%s%s",
+				parts[0], orgID, email, role, queryAndHash)
+			c.logger.Log(logger.Info, "Customized invite link for organization",
+				fmt.Sprintf("Custom InviteLink: %s", customInviteLink))
+			return customInviteLink
+		}
+	}
+	return inviteLink
+}
 
 func (c *OrganizationsController) SendInvite(f fuego.ContextWithBody[types.InviteSendRequest]) (*shared_types.Response, error) {
 	request, err := f.Body()
@@ -34,24 +54,15 @@ func (c *OrganizationsController) SendInvite(f fuego.ContextWithBody[types.Invit
 		"organization_id": request.OrganizationID,
 		"role":            request.Role,
 	}
-
-	response, err := passwordless.CreateCodeWithEmail("public", request.Email, nil, userContext)
+	inviteLink, err := passwordless.CreateMagicLinkByEmail("public", request.Email, userContext)
 	if err != nil {
-		c.logger.Log(logger.Error, "Failed to create passwordless code", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,
 		}
 	}
 
-	if response.OK == nil {
-		return &shared_types.Response{
-			Status:  "error",
-			Message: "Failed to create magic link",
-		}, nil
-	}
-
-	c.logger.Log(logger.Info, "Organization invite sent", request.Email)
+	inviteLink = c.customizeInviteLink(inviteLink, request.OrganizationID, request.Email, request.Role)
 
 	return &shared_types.Response{
 		Status:  "success",
@@ -87,23 +98,15 @@ func (c *OrganizationsController) ResendInvite(f fuego.ContextWithBody[types.Inv
 		"role":            request.Role,
 	}
 
-	response, err := passwordless.CreateCodeWithEmail("public", request.Email, nil, userContext)
+	inviteLink, err := passwordless.CreateMagicLinkByEmail("public", request.Email, userContext)
 	if err != nil {
-		c.logger.Log(logger.Error, "Failed to resend passwordless code", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,
 		}
 	}
 
-	if response.OK == nil {
-		return &shared_types.Response{
-			Status:  "error",
-			Message: "Failed to resend magic link",
-		}, nil
-	}
-
-	c.logger.Log(logger.Info, "Organization invite resent", request.Email)
+	inviteLink = c.customizeInviteLink(inviteLink, request.OrganizationID, request.Email, request.Role)
 
 	return &shared_types.Response{
 		Status:  "success",

@@ -37,6 +37,7 @@ func NewOrganizationsController(
 		validator:    validation.NewValidator(&storage),
 		service:      service.NewOrganizationService(store, ctx, l, &storage, cache),
 		ctx:          ctx,
+		logger:       l,
 		notification: notificationManager,
 		cache:        cache,
 	}

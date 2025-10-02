@@ -417,8 +417,7 @@ func (router *Router) ContainerRoutes(s *fuego.Server, containerController *cont
 }
 
 func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController *organization.OrganizationsController) {
-	// fuego.Get(f, "/users", organizationController.GetOrganizationUsers)
-	// fuego.Post(f, "/add-user", organizationController.AddUserToOrganization)
+	fuego.Get(f, "/users", organizationController.GetOrganizationUsers)
 	// fuego.Post(f, "/remove-user", organizationController.RemoveUserFromOrganization)
 	fuego.Put(f, "", organizationController.UpdateOrganization)
 	fuego.Post(f, "", organizationController.CreateOrganization)

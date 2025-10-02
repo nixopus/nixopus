@@ -94,7 +94,6 @@ func Init(appInstance *storage.App) {
 					Enabled: true,
 				},
 				Override:      createPasswordlessOverrides(),
-				EmailDelivery: createPasswordlessEmailDeliveryOverride(),
 			}),
 			session.Init(&sessmodels.TypeInput{
 				ExposeAccessTokenToFrontendInCookieBasedAuth: true,

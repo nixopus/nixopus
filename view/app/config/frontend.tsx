@@ -1,4 +1,5 @@
 import EmailPasswordReact from 'supertokens-auth-react/recipe/emailpassword'
+import PasswordlessReact from 'supertokens-auth-react/recipe/passwordless'
 import SessionReact from 'supertokens-auth-react/recipe/session'
 import { appInfo } from './appInfo'
 import { useRouter } from "next/navigation";
@@ -23,6 +24,9 @@ export const frontendConfig = (): SuperTokensConfig => {
         resetPasswordUsingTokenFeature: {
           disableDefaultUI: true,
         },
+      }),
+      PasswordlessReact.init({
+        contactMethod: "EMAIL",
       }),
       SessionReact.init(),
     ],

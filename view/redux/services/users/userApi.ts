@@ -11,6 +11,19 @@ import {
   UpdateUserRoleRequest,
   UserOrganization
 } from '@/redux/types/orgs';
+
+export interface InviteSendRequest {
+  email: string;
+  organization_id: string;
+  role: string;
+}
+
+export interface InviteResendRequest {
+  email: string;
+  organization_id: string;
+  role: string;
+}
+
 import { baseQueryWithReauth } from '@/redux/base-query';
 import {
   UserSettings,
@@ -127,6 +140,30 @@ export const userApi = createApi({
         };
       }
     }),
+    sendInvite: builder.mutation<{ message: string }, InviteSendRequest>({
+      query(payload) {
+        return {
+          url: USERURLS.SEND_INVITE,
+          method: 'POST',
+          body: payload
+        };
+      },
+      transformResponse: (response: { data: { message: string } }) => {
+        return response.data;
+      }
+    }),
+    resendInvite: builder.mutation<{ message: string }, InviteResendRequest>({
+      query(payload) {
+        return {
+          url: USERURLS.RESEND_INVITE,
+          method: 'POST',
+          body: payload
+        };
+      },
+      transformResponse: (response: { data: { message: string } }) => {
+        return response.data;
+      }
+    }),
     getResources: builder.query<string[], void>({
       query: () => ({
         url: USERURLS.GET_RESOURCES,
@@ -226,7 +263,6 @@ export const {
   useAddUserToOrganizationMutation,
   useRemoveUserFromOrganizationMutation,
   useUpdateUserNameMutation,
-  useRequestPasswordResetLinkMutation,
   useGetOrganizationUsersQuery,
   useUpdateOrganizationDetailsMutation,
   useCreateUserMutation,
@@ -240,5 +276,7 @@ export const {
   useUpdateAutoUpdateMutation,
   useCheckForUpdatesQuery,
   usePerformUpdateMutation,
-  useUpdateAvatarMutation
+  useUpdateAvatarMutation,
+  useSendInviteMutation,
+  useResendInviteMutation
 } = userApi;
