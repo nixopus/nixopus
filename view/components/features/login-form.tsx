@@ -9,6 +9,7 @@ import nixopusLogo from '@/public/nixopus_logo_transparent.png';
 import { useTranslation } from '@/hooks/use-translation';
 import Link from 'next/link';
 import { useState } from 'react';
+import { z } from 'zod';
 
 export interface LoginFormProps {
   email: string;
@@ -30,39 +31,30 @@ export function LoginForm({ ...props }: LoginFormProps) {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
-  /**
-   * Validates email format using regex pattern
-   * Pattern breakdown:
-   * - ^[^\s@]+ : Start with one or more characters that are not whitespace or @
-   * - @ : Must contain exactly one @ symbol
-   * - [^\s@]+ : One or more characters that are not whitespace or @ (domain name)
-   * - \. : Must contain a literal dot
-   * - [^\s@]+$ : End with one or more characters that are not whitespace or @ (domain extension)
-   */
-  const isValidEmail = (email: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-  const validateEmail = (email: string): string => {
-    return !email ? 'Email is required' : !isValidEmail(email) ? 'Please enter a valid Email' : '';
-  };
-
-  const validatePassword = (password: string): string => {
-    return !password ? 'Password is required' : '';
-  };
+  // Zod schema for login validation
+  const loginSchema = z.object({
+    email: z.string().min(1, 'Email is required').email('Please enter a valid Email'),
+    password: z.string().min(1, 'Password is required')
+  });
 
   const handleLoginClick = (): void => {
     // Reset errors first
     setEmailError('');
     setPasswordError('');
 
-    const emailValidationError = validateEmail(props.email);
-    if (emailValidationError) {
-      setEmailError(emailValidationError);
-      return;
-    }
+    const result = loginSchema.safeParse({
+      email: props.email ?? '',
+      password: props.password ?? ''
+    });
 
-    const passwordValidationError = validatePassword(props.password);
-    if (passwordValidationError) {
-      setPasswordError(passwordValidationError);
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      if (fieldErrors.email && fieldErrors.email[0]) {
+        setEmailError(fieldErrors.email[0]);
+      }
+      if (fieldErrors.password && fieldErrors.password[0]) {
+        setPasswordError(fieldErrors.password[0]);
+      }
       return;
     }
 
@@ -99,7 +91,9 @@ export function LoginForm({ ...props }: LoginFormProps) {
                     />
                     {emailError && (
                       <Alert variant="destructive">
-                        <AlertDescription className="text-xs !text-red-400" >{emailError}</AlertDescription>
+                        <AlertDescription className="text-xs !text-red-600 font-medium">
+                          {emailError}
+                        </AlertDescription>
                       </Alert>
                     )}
                   </div>
@@ -119,7 +113,9 @@ export function LoginForm({ ...props }: LoginFormProps) {
                     />
                     {passwordError && (
                       <Alert variant="destructive">
-                        <AlertDescription className="text-xs !text-red-400">{passwordError}</AlertDescription>
+                        <AlertDescription className="text-xs !text-red-600 font-medium">
+                          {passwordError}
+                        </AlertDescription>
                       </Alert>
                     )}
                   </div>
