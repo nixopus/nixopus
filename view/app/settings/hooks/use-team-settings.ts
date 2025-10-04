@@ -105,7 +105,7 @@ function useTeamSettings() {
       await updateUserRole({
         user_id: userId,
         organization_id: activeOrganization?.id || '',
-        role_name: role
+        role: role.toLowerCase()
       });
       await refetchUsers();
       toast.success(t('settings.teams.messages.userUpdated'));

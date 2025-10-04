@@ -107,6 +107,9 @@ export const useRBAC = () => {
     hasPermission: hasPermissionCheck,
     hasAnyPermission,
     hasAllPermissions,
-    isLoading
+    isLoading,
+    roles,
+    permissions,
+    isAdmin
   };
 }; 

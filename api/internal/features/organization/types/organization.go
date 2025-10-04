@@ -59,6 +59,12 @@ type InviteResendRequest struct {
 	Role           string `json:"role"`
 }
 
+type UpdateUserRoleRequest struct {
+	UserID         string `json:"user_id"`
+	OrganizationID string `json:"organization_id"`
+	Role           string `json:"role"`
+}
+
 func NewOrganization(name string, description string) shared_types.Organization {
 	return shared_types.Organization{
 		ID:          uuid.New(),

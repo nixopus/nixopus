@@ -10,10 +10,9 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-// TODO: Here we need to make sure when a user is removed from an organization, if no organization is left for the user, we should remove the user from the system.
-func (c *OrganizationsController) RemoveUserFromOrganization(f fuego.ContextWithBody[types.RemoveUserFromOrganizationRequest]) (*shared_types.Response, error) {
+func (c *OrganizationsController) UpdateUserRole(f fuego.ContextWithBody[types.UpdateUserRoleRequest]) (*shared_types.Response, error) {
 	_, r := f.Response(), f.Request()
-	user, err := f.Body()
+	request, err := f.Body()
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
@@ -29,7 +28,7 @@ func (c *OrganizationsController) RemoveUserFromOrganization(f fuego.ContextWith
 		}
 	}
 
-	if err := c.validator.ValidateRequest(&user); err != nil {
+	if err := c.validator.ValidateRequest(&request); err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
@@ -37,7 +36,7 @@ func (c *OrganizationsController) RemoveUserFromOrganization(f fuego.ContextWith
 		}
 	}
 
-	if err := c.service.RemoveUserFromOrganization(&user); err != nil {
+	if err := c.service.UpdateUserRole(&request); err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,
@@ -46,7 +45,7 @@ func (c *OrganizationsController) RemoveUserFromOrganization(f fuego.ContextWith
 
 	return &shared_types.Response{
 		Status:  "success",
-		Message: "User removed from organization successfully",
+		Message: "User role updated successfully",
 		Data:    nil,
 	}, nil
 }

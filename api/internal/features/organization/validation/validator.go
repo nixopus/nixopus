@@ -82,6 +82,8 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return v.validateInviteSend(*r)
 	case *types.InviteResendRequest:
 		return v.validateInviteResend(*r)
+	case *types.UpdateUserRoleRequest:
+		return v.validateUpdateUserRole(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}
@@ -230,7 +232,28 @@ func (v *Validator) validateInviteResend(req types.InviteResendRequest) error {
 	return nil
 }
 
+func (v *Validator) validateUpdateUserRole(req types.UpdateUserRoleRequest) error {
+	if err := v.ValidateID(req.OrganizationID, types.ErrMissingOrganizationID); err != nil {
+		return err
+	}
+	if err := v.ValidateID(req.UserID, types.ErrMissingUserID); err != nil {
+		return err
+	}
+	if req.Role == "" {
+		return types.ErrMissingRoleID
+	}
+
+	organization, err := v.storage.GetOrganization(req.OrganizationID)
+	if err != nil {
+		return err
+	}
+	if organization == nil {
+		return types.ErrOrganizationNotFound
+	}
+
+	return nil
+}
+
 func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decoded interface{}) error {
 	return json.NewDecoder(body).Decode(decoded)
 }
-

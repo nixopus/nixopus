@@ -418,7 +418,8 @@ func (router *Router) ContainerRoutes(s *fuego.Server, containerController *cont
 
 func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController *organization.OrganizationsController) {
 	fuego.Get(f, "/users", organizationController.GetOrganizationUsers)
-	// fuego.Post(f, "/remove-user", organizationController.RemoveUserFromOrganization)
+	fuego.Post(f, "/remove-user", organizationController.RemoveUserFromOrganization)
+	fuego.Post(f, "/update-user-role", organizationController.UpdateUserRole)
 	fuego.Put(f, "", organizationController.UpdateOrganization)
 	fuego.Post(f, "", organizationController.CreateOrganization)
 	fuego.Delete(f, "", organizationController.DeleteOrganization)
