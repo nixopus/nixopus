@@ -22,13 +22,20 @@ import useTeamSwitcher from '@/hooks/use-team-switcher';
 import { useAppSelector } from '@/redux/hooks';
 import { UserOrganization } from '@/redux/types/orgs';
 
-export function TeamSwitcher({ refetch }: { refetch: () => void }) {
+export function TeamSwitcher({ 
+  refetch, 
+  toggleAddTeamModal, 
+  addTeamModalOpen 
+}: { 
+  refetch: () => void;
+  toggleAddTeamModal?: () => void;
+  addTeamModalOpen?: boolean;
+}) {
   const { isMobile } = useSidebar();
   const teams = useAppSelector((state) => state.user.organizations);
   const user = useAppSelector((state) => state.auth.user);
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
   const {
-    toggleAddTeamModal,
     handleTeamChange,
     handleDeleteOrganization,
     isDeleteDialogOpen,
@@ -98,16 +105,19 @@ export function TeamSwitcher({ refetch }: { refetch: () => void }) {
                   {team.organization.name}
                 </DropdownMenuItem>
               ))}
-              {/* {canCreateOrg() || (canDeleteOrg && <DropdownMenuSeparator />)}
+              {canCreateOrg() && <DropdownMenuSeparator />}
               {canCreateOrg() && (
-                <DropdownMenuItem className="gap-2 p-2" onClick={toggleAddTeamModal}>
+                <div 
+                  className="gap-2 p-2 cursor-pointer hover:bg-accent hover:text-accent-foreground relative flex items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none"
+                  onClick={toggleAddTeamModal}
+                >
                   <div className="bg-background flex size-6 items-center justify-center rounded-md border">
                     <Plus className="size-4" />
                   </div>
                   <div className="text-muted-foreground font-medium">Add team</div>
-                </DropdownMenuItem>
+                </div>
               )}
-              {teams.length > 1 && canDeleteOrg && (
+              {teams.length > 1 && (
                 <DropdownMenuItem
                   className="gap-2 p-2 text-destructive"
                   onClick={() => setIsDeleteDialogOpen(true)}
@@ -117,7 +127,7 @@ export function TeamSwitcher({ refetch }: { refetch: () => void }) {
                   </div>
                   <div className="text-muted-foreground font-medium">Delete team</div>
                 </DropdownMenuItem>
-              )} */}
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>

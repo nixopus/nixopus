@@ -213,7 +213,7 @@ func createUserInDatabase(supertokensUserID, email string) {
 	roleName := fmt.Sprintf("orgid_%s_admin", organization.ID.String())
 
 	// Create the organization specific role first
-	if _, createRoleErr := userroles.CreateNewRoleOrAddPermissions(roleName, adminPermissions, nil); createRoleErr != nil {
+	if _, createRoleErr := userroles.CreateNewRoleOrAddPermissions(roleName, GetAdminPermissions(), nil); createRoleErr != nil {
 		log.Printf("Failed to create organization-specific role %s: %v", roleName, createRoleErr)
 		return
 	}
@@ -240,15 +240,15 @@ func createUserInDatabase(supertokensUserID, email string) {
 
 // seedDefaultRolesAndPermissions creates initial roles and permissions in SuperTokens
 func seedDefaultRolesAndPermissions() error {
-	if _, err := userroles.CreateNewRoleOrAddPermissions("admin", adminPermissions, nil); err != nil {
+	if _, err := userroles.CreateNewRoleOrAddPermissions("admin", GetAdminPermissions(), nil); err != nil {
 		return err
 	}
 
-	if _, err := userroles.CreateNewRoleOrAddPermissions("member", memberPermissions, nil); err != nil {
+	if _, err := userroles.CreateNewRoleOrAddPermissions("member", GetMemberPermissions(), nil); err != nil {
 		return err
 	}
 
-	if _, err := userroles.CreateNewRoleOrAddPermissions("viewer", viewerPermissions, nil); err != nil {
+	if _, err := userroles.CreateNewRoleOrAddPermissions("viewer", GetViewerPermissions(), nil); err != nil {
 		return err
 	}
 
@@ -331,4 +331,19 @@ func createDefaultFeatureFlags(organizationID uuid.UUID, tx *bun.Tx) error {
 
 	log.Printf("Created %d default feature flags for organization %s", len(defaultFeatures), organizationID)
 	return nil
+}
+
+// GetAdminPermissions returns the admin permissions list
+func GetAdminPermissions() []string {
+	return adminPermissions
+}
+
+// GetMemberPermissions returns the member permissions list
+func GetMemberPermissions() []string {
+	return memberPermissions
+}
+
+// GetViewerPermissions returns the viewer permissions list
+func GetViewerPermissions() []string {
+	return viewerPermissions
 }

@@ -129,6 +129,12 @@ function useTeamSwitcher() {
       setOpen(false);
       setTeamName('');
       setTeamDescription('');
+      
+      // Refresh the page to ensure all roles and permissions are updated
+      // This is necessary because SuperTokens roles are session based
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error('Failed to create team:', error);
       toast.error('Failed to create team');

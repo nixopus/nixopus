@@ -94,13 +94,13 @@ func addPasswordlessUserToOrganization(userID, email, organizationID, role strin
 	var permissions []string
 	switch role {
 	case "admin":
-		permissions = adminPermissions
+		permissions = GetAdminPermissions()
 	case "member":
-		permissions = memberPermissions
+		permissions = GetMemberPermissions()
 	case "viewer":
-		permissions = viewerPermissions
+		permissions = GetViewerPermissions()
 	default:
-		permissions = viewerPermissions // Default to viewer permissions
+		permissions = GetViewerPermissions() // Default to viewer permissions
 	}
 
 	// Create the organization specific role first
