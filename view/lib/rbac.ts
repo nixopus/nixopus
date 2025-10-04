@@ -66,7 +66,20 @@ export const useRBAC = () => {
     };
   }, []);
 
-  const isAdmin = useMemo(() => Array.isArray(roles) && roles.includes('admin'), [roles]);
+  const isAdmin = useMemo(() => {
+    if (!Array.isArray(roles)) return false;
+    return roles.some(role => {
+      // Strip orgid_ prefix to get base role name
+      if (role.startsWith('orgid_')) {
+        const lastUnderscore = role.lastIndexOf('_');
+        if (lastUnderscore !== -1 && lastUnderscore < role.length - 1) {
+          const baseRole = role.substring(lastUnderscore + 1);
+          return baseRole === 'admin';
+        }
+      }
+      return role === 'admin';
+    });
+  }, [roles]);
   
   const canAccessResource = (resource: Resource, action: Action): boolean => {
     if (isAdmin) return true;

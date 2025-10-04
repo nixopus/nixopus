@@ -83,13 +83,36 @@ func addPasswordlessUserToOrganization(userID, email, organizationID, role strin
 	defer tx.Rollback()
 
 	// Add user to organization with role
-	if err := addUserToOrganizationWithRole(*user, organization, role, &tx); err != nil {
+	if err := addUserToOrganization(*user, organization, &tx); err != nil {
 		return fmt.Errorf("failed to add user to organization: %w", err)
 	}
 
-	// Assign SuperTokens role to the user in the default tenant
-	if _, roleErr := userroles.AddRoleToUser("public", userID, role, nil); roleErr != nil {
-		// Don't fail the entire operation for role assignment failure
+	// Create organization specific role and assign it to the user
+	roleName := fmt.Sprintf("orgid_%s_%s", organizationID, role)
+
+	// Determine permissions based on role
+	var permissions []string
+	switch role {
+	case "admin":
+		permissions = adminPermissions
+	case "member":
+		permissions = memberPermissions
+	case "viewer":
+		permissions = viewerPermissions
+	default:
+		permissions = viewerPermissions // Default to viewer permissions
+	}
+
+	// Create the organization specific role first
+	if _, createRoleErr := userroles.CreateNewRoleOrAddPermissions(roleName, permissions, nil); createRoleErr != nil {
+		// Log error but don't fail the entire operation for role creation failure
+		fmt.Printf("Failed to create organization specific role %s: %v", roleName, createRoleErr)
+	}
+
+	// Then assign the role to the user
+	if _, roleErr := userroles.AddRoleToUser("public", userID, roleName, nil); roleErr != nil {
+		// Log error but don't fail the entire operation for role assignment failure
+		fmt.Printf("Failed to assign SuperTokens role %s to user %s: %v", roleName, userID, roleErr)
 	}
 
 	if err := tx.Commit(); err != nil {
