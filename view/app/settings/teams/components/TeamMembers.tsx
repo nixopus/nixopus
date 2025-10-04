@@ -75,7 +75,12 @@ function TeamMembers({
     const orgUser = loggedInUser.organization_users.find(
       (ou: OrganizationUsers) => ou.organization_id === activeOrganization.id
     );
-    return (orgUser?.role?.name?.toLowerCase() as RoleType) || null;
+    const primaryRole = orgUser?.roles?.[0] || '';
+    if (primaryRole.includes('admin')) return 'admin';
+    if (primaryRole.includes('member')) return 'member';
+    if (primaryRole.includes('viewer')) return 'viewer';
+    if (primaryRole.includes('owner')) return 'owner';
+    return null;
   };
 
   const canModifyUser = (targetUser: EditUser) => {

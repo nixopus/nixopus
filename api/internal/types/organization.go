@@ -39,3 +39,10 @@ type OrganizationUsers struct {
 	User         *User         `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
 	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }
+
+// OrganizationUsersWithRoles represents organization users with their roles and permissions from SuperTokens
+type OrganizationUsersWithRoles struct {
+	OrganizationUsers
+	Roles       []string `json:"roles"`
+	Permissions []string `json:"permissions"`
+}

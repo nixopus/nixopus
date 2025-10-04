@@ -347,3 +347,50 @@ func GetMemberPermissions() []string {
 func GetViewerPermissions() []string {
 	return viewerPermissions
 }
+
+// GetRolesAndPermissionsForUserInOrganization retrieves roles and permissions for a user from SuperTokens, filtered by organization
+func GetRolesAndPermissionsForUserInOrganization(userId, organizationId string) ([]string, []string, error) {
+	// Get roles for the user
+	rolesResponse, err := userroles.GetRolesForUser("public", userId, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get roles for user %s: %w", userId, err)
+	}
+
+	allRoles := rolesResponse.OK.Roles
+
+	// Filter roles to only include organization specific roles
+	var orgRoles []string
+	var allPermissions []string
+	permissionSet := make(map[string]bool)
+
+	for _, role := range allRoles {
+		// Check if this role is organization specific
+		if strings.HasPrefix(role, "orgid_") && strings.Contains(role, organizationId) {
+			orgRoles = append(orgRoles, role)
+		} else if role == "admin" || role == "member" || role == "viewer" {
+			orgRoles = append(orgRoles, role)
+		} else {
+			// Skip roles that don't belong to the organization
+			continue
+		}
+
+		// Get permissions for the role
+		permissionsResponse, err := userroles.GetPermissionsForRole(role, nil)
+		if err != nil {
+			continue
+		}
+
+		if permissionsResponse.UnknownRoleError != nil {
+			continue
+		}
+
+		for _, permission := range permissionsResponse.OK.Permissions {
+			if !permissionSet[permission] {
+				permissionSet[permission] = true
+				allPermissions = append(allPermissions, permission)
+			}
+		}
+	}
+
+	return orgRoles, allPermissions, nil
+}

@@ -37,15 +37,19 @@ function useTeamSettings() {
   useEffect(() => {
     if (apiUsers) {
       const transformedUsers = apiUsers.map((user) => {
-        const roleName = user.role?.name || 'Unknown';
-        const permissions =
-          user.role?.permissions?.map(
-            (permission) => `${permission.resource.toUpperCase()}:${permission.name}`
-          ) || [];
+        const primaryRole = user.roles?.[0] || 'Unknown';
+        const roleName = primaryRole.includes('admin') ? 'Admin' : 
+                        primaryRole.includes('member') ? 'Member' : 
+                        primaryRole.includes('viewer') ? 'Viewer' : 
+                        primaryRole.includes('owner') ? 'Owner' : 'Unknown';
+        
+        const permissions = user.permissions || [];
+        
         return {
           id: user.user.id,
           name: user.user?.username || 'Unknown User',
           email: user.user?.email || '',
+          avatar: user.user?.avatar || '',
           role: roleName,
           permissions
         };
