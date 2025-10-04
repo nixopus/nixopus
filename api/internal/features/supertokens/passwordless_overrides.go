@@ -13,7 +13,9 @@ import (
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/supertokens/supertokens-golang/recipe/passwordless/plessmodels"
+	"github.com/supertokens/supertokens-golang/recipe/session"
 	"github.com/supertokens/supertokens-golang/recipe/userroles"
+	"github.com/supertokens/supertokens-golang/recipe/userroles/userrolesclaims"
 	"github.com/supertokens/supertokens-golang/supertokens"
 )
 
@@ -231,6 +233,30 @@ func consumeCodeOverride(originalConsumeCode func(userInput *plessmodels.UserInp
 			} else {
 				// Post sign in logic
 				handleExistingUserSignin(user, userContext)
+			}
+
+			// Refresh session with roles and permissions for both new and existing users
+			// We need to get the session from the user context
+			if userContext != nil {
+				if defaultData, exists := (*userContext)["_default"]; exists {
+					if castData, ok := defaultData.(map[string]interface{}); ok {
+						if requestVal, reqExists := castData["request"]; reqExists {
+							if request, reqOk := requestVal.(*http.Request); reqOk {
+								ctx := request.Context()
+								sessContainer := session.GetSessionFromRequestContext(ctx)
+								if sessContainer != nil {
+									// Refresh roles and permissions in the session
+									if err := sessContainer.FetchAndSetClaim(userrolesclaims.UserRoleClaim); err != nil {
+										// Log error but don't fail the operation
+									}
+									if err := sessContainer.FetchAndSetClaim(userrolesclaims.PermissionClaim); err != nil {
+										// Log error but don't fail the operation
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 
