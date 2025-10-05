@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -37,6 +38,7 @@ const (
 	ExecutionStatusRunning   ExecutionStatus = "running"
 	ExecutionStatusCompleted ExecutionStatus = "completed"
 	ExecutionStatusFailed    ExecutionStatus = "failed"
+	ExecutionStatusCancelled ExecutionStatus = "cancelled"
 )
 
 type Extension struct {
@@ -64,15 +66,15 @@ type Extension struct {
 
 type ExtensionVariable struct {
 	bun.BaseModel     `bun:"table:extension_variables,alias:ev" swaggerignore:"true"`
-	ID                uuid.UUID `json:"id" bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
-	ExtensionID       uuid.UUID `json:"extension_id" bun:"extension_id,notnull,type:uuid"`
-	VariableName      string    `json:"variable_name" bun:"variable_name,notnull"`
-	VariableType      string    `json:"variable_type" bun:"variable_type,notnull"`
-	Description       string    `json:"description" bun:"description"`
-	DefaultValue      string    `json:"default_value" bun:"default_value,type:jsonb"`
-	IsRequired        bool      `json:"is_required" bun:"is_required,default:false"`
-	ValidationPattern string    `json:"validation_pattern" bun:"validation_pattern"`
-	CreatedAt         time.Time `json:"created_at" bun:"created_at,notnull,default:now()"`
+	ID                uuid.UUID       `json:"id" bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
+	ExtensionID       uuid.UUID       `json:"extension_id" bun:"extension_id,notnull,type:uuid"`
+	VariableName      string          `json:"variable_name" bun:"variable_name,notnull"`
+	VariableType      string          `json:"variable_type" bun:"variable_type,notnull"`
+	Description       string          `json:"description" bun:"description"`
+	DefaultValue      json.RawMessage `json:"default_value" bun:"default_value,type:jsonb"`
+	IsRequired        bool            `json:"is_required" bun:"is_required,default:false"`
+	ValidationPattern string          `json:"validation_pattern" bun:"validation_pattern"`
+	CreatedAt         time.Time       `json:"created_at" bun:"created_at,notnull,default:now()"`
 
 	Extension *Extension `json:"extension,omitempty" bun:"rel:belongs-to,join:extension_id=id"`
 }
@@ -110,6 +112,23 @@ type ExecutionStep struct {
 	CreatedAt     time.Time       `json:"created_at" bun:"created_at,notnull,default:now()"`
 
 	Execution *ExtensionExecution `json:"execution,omitempty" bun:"rel:belongs-to,join:execution_id=id"`
+}
+
+// SpecStep defines a single step in the extension spec (parsed from YAML/JSON)
+type SpecStep struct {
+	Name         string                 `json:"name"`
+	Type         string                 `json:"type"`
+	Properties   map[string]interface{} `json:"properties"`
+	IgnoreErrors bool                   `json:"ignore_errors"`
+	Timeout      int                    `json:"timeout"`
+}
+
+// ExtensionSpec is the parsed extension content used for execution
+type ExtensionSpec struct {
+	Execution struct {
+		Run      []SpecStep `json:"run"`
+		Validate []SpecStep `json:"validate"`
+	} `json:"execution"`
 }
 
 type SortDirection string

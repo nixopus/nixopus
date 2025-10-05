@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQueryWithReauth } from '@/redux/base-query';
-import { Extension, ExtensionListParams, ExtensionListResponse } from '@/redux/types/extension';
+import { Extension, ExtensionListParams, ExtensionListResponse, ExtensionExecution } from '@/redux/types/extension';
 import { EXTENSIONURLS } from '@/redux/api-conf';
 
 export const extensionsApi = createApi({
@@ -55,6 +55,23 @@ export const extensionsApi = createApi({
       }),
       providesTags: (result, error, { extensionId }) => [{ type: 'Extension', id: extensionId }],
       transformResponse: (response: Extension) => response
+    }),
+    runExtension: builder.mutation<ExtensionExecution, { extensionId: string; body: FormData | { variables?: Record<string, unknown> } }>({
+      query: ({ extensionId, body }) => {
+        const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+        return {
+          url: EXTENSIONURLS.RUN_EXTENSION.replace('{extension_id}', extensionId),
+          method: 'POST',
+          body,
+          headers: isFormData ? undefined : { 'Content-Type': 'application/json' }
+        };
+      }
+    }),
+    cancelExecution: builder.mutation<{ status: string; message: string }, { executionId: string }>({
+      query: ({ executionId }) => ({
+        url: EXTENSIONURLS.CANCEL_EXECUTION.replace('{execution_id}', executionId),
+        method: 'POST'
+      })
     })
   })
 });
@@ -62,5 +79,7 @@ export const extensionsApi = createApi({
 export const {
   useGetExtensionsQuery,
   useGetExtensionQuery,
-  useGetExtensionByExtensionIdQuery
+  useGetExtensionByExtensionIdQuery,
+  useRunExtensionMutation,
+  useCancelExecutionMutation
 } = extensionsApi;

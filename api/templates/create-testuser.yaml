@@ -1,0 +1,40 @@
+metadata:
+  id: "create-testuser"
+  name: "Create testuser"
+  description: "Creates a Linux user named testuser with optional shell and groups."
+  author: "Nixopus Team"
+  icon: "👤"
+  category: "Maintenance"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  shell:
+    type: "string"
+    description: "Login shell for testuser"
+    default: "/bin/bash"
+    is_required: false
+  groups:
+    type: "string"
+    description: "Comma-separated groups to add testuser to"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Ensure testuser exists"
+      type: "user"
+      properties:
+        action: "ensure"
+        username: "testuser"
+        shell: "{{ shell }}"
+        groups: "{{ groups }}"
+      timeout: 30
+
+  validate:
+    - name: "Check testuser presence"
+      type: "user"
+      properties:
+        action: "check"
+        username: "testuser"
+      timeout: 10

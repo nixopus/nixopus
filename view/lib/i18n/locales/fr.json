@@ -13,7 +13,8 @@
     "goBack": "Retour",
     "refreshPage": "Actualiser la page",
     "loading": "Chargement...",
-    "installed": "Installé"
+    "installed": "Installé",
+    "cancel": "Annuler"
   },
   "containers": {
     "title": "Conteneurs",
@@ -1255,6 +1256,7 @@
     "exploreExtensions": "Explorer le Hub d'Extensions",
     "exploreExtensionsTitle": "Explorer les extensions",
     "install": "Installer",
+    "run": "Exécuter",
     "viewDetails": "Voir les détails",
     "madeBy": "Fait par",
     "beta": "Bêta",
@@ -1267,6 +1269,7 @@
       "rating": "Note"
     },
     "noExtensions": "Aucune extension trouvée",
+    "noVariables": "Cette extension n'a pas de champs",
     "loading": "Chargement des extensions...",
     "error": "Échec du chargement des extensions"
   },

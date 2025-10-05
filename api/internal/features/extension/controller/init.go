@@ -66,3 +66,7 @@ func (c *ExtensionsController) parseAndValidate(w http.ResponseWriter, r *http.R
 
 	return true
 }
+
+type RunExtensionRequest struct {
+	Variables map[string]interface{} `json:"variables"`
+}

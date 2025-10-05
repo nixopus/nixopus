@@ -20,7 +20,7 @@ export interface ExtensionVariable {
   variable_name: string;
   variable_type: string;
   description: string;
-  default_value: string;
+  default_value: unknown;
   is_required: boolean;
   validation_pattern: string;
   created_at: string;

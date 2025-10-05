@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Extension, ExtensionListParams, SortDirection, ExtensionSortField } from '@/redux/types/extension';
-import { useGetExtensionsQuery } from '@/redux/services/extensions/extensionsApi';
+import { useGetExtensionsQuery, useRunExtensionMutation, useCancelExecutionMutation } from '@/redux/services/extensions/extensionsApi';
 
 export function useExtensions() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,6 +12,8 @@ export function useExtensions() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
+  const [runModalOpen, setRunModalOpen] = useState(false);
+  const [selectedExtension, setSelectedExtension] = useState<Extension | null>(null);
 
   const queryParams: ExtensionListParams = {
     search: searchTerm || undefined,
@@ -46,8 +48,8 @@ export function useExtensions() {
   };
 
   const handleInstall = (extension: Extension) => {
-    // TODO: Implement installation logic
-    console.log('Installing extension:', extension.name);
+    setSelectedExtension(extension);
+    setRunModalOpen(true);
   };
 
   const handleViewDetails = (extension: Extension) => {
@@ -55,6 +57,21 @@ export function useExtensions() {
   };
 
   const error = apiError ? 'Failed to load extensions' : null;
+
+  const [runExtensionMutation] = useRunExtensionMutation();
+  const [cancelExecutionMutation] = useCancelExecutionMutation();
+
+  const handleRun = async (values: Record<string, unknown>) => {
+    if (!selectedExtension) return;
+    await runExtensionMutation({
+      extensionId: selectedExtension.extension_id,
+      body: { variables: values }
+    });
+  };
+
+  const handleCancel = async (executionId: string) => {
+    await cancelExecutionMutation({ executionId });
+  };
 
   return {
     extensions,
@@ -69,6 +86,11 @@ export function useExtensions() {
     handleSortChange,
     handlePageChange,
     handleInstall,
-    handleViewDetails
+    handleViewDetails,
+    handleRun,
+    handleCancel,
+    runModalOpen,
+    setRunModalOpen,
+    selectedExtension
   };
 }

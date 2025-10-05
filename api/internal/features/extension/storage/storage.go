@@ -22,6 +22,12 @@ type ExtensionStorageInterface interface {
 	UpdateExtension(extension *types.Extension) error
 	DeleteExtension(id string) error
 	ListExtensions(params types.ExtensionListParams) (*types.ExtensionListResponse, error)
+	CreateExecution(exec *types.ExtensionExecution) error
+	CreateExecutionSteps(steps []types.ExecutionStep) error
+	ListExecutionSteps(executionID string) ([]types.ExecutionStep, error)
+	UpdateExecutionStep(step *types.ExecutionStep) error
+	UpdateExecution(exec *types.ExtensionExecution) error
+	GetExecutionByID(id string) (*types.ExtensionExecution, error)
 	BeginTx() (bun.Tx, error)
 	WithTx(tx bun.Tx) ExtensionStorageInterface
 }
@@ -191,4 +197,70 @@ func (s *ExtensionStorage) ListExtensions(params types.ExtensionListParams) (*ty
 		PageSize:   params.PageSize,
 		TotalPages: totalPages,
 	}, nil
+}
+
+func (s *ExtensionStorage) CreateExecution(exec *types.ExtensionExecution) error {
+	_, err := s.getDB().NewInsert().Model(exec).Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ExtensionStorage) CreateExecutionSteps(steps []types.ExecutionStep) error {
+	if len(steps) == 0 {
+		return nil
+	}
+	_, err := s.getDB().NewInsert().Model(&steps).Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ExtensionStorage) ListExecutionSteps(executionID string) ([]types.ExecutionStep, error) {
+	var steps []types.ExecutionStep
+	err := s.getDB().NewSelect().
+		Model(&steps).
+		Where("execution_id = ?", executionID).
+		Order("step_order ASC").
+		Scan(s.Ctx)
+	if err != nil {
+		return nil, err
+	}
+	return steps, nil
+}
+
+func (s *ExtensionStorage) UpdateExecutionStep(step *types.ExecutionStep) error {
+	_, err := s.getDB().NewUpdate().
+		Model(step).
+		Where("id = ?", step.ID).
+		Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ExtensionStorage) UpdateExecution(exec *types.ExtensionExecution) error {
+	_, err := s.getDB().NewUpdate().
+		Model(exec).
+		Where("id = ?", exec.ID).
+		Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ExtensionStorage) GetExecutionByID(id string) (*types.ExtensionExecution, error) {
+	var exec types.ExtensionExecution
+	err := s.getDB().NewSelect().
+		Model(&exec).
+		Where("id = ?", id).
+		Scan(s.Ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &exec, nil
 }

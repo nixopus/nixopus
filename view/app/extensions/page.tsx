@@ -8,8 +8,7 @@ import ExtensionsGrid from '@/app/extensions/components/extensions-grid';
 import ExtensionsHero from '@/app/extensions/components/extensions-hero';
 import { useExtensions } from './hooks/use-extensions';
 import PaginationWrapper from '@/components/ui/pagination';
-import { RBACGuard } from '@/components/rbac/RBACGuard';
-import DisabledFeature from '@/components/features/disabled-feature';
+import ExtensionInput from '@/app/extensions/components/extension-input';
 
 export default function ExtensionsPage() {
   const { t } = useTranslation();
@@ -26,22 +25,21 @@ export default function ExtensionsPage() {
     handleSortChange,
     handlePageChange,
     handleInstall,
-    handleViewDetails
+    handleViewDetails,
+    handleRun,
+    runModalOpen,
+    setRunModalOpen,
+    selectedExtension
   } = useExtensions();
 
   return (
-    <RBACGuard
-      resource="extensions"
-      action="read"
-      loadingFallback={<DisabledFeature />}
-    >
+    <>
       <PageLayout maxWidth="7xl" padding="md" spacing="lg">
         <ExtensionsHero isLoading={isLoading} />
         <ExtensionsHeader
           searchTerm={searchTerm}
           onSearchChange={handleSearchChange}
           sortConfig={sortConfig}
-          onSortChange={handleSortChange}
           isLoading={isLoading}
         />
 
@@ -71,6 +69,12 @@ export default function ExtensionsPage() {
           )}
         </div>
       </PageLayout>
-    </RBACGuard>
+      <ExtensionInput
+        open={runModalOpen}
+        onOpenChange={setRunModalOpen}
+        extension={selectedExtension}
+        onSubmit={handleRun}
+      />
+    </>
   );
 }

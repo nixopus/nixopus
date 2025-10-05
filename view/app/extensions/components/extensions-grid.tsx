@@ -2,10 +2,11 @@
 
 import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
-import { ExtensionCard, Extension } from './extension-card';
+import { ExtensionCard } from './extension-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { Extension } from '@/redux/types/extension';
 
 interface ExtensionsGridProps {
   extensions?: Extension[];

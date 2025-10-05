@@ -451,4 +451,6 @@ func (router *Router) ExtensionRoutes(s *fuego.Server, extensionController *exte
 	fuego.Get(s, "", extensionController.GetExtensions)
 	fuego.Get(s, "/{id}", extensionController.GetExtension)
 	fuego.Get(s, "/by-extension-id/{extension_id}", extensionController.GetExtensionByExtensionID)
+	fuego.Post(s, "/{extension_id}/run", extensionController.RunExtension)
+	fuego.Post(s, "/execution/{execution_id}/cancel", extensionController.CancelExecution)
 }

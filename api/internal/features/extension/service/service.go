@@ -2,6 +2,12 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/extension/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -79,4 +85,44 @@ func (s *ExtensionService) ListExtensions(params types.ExtensionListParams) (*ty
 		return nil, err
 	}
 	return response, nil
+}
+
+func (s *ExtensionService) ParseMultipartRunRequest(r *http.Request) (map[string]interface{}, error) {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		return nil, err
+	}
+	vars := map[string]interface{}{}
+	if raw := r.FormValue("variables"); raw != "" {
+		_ = json.Unmarshal([]byte(raw), &vars)
+	}
+	file, header, err := r.FormFile("file")
+	if err == nil && file != nil {
+		defer file.Close()
+		tmpDir := os.TempDir()
+		tmpPath := filepath.Join(tmpDir, header.Filename)
+		out, err := os.Create(tmpPath)
+		if err != nil {
+			return nil, err
+		}
+		defer out.Close()
+		if _, err := io.Copy(out, file); err != nil {
+			return nil, err
+		}
+		vars["uploaded_file_path"] = tmpPath
+	}
+	return vars, err
+}
+
+func (s *ExtensionService) CancelExecution(id string) error {
+	exec, err := s.storage.GetExecutionByID(id)
+	if err != nil {
+		return err
+	}
+	if exec.Status == types.ExecutionStatusCompleted || exec.Status == types.ExecutionStatusFailed {
+		return nil
+	}
+	now := time.Now()
+	exec.Status = types.ExecutionStatusCancelled
+	exec.CompletedAt = &now
+	return s.storage.UpdateExecution(exec)
 }

@@ -13,7 +13,8 @@
     "goBack": "Go Back",
     "refreshPage": "Refresh Page",
     "loading": "Loading...",
-    "installed": "Installed"
+    "installed": "Installed",
+    "cancel": "Cancel"
   },
   "containers": {
     "title": "Containers",
@@ -1303,6 +1304,7 @@
     "exploreExtensions": "Explore Extensions Hub",
     "exploreExtensionsTitle": "Explore extensions",
     "install": "Install",
+    "run": "Run",
     "viewDetails": "View details",
     "madeBy": "Made by",
     "beta": "Beta",
@@ -1315,6 +1317,7 @@
       "rating": "Rating"
     },
     "noExtensions": "No extensions found",
+    "noVariables": "This extension has no inputs",
     "loading": "Loading extensions...",
     "error": "Failed to load extensions"
   },

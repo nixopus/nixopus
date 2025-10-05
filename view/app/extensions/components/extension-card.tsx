@@ -50,10 +50,8 @@ export function ExtensionCard({ extension, onInstall, onViewDetails }: Extension
           <Button
             className="font-medium min-w-[100px]"
             onClick={() => onInstall?.(extension)}
-            // disabled={extension.is_installed}
           >
-            {/* {extension.is_installed ? t('common.installed') : t('extensions.install')} */}
-            {t('extensions.install')}
+            {t('extensions.run')}
           </Button>
           <Button
             variant="ghost"

@@ -129,5 +129,7 @@ export enum IMAGEURLS {
 export enum EXTENSIONURLS {
   GET_EXTENSIONS = 'v1/extensions',
   GET_EXTENSION = 'v1/extensions/{id}',
-  GET_EXTENSION_BY_ID = 'v1/extensions/by-extension-id/{extension_id}'
+  GET_EXTENSION_BY_ID = 'v1/extensions/by-extension-id/{extension_id}',
+  RUN_EXTENSION = 'v1/extensions/{extension_id}/run',
+  CANCEL_EXECUTION = 'v1/extensions/execution/{execution_id}/cancel'
 }

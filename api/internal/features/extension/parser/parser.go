@@ -42,7 +42,7 @@ type ExecutionStep struct {
 }
 
 type ExtensionExecution struct {
-	Install  []ExecutionStep `yaml:"install"`
+	Run      []ExecutionStep `yaml:"run"`
 	Validate []ExecutionStep `yaml:"validate"`
 }
 
@@ -120,6 +120,66 @@ func (p *Parser) validateExtension(ext *ExtensionYAML) error {
 		}
 	}
 
+	if len(ext.Execution.Run) == 0 && len(ext.Execution.Validate) == 0 {
+		return fmt.Errorf("execution must have at least one step")
+	}
+	for _, step := range append([]ExecutionStep{}, ext.Execution.Run...) {
+		if err := p.validateStep(step); err != nil {
+			return err
+		}
+	}
+	for _, step := range append([]ExecutionStep{}, ext.Execution.Validate...) {
+		if err := p.validateStep(step); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *Parser) validateStep(step ExecutionStep) error {
+	if strings.TrimSpace(step.Name) == "" {
+		return fmt.Errorf("execution step name is required")
+	}
+	allowedTypes := map[string]bool{"command": true, "file": true, "service": true, "user": true}
+	if !allowedTypes[step.Type] {
+		return fmt.Errorf("invalid execution step type: %s", step.Type)
+	}
+	if step.Type == "command" {
+		if _, ok := step.Properties["cmd"]; !ok {
+			return fmt.Errorf("command step requires 'cmd' property")
+		}
+	}
+	if step.Type == "file" {
+		if _, ok := step.Properties["action"]; !ok {
+			return fmt.Errorf("file step requires 'action' property")
+		}
+		if _, ok := step.Properties["src"]; !ok {
+			return fmt.Errorf("file step requires 'src' property")
+		}
+		if _, ok := step.Properties["dest"]; !ok {
+			return fmt.Errorf("file step requires 'dest' property")
+		}
+	}
+	if step.Type == "service" {
+		if _, ok := step.Properties["name"]; !ok {
+			return fmt.Errorf("service step requires 'name' property")
+		}
+		if _, ok := step.Properties["action"]; !ok {
+			return fmt.Errorf("service step requires 'action' property")
+		}
+	}
+	if step.Type == "user" {
+		if _, ok := step.Properties["username"]; !ok {
+			return fmt.Errorf("user step requires 'username' property")
+		}
+		if _, ok := step.Properties["action"]; !ok {
+			return fmt.Errorf("user step requires 'action' property")
+		}
+	}
+	if step.Timeout < 0 {
+		return fmt.Errorf("timeout cannot be negative")
+	}
 	return nil
 }
 
@@ -229,7 +289,7 @@ func (p *Parser) convertToVariables(extYAML *ExtensionYAML, extensionID string) 
 			VariableName:      varName,
 			VariableType:      variable.Type,
 			Description:       variable.Description,
-			DefaultValue:      string(defaultValueJSON),
+			DefaultValue:      json.RawMessage(defaultValueJSON),
 			IsRequired:        variable.IsRequired,
 			ValidationPattern: variable.ValidationPattern,
 		})
