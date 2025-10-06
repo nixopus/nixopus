@@ -2,12 +2,11 @@ package tasks
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/go-connections/nat"
+	"github.com/docker/docker/api/types/swarm"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
@@ -53,45 +52,6 @@ func (s *TaskService) sanitizeEnvVars(envVars map[string]string) []string {
 	return logEnvVars
 }
 
-// prepareContainerConfig creates Docker container configuration
-func (s *TaskService) prepareContainerConfig(
-	imageName string,
-	port nat.Port,
-	envVars []string,
-	applicationID string,
-) container.Config {
-	return container.Config{
-		Image:    imageName,
-		Hostname: "nixopus",
-		ExposedPorts: nat.PortSet{
-			port: struct{}{},
-		},
-		Env: envVars,
-		Labels: map[string]string{
-			"com.docker.compose.project": "nixopus",
-			"com.docker.compose.version": "0.0.1",
-			"com.project.name":           imageName,
-			"com.application.id":         applicationID,
-		},
-	}
-}
-
-// prepareHostConfig creates Docker host configuration with port bindings
-func (s *TaskService) prepareHostConfig(port nat.Port, availablePort string) container.HostConfig {
-	return container.HostConfig{
-		NetworkMode: "bridge",
-		PortBindings: map[nat.Port][]nat.PortBinding{
-			port: {
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: availablePort,
-				},
-			},
-		},
-		PublishAllPorts: true,
-	}
-}
-
 func (s *TaskService) getAvailablePort() (string, error) {
 	ssh := ssh.NewSSH()
 	client, err := ssh.Connect()
@@ -119,64 +79,6 @@ func (s *TaskService) getAvailablePort() (string, error) {
 	return port, nil
 }
 
-// prepareNetworkConfig creates Docker network configuration
-func (s *TaskService) prepareNetworkConfig() network.NetworkingConfig {
-	return network.NetworkingConfig{
-		EndpointsConfig: map[string]*network.EndpointSettings{
-			"bridge": {},
-		},
-	}
-}
-
-func (s *TaskService) getRunningContainers(r shared_types.TaskPayload, taskContext *TaskContext) ([]container.Summary, error) {
-	all_containers, err := s.DockerRepo.ListAllContainers()
-	if err != nil {
-		return nil, types.ErrFailedToListContainers
-	}
-
-	var currentContainers []container.Summary
-	for _, ctr := range all_containers {
-		if ctr.Labels["com.application.id"] == r.Application.ID.String() {
-			currentContainers = append(currentContainers, ctr)
-		}
-	}
-
-	s.formatLog(taskContext, "Found %d running containers", len(currentContainers))
-	return currentContainers, nil
-}
-
-func (s *TaskService) createContainerConfigs(r shared_types.TaskPayload, taskContext *TaskContext) (container.Config, container.HostConfig, network.NetworkingConfig, string) {
-	port_str := fmt.Sprintf("%d", r.Application.Port)
-	port, _ := nat.NewPort("tcp", port_str)
-
-	var env_vars []string
-	for k, v := range GetMapFromString(r.Application.EnvironmentVariables) {
-		env_vars = append(env_vars, fmt.Sprintf("%s=%s", k, v))
-	}
-
-	logEnvVars := s.sanitizeEnvVars(GetMapFromString(r.Application.EnvironmentVariables))
-	s.formatLog(taskContext, types.LogEnvironmentVariables, logEnvVars)
-	s.formatLog(taskContext, types.LogContainerExposingPort, port_str)
-
-	container_config := s.prepareContainerConfig(
-		fmt.Sprintf("%s:latest", r.Application.Name),
-		port,
-		env_vars,
-		r.Application.ID.String(),
-	)
-
-	availablePort, err := s.getAvailablePort()
-	if err != nil {
-		taskContext.LogAndUpdateStatus("Failed to get available port: "+err.Error(), shared_types.Failed)
-		return container.Config{}, container.HostConfig{}, network.NetworkingConfig{}, ""
-	}
-
-	host_config := s.prepareHostConfig(port, availablePort)
-	network_config := s.prepareNetworkConfig()
-
-	return container_config, host_config, network_config, availablePort
-}
-
 // AtomicUpdateContainer performs a zero-downtime update of a running container
 func (s *TaskService) AtomicUpdateContainer(r shared_types.TaskPayload, taskContext *TaskContext) (AtomicUpdateContainerResult, error) {
 	if r.Application.Name == "" {
@@ -188,76 +90,162 @@ func (s *TaskService) AtomicUpdateContainer(r shared_types.TaskPayload, taskCont
 	s.Logger.Log(logger.Info, types.LogUpdatingContainer, r.Application.Name)
 	s.formatLog(taskContext, types.LogPreparingToUpdateContainer, r.Application.Name)
 
-	currentContainers, err := s.getRunningContainers(r, taskContext)
+	// Check if service already exists
+	existingService, err := s.getExistingService(r, taskContext)
 	if err != nil {
-		taskContext.LogAndUpdateStatus("Failed to get running containers: "+err.Error(), shared_types.Failed)
-		return AtomicUpdateContainerResult{}, err
+		s.formatLog(taskContext, "No existing service found, creating new service", "")
 	}
 
-	container_config, host_config, network_config, availablePort := s.createContainerConfigs(r, taskContext)
+	// Create service spec
+	serviceSpec, availablePort := s.createServiceSpec(r, taskContext)
 	if availablePort == "" {
 		taskContext.LogAndUpdateStatus("Failed to get available port", shared_types.Failed)
 		return AtomicUpdateContainerResult{}, types.ErrFailedToGetAvailablePort
 	}
 
-	s.formatLog(taskContext, types.LogCreatingNewContainer)
-	resp, err := s.DockerRepo.CreateContainer(container_config, host_config, network_config, "")
-	if err != nil {
-		taskContext.LogAndUpdateStatus("Failed to create container: "+err.Error(), shared_types.Failed)
-		return AtomicUpdateContainerResult{}, types.ErrFailedToCreateContainer
-	}
-	s.formatLog(taskContext, types.LogNewContainerCreated+" %s", resp.ID)
-
-	for _, ctr := range currentContainers {
-		s.formatLog(taskContext, types.LogStoppingOldContainer+" %s", ctr.ID)
-		err = s.DockerRepo.StopContainer(ctr.ID, container.StopOptions{Timeout: intPtr(10)})
+	if existingService != nil {
+		// Update existing service
+		s.formatLog(taskContext, "Updating existing service: %s", existingService.ID)
+		err = s.DockerRepo.UpdateService(existingService.ID, serviceSpec, "")
 		if err != nil {
-			s.formatLog(taskContext, types.LogFailedToStopOldContainer, err.Error())
+			taskContext.LogAndUpdateStatus("Failed to update service: "+err.Error(), shared_types.Failed)
+			return AtomicUpdateContainerResult{}, err
+		}
+		s.formatLog(taskContext, "Service updated successfully: %s", existingService.ID)
+	} else {
+		// Create new service
+		s.formatLog(taskContext, "Creating new service")
+		err = s.DockerRepo.CreateService(swarm.Service{
+			Spec: serviceSpec,
+		})
+		if err != nil {
+			taskContext.LogAndUpdateStatus("Failed to create service: "+err.Error(), shared_types.Failed)
+			return AtomicUpdateContainerResult{}, err
+		}
+		s.formatLog(taskContext, "Service created successfully")
+	}
+
+	// Wait for service to be ready
+	time.Sleep(time.Second * 10)
+
+	// Get updated service info
+	serviceInfo, err := s.getServiceInfo(r, taskContext)
+	if err != nil {
+		taskContext.LogAndUpdateStatus("Failed to get service info: "+err.Error(), shared_types.Failed)
+		return AtomicUpdateContainerResult{}, err
+	}
+
+	// Check service health
+	if serviceInfo.Spec.Mode.Replicated != nil && serviceInfo.Spec.Mode.Replicated.Replicas != nil {
+		running, _, err := s.DockerRepo.GetServiceHealth(serviceInfo)
+		if err != nil || running < int(*serviceInfo.Spec.Mode.Replicated.Replicas) {
+			taskContext.LogAndUpdateStatus("Service health check failed", shared_types.Failed)
+			return AtomicUpdateContainerResult{}, types.ErrFailedToUpdateContainer
 		}
 	}
 
-	s.formatLog(taskContext, types.LogStartingNewContainer)
-	err = s.DockerRepo.StartContainer(resp.ID, container.StartOptions{})
-	if err != nil {
-		taskContext.LogAndUpdateStatus("Failed to start container: "+err.Error(), shared_types.Failed)
-		s.DockerRepo.RemoveContainer(resp.ID, container.RemoveOptions{Force: true})
-		return AtomicUpdateContainerResult{}, types.ErrFailedToStartNewContainer
-	}
-	s.formatLog(taskContext, types.LogNewContainerStartedSuccessfully)
+	taskContext.LogAndUpdateStatus("Service update completed successfully", shared_types.Deployed)
 
-	time.Sleep(time.Second * 5)
-
-	containerInfo, err := s.DockerRepo.GetContainerById(resp.ID)
-	if err != nil || containerInfo.State.Status != "running" {
-		taskContext.LogAndUpdateStatus("Container health check failed", shared_types.Failed)
-		s.DockerRepo.StopContainer(resp.ID, container.StopOptions{})
-		s.DockerRepo.RemoveContainer(resp.ID, container.RemoveOptions{Force: true})
-		return AtomicUpdateContainerResult{}, types.ErrFailedToUpdateContainer
-	}
-
-	taskContext.LogAndUpdateStatus("Container update completed successfully", shared_types.Deployed)
-
-	r.ApplicationDeployment.ContainerID = resp.ID
-	r.ApplicationDeployment.ContainerName = containerInfo.Name
-	r.ApplicationDeployment.ContainerImage = containerInfo.Image
+	// Update deployment record
+	r.ApplicationDeployment.ContainerID = serviceInfo.ID
+	r.ApplicationDeployment.ContainerName = serviceInfo.Spec.Annotations.Name
+	r.ApplicationDeployment.ContainerImage = serviceInfo.Spec.TaskTemplate.ContainerSpec.Image
 	r.ApplicationDeployment.ContainerStatus = "running"
 	r.ApplicationDeployment.UpdatedAt = time.Now()
 
 	taskContext.UpdateDeployment(&r.ApplicationDeployment)
 
 	return AtomicUpdateContainerResult{
-		ContainerID:     resp.ID,
-		ContainerName:   containerInfo.Name,
-		ContainerImage:  containerInfo.Image,
-		ContainerStatus: containerInfo.State.Status,
+		ContainerID:     serviceInfo.ID,
+		ContainerName:   serviceInfo.Spec.Annotations.Name,
+		ContainerImage:  serviceInfo.Spec.TaskTemplate.ContainerSpec.Image,
+		ContainerStatus: "running",
 		UpdatedAt:       time.Now(),
 		AvailablePort:   availablePort,
 	}, nil
 }
 
-// Helper function to create a pointer to an integer
-func intPtr(i int) *int {
-	return &i
+// getExistingService finds an existing swarm service for the application
+func (s *TaskService) getExistingService(r shared_types.TaskPayload, taskContext *TaskContext) (*swarm.Service, error) {
+	services, err := s.DockerRepo.GetClusterServices()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, service := range services {
+		if service.Spec.Annotations.Name == r.Application.Name {
+			return &service, nil
+		}
+	}
+	return nil, nil
+}
+
+// createServiceSpec creates a swarm service specification
+func (s *TaskService) createServiceSpec(r shared_types.TaskPayload, taskContext *TaskContext) (swarm.ServiceSpec, string) {
+	availablePort, err := s.getAvailablePort()
+	if err != nil {
+		taskContext.LogAndUpdateStatus("Failed to get available port: "+err.Error(), shared_types.Failed)
+		return swarm.ServiceSpec{}, ""
+	}
+
+	var env_vars []string
+	for k, v := range GetMapFromString(r.Application.EnvironmentVariables) {
+		env_vars = append(env_vars, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	replicas := uint64(1)
+	port, _ := strconv.Atoi(availablePort)
+
+	serviceSpec := swarm.ServiceSpec{
+		Annotations: swarm.Annotations{
+			Name: r.Application.Name,
+		},
+		Mode: swarm.ServiceMode{
+			Replicated: &swarm.ReplicatedService{
+				Replicas: &replicas,
+			},
+		},
+		TaskTemplate: swarm.TaskSpec{
+			ContainerSpec: &swarm.ContainerSpec{
+				Image: fmt.Sprintf("%s:latest", r.Application.Name),
+				Env:   env_vars,
+				Labels: map[string]string{
+					"com.application.id": r.Application.ID.String(),
+				},
+			},
+			RestartPolicy: &swarm.RestartPolicy{
+				Condition: swarm.RestartPolicyConditionAny,
+			},
+		},
+		EndpointSpec: &swarm.EndpointSpec{
+			Mode: swarm.ResolutionModeVIP,
+			Ports: []swarm.PortConfig{
+				{
+					Protocol:      swarm.PortConfigProtocolTCP,
+					TargetPort:    uint32(r.Application.Port),
+					PublishedPort: uint32(port),
+					PublishMode:   swarm.PortConfigPublishModeHost,
+				},
+			},
+		},
+	}
+
+	return serviceSpec, availablePort
+}
+
+// getServiceInfo retrieves service information
+func (s *TaskService) getServiceInfo(r shared_types.TaskPayload, taskContext *TaskContext) (swarm.Service, error) {
+	services, err := s.DockerRepo.GetClusterServices()
+	if err != nil {
+		return swarm.Service{}, err
+	}
+
+	for _, service := range services {
+		if service.Spec.Annotations.Name == r.Application.Name {
+			return service, nil
+		}
+	}
+	return swarm.Service{}, fmt.Errorf("service not found: %s", r.Application.Name)
 }
 
 // containsSensitiveKeyword checks if a key likely contains sensitive information

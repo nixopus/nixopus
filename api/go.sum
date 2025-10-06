@@ -512,6 +512,8 @@ github.com/quic-go/quic-go v0.54.0 h1:6s1YB9QotYI6Ospeiguknbp2Znb/jZYjZLRXn9kMQB
 github.com/quic-go/quic-go v0.54.0/go.mod h1:e68ZEaCdyviluZmy44P6Iey98v/Wfz6HCjQEm+l8zTY=
 github.com/raghavyuva/caddygo v0.0.0-20250820132249-3db4bc273996 h1:vtCThL1ADhVV0f35qi9K3BnWCU34DGD8AS3TaP4ovjY=
 github.com/raghavyuva/caddygo v0.0.0-20250820132249-3db4bc273996/go.mod h1:nXAW//4ImRs0bC/UHcqsdYpif2YCvgFdxUAHE7JqdCc=
+github.com/raghavyuva/caddygo v0.0.0-20250919125030-03449d9e9252 h1:PCJiDfujvCXaHlhauvRo1aNEfbgAqfkbDBUsXa/TriU=
+github.com/raghavyuva/caddygo v0.0.0-20250919125030-03449d9e9252/go.mod h1:nXAW//4ImRs0bC/UHcqsdYpif2YCvgFdxUAHE7JqdCc=
 github.com/rogpeppe/go-internal v1.13.1 h1:KvO1DLK/DRN07sQ1LQKScxyZJuNnedQ5/wKSR38lUII=
 github.com/rogpeppe/go-internal v1.13.1/go.mod h1:uMEvuHeurkdAXX61udpOXGD/AzZDWNMNyH2VO9fmH0o=
 github.com/rs/xid v1.6.0 h1:fV591PaemRlL6JfRxGDEPl69wICngIQ3shQtzfy2gxU=

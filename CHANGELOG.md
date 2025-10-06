@@ -1,3 +1,18 @@
+# [0.1.0-alpha.30](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.29...v0.1.0-alpha.30) (2025-09-19)
+
+
+### Bug Fixes
+
+* prevent PasswordInputField type override ([#417](https://github.com/raghavyuva/nixopus/issues/417)) ([ad621d9](https://github.com/raghavyuva/nixopus/commit/ad621d9284340495bc5125abe7ea6106d8f38029))
+* reassign port in caddy when container gets new port ([60c8f6f](https://github.com/raghavyuva/nixopus/commit/60c8f6fcfca08e68a73119712ff5d218b7dcc41c))
+
+
+### Features
+
+* cluster based deployment, rollback, restart across services, and more methods wrapper for future integrations for multi server management ([27a8f7a](https://github.com/raghavyuva/nixopus/commit/27a8f7a14125074fbb7dd54c01d08cf3f8d260e0))
+
+
+
 # [0.1.0-alpha.29](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.28...v0.1.0-alpha.29) (2025-09-15)
 
 

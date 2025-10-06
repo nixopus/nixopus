@@ -276,8 +276,8 @@ onMounted(async () => {
   padding: 0.25rem 0.75rem;
   border-radius: 1rem;
   text-transform: capitalize;
-  background: #6366f1;
-  color: white;
+  background: #9be935;
+  color: black;
 }
 
 /* Dark mode adjustments */
