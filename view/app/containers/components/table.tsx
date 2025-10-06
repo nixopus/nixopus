@@ -83,8 +83,8 @@ const ContainersTable = ({
 
                             const hasPorts = container.ports && container.ports.length > 0;
                             const formattedDate = container.created
-                                ? new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'long' }).format(
-                                    new Date(parseInt(container.created) * 1000)
+                                ? new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' }).format(
+                                    new Date(container.created)
                                 )
                                 : '-';
 
@@ -141,7 +141,7 @@ const ContainersTable = ({
                         })
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={7} className="text-center py-6">
+                            <TableCell colSpan={onAction ? 7 : 6} className="text-center py-6">
                                 <TypographyMuted>{t('dashboard.containers.table.noContainers')}</TypographyMuted>
                             </TableCell>
                         </TableRow>

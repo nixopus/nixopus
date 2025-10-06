@@ -24,7 +24,6 @@ import { auditApi } from './services/audit';
 import { FeatureFlagsApi } from './services/feature-flags/featureFlagsApi';
 import { containerApi } from './services/container/containerApi';
 import { imagesApi } from './services/container/imagesApi';
-import { extensionsApi } from './services/extensions/extensionsApi';
 const createNoopStorage = () => ({
   getItem: (_key: string) => Promise.resolve(null),
   setItem: (_key: string, value: any) => Promise.resolve(value),
@@ -58,8 +57,7 @@ const rootReducer = combineReducers({
   [auditApi.reducerPath]: auditApi.reducer,
   [FeatureFlagsApi.reducerPath]: FeatureFlagsApi.reducer,
   [containerApi.reducerPath]: containerApi.reducer,
-  [imagesApi.reducerPath]: imagesApi.reducer,
-  [extensionsApi.reducerPath]: extensionsApi.reducer
+  [imagesApi.reducerPath]: imagesApi.reducer
 });
 
 type RootReducer = ReturnType<typeof rootReducer>;
@@ -93,8 +91,7 @@ const storeOptions: ConfigureStoreOptions = {
       auditApi.middleware,
       FeatureFlagsApi.middleware,
       containerApi.middleware,
-      imagesApi.middleware,
-      extensionsApi.middleware
+      imagesApi.middleware
     ]),
   devTools: process.env.NODE_ENV === 'development'
 };

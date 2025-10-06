@@ -12,9 +12,7 @@
     "featureNotAvailable": "Cette caractéristique n'est pas disponible pour votre organisation",
     "goBack": "Retour",
     "refreshPage": "Actualiser la page",
-    "loading": "Chargement...",
-    "installed": "Installé",
-    "cancel": "Annuler"
+    "loading": "Chargement..."
   },
   "containers": {
     "title": "Conteneurs",
@@ -1250,34 +1248,10 @@
     "shortcut": "⌘J",
     "close": "Fermer le Terminal"
   },
-  "extensions": {
-    "title": "Extensions",
-    "subtitle": "Omettez le boilerplate, lancez votre configuration de serveur en quelques secondes",
-    "exploreExtensions": "Explorer le Hub d'Extensions",
-    "exploreExtensionsTitle": "Explorer les extensions",
-    "install": "Installer",
-    "run": "Exécuter",
-    "viewDetails": "Voir les détails",
-    "madeBy": "Fait par",
-    "beta": "Bêta",
-    "searchPlaceholder": "Rechercher des extensions...",
-    "sortBy": "Trier par",
-    "sortOptions": {
-      "name": "Nom",
-      "popularity": "Popularité",
-      "recent": "Récent",
-      "rating": "Note"
-    },
-    "noExtensions": "Aucune extension trouvée",
-    "noVariables": "Cette extension n'a pas de champs",
-    "loading": "Chargement des extensions...",
-    "error": "Échec du chargement des extensions"
-  },
   "navigation": {
     "dashboard": "Tableau de Bord",
     "selfHost": "Auto-hébergé",
     "fileManager": "Gestionnaire de Fichiers",
-    "extensions": "Extensions",
     "settings": "Paramètres",
     "general": "Général",
     "notifications": "Notifications",

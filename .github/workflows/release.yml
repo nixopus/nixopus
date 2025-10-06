@@ -63,3 +63,13 @@ jobs:
           name: ${{ steps.changelog.outputs.tag }}
           body: ${{ steps.changelog.outputs.clean_changelog }}
           prerelease: true
+
+      - name: Notify Discord about Pre-Release
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        uses: appleboy/discord-action@v1.2.0
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          username: "Release Bot"
+          message: |
+            - New pre-release published: **${{ steps.changelog.outputs.tag }}**
+            - https://github.com/${{ github.repository }}/releases/tag/${{ steps.changelog.outputs.tag }}
