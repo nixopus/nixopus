@@ -11,7 +11,8 @@
     "featureNotAvailable": "Esta característica no está disponible para tu organización",
     "goBack": "Volver",
     "refreshPage": "Actualizar página",
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "installed": "Instalado"
   },
   "containers": {
     "title": "Contenedores",
@@ -1254,10 +1255,32 @@
     "shortcut": "⌘J",
     "close": "Cerrar Terminal"
   },
+  "extensions": {
+    "title": "Extensiones",
+    "subtitle": "Omite el boilerplate, inicia tu configuración de servidor en segundos",
+    "exploreExtensions": "Explorar Hub de Extensiones",
+    "exploreExtensionsTitle": "Explorar extensiones",
+    "install": "Instalar",
+    "viewDetails": "Ver detalles",
+    "madeBy": "Hecho por",
+    "beta": "Beta",
+    "searchPlaceholder": "Buscar extensiones...",
+    "sortBy": "Ordenar por",
+    "sortOptions": {
+      "name": "Nombre",
+      "popularity": "Popularidad",
+      "recent": "Reciente",
+      "rating": "Calificación"
+    },
+    "noExtensions": "No se encontraron extensiones",
+    "loading": "Cargando extensiones...",
+    "error": "Error al cargar extensiones"
+  },
   "navigation": {
     "dashboard": "Panel de Control",
     "selfHost": "Autoalojado",
     "fileManager": "Gestor de Archivos",
+    "extensions": "Extensiones",
     "settings": "Configuración",
     "general": "General",
     "notifications": "Notificaciones",

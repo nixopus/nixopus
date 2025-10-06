@@ -1,0 +1,38 @@
+metadata:
+  id: "copy-file"
+  name: "Copy File to Remote"
+  description: "Copies a file from local system to a destination on the remote server."
+  author: "Nixopus Team"
+  icon: "📤"
+  category: "Storage"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  source_path:
+    type: "string"
+    description: "Local path of the file to upload"
+    default: ""
+    is_required: true
+
+  destination_path:
+    type: "string"
+    description: "Destination path on the remote server"
+    default: ""
+    is_required: true
+
+execution:
+  run:
+    - name: "Upload file to remote"
+      type: "file"
+      properties:
+        action: "upload"
+        src: "{{ source_path }}"
+        dest: "{{ destination_path }}"
+
+  validate:
+    - name: "Verify file exists at destination"
+      type: "command"
+      properties:
+        cmd: "test -f {{ destination_path }}"
+        timeout: 10

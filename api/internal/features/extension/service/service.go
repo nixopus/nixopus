@@ -1,0 +1,128 @@
+package service
+
+import (
+	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/raghavyuva/nixopus-api/internal/features/extension/storage"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/raghavyuva/nixopus-api/internal/types"
+)
+
+type ExtensionService struct {
+	store   *shared_storage.Store
+	storage storage.ExtensionStorageInterface
+	ctx     context.Context
+	logger  logger.Logger
+}
+
+func NewExtensionService(
+	store *shared_storage.Store,
+	ctx context.Context,
+	l logger.Logger,
+	storage storage.ExtensionStorageInterface,
+) *ExtensionService {
+	return &ExtensionService{
+		store:   store,
+		storage: storage,
+		ctx:     ctx,
+		logger:  l,
+	}
+}
+
+func (s *ExtensionService) CreateExtension(extension *types.Extension) error {
+	if err := s.storage.CreateExtension(extension); err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return err
+	}
+	return nil
+}
+
+func (s *ExtensionService) GetExtension(id string) (*types.Extension, error) {
+	extension, err := s.storage.GetExtension(id)
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return nil, err
+	}
+	return extension, nil
+}
+
+func (s *ExtensionService) GetExtensionByID(extensionID string) (*types.Extension, error) {
+	extension, err := s.storage.GetExtensionByID(extensionID)
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return nil, err
+	}
+	return extension, nil
+}
+
+func (s *ExtensionService) UpdateExtension(extension *types.Extension) error {
+	if err := s.storage.UpdateExtension(extension); err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return err
+	}
+	return nil
+}
+
+func (s *ExtensionService) DeleteExtension(id string) error {
+	if err := s.storage.DeleteExtension(id); err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return err
+	}
+	return nil
+}
+
+func (s *ExtensionService) ListExtensions(params types.ExtensionListParams) (*types.ExtensionListResponse, error) {
+	response, err := s.storage.ListExtensions(params)
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return nil, err
+	}
+	return response, nil
+}
+
+func (s *ExtensionService) ParseMultipartRunRequest(r *http.Request) (map[string]interface{}, error) {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		return nil, err
+	}
+	vars := map[string]interface{}{}
+	if raw := r.FormValue("variables"); raw != "" {
+		_ = json.Unmarshal([]byte(raw), &vars)
+	}
+	file, header, err := r.FormFile("file")
+	if err == nil && file != nil {
+		defer file.Close()
+		tmpDir := os.TempDir()
+		tmpPath := filepath.Join(tmpDir, header.Filename)
+		out, err := os.Create(tmpPath)
+		if err != nil {
+			return nil, err
+		}
+		defer out.Close()
+		if _, err := io.Copy(out, file); err != nil {
+			return nil, err
+		}
+		vars["uploaded_file_path"] = tmpPath
+	}
+	return vars, err
+}
+
+func (s *ExtensionService) CancelExecution(id string) error {
+	exec, err := s.storage.GetExecutionByID(id)
+	if err != nil {
+		return err
+	}
+	if exec.Status == types.ExecutionStatusCompleted || exec.Status == types.ExecutionStatusFailed {
+		return nil
+	}
+	now := time.Now()
+	exec.Status = types.ExecutionStatusCancelled
+	exec.CompletedAt = &now
+	return s.storage.UpdateExecution(exec)
+}
