@@ -71,5 +71,5 @@ jobs:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           username: "Release Bot"
           message: |
-            🚀 New pre-release published: **${{ steps.changelog.outputs.tag }}**
-            🔗 https://github.com/${{ github.repository }}/releases/tag/${{ steps.changelog.outputs.tag }}
+            - New pre-release published: **${{ steps.changelog.outputs.tag }}**
+            - https://github.com/${{ github.repository }}/releases/tag/${{ steps.changelog.outputs.tag }}
