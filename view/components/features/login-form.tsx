@@ -4,10 +4,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PasswordInputField } from '@/components/ui/password-input-field';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import nixopusLogo from '@/public/nixopus_logo_transparent.png';
 import { useTranslation } from '@/hooks/use-translation';
 import Link from 'next/link';
 import { useState } from 'react';
+import { z } from 'zod';
 
 export interface LoginFormProps {
   email: string;
@@ -26,6 +28,38 @@ export interface LoginFormProps {
 export function LoginForm({ ...props }: LoginFormProps) {
   const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  // Zod schema for login validation
+  const loginSchema = z.object({
+    email: z.string().min(1, 'Email is required').email('Please enter a valid Email'),
+    password: z.string().min(1, 'Password is required')
+  });
+
+  const handleLoginClick = (): void => {
+    // Reset errors first
+    setEmailError('');
+    setPasswordError('');
+
+    const result = loginSchema.safeParse({
+      email: props.email ?? '',
+      password: props.password ?? ''
+    });
+
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      if (fieldErrors.email && fieldErrors.email[0]) {
+        setEmailError(fieldErrors.email[0]);
+      }
+      if (fieldErrors.password && fieldErrors.password[0]) {
+        setPasswordError(fieldErrors.password[0]);
+      }
+      return;
+    }
+
+    props.handleLogin();
+  };
 
   return (
     <div className={cn('flex flex-col gap-6')}>
@@ -55,6 +89,13 @@ export function LoginForm({ ...props }: LoginFormProps) {
                       value={props.email}
                       onChange={props.handleEmailChange}
                     />
+                    {emailError && (
+                      <Alert variant="destructive">
+                        <AlertDescription className="text-xs !text-red-600 font-medium">
+                          {emailError}
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
                   <div className="grid gap-3">
                     {/* <div className="flex items-center">
@@ -70,6 +111,13 @@ export function LoginForm({ ...props }: LoginFormProps) {
                       value={props.password}
                       onChange={props.handlePasswordChange}
                     />
+                    {passwordError && (
+                      <Alert variant="destructive">
+                        <AlertDescription className="text-xs !text-red-600 font-medium">
+                          {passwordError}
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
                 </>
               )}
@@ -89,7 +137,7 @@ export function LoginForm({ ...props }: LoginFormProps) {
               <Button
                 type="submit"
                 className="w-full"
-                onClick={props.showTwoFactor ? props.handleTwoFactorLogin : props.handleLogin}
+                onClick={props.showTwoFactor ? props.handleTwoFactorLogin : handleLoginClick}
                 disabled={props.showTwoFactor ? props.isTwoFactorLoading : props.isLoading}
               >
                 {props.showTwoFactor
