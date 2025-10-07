@@ -63,6 +63,7 @@ function ListRepositories() {
         onSortChange={onSortChange}
         sortOptions={sortOptions}
         label={t('selfHost.repositories.title')}
+        description={t('selfHost.repositories.description')}
         className="mt-5 mb-5"
       />
       {renderGithubRepositories()}

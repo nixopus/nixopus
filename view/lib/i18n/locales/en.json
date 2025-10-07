@@ -1252,6 +1252,7 @@
     },
     "repositories": {
       "title": "Repositories",
+      "description": "View and manage your repository deployment settings",
       "noRepositories": "No repositories found",
       "search": {
         "placeholder": "Search repositories..."

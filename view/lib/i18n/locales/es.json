@@ -1210,6 +1210,7 @@
     },
     "repositories": {
       "title": "Repositorios",
+      "description": "Vea y administre la configuración de implementación de su repositorio",
       "noRepositories": "No se encontraron repositorios",
       "search": {
         "placeholder": "Buscar repositorios..."

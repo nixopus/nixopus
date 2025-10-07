@@ -32,6 +32,7 @@ interface DashboardUtilityHeaderProps<T> {
   onSortChange: (newSort: SortOption<T>) => void;
   sortOptions: SortOption<T>[];
   label: string;
+  description: string;
   searchPlaceHolder?: string;
   children?: React.ReactNode;
 }
@@ -44,12 +45,14 @@ export function DahboardUtilityHeader<T>({
   onSortChange,
   sortOptions,
   label,
+  description,
   children,
   searchPlaceHolder = 'Search...'
 }: DashboardUtilityHeaderProps<T>) {
   return (
     <div className={'space-y-6' + className}>
       <TypographyH2 className='text-primary'>{label}</TypographyH2>
+      <TypographyMuted>{description}</TypographyMuted>
       <div className="flex flex-col gap-4 sm:flex-row mt-4 justify-between items-center">
         <div className="flex-grow">
           <SearchBar

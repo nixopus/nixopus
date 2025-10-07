@@ -1215,6 +1215,21 @@
         "success": "Application GitHub créée avec succès !"
       }
     },
+    "repositories": {
+      "title": "Référentiels",
+      "description": "Affichez et gérez les paramètres de déploiement de votre référentiel",
+      "noRepositories": "Aucun référentiel trouvé",
+      "search": {
+        "placeholder": "Rechercher des référentiels..."
+      },
+      "sort": {
+        "name": "Nom",
+        "created": "Créé",
+        "updated": "Mis à jour",
+        "stars": "Étoiles"
+      }
+    },
+
     "repositoryCard": {
       "viewOnGithub": "Voir sur GitHub",
       "unnamed": "Dépôt Sans Nom",
