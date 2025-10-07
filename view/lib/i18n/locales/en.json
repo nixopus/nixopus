@@ -14,7 +14,8 @@
     "refreshPage": "Refresh Page",
     "loading": "Loading...",
     "installed": "Installed",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "delete": "Delete"
   },
   "containers": {
     "title": "Containers",
@@ -1319,7 +1320,15 @@
     "noExtensions": "No extensions found",
     "noVariables": "This extension has no inputs",
     "loading": "Loading extensions...",
-    "error": "Failed to load extensions"
+    "error": "Failed to load extensions",
+    "fork": "Fork",
+    "forkSuccess": "Extension forked successfully",
+    "forkFailed": "Failed to fork extension",
+    "remove": "Remove",
+    "deleteSuccess": "Extension removed",
+    "deleteFailed": "Failed to remove extension",
+    "confirmDeleteTitle": "Remove fork?",
+    "confirmDeleteMessage": "This will remove your forked extension. This action cannot be undone."
   },
   "navigation": {
     "dashboard": "Dashboard",

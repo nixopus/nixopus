@@ -5,6 +5,7 @@ metadata:
   author: "Nixopus Team"
   icon: "🔒"
   category: "Security"
+  type: "install"
   version: "1.0.0"
   isVerified: false
 

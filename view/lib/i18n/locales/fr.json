@@ -14,7 +14,8 @@
     "refreshPage": "Actualiser la page",
     "loading": "Chargement...",
     "installed": "Installé",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "delete": "Supprimer"
   },
   "containers": {
     "title": "Conteneurs",
@@ -1271,7 +1272,15 @@
     "noExtensions": "Aucune extension trouvée",
     "noVariables": "Cette extension n'a pas de champs",
     "loading": "Chargement des extensions...",
-    "error": "Échec du chargement des extensions"
+    "error": "Échec du chargement des extensions",
+    "fork": "Fork",
+    "forkSuccess": "Extension forkée avec succès",
+    "forkFailed": "Échec du fork de l'extension",
+    "remove": "Supprimer",
+    "deleteSuccess": "Extension supprimée",
+    "deleteFailed": "Échec de la suppression de l'extension",
+    "confirmDeleteTitle": "Supprimer le fork ?",
+    "confirmDeleteMessage": "Cela supprimera votre extension forkée. Cette action est irréversible."
   },
   "navigation": {
     "dashboard": "Tableau de Bord",

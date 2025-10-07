@@ -35,7 +35,7 @@ export default function ExtensionInput({ open, onOpenChange, extension, onSubmit
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>{extension?.name || t('extensions.run')}</DialogTitle>
+          <DialogTitle>{extension?.name || (extension?.extension_type === 'install' ? t('extensions.install') : t('extensions.run'))}</DialogTitle>
           <DialogDescription>{extension?.description}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -51,7 +51,7 @@ export default function ExtensionInput({ open, onOpenChange, extension, onSubmit
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t('common.cancel')}
           </Button>
-          <Button onClick={submit}>{t('extensions.run')}</Button>
+          <Button onClick={submit}>{extension?.extension_type === 'install' ? t('extensions.install') : t('extensions.run')}</Button>
         </div>
       </DialogContent>
     </Dialog>
