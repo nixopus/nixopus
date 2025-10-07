@@ -12,7 +12,12 @@
     "featureNotAvailable": "This feature is not available for your organization",
     "goBack": "Go Back",
     "refreshPage": "Refresh Page",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "installed": "Installed",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "preview": "Preview"
   },
   "containers": {
     "title": "Containers",
@@ -93,7 +98,7 @@
       "submit": "Login",
       "emailPlaceholder": "m@example.com",
       "loading": "Loading...",
-      "terms": "By continuing, you agree to our",
+      "terms": "By clicking continue, you agree to our",
       "termsOfService": "Terms of Service",
       "and": "and",
       "privacyPolicy": "Privacy Policy",
@@ -737,8 +742,7 @@
     "en": "English",
     "es": "Spanish",
     "fr": "French",
-    "kn": "Kannada",
-    "ml": "Malayalam"
+    "kn": "Kannada"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1297,10 +1301,48 @@
     "shortcut": "⌘J",
     "close": "Close Terminal"
   },
+  "extensions": {
+    "title": "Extensions",
+    "subtitle": "Skip the boilerplate, Kick off your server setup in seconds",
+    "exploreExtensions": "Explore Extensions Hub",
+    "exploreExtensionsTitle": "Explore extensions",
+    "install": "Install",
+    "run": "Run",
+    "viewDetails": "View details",
+    "madeBy": "Made by",
+    "beta": "Beta",
+    "searchPlaceholder": "Search extensions...",
+    "sortBy": "Sort by",
+    "sortOptions": {
+      "name": "Name",
+      "popularity": "Popularity",
+      "recent": "Recent",
+      "rating": "Rating"
+    },
+    "noExtensions": "No extensions found",
+    "noVariables": "This extension has no inputs",
+    "loading": "Loading extensions...",
+    "error": "Failed to load extensions",
+    "fork": "Fork",
+    "forkSuccess": "Extension forked successfully",
+    "forkFailed": "Failed to fork extension",
+    "type": "Type",
+    "category": "Category",
+    "execution": "Execution",
+    "runSteps": "Run steps",
+    "validateSteps": "Validate steps",
+    "forkYaml": "YAML (optional)",
+    "remove": "Remove",
+    "deleteSuccess": "Extension removed",
+    "deleteFailed": "Failed to remove extension",
+    "confirmDeleteTitle": "Remove fork?",
+    "confirmDeleteMessage": "This will remove your forked extension. This action cannot be undone."
+  },
   "navigation": {
     "dashboard": "Dashboard",
     "selfHost": "Self Host",
     "fileManager": "File Manager",
+    "extensions": "Extensions",
     "settings": "Settings",
     "general": "General",
     "notifications": "Notifications",

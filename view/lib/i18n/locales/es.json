@@ -11,7 +11,12 @@
     "featureNotAvailable": "Esta característica no está disponible para tu organización",
     "goBack": "Volver",
     "refreshPage": "Actualizar página",
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "installed": "Instalado",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "preview": "Previsualizar"
   },
   "containers": {
     "title": "Contenedores",
@@ -724,8 +729,7 @@
     "en": "Inglés",
     "es": "Español",
     "fr": "Francés",
-    "kn": "Canarés",
-    "ml": "Malayalam"
+    "kn": "Kannada"
   },
   "dashboard": {
     "title": "Panel de control",
@@ -1255,10 +1259,46 @@
     "shortcut": "⌘J",
     "close": "Cerrar Terminal"
   },
+  "extensions": {
+    "title": "Extensiones",
+    "subtitle": "Omite el boilerplate, inicia tu configuración de servidor en segundos",
+    "exploreExtensions": "Explorar Hub de Extensiones",
+    "exploreExtensionsTitle": "Explorar extensiones",
+    "install": "Instalar",
+    "viewDetails": "Ver detalles",
+    "madeBy": "Hecho por",
+    "beta": "Beta",
+    "searchPlaceholder": "Buscar extensiones...",
+    "sortBy": "Ordenar por",
+    "sortOptions": {
+      "name": "Nombre",
+      "popularity": "Popularidad",
+      "recent": "Reciente",
+      "rating": "Calificación"
+    },
+    "noExtensions": "No se encontraron extensiones",
+    "loading": "Cargando extensiones...",
+    "error": "Error al cargar extensiones",
+    "fork": "Fork",
+    "forkSuccess": "Extensión bifurcada correctamente",
+    "forkFailed": "Error al bifurcar la extensión",
+    "type": "Tipo",
+    "category": "Categoría",
+    "execution": "Ejecución",
+    "runSteps": "Pasos de ejecución",
+    "validateSteps": "Pasos de validación",
+    "forkYaml": "YAML (opcional)",
+    "remove": "Eliminar",
+    "deleteSuccess": "Extensión eliminada",
+    "deleteFailed": "Error al eliminar la extensión",
+    "confirmDeleteTitle": "¿Eliminar fork?",
+    "confirmDeleteMessage": "Esto eliminará tu extensión bifurcada. Esta acción no se puede deshacer."
+  },
   "navigation": {
     "dashboard": "Panel de Control",
     "selfHost": "Autoalojado",
     "fileManager": "Gestor de Archivos",
+    "extensions": "Extensiones",
     "settings": "Configuración",
     "general": "General",
     "notifications": "Notificaciones",
