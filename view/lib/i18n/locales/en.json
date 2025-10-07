@@ -737,7 +737,8 @@
     "en": "English",
     "es": "Spanish",
     "fr": "French",
-    "kn": "Kannada"
+    "kn": "Kannada",
+    "ml": "Malayalam"
   },
   "dashboard": {
     "title": "Dashboard",
