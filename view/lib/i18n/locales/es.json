@@ -1292,7 +1292,17 @@
     "deleteSuccess": "Extensión eliminada",
     "deleteFailed": "Error al eliminar la extensión",
     "confirmDeleteTitle": "¿Eliminar fork?",
-    "confirmDeleteMessage": "Esto eliminará tu extensión bifurcada. Esta acción no se puede deshacer."
+    "confirmDeleteMessage": "Esto eliminará tu extensión bifurcada. Esta acción no se puede deshacer.",
+    "overview": "Resumen",
+    "logs": "Registros",
+    "executions": "Ejecuciones",
+    "executionId": "ID de Ejecución",
+    "status": "Estado",
+    "startedAt": "Iniciado",
+    "completedAt": "Completado",
+    "noExecutions": "Aún no hay ejecuciones.",
+    "variables": "Variables",
+    "logsEmpty": "Los registros de ejecución aparecerán aquí cuando estén disponibles."
   },
   "navigation": {
     "dashboard": "Panel de Control",

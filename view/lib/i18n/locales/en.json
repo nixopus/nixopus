@@ -1336,7 +1336,17 @@
     "deleteSuccess": "Extension removed",
     "deleteFailed": "Failed to remove extension",
     "confirmDeleteTitle": "Remove fork?",
-    "confirmDeleteMessage": "This will remove your forked extension. This action cannot be undone."
+    "confirmDeleteMessage": "This will remove your forked extension. This action cannot be undone.",
+    "overview": "Overview",
+    "logs": "Logs",
+    "executions": "Executions",
+    "executionId": "Execution ID",
+    "status": "Status",
+    "startedAt": "Started At",
+    "completedAt": "Completed At",
+    "noExecutions": "No executions yet.",
+    "variables": "Variables",
+    "logsEmpty": "Execution logs will appear here when available."
   },
   "navigation": {
     "dashboard": "Dashboard",

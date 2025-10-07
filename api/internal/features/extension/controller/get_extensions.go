@@ -117,3 +117,42 @@ func (c *ExtensionsController) GetExtensionByExtensionID(ctx fuego.ContextNoBody
 
 	return *extension, nil
 }
+
+func (c *ExtensionsController) GetExecution(ctx fuego.ContextNoBody) (*types.ExtensionExecution, error) {
+	id := ctx.PathParam("execution_id")
+	if id == "" {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	exec, err := c.service.GetExecutionByID(id)
+	if err != nil {
+		c.logger.Log(logger.Error, err.Error(), "")
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+	return exec, nil
+}
+
+func (c *ExtensionsController) ListExecutionsByExtensionID(ctx fuego.ContextNoBody) ([]types.ExtensionExecution, error) {
+	extensionID := ctx.PathParam("extension_id")
+	if extensionID == "" {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusBadRequest,
+		}
+	}
+	execs, err := c.service.ListExecutionsByExtensionID(extensionID)
+	if err != nil {
+		c.logger.Log(logger.Error, err.Error(), "")
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+	return execs, nil
+}

@@ -29,6 +29,7 @@ type ExtensionStorageInterface interface {
 	UpdateExecutionStep(step *types.ExecutionStep) error
 	UpdateExecution(exec *types.ExtensionExecution) error
 	GetExecutionByID(id string) (*types.ExtensionExecution, error)
+	ListExecutionsByExtensionID(extensionID string) ([]types.ExtensionExecution, error)
 	BeginTx() (bun.Tx, error)
 	WithTx(tx bun.Tx) ExtensionStorageInterface
 }
@@ -283,4 +284,17 @@ func (s *ExtensionStorage) GetExecutionByID(id string) (*types.ExtensionExecutio
 		return nil, err
 	}
 	return &exec, nil
+}
+
+func (s *ExtensionStorage) ListExecutionsByExtensionID(extensionID string) ([]types.ExtensionExecution, error) {
+	var execs []types.ExtensionExecution
+	err := s.getDB().NewSelect().
+		Model(&execs).
+		Where("extension_id = ?", extensionID).
+		Order("created_at DESC").
+		Scan(s.Ctx)
+	if err != nil {
+		return nil, err
+	}
+	return execs, nil
 }
