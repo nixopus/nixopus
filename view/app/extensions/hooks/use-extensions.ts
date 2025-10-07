@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Extension, ExtensionListParams, SortDirection, ExtensionSortField } from '@/redux/types/extension';
 import { useGetExtensionsQuery, useRunExtensionMutation, useCancelExecutionMutation } from '@/redux/services/extensions/extensionsApi';
 
 export function useExtensions() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: ExtensionSortField; direction: SortDirection }>({
     key: 'name',
@@ -53,7 +55,7 @@ export function useExtensions() {
   };
 
   const handleViewDetails = (extension: Extension) => {
-    console.log('Viewing details for extension:', extension.name);
+    router.push(`/extensions/${extension.id}`);
   };
 
   const error = apiError ? 'Failed to load extensions' : null;

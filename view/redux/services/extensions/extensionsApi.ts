@@ -6,7 +6,7 @@ import { EXTENSIONURLS } from '@/redux/api-conf';
 export const extensionsApi = createApi({
   reducerPath: 'extensionsApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Extensions', 'Extension'],
+  tagTypes: ['Extensions', 'Extension', 'Execution'],
   endpoints: (builder) => ({
     getExtensions: builder.query<ExtensionListResponse, ExtensionListParams>({
       query: (params) => {
@@ -91,6 +91,23 @@ export const extensionsApi = createApi({
         url: EXTENSIONURLS.CANCEL_EXECUTION.replace('{execution_id}', executionId),
         method: 'POST'
       })
+    }),
+    getExecution: builder.query<ExtensionExecution, { executionId: string }>({
+      query: ({ executionId }) => ({
+        url: EXTENSIONURLS.GET_EXECUTION.replace('{execution_id}', executionId),
+        method: 'GET'
+      }),
+      providesTags: (result, error, { executionId }) => [{ type: 'Execution', id: executionId }],
+      transformResponse: (response: ExtensionExecution) => response
+    })
+    ,
+    listExecutions: builder.query<ExtensionExecution[], { extensionId: string }>({
+      query: ({ extensionId }) => ({
+        url: EXTENSIONURLS.LIST_EXECUTIONS.replace('{extension_id}', extensionId),
+        method: 'GET'
+      }),
+      providesTags: (result, error, { extensionId }) => [{ type: 'Extension', id: extensionId }],
+      transformResponse: (response: ExtensionExecution[]) => response
     })
   })
 });
@@ -102,5 +119,7 @@ export const {
   useRunExtensionMutation,
   useForkExtensionMutation,
   useDeleteExtensionMutation,
-  useCancelExecutionMutation
+  useCancelExecutionMutation,
+  useGetExecutionQuery,
+  useListExecutionsQuery
 } = extensionsApi;

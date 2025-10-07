@@ -1288,7 +1288,17 @@
     "deleteSuccess": "Extension supprimée",
     "deleteFailed": "Échec de la suppression de l'extension",
     "confirmDeleteTitle": "Supprimer le fork ?",
-    "confirmDeleteMessage": "Cela supprimera votre extension forkée. Cette action est irréversible."
+    "confirmDeleteMessage": "Cela supprimera votre extension forkée. Cette action est irréversible.",
+    "overview": "Aperçu",
+    "logs": "Journaux",
+    "executions": "Exécutions",
+    "executionId": "ID d'exécution",
+    "status": "Statut",
+    "startedAt": "Début",
+    "completedAt": "Terminé",
+    "noExecutions": "Aucune exécution pour le moment.",
+    "variables": "Variables",
+    "logsEmpty": "Les journaux d'exécution apparaîtront ici lorsqu'ils seront disponibles."
   },
   "navigation": {
     "dashboard": "Tableau de Bord",

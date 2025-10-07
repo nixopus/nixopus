@@ -224,3 +224,21 @@ func (s *ExtensionService) CancelExecution(id string) error {
 	exec.CompletedAt = &now
 	return s.storage.UpdateExecution(exec)
 }
+
+func (s *ExtensionService) GetExecutionByID(id string) (*types.ExtensionExecution, error) {
+	exec, err := s.storage.GetExecutionByID(id)
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return nil, err
+	}
+	return exec, nil
+}
+
+func (s *ExtensionService) ListExecutionsByExtensionID(extensionID string) ([]types.ExtensionExecution, error) {
+	execs, err := s.storage.ListExecutionsByExtensionID(extensionID)
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return nil, err
+	}
+	return execs, nil
+}

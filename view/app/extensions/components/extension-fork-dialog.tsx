@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AceEditor from '@/components/ui/ace-editor';
 import YAML from 'yaml';
+import { StepsSection } from '@/app/extensions/[id]/components/OverviewTab';
 
 interface ExtensionForkDialogProps {
   open: boolean;
@@ -91,42 +92,41 @@ export default function ExtensionForkDialog({ open, onOpenChange, extension }: E
                   <div className="text-sm font-medium">{preview?.metadata?.category || extension.category}</div>
                 </div>
               </div>
-              <div className="rounded-md border p-3">
-                <div className="text-sm font-semibold mb-2">{t('extensions.variables') || 'Variables'}</div>
-                <div className="space-y-2">
-                  {(preview?.variables && Object.keys(preview.variables).length > 0) ? (
-                    Object.entries(preview.variables).map(([key, val]: any) => (
-                      <div key={key} className="flex items-center justify-between text-sm">
-                        <div className="font-medium">{key}</div>
-                        <div className="text-muted-foreground">{val?.type}</div>
+              {preview?.variables && Object.keys(preview.variables).length > 0 && (
+                <div className="rounded-md border overflow-hidden">
+                  <div className="grid grid-cols-12 bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
+                    <div className="col-span-3">Name</div>
+                    <div className="col-span-2">Type</div>
+                    <div className="col-span-2">Required</div>
+                    <div className="col-span-2">Default</div>
+                    <div className="col-span-3">Description</div>
+                  </div>
+                  <div className="divide-y">
+                    {Object.entries(preview.variables).map(([key, val]: any) => (
+                      <div key={key} className="grid grid-cols-12 px-3 py-3 text-sm">
+                        <div className="col-span-3 font-medium">{key}</div>
+                        <div className="col-span-2 text-muted-foreground">{val?.variable_type || val?.type}</div>
+                        <div className="col-span-2 text-muted-foreground">{val?.is_required ? 'Yes' : 'No'}</div>
+                        <div className="col-span-2 text-muted-foreground truncate">{String(val?.default_value ?? '')}</div>
+                        <div className="col-span-3 text-muted-foreground">{val?.description}</div>
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-sm text-muted-foreground">{t('extensions.noVariables') || 'No variables defined'}</div>
-                  )}
-                </div>
-              </div>
-              <div className="rounded-md border p-3">
-                <div className="text-sm font-semibold mb-2">{t('extensions.execution') || 'Execution'}</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">{t('extensions.runSteps') || 'Run steps'}</div>
-                    <ul className="list-disc pl-5 space-y-1 text-sm">
-                      {(preview?.execution?.run || []).map((s: any, i: number) => (
-                        <li key={i}>{s?.name || s?.type || 'Step'}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">{t('extensions.validateSteps') || 'Validate steps'}</div>
-                    <ul className="list-disc pl-5 space-y-1 text-sm">
-                      {(preview?.execution?.validate || []).map((s: any, i: number) => (
-                        <li key={i}>{s?.name || s?.type || 'Step'}</li>
-                      ))}
-                    </ul>
+                    ))}
                   </div>
                 </div>
-              </div>
+              )}
+              {(preview?.execution?.run?.length || preview?.execution?.validate?.length) && (
+                <StepsSection
+                  tRunLabel={t('extensions.runSteps') || 'Run steps'}
+                  tValidateLabel={t('extensions.validateSteps') || 'Validate steps'}
+                  title={t('extensions.execution') || 'Execution'}
+                  runSteps={preview?.execution?.run || []}
+                  validateSteps={preview?.execution?.validate || []}
+                  openRunIndex={null}
+                  setOpenRunIndex={() => {}}
+                  openValidateIndex={null}
+                  setOpenValidateIndex={() => {}}
+                />
+              )}
             </div>
           </TabsContent>
         </Tabs>
