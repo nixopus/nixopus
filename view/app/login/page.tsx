@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { AuthResponse } from '@/redux/types/user';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCredentials } from '@/redux/features/users/authSlice';
+import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { RootState } from '@/redux/store';
 
 export default function LoginPage() {
@@ -43,6 +44,7 @@ export default function LoginPage() {
             expiresIn: response.expires_in
           })
         );
+        dispatch(FeatureFlagsApi.util.invalidateTags(['FeatureFlags']));
         router.push('/dashboard');
       }
     } catch (error) {
@@ -63,6 +65,7 @@ export default function LoginPage() {
             expiresIn: response.expires_in
           })
         );
+        dispatch(FeatureFlagsApi.util.invalidateTags(['FeatureFlags']));
         router.push('/dashboard');
       }
     } catch (error) {
