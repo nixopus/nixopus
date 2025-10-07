@@ -20,6 +20,7 @@ type ExtensionMetadata struct {
 	Author      string `yaml:"author"`
 	Icon        string `yaml:"icon"`
 	Category    string `yaml:"category"`
+	Type        string `yaml:"type"`
 	Version     string `yaml:"version"`
 	IsVerified  bool   `yaml:"isVerified"`
 }
@@ -79,6 +80,19 @@ func (p *Parser) ParseExtensionFile(filePath string) (*types.Extension, []types.
 	return extension, variables, nil
 }
 
+func (p *Parser) ParseExtensionContent(content string) (*types.Extension, []types.ExtensionVariable, error) {
+	var extYAML ExtensionYAML
+	if err := yaml.Unmarshal([]byte(content), &extYAML); err != nil {
+		return nil, nil, fmt.Errorf("failed to parse YAML: %w", err)
+	}
+	if err := p.validateExtension(&extYAML); err != nil {
+		return nil, nil, fmt.Errorf("validation failed: %w", err)
+	}
+	extension := p.convertToExtension(&extYAML, content)
+	variables := p.convertToVariables(&extYAML, extension.ExtensionID)
+	return extension, variables, nil
+}
+
 func (p *Parser) validateExtension(ext *ExtensionYAML) error {
 	if ext.Metadata.ID == "" {
 		return fmt.Errorf("metadata.id is required")
@@ -97,6 +111,13 @@ func (p *Parser) validateExtension(ext *ExtensionYAML) error {
 	}
 	if ext.Metadata.Category == "" {
 		return fmt.Errorf("metadata.category is required")
+	}
+
+	if ext.Metadata.Type == "" {
+		return fmt.Errorf("metadata.type is required (install or run)")
+	}
+	if ext.Metadata.Type != "install" && ext.Metadata.Type != "run" {
+		return fmt.Errorf("invalid metadata.type: %s", ext.Metadata.Type)
 	}
 
 	if !p.isValidCategory(ext.Metadata.Category) {
@@ -267,6 +288,7 @@ func (p *Parser) convertToExtension(extYAML *ExtensionYAML, yamlContent string) 
 		Author:           extYAML.Metadata.Author,
 		Icon:             extYAML.Metadata.Icon,
 		Category:         types.ExtensionCategory(extYAML.Metadata.Category),
+		ExtensionType:    types.ExtensionType(extYAML.Metadata.Type),
 		Version:          extYAML.Metadata.Version,
 		IsVerified:       extYAML.Metadata.IsVerified,
 		YAMLContent:      yamlContent,

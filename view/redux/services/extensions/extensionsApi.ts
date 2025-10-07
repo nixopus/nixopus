@@ -15,6 +15,9 @@ export const extensionsApi = createApi({
         if (params.category) {
           searchParams.append('category', params.category);
         }
+        if (params.type) {
+          searchParams.append('type', params.type);
+        }
         if (params.search) {
           searchParams.append('search', params.search);
         }
@@ -67,6 +70,22 @@ export const extensionsApi = createApi({
         };
       }
     }),
+    forkExtension: builder.mutation<Extension, { extensionId: string; yaml_content?: string }>({
+      query: ({ extensionId, ...body }) => ({
+        url: EXTENSIONURLS.FORK_EXTENSION.replace('{extension_id}', extensionId),
+        method: 'POST',
+        body,
+        headers: { 'Content-Type': 'application/json' }
+      }),
+      invalidatesTags: ['Extensions']
+    }),
+    deleteExtension: builder.mutation<{ status: string }, { id: string }>({
+      query: ({ id }) => ({
+        url: EXTENSIONURLS.DELETE_EXTENSION.replace('{id}', id),
+        method: 'DELETE'
+      }),
+      invalidatesTags: ['Extensions']
+    }),
     cancelExecution: builder.mutation<{ status: string; message: string }, { executionId: string }>({
       query: ({ executionId }) => ({
         url: EXTENSIONURLS.CANCEL_EXECUTION.replace('{execution_id}', executionId),
@@ -81,5 +100,7 @@ export const {
   useGetExtensionQuery,
   useGetExtensionByExtensionIdQuery,
   useRunExtensionMutation,
+  useForkExtensionMutation,
+  useDeleteExtensionMutation,
   useCancelExecutionMutation
 } = extensionsApi;

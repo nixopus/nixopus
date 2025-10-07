@@ -41,25 +41,34 @@ const (
 	ExecutionStatusCancelled ExecutionStatus = "cancelled"
 )
 
+type ExtensionType string
+
+const (
+	ExtensionTypeInstall ExtensionType = "install"
+	ExtensionTypeRun     ExtensionType = "run"
+)
+
 type Extension struct {
-	bun.BaseModel    `bun:"table:extensions,alias:e" swaggerignore:"true"`
-	ID               uuid.UUID         `json:"id" bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
-	ExtensionID      string            `json:"extension_id" bun:"extension_id,unique,notnull"`
-	Name             string            `json:"name" bun:"name,notnull"`
-	Description      string            `json:"description" bun:"description,notnull"`
-	Author           string            `json:"author" bun:"author,notnull"`
-	Icon             string            `json:"icon" bun:"icon,notnull"`
-	Category         ExtensionCategory `json:"category" bun:"category,notnull"`
-	Version          string            `json:"version" bun:"version"`
-	IsVerified       bool              `json:"is_verified" bun:"is_verified,notnull,default:false"`
-	YAMLContent      string            `json:"yaml_content" bun:"yaml_content,notnull"`
-	ParsedContent    string            `json:"parsed_content" bun:"parsed_content,notnull,type:jsonb"`
-	ContentHash      string            `json:"content_hash" bun:"content_hash,notnull"`
-	ValidationStatus ValidationStatus  `json:"validation_status" bun:"validation_status,default:'not_validated'"`
-	ValidationErrors string            `json:"validation_errors" bun:"validation_errors,type:jsonb"`
-	CreatedAt        time.Time         `json:"created_at" bun:"created_at,notnull,default:now()"`
-	UpdatedAt        time.Time         `json:"updated_at" bun:"updated_at,notnull,default:now()"`
-	DeletedAt        *time.Time        `json:"deleted_at,omitempty" bun:"deleted_at"`
+	bun.BaseModel     `bun:"table:extensions,alias:e" swaggerignore:"true"`
+	ID                uuid.UUID         `json:"id" bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
+	ExtensionID       string            `json:"extension_id" bun:"extension_id,unique,notnull"`
+	ParentExtensionID *uuid.UUID        `json:"parent_extension_id,omitempty" bun:"parent_extension_id,nullzero"`
+	Name              string            `json:"name" bun:"name,notnull"`
+	Description       string            `json:"description" bun:"description,notnull"`
+	Author            string            `json:"author" bun:"author,notnull"`
+	Icon              string            `json:"icon" bun:"icon,notnull"`
+	Category          ExtensionCategory `json:"category" bun:"category,notnull"`
+	ExtensionType     ExtensionType     `json:"extension_type" bun:"extension_type,notnull"`
+	Version           string            `json:"version" bun:"version"`
+	IsVerified        bool              `json:"is_verified" bun:"is_verified,notnull,default:false"`
+	YAMLContent       string            `json:"yaml_content" bun:"yaml_content,notnull"`
+	ParsedContent     string            `json:"parsed_content" bun:"parsed_content,notnull,type:jsonb"`
+	ContentHash       string            `json:"content_hash" bun:"content_hash,notnull"`
+	ValidationStatus  ValidationStatus  `json:"validation_status" bun:"validation_status,default:'not_validated'"`
+	ValidationErrors  string            `json:"validation_errors" bun:"validation_errors,type:jsonb"`
+	CreatedAt         time.Time         `json:"created_at" bun:"created_at,notnull,default:now()"`
+	UpdatedAt         time.Time         `json:"updated_at" bun:"updated_at,notnull,default:now()"`
+	DeletedAt         *time.Time        `json:"deleted_at,omitempty" bun:"deleted_at"`
 
 	Variables []ExtensionVariable `json:"variables,omitempty" bun:"rel:has-many,join:id=extension_id"`
 }
@@ -151,6 +160,7 @@ const (
 
 type ExtensionListParams struct {
 	Category *ExtensionCategory `json:"category,omitempty"`
+	Type     *ExtensionType     `json:"type,omitempty"`
 	Search   string             `json:"search,omitempty"`
 	SortBy   ExtensionSortField `json:"sort_by,omitempty"`
 	SortDir  SortDirection      `json:"sort_dir,omitempty"`

@@ -17,6 +17,7 @@ type ExtensionStorage struct {
 
 type ExtensionStorageInterface interface {
 	CreateExtension(extension *types.Extension) error
+	CreateExtensionVariables(vars []types.ExtensionVariable) error
 	GetExtension(id string) (*types.Extension, error)
 	GetExtensionByID(extensionID string) (*types.Extension, error)
 	UpdateExtension(extension *types.Extension) error
@@ -53,6 +54,17 @@ func (s *ExtensionStorage) getDB() bun.IDB {
 
 func (s *ExtensionStorage) CreateExtension(extension *types.Extension) error {
 	_, err := s.getDB().NewInsert().Model(extension).Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ExtensionStorage) CreateExtensionVariables(vars []types.ExtensionVariable) error {
+	if len(vars) == 0 {
+		return nil
+	}
+	_, err := s.getDB().NewInsert().Model(&vars).Exec(s.Ctx)
 	if err != nil {
 		return err
 	}
@@ -139,6 +151,10 @@ func (s *ExtensionStorage) ListExtensions(params types.ExtensionListParams) (*ty
 		query = query.Where("category = ?", *params.Category)
 	}
 
+	if params.Type != nil {
+		query = query.Where("extension_type = ?", *params.Type)
+	}
+
 	if params.Search != "" {
 		searchPattern := "%" + params.Search + "%"
 		query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
@@ -163,6 +179,10 @@ func (s *ExtensionStorage) ListExtensions(params types.ExtensionListParams) (*ty
 
 	if params.Category != nil {
 		countQuery = countQuery.Where("category = ?", *params.Category)
+	}
+
+	if params.Type != nil {
+		countQuery = countQuery.Where("extension_type = ?", *params.Type)
 	}
 
 	if params.Search != "" {

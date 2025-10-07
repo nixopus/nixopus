@@ -14,6 +14,8 @@ export type ValidationStatus = 'not_validated' | 'valid' | 'invalid';
 
 export type ExecutionStatus = 'pending' | 'running' | 'completed' | 'failed';
 
+export type ExtensionType = 'install' | 'run';
+
 export interface ExtensionVariable {
   id: string;
   extension_id: string;
@@ -29,11 +31,13 @@ export interface ExtensionVariable {
 export interface Extension {
   id: string;
   extension_id: string;
+  parent_extension_id?: string;
   name: string;
   description: string;
   author: string;
   icon: string;
   category: ExtensionCategory;
+  extension_type: ExtensionType;
   version: string;
   is_verified: boolean;
   yaml_content: string;
@@ -88,6 +92,7 @@ export type ExtensionSortField =
 
 export interface ExtensionListParams {
   category?: ExtensionCategory;
+  type?: ExtensionType;
   search?: string;
   sort_by?: ExtensionSortField;
   sort_dir?: SortDirection;

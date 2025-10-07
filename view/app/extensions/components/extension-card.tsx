@@ -4,9 +4,13 @@ import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Check } from 'lucide-react';
+import { DeleteDialog } from '@/components/ui/delete-dialog';
+import { ExternalLink, Check, GitFork, Trash2 } from 'lucide-react';
 
 import { Extension } from '@/redux/types/extension';
+import ExtensionForkDialog from './extension-fork-dialog';
+import { useDeleteExtensionMutation } from '@/redux/services/extensions/extensionsApi';
+import { toast } from 'sonner';
 
 interface ExtensionCardProps {
   extension: Extension;
@@ -16,6 +20,18 @@ interface ExtensionCardProps {
 
 export function ExtensionCard({ extension, onInstall, onViewDetails }: ExtensionCardProps) {
   const { t } = useTranslation();
+  const [forkOpen, setForkOpen] = React.useState(false);
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [deleteExtension] = useDeleteExtensionMutation();
+
+  const onDelete = async () => {
+    try {
+      await deleteExtension({ id: extension.id }).unwrap();
+      toast.success(t('extensions.deleteSuccess') || 'Removed');
+    } catch (e) {
+      toast.error(t('extensions.deleteFailed') || 'Remove failed');
+    }
+  };
 
   return (
     <Card className="group h-full transition-all duration-200 hover:shadow-lg bg-card border-border p-6">
@@ -41,6 +57,26 @@ export function ExtensionCard({ extension, onInstall, onViewDetails }: Extension
               )}
             </div>
           </div>
+          <div className="ml-auto -mt-2 flex items-center gap-1">
+            {!extension.parent_extension_id && (
+              <button
+                aria-label={t('extensions.fork') || 'Fork'}
+                className="p-2 rounded-md hover:bg-accent text-muted-foreground"
+                onClick={() => setForkOpen(true)}
+              >
+                <GitFork className="h-4 w-4" />
+              </button>
+            )}
+            {extension.parent_extension_id && (
+              <button
+                aria-label={t('extensions.remove') || 'Remove'}
+                className="p-2 rounded-md hover:bg-destructive/10 text-destructive"
+                onClick={() => setConfirmOpen(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         <CardDescription className="text-sm leading-relaxed text-muted-foreground">
@@ -51,7 +87,7 @@ export function ExtensionCard({ extension, onInstall, onViewDetails }: Extension
             className="font-medium min-w-[100px]"
             onClick={() => onInstall?.(extension)}
           >
-            {t('extensions.run')}
+            {extension.extension_type === 'install' ? t('extensions.install') : t('extensions.run')}
           </Button>
           <Button
             variant="ghost"
@@ -63,6 +99,19 @@ export function ExtensionCard({ extension, onInstall, onViewDetails }: Extension
           </Button>
         </div>
       </div>
+      <ExtensionForkDialog open={forkOpen} onOpenChange={setForkOpen} extension={extension} />
+      <DeleteDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('extensions.confirmDeleteTitle') || 'Remove fork?'}
+        description={t('extensions.confirmDeleteMessage') || 'This will remove your forked extension. This action cannot be undone.'}
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        variant="destructive"
+        onConfirm={async () => {
+          await onDelete();
+        }}
+      />
     </Card>
   );
 }

@@ -23,6 +23,11 @@ func (c *ExtensionsController) GetExtensions(ctx fuego.ContextNoBody) (*types.Ex
 		params.Search = searchParam
 	}
 
+	if typeParam := ctx.QueryParam("type"); typeParam != "" {
+		et := types.ExtensionType(typeParam)
+		params.Type = &et
+	}
+
 	sortByParam := ctx.QueryParam("sort_by")
 	if sortByParam != "" {
 		params.SortBy = types.ExtensionSortField(sortByParam)

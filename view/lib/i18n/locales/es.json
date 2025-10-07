@@ -12,7 +12,9 @@
     "goBack": "Volver",
     "refreshPage": "Actualizar página",
     "loading": "Cargando...",
-    "installed": "Instalado"
+    "installed": "Instalado",
+    "cancel": "Cancelar",
+    "delete": "Eliminar"
   },
   "containers": {
     "title": "Contenedores",
@@ -1274,7 +1276,15 @@
     },
     "noExtensions": "No se encontraron extensiones",
     "loading": "Cargando extensiones...",
-    "error": "Error al cargar extensiones"
+    "error": "Error al cargar extensiones",
+    "fork": "Fork",
+    "forkSuccess": "Extensión bifurcada correctamente",
+    "forkFailed": "Error al bifurcar la extensión",
+    "remove": "Eliminar",
+    "deleteSuccess": "Extensión eliminada",
+    "deleteFailed": "Error al eliminar la extensión",
+    "confirmDeleteTitle": "¿Eliminar fork?",
+    "confirmDeleteMessage": "Esto eliminará tu extensión bifurcada. Esta acción no se puede deshacer."
   },
   "navigation": {
     "dashboard": "Panel de Control",
