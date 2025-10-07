@@ -15,7 +15,9 @@
     "loading": "Chargement...",
     "installed": "Installé",
     "cancel": "Annuler",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "preview": "Aperçu"
   },
   "containers": {
     "title": "Conteneurs",
@@ -1276,6 +1278,12 @@
     "fork": "Fork",
     "forkSuccess": "Extension forkée avec succès",
     "forkFailed": "Échec du fork de l'extension",
+    "type": "Type",
+    "category": "Catégorie",
+    "execution": "Exécution",
+    "runSteps": "Étapes d'exécution",
+    "validateSteps": "Étapes de validation",
+    "forkYaml": "YAML (optionnel)",
     "remove": "Supprimer",
     "deleteSuccess": "Extension supprimée",
     "deleteFailed": "Échec de la suppression de l'extension",

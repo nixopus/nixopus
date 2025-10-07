@@ -15,7 +15,9 @@
     "loading": "Loading...",
     "installed": "Installed",
     "cancel": "Cancel",
-    "delete": "Delete"
+    "delete": "Delete",
+    "edit": "Edit",
+    "preview": "Preview"
   },
   "containers": {
     "title": "Containers",
@@ -1324,6 +1326,12 @@
     "fork": "Fork",
     "forkSuccess": "Extension forked successfully",
     "forkFailed": "Failed to fork extension",
+    "type": "Type",
+    "category": "Category",
+    "execution": "Execution",
+    "runSteps": "Run steps",
+    "validateSteps": "Validate steps",
+    "forkYaml": "YAML (optional)",
     "remove": "Remove",
     "deleteSuccess": "Extension removed",
     "deleteFailed": "Failed to remove extension",

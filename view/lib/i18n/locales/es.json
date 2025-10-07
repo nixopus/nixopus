@@ -14,7 +14,9 @@
     "loading": "Cargando...",
     "installed": "Instalado",
     "cancel": "Cancelar",
-    "delete": "Eliminar"
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "preview": "Previsualizar"
   },
   "containers": {
     "title": "Contenedores",
@@ -1280,6 +1282,12 @@
     "fork": "Fork",
     "forkSuccess": "Extensión bifurcada correctamente",
     "forkFailed": "Error al bifurcar la extensión",
+    "type": "Tipo",
+    "category": "Categoría",
+    "execution": "Ejecución",
+    "runSteps": "Pasos de ejecución",
+    "validateSteps": "Pasos de validación",
+    "forkYaml": "YAML (opcional)",
     "remove": "Eliminar",
     "deleteSuccess": "Extensión eliminada",
     "deleteFailed": "Error al eliminar la extensión",
