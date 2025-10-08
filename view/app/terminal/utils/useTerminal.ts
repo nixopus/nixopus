@@ -156,6 +156,13 @@ export const useTerminal = (
         });
 
         if (allowInput) {
+          term.attachCustomKeyEventHandler((event: KeyboardEvent) => {
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'j') {
+              return false;
+            }
+            return true;
+          });
+
           term.onData((data) => {
             sendJsonMessage({
               action: 'terminal',

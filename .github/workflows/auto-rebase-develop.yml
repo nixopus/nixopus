@@ -1,0 +1,226 @@
+name: Auto Rebase Develop
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check if develop branch exists
+        id: check-develop
+        run: |
+          if git ls-remote --heads origin feat/develop | grep -q feat/develop; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Develop branch exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Develop branch does not exist"
+          fi
+
+      - name: Fetch latest changes
+        if: steps.check-develop.outputs.exists == 'true'
+        run: |
+          git fetch origin master
+          git fetch origin feat/develop
+
+      - name: Check if rebase is needed
+        if: steps.check-develop.outputs.exists == 'true'
+        id: check-rebase
+        run: |
+          # Get the commit hashes
+          master_commit=$(git rev-parse origin/master)
+          develop_commit=$(git rev-parse origin/feat/develop)
+
+          # Check if develop is already up to date with master
+          merge_base=$(git merge-base origin/master origin/feat/develop)
+
+          if [ "$merge_base" = "$master_commit" ]; then
+            echo "needed=false" >> $GITHUB_OUTPUT
+            echo "Develop branch is already up to date with master"
+          else
+            echo "needed=true" >> $GITHUB_OUTPUT
+            echo "Develop branch needs to be rebased with master"
+            echo "master commit: $master_commit"
+            echo "Develop commit: $develop_commit"
+            echo "Merge base: $merge_base"
+          fi
+
+      - name: Checkout develop branch
+        if: steps.check-develop.outputs.exists == 'true' && steps.check-rebase.outputs.needed == 'true'
+        run: |
+          git checkout feat/develop
+          git reset --hard origin/feat/develop
+
+      - name: Attempt rebase
+        if: steps.check-develop.outputs.exists == 'true' && steps.check-rebase.outputs.needed == 'true'
+        id: rebase
+        run: |
+          echo "Starting rebase of develop with master..."
+
+          # Attempt the rebase
+          if git rebase origin/master; then
+            echo "success=true" >> $GITHUB_OUTPUT
+            echo "Rebase completed successfully"
+          else
+            echo "success=false" >> $GITHUB_OUTPUT
+            echo "Rebase failed due to conflicts"
+
+            # Abort the rebase
+            git rebase --abort
+
+            # Get list of conflicting files for the issue
+            git checkout feat/develop
+            git merge origin/master --no-commit --no-ff || true
+            conflicts=$(git diff --name-only --diff-filter=U | tr '\n' ',' | sed 's/,$//')
+            echo "conflicts=$conflicts" >> $GITHUB_OUTPUT
+
+            # Reset to clean state
+            git merge --abort || true
+            git reset --hard origin/feat/develop
+          fi
+
+      - name: Push rebased develop branch
+        if: steps.check-develop.outputs.exists == 'true' && steps.check-rebase.outputs.needed == 'true' && steps.rebase.outputs.success == 'true'
+        run: |
+          echo "Pushing rebased develop branch..."
+          git push origin feat/develop --force-with-lease
+          echo "Successfully pushed rebased develop branch"
+
+      - name: Create issue for manual resolution
+        if: steps.check-develop.outputs.exists == 'true' && steps.check-rebase.outputs.needed == 'true' && steps.rebase.outputs.success == 'false'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const conflicts = '${{ steps.rebase.outputs.conflicts }}';
+            const conflictsList = conflicts ? conflicts.split(',').map(file => `- \`${file}\``).join('\n') : 'Unknown files';
+
+            const issueBody = `## Auto Rebase Failed
+
+            The automatic rebase of the \`feat/develop\` branch with \`master\` has failed due to merge conflicts.
+
+            ### Conflicting Files:
+            ${conflictsList}
+
+            ### Manual Resolution Required:
+
+            1. Checkout the develop branch locally:
+               \`\`\`bash
+               git checkout feat/develop
+               git pull origin feat/develop
+               \`\`\`
+
+            2. Rebase with master:
+               \`\`\`bash
+               git fetch origin master
+               git rebase origin/master
+               \`\`\`
+
+            3. Resolve conflicts in the listed files above
+
+            4. Continue the rebase:
+               \`\`\`bash
+               git add .
+               git rebase --continue
+               \`\`\`
+
+            5. Force push the resolved branch:
+               \`\`\`bash
+               git push origin feat/develop --force-with-lease
+               \`\`\`
+
+            ### Triggered by:
+            - **Commit**: ${{ github.sha }}
+            - **Author**: ${{ github.actor }}
+            - **Workflow**: ${{ github.workflow }}
+
+            This issue will be automatically closed when the next successful rebase occurs.
+            `;
+
+            // Check if there's already an open issue for rebase conflicts
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'auto-rebase-conflict'
+            });
+
+            if (existingIssues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Auto Rebase Failed: Manual Resolution Required',
+                body: issueBody,
+                labels: ['auto-rebase-conflict', 'needs-attention']
+              });
+
+              console.log('Created issue for manual conflict resolution');
+            } else {
+              console.log('Issue for rebase conflicts already exists');
+            }
+
+      - name: Close resolved rebase issues
+        if: steps.check-develop.outputs.exists == 'true' && steps.check-rebase.outputs.needed == 'true' && steps.rebase.outputs.success == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Close any open rebase conflict issues
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'auto-rebase-conflict'
+            });
+
+            for (const issue of existingIssues.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: 'Auto rebase has been successfully completed. Closing this issue.'
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+
+              console.log(`Closed issue #${issue.number}`);
+            }
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Auto Rebase Summary"
+          echo "- **Develop branch exists**: ${{ steps.check-develop.outputs.exists }}"
+          if [ "${{ steps.check-develop.outputs.exists }}" = "true" ]; then
+            echo "- **Rebase needed**: ${{ steps.check-rebase.outputs.needed }}"
+            if [ "${{ steps.check-rebase.outputs.needed }}" = "true" ]; then
+              echo "- **Rebase successful**: ${{ steps.rebase.outputs.success }}"
+            fi
+          fi
