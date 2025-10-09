@@ -11,6 +11,7 @@ import useLogViewer, { LogViewerProps } from '../../hooks/use_log_viewer';
 import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TypographyMuted } from '@/components/ui/typography';
 
 function LogViewer({
   id,
@@ -56,6 +57,7 @@ function LogViewer({
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold">{t('selfHost.logViewer.title')}</h3>
+              <TypographyMuted>{t('selfHost.logViewer.description')}</TypographyMuted>
             </div>
             <div className="flex items-center space-x-2">
               <Button variant="outline" onClick={() => setCurrentPage(currentPage + 1)}>
