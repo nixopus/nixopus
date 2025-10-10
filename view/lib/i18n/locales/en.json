@@ -97,6 +97,7 @@
       "termsOfService": "Terms of Service",
       "and": "and",
       "privacyPolicy": "Privacy Policy",
+      "forgotPassword": "Forgot your password?",
       "errors": {
         "loginFailed": "Login failed",
         "invalidCredentials": "Invalid email or password",

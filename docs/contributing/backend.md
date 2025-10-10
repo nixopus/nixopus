@@ -24,12 +24,48 @@ This guide provides detailed instructions for contributing to the Nixopus backen
    # Note: Be sure to update the environment variables to suit your setup.
    cp api/.env.sample api/.env
    
+   # Configure SuperTokens (required for authentication)
+   # Update the SuperTokens configuration in your .env file:
+   # SUPERTOKENS_API_KEY=your-secure-api-key
+   # SUPERTOKENS_API_DOMAIN=http://localhost:3567
+   # SUPERTOKENS_WEBSITE_DOMAIN=http://localhost:3000
+   # SUPERTOKENS_CONNECTION_URI=http://localhost:3567
+   
    # Install dependencies
    cd api
    go mod download
    ```
 
-3. **Database Migrations**
+3. **SuperTokens Authentication Setup**
+
+   Nixopus uses SuperTokens for authentication. You'll need to set up SuperTokens Core for development:
+
+   ```bash
+   # Install SuperTokens Core (using Docker)
+   docker run -p 3567:3567 -d \
+     --name supertokens-core \
+     registry.supertokens.io/supertokens/supertokens-postgresql
+   
+   # Or install locally (see SuperTokens documentation)
+   npm install -g supertokens
+   supertokens start
+   ```
+
+   **Required Environment Variables:**
+   ```bash
+   # In your api/.env file
+   SUPERTOKENS_API_KEY=NixopusSuperTokensAPIKey
+   SUPERTOKENS_API_DOMAIN=http://localhost:3567
+   SUPERTOKENS_WEBSITE_DOMAIN=http://localhost:3000
+   SUPERTOKENS_CONNECTION_URI=http://localhost:3567
+   ```
+
+   **For Production:**
+   - Generate a secure random string for `SUPERTOKENS_API_KEY`
+   - Update domains to match your production URLs
+   - Ensure SuperTokens Core is accessible from your application
+
+4. **Database Migrations**
 
 Currently **the migration works automatically when starting the server**. However, you can run migrations manually using the following command:
 

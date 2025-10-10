@@ -8,15 +8,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"golang.org/x/crypto/bcrypt"
 )
-
-// Login authenticates a user and returns an authentication token and user information.
-//
-// The function takes in an email and password as input and returns an error if the user
-// does not exist or if the password is invalid. It also returns an error if a token
-// cannot be created.
-//
-// The returned types.AuthResponse contains an authentication token, a refresh token,
-// the user's expiration time, and the user information.
+// Deprecated: Use SupertokensLogin instead
 func (u *AuthService) Login(email string, password string) (types.AuthResponse, error) {
 	u.logger.Log(logger.Info, "logging in user", email)
 

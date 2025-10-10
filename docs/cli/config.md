@@ -22,6 +22,11 @@ services:
       DB_NAME: ${DB_NAME:-postgres}
       USERNAME: ${USERNAME:-postgres}
       PASSWORD: ${PASSWORD:-changeme}
+      # SuperTokens configuration
+      SUPERTOKENS_API_KEY: ${SUPERTOKENS_API_KEY:-NixopusSuperTokensAPIKey}
+      SUPERTOKENS_API_DOMAIN: ${SUPERTOKENS_API_DOMAIN:-http://localhost:3567}
+      SUPERTOKENS_WEBSITE_DOMAIN: ${SUPERTOKENS_WEBSITE_DOMAIN:-http://localhost:3000}
+      SUPERTOKENS_CONNECTION_URI: ${SUPERTOKENS_CONNECTION_URI:-http://localhost:3567}
       # ... other API settings
   
   view:
@@ -86,6 +91,12 @@ PORT: ${API_PORT:-8443}  # Uses API_PORT if set, otherwise 8443
 ```bash
 # Override API domain
 export API_DOMAIN=api.example.com
+
+# Override SuperTokens configuration
+export SUPERTOKENS_API_KEY=your-secure-api-key
+export SUPERTOKENS_API_DOMAIN=https://your-supertokens-core.com
+export SUPERTOKENS_WEBSITE_DOMAIN=https://your-frontend-domain.com
+export SUPERTOKENS_CONNECTION_URI=https://your-supertokens-core.com
 
 # Override database credentials  
 export USERNAME=myuser

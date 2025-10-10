@@ -97,6 +97,7 @@
       "termsOfService": "Conditions d'Utilisation",
       "and": "et",
       "privacyPolicy": "Politique de Confidentialité",
+      "forgotPassword": "Mot de passe oublié ?",
       "errors": {
         "loginFailed": "Échec de la connexion",
         "invalidCredentials": "Email ou mot de passe invalide",

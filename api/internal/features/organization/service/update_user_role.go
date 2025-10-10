@@ -1,58 +1,80 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/supertokens"
+	"github.com/supertokens/supertokens-golang/recipe/userroles"
 )
 
-// UpdateUserRole updates a user's role in an organization.
-//
-// It first checks if the organization exists using the organization ID.
-// If the organization does not exist, it returns ErrOrganizationDoesNotExist.
-// It then checks if the user exists using the user ID.
-// If the user does not exist, it returns ErrUserDoesNotExist.
-// It also checks if the user is part of the organization using both IDs.
-// If the user is not part of the organization, it returns ErrUserNotInOrganization.
-// If all checks pass, it calls the storage layer's UpdateUserRole method
-// to update the user's role in the organization.
-// If the update fails, it returns ErrFailedToUpdateUserRole.
-// Upon successful update, it returns nil.
-func (o *OrganizationService) UpdateUserRole(userID, organizationID, role string) error {
-	o.logger.Log(logger.Info, "updating user role", userID)
-	existingOrganization, err := o.storage.GetOrganization(organizationID)
-	if err == nil && existingOrganization.ID == uuid.Nil {
+func (o *OrganizationService) UpdateUserRole(request *types.UpdateUserRoleRequest) error {
+	o.logger.Log(logger.Info, "updating user role", request.UserID)
+
+	existingOrganization, err := o.storage.GetOrganization(request.OrganizationID)
+	if err != nil || existingOrganization.ID == uuid.Nil {
 		o.logger.Log(logger.Error, types.ErrOrganizationDoesNotExist.Error(), "")
 		return types.ErrOrganizationDoesNotExist
 	}
 
-	existingUser, err := o.user_storage.FindUserByID(userID)
-	if err == nil && existingUser.ID == uuid.Nil {
+	existingUser, err := o.user_storage.FindUserByID(request.UserID)
+	if err != nil || existingUser.ID == uuid.Nil {
 		o.logger.Log(logger.Error, types.ErrUserDoesNotExist.Error(), "")
 		return types.ErrUserDoesNotExist
 	}
 
-	existingUserInOrganization, err := o.storage.FindUserInOrganization(userID, organizationID)
-	if err == nil && existingUserInOrganization.ID == uuid.Nil {
+	existingUserInOrganization, err := o.storage.FindUserInOrganization(request.UserID, request.OrganizationID)
+	if err != nil || existingUserInOrganization.ID == uuid.Nil {
 		o.logger.Log(logger.Error, types.ErrUserNotInOrganization.Error(), "")
 		return types.ErrUserNotInOrganization
 	}
 
-	existingRole, err := o.role_storage.GetRoleByName(role)
-	if err == nil && existingRole.ID == uuid.Nil {
-		o.logger.Log(logger.Error, types.ErrRoleDoesNotExist.Error(), "")
-		return types.ErrRoleDoesNotExist
+	if existingUser.SupertokensUserID != "" {
+		oldRoleName := fmt.Sprintf("orgid_%s_admin", request.OrganizationID)
+		if _, err := userroles.RemoveUserRole("public", existingUser.SupertokensUserID, oldRoleName, nil); err != nil {
+			o.logger.Log(logger.Warning, "failed to remove old SuperTokens role", err.Error())
+		}
+
+		oldRoleName = fmt.Sprintf("orgid_%s_member", request.OrganizationID)
+		if _, err := userroles.RemoveUserRole("public", existingUser.SupertokensUserID, oldRoleName, nil); err != nil {
+			o.logger.Log(logger.Warning, "failed to remove old SuperTokens role", err.Error())
+		}
+
+		oldRoleName = fmt.Sprintf("orgid_%s_viewer", request.OrganizationID)
+		if _, err := userroles.RemoveUserRole("public", existingUser.SupertokensUserID, oldRoleName, nil); err != nil {
+			o.logger.Log(logger.Warning, "failed to remove old SuperTokens role", err.Error())
+		}
+
+		newRoleName := fmt.Sprintf("orgid_%s_%s", request.OrganizationID, request.Role)
+		var permissions []string
+		switch request.Role {
+		case "admin":
+			permissions = supertokens.GetAdminPermissions()
+		case "member":
+			permissions = supertokens.GetMemberPermissions()
+		case "viewer":
+			permissions = supertokens.GetViewerPermissions()
+		default:
+			permissions = supertokens.GetViewerPermissions()
+		}
+
+		if _, err := userroles.CreateNewRoleOrAddPermissions(newRoleName, permissions, nil); err != nil {
+			o.logger.Log(logger.Error, "failed to create SuperTokens role", err.Error())
+			return types.ErrFailedToUpdateUserRole
+		}
+
+		if _, err := userroles.AddRoleToUser("public", existingUser.SupertokensUserID, newRoleName, nil); err != nil {
+			o.logger.Log(logger.Error, "failed to assign SuperTokens role", err.Error())
+			return types.ErrFailedToUpdateUserRole
+		}
 	}
 
-	if err := o.storage.UpdateUserRole(userID, organizationID, existingRole.ID); err != nil {
-		o.logger.Log(logger.Error, types.ErrFailedToUpdateUserRole.Error(), err.Error())
-		return types.ErrFailedToUpdateUserRole
-	}
-
-	// Invalidate cache for organization membership
-	if err := o.cache.InvalidateOrgMembership(o.Ctx, userID, organizationID); err != nil {
+	if err := o.cache.InvalidateOrgMembership(o.Ctx, request.UserID, request.OrganizationID); err != nil {
 		o.logger.Log(logger.Error, "failed to invalidate organization membership cache", err.Error())
 	}
 
+	o.logger.Log(logger.Info, "user role updated successfully", request.UserID)
 	return nil
 }

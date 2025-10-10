@@ -7,7 +7,7 @@ interface TeamStatsProps {
   users: {
     id: string;
     name: string;
-    role: 'admin' | 'member' | 'viewer' | 'owner';
+    role: 'Admin' | 'Member' | 'Viewer' | 'Owner';
   }[];
 }
 
@@ -32,19 +32,19 @@ function TeamStats({ users }: TeamStatsProps) {
             <TypographyMuted>
               {t('settings.teams.stats.owners')}
             </TypographyMuted>
-            <span className="font-medium">{users.filter((u) => u.role === 'admin').length}</span>
+            <span className="font-medium">{users.filter((u) => u.role === 'Admin').length}</span>
           </div>
           <div className="flex justify-between items-center">
             <TypographyMuted>
               {t('settings.teams.stats.members')}
             </TypographyMuted>
-            <span className="font-medium">{users.filter((u) => u.role === 'member').length}</span>
+            <span className="font-medium">{users.filter((u) => u.role === 'Member').length}</span>
           </div>
           <div className="flex justify-between items-center">
             <TypographyMuted>
               {t('settings.teams.stats.viewers')}
             </TypographyMuted>
-            <span className="font-medium">{users.filter((u) => u.role === 'viewer').length}</span>
+            <span className="font-medium">{users.filter((u) => u.role === 'Viewer').length}</span>
           </div>
         </div>
       </CardContent>

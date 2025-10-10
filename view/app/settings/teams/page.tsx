@@ -19,7 +19,7 @@ function Page() {
     setIsAddUserDialogOpen,
     newUser,
     setNewUser,
-    handleAddUser,
+    handleSendInvite,
     handleRemoveUser,
     getRoleBadgeVariant,
     handleUpdateTeam,
@@ -30,7 +30,8 @@ function Page() {
     teamName,
     teamDescription,
     isUpdating,
-    handleUpdateUser
+    handleUpdateUser,
+    isInviteLoading
   } = useTeamSettings();
 
   return (
@@ -63,7 +64,8 @@ function Page() {
               setIsAddUserDialogOpen={setIsAddUserDialogOpen}
               newUser={newUser}
               setNewUser={setNewUser}
-              handleAddUser={handleAddUser}
+              handleSendInvite={handleSendInvite}
+              isInviteLoading={isInviteLoading}
             />
           </ResourceGuard>
         </div>

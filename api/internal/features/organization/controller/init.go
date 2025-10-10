@@ -10,8 +10,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/validation"
-	role_service "github.com/raghavyuva/nixopus-api/internal/features/role/service"
-	role_storage "github.com/raghavyuva/nixopus-api/internal/features/role/storage"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
@@ -20,7 +18,6 @@ type OrganizationsController struct {
 	store        *shared_storage.Store
 	validator    *validation.Validator
 	service      *service.OrganizationService
-	role_service *role_service.RoleService
 	ctx          context.Context
 	logger       logger.Logger
 	notification *notification.NotificationManager
@@ -35,14 +32,12 @@ func NewOrganizationsController(
 	cache *cache.Cache,
 ) *OrganizationsController {
 	storage := storage.OrganizationStore{DB: store.DB, Ctx: ctx}
-	role_storage := role_storage.RoleStorage{DB: store.DB, Ctx: ctx}
-
 	return &OrganizationsController{
 		store:        store,
 		validator:    validation.NewValidator(&storage),
 		service:      service.NewOrganizationService(store, ctx, l, &storage, cache),
-		role_service: role_service.NewRoleService(store, ctx, l, &role_storage),
 		ctx:          ctx,
+		logger:       l,
 		notification: notificationManager,
 		cache:        cache,
 	}

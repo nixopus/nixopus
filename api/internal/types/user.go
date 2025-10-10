@@ -11,9 +11,10 @@ import (
 type User struct {
 	bun.BaseModel     `bun:"table:users,alias:u" swaggerignore:"true"`
 	ID                uuid.UUID            `json:"id" bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
+	SupertokensUserID string               `json:"supertokens_user_id" bun:"supertokens_user_id,type:text,unique"`
 	Username          string               `json:"username" bun:"username,type:text,notnull"`
 	Email             string               `json:"email" bun:"email,type:text,notnull,unique"`
-	Password          string               `json:"-" bun:"password,type:text,notnull"`
+	Password          string               `json:"-" bun:"password,type:text"` // Optional for SuperTokens users
 	Avatar            string               `json:"avatar" bun:"avatar,type:text"`
 	CreatedAt         time.Time            `json:"created_at" bun:"created_at,type:timestamp,notnull,default:now()"`
 	UpdatedAt         time.Time            `json:"updated_at" bun:"updated_at,type:timestamp,notnull,default:now()"`

@@ -1,7 +1,7 @@
 'use client';
-import { getToken } from '@/lib/auth';
 import { getWebsocketUrl } from '@/redux/conf';
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
+import { getAccessToken } from 'supertokens-auth-react/recipe/session';
 
 type WebSocketContextValue = {
   isReady: boolean;
@@ -71,7 +71,8 @@ export const WebSocketProvider = ({
     console.log('Initiating WebSocket connection...');
 
     try {
-      const wsUrl = url || (await getWebsocketUrl()) + '?token=' + getToken();
+      const token = await getAccessToken();
+      const wsUrl = url || (await getWebsocketUrl()) + '?token=' + token;
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {

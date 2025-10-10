@@ -185,6 +185,12 @@ func setupEnvVarMappings() {
 	viper.BindEnv("app.environment", "ENV")
 	viper.BindEnv("app.version", "APP_VERSION")
 	viper.BindEnv("app.logs_path", "LOGS_PATH")
+
+	// SuperTokens
+	viper.BindEnv("supertokens.api_key", "SUPERTOKENS_API_KEY")
+	viper.BindEnv("supertokens.api_domain", "SUPERTOKENS_API_DOMAIN")
+	viper.BindEnv("supertokens.website_domain", "SUPERTOKENS_WEBSITE_DOMAIN")
+	viper.BindEnv("supertokens.connection_uri", "SUPERTOKENS_CONNECTION_URI")
 }
 
 func validateConfig(config types.Config) error {
@@ -231,6 +237,18 @@ func validateConfig(config types.Config) error {
 
 	if config.CORS.AllowedOrigin == "" {
 		errors = append(errors, "CORS allowed origin is required")
+	}
+	if config.Supertokens.APIKey == "" {
+		errors = append(errors, "SuperTokens API key is required")
+	}
+	if config.Supertokens.APIDomain == "" {
+		errors = append(errors, "SuperTokens API domain is required")
+	}
+	if config.Supertokens.WebsiteDomain == "" {
+		errors = append(errors, "SuperTokens website domain is required")
+	}
+	if config.Supertokens.ConnectionURI == "" {
+		errors = append(errors, "SuperTokens connection URI is required")
 	}
 
 	if len(errors) > 0 {

@@ -42,7 +42,6 @@ func (s *Store) DropTable(ctx context.Context, model interface{}) error {
 }
 
 func (s *Store) Init(ctx context.Context) error {
-	s.DB.RegisterModel((*types.RolePermissions)(nil))
 	s.DB.RegisterModel((*types.OrganizationUsers)(nil))
 
 	// tables := []interface{}{
@@ -87,9 +86,6 @@ func (s *Store) DropAllTables(ctx context.Context) error {
 		(*types.SMTPConfigs)(nil),
 		(*types.OrganizationUsers)(nil),
 		(*types.Organization)(nil),
-		(*types.RolePermissions)(nil),
-		(*types.Permission)(nil),
-		(*types.Role)(nil),
 		(*types.RefreshToken)(nil),
 		&struct {
 			bun.BaseModel `bun:"table:verification_tokens"`

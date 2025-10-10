@@ -2,7 +2,6 @@ import { useAppSelector } from '@/redux/hooks';
 import {
   useGetUserSettingsQuery,
   useUpdateFontMutation,
-  useRequestPasswordResetLinkMutation,
   useUpdateAutoUpdateMutation,
   useUpdateLanguageMutation,
   useUpdateThemeMutation,
@@ -25,8 +24,6 @@ function useGeneralSettings() {
   const [emailSent, setEmailSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [updateUserName, { isLoading: isUpdatingUsername }] = useUpdateUserNameMutation();
-  const [requestPasswordResetLink, { isLoading: isRequestingPasswordReset }] =
-    useRequestPasswordResetLinkMutation();
   const [updateAvatar, { isLoading: isUpdatingAvatar }] = useUpdateAvatarMutation();
 
   const {
@@ -62,17 +59,7 @@ function useGeneralSettings() {
     }
   };
 
-  const handlePasswordResetRequest = async () => {
-    setIsLoading(true);
-    try {
-      await requestPasswordResetLink();
-      setEmailSent(true);
-    } catch (error) {
-      console.error(t('settings.account.errors.resetEmailFailed'), error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handlePasswordResetRequest = undefined as unknown as () => void;
 
   const onImageChange = async (imageUrl: string | null) => {
     if (!imageUrl) {
@@ -134,7 +121,7 @@ function useGeneralSettings() {
     usernameSuccess,
     email,
     emailSent,
-    isLoading: isLoading || isUpdatingUsername || isRequestingPasswordReset || isUpdatingAvatar,
+    isLoading: isLoading || isUpdatingUsername || isUpdatingAvatar,
     handleUsernameChange,
     handlePasswordResetRequest,
     setUsername,

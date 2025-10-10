@@ -17,10 +17,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	organization_service "github.com/raghavyuva/nixopus-api/internal/features/organization/service"
 	organization_storage "github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
-	permissions_service "github.com/raghavyuva/nixopus-api/internal/features/permission/service"
-	permissions_storage "github.com/raghavyuva/nixopus-api/internal/features/permission/storage"
-	role_service "github.com/raghavyuva/nixopus-api/internal/features/role/service"
-	role_storage "github.com/raghavyuva/nixopus-api/internal/features/role/storage"
 	dbstorage "github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/uptrace/bun"
@@ -39,11 +35,7 @@ type TestSetup struct {
 	Store       *dbstorage.Store
 	Logger      logger.Logger
 	UserStorage *user_storage.UserStorage
-	PermStorage *permissions_storage.PermissionStorage
-	RoleStorage *role_storage.RoleStorage
 	OrgStorage  *organization_storage.OrganizationStore
-	PermService *permissions_service.PermissionService
-	RoleService *role_service.RoleService
 	OrgService  *organization_service.OrganizationService
 	AuthService *authService.AuthService
 }
@@ -181,18 +173,14 @@ func NewTestSetup() *TestSetup {
 
 	// Create repositories
 	userStorage := &user_storage.UserStorage{DB: testDB, Ctx: ctx}
-	permStorage := &permissions_storage.PermissionStorage{DB: testDB, Ctx: ctx}
-	roleStorage := &role_storage.RoleStorage{DB: testDB, Ctx: ctx}
 	orgStorage := &organization_storage.OrganizationStore{DB: testDB, Ctx: ctx}
 	cache, err := cache.NewCache(getEnvOrDefault("REDIS_URL", "redis://localhost:6379"))
 	if err != nil {
 		panic(fmt.Sprintf("failed to create redis client: %v", err))
 	}
-	// Create services
-	permService := permissions_service.NewPermissionService(store, ctx, l, permStorage)
-	roleService := role_service.NewRoleService(store, ctx, l, roleStorage)
+	// Create services	
 	orgService := organization_service.NewOrganizationService(store, ctx, l, orgStorage, cache)
-	authService := authService.NewAuthService(userStorage, l, permService, roleService, orgService, ctx)
+	authService := authService.NewAuthService(userStorage, l, orgService, ctx)
 
 	return &TestSetup{
 		DB:          testDB,
@@ -200,11 +188,7 @@ func NewTestSetup() *TestSetup {
 		Store:       store,
 		Logger:      l,
 		UserStorage: userStorage,
-		PermStorage: permStorage,
-		RoleStorage: roleStorage,
 		OrgStorage:  orgStorage,
-		PermService: permService,
-		RoleService: roleService,
 		OrgService:  orgService,
 		AuthService: authService,
 	}
@@ -255,17 +239,10 @@ func (s *TestSetup) RegistrationHelper(email, password, username, orgName, orgDe
 		return nil, nil, fmt.Errorf("failed to create test organization: %w", err)
 	}
 
-	// Add user to organization with admin role
-	adminRole, err := s.RoleService.GetRoleByName("admin")
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get admin role: %w", err)
-	}
-
 	orgUser := &types.OrganizationUsers{
 		ID:             uuid.New(),
 		UserID:         authResponse.User.ID,
 		OrganizationID: org.ID,
-		RoleID:         adminRole.ID,
 	}
 
 	if err := s.OrgStorage.AddUserToOrganization(*orgUser); err != nil {

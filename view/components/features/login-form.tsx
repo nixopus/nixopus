@@ -98,13 +98,12 @@ export function LoginForm({ ...props }: LoginFormProps) {
                     )}
                   </div>
                   <div className="grid gap-3">
-                    {/* <div className="flex items-center">
-                      <Label htmlFor="password">Password</Label>
-                      <a href="#" className="ml-auto text-sm underline-offset-2 hover:underline">
-                        Forgot your password?
-                      </a>
-                    </div> */}
-                    <Label htmlFor="password">{t('auth.password')}</Label>
+                    <div className="flex items-center">
+                      <Label htmlFor="password">{t('auth.password')}</Label>
+                      <Link href="/auth/reset-password" className="ml-auto text-sm underline-offset-2 hover:underline">
+                        {t('auth.login.forgotPassword')}
+                      </Link>
+                    </div>
                     <PasswordInputField
                       id="password"
                       required

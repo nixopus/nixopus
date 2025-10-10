@@ -78,8 +78,12 @@ const data = {
 
 export function AppSidebar({
   toggleAddTeamModal,
+  addTeamModalOpen,
   ...props
-}: React.ComponentProps<typeof Sidebar> & { toggleAddTeamModal?: () => void }) {
+}: React.ComponentProps<typeof Sidebar> & { 
+  toggleAddTeamModal?: () => void;
+  addTeamModalOpen?: boolean;
+}) {
   const { t } = useTranslation();
   const user = useAppSelector((state) => state.auth.user);
   const { isLoading, refetch } = useGetUserOrganizationsQuery();
@@ -153,7 +157,11 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher refetch={refetch} />
+        <TeamSwitcher 
+          refetch={refetch} 
+          toggleAddTeamModal={toggleAddTeamModal}
+          addTeamModalOpen={addTeamModalOpen}
+        />
       </SidebarHeader>
       <SidebarContent>
         <NavMain

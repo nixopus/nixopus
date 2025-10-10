@@ -44,6 +44,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     handleTeamNameChange,
     handleTeamDescriptionChange
   } = useTeamSwitcher();
+
   const { getBreadcrumbs } = useBreadCrumbs();
   const breadcrumbs = React.useMemo(() => getBreadcrumbs(), [getBreadcrumbs]);
   const { isTerminalOpen, toggleTerminal } = useTerminalState();
@@ -68,7 +69,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <AppSidebar toggleAddTeamModal={toggleAddTeamModal} />
+      <AppSidebar 
+        toggleAddTeamModal={toggleAddTeamModal}
+        addTeamModalOpen={addTeamModalOpen}
+      />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4 justify-between w-full">
@@ -114,18 +118,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <Tour>
             <div className="flex h-[calc(100vh-5rem)]">
-              {addTeamModalOpen && (
-                <CreateTeam
-                  open={addTeamModalOpen}
-                  setOpen={setAddTeamModalOpen}
-                  createTeam={createTeam}
-                  teamName={teamName}
-                  teamDescription={teamDescription}
-                  handleTeamNameChange={handleTeamNameChange}
-                  handleTeamDescriptionChange={handleTeamDescriptionChange}
-                  isLoading={isLoading}
-                />
-              )}
+              <CreateTeam
+                open={addTeamModalOpen}
+                setOpen={setAddTeamModalOpen}
+                createTeam={createTeam}
+                teamName={teamName}
+                teamDescription={teamDescription}
+                handleTeamNameChange={handleTeamNameChange}
+                handleTeamDescriptionChange={handleTeamDescriptionChange}
+                isLoading={isLoading}
+              />
               <ResizablePanelGroup
                 direction={
                   TERMINAL_POSITION.BOTTOM === TerminalPosition ? 'vertical' : 'horizontal'

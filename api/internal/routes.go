@@ -29,10 +29,8 @@ import (
 	organization "github.com/raghavyuva/nixopus-api/internal/features/organization/controller"
 	organization_service "github.com/raghavyuva/nixopus-api/internal/features/organization/service"
 	organization_storage "github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
-	permissions_service "github.com/raghavyuva/nixopus-api/internal/features/permission/service"
-	permissions_storage "github.com/raghavyuva/nixopus-api/internal/features/permission/storage"
-	role_service "github.com/raghavyuva/nixopus-api/internal/features/role/service"
-	role_storage "github.com/raghavyuva/nixopus-api/internal/features/role/storage"
+
+	"github.com/raghavyuva/nixopus-api/internal/features/supertokens"
 	update "github.com/raghavyuva/nixopus-api/internal/features/update/controller"
 	update_service "github.com/raghavyuva/nixopus-api/internal/features/update/service"
 	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
@@ -60,6 +58,8 @@ func NewRouter(app *storage.App) *Router {
 }
 
 func (router *Router) Routes() {
+	// Initialize SuperTokens authentication system
+	supertokens.Init(router.app)
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -74,6 +74,7 @@ func (router *Router) Routes() {
 	l := logger.NewLogger()
 	server := fuego.NewServer(
 		fuego.WithGlobalMiddlewares(
+			middleware.SupertokensCorsMiddleware,
 			middleware.RecoveryMiddleware,
 			middleware.CorsMiddleware,
 			middleware.LoggingMiddleware,
@@ -108,13 +109,9 @@ func (router *Router) Routes() {
 	router.WebSocketServer(server, deployController)
 
 	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
-	permStorage := &permissions_storage.PermissionStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
-	roleStorage := &role_storage.RoleStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	orgStorage := &organization_storage.OrganizationStore{DB: router.app.Store.DB, Ctx: router.app.Ctx}
-	permService := permissions_service.NewPermissionService(router.app.Store, router.app.Ctx, l, permStorage)
-	roleService := role_service.NewRoleService(router.app.Store, router.app.Ctx, l, roleStorage)
 	orgService := organization_service.NewOrganizationService(router.app.Store, router.app.Ctx, l, orgStorage, router.cache)
-	authService := authService.NewAuthService(userStorage, l, permService, roleService, orgService, router.app.Ctx)
+	authService := authService.NewAuthService(userStorage, l, orgService, router.app.Ctx)
 	authController := auth.NewAuthController(router.app.Ctx, l, notificationManager, *authService)
 	authGroup := fuego.Group(server, apiV1.Path+"/auth")
 	router.AuthRoutes(authController, authGroup)
@@ -302,15 +299,10 @@ func (router *Router) WebSocketServer(f *fuego.Server, deployController *deploy.
 }
 
 func (router *Router) AuthRoutes(authController *auth.AuthController, s *fuego.Server) {
-	fuego.Post(s, "/register", authController.Register)
-	fuego.Post(s, "/login", authController.Login)
-	fuego.Post(s, "/refresh-token", authController.RefreshToken)
 	fuego.Get(s, "/is-admin-registered", authController.IsAdminRegistered)
 }
 
 func (router *Router) AuthenticatedAuthRoutes(s *fuego.Server, authController *auth.AuthController) {
-	fuego.Post(s, "/request-password-reset", authController.GeneratePasswordResetLink)
-	fuego.Post(s, "/reset-password", authController.ResetPassword)
 	fuego.Post(s, "/logout", authController.Logout)
 	fuego.Post(s, "/send-verification-email", authController.SendVerificationEmail)
 	fuego.Get(s, "/verify-email", authController.VerifyEmail)
@@ -396,18 +388,6 @@ func (router *Router) FileManagerRoutes(f *fuego.Server, fileManagerController *
 	fuego.Delete(f, "/delete-directory", fileManagerController.DeleteDirectory)
 }
 
-func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController *organization.OrganizationsController) {
-	fuego.Get(f, "/users", organizationController.GetOrganizationUsers)
-	fuego.Post(f, "/add-user", organizationController.AddUserToOrganization)
-	fuego.Post(f, "/remove-user", organizationController.RemoveUserFromOrganization)
-	fuego.Post(f, "/update-user-role", organizationController.UpdateUserRole)
-	fuego.Get(f, "/roles", organizationController.GetRoles)
-	fuego.Get(f, "/resources", organizationController.GetResources)
-	fuego.Put(f, "", organizationController.UpdateOrganization)
-	fuego.Post(f, "", organizationController.CreateOrganization)
-	fuego.Delete(f, "", organizationController.DeleteOrganization)
-}
-
 func (router *Router) AuditRoutes(s *fuego.Server, auditController *audit.AuditController) {
 	fuego.Get(s, "/logs", auditController.GetRecentAuditLogs)
 }
@@ -434,4 +414,17 @@ func (router *Router) ContainerRoutes(s *fuego.Server, containerController *cont
 	fuego.Post(s, "/prune/build-cache", containerController.PruneBuildCache)
 	fuego.Post(s, "/prune/images", containerController.PruneImages)
 	fuego.Post(s, "/images", containerController.ListImages)
+}
+
+func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController *organization.OrganizationsController) {
+	fuego.Get(f, "/users", organizationController.GetOrganizationUsers)
+	fuego.Post(f, "/remove-user", organizationController.RemoveUserFromOrganization)
+	fuego.Post(f, "/update-user-role", organizationController.UpdateUserRole)
+	fuego.Put(f, "", organizationController.UpdateOrganization)
+	fuego.Post(f, "", organizationController.CreateOrganization)
+	fuego.Delete(f, "", organizationController.DeleteOrganization)
+	fuego.Get(f, "", organizationController.GetOrganization)
+	fuego.Get(f, "/all", organizationController.GetOrganizations)
+	fuego.Post(f, "/invite/send", organizationController.SendInvite)
+	fuego.Post(f, "/invite/resend", organizationController.ResendInvite)
 }

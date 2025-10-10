@@ -10,6 +10,14 @@ type Config struct {
 	Proxy      ProxyConfig      `mapstructure:"proxy"`
 	CORS       CORSConfig       `mapstructure:"cors"`
 	App        AppConfig        `mapstructure:"app"`
+	Supertokens SupertokensConfig `mapstructure:"supertokens"`
+}
+
+type SupertokensConfig struct {
+	APIKey        string `mapstructure:"api_key" validate:"required"`
+	APIDomain     string `mapstructure:"api_domain" validate:"required"`
+	WebsiteDomain string `mapstructure:"website_domain" validate:"required"`
+	ConnectionURI string `mapstructure:"connection_uri" validate:"required"`
 }
 
 type ServerConfig struct {

@@ -12,6 +12,7 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// TODO: deleting the organization should only happen if there is no deployments or etc .... else do not allow it.
 func (c *OrganizationsController) DeleteOrganization(f fuego.ContextWithBody[types.DeleteOrganizationRequest]) (*shared_types.Response, error) {
 	organization, err := f.Body()
 	c.logger.Log(logger.Info, "Deleting organization", organization.ID)

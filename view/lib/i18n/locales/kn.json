@@ -97,6 +97,7 @@
       "termsOfService": "ಸೇವಾ ನಿಯಮಗಳು",
       "and": "ಮತ್ತು",
       "privacyPolicy": "ಗೌಪ್ಯತಾ ನೀತಿ",
+      "forgotPassword": "ಪಾಸ್ವರ್ಡ್ ಮರೆತಿರಾ?",
       "errors": {
         "loginFailed": "ಲಾಗಿನ್ ವಿಫಲವಾಗಿದೆ",
         "invalidCredentials": "ಅಮಾನ್ಯ ಇಮೇಲ್ ಅಥವಾ ಪಾಸ್ವರ್ಡ್",

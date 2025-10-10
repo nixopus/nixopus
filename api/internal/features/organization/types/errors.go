@@ -33,4 +33,5 @@ var (
 	ErrOrganizationNotFound               = errors.New("organization not found")
 	ErrUserNotFound                       = errors.New("user not found")
 	ErrFailedToGetRoles                   = errors.New("failed to get roles")
+	ErrInvalidEmail                       = errors.New("invalid email format")
 )

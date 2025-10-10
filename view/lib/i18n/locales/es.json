@@ -96,6 +96,7 @@
       "termsOfService": "Términos de Servicio",
       "and": "y",
       "privacyPolicy": "Política de Privacidad",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
       "errors": {
         "loginFailed": "Error al iniciar sesión",
         "invalidCredentials": "Email o contraseña inválidos",

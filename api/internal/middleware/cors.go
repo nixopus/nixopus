@@ -3,8 +3,10 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/supertokens/supertokens-golang/supertokens"
 )
 
 // CorsMiddleware sets the necessary CORS headers for the response. If the request
@@ -44,10 +46,12 @@ func CorsMiddleware(next http.Handler) http.Handler {
 		}
 
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token, Sec-WebSocket-Extensions, Sec-WebSocket-Key, Sec-WebSocket-Version, X-Organization-Id")
 		w.Header().Set("Access-Control-Expose-Headers", "Authorization, X-Organization-Id")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Access-Control-Max-Age", "300")
+		headers := []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Organization-Id"}
+		supertokensHeaders := supertokens.GetAllCORSHeaders()
+		w.Header().Set("Access-Control-Allow-Headers", strings.Join(append(headers, supertokensHeaders...), ","))
 
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
@@ -60,5 +64,17 @@ func CorsMiddleware(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+func SupertokensCorsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Upgrade") == "websocket" {
+			r.Header.Set("connection", "Upgrade")
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		supertokens.Middleware(next).ServeHTTP(w, r)
 	})
 }

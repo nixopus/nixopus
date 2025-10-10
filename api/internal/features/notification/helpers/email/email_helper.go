@@ -50,12 +50,6 @@ type VerificationEmailData struct {
 	VerifyURL string `json:"verify_url"`
 }
 
-type UpdateUserRoleData struct {
-	OrganizationName string `json:"organization_name"`
-	UserName         string `json:"user_name"`
-	NewRole          string `json:"new_role"`
-}
-
 type AddUserToOrganizationData struct {
 	OrganizationName string `json:"organization_name"`
 	UserName         string `json:"user_name"`
@@ -196,40 +190,6 @@ func (m *EmailManager) SendVerificationEmail(userID string, token string) error 
 	}
 
 	log.Printf("Verification email sent successfully")
-	return nil
-}
-
-func (m *EmailManager) SendUpdateUserRoleEmail(userID string, organizationName string, userName string, newRole string) error {
-	shouldSend, err := m.prefManager.CheckUserNotificationPreferences(userID, string(types.ActivityCategory), "team-updates")
-	if err != nil {
-		return fmt.Errorf("failed to check notification preferences: %w", err)
-	}
-
-	if !shouldSend {
-		return nil
-	}
-
-	data := UpdateUserRoleData{
-		OrganizationName: organizationName,
-		UserName:         userName,
-		NewRole:          newRole,
-	}
-
-	emailData := EmailData{
-		Subject:     "User Role Updated",
-		Template:    "update_user_role.html",
-		Data:        data,
-		ContentType: "text/html; charset=UTF-8",
-		Category:    string(types.ActivityCategory),
-		Type:        "team-updates",
-	}
-
-	if err := m.SendEmailWithTemplate(userID, emailData); err != nil {
-		log.Printf("Failed to send update user role email: %s", err)
-		return err
-	}
-
-	log.Printf("Update user role email sent successfully")
 	return nil
 }
 

@@ -5,18 +5,11 @@ export interface Permission {
   name: string;
   description: string;
   resource: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string | null;
 }
 
 export interface Role {
   id: string;
   name: string;
-  description: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string | null;
 }
 
 export interface RoleWithPermissions extends Role {
@@ -72,12 +65,12 @@ export interface OrganizationUsers {
   id: string;
   user_id: string;
   organization_id: string;
-  role_id: string;
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
-  role: RoleWithPermissions;
   user: User;
+  roles: string[];
+  permissions: string[];
 }
 
 export interface UpdateOrganizationDetailsRequest {
@@ -99,5 +92,5 @@ export interface CreateUserRequest {
 export interface UpdateUserRoleRequest {
   user_id: string;
   organization_id: string;
-  role_name: UserTypes;
+  role: string;
 }

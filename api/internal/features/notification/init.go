@@ -153,14 +153,6 @@ func (m *NotificationManager) SendOrganizationNotification(payload NotificationP
 	}
 
 	switch payload.Type {
-	case NotificationPayloadTypeUpdateUserRole:
-		if data, ok := payload.Data.(email.UpdateUserRoleData); ok {
-			err := m.emailManager.SendUpdateUserRoleEmail(payload.UserID, data.OrganizationName, data.UserName, data.NewRole)
-			if err != nil {
-				log.Printf("Failed to send update user role email: %s", err)
-			}
-			m.sendWebhookNotification(payload.UserID, fmt.Sprintf("User role updated in organization %s", data.OrganizationName))
-		}
 	case NotificationPayloadTypeAddUserToOrganization:
 		if data, ok := payload.Data.(AddUserToOrganizationData); ok {
 			err := m.emailManager.SendAddUserToOrganizationEmail(payload.UserID, email.AddUserToOrganizationData{

@@ -9,6 +9,7 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// Deprecated: Use SupertokensGenerateVerificationToken instead
 func (s *AuthService) GenerateVerificationToken(userID string) (string, error) {
 	s.logger.Log(logger.Info, "Generating verification token for user", userID)
 	token := uuid.New().String()
@@ -24,6 +25,7 @@ func (s *AuthService) GenerateVerificationToken(userID string) (string, error) {
 	return token, nil
 }
 
+// Deprecated: Use SupertokensVerifyToken instead
 func (s *AuthService) VerifyToken(token string) (string, error) {
 	if token == "" {
 		return "", errors.New("verification token is required")
@@ -57,6 +59,7 @@ func (s *AuthService) VerifyToken(token string) (string, error) {
 	return userID, nil
 }
 
+// Deprecated: Use SupertokensMarkEmailAsVerified instead
 func (s *AuthService) MarkEmailAsVerified(userID string) error {
 	s.logger.Log(logger.Info, "Marking email as verified for user", userID)
 	err := s.storage.UpdateUserEmailVerification(userID, true)
@@ -69,6 +72,7 @@ func (s *AuthService) MarkEmailAsVerified(userID string) error {
 	return nil
 }
 
+// Deprecated: Use SupertokensGetUserByID instead
 func (s *AuthService) GetUserByID(userID string) (*shared_types.User, error) {
 	s.logger.Log(logger.Info, "Getting user by ID", userID)
 	user, err := s.storage.FindUserByID(userID)

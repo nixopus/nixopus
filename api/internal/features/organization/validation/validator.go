@@ -2,11 +2,13 @@ package validation
 
 import (
 	"encoding/json"
+	"io"
+	"regexp"
+	"unicode/utf8"
+
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
-	"io"
-	"unicode/utf8"
 )
 
 const (
@@ -76,6 +78,12 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return v.validateAddUser(*r)
 	case *types.RemoveUserFromOrganizationRequest:
 		return v.validateRemoveUser(*r)
+	case *types.InviteSendRequest:
+		return v.validateInviteSend(*r)
+	case *types.InviteResendRequest:
+		return v.validateInviteResend(*r)
+	case *types.UpdateUserRoleRequest:
+		return v.validateUpdateUserRole(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}
@@ -163,7 +171,7 @@ func (v *Validator) validateAddUser(req types.AddUserToOrganizationRequest) erro
 		return types.ErrOrganizationNotFound
 	}
 
-	return v.ValidateID(req.RoleId, types.ErrMissingRoleID)
+	return nil
 }
 
 // validateRemoveUser validates a RemoveUserFromOrganizationRequest object.
@@ -188,6 +196,62 @@ func (v *Validator) validateRemoveUser(req types.RemoveUserFromOrganizationReque
 	}
 
 	return v.ValidateID(req.UserID, types.ErrMissingUserID)
+}
+
+func (v *Validator) ValidateEmail(email string) error {
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	if !emailRegex.MatchString(email) {
+		return types.ErrInvalidEmail
+	}
+	return nil
+}
+
+func (v *Validator) validateInviteSend(req types.InviteSendRequest) error {
+	if err := v.ValidateEmail(req.Email); err != nil {
+		return err
+	}
+	if req.OrganizationID == "" {
+		return types.ErrMissingOrganizationID
+	}
+	if req.Role == "" {
+		return types.ErrMissingRoleID
+	}
+	return nil
+}
+
+func (v *Validator) validateInviteResend(req types.InviteResendRequest) error {
+	if err := v.ValidateEmail(req.Email); err != nil {
+		return err
+	}
+	if req.OrganizationID == "" {
+		return types.ErrMissingOrganizationID
+	}
+	if req.Role == "" {
+		return types.ErrMissingRoleID
+	}
+	return nil
+}
+
+func (v *Validator) validateUpdateUserRole(req types.UpdateUserRoleRequest) error {
+	if err := v.ValidateID(req.OrganizationID, types.ErrMissingOrganizationID); err != nil {
+		return err
+	}
+	if err := v.ValidateID(req.UserID, types.ErrMissingUserID); err != nil {
+		return err
+	}
+	if req.Role == "" {
+		return types.ErrMissingRoleID
+	}
+
+	organization, err := v.storage.GetOrganization(req.OrganizationID)
+	if err != nil {
+		return err
+	}
+	if organization == nil {
+		return types.ErrOrganizationNotFound
+	}
+
+	return nil
 }
 
 func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decoded interface{}) error {
