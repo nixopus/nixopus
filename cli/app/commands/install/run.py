@@ -82,6 +82,7 @@ DEFAULTS = {
     "view_port": _config.get_yaml_value(VIEW_PORT),
     "api_port": _config.get_yaml_value(API_PORT),
     "docker_port": _config.get_yaml_value(DOCKER_PORT),
+    "supertokens_api_port": 3567,
 }
 
 
@@ -114,7 +115,7 @@ class Install:
         self.main_task = None
         self._validate_domains()
         self._validate_repo()
-        
+
         # Log when using custom repository/branch and staging compose file
         if self._is_custom_repo_or_branch():
             if self.logger:
@@ -126,13 +127,13 @@ class Install:
             return self.repo
         if key == "branch_name" and self.branch is not None:
             return self.branch
-            
+
         # Override compose_file_path to use docker-compose-staging.yml when custom repo/branch is provided
         if key == "compose_file_path" and self._is_custom_repo_or_branch():
             # Get the base directory and replace docker-compose.yml with docker-compose-staging.yml
             default_compose_path = _config.get_config_value(key, self._user_config, DEFAULTS)
             return default_compose_path.replace("docker-compose.yml", "docker-compose-staging.yml")
-            
+
         try:
             return _config.get_config_value(key, self._user_config, DEFAULTS)
         except ValueError:
@@ -163,11 +164,11 @@ class Install:
         """Check if custom repository or branch is provided (different from defaults)"""
         default_repo = _config.get_yaml_value(DEFAULT_REPO)  # "https://github.com/raghavyuva/nixopus"
         default_branch = _config.get_yaml_value(DEFAULT_BRANCH)  # "master"
-        
+
         # Check if either repo or branch differs from defaults
         repo_differs = self.repo is not None and self.repo != default_repo
         branch_differs = self.branch is not None and self.branch != default_branch
-        
+
         return repo_differs or branch_differs
 
     def run(self):
@@ -424,6 +425,7 @@ class Install:
         view_host = self.view_domain if secure else f"{host_ip}:{self._get_config('view_port')}"
         protocol = "https" if secure else "http"
         ws_protocol = "wss" if secure else "ws"
+        super_tokens_api_port = self._get_config("services.api.env.SUPERTOKENS_API_PORT") or 3567
         key_map = {
             "ALLOWED_ORIGIN": f"{protocol}://{view_host}",
             "SSH_HOST": host_ip,
@@ -431,6 +433,12 @@ class Install:
             "WEBSOCKET_URL": f"{ws_protocol}://{api_host}/ws",
             "API_URL": f"{protocol}://{api_host}/api",
             "WEBHOOK_URL": f"{protocol}://{api_host}/api/v1/webhook",
+            "NEXT_PUBLIC_API_URL": f"{protocol}://{api_host}/api",
+            "NEXT_PUBLIC_WEBSITE_DOMAIN": f"{protocol}://{view_host}",
+            "SUPERTOKENS_API_KEY": "NixopusSuperTokensAPIKey",
+            "SUPERTOKENS_API_DOMAIN": f"{protocol}://{api_host}/api",
+            "SUPERTOKENS_WEBSITE_DOMAIN": f"{protocol}://{view_host}",
+            "SUPERTOKENS_CONNECTION_URI": f"{protocol}://{api_host}:{super_tokens_api_port}/api",
         }
 
         for key, value in key_map.items():
