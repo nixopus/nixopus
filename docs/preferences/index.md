@@ -23,6 +23,7 @@ Nixopus speaks your language! We currently support:
 - Spanish
 - French
 - Kannada
+- Malayalam
 
 You can switch languages anytime in the settings. We're working on adding more languages to make Nixopus accessible to everyone around the world.
 
