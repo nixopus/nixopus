@@ -1,3 +1,4 @@
+import ipaddress
 import json
 import os
 import re
@@ -439,6 +440,14 @@ class Install:
         self.logger.info("If you have any questions, please visit the community forum at https://discord.gg/skdcq39Wpv")
         self.logger.highlight("See you in the community!")
 
+    def _get_supertokens_connection_uri(self, protocol: str, api_host: str, supertokens_api_port: int):
+        protocol = protocol.replace("https", "http")
+        try:
+            ipaddress.ip_address(api_host)
+            return f"{protocol}://{api_host}"
+        except ValueError:
+            return f"{protocol}://{api_host}:{supertokens_api_port}"
+
     def _update_environment_variables(self, env_values: dict) -> dict:
         updated_env = env_values.copy()
         host_ip = HostInformation.get_public_ip()
@@ -461,7 +470,8 @@ class Install:
             "SUPERTOKENS_API_KEY": "NixopusSuperTokensAPIKey",
             "SUPERTOKENS_API_DOMAIN": f"{protocol}://{api_host}/api",
             "SUPERTOKENS_WEBSITE_DOMAIN": f"{protocol}://{view_host}",
-            "SUPERTOKENS_CONNECTION_URI": f"{protocol}://{api_host}:{supertokens_api_port}".replace("https", "http"),
+            # TODO: temp fix, remove this once we have a secure connection
+            "SUPERTOKENS_CONNECTION_URI": self._get_supertokens_connection_uri(protocol, api_host, supertokens_api_port),
         }
 
         for key, value in key_map.items():
