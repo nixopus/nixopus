@@ -1,7 +1,7 @@
 import EmailPasswordReact from 'supertokens-auth-react/recipe/emailpassword'
 import PasswordlessReact from 'supertokens-auth-react/recipe/passwordless'
 import SessionReact from 'supertokens-auth-react/recipe/session'
-import { appInfo } from './appInfo'
+import { getAppInfo } from './appInfo'
 import { useRouter } from "next/navigation";
 import { SuperTokensConfig } from 'supertokens-auth-react/lib/build/types'
 
@@ -16,7 +16,9 @@ export function setRouter(
   routerInfo.pathName = pathName;
 }
 
-export const frontendConfig = (): SuperTokensConfig => {
+export const frontendConfig = async (): Promise<SuperTokensConfig> => {
+  const appInfo = await getAppInfo();
+  
   return {
     appInfo,
     recipeList: [
