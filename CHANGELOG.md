@@ -1,3 +1,12 @@
+# [0.1.0-alpha.33](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.32...v0.1.0-alpha.33) (2025-10-11)
+
+
+### Bug Fixes
+
+* env config for psql setup with supertokens ([#483](https://github.com/raghavyuva/nixopus/issues/483)) ([5e8db05](https://github.com/raghavyuva/nixopus/commit/5e8db05b8c4b20b729952a79f6c1edbff32bf6db))
+
+
+
 # [0.1.0-alpha.32](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.31...v0.1.0-alpha.32) (2025-10-10)
 
 
