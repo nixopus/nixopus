@@ -293,14 +293,20 @@ class Install:
     def _create_env_files(self):
         api_env_file = self._get_config("api_env_file_path")
         view_env_file = self._get_config("view_env_file_path")
+
+        full_source_path = self._get_config("full_source_path")
+        combined_env_file = os.path.join(full_source_path, ".env")
         FileManager.create_directory(FileManager.get_directory_path(api_env_file), logger=self.logger)
         FileManager.create_directory(FileManager.get_directory_path(view_env_file), logger=self.logger)
+        FileManager.create_directory(FileManager.get_directory_path(combined_env_file), logger=self.logger)
+
         services = [
             ("api", "services.api.env", api_env_file),
             ("view", "services.view.env", view_env_file),
         ]
         env_manager = BaseEnvironmentManager(self.logger)
 
+        # individual service env files
         for i, (service_name, service_key, env_file) in enumerate(services):
             env_values = _config.get_service_env_values(service_key)
             updated_env_values = self._update_environment_variables(env_values)
@@ -311,6 +317,22 @@ class Install:
             if not file_perm_success:
                 raise Exception(f"{env_file_permissions_failed} {service_name}: {file_perm_error}")
             self.logger.debug(created_env_file.format(service_name=service_name, env_file=env_file))
+
+        # combined env file with both API and view variables
+        api_env_values = _config.get_service_env_values("services.api.env")
+        view_env_values = _config.get_service_env_values("services.view.env")
+
+        combined_env_values = {}
+        combined_env_values.update(self._update_environment_variables(api_env_values))
+        combined_env_values.update(self._update_environment_variables(view_env_values))
+        success, error = env_manager.write_env_file(combined_env_file, combined_env_values)
+
+        if not success:
+            raise Exception(f"{env_file_creation_failed} combined: {error}")
+        file_perm_success, file_perm_error = FileManager.set_permissions(combined_env_file, 0o644)
+        if not file_perm_success:
+            raise Exception(f"{env_file_permissions_failed} combined: {file_perm_error}")
+        self.logger.debug(created_env_file.format(service_name="combined", env_file=combined_env_file))
 
     def _setup_proxy_config(self):
         full_source_path = self._get_config("full_source_path")
@@ -439,7 +461,7 @@ class Install:
             "SUPERTOKENS_API_KEY": "NixopusSuperTokensAPIKey",
             "SUPERTOKENS_API_DOMAIN": f"{protocol}://{api_host}/api",
             "SUPERTOKENS_WEBSITE_DOMAIN": f"{protocol}://{view_host}",
-            "SUPERTOKENS_CONNECTION_URI": f"{protocol}://{api_host}:{supertokens_api_port}/api",
+            "SUPERTOKENS_CONNECTION_URI": f"{protocol}://{api_host}:{supertokens_api_port}",
         }
 
         for key, value in key_map.items():

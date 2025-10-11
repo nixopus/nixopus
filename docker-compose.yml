@@ -11,6 +11,7 @@ services:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/api/.env
     environment:
       - HOST_NAME=nixopus-db
+
     volumes:
       - ./logs:/app/logs
       - ${NIXOPUS_HOME:-/etc/nixopus}:/etc/nixopus
@@ -31,6 +32,7 @@ services:
       - POSTGRES_PASSWORD=${PASSWORD}
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_HOST_AUTH_METHOD=trust
+
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
@@ -49,6 +51,8 @@ services:
     build:
       args:
         - NEXT_PUBLIC_PORT=${NEXT_PUBLIC_PORT}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - NEXT_PUBLIC_WEBSITE_DOMAIN=${NEXT_PUBLIC_WEBSITE_DOMAIN}        
     ports:
       - "${NEXT_PUBLIC_PORT:-7443}:${NEXT_PUBLIC_PORT:-7443}"
     restart: unless-stopped
@@ -95,11 +99,11 @@ services:
         "--config",
         "/etc/caddy/Caddyfile",
         "--adapter",
-        "caddyfile"
+        "caddyfile",
       ]
     networks:
       - nixopus-network
-  
+
   supertokens:
     image: registry.supertokens.io/supertokens/supertokens-postgresql:latest
     depends_on:
