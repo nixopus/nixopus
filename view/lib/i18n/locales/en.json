@@ -12,7 +12,9 @@
     "featureNotAvailable": "This feature is not available for your organization",
     "goBack": "Go Back",
     "refreshPage": "Refresh Page",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "enabled": "Enabled",
+    "disabled": "Disabled"
   },
   "containers": {
     "title": "Containers",
@@ -287,7 +289,15 @@
       "messages": {
         "updated": "Feature flag updated successfully",
         "updateFailed": "Failed to update feature flag"
-      }
+      },
+      "searchPlaceholder": "Search features...",
+      "filters": {
+        "all": "All",
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "noResults": "No features found matching your search criteria",
+      "noFeatures": "No features available"
     },
     "account": {
       "title": "Account Information",
