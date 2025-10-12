@@ -1,3 +1,12 @@
+# [0.1.0-alpha.37](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.36...v0.1.0-alpha.37) (2025-10-12)
+
+
+### Bug Fixes
+
+* feature flag ui and feature flag writes missing RBAC permissions ([#493](https://github.com/raghavyuva/nixopus/issues/493)) ([2e1c857](https://github.com/raghavyuva/nixopus/commit/2e1c857231d4587e736a157974585c670e0e09a4))
+
+
+
 # [0.1.0-alpha.36](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.35...v0.1.0-alpha.36) (2025-10-11)
 
 
