@@ -11,7 +11,9 @@
     "featureNotAvailable": "Esta característica no está disponible para tu organización",
     "goBack": "Volver",
     "refreshPage": "Actualizar página",
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "enabled": "Habilitado",
+    "disabled": "Deshabilitado"
   },
   "containers": {
     "title": "Contenedores",
@@ -286,7 +288,15 @@
       "messages": {
         "updated": "Característica actualizada exitosamente",
         "updateFailed": "Error al actualizar la característica"
-      }
+      },
+      "searchPlaceholder": "Buscar características...",
+      "filters": {
+        "all": "Todas",
+        "enabled": "Habilitadas",
+        "disabled": "Deshabilitadas"
+      },
+      "noResults": "No se encontraron características que coincidan con tu búsqueda",
+      "noFeatures": "No hay características disponibles"
     },
     "account": {
       "title": "Información de la Cuenta",
