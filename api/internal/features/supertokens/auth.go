@@ -42,6 +42,7 @@ var (
 		"container:create", "container:read", "container:update", "container:delete",
 		"audit:create", "audit:read", "audit:update", "audit:delete",
 		"terminal:create", "terminal:read", "terminal:update", "terminal:delete",
+		"feature_flags:read", "feature_flags:update",
 		"dashboard:read",
 	}
 
@@ -54,11 +55,12 @@ var (
 		"notification:read",
 		"file-manager:read",
 		"deploy:read",
+		"feature_flags:read",
 		"dashboard:read",
 	}
 
 	viewerPermissions = []string{
-		"user:read", "organization:read", "container:read", "audit:read", "domain:read", "notification:read", "file-manager:read", "deploy:read", "dashboard:read",
+		"user:read", "organization:read", "container:read", "audit:read", "domain:read", "notification:read", "file-manager:read", "deploy:read", "feature_flags:read", "dashboard:read",
 	}
 )
 

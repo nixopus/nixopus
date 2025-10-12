@@ -12,7 +12,9 @@
     "featureNotAvailable": "Cette caractéristique n'est pas disponible pour votre organisation",
     "goBack": "Retour",
     "refreshPage": "Actualiser la page",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "enabled": "Activé",
+    "disabled": "Désactivé"
   },
   "containers": {
     "title": "Conteneurs",
@@ -287,7 +289,15 @@
       "messages": {
         "updated": "Caractéristique mise à jour avec succès",
         "updateFailed": "Échec de la mise à jour de la caractéristique"
-      }
+      },
+      "searchPlaceholder": "Rechercher des caractéristiques...",
+      "filters": {
+        "all": "Toutes",
+        "enabled": "Activées",
+        "disabled": "Désactivées"
+      },
+      "noResults": "Aucune caractéristique trouvée correspondant à votre recherche",
+      "noFeatures": "Aucune caractéristique disponible"
     },
     "account": {
       "title": "Informations du Compte",
