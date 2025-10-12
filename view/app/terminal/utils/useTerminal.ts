@@ -160,6 +160,32 @@ export const useTerminal = (
             if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'j') {
               return false;
             }
+
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c') {
+              if (event.shiftKey) {
+                sendJsonMessage({
+                  action: 'terminal',
+                  data: { value: CTRL_C, terminalId }
+                });
+                return false;
+              }
+              const selection = term.getSelection();
+              if (selection) {
+                navigator.clipboard.writeText(selection);
+              }
+              return false;
+            }
+
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v') {
+              navigator.clipboard.readText().then((text) => {
+                sendJsonMessage({
+                  action: 'terminal',
+                  data: { value: text, terminalId }
+                });
+              });
+              return false;
+            }
+
             return true;
           });
 
