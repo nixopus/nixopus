@@ -193,7 +193,9 @@ export default function ContainersPage() {
         {totalCount > 0 && (
           <div className="mt-4 flex items-center justify-between flex-wrap gap-2">
             <TypographyMuted>{totalCount} containers</TypographyMuted>
-            <PaginationWrapper currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            {totalPages > 1 && (
+              <PaginationWrapper currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            )}
           </div>
         )}
         <AnyPermissionGuard
