@@ -18,7 +18,8 @@ export type Resource =
   | 'github-connector'
   | 'container'
   | 'terminal'
-  | 'update';
+  | 'update'
+  | 'extensions';
 
 export type Action = 'create' | 'read' | 'update' | 'delete';
 

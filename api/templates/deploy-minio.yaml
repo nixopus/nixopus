@@ -1,0 +1,99 @@
+metadata:
+  id: "deploy-minio"
+  name: "MinIO"
+  description: "Minio is a high-performance, S3-compatible object storage system designed for private cloud and AI/ML workloads"
+  author: "Nixopus Team"
+  icon: "🗄️"
+  category: "Storage"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for MinIO"
+    default: "minio/minio"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the MinIO container"
+    default: "minio"
+    is_required: true
+
+  api_port:
+    type: "integer"
+    description: "Host port to expose MinIO API"
+    default: 9000
+    is_required: true
+
+  console_port:
+    type: "integer"
+    description: "Host port to expose MinIO Console"
+    default: 9001
+    is_required: true
+
+  access_key:
+    type: "string"
+    description: "MINIO_ROOT_USER"
+    default: "minioadmin"
+    is_required: true
+
+  secret_key:
+    type: "string"
+    description: "MINIO_ROOT_PASSWORD"
+    default: "minioadmin"
+    is_required: true
+
+  default_buckets:
+    type: "string"
+    description: "Comma-separated list of buckets to create (optional, official image ignores this)"
+    default: ""
+    is_required: false
+
+  volume_name:
+    type: "string"
+    description: "Named Docker volume for MinIO data"
+    default: "minio-data"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull MinIO image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run MinIO container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ api_port }}:9000,{{ console_port }}:9001"
+        restart: "unless-stopped"
+        env:
+          MINIO_ROOT_USER: "{{ access_key }}"
+          MINIO_ROOT_PASSWORD: "{{ secret_key }}"
+        volumes:
+          - "{{ volume_name }}:/data"
+        cmd: "server /data --console-address :9001"
+      timeout: 180
+
+  validate:
+    - name: "Check MinIO liveness"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 60); do curl -fsS --connect-timeout 2 -m 5 http://localhost:{{ api_port }}/minio/health/live >/dev/null && exit 0; sleep 3; done; exit 1'"
+      timeout: 180

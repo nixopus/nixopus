@@ -1,0 +1,73 @@
+metadata:
+  id: "deploy-uptime-kuma"
+  name: "Uptime Kuma"
+  description: "Uptime Kuma is a self-hosted monitoring tool"
+  author: "Nixopus Team"
+  icon: "🕒"
+  category: "Monitoring"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Uptime Kuma"
+    default: "louislam/uptime-kuma"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "1"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Uptime Kuma container"
+    default: "uptime-kuma"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Uptime Kuma"
+    default: 3001
+    is_required: true
+
+  volume_name:
+    type: "string"
+    description: "Named Docker volume for persistent data"
+    default: "uptime-kuma"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Uptime Kuma image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Uptime Kuma container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:3001"
+        restart: "always"
+        volumes:
+          - "{{ volume_name }}:/app/data"
+      timeout: 180
+
+  validate:
+    - name: "Check HTTP response from Uptime Kuma"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 2; done; exit 1'"
+      timeout: 60
+
+

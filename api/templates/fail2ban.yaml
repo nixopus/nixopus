@@ -1,0 +1,77 @@
+metadata:
+  id: "fail2ban-ssh"
+  name: "Fail2ban SSH Protection"
+  description: "Protects SSH from brute-force attacks using Fail2ban with basic configuration."
+  author: "Nixopus Team"
+  icon: "🔒"
+  category: "Security"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  ssh_port:
+    type: "integer"
+    description: "SSH port to monitor"
+    default: 22
+    is_required: true
+  
+  max_retry:
+    type: "integer"
+    description: "Maximum SSH login attempts before ban"
+    default: 5
+    is_required: true
+  
+  ban_time:
+    type: "string"
+    description: "Ban duration (e.g., 10m, 1h, 1d)"
+    default: "1h"
+    is_required: true
+
+execution:
+  install:
+    - name: "Install fail2ban package"
+      type: "package"
+      properties:
+        name: "fail2ban"
+        action: "install"
+    
+    - name: "Create SSH jail configuration"
+      type: "file"
+      properties:
+        action: "create"
+        dest: "/etc/fail2ban/jail.local"
+        content: |
+          [DEFAULT]
+          ignoreip = 127.0.0.1/8 ::1
+          
+          [sshd]
+          enabled = true
+          port = {{ ssh_port }}
+          filter = sshd
+          logpath = /var/log/auth.log
+          maxretry = {{ max_retry }}
+          bantime = {{ ban_time }}
+        mode: "0644"
+        owner: "root"
+        group: "root"
+    
+    - name: "Start fail2ban service"
+      type: "service"
+      properties:
+        name: "fail2ban"
+        action: "start"
+        state: "started"
+
+  validate:
+    - name: "Verify fail2ban service is running"
+      type: "command"
+      properties:
+        cmd: "systemctl is-active fail2ban"
+        timeout: 10
+    
+    - name: "Check SSH jail status"
+      type: "command"
+      properties:
+        cmd: "fail2ban-client status sshd"
+        timeout: 30

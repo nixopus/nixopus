@@ -1,0 +1,118 @@
+metadata:
+  id: "deploy-speedtest-tracker"
+  name: "Speedtest Tracker"
+  description: "Speedtest Tracker is a self-hosted application for tracking internet speed test results over time. It provides detailed analytics, historical data, and automated speed testing with support for multiple databases and SSL certificates."
+  author: "Nixopus Team"
+  icon: "📡"
+  category: "Monitoring"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Speedtest Tracker"
+    default: "lscr.io/linuxserver/speedtest-tracker"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Speedtest Tracker container"
+    default: "speedtest-tracker"
+    is_required: true
+
+  http_port:
+    type: "integer"
+    description: "Host port to expose HTTP interface"
+    default: 8080
+    is_required: true
+
+  https_port:
+    type: "integer"
+    description: "Host port to expose HTTPS interface"
+    default: 8443
+    is_required: true
+
+  container_http_port:
+    type: "integer"
+    description: "Container port for HTTP interface"
+    default: 80
+    is_required: true
+
+  container_https_port:
+    type: "integer"
+    description: "Container port for HTTPS interface"
+    default: 443
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for the container user"
+    default: 1000
+    is_required: true
+
+  pgid:
+    type: "integer"
+    description: "Group ID for the container user"
+    default: 1000
+    is_required: true
+
+  app_key:
+    type: "string"
+    description: "Application key for encryption (generate with: echo -n 'base64:'; openssl rand -base64 32)"
+    default: ""
+    is_required: true
+
+  db_connection:
+    type: "string"
+    description: "Database connection type (sqlite, mysql, pgsql)"
+    default: "sqlite"
+    is_required: true
+
+  data_volume_name:
+    type: "string"
+    description: "Named Docker volume for Speedtest Tracker data and configuration"
+    default: "speedtest-tracker-data"
+    is_required: true
+
+  ssl_keys_volume_name:
+    type: "string"
+    description: "Named Docker volume for custom SSL certificates (optional)"
+    default: "speedtest-tracker-ssl"
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull Speedtest Tracker image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Speedtest Tracker container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ http_port }}:{{ container_http_port }},{{ https_port }}:{{ container_https_port }}"
+        restart: "unless-stopped"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          APP_KEY: "{{ app_key }}"
+          DB_CONNECTION: "{{ db_connection }}"
+        volumes:
+          - "{{ data_volume_name }}:/config"
+          - "{{ ssl_keys_volume_name }}:/config/keys"
+      timeout: 300

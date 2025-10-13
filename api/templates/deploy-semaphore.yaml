@@ -1,0 +1,119 @@
+metadata:
+  id: "deploy-semaphore"
+  name: "Semaphore"
+  description: "Semaphore is a modern CI/CD platform with an intuitive interface built for DevOps teams. It supports Ansible, Terraform, OpenTofu, Bash, PowerShell, Python, and Terragrunt, allowing you to effortlessly manage tasks with a modern, user-friendly interface."
+  author: "Nixopus Team"
+  icon: "🚦"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Semaphore"
+    default: "public.ecr.aws/semaphore/pro/server"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "v2.16.18"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Semaphore container"
+    default: "semaphore"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Semaphore"
+    default: 3000
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Semaphore"
+    default: 3000
+    is_required: true
+
+  db_dialect:
+    type: "string"
+    description: "Database dialect (sqlite, mysql, postgres)"
+    default: "sqlite"
+    is_required: true
+
+  admin_username:
+    type: "string"
+    description: "Admin username"
+    default: "admin"
+    is_required: true
+
+  admin_password:
+    type: "string"
+    description: "Admin password"
+    default: "changeme"
+    is_required: true
+
+  admin_name:
+    type: "string"
+    description: "Admin display name"
+    default: "Admin"
+    is_required: true
+
+  admin_email:
+    type: "string"
+    description: "Admin email address"
+    default: "admin@localhost"
+    is_required: true
+
+  data_volume_name:
+    type: "string"
+    description: "Named Docker volume for Semaphore data persistence"
+    default: "semaphore-data"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Semaphore image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Semaphore container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        restart: "unless-stopped"
+        env:
+          SEMAPHORE_DB_DIALECT: "{{ db_dialect }}"
+          SEMAPHORE_ADMIN: "{{ admin_username }}"
+          SEMAPHORE_ADMIN_PASSWORD: "{{ admin_password }}"
+          SEMAPHORE_ADMIN_NAME: "{{ admin_name }}"
+          SEMAPHORE_ADMIN_EMAIL: "{{ admin_email }}"
+        volumes:
+          - "{{ data_volume_name }}:/var/lib/semaphore"
+      timeout: 300
+
+  validate:
+    - name: "Check Semaphore HTTP response"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 60); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 5; done; exit 1'"
+      timeout: 300
+
+    - name: "Verify Semaphore is accessible"
+      type: "command"
+      properties:
+        cmd: "sh -c 'curl -fsS http://localhost:{{ host_port }} | grep -i semaphore >/dev/null && exit 0 || exit 1'"
+      timeout: 30

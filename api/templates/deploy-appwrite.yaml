@@ -1,0 +1,78 @@
+metadata:
+  id: "deploy-appwrite"
+  name: "Appwrite"
+  description: "Appwrite is a secure open-source backend server for web, mobile, and Flutter developers. This template runs the official installer to provision the stack via Docker."
+  author: "Nixopus Team"
+  icon: "🧩"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Appwrite installer"
+    default: "appwrite/appwrite"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "1.7.4"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Appwrite installer container"
+    default: "appwrite-installer"
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume to persist generated Appwrite configuration (/usr/src/code/appwrite)"
+    default: "appwrite-config"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Appwrite"
+    default: 5555
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Appwrite"
+    default: 80
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Appwrite image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Appwrite installer"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        entrypoint: "install"
+        volumes:
+          - "/var/run/docker.sock:/var/run/docker.sock"
+          - "{{ config_volume_name }}:/usr/src/code/appwrite"
+      timeout: 600
+
+  validate:
+    - name: "Check HTTP response from Appwrite"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 2; done; exit 1'"
+      timeout: 60

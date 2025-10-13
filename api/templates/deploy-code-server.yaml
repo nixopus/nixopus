@@ -1,0 +1,154 @@
+metadata:
+  id: "deploy-code-server"
+  name: "Code Server"
+  description: "Code Server is VS Code running on a remote server, accessible through the browser. It provides a full-featured VS Code experience in your browser with extensions, terminal, and all the features you expect from VS Code."
+  author: "Nixopus Team"
+  icon: "💻"
+  category: "Development"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Code Server"
+    default: "lscr.io/linuxserver/code-server"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Code Server container"
+    default: "code-server"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Code Server"
+    default: 8443
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Code Server"
+    default: 8443
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for the container user"
+    default: 1000
+    is_required: true
+
+  pgid:
+    type: "integer"
+    description: "Group ID for the container user"
+    default: 1000
+    is_required: true
+
+  timezone:
+    type: "string"
+    description: "Timezone for the container"
+    default: "Etc/UTC"
+    is_required: true
+
+  password:
+    type: "string"
+    description: "Password for Code Server access (optional)"
+    default: ""
+    is_required: false
+
+  hashed_password:
+    type: "string"
+    description: "Hashed password for Code Server access (optional)"
+    default: ""
+    is_required: false
+
+  sudo_password:
+    type: "string"
+    description: "Sudo password for the container user (optional)"
+    default: ""
+    is_required: false
+
+  sudo_password_hash:
+    type: "string"
+    description: "Hashed sudo password for the container user (optional)"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Proxy domain for Code Server (optional)"
+    default: ""
+    is_required: false
+
+  default_workspace:
+    type: "string"
+    description: "Default workspace directory"
+    default: "/config/workspace"
+    is_required: true
+
+  pwa_appname:
+    type: "string"
+    description: "PWA application name (optional)"
+    default: "code-server"
+    is_required: false
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Code Server configuration and data"
+    default: "code-server-config"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Code Server image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Code Server container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        restart: "unless-stopped"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          PASSWORD: "{{ password }}"
+          HASHED_PASSWORD: "{{ hashed_password }}"
+          SUDO_PASSWORD: "{{ sudo_password }}"
+          SUDO_PASSWORD_HASH: "{{ sudo_password_hash }}"
+          PROXY_DOMAIN: "{{ proxy_domain }}"
+          DEFAULT_WORKSPACE: "{{ default_workspace }}"
+          PWA_APPNAME: "{{ pwa_appname }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+      timeout: 300
+
+  validate:
+    - name: "Check Code Server HTTP response"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 60); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 5; done; exit 1'"
+      timeout: 300
+
+    - name: "Verify Code Server is accessible"
+      type: "command"
+      properties:
+        cmd: "sh -c 'curl -fsS http://localhost:{{ host_port }} | grep -i \"code-server\" >/dev/null && exit 0 || exit 1'"
+      timeout: 30

@@ -1,0 +1,133 @@
+metadata:
+  id: "deploy-firefly-iii"
+  name: "Firefly III"
+  description: "Firefly III is a free and open-source personal finance manager. It helps you keep track of expenses, income, budgets, and everything in between. It supports credit cards, has an envelope budgeting system, categories, and much more."
+  author: "Nixopus Team"
+  icon: "🔥"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Firefly III"
+    default: "fireflyiii/core"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Firefly III container"
+    default: "firefly-iii"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Firefly III"
+    default: 80
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Firefly III"
+    default: 8080
+    is_required: true
+
+  app_key:
+    type: "string"
+    description: "Application key (32 character random string)"
+    default: "CHANGEME_32_CHARS"
+    is_required: true
+
+  db_connection:
+    type: "string"
+    description: "Database connection type"
+    default: "mysql"
+    is_required: true
+
+  db_host:
+    type: "string"
+    description: "Database host (use 'host.docker.internal' for host machine, or IP address for Linux)"
+    default: "host.docker.internal"
+    is_required: true
+
+  db_port:
+    type: "integer"
+    description: "Database port"
+    default: 3306
+    is_required: true
+
+  db_database:
+    type: "string"
+    description: "Database name"
+    default: "firefly"
+    is_required: true
+
+  db_username:
+    type: "string"
+    description: "Database username"
+    default: "firefly"
+    is_required: true
+
+  db_password:
+    type: "string"
+    description: "Database password"
+    default: "firefly"
+    is_required: true
+
+  upload_volume_name:
+    type: "string"
+    description: "Named Docker volume for Firefly III uploads (will be created automatically)"
+    default: "firefly_iii_upload"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Firefly III image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Firefly III container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        restart: "unless-stopped"
+        env:
+          APP_KEY: "{{ app_key }}"
+          DB_CONNECTION: "{{ db_connection }}"
+          DB_HOST: "{{ db_host }}"
+          DB_PORT: "{{ db_port }}"
+          DB_DATABASE: "{{ db_database }}"
+          DB_USERNAME: "{{ db_username }}"
+          DB_PASSWORD: "{{ db_password }}"
+        volumes:
+          - "{{ upload_volume_name }}:/var/www/html/storage/upload"
+      timeout: 300
+
+  validate:
+    - name: "Check Firefly III HTTP response"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 60); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 5; done; exit 1'"
+      timeout: 300
+
+    - name: "Verify Firefly III is accessible"
+      type: "command"
+      properties:
+        cmd: "sh -c 'curl -fsS http://localhost:{{ host_port }} | grep -i firefly >/dev/null && exit 0 || exit 1'"
+      timeout: 30

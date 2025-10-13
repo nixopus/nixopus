@@ -1,0 +1,101 @@
+metadata:
+  id: "deploy-blocky"
+  name: "Blocky"
+  description: "Blocky is a DNS proxy and ad-blocker for the local network written in Go. It provides fast DNS resolution with built-in ad-blocking capabilities, customizable filtering rules, and a web interface for monitoring and configuration."
+  author: "Nixopus Team"
+  icon: "🛡️"
+  category: "Network"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Blocky"
+    default: "spx01/blocky"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Blocky container"
+    default: "blocky"
+    is_required: true
+
+  web_port:
+    type: "integer"
+    description: "Host port to expose Blocky web interface"
+    default: 4000
+    is_required: true
+
+  dns_port:
+    type: "integer"
+    description: "Host port to expose DNS service (UDP)"
+    default: 53
+    is_required: true
+
+  container_web_port:
+    type: "integer"
+    description: "Container port for web interface"
+    default: 4000
+    is_required: true
+
+  container_dns_port:
+    type: "integer"
+    description: "Container port for DNS service"
+    default: 53
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Blocky configuration file"
+    default: "blocky-config"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Blocky image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Blocky container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ web_port }}:{{ container_web_port }},{{ dns_port }}:{{ container_dns_port }}/udp"
+        restart: "unless-stopped"
+        volumes:
+          - "{{ config_volume_name }}:/app/config.yml"
+      timeout: 180
+
+  validate:
+    - name: "Check Blocky web interface HTTP response"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ web_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 2; done; exit 1'"
+      timeout: 60
+
+    - name: "Verify Blocky web interface is accessible"
+      type: "command"
+      properties:
+        cmd: "sh -c 'curl -fsS http://localhost:{{ web_port }} | grep -i blocky >/dev/null && exit 0 || exit 1'"
+      timeout: 30
+
+    - name: "Test DNS resolution"
+      type: "command"
+      properties:
+        cmd: "sh -c 'nslookup google.com 127.0.0.1 -port={{ dns_port }} >/dev/null 2>&1 && exit 0 || exit 1'"
+      timeout: 30
