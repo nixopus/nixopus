@@ -1,3 +1,36 @@
+# [0.1.0-alpha.38](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.37...v0.1.0-alpha.38) (2025-10-15)
+
+
+### Bug Fixes
+
+* extension step execution ([3b03319](https://github.com/raghavyuva/nixopus/commit/3b033195f4c856a3c050e8e5b7c8c79c329f1a5e))
+* overflow of descriptions with readmore option ([dab77db](https://github.com/raghavyuva/nixopus/commit/dab77db2868edd1eb49d81489e01579c5c61e2c2))
+* rbac permissions according to supertokens changes ([4c3db53](https://github.com/raghavyuva/nixopus/commit/4c3db539e37f497c96943c1b79e4d8b024cacca4))
+* search and sorting in extensions ([9558b28](https://github.com/raghavyuva/nixopus/commit/9558b28fd8715307a2358784c21cd33fb0256aef))
+* wrap extension page and sidebar in feature flag and rbac guards ([340ff69](https://github.com/raghavyuva/nixopus/commit/340ff696dec012a925603c92135e2530a9211da7))
+
+
+### Features
+
+* add button for install / run in extension detail page ([e88d011](https://github.com/raghavyuva/nixopus/commit/e88d011988c82d79ba60290889a103b6cd605188))
+* add deploy templates ([1bd2fa0](https://github.com/raghavyuva/nixopus/commit/1bd2fa0c034bcdfb8a42db21543c7f2d9496ca01))
+* add migrations for extensions permissions, auditing, feature flags ([5d302ac](https://github.com/raghavyuva/nixopus/commit/5d302ac41128fedf21dbb9f09b5059bda41768a5))
+* add routes for listing extensions ([9a5e87a](https://github.com/raghavyuva/nixopus/commit/9a5e87a51b6b42216f58626a4b7e919fd7639cb4))
+* allow pagination search, sorting and integrate with view ([882c741](https://github.com/raghavyuva/nixopus/commit/882c74159ead7c01c6f4ee379fcc0ee3e264802a))
+* define migration for extensions ([a0c64aa](https://github.com/raghavyuva/nixopus/commit/a0c64aab8bdbba5107f4d3b60fe6ab6c460013b0))
+* display of status colors based on extension running ([9e490dc](https://github.com/raghavyuva/nixopus/commit/9e490dcce6598c72ea4364b1eb7af4d55279699c))
+* enable extension execution with run and cancel apis ([#455](https://github.com/raghavyuva/nixopus/issues/455)) ([9572671](https://github.com/raghavyuva/nixopus/commit/957267176c9804d8066ab6fe03f5d0563f467baa))
+* extension category as badges ([0e5d58d](https://github.com/raghavyuva/nixopus/commit/0e5d58ddf4da2ab678c6aa68786f35b7c6489a5a))
+* extension details ([#470](https://github.com/raghavyuva/nixopus/issues/470)) ([7fcee25](https://github.com/raghavyuva/nixopus/commit/7fcee25eaa17679a5828eb073fc438dafbd2c296))
+* extension discovery and saving to database on api init ([12661f0](https://github.com/raghavyuva/nixopus/commit/12661f0a6e97ea194688035c087597faa4b6cb91))
+* extension forking ([#464](https://github.com/raghavyuva/nixopus/issues/464)) ([76238a7](https://github.com/raghavyuva/nixopus/commit/76238a701835a5df4b8c810f4f21c8103625be70))
+* extensions ui design with dummy data ([798fef9](https://github.com/raghavyuva/nixopus/commit/798fef94b685e4280a872e56b75b5d85927d9e38))
+* log extension execution ([fac665f](https://github.com/raghavyuva/nixopus/commit/fac665f50fdcba7f2335ca573ca58dc72fd72f6e))
+* refactor extension executor ([9c89d61](https://github.com/raghavyuva/nixopus/commit/9c89d6103e1a9df938d0414846987163a9df537c))
+* rename extension permission migration files ([52d3331](https://github.com/raghavyuva/nixopus/commit/52d3331836ffa60dd3890e8c25cedf688d584942))
+
+
+
 # [0.1.0-alpha.37](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.36...v0.1.0-alpha.37) (2025-10-12)
 
 
