@@ -3,7 +3,9 @@ package storage
 import (
 	"context"
 	"fmt"
+	"log"
 
+	"github.com/raghavyuva/nixopus-api/internal/features/extension/loader"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/uptrace/bun"
@@ -43,31 +45,18 @@ func (s *Store) DropTable(ctx context.Context, model interface{}) error {
 
 func (s *Store) Init(ctx context.Context) error {
 	s.DB.RegisterModel((*types.OrganizationUsers)(nil))
+	s.DB.RegisterModel((*types.Extension)(nil))
+	s.DB.RegisterModel((*types.ExtensionVariable)(nil))
+	s.DB.RegisterModel((*types.ExtensionExecution)(nil))
+	s.DB.RegisterModel((*types.ExecutionStep)(nil))
 
-	// tables := []interface{}{
-	// 	(*types.User)(nil),
-	// 	(*types.Role)(nil),
-	// 	(*types.RefreshToken)(nil),
-	// 	(*types.Permission)(nil),
-	// 	(*types.RolePermissions)(nil),
-	// 	(*types.Organization)(nil),
-	// 	(*types.OrganizationUsers)(nil),
-	// 	(*types.SMTPConfigs)(nil),
-	// 	(*types.NotificationPreferences)(nil),
-	// 	(*types.PreferenceItem)(nil),
-	// 	(*types.Domain)(nil),
-	// 	(*types.Server)(nil),
-	// 	(*types.GithubConnector)(nil),
-	// 	(*types.Application)(nil),
-	// 	(*types.ApplicationStatus)(nil),
-	// 	(*types.ApplicationLogs)(nil),
-	// }
-
-	// for _, model := range tables {
-	// 	if err := s.CreateTable(ctx, model); err != nil {
-	// 		return fmt.Errorf("failed to create table for %T: %w", model, err)
-	// 	}
-	// }
+	// Load extensions from templates directory
+	extensionLoader := loader.NewExtensionLoader(s.DB)
+	if err := extensionLoader.LoadExtensionsFromTemplates(ctx); err != nil {
+		log.Printf("Warning: Failed to load extensions from templates: %v", err)
+	} else {
+		log.Println("Extensions loaded successfully from templates")
+	}
 
 	return nil
 }

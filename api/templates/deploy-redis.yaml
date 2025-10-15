@@ -1,0 +1,111 @@
+metadata:
+  id: "deploy-redis"
+  name: "Redis"
+  description: "Redis is an open source, in-memory data structure store, used as a database, cache, and message broker. Redis provides data structures such as strings, hashes, lists, sets, sorted sets with range queries, bitmaps, hyperloglogs, geospatial indexes, and streams."
+  author: "Nixopus Team"
+  icon: "🔴"
+  category: "Database"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Redis"
+    default: "redis"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "7-alpine"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Redis container"
+    default: "redis"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Redis"
+    default: 6379
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Redis"
+    default: 6379
+    is_required: true
+
+  redis_password:
+    type: "string"
+    description: "Redis password for authentication (leave empty for no password)"
+    default: ""
+    is_required: false
+
+  data_volume_name:
+    type: "string"
+    description: "Named Docker volume for Redis data persistence"
+    default: "redis-data"
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Redis configuration files (optional)"
+    default: "redis-config"
+    is_required: false
+
+  maxmemory:
+    type: "string"
+    description: "Maximum memory Redis can use (e.g., '256mb', '1gb')"
+    default: "256mb"
+    is_required: false
+
+  maxmemory_policy:
+    type: "string"
+    description: "Policy for evicting keys when maxmemory is reached"
+    default: "allkeys-lru"
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull Redis image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Redis container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        restart: "unless-stopped"
+        env:
+          REDIS_PASSWORD: "{{ redis_password }}"
+        volumes:
+          - "{{ data_volume_name }}:/data"
+          - "{{ config_volume_name }}:/usr/local/etc/redis"
+        cmd: "redis-server --appendonly yes --maxmemory {{ maxmemory }} --maxmemory-policy {{ maxmemory_policy }}"
+      timeout: 180
+
+  validate:
+    - name: "Check Redis connection"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do docker exec {{ container_name }} redis-cli ping && exit 0; sleep 2; done; exit 1'"
+      timeout: 60
+
+    - name: "Verify Redis is accepting commands"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do docker exec {{ container_name }} redis-cli set test_key test_value && docker exec {{ container_name }} redis-cli get test_key | grep -q test_value && docker exec {{ container_name }} redis-cli del test_key && exit 0; sleep 2; done; exit 1'"
+      timeout: 60

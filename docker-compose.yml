@@ -36,7 +36,7 @@ services:
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
-      - ${NIXOPUS_HOME:-/etc/nixopus}/db:/var/lib/postgresql/data
+      - nixopus-db-data:/var/lib/postgresql/data
     networks:
       - nixopus-network
     healthcheck:
@@ -51,8 +51,6 @@ services:
     build:
       args:
         - NEXT_PUBLIC_PORT=${NEXT_PUBLIC_PORT}
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-        - NEXT_PUBLIC_WEBSITE_DOMAIN=${NEXT_PUBLIC_WEBSITE_DOMAIN}
     ports:
       - "${NEXT_PUBLIC_PORT:-7443}:${NEXT_PUBLIC_PORT:-7443}"
     restart: unless-stopped
@@ -128,3 +126,6 @@ services:
 networks:
   nixopus-network:
     driver: bridge
+
+volumes:
+  nixopus-db-data:

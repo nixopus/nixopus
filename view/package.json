@@ -58,6 +58,7 @@
     "react-redux": "^9.2.0",
     "react-resizable-panels": "^2.1.7",
     "react-use-websocket": "^4.13.0",
+    "yaml": "^2.5.1",
     "recharts": "^2.15.1",
     "redux-persist": "^6.0.0",
     "sonner": "^2.0.1",

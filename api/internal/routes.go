@@ -17,6 +17,7 @@ import (
 	container "github.com/raghavyuva/nixopus-api/internal/features/container/controller"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
 	domain "github.com/raghavyuva/nixopus-api/internal/features/domain/controller"
+	extension "github.com/raghavyuva/nixopus-api/internal/features/extension/controller"
 	feature_flags_controller "github.com/raghavyuva/nixopus-api/internal/features/feature-flags/controller"
 	feature_flags_service "github.com/raghavyuva/nixopus-api/internal/features/feature-flags/service"
 	feature_flags_storage "github.com/raghavyuva/nixopus-api/internal/features/feature-flags/storage"
@@ -266,6 +267,16 @@ func (router *Router) Routes() {
 	})
 	router.ContainerRoutes(containerGroup, containerController)
 
+	extensionController := extension.NewExtensionsController(router.app.Store, router.app.Ctx, l)
+	extensionGroup := fuego.Group(server, apiV1.Path+"/extensions")
+	fuego.Use(extensionGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "extension")
+	})
+	fuego.Use(extensionGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "extension")
+	})
+	router.ExtensionRoutes(extensionGroup, extensionController)
+
 	log.Printf("Server starting on port %s", PORT)
 	log.Printf("Swagger UI available at: http://localhost:%s/swagger/", PORT)
 	server.Run()
@@ -414,6 +425,20 @@ func (router *Router) ContainerRoutes(s *fuego.Server, containerController *cont
 	fuego.Post(s, "/prune/build-cache", containerController.PruneBuildCache)
 	fuego.Post(s, "/prune/images", containerController.PruneImages)
 	fuego.Post(s, "/images", containerController.ListImages)
+}
+
+func (router *Router) ExtensionRoutes(s *fuego.Server, extensionController *extension.ExtensionsController) {
+	fuego.Get(s, "", extensionController.GetExtensions)
+	fuego.Get(s, "/categories", extensionController.GetCategories)
+	fuego.Get(s, "/{id}", extensionController.GetExtension)
+	fuego.Get(s, "/by-extension-id/{extension_id}", extensionController.GetExtensionByExtensionID)
+	fuego.Get(s, "/by-extension-id/{extension_id}/executions", extensionController.ListExecutionsByExtensionID)
+	fuego.Post(s, "/{extension_id}/run", extensionController.RunExtension)
+	fuego.Post(s, "/execution/{execution_id}/cancel", extensionController.CancelExecution)
+	fuego.Get(s, "/execution/{execution_id}", extensionController.GetExecution)
+	fuego.Get(s, "/execution/{execution_id}/logs", extensionController.ListExecutionLogs)
+	fuego.Post(s, "/{extension_id}/fork", extensionController.ForkExtension)
+	fuego.Delete(s, "/{id}", extensionController.DeleteFork)
 }
 
 func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController *organization.OrganizationsController) {
