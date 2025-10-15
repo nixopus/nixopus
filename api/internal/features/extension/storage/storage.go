@@ -216,6 +216,10 @@ func (s *ExtensionStorage) ListExtensions(params types.ExtensionListParams) (*ty
 
 	totalPages := (total + params.PageSize - 1) / params.PageSize
 
+	if len(extensions) == 0 {
+		extensions = make([]types.Extension, 0)
+	}
+
 	return &types.ExtensionListResponse{
 		Extensions: extensions,
 		Total:      total,
