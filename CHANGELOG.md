@@ -1,3 +1,12 @@
+# [0.1.0-alpha.39](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.38...v0.1.0-alpha.39) (2025-10-15)
+
+
+### Bug Fixes
+
+* supertokens connection URI handling for ip addr and domains ([#503](https://github.com/raghavyuva/nixopus/issues/503)) ([9d62c8d](https://github.com/raghavyuva/nixopus/commit/9d62c8d1d3317a0fef008945e09982b0429ad487))
+
+
+
 # [0.1.0-alpha.38](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.37...v0.1.0-alpha.38) (2025-10-15)
 
 
