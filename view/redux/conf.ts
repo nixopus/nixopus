@@ -22,3 +22,8 @@ export async function getWebhookUrl() {
   const { webhookUrl } = await fetchConfig();
   return webhookUrl;
 }
+
+export async function getWebsiteDomain() {
+  const { websiteDomain } = await fetchConfig();
+  return websiteDomain;
+}
