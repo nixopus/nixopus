@@ -82,14 +82,10 @@ func TestGetDomains(t *testing.T) {
 		err = setup.OrgStorage.CreateOrganization(*org2)
 		assert.NoError(t, err)
 
-		adminRole, err := setup.RoleService.GetRoleByName("admin")
-		assert.NoError(t, err)
-
 		orgUser := &shared_types.OrganizationUsers{
 			ID:             uuid.New(),
 			UserID:         user.ID,
 			OrganizationID: org2.ID,
-			RoleID:         adminRole.ID,
 		}
 
 		err = setup.OrgStorage.AddUserToOrganization(*orgUser)

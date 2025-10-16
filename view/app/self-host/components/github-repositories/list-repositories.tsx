@@ -43,13 +43,15 @@ function ListRepositories() {
               />
             ))}
         </div>
-        <div className="mt-8 flex justify-center">
-          <PaginationWrapper
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        </div>
+        {totalPages > 1 && (
+          <div className="mt-8 flex justify-center">
+            <PaginationWrapper
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
       </>
     );
   };

@@ -17,13 +17,16 @@ services:
       SSH_PASSWORD: ${SSH_PASSWORD:-}
       DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
       REDIS_URL: ${REDIS_URL:-redis://localhost:6379}
-      CADDY_ENDPOINT: ${CADDY_ENDPOINT:-http://127.0.0.1:2019}
-      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:7443}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:3000}
       ENV: ${ENV:-development}
       LOGS_PATH: ${LOGS_PATH:-./logs}
       API_VOLUME: ${API_VOLUME:-./configs}
       DOCKER_PORT: ${DOCKER_PORT:-2376}
       APP_VERSION: ${APP_VERSION:-0.1.0-alpha.11}
+      SUPERTOKENS_API_KEY: ${SUPERTOKENS_API_KEY:-NixopusSuperTokensAPIKey}
+      SUPERTOKENS_API_DOMAIN: ${SUPERTOKENS_API_DOMAIN:-http://localhost:3567}
+      SUPERTOKENS_WEBSITE_DOMAIN: ${SUPERTOKENS_WEBSITE_DOMAIN:-http://localhost:3000}
+      SUPERTOKENS_CONNECTION_URI: ${SUPERTOKENS_CONNECTION_URI:-http://localhost:3567}
 
   view:
     env:

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Folder, Home, Package, SettingsIcon, Container } from 'lucide-react';
+import { Folder, Home, Package, SettingsIcon, Container, Puzzle } from 'lucide-react';
 import { NavMain } from '@/components/layout/nav-main';
 import { NavUser } from '@/components/layout/nav-user';
 import { TeamSwitcher } from '@/components/ui/team-switcher';
@@ -26,6 +26,12 @@ const data = {
       url: '/dashboard',
       icon: Home,
       resource: 'dashboard'
+    },
+    {
+      title: 'navigation.extensions',
+      url: '/extensions',
+      icon: Puzzle,
+      resource: 'extensions'
     },
     {
       title: 'navigation.selfHost',
@@ -78,8 +84,12 @@ const data = {
 
 export function AppSidebar({
   toggleAddTeamModal,
+  addTeamModalOpen,
   ...props
-}: React.ComponentProps<typeof Sidebar> & { toggleAddTeamModal?: () => void }) {
+}: React.ComponentProps<typeof Sidebar> & { 
+  toggleAddTeamModal?: () => void;
+  addTeamModalOpen?: boolean;
+}) {
   const { t } = useTranslation();
   const user = useAppSelector((state) => state.auth.user);
   const { isLoading, refetch } = useGetUserOrganizationsQuery();
@@ -90,7 +100,7 @@ export function AppSidebar({
   const { canAccessResource } = useRBAC();
 
   const hasAnyPermission = React.useMemo(() => {
-    const allowedResources = ['dashboard', 'settings'];
+    const allowedResources = ['dashboard', 'settings',"extensions"];
 
     return (resource: string) => {
       if (!user || !activeOrg) return false;
@@ -153,7 +163,11 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher refetch={refetch} />
+        <TeamSwitcher 
+          refetch={refetch} 
+          toggleAddTeamModal={toggleAddTeamModal}
+          addTeamModalOpen={addTeamModalOpen}
+        />
       </SidebarHeader>
       <SidebarContent>
         <NavMain

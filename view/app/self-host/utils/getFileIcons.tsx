@@ -28,7 +28,7 @@ export function getFileIcons(
   const baseProps: IconProps = { className: `${iconSize}` };
 
   if (type === 'folder') {
-    return <Folder {...baseProps} className={`${iconSize} fill-secondary text-secondary`} />;
+    return <Folder {...baseProps} className={`${iconSize} fill-[#58b7e9] text-[#58b7e9] `} />;
   } else {
     switch (ext.toLowerCase()) {
       case 'js':

@@ -9,7 +9,6 @@ import AccountSection from './components/AccountSection';
 import SecuritySection from './components/SecuritySection';
 import { useTranslation } from '@/hooks/use-translation';
 import FeatureFlagsSettings from './components/FeatureFlagsSettings';
-import { RBACGuard } from '@/components/rbac/RBACGuard';
 import { useRBAC } from '@/lib/rbac';
 import PageLayout from '@/components/layout/page-layout';
 
@@ -23,10 +22,8 @@ function Page() {
     email,
     usernameError,
     usernameSuccess,
-    emailSent,
     isLoading: settingsLoading,
     handleUsernameChange,
-    handlePasswordResetRequest,
     setUsername,
     setUsernameError,
     userSettings,
@@ -42,7 +39,6 @@ function Page() {
   } = useGeneralSettings();
 
   const hasFeatureFlagsReadPermission = canAccessResource('feature-flags', 'read');
-  const totalTabs = hasFeatureFlagsReadPermission ? 3 : 2;
 
   return (
     <PageLayout maxWidth="6xl" padding="md" spacing="lg">
@@ -91,11 +87,7 @@ function Page() {
               // handleAutoUpdateChange={handleAutoUpdateChange}
               handleFontUpdate={handleFontUpdate}
             />
-            <SecuritySection
-              emailSent={emailSent}
-              isLoading={settingsLoading}
-              handlePasswordResetRequest={handlePasswordResetRequest}
-            />
+            <SecuritySection />
             {hasFeatureFlagsReadPermission && <FeatureFlagsSettings />}
           </Tabs>
         </div>

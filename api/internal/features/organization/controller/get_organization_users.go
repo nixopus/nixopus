@@ -23,7 +23,7 @@ func (c *OrganizationsController) GetOrganizationUsers(f fuego.ContextWithBody[G
 			Status: http.StatusBadRequest,
 		}
 	}
-	users, err := c.service.GetOrganizationUsers(id)
+	users, err := c.service.GetOrganizationUsersWithRoles(id)
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,

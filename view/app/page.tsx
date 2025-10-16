@@ -13,7 +13,7 @@ export default function Home() {
     if (isInitialized && isAuthenticated) {
       router.push('/dashboard');
     } else {
-      router.push('/login');
+      router.push('/auth');
     }
   }, [isAuthenticated, isInitialized, router]);
 
@@ -23,3 +23,4 @@ export default function Home() {
     </div>
   );
 }
+

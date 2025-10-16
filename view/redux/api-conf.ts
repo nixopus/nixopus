@@ -22,7 +22,6 @@ export enum USERURLS {
   REMOVE_USER_FROM_ORGANIZATION = 'v1/organizations/remove-user',
   UPDATE_USER_ROLE = 'v1/organizations/update-user-role',
   UPDATE_USER_NAME = 'v1/user/name',
-  REQUEST_PASSWORD_RESET_LINK = 'v1/auth/request-password-reset',
   ORGANIZATION_USERS = 'v1/organizations/users',
   CREATE_USER = 'v1/auth/create-user',
   GET_RESOURCES = 'v1/organizations/resources',
@@ -33,7 +32,9 @@ export enum USERURLS {
   UPDATE_AUTO_UPDATE = 'v1/user/settings/auto-update',
   CHECK_FOR_UPDATES = 'v1/update/check',
   PERFORM_UPDATE = 'v1/update',
-  UPDATE_AVATAR = 'v1/user/avatar'
+  UPDATE_AVATAR = 'v1/user/avatar',
+  SEND_INVITE = 'v1/organizations/invite/send',
+  RESEND_INVITE = 'v1/organizations/invite/resend'
 }
 
 export enum USER_NOTIFICATION_SETTINGS {
@@ -124,4 +125,18 @@ export enum IMAGEURLS {
   GET_IMAGES = 'v1/container/images',
   PRUNE_IMAGES = 'v1/container/prune/images',
   PRUNE_BUILD_CACHE = 'v1/container/prune/build-cache'
+}
+
+export enum EXTENSIONURLS {
+  GET_EXTENSIONS = 'v1/extensions',
+  GET_CATEGORIES = 'v1/extensions/categories',
+  GET_EXTENSION = 'v1/extensions/{id}',
+  GET_EXTENSION_BY_ID = 'v1/extensions/by-extension-id/{extension_id}',
+  FORK_EXTENSION = 'v1/extensions/{extension_id}/fork',
+  DELETE_EXTENSION = 'v1/extensions/{id}',
+  RUN_EXTENSION = 'v1/extensions/{extension_id}/run',
+  CANCEL_EXECUTION = 'v1/extensions/execution/{execution_id}/cancel',
+  GET_EXECUTION = 'v1/extensions/execution/{execution_id}',
+  LIST_EXECUTIONS = 'v1/extensions/by-extension-id/{extension_id}/executions',
+  GET_EXECUTION_LOGS = 'v1/extensions/execution/{execution_id}/logs'
 }

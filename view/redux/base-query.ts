@@ -8,6 +8,7 @@ import {
   retry
 } from '@reduxjs/toolkit/query/react';
 import { Mutex } from 'async-mutex';
+import { getAccessToken } from 'supertokens-auth-react/recipe/session';
 
 const mutex = new Mutex();
 const MAX_RETRIES = 1;
@@ -25,8 +26,8 @@ const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryEr
 
   const baseQuery = fetchBaseQuery({
     baseUrl: currentBaseUrl,
-    prepareHeaders: (headers, { getState, endpoint }) => {
-      const token = (getState() as RootState).auth.token;
+    prepareHeaders: async (headers, { getState, endpoint }) => {
+      const token = await getAccessToken();  
       const organizationId =
         (getState() as RootState).user.activeOrganization?.id ||
         (getState() as RootState).auth.user?.organization_users?.[0]?.organization_id;
@@ -67,7 +68,7 @@ export const baseQueryWithReauth: BaseQueryFn<
     if (result.error) {
       if (result.error.status === 401) {
         console.warn('Unauthorized request, logging out');
-        api.dispatch({ type: 'auth/logout' });
+        api.dispatch({ type: 'auth/logoutUser' });
       }
 
       if (result.error.status === 429) {

@@ -1,3 +1,4 @@
+import ipaddress
 import json
 import os
 import re
@@ -29,6 +30,7 @@ from app.utils.config import (
     SSH_FILE_PATH,
     SSH_KEY_SIZE,
     SSH_KEY_TYPE,
+    SUPERTOKENS_API_PORT,
     VIEW_ENV_FILE,
     VIEW_PORT,
     Config,
@@ -82,6 +84,7 @@ DEFAULTS = {
     "view_port": _config.get_yaml_value(VIEW_PORT),
     "api_port": _config.get_yaml_value(API_PORT),
     "docker_port": _config.get_yaml_value(DOCKER_PORT),
+    "supertokens_api_port": _config.get_yaml_value(SUPERTOKENS_API_PORT),
 }
 
 
@@ -114,7 +117,7 @@ class Install:
         self.main_task = None
         self._validate_domains()
         self._validate_repo()
-        
+
         # Log when using custom repository/branch and staging compose file
         if self._is_custom_repo_or_branch():
             if self.logger:
@@ -126,13 +129,13 @@ class Install:
             return self.repo
         if key == "branch_name" and self.branch is not None:
             return self.branch
-            
+
         # Override compose_file_path to use docker-compose-staging.yml when custom repo/branch is provided
         if key == "compose_file_path" and self._is_custom_repo_or_branch():
             # Get the base directory and replace docker-compose.yml with docker-compose-staging.yml
             default_compose_path = _config.get_config_value(key, self._user_config, DEFAULTS)
             return default_compose_path.replace("docker-compose.yml", "docker-compose-staging.yml")
-            
+
         try:
             return _config.get_config_value(key, self._user_config, DEFAULTS)
         except ValueError:
@@ -163,11 +166,11 @@ class Install:
         """Check if custom repository or branch is provided (different from defaults)"""
         default_repo = _config.get_yaml_value(DEFAULT_REPO)  # "https://github.com/raghavyuva/nixopus"
         default_branch = _config.get_yaml_value(DEFAULT_BRANCH)  # "master"
-        
+
         # Check if either repo or branch differs from defaults
         repo_differs = self.repo is not None and self.repo != default_repo
         branch_differs = self.branch is not None and self.branch != default_branch
-        
+
         return repo_differs or branch_differs
 
     def run(self):
@@ -291,14 +294,20 @@ class Install:
     def _create_env_files(self):
         api_env_file = self._get_config("api_env_file_path")
         view_env_file = self._get_config("view_env_file_path")
+
+        full_source_path = self._get_config("full_source_path")
+        combined_env_file = os.path.join(full_source_path, ".env")
         FileManager.create_directory(FileManager.get_directory_path(api_env_file), logger=self.logger)
         FileManager.create_directory(FileManager.get_directory_path(view_env_file), logger=self.logger)
+        FileManager.create_directory(FileManager.get_directory_path(combined_env_file), logger=self.logger)
+
         services = [
             ("api", "services.api.env", api_env_file),
             ("view", "services.view.env", view_env_file),
         ]
         env_manager = BaseEnvironmentManager(self.logger)
 
+        # individual service env files
         for i, (service_name, service_key, env_file) in enumerate(services):
             env_values = _config.get_service_env_values(service_key)
             updated_env_values = self._update_environment_variables(env_values)
@@ -309,6 +318,22 @@ class Install:
             if not file_perm_success:
                 raise Exception(f"{env_file_permissions_failed} {service_name}: {file_perm_error}")
             self.logger.debug(created_env_file.format(service_name=service_name, env_file=env_file))
+
+        # combined env file with both API and view variables
+        api_env_values = _config.get_service_env_values("services.api.env")
+        view_env_values = _config.get_service_env_values("services.view.env")
+
+        combined_env_values = {}
+        combined_env_values.update(self._update_environment_variables(api_env_values))
+        combined_env_values.update(self._update_environment_variables(view_env_values))
+        success, error = env_manager.write_env_file(combined_env_file, combined_env_values)
+
+        if not success:
+            raise Exception(f"{env_file_creation_failed} combined: {error}")
+        file_perm_success, file_perm_error = FileManager.set_permissions(combined_env_file, 0o644)
+        if not file_perm_success:
+            raise Exception(f"{env_file_permissions_failed} combined: {file_perm_error}")
+        self.logger.debug(created_env_file.format(service_name="combined", env_file=combined_env_file))
 
     def _setup_proxy_config(self):
         full_source_path = self._get_config("full_source_path")
@@ -415,6 +440,16 @@ class Install:
         self.logger.info("If you have any questions, please visit the community forum at https://discord.gg/skdcq39Wpv")
         self.logger.highlight("See you in the community!")
 
+    def _get_supertokens_connection_uri(self, protocol: str, api_host: str, supertokens_api_port: int, host_ip: str):
+        protocol = protocol.replace("https", "http")
+        try:
+            ipaddress.ip_address(api_host)
+            # If api_host is an IP, use the host_ip instead, x.y.z.w:supertokens_api_port
+            return f"{protocol}://{host_ip}:{supertokens_api_port}"
+        except ValueError:
+            # If api_host is not IP rather domain, then use domain:supertokens_api_port
+            return f"{protocol}://{api_host}:{supertokens_api_port}"
+
     def _update_environment_variables(self, env_values: dict) -> dict:
         updated_env = env_values.copy()
         host_ip = HostInformation.get_public_ip()
@@ -424,6 +459,7 @@ class Install:
         view_host = self.view_domain if secure else f"{host_ip}:{self._get_config('view_port')}"
         protocol = "https" if secure else "http"
         ws_protocol = "wss" if secure else "ws"
+        supertokens_api_port = self._get_config("supertokens_api_port") or 3567
         key_map = {
             "ALLOWED_ORIGIN": f"{protocol}://{view_host}",
             "SSH_HOST": host_ip,
@@ -431,6 +467,14 @@ class Install:
             "WEBSOCKET_URL": f"{ws_protocol}://{api_host}/ws",
             "API_URL": f"{protocol}://{api_host}/api",
             "WEBHOOK_URL": f"{protocol}://{api_host}/api/v1/webhook",
+            "VIEW_DOMAIN": f"{protocol}://{view_host}",
+            "SUPERTOKENS_API_KEY": "NixopusSuperTokensAPIKey",
+            "SUPERTOKENS_API_DOMAIN": f"{protocol}://{api_host}/api",
+            "SUPERTOKENS_WEBSITE_DOMAIN": f"{protocol}://{view_host}",
+            # TODO: temp fix, remove this once we have a secure connection
+            "SUPERTOKENS_CONNECTION_URI": self._get_supertokens_connection_uri(
+                protocol, api_host, supertokens_api_port, host_ip
+            ),
         }
 
         for key, value in key_map.items():

@@ -11,6 +11,7 @@ services:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/api/.env
     environment:
       - HOST_NAME=nixopus-db
+
     volumes:
       - ./logs:/app/logs
       - ${NIXOPUS_HOME:-/etc/nixopus}:/etc/nixopus
@@ -31,10 +32,11 @@ services:
       - POSTGRES_PASSWORD=${PASSWORD}
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_HOST_AUTH_METHOD=trust
+
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
-      - ${NIXOPUS_HOME:-/etc/nixopus}/db:/var/lib/postgresql/data
+      - nixopus-db-data:/var/lib/postgresql/data
     networks:
       - nixopus-network
     healthcheck:
@@ -95,11 +97,35 @@ services:
         "--config",
         "/etc/caddy/Caddyfile",
         "--adapter",
-        "caddyfile"
+        "caddyfile",
       ]
     networks:
       - nixopus-network
 
+  supertokens:
+    image: registry.supertokens.io/supertokens/supertokens-postgresql:latest
+    depends_on:
+      nixopus-db:
+        condition: service_healthy
+    ports:
+      - 3567:3567
+    environment:
+      # This is to avoid conflicts with the nixopus database
+      POSTGRESQL_TABLE_NAMES_PREFIX: "supertokens_"
+      POSTGRESQL_CONNECTION_URI: "postgresql://${USERNAME}:${PASSWORD}@nixopus-db:${DB_PORT}/${DB_NAME}"
+    networks:
+      - nixopus-network
+    restart: unless-stopped
+    healthcheck:
+      test: >
+        bash -c 'exec 3<>/dev/tcp/127.0.0.1/3567 && echo -e "GET /hello HTTP/1.1\r\nhost: 127.0.0.1:3567\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep "Hello"'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 networks:
   nixopus-network:
     driver: bridge
+
+volumes:
+  nixopus-db-data:

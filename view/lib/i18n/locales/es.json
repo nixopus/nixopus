@@ -11,7 +11,16 @@
     "featureNotAvailable": "Esta característica no está disponible para tu organización",
     "goBack": "Volver",
     "refreshPage": "Actualizar página",
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "installed": "Instalado",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "preview": "Previsualizar",
+    "enabled": "Habilitado",
+    "disabled": "Deshabilitado",
+    "readMore": "Leer más",
+    "readLess": "Leer menos"
   },
   "containers": {
     "title": "Contenedores",
@@ -96,6 +105,7 @@
       "termsOfService": "Términos de Servicio",
       "and": "y",
       "privacyPolicy": "Política de Privacidad",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
       "errors": {
         "loginFailed": "Error al iniciar sesión",
         "invalidCredentials": "Email o contraseña inválidos",
@@ -285,7 +295,15 @@
       "messages": {
         "updated": "Característica actualizada exitosamente",
         "updateFailed": "Error al actualizar la característica"
-      }
+      },
+      "searchPlaceholder": "Buscar características...",
+      "filters": {
+        "all": "Todas",
+        "enabled": "Habilitadas",
+        "disabled": "Deshabilitadas"
+      },
+      "noResults": "No se encontraron características que coincidan con tu búsqueda",
+      "noFeatures": "No hay características disponibles"
     },
     "account": {
       "title": "Información de la Cuenta",
@@ -1255,10 +1273,56 @@
     "shortcut": "⌘J",
     "close": "Cerrar Terminal"
   },
+  "extensions": {
+    "title": "Extensiones",
+    "subtitle": "Omite el boilerplate, inicia tu configuración de servidor en segundos",
+    "exploreExtensions": "Explorar Hub de Extensiones",
+    "exploreExtensionsTitle": "Explorar extensiones",
+    "install": "Instalar",
+    "viewDetails": "Ver detalles",
+    "madeBy": "Hecho por",
+    "beta": "Beta",
+    "searchPlaceholder": "Buscar extensiones...",
+    "sortBy": "Ordenar por",
+    "sortOptions": {
+      "name": "Nombre",
+      "popularity": "Popularidad",
+      "recent": "Reciente",
+      "rating": "Calificación"
+    },
+    "noExtensions": "No se encontraron extensiones",
+    "loading": "Cargando extensiones...",
+    "error": "Error al cargar extensiones",
+    "fork": "Fork",
+    "forkSuccess": "Extensión bifurcada correctamente",
+    "forkFailed": "Error al bifurcar la extensión",
+    "type": "Tipo",
+    "category": "Categoría",
+    "execution": "Ejecución",
+    "runSteps": "Pasos de ejecución",
+    "validateSteps": "Pasos de validación",
+    "forkYaml": "YAML (opcional)",
+    "remove": "Eliminar",
+    "deleteSuccess": "Extensión eliminada",
+    "deleteFailed": "Error al eliminar la extensión",
+    "confirmDeleteTitle": "¿Eliminar fork?",
+    "confirmDeleteMessage": "Esto eliminará tu extensión bifurcada. Esta acción no se puede deshacer.",
+    "overview": "Resumen",
+    "logs": "Registros",
+    "executions": "Ejecuciones",
+    "executionId": "ID de Ejecución",
+    "status": "Estado",
+    "startedAt": "Iniciado",
+    "completedAt": "Completado",
+    "noExecutions": "Aún no hay ejecuciones.",
+    "variables": "Variables",
+    "logsEmpty": "Los registros de ejecución aparecerán aquí cuando estén disponibles."
+  },
   "navigation": {
     "dashboard": "Panel de Control",
     "selfHost": "Autoalojado",
     "fileManager": "Gestor de Archivos",
+    "extensions": "Extensiones",
     "settings": "Configuración",
     "general": "General",
     "notifications": "Notificaciones",

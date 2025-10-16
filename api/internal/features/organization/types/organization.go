@@ -40,12 +40,29 @@ type DeleteOrganizationRequest struct {
 type AddUserToOrganizationRequest struct {
 	UserID         string `json:"user_id"`
 	OrganizationID string `json:"organization_id"`
-	RoleId         string `json:"role_id"`
 }
 
 type RemoveUserFromOrganizationRequest struct {
 	UserID         string `json:"user_id"`
 	OrganizationID string `json:"organization_id"`
+}
+
+type InviteSendRequest struct {
+	Email          string `json:"email"`
+	OrganizationID string `json:"organization_id"`
+	Role           string `json:"role"`
+}
+
+type InviteResendRequest struct {
+	Email          string `json:"email"`
+	OrganizationID string `json:"organization_id"`
+	Role           string `json:"role"`
+}
+
+type UpdateUserRoleRequest struct {
+	UserID         string `json:"user_id"`
+	OrganizationID string `json:"organization_id"`
+	Role           string `json:"role"`
 }
 
 func NewOrganization(name string, description string) shared_types.Organization {

@@ -4,12 +4,11 @@ import { User } from '@/redux/types/user';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
-  getToken,
-  getRefreshToken,
-  isTokenExpired,
   setAuthTokens,
   clearAuthTokens
 } from '@/lib/auth';
+import { doesSessionExist, signOut } from 'supertokens-auth-react/recipe/session';
+import { setActiveOrganization } from './userSlice';
 
 interface AuthState {
   user: User | null;
@@ -30,74 +29,57 @@ interface AuthPayload {
   refreshToken: string | undefined;
 }
 
-export const initializeAuth = createAsyncThunk<AuthPayload | null>(
+export const initializeAuth = createAsyncThunk<AuthPayload | null, void, { rejectValue: string }>(
   'auth/initialize',
   async (_, { dispatch, rejectWithValue }) => {
     try {
-      console.log('Starting auth initialization');
-      const token = getToken();
-      const refreshToken = getRefreshToken();
+      const sessionExists = await doesSessionExist();
 
-      if (!token || !refreshToken) {
-        console.log('No tokens found, returning null');
+      if (!sessionExists) {
         return null;
       }
 
-      if (isTokenExpired(token)) {
-        console.log('Token expired, attempting refresh');
+      try {
+        const userResult = await dispatch(
+          authApi.endpoints.getUserDetails.initiate(undefined)
+        ).unwrap();
+
         try {
-          const refreshResult = await dispatch(
-            authApi.endpoints.refreshToken.initiate({ refresh_token: refreshToken })
+          const organizationsResult = await dispatch(
+            userApi.endpoints.getUserOrganizations.initiate(undefined)
           ).unwrap();
 
-          if (refreshResult?.access_token) {
-            console.log('Token refresh successful');
-            setAuthTokens({
-              access_token: refreshResult.access_token,
-              refresh_token: refreshResult.refresh_token,
-              expires_in: refreshResult.expires_in
-            });
-
-            const userResult = await dispatch(
-              authApi.endpoints.getUserDetails.initiate(undefined)
-            ).unwrap();
-
-            console.log('User details fetched successfully after refresh');
-            return {
-              user: userResult,
-              token: refreshResult.access_token,
-              refreshToken: refreshResult.refresh_token || refreshToken
-            };
-          } else {
-            console.log('Token refresh failed - no access token received');
-            return null;
+          if (organizationsResult && organizationsResult.length > 0) {
+            const firstOrg = organizationsResult[0];
+            dispatch(setActiveOrganization(firstOrg.organization));
           }
-        } catch (refreshError) {
-          console.error('Token refresh error:', refreshError);
-          clearAuthTokens();
-          return rejectWithValue('Token refresh failed');
+        } catch (orgError: any) {
+          // Don't fail auth if organizations can't be loaded
         }
-      } else {
-        console.log('Token valid, fetching user details');
-        try {
-          const userResult = await dispatch(
-            authApi.endpoints.getUserDetails.initiate(undefined)
-          ).unwrap();
 
-          console.log('User details fetched successfully');
-          return {
-            user: userResult,
-            token,
-            refreshToken
-          };
-        } catch (error) {
-          console.error('Failed to fetch user details:', error);
-          return rejectWithValue('Failed to fetch user details');
-        }
+        return {
+          user: userResult,
+          token: 'supertokens-session',
+          refreshToken: undefined
+        };
+      } catch (error: any) {
+        return rejectWithValue('Failed to fetch user details');
       }
-    } catch (error) {
-      console.error('Auth initialization error:', error);
+    } catch (error: any) {
       return rejectWithValue('Auth initialization failed');
+    }
+  }
+);
+
+export const logoutUser = createAsyncThunk(
+  'auth/logoutUser',
+  async (_, { dispatch }) => {
+    try {
+      await signOut();
+      dispatch(logout());
+    } catch (error) {
+      console.error('SuperTokens logout failed:', error);
+      dispatch(logout());
     }
   }
 );
@@ -205,9 +187,7 @@ export const authSlice = createSlice({
         state.isLoading = true;
       })
       .addMatcher(authApi.endpoints.loginUser.matchFulfilled, (state, { payload }) => {
-        console.log('Login successful, payload:', payload);
         if (payload?.temp_token) {
-          console.log('2FA required, setting temp token');
           state.twoFactor.isRequired = true;
           state.twoFactor.tempToken = payload.temp_token;
           state.token = payload.temp_token;
@@ -219,7 +199,6 @@ export const authSlice = createSlice({
             expires_in: payload.expires_in
           });
         } else if (payload?.access_token) {
-          console.log('Setting auth state with access token');
           state.user = payload.user;
           state.token = payload.access_token;
           state.refreshToken = payload.refresh_token || undefined;
@@ -233,8 +212,6 @@ export const authSlice = createSlice({
             refresh_token: payload.refresh_token || undefined,
             expires_in: payload.expires_in
           });
-        } else {
-          console.error('Login payload missing required tokens:', payload);
         }
         state.isLoading = false;
       })

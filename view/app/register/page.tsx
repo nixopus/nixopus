@@ -7,23 +7,83 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import nixopusLogo from '@/public/nixopus_logo_transparent.png';
-import useRegister from './hooks/use-register';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
-import { LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { PasswordInputField } from '@/components/ui/password-input-field';
+import { signUp } from 'supertokens-auth-react/recipe/emailpassword';
+import { toast } from 'sonner';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { LogIn } from 'lucide-react';
+import { useIsAdminRegisteredQuery } from '@/redux/services/users/authApi';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const registerSchema = (t: (key: string) => string) =>
+  z
+    .object({
+      email: z.string().email(t('auth.register.errors.invalidEmail')),
+      password: z
+        .string()
+        .min(8, t('auth.register.errors.passwordRequirements.minLength'))
+        .regex(/[A-Z]/, t('auth.register.errors.passwordRequirements.uppercase'))
+        .regex(/[a-z]/, t('auth.register.errors.passwordRequirements.lowercase'))
+        .regex(/[0-9]/, t('auth.register.errors.passwordRequirements.number'))
+        .regex(
+          /[!@#$%^&*(),.?":{}|<>]/,
+          t('auth.register.errors.passwordRequirements.specialChar')
+        ),
+      confirmPassword: z.string()
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('auth.register.errors.passwordMismatch'),
+      path: ['confirmPassword']
+    });
+
+type RegisterForm = z.infer<ReturnType<typeof registerSchema>>;
 
 export default function RegisterPage() {
   const { t } = useTranslation();
-  const {
-    form,
-    onSubmit,
-    isLoading,
-    isAdminRegistered,
-    isAdminRegisteredLoading,
-    isAdminRegisteredError
-  } = useRegister();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const { data: isAdminRegistered, isLoading: isAdminRegisteredLoading, isError: isAdminRegisteredError } = useIsAdminRegisteredQuery();
+  const form = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema(t)),
+    defaultValues: {
+      email: '',
+      password: '',
+      confirmPassword: ''
+    }
+  });
+
+  const onSubmit = async (data: RegisterForm) => {
+    setIsLoading(true);
+    try {
+      const response = await signUp({
+        formFields: [
+          { id: 'email', value: data.email },
+          { id: 'password', value: data.password }
+        ]
+      });
+
+      if (response.status === 'FIELD_ERROR') {
+        response.formFields.forEach(field => {
+          toast.error(field.error);
+        });
+      } else if (response.status === 'SIGN_UP_NOT_ALLOWED') {
+        toast.error('Sign up is not allowed');
+      } else {
+        toast.success(t('auth.register.success'));
+        router.push('/auth');
+      }
+    } catch (error) {
+      toast.error(t('auth.register.errors.registerFailed'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
 
   if (isAdminRegisteredLoading) {
     return <AdminRegisteredSkeleton />;
@@ -94,7 +154,7 @@ export default function RegisterPage() {
                     </Button>
                     <div className="text-center text-sm">
                       {t('auth.register.alreadyHaveAccount')}{' '}
-                      <Link href="/login" className="underline underline-offset-4">
+                      <Link href="/auth" className="underline underline-offset-4">
                         {t('auth.login.title')}
                       </Link>
                     </div>
@@ -137,6 +197,7 @@ export default function RegisterPage() {
   );
 }
 
+
 const AdminRegisteredError = () => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -161,7 +222,7 @@ const AdminRegisteredError = () => {
                     <Button variant="outline" onClick={() => window.location.reload()}>
                       {t('auth.register.errors.tryAgain')}
                     </Button>
-                    <Button variant="outline" onClick={() => router.push('/login')}>
+                    <Button variant="outline" onClick={() => router.push('/auth')}>
                       {t('auth.register.errors.loginButton')}
                     </Button>
                   </div>
@@ -174,6 +235,36 @@ const AdminRegisteredError = () => {
     </div>
   );
 };
+
+
+const AdminRegistered = () => {
+  const { t } = useTranslation();
+  const router = useRouter();
+
+  return (
+    <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
+      <Card>
+        <CardContent>
+          <div className="flex flex-col items-center text-center">
+            <h1 className="text-2xl font-bold">
+              {t('auth.register.errors.adminAlreadyRegistered')}
+            </h1>
+            <p className="text-muted-foreground text-balance mt-4">
+              {t('auth.register.errors.adminAlreadyRegisteredDescription')}
+            </p>
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <Button onClick={() => router.push('/auth')}>
+            <LogIn className="mr-2 h-4 w-4" />
+            {t('auth.register.errors.loginButton')}
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+};
+
 
 const AdminRegisteredSkeleton = () => {
   return (
@@ -214,34 +305,6 @@ const AdminRegisteredSkeleton = () => {
           <Skeleton className="mx-auto h-4 w-64" />
         </div>
       </div>
-    </div>
-  );
-};
-
-const AdminRegistered = () => {
-  const { t } = useTranslation();
-  const router = useRouter();
-
-  return (
-    <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
-      <Card>
-        <CardContent>
-          <div className="flex flex-col items-center text-center">
-            <h1 className="text-2xl font-bold">
-              {t('auth.register.errors.adminAlreadyRegistered')}
-            </h1>
-            <p className="text-muted-foreground text-balance mt-4">
-              {t('auth.register.errors.adminAlreadyRegisteredDescription')}
-            </p>
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <Button onClick={() => router.push('/login')}>
-            <LogIn className="mr-2 h-4 w-4" />
-            {t('auth.register.errors.loginButton')}
-          </Button>
-        </CardFooter>
-      </Card>
     </div>
   );
 };

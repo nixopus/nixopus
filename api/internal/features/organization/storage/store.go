@@ -133,9 +133,7 @@ func (s OrganizationStore) GetOrganizationUsers(id string) ([]shared_types.Organ
 	err := s.getDB().NewSelect().
 		Model(&organizationUsers).
 		Where("organization_id = ?", id).
-		Relation("Role").
 		Relation("User").
-		Relation("Role.Permissions").
 		Scan(s.Ctx)
 
 	if err == sql.ErrNoRows {

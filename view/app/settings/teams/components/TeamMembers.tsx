@@ -22,12 +22,13 @@ import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAppSelector } from '@/redux/hooks';
 import EditUserDialog from './EditUserDialog';
-import { OrganizationUsers, UserTypes } from '@/redux/types/orgs';
+import { UserTypes } from '@/redux/types/orgs';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { useTranslation } from '@/hooks/use-translation';
 import { User } from '@/redux/types/user';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
+import { useRBAC } from '@/lib/rbac';
 
 type EditUser = {
   id: string;
@@ -39,13 +40,6 @@ type EditUser = {
 };
 
 type RoleType = 'owner' | 'admin' | 'member' | 'viewer';
-
-const roleHierarchy: Record<RoleType, number> = {
-  owner: 4,
-  admin: 3,
-  member: 2,
-  viewer: 1
-};
 
 interface TeamMembersProps {
   users: EditUser[];
@@ -63,6 +57,7 @@ function TeamMembers({
   onUpdateUser
 }: TeamMembersProps) {
   const { t } = useTranslation();
+  const { canAccessResource, isAdmin, isLoading: rbacLoading } = useRBAC();
   const loggedInUser = useAppSelector((state) => state.auth.user) as User;
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
@@ -70,28 +65,20 @@ function TeamMembers({
   const [userToRemove, setUserToRemove] = useState<EditUser | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const getCurrentUserRole = (): RoleType | null => {
-    if (!loggedInUser || !activeOrganization) return null;
-    const orgUser = loggedInUser.organization_users.find(
-      (ou: OrganizationUsers) => ou.organization_id === activeOrganization.id
-    );
-    return (orgUser?.role?.name?.toLowerCase() as RoleType) || null;
-  };
-
   const canModifyUser = (targetUser: EditUser) => {
     if (!loggedInUser || !targetUser || !activeOrganization) {
       return false;
     }
 
-    const currentUserRole = getCurrentUserRole();
-    const targetUserRole = targetUser.role?.toLowerCase() as RoleType;
-
-    if (!currentUserRole || !targetUserRole) {
+    if (loggedInUser.id === targetUser.id) {
       return false;
     }
 
-    const canModify = roleHierarchy[currentUserRole] >= roleHierarchy[targetUserRole];
-    return canModify;
+    if (rbacLoading) {
+      return false;
+    }
+
+    return isAdmin;
   };
 
   const toggleUserPermissions = (userId: string) => {
@@ -136,7 +123,10 @@ function TeamMembers({
       <div className="flex items-center gap-2">
         <div className="flex flex-wrap gap-1.5">
           {visiblePermissions.map((permission, index) => (
-            <Badge key={index} variant="outline" className="bg-primary/10 text-primary rounded-full">
+            <Badge
+              key={index}
+              variant="outline"
+              className="bg-primary/10 text-primary rounded-full">
               {permission}
             </Badge>
           ))}
@@ -146,8 +136,7 @@ function TeamMembers({
             variant="ghost"
             size="sm"
             className="h-6 px-2 text-xs font-medium text-primary hover:text-primary/80"
-            onClick={() => toggleUserPermissions(userId)}
-          >
+            onClick={() => toggleUserPermissions(userId)}>
             {isExpanded ? (
               <>
                 {t('settings.teams.members.actions.showLess')}{' '}
@@ -246,8 +235,7 @@ function TeamMembers({
                                 onClick={() => {
                                   setUserToRemove(user);
                                   setIsDeleteDialogOpen(true);
-                                }}
-                              >
+                                }}>
                                 <TrashIcon className="h-4 w-4 mr-2" />
                                 {t('settings.teams.members.actions.remove')}
                               </DropdownMenuItem>
