@@ -1,3 +1,13 @@
+# [0.1.0-alpha.40](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.39...v0.1.0-alpha.40) (2025-10-15)
+
+
+### Bug Fixes
+
+* db getting wiped due to hosts permission issue, switches back to named docker maintained volumes ([#507](https://github.com/raghavyuva/nixopus/issues/507)) ([f8fd796](https://github.com/raghavyuva/nixopus/commit/f8fd7964da4c0a69b67c2696fd25694433238718))
+* update dockerfile to copy extensions templates folder in production ([5492582](https://github.com/raghavyuva/nixopus/commit/5492582a8c249cd1a169cb8c0ac9615cb67c2984))
+
+
+
 # [0.1.0-alpha.39](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.38...v0.1.0-alpha.39) (2025-10-15)
 
 

@@ -74,6 +74,7 @@ func Init(appInstance *storage.App) {
 	websiteBasePath := "/auth"
 
 	err := supertokens.Init(supertokens.TypeInput{
+		Debug: true,
 		Supertokens: &supertokens.ConnectionInfo{
 			ConnectionURI: config.Supertokens.ConnectionURI,
 			APIKey:        config.Supertokens.APIKey,
