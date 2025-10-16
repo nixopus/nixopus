@@ -1,3 +1,12 @@
+# [0.1.0-alpha.41](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.40...v0.1.0-alpha.41) (2025-10-16)
+
+
+### Bug Fixes
+
+* security scan to have TRIVY_DISABLE_VEX_NOTICE ([43546b8](https://github.com/raghavyuva/nixopus/commit/43546b88b507aa776e2260d24a1ac68594630fe0))
+
+
+
 # [0.1.0-alpha.40](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.39...v0.1.0-alpha.40) (2025-10-15)
 
 
