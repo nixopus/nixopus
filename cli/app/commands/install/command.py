@@ -22,6 +22,17 @@ def install_callback(
     config_file: str = typer.Option(
         None, "--config-file", "-c", help="Path to custom config file (defaults to built-in config)"
     ),
+    development: bool = typer.Option(
+        False,
+        "--development",
+        "-D",
+        help="Use development workflow (local setup, dev compose, dev env)",
+    ),
+    dev_path: str = typer.Option(
+        None,
+        "--dev-path",
+        help="Installation directory for development workflow (defaults to current directory)",
+    ),
     api_domain: str = typer.Option(
         None,
         "--api-domain",
@@ -34,36 +45,55 @@ def install_callback(
         "-vd",
         help="The domain where the nixopus view will be accessible (e.g. nixopus.com), if not provided you can use the ip address of the server and the port (e.g. 192.168.1.100:80)",
     ),
-    repo: str = typer.Option(
-        None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"
-    ),
-    branch: str = typer.Option(
-        None, "--branch", "-b", help="Git branch to clone (defaults to config value)"
-    ),
+    repo: str = typer.Option(None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"),
+    branch: str = typer.Option(None, "--branch", "-b", help="Git branch to clone (defaults to config value)"),
 ):
     """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
         logger = Logger(verbose=verbose)
-        install = Install(
-            logger=logger,
-            verbose=verbose,
-            timeout=timeout,
-            force=force,
-            dry_run=dry_run,
-            config_file=config_file,
-            api_domain=api_domain,
-            view_domain=view_domain,
-            repo=repo,
-            branch=branch,
-            development=False,
-        )
-        install.run()
+        if development:
+            # Warn when incompatible production-only options are provided alongside --development
+            if api_domain or view_domain:
+                logger.warning("Ignoring --api-domain/--view-domain in development mode")
+            dev_install = DevelopmentInstall(
+                logger=logger,
+                verbose=verbose,
+                timeout=timeout,
+                force=force,
+                dry_run=dry_run,
+                config_file=config_file,
+                repo=repo,
+                branch=branch,
+                install_path=dev_path,
+            )
+            dev_install.run()
+        else:
+            install = Install(
+                logger=logger,
+                verbose=verbose,
+                timeout=timeout,
+                force=force,
+                dry_run=dry_run,
+                config_file=config_file,
+                api_domain=api_domain,
+                view_domain=view_domain,
+                repo=repo,
+                branch=branch,
+            )
+            install.run()
 
 
 def main_install_callback(value: bool):
     if value:
         logger = Logger(verbose=False)
-        install = Install(logger=logger, verbose=False, timeout=300, force=False, dry_run=False, config_file=None)
+        install = Install(
+            logger=logger,
+            verbose=False,
+            timeout=300,
+            force=False,
+            dry_run=False,
+            config_file=None,
+        )
         install.run()
         raise typer.Exit()
 
@@ -78,12 +108,8 @@ def development(
     config_file: str = typer.Option(
         None, "--config-file", "-c", help="Path to custom config file (defaults to config.dev.yaml)"
     ),
-    repo: str = typer.Option(
-        None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"
-    ),
-    branch: str = typer.Option(
-        None, "--branch", "-b", help="Git branch to clone (defaults to config value)"
-    ),
+    repo: str = typer.Option(None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"),
+    branch: str = typer.Option(None, "--branch", "-b", help="Git branch to clone (defaults to config value)"),
 ):
     """Install Nixopus for local development in specified or current directory"""
     logger = Logger(verbose=verbose)
@@ -121,8 +147,8 @@ def ssh(
     timeout: int = typer.Option(10, "--timeout", "-T", help="Timeout in seconds"),
 ):
     """Generate an SSH key pair with proper permissions and optional authorized_keys integration"""
+    logger = Logger(verbose=verbose)
     try:
-        logger = Logger(verbose=verbose)
         config = SSHConfig(
             path=path,
             key_type=key_type,
@@ -143,10 +169,10 @@ def ssh(
 
         logger.success(result.output)
     except TimeoutError as e:
-        logger.error(e)
+        logger.error(str(e))
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(e)
+        logger.error(str(e))
         raise typer.Exit(1)
 
 
@@ -158,8 +184,8 @@ def deps(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Install dependencies"""
+    logger = Logger(verbose=verbose)
     try:
-        logger = Logger(verbose=verbose)
 
         with TimeoutWrapper(timeout):
             result = install_all_deps(verbose=verbose, output=output, dry_run=dry_run)
@@ -169,8 +195,8 @@ def deps(
         else:
             logger.success("All dependencies installed successfully.")
     except TimeoutError as e:
-        logger.error(e)
+        logger.error(str(e))
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(e)
+        logger.error(str(e))
         raise typer.Exit(1)

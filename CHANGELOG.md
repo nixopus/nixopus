@@ -1,3 +1,12 @@
+# [0.1.0-alpha.42](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.41...v0.1.0-alpha.42) (2025-10-17)
+
+
+### Features
+
+* setup development environment with cli installer ([#508](https://github.com/raghavyuva/nixopus/issues/508)) ([a3647c6](https://github.com/raghavyuva/nixopus/commit/a3647c6f47bc2a75b1367a146a13ed143daedfa6))
+
+
+
 # [0.1.0-alpha.41](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.40...v0.1.0-alpha.41) (2025-10-16)
 
 
