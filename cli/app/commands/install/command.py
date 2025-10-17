@@ -6,6 +6,7 @@ from app.utils.timeout import TimeoutWrapper
 
 from .deps import install_all_deps
 from .run import Install
+from .development import DevelopmentInstall
 from .ssh import SSH, SSHConfig
 
 install_app = typer.Typer(help="Install Nixopus", invoke_without_command=True)
@@ -40,7 +41,7 @@ def install_callback(
         None, "--branch", "-b", help="Git branch to clone (defaults to config value)"
     ),
 ):
-    """Install Nixopus"""
+    """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
         logger = Logger(verbose=verbose)
         install = Install(
@@ -54,6 +55,7 @@ def install_callback(
             view_domain=view_domain,
             repo=repo,
             branch=branch,
+            development=False,
         )
         install.run()
 
@@ -64,6 +66,39 @@ def main_install_callback(value: bool):
         install = Install(logger=logger, verbose=False, timeout=300, force=False, dry_run=False, config_file=None)
         install.run()
         raise typer.Exit()
+
+
+@install_app.command(name="development")
+def development(
+    path: str = typer.Option(None, "--path", "-p", help="Installation directory (defaults to current directory)"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show more details while installing"),
+    timeout: int = typer.Option(300, "--timeout", "-t", help="How long to wait for each step (in seconds)"),
+    force: bool = typer.Option(False, "--force", "-f", help="Replace files if they already exist"),
+    dry_run: bool = typer.Option(False, "--dry-run", "-d", help="See what would happen, but don't make changes"),
+    config_file: str = typer.Option(
+        None, "--config-file", "-c", help="Path to custom config file (defaults to config.dev.yaml)"
+    ),
+    repo: str = typer.Option(
+        None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"
+    ),
+    branch: str = typer.Option(
+        None, "--branch", "-b", help="Git branch to clone (defaults to config value)"
+    ),
+):
+    """Install Nixopus for local development in specified or current directory"""
+    logger = Logger(verbose=verbose)
+    install = DevelopmentInstall(
+        logger=logger,
+        verbose=verbose,
+        timeout=timeout,
+        force=force,
+        dry_run=dry_run,
+        config_file=config_file,
+        repo=repo,
+        branch=branch,
+        install_path=path,
+    )
+    install.run()
 
 
 @install_app.command(name="ssh")

@@ -117,7 +117,6 @@ class Install:
         self.main_task = None
         self._validate_domains()
         self._validate_repo()
-
         # Log when using custom repository/branch and staging compose file
         if self._is_custom_repo_or_branch():
             if self.logger:

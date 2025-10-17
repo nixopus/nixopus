@@ -80,6 +80,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('../helpers/config.prod.yaml', 'helpers/'),
+        ('../helpers/config.dev.yaml', 'helpers/'),
     ],
     hiddenimports=[
         'app.commands.clone.command',

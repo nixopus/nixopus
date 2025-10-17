@@ -1,0 +1,21 @@
+FROM golang:alpine
+ARG API_PORT=8443
+
+# Install air for live reload
+RUN apk add --no-cache bash git curl make && \
+    go install github.com/air-verse/air@latest
+
+WORKDIR /app
+
+# Pre-download dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+
+# Source code is mounted via volume
+ENV PORT=${API_PORT}
+EXPOSE ${API_PORT}
+
+# Use air with default config for live reload
+CMD ["air"]
+
