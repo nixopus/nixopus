@@ -1,0 +1,69 @@
+metadata:
+  id: "deploy-excalidraw"
+  name: "Excalidraw"
+  description: "Excalidraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them."
+  author: "Nixopus Team"
+  icon: "✏️"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Excalidraw"
+    default: "excalidraw/excalidraw"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "excalidraw"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose"
+    default: 5000
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port to map"
+    default: 80
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Excalidraw image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Excalidraw container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+  validate:
+    - name: "Check HTTP response from Excalidraw"
+      type: "command"
+      properties:
+        cmd: "curl -fsS -o /dev/null -w '%{http_code}\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+      timeout: 60

@@ -1,0 +1,112 @@
+metadata:
+  id: "deploy-postgres"
+  name: "PostgreSQL"
+  description: "PostgreSQL is a powerful, open source object-relational database system with over 30 years of active development that has earned it a strong reputation for reliability, feature robustness, and performance."
+  author: "Nixopus Team"
+  icon: "🐘"
+  category: "Database"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for PostgreSQL"
+    default: "postgres"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "15-alpine"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the PostgreSQL container"
+    default: "postgres"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose PostgreSQL"
+    default: 5432
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for PostgreSQL"
+    default: 5432
+    is_required: true
+
+  database_name:
+    type: "string"
+    description: "Name of the default database to create"
+    default: "postgres"
+    is_required: true
+
+  postgres_user:
+    type: "string"
+    description: "PostgreSQL superuser name"
+    default: "postgres"
+    is_required: true
+
+  postgres_password:
+    type: "string"
+    description: "PostgreSQL superuser password"
+    default: "postgres"
+    is_required: true
+
+  data_volume_name:
+    type: "string"
+    description: "Named Docker volume for PostgreSQL data persistence"
+    default: "postgres-data"
+    is_required: true
+
+  init_scripts_volume:
+    type: "string"
+    description: "Named Docker volume for initialization scripts (optional)"
+    default: "postgres-init-scripts"
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull PostgreSQL image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run PostgreSQL container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        restart: "unless-stopped"
+        env:
+          POSTGRES_DB: "{{ database_name }}"
+          POSTGRES_USER: "{{ postgres_user }}"
+          POSTGRES_PASSWORD: "{{ postgres_password }}"
+        volumes:
+          - "{{ data_volume_name }}:/var/lib/postgresql/data"
+          - "{{ init_scripts_volume }}:/docker-entrypoint-initdb.d"
+      timeout: 180
+
+  validate:
+    - name: "Check PostgreSQL connection"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do docker exec {{ container_name }} pg_isready -U {{ postgres_user }} -d {{ database_name }} && exit 0; sleep 2; done; exit 1'"
+      timeout: 60
+
+    - name: "Verify PostgreSQL is accepting connections"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do docker exec {{ container_name }} psql -U {{ postgres_user }} -d {{ database_name }} -c \"SELECT 1;\" >/dev/null 2>&1 && exit 0; sleep 2; done; exit 1'"
+      timeout: 60

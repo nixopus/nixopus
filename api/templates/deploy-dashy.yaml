@@ -1,0 +1,79 @@
+metadata:
+  id: "deploy-dashy"
+  name: "Dashy"
+  description: "Dashy is a self-hosted, highly configurable personal dashboard."
+  author: "Nixopus Team"
+  icon: "📊"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Dashy"
+    default: "lissy93/dashy"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Dashy container"
+    default: "dashy"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Dashy"
+    default: 8080
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Dashy"
+    default: 8080
+    is_required: true
+
+  user_data_volume:
+    type: "string"
+    description: "Named Docker volume for Dashy user data (/app/user-data)"
+    default: "dashy-user-data"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Dashy image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Dashy container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        restart: "unless-stopped"
+        volumes:
+          - "{{ user_data_volume }}:/app/user-data"
+      timeout: 180
+
+  validate:
+    - name: "Check HTTP response from Dashy"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 2; done; exit 1'"
+      timeout: 60
+
+

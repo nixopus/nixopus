@@ -1,0 +1,77 @@
+metadata:
+  id: "deploy-dashdot"
+  name: "Dash"
+  description: "Aa modern server dashboard"
+  author: "Nixopus Team"
+  icon: "📊"
+  category: "Monitoring"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Dashdot"
+    default: "mauricenino/dashdot"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Dashdot container"
+    default: "dashdot"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Dashdot"
+    default: 80
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Dashdot"
+    default: 3001
+    is_required: true
+
+  host_mount_path:
+    type: "string"
+    description: "Host path to mount for system monitoring (read-only)"
+    default: "/"
+    is_required: true
+
+  container_mount_path:
+    type: "string"
+    description: "Container path for host mount"
+    default: "/mnt/host"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Dashdot image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Dashdot container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        restart: "unless-stopped"
+        privileged: true
+        volumes:
+          - "{{ host_mount_path }}:{{ container_mount_path }}:ro"
+      timeout: 180
