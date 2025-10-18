@@ -46,6 +46,12 @@ variables:
     default: "beszel_data"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Beszel (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Beszel image"
@@ -68,6 +74,14 @@ execution:
         volumes:
           - "{{ data_volume_name }}:/beszel_data"
       timeout: 180
+
+    - name: "Add proxy for Beszel"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check Beszel HTTP response"

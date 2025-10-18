@@ -40,6 +40,12 @@ variables:
     default: "uptime-kuma"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Uptime Kuma (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Uptime Kuma image"
@@ -62,6 +68,14 @@ execution:
         volumes:
           - "{{ volume_name }}:/app/data"
       timeout: 180
+
+    - name: "Add proxy for Uptime Kuma"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check HTTP response from Uptime Kuma"

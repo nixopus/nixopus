@@ -47,6 +47,13 @@ func (proxyModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[str
 	domain, _ := step.Properties["domain"].(string)
 	port, _ := step.Properties["port"].(string)
 
+	if domain != "" {
+		domain = replaceVars(domain, vars)
+	}
+	if port != "" {
+		port = replaceVars(port, vars)
+	}
+
 	switch action {
 	case "add":
 		if domain == "" || port == "" {

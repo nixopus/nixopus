@@ -46,6 +46,12 @@ variables:
     default: "slash-data"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Slash (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Slash image"
@@ -68,3 +74,11 @@ execution:
         volumes:
           - "{{ data_volume_name }}:/var/opt/slash"
       timeout: 180
+
+    - name: "Add proxy for Slash"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30

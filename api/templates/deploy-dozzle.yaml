@@ -58,6 +58,12 @@ variables:
     default: "false"
     is_required: false
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Dozzle (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Dozzle image"
@@ -86,6 +92,14 @@ execution:
         volumes:
           - "{{ docker_socket_path }}:/var/run/docker.sock:ro"
       timeout: 180
+
+    - name: "Add proxy for Dozzle"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check Dozzle HTTP response"

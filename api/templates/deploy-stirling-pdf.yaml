@@ -76,6 +76,12 @@ variables:
     default: "en_GB"
     is_required: false
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Stirling PDF (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Stirling PDF image"
@@ -105,6 +111,14 @@ execution:
           - "{{ logs_volume }}:/logs"
           - "{{ pipeline_volume }}:/pipeline"
       timeout: 180
+
+    - name: "Add proxy for Stirling PDF"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check HTTP response from Stirling PDF"

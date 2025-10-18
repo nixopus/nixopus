@@ -46,6 +46,12 @@ variables:
     default: "linkding-data"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Linkding (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Linkding image"
@@ -68,4 +74,12 @@ execution:
         volumes:
           - "{{ data_volume_name }}:/etc/linkding/data"
       timeout: 180
+
+    - name: "Add proxy for Linkding"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 

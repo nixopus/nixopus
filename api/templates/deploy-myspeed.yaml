@@ -46,6 +46,12 @@ variables:
     default: "myspeed"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for MySpeed (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull MySpeed image"
@@ -68,6 +74,14 @@ execution:
         volumes:
           - "{{ data_volume_name }}:/myspeed/data"
       timeout: 180
+
+    - name: "Add proxy for MySpeed"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check MySpeed HTTP response"

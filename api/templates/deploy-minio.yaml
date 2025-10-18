@@ -64,6 +64,12 @@ variables:
     default: "minio-data"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for MinIO Console (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull MinIO image"
@@ -90,6 +96,14 @@ execution:
           - "{{ volume_name }}:/data"
         cmd: "server /data --console-address :9001"
       timeout: 180
+
+    - name: "Add proxy for MinIO Console"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ console_port }}"
+      timeout: 30
 
   validate:
     - name: "Check MinIO liveness"

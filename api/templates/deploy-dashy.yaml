@@ -46,6 +46,12 @@ variables:
     default: "dashy-user-data"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Dashy (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Dashy image"
@@ -68,6 +74,14 @@ execution:
         volumes:
           - "{{ user_data_volume }}:/app/user-data"
       timeout: 180
+
+    - name: "Add proxy for Dashy"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check HTTP response from Dashy"
