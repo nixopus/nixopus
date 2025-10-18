@@ -1,3 +1,12 @@
+# [0.1.0-alpha.43](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.42...v0.1.0-alpha.43) (2025-10-18)
+
+
+### Features
+
+* add proxy support for extensions ([88ce1bc](https://github.com/raghavyuva/nixopus/commit/88ce1bcaded066ad8f906f03731e1f3ea925f908))
+
+
+
 # [0.1.0-alpha.42](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.41...v0.1.0-alpha.42) (2025-10-17)
 
 
