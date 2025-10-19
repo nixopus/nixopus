@@ -1,3 +1,12 @@
+# [0.1.0-alpha.44](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.43...v0.1.0-alpha.44) (2025-10-18)
+
+
+### Features
+
+* add custom domain support for templates ([956e889](https://github.com/raghavyuva/nixopus/commit/956e8892db6736b5c70b4099497612a828d2369e))
+
+
+
 # [0.1.0-alpha.43](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.42...v0.1.0-alpha.43) (2025-10-18)
 
 

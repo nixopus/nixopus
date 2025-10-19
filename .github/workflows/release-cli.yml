@@ -182,8 +182,124 @@ jobs:
             cli/*.apk
           retention-days: 30
 
+  build-and-package-macos:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-13, macos-14]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: cli/.venv
+          key: venv-${{ matrix.os }}-${{ hashFiles('cli/poetry.lock') }}
+
+      - name: Install dependencies
+        working-directory: cli
+        run: poetry install
+
+      - name: Extract version from pyproject.toml
+        id: version
+        working-directory: cli
+        run: |
+          VERSION=$(poetry version --short)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Install fpm
+        run: |
+          sudo gem install --no-document fpm
+
+      - name: Build CLI binary
+        working-directory: cli
+        env:
+          NIXOPUS_DISABLE_DOCKER: "1"
+        run: |
+          chmod +x build.sh
+          if [ ! -d "helpers" ]; then
+            ln -s ../helpers helpers
+          fi
+          echo "Running production build (PyInstaller)"
+          ./build.sh --no-test --no-cleanup --no-archive
+
+      - name: Prepare binary for packaging
+        working-directory: cli
+        run: |
+          mkdir -p packaging/usr/local/bin
+          if [ -f "dist/nixopus" ]; then
+            cp dist/nixopus packaging/usr/local/bin/
+            if [ -d "dist/nixopus_darwin_amd64" ]; then
+              cp -r dist/nixopus_darwin_amd64 packaging/usr/local/bin/
+            elif [ -d "dist/nixopus_darwin_arm64" ]; then
+              cp -r dist/nixopus_darwin_arm64 packaging/usr/local/bin/
+            fi
+          else
+            echo "Build output not found in expected location"
+            ls -la dist/
+            exit 1
+          fi
+          chmod +x packaging/usr/local/bin/nixopus
+
+      - name: Set architecture variables
+        run: |
+          ARCH=$(uname -m)
+          case "$ARCH" in
+            x86_64) PKG_ARCH=amd64 ;;
+            aarch64|arm64) PKG_ARCH=arm64 ;;
+            *) PKG_ARCH=$ARCH ;;
+          esac
+          echo "ARCH=$ARCH" >> $GITHUB_ENV
+          echo "PKG_ARCH=$PKG_ARCH" >> $GITHUB_ENV
+
+      - name: Create PKG package
+        working-directory: cli
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          fpm -s dir -t osxpkg \
+            -n nixopus \
+            -v "$VERSION" \
+            -a "$PKG_ARCH" \
+            --description "A CLI for Nixopus" \
+            --maintainer "Nixopus <raghavyuva@gmail.com>" \
+            --license "FSL" \
+            --url "https://github.com/nixopus/cli" \
+            --prefix / \
+            packaging/=/
+          PKG_SOURCE="nixopus-${VERSION}.pkg"
+          PKG_TARGET="nixopus-${VERSION}-darwin-$PKG_ARCH.pkg"
+          mv "$PKG_SOURCE" "$PKG_TARGET"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nixopus-packages-${{ matrix.os }}-${{ env.ARCH }}
+          path: |
+            cli/*.pkg
+          retention-days: 30
+
   create-release:
-    needs: build-and-package
+    needs:
+      - build-and-package
+      - build-and-package-macos
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -212,7 +328,7 @@ jobs:
           while IFS= read -r -d '' file; do
             filename=$(basename "$file")
             PACKAGE_FILES+=("$filename")
-          done < <(find ./artifacts -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.tar" -o -name "*.apk" \) -print0)
+          done < <(find ./artifacts -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.tar" -o -name "*.apk" -o -name "*.pkg" \) -print0)
 
           echo "Found package files: ${PACKAGE_FILES[@]}"
 
@@ -256,7 +372,7 @@ jobs:
 
           echo "Creating release with tag: $RELEASE_TAG"
           echo "Files to upload:"
-          find ./artifacts -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.tar" -o -name "*.apk" \) -exec ls -la {} \;
+          find ./artifacts -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.tar" -o -name "*.apk" -o -name "*.pkg" \) -exec ls -la {} \;
 
           gh release create "$RELEASE_TAG" \
             --title "Nixopus CLI v$CLI_VERSION" \
@@ -264,6 +380,6 @@ jobs:
             --target ${{ github.ref_name }} \
             --prerelease
 
-          find ./artifacts -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.tar" -o -name "*.apk" \) -exec gh release upload "$RELEASE_TAG" {} \;
+          find ./artifacts -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.tar" -o -name "*.apk" -o -name "*.pkg" \) -exec gh release upload "$RELEASE_TAG" {} \;
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
