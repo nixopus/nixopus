@@ -84,7 +84,7 @@ variables:
 
   proxy_domain:
     type: "string"
-    description: "Proxy domain for Code Server (optional)"
+    description: "Domain name for Code Server (optional)"
     default: ""
     is_required: false
 
@@ -139,6 +139,14 @@ execution:
         volumes:
           - "{{ config_volume_name }}:/config"
       timeout: 300
+
+    - name: "Add proxy for Code Server"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check Code Server HTTP response"

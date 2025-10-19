@@ -46,6 +46,12 @@ variables:
     default: 80
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Appwrite (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Appwrite image"
@@ -69,6 +75,14 @@ execution:
           - "/var/run/docker.sock:/var/run/docker.sock"
           - "{{ config_volume_name }}:/usr/src/code/appwrite"
       timeout: 600
+
+    - name: "Add proxy for Appwrite"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check HTTP response from Appwrite"

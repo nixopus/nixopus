@@ -46,6 +46,12 @@ variables:
     default: "homer-config"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Homer (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Homer image"
@@ -68,6 +74,14 @@ execution:
         volumes:
           - "{{ config_volume_name }}:/www/assets"
       timeout: 180
+
+    - name: "Add proxy for Homer"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check Homer HTTP response"

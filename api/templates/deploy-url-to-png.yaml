@@ -40,6 +40,12 @@ variables:
     default: 3089
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for URL to PNG (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull URL to PNG image"
@@ -60,6 +66,14 @@ execution:
         ports: "{{ host_port }}:{{ container_port }}"
         restart: "unless-stopped"
       timeout: 180
+
+    - name: "Add proxy for URL to PNG"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check URL to PNG HTTP response"

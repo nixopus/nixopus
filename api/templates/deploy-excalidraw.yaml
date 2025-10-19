@@ -40,6 +40,12 @@ variables:
     default: 80
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Excalidraw (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Excalidraw image"
@@ -60,6 +66,14 @@ execution:
         ports: "{{ host_port }}:{{ container_port }}"
         restart: "unless-stopped"
       timeout: 120
+
+    - name: "Add proxy for Excalidraw"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check HTTP response from Excalidraw"

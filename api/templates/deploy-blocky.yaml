@@ -58,6 +58,12 @@ variables:
     default: "blocky-config"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Blocky web interface (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Blocky image"
@@ -80,6 +86,14 @@ execution:
         volumes:
           - "{{ config_volume_name }}:/app/config.yml"
       timeout: 180
+
+    - name: "Add proxy for Blocky web interface"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ web_port }}"
+      timeout: 30
 
   validate:
     - name: "Check Blocky web interface HTTP response"

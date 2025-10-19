@@ -52,6 +52,12 @@ variables:
     default: "/mnt/host"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Dashdot (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Dashdot image"
@@ -75,3 +81,11 @@ execution:
         volumes:
           - "{{ host_mount_path }}:{{ container_mount_path }}:ro"
       timeout: 180
+
+    - name: "Add proxy for Dashdot"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30

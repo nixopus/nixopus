@@ -81,6 +81,7 @@ func (p *Parser) validateStep(step ExecutionStep) error {
 		"user":           p.validateUserStep,
 		"docker":         p.validateDockerStep,
 		"docker_compose": p.validateDockerComposeStep,
+		"proxy":          p.validateProxyStep,
 	}
 	v, ok := validators[step.Type]
 	if !ok {
@@ -146,6 +147,21 @@ func (p *Parser) validateDockerComposeStep(step ExecutionStep) error {
 		return nil
 	default:
 		return fmt.Errorf("unsupported docker_compose action: %s", action)
+	}
+}
+
+func (p *Parser) validateProxyStep(step ExecutionStep) error {
+	if err := p.requireProps(step, map[string]bool{"action": true}); err != nil {
+		return err
+	}
+	action, _ := step.Properties["action"].(string)
+	switch action {
+	case "add", "update":
+		return p.requireProps(step, map[string]bool{"domain": true, "port": true})
+	case "remove":
+		return p.requireProps(step, map[string]bool{"domain": true})
+	default:
+		return fmt.Errorf("unsupported proxy action: %s", action)
 	}
 }
 

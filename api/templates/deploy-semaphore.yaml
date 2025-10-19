@@ -76,6 +76,12 @@ variables:
     default: "semaphore-data"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Semaphore (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Semaphore image"
@@ -104,6 +110,14 @@ execution:
         volumes:
           - "{{ data_volume_name }}:/var/lib/semaphore"
       timeout: 300
+
+    - name: "Add proxy for Semaphore"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check Semaphore HTTP response"

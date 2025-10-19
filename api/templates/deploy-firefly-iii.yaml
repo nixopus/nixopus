@@ -88,6 +88,12 @@ variables:
     default: "firefly_iii_upload"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Firefly III (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Firefly III image"
@@ -118,6 +124,14 @@ execution:
         volumes:
           - "{{ upload_volume_name }}:/var/www/html/storage/upload"
       timeout: 300
+
+    - name: "Add proxy for Firefly III"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check Firefly III HTTP response"

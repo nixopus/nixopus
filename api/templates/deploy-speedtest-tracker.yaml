@@ -88,6 +88,12 @@ variables:
     default: "speedtest-tracker-ssl"
     is_required: false
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Speedtest Tracker (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Speedtest Tracker image"
@@ -116,3 +122,11 @@ execution:
           - "{{ data_volume_name }}:/config"
           - "{{ ssl_keys_volume_name }}:/config/keys"
       timeout: 300
+
+    - name: "Add proxy for Speedtest Tracker"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ http_port }}"
+      timeout: 30

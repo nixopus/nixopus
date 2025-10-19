@@ -52,6 +52,12 @@ variables:
     default: "filebrowser_config"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for File Browser (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull File Browser image"
@@ -76,6 +82,14 @@ execution:
           - "{{ db_volume }}:/database"
           - "{{ config_volume }}:/config"
       timeout: 180
+
+    - name: "Add proxy for File Browser"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check HTTP response from File Browser"
