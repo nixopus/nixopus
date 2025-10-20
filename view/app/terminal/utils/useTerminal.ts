@@ -19,8 +19,8 @@ type TerminalOutput = {
 };
 
 export const useTerminal = (
-  isTerminalOpen: boolean, 
-  width: number, 
+  isTerminalOpen: boolean,
+  width: number,
   height: number,
   allowInput: boolean = true,
   terminalId: string = 'terminal_id'
@@ -157,38 +157,29 @@ export const useTerminal = (
 
         if (allowInput) {
           term.attachCustomKeyEventHandler((event: KeyboardEvent) => {
-            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'j') {
+            const key = event.key.toLowerCase();
+            if (key === 'j' && (event.ctrlKey || event.metaKey)) {
               return false;
             }
-
-            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c') {
-              if (event.shiftKey) {
-                sendJsonMessage({
-                  action: 'terminal',
-                  data: { value: CTRL_C, terminalId }
-                });
-                return false;
+            else if (key === 'c' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
+              if (event.type === 'keydown' ) {
+                  try {
+                    const selection = term.getSelection();
+                    if (selection) {
+                      navigator.clipboard.writeText(selection)
+                        .then(() => {
+                          term.clearSelection(); // Clear selection after successful copy
+                        })
+                      return false;
+                    }
+                  } catch (error) {
+                    console.error('Error in Ctrl+C handler:', error);
+                  }
               }
-              const selection = term.getSelection();
-              if (selection) {
-                navigator.clipboard.writeText(selection);
-              }
               return false;
             }
-
-            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v') {
-              navigator.clipboard.readText().then((text) => {
-                sendJsonMessage({
-                  action: 'terminal',
-                  data: { value: text, terminalId }
-                });
-              });
-              return false;
-            }
-
             return true;
           });
-
           term.onData((data) => {
             sendJsonMessage({
               action: 'terminal',
