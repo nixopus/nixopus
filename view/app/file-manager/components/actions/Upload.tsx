@@ -88,11 +88,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ setIsDialogOpen, currentPath })
   };
 
   return (
-    <ResourceGuard 
-      resource="file-manager" 
-      action="create"
-      loadingFallback={null}
-    >
+    <ResourceGuard resource="file-manager" action="create" loadingFallback={null}>
       <DialogContent>
         <DialogHeader className="space-y-8">
           <DialogTitle>{t('fileManager.upload.title')}</DialogTitle>
@@ -108,7 +104,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ setIsDialogOpen, currentPath })
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-              <p className="text-md mt-2 text-muted-foreground">{t('fileManager.upload.dragDrop')}</p>
+              <p className="text-md mt-2 text-muted-foreground">
+                {t('fileManager.upload.dragDrop')}
+              </p>
             </div>
             <input
               type="file"

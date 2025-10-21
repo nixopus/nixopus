@@ -13,8 +13,8 @@ function page() {
   const { t } = useTranslation();
 
   return (
-    <ResourceGuard 
-      resource="deploy" 
+    <ResourceGuard
+      resource="deploy"
       action="create"
       loadingFallback={<Skeleton className="h-96" />}
     >
@@ -22,7 +22,7 @@ function page() {
         <DashboardPageHeader
           label={repository?.name || t('selfHost.create.title')}
           description={t('selfHost.create.description')}
-          className='justify-center text-center mb-16'
+          className="justify-center text-center mb-16"
         />
         <DeployForm
           repository={repository?.id.toString() || ''}

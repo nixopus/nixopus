@@ -41,9 +41,7 @@ export function ExtensionCard({ extension, onInstall, onViewDetails }: Extension
       <div className="space-y-4">
         <div className="flex items-start gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-primary-foreground flex-shrink-0">
-            <div className="text-muted-foreground text-lg font-bold">
-              {extension.icon}
-            </div>
+            <div className="text-muted-foreground text-lg font-bold">{extension.icon}</div>
           </div>
           <div className="flex-1 min-w-0">
             <CardTitle className="text-lg font-bold text-card-foreground mb-1">
@@ -91,15 +89,12 @@ export function ExtensionCard({ extension, onInstall, onViewDetails }: Extension
               className="ml-2 text-primary hover:underline text-sm"
               onClick={() => setExpanded((v) => !v)}
             >
-              {expanded ? (t('common.readLess') || 'Read less') : (t('common.readMore') || 'Read more')}
+              {expanded ? t('common.readLess') || 'Read less' : t('common.readMore') || 'Read more'}
             </button>
           )}
         </CardDescription>
         <div className="flex gap-2 pt-6 justify-start">
-          <Button
-            className="font-medium min-w-[100px]"
-            onClick={() => onInstall?.(extension)}
-          >
+          <Button className="font-medium min-w-[100px]" onClick={() => onInstall?.(extension)}>
             {extension.extension_type === 'install' ? t('extensions.install') : t('extensions.run')}
           </Button>
           <Button
@@ -117,7 +112,10 @@ export function ExtensionCard({ extension, onInstall, onViewDetails }: Extension
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title={t('extensions.confirmDeleteTitle') || 'Remove fork?'}
-        description={t('extensions.confirmDeleteMessage') || 'This will remove your forked extension. This action cannot be undone.'}
+        description={
+          t('extensions.confirmDeleteMessage') ||
+          'This will remove your forked extension. This action cannot be undone.'
+        }
         confirmText={t('common.delete') || 'Delete'}
         cancelText={t('common.cancel') || 'Cancel'}
         variant="destructive"

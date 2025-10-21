@@ -126,7 +126,8 @@ function TeamMembers({
             <Badge
               key={index}
               variant="outline"
-              className="bg-primary/10 text-primary rounded-full">
+              className="bg-primary/10 text-primary rounded-full"
+            >
               {permission}
             </Badge>
           ))}
@@ -136,7 +137,8 @@ function TeamMembers({
             variant="ghost"
             size="sm"
             className="h-6 px-2 text-xs font-medium text-primary hover:text-primary/80"
-            onClick={() => toggleUserPermissions(userId)}>
+            onClick={() => toggleUserPermissions(userId)}
+          >
             {isExpanded ? (
               <>
                 {t('settings.teams.members.actions.showLess')}{' '}
@@ -235,7 +237,8 @@ function TeamMembers({
                                 onClick={() => {
                                   setUserToRemove(user);
                                   setIsDeleteDialogOpen(true);
-                                }}>
+                                }}
+                              >
                                 <TrashIcon className="h-4 w-4 mr-2" />
                                 {t('settings.teams.members.actions.remove')}
                               </DropdownMenuItem>

@@ -1,4 +1,4 @@
-export type ExtensionCategory = 
+export type ExtensionCategory =
   | 'Security'
   | 'Containers'
   | 'Database'
@@ -99,7 +99,7 @@ export interface ListLogsResponse {
 
 export type SortDirection = 'asc' | 'desc';
 
-export type ExtensionSortField = 
+export type ExtensionSortField =
   | 'name'
   | 'author'
   | 'category'

@@ -1,8 +1,14 @@
 'use client';
 
-import React, { } from 'react';
+import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
@@ -17,7 +23,11 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { ActivityMessage } from '@/redux/types/audit';
-import useActivities, { ActivityListProps, getActionColor, resourceTypeOptions } from './hooks/use-activities';
+import useActivities, {
+  ActivityListProps,
+  getActionColor,
+  resourceTypeOptions
+} from './hooks/use-activities';
 
 export default function ActivitiesPage() {
   const { t } = useTranslation();
@@ -52,9 +62,8 @@ function ActivityList({
     totalPages,
     sortConfig,
     searchTerm,
-    currentPage,
-
-  } = useActivities()
+    currentPage
+  } = useActivities();
 
   return (
     <div className="space-y-4">
@@ -106,7 +115,9 @@ function ActivityList({
                 {activities.map((activity: ActivityMessage) => (
                   <TableRow key={activity.id}>
                     <TableCell>
-                      <div className={`h-3 w-3 rounded-full ${getActionColor(activity.action_color)}`}></div>
+                      <div
+                        className={`h-3 w-3 rounded-full ${getActionColor(activity.action_color)}`}
+                      ></div>
                     </TableCell>
                     <TableCell className="max-w-md">
                       <TypographySmall className="text-foreground">
@@ -136,7 +147,9 @@ function ActivityList({
         </>
       ) : (
         <div className="text-center text-muted-foreground py-8">
-          {searchTerm || (resourceType && resourceType !== 'all') ? 'No activities found matching your filters.' : 'No activities yet.'}
+          {searchTerm || (resourceType && resourceType !== 'all')
+            ? 'No activities found matching your filters.'
+            : 'No activities yet.'}
         </div>
       )}
     </div>

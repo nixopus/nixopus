@@ -100,7 +100,10 @@ export function LoginForm({ ...props }: LoginFormProps) {
                   <div className="grid gap-3">
                     <div className="flex items-center">
                       <Label htmlFor="password">{t('auth.password')}</Label>
-                      <Link href="/auth/reset-password" className="ml-auto text-sm underline-offset-2 hover:underline">
+                      <Link
+                        href="/auth/reset-password"
+                        className="ml-auto text-sm underline-offset-2 hover:underline"
+                      >
                         {t('auth.login.forgotPassword')}
                       </Link>
                     </div>

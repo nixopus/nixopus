@@ -22,7 +22,7 @@ export default function ExtensionDetailsPage() {
     setRunModalOpen,
     t,
     setTab
-  } = useExtensionDetails()
+  } = useExtensionDetails();
 
   return (
     <PageLayout maxWidth="6xl" padding="md" spacing="lg">
@@ -51,7 +51,9 @@ export default function ExtensionDetailsPage() {
               onClick={() => setRunModalOpen(true)}
               disabled={!extension || isRunning}
             >
-              {extension?.extension_type === 'install' ? (t('extensions.install') || 'Install') : (t('extensions.run') || 'Run')}
+              {extension?.extension_type === 'install'
+                ? t('extensions.install') || 'Install'
+                : t('extensions.run') || 'Run'}
             </Button>
           )}
         </div>
@@ -85,7 +87,10 @@ export default function ExtensionDetailsPage() {
         extension={extension}
         onSubmit={async (values) => {
           if (!extension) return;
-          const exec = await runExtension({ extensionId: extension.extension_id, body: { variables: values } }).unwrap();
+          const exec = await runExtension({
+            extensionId: extension.extension_id,
+            body: { variables: values }
+          }).unwrap();
           setRunModalOpen(false);
           router.push(`/extensions/${extension.id}?exec=${exec.id}&openLogs=1`);
         }}

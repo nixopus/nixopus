@@ -37,7 +37,11 @@ function useRegister() {
   const { t } = useTranslation();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const { data: isAdminRegistered, isLoading: isAdminRegisteredLoading, isError: isAdminRegisteredError } = useIsAdminRegisteredQuery();
+  const {
+    data: isAdminRegistered,
+    isLoading: isAdminRegisteredLoading,
+    isError: isAdminRegisteredError
+  } = useIsAdminRegisteredQuery();
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema(t)),
     defaultValues: {
@@ -58,7 +62,7 @@ function useRegister() {
       });
 
       if (response.status === 'FIELD_ERROR') {
-        response.formFields.forEach(field => {
+        response.formFields.forEach((field) => {
           toast.error(field.error);
         });
       } else if (response.status === 'SIGN_UP_NOT_ALLOWED') {
@@ -74,7 +78,6 @@ function useRegister() {
     }
   };
 
-
   return {
     form,
     onSubmit,
@@ -82,8 +85,7 @@ function useRegister() {
     isAdminRegistered,
     isAdminRegisteredLoading,
     isAdminRegisteredError,
-    t,
-    
+    t
   };
 }
 

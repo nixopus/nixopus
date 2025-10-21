@@ -22,7 +22,7 @@ export default function RegisterPage() {
     isAdminRegisteredLoading,
     isAdminRegisteredError,
     t
-  } = useRegister()
+  } = useRegister();
 
   if (isAdminRegisteredLoading) {
     return <AdminRegisteredSkeleton />;
@@ -67,7 +67,11 @@ export default function RegisterPage() {
                     </div>
                     <div className="grid gap-3">
                       <Label htmlFor="password">{t('auth.password')}</Label>
-                      <PasswordInputField id="password" type="password" {...form.register('password')} />
+                      <PasswordInputField
+                        id="password"
+                        type="password"
+                        {...form.register('password')}
+                      />
                       {form.formState.errors.password && (
                         <p className="text-sm text-destructive">
                           {form.formState.errors.password.message}

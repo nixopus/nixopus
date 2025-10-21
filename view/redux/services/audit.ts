@@ -29,7 +29,7 @@ export const auditApi = createApi({
       query: ({ page = 1, pageSize = 10, search, resource_type }) => {
         const params = new URLSearchParams({
           page: page.toString(),
-          pageSize: pageSize.toString(),
+          pageSize: pageSize.toString()
         });
 
         if (search) params.append('search', search);

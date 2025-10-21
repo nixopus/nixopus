@@ -27,15 +27,8 @@ export default function CategoryBadges({
     <div className={cn('w-full', className)}>
       <div className="flex flex-wrap items-center gap-2">
         {showAll && (
-          <button
-            type="button"
-            onClick={() => handleSelect(null)}
-            className="focus:outline-none"
-          >
-            <Badge
-              variant={selected === null ? 'default' : 'outline'}
-              className="px-3 py-1"
-            >
+          <button type="button" onClick={() => handleSelect(null)} className="focus:outline-none">
+            <Badge variant={selected === null ? 'default' : 'outline'} className="px-3 py-1">
               All
             </Badge>
           </button>
@@ -47,10 +40,7 @@ export default function CategoryBadges({
             onClick={() => handleSelect(cat === selected ? null : cat)}
             className="focus:outline-none"
           >
-            <Badge
-              variant={selected === cat ? 'default' : 'outline'}
-              className="px-3 py-1"
-            >
+            <Badge variant={selected === cat ? 'default' : 'outline'} className="px-3 py-1">
               {cat}
             </Badge>
           </button>
@@ -59,5 +49,3 @@ export default function CategoryBadges({
     </div>
   );
 }
-
-

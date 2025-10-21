@@ -1,20 +1,14 @@
 'use client';
 
-import React, { } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import useOrganizationInvite from '../hooks/use-org-invite';
 
 export default function OrganizationInvitePage() {
-  const {
-    message,
-    router,
-    orgId,
-    handleIntermediateLogin,
-    isLoading,
-    status
-  } = useOrganizationInvite()
+  const { message, router, orgId, handleIntermediateLogin, isLoading, status } =
+    useOrganizationInvite();
 
   const renderContent = () => {
     switch (status) {
@@ -40,11 +34,7 @@ export default function OrganizationInvitePage() {
           <div className="flex flex-col items-center space-y-4">
             <AlertCircle className="h-8 w-8 text-destructive" />
             <p className="text-sm text-destructive font-medium">{message}</p>
-            <Button
-              onClick={() => router.push('/auth')}
-              variant="outline"
-              size="sm"
-            >
+            <Button onClick={() => router.push('/auth')} variant="outline" size="sm">
               Back to Login
             </Button>
           </div>
@@ -55,11 +45,7 @@ export default function OrganizationInvitePage() {
           <div className="flex flex-col items-center space-y-4">
             <AlertCircle className="h-8 w-8 text-accent-foreground" />
             <p className="text-sm text-center">{message}</p>
-            <Button
-              onClick={handleIntermediateLogin}
-              disabled={isLoading}
-              className="w-full"
-            >
+            <Button onClick={handleIntermediateLogin} disabled={isLoading} className="w-full">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -86,9 +72,7 @@ export default function OrganizationInvitePage() {
             {orgId ? `Joining organization: ${orgId}` : 'Processing your invitation...'}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          {renderContent()}
-        </CardContent>
+        <CardContent>{renderContent()}</CardContent>
       </Card>
     </div>
   );

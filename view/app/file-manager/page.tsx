@@ -25,7 +25,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 const CopyFeedback = ({ show, message }: { show: boolean; message: string }) => {
   if (!show) return null;
-  
+
   return (
     <div className="fixed bottom-4 right-4 flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground shadow-lg animate-in fade-in slide-in-from-bottom-4">
       <CheckIcon className="h-4 w-4" />
@@ -75,7 +75,7 @@ const MobileNavigation = ({
     </button>
     <div className="flex items-center gap-2">
       <SortMethods files={visibleFiles} onSortChange={handleSortChange} />
-      <AnyPermissionGuard 
+      <AnyPermissionGuard
         permissions={['file-manager:create', 'file-manager:update', 'file-manager:delete']}
       >
         <Actions
@@ -97,7 +97,7 @@ interface DesktopNavigationProps {
   fileClicked: (path: string) => void;
   visibleFiles: FileData[];
   handleSortChange: (method: any) => void;
-  layout: 'grid' | 'list';  
+  layout: 'grid' | 'list';
   setLayout: React.Dispatch<React.SetStateAction<'grid' | 'list'>>;
   refetch: () => void;
   showHidden: boolean;
@@ -122,14 +122,11 @@ const DesktopNavigation = ({
   files
 }: DesktopNavigationProps) => (
   <>
-    <Breadcrumbs
-      breadcrumbs={currentPath.split('/').filter(Boolean)}
-      fileClicked={fileClicked}
-    />
+    <Breadcrumbs breadcrumbs={currentPath.split('/').filter(Boolean)} fileClicked={fileClicked} />
     <div className="flex flex-wrap items-center gap-2 sm:gap-4">
       <SortMethods files={visibleFiles} onSortChange={handleSortChange} />
       <LayoutSwitcher layout={layout} setLayout={setLayout} />
-      <AnyPermissionGuard 
+      <AnyPermissionGuard
         permissions={['file-manager:create', 'file-manager:update', 'file-manager:delete']}
       >
         <Actions
@@ -249,11 +246,7 @@ const FileDeleteDialog = ({
   handleDelete,
   t
 }: FileDeleteDialogProps) => (
-  <ResourceGuard 
-    resource="file-manager" 
-    action="delete"
-    loadingFallback={null}
-  >
+  <ResourceGuard resource="file-manager" action="delete" loadingFallback={null}>
     <DeleteDialog
       title={t('fileManager.deleteDialog.title')}
       description={
@@ -357,11 +350,7 @@ function FileManager() {
   };
 
   return (
-    <ResourceGuard 
-      resource="file-manager" 
-      action="read"
-      loadingFallback={<Skeleton />}
-    >
+    <ResourceGuard resource="file-manager" action="read" loadingFallback={<Skeleton />}>
       <FileContextMenu
         showHidden={showHidden}
         setShowHidden={setShowHidden}
@@ -375,7 +364,7 @@ function FileManager() {
       >
         <PageLayout maxWidth="6xl" padding="md" spacing="lg" className="min-h-[calc(100vh-100px)]">
           <CopyFeedback show={showCopyFeedback} message={copyFeedbackMessage} />
-          
+
           <div className="mb-6 flex flex-col gap-4 px-0 lg:px-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <Header />
@@ -387,7 +376,7 @@ function FileManager() {
                 />
               </div>
             </div>
-            
+
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               {isMobile ? (
                 <MobileNavigation

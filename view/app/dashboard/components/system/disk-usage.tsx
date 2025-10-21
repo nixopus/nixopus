@@ -6,7 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SystemStatsType } from '@/redux/types/monitor';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/use-translation';
-import { Table, TableBody, TableRow, TableCell, TableHead, TableHeader } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableHead,
+  TableHeader
+} from '@/components/ui/table';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 interface DiskUsageCardProps {
@@ -54,22 +61,30 @@ const DiskUsageCard: React.FC<DiskUsageCardProps> = ({ systemStats }) => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-left pr-1 sm:pr-2">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.mount')}</TypographySmall>
+                    <TypographySmall className="text-xs">
+                      {t('dashboard.disk.table.headers.mount')}
+                    </TypographySmall>
                   </TableHead>
                   <TableHead className="text-left pr-1 sm:pr-2">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.size')}</TypographySmall>
+                    <TypographySmall className="text-xs">
+                      {t('dashboard.disk.table.headers.size')}
+                    </TypographySmall>
                   </TableHead>
                   <TableHead className="text-left pr-1 sm:pr-2">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.used')}</TypographySmall>
+                    <TypographySmall className="text-xs">
+                      {t('dashboard.disk.table.headers.used')}
+                    </TypographySmall>
                   </TableHead>
                   <th className="text-left">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.percentage')}</TypographySmall>
+                    <TypographySmall className="text-xs">
+                      {t('dashboard.disk.table.headers.percentage')}
+                    </TypographySmall>
                   </th>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {disk.allMounts.map((mount, index) => (
-                  <TableRow key={index} className='border-0'>
+                  <TableRow key={index} className="border-0">
                     <TableCell>
                       <TypographySmall className="text-xs">{mount.mountPoint}</TypographySmall>
                     </TableCell>
@@ -121,16 +136,24 @@ const DiskUsageCardSkeleton = () => {
               <thead>
                 <tr>
                   <th className="text-left pr-1 sm:pr-2">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.mount')}</TypographySmall>
+                    <TypographySmall className="text-xs">
+                      {t('dashboard.disk.table.headers.mount')}
+                    </TypographySmall>
                   </th>
                   <th className="text-right pr-1 sm:pr-2">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.size')}</TypographySmall>
+                    <TypographySmall className="text-xs">
+                      {t('dashboard.disk.table.headers.size')}
+                    </TypographySmall>
                   </th>
                   <th className="text-right pr-1 sm:pr-2">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.used')}</TypographySmall>
+                    <TypographySmall className="text-xs">
+                      {t('dashboard.disk.table.headers.used')}
+                    </TypographySmall>
                   </th>
                   <th className="text-right">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.percentage')}</TypographySmall>
+                    <TypographySmall className="text-xs">
+                      {t('dashboard.disk.table.headers.percentage')}
+                    </TypographySmall>
                   </th>
                 </tr>
               </thead>

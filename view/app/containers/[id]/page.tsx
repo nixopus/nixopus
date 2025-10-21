@@ -37,7 +37,7 @@ export default function ContainerDetailsPage() {
     handleDeleteConfirm,
     isDeleteDialogOpen,
     setIsDeleteDialogOpen
-  } = useContainerDetails()
+  } = useContainerDetails();
 
   if (isLoading || !container) {
     return <ContainerDetailsLoading />;
@@ -46,11 +46,7 @@ export default function ContainerDetailsPage() {
   const isProtected = isNixopusContainer(container?.name);
 
   return (
-    <ResourceGuard
-      resource="container"
-      action="read"
-      loadingFallback={<ContainerDetailsLoading />}
-    >
+    <ResourceGuard resource="container" action="read" loadingFallback={<ContainerDetailsLoading />}>
       <PageLayout maxWidth="6xl" padding="md" spacing="lg">
         <div className="flex items-center justify-between mb-6 pb-4 border-b">
           <div>
@@ -162,11 +158,7 @@ export default function ContainerDetailsPage() {
             </TabsContent>
           </Tabs>
         </div>
-        <ResourceGuard
-          resource="container"
-          action="delete"
-          loadingFallback={null}
-        >
+        <ResourceGuard resource="container" action="delete" loadingFallback={null}>
           <DeleteDialog
             title={t('containers.deleteDialog.title')}
             description={t('containers.deleteDialog.description')}

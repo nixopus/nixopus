@@ -3,10 +3,7 @@ import { userApi } from '@/redux/services/users/userApi';
 import { User } from '@/redux/types/user';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import {
-  setAuthTokens,
-  clearAuthTokens
-} from '@/lib/auth';
+import { setAuthTokens, clearAuthTokens } from '@/lib/auth';
 import { doesSessionExist, signOut } from 'supertokens-auth-react/recipe/session';
 import { setActiveOrganization } from './userSlice';
 
@@ -71,18 +68,15 @@ export const initializeAuth = createAsyncThunk<AuthPayload | null, void, { rejec
   }
 );
 
-export const logoutUser = createAsyncThunk(
-  'auth/logoutUser',
-  async (_, { dispatch }) => {
-    try {
-      await signOut();
-      dispatch(logout());
-    } catch (error) {
-      console.error('SuperTokens logout failed:', error);
-      dispatch(logout());
-    }
+export const logoutUser = createAsyncThunk('auth/logoutUser', async (_, { dispatch }) => {
+  try {
+    await signOut();
+    dispatch(logout());
+  } catch (error) {
+    console.error('SuperTokens logout failed:', error);
+    dispatch(logout());
   }
-);
+});
 
 const initialState: AuthState = {
   user: null,
