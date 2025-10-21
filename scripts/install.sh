@@ -111,7 +111,7 @@ detect_arch() {
 detect_os() {
     case "$(uname -s)" in
         Darwin*)
-            echo "tar"  # macOS uses tar fallback
+            echo "pkg"
             ;;
         Linux*)
             if command -v apt &>/dev/null; then
@@ -159,6 +159,7 @@ build_package_name() {
         rpm) echo "nixopus-${CLI_VERSION}-1.$([ "$arch" = "amd64" ] && echo "x86_64" || echo "aarch64").rpm" ;;
         apk) echo "nixopus_${CLI_VERSION}_${arch}.apk" ;;
         tar) echo "nixopus-${CLI_VERSION}.tar" ;;
+        pkg) echo "nixopus-${CLI_VERSION}-darwin-${arch}.pkg" ;;
         *) log_error "Unknown package type: $pkg_type"; exit 1 ;;
     esac
 }
@@ -228,6 +229,9 @@ install_package() {
                 fi
             fi
             ;;
+        pkg)
+            sudo installer -pkg "$temp_file" -target /
+            ;;
     esac
     
     # Cleanup
@@ -263,7 +267,7 @@ install_cli() {
 check_permissions() {
     local pkg_type="$1"
     case "$pkg_type" in
-        deb|rpm|apk)
+        deb|rpm|apk|pkg)
             if [[ $EUID -ne 0 ]] && ! sudo -n true 2>/dev/null; then
                 echo "This script requires sudo privileges for package installation."
             fi
