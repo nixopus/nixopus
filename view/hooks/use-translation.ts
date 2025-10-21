@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { defaultLocale } from '@/lib/i18n/config';
-import en from '../lib/i18n/locales/en.json'
+import en from '@/lib/i18n/locales/en.json'
 
 // Recursive way to infer types from nested json keys
 type DeepKeyOf<T> = {
