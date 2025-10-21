@@ -19,5 +19,3 @@ func New(redisURL string) (*redis.Client, error) {
 	opt.WriteTimeout = 3 * time.Second
 	return redis.NewClient(opt), nil
 }
-
-

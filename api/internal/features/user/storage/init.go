@@ -164,7 +164,6 @@ func (s *UserStorage) UpdateUserSettings(userID string, updates map[string]inter
 	return &settings, nil
 }
 
-
 func (s *UserStorage) UpdateUserAvatar(ctx context.Context, userID string, avatarData string) error {
 	_, err := s.DB.NewUpdate().
 		Table("users").
