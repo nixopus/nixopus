@@ -3,7 +3,7 @@
 import React from 'react';
 import { RefreshCw, Trash2, Loader2, Scissors, Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import ContainersLoading from './skeleton';
+import ContainersLoading from './components/skeleton';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { FeatureNames } from '@/types/feature-flags';
 import { Skeleton } from '@/components/ui/skeleton';
