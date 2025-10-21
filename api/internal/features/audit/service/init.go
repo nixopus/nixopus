@@ -468,7 +468,7 @@ func (s *AuditService) generateIntegrationMessage(actor string, action types.Aud
 
 func (s *AuditService) generateGenericMessage(actor string, action types.AuditAction, resourceType string) string {
 	return fmt.Sprintf("%s %s %s", actor, action, resourceType)
-}	
+}
 
 func getActionColor(action types.AuditAction) string {
 	switch action {

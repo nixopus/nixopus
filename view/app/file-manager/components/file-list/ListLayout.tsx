@@ -39,7 +39,7 @@ export const ListLayout: React.FC<ListLayoutProps> = ({
         onKeyDown={(e) => handleKeyDown(e, file)}
         autoFocus
         className={cn(
-          "w-full px-2 py-1 rounded-md border-0 bg-transparent focus:ring-2 focus:ring-primary text-left",
+          'w-full px-2 py-1 rounded-md border-0 bg-transparent focus:ring-2 focus:ring-primary text-left',
           activePath === file.path ? 'bg-secondary text-secondary-foreground' : 'bg-background'
         )}
         onClick={(e) => e.stopPropagation()}
@@ -47,7 +47,7 @@ export const ListLayout: React.FC<ListLayoutProps> = ({
     ) : (
       <span
         className={cn(
-          "px-2 py-1 rounded-md break-words leading-normal text-left",
+          'px-2 py-1 rounded-md break-words leading-normal text-left',
           activePath === file.path ? 'bg-secondary text-secondary-foreground' : 'text-foreground'
         )}
         title={file.name}
@@ -65,7 +65,9 @@ export const ListLayout: React.FC<ListLayoutProps> = ({
           if (type === 'folder') onFolderClick(file.path);
         }}
       >
-        <div className="mr-3">{getFileIcons(type, file.name.split('.').pop() as string, 'list')}</div>
+        <div className="mr-3">
+          {getFileIcons(type, file.name.split('.').pop() as string, 'list')}
+        </div>
         <div className="min-w-0 flex-1">{renderFileName()}</div>
       </div>
       <div className="flex items-center space-x-4 text-xs text-muted-foreground">

@@ -12,7 +12,6 @@ function FileManagerHeader() {
           {t('fileManager.header.title')}
         </h1>
         <TypographyMuted>{t('fileManager.header.subtitle')}</TypographyMuted>
-
       </div>
     </div>
   );

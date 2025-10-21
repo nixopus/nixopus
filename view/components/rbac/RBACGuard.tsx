@@ -22,15 +22,10 @@ export const RBACGuard: React.FC<RBACGuardProps> = ({
   requireAll = false,
   fallback = null,
   loadingFallback = null,
-  errorFallback = null,
+  errorFallback = null
 }) => {
-  const { 
-    canAccessResource, 
-    hasPermission, 
-    hasAnyPermission, 
-    hasAllPermissions, 
-    isLoading 
-  } = useRBAC();
+  const { canAccessResource, hasPermission, hasAnyPermission, hasAllPermissions, isLoading } =
+    useRBAC();
 
   if (isLoading) {
     return <>{loadingFallback}</>;
@@ -44,9 +39,7 @@ export const RBACGuard: React.FC<RBACGuardProps> = ({
     } else if (permission) {
       shouldRender = hasPermission(permission);
     } else if (permissions && permissions.length > 0) {
-      shouldRender = requireAll 
-        ? hasAllPermissions(permissions)
-        : hasAnyPermission(permissions);
+      shouldRender = requireAll ? hasAllPermissions(permissions) : hasAnyPermission(permissions);
     } else {
       shouldRender = true;
     }
@@ -56,4 +49,4 @@ export const RBACGuard: React.FC<RBACGuardProps> = ({
   }
 
   return shouldRender ? <>{children}</> : <>{fallback}</>;
-}; 
+};

@@ -11,8 +11,8 @@ export default function Auth() {
     email,
     password,
     handlePasswordChange,
-    loaded,
-  } = useAuth()
+    loaded
+  } = useAuth();
 
   if (!loaded) {
     return (

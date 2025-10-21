@@ -14,13 +14,13 @@ import { RBACGuard } from '@/components/rbac/RBACGuard';
 import { TypographySmall, TypographyMuted, TypographyH3 } from '@/components/ui/typography';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Server, 
-  Code, 
-  BarChart3, 
-  Bell, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  Server,
+  Code,
+  BarChart3,
+  Bell,
+  CheckCircle2,
+  XCircle,
   Search,
   Filter,
   Settings
@@ -63,15 +63,19 @@ export default function FeatureFlagsSettings() {
 
   const getFilteredFeatures = () => {
     if (!featureFlags) return [];
-    
+
     return featureFlags.filter((feature) => {
-      const matchesSearch = feature.feature_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t(`settings.featureFlags.features.${feature.feature_name}.title`).toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesFilter = filterEnabled === 'all' || 
+      const matchesSearch =
+        feature.feature_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t(`settings.featureFlags.features.${feature.feature_name}.title` as any)
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+
+      const matchesFilter =
+        filterEnabled === 'all' ||
         (filterEnabled === 'enabled' && feature.is_enabled) ||
         (filterEnabled === 'disabled' && !feature.is_enabled);
-      
+
       return matchesSearch && matchesFilter;
     });
   };
@@ -79,7 +83,7 @@ export default function FeatureFlagsSettings() {
   const getGroupedFeatures = () => {
     const filteredFeatures = getFilteredFeatures();
     const grouped = new Map<string, FeatureFlag[]>();
-    
+
     filteredFeatures.forEach((feature) => {
       for (const [group, features] of Object.entries(featureGroups)) {
         if (features.includes(feature.feature_name as FeatureName)) {
@@ -96,7 +100,7 @@ export default function FeatureFlagsSettings() {
 
   const groupedFeatures = getGroupedFeatures();
   const totalFeatures = featureFlags?.length || 0;
-  const enabledFeatures = featureFlags?.filter(f => f.is_enabled).length || 0;
+  const enabledFeatures = featureFlags?.filter((f) => f.is_enabled).length || 0;
   const disabledFeatures = totalFeatures - enabledFeatures;
 
   if (isLoading) {
@@ -117,7 +121,10 @@ export default function FeatureFlagsSettings() {
                   <div className="h-4 bg-muted rounded w-1/4 mb-2"></div>
                   <div className="space-y-2">
                     {[1, 2].map((j) => (
-                      <div key={j} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div
+                        key={j}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
                         <div className="space-y-2">
                           <div className="h-4 bg-muted rounded w-32"></div>
                           <div className="h-3 bg-muted rounded w-48"></div>
@@ -188,24 +195,23 @@ export default function FeatureFlagsSettings() {
               <Alert>
                 <Search className="h-4 w-4" />
                 <AlertDescription>
-                  {searchTerm || filterEnabled !== 'all' 
+                  {searchTerm || filterEnabled !== 'all'
                     ? t('settings.featureFlags.noResults')
-                    : t('settings.featureFlags.noFeatures')
-                  }
+                    : t('settings.featureFlags.noFeatures')}
                 </AlertDescription>
               </Alert>
             ) : (
               Array.from(groupedFeatures.entries()).map(([group, features], index) => {
                 const GroupIcon = getGroupIcon(group);
-                const enabledInGroup = features.filter(f => f.is_enabled).length;
-                
+                const enabledInGroup = features.filter((f) => f.is_enabled).length;
+
                 return (
                   <div key={group} className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <GroupIcon className="h-4 w-4 text-muted-foreground" />
                         <TypographySmall className="font-semibold">
-                          {t(`settings.featureFlags.groups.${group}.title`)}
+                          {t(`settings.featureFlags.groups.${group}.title` as any)}
                         </TypographySmall>
                         <Badge variant="outline" className="text-xs">
                           {enabledInGroup}/{features.length}
@@ -221,11 +227,15 @@ export default function FeatureFlagsSettings() {
                           <div className="space-y-1 flex-1">
                             <div className="flex items-center gap-2">
                               <TypographySmall className="font-medium">
-                                {t(`settings.featureFlags.features.${feature.feature_name}.title`)}
+                                {t(
+                                  `settings.featureFlags.features.${feature.feature_name}.title` as any
+                                )}
                               </TypographySmall>
                             </div>
                             <TypographyMuted className="text-sm">
-                              {t(`settings.featureFlags.features.${feature.feature_name}.description`)}
+                              {t(
+                                `settings.featureFlags.features.${feature.feature_name}.description` as any
+                              )}
                             </TypographyMuted>
                           </div>
                           <RBACGuard resource="feature-flags" action="update">

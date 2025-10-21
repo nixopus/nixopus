@@ -7,5 +7,5 @@ export const languageNames: Record<Locale, string> = {
   es: 'Español',
   fr: 'Français',
   kn: 'ಕನ್ನಡ',
-  ml: 'മലയാളം',
+  ml: 'മലയാളം'
 };

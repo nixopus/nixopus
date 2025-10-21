@@ -41,5 +41,3 @@ const PasswordInputField = React.forwardRef<HTMLInputElement, PasswordInputField
 );
 
 export { PasswordInputField };
-
-

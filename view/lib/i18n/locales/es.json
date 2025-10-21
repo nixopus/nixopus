@@ -42,6 +42,8 @@
     "start_error": "Error al iniciar el contenedor",
     "stop_error": "Error al parar el contenedor",
     "remove_error": "Error al eliminar el contenedor",
+    "restart_success": "Contenedor reiniciado correctamente",
+    "restart_error": "Error al reiniciar el contenedor",
     "fetch_error": "Error al obtener los contenedores",
     "prune_images": "Eliminar imágenes",
     "prune_build_cache": "Eliminar caché de compilación",
@@ -1271,7 +1273,8 @@
   "terminal": {
     "title": "Terminal",
     "shortcut": "⌘J",
-    "close": "Cerrar Terminal"
+    "close": "Cerrar Terminal",
+    "newTab": "Nueva Pestaña"
   },
   "extensions": {
     "title": "Extensiones",
@@ -1357,6 +1360,10 @@
     }
   },
   "toasts": {
+    "success": {
+      "uploadFile": "Archivo subido exitosamente",
+      "copyFile": "Archivo copiado exitosamente"
+    },
     "errors": {
       "realtimeMonitor": "Error al conectar con el servicio de monitorización en tiempo real",
       "setFileToCopy": "Error al establecer el archivo para copiar",
@@ -1366,8 +1373,10 @@
       "startRenaming": "Error al iniciar el renombrado",
       "navigateToFile": "Error al navegar al archivo",
       "createNewFolder": "Error al crear nueva carpeta",
+      "createDirectory": "Error al crear directorio",
       "uploadFile": "Error al subir el archivo",
       "deleteFile": "Error al eliminar el archivo",
+      "calculateSize": "Error al calcular el tamaño",
       "setEmail": "Error al establecer el correo electrónico",
       "setPassword": "Error al establecer la contraseña"
     }

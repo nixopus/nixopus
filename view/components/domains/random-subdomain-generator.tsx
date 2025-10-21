@@ -31,25 +31,23 @@ export const RandomSubdomainGenerator: React.FC<RandomSubdomainGeneratorProps> =
 
   return (
     <div className="flex flex-col gap-2">
-      <Button
-        onClick={handleGenerateSubdomain}
-        disabled={isLoading}
-        variant="outline"
-      >
+      <Button onClick={handleGenerateSubdomain} disabled={isLoading} variant="outline">
         {isLoading ? 'Generating...' : 'Generate Random Subdomain'}
       </Button>
-      
+
       {randomSubdomainData && (
         <div className="text-sm text-muted-foreground">
-          <p><strong>Subdomain:</strong> {randomSubdomainData.subdomain}</p>
-          <p><strong>Domain:</strong> {randomSubdomainData.domain}</p>
+          <p>
+            <strong>Subdomain:</strong> {randomSubdomainData.subdomain}
+          </p>
+          <p>
+            <strong>Domain:</strong> {randomSubdomainData.domain}
+          </p>
         </div>
       )}
-      
+
       {error && (
-        <p className="text-sm text-destructive">
-          Failed to generate subdomain. Please try again.
-        </p>
+        <p className="text-sm text-destructive">Failed to generate subdomain. Please try again.</p>
       )}
     </div>
   );

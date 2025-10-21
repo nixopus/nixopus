@@ -44,16 +44,16 @@ function useGithubRepoPagination() {
     handleSearchChange,
     handleSortChange,
     sortConfig
-  } = useSearchable<GithubRepository>(
-    [],
-    ['name', 'description', 'stargazers_count'],
-    { key: 'name', direction: 'asc' }
-  );
-  const { data, isLoading } = useGetAllGithubRepositoriesQuery({ page: currentPage, page_size: PAGE_SIZE });
+  } = useSearchable<GithubRepository>([], ['name', 'description', 'stargazers_count'], {
+    key: 'name',
+    direction: 'asc'
+  });
+  const { data, isLoading } = useGetAllGithubRepositoriesQuery({
+    page: currentPage,
+    page_size: PAGE_SIZE
+  });
   // Re-wire the searchable array to API data
-  const {
-    filteredAndSortedData: filteredAndSortedApplications,
-  } = useSearchable<GithubRepository>(
+  const { filteredAndSortedData: filteredAndSortedApplications } = useSearchable<GithubRepository>(
     data?.repositories || [],
     ['name', 'description', 'stargazers_count'],
     { key: 'name', direction: 'asc' }
@@ -93,7 +93,7 @@ function useGithubRepoPagination() {
   };
 
   return {
-  githubRepositories: data?.repositories,
+    githubRepositories: data?.repositories,
     selectedRepository,
     setSelectedRepository,
     filteredAndSortedApplications,

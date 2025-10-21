@@ -70,7 +70,7 @@ func TestResetPassword(t *testing.T) {
 			request: types.ResetPasswordRequest{
 				Password: "Password123@",
 			},
-			token: resetToken,
+			token:          resetToken,
 			expectedStatus: http.StatusOK,
 		},
 		{
@@ -78,7 +78,7 @@ func TestResetPassword(t *testing.T) {
 			request: types.ResetPasswordRequest{
 				Password: "weakpassword",
 			},
-			token: resetToken,
+			token:          resetToken,
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
@@ -103,8 +103,8 @@ func TestResetPassword(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			Test(t,
 				Description(tc.name),
-				Post(tests.GetResetPasswordURL() + "?token=" + tc.token),
-				Send().Headers("Authorization").Add("Bearer " + authResponse.AccessToken),
+				Post(tests.GetResetPasswordURL()+"?token="+tc.token),
+				Send().Headers("Authorization").Add("Bearer "+authResponse.AccessToken),
 				Send().Headers("X-Organization-ID").Add(organization.ID.String()),
 				Send().Body().JSON(tc.request),
 				Expect().Status().Equal(int64(tc.expectedStatus)),

@@ -2,13 +2,27 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Extension, ExtensionListParams, SortDirection, ExtensionSortField, ExtensionCategory } from '@/redux/types/extension';
-import { useGetExtensionsQuery, useRunExtensionMutation, useCancelExecutionMutation, useGetExtensionCategoriesQuery } from '@/redux/services/extensions/extensionsApi';
+import {
+  Extension,
+  ExtensionListParams,
+  SortDirection,
+  ExtensionSortField,
+  ExtensionCategory
+} from '@/redux/types/extension';
+import {
+  useGetExtensionsQuery,
+  useRunExtensionMutation,
+  useCancelExecutionMutation,
+  useGetExtensionCategoriesQuery
+} from '@/redux/services/extensions/extensionsApi';
 
 export function useExtensions() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: ExtensionSortField; direction: SortDirection }>({
+  const [sortConfig, setSortConfig] = useState<{
+    key: ExtensionSortField;
+    direction: SortDirection;
+  }>({
     key: 'name',
     direction: 'asc'
   });
@@ -27,11 +41,7 @@ export function useExtensions() {
     page_size: itemsPerPage
   };
 
-  const {
-    data: response,
-    isLoading,
-    error: apiError
-  } = useGetExtensionsQuery(queryParams);
+  const { data: response, isLoading, error: apiError } = useGetExtensionsQuery(queryParams);
 
   const { data: categories = [] } = useGetExtensionCategoriesQuery();
 

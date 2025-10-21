@@ -11,7 +11,15 @@ import { parsePort } from '../../utils/parsePort';
 import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronDownIcon, ChevronRightIcon, SettingsIcon, ServerIcon, CodeIcon, InfoIcon, Terminal } from 'lucide-react';
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  SettingsIcon,
+  ServerIcon,
+  CodeIcon,
+  InfoIcon,
+  Terminal
+} from 'lucide-react';
 
 interface DeployConfigureProps {
   application_name?: string;
@@ -39,13 +47,13 @@ interface CollapsibleSectionProps {
   description?: string;
 }
 
-const CollapsibleSection = ({ 
-  title, 
-  children, 
-  defaultOpen = false, 
+const CollapsibleSection = ({
+  title,
+  children,
+  defaultOpen = false,
   icon: Icon,
   badge,
-  description 
+  description
 }: CollapsibleSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -55,16 +63,19 @@ const CollapsibleSection = ({
         <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors group">
           <div className="flex items-center gap-3">
             {Icon && (
-              <Icon size={20} className="text-muted-foreground group-hover:text-foreground transition-colors" />
+              <Icon
+                size={20}
+                className="text-muted-foreground group-hover:text-foreground transition-colors"
+              />
             )}
             <div className="text-left">
               <h3 className="text-sm font-medium">{title}</h3>
-              {description && (
-                <p className="text-xs text-muted-foreground mt-1">{description}</p>
-              )}
+              {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
             </div>
             {badge && (
-              <span className={`px-2 py-1 ${badge.toLowerCase() === 'required' ? 'bg-destructive/10 text-destructive' : badge.toLowerCase() === 'read-only' ? 'bg-muted/10 text-muted-foreground' : 'bg-primary/10 text-primary'} text-xs rounded-full font-medium`}>
+              <span
+                className={`px-2 py-1 ${badge.toLowerCase() === 'required' ? 'bg-destructive/10 text-destructive' : badge.toLowerCase() === 'read-only' ? 'bg-muted/10 text-muted-foreground' : 'bg-primary/10 text-primary'} text-xs rounded-full font-medium`}
+              >
                 {badge}
               </span>
             )}
@@ -76,9 +87,7 @@ const CollapsibleSection = ({
           )}
         </CollapsibleTrigger>
         <CollapsibleContent className="border-t bg-muted/20">
-          <div className="p-4 space-y-4">
-            {children}
-          </div>
+          <div className="p-4 space-y-4">{children}</div>
         </CollapsibleContent>
       </Collapsible>
     </div>
@@ -141,19 +150,12 @@ export const DeployConfigureForm = ({
   };
 
   return (
-    <ResourceGuard 
-      resource="deploy" 
-      action="read"
-      loadingFallback={<Skeleton className="h-96" />}
-    >
-      <AnyPermissionGuard 
-        permissions={['deploy:update']}
-        loadingFallback={null}
-      >
+    <ResourceGuard resource="deploy" action="read" loadingFallback={<Skeleton className="h-96" />}>
+      <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <CollapsibleSection 
-              title={t('selfHost.configuration.sections.basicConfiguration')} 
+            <CollapsibleSection
+              title={t('selfHost.configuration.sections.basicConfiguration')}
               icon={SettingsIcon}
               badge="Required"
               description="Essential settings for your application"
@@ -163,7 +165,7 @@ export const DeployConfigureForm = ({
                 <FormInputField
                   form={form}
                   label={t('selfHost.configuration.fields.applicationName.label')}
-                  name="name" 
+                  name="name"
                   placeholder={t('selfHost.configuration.fields.applicationName.label')}
                 />
                 {build_pack !== BuildPack.Static && (
@@ -180,7 +182,7 @@ export const DeployConfigureForm = ({
 
             {build_pack !== BuildPack.Static && (
               <>
-                <CollapsibleSection 
+                <CollapsibleSection
                   title={t('selfHost.configuration.sections.dockerConfiguration')}
                   icon={ServerIcon}
                   badge="Optional"
@@ -205,7 +207,7 @@ export const DeployConfigureForm = ({
                   </div>
                 </CollapsibleSection>
 
-                <CollapsibleSection 
+                <CollapsibleSection
                   title={t('selfHost.configuration.sections.environmentVariables')}
                   icon={CodeIcon}
                   badge="Optional"
@@ -217,7 +219,9 @@ export const DeployConfigureForm = ({
                       form={form}
                       label={t('selfHost.configuration.fields.environmentVariables.label')}
                       name="environment_variables"
-                      placeholder={t('selfHost.configuration.fields.environmentVariables.placeholder')}
+                      placeholder={t(
+                        'selfHost.configuration.fields.environmentVariables.placeholder'
+                      )}
                       required={false}
                       validator={validateEnvVar}
                       defaultValues={env_variables}
@@ -234,7 +238,7 @@ export const DeployConfigureForm = ({
                   </div>
                 </CollapsibleSection>
 
-                <CollapsibleSection 
+                <CollapsibleSection
                   title={t('selfHost.configuration.sections.commands')}
                   icon={Terminal}
                   badge="Optional"
@@ -261,7 +265,7 @@ export const DeployConfigureForm = ({
               </>
             )}
 
-            <CollapsibleSection 
+            <CollapsibleSection
               title={t('selfHost.configuration.sections.deploymentInformation')}
               icon={InfoIcon}
               badge="Read-only"

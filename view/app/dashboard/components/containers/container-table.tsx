@@ -55,8 +55,8 @@ const ContainersTable = ({ containersData }: { containersData: ContainerData[] }
               const hasPorts = container.Ports && container.Ports.length > 0;
               const formattedDate = container.Created
                 ? new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'long' }).format(
-                  new Date(container.Created * 1000)
-                )
+                    new Date(container.Created * 1000)
+                  )
                 : '-';
 
               return (
@@ -68,7 +68,9 @@ const ContainersTable = ({ containersData }: { containersData: ContainerData[] }
                     <TypographySmall>{containerName}</TypographySmall>
                   </TableCell>
                   <TableCell className="max-w-[200px] overflow-hidden">
-                    <TypographySmall className='truncate whitespace-nowrap max-w-full block'>{container.Image}</TypographySmall>
+                    <TypographySmall className="truncate whitespace-nowrap max-w-full block">
+                      {container.Image}
+                    </TypographySmall>
                   </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(container.Status)}>

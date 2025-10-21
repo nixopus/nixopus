@@ -9,13 +9,11 @@ import { useIsAdminRegisteredQuery } from '@/redux/services/users/authApi';
 
 let isInitialized = false;
 
-export const SuperTokensProvider: React.FC<React.PropsWithChildren<{}>> = ({
-  children,
-}) => {
+export const SuperTokensProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
   const [isReady, setIsReady] = useState(isInitialized);
   const router = useRouter();
   const pathname = usePathname();
-  
+
   useEffect(() => {
     const initializeSuperTokens = async () => {
       if (!isInitialized) {
@@ -51,11 +49,8 @@ export const SuperTokensProvider: React.FC<React.PropsWithChildren<{}>> = ({
       <AuthRecipeComponentsOverrideContextProvider
         components={{
           AuthPageComponentList_Override: ({ DefaultComponent, ...props }) => (
-            <DefaultComponent
-              {...props}
-              hasSeparateSignUpView={isAdminRegistered ? false : true}
-            />
-          ),
+            <DefaultComponent {...props} hasSeparateSignUpView={isAdminRegistered ? false : true} />
+          )
         }}
       >
         {children}

@@ -23,27 +23,19 @@ function TeamStats({ users }: TeamStatsProps) {
       <CardContent>
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <TypographyMuted>
-              {t('settings.teams.stats.totalMembers')}
-            </TypographyMuted>
+            <TypographyMuted>{t('settings.teams.stats.totalMembers')}</TypographyMuted>
             <span className="font-medium">{users.length}</span>
           </div>
           <div className="flex justify-between items-center">
-            <TypographyMuted>
-              {t('settings.teams.stats.owners')}
-            </TypographyMuted>
+            <TypographyMuted>{t('settings.teams.stats.owners')}</TypographyMuted>
             <span className="font-medium">{users.filter((u) => u.role === 'Admin').length}</span>
           </div>
           <div className="flex justify-between items-center">
-            <TypographyMuted>
-              {t('settings.teams.stats.members')}
-            </TypographyMuted>
+            <TypographyMuted>{t('settings.teams.stats.members')}</TypographyMuted>
             <span className="font-medium">{users.filter((u) => u.role === 'Member').length}</span>
           </div>
           <div className="flex justify-between items-center">
-            <TypographyMuted>
-              {t('settings.teams.stats.viewers')}
-            </TypographyMuted>
+            <TypographyMuted>{t('settings.teams.stats.viewers')}</TypographyMuted>
             <span className="font-medium">{users.filter((u) => u.role === 'Viewer').length}</span>
           </div>
         </div>

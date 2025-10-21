@@ -14,8 +14,8 @@ interface DashboardPageHeaderProps {
 function DashboardPageHeader({ className, label, description }: DashboardPageHeaderProps) {
   return (
     <div className={cn('flex items-center justify-between space-y-2', className)}>
-      <span className=''>
-        <TypographyH1 className='text-primary'>{label}</TypographyH1>
+      <span className="">
+        <TypographyH1 className="text-primary">{label}</TypographyH1>
         <TypographyMuted>{description}</TypographyMuted>
       </span>
     </div>
@@ -49,7 +49,7 @@ export function DahboardUtilityHeader<T>({
 }: DashboardUtilityHeaderProps<T>) {
   return (
     <div className={'space-y-6' + className}>
-      <TypographyH2 className='text-primary'>{label}</TypographyH2>
+      <TypographyH2 className="text-primary">{label}</TypographyH2>
       <div className="flex flex-col gap-4 sm:flex-row mt-4 justify-between items-center">
         <div className="flex-grow">
           <SearchBar

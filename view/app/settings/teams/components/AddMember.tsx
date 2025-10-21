@@ -64,7 +64,7 @@ function AddMember({
             Send a magic link invitation to add a new member to your team
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="email" className="text-right">
@@ -98,7 +98,7 @@ function AddMember({
             </Select>
           </div>
         </div>
-        
+
         <DialogFooter>
           <Button variant="outline" onClick={() => setIsAddUserDialogOpen(false)}>
             Cancel

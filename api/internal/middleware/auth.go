@@ -2,14 +2,14 @@ package middleware
 
 import (
 	"context"
-	"net/http"
-	"strings"
 	"github.com/raghavyuva/nixopus-api/internal/cache"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 	"github.com/supertokens/supertokens-golang/recipe/session"
+	"net/http"
+	"strings"
 )
 
 // AuthMiddleware is a middleware that checks if the request has a valid

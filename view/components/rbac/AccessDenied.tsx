@@ -19,13 +19,9 @@ export const AccessDenied: React.FC<AccessDeniedProps> = ({
     <div className={`flex h-full items-center justify-center ${className}`}>
       <div className="text-center">
         <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-bold">
-          {title || t('common.accessDenied')}
-        </h2>
-        <p className="text-muted-foreground">
-          {description || t('common.noPermissionView')}
-        </p>
+        <h2 className="text-2xl font-bold">{title || t('common.accessDenied')}</h2>
+        <p className="text-muted-foreground">{description || t('common.noPermissionView')}</p>
       </div>
     </div>
   );
-}; 
+};

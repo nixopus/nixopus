@@ -26,16 +26,7 @@ export interface AceEditorProps {
 
 const AceEditor = React.forwardRef<any, AceEditorProps>(
   (
-    {
-      mode,
-      value,
-      onChange,
-      name,
-      readOnly = false,
-      onLoad,
-      height = '600px',
-      markers = []
-    },
+    { mode, value, onChange, name, readOnly = false, onLoad, height = '600px', markers = [] },
     ref
   ) => (
     <Ace

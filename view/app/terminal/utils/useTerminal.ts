@@ -19,8 +19,8 @@ type TerminalOutput = {
 };
 
 export const useTerminal = (
-  isTerminalOpen: boolean, 
-  width: number, 
+  isTerminalOpen: boolean,
+  width: number,
   height: number,
   allowInput: boolean = true,
   terminalId: string = 'terminal_id'

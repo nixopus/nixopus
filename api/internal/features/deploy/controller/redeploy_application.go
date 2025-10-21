@@ -61,14 +61,14 @@ func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReD
 
 	c.logger.Log(logger.Info, "attempting to redeploy application", "id: "+data.ID.String()+", user_id: "+user.ID.String())
 
-    application, err := c.taskService.ReDeployApplication(&data, user.ID, organizationID)
-    if err != nil {
-        c.logger.Log(logger.Error, "failed to redeploy application", "id: "+data.ID.String()+", error: "+err.Error())
-        return nil, fuego.HTTPError{
-            Err:    err,
-            Status: http.StatusInternalServerError,
-        }
-    }
+	application, err := c.taskService.ReDeployApplication(&data, user.ID, organizationID)
+	if err != nil {
+		c.logger.Log(logger.Error, "failed to redeploy application", "id: "+data.ID.String()+", error: "+err.Error())
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
 
 	c.logger.Log(logger.Info, "application redeployed successfully", "id: "+data.ID.String())
 	return &shared_types.Response{

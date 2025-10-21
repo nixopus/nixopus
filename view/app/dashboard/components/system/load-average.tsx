@@ -27,21 +27,15 @@ const LoadAverageCard: React.FC<LoadAverageCardProps> = ({ systemStats }) => {
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <TypographyMuted>
-              {t('dashboard.load.labels.oneMin')}
-            </TypographyMuted>
+            <TypographyMuted>{t('dashboard.load.labels.oneMin')}</TypographyMuted>
             <TypographySmall>{load.oneMin.toFixed(2)}</TypographySmall>
           </div>
           <div className="flex items-center justify-between">
-            <TypographyMuted>
-              {t('dashboard.load.labels.fiveMin')}
-            </TypographyMuted>
+            <TypographyMuted>{t('dashboard.load.labels.fiveMin')}</TypographyMuted>
             <TypographySmall>{load.fiveMin.toFixed(2)}</TypographySmall>
           </div>
           <div className="flex items-center justify-between">
-            <TypographyMuted>
-              {t('dashboard.load.labels.fifteenMin')}
-            </TypographyMuted>
+            <TypographyMuted>{t('dashboard.load.labels.fifteenMin')}</TypographyMuted>
             <TypographySmall>{load.fifteenMin.toFixed(2)}</TypographySmall>
           </div>
         </div>
@@ -86,21 +80,15 @@ export function LoadAverageCardSkeleton() {
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <TypographyMuted>
-              {t('dashboard.load.labels.oneMin')}
-            </TypographyMuted>
+            <TypographyMuted>{t('dashboard.load.labels.oneMin')}</TypographyMuted>
             <Skeleton className="h-4 w-12" />
           </div>
           <div className="flex items-center justify-between">
-            <TypographyMuted>
-              {t('dashboard.load.labels.fiveMin')}
-            </TypographyMuted>
+            <TypographyMuted>{t('dashboard.load.labels.fiveMin')}</TypographyMuted>
             <Skeleton className="h-4 w-12" />
           </div>
           <div className="flex items-center justify-between">
-            <TypographyMuted>
-              {t('dashboard.load.labels.fifteenMin')}
-            </TypographyMuted>
+            <TypographyMuted>{t('dashboard.load.labels.fifteenMin')}</TypographyMuted>
             <Skeleton className="h-4 w-12" />
           </div>
         </div>

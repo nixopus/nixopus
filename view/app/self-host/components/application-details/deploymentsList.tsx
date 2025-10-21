@@ -92,7 +92,8 @@ function DeploymentsList({
                       router.push(
                         `/self-host/application/${deployment.application_id}/deployments/${deployment.id}`
                       );
-                    }}>
+                    }}
+                  >
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(deployment.status?.status)}
@@ -103,7 +104,8 @@ function DeploymentsList({
                               : deployment.status?.status?.toLowerCase() === 'failed'
                                 ? 'destructive'
                                 : 'secondary'
-                          }>
+                          }
+                        >
                           {deployment.status?.status || t('selfHost.deployment.list.table.unknown')}
                         </Badge>
                       </div>
@@ -131,7 +133,8 @@ function DeploymentsList({
                           rollBackApplication({ id: deployment.id });
                         }}
                         disabled={isLoading}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
                         <Undo className="h-4 w-4 mr-2" />
                         {t('selfHost.deployment.list.card.rollback.title')}
                       </Button>

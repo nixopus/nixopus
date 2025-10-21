@@ -29,7 +29,7 @@ const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
       <CardContent>
         <div className="space-y-2 sm:space-y-3">
           <div className="w-full h-2 bg-gray-200 rounded-full">
-            <div  
+            <div
               className={`h-2 rounded-full bg-primary`}
               style={{ width: `${memory.percentage}%` }}
             />

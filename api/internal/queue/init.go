@@ -35,4 +35,3 @@ func StartConsumers(ctx context.Context) error {
 func Close() error {
 	return factory.Close()
 }
-

@@ -87,7 +87,9 @@ function VariablesTable({ variables }: { variables: NonNullable<Extension['varia
             <div className="col-span-3 font-medium">{v.variable_name}</div>
             <div className="col-span-2 text-muted-foreground">{v.variable_type}</div>
             <div className="col-span-2 text-muted-foreground">{v.is_required ? 'Yes' : 'No'}</div>
-            <div className="col-span-2 text-muted-foreground truncate">{String(v.default_value ?? '')}</div>
+            <div className="col-span-2 text-muted-foreground truncate">
+              {String(v.default_value ?? '')}
+            </div>
             <div className="col-span-3 text-muted-foreground">{v.description}</div>
           </div>
         ))}
@@ -169,9 +171,15 @@ function StepList({
                   <span className="text-muted-foreground mr-1 mt-0.5">{i + 1}.</span>
                   <div className="flex-1">
                     <div className="font-medium">{s?.name || s?.type || 'Step'}</div>
-                    {s?.type && <div className="mt-1"><Badge variant="outline">{s.type}</Badge></div>}
+                    {s?.type && (
+                      <div className="mt-1">
+                        <Badge variant="outline">{s.type}</Badge>
+                      </div>
+                    )}
                   </div>
-                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`ml-2 h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                  />
                 </CollapsibleTrigger>
                 {entries.length > 0 && (
                   <CollapsibleContent>
@@ -182,7 +190,9 @@ function StepList({
                             <div className="col-span-3 text-muted-foreground">{k}</div>
                             <div className="col-span-9 break-words">
                               {typeof v === 'object' ? (
-                                <pre className="whitespace-pre-wrap text-xs">{JSON.stringify(v, null, 2)}</pre>
+                                <pre className="whitespace-pre-wrap text-xs">
+                                  {JSON.stringify(v, null, 2)}
+                                </pre>
                               ) : (
                                 String(v)
                               )}

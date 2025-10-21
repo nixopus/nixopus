@@ -9,8 +9,8 @@ function page() {
   const { t } = useTranslation();
 
   return (
-    <ResourceGuard 
-      resource="deploy" 
+    <ResourceGuard
+      resource="deploy"
       action="create"
       loadingFallback={<Skeleton className="h-96" />}
     >

@@ -16,12 +16,12 @@ interface ExtensionsGridProps {
   onViewDetails?: (extension: Extension) => void;
 }
 
-function ExtensionsGrid({ 
-  extensions = [], 
-  isLoading = false, 
+function ExtensionsGrid({
+  extensions = [],
+  isLoading = false,
   error,
   onInstall,
-  onViewDetails 
+  onViewDetails
 }: ExtensionsGridProps) {
   const { t } = useTranslation();
 
@@ -29,9 +29,7 @@ function ExtensionsGrid({
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          {error}
-        </AlertDescription>
+        <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
   }
@@ -45,9 +43,7 @@ function ExtensionsGrid({
       <div className="text-center py-12">
         <div className="mx-auto max-w-md">
           <div className="text-6xl mb-4">🔍</div>
-          <h3 className="text-lg font-semibold mb-2">
-            {t('extensions.noExtensions')}
-          </h3>
+          <h3 className="text-lg font-semibold mb-2">{t('extensions.noExtensions')}</h3>
           <p className="text-muted-foreground">
             Try adjusting your search or filters to find more extensions.
           </p>
@@ -74,7 +70,10 @@ function ExtensionsGridSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="group h-full transition-all duration-200 bg-card border-border p-6 rounded-xl">
+        <div
+          key={i}
+          className="group h-full transition-all duration-200 bg-card border-border p-6 rounded-xl"
+        >
           <div className="space-y-4">
             <div className="flex items-start gap-4">
               <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />

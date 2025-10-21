@@ -22,11 +22,11 @@ import useTeamSwitcher from '@/hooks/use-team-switcher';
 import { useAppSelector } from '@/redux/hooks';
 import { UserOrganization } from '@/redux/types/orgs';
 
-export function TeamSwitcher({ 
-  refetch, 
-  toggleAddTeamModal, 
-  addTeamModalOpen 
-}: { 
+export function TeamSwitcher({
+  refetch,
+  toggleAddTeamModal,
+  addTeamModalOpen
+}: {
   refetch: () => void;
   toggleAddTeamModal?: () => void;
   addTeamModalOpen?: boolean;
@@ -107,7 +107,7 @@ export function TeamSwitcher({
               ))}
               {canCreateOrg() && <DropdownMenuSeparator />}
               {canCreateOrg() && (
-                <div 
+                <div
                   className="gap-2 p-2 cursor-pointer hover:bg-accent hover:text-accent-foreground relative flex items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none"
                   onClick={toggleAddTeamModal}
                 >

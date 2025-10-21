@@ -13,11 +13,7 @@ function Monitor({ application }: { application?: Application }) {
   const deployments = application.deployments || [];
 
   return (
-    <ResourceGuard 
-      resource="deploy" 
-      action="read"
-      loadingFallback={<Skeleton className="h-96" />}
-    >
+    <ResourceGuard resource="deploy" action="read" loadingFallback={<Skeleton className="h-96" />}>
       <div className="space-y-6">
         <div className="">
           <DeploymentStatusChart deployments={deployments} />

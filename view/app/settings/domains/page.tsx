@@ -19,11 +19,7 @@ import PageLayout from '@/components/layout/page-layout';
 const Page = () => {
   const { t } = useTranslation();
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const {
-    data: domains,
-    isLoading,
-    error
-  } = useGetAllDomainsQuery();
+  const { data: domains, isLoading, error } = useGetAllDomainsQuery();
   const [addDomainDialogOpen, setAddDomainDialogOpen] = React.useState(false);
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
 
@@ -64,7 +60,9 @@ const Page = () => {
         {isLoading ? (
           <div className="flex flex-col h-full justify-center items-center gap-4 mt-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <p className="text-muted-foreground text-center">{t('settings.domains.page.loading')}</p>
+            <p className="text-muted-foreground text-center">
+              {t('settings.domains.page.loading')}
+            </p>
           </div>
         ) : error ? (
           <Alert variant="destructive">
@@ -110,11 +108,15 @@ const NoDomainsFound = ({ onPressAddDomain }: NoDomainsFoundProps) => {
           {t('settings.domains.page.domainsList.addButton')}
         </Button>
       </ResourceGuard>
-      <ResourceGuard resource="domain" action="create" fallback={
-        <p className="text-muted-foreground text-center">
-          {t('settings.domains.page.noDomains.noPermission')}
-        </p>
-      }>
+      <ResourceGuard
+        resource="domain"
+        action="create"
+        fallback={
+          <p className="text-muted-foreground text-center">
+            {t('settings.domains.page.noDomains.noPermission')}
+          </p>
+        }
+      >
         <></>
       </ResourceGuard>
     </div>

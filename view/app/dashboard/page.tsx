@@ -31,7 +31,6 @@ function DashboardPage() {
   });
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
 
-
   if (isFeatureFlagsLoading) {
     return <Skeleton />;
   }
@@ -47,14 +46,14 @@ function DashboardPage() {
       // fallback={<div>You are not authorized to access this page</div>}
     >
       <PageLayout maxWidth="6xl" padding="md" spacing="lg">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
-            <div>
-              <TypographyH1>{t('dashboard.title')}</TypographyH1>
-              <TypographyMuted>{t('dashboard.description')}</TypographyMuted>
-            </div>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
+          <div>
+            <TypographyH1>{t('dashboard.title')}</TypographyH1>
+            <TypographyMuted>{t('dashboard.description')}</TypographyMuted>
           </div>
-          {!smtpConfig && <SMTPBanner />}
-          <MonitoringSection systemStats={systemStats} containersData={containersData} t={t} />
+        </div>
+        {!smtpConfig && <SMTPBanner />}
+        <MonitoringSection systemStats={systemStats} containersData={containersData} t={t} />
       </PageLayout>
     </ResourceGuard>
   );

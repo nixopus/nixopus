@@ -8,6 +8,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"golang.org/x/crypto/bcrypt"
 )
+
 // Deprecated: Use SupertokensLogin instead
 func (u *AuthService) Login(email string, password string) (types.AuthResponse, error) {
 	u.logger.Log(logger.Info, "logging in user", email)

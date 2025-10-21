@@ -130,7 +130,9 @@ function AccountSection({
               </RBACGuard>
             </div>
 
-            {usernameError && <TypographySmall className="text-red-500">{usernameError}</TypographySmall>}
+            {usernameError && (
+              <TypographySmall className="text-red-500">{usernameError}</TypographySmall>
+            )}
 
             {usernameSuccess && (
               <Alert variant="default">
@@ -173,7 +175,9 @@ function AccountSection({
                           : t('settings.account.email.notVerified.sendButton')}
                     </Button>
                   </RBACGuard>
-                  {verificationError && <TypographySmall className="text-red-500">{verificationError}</TypographySmall>}
+                  {verificationError && (
+                    <TypographySmall className="text-red-500">{verificationError}</TypographySmall>
+                  )}
                   {verificationSent && (
                     <Alert variant="default">
                       <CheckCircle className="h-4 w-4" />
@@ -208,8 +212,12 @@ function AccountSection({
                   <SelectValue placeholder={t('settings.preferences.font')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="geist">{t('settings.preferences.fontOptions.geist')}</SelectItem>
-                  <SelectItem value="inter">{t('settings.preferences.fontOptions.inter')}</SelectItem>
+                  <SelectItem value="geist">
+                    {t('settings.preferences.fontOptions.geist')}
+                  </SelectItem>
+                  <SelectItem value="inter">
+                    {t('settings.preferences.fontOptions.inter')}
+                  </SelectItem>
                   <SelectItem value="roboto">
                     {t('settings.preferences.fontOptions.roboto')}
                   </SelectItem>

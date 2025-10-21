@@ -64,8 +64,8 @@ const Page: React.FC = () => {
       });
     }
   };
-  
- // TODO: Implement proper FeatureFlagRead permission management when this feature is taken up
+
+  // TODO: Implement proper FeatureFlagRead permission management when this feature is taken up
 
   const handleSaveDiscord = (data: Record<string, string>) => {
     if (discordConfig) {

@@ -12,9 +12,9 @@ import (
 func (c *ContainerController) StartContainer(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	containerID := f.PathParam("container_id")
 
-    if resp, skipped := c.isProtectedContainer(containerID, "start"); skipped {
-        return resp, nil
-    }
+	if resp, skipped := c.isProtectedContainer(containerID, "start"); skipped {
+		return resp, nil
+	}
 
 	err := c.dockerService.StartContainer(containerID, container.StartOptions{})
 	if err != nil {

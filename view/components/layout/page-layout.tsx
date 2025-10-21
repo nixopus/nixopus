@@ -39,21 +39,23 @@ const spacingClasses = {
   xl: 'space-y-10'
 };
 
-function PageLayout({ 
-  children, 
-  className, 
-  maxWidth = '6xl', 
+function PageLayout({
+  children,
+  className,
+  maxWidth = '6xl',
   padding = 'md',
   spacing = 'lg'
 }: PageLayoutProps) {
   return (
-    <div className={cn(
-      'container mx-auto',
-      paddingClasses[padding],
-      spacingClasses[spacing],
-      maxWidthClasses[maxWidth],
-      className
-    )}>
+    <div
+      className={cn(
+        'container mx-auto',
+        paddingClasses[padding],
+        spacingClasses[spacing],
+        maxWidthClasses[maxWidth],
+        className
+      )}
+    >
       {children}
     </div>
   );

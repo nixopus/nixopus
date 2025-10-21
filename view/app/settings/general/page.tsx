@@ -47,7 +47,9 @@ function Page() {
         <AvatarSection onImageChange={onImageChange} user={user} />
         <div className="col-span-1 lg:col-span-2">
           <Tabs defaultValue="account" className="w-full">
-            <TabsList className={`grid w-full ${hasFeatureFlagsReadPermission ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            <TabsList
+              className={`grid w-full ${hasFeatureFlagsReadPermission ? 'grid-cols-3' : 'grid-cols-2'}`}
+            >
               <TabsTrigger value="account">{t('settings.tabs.account')}</TabsTrigger>
               <TabsTrigger value="security">{t('settings.tabs.security')}</TabsTrigger>
               {hasFeatureFlagsReadPermission && (

@@ -38,9 +38,9 @@ function RecentActivity() {
             <TypographySmall>{t('settings.teams.recentActivity.title')}</TypographySmall>
             <TypographyMuted>{t('settings.teams.recentActivity.description')}</TypographyMuted>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleViewAll}
             className="flex items-center gap-1"
           >
@@ -60,7 +60,9 @@ function RecentActivity() {
           <div className="space-y-4">
             {activities.map((activity) => (
               <div key={activity.id} className="flex items-start gap-4">
-                <div className={`h-2 w-2 mt-2 rounded-full ${getActionColor(activity.action_color)}`}></div>
+                <div
+                  className={`h-2 w-2 mt-2 rounded-full ${getActionColor(activity.action_color)}`}
+                ></div>
                 <div>
                   <TypographySmall>{activity.message}</TypographySmall>
                   <TypographyMuted>

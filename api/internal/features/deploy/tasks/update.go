@@ -1,13 +1,13 @@
 package tasks
 
 import (
-    "context"
-    "fmt"
+	"context"
+	"fmt"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/raghavyuva/caddygo"
 	"github.com/raghavyuva/nixopus-api/internal/config"
-    "github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
@@ -27,13 +27,13 @@ func (s *TaskService) UpdateDeployment(deployment *types.UpdateDeploymentRequest
 		OrganizationId: organizationID,
 		Application:    &application,
 	}
-	
+
 	TaskPayload, err := contextTask.PrepareUpdateDeploymentContext()
 	if err != nil {
 		return shared_types.Application{}, err
 	}
 
-    TaskPayload.CorrelationID = uuid.NewString()
+	TaskPayload.CorrelationID = uuid.NewString()
 
 	err = UpdateDeploymentQueue.Add(TaskUpdateDeployment.WithArgs(context.Background(), TaskPayload))
 	if err != nil {

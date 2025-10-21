@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Session from 'supertokens-web-js/recipe/session';
 import { UserRoleClaim, PermissionClaim } from 'supertokens-web-js/recipe/userroles';
 
-export type Resource = 
+export type Resource =
   | 'organization'
   | 'user'
   | 'role'
@@ -46,7 +46,7 @@ export const useRBAC = () => {
 
         const [sessionRoles, sessionPerms] = await Promise.all([
           Session.getClaimValue({ claim: UserRoleClaim }),
-          Session.getClaimValue({ claim: PermissionClaim }),
+          Session.getClaimValue({ claim: PermissionClaim })
         ]);
 
         if (isMounted) {
@@ -69,7 +69,7 @@ export const useRBAC = () => {
 
   const isAdmin = useMemo(() => {
     if (!Array.isArray(roles)) return false;
-    return roles.some(role => {
+    return roles.some((role) => {
       // Strip orgid_ prefix to get base role name
       if (role.startsWith('orgid_')) {
         const lastUnderscore = role.lastIndexOf('_');
@@ -81,7 +81,7 @@ export const useRBAC = () => {
       return role === 'admin';
     });
   }, [roles]);
-  
+
   const canAccessResource = (resource: Resource, action: Action): boolean => {
     if (isAdmin) return true;
     if (!permissions) return false;
@@ -113,4 +113,4 @@ export const useRBAC = () => {
     permissions,
     isAdmin
   };
-}; 
+};
