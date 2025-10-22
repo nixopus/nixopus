@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { DialogWrapper } from '@/components/ui/dialog-wrapper';
 import { FileData } from '@/redux/types/files';
 import FileInfo from './FileInfo';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
@@ -93,11 +93,13 @@ export function FileItem({
           />
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
-            <FileInfo file={file} isLoading={isSizeLoading} fileSize={fileSize || null} />
-          </DialogContent>
-        </Dialog>
+        <DialogWrapper
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          size="lg"
+        >
+          <FileInfo file={file} isLoading={isSizeLoading} fileSize={fileSize || null} />
+        </DialogWrapper>
 
         <MobileActionSheet
           file={file}
@@ -181,11 +183,13 @@ export function FileItem({
           )}
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
-            <FileInfo file={file} isLoading={isSizeLoading} fileSize={fileSize || null} />
-          </DialogContent>
-        </Dialog>
+        <DialogWrapper
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          size="lg"
+        >
+          <FileInfo file={file} isLoading={isSizeLoading} fileSize={fileSize || null} />
+        </DialogWrapper>
 
         <ResourceGuard resource="file-manager" action="delete" loadingFallback={null}>
           <DeleteDialog

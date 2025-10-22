@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
+import { DialogWrapper, DialogAction } from '@/components/ui/dialog-wrapper';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
@@ -57,34 +51,40 @@ function EditUserDialog({ isOpen, onClose, user, onSave }: EditUserDialogProps) 
     onClose();
   };
 
+  const actions: DialogAction[] = [
+    {
+      label: t('settings.teams.editUser.dialog.buttons.cancel'),
+      onClick: onClose,
+      variant: 'outline'
+    },
+    {
+      label: t('settings.teams.editUser.dialog.buttons.save'),
+      onClick: handleSave,
+      variant: 'default'
+    }
+  ];
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>{t('settings.teams.editUser.dialog.title')}</DialogTitle>
-          <DialogDescription>
-            {t('settings.teams.editUser.dialog.description').replace('{name}', user.name)}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-6 py-4">
-          <div className="space-y-2">
-            <Label>{t('settings.teams.editUser.dialog.fields.role.label')}</Label>
-            <SelectWrapper
-              value={selectedRole}
-              onValueChange={handleRoleChange}
-              options={AVAILABLE_ROLES}
-              placeholder={t('settings.teams.editUser.dialog.fields.role.placeholder')}
-            />
-          </div>
+    <DialogWrapper
+      open={isOpen}
+      onOpenChange={onClose}
+      title={t('settings.teams.editUser.dialog.title')}
+      description={t('settings.teams.editUser.dialog.description').replace('{name}', user.name)}
+      actions={actions}
+      size="sm"
+    >
+      <div className="space-y-6 py-4">
+        <div className="space-y-2">
+          <Label>{t('settings.teams.editUser.dialog.fields.role.label')}</Label>
+          <SelectWrapper
+            value={selectedRole}
+            onValueChange={handleRoleChange}
+            options={AVAILABLE_ROLES}
+            placeholder={t('settings.teams.editUser.dialog.fields.role.placeholder')}
+          />
         </div>
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={onClose}>
-            {t('settings.teams.editUser.dialog.buttons.cancel')}
-          </Button>
-          <Button onClick={handleSave}>{t('settings.teams.editUser.dialog.buttons.save')}</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </DialogWrapper>
   );
 }
 
