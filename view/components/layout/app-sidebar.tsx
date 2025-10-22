@@ -1,86 +1,21 @@
 'use client';
 
 import * as React from 'react';
-import { Folder, Home, Package, SettingsIcon, Container, Puzzle } from 'lucide-react';
+import { AlertCircle, HelpCircle, Heart, LogOut } from 'lucide-react';
 import { NavMain } from '@/components/layout/nav-main';
-import { NavUser } from '@/components/layout/nav-user';
 import { TeamSwitcher } from '@/components/ui/team-switcher';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail
+  SidebarRail,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem
 } from '@/components/ui/sidebar';
-import { useAppSelector, useAppDispatch } from '@/redux/hooks';
-import { useGetUserOrganizationsQuery } from '@/redux/services/users/userApi';
-import { useNavigationState } from '@/hooks/use_navigation_state';
-import { setActiveOrganization } from '@/redux/features/users/userSlice';
-import { useTranslation } from '@/hooks/use-translation';
-import { useRBAC } from '@/lib/rbac';
-
-const data = {
-  navMain: [
-    {
-      title: 'navigation.dashboard',
-      url: '/dashboard',
-      icon: Home,
-      resource: 'dashboard'
-    },
-    {
-      title: 'navigation.extensions',
-      url: '/extensions',
-      icon: Puzzle,
-      resource: 'extensions'
-    },
-    {
-      title: 'navigation.selfHost',
-      url: '/self-host',
-      icon: Package,
-      resource: 'deploy'
-    },
-    {
-      title: 'navigation.containers',
-      url: '/containers',
-      icon: Container,
-      resource: 'container'
-    },
-    {
-      title: 'navigation.fileManager',
-      url: '/file-manager',
-      icon: Folder,
-      resource: 'file-manager'
-    },
-    {
-      title: 'navigation.settings',
-      url: '/settings/general',
-      icon: SettingsIcon,
-      resource: 'settings',
-      items: [
-        {
-          title: 'navigation.general',
-          url: '/settings/general',
-          resource: 'settings'
-        },
-        {
-          title: 'navigation.notifications',
-          url: '/settings/notifications',
-          resource: 'notification'
-        },
-        {
-          title: 'navigation.team',
-          url: '/settings/teams',
-          resource: 'organization'
-        },
-        {
-          title: 'navigation.domains',
-          url: '/settings/domains',
-          resource: 'domain'
-        }
-      ]
-    }
-  ]
-};
+import { useAppSidebar } from '@/hooks/use-app-sidebar';
+import { LogoutDialog } from '@/components/ui/logout-dialog';
 
 export function AppSidebar({
   toggleAddTeamModal,
@@ -90,71 +25,23 @@ export function AppSidebar({
   toggleAddTeamModal?: () => void;
   addTeamModalOpen?: boolean;
 }) {
-  const { t } = useTranslation();
-  const user = useAppSelector((state) => state.auth.user);
-  const { isLoading, refetch } = useGetUserOrganizationsQuery();
-  const organizations = useAppSelector((state) => state.user.organizations);
-  const { activeNav, setActiveNav } = useNavigationState();
-  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const dispatch = useAppDispatch();
-  const { canAccessResource } = useRBAC();
-
-  const hasAnyPermission = React.useMemo(() => {
-    const allowedResources = ['dashboard', 'settings', 'extensions'];
-
-    return (resource: string) => {
-      if (!user || !activeOrg) return false;
-
-      if (allowedResources.includes(resource)) {
-        return true;
-      }
-
-      return (
-        canAccessResource(resource as any, 'read') ||
-        canAccessResource(resource as any, 'create') ||
-        canAccessResource(resource as any, 'update') ||
-        canAccessResource(resource as any, 'delete')
-      );
-    };
-  }, [user, activeOrg, canAccessResource]);
-
-  const filteredNavItems = React.useMemo(
-    () =>
-      data.navMain
-        .filter((item) => {
-          if (!item.resource) return false;
-
-          if (item.items) {
-            const filteredSubItems = item.items.filter(
-              (subItem) => subItem.resource && hasAnyPermission(subItem.resource)
-            );
-            return filteredSubItems.length > 0;
-          }
-
-          return hasAnyPermission(item.resource);
-        })
-        .map((item) => ({
-          ...item,
-          title: t(item.title as any),
-          items: item.items?.map((subItem) => ({
-            ...subItem,
-            title: t(subItem.title as any)
-          }))
-        })),
-    [data.navMain, hasAnyPermission, t]
-  );
-
-  React.useEffect(() => {
-    if (organizations && organizations.length > 0 && !activeOrg) {
-      dispatch(setActiveOrganization(organizations[0].organization));
-    }
-  }, [organizations, activeOrg, dispatch]);
-
-  React.useEffect(() => {
-    if (activeOrg?.id) {
-      refetch();
-    }
-  }, [activeOrg?.id, refetch]);
+  const {
+    user,
+    refetch,
+    activeNav,
+    setActiveNav,
+    activeOrg,
+    hasAnyPermission,
+    t,
+    showLogoutDialog,
+    filteredNavItems,
+    handleSponsor,
+    handleReportIssue,
+    handleHelp,
+    handleLogoutClick,
+    handleLogoutConfirm,
+    handleLogoutCancel
+  } = useAppSidebar();
 
   if (!user || !activeOrg) {
     return null;
@@ -182,9 +69,39 @@ export function AppSidebar({
         />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleSponsor} className="cursor-pointer">
+              <Heart className="text-red-500" />
+              <span>{t('user.menu.sponsor')}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleHelp} className="cursor-pointer">
+              <HelpCircle />
+              <span>{t('user.menu.help')}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleReportIssue} className="cursor-pointer">
+              <AlertCircle />
+              <span>{t('user.menu.reportIssue')}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleLogoutClick} className="cursor-pointer">
+              <LogOut />
+              <span>{t('user.menu.logout')}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />
+      <LogoutDialog
+        open={showLogoutDialog}
+        onConfirm={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
+      />
     </Sidebar>
   );
 }

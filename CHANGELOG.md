@@ -1,3 +1,12 @@
+# [0.1.0-alpha.45](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.44...v0.1.0-alpha.45) (2025-10-22)
+
+
+### Features
+
+* nixopus update ([#401](https://github.com/raghavyuva/nixopus/issues/401)) ([3913d60](https://github.com/raghavyuva/nixopus/commit/3913d60a1566f86a71407103417ce5fabd35a086))
+
+
+
 # [0.1.0-alpha.44](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.43...v0.1.0-alpha.44) (2025-10-18)
 
 
