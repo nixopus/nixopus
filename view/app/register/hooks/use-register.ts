@@ -1,12 +1,16 @@
+'use client';
+
+import { useTranslation, type translationKey } from '@/hooks/use-translation';
+import { useRouter } from 'next/navigation';
+import { signUp } from 'supertokens-auth-react/recipe/emailpassword';
+import { toast } from 'sonner';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useRouter } from 'next/navigation';
-import { useTranslation } from '@/hooks/use-translation';
-import { useIsAdminRegisteredQuery, useRegisterUserMutation } from '@/redux/services/users/authApi';
-import { toast } from 'sonner';
+import { useIsAdminRegisteredQuery } from '@/redux/services/users/authApi';
 
-const registerSchema = (t: (key: string) => string) =>
+const registerSchema = (t: (key: translationKey, params?: Record<string, string>) => string) =>
   z
     .object({
       email: z.string().email(t('auth.register.errors.invalidEmail')),
@@ -32,13 +36,12 @@ type RegisterForm = z.infer<ReturnType<typeof registerSchema>>;
 function useRegister() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [registerUser, { isLoading }] = useRegisterUserMutation();
+  const [isLoading, setIsLoading] = useState(false);
   const {
     data: isAdminRegistered,
     isLoading: isAdminRegisteredLoading,
     isError: isAdminRegisteredError
   } = useIsAdminRegisteredQuery();
-
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema(t)),
     defaultValues: {
@@ -49,15 +52,29 @@ function useRegister() {
   });
 
   const onSubmit = async (data: RegisterForm) => {
+    setIsLoading(true);
     try {
-      await registerUser({
-        email: data.email,
-        password: data.password
-      }).unwrap();
-      toast.success(t('auth.register.success'));
-      router.push('/login');
+      const response = await signUp({
+        formFields: [
+          { id: 'email', value: data.email },
+          { id: 'password', value: data.password }
+        ]
+      });
+
+      if (response.status === 'FIELD_ERROR') {
+        response.formFields.forEach((field) => {
+          toast.error(field.error);
+        });
+      } else if (response.status === 'SIGN_UP_NOT_ALLOWED') {
+        toast.error('Sign up is not allowed');
+      } else {
+        toast.success(t('auth.register.success'));
+        router.push('/auth');
+      }
     } catch (error) {
       toast.error(t('auth.register.errors.registerFailed'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -67,7 +84,8 @@ function useRegister() {
     isLoading,
     isAdminRegistered,
     isAdminRegisteredLoading,
-    isAdminRegisteredError
+    isAdminRegisteredError,
+    t
   };
 }
 

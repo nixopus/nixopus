@@ -6,14 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { DialogWrapper, DialogAction } from '@/components/ui/dialog-wrapper';
 import {
   useCreateDomainMutation,
   useUpdateDomainMutation
@@ -78,50 +71,52 @@ function UpdateDomainDialog({ open, setOpen, id, data }: UpdateDomainDialogProps
     }
   }
 
+  const actions: DialogAction[] = [
+    {
+      label: t('settings.domains.update.buttons.cancel'),
+      onClick: () => {
+        form.reset();
+        setOpen(false);
+      },
+      variant: 'outline'
+    },
+    {
+      label: isLoading || isUpdating
+        ? t('settings.domains.update.buttons.saving')
+        : t('settings.domains.update.buttons.save'),
+      onClick: form.handleSubmit(onSubmit),
+      disabled: isLoading || isUpdating,
+      loading: isLoading || isUpdating,
+      variant: 'default'
+    }
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            {!id ? t('settings.domains.update.addTitle') : t('settings.domains.update.updateTitle')}
-          </DialogTitle>
-          <DialogDescription>{t('settings.domains.update.description')}</DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="domainName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input placeholder={t('settings.domains.update.form.placeholder')} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter className="flex justify-between sm:justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  form.reset();
-                  setOpen(false);
-                }}
-              >
-                {t('settings.domains.update.buttons.cancel')}
-              </Button>
-              <Button type="submit" disabled={isLoading || isUpdating}>
-                {isLoading || isUpdating
-                  ? t('settings.domains.update.buttons.saving')
-                  : t('settings.domains.update.buttons.save')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    <DialogWrapper
+      open={open}
+      onOpenChange={setOpen}
+      title={!id ? t('settings.domains.update.addTitle') : t('settings.domains.update.updateTitle')}
+      description={t('settings.domains.update.description')}
+      actions={actions}
+      size="lg"
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="domainName"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input placeholder={t('settings.domains.update.form.placeholder')} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </form>
+      </Form>
+    </DialogWrapper>
   );
 }
 

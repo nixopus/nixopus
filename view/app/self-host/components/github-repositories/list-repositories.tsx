@@ -28,7 +28,7 @@ function ListRepositories() {
       return <GithubRepositoriesSkeletonLoader />;
     }
 
-  if (paginatedApplications?.length === 0 && !isLoading) {
+    if (paginatedApplications?.length === 0 && !isLoading) {
       return <div className="text-center">{t('selfHost.repositories.noRepositories')}</div>;
     }
     return (
@@ -43,13 +43,15 @@ function ListRepositories() {
               />
             ))}
         </div>
-        <div className="mt-8 flex justify-center">
-          <PaginationWrapper
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        </div>
+        {totalPages > 1 && (
+          <div className="mt-8 flex justify-center">
+            <PaginationWrapper
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
       </>
     );
   };

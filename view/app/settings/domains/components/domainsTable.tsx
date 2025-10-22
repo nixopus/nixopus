@@ -1,13 +1,6 @@
 import React from 'react';
 import { Domain } from '@/redux/types/domain';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTable, TableColumn } from '@/components/ui/data-table';
 import { DomainTypeTag } from './domain-type-tag';
 import { DomainActions } from './domain-actions';
 import { useTranslation } from '@/hooks/use-translation';
@@ -19,39 +12,32 @@ interface DomainsTableProps {
 function DomainsTable({ domains }: DomainsTableProps) {
   const { t } = useTranslation();
 
+  const columns: TableColumn<Domain>[] = [
+    {
+      key: 'name',
+      title: t('settings.domains.table.headers.domain'),
+      dataIndex: 'name'
+    },
+    {
+      key: 'type',
+      title: t('settings.domains.table.headers.type'),
+      render: (_, domain) => <DomainTypeTag isWildcard={domain.name.startsWith('*')} />
+    },
+    {
+      key: 'actions',
+      title: t('settings.domains.table.headers.actions'),
+      render: (_, domain) => <DomainActions domain={domain} />,
+      align: 'right'
+    }
+  ];
+
   return (
-    <div className="border rounded-lg overflow-hidden p-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead >
-              {t('settings.domains.table.headers.domain')}
-            </TableHead>
-            <TableHead>
-              {t('settings.domains.table.headers.type')}
-            </TableHead>
-            <TableHead className="text-right text-xs font-medium text-muted-foreground">
-              {t('settings.domains.table.headers.actions')}
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody className="divide-y divide-border">
-          {domains?.flatMap((domain) => (
-            <TableRow key={domain.id}>
-              <TableCell className="whitespace-nowrap font-medium text-foreground">
-                {domain.name}
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-muted-foreground">
-                <DomainTypeTag isWildcard={domain.name.startsWith('*')} />
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-right">
-                <DomainActions domain={domain} />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+      <DataTable
+        data={domains}
+        columns={columns}
+        containerClassName="divide-y divide-border"
+        showBorder={true}
+    />
   );
 }
 

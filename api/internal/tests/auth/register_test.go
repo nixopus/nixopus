@@ -68,10 +68,10 @@ func TestRegisterWithInvalidType(t *testing.T) {
 		Description("Register a new user with invalid type"),
 		Post(tests.GetRegisterURL()),
 		Send().Body().JSON(types.RegisterRequest{
-			Email:        "test@example.com",
-			Password:     "Password123@",
-			Username:     "NixopusUser",
-			Type:         "member",
+			Email:    "test@example.com",
+			Password: "Password123@",
+			Username: "NixopusUser",
+			Type:     "member",
 		}),
 		Expect().Status().Equal(http.StatusBadRequest),
 	)
@@ -83,10 +83,10 @@ func TestRegisterWithInvalidEmail(t *testing.T) {
 		Description("Register a new user with invalid email"),
 		Post(tests.GetRegisterURL()),
 		Send().Body().JSON(types.RegisterRequest{
-			Email:        "testexample.com",
-			Password:     "Password123@",
-			Username:     "NixopusUser",
-			Type:         shared_types.UserTypeAdmin,
+			Email:    "testexample.com",
+			Password: "Password123@",
+			Username: "NixopusUser",
+			Type:     shared_types.UserTypeAdmin,
 		}),
 		Expect().Status().Equal(http.StatusBadRequest),
 	)

@@ -13,13 +13,16 @@ class Config:
         self._yaml_config = None
         self._cache = {}
 
+        # Determine config file based on environment
+        config_file = "config.dev.yaml" if default_env.upper() == "DEVELOPMENT" else "config.prod.yaml"
+
         # Check if running as PyInstaller bundle
         if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
             # Running as PyInstaller bundle
-            self._yaml_path = os.path.join(sys._MEIPASS, "helpers", "config.prod.yaml")
+            self._yaml_path = os.path.join(sys._MEIPASS, "helpers", config_file)
         else:
             # Running as normal Python script
-            self._yaml_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../helpers/config.prod.yaml"))
+            self._yaml_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../helpers", config_file))
 
     def get_env(self):
         return os.environ.get("ENV", self.default_env)
@@ -150,3 +153,4 @@ VIEW_PORT = "services.view.env.NEXT_PUBLIC_PORT"
 API_PORT = "services.api.env.PORT"
 CADDY_CONFIG_VOLUME = "services.caddy.env.CADDY_CONFIG_VOLUME"
 DOCKER_PORT = "services.api.env.DOCKER_PORT"
+SUPERTOKENS_API_PORT = "services.api.env.SUPERTOKENS_API_PORT"

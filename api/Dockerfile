@@ -9,6 +9,7 @@ RUN go mod download
 
 COPY . .
 COPY ./migrations /app/migrations
+COPY ./templates /app/templates
 
 RUN make build
 
@@ -20,6 +21,7 @@ WORKDIR /app
 
 COPY --from=builder /app/bin/nixopus-api .
 COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/templates ./templates
 
 RUN mkdir -p /etc/nixopus/ssh && \
     chmod 700 /etc/nixopus/ssh && \

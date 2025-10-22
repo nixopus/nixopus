@@ -12,7 +12,16 @@
     "featureNotAvailable": "This feature is not available for your organization",
     "goBack": "Go Back",
     "refreshPage": "Refresh Page",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "installed": "Installed",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "preview": "Preview",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "readMore": "Read more",
+    "readLess": "Read less"
   },
   "containers": {
     "title": "Containers",
@@ -40,6 +49,8 @@
     "start_error": "Failed to start container",
     "stop_error": "Failed to stop container",
     "remove_error": "Failed to remove container",
+    "restart_success": "Container restarted successfully",
+    "restart_error": "Failed to restart container",
     "fetch_error": "Failed to fetch containers",
     "overview": "Overview",
     "logs": "Logs",
@@ -93,10 +104,11 @@
       "submit": "Login",
       "emailPlaceholder": "m@example.com",
       "loading": "Loading...",
-      "terms": "By clicking continue, you agree to our",
+      "terms": "By continuing, you agree to our",
       "termsOfService": "Terms of Service",
       "and": "and",
       "privacyPolicy": "Privacy Policy",
+      "forgotPassword": "Forgot your password?",
       "errors": {
         "loginFailed": "Login failed",
         "invalidCredentials": "Invalid email or password",
@@ -286,7 +298,15 @@
       "messages": {
         "updated": "Feature flag updated successfully",
         "updateFailed": "Failed to update feature flag"
-      }
+      },
+      "searchPlaceholder": "Search features...",
+      "filters": {
+        "all": "All",
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "noResults": "No features found matching your search criteria",
+      "noFeatures": "No features available"
     },
     "account": {
       "title": "Account Information",
@@ -552,6 +572,10 @@
           "success": "Discord configuration saved successfully",
           "error": "Failed to save Discord configuration"
         },
+        "webhookConfigSaved": "Webhook configuration saved successfully",
+        "webhookConfigUpdated": "Webhook configuration updated successfully",
+        "webhookConfigDeleted": "Webhook configuration deleted successfully",
+        "webhookConfigFailed": "Failed to save webhook configuration",
         "preferencesUpdated": "Preferences updated successfully",
         "preferencesFailed": "Failed to update preferences"
       }
@@ -737,7 +761,8 @@
     "en": "English",
     "es": "Spanish",
     "fr": "French",
-    "kn": "Kannada"
+    "kn": "Kannada",
+    "ml": "Malayalam"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1294,12 +1319,61 @@
   "terminal": {
     "title": "Terminal",
     "shortcut": "⌘J",
-    "close": "Close Terminal"
+    "close": "Close Terminal",
+    "newTab": "New Tab"
+  },
+  "extensions": {
+    "title": "Extensions",
+    "subtitle": "Skip the boilerplate, Kick off your server setup in seconds",
+    "exploreExtensions": "Explore Extensions Hub",
+    "exploreExtensionsTitle": "Explore extensions",
+    "install": "Install",
+    "run": "Run",
+    "viewDetails": "View details",
+    "madeBy": "Made by",
+    "beta": "Beta",
+    "searchPlaceholder": "Search extensions...",
+    "sortBy": "Sort by",
+    "sortOptions": {
+      "name": "Name",
+      "popularity": "Popularity",
+      "recent": "Recent",
+      "rating": "Rating"
+    },
+    "noExtensions": "No extensions found",
+    "noVariables": "This extension has no inputs",
+    "loading": "Loading extensions...",
+    "error": "Failed to load extensions",
+    "fork": "Fork",
+    "forkSuccess": "Extension forked successfully",
+    "forkFailed": "Failed to fork extension",
+    "type": "Type",
+    "category": "Category",
+    "execution": "Execution",
+    "runSteps": "Run steps",
+    "validateSteps": "Validate steps",
+    "forkYaml": "YAML (optional)",
+    "remove": "Remove",
+    "deleteSuccess": "Extension removed",
+    "deleteFailed": "Failed to remove extension",
+    "confirmDeleteTitle": "Remove fork?",
+    "confirmDeleteMessage": "This will remove your forked extension. This action cannot be undone.",
+    "overview": "Overview",
+    "logs": "Logs",
+    "executions": "Executions",
+    "executionId": "Execution ID",
+    "status": "Status",
+    "startedAt": "Started At",
+    "completedAt": "Completed At",
+    "noExecutions": "No executions yet.",
+    "variables": "Variables",
+    "logsEmpty": "Execution logs will appear here when available."
   },
   "navigation": {
     "dashboard": "Dashboard",
     "selfHost": "Self Host",
     "fileManager": "File Manager",
+    "extensions": "Extensions",
     "settings": "Settings",
     "general": "General",
     "notifications": "Notifications",
@@ -1333,6 +1407,10 @@
     }
   },
   "toasts": {
+    "success": {
+      "uploadFile": "File uploaded successfully",
+      "copyFile": "File copied successfully"
+    },
     "errors": {
       "realtimeMonitor": "Error connecting to realtime monitor service",
       "setFileToCopy": "Error setting file to copy",
@@ -1342,8 +1420,10 @@
       "startRenaming": "Error starting renaming",
       "navigateToFile": "Error navigating to file",
       "createNewFolder": "Error creating new folder",
+      "createDirectory": "Error creating directory",
       "uploadFile": "Failed to upload file",
       "deleteFile": "Error deleting file",
+      "calculateSize": "Error calculating size",
       "setEmail": "Error setting email",
       "setPassword": "Error setting password"
     }

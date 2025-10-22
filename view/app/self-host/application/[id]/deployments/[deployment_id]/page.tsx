@@ -12,11 +12,7 @@ function page() {
   const [currentPage, setCurrentPage] = useState(1);
 
   return (
-    <ResourceGuard 
-      resource="deploy" 
-      action="read"
-      loadingFallback={<Skeleton className="h-96" />}
-    >
+    <ResourceGuard resource="deploy" action="read" loadingFallback={<Skeleton className="h-96" />}>
       <div className="container mx-auto py-6 space-y-8 max-w-4xl 2xl:max-w-7xl">
         <div className="mt-5 flex-col flex mb-4">
           <span className="text-2xl font-bold">{t('selfHost.deployment.title')}</span>

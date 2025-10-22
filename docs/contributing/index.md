@@ -60,9 +60,27 @@ createdb nixopus_test -U postgres
 cd api
 cp .env.sample .env
 # Update .env to match your local DB (e.g., DB_NAME=nixopus, USERNAME=postgres, PASSWORD=...)
+# Configure SuperTokens authentication:
+# SUPERTOKENS_API_KEY=your-secure-api-key
+# SUPERTOKENS_API_DOMAIN=http://localhost:3567
+# SUPERTOKENS_WEBSITE_DOMAIN=http://localhost:3000
+# SUPERTOKENS_CONNECTION_URI=http://localhost:3567
 ```
 
-5. Install project dependencies:
+5. Set up SuperTokens Core (required for authentication):
+
+```bash
+# Using Docker (recommended)
+docker run -p 3567:3567 -d \
+  --name supertokens-core \
+  registry.supertokens.io/supertokens/supertokens-postgresql
+
+# Or install locally
+npm install -g supertokens
+supertokens start
+```
+
+6. Install project dependencies:
 
 ```bash
 go mod download
@@ -71,7 +89,7 @@ cd ../view
 yarn install
 ```
 
-6. Load development fixtures (optional but recommended):
+7. Load development fixtures (optional but recommended):
 
 ```bash
 cd ../api

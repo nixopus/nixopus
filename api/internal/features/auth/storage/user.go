@@ -24,6 +24,7 @@ type AuthRepository interface {
 	FindUserByEmail(email string) (*types.User, error)
 	FindUserByUsername(username string) (*types.User, error)
 	FindUserByID(id string) (*types.User, error)
+	FindUserBySupertokensID(supertokensUserID string) (*types.User, error)
 	CreateUser(user *types.User) error
 	UpdateUser(user *types.User) error
 	CreateRefreshToken(user_id uuid.UUID) (*types.RefreshToken, error)
@@ -72,24 +73,10 @@ func (u *UserStorage) FindUserByEmail(email string) (*types.User, error) {
 	err = u.getDB().NewSelect().
 		Model(&user.OrganizationUsers).
 		Where("user_id = ?", user.ID).
-		Relation("Role").
 		Relation("Organization").
 		Scan(u.Ctx)
 	if err != nil {
 		return nil, err
-	}
-
-	for i, orgUser := range user.OrganizationUsers {
-		if orgUser.Role != nil {
-			err = u.getDB().NewSelect().
-				Model(&user.OrganizationUsers[i].Role.Permissions).
-				Join("JOIN role_permissions AS rp ON rp.permission_id = p.id").
-				Where("rp.role_id = ?", orgUser.Role.ID).
-				Scan(u.Ctx)
-			if err != nil {
-				return nil, err
-			}
-		}
 	}
 
 	return user, nil
@@ -113,24 +100,10 @@ func (u *UserStorage) FindUserByUsername(username string) (*types.User, error) {
 	err = u.getDB().NewSelect().
 		Model(&user.OrganizationUsers).
 		Where("user_id = ?", user.ID).
-		Relation("Role").
 		Relation("Organization").
 		Scan(u.Ctx)
 	if err != nil {
 		return nil, err
-	}
-
-	for i, orgUser := range user.OrganizationUsers {
-		if orgUser.Role != nil {
-			err = u.getDB().NewSelect().
-				Model(&user.OrganizationUsers[i].Role.Permissions).
-				Join("JOIN role_permissions AS rp ON rp.permission_id = p.id").
-				Where("rp.role_id = ?", orgUser.Role.ID).
-				Scan(u.Ctx)
-			if err != nil {
-				return nil, err
-			}
-		}
 	}
 
 	return user, nil
@@ -146,6 +119,33 @@ func (u *UserStorage) FindUserByID(id string) (*types.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	return user, nil
+}
+
+// FindUserBySupertokensID finds a user by SuperTokens user ID in the database.
+//
+// The function returns an error if the user does not exist or if the query
+// fails.
+func (u *UserStorage) FindUserBySupertokensID(supertokensUserID string) (*types.User, error) {
+	user := &types.User{}
+	err := u.getDB().NewSelect().
+		Model(user).
+		Where("supertokens_user_id = ?", supertokensUserID).
+		Relation("Organizations").
+		Scan(u.Ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = u.getDB().NewSelect().
+		Model(&user.OrganizationUsers).
+		Where("user_id = ?", user.ID).
+		Relation("Organization").
+		Scan(u.Ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return user, nil
 }
 

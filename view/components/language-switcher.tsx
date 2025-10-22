@@ -1,13 +1,7 @@
 'use client';
 
 import { locales } from '@/lib/i18n/config';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
 import { useTranslation } from '@/hooks/use-translation';
 import { useEffect, useState } from 'react';
 import { useUpdateLanguageMutation } from '@/redux/services/users/userApi';
@@ -46,18 +40,19 @@ export function LanguageSwitcher({
     }
   };
 
+  const languageOptions: SelectOption[] = locales.map((locale) => ({
+    value: locale,
+    label: t(`languages.${locale}`)
+  }));
+
   return (
-    <Select value={currentLocale} onValueChange={handleChange} disabled={isUpdatingLanguage}>
-      <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder={t('settings.preferences.language.select')} />
-      </SelectTrigger>
-      <SelectContent>
-        {locales.map((locale) => (
-          <SelectItem key={locale} value={locale}>
-            {t(`languages.${locale}`)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <SelectWrapper
+      value={currentLocale}
+      onValueChange={handleChange}
+      options={languageOptions}
+      placeholder={t('settings.preferences.language.select')}
+      disabled={isUpdatingLanguage}
+      className="w-[180px]"
+    />
   );
 }

@@ -1,7 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { defaultLocale, locales } from '@/lib/i18n/config';
+import { defaultLocale } from '@/lib/i18n/config';
+import en from '@/lib/i18n/locales/en.json';
+
+// Recursive way to infer types from nested json keys
+type DeepKeyOf<T> = {
+  [K in keyof T & string]: T[K] extends Record<string, any>
+    ? `${K}` | `${K}.${DeepKeyOf<T[K]>}`
+    : `${K}`;
+}[keyof T & string];
+
+// This will help us to make sure whatever keys that are entered in the t(``) string are correct,
+// and enable autocompletion in editors
+export type translationKey = DeepKeyOf<typeof en>;
 
 export function useTranslation() {
   const [translations, setTranslations] = useState<Record<string, any>>({});
@@ -31,7 +43,7 @@ export function useTranslation() {
     loadTranslations();
   }, []);
 
-  const t = (key: string, params?: Record<string, string>): string => {
+  const t = (key: translationKey, params?: Record<string, string>): string => {
     if (isLoading) return key;
 
     const keys = key.split('.');

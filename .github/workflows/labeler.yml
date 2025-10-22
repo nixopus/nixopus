@@ -1,8 +1,12 @@
-name: Labeler
+# Workflow: PR Labeler
+# Description: Applies labels to pull requests using actions/labeler
+# Why: Simplifies PR triage
+
+name: Label PRs
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
+  pull_request:
+    types: [opened, reopened, synchronize]
 
 jobs:
   label:
@@ -17,6 +21,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       run: echo "PAT set up"
-    - uses: actions/labeler@v4
+    - name: Apply PR labels
+      uses: actions/labeler@v4
       with:
         repo-token: "${{ secrets.PERSONAL_ACCESS_TOKEN }}" 

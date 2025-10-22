@@ -7,14 +7,7 @@ import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
 import PaginationWrapper from '@/components/ui/pagination';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTable, TableColumn } from '@/components/ui/data-table';
 
 interface DeploymentsListProps {
   deployments?: ApplicationDeployment[];
@@ -36,12 +29,12 @@ function DeploymentsList({
   const formatDate = (created_at: string) =>
     deployments
       ? new Date(created_at).toLocaleString('en-US', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
       : 'N/A';
 
   const calculateRunTime = (updated_at: string, created_at: string) => {
@@ -68,80 +61,91 @@ function DeploymentsList({
     }
   };
 
+  const handleRowClick = (deployment: ApplicationDeployment) => {
+    router.push(
+      `/self-host/application/${deployment.application_id}/deployments/${deployment.id}`
+    );
+  };
+
+  const columns: TableColumn<ApplicationDeployment>[] = [
+    {
+      key: 'status',
+      title: t('selfHost.deployment.list.table.status'),
+      render: (_, deployment) => (
+        <div className="flex items-center gap-2">
+          {getStatusIcon(deployment.status?.status)}
+          <Badge
+            variant={
+              deployment.status?.status?.toLowerCase() === 'deployed'
+                ? 'default'
+                : deployment.status?.status?.toLowerCase() === 'failed'
+                  ? 'destructive'
+                  : 'secondary'
+            }
+          >
+            {deployment.status?.status || t('selfHost.deployment.list.table.unknown')}
+          </Badge>
+        </div>
+      )
+    },
+    {
+      key: 'container',
+      title: t('selfHost.deployment.list.table.container'),
+      dataIndex: 'container_name',
+      className: 'font-medium',
+      render: (containerName) =>
+        containerName?.startsWith('/') ? containerName.slice(1) : containerName
+    },
+    {
+      key: 'created',
+      title: t('selfHost.deployment.list.table.created'),
+      dataIndex: 'created_at',
+      render: (createdAt) => formatDate(createdAt)
+    },
+    {
+      key: 'runTime',
+      title: t('selfHost.deployment.list.table.runTime'),
+      render: (_, deployment) => (
+        <Badge variant="outline">
+          {calculateRunTime(
+            deployment.status?.updated_at as string,
+            deployment.status?.created_at as string
+          )}
+        </Badge>
+      )
+    },
+    {
+      key: 'actions',
+      title: t('selfHost.deployment.list.table.actions'),
+      render: (_, deployment) => (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={(e) => {
+            e.stopPropagation();
+            rollBackApplication({ id: deployment.id });
+          }}
+          disabled={isLoading}
+          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+        >
+          <Undo className="h-4 w-4 mr-2" />
+          {t('selfHost.deployment.list.card.rollback.title')}
+        </Button>
+      )
+    }
+  ];
+
   return (
     <div className="space-y-6">
       {deployments && deployments.length > 0 ? (
         <>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('selfHost.deployment.list.table.status')}</TableHead>
-                  <TableHead>{t('selfHost.deployment.list.table.container')}</TableHead>
-                  <TableHead>{t('selfHost.deployment.list.table.created')}</TableHead>
-                  <TableHead>{t('selfHost.deployment.list.table.runTime')}</TableHead>
-                  <TableHead>{t('selfHost.deployment.list.table.actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {deployments.map((deployment) => (
-                  <TableRow
-                    key={deployment.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => {
-                      router.push(
-                        `/self-host/application/${deployment.application_id}/deployments/${deployment.id}`
-                      );
-                    }}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(deployment.status?.status)}
-                        <Badge
-                          variant={
-                            deployment.status?.status?.toLowerCase() === 'deployed'
-                              ? 'default'
-                              : deployment.status?.status?.toLowerCase() === 'failed'
-                                ? 'destructive'
-                                : 'secondary'
-                          }>
-                          {deployment.status?.status || t('selfHost.deployment.list.table.unknown')}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {deployment.container_name?.startsWith('/')
-                        ? deployment.container_name.slice(1)
-                        : deployment.container_name}
-                    </TableCell>
-                    <TableCell>{formatDate(deployment.created_at)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {calculateRunTime(
-                          deployment.status?.updated_at as string,
-                          deployment.status?.created_at as string
-                        )}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          rollBackApplication({ id: deployment.id });
-                        }}
-                        disabled={isLoading}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                        <Undo className="h-4 w-4 mr-2" />
-                        {t('selfHost.deployment.list.card.rollback.title')}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
+          <DataTable
+            data={deployments}
+            columns={columns}
+            onRowClick={handleRowClick}
+            showBorder={true}
+            hoverable={true}
+          />
           {totalPages > 1 && (
             <div className="mt-8 flex justify-center">
               <PaginationWrapper

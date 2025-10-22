@@ -1,8 +1,12 @@
+# Workflow: Security Scan
+# Description: Runs Trivy and TruffleHog to detect vulnerabilities and secrets
+# Why: Proactively ensures security
+
 name: Security Scan
 
 on:
   schedule:
-    - cron: '0 0 * * 0' 
+    - cron: '0 0 * * 0' # Weekly
   push:
     branches:
       - master
@@ -17,6 +21,8 @@ jobs:
       
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: "1"
         with:
           scan-type: 'fs'
           scan-ref: '.'

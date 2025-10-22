@@ -14,13 +14,7 @@ import { UserSettings, User as UserType } from '@/redux/types/user';
 import { useSendVerificationEmailMutation } from '@/redux/services/users/authApi';
 import { useTranslation } from '@/hooks/use-translation';
 import { LanguageSwitcher } from '@/components/language-switcher';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
 import { Switch } from '@/components/ui/switch';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
@@ -130,7 +124,9 @@ function AccountSection({
               </RBACGuard>
             </div>
 
-            {usernameError && <TypographySmall className="text-red-500">{usernameError}</TypographySmall>}
+            {usernameError && (
+              <TypographySmall className="text-red-500">{usernameError}</TypographySmall>
+            )}
 
             {usernameSuccess && (
               <Alert variant="default">
@@ -173,7 +169,9 @@ function AccountSection({
                           : t('settings.account.email.notVerified.sendButton')}
                     </Button>
                   </RBACGuard>
-                  {verificationError && <TypographySmall className="text-red-500">{verificationError}</TypographySmall>}
+                  {verificationError && (
+                    <TypographySmall className="text-red-500">{verificationError}</TypographySmall>
+                  )}
                   {verificationSent && (
                     <Alert variant="default">
                       <CheckCircle className="h-4 w-4" />
@@ -199,40 +197,24 @@ function AccountSection({
           <div className="flex justify-between items-center">
             <TypographyMuted>{t('settings.preferences.font')}</TypographyMuted>
             <RBACGuard resource="user" action="update">
-              <Select
+              <SelectWrapper
                 value={userSettings.font_family || 'outfit'}
                 onValueChange={handleFontChange}
+                options={[
+                  { value: 'geist', label: t('settings.preferences.fontOptions.geist') },
+                  { value: 'inter', label: t('settings.preferences.fontOptions.inter') },
+                  { value: 'roboto', label: t('settings.preferences.fontOptions.roboto') },
+                  { value: 'poppins', label: t('settings.preferences.fontOptions.poppins') },
+                  { value: 'montserrat', label: t('settings.preferences.fontOptions.montserrat') },
+                  { value: 'space-grotesk', label: t('settings.preferences.fontOptions.spaceGrotesk') },
+                  { value: 'outfit', label: t('settings.preferences.fontOptions.outfit') },
+                  { value: 'jakarta', label: t('settings.preferences.fontOptions.jakarta') },
+                  { value: 'system', label: t('settings.preferences.fontOptions.system') }
+                ]}
+                placeholder={t('settings.preferences.font')}
                 disabled={isUpdatingFont}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder={t('settings.preferences.font')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="geist">{t('settings.preferences.fontOptions.geist')}</SelectItem>
-                  <SelectItem value="inter">{t('settings.preferences.fontOptions.inter')}</SelectItem>
-                  <SelectItem value="roboto">
-                    {t('settings.preferences.fontOptions.roboto')}
-                  </SelectItem>
-                  <SelectItem value="poppins">
-                    {t('settings.preferences.fontOptions.poppins')}
-                  </SelectItem>
-                  <SelectItem value="montserrat">
-                    {t('settings.preferences.fontOptions.montserrat')}
-                  </SelectItem>
-                  <SelectItem value="space-grotesk">
-                    {t('settings.preferences.fontOptions.spaceGrotesk')}
-                  </SelectItem>
-                  <SelectItem value="outfit">
-                    {t('settings.preferences.fontOptions.outfit')}
-                  </SelectItem>
-                  <SelectItem value="jakarta">
-                    {t('settings.preferences.fontOptions.jakarta')}
-                  </SelectItem>
-                  <SelectItem value="system">
-                    {t('settings.preferences.fontOptions.system')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                className="w-[180px]"
+              />
             </RBACGuard>
           </div>
         </CardContent>

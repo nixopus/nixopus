@@ -272,90 +272,90 @@ func (c *ContextTask) mergeDeploymentUpdates() shared_types.Application {
 }
 
 func (c *ContextTask) PrepareReDeploymentContext() (shared_types.TaskPayload, error) {
-    // Redeploy: keep application config, create a new deployment entry and initial status
-    app := *c.Application
-    app.UpdatedAt = time.Now()
+	// Redeploy: keep application config, create a new deployment entry and initial status
+	app := *c.Application
+	app.UpdatedAt = time.Now()
 
-    applicationDeployment := c.GetDeploymentConfig(app.ID)
+	applicationDeployment := c.GetDeploymentConfig(app.ID)
 
-    if err := c.PersistUpdateApplicationDeploymentData(app, applicationDeployment); err != nil {
-        return shared_types.TaskPayload{}, err
-    }
+	if err := c.PersistUpdateApplicationDeploymentData(app, applicationDeployment); err != nil {
+		return shared_types.TaskPayload{}, err
+	}
 
-    initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
-    if err != nil {
-        return shared_types.TaskPayload{}, err
-    }
+	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
+	if err != nil {
+		return shared_types.TaskPayload{}, err
+	}
 
-    opts := shared_types.UpdateOptions{
-        Force:             c.ContextConfig.(*types.ReDeployApplicationRequest).Force,
-        ForceWithoutCache: c.ContextConfig.(*types.ReDeployApplicationRequest).ForceWithoutCache,
-    }
+	opts := shared_types.UpdateOptions{
+		Force:             c.ContextConfig.(*types.ReDeployApplicationRequest).Force,
+		ForceWithoutCache: c.ContextConfig.(*types.ReDeployApplicationRequest).ForceWithoutCache,
+	}
 
-    return shared_types.TaskPayload{
-        Application:           app,
-        ApplicationDeployment: applicationDeployment,
-        Status:                initialStatus,
-        UpdateOptions:         opts,
-    }, nil
+	return shared_types.TaskPayload{
+		Application:           app,
+		ApplicationDeployment: applicationDeployment,
+		Status:                initialStatus,
+		UpdateOptions:         opts,
+	}, nil
 }
 
 func (c *ContextTask) PrepareRollbackContext() (shared_types.TaskPayload, error) {
-    // Load the target deployment to determine commit to roll back to
-    target := c.ContextConfig.(*types.RollbackDeploymentRequest)
-    dep, err := c.TaskService.Storage.GetApplicationDeploymentById(target.ID.String())
-    if err != nil {
-        return shared_types.TaskPayload{}, err
-    }
+	// Load the target deployment to determine commit to roll back to
+	target := c.ContextConfig.(*types.RollbackDeploymentRequest)
+	dep, err := c.TaskService.Storage.GetApplicationDeploymentById(target.ID.String())
+	if err != nil {
+		return shared_types.TaskPayload{}, err
+	}
 
-    app := *c.Application
-    app.UpdatedAt = time.Now()
+	app := *c.Application
+	app.UpdatedAt = time.Now()
 
-    applicationDeployment := c.GetDeploymentConfig(app.ID)
-    applicationDeployment.CommitHash = dep.CommitHash
+	applicationDeployment := c.GetDeploymentConfig(app.ID)
+	applicationDeployment.CommitHash = dep.CommitHash
 
-    if err := c.PersistUpdateApplicationDeploymentData(app, applicationDeployment); err != nil {
-        return shared_types.TaskPayload{}, err
-    }
+	if err := c.PersistUpdateApplicationDeploymentData(app, applicationDeployment); err != nil {
+		return shared_types.TaskPayload{}, err
+	}
 
-    initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
-    if err != nil {
-        return shared_types.TaskPayload{}, err
-    }
+	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
+	if err != nil {
+		return shared_types.TaskPayload{}, err
+	}
 
-    return shared_types.TaskPayload{
-        Application:           app,
-        ApplicationDeployment: applicationDeployment,
-        Status:                initialStatus,
-        UpdateOptions: shared_types.UpdateOptions{
-            Force:             false,
-            ForceWithoutCache: false,
-        },
-    }, nil
+	return shared_types.TaskPayload{
+		Application:           app,
+		ApplicationDeployment: applicationDeployment,
+		Status:                initialStatus,
+		UpdateOptions: shared_types.UpdateOptions{
+			Force:             false,
+			ForceWithoutCache: false,
+		},
+	}, nil
 }
 
 func (c *ContextTask) PrepareRestartContext() (shared_types.TaskPayload, error) {
-    // For restart, create a fresh deployment record and initial status
-    app := *c.Application
-    app.UpdatedAt = time.Now()
+	// For restart, create a fresh deployment record and initial status
+	app := *c.Application
+	app.UpdatedAt = time.Now()
 
-    applicationDeployment := c.GetDeploymentConfig(app.ID)
-    if err := c.PersistUpdateApplicationDeploymentData(app, applicationDeployment); err != nil {
-        return shared_types.TaskPayload{}, err
-    }
+	applicationDeployment := c.GetDeploymentConfig(app.ID)
+	if err := c.PersistUpdateApplicationDeploymentData(app, applicationDeployment); err != nil {
+		return shared_types.TaskPayload{}, err
+	}
 
-    initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
-    if err != nil {
-        return shared_types.TaskPayload{}, err
-    }
+	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
+	if err != nil {
+		return shared_types.TaskPayload{}, err
+	}
 
-    return shared_types.TaskPayload{
-        Application:           app,
-        ApplicationDeployment: applicationDeployment,
-        Status:                initialStatus,
-        UpdateOptions: shared_types.UpdateOptions{
-            Force:             false,
-            ForceWithoutCache: false,
-        },
-    }, nil
+	return shared_types.TaskPayload{
+		Application:           app,
+		ApplicationDeployment: applicationDeployment,
+		Status:                initialStatus,
+		UpdateOptions: shared_types.UpdateOptions{
+			Force:             false,
+			ForceWithoutCache: false,
+		},
+	}, nil
 }

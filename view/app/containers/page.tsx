@@ -3,7 +3,7 @@
 import React from 'react';
 import { RefreshCw, Trash2, Loader2, Scissors, Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import ContainersLoading from './skeleton';
+import ContainersLoading from './components/skeleton';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { FeatureNames } from '@/types/feature-flags';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,7 +14,7 @@ import { TypographyH1, TypographyH2, TypographyMuted } from '@/components/ui/typ
 import PageLayout from '@/components/layout/page-layout';
 import ContainersTable from './components/table';
 import PaginationWrapper from '@/components/ui/pagination';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
 import { SearchBar } from '@/components/ui/search-bar';
 import { ContainerCard } from './components/card';
 
@@ -75,18 +75,19 @@ export default function ContainersPage() {
   }
 
   return (
-    <ResourceGuard
-      resource="container"
-      action="read"
-      loadingFallback={<ContainersLoading />}
-    >
+    <ResourceGuard resource="container" action="read" loadingFallback={<ContainersLoading />}>
       <PageLayout maxWidth="6xl" padding="md" spacing="lg" className="relative z-10">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <span>
             <TypographyH1 className="text-2xl font-bold">{t('containers.title')}</TypographyH1>
           </span>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button onClick={handleRefresh} variant="outline" size="sm" disabled={isRefreshing || isFetching}>
+            <Button
+              onClick={handleRefresh}
+              variant="outline"
+              size="sm"
+              disabled={isRefreshing || isFetching}
+            >
               {isRefreshing || isFetching ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -123,25 +124,22 @@ export default function ContainersPage() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <Select
+            <SelectWrapper
               value={String(pageSize)}
               onValueChange={(v) => {
                 const num = parseInt(v, 10);
                 setPageSize(num);
                 setPage(1);
               }}
-            >
-              <SelectTrigger className="w-[110px]">
-                <SelectValue placeholder="Page size" />
-              </SelectTrigger>
-              <SelectContent>
-                {[10, 20, 50, 100].map((s) => (
-                  <SelectItem key={s} value={String(s)}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={[
+                { value: '10', label: '10' },
+                { value: '20', label: '20' },
+                { value: '50', label: '50' },
+                { value: '100', label: '100' }
+              ]}
+              placeholder="Page size"
+              className="w-[110px]"
+            />
             <div className="hidden sm:flex items-center gap-2 ml-2">
               <Button
                 variant="outline"
@@ -149,7 +147,8 @@ export default function ContainersPage() {
                 onClick={() => {
                   const next = viewMode === 'table' ? 'card' : 'table';
                   setViewMode(next);
-                  if (typeof window !== 'undefined') window.localStorage.setItem('containers_view', next);
+                  if (typeof window !== 'undefined')
+                    window.localStorage.setItem('containers_view', next);
                 }}
               >
                 {viewMode === 'table' ? <Grid className="h-4 w-4" /> : <List className="h-4 w-4" />}
@@ -193,13 +192,16 @@ export default function ContainersPage() {
         {totalCount > 0 && (
           <div className="mt-4 flex items-center justify-between flex-wrap gap-2">
             <TypographyMuted>{totalCount} containers</TypographyMuted>
-            <PaginationWrapper currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            {totalPages > 1 && (
+              <PaginationWrapper
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            )}
           </div>
         )}
-        <AnyPermissionGuard
-          permissions={['container:delete']}
-          loadingFallback={null}
-        >
+        <AnyPermissionGuard permissions={['container:delete']} loadingFallback={null}>
           <DeleteDialog
             title={t('containers.deleteDialog.title')}
             description={t('containers.deleteDialog.description')}

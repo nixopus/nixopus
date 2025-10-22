@@ -1,0 +1,170 @@
+# docker compose -f docker-compose-dev.yml up --build
+# TODO: add cli tool seutp configuration for this
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
+      args:
+        - API_PORT=${API_PORT:-8080}
+    container_name: nixopus-api-dev
+    ports:
+      - "${API_PORT:-8080}:${API_PORT:-8080}"
+    env_file:
+      - ./api/.env
+    environment:
+      # Ensure container-to-container service addresses
+      - PORT=${API_PORT:-8080}
+      # Database connection - must match nixopus-db and supertokens
+      - HOST_NAME=nixopus-db
+      - DB_PORT=5432
+      - USERNAME=${USERNAME:-postgres}
+      - PASSWORD=${PASSWORD:-changeme}
+      - DB_NAME=${DB_NAME:-postgres}
+      - SSL_MODE=disable
+      - REDIS_URL=redis://nixopus-redis:6379
+      - CADDY_ENDPOINT=http://nixopus-caddy:2019
+      - SUPERTOKENS_API_DOMAIN=http://localhost:${API_PORT:-8080}
+      - SUPERTOKENS_CONNECTION_URI=http://supertokens:3567
+      - SUPERTOKENS_WEBSITE_DOMAIN=http://localhost:${NEXT_PUBLIC_PORT:-3000}
+      - SUPERTOKENS_API_KEY=NixopusSuperTokensAPIKey
+      - SSH_HOST=host.docker.internal
+      - SSH_PORT=22
+      - SSH_USER=${USER}
+      - SSH_PRIVATE_KEY=/root/.ssh/id_rsa_nixopus
+      - SSH_PASSWORD=
+      - ENV=development
+    volumes:
+      - ./api:/app
+      - ./api/.env:/app/.env:ro
+      - ./helpers:/etc/nixopus/source/helpers:ro
+      - ./logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOME}/.ssh:/root/.ssh:ro
+      # Speed up go builds by caching modules & tmp directory
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - nixopus-network
+    depends_on:
+      nixopus-db:
+        condition: service_healthy
+      nixopus-redis:
+        condition: service_healthy
+      nixopus-supertokens:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1:${API_PORT:-8080}/api/v1/health >/dev/null || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  nixopus-redis:
+    image: redis:7-alpine
+    container_name: nixopus-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - nixopus-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  nixopus-db:
+    image: postgres:14-alpine
+    container_name: nixopus-db
+    environment:
+      - POSTGRES_USER=${USERNAME:-postgres}
+      - POSTGRES_PASSWORD=${PASSWORD:-changeme}
+      - POSTGRES_DB=${DB_NAME:-postgres}
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - nixopus-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${USERNAME:-postgres} -d ${DB_NAME:-postgres}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  supertokens:
+    image: registry.supertokens.io/supertokens/supertokens-postgresql:latest
+    container_name: supertokens
+
+    depends_on:
+      nixopus-db:
+        condition: service_healthy
+    ports:
+      - "3567:3567"
+    environment:
+      - POSTGRESQL_CONNECTION_URI=postgresql://${USERNAME:-postgres}:${PASSWORD:-changeme}@nixopus-db:${DB_PORT:-5432}/${DB_NAME:-postgres}
+      - POSTGRESQL_TABLE_NAMES_PREFIX=supertokens_
+
+    networks:
+      - nixopus-network
+    restart: unless-stopped
+    healthcheck:
+      test: >
+        bash -c 'exec 3<>/dev/tcp/127.0.0.1/3567 && echo -e "GET /hello HTTP/1.1\r\nhost: 127.0.0.1:3567\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep "Hello"'
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  nixopus-caddy:
+    image: caddy:latest
+    container_name: nixopus-caddy
+    ports:
+      - "2019:2019"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./helpers/Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+    command:
+      [
+        "caddy",
+        "run",
+        "--config",
+        "/etc/caddy/Caddyfile",
+        "--adapter",
+        "caddyfile",
+      ]
+    networks:
+      - nixopus-network
+    # Basic health check to ensure caddy is responsive
+    healthcheck:
+      test: ["CMD", "caddy", "version"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  nixopus-network:
+    driver: bridge
+
+volumes:
+  db-data:
+  redis-data:
+  caddy-data:
+  caddy-config:
+  go-mod-cache:
+  go-build-cache:

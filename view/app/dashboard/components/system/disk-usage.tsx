@@ -6,11 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SystemStatsType } from '@/redux/types/monitor';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/use-translation';
-import { Table, TableBody, TableRow, TableCell, TableHead, TableHeader } from '@/components/ui/table';
+import { DataTable, TableColumn } from '@/components/ui/data-table';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 interface DiskUsageCardProps {
   systemStats: SystemStatsType | null;
+}
+
+interface MountData {
+  mountPoint: string;
+  size: string;
+  used: string;
+  capacity: string;
 }
 
 const DiskUsageCard: React.FC<DiskUsageCardProps> = ({ systemStats }) => {
@@ -50,42 +57,7 @@ const DiskUsageCard: React.FC<DiskUsageCardProps> = ({ systemStats }) => {
             </TypographyMuted>
           </div>
           <div className="text-xs font-mono mt-1 sm:mt-2">
-            <Table className="min-w-full overflow-x-hidden">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-left pr-1 sm:pr-2">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.mount')}</TypographySmall>
-                  </TableHead>
-                  <TableHead className="text-left pr-1 sm:pr-2">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.size')}</TypographySmall>
-                  </TableHead>
-                  <TableHead className="text-left pr-1 sm:pr-2">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.used')}</TypographySmall>
-                  </TableHead>
-                  <th className="text-left">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.percentage')}</TypographySmall>
-                  </th>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {disk.allMounts.map((mount, index) => (
-                  <TableRow key={index} className='border-0'>
-                    <TableCell>
-                      <TypographySmall className="text-xs">{mount.mountPoint}</TypographySmall>
-                    </TableCell>
-                    <TableCell>
-                      <TypographySmall className="text-xs">{mount.size}</TypographySmall>
-                    </TableCell>
-                    <TableCell>
-                      <TypographySmall className="text-xs">{mount.used}</TypographySmall>
-                    </TableCell>
-                    <TableCell>
-                      <TypographySmall className="text-xs">{mount.capacity}</TypographySmall>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DiskMountsTable mounts={disk.allMounts} />
           </div>
         </div>
       </CardContent>
@@ -94,6 +66,60 @@ const DiskUsageCard: React.FC<DiskUsageCardProps> = ({ systemStats }) => {
 };
 
 export default DiskUsageCard;
+
+function DiskMountsTable({ mounts }: { mounts: MountData[] }) {
+  const { t } = useTranslation();
+
+  const columns: TableColumn<MountData>[] = [
+    {
+      key: 'mount',
+      title: t('dashboard.disk.table.headers.mount'),
+      dataIndex: 'mountPoint',
+      className: 'text-xs pr-1 sm:pr-2',
+      render: (mountPoint) => (
+        <TypographySmall className="text-xs">{mountPoint}</TypographySmall>
+      )
+    },
+    {
+      key: 'size',
+      title: t('dashboard.disk.table.headers.size'),
+      dataIndex: 'size',
+      className: 'text-xs pr-1 sm:pr-2',
+      render: (size) => (
+        <TypographySmall className="text-xs">{size}</TypographySmall>
+      )
+    },
+    {
+      key: 'used',
+      title: t('dashboard.disk.table.headers.used'),
+      dataIndex: 'used',
+      className: 'text-xs pr-1 sm:pr-2',
+      render: (used) => (
+        <TypographySmall className="text-xs">{used}</TypographySmall>
+      )
+    },
+    {
+      key: 'capacity',
+      title: t('dashboard.disk.table.headers.percentage'),
+      dataIndex: 'capacity',
+      className: 'text-xs',
+      render: (capacity) => (
+        <TypographySmall className="text-xs">{capacity}</TypographySmall>
+      )
+    }
+  ];
+
+  return (
+    <DataTable
+      data={mounts}
+      columns={columns}
+      tableClassName="min-w-full overflow-x-hidden"
+      showBorder={false}
+      hoverable={false}
+      striped={false}
+    />
+  );
+}
 
 const DiskUsageCardSkeleton = () => {
   const { t } = useTranslation();
@@ -121,16 +147,24 @@ const DiskUsageCardSkeleton = () => {
               <thead>
                 <tr>
                   <th className="text-left pr-1 sm:pr-2">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.mount')}</TypographySmall>
+                    <TypographySmall className="text-xs">
+                      {t('dashboard.disk.table.headers.mount')}
+                    </TypographySmall>
                   </th>
                   <th className="text-right pr-1 sm:pr-2">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.size')}</TypographySmall>
+                    <TypographySmall className="text-xs">
+                      {t('dashboard.disk.table.headers.size')}
+                    </TypographySmall>
                   </th>
                   <th className="text-right pr-1 sm:pr-2">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.used')}</TypographySmall>
+                    <TypographySmall className="text-xs">
+                      {t('dashboard.disk.table.headers.used')}
+                    </TypographySmall>
                   </th>
                   <th className="text-right">
-                    <TypographySmall className="text-xs">{t('dashboard.disk.table.headers.percentage')}</TypographySmall>
+                    <TypographySmall className="text-xs">
+                      {t('dashboard.disk.table.headers.percentage')}
+                    </TypographySmall>
                   </th>
                 </tr>
               </thead>

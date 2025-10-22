@@ -143,7 +143,7 @@ type License struct {
 }
 
 type GithubRepositoryBranch struct {
-	Name string `json:"name"`
+	Name   string `json:"name"`
 	Commit struct {
 		Sha string `json:"sha"`
 		URL string `json:"url"`

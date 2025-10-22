@@ -1,18 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTable, TableColumn } from '@/components/ui/data-table';
 import { useTranslation } from '@/hooks/use-translation';
 import { formatBytes, formatDate } from '@/lib/utils';
 import { useGetImagesQuery } from '@/redux/services/container/imagesApi';
-import { Loader2 } from 'lucide-react';
 
 interface Image {
   id: string;
@@ -33,39 +25,42 @@ export function Images({ containerId, imagePrefix }: { containerId: string; imag
     return <ImagesSectionSkeleton />;
   }
 
+  const columns: TableColumn<Image>[] = [
+    {
+      key: 'id',
+      title: t('containers.images.id'),
+      dataIndex: 'id',
+      render: (id) => <span className="font-mono">{id.slice(0, 12)}</span>
+    },
+    {
+      key: 'tags',
+      title: t('containers.images.tags'),
+      dataIndex: 'repo_tags',
+      render: (tags) => tags?.join(', ') || '<none>'
+    },
+    {
+      key: 'created',
+      title: t('containers.images.created'),
+      dataIndex: 'created',
+      render: (created) => formatDate(new Date(created * 1000))
+    },
+    {
+      key: 'size',
+      title: t('containers.images.size'),
+      dataIndex: 'size',
+      render: (size) => formatBytes(size)
+    }
+  ];
+
   return (
-    <Card>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('containers.images.id')}</TableHead>
-              <TableHead>{t('containers.images.tags')}</TableHead>
-              <TableHead>{t('containers.images.created')}</TableHead>
-              <TableHead>{t('containers.images.size')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center">
-                  <Loader2 className="mx-auto h-6 w-6 animate-spin" />
-                </TableCell>
-              </TableRow>
-            ) : (
-              images?.map((image: Image) => (
-                <TableRow key={image.id}>
-                  <TableCell className="font-mono">{image.id.slice(0, 12)}</TableCell>
-                  <TableCell>{image.repo_tags?.join(', ') || '<none>'}</TableCell>
-                  <TableCell>{formatDate(new Date(image.created * 1000))}</TableCell>
-                  <TableCell>{formatBytes(image.size)}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <DataTable
+      data={images}
+      columns={columns}
+      loading={isLoading}
+      loadingRows={5}
+      showBorder={true}
+      hoverable={false}
+    />
   );
 }
 

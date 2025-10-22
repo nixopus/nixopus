@@ -1,10 +1,14 @@
+# Workflow: Go Tests
+# Description: Executes Go unit tests on pushes to master or feat/develop
+# Why: Maintains code correctness and prevents regressions
+
 name: Test Nixopus API
 
 on:
   push:
     branches:
-      - 'master'
-      - 'feat/develop'
+      - master
+      - feat/develop
     paths:
       - 'api/**'
 

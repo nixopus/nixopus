@@ -393,7 +393,7 @@ func TestTwoFactorLoginEdgeCases(t *testing.T) {
 			request: types.TwoFactorLoginRequest{
 				Email:    authResponse.User.Email,
 				Password: "Password123@",
-				Code:     "000000", 
+				Code:     "000000",
 			},
 			expectedStatus: http.StatusUnauthorized,
 		},

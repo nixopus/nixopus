@@ -31,16 +31,14 @@ function Page() {
   const totalPages = Math.ceil(totalDeployments / deploymentsPerPage);
 
   return (
-    <ResourceGuard 
-      resource="deploy" 
-      action="read"
-      loadingFallback={<Skeleton className="h-96" />}
-    >
+    <ResourceGuard resource="deploy" action="read" loadingFallback={<Skeleton className="h-96" />}>
       <PageLayout maxWidth="6xl" padding="md" spacing="lg">
         <ApplicationDetailsHeader application={application} />
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList>
-            <TabsTrigger value="monitoring">{t('selfHost.application.tabs.monitoring')}</TabsTrigger>
+            <TabsTrigger value="monitoring">
+              {t('selfHost.application.tabs.monitoring')}
+            </TabsTrigger>
             <TabsTrigger value="configuration">
               {t('selfHost.application.tabs.configuration')}
             </TabsTrigger>
