@@ -57,6 +57,30 @@ services:
       POSTGRES_DB: ${DB_NAME:-postgres}
       POSTGRES_HOST_AUTH_METHOD: trust
 
+  caddy:
+    env:
+      CADDY_IMAGE: ${CADDY_IMAGE:-caddy:latest}
+      CADDY_CONTAINER_NAME: ${CADDY_CONTAINER_NAME:-nixopus-caddy}
+      CADDY_DATA_VOLUME: ${CADDY_DATA_VOLUME:-./caddy/data}
+      CADDY_CONFIG_VOLUME: ${CADDY_CONFIG_VOLUME:-./caddy/config}
+      CADDY_PORTS: "2019:2019,80:80,443:443"
+      API_DOMAIN: ${API_DOMAIN:-api.localhost}
+      VIEW_DOMAIN: ${VIEW_DOMAIN:-app.localhost}
+      BASE_URL: ${BASE_URL:-http://localhost:2019}
+      PROXY_PORT: ${PROXY_PORT:-2019}
+      CONFIG_ENDPOINT: ${CONFIG_ENDPOINT:-/config}
+      LOAD_ENDPOINT: ${LOAD_ENDPOINT:-/load}
+      STOP_ENDPOINT: ${STOP_ENDPOINT:-/stop}
+      CADDY_COMMAND:
+        [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile",
+        ]
+
 networks:
   default:
     name: nixopus-network

@@ -10,6 +10,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn
 from app.commands.clone.clone import Clone, CloneConfig
 from app.commands.conf.base import BaseEnvironmentManager
 from app.commands.preflight.run import PreflightRunner
+from app.commands.proxy.load import Load, LoadConfig
 from app.commands.service.base import BaseDockerService
 from app.commands.service.up import Up, UpConfig
 from app.utils.config import (
@@ -22,6 +23,7 @@ from app.utils.config import (
     DEFAULT_REPO,
     NIXOPUS_CONFIG_DIR,
     PORTS,
+    PROXY_PORT,
     SSH_FILE_PATH,
     SSH_KEY_SIZE,
     SSH_KEY_TYPE,
@@ -75,14 +77,14 @@ class DevelopmentInstall(BaseInstall):
         )
 
         self.install_path = os.path.abspath(os.path.expanduser(install_path)) if install_path else os.getcwd()
-        
+
         # Check platform and WSL requirement for Windows
         self._check_platform_support()
-        
+
         # Load config from config.dev.yaml
         self._config = Config(default_env="DEVELOPMENT")
         self._defaults = self._load_dev_defaults()
-        
+
         if self.logger:
             self.logger.info(f"Development mode - installing to: {self.install_path}")
 
@@ -90,7 +92,7 @@ class DevelopmentInstall(BaseInstall):
         """Check if platform is supported for development"""
         if platform.system() != "Windows":
             return
-        
+
         # Check if running in WSL
         is_wsl = False
         try:
@@ -99,36 +101,52 @@ class DevelopmentInstall(BaseInstall):
                     is_wsl = "microsoft" in f.read().lower() or "wsl" in f.read().lower()
         except Exception:
             is_wsl = False
-        
+
         if is_wsl:
             if self.verbose:
                 self.logger.info("Running in WSL2 - full support available")
             return
-        
-        # Native Windows - show warning
-        self.logger.warning("Running on native Windows")
+
+        # Native Windows - show detailed guidance
+        self.logger.warning("=" * 70)
+        self.logger.warning("Running on Native Windows")
+        self.logger.warning("=" * 70)
         self.logger.warning("")
-        self.logger.warning("Nixopus development environment requires WSL2 for full feature support.")
+        self.logger.warning("Nixopus development requires WSL2 for full functionality.")
         self.logger.warning("")
-        self.logger.warning("Developmet setup not available on native Windows:")
-        self.logger.warning("  - SSH file manager (container to host access)")
-        self.logger.warning("  - Docker container management")
+        self.logger.warning("What works on native Windows:")
+        self.logger.warning("  + Running API/View containers with hot reload")
+        self.logger.warning("  + Accessing at http://app.localhost")
+        self.logger.warning("  + Database, Redis, SuperTokens, Caddy")
         self.logger.warning("")
-        self.logger.warning("To install WSL2:")
-        self.logger.warning("  1. Open PowerShell as Administrator")
-        self.logger.warning("  2. Run: wsl --install")
-        self.logger.warning("  3. Restart your computer")
-        self.logger.warning("  4. Run this command again in WSL2 terminal")
+        self.logger.warning("What requires WSL2:")
+        self.logger.warning("  - Deploying applications (SSH/SFTP access needed)")
+        self.logger.warning("  - Container-to-host filesystem access")
+        self.logger.warning("  - Building Docker images from host directories")
         self.logger.warning("")
-        self.logger.error("Development installation is only supported on macOS, Linux, or WSL2")
-        self.logger.info("Visit: https://docs.microsoft.com/en-us/windows/wsl/install")
+        self.logger.warning("Why WSL2?")
+        self.logger.warning("  * Native SSH server for container-to-host communication")
+        self.logger.warning("  * Unix-compatible filesystem paths")
+        self.logger.warning("  * Full Docker Desktop integration")
+        self.logger.warning("")
+        self.logger.info("Install WSL2 (5 minutes):")
+        self.logger.info("  1. Open PowerShell as Administrator")
+        self.logger.info("  2. Run: wsl --install")
+        self.logger.info("  3. Restart your computer")
+        self.logger.info("  4. Run this command in WSL2 terminal")
+        self.logger.info("")
+        self.logger.info("Documentation:")
+        self.logger.info("  https://docs.microsoft.com/en-us/windows/wsl/install")
+        self.logger.info("")
+        self.logger.error("Development installation requires macOS, Linux, or WSL2")
+        self.logger.error("Native Windows is not supported due to SSH/filesystem requirements")
         raise typer.Exit(1)
-    
+
     def _load_dev_defaults(self):
         """Load defaults from config.dev.yaml"""
         config_dir = self._config.get_yaml_value(NIXOPUS_CONFIG_DIR)
         source_path = self._config.get_yaml_value(DEFAULT_PATH)
-        
+
         return {
             "ssh_key_type": self._config.get_yaml_value(SSH_KEY_TYPE),
             "ssh_key_size": self._config.get_yaml_value(SSH_KEY_SIZE),
@@ -148,10 +166,11 @@ class DevelopmentInstall(BaseInstall):
             "compose_file_path": os.path.join(self.install_path, "docker-compose-dev.yml"),
             "view_port": self._config.get_yaml_value(VIEW_PORT),
             "api_port": self._config.get_yaml_value(API_PORT),
+            "proxy_port": self._config.get_yaml_value(PROXY_PORT),
             "nixopus_config_dir": os.path.join(self.install_path, "nixopus-dev"),
         }
 
-    def _get_config(self, key: str):
+    def _get_config(self, key: str, user_config=None, defaults=None):
         """Get config value with development-specific overrides"""
         # Development-specific path overrides
         if key == "compose_file_path":
@@ -168,7 +187,7 @@ class DevelopmentInstall(BaseInstall):
             return os.path.expanduser("~/.ssh/id_rsa_nixopus")
 
         # Use parent's _get_config with dev defaults
-        return super()._get_config(key, self._user_config, self._defaults)
+        return super()._get_config(key, user_config or self._user_config, defaults or self._defaults)
 
     def run(self):
         """Execute development installation workflow"""
@@ -176,10 +195,11 @@ class DevelopmentInstall(BaseInstall):
             ("Preflight checks", self._run_preflight_checks),
             ("Checking dependencies", self._check_and_install_dependencies),
             ("Cloning repository", self._setup_clone_and_config),
+            ("Setting up proxy config", self._setup_proxy_config),
             ("Creating environment files", self._create_env_files),
             ("Generating SSH keys", self._setup_ssh),
-            ("Starting backend services", self._start_backend),
-            ("Starting frontend", self._start_frontend),
+            ("Starting all services", self._start_all_services),
+            ("Loading proxy configuration", self._load_proxy),
             ("Validating services", self._validate_services),
         ]
 
@@ -226,11 +246,11 @@ class DevelopmentInstall(BaseInstall):
                 progress.update(self.main_task, completed=True, description="Installation completed")
 
             self._show_success_message()
-        
+
         except Exception as e:
             self._handle_installation_error(e)
             raise typer.Exit(1)
-    
+
     def _handle_installation_error(self, error):
         """Handle installation errors with clean output"""
         if self.verbose:
@@ -380,8 +400,91 @@ class DevelopmentInstall(BaseInstall):
         if not self.dry_run and self.verbose:
             self.logger.info("SSH key configured for local development with host access")
 
-    def _start_backend(self):
-        """Start backend services using Docker Compose"""
+    def _setup_proxy_config(self):
+        """Setup Caddy proxy configuration for development with localhost domains"""
+        import json
+
+        caddy_json_template = os.path.join(self.install_path, "helpers", "caddy.json")
+
+        if self.dry_run:
+            self.logger.info(f"[DRY RUN] Would setup proxy config at {caddy_json_template}")
+            return
+
+        if not os.path.exists(caddy_json_template):
+            raise Exception(f"Caddy config template not found: {caddy_json_template}")
+
+        with open(caddy_json_template, "r") as f:
+            config_str = f.read()
+
+        # Get ports from config
+        view_port = self._get_config("view_port") or "3000"
+        api_port = self._get_config("api_port") or "8080"
+
+        # Use localhost domains for development
+        view_domain = "app.localhost"
+        api_domain = "api.localhost"
+
+        # Use host.docker.internal for reverse proxy since containers talk to host
+        app_reverse_proxy_url = f"host.docker.internal:{view_port}"
+        api_reverse_proxy_url = f"host.docker.internal:{api_port}"
+
+        # Replace placeholders
+        config_str = config_str.replace("{env.APP_DOMAIN}", view_domain)
+        config_str = config_str.replace("{env.API_DOMAIN}", api_domain)
+        config_str = config_str.replace("{env.APP_REVERSE_PROXY_URL}", app_reverse_proxy_url)
+        config_str = config_str.replace("{env.API_REVERSE_PROXY_URL}", api_reverse_proxy_url)
+
+        # Parse and write back
+        caddy_config = json.loads(config_str)
+
+        # Ensure nixopus server has listen directive for both HTTP and HTTPS
+        if "apps" in caddy_config and "http" in caddy_config["apps"]:
+            if "servers" in caddy_config["apps"]["http"]:
+                if "nixopus" in caddy_config["apps"]["http"]["servers"]:
+                    server = caddy_config["apps"]["http"]["servers"]["nixopus"]
+                    if "listen" not in server or not server["listen"]:
+                        server["listen"] = [":80", ":443"]
+
+        with open(caddy_json_template, "w") as f:
+            json.dump(caddy_config, f, indent=2)
+
+        if self.verbose:
+            self.logger.info(f"Proxy config created for development:")
+            self.logger.info(f"  - View:  http://{view_domain} → {app_reverse_proxy_url}")
+            self.logger.info(f"  - API:   http://{api_domain} → {api_reverse_proxy_url}")
+
+    def _load_proxy(self):
+        """Load Caddy proxy configuration via Admin API"""
+        proxy_port = int(self._get_config("proxy_port") or 2019)
+        caddy_json_config = os.path.join(self.install_path, "helpers", "caddy.json")
+
+        if self.dry_run:
+            self.logger.info(f"[DRY RUN] Would load proxy config from {caddy_json_config}")
+            return
+
+        config = LoadConfig(
+            proxy_port=proxy_port,
+            verbose=self.verbose,
+            output="text",
+            dry_run=self.dry_run,
+            config_file=caddy_json_config,
+        )
+
+        load_service = Load(logger=self.logger)
+        try:
+            with TimeoutWrapper(self.timeout):
+                result = load_service.load(config)
+        except TimeoutError:
+            raise Exception(f"Proxy load failed: {operation_timed_out}")
+
+        if result.success:
+            if not self.dry_run and self.verbose:
+                self.logger.info("Caddy proxy configuration loaded successfully")
+        else:
+            raise Exception(f"Proxy load failed: {result.error}")
+
+    def _start_all_services(self):
+        """Start all services (API, View, DB, Redis, Caddy) using Docker Compose"""
         config = UpConfig(
             name=self._get_config("service_name"),
             detach=self._get_config("service_detach"),
@@ -401,126 +504,77 @@ class DevelopmentInstall(BaseInstall):
         if not result.success:
             raise Exception(services_start_failed)
 
-    def _start_frontend(self):
-        """Install frontend dependencies and start dev server"""
-        view_dir = os.path.join(self.install_path, "view")
-
-        if not os.path.exists(view_dir):
-            raise Exception(f"Frontend directory not found: {view_dir}")
-
-        if self.dry_run:
-            self.logger.info("[DRY RUN] Would install frontend dependencies and start server")
-            return
-
-        # Install dependencies
-        if not self.verbose:
-            self.logger.info("Installing frontend dependencies...")
-
-        try:
-            yarn_install = subprocess.run(
-                ["yarn", "install", "--non-interactive"],
-                cwd=view_dir,
-                capture_output=not self.verbose,
-                text=True,
-                timeout=self.timeout,  # Use configurable timeout
-            )
-
-            if yarn_install.returncode != 0:
-                raise Exception("Frontend dependency installation failed")
-        except subprocess.TimeoutExpired:
-            raise Exception("Frontend dependency installation timed out")
-        except FileNotFoundError:
-            raise Exception("yarn not found. Please install yarn first.")
-
-        # Create logs directory
-        log_dir = os.path.join(self.install_path, "logs")
-        FileManager.create_directory(log_dir, logger=self.logger)
-
-        # Start dev server in background
-        log_file_path = os.path.join(log_dir, "frontend.log")
-        pid_file_path = os.path.join(log_dir, "frontend.pid")
-
-        if not self.verbose:
-            self.logger.info("Starting frontend server...")
-
-        try:
-            log_file = open(log_file_path, "w")
-            process = subprocess.Popen(
-                ["yarn", "dev"], cwd=view_dir, stdout=log_file, stderr=subprocess.STDOUT, start_new_session=True
-            )
-
-            # Save PID
-            with open(pid_file_path, "w") as f:
-                f.write(str(process.pid))
-
-            # Wait for startup
-            time.sleep(5)
-
-            # Check if process is still running
-            if process.poll() is not None:
-                raise Exception("Frontend server failed to start. Check logs/frontend.log")
-
-            if not self.verbose:
-                self.logger.info("Frontend server started")
-
-        except FileNotFoundError:
-            raise Exception("yarn not found. Please install yarn first.")
-        except Exception as e:
-            raise Exception(f"Failed to start frontend: {str(e)}")
-
     def _validate_services(self):
-        """Validate backend and frontend are accessible"""
+        """Validate all Docker services are running and accessible through Caddy proxy"""
         if self.dry_run:
             self.logger.info("[DRY RUN] Would validate services")
             return
 
-        # Get ports from config
-        api_port = self._get_config("api_port") or "8080"
-        view_port = self._get_config("view_port") or "3000"
-
         if not self.verbose:
             self.logger.info("Validating services...")
 
-        # Check backend with retries
-        backend_url = f"http://localhost:{api_port}/api/v1/health"
-        backend_ready = False
+        # Check API container health
+        api_url = "http://api.localhost/api/v1/health"
+        api_ready = False
 
-        for i in range(5):
+        if self.verbose:
+            self.logger.info("Checking API service...")
+
+        for i in range(10):
             try:
-                response = urllib.request.urlopen(backend_url, timeout=5)
+                response = urllib.request.urlopen(api_url, timeout=5)
                 if response.status == 200:
-                    backend_ready = True
+                    api_ready = True
                     break
             except Exception:
-                if i < 4:
-                    time.sleep(2)
+                if i < 9:
+                    time.sleep(3)
 
         if self.verbose:
-            if backend_ready:
-                self.logger.info(f"Backend ready at http://localhost:{api_port}")
+            if api_ready:
+                self.logger.info("✓ API service ready at http://api.localhost")
             else:
-                self.logger.warning("Backend not responding yet (may need more time)")
+                self.logger.warning("⚠ API service not responding yet (may need more time)")
 
-        # Check frontend
-        frontend_url = f"http://localhost:{view_port}"
-        frontend_ready = False
+        # Check View container health
+        view_url = "http://app.localhost"
+        view_ready = False
 
-        for i in range(3):
+        if self.verbose:
+            self.logger.info("Checking View service...")
+
+        for i in range(10):
             try:
-                response = urllib.request.urlopen(frontend_url, timeout=5)
-                frontend_ready = True
+                response = urllib.request.urlopen(view_url, timeout=5)
+                view_ready = True
                 break
             except Exception:
-                if i < 2:
-                    time.sleep(2)
+                if i < 9:
+                    time.sleep(3)
 
         if self.verbose:
-            if frontend_ready:
-                self.logger.info(f"Frontend ready at http://localhost:{view_port}")
+            if view_ready:
+                self.logger.info("✓ View service ready at http://app.localhost")
             else:
-                self.logger.warning("Frontend not responding yet (may need more time)")
+                self.logger.warning("⚠ View service not responding yet (may need more time)")
 
-        if not self.verbose and (backend_ready or frontend_ready):
+        # Check Docker containers
+        try:
+            result = subprocess.run(
+                ["docker", "ps", "--filter", "name=nixopus", "--format", "{{.Names}}: {{.Status}}"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0 and self.verbose:
+                self.logger.info("\nDocker Containers:")
+                for line in result.stdout.strip().split("\n"):
+                    if line:
+                        self.logger.info(f"  • {line}")
+        except Exception:
+            pass
+
+        if not self.verbose and (api_ready or view_ready):
             self.logger.info("Services validated")
 
     def _show_success_message(self):
@@ -534,49 +588,71 @@ class DevelopmentInstall(BaseInstall):
         if not self.verbose:
             # Minimal output
             self.logger.info("")
-            self.logger.info("Services Running:")
+            self.logger.info(" Development Environment Ready!")
+            self.logger.info("")
+            self.logger.info("Access via Caddy Proxy:")
+            self.logger.info("  • Frontend:  http://app.localhost")
+            self.logger.info("  • Backend:   http://api.localhost")
+            self.logger.info("")
+            self.logger.info("Direct Container Access:")
             self.logger.info(f"  • Frontend:  http://localhost:{view_port}")
             self.logger.info(f"  • Backend:   http://localhost:{api_port}")
-            self.logger.info(f"  • Register:  http://localhost:{view_port}/register")
             self.logger.info("")
             self.logger.info("View Logs:")
-            self.logger.info(f"  • Frontend:  tail -f {os.path.join(self.install_path, 'logs', 'frontend.log')}")
+            self.logger.info("  • Frontend:  docker logs -f nixopus-view-dev")
             self.logger.info("  • Backend:   docker logs -f nixopus-api-dev")
             self.logger.info("")
             self.logger.info("Stop Services:")
-            self.logger.info(f"  • Frontend:  kill $(cat {os.path.join(self.install_path, 'logs', 'frontend.pid')})")
-            self.logger.info(f"  • Backend:   cd {self.install_path} && docker-compose -f docker-compose-dev.yml down")
+            self.logger.info(f"  • All:       cd {self.install_path} && docker-compose -f docker-compose-dev.yml down")
         else:
             # Verbose output
             self.logger.info("")
-            self.logger.info(f"Development environment installed in: {self.install_path}")
+            self.logger.info("=" * 70)
+            self.logger.info(" Development Environment Successfully Installed!")
+            self.logger.info("=" * 70)
+            self.logger.info(f"Installation Path: {self.install_path}")
             self.logger.info("")
-            self.logger.info("Services Running:")
-            self.logger.info(f"  • Frontend:  http://localhost:{view_port}")
-            self.logger.info(f"  • Backend:   http://localhost:{api_port}")
-            self.logger.info(f"  • Database:  localhost:5432 (postgres/changeme)")
-            self.logger.info("  • Redis:     localhost:6379")
+            self.logger.info(" Access via Caddy Reverse Proxy (Recommended):")
+            self.logger.info("  • Frontend:    http://app.localhost")
+            self.logger.info("  • Backend API: http://api.localhost")
+            self.logger.info("  • Register:    http://app.localhost/register")
+            self.logger.info("  • API Docs:    http://api.localhost/api/docs")
+            self.logger.info("")
+            self.logger.info(" Direct Container Access:")
+            self.logger.info(f"  • Frontend:    http://localhost:{view_port}")
+            self.logger.info(f"  • Backend:     http://localhost:{api_port}")
+            self.logger.info(f"  • Database:    localhost:5432 (postgres/changeme)")
+            self.logger.info("  • Redis:       localhost:6379")
             self.logger.info(f"  • SuperTokens: http://localhost:3567")
+            self.logger.info("  • Caddy Admin: http://localhost:2019")
             self.logger.info("")
-            self.logger.info("Access Application:")
-            self.logger.info(f"  • Main:      http://localhost:{view_port}")
-            self.logger.info(f"  • Register:  http://localhost:{view_port}/register")
-            self.logger.info(f"  • API Docs:  http://localhost:{api_port}/api/docs")
-            self.logger.info("")
-            self.logger.info("View Logs:")
-            self.logger.info(f"  • Frontend:  tail -f {os.path.join(self.install_path, 'logs', 'frontend.log')}")
+            self.logger.info("  View Logs:")
+            self.logger.info("  • Frontend:  docker logs -f nixopus-view-dev")
             self.logger.info("  • Backend:   docker logs -f nixopus-api-dev")
             self.logger.info("  • Database:  docker logs -f nixopus-db")
+            self.logger.info("  • Caddy:     docker logs -f nixopus-caddy")
             self.logger.info(f"  • All:       cd {self.install_path} && docker-compose -f docker-compose-dev.yml logs -f")
             self.logger.info("")
-            self.logger.info("Development Commands:")
+            self.logger.info("  Development Commands:")
             self.logger.info(f"  • Database:  docker exec -it nixopus-db psql -U postgres")
             self.logger.info("  • Redis:     docker exec -it nixopus-redis redis-cli")
-            self.logger.info(f"  • Restart:   cd {self.install_path} && docker-compose -f docker-compose-dev.yml restart api")
+            self.logger.info(f"  • Restart:   cd {self.install_path} && docker-compose -f docker-compose-dev.yml restart")
+            self.logger.info(
+                f"  • Rebuild:   cd {self.install_path} && docker-compose -f docker-compose-dev.yml up -d --build"
+            )
             self.logger.info("")
-            self.logger.info("Configuration:")
-            self.logger.info(f"  • Config:    {os.path.join(self.install_path, 'nixopus-dev')}")
-            self.logger.info(f"  • Backend:   {os.path.join(self.install_path, 'api', '.env')}")
-            self.logger.info(f"  • Frontend:  {os.path.join(self.install_path, 'view', '.env.local')}")
-            self.logger.info(f"  • Logs:      {os.path.join(self.install_path, 'logs')}")
-            self.logger.info("  • SSH Key:   ~/.ssh/id_rsa_nixopus")
+            self.logger.info(" Hot Reload Enabled:")
+            self.logger.info("  • Backend (Go):     Changes rebuild automatically with Air")
+            self.logger.info("  • Frontend (Next):  Changes reload instantly with Turbopack")
+            self.logger.info("")
+            self.logger.info(" Configuration Files:")
+            self.logger.info(f"  • Config Dir:  {os.path.join(self.install_path, 'nixopus-dev')}")
+            self.logger.info(f"  • Backend:     {os.path.join(self.install_path, 'api', '.env')}")
+            self.logger.info(f"  • Frontend:    {os.path.join(self.install_path, 'view', '.env.local')}")
+            self.logger.info(f"  • Caddy:       {os.path.join(self.install_path, 'helpers', 'caddy.json')}")
+            self.logger.info("  • SSH Key:     ~/.ssh/id_rsa_nixopus")
+            self.logger.info("")
+            self.logger.info(" Stop Services:")
+            self.logger.info(f"  cd {self.install_path} && docker-compose -f docker-compose-dev.yml down")
+            self.logger.info("")
+            self.logger.info("=" * 70)

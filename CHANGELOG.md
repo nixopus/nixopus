@@ -1,3 +1,30 @@
+# [0.1.0-alpha.48](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.47...v0.1.0-alpha.48) (2025-10-22)
+
+
+### Features
+
+* **cli:** bump cli v0.1.15 to v0.1.16 ([#529](https://github.com/raghavyuva/nixopus/issues/529)) ([0db449b](https://github.com/raghavyuva/nixopus/commit/0db449b5fa5b8235fffe12b09b3dbdcfaecccf9a))
+
+
+
+# [0.1.0-alpha.47](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.46...v0.1.0-alpha.47) (2025-10-22)
+
+
+### Features
+
+* **cli:** live reloading dockerized dev setup ([#522](https://github.com/raghavyuva/nixopus/issues/522)) ([a05a0d6](https://github.com/raghavyuva/nixopus/commit/a05a0d658ba42284404e0e72d930630abd5a74d1))
+
+
+
+# [0.1.0-alpha.46](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.45...v0.1.0-alpha.46) (2025-10-22)
+
+
+### Features
+
+* **terminal:** support clipboard for terminal input/output ([#515](https://github.com/raghavyuva/nixopus/issues/515)) ([8ad6a1c](https://github.com/raghavyuva/nixopus/commit/8ad6a1c08c64eebfbfad5c83bd506ce8bc3fd508))
+
+
+
 # [0.1.0-alpha.45](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.44...v0.1.0-alpha.45) (2025-10-22)
 
 

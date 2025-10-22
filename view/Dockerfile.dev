@@ -1,0 +1,34 @@
+FROM node:18-alpine
+
+# Install dependencies for better compatibility
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+
+# Install dependencies based on the lockfile present
+RUN \
+  if [ -f yarn.lock ]; then yarn install --frozen-lockfile --network-timeout 600000; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+  else echo "No lockfile found. Installing with npm..." && npm install; \
+  fi
+
+# Copy the rest of the application (will be overridden by volume mount)
+COPY . .
+
+# Disable Next.js telemetry
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=development
+
+# Expose the port (default 3000 for Next.js dev server)
+ARG NEXT_PUBLIC_PORT=3000
+ENV PORT=${NEXT_PUBLIC_PORT}
+ENV NEXT_PUBLIC_PORT=${NEXT_PUBLIC_PORT}
+
+EXPOSE ${NEXT_PUBLIC_PORT}
+
+# Run Next.js in development mode with turbopack
+CMD ["sh", "-c", "yarn dev -p ${PORT}"]
