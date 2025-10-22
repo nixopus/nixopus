@@ -157,12 +157,29 @@ export const useTerminal = (
 
         if (allowInput) {
           term.attachCustomKeyEventHandler((event: KeyboardEvent) => {
-            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'j') {
+            const key = event.key.toLowerCase();
+            if (key === 'j' && (event.ctrlKey || event.metaKey)) {
+              return false;
+            }
+            else if (key === 'c' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
+              if (event.type === 'keydown' ) {
+                  try {
+                    const selection = term.getSelection();
+                    if (selection) {
+                      navigator.clipboard.writeText(selection)
+                        .then(() => {
+                          term.clearSelection(); // Clear selection after successful copy
+                        })
+                      return false;
+                    }
+                  } catch (error) {
+                    console.error('Error in Ctrl+C handler:', error);
+                  }
+              }
               return false;
             }
             return true;
           });
-
           term.onData((data) => {
             sendJsonMessage({
               action: 'terminal',
