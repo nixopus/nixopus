@@ -49,6 +49,8 @@
     "start_error": "കണ്ടെയ്നർ ആരംഭിക്കാൻ കഴിഞ്ഞില്ല",
     "stop_error": "കണ്ടെയ്നർ നിർത്താൻ കഴിഞ്ഞില്ല",
     "remove_error": "കണ്ടെയ്നർ നീക്കം ചെയ്യാൻ കഴിഞ്ഞില്ല",
+    "restart_success": "കണ്ടെയ്നർ പുനരാരംഭിച്ചു",
+    "restart_error": "കണ്ടെയ്നർ പുനരാരംഭിക്കാൻ കഴിഞ്ഞില്ല",
     "fetch_error": "കണ്ടെയ്നറുകൾ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല",
     "overview": "അവലോകനം",
     "logs": "ലോഗുകൾ",
@@ -197,567 +199,571 @@
       }
     }
   },
-"settings": {
-  "title": "ക്രമീകരണങ്ങൾ",
-  "description": "അക്കൗണ്ട് കൈകാര്യം ചെയ്യുക",
-  "tabs": {
-    "account": "അക്കൗണ്ട്",
-    "security": "സുരക്ഷ",
-    "featureFlags": "വിശേഷതകൾ"
-  },
-  "preferences": {
-    "language": {
-      "title": "ഭാഷ",
-      "description": "ആപ്പ് ഭാഷ തിരഞ്ഞെടുക്കുക",
-      "select": "ഭാഷ തിരഞ്ഞെടുക്കുക"
-    },
-    "font": "ഫോണ്ട്",
-    "fontOptions": {
-      "geist": "ഗീസ്റ്റ്",
-      "inter": "ഇൻ്റർ",
-      "roboto": "റോബോട്ടോ",
-      "poppins": "പോപ്പിൻസ്",
-      "montserrat": "മോണ്ടസെറട്ട്",
-      "spaceGrotesk": "സ്പേസ് ഗ്രൊടെസ്ക്",
-      "outfit": "ഔട്ട്‌ഫിറ്റ്",
-      "jakarta": "ജക്കാർത്ത സാൻസ്",
-      "system": "സിസ്റ്റം"
-    },
-    "autoUpdate": {
-      "title": "ഓട്ടോ അപ്ഡേറ്റ്",
-      "description": "പുതിയ പതിപ്പ് ലഭിക്കുമ്പോൾ സ്വയം അപ്ഡേറ്റ് ചെയ്യുക",
-      "select": "ഓട്ടോ അപ്ഡേറ്റ് തിരഞ്ഞെടുക്കുക"
-      }
-    },
-   "featureFlags": {
-     "title": "വിശേഷതകൾ",
-     "description": "സ്ഥാപനത്തിനുള്ള സവിശേഷതകൾ നിയന്ത്രിക്കുക",
-    "groups": {
-      "infrastructure": {
-        "title": "അടിസ്ഥാനസൗകര്യങ്ങൾ",
-        "description": "അടിസ്ഥാനസൗകര്യങ്ങൾ പ്രാപ്തമാക്കുക/അപ്രാപ്തമാക്കുക"
-      },
-      "development": {
-        "title": "വികസനം",
-        "description": "വികസന സവിശേഷതകൾ പ്രാപ്തമാക്കുക/അപ്രാപ്തമാക്കുക"
-      },
-      "monitoring": {
-        "title": "മോണിറ്ററിംഗ്",
-        "description": "മോണിറ്ററിംഗ് പ്രാപ്തമാക്കുക/അപ്രാപ്തമാക്കുക"
-      },
-      "notifications": {
-        "title": "അറിയിപ്പുകൾ",
-        "description": "അറിയിപ്പ് സവിശേഷതകൾ പ്രാപ്തമാക്കുക/അപ്രാപ്തമാക്കുക"
-      }
-    },
-    "features": {
-      "terminal": {
-        "title": "ടെർമിനൽ",
-        "description": "ടെർമിനൽ ആക്‌സസ്"
-      },
-      "file_manager": {
-        "title": "ഫയൽ മാനേജർ",
-        "description": "ഫയൽ മാനേജർ ആക്‌സസ്"
-      },
-      "self_hosted": {
-        "title": "സ്വയം ഹോസ്റ്റ്",
-        "description": "സ്വയം ഹോസ്റ്റഡ് ആക്‌സസ്"
-      },
-      "domain": {
-        "title": "ഡൊമെയ്ൻ",
-        "description": "ഡൊമെയ്ൻ ആക്‌സസ്"
-      },
-      "container": {
-        "title": "കണ്ടെയ്നർ",
-        "description": "കണ്ടെയ്നർ ആക്‌സസ്"
-      },
-      "monitoring": {
-        "title": "മോണിറ്ററിംഗ്",
-        "description": "മോണിറ്ററിംഗ് ആക്‌സസ്"
-      },
-      "proxy_config": {
-        "title": "പ്രോക്സി",
-        "description": "പ്രോക്സി കോൺഫിഗ് ആക്‌സസ്"
-      },
-      "github_connector": {
-        "title": "GitHub കണക്റ്റർ",
-        "description": "GitHub കണക്റ്റർ ആക്‌സസ്"
-      },
-      "audit": {
-        "title": "ഓഡിറ്റ് ലോഗുകൾ",
-        "description": "ഓഡിറ്റ് ലോഗുകൾ ആക്‌സസ്"
-      },
-      "notifications": {
-        "title": "അറിയിപ്പുകൾ",
-        "description": "അറിയിപ്പ് ആക്‌സസ്"
-      }
-    },
-    "messages": {
-      "updated": "ഫീച്ചർ അപ്ഡേറ്റ് ചെയ്തു",
-      "updateFailed": "ഫീച്ചർ അപ്ഡേറ്റ് പരാജയപ്പെട്ടു"
-    },
-    "searchPlaceholder": "വിശേഷതകൾ തിരയുക...",
-    "filters": {
-      "all": "എല്ലാം",
-      "enabled": "പ്രവർത്തനസജ്ജമാക്കി",
-      "disabled": "പ്രവർത്തനരഹിതമാക്കി"
-    },
-    "noResults": "നിങ്ങളുടെ തിരയൽ മാനദണ്ഡങ്ങൾക്ക് പൊരുത്തപ്പെടുന്ന വിശേഷതകൾ കണ്ടെത്തിയില്ല",
-    "noFeatures": "വിശേഷതകൾ ലഭ്യമല്ല"
-  },
-  "account": {
-    "title": "അക്കൗണ്ട്",
-    "description": "അക്കൗണ്ട് അപ്ഡേറ്റ് ചെയ്യുക",
-    "username": {
-      "label": "ഉപയോക്തൃനാമം",
-      "placeholder": "ഉപയോക്തൃനാമം നൽകുക",
-      "update": "അപ്ഡേറ്റ്",
-      "success": "ഉപയോക്തൃനാമം അപ്ഡേറ്റ് ചെയ്തു!",
-      "error": "അപ്ഡേറ്റ് പരാജയപ്പെട്ടു"
-    },
-    "email": {
-      "label": "ഇമെയിൽ",
-      "notVerified": {
-        "title": "ഇമെയിൽ സ്ഥിരീകരിച്ചിട്ടില്ല",
-        "description": "എല്ലാ ഫീച്ചറുകൾക്കായി ഇമെയിൽ സ്ഥിരീകരിക്കുക.",
-        "sendButton": "സ്ഥിരീകരണ മെയിൽ അയയ്ക്കുക",
-        "sending": "അയക്കുന്നു...",
-        "sent": "മെയിൽ അയച്ചു",
-        "error": "അയയ്ക്കൽ പരാജയപ്പെട്ടു",
-        "checkEmail": "ലിങ്ക് ക്ലിക്ക് ചെയ്ത് ഇമെയിൽ സ്ഥിരീകരിക്കുക."
-      }
+  "settings": {
+    "title": "ക്രമീകരണങ്ങൾ",
+    "description": "അക്കൗണ്ട് കൈകാര്യം ചെയ്യുക",
+    "tabs": {
+      "account": "അക്കൗണ്ട്",
+      "security": "സുരക്ഷ",
+      "featureFlags": "വിശേഷതകൾ"
     },
     "preferences": {
-      "title": "മുൻഗണനകൾ",
-      "description": "അറിയിപ്പ് & പ്രദർശനം നിയന്ത്രിക്കുക",
-      "appearance": "പ്രദർശനം"
+      "language": {
+        "title": "ഭാഷ",
+        "description": "ആപ്പ് ഭാഷ തിരഞ്ഞെടുക്കുക",
+        "select": "ഭാഷ തിരഞ്ഞെടുക്കുക"
+      },
+      "font": "ഫോണ്ട്",
+      "fontOptions": {
+        "geist": "ഗീസ്റ്റ്",
+        "inter": "ഇൻ്റർ",
+        "roboto": "റോബോട്ടോ",
+        "poppins": "പോപ്പിൻസ്",
+        "montserrat": "മോണ്ടസെറട്ട്",
+        "spaceGrotesk": "സ്പേസ് ഗ്രൊടെസ്ക്",
+        "outfit": "ഔട്ട്‌ഫിറ്റ്",
+        "jakarta": "ജക്കാർത്ത സാൻസ്",
+        "system": "സിസ്റ്റം"
+      },
+      "autoUpdate": {
+        "title": "ഓട്ടോ അപ്ഡേറ്റ്",
+        "description": "പുതിയ പതിപ്പ് ലഭിക്കുമ്പോൾ സ്വയം അപ്ഡേറ്റ് ചെയ്യുക",
+        "select": "ഓട്ടോ അപ്ഡേറ്റ് തിരഞ്ഞെടുക്കുക"
+      }
     },
-    "avatar": {
-      "title": "പ്രൊഫൈൽ",
-      "description": "പ്രൊഫൈൽ കൈകാര്യം ചെയ്യുക",
-      "upload": "അവതാർ അപ്‌ലോഡ്",
-      "uploadSuccess": "അവതാർ അപ്‌ലോഡ് ചെയ്തു",
-      "uploadError": "അപ്‌ലോഡ് പരാജയപ്പെട്ടു"
+    "featureFlags": {
+      "title": "വിശേഷതകൾ",
+      "description": "സ്ഥാപനത്തിനുള്ള സവിശേഷതകൾ നിയന്ത്രിക്കുക",
+      "groups": {
+        "infrastructure": {
+          "title": "അടിസ്ഥാനസൗകര്യങ്ങൾ",
+          "description": "അടിസ്ഥാനസൗകര്യങ്ങൾ പ്രാപ്തമാക്കുക/അപ്രാപ്തമാക്കുക"
+        },
+        "development": {
+          "title": "വികസനം",
+          "description": "വികസന സവിശേഷതകൾ പ്രാപ്തമാക്കുക/അപ്രാപ്തമാക്കുക"
+        },
+        "monitoring": {
+          "title": "മോണിറ്ററിംഗ്",
+          "description": "മോണിറ്ററിംഗ് പ്രാപ്തമാക്കുക/അപ്രാപ്തമാക്കുക"
+        },
+        "notifications": {
+          "title": "അറിയിപ്പുകൾ",
+          "description": "അറിയിപ്പ് സവിശേഷതകൾ പ്രാപ്തമാക്കുക/അപ്രാപ്തമാക്കുക"
+        }
+      },
+      "features": {
+        "terminal": {
+          "title": "ടെർമിനൽ",
+          "description": "ടെർമിനൽ ആക്‌സസ്"
+        },
+        "file_manager": {
+          "title": "ഫയൽ മാനേജർ",
+          "description": "ഫയൽ മാനേജർ ആക്‌സസ്"
+        },
+        "self_hosted": {
+          "title": "സ്വയം ഹോസ്റ്റ്",
+          "description": "സ്വയം ഹോസ്റ്റഡ് ആക്‌സസ്"
+        },
+        "domain": {
+          "title": "ഡൊമെയ്ൻ",
+          "description": "ഡൊമെയ്ൻ ആക്‌സസ്"
+        },
+        "container": {
+          "title": "കണ്ടെയ്നർ",
+          "description": "കണ്ടെയ്നർ ആക്‌സസ്"
+        },
+        "monitoring": {
+          "title": "മോണിറ്ററിംഗ്",
+          "description": "മോണിറ്ററിംഗ് ആക്‌സസ്"
+        },
+        "proxy_config": {
+          "title": "പ്രോക്സി",
+          "description": "പ്രോക്സി കോൺഫിഗ് ആക്‌സസ്"
+        },
+        "github_connector": {
+          "title": "GitHub കണക്റ്റർ",
+          "description": "GitHub കണക്റ്റർ ആക്‌സസ്"
+        },
+        "audit": {
+          "title": "ഓഡിറ്റ് ലോഗുകൾ",
+          "description": "ഓഡിറ്റ് ലോഗുകൾ ആക്‌സസ്"
+        },
+        "notifications": {
+          "title": "അറിയിപ്പുകൾ",
+          "description": "അറിയിപ്പ് ആക്‌സസ്"
+        }
+      },
+      "messages": {
+        "updated": "ഫീച്ചർ അപ്ഡേറ്റ് ചെയ്തു",
+        "updateFailed": "ഫീച്ചർ അപ്ഡേറ്റ് പരാജയപ്പെട്ടു"
+      },
+      "searchPlaceholder": "വിശേഷതകൾ തിരയുക...",
+      "filters": {
+        "all": "എല്ലാം",
+        "enabled": "പ്രവർത്തനസജ്ജമാക്കി",
+        "disabled": "പ്രവർത്തനരഹിതമാക്കി"
+      },
+      "noResults": "നിങ്ങളുടെ തിരയൽ മാനദണ്ഡങ്ങൾക്ക് പൊരുത്തപ്പെടുന്ന വിശേഷതകൾ കണ്ടെത്തിയില്ല",
+      "noFeatures": "വിശേഷതകൾ ലഭ്യമല്ല"
     },
-    "success": {
-      "avatarUpdated": "അവതാർ അപ്‌ലോഡ് ചെയ്തു",
-      "usernameUpdated": "ഉപയോക്തൃനാമം അപ്‌ലോഡ് ചെയ്തു"
-    },
-    "errors": {
-      "emptyUsername": "ഉപയോക്തൃനാമം ഒഴിവാക്കരുത്",
-      "sameUsername": "വ്യത്യസ്ത ഉപയോക്തൃനാമം നൽകുക",
-      "updateFailed": "അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
-      "resetEmailFailed": "മെയിൽ അയയ്ക്കൽ പരാജയപ്പെട്ടു",
-      "imageNotImplemented": "നടപ്പിലാക്കിയിട്ടില്ല",
-      "noImageSelected": "ചിത്രം തിരഞ്ഞെടുക്കാത്തത്",
-      "avatarUpdateFailed": "അവതാർ അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
-      "fontUpdateFailed": "ഫോണ്ട് അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
-      "themeUpdateFailed": "തീം അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
-      "languageUpdateFailed": "ഭാഷ അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
-      "autoUpdateUpdateFailed": "ഓട്ടോ-അപ്ഡേറ്റ് പരാജയപ്പെട്ടു"
-     }
+    "account": {
+      "title": "അക്കൗണ്ട്",
+      "description": "അക്കൗണ്ട് അപ്ഡേറ്റ് ചെയ്യുക",
+      "username": {
+        "label": "ഉപയോക്തൃനാമം",
+        "placeholder": "ഉപയോക്തൃനാമം നൽകുക",
+        "update": "അപ്ഡേറ്റ്",
+        "success": "ഉപയോക്തൃനാമം അപ്ഡേറ്റ് ചെയ്തു!",
+        "error": "അപ്ഡേറ്റ് പരാജയപ്പെട്ടു"
+      },
+      "email": {
+        "label": "ഇമെയിൽ",
+        "notVerified": {
+          "title": "ഇമെയിൽ സ്ഥിരീകരിച്ചിട്ടില്ല",
+          "description": "എല്ലാ ഫീച്ചറുകൾക്കായി ഇമെയിൽ സ്ഥിരീകരിക്കുക.",
+          "sendButton": "സ്ഥിരീകരണ മെയിൽ അയയ്ക്കുക",
+          "sending": "അയക്കുന്നു...",
+          "sent": "മെയിൽ അയച്ചു",
+          "error": "അയയ്ക്കൽ പരാജയപ്പെട്ടു",
+          "checkEmail": "ലിങ്ക് ക്ലിക്ക് ചെയ്ത് ഇമെയിൽ സ്ഥിരീകരിക്കുക."
+        }
+      },
+      "preferences": {
+        "title": "മുൻഗണനകൾ",
+        "description": "അറിയിപ്പ് & പ്രദർശനം നിയന്ത്രിക്കുക",
+        "appearance": "പ്രദർശനം"
+      },
+      "avatar": {
+        "title": "പ്രൊഫൈൽ",
+        "description": "പ്രൊഫൈൽ കൈകാര്യം ചെയ്യുക",
+        "upload": "അവതാർ അപ്‌ലോഡ്",
+        "uploadSuccess": "അവതാർ അപ്‌ലോഡ് ചെയ്തു",
+        "uploadError": "അപ്‌ലോഡ് പരാജയപ്പെട്ടു"
+      },
+      "success": {
+        "avatarUpdated": "അവതാർ അപ്‌ലോഡ് ചെയ്തു",
+        "usernameUpdated": "ഉപയോക്തൃനാമം അപ്‌ലോഡ് ചെയ്തു"
+      },
+      "errors": {
+        "emptyUsername": "ഉപയോക്തൃനാമം ഒഴിവാക്കരുത്",
+        "sameUsername": "വ്യത്യസ്ത ഉപയോക്തൃനാമം നൽകുക",
+        "updateFailed": "അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
+        "resetEmailFailed": "മെയിൽ അയയ്ക്കൽ പരാജയപ്പെട്ടു",
+        "imageNotImplemented": "നടപ്പിലാക്കിയിട്ടില്ല",
+        "noImageSelected": "ചിത്രം തിരഞ്ഞെടുക്കാത്തത്",
+        "avatarUpdateFailed": "അവതാർ അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
+        "fontUpdateFailed": "ഫോണ്ട് അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
+        "themeUpdateFailed": "തീം അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
+        "languageUpdateFailed": "ഭാഷ അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
+        "autoUpdateUpdateFailed": "ഓട്ടോ-അപ്ഡേറ്റ് പരാജയപ്പെട്ടു"
+      }
     },
     "security": {
       "password": {
-       "title": "പാസ്‌വേഡ്",
-       "description": "നിങ്ങളുടെ പാസ്‌വേഡ് മാറ്റുക",
-      "reset": {
-        "label": "പാസ്‌വേഡ് പുനഃസജ്ജമാക്കുക",
-        "description": "നിങ്ങളുടെ ഇമെയിലിലേക്ക് പാസ്‌വേഡ് പുനഃസജ്ജമാക്കൽ ലിങ്ക് അയയ്ക്കും",
-        "button": "പാസ്‌വേഡ് പുനഃസജ്ജമാക്കൽ ലിങ്ക് അയയ്ക്കുക",
-        "emailSent": {
-        "title": "ഇമെയിൽ അയച്ചു",
-        "description": "പുനഃസജ്ജമാക്കൽ ലിങ്കിനായി ഇൻബോക്സ് പരിശോധിക്കുക"
-       }
-     }
-   },
-   "2fa": {
-    "title": "രണ്ട് ഘട്ട പരിശോധന",
-    "description": "അക്കൗണ്ടിൽ അധിക സുരക്ഷ ചേർക്കുക",
-    "setupButton": "2FA ക്രമീകരിക്കുക",
-    "verifyButton": "സ്ഥിരീകരിക്കുക",
-    "enterCode": "കോഡ് നൽകുക",
-    "codePlaceholder": "6-അക്കം കോഡ്",
-    "setupSuccess": "2FA വിജയകരമായി ക്രമീകരിച്ചു",
-    "setupError": "2FA ക്രമീകരണം പരാജയപ്പെട്ടു",
-    "verifySuccess": "2FA വിജയകരമായി സ്ഥിരീകരിച്ചു",
-    "verifyError": "കോഡ് അസാധുവാണ്",
-    "enabledTitle": "2FA സജീവമാണ്",
-    "enabledDescription": "നിങ്ങളുടെ അക്കൗണ്ട് 2FA വഴി സംരക്ഷിതമാണ്",
-    "disableButton": "2FA അപ്രവർത്തനം ചെയ്യുക",
-    "disableSuccess": "2FA അപ്രവർത്തനം ചെയ്തു",
-    "disableError": "2FA അപ്രവർത്തനം പരാജയപ്പെട്ടു"
-    }
-  },
+        "title": "പാസ്‌വേഡ്",
+        "description": "നിങ്ങളുടെ പാസ്‌വേഡ് മാറ്റുക",
+        "reset": {
+          "label": "പാസ്‌വേഡ് പുനഃസജ്ജമാക്കുക",
+          "description": "നിങ്ങളുടെ ഇമെയിലിലേക്ക് പാസ്‌വേഡ് പുനഃസജ്ജമാക്കൽ ലിങ്ക് അയയ്ക്കും",
+          "button": "പാസ്‌വേഡ് പുനഃസജ്ജമാക്കൽ ലിങ്ക് അയയ്ക്കുക",
+          "emailSent": {
+            "title": "ഇമെയിൽ അയച്ചു",
+            "description": "പുനഃസജ്ജമാക്കൽ ലിങ്കിനായി ഇൻബോക്സ് പരിശോധിക്കുക"
+          }
+        }
+      },
+      "2fa": {
+        "title": "രണ്ട് ഘട്ട പരിശോധന",
+        "description": "അക്കൗണ്ടിൽ അധിക സുരക്ഷ ചേർക്കുക",
+        "setupButton": "2FA ക്രമീകരിക്കുക",
+        "verifyButton": "സ്ഥിരീകരിക്കുക",
+        "enterCode": "കോഡ് നൽകുക",
+        "codePlaceholder": "6-അക്കം കോഡ്",
+        "setupSuccess": "2FA വിജയകരമായി ക്രമീകരിച്ചു",
+        "setupError": "2FA ക്രമീകരണം പരാജയപ്പെട്ടു",
+        "verifySuccess": "2FA വിജയകരമായി സ്ഥിരീകരിച്ചു",
+        "verifyError": "കോഡ് അസാധുവാണ്",
+        "enabledTitle": "2FA സജീവമാണ്",
+        "enabledDescription": "നിങ്ങളുടെ അക്കൗണ്ട് 2FA വഴി സംരക്ഷിതമാണ്",
+        "disableButton": "2FA അപ്രവർത്തനം ചെയ്യുക",
+        "disableSuccess": "2FA അപ്രവർത്തനം ചെയ്തു",
+        "disableError": "2FA അപ്രവർത്തനം പരാജയപ്പെട്ടു"
+      }
+    },
     "domains": {
       "page": {
         "title": "ഡൊമെയ്‌നുകൾ",
         "description": "ആപ്ലിക്കേഷനുകൾ വിന്യസിക്കാൻ ഡൊമെയ്‌നുകൾ ഉപയോഗിക്കുന്നു",
         "noOrganization": {
-        "title": "സംഘടന തിരഞ്ഞെടുക്കപ്പെട്ടിട്ടില്ല",
-        "description": "ഡൊമെയ്‌നുകൾ കാണാനും നിയന്ത്രിക്കാനും ഒരു സംഘടന തിരഞ്ഞെടുക്കുക"
-    },
-    "accessDenied": {
-      "title": "പ്രവേശനം നിരസിച്ചു",
-      "description": "ഈ സംഘടനയിൽ ഡൊമെയ്‌നുകൾ കാണാൻ അനുമതി ഇല്ല"
-    },
-    "loading": "ഡൊമെയ്‌നുകൾ ലോഡുചെയ്യുന്നു...",
-    "error": "ഡൊമെയ്‌നുകൾ ലോഡുചെയ്യൽ പരാജയപ്പെട്ടു. പിന്നീട് ശ്രമിക്കുക.",
-    "domainsList": {
-      "title": "ഡൊമെയ്‌നുകൾ",
-      "addButton": "ഡൊമെയ്ൻ ചേർക്കുക"
-    },
-    "noDomains": {
-      "title": "ഡൊമെയ്‌നുകൾ ഒന്നുമില്ല",
-      "noPermission": "ഡൊമെയ്‌നുകൾ ചേർക്കാൻ അനുമതി ഇല്ല"
-     }
-   },
-   "actions": {
-     "edit": "തിരുത്തുക",
-     "delete": "നീക്കുക"
-  },
-  "delete": {
-    "title": "ഡൊമെയ്ൻ നീക്കം",
-    "description": "ഈ ഡൊമെയ്ൻ നീക്കണോ?",
-    "cancel": "റദ്ദാക്കുക",
-    "delete": "നീക്കുക",
-    "deleting": "നീക്കുന്നു...",
-    "success": "ഡൊമെയ്ൻ നീക്കി",
-    "error": "ഡൊമെയ്ൻ നീക്കൽ പരാജയപ്പെട്ടു"
-  },
-  "types": {
-    "wildcard": "വൈൽഡ്കാർഡ്",
-    "standard": "സ്റ്റാൻഡേർഡ്"
-  },
-  "table": {
-    "headers": {
-      "domain": "ഡൊമെയ്ൻ",
-      "type": "തരം",
-      "actions": "പ്രവർത്തനങ്ങൾ"
-    }
-  },
-  "update": {
-    "addButton": "ഡൊമെയ്ൻ ചേർക്കുക",
-    "addTitle": "ഡൊമെയ്ൻ ചേർക്കുക",
-    "updateTitle": "ഡൊമെയ്ൻ അപ്ഡേറ്റ് ചെയ്യുക",
-    "description": "ഡൊമെയ്ൻ ആപ്ലിക്കേഷനുകൾ വിന്യസിക്കാൻ സഹായിക്കും",
-    "form": {
-      "placeholder": "example.com",
-      "validation": {
-        "minLength": "ഡൊമെയ്ൻ കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം",
-        "invalidFormat": "സാധുവായ ഡൊമെയ്ൻ നൽകുക (ഉദാ: example.com)"
-      }
-    },
-    "buttons": {
-      "cancel": "റദ്ദാക്കുക",
-      "save": "സംരക്ഷിക്കുക",
-      "saving": "സംരക്ഷിക്കുന്നു..."
-    },
-    "success": "ഡൊമെയ്ൻ ചേർത്തു",
-    "error": "ഡൊമെയ്ൻ ചേർക്കൽ പരാജയപ്പെട്ടു"
-    }
-   },
-    "notifications": {
-     "page": {
-      "title": "അറിയിപ്പുകൾ",
-      "description": "അറിയിപ്പ് മുൻഗണനകളും ചാനലുകളും ക്രമീകരിക്കുക",
-      "accessDenied": {
-       "title": "പ്രവേശനം നിരസിച്ചു",
-       "description": "അറിയിപ്പ് ക്രമീകരണങ്ങൾ കാണാൻ അനുമതി ഇല്ല"
-    },
-    "tabs": {
-      "channels": "ചാനലുകൾ",
-      "preferences": "മുൻഗണനകൾ"
-    },
-    "permissions": {
-      "update": "അറിയിപ്പ് ക്രമീകരണങ്ങൾ മാറ്റാൻ അനുമതി ഇല്ല",
-      "create": "അറിയിപ്പ് ക്രമീകരണങ്ങൾ സൃഷ്ടിക്കാൻ അനുമതി ഇല്ല"
-    }
-  },
-  "channels": {
-    "email": {
-      "title": "ഇമെയിൽ",
-      "description": "SMTP ക്രമീകരിച്ച് ഇമെയിൽ അറിയിപ്പുകൾ അയയ്ക്കുക",
-      "fields": {
-        "smtp_host": {
-          "label": "SMTP സെർവർ",
-          "placeholder": "smtp.example.com"
+          "title": "സംഘടന തിരഞ്ഞെടുക്കപ്പെട്ടിട്ടില്ല",
+          "description": "ഡൊമെയ്‌നുകൾ കാണാനും നിയന്ത്രിക്കാനും ഒരു സംഘടന തിരഞ്ഞെടുക്കുക"
         },
-        "smtp_port": {
-          "label": "പോർട്ട്",
-          "placeholder": "587"
+        "accessDenied": {
+          "title": "പ്രവേശനം നിരസിച്ചു",
+          "description": "ഈ സംഘടനയിൽ ഡൊമെയ്‌നുകൾ കാണാൻ അനുമതി ഇല്ല"
         },
-        "smtp_username": {
-          "label": "ഉപയോക്തൃനാമം",
-          "placeholder": "your-email@example.com"
+        "loading": "ഡൊമെയ്‌നുകൾ ലോഡുചെയ്യുന്നു...",
+        "error": "ഡൊമെയ്‌നുകൾ ലോഡുചെയ്യൽ പരാജയപ്പെട്ടു. പിന്നീട് ശ്രമിക്കുക.",
+        "domainsList": {
+          "title": "ഡൊമെയ്‌നുകൾ",
+          "addButton": "ഡൊമെയ്ൻ ചേർക്കുക"
         },
-        "smtp_password": {
-          "label": "പാസ്‌വേഡ്",
-          "placeholder": "••••••••"
-        },
-        "smtp_from_email": {
-          "label": "ഇമെയിൽ അയക്കുന്ന വിലാസം",
-          "placeholder": "notifications@example.com"
-        },
-        "smtp_from_name": {
-          "label": "പേര്",
-          "placeholder": "സ്ഥാപനത്തിന്റെ പേര്"
+        "noDomains": {
+          "title": "ഡൊമെയ്‌നുകൾ ഒന്നുമില്ല",
+          "noPermission": "ഡൊമെയ്‌നുകൾ ചേർക്കാൻ അനുമതി ഇല്ല"
         }
       },
-      "buttons": {
+      "actions": {
+        "edit": "തിരുത്തുക",
+        "delete": "നീക്കുക"
+      },
+      "delete": {
+        "title": "ഡൊമെയ്ൻ നീക്കം",
+        "description": "ഈ ഡൊമെയ്ൻ നീക്കണോ?",
+        "cancel": "റദ്ദാക്കുക",
+        "delete": "നീക്കുക",
+        "deleting": "നീക്കുന്നു...",
+        "success": "ഡൊമെയ്ൻ നീക്കി",
+        "error": "ഡൊമെയ്ൻ നീക്കൽ പരാജയപ്പെട്ടു"
+      },
+      "types": {
+        "wildcard": "വൈൽഡ്കാർഡ്",
+        "standard": "സ്റ്റാൻഡേർഡ്"
+      },
+      "table": {
+        "headers": {
+          "domain": "ഡൊമെയ്ൻ",
+          "type": "തരം",
+          "actions": "പ്രവർത്തനങ്ങൾ"
+        }
+      },
+      "update": {
+        "addButton": "ഡൊമെയ്ൻ ചേർക്കുക",
+        "addTitle": "ഡൊമെയ്ൻ ചേർക്കുക",
+        "updateTitle": "ഡൊമെയ്ൻ അപ്ഡേറ്റ് ചെയ്യുക",
+        "description": "ഡൊമെയ്ൻ ആപ്ലിക്കേഷനുകൾ വിന്യസിക്കാൻ സഹായിക്കും",
+        "form": {
+          "placeholder": "example.com",
+          "validation": {
+            "minLength": "ഡൊമെയ്ൻ കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം",
+            "invalidFormat": "സാധുവായ ഡൊമെയ്ൻ നൽകുക (ഉദാ: example.com)"
+          }
+        },
+        "buttons": {
+          "cancel": "റദ്ദാക്കുക",
+          "save": "സംരക്ഷിക്കുക",
+          "saving": "സംരക്ഷിക്കുന്നു..."
+        },
+        "success": "ഡൊമെയ്ൻ ചേർത്തു",
+        "error": "ഡൊമെയ്ൻ ചേർക്കൽ പരാജയപ്പെട്ടു"
+      }
+    },
+    "notifications": {
+      "page": {
+        "title": "അറിയിപ്പുകൾ",
+        "description": "അറിയിപ്പ് മുൻഗണനകളും ചാനലുകളും ക്രമീകരിക്കുക",
+        "accessDenied": {
+          "title": "പ്രവേശനം നിരസിച്ചു",
+          "description": "അറിയിപ്പ് ക്രമീകരണങ്ങൾ കാണാൻ അനുമതി ഇല്ല"
+        },
+        "tabs": {
+          "channels": "ചാനലുകൾ",
+          "preferences": "മുൻഗണനകൾ"
+        },
+        "permissions": {
+          "update": "അറിയിപ്പ് ക്രമീകരണങ്ങൾ മാറ്റാൻ അനുമതി ഇല്ല",
+          "create": "അറിയിപ്പ് ക്രമീകരണങ്ങൾ സൃഷ്ടിക്കാൻ അനുമതി ഇല്ല"
+        }
+      },
+      "channels": {
+        "email": {
+          "title": "ഇമെയിൽ",
+          "description": "SMTP ക്രമീകരിച്ച് ഇമെയിൽ അറിയിപ്പുകൾ അയയ്ക്കുക",
+          "fields": {
+            "smtp_host": {
+              "label": "SMTP സെർവർ",
+              "placeholder": "smtp.example.com"
+            },
+            "smtp_port": {
+              "label": "പോർട്ട്",
+              "placeholder": "587"
+            },
+            "smtp_username": {
+              "label": "ഉപയോക്തൃനാമം",
+              "placeholder": "your-email@example.com"
+            },
+            "smtp_password": {
+              "label": "പാസ്‌വേഡ്",
+              "placeholder": "••••••••"
+            },
+            "smtp_from_email": {
+              "label": "ഇമെയിൽ അയക്കുന്ന വിലാസം",
+              "placeholder": "notifications@example.com"
+            },
+            "smtp_from_name": {
+              "label": "പേര്",
+              "placeholder": "സ്ഥാപനത്തിന്റെ പേര്"
+            }
+          },
+          "buttons": {
+            "save": "സംരക്ഷിക്കുക"
+          }
+        },
+        "slack": {
+          "title": "Slack",
+          "description": "Slack അറിയിപ്പുകൾ ക്രമീകരിക്കുക",
+          "fields": {
+            "webhook_url": {
+              "label": "വെബ്ഹുക്ക് URL",
+              "placeholder": "Slack വെബ്ഹുക്ക് URL നൽകുക"
+            },
+            "is_active": {
+              "label": "സജീവം"
+            }
+          },
+          "buttons": {
+            "save": "സംരക്ഷിക്കുക"
+          }
+        },
+        "discord": {
+          "title": "Discord",
+          "description": "Discord അറിയിപ്പുകൾ ക്രമീകരിക്കുക",
+          "fields": {
+            "webhook_url": {
+              "label": "വെബ്ഹുക്ക് URL",
+              "placeholder": "Discord വെബ്ഹുക്ക് URL നൽകുക"
+            },
+            "is_active": {
+              "label": "സജീവം"
+            }
+          },
+          "buttons": {
+            "save": "സംരക്ഷിക്കുക"
+          }
+        },
         "save": "സംരക്ഷിക്കുക"
+      },
+      "preferences": {
+        "activity": {
+          "title": "പ്രവർത്തന അറിയിപ്പുകൾ",
+          "description": "ടീമിലെ പ്രവർത്തനങ്ങളെക്കുറിച്ചുള്ള അറിയിപ്പുകൾ"
+        },
+        "security": {
+          "title": "സുരക്ഷാ അറിയിപ്പുകൾ",
+          "description": "ആപ്ലിക്കേഷനുകളും പിശകുകളും സംബന്ധിച്ച പ്രധാന അറിയിപ്പുകൾ"
+        },
+        "updates": {
+          "title": "അപ്ഡേറ്റുകളും മാർക്കറ്റിംഗ്",
+          "description": "ഉൽപ്പന്നങ്ങളും സേവനങ്ങളും സംബന്ധിച്ച വിവരങ്ങൾ"
+        }
+      },
+      "messages": {
+        "email": {
+          "success": "ഇമെയിൽ ക്രമീകരണം സംരക്ഷിച്ചു",
+          "error": "ഇമെയിൽ ക്രമീകരണം പരാജയപ്പെട്ടു"
+        },
+        "slack": {
+          "success": "Slack ക്രമീകരണം സംരക്ഷിച്ചു",
+          "error": "Slack ക്രമീകരണം പരാജയപ്പെട്ടു"
+        },
+        "discord": {
+          "success": "Discord ക്രമീകരണം സംരക്ഷിച്ചു",
+          "error": "Discord ക്രമീകരണം പരാജയപ്പെട്ടു"
+        },
+        "webhookConfigSaved": "വെബ്ഹുക്ക് ക്രമീകരണം സംരക്ഷിച്ചു",
+        "webhookConfigUpdated": "വെബ്ഹുക്ക് ക്രമീകരണം അപ്ഡേറ്റ് ചെയ്തു",
+        "webhookConfigDeleted": "വെബ്ഹുക്ക് ക്രമീകരണം ഇല്ലാതാക്കി",
+        "webhookConfigFailed": "വെബ്ഹുക്ക് ക്രമീകരണം പരാജയപ്പെട്ടു",
+        "preferencesUpdated": "മുൻഗണനകൾ അപ്ഡേറ്റ് ചെയ്തു",
+        "preferencesFailed": "മുൻഗണനകൾ അപ്ഡേറ്റ് പരാജയപ്പെട്ടു"
       }
-    },
-    "slack": {
-      "title": "Slack",
-      "description": "Slack അറിയിപ്പുകൾ ക്രമീകരിക്കുക",
-      "fields": {
-        "webhook_url": {
-         "label": "വെബ്ഹുക്ക് URL",
-         "placeholder": "Slack വെബ്ഹുക്ക് URL നൽകുക"
-      },
-      "is_active": {
-       "label": "സജീവം"
-    }
-  },
-  "buttons": {
-    "save": "സംരക്ഷിക്കുക"
-    }
-   },
-    "discord": {
-     "title": "Discord",
-     "description": "Discord അറിയിപ്പുകൾ ക്രമീകരിക്കുക",
-     "fields": {
-       "webhook_url": {
-          "label": "വെബ്ഹുക്ക് URL",
-          "placeholder": "Discord വെബ്ഹുക്ക് URL നൽകുക"
-    },
-     "is_active": {
-      "label": "സജീവം"
-      }
-    },
-     "buttons": {
-       "save": "സംരക്ഷിക്കുക"
-     }
-    },
-     "save": "സംരക്ഷിക്കുക"
-      },
-     "preferences": {
-       "activity": {
-        "title": "പ്രവർത്തന അറിയിപ്പുകൾ",
-        "description": "ടീമിലെ പ്രവർത്തനങ്ങളെക്കുറിച്ചുള്ള അറിയിപ്പുകൾ"
-      },
-      "security": {
-      "title": "സുരക്ഷാ അറിയിപ്പുകൾ",
-      "description": "ആപ്ലിക്കേഷനുകളും പിശകുകളും സംബന്ധിച്ച പ്രധാന അറിയിപ്പുകൾ"
-      },
-      "updates": {
-        "title": "അപ്ഡേറ്റുകളും മാർക്കറ്റിംഗ്",
-        "description": "ഉൽപ്പന്നങ്ങളും സേവനങ്ങളും സംബന്ധിച്ച വിവരങ്ങൾ"
-      }
-   },
-    "messages": {
-     "email": {
-      "success": "ഇമെയിൽ ക്രമീകരണം സംരക്ഷിച്ചു",
-      "error": "ഇമെയിൽ ക്രമീകരണം പരാജയപ്പെട്ടു"
-    },
-   "slack": {
-     "success": "Slack ക്രമീകരണം സംരക്ഷിച്ചു",
-     "error": "Slack ക്രമീകരണം പരാജയപ്പെട്ടു"
-    },
-    "discord": {
-     "success": "Discord ക്രമീകരണം സംരക്ഷിച്ചു",
-     "error": "Discord ക്രമീകരണം പരാജയപ്പെട്ടു"
-    },
-     "preferencesUpdated": "മുൻഗണനകൾ അപ്ഡേറ്റ് ചെയ്തു",
-     "preferencesFailed": "മുൻഗണനകൾ അപ്ഡേറ്റ് പരാജയപ്പെട്ടു"
-     }
     },
     "teams": {
       "addMember": {
-       "button": "ഉപയോക്താവിനെ ചേർക്കുക",
-       "dialog": {
-         "title": "പുതിയ ഉപയോക്താവിനെ ചേർക്കുക",
-         "description": "സ്ഥാപനത്തിൽ പുതിയ ഉപയോക്താവിനെ ചേർക്കുക",
-         "fields": {
-          "name": {
-           "label": "പേര്",
-           "placeholder": "ഉപയോക്താവിന്റെ പേര്"
-        },
-        "email": {
-          "label": "ഇമെയിൽ",
-          "placeholder": "ഉപയോക്താവിന്റെ ഇമെയിൽ"
-        },
-        "role": {
-          "label": "റോൾ",
-          "placeholder": "റോൾ തിരഞ്ഞെടുക്കുക",
-          "options": {
-            "admin": "അഡ്മിൻ",
-            "member": "അംഗം",
-            "viewer": "ദർശകൻ"
+        "button": "ഉപയോക്താവിനെ ചേർക്കുക",
+        "dialog": {
+          "title": "പുതിയ ഉപയോക്താവിനെ ചേർക്കുക",
+          "description": "സ്ഥാപനത്തിൽ പുതിയ ഉപയോക്താവിനെ ചേർക്കുക",
+          "fields": {
+            "name": {
+              "label": "പേര്",
+              "placeholder": "ഉപയോക്താവിന്റെ പേര്"
+            },
+            "email": {
+              "label": "ഇമെയിൽ",
+              "placeholder": "ഉപയോക്താവിന്റെ ഇമെയിൽ"
+            },
+            "role": {
+              "label": "റോൾ",
+              "placeholder": "റോൾ തിരഞ്ഞെടുക്കുക",
+              "options": {
+                "admin": "അഡ്മിൻ",
+                "member": "അംഗം",
+                "viewer": "ദർശകൻ"
+              }
+            },
+            "password": {
+              "label": "പാസ്‌വേഡ്",
+              "placeholder": "ഉപയോക്താവിന്റെ പാസ്‌വേഡ്"
+            }
+          },
+          "buttons": {
+            "cancel": "റദ്ദാക്കുക",
+            "add": "ചേർക്കുക"
+          }
+        }
+      },
+      "editTeam": {
+        "dialog": {
+          "title": "ടീം എഡിറ്റ് ചെയ്യുക",
+          "description": "ടീമിന്റെ വിശദാംശങ്ങൾ പുതുക്കുക",
+          "fields": {
+            "name": {
+              "label": "പേര്",
+              "placeholder": "ടീമിന്റെ പേര്"
+            },
+            "description": {
+              "label": "വിവരണം",
+              "placeholder": "ടീമിന്റെ വിവരണം"
+            }
+          },
+          "buttons": {
+            "cancel": "റദ്ദാക്കുക",
+            "update": "അപ്ഡേറ്റ്",
+            "updating": "അപ്ഡേറ്റ് ചെയ്യുന്നു..."
+          }
+        }
+      },
+      "editUser": {
+        "dialog": {
+          "title": "ഉപയോക്താവിന്റെ റോൾ മാറ്റുക",
+          "description": "{name} എന്നതിനുള്ള റോൾ അപ്ഡേറ്റ് ചെയ്യുക",
+          "fields": {
+            "role": {
+              "label": "റോൾ",
+              "placeholder": "റോൾ തിരഞ്ഞെടുക്കുക"
+            }
+          },
+          "buttons": {
+            "cancel": "റദ്ദാക്കുക",
+            "save": "സംരക്ഷിക്കുക"
+          },
+          "errors": {
+            "noRole": "ഒരു റോൾ തിരഞ്ഞെടുക്കുക"
+          }
+        }
+      },
+      "recentActivity": {
+        "title": "സമീപകാല പ്രവർത്തനങ്ങൾ",
+        "description": "സംഘടനയിൽ നടന്ന മാറ്റങ്ങൾ",
+        "loading": "ലോഡുചെയ്യുന്നു...",
+        "error": "ലോഡുചെയ്യൽ പരാജയപ്പെട്ടു",
+        "noActivities": "പ്രവർത്തനങ്ങൾ ഒന്നുമില്ല",
+        "viewAll": "എല്ലാം കാണുക",
+        "actions": {
+          "create": "{username} പുതിയ {resource} സൃഷ്ടിച്ചു",
+          "update": "{username} {resource} അപ്ഡേറ്റ് ചെയ്തു",
+          "delete": "{username} {resource} നീക്കി",
+          "default": "{username} {resource} ആക്സസ് ചെയ്തു"
+        }
+      },
+      "members": {
+        "title": "ടീം അംഗങ്ങൾ",
+        "description": "ടീം അംഗങ്ങളും റോൾകളും നിയന്ത്രിക്കുക",
+        "table": {
+          "headers": {
+            "user": "ഉപയോക്താവ്",
+            "role": "റോൾ",
+            "permissions": "അനുമതികൾ",
+            "actions": "പ്രവർത്തനങ്ങൾ"
           }
         },
-        "password": {
-          "label": "പാസ്‌വേഡ്",
-          "placeholder": "ഉപയോക്താവിന്റെ പാസ്‌വേഡ്"
+        "actions": {
+          "edit": "എഡിറ്റ് ചെയ്യുക",
+          "remove": "നീക്കം ചെയ്യുക",
+          "showMore": "കൂടുതൽ കാണിക്കുക",
+          "showLess": "കുറച്ച് കാണിക്കുക"
+        },
+        "deleteDialog": {
+          "title": "{പേര്} നീക്കം ചെയ്യുക",
+          "description": "{പേര്} ടീമിൽ നിന്ന് നീക്കണമോ? ഇത് തിരുത്താനാവില്ല.",
+          "confirm": "നീക്കം ചെയ്യുക"
         }
       },
-      "buttons": {
-        "cancel": "റദ്ദാക്കുക",
-        "add": "ചേർക്കുക"
-      }
-    }
-  },
-  "editTeam": {
-    "dialog": {
-      "title": "ടീം എഡിറ്റ് ചെയ്യുക",
-      "description": "ടീമിന്റെ വിശദാംശങ്ങൾ പുതുക്കുക",
-     "fields": {
-       "name": {
-         "label": "പേര്",
-         "placeholder": "ടീമിന്റെ പേര്"
+      "stats": {
+        "title": "ടീം സ്റ്റാറ്റ്സ്",
+        "description": "ടീം അവലോകനം",
+        "totalMembers": "മൊത്തം അംഗങ്ങൾ",
+        "owners": "മുടൽക്കാർ",
+        "members": "അംഗങ്ങൾ",
+        "viewers": "ദർശകർ"
       },
-      "description": {
-         "label": "വിവരണം",
-         "placeholder": "ടീമിന്റെ വിവരണം"
-      }
-    },
-    "buttons": {
-      "cancel": "റദ്ദാക്കുക",
-      "update": "അപ്ഡേറ്റ്",
-      "updating": "അപ്ഡേറ്റ് ചെയ്യുന്നു..."
-    }
-  }
-},
-      "editUser": {
-  "dialog": {
-    "title": "ഉപയോക്താവിന്റെ റോൾ മാറ്റുക",
-    "description": "{name} എന്നതിനുള്ള റോൾ അപ്ഡേറ്റ് ചെയ്യുക",
-    "fields": {
-      "role": {
-        "label": "റോൾ",
-        "placeholder": "റോൾ തിരഞ്ഞെടുക്കുക"
-      }
-    },
-    "buttons": {
-      "cancel": "റദ്ദാക്കുക",
-      "save": "സംരക്ഷിക്കുക"
-    },
-    "errors": {
-      "noRole": "ഒരു റോൾ തിരഞ്ഞെടുക്കുക"
-     }
-    }
-  },
-  "recentActivity": {
-    "title": "സമീപകാല പ്രവർത്തനങ്ങൾ",
-    "description": "സംഘടനയിൽ നടന്ന മാറ്റങ്ങൾ",
-    "loading": "ലോഡുചെയ്യുന്നു...",
-    "error": "ലോഡുചെയ്യൽ പരാജയപ്പെട്ടു",
-    "noActivities": "പ്രവർത്തനങ്ങൾ ഒന്നുമില്ല",
-    "viewAll": "എല്ലാം കാണുക",
-    "actions": {
-     "create": "{username} പുതിയ {resource} സൃഷ്ടിച്ചു",
-     "update": "{username} {resource} അപ്ഡേറ്റ് ചെയ്തു",
-     "delete": "{username} {resource} നീക്കി",
-     "default": "{username} {resource} ആക്സസ് ചെയ്തു"
-     }
-   },
-     "members": {
-       "title": "ടീം അംഗങ്ങൾ",
-       "description": "ടീം അംഗങ്ങളും റോൾകളും നിയന്ത്രിക്കുക",
-       "table": {
-         "headers": {
-           "user": "ഉപയോക്താവ്",
-      "role": "റോൾ",
-      "permissions": "അനുമതികൾ",
-      "actions": "പ്രവർത്തനങ്ങൾ"
-       }
-     },
-     "actions": {
-       "edit": "എഡിറ്റ് ചെയ്യുക",
-       "remove": "നീക്കം ചെയ്യുക",
-       "showMore": "കൂടുതൽ കാണിക്കുക",
-      "showLess": "കുറച്ച് കാണിക്കുക"
-    },
-    "deleteDialog": {
-      "title": "{പേര്} നീക്കം ചെയ്യുക",
-      "description": "{പേര്} ടീമിൽ നിന്ന് നീക്കണമോ? ഇത് തിരുത്താനാവില്ല.",
-      "confirm": "നീക്കം ചെയ്യുക"
-    }
-  },
-  "stats": {
-    "title": "ടീം സ്റ്റാറ്റ്സ്",
-    "description": "ടീം അവലോകനം",
-    "totalMembers": "മൊത്തം അംഗങ്ങൾ",
-    "owners": "മുടൽക്കാർ",
-    "members": "അംഗങ്ങൾ",
-    "viewers": "ദർശകർ"
-  },
-   "noMembers": "ടീം അംഗങ്ങൾ ഇല്ല",
-   "messages": {
-     "userAdded": "ഉപയോക്താവ് ചേർത്തു",
-     "userAddFailed": "ഉപയോക്താവ് ചേർക്കൽ പരാജയപ്പെട്ടു",
-     "userRemoved": "ഉപയോക്താവ് നീക്കി",
-     "userRemoveFailed": "ഉപയോക്താവ് നീക്കൽ പരാജയപ്പെട്ടു",
-     "userUpdated": "ഉപയോക്താവ് അപ്ഡേറ്റ് ചെയ്തു",
-     "userUpdateFailed": "ഉപയോക്താവ് അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
-     "teamUpdated": "ടീം അപ്ഡേറ്റ് ചെയ്തു",
-     "teamUpdateFailed": "ടീം അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
-     "requiredFields": "ടീം പേര്, വിവരണം ആവശ്യമാണ്"
-   },
-   "createTeam": {
-     "title": "ടീം സൃഷ്ടിക്കുക",
-     "description": "സഹകരിക്കാൻ പുതിയ ടീം സൃഷ്ടിക്കുക",
-     "fields": {
-      "name": {
-      "label": "പേര്",
-      "placeholder": "ടീം പേര് നൽകുക"
-    },
-    "description": {
-      "label": "വിവരണം",
-      "placeholder": "ടീം വിവരണം നൽകുക"
-    }
-  },
-  "buttons": {
-    "create": "സൃഷ്ടിക്കുക",
-    "creating": "സൃഷ്ടിക്കുന്നു..."
+      "noMembers": "ടീം അംഗങ്ങൾ ഇല്ല",
+      "messages": {
+        "userAdded": "ഉപയോക്താവ് ചേർത്തു",
+        "userAddFailed": "ഉപയോക്താവ് ചേർക്കൽ പരാജയപ്പെട്ടു",
+        "userRemoved": "ഉപയോക്താവ് നീക്കി",
+        "userRemoveFailed": "ഉപയോക്താവ് നീക്കൽ പരാജയപ്പെട്ടു",
+        "userUpdated": "ഉപയോക്താവ് അപ്ഡേറ്റ് ചെയ്തു",
+        "userUpdateFailed": "ഉപയോക്താവ് അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
+        "teamUpdated": "ടീം അപ്ഡേറ്റ് ചെയ്തു",
+        "teamUpdateFailed": "ടീം അപ്ഡേറ്റ് പരാജയപ്പെട്ടു",
+        "requiredFields": "ടീം പേര്, വിവരണം ആവശ്യമാണ്"
+      },
+      "createTeam": {
+        "title": "ടീം സൃഷ്ടിക്കുക",
+        "description": "സഹകരിക്കാൻ പുതിയ ടീം സൃഷ്ടിക്കുക",
+        "fields": {
+          "name": {
+            "label": "പേര്",
+            "placeholder": "ടീം പേര് നൽകുക"
+          },
+          "description": {
+            "label": "വിവരണം",
+            "placeholder": "ടീം വിവരണം നൽകുക"
+          }
+        },
+        "buttons": {
+          "create": "സൃഷ്ടിക്കുക",
+          "creating": "സൃഷ്ടിക്കുന്നു..."
         }
-   }
+      }
+    },
+    "2fa": {
+      "title": "രണ്ടാംഘട്ട സ്ഥിരീകരണം",
+      "description": "അക്കൗണ്ടിന് അധിക സുരക്ഷ",
+      "setupButton": "2FA ക്രമീകരിക്കുക",
+      "verifyButton": "സ്ഥിരീകരിക്കുക",
+      "enterCode": "കോഡ് നൽകുക",
+      "codePlaceholder": "6-അക്ക കോഡ് നൽകുക",
+      "setupSuccess": "2FA ക്രമീകരിച്ചു",
+      "setupError": "2FA ക്രമീകരണം പരാജയപ്പെട്ടു",
+      "verifySuccess": "സ്ഥിരീകരിച്ചു",
+      "verifyError": "കോഡ് അസാധുവാണ്",
+      "enabledTitle": "2FA സജീവമാണ്",
+      "enabledDescription": "അക്കൗണ്ട് 2FA സംരക്ഷിതമാണ്",
+      "disableButton": "2FA അപ്രവർത്തനം ചെയ്യുക",
+      "disableSuccess": "2FA അപ്രവർത്തനം ചെയ്തു",
+      "disableError": "2FA അപ്രവർത്തനം പരാജയപ്പെട്ടു"
+    }
   },
-   "2fa": {
-     "title": "രണ്ടാംഘട്ട സ്ഥിരീകരണം",
-     "description": "അക്കൗണ്ടിന് അധിക സുരക്ഷ",
-     "setupButton": "2FA ക്രമീകരിക്കുക",
-     "verifyButton": "സ്ഥിരീകരിക്കുക",
-     "enterCode": "കോഡ് നൽകുക",
-     "codePlaceholder": "6-അക്ക കോഡ് നൽകുക",
-     "setupSuccess": "2FA ക്രമീകരിച്ചു",
-     "setupError": "2FA ക്രമീകരണം പരാജയപ്പെട്ടു",
-     "verifySuccess": "സ്ഥിരീകരിച്ചു",
-     "verifyError": "കോഡ് അസാധുവാണ്",
-     "enabledTitle": "2FA സജീവമാണ്",
-     "enabledDescription": "അക്കൗണ്ട് 2FA സംരക്ഷിതമാണ്",
-     "disableButton": "2FA അപ്രവർത്തനം ചെയ്യുക",
-     "disableSuccess": "2FA അപ്രവർത്തനം ചെയ്തു",
-     "disableError": "2FA അപ്രവർത്തനം പരാജയപ്പെട്ടു"
-   }
- },
   "activities": {
     "title": "പ്രവൃത്തികൾ",
     "description": "സംഘടനയിലെ എല്ലാ പ്രവർത്തനങ്ങളും മാറ്റങ്ങളും",
     "list": {
-     "title": "ടീം പ്രവർത്തനങ്ങൾ",
-     "description": "പുതിയ പ്രവർത്തനങ്ങൾ"
-   }
- },
+      "title": "ടീം പ്രവർത്തനങ്ങൾ",
+      "description": "പുതിയ പ്രവർത്തനങ്ങൾ"
+    }
+  },
   "languages": {
-  "en": "ഇംഗ്ലീഷ്",
-  "es": "സ്പാനിഷ്",
-  "fr": "ഫ്രഞ്ച്",
-  "kn": "കന്നഡ",
-   "ml": "മലയാളം"
- },
- "dashboard": {
+    "en": "ഇംഗ്ലീഷ്",
+    "es": "സ്പാനിഷ്",
+    "fr": "ഫ്രഞ്ച്",
+    "kn": "കന്നഡ",
+    "ml": "മലയാളം"
+  },
+  "dashboard": {
     "title": "ഡാഷ്ബോർഡ്",
     "description": "ആപ്ലിക്കേഷനുകളും സിസ്റ്റം ഉറവിടങ്ങളും നിരീക്ഷിക്കുക",
     "containers": {
@@ -770,93 +776,93 @@
           "status": "സ്ഥിതി",
           "ports": "പോർട്ടുകൾ",
           "created": "സൃഷ്ടിച്ചത്"
+        },
+        "noContainers": "കണ്ടെയ്‌നറുകൾ ഇല്ല",
+        "morePorts": "+{എണ്ണുക} കൂടുതൽ"
       },
-      "noContainers": "കണ്ടെയ്‌നറുകൾ ഇല്ല",
-      "morePorts": "+{എണ്ണുക} കൂടുതൽ"
+      "viewAll": "എല്ലാം കാണുക"
     },
-    "viewAll": "എല്ലാം കാണുക"
-  },
-  "disk": {
-    "title": "ഡിസ്‌ക് ഉപയോഗം",
-    "used": "{മൂല്യം} GB ഉപയോഗിച്ചു",
-    "total": "{മൂല്യം} GB മൊത്തം",
-    "percentage": "{മൂല്യം}%",
-    "table": {
-      "headers": {
-        "mount": "മൗണ്ട്",
-        "size": "വലിപ്പം",
-        "used": "ഉപയോഗം",
-        "percentage": "%"
+    "disk": {
+      "title": "ഡിസ്‌ക് ഉപയോഗം",
+      "used": "{മൂല്യം} GB ഉപയോഗിച്ചു",
+      "total": "{മൂല്യം} GB മൊത്തം",
+      "percentage": "{മൂല്യം}%",
+      "table": {
+        "headers": {
+          "mount": "മൗണ്ട്",
+          "size": "വലിപ്പം",
+          "used": "ഉപയോഗം",
+          "percentage": "%"
+        }
       }
-    }
-  },
-   "load": {
-    "title": "ശരാശരി ലോഡ്",
-    "labels": {
-      "oneMin": "1 മിനിറ്റ്",
-      "fiveMin": "5 മിനിറ്റ്",
-      "fifteenMin": "15 മിനിറ്റ്"
-  }
-},
-"memory": {
-  "title": "മെമ്മറി ഉപയോഗം",
-  "used": "{മൂല്യം} GB ഉപയോഗിച്ചു",
-  "total": "{മൂല്യം} GB മൊത്തം",
-  "percentage": "{മൂല്യം}%"
-},
-"errors": {
-  "parseMessage": "സന്ദേശം പാഴ്‌സ് ചെയ്യൽ പരാജയപ്പെട്ടു",
-  "unknownError": "അജ്ഞാത പിശക്",
-  "connectionLost": "കണക്ഷൻ നഷ്ടപ്പെട്ടു. വീണ്ടും ശ്രമിക്കുന്നു...",
-  "reconnectFailed": "വീണ്ടും കണക്റ്റ് പരാജയപ്പെട്ടു. ദയവായി പിന്നീട് ശ്രമിക്കുക."
-},
-"system": {
-  "title": "സിസ്റ്റം വിവരം",
-  "osType": "OS തരം",
-  "cpu": "CPU",
-  "uptime": "അപ്‌ടൈം",
-  "lastUpdated": "അവസാനം അപ്ഡേറ്റ് ചെയ്തത്"
-},
-"smtpBanner": {
-  "message": "അറിയിപ്പുകൾക്കായി SMTP ക്രമീകരിക്കുക",
-  "configure": "ക്രമീകരിക്കുക"
-}
-},
-"fileManager": {
-  "header": {
-    "title": "ഫയൽ മാനേജർ",
-    "subtitle": "ഫയലുകൾ ഇവിടെ മാനേജ് ചെയ്യുക"
-  },
-  "actions": {
-    "upload": "ഫയൽ അപ്‌ലോഡ്",
-    "createDirectory": "ഡയറക്ടറി സൃഷ്ടിക്കുക",
-    "showHidden": "മറച്ച ഫയലുകൾ കാണിക്കുക",
-    "hideHidden": "മറച്ച ഫയലുകൾ മറയ്ക്കുക",
-    "newFolder": "പുതിയ ഫോൾഡർ {നമ്പർ}",
+    },
+    "load": {
+      "title": "ശരാശരി ലോഡ്",
+      "labels": {
+        "oneMin": "1 മിനിറ്റ്",
+        "fiveMin": "5 മിനിറ്റ്",
+        "fifteenMin": "15 മിനിറ്റ്"
+      }
+    },
+    "memory": {
+      "title": "മെമ്മറി ഉപയോഗം",
+      "used": "{മൂല്യം} GB ഉപയോഗിച്ചു",
+      "total": "{മൂല്യം} GB മൊത്തം",
+      "percentage": "{മൂല്യം}%"
+    },
     "errors": {
-      "createDirectory": "ഡയറക്ടറി സൃഷ്ടിക്കൽ പരാജയപ്പെട്ടു"
+      "parseMessage": "സന്ദേശം പാഴ്‌സ് ചെയ്യൽ പരാജയപ്പെട്ടു",
+      "unknownError": "അജ്ഞാത പിശക്",
+      "connectionLost": "കണക്ഷൻ നഷ്ടപ്പെട്ടു. വീണ്ടും ശ്രമിക്കുന്നു...",
+      "reconnectFailed": "വീണ്ടും കണക്റ്റ് പരാജയപ്പെട്ടു. ദയവായി പിന്നീട് ശ്രമിക്കുക."
+    },
+    "system": {
+      "title": "സിസ്റ്റം വിവരം",
+      "osType": "OS തരം",
+      "cpu": "CPU",
+      "uptime": "അപ്‌ടൈം",
+      "lastUpdated": "അവസാനം അപ്ഡേറ്റ് ചെയ്തത്"
+    },
+    "smtpBanner": {
+      "message": "അറിയിപ്പുകൾക്കായി SMTP ക്രമീകരിക്കുക",
+      "configure": "ക്രമീകരിക്കുക"
     }
   },
-  "sort": {
-    "title": "ക്രമം",
-    "methods": {
-      "name": "പേര്",
-      "updated_at": "അവസാനമായി പുതുക്കിയത്",
-      "created_at": "സൃഷ്ടിച്ചത്",
-      "size": "വലിപ്പം",
-      "file_type": "ടൈപ്പ്"
-    }
-  },
-  "upload": {
-    "title": "ഫയൽ അപ്‌ലോഡ്",
-    "dragDrop": "ഫയലുകൾ ഇവിടെ ഇടുക അല്ലെങ്കിൽ തിരഞ്ഞെടുക്കുക",
-    "errors": {
-      "uploadFailed": "അപ്‌ലോഡ് പരാജയപ്പെട്ടു",
-      "fileTooLarge": "ഫയൽ വലുതാണ്",
-      "invalidType": "ഫയൽ ടൈപ്പ് അസാധുവാണ്"
-    }
-  },
-   "info": {
+  "fileManager": {
+    "header": {
+      "title": "ഫയൽ മാനേജർ",
+      "subtitle": "ഫയലുകൾ ഇവിടെ മാനേജ് ചെയ്യുക"
+    },
+    "actions": {
+      "upload": "ഫയൽ അപ്‌ലോഡ്",
+      "createDirectory": "ഡയറക്ടറി സൃഷ്ടിക്കുക",
+      "showHidden": "മറച്ച ഫയലുകൾ കാണിക്കുക",
+      "hideHidden": "മറച്ച ഫയലുകൾ മറയ്ക്കുക",
+      "newFolder": "പുതിയ ഫോൾഡർ {നമ്പർ}",
+      "errors": {
+        "createDirectory": "ഡയറക്ടറി സൃഷ്ടിക്കൽ പരാജയപ്പെട്ടു"
+      }
+    },
+    "sort": {
+      "title": "ക്രമം",
+      "methods": {
+        "name": "പേര്",
+        "updated_at": "അവസാനമായി പുതുക്കിയത്",
+        "created_at": "സൃഷ്ടിച്ചത്",
+        "size": "വലിപ്പം",
+        "file_type": "ടൈപ്പ്"
+      }
+    },
+    "upload": {
+      "title": "ഫയൽ അപ്‌ലോഡ്",
+      "dragDrop": "ഫയലുകൾ ഇവിടെ ഇടുക അല്ലെങ്കിൽ തിരഞ്ഞെടുക്കുക",
+      "errors": {
+        "uploadFailed": "അപ്‌ലോഡ് പരാജയപ്പെട്ടു",
+        "fileTooLarge": "ഫയൽ വലുതാണ്",
+        "invalidType": "ഫയൽ ടൈപ്പ് അസാധുവാണ്"
+      }
+    },
+    "info": {
       "labels": {
         "path": "പാത",
         "size": "വലിപ്പം",
@@ -864,74 +870,74 @@
         "updated": "പുതുക്കിയത്",
         "type": "ടൈപ്പ്",
         "hidden": "മറച്ച",
-      "permissions": "അനുമതികൾ"
+        "permissions": "അനുമതികൾ"
+      },
+      "calculating": "കണക്കാക്കുന്നു...",
+      "yes": "അതെ",
+      "no": "ഇല്ല"
     },
-    "calculating": "കണക്കാക്കുന്നു...",
-    "yes": "അതെ",
-    "no": "ഇല്ല"
-  },
-  "item": {
-    "actions": {
+    "item": {
+      "actions": {
+        "info": "വിവരം",
+        "rename": "പുനർനാമം",
+        "copy": "പകർപ്പ്",
+        "move": "മാറ്റുക",
+        "delete": "കഴിവ്",
+        "moveHere": "ഇവിടെ മാറ്റുക",
+        "pasteHere": "ഇവിടെ ഒട്ടിക്കുക"
+      }
+    },
+    "noFiles": "ഫയലുകൾ ഇല്ല",
+    "deleteDialog": {
+      "title": "ഇല്ലാതാക്കൽ സ്ഥിരീകരണം",
+      "descriptionFile": "'{പേര്}' ഇല്ലാതാക്കണോ? ഇത് തിരുത്താനാവില്ല.",
+      "descriptionDirectory": "'{പേര്}' ഡയറക്ടറിയും ഉള്ളടക്കവും ഇല്ലാതാക്കണോ? ഇത് തിരുത്താനാവില്ല.",
+      "confirm": "ഇല്ലാതാക്കുക",
+      "cancel": "റദ്ദാക്കുക"
+    },
+    "contextMenu": {
       "info": "വിവരം",
       "rename": "പുനർനാമം",
       "copy": "പകർപ്പ്",
       "move": "മാറ്റുക",
-      "delete": "കഴിവ്",
-      "moveHere": "ഇവിടെ മാറ്റുക",
-      "pasteHere": "ഇവിടെ ഒട്ടിക്കുക"
+      "share": "പങ്കിടുക",
+      "download": "ഡൗൺലോഡ്",
+      "delete": "ഇല്ലാതാക്കുക",
+      "cancel": "റദ്ദാക്കുക"
+    },
+    "noPermissionCreate": "ഫയലുകൾ സൃഷ്ടിക്കാൻ അനുമതിയില്ല",
+    "noPermissionUpdate": "ഫയലുകൾ പുതുക്കാൻ അനുമതിയില്ല",
+    "copiedToClipboard": "ക്ലിപ്ബോർഡിൽ പകർത്തി",
+    "copySuccess": "ഫയൽ പകർത്തി",
+    "errors": {
+      "fileExists": "ഫയൽ ഇതിനകം ഉണ്ട്"
     }
   },
-  "noFiles": "ഫയലുകൾ ഇല്ല",
-  "deleteDialog": {
-    "title": "ഇല്ലാതാക്കൽ സ്ഥിരീകരണം",
-    "descriptionFile": "'{പേര്}' ഇല്ലാതാക്കണോ? ഇത് തിരുത്താനാവില്ല.",
-    "descriptionDirectory": "'{പേര്}' ഡയറക്ടറിയും ഉള്ളടക്കവും ഇല്ലാതാക്കണോ? ഇത് തിരുത്താനാവില്ല.",
-    "confirm": "ഇല്ലാതാക്കുക",
-    "cancel": "റദ്ദാക്കുക"
-  },
-  "contextMenu": {
-    "info": "വിവരം",
-    "rename": "പുനർനാമം",
-    "copy": "പകർപ്പ്",
-    "move": "മാറ്റുക",
-    "share": "പങ്കിടുക",
-    "download": "ഡൗൺലോഡ്",
-    "delete": "ഇല്ലാതാക്കുക",
-    "cancel": "റദ്ദാക്കുക"
-  },
-  "noPermissionCreate": "ഫയലുകൾ സൃഷ്ടിക്കാൻ അനുമതിയില്ല",
-  "noPermissionUpdate": "ഫയലുകൾ പുതുക്കാൻ അനുമതിയില്ല",
-  "copiedToClipboard": "ക്ലിപ്ബോർഡിൽ പകർത്തി",
-  "copySuccess": "ഫയൽ പകർത്തി",
-  "errors": {
-    "fileExists": "ഫയൽ ഇതിനകം ഉണ്ട്"
-  }
-},
-"selfHost": {
-  "deployment": {
-    "title": "വിന്യാസ വിശദാംശങ്ങൾ",
-    "logs": {
-      "title": "വിന്യാസ ലോഗുകൾ",
-      "refresh": "ലോഗുകൾ പുതുക്കുക",
-      "loading": "ലോഗുകൾ ലോഡുചെയ്യുന്നു...",
-      "noLogs": "ലോഗുകൾ ഇല്ല",
-      "pagination": {
-        "previous": "മുൻപ്",
-        "next": "അടുത്തത്",
-        "page": "ആകെ {നിലവിലുള്ളത്} പേജ്"
-      }
-    },
-     "list": {
-  "title": "വിന്യാസങ്ങൾ",
-  "noDeployments": "വിന്യാസങ്ങളൊന്നുമില്ല",
-  "card": {
-    "runTime": "പ്രവർത്തന സമയം",
-    "viewButton": "കാണുക",
-    "rollback": {
-      "title": "റോള്ബാക്ക്"
-     }
-   },
-    "table": {
+  "selfHost": {
+    "deployment": {
+      "title": "വിന്യാസ വിശദാംശങ്ങൾ",
+      "logs": {
+        "title": "വിന്യാസ ലോഗുകൾ",
+        "refresh": "ലോഗുകൾ പുതുക്കുക",
+        "loading": "ലോഗുകൾ ലോഡുചെയ്യുന്നു...",
+        "noLogs": "ലോഗുകൾ ഇല്ല",
+        "pagination": {
+          "previous": "മുൻപ്",
+          "next": "അടുത്തത്",
+          "page": "ആകെ {നിലവിലുള്ളത്} പേജ്"
+        }
+      },
+      "list": {
+        "title": "വിന്യാസങ്ങൾ",
+        "noDeployments": "വിന്യാസങ്ങളൊന്നുമില്ല",
+        "card": {
+          "runTime": "പ്രവർത്തന സമയം",
+          "viewButton": "കാണുക",
+          "rollback": {
+            "title": "റോള്ബാക്ക്"
+          }
+        },
+        "table": {
           "status": "സ്റ്റാറ്റസ്",
           "container": "കണ്ടെയ്നർ",
           "created": "സൃഷ്ടിച്ചു",
@@ -939,381 +945,382 @@
           "actions": "പ്രവർത്തനങ്ങൾ",
           "unknown": "അജ്ഞാതം"
         }
-  }
-},
-"application": {
-  "accessDenied": {
-    "title": "പ്രവേശനം നിരസിച്ചു",
-    "description": "ആപ്ലിക്കേഷൻ വിവരങ്ങൾ കാണാൻ അനുമതി ഇല്ല"
-  },
-  "tabs": {
-       "monitoring": "നിരീക്ഷണം",
-       "configuration": "കോൺഫിഗറേഷൻ",
-       "deployments": "വിന്യാസങ്ങൾ",
-       "logs": "ലോഗുകൾ"
-  }
-},
-"page": {
-  "title": "സ്വയം ഹോസ്റ്റ് ചെയ്ത ആപ്ലിക്കേഷനുകൾ",
-  "description": "നിങ്ങളുടെ ആപ്ലിക്കേഷനുകൾ കൈകാര്യം ചെയ്യുക",
-  "accessDenied": {
-    "title": "പ്രവേശനം നിരസിച്ചു",
-    "description": "സ്വയം ഹോസ്റ്റ് ആപ്ലിക്കേഷനുകൾ കാണാൻ അനുമതി ഇല്ല"
-  },
-  "createButton": "പുതിയത് സൃഷ്ടിക്കുക",
-  "loading": "ലോഡുചെയ്യുന്നു...",
-  "noApplications": "ആപ്ലിക്കേഷനുകളൊന്നുമില്ല",
-  "search": {
-    "placeholder": "തിരയുക..."
-  },
-  "sort": {
-    "name": "പേര്",
-    "created": "സൃഷ്ടിച്ചത്",
-    "updated": "അപ്‌ഡേറ്റ് ചെയ്തത്",
-    "status": "സ്ഥിതി"
-  }
-},
-"configuration": {
-  "sections": {
-    "basicConfiguration": "അടിസ്ഥാന ക്രമീകരണം",
-    "dockerConfiguration": "ഡോക്കർ ക്രമീകരണം",
-    "environmentVariables": "എൻവയോൺമെന്റ് വേരിയബിളുകൾ",
-    "commands": "കമാൻഡുകൾ",
-    "deploymentInformation": "വിന്യാസ വിവരം"
-  },
-  "fields": {
-    "applicationName": {
-      "label": "ആപ്ലിക്കേഷൻ പേര്",
-      "description": "പേര് നൽകുക"
-    },
-    "port": {
-      "label": "പോർട്ട്",
-      "description": "ആപ്ലിക്കേഷൻ ലഭ്യമായ പോർട്ട്"
-    },
-    "basePath": {
-      "label": "ബേസ് പാത",
-      "description": "ബിൽഡ് കോൺടെക്സ്റ്റ് പാത"
-    },
-    "dockerfilePath": {
-      "label": "ഡോക്കർഫയൽ പാത",
-      "description": "ബേസ് പാത്തിനോടനുബന്ധിച്ച്"
-    },
-    "environmentVariables": {
-      "label": "എൻവയോൺമെന്റ് വേരിയബിളുകൾ",
-      "description": "KEY=VALUE നൽകി എൻറ്റർ അമർത്തുക",
-      "placeholder": "NODE_ENV=production"
-    },
-    "buildVariables": {
-      "label": "ബിൽഡ് വേരിയബിളുകൾ",
-      "description": "KEY=VALUE നൽകി ചേർക്കുക",
-      "placeholder": "DEBUG=false"
-    },
-    "preRunCommands": {
-      "label": "ഡിപ്ലോയ്മെന്റിന് മുമ്പ്",
-      "description": "പ്രവർത്തിപ്പിക്കേണ്ട കമാൻഡുകൾ",
-      "placeholder": "npm install"
-    },
-    "postRunCommands": {
-      "label": "ഡിപ്ലോയ്മെന്റിന് ശേഷം",
-      "description": "പ്രവർത്തിപ്പിക്കേണ്ട കമാൻഡുകൾ",
-      "placeholder": "npm run test"
-    },
-    "environment": {
-      "label": "എൻവയോൺമെന്റ്",
-      "description": "വിന്യാസത്തിനുള്ള എൻവയോൺമെന്റ്"
-    },
-    "branch": {
-      "label": "ബ്രാഞ്ച്",
-      "description": "ഡിപ്ലോയ് ചെയ്യേണ്ട ബ്രാഞ്ച്"
-    },
-    "domain": {
-      "label": "ഡൊമെയിൻ",
-      "description": "ആപ്ലിക്കേഷൻ ലഭ്യമായ ഡൊമെയിൻ"
-    },
-    "buildPack": {
-      "label": "ബിൽഡ് പാക്ക്",
-      "description": "ഉപയോഗിക്കുന്ന ബിൽഡ് പാക്ക്"
-    }
-  },
-  "buttons": {
-    "update": "ഡിപ്ലോയ്മെന്റ് അപ്‌ഡേറ്റ്",
-    "updating": "അപ്‌ഡേറ്റ് ചെയ്യുന്നു..."
-  }
-},
-"deployments": {
-  "list": {
-    "title": "ഡിപ്ലോയ്മെന്റുകൾ",
-    "noDeployments": "ഒന്നുമില്ല",
-    "card": {
-      "status": {
-        "completed": "പൂർത്തിയായി"
-      },
-      "runTime": "സമയം",
-      "viewButton": "കാണുക",
-      "rollback": {
-        "title": "റോള്ബാക്ക്"
       }
-    }
-  },
- "chart": {
-  "title": "വിന്യാസ സ്ഥിതിവിവരങ്ങൾ",
-  "description": "നിലവിലെ സ്ഥിതി",
-  "status": {
-    "building": "നിർമ്മിക്കുന്നു",
-    "deployed": "ഡിപ്ലോയ് ചെയ്തു",
-    "deploying": "ഡിപ്ലോയ് ചെയ്യുന്നു",
-    "failed": "പരാജയപ്പെട്ടു"
-  },
-  "total": "മൊത്തം: {count}"
- }
-},
-"applicationDetails": {
-  "header": {
-    "actions": {
-      "restart": {
-        "button": "റീസ്റ്റാർട്ട്",
-        "success": "റീസ്റ്റാർട്ട് ആരംഭിച്ചു",
-        "error": "റീസ്റ്റാർട്ട് പരാജയം",
-        "permissionError": "റീസ്റ്റാർട്ട് ചെയ്യാൻ അനുവാദമില്ല"
+    },
+    "application": {
+      "accessDenied": {
+        "title": "പ്രവേശനം നിരസിച്ചു",
+        "description": "ആപ്ലിക്കേഷൻ വിവരങ്ങൾ കാണാൻ അനുമതി ഇല്ല"
       },
-      "delete": {
-        "button": "ഇല്ലാതാക്കുക",
-        "dialog": {
-          "title": "{പേര്} ഇല്ലാതാക്കുക",
-          "description": "{പേര്} ഇല്ലാതാക്കണോ? ഈ പ്രവർത്തി പിന്‍വലിക്കാനാവില്ല."
+      "tabs": {
+        "monitoring": "നിരീക്ഷണം",
+        "configuration": "കോൺഫിഗറേഷൻ",
+        "deployments": "വിന്യാസങ്ങൾ",
+        "logs": "ലോഗുകൾ"
+      }
+    },
+    "page": {
+      "title": "സ്വയം ഹോസ്റ്റ് ചെയ്ത ആപ്ലിക്കേഷനുകൾ",
+      "description": "നിങ്ങളുടെ ആപ്ലിക്കേഷനുകൾ കൈകാര്യം ചെയ്യുക",
+      "accessDenied": {
+        "title": "പ്രവേശനം നിരസിച്ചു",
+        "description": "സ്വയം ഹോസ്റ്റ് ആപ്ലിക്കേഷനുകൾ കാണാൻ അനുമതി ഇല്ല"
+      },
+      "createButton": "പുതിയത് സൃഷ്ടിക്കുക",
+      "loading": "ലോഡുചെയ്യുന്നു...",
+      "noApplications": "ആപ്ലിക്കേഷനുകളൊന്നുമില്ല",
+      "search": {
+        "placeholder": "തിരയുക..."
+      },
+      "sort": {
+        "name": "പേര്",
+        "created": "സൃഷ്ടിച്ചത്",
+        "updated": "അപ്‌ഡേറ്റ് ചെയ്തത്",
+        "status": "സ്ഥിതി"
+      }
+    },
+    "configuration": {
+      "sections": {
+        "basicConfiguration": "അടിസ്ഥാന ക്രമീകരണം",
+        "dockerConfiguration": "ഡോക്കർ ക്രമീകരണം",
+        "environmentVariables": "എൻവയോൺമെന്റ് വേരിയബിളുകൾ",
+        "commands": "കമാൻഡുകൾ",
+        "deploymentInformation": "വിന്യാസ വിവരം"
+      },
+      "fields": {
+        "applicationName": {
+          "label": "ആപ്ലിക്കേഷൻ പേര്",
+          "description": "പേര് നൽകുക"
         },
-        "success": "ഇല്ലാതാക്കി",
-        "error": "ഇല്ലാതാക്കൽ പരാജയം",
-        "permissionError": "ഇല്ലാതാക്കാൻ അനുവാദമില്ല"
+        "port": {
+          "label": "പോർട്ട്",
+          "description": "ആപ്ലിക്കേഷൻ ലഭ്യമായ പോർട്ട്"
+        },
+        "basePath": {
+          "label": "ബേസ് പാത",
+          "description": "ബിൽഡ് കോൺടെക്സ്റ്റ് പാത"
+        },
+        "dockerfilePath": {
+          "label": "ഡോക്കർഫയൽ പാത",
+          "description": "ബേസ് പാത്തിനോടനുബന്ധിച്ച്"
+        },
+        "environmentVariables": {
+          "label": "എൻവയോൺമെന്റ് വേരിയബിളുകൾ",
+          "description": "KEY=VALUE നൽകി എൻറ്റർ അമർത്തുക",
+          "placeholder": "NODE_ENV=production"
+        },
+        "buildVariables": {
+          "label": "ബിൽഡ് വേരിയബിളുകൾ",
+          "description": "KEY=VALUE നൽകി ചേർക്കുക",
+          "placeholder": "DEBUG=false"
+        },
+        "preRunCommands": {
+          "label": "ഡിപ്ലോയ്മെന്റിന് മുമ്പ്",
+          "description": "പ്രവർത്തിപ്പിക്കേണ്ട കമാൻഡുകൾ",
+          "placeholder": "npm install"
+        },
+        "postRunCommands": {
+          "label": "ഡിപ്ലോയ്മെന്റിന് ശേഷം",
+          "description": "പ്രവർത്തിപ്പിക്കേണ്ട കമാൻഡുകൾ",
+          "placeholder": "npm run test"
+        },
+        "environment": {
+          "label": "എൻവയോൺമെന്റ്",
+          "description": "വിന്യാസത്തിനുള്ള എൻവയോൺമെന്റ്"
+        },
+        "branch": {
+          "label": "ബ്രാഞ്ച്",
+          "description": "ഡിപ്ലോയ് ചെയ്യേണ്ട ബ്രാഞ്ച്"
+        },
+        "domain": {
+          "label": "ഡൊമെയിൻ",
+          "description": "ആപ്ലിക്കേഷൻ ലഭ്യമായ ഡൊമെയിൻ"
+        },
+        "buildPack": {
+          "label": "ബിൽഡ് പാക്ക്",
+          "description": "ഉപയോഗിക്കുന്ന ബിൽഡ് പാക്ക്"
+        }
       },
-      "redeploy": {
-        "button": "പുനർഡിപ്ലോയ്",
-        "forceButton": "ഫോഴ്‌സ് ഡിപ്ലോയ് (ക്യാഷ് ഇല്ലാതെ)",
-        "success": "പുനർഡിപ്ലോയ് ആരംഭിച്ചു",
-        "error": "പുനർഡിപ്ലോയ് പരാജയം",
-        "permissionError": "പുനർഡിപ്ലോയ് ചെയ്യാൻ അനുവാദമില്ല"
-      },
-      "open": "പുതിയ ടാബിൽ തുറക്കുക"
-    }
-  }
-},
-"logViewer": {
-  "title": "ലോഗ് വ്യൂവർ",
-  "description": "രിയൽ-ടൈം ലോഗുകൾ",
-  "actions": {
-    "fetchMore": "കൂടുതൽ",
-    "refresh": "പുതുക്കുക",
-    "fullscreen": "പൂർണ്ണസ്ക്രീൻ",
-    "exitFullscreen": "പുറത്തുകടക്കുക",
-    "download": "ഡൗൺലോഡ്",
-    "search": {
-      "placeholder": "ലോഗുകൾ തിരയുക...",
-      "previous": "മുൻപത്തെത്",
-      "next": "അടുത്തത്",
-      "results": "{നിലവിലെ} / {ആകെ}"
-    },
-    "filter": {
-      "level": {
-        "label": "നില",
-        "all": "എല്ലാം"
-      },
-      "time": {
-        "label": "സമയ പരിധി",
-        "all": "എല്ലാ സമയം",
-        "5m": "അവസാന 5 മിനിറ്റ്",
-        "15m": "അവസാന 15 മിനിറ്റ്",
-        "1h": "അവസാന 1 മണിക്കൂർ",
-        "24h": "അവസാന 24 മണിക്കൂർ"
+      "buttons": {
+        "update": "ഡിപ്ലോയ്മെന്റ് അപ്‌ഡേറ്റ്",
+        "updating": "അപ്‌ഡേറ്റ് ചെയ്യുന്നു..."
       }
     },
-    "autoScroll": "ഓട്ടോ സ്ക്രോൾ"
-  }
-},
-"deployForm": {
-  "accessDenied": {
-    "title": "പ്രവേശനം നിരസിച്ചു",
-    "description": "ഡിപ്ലോയ് ചെയ്യാൻ അനുവാദമില്ല"
-  },
-  "success": {
-    "update": "അപ്‌ഡേറ്റ് ചെയ്തു"
-  },
-  "errors": {
-    "createFailed": "സൃഷ്ടിക്കൽ പരാജയം",
-    "updateFailed": "അപ്‌ഡേറ്റ് പരാജയം"
-  },
-  "fields": {
-    "applicationName": {
-      "label": "ആപ്ലിക്കേഷൻ പേര്",
-      "description": "പേര് നൽകുക",
-      "placeholder": "ആപ്ലിക്കേഷൻ പേര്"
-    },
-    "environment": {
-      "label": "എൻവയോൺമെന്റ്",
-      "description": "എൻവയോൺമെന്റ് തിരഞ്ഞെടുക്കുക",
-      "placeholder": "എൻവയോൺമെന്റ്",
-      "options": {
-        "staging": "സ്റ്റേജിംഗ്",
-        "production": "പ്രൊഡക്ഷൻ",
-        "development": "ഡെവലപ്പ്മെന്റ്"
+    "deployments": {
+      "list": {
+        "title": "ഡിപ്ലോയ്മെന്റുകൾ",
+        "noDeployments": "ഒന്നുമില്ല",
+        "card": {
+          "status": {
+            "completed": "പൂർത്തിയായി"
+          },
+          "runTime": "സമയം",
+          "viewButton": "കാണുക",
+          "rollback": {
+            "title": "റോള്ബാക്ക്"
+          }
+        }
+      },
+      "chart": {
+        "title": "വിന്യാസ സ്ഥിതിവിവരങ്ങൾ",
+        "description": "നിലവിലെ സ്ഥിതി",
+        "status": {
+          "building": "നിർമ്മിക്കുന്നു",
+          "deployed": "ഡിപ്ലോയ് ചെയ്തു",
+          "deploying": "ഡിപ്ലോയ് ചെയ്യുന്നു",
+          "failed": "പരാജയപ്പെട്ടു"
+        },
+        "total": "മൊത്തം: {count}"
       }
     },
-    "basePath": {
-      "label": "ബേസ് പാത",
-      "description": "ബിൽഡ് കോൺടെക്‌സ്‌റ്റ് പാത",
-      "placeholder": "/"
+    "applicationDetails": {
+      "header": {
+        "actions": {
+          "restart": {
+            "button": "റീസ്റ്റാർട്ട്",
+            "success": "റീസ്റ്റാർട്ട് ആരംഭിച്ചു",
+            "error": "റീസ്റ്റാർട്ട് പരാജയം",
+            "permissionError": "റീസ്റ്റാർട്ട് ചെയ്യാൻ അനുവാദമില്ല"
+          },
+          "delete": {
+            "button": "ഇല്ലാതാക്കുക",
+            "dialog": {
+              "title": "{പേര്} ഇല്ലാതാക്കുക",
+              "description": "{പേര്} ഇല്ലാതാക്കണോ? ഈ പ്രവർത്തി പിന്‍വലിക്കാനാവില്ല."
+            },
+            "success": "ഇല്ലാതാക്കി",
+            "error": "ഇല്ലാതാക്കൽ പരാജയം",
+            "permissionError": "ഇല്ലാതാക്കാൻ അനുവാദമില്ല"
+          },
+          "redeploy": {
+            "button": "പുനർഡിപ്ലോയ്",
+            "forceButton": "ഫോഴ്‌സ് ഡിപ്ലോയ് (ക്യാഷ് ഇല്ലാതെ)",
+            "success": "പുനർഡിപ്ലോയ് ആരംഭിച്ചു",
+            "error": "പുനർഡിപ്ലോയ് പരാജയം",
+            "permissionError": "പുനർഡിപ്ലോയ് ചെയ്യാൻ അനുവാദമില്ല"
+          },
+          "open": "പുതിയ ടാബിൽ തുറക്കുക"
+        }
+      }
     },
- "dockerfilePath": {
-  "label": "ഡോക്കർഫയൽ പാത",
-  "description": "ബേസ് പാത്ത് അനുസരിച്ച് ഡോക്കർഫയൽ പാത",
-  "placeholder": "ഡോക്കർഫയൽ"
-},
-"branch": {
-  "label": "ബ്രാഞ്ച്",
-  "description": "ഡിപ്ലോയ് ചെയ്യേണ്ട ബ്രാഞ്ച്",
-  "placeholder": "ബ്രാഞ്ച്"
-},
-"port": {
-  "label": "പോർട്ട്",
-  "description": "ആപ്പ് ലഭ്യമാകുന്ന പോർട്ട്",
-  "placeholder": "3000"
-},
-"domain": {
-  "label": "ഡൊമെയിൻ",
-  "description": "ആപ്പ് ലഭ്യമാകുന്ന ഡൊമെയിൻ",
-  "placeholder": "ഡൊമെയിൻ"
-},
-"buildPack": {
-  "label": "ബിൽഡ് പാക്ക്",
-  "description": "ആപ്പ് സ്ട്രക്ചറിന് അനുയോജ്യം തിരഞ്ഞെടുക്കുക",
-  "placeholder": "ബിൽഡ് പാക്ക്",
-  "options": {
-    "dockerfile": "ഡോക്കർഫയൽ",
-    "dockerCompose": "DockerCompose",
-    "static": "സ്റ്റാറ്റിക്"
-  }
-},
-"envVariables": {
-  "label": "എൻവയർമെന്റ് വേരിയബിൾസ്",
-  "description": "താക്കോൽ=മൂല്യം നൽകി എൻറ്റർ അമർത്തുക",
-  "placeholder": "NODE_ENV=production"
-},
-"buildVariables": {
-  "label": "ബിൽഡ് വേരിയബിൾസ്",
-  "description": "താക്കോൽ=മൂല്യം നൽകി എൻറ്റർ അമർത്തുക",
-  "placeholder": "DEBUG=false"
-},
-"preRunCommands": {
-  "label": "പ്രി റൺ കമാൻഡുകൾ",
-  "description": "ഡിപ്ലോയിന് മുമ്പ് പ്രവർത്തിപ്പിക്കേണ്ട കമാൻഡുകൾ",
-  "placeholder": "npm install"
-},
-"postRunCommands": {
-  "label": "പോസ്റ്റ് റൺ കമാൻഡുകൾ",
-  "description": "ഡിപ്ലോയിന് ശേഷം പ്രവർത്തിപ്പിക്കേണ്ട കമാൻഡുകൾ",
-  "placeholder": "npm run test"
- }
-},
-"submit": "ഡിപ്ലോയ് ചെയ്യുക",
-"validation": {
-  "applicationName": {
-    "minLength": "ആപ്പ് പേര് കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം.",
-    "invalidFormat": "സാധുവായ ആപ്പ് പേര് നൽകുക."
-  },
-  "environment": {
-    "invalidValue": "എൻവയർമെന്റ് production, staging, അല്ലെങ്കിൽ development ആയിരിക്കണം."
-  },
-  "branch": {
-    "minLength": "ബ്രാഞ്ച് പേര് കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം.",
-    "invalidFormat": "സാധുവായ ബ്രാഞ്ച് പേര് നൽകുക."
-  },
-  "port": {
-    "invalidFormat": "പോർട്ട് ഒരു സംഖ്യയായിരിക്കണം."
-  },
-  "domain": {
-    "minLength": "ഡൊമെയിൻ പേര് കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം.",
-    "invalidFormat": "സാധുവായ ഡൊമെയിൻ പേര് നൽകുക (ഉദാ: example.com).",
-    "notAllowed": "ഈ ഡൊമെയിൻ അനുവദനീയമല്ല. ക്രമീകരണങ്ങൾ > ഡൊമെയിനുകൾ-ൽ ചേർക്കുക."
-  },
-  "repository": {
-    "minLength": "റിപ്പോസിറ്ററി പേര് കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം.",
-    "invalidFormat": "സാധുവായ റിപ്പോസിറ്ററി പേര് നൽകുക."
-  },
-  "buildPack": {
-    "invalidValue": "ബിൽഡ് പാക്ക് Dockerfile, DockerCompose, അല്ലെങ്കിൽ Static ആയിരിക്കണം."
-  },
-  "envVariables": {
-    "emptyInput": "ഇൻപുട്ട് ഒഴിവാക്കരുത്",
-    "invalidFormat": "താക്കോൽ=മൂല്യം ഫോർമാറ്റ് വേണം",
-    "emptyKey": "കീ ഒഴിവാക്കരുത്"
-   }
-  }
-},
-"githubInstaller": {
-  "title": "GitHub ആപ്പ് ഇൻസ്റ്റാൾ",
-  "description": "പുതിയ ആപ്പിലേക്ക് കണക്റ്റ് ചെയ്യുക",
-  "connectButton": "GitHub കണക്റ്റ് ചെയ്യുക",
-  "terms": "കണക്റ്റ് ചെയ്താൽ സേവന നിബന്ധനകളും സ്വകാര്യതാ നയവും അംഗീകരിക്കുന്നു."
-},
-"githubManifest": {
-  "title": "GitHub ആപ്പ് സൃഷ്ടിക്കുക",
-  "appName": {
-    "label": "ആപ്പ് പേര്",
-    "placeholder": "ആപ്പ് പേര് നൽകുക",
-    "generate": "പുതിയ പേര് സൃഷ്ടിക്കുക"
-  },
-  "createButton": "GitHub ആപ്പ് സൃഷ്ടിക്കുക",
-  "status": {
-    "redirecting": "GitHub-ലേക്ക് റീഡയറക്‌ട് ചെയ്യുന്നു...",
-    "converting": "GitHub ആപ്പ് ക്രമീകരിക്കുന്നു...",
-    "success": "GitHub ആപ്പ് സൃഷ്ടിച്ചു!"
-  }
-},
-"repositories": {
-  "title": "റിപ്പോസിറ്ററികൾ",
-  "noRepositories": "റിപ്പോസിറ്ററികളൊന്നും കണ്ടെത്തിയില്ല",
-  "search": {
-    "placeholder": "റിപ്പോസിറ്ററികൾ തിരയുക..."
-  },
-  "sort": {
-    "name": "പേര്",
-    "created": "സൃഷ്ടിച്ചത്",
-    "updated": "അപ്‌ഡേറ്റ് ചെയ്തത്",
-    "stars": "സ്റ്റാർസ്"
-  }
-  },
- "repositoryCard": {
-  "viewOnGithub": "GitHub-ൽ കാണുക",
-  "unnamed": "പേരില്ലാത്ത റിപ്പോസിറ്ററി",
-  "visibility": {
-    "private": "സ്വകാര്യ",
-    "public": "പൊതു"
-  },
-  "topics": {
-    "more": "+{എണ്ണം} കൂടി"
-  }
-},
-"create": {
-  "title": "റിപ്പോസിറ്ററി",
-  "description": "ആപ്പ് ഡിപ്ലോയ് ചെയ്യുന്നതിന് ക്രമീകരിക്കുക",
-  "accessDenied": {
-    "title": "പ്രവേശനം നിരസിച്ചു",
-    "description": "സ്വയം ഹോസ്റ്റ് ആപ്പുകൾ സൃഷ്ടിക്കാനാവില്ല"
-  }
-},
-"githubCallback": {
-  "processing": "GitHub ഇൻസ്റ്റലേഷൻ പ്രോസസ് ചെയ്യുന്നു...",
-  "success": "GitHub-ലേക്ക് കണക്റ്റ് ചെയ്തു!",
-  "error": {
-    "invalidParams": "അസാധുവായ ഇൻസ്റ്റലേഷൻ പാരാമീറ്റർ",
-    "installationFailed": "ഇൻസ്റ്റലേഷൻ പരാജയപ്പെട്ടു"
+    "logViewer": {
+      "title": "ലോഗ് വ്യൂവർ",
+      "description": "രിയൽ-ടൈം ലോഗുകൾ",
+      "actions": {
+        "fetchMore": "കൂടുതൽ",
+        "refresh": "പുതുക്കുക",
+        "fullscreen": "പൂർണ്ണസ്ക്രീൻ",
+        "exitFullscreen": "പുറത്തുകടക്കുക",
+        "download": "ഡൗൺലോഡ്",
+        "search": {
+          "placeholder": "ലോഗുകൾ തിരയുക...",
+          "previous": "മുൻപത്തെത്",
+          "next": "അടുത്തത്",
+          "results": "{നിലവിലെ} / {ആകെ}"
+        },
+        "filter": {
+          "level": {
+            "label": "നില",
+            "all": "എല്ലാം"
+          },
+          "time": {
+            "label": "സമയ പരിധി",
+            "all": "എല്ലാ സമയം",
+            "5m": "അവസാന 5 മിനിറ്റ്",
+            "15m": "അവസാന 15 മിനിറ്റ്",
+            "1h": "അവസാന 1 മണിക്കൂർ",
+            "24h": "അവസാന 24 മണിക്കൂർ"
+          }
+        },
+        "autoScroll": "ഓട്ടോ സ്ക്രോൾ"
+      }
+    },
+    "deployForm": {
+      "accessDenied": {
+        "title": "പ്രവേശനം നിരസിച്ചു",
+        "description": "ഡിപ്ലോയ് ചെയ്യാൻ അനുവാദമില്ല"
+      },
+      "success": {
+        "update": "അപ്‌ഡേറ്റ് ചെയ്തു"
+      },
+      "errors": {
+        "createFailed": "സൃഷ്ടിക്കൽ പരാജയം",
+        "updateFailed": "അപ്‌ഡേറ്റ് പരാജയം"
+      },
+      "fields": {
+        "applicationName": {
+          "label": "ആപ്ലിക്കേഷൻ പേര്",
+          "description": "പേര് നൽകുക",
+          "placeholder": "ആപ്ലിക്കേഷൻ പേര്"
+        },
+        "environment": {
+          "label": "എൻവയോൺമെന്റ്",
+          "description": "എൻവയോൺമെന്റ് തിരഞ്ഞെടുക്കുക",
+          "placeholder": "എൻവയോൺമെന്റ്",
+          "options": {
+            "staging": "സ്റ്റേജിംഗ്",
+            "production": "പ്രൊഡക്ഷൻ",
+            "development": "ഡെവലപ്പ്മെന്റ്"
+          }
+        },
+        "basePath": {
+          "label": "ബേസ് പാത",
+          "description": "ബിൽഡ് കോൺടെക്‌സ്‌റ്റ് പാത",
+          "placeholder": "/"
+        },
+        "dockerfilePath": {
+          "label": "ഡോക്കർഫയൽ പാത",
+          "description": "ബേസ് പാത്ത് അനുസരിച്ച് ഡോക്കർഫയൽ പാത",
+          "placeholder": "ഡോക്കർഫയൽ"
+        },
+        "branch": {
+          "label": "ബ്രാഞ്ച്",
+          "description": "ഡിപ്ലോയ് ചെയ്യേണ്ട ബ്രാഞ്ച്",
+          "placeholder": "ബ്രാഞ്ച്"
+        },
+        "port": {
+          "label": "പോർട്ട്",
+          "description": "ആപ്പ് ലഭ്യമാകുന്ന പോർട്ട്",
+          "placeholder": "3000"
+        },
+        "domain": {
+          "label": "ഡൊമെയിൻ",
+          "description": "ആപ്പ് ലഭ്യമാകുന്ന ഡൊമെയിൻ",
+          "placeholder": "ഡൊമെയിൻ"
+        },
+        "buildPack": {
+          "label": "ബിൽഡ് പാക്ക്",
+          "description": "ആപ്പ് സ്ട്രക്ചറിന് അനുയോജ്യം തിരഞ്ഞെടുക്കുക",
+          "placeholder": "ബിൽഡ് പാക്ക്",
+          "options": {
+            "dockerfile": "ഡോക്കർഫയൽ",
+            "dockerCompose": "DockerCompose",
+            "static": "സ്റ്റാറ്റിക്"
+          }
+        },
+        "envVariables": {
+          "label": "എൻവയർമെന്റ് വേരിയബിൾസ്",
+          "description": "താക്കോൽ=മൂല്യം നൽകി എൻറ്റർ അമർത്തുക",
+          "placeholder": "NODE_ENV=production"
+        },
+        "buildVariables": {
+          "label": "ബിൽഡ് വേരിയബിൾസ്",
+          "description": "താക്കോൽ=മൂല്യം നൽകി എൻറ്റർ അമർത്തുക",
+          "placeholder": "DEBUG=false"
+        },
+        "preRunCommands": {
+          "label": "പ്രി റൺ കമാൻഡുകൾ",
+          "description": "ഡിപ്ലോയിന് മുമ്പ് പ്രവർത്തിപ്പിക്കേണ്ട കമാൻഡുകൾ",
+          "placeholder": "npm install"
+        },
+        "postRunCommands": {
+          "label": "പോസ്റ്റ് റൺ കമാൻഡുകൾ",
+          "description": "ഡിപ്ലോയിന് ശേഷം പ്രവർത്തിപ്പിക്കേണ്ട കമാൻഡുകൾ",
+          "placeholder": "npm run test"
+        }
+      },
+      "submit": "ഡിപ്ലോയ് ചെയ്യുക",
+      "validation": {
+        "applicationName": {
+          "minLength": "ആപ്പ് പേര് കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം.",
+          "invalidFormat": "സാധുവായ ആപ്പ് പേര് നൽകുക."
+        },
+        "environment": {
+          "invalidValue": "എൻവയർമെന്റ് production, staging, അല്ലെങ്കിൽ development ആയിരിക്കണം."
+        },
+        "branch": {
+          "minLength": "ബ്രാഞ്ച് പേര് കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം.",
+          "invalidFormat": "സാധുവായ ബ്രാഞ്ച് പേര് നൽകുക."
+        },
+        "port": {
+          "invalidFormat": "പോർട്ട് ഒരു സംഖ്യയായിരിക്കണം."
+        },
+        "domain": {
+          "minLength": "ഡൊമെയിൻ പേര് കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം.",
+          "invalidFormat": "സാധുവായ ഡൊമെയിൻ പേര് നൽകുക (ഉദാ: example.com).",
+          "notAllowed": "ഈ ഡൊമെയിൻ അനുവദനീയമല്ല. ക്രമീകരണങ്ങൾ > ഡൊമെയിനുകൾ-ൽ ചേർക്കുക."
+        },
+        "repository": {
+          "minLength": "റിപ്പോസിറ്ററി പേര് കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം.",
+          "invalidFormat": "സാധുവായ റിപ്പോസിറ്ററി പേര് നൽകുക."
+        },
+        "buildPack": {
+          "invalidValue": "ബിൽഡ് പാക്ക് Dockerfile, DockerCompose, അല്ലെങ്കിൽ Static ആയിരിക്കണം."
+        },
+        "envVariables": {
+          "emptyInput": "ഇൻപുട്ട് ഒഴിവാക്കരുത്",
+          "invalidFormat": "താക്കോൽ=മൂല്യം ഫോർമാറ്റ് വേണം",
+          "emptyKey": "കീ ഒഴിവാക്കരുത്"
+        }
+      }
+    },
+    "githubInstaller": {
+      "title": "GitHub ആപ്പ് ഇൻസ്റ്റാൾ",
+      "description": "പുതിയ ആപ്പിലേക്ക് കണക്റ്റ് ചെയ്യുക",
+      "connectButton": "GitHub കണക്റ്റ് ചെയ്യുക",
+      "terms": "കണക്റ്റ് ചെയ്താൽ സേവന നിബന്ധനകളും സ്വകാര്യതാ നയവും അംഗീകരിക്കുന്നു."
+    },
+    "githubManifest": {
+      "title": "GitHub ആപ്പ് സൃഷ്ടിക്കുക",
+      "appName": {
+        "label": "ആപ്പ് പേര്",
+        "placeholder": "ആപ്പ് പേര് നൽകുക",
+        "generate": "പുതിയ പേര് സൃഷ്ടിക്കുക"
+      },
+      "createButton": "GitHub ആപ്പ് സൃഷ്ടിക്കുക",
+      "status": {
+        "redirecting": "GitHub-ലേക്ക് റീഡയറക്‌ട് ചെയ്യുന്നു...",
+        "converting": "GitHub ആപ്പ് ക്രമീകരിക്കുന്നു...",
+        "success": "GitHub ആപ്പ് സൃഷ്ടിച്ചു!"
+      }
+    },
+    "repositories": {
+      "title": "റിപ്പോസിറ്ററികൾ",
+      "noRepositories": "റിപ്പോസിറ്ററികളൊന്നും കണ്ടെത്തിയില്ല",
+      "search": {
+        "placeholder": "റിപ്പോസിറ്ററികൾ തിരയുക..."
+      },
+      "sort": {
+        "name": "പേര്",
+        "created": "സൃഷ്ടിച്ചത്",
+        "updated": "അപ്‌ഡേറ്റ് ചെയ്തത്",
+        "stars": "സ്റ്റാർസ്"
+      }
+    },
+    "repositoryCard": {
+      "viewOnGithub": "GitHub-ൽ കാണുക",
+      "unnamed": "പേരില്ലാത്ത റിപ്പോസിറ്ററി",
+      "visibility": {
+        "private": "സ്വകാര്യ",
+        "public": "പൊതു"
+      },
+      "topics": {
+        "more": "+{എണ്ണം} കൂടി"
+      }
+    },
+    "create": {
+      "title": "റിപ്പോസിറ്ററി",
+      "description": "ആപ്പ് ഡിപ്ലോയ് ചെയ്യുന്നതിന് ക്രമീകരിക്കുക",
+      "accessDenied": {
+        "title": "പ്രവേശനം നിരസിച്ചു",
+        "description": "സ്വയം ഹോസ്റ്റ് ആപ്പുകൾ സൃഷ്ടിക്കാനാവില്ല"
+      }
+    },
+    "githubCallback": {
+      "processing": "GitHub ഇൻസ്റ്റലേഷൻ പ്രോസസ് ചെയ്യുന്നു...",
+      "success": "GitHub-ലേക്ക് കണക്റ്റ് ചെയ്തു!",
+      "error": {
+        "invalidParams": "അസാധുവായ ഇൻസ്റ്റലേഷൻ പാരാമീറ്റർ",
+        "installationFailed": "ഇൻസ്റ്റലേഷൻ പരാജയപ്പെട്ടു"
+      }
     }
-  }
-},
-"terminal": {
-  "title": "ടെർമിനൽ",
-  "shortcut": "⌘J",
-  "close": "ടെർമിനൽ അടയ്ക്കുക"
-},
+  },
+  "terminal": {
+    "title": "ടെർമിനൽ",
+    "shortcut": "⌘J",
+    "close": "ടെർമിനൽ അടയ്ക്കുക",
+    "newTab": "പുതിയ ടാബ്"
+  },
   "extensions": {
     "title": "എക്സ്റ്റെൻഷനുകൾ",
     "subtitle": "ബോയിലർപ്ലേറ്റ് ഒഴിവാക്കി, നിങ്ങളുടെ സർവർ സെറ്റപ്പ് സെക്കൻഡുകൾക്കുള്ളിൽ ആരംഭിക്കൂ",
@@ -1361,44 +1368,48 @@
     "variables": "വേരിയബിളുകൾ",
     "logsEmpty": "ലഭ്യമാകുമ്പോൾ പ്രവർത്തന ലോഗുകൾ ഇവിടെ പ്രത്യക്ഷപ്പെടും."
   },
-"navigation": {
-  "dashboard": "ഡാഷ്‌ബോർഡ്",
-  "selfHost": "സ്വയം ഹോസ്റ്റ്",
-  "fileManager": "ഫയൽ മാനേജർ",
-    "extensions": "എക്സ്റ്റെൻഷനുകൾ",
-  "settings": "ക്രമീകരണങ്ങൾ",
-  "general": "ജനറൽ",
-  "notifications": "അറിയിപ്പുകൾ",
-  "team": "ടീം",
-  "domains": "ഡൊമെയിനുകൾ",
-  "update": "അപ്‌ഡേറ്റ്",
-  "containers": "കണ്ടെയ്‌നറുകൾ"
-},
-"layout": {
-  "breadcrumbs": {
-    "home": "ഹോം",
+  "navigation": {
     "dashboard": "ഡാഷ്‌ബോർഡ്",
     "selfHost": "സ്വയം ഹോസ്റ്റ്",
     "fileManager": "ഫയൽ മാനേജർ",
+    "extensions": "എക്സ്റ്റെൻഷനുകൾ",
     "settings": "ക്രമീകരണങ്ങൾ",
     "general": "ജനറൽ",
     "notifications": "അറിയിപ്പുകൾ",
     "team": "ടീം",
-    "domains": "ഡൊമെയിനുകൾ"
+    "domains": "ഡൊമെയിനുകൾ",
+    "update": "അപ്‌ഡേറ്റ്",
+    "containers": "കണ്ടെയ്‌നറുകൾ"
   },
-  "terminal": {
-    "togglePosition": "ടെർമിനൽ സ്ഥാനം മാറ്റുക (Ctrl+T)"
-  }
-},
-"user": {
-  "menu": {
-    "sponsor": "സ്പോൺസർ",
-    "help": "സഹായം",
-    "reportIssue": "പ്രശ്നം റിപ്പോർട്ട് ചെയ്യുക",
-    "logout": "ലോഗ് ഔട്ട്"
-  }
-},
+  "layout": {
+    "breadcrumbs": {
+      "home": "ഹോം",
+      "dashboard": "ഡാഷ്‌ബോർഡ്",
+      "selfHost": "സ്വയം ഹോസ്റ്റ്",
+      "fileManager": "ഫയൽ മാനേജർ",
+      "settings": "ക്രമീകരണങ്ങൾ",
+      "general": "ജനറൽ",
+      "notifications": "അറിയിപ്പുകൾ",
+      "team": "ടീം",
+      "domains": "ഡൊമെയിനുകൾ"
+    },
+    "terminal": {
+      "togglePosition": "ടെർമിനൽ സ്ഥാനം മാറ്റുക (Ctrl+T)"
+    }
+  },
+  "user": {
+    "menu": {
+      "sponsor": "സ്പോൺസർ",
+      "help": "സഹായം",
+      "reportIssue": "പ്രശ്നം റിപ്പോർട്ട് ചെയ്യുക",
+      "logout": "ലോഗ് ഔട്ട്"
+    }
+  },
   "toasts": {
+    "success": {
+      "uploadFile": "ഫയൽ വിജയകരമായി അപ്ലോഡ് ചെയ്തു",
+      "copyFile": "ഫയൽ വിജയകരമായി കോപ്പി ചെയ്തു"
+    },
     "errors": {
       "realtimeMonitor": "റിയൽടൈം മോണിറ്ററിലേക്ക് കണക്റ്റ് ചെയ്യുന്നതിൽ പിശക്",
       "setFileToCopy": "ഫയൽ പകർത്താൻ സജ്ജമാക്കുന്നതിൽ പിശക്",
@@ -1408,10 +1419,12 @@
       "startRenaming": "പുനർനാമകരണം തുടങ്ങുന്നതിൽ പിശക്",
       "navigateToFile": "ഫയലിലേക്ക് പോകുന്നതിൽ പിശക്",
       "createNewFolder": "പുതിയ ഫോൾഡർ സൃഷ്ടിക്കുന്നതിൽ പിശക്",
+      "createDirectory": "ഡയറക്ടറി സൃഷ്ടിക്കുന്നതിൽ പിശക്",
       "uploadFile": "ഫയൽ അപ്ലോഡ് പരാജയപ്പെട്ടു",
       "deleteFile": "ഫയൽ ഇല്ലാതാക്കുന്നതിൽ പിശക്",
+      "calculateSize": "വലിപ്പം കണക്കാക്കുന്നതിൽ പിശക്",
       "setEmail": "ഇമെയിൽ സെറ്റ് ചെയ്യുന്നതിൽ പിശക്",
       "setPassword": "പാസ്‌വേഡ് സെറ്റ് ചെയ്യുന്നതിൽ പിശക്"
     }
-   }
   }
+}

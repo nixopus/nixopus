@@ -45,7 +45,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <Provider store={store}>
           <PersistGate loading={null} persistor={persistor}>
             <SuperTokensProvider>
-            <ChildrenWrapper>{children}</ChildrenWrapper>
+              <ChildrenWrapper>{children}</ChildrenWrapper>
             </SuperTokensProvider>
           </PersistGate>
         </Provider>
@@ -64,20 +64,32 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
     dispatch(initializeAuth() as any);
   }, [dispatch]);
 
-  const PUBLIC_ROUTES = ['/login', '/register', '/auth', '/reset-password', '/verify-email', '/auth/organization-invite'];
-  const isPublicRoute = PUBLIC_ROUTES.some(route => 
-    pathname === route || pathname.startsWith(route + '/')
+  const PUBLIC_ROUTES = [
+    '/login',
+    '/register',
+    '/auth',
+    '/reset-password',
+    '/verify-email',
+    '/auth/organization-invite'
+  ];
+  const isPublicRoute = PUBLIC_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(route + '/')
   );
 
   useEffect(() => {
     if (session.loading) return;
 
     const sessionExists = 'doesSessionExist' in session ? session.doesSessionExist : false;
-    
+
     if (!isPublicRoute && !sessionExists) {
       router.push('/auth');
     } else if (isPublicRoute && sessionExists) {
-      if (pathname === '/' || pathname === '/auth' || pathname === '/login' || pathname === '/register') {
+      if (
+        pathname === '/' ||
+        pathname === '/auth' ||
+        pathname === '/login' ||
+        pathname === '/register'
+      ) {
         router.push('/dashboard');
       }
     }
@@ -93,14 +105,16 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange  themes={palette}>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+        themes={palette}
+      >
         <WebSocketProvider>
           <FeatureFlagsProvider>
-            {isPublicRoute ? (
-              <>{children}</>
-            ) : (
-              <DashboardLayout>{children}</DashboardLayout>
-            )}
+            {isPublicRoute ? <>{children}</> : <DashboardLayout>{children}</DashboardLayout>}
           </FeatureFlagsProvider>
         </WebSocketProvider>
       </ThemeProvider>

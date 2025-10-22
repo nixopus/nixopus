@@ -38,13 +38,18 @@ function useTeamSettings() {
     if (apiUsers) {
       const transformedUsers = apiUsers.map((user) => {
         const primaryRole = user.roles?.[0] || 'Unknown';
-        const roleName = primaryRole.includes('admin') ? 'Admin' : 
-                        primaryRole.includes('member') ? 'Member' : 
-                        primaryRole.includes('viewer') ? 'Viewer' : 
-                        primaryRole.includes('owner') ? 'Owner' : 'Unknown';
-        
+        const roleName = primaryRole.includes('admin')
+          ? 'Admin'
+          : primaryRole.includes('member')
+            ? 'Member'
+            : primaryRole.includes('viewer')
+              ? 'Viewer'
+              : primaryRole.includes('owner')
+                ? 'Owner'
+                : 'Unknown';
+
         const permissions = user.permissions || [];
-        
+
         return {
           id: user.user.id,
           name: user.user?.username || 'Unknown User',
@@ -65,7 +70,6 @@ function useTeamSettings() {
       setTeamDescription(activeOrganization.description);
     }
   }, [activeOrganization]);
-
 
   const handleSendInvite = async () => {
     if (!newUser.email || !newUser.role || !activeOrganization?.id) {

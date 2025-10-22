@@ -38,7 +38,7 @@ func NewDeployController(
 	notificationManager *notification.NotificationManager,
 ) *DeployController {
 	storage := storage.DeployStorage{DB: store.DB, Ctx: ctx}
-	docker_repo := docker.NewDockerService()	
+	docker_repo := docker.NewDockerService()
 	github_service := github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx})
 	taskService := tasks.NewTaskService(&storage, l, docker_repo, github_service, store)
 	taskService.SetupCreateDeploymentQueue()

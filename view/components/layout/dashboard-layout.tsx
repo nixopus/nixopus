@@ -21,7 +21,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { Tour } from '@/components/Tour';
 import { useTour } from '@/hooks/useTour';
 import { Button } from '@/components/ui/button';
-import { HelpCircle } from 'lucide-react';  
+import { HelpCircle } from 'lucide-react';
 import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { ModeToggler } from '@/components/ui/theme-toggler';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
@@ -69,10 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <AppSidebar 
-        toggleAddTeamModal={toggleAddTeamModal}
-        addTeamModalOpen={addTeamModalOpen}
-      />
+      <AppSidebar toggleAddTeamModal={toggleAddTeamModal} addTeamModalOpen={addTeamModalOpen} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4 justify-between w-full">
@@ -110,8 +107,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Button>
               <KeyboardShortcuts />
               <RBACGuard resource="user" action="update">
-              <ModeToggler />
-            </RBACGuard>
+                <ModeToggler />
+              </RBACGuard>
             </div>
           </div>
         </header>

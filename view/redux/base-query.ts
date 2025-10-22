@@ -27,7 +27,7 @@ const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryEr
   const baseQuery = fetchBaseQuery({
     baseUrl: currentBaseUrl,
     prepareHeaders: async (headers, { getState, endpoint }) => {
-      const token = await getAccessToken();  
+      const token = await getAccessToken();
       const organizationId =
         (getState() as RootState).user.activeOrganization?.id ||
         (getState() as RootState).auth.user?.organization_users?.[0]?.organization_id;

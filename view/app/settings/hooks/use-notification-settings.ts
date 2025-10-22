@@ -54,18 +54,18 @@ function useNotificationSettings() {
   const handleCreateSMTPConfiguration = async (data: CreateSMTPConfigRequest) => {
     try {
       await createSMTPConfiguration(data);
-      toast.success(t('settings.notifications.messages.emailConfigSaved'));
+      toast.success(t('settings.notifications.messages.email.success'));
     } catch (error) {
-      toast.error(t('settings.notifications.messages.emailConfigFailed'));
+      toast.error(t('settings.notifications.messages.email.error'));
     }
   };
 
   const handleUpdateSMTPConfiguration = async (data: UpdateSMTPConfigRequest) => {
     try {
       await updateSMTPConfiguration(data);
-      toast.success(t('settings.notifications.messages.emailConfigSaved'));
+      toast.success(t('settings.notifications.messages.email.success'));
     } catch (error) {
-      toast.error(t('settings.notifications.messages.emailConfigFailed'));
+      toast.error(t('settings.notifications.messages.email.error'));
     }
   };
 
@@ -125,7 +125,7 @@ function useNotificationSettings() {
         });
       }
     } catch (error) {
-      toast.error(t('settings.notifications.messages.emailConfigFailed'));
+      toast.error(t('settings.notifications.messages.email.error'));
     }
   };
 

@@ -118,6 +118,7 @@ func (c *AuthService) Register(registrationRequest types.RegisterRequest, userTy
 		User:         user,
 	}, nil
 }
+
 // Deprecated: Use SupertokensRegister instead
 func (c *AuthService) createDefaultOrganization(user shared_types.User, tx bun.Tx) (shared_types.Organization, error) {
 	c.logger.Log(logger.Info, "creating default organization for user", user.Email)

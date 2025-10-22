@@ -39,7 +39,6 @@ interface FileItemProps {
   startRenaming: (file: FileData) => void;
 }
 
-
 export function FileItem({
   file,
   onFolderClick,
@@ -71,15 +70,13 @@ export function FileItem({
 
   if (layout === 'mobile') {
     return (
-      <ResourceGuard
-        resource="file-manager"
-        action="read"
-        loadingFallback={null}
-      >
-        <div className={cn(
-          "border-b border-border last:border-b-0",
-          activePath === file.path && "bg-muted/50 border-l-4 border-l-primary"
-        )}>
+      <ResourceGuard resource="file-manager" action="read" loadingFallback={null}>
+        <div
+          className={cn(
+            'border-b border-border last:border-b-0',
+            activePath === file.path && 'bg-muted/50 border-l-4 border-l-primary'
+          )}
+        >
           <MobileLayout
             file={file}
             type={type}
@@ -95,7 +92,7 @@ export function FileItem({
             onMoreClick={() => setIsMobileActionSheetOpen(true)}
           />
         </div>
-        
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <FileInfo file={file} isLoading={isSizeLoading} fileSize={fileSize || null} />
@@ -117,11 +114,7 @@ export function FileItem({
           onDelete={() => setIsDeleteDialogOpen(true)}
         />
 
-        <ResourceGuard
-          resource="file-manager"
-          action="delete"
-          loadingFallback={null}
-        >
+        <ResourceGuard resource="file-manager" action="delete" loadingFallback={null}>
           <DeleteDialog
             title={t('fileManager.deleteDialog.title')}
             description={
@@ -143,11 +136,7 @@ export function FileItem({
   }
 
   return (
-    <ResourceGuard
-      resource="file-manager"
-      action="read"
-      loadingFallback={null}
-    >
+    <ResourceGuard resource="file-manager" action="read" loadingFallback={null}>
       <FileContextMenu
         isItem
         onInfo={() => setIsDialogOpen(true)}
@@ -159,8 +148,8 @@ export function FileItem({
         onMoveItem={() => setFileToMove(file)}
         onDelete={() => setIsDeleteDialogOpen(true)}
       >
-        <div 
-          onClick={() => onFolderClickActive(file.path)} 
+        <div
+          onClick={() => onFolderClickActive(file.path)}
           className="cursor-pointer hover:bg-muted/50 transition-colors rounded-sm"
         >
           {layout === 'grid' ? (
@@ -191,18 +180,14 @@ export function FileItem({
             />
           )}
         </div>
-        
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <FileInfo file={file} isLoading={isSizeLoading} fileSize={fileSize || null} />
           </DialogContent>
         </Dialog>
 
-        <ResourceGuard
-          resource="file-manager"
-          action="delete"
-          loadingFallback={null}
-        >
+        <ResourceGuard resource="file-manager" action="delete" loadingFallback={null}>
           <DeleteDialog
             title={t('fileManager.deleteDialog.title')}
             description={

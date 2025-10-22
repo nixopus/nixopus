@@ -44,11 +44,7 @@ function LogViewer({
   });
 
   return (
-    <ResourceGuard 
-      resource="deploy" 
-      action="read"
-      loadingFallback={<Skeleton className="h-96" />}
-    >
+    <ResourceGuard resource="deploy" action="read" loadingFallback={<Skeleton className="h-96" />}>
       <div
         className={`transition-all duration-300 ease-in-out ${isFullscreen ? 'fixed inset-0 z-50 bg-background' : 'relative w-full'}`}
       >
@@ -66,7 +62,11 @@ function LogViewer({
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               </Button>
               <Button variant="outline" size="icon" onClick={toggleFullscreen}>
-                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                {isFullscreen ? (
+                  <Minimize2 className="h-4 w-4" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </CardHeader>

@@ -50,9 +50,12 @@ export const DeployForm = ({
 }: DeployFormProps) => {
   const { t } = useTranslation();
   const isMobileView = useIsMobile();
-  
-  const [getGithubRepositoryBranches, { isLoading: isLoadingBranches }] = useGetGithubRepositoryBranchesMutation();
-  const [availableBranches, setAvailableBranches] = useState<{ label: string; value: string }[]>([]);
+
+  const [getGithubRepositoryBranches, { isLoading: isLoadingBranches }] =
+    useGetGithubRepositoryBranchesMutation();
+  const [availableBranches, setAvailableBranches] = useState<{ label: string; value: string }[]>(
+    []
+  );
 
   const { validateEnvVar, form, onSubmit, parsePort } = useCreateDeployment({
     application_name,
@@ -75,24 +78,27 @@ export const DeployForm = ({
 
   const isStaticBuildPack = form.watch('build_pack') === BuildPack.Static;
 
-  const stepperSteps = useMemo(() => 
-    isStaticBuildPack 
-      ? [
-          { id: 'basic-info', title: 'Basic Information' },
-          { id: 'repository', title: 'Repository & Branch' }
-        ]
-      : [
-          { id: 'basic-info', title: 'Basic Information' },
-          { id: 'repository', title: 'Repository & Branch' },
-          { id: 'configuration', title: 'Configuration' },
-          { id: 'variables', title: 'Variables & Commands' }
-        ], [isStaticBuildPack]);
+  const stepperSteps = useMemo(
+    () =>
+      isStaticBuildPack
+        ? [
+            { id: 'basic-info', title: 'Basic Information' },
+            { id: 'repository', title: 'Repository & Branch' }
+          ]
+        : [
+            { id: 'basic-info', title: 'Basic Information' },
+            { id: 'repository', title: 'Repository & Branch' },
+            { id: 'configuration', title: 'Configuration' },
+            { id: 'variables', title: 'Variables & Commands' }
+          ],
+    [isStaticBuildPack]
+  );
 
   const fetchRepositoryBranches = useCallback(async () => {
     if (!repository_full_name) {
       return;
     }
-    
+
     try {
       const result = await getGithubRepositoryBranches(repository_full_name).unwrap();
       const branchOptions = result.map((branch) => ({
@@ -100,13 +106,13 @@ export const DeployForm = ({
         value: branch.name
       }));
       setAvailableBranches(branchOptions);
-      
+
       const current = form.getValues('branch');
       const defaultBranch =
-        branchOptions.find(b => b.value === 'main') ||
-        branchOptions.find(b => b.value === 'master') ||
+        branchOptions.find((b) => b.value === 'main') ||
+        branchOptions.find((b) => b.value === 'master') ||
         branchOptions[0];
-      if (!current || !branchOptions.some(b => b.value === current)) {
+      if (!current || !branchOptions.some((b) => b.value === current)) {
         if (defaultBranch) {
           form.setValue('branch', defaultBranch.value);
         } else {
@@ -159,7 +165,12 @@ export const DeployForm = ({
         fieldsToValidate = ['base_path', 'DockerfilePath'];
         break;
       case 'variables':
-        fieldsToValidate = ['env_variables', 'build_variables', 'pre_run_commands', 'post_run_commands'];
+        fieldsToValidate = [
+          'env_variables',
+          'build_variables',
+          'pre_run_commands',
+          'post_run_commands'
+        ];
         break;
       default:
         return true;
@@ -169,22 +180,20 @@ export const DeployForm = ({
     return isValid;
   }, [currentStepId, form, isStaticBuildPack]);
 
-
-
   const handleNext = useCallback(async () => {
     const isValid = await validateCurrentStep();
     if (!isValid) {
       toast.warning('Please fix the errors before proceeding');
       return;
     }
-    const currentIndex = stepperSteps.findIndex(step => step.id === currentStepId);
+    const currentIndex = stepperSteps.findIndex((step) => step.id === currentStepId);
     if (currentIndex < stepperSteps.length - 1) {
       setCurrentStepId(stepperSteps[currentIndex + 1].id);
     }
   }, [currentStepId, stepperSteps, validateCurrentStep]);
 
   const handlePrev = useCallback(() => {
-    const currentIndex = stepperSteps.findIndex(step => step.id === currentStepId);
+    const currentIndex = stepperSteps.findIndex((step) => step.id === currentStepId);
     if (currentIndex > 0) {
       setCurrentStepId(stepperSteps[currentIndex - 1].id);
     }
@@ -274,7 +283,9 @@ export const DeployForm = ({
               {isLoadingBranches ? (
                 <div className="space-y-2">
                   <div className="flex gap-2">
-                    <label className="text-sm font-medium">{t('selfHost.deployForm.fields.branch.label')}</label>
+                    <label className="text-sm font-medium">
+                      {t('selfHost.deployForm.fields.branch.label')}
+                    </label>
                     <span className="text-destructive">*</span>
                   </div>
                   <Skeleton className="h-10 w-full" />
@@ -284,7 +295,11 @@ export const DeployForm = ({
                   form={form}
                   label={t('selfHost.deployForm.fields.branch.label')}
                   name="branch"
-                  placeholder={availableBranches.length === 0 ? "No branches available" : t('selfHost.deployForm.fields.branch.placeholder')}
+                  placeholder={
+                    availableBranches.length === 0
+                      ? 'No branches available'
+                      : t('selfHost.deployForm.fields.branch.placeholder')
+                  }
                   selectOptions={availableBranches}
                   required={true}
                 />
@@ -365,14 +380,14 @@ export const DeployForm = ({
   }, []);
 
   return (
-    <ResourceGuard 
-      resource="deploy" 
+    <ResourceGuard
+      resource="deploy"
       action="create"
       loadingFallback={<Skeleton className="h-96" />}
     >
-      <Stepper.Provider 
-        variant={isMobileView ? 'vertical' : 'horizontal'} 
-        labelOrientation={isMobileView ? 'horizontal' : 'vertical'} 
+      <Stepper.Provider
+        variant={isMobileView ? 'vertical' : 'horizontal'}
+        labelOrientation={isMobileView ? 'horizontal' : 'vertical'}
         className="sm:space-y-4 space-y-2"
       >
         {({ methods }) => {
@@ -380,59 +395,54 @@ export const DeployForm = ({
 
           return (
             <>
-              <Stepper.Navigation aria-label="Deployment Form Steps" className="sm:flex-row flex-col mb-24">
-                              {stepperSteps.map((step, index) => {
-                return (
-                  <Stepper.Step
-                    key={step.id}
-                    of={step.id}
-                    onClick={() => handleStepClick(step.id)}
-                    className="sm:flex-row flex-col sm:gap-2 gap-1"
-                  >
-                    <Stepper.Title className="sm:text-base text-sm">{step.title}</Stepper.Title>
-                  </Stepper.Step>
-                );
-              })}
+              <Stepper.Navigation
+                aria-label="Deployment Form Steps"
+                className="sm:flex-row flex-col mb-24"
+              >
+                {stepperSteps.map((step, index) => {
+                  return (
+                    <Stepper.Step
+                      key={step.id}
+                      of={step.id}
+                      onClick={() => handleStepClick(step.id)}
+                      className="sm:flex-row flex-col sm:gap-2 gap-1"
+                    >
+                      <Stepper.Title className="sm:text-base text-sm">{step.title}</Stepper.Title>
+                    </Stepper.Step>
+                  );
+                })}
               </Stepper.Navigation>
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 mt-8">
-                <Stepper.Panel key={currentStepId}>
-                  {renderStepContent()}
-                </Stepper.Panel>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 mt-8">
+                  <Stepper.Panel key={currentStepId}>{renderStepContent()}</Stepper.Panel>
 
-                <Stepper.Controls>
-                  <div className="flex justify-between w-full mt-16">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handlePrev}
-                      disabled={isFirstStep}
-                    >
-                      Previous
-                    </Button>
-                    <div className="flex gap-2">
-                      {!isLastStep && (
-                        <Button
-                          type="button"
-                          onClick={handleNext}
-                        >
-                          Next
-                        </Button>
-                      )}
-                      {isLastStep && (
-                        <Button 
-                          type="submit" 
-                          className="cursor-pointer"
-                        >
-                          {t('selfHost.deployForm.submit')}
-                        </Button>
-                      )}
+                  <Stepper.Controls>
+                    <div className="flex justify-between w-full mt-16">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handlePrev}
+                        disabled={isFirstStep}
+                      >
+                        Previous
+                      </Button>
+                      <div className="flex gap-2">
+                        {!isLastStep && (
+                          <Button type="button" onClick={handleNext}>
+                            Next
+                          </Button>
+                        )}
+                        {isLastStep && (
+                          <Button type="submit" className="cursor-pointer">
+                            {t('selfHost.deployForm.submit')}
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </Stepper.Controls>
-              </form>
-            </Form>
+                  </Stepper.Controls>
+                </form>
+              </Form>
             </>
           );
         }}

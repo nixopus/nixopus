@@ -24,12 +24,8 @@ function DomainsTable({ domains }: DomainsTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead >
-              {t('settings.domains.table.headers.domain')}
-            </TableHead>
-            <TableHead>
-              {t('settings.domains.table.headers.type')}
-            </TableHead>
+            <TableHead>{t('settings.domains.table.headers.domain')}</TableHead>
+            <TableHead>{t('settings.domains.table.headers.type')}</TableHead>
             <TableHead className="text-right text-xs font-medium text-muted-foreground">
               {t('settings.domains.table.headers.actions')}
             </TableHead>

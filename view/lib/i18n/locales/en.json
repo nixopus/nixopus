@@ -49,6 +49,8 @@
     "start_error": "Failed to start container",
     "stop_error": "Failed to stop container",
     "remove_error": "Failed to remove container",
+    "restart_success": "Container restarted successfully",
+    "restart_error": "Failed to restart container",
     "fetch_error": "Failed to fetch containers",
     "overview": "Overview",
     "logs": "Logs",
@@ -570,6 +572,10 @@
           "success": "Discord configuration saved successfully",
           "error": "Failed to save Discord configuration"
         },
+        "webhookConfigSaved": "Webhook configuration saved successfully",
+        "webhookConfigUpdated": "Webhook configuration updated successfully",
+        "webhookConfigDeleted": "Webhook configuration deleted successfully",
+        "webhookConfigFailed": "Failed to save webhook configuration",
         "preferencesUpdated": "Preferences updated successfully",
         "preferencesFailed": "Failed to update preferences"
       }
@@ -1313,7 +1319,8 @@
   "terminal": {
     "title": "Terminal",
     "shortcut": "⌘J",
-    "close": "Close Terminal"
+    "close": "Close Terminal",
+    "newTab": "New Tab"
   },
   "extensions": {
     "title": "Extensions",
@@ -1400,6 +1407,10 @@
     }
   },
   "toasts": {
+    "success": {
+      "uploadFile": "File uploaded successfully",
+      "copyFile": "File copied successfully"
+    },
     "errors": {
       "realtimeMonitor": "Error connecting to realtime monitor service",
       "setFileToCopy": "Error setting file to copy",
@@ -1409,8 +1420,10 @@
       "startRenaming": "Error starting renaming",
       "navigateToFile": "Error navigating to file",
       "createNewFolder": "Error creating new folder",
+      "createDirectory": "Error creating directory",
       "uploadFile": "Failed to upload file",
       "deleteFile": "Error deleting file",
+      "calculateSize": "Error calculating size",
       "setEmail": "Error setting email",
       "setPassword": "Error setting password"
     }

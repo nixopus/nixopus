@@ -86,7 +86,7 @@ export function AppSidebar({
   toggleAddTeamModal,
   addTeamModalOpen,
   ...props
-}: React.ComponentProps<typeof Sidebar> & { 
+}: React.ComponentProps<typeof Sidebar> & {
   toggleAddTeamModal?: () => void;
   addTeamModalOpen?: boolean;
 }) {
@@ -100,7 +100,7 @@ export function AppSidebar({
   const { canAccessResource } = useRBAC();
 
   const hasAnyPermission = React.useMemo(() => {
-    const allowedResources = ['dashboard', 'settings',"extensions"];
+    const allowedResources = ['dashboard', 'settings', 'extensions'];
 
     return (resource: string) => {
       if (!user || !activeOrg) return false;
@@ -135,10 +135,10 @@ export function AppSidebar({
         })
         .map((item) => ({
           ...item,
-          title: t(item.title),
+          title: t(item.title as any),
           items: item.items?.map((subItem) => ({
             ...subItem,
-            title: t(subItem.title)
+            title: t(subItem.title as any)
           }))
         })),
     [data.navMain, hasAnyPermission, t]
@@ -163,8 +163,8 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher 
-          refetch={refetch} 
+        <TeamSwitcher
+          refetch={refetch}
           toggleAddTeamModal={toggleAddTeamModal}
           addTeamModalOpen={addTeamModalOpen}
         />

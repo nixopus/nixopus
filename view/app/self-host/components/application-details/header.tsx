@@ -64,11 +64,7 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
   };
 
   return (
-    <ResourceGuard 
-      resource="deploy" 
-      action="read"
-      loadingFallback={null}
-    >
+    <ResourceGuard resource="deploy" action="read" loadingFallback={null}>
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-start">
           <div className="mr-2">
@@ -86,10 +82,7 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <AnyPermissionGuard 
-            permissions={['deploy:update']}
-            loadingFallback={null}
-          >
+          <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -108,10 +101,7 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
               </Tooltip>
             </TooltipProvider>
           </AnyPermissionGuard>
-          <AnyPermissionGuard 
-            permissions={['deploy:delete']}
-            loadingFallback={null}
-          >
+          <AnyPermissionGuard permissions={['deploy:delete']} loadingFallback={null}>
             <DeleteDialog
               title={t('selfHost.applicationDetails.header.actions.delete.dialog.title').replace(
                 '{name}',
@@ -131,10 +121,7 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
               icon={TrashIcon}
             />
           </AnyPermissionGuard>
-          <AnyPermissionGuard 
-            permissions={['deploy:update']}
-            loadingFallback={null}
-          >
+          <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">

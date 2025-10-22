@@ -38,7 +38,7 @@ export const GridLayout: React.FC<GridLayoutProps> = ({
         onKeyDown={(e) => handleKeyDown(e, file)}
         autoFocus
         className={cn(
-          "w-full px-2 py-1 rounded-md border-0 bg-transparent focus:ring-2 focus:ring-primary text-center",
+          'w-full px-2 py-1 rounded-md border-0 bg-transparent focus:ring-2 focus:ring-primary text-center',
           activePath === file.path ? 'bg-secondary text-secondary-foreground' : 'bg-background'
         )}
         onClick={(e) => e.stopPropagation()}
@@ -46,7 +46,7 @@ export const GridLayout: React.FC<GridLayoutProps> = ({
     ) : (
       <span
         className={cn(
-          "px-2 py-1 rounded-md break-words leading-normal text-center",
+          'px-2 py-1 rounded-md break-words leading-normal text-center',
           activePath === file.path ? 'bg-secondary text-secondary-foreground' : 'text-foreground'
         )}
         title={file.name}

@@ -178,7 +178,7 @@ func NewTestSetup() *TestSetup {
 	if err != nil {
 		panic(fmt.Sprintf("failed to create redis client: %v", err))
 	}
-	// Create services	
+	// Create services
 	orgService := organization_service.NewOrganizationService(store, ctx, l, orgStorage, cache)
 	authService := authService.NewAuthService(userStorage, l, orgService, ctx)
 

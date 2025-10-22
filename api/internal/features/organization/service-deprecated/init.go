@@ -29,7 +29,7 @@ func NewOrganizationService(store *shared_storage.Store, ctx context.Context, lo
 			DB:  store.DB,
 			Ctx: ctx,
 		},
-		cache:        cache,
-		Ctx:          ctx,
+		cache: cache,
+		Ctx:   ctx,
 	}
 }

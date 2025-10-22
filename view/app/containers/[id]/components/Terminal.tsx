@@ -15,13 +15,11 @@ export const Terminal: React.FC<TerminalProps> = ({ containerId }) => {
   const sessionId = useMemo(() => `container-${containerId}-${uuidv4()}`, [containerId]);
   const { sendJsonMessage, isReady } = useWebSocket();
 
-  const { terminalRef: termRef, initializeTerminal, terminalInstance } = useTerminal(
-    true,
-    0,
-    0,
-    true,
-    sessionId
-  );
+  const {
+    terminalRef: termRef,
+    initializeTerminal,
+    terminalInstance
+  } = useTerminal(true, 0, 0, true, sessionId);
 
   const isMounted = useContainerReady(true, termRef as React.RefObject<HTMLDivElement>);
 
@@ -57,5 +55,3 @@ export const Terminal: React.FC<TerminalProps> = ({ containerId }) => {
 };
 
 export default Terminal;
-
-

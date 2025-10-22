@@ -49,6 +49,8 @@
     "start_error": "Erreur lors de l'ouverture du conteneur",
     "stop_error": "Erreur lors de l'arrêt du conteneur",
     "remove_error": "Erreur lors de la suppression du conteneur",
+    "restart_success": "Conteneur redémarré avec succès",
+    "restart_error": "Erreur lors du redémarrage du conteneur",
     "fetch_error": "Erreur lors de la récupération des conteneurs",
     "overview": "Aperçu",
     "logs": "Logs",
@@ -1265,7 +1267,8 @@
   "terminal": {
     "title": "Terminal",
     "shortcut": "⌘J",
-    "close": "Fermer le Terminal"
+    "close": "Fermer le Terminal",
+    "newTab": "Nouvel Onglet"
   },
   "extensions": {
     "title": "Extensions",
@@ -1352,6 +1355,10 @@
     }
   },
   "toasts": {
+    "success": {
+      "uploadFile": "Fichier téléchargé avec succès",
+      "copyFile": "Fichier copié avec succès"
+    },
     "errors": {
       "realtimeMonitor": "Erreur de connexion au service de surveillance en temps réel",
       "setFileToCopy": "Erreur lors de la définition du fichier à copier",
@@ -1361,8 +1368,10 @@
       "startRenaming": "Erreur lors du démarrage du renommage",
       "navigateToFile": "Erreur lors de la navigation vers le fichier",
       "createNewFolder": "Erreur lors de la création du nouveau dossier",
+      "createDirectory": "Erreur lors de la création du répertoire",
       "uploadFile": "Erreur lors du téléchargement du fichier",
       "deleteFile": "Erreur lors de la suppression du fichier",
+      "calculateSize": "Erreur lors du calcul de la taille",
       "setEmail": "Erreur lors de la définition de l'email",
       "setPassword": "Erreur lors de la définition du mot de passe"
     }
