@@ -1,5 +1,6 @@
 # docker compose -f docker-compose-dev.yml up --build
-# TODO: add cli tool seutp configuration for this
+# Development setup with hot reloading for both API and View
+# All services run in containers with localhost files mounted via SSH
 services:
   api:
     build:
@@ -25,7 +26,7 @@ services:
       - REDIS_URL=redis://nixopus-redis:6379
       - CADDY_ENDPOINT=http://nixopus-caddy:2019
       - SUPERTOKENS_API_DOMAIN=http://localhost:${API_PORT:-8080}
-      - SUPERTOKENS_CONNECTION_URI=http://supertokens:3567
+      - SUPERTOKENS_CONNECTION_URI=http://nixopus-supertokens:3567
       - SUPERTOKENS_WEBSITE_DOMAIN=http://localhost:${NEXT_PUBLIC_PORT:-3000}
       - SUPERTOKENS_API_KEY=NixopusSuperTokensAPIKey
       - SSH_HOST=host.docker.internal
@@ -41,6 +42,8 @@ services:
       - ./logs:/app/logs
       - /var/run/docker.sock:/var/run/docker.sock
       - ${HOME}/.ssh:/root/.ssh:ro
+      # Mount projects-dummy for Docker build contexts
+      - ${HOME}/projects-dummy:${HOME}/projects-dummy
       # Speed up go builds by caching modules & tmp directory
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/root/.cache/go-build
@@ -60,6 +63,47 @@ services:
         [
           "CMD-SHELL",
           "curl -fsS http://127.0.0.1:${API_PORT:-8080}/api/v1/health >/dev/null || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  view:
+    build:
+      context: ./view
+      dockerfile: Dockerfile.dev
+      args:
+        - NEXT_PUBLIC_PORT=${NEXT_PUBLIC_PORT:-3000}
+    container_name: nixopus-view-dev
+    ports:
+      - "${NEXT_PUBLIC_PORT:-3000}:${NEXT_PUBLIC_PORT:-3000}"
+    env_file:
+      - ./view/.env
+    environment:
+      - PORT=${NEXT_PUBLIC_PORT:-3000}
+      - NEXT_PUBLIC_PORT=${NEXT_PUBLIC_PORT:-3000}
+      - NEXT_PUBLIC_API_URL=http://localhost:${API_PORT:-8080}
+      - NEXT_TELEMETRY_DISABLED=1
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+    volumes:
+      # Mount source code for hot reloading
+      - ./view:/app
+      - ./view/.env:/app/.env:ro
+      # Use named volume for node_modules to avoid conflicts
+      - view-node-modules:/app/node_modules
+      # Mount logs
+      - ./logs:/app/logs
+    networks:
+      - nixopus-network
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1:${NEXT_PUBLIC_PORT:-3000} >/dev/null || exit 1",
         ]
       interval: 10s
       timeout: 5s
@@ -107,7 +151,7 @@ services:
 
   nixopus-supertokens:
     image: registry.supertokens.io/supertokens/supertokens-postgresql:latest
-    container_name: supertokens
+    container_name: nixopus-supertokens
 
     depends_on:
       nixopus-db:
@@ -168,3 +212,4 @@ volumes:
   caddy-config:
   go-mod-cache:
   go-build-cache:
+  view-node-modules:
