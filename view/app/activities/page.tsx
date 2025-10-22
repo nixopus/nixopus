@@ -2,26 +2,13 @@
 
 import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 import { DahboardUtilityHeader } from '@/components/layout/dashboard-page-header';
 import PaginationWrapper from '@/components/ui/pagination';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTable, TableColumn } from '@/components/ui/data-table';
 import { ActivityMessage } from '@/redux/types/audit';
 import useActivities, {
   ActivityListProps,
@@ -77,18 +64,13 @@ function ActivityList({
         searchPlaceHolder="Search activities..."
       >
         {showFilters && (
-          <Select value={resourceType} onValueChange={handleResourceTypeChange}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Filter by resource" />
-            </SelectTrigger>
-            <SelectContent>
-              {resourceTypeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SelectWrapper
+            value={resourceType}
+            onValueChange={handleResourceTypeChange}
+            options={resourceTypeOptions}
+            placeholder="Filter by resource"
+            className="w-full sm:w-48"
+          />
         )}
       </DahboardUtilityHeader>
       {isLoading ? (
@@ -102,38 +84,7 @@ function ActivityList({
         </div>
       ) : activities.length > 0 ? (
         <>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50px]"></TableHead>
-                  <TableHead>Message</TableHead>
-                  <TableHead>Timestamp</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {activities.map((activity: ActivityMessage) => (
-                  <TableRow key={activity.id}>
-                    <TableCell>
-                      <div
-                        className={`h-3 w-3 rounded-full ${getActionColor(activity.action_color)}`}
-                      ></div>
-                    </TableCell>
-                    <TableCell className="max-w-md">
-                      <TypographySmall className="text-foreground">
-                        {activity.message}
-                      </TypographySmall>
-                    </TableCell>
-                    <TableCell>
-                      <TypographyMuted className="text-xs">
-                        {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
-                      </TypographyMuted>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <ActivitiesTable activities={activities} />
 
           {totalPages > 1 && (
             <div className="mt-6 flex justify-center">
@@ -152,6 +103,53 @@ function ActivityList({
             : 'No activities yet.'}
         </div>
       )}
+    </div>
+  );
+}
+
+function ActivitiesTable({ activities }: { activities: ActivityMessage[] }) {
+  const columns: TableColumn<ActivityMessage>[] = [
+    {
+      key: 'indicator',
+      title: '',
+      width: '50px',
+      render: (_, activity) => (
+        <div
+          className={`h-3 w-3 rounded-full ${getActionColor(activity.action_color)}`}
+        />
+      )
+    },
+    {
+      key: 'message',
+      title: 'Message',
+      dataIndex: 'message',
+      className: 'max-w-md',
+      render: (message) => (
+        <TypographySmall className="text-foreground">
+          {message}
+        </TypographySmall>
+      )
+    },
+    {
+      key: 'timestamp',
+      title: 'Timestamp',
+      dataIndex: 'timestamp',
+      render: (timestamp) => (
+        <TypographyMuted className="text-xs">
+          {formatDistanceToNow(new Date(timestamp), { addSuffix: true })}
+        </TypographyMuted>
+      )
+    }
+  ];
+
+  return (
+    <div className="rounded-md border">
+      <DataTable
+        data={activities}
+        columns={columns}
+        showBorder={false}
+        hoverable={false}
+      />
     </div>
   );
 }

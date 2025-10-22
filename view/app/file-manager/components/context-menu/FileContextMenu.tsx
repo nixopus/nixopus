@@ -19,7 +19,7 @@ import {
 import { useTranslation } from '@/hooks/use-translation';
 import { FileData } from '@/redux/types/files';
 import { toast } from 'sonner';
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { DialogWrapper } from '@/components/ui/dialog-wrapper';
 import FileUpload from '../actions/Upload';
 import { useCreateDirectoryMutation } from '@/redux/services/file-manager/fileManagersApi';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
@@ -119,15 +119,19 @@ export function FileContextMenu({
         ) : (
           <>
             <ResourceGuard resource="file-manager" action="create">
-              <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-                <DialogTrigger asChild>
+              <DialogWrapper
+                open={isUploadOpen}
+                onOpenChange={setIsUploadOpen}
+                trigger={
                   <ContextMenuItem onSelect={(e) => e.preventDefault()}>
                     <UploadCloudIcon className="mr-2 h-5 w-5" />
                     <span>{t('fileManager.actions.upload')}</span>
                   </ContextMenuItem>
-                </DialogTrigger>
+                }
+                size="lg"
+              >
                 <FileUpload setIsDialogOpen={setIsUploadOpen} currentPath={currentPath || ''} />
-              </Dialog>
+              </DialogWrapper>
 
               <ContextMenuItem onSelect={handleCreateDirectory}>
                 <FolderPlusIcon className="mr-2 h-5 w-5" />

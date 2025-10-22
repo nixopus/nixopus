@@ -3,13 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Keyboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
+import { DialogWrapper } from '@/components/ui/dialog-wrapper';
 import { Separator } from '@/components/ui/separator';
 
 interface Shortcut {
@@ -49,58 +43,60 @@ export function KeyboardShortcuts() {
   const leftColumn = shortcuts.slice(0, halfLength);
   const rightColumn = shortcuts.slice(halfLength);
 
+  const trigger = (
+    <Button variant="outline" size="icon" className="h-9 w-9" data-slot="keyboard-shortcuts">
+      <Keyboard className="h-4 w-4" />
+    </Button>
+  );
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="icon" className="h-9 w-9" data-slot="keyboard-shortcuts">
-          <Keyboard className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Keyboard Shortcuts</DialogTitle>
-        </DialogHeader>
-        <div className="grid grid-cols-2 gap-4 py-4">
-          <div className="space-y-4">
-            {leftColumn.map((shortcut, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">{shortcut.description}</div>
-                <div className="flex items-center gap-1">
-                  {shortcut.keys.map((key, keyIndex) => (
-                    <React.Fragment key={keyIndex}>
-                      <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                        {key}
-                      </kbd>
-                      {keyIndex < shortcut.keys.length - 1 && (
-                        <span className="text-muted-foreground">+</span>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
+    <DialogWrapper
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      title="Keyboard Shortcuts"
+      trigger={trigger}
+      size="lg"
+    >
+      <div className="grid grid-cols-2 gap-4 py-4">
+        <div className="space-y-4">
+          {leftColumn.map((shortcut, index) => (
+            <div key={index} className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">{shortcut.description}</div>
+              <div className="flex items-center gap-1">
+                {shortcut.keys.map((key, keyIndex) => (
+                  <React.Fragment key={keyIndex}>
+                    <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                      {key}
+                    </kbd>
+                    {keyIndex < shortcut.keys.length - 1 && (
+                      <span className="text-muted-foreground">+</span>
+                    )}
+                  </React.Fragment>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="space-y-4">
-            {rightColumn.map((shortcut, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">{shortcut.description}</div>
-                <div className="flex items-center gap-1">
-                  {shortcut.keys.map((key, keyIndex) => (
-                    <React.Fragment key={keyIndex}>
-                      <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                        {key}
-                      </kbd>
-                      {keyIndex < shortcut.keys.length - 1 && (
-                        <span className="text-muted-foreground">+</span>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-      </DialogContent>
-    </Dialog>
+        <div className="space-y-4">
+          {rightColumn.map((shortcut, index) => (
+            <div key={index} className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">{shortcut.description}</div>
+              <div className="flex items-center gap-1">
+                {shortcut.keys.map((key, keyIndex) => (
+                  <React.Fragment key={keyIndex}>
+                    <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                      {key}
+                    </kbd>
+                    {keyIndex < shortcut.keys.length - 1 && (
+                      <span className="text-muted-foreground">+</span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </DialogWrapper>
   );
 }

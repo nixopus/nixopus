@@ -3,13 +3,7 @@
 import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
 import { Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ExtensionSortField, SortDirection } from '@/redux/types/extension';
@@ -35,7 +29,7 @@ function ExtensionsHeader({
     return <ExtensionsHeaderSkeleton />;
   }
 
-  const sortOptions = [
+  const sortOptions: SelectOption[] = [
     { value: 'name_asc', label: t('extensions.sortOptions.name') + ' (A-Z)' },
     { value: 'name_desc', label: t('extensions.sortOptions.name') + ' (Z-A)' }
   ];
@@ -58,24 +52,16 @@ function ExtensionsHeader({
               className="pl-10 w-full sm:w-[300px]"
             />
           </div>
-          <Select
+          <SelectWrapper
             value={sortConfig ? `${sortConfig.key}_${sortConfig.direction}` : 'name_asc'}
             onValueChange={(value) => {
               const [key, direction] = value.split('_') as [ExtensionSortField, SortDirection];
               onSortChange?.(key, direction);
             }}
-          >
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder={t('extensions.sortBy')} />
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={sortOptions}
+            placeholder={t('extensions.sortBy')}
+            className="w-full sm:w-[180px]"
+          />
         </div>
       </div>
     </div>
