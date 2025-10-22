@@ -1,0 +1,7 @@
+updating_nixopus = "Updating Nixopus..."
+pulling_latest_images = "Pulling latest images..."
+images_pulled_successfully = "Images pulled successfully"
+failed_to_pull_images = "Failed to pull images: {error}"
+starting_services = "Starting services..."
+failed_to_start_services = "Failed to start services: {error}"
+nixopus_updated_successfully = "Nixopus updated successfully"

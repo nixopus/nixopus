@@ -16,6 +16,7 @@ from app.commands.proxy.command import proxy_app
 from app.commands.service.command import service_app
 from app.commands.test.command import test_app
 from app.commands.uninstall.command import uninstall_app
+from app.commands.update.command import update_app
 from app.commands.version.command import main_version_callback, version_app
 from app.commands.version.version import VersionCommand
 from app.utils.config import Config
@@ -99,6 +100,7 @@ app.add_typer(service_app, name="service")
 app.add_typer(proxy_app, name="proxy")
 app.add_typer(install_app, name="install")
 app.add_typer(uninstall_app, name="uninstall")
+app.add_typer(update_app, name="update")
 app.add_typer(version_app, name="version")
 
 config = Config()
