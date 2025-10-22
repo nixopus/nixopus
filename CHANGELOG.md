@@ -1,3 +1,12 @@
+# [0.1.0-alpha.48](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.47...v0.1.0-alpha.48) (2025-10-22)
+
+
+### Features
+
+* **cli:** bump cli v0.1.15 to v0.1.16 ([#529](https://github.com/raghavyuva/nixopus/issues/529)) ([0db449b](https://github.com/raghavyuva/nixopus/commit/0db449b5fa5b8235fffe12b09b3dbdcfaecccf9a))
+
+
+
 # [0.1.0-alpha.47](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.46...v0.1.0-alpha.47) (2025-10-22)
 
 
