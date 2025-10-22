@@ -2,13 +2,7 @@
 
 import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
@@ -70,18 +64,13 @@ function ActivityList({
         searchPlaceHolder="Search activities..."
       >
         {showFilters && (
-          <Select value={resourceType} onValueChange={handleResourceTypeChange}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Filter by resource" />
-            </SelectTrigger>
-            <SelectContent>
-              {resourceTypeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SelectWrapper
+            value={resourceType}
+            onValueChange={handleResourceTypeChange}
+            options={resourceTypeOptions}
+            placeholder="Filter by resource"
+            className="w-full sm:w-48"
+          />
         )}
       </DahboardUtilityHeader>
       {isLoading ? (

@@ -11,13 +11,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
 import { Label } from '@/components/ui/label';
 import { PlusIcon } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
@@ -83,19 +77,17 @@ function AddMember({
             <Label htmlFor="role" className="text-right">
               Role
             </Label>
-            <Select
+            <SelectWrapper
               value={newUser.role}
               onValueChange={(value) => setNewUser({ ...newUser, role: value })}
-            >
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="viewer">Viewer</SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: 'admin', label: 'Admin' },
+                { value: 'member', label: 'Member' },
+                { value: 'viewer', label: 'Viewer' }
+              ]}
+              placeholder="Select role"
+              className="col-span-3"
+            />
           </div>
         </div>
 

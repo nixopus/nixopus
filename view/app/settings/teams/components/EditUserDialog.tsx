@@ -8,13 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
 import { UserTypes } from '@/redux/types/orgs';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
@@ -32,7 +26,7 @@ interface EditUserDialogProps {
   onSave: (userId: string, role: UserTypes) => void;
 }
 
-const AVAILABLE_ROLES: { value: UserTypes; label: string }[] = [
+const AVAILABLE_ROLES: SelectOption[] = [
   { value: 'admin', label: 'Admin' },
   { value: 'member', label: 'Member' },
   { value: 'viewer', label: 'Viewer' }
@@ -75,20 +69,12 @@ function EditUserDialog({ isOpen, onClose, user, onSave }: EditUserDialogProps) 
         <div className="space-y-6 py-4">
           <div className="space-y-2">
             <Label>{t('settings.teams.editUser.dialog.fields.role.label')}</Label>
-            <Select value={selectedRole} onValueChange={handleRoleChange}>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={t('settings.teams.editUser.dialog.fields.role.placeholder')}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {AVAILABLE_ROLES.map((role) => (
-                  <SelectItem key={role.value} value={role.value}>
-                    {role.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SelectWrapper
+              value={selectedRole}
+              onValueChange={handleRoleChange}
+              options={AVAILABLE_ROLES}
+              placeholder={t('settings.teams.editUser.dialog.fields.role.placeholder')}
+            />
           </div>
         </div>
         <div className="flex justify-end space-x-2">
