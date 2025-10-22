@@ -2,22 +2,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { DialogWrapper, DialogAction } from '@/components/ui/dialog-wrapper';
+import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
 import { Label } from '@/components/ui/label';
 import { PlusIcon } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
@@ -49,66 +35,70 @@ function AddMember({
 }: AddMemberProps) {
   const { t } = useTranslation();
 
+  const actions: DialogAction[] = [
+    {
+      label: 'Cancel',
+      onClick: () => setIsAddUserDialogOpen(false),
+      variant: 'outline'
+    },
+    {
+      label: isInviteLoading ? 'Sending...' : 'Send Invite',
+      onClick: handleSendInvite,
+      disabled: isInviteLoading,
+      loading: isInviteLoading,
+      variant: 'default'
+    }
+  ];
+
+  const trigger = (
+    <Button size="sm">
+      <PlusIcon className="h-4 w-4 mr-2" />
+      Invite Member
+    </Button>
+  );
+
   return (
-    <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <PlusIcon className="h-4 w-4 mr-2" />
-          Invite Member
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Invite Team Member</DialogTitle>
-          <DialogDescription>
-            Send a magic link invitation to add a new member to your team
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="email" className="text-right">
-              Email
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              value={newUser.email}
-              onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-              className="col-span-3"
-              placeholder="Enter email address"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="role" className="text-right">
-              Role
-            </Label>
-            <Select
-              value={newUser.role}
-              onValueChange={(value) => setNewUser({ ...newUser, role: value })}
-            >
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="viewer">Viewer</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+    <DialogWrapper
+      open={isAddUserDialogOpen}
+      onOpenChange={setIsAddUserDialogOpen}
+      title="Invite Team Member"
+      description="Send a magic link invitation to add a new member to your team"
+      trigger={trigger}
+      actions={actions}
+      size="md"
+    >
+      <div className="grid gap-4 py-4">
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="email" className="text-right">
+            Email
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            value={newUser.email}
+            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+            className="col-span-3"
+            placeholder="Enter email address"
+          />
         </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsAddUserDialogOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSendInvite} disabled={isInviteLoading}>
-            {isInviteLoading ? 'Sending...' : 'Send Invite'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="role" className="text-right">
+            Role
+          </Label>
+          <SelectWrapper
+            value={newUser.role}
+            onValueChange={(value) => setNewUser({ ...newUser, role: value })}
+            options={[
+              { value: 'admin', label: 'Admin' },
+              { value: 'member', label: 'Member' },
+              { value: 'viewer', label: 'Viewer' }
+            ]}
+            placeholder="Select role"
+            className="col-span-3"
+          />
+        </div>
+      </div>
+    </DialogWrapper>
   );
 }
 

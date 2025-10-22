@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTable, TableColumn } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -163,6 +156,90 @@ function TeamMembers({
     return canModifyUser(user);
   };
 
+  const hasAnyEditableActions = users.some((user) => hasEditableActions(user));
+
+  const columns: TableColumn<EditUser>[] = [
+    {
+      key: 'user',
+      title: t('settings.teams.members.table.headers.user'),
+      render: (_, user) => (
+        <div className="flex items-center space-x-3">
+          <Avatar className="w-12 h-12 shadow-md">
+            {user.avatar ? (
+              <AvatarImage src={user.avatar} alt="Profile avatar" />
+            ) : (
+              <AvatarFallback className="bg-secondary text-foreground text-xl font-medium">
+                {user.name.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            )}
+          </Avatar>
+          <div>
+            <div className="font-medium">{user.name}</div>
+            <TypographyMuted>{user.email}</TypographyMuted>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'role',
+      title: t('settings.teams.members.table.headers.role'),
+      render: (_, user) => (
+        <Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge>
+      )
+    },
+    {
+      key: 'permissions',
+      title: t('settings.teams.members.table.headers.permissions'),
+      render: (_, user) => renderPermissions(user.permissions, user.id)
+    }
+  ];
+
+  if (hasAnyEditableActions) {
+    columns.push({
+      key: 'actions',
+      title: t('settings.teams.members.table.headers.actions'),
+      render: (_, user) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <DotsVerticalIcon className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <ResourceGuard resource="user" action="update">
+              {canModifyUser(user) && (
+                <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                  <PencilIcon className="h-4 w-4 mr-2" />
+                  {t('settings.teams.members.actions.edit')}
+                </DropdownMenuItem>
+              )}
+            </ResourceGuard>
+            <ResourceGuard resource="user" action="update">
+              <ResourceGuard resource="user" action="delete">
+                {canModifyUser(user) && <DropdownMenuSeparator />}
+              </ResourceGuard>
+            </ResourceGuard>
+            <ResourceGuard resource="user" action="delete">
+              {canModifyUser(user) && (
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => {
+                    setUserToRemove(user);
+                    setIsDeleteDialogOpen(true);
+                  }}
+                >
+                  <TrashIcon className="h-4 w-4 mr-2" />
+                  {t('settings.teams.members.actions.remove')}
+                </DropdownMenuItem>
+              )}
+            </ResourceGuard>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+      align: 'right'
+    });
+  }
+
   return (
     <>
       <Card>
@@ -171,87 +248,12 @@ function TeamMembers({
           <TypographyMuted>{t('settings.teams.members.description')}</TypographyMuted>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('settings.teams.members.table.headers.user')}</TableHead>
-                <TableHead>{t('settings.teams.members.table.headers.role')}</TableHead>
-                <TableHead>{t('settings.teams.members.table.headers.permissions')}</TableHead>
-                {users.some((user) => hasEditableActions(user)) && (
-                  <TableHead className="text-right">
-                    {t('settings.teams.members.table.headers.actions')}
-                  </TableHead>
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="w-12 h-12 shadow-md">
-                        {user.avatar ? (
-                          <AvatarImage src={user.avatar} alt="Profile avatar" />
-                        ) : (
-                          <AvatarFallback className="bg-secondary text-foreground text-xl font-medium">
-                            {user.name.slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{user.name}</div>
-                        <TypographyMuted>{user.email}</TypographyMuted>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge>
-                  </TableCell>
-                  <TableCell>{renderPermissions(user.permissions, user.id)}</TableCell>
-                  {hasEditableActions(user) && (
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <DotsVerticalIcon className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <ResourceGuard resource="user" action="update">
-                            {canModifyUser(user) && (
-                              <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                                <PencilIcon className="h-4 w-4 mr-2" />
-                                {t('settings.teams.members.actions.edit')}
-                              </DropdownMenuItem>
-                            )}
-                          </ResourceGuard>
-                          <ResourceGuard resource="user" action="update">
-                            <ResourceGuard resource="user" action="delete">
-                              {canModifyUser(user) && <DropdownMenuSeparator />}
-                            </ResourceGuard>
-                          </ResourceGuard>
-                          <ResourceGuard resource="user" action="delete">
-                            {canModifyUser(user) && (
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => {
-                                  setUserToRemove(user);
-                                  setIsDeleteDialogOpen(true);
-                                }}
-                              >
-                                <TrashIcon className="h-4 w-4 mr-2" />
-                                {t('settings.teams.members.actions.remove')}
-                              </DropdownMenuItem>
-                            )}
-                          </ResourceGuard>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            data={users}
+            columns={columns}
+            showBorder={false}
+            hoverable={false}
+          />
         </CardContent>
       </Card>
 

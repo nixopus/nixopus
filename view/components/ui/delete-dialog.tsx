@@ -1,13 +1,4 @@
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
+import { DialogWrapper, DialogAction } from '@/components/ui/dialog-wrapper';
 import { LucideIcon } from 'lucide-react';
 import { ReactNode } from 'react';
 
@@ -38,34 +29,32 @@ export function DeleteDialog({
   open,
   onOpenChange
 }: ConfirmationDialogProps) {
-  const handleConfirm = () => {
-    onConfirm();
-    onOpenChange?.(false);
-  };
+  const actions: DialogAction[] = [
+    {
+      label: cancelText,
+      onClick: () => onOpenChange?.(false),
+      variant: 'outline'
+    },
+    {
+      label: confirmText,
+      onClick: onConfirm,
+      disabled: isDeleting,
+      loading: isDeleting,
+      variant: variant,
+      icon: Icon,
+      className: variant === 'destructive' ? 'bg-destructive' : ''
+    }
+  ];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="sm:justify-end">
-          <Button variant="outline" onClick={() => onOpenChange?.(false)}>
-            {cancelText}
-          </Button>
-          <Button
-            variant={variant}
-            onClick={handleConfirm}
-            disabled={isDeleting}
-            className={variant === 'destructive' ? 'bg-destructive' : ''}
-          >
-            {Icon && <Icon className="mr-2 h-4 w-4" />}
-            {confirmText}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DialogWrapper
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      description={description}
+      trigger={trigger}
+      actions={actions}
+      size="sm"
+    />
   );
 }

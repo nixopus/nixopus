@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
 
 export interface SortOption<T> {
   value: keyof T;
@@ -28,32 +22,28 @@ export function SortSelect<T>({
   placeholder = 'Sort by',
   className = 'w-full sm:w-[180px]'
 }: SortSelectProps<T>) {
+  const selectOptions: SelectOption[] = options.map((option) => ({
+    value: `${option.value as string}_${option.direction}`,
+    label: option.label
+  }));
+
+  const handleValueChange = (value: string) => {
+    const [key, direction] = value.split('_');
+    const newSort = options.find(
+      (option) => option.value === key && option.direction === direction
+    );
+    if (newSort) {
+      onSortChange(newSort);
+    }
+  };
+
   return (
-    <Select
-      onValueChange={(value) => {
-        const [key, direction] = value.split('_');
-        const newSort = options.find(
-          (option) => option.value === key && option.direction === direction
-        );
-        if (newSort) {
-          onSortChange(newSort);
-        }
-      }}
+    <SelectWrapper
       value={`${currentSort.value as string}_${currentSort.direction}`}
-    >
-      <SelectTrigger className={className}>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem
-            key={`${option.value as string}_${option.direction}`}
-            value={`${option.value as string}_${option.direction}`}
-          >
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      onValueChange={handleValueChange}
+      options={selectOptions}
+      placeholder={placeholder}
+      className={className}
+    />
   );
 }

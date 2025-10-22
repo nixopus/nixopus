@@ -1,13 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription
-} from '@/components/ui/dialog';
+import { DialogWrapper, DialogAction } from '@/components/ui/dialog-wrapper';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,34 +36,42 @@ export default function ExtensionInput({
     onOpenChange(false);
   };
 
+  const actions: DialogAction[] = [
+    {
+      label: t('common.cancel'),
+      onClick: () => onOpenChange(false),
+      variant: 'ghost'
+    },
+    {
+      label: t('extensions.run'),
+      onClick: submit,
+      variant: 'default'
+    }
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>{extension?.name || t('extensions.run')}</DialogTitle>
-          <DialogDescription>{extension?.description}</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          {variables.length === 0 && (
-            <div className="text-sm text-muted-foreground">{t('extensions.noVariables')}</div>
-          )}
-          {variables.map((v) => (
-            <div key={v.id} className="space-y-1">
-              <Field variable={v} value={values[v.variable_name]} onChange={handleChange} />
-              {errors[v.variable_name] && (
-                <div className="text-xs text-destructive">{errors[v.variable_name]}</div>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {t('common.cancel')}
-          </Button>
-          <Button onClick={submit}>{t('extensions.run')}</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <DialogWrapper
+      open={open}
+      onOpenChange={onOpenChange}
+      title={extension?.name || t('extensions.run')}
+      description={extension?.description}
+      actions={actions}
+      size="lg"
+    >
+      <div className="space-y-4 py-2">
+        {variables.length === 0 && (
+          <div className="text-sm text-muted-foreground">{t('extensions.noVariables')}</div>
+        )}
+        {variables.map((v) => (
+          <div key={v.id} className="space-y-1">
+            <Field variable={v} value={values[v.variable_name]} onChange={handleChange} />
+            {errors[v.variable_name] && (
+              <div className="text-xs text-destructive">{errors[v.variable_name]}</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </DialogWrapper>
   );
 }
 

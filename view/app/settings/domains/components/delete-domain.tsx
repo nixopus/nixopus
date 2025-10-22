@@ -1,12 +1,4 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { DialogWrapper, DialogAction } from '@/components/ui/dialog-wrapper';
 import React from 'react';
 import { useDeleteDomainMutation } from '@/redux/services/settings/domainsApi';
 import { toast } from 'sonner';
@@ -36,25 +28,32 @@ const DeleteDomain = ({ open, setOpen, id }: DeleteDomainProps) => {
     }
   };
 
+  const actions: DialogAction[] = [
+    {
+      label: t('settings.domains.delete.cancel'),
+      onClick: () => setOpen(false),
+      variant: 'outline'
+    },
+    {
+      label: isLoading
+        ? t('settings.domains.delete.deleting')
+        : t('settings.domains.delete.delete'),
+      onClick: handleDelete,
+      disabled: isLoading,
+      loading: isLoading,
+      variant: 'destructive'
+    }
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{t('settings.domains.delete.title')}</DialogTitle>
-          <DialogDescription>{t('settings.domains.delete.description')}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="flex justify-between sm:justify-end gap-2 pt-2">
-          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-            {t('settings.domains.delete.cancel')}
-          </Button>
-          <Button type="button" disabled={isLoading} onClick={handleDelete}>
-            {isLoading
-              ? t('settings.domains.delete.deleting')
-              : t('settings.domains.delete.delete')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DialogWrapper
+      open={open}
+      onOpenChange={setOpen}
+      title={t('settings.domains.delete.title')}
+      description={t('settings.domains.delete.description')}
+      actions={actions}
+      size="lg"
+    />
   );
 };
 

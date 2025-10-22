@@ -14,13 +14,7 @@ import { TypographyH1, TypographyH2, TypographyMuted } from '@/components/ui/typ
 import PageLayout from '@/components/layout/page-layout';
 import ContainersTable from './components/table';
 import PaginationWrapper from '@/components/ui/pagination';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
 import { SearchBar } from '@/components/ui/search-bar';
 import { ContainerCard } from './components/card';
 
@@ -130,25 +124,22 @@ export default function ContainersPage() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <Select
+            <SelectWrapper
               value={String(pageSize)}
               onValueChange={(v) => {
                 const num = parseInt(v, 10);
                 setPageSize(num);
                 setPage(1);
               }}
-            >
-              <SelectTrigger className="w-[110px]">
-                <SelectValue placeholder="Page size" />
-              </SelectTrigger>
-              <SelectContent>
-                {[10, 20, 50, 100].map((s) => (
-                  <SelectItem key={s} value={String(s)}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={[
+                { value: '10', label: '10' },
+                { value: '20', label: '20' },
+                { value: '50', label: '50' },
+                { value: '100', label: '100' }
+              ]}
+              placeholder="Page size"
+              className="w-[110px]"
+            />
             <div className="hidden sm:flex items-center gap-2 ml-2">
               <Button
                 variant="outline"

@@ -7,13 +7,7 @@ import {
   FormField,
   FormDescription
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
 
 type FormSelectFieldProps = {
   form: any;
@@ -21,7 +15,7 @@ type FormSelectFieldProps = {
   name: string;
   description?: string;
   placeholder?: string;
-  selectOptions?: { label: string; value: string }[];
+  selectOptions?: SelectOption[];
   required?: boolean;
 };
 
@@ -46,20 +40,14 @@ function FormSelectField({
               {required ? '*' : ''}
             </span>
           </div>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder={placeholder} />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {selectOptions?.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FormControl>
+            <SelectWrapper
+              value={field.value}
+              onValueChange={field.onChange}
+              options={selectOptions || []}
+              placeholder={placeholder}
+            />
+          </FormControl>
           {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
         </FormItem>
