@@ -89,6 +89,15 @@ class UpService(BaseService[UpConfig, UpResult]):
     def execute(self) -> UpResult:
         self.logger.debug(f"Starting services: {self.config.name}")
 
+        # Handle dry-run mode
+        if self.config.dry_run:
+            self.logger.debug("[DRY RUN] Would start services")
+            return self._create_result(
+                success=True,
+                error=None,
+                docker_output="[DRY RUN] Services would be started"
+            )
+
         success, docker_output = self.docker_service.start_services(
             self.config.name, self.config.detach, self.config.env_file, self.config.compose_file
         )

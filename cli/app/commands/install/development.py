@@ -76,7 +76,20 @@ class DevelopmentInstall(BaseInstall):
             branch=branch,
         )
 
-        self.install_path = os.path.abspath(os.path.expanduser(install_path)) if install_path else os.getcwd()
+        # safe fallback incase cwd is not accessible
+        if install_path:
+            self.install_path = os.path.abspath(os.path.expanduser(install_path))
+        else:
+            try:
+                self.install_path = os.getcwd()
+            except (FileNotFoundError, OSError) as e:
+                # cwd is not accessible
+                # Fall back to user's home directory
+                self.install_path = os.path.expanduser("~/nixopus-dev")
+                os.makedirs(self.install_path, exist_ok=True)
+                if logger:
+                    logger.warning(f"Current directory is not accessible: {e}")
+                    logger.info(f"Using default installation path: {self.install_path}")
 
         # Check platform and WSL requirement for Windows
         self._check_platform_support()
@@ -182,7 +195,7 @@ class DevelopmentInstall(BaseInstall):
         if key == "api_env_file_path":
             return os.path.join(self.install_path, "api", ".env")
         if key == "view_env_file_path":
-            return os.path.join(self.install_path, "view", ".env.local")
+            return os.path.join(self.install_path, "view", ".env")
         if key == "ssh_key_path":
             return os.path.expanduser("~/.ssh/id_rsa_nixopus")
 
@@ -322,8 +335,19 @@ class DevelopmentInstall(BaseInstall):
         api_env_file = self._get_config("api_env_file_path")
         view_env_file = self._get_config("view_env_file_path")
 
+        if self.dry_run:
+            self.logger.info(f"[DRY RUN] Would create environment files:")
+            self.logger.info(f"  - API:  {api_env_file}")
+            self.logger.info(f"  - View: {view_env_file}")
+            return
+
         FileManager.create_directory(FileManager.get_directory_path(api_env_file), logger=self.logger)
         FileManager.create_directory(FileManager.get_directory_path(view_env_file), logger=self.logger)
+
+        # Get combined env file path
+        full_source_path = self._get_config("full_source_path")
+        combined_env_file = os.path.join(full_source_path, ".env")
+        FileManager.create_directory(FileManager.get_directory_path(combined_env_file), logger=self.logger)
 
         services = [
             ("api", "services.api.env", api_env_file),
@@ -332,6 +356,7 @@ class DevelopmentInstall(BaseInstall):
 
         env_manager = BaseEnvironmentManager(self.logger)
 
+        # Create individual service env files
         for service_name, service_key, env_file in services:
             env_values = self._config.get_service_env_values(service_key)
             updated_env_values = self._update_environment_variables(env_values)
@@ -342,6 +367,24 @@ class DevelopmentInstall(BaseInstall):
             if not file_perm_success:
                 raise Exception(f"{env_file_permissions_failed} {service_name}: {file_perm_error}")
             self.logger.debug(created_env_file.format(service_name=service_name, env_file=env_file))
+
+        # Create combined env file with both API and view variables (for docker-compose)
+        api_env_values = self._config.get_service_env_values("services.api.env")
+        view_env_values = self._config.get_service_env_values("services.view.env")
+
+        combined_env_values = {}
+        combined_env_values.update(self._update_environment_variables(api_env_values))
+        combined_env_values.update(self._update_environment_variables(view_env_values))
+
+        success, error = env_manager.write_env_file(combined_env_file, combined_env_values)
+        if not success:
+            raise Exception(f"{env_file_creation_failed} combined: {error}")
+
+        file_perm_success, file_perm_error = FileManager.set_permissions(combined_env_file, 0o644)
+        if not file_perm_success:
+            raise Exception(f"{env_file_permissions_failed} combined: {file_perm_error}")
+
+        self.logger.debug(created_env_file.format(service_name="combined", env_file=combined_env_file))
 
     def _update_environment_variables(self, env_values: dict) -> dict:
         """Update environment variables with development-specific values"""
@@ -648,7 +691,7 @@ class DevelopmentInstall(BaseInstall):
             self.logger.info(" Configuration Files:")
             self.logger.info(f"  • Config Dir:  {os.path.join(self.install_path, 'nixopus-dev')}")
             self.logger.info(f"  • Backend:     {os.path.join(self.install_path, 'api', '.env')}")
-            self.logger.info(f"  • Frontend:    {os.path.join(self.install_path, 'view', '.env.local')}")
+            self.logger.info(f"  • Frontend:    {os.path.join(self.install_path, 'view', '.env')}")
             self.logger.info(f"  • Caddy:       {os.path.join(self.install_path, 'helpers', 'caddy.json')}")
             self.logger.info("  • SSH Key:     ~/.ssh/id_rsa_nixopus")
             self.logger.info("")
