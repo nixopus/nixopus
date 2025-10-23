@@ -195,7 +195,6 @@ class DevelopmentInstall(BaseInstall):
         if key == "api_env_file_path":
             return os.path.join(self.install_path, "api", ".env")
         if key == "view_env_file_path":
-            # Development uses .env (not .env.local) to match docker-compose-dev.yml
             return os.path.join(self.install_path, "view", ".env")
         if key == "ssh_key_path":
             return os.path.expanduser("~/.ssh/id_rsa_nixopus")
