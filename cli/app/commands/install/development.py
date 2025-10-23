@@ -85,7 +85,8 @@ class DevelopmentInstall(BaseInstall):
             except (FileNotFoundError, OSError) as e:
                 # cwd is not accessible
                 # Fall back to user's home directory
-                self.install_path = os.path.expanduser("~/nixopus")
+                self.install_path = os.path.expanduser("~/nixopus-dev")
+                os.makedirs(self.install_path, exist_ok=True)
                 if logger:
                     logger.warning(f"Current directory is not accessible: {e}")
                     logger.info(f"Using default installation path: {self.install_path}")
