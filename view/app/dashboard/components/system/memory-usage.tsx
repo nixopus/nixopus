@@ -9,13 +9,18 @@ import { useTranslation } from '@/hooks/use-translation';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 interface MemoryUsageCardProps {
-  systemStats: SystemStatsType;
+  systemStats: SystemStatsType | null;
 }
 
 const formatGB = (value: number) => `${value.toFixed(2)}`;
 
 const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
   const { t } = useTranslation();
+  
+  if (!systemStats) {
+    return <MemoryUsageCardSkeleton />;
+  }
+  
   const { memory } = systemStats;
 
   return (

@@ -9,11 +9,16 @@ import { useTranslation } from '@/hooks/use-translation';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 interface SystemInfoCardProps {
-  systemStats: SystemStatsType;
+  systemStats: SystemStatsType | null;
 }
 
 const SystemInfoCard: React.FC<SystemInfoCardProps> = ({ systemStats }) => {
   const { t } = useTranslation();
+  
+  if (!systemStats) {
+    return <SystemInfoCardSkeleton />;
+  }
+  
   const { load } = systemStats;
 
   return (

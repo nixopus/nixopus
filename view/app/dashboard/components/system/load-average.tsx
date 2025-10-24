@@ -9,11 +9,16 @@ import { useTranslation } from '@/hooks/use-translation';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 
 interface LoadAverageCardProps {
-  systemStats: SystemStatsType;
+  systemStats: SystemStatsType | null;
 }
 
 const LoadAverageCard: React.FC<LoadAverageCardProps> = ({ systemStats }) => {
   const { t } = useTranslation();
+  
+  if (!systemStats) {
+    return <LoadAverageCardSkeleton />;
+  }
+  
   const { load } = systemStats;
 
   return (
