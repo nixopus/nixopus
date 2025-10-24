@@ -67,3 +67,4 @@ artifacts/
 cli/nixopus.spec
 
 **/.DS_Store
+api/nixopus-api
