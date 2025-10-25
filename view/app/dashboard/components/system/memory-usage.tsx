@@ -63,7 +63,7 @@ const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
       <CardContent className="flex-1 flex flex-col">
         <div className="space-y-4 flex-1 flex flex-col">
           {/* Doughnut Chart */}
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center min-h-[200px]">
             <DoughnutChartComponent
               data={chartData}
               chartConfig={chartConfig}
@@ -120,7 +120,7 @@ export function MemoryUsageCardSkeleton() {
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         <div className="space-y-4 flex-1 flex flex-col">
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center min-h-[200px]">
             <Skeleton className="mx-auto aspect-square max-h-[200px] w-[200px] rounded-full" />
           </div>
 

@@ -31,8 +31,8 @@ export const DoughnutChartComponent: React.FC<DoughnutChartComponentProps> = ({
   maxHeight = 'max-h-[200px]'
 }) => {
   return (
-    <ChartContainer config={chartConfig} className={`mx-auto aspect-square ${maxHeight}`}>
-      <PieChart>
+    <ChartContainer config={chartConfig} className={`mx-auto aspect-square ${maxHeight} w-full`}>
+      <PieChart width={200} height={200}>
         <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
         <Pie
           data={data}
@@ -41,6 +41,8 @@ export const DoughnutChartComponent: React.FC<DoughnutChartComponentProps> = ({
           innerRadius={innerRadius}
           outerRadius={outerRadius}
           strokeWidth={5}
+          cx="50%"
+          cy="50%"
         >
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.fill} />
