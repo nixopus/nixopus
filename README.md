@@ -4,7 +4,7 @@
 
 
 <p align="center">
- Open Source Server management platform with Terminal integration, and Self Hosting capabilities.
+ Open Source alternative to vercel, heroku, netlify with Terminal integration, and Self Hosting capabilities. 
 </p>
 
 <p align="center">

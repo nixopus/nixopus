@@ -1,3 +1,12 @@
+# [0.1.0-alpha.51](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.50...v0.1.0-alpha.51) (2025-10-25)
+
+
+### Bug Fixes
+
+* menu for closed sidebar items on hover ([#526](https://github.com/raghavyuva/nixopus/issues/526)) ([ca423ed](https://github.com/raghavyuva/nixopus/commit/ca423ed2e3a53c5a1e96048914316399274afcf0))
+
+
+
 # [0.1.0-alpha.50](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.49...v0.1.0-alpha.50) (2025-10-25)
 
 
