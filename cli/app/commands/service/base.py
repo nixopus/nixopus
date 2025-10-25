@@ -39,13 +39,12 @@ class BaseDockerCommandBuilder:
         cmd = ["docker", "compose"]
         if compose_file:
             cmd.extend(["-f", compose_file])
+        if env_file:
+            cmd.extend(["--env-file", env_file])
         cmd.append(action)
 
         if action == "up" and kwargs.get("detach", False):
             cmd.append("-d")
-
-        if env_file:
-            cmd.extend(["--env-file", env_file])
 
         if name != "all":
             cmd.append(name)
@@ -58,11 +57,14 @@ class BaseDockerCommandBuilder:
         remove_images: str = "all",
         remove_volumes: bool = True,
         remove_orphans: bool = True,
+        env_file: str = None,
     ) -> list[str]:
         """Build a docker compose cleanup command (down with prune flags)."""
         cmd = ["docker", "compose"]
         if compose_file:
             cmd.extend(["-f", compose_file])
+        if env_file:
+            cmd.extend(["--env-file", env_file])
         cmd.append("down")
 
         if remove_images:

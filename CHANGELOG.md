@@ -1,3 +1,12 @@
+# [0.1.0-alpha.50](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.49...v0.1.0-alpha.50) (2025-10-25)
+
+
+### Features
+
+* update command to not reference .env ([af13242](https://github.com/raghavyuva/nixopus/commit/af13242c25e2cc8b02e965e8b3645df84e372c9b))
+
+
+
 # [0.1.0-alpha.49](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.48...v0.1.0-alpha.49) (2025-10-22)
 
 
