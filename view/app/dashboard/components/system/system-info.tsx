@@ -68,15 +68,15 @@ const SystemInfoCard: React.FC<SystemInfoCardProps> = ({ systemStats }) => {
   ];
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden h-full flex flex-col w-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-bold flex items-center">
           <Server className="h-4 w-4 mr-2 text-muted-foreground" />
           <TypographySmall>{t('dashboard.system.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <CardContent className="flex-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {systemInfoItems.map((item, index) => (
             <div key={index} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
               <div className="mt-0.5">{item.icon}</div>
@@ -102,15 +102,15 @@ export function SystemInfoCardSkeleton() {
   const { t } = useTranslation();
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden h-full flex flex-col w-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-bold flex items-center">
           <Server className="h-4 w-4 mr-2 text-muted-foreground" />
           <TypographySmall>{t('dashboard.system.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <CardContent className="flex-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[...Array(8)].map((_, index) => (
             <div key={index} className="flex items-start gap-3 p-2">
               <Skeleton className="h-4 w-4 mt-0.5" />

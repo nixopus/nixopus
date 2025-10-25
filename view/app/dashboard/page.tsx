@@ -154,7 +154,8 @@ const MonitoringSection = ({
   const dashboardItems: DraggableItem[] = [
     {
       id: 'system-info',
-      component: <SystemInfoCard systemStats={systemStats} />
+      component: <SystemInfoCard systemStats={systemStats} />,
+      className: 'md:col-span-2'
     },
     {
       id: 'load-average',

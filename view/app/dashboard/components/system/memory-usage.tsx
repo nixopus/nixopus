@@ -53,48 +53,52 @@ const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
           <BarChart className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
           <TypographySmall>{t('dashboard.memory.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="flex-1 flex flex-col">
+        <div className="space-y-4 flex-1 flex flex-col">
           {/* Doughnut Chart */}
-          <DoughnutChartComponent
-            data={chartData}
-            chartConfig={chartConfig}
-            centerLabel={{
-              value: `${memory.percentage.toFixed(1)}%`,
-              subLabel: 'Used'
-            }}
-            innerRadius={60}
-            outerRadius={80}
-            maxHeight="max-h-[200px]"
-          />
-
-          {/* Summary Stats with Distinct Colors */}
-          <div className="flex justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: '#3b82f6' }} />
-              <TypographyMuted>
-                Used: {formatGB(memory.used)} GB
-              </TypographyMuted>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: '#10b981' }} />
-              <TypographyMuted>
-                Free: {formatGB(freeMemory)} GB
-              </TypographyMuted>
-            </div>
+          <div className="flex-1 flex items-center justify-center">
+            <DoughnutChartComponent
+              data={chartData}
+              chartConfig={chartConfig}
+              centerLabel={{
+                value: `${memory.percentage.toFixed(1)}%`,
+                subLabel: 'Used'
+              }}
+              innerRadius={60}
+              outerRadius={80}
+              maxHeight="max-h-[200px]"
+            />
           </div>
 
-          {/* Additional Info */}
-          <TypographyMuted className="text-xs text-center">
-            Total: {formatGB(memory.total)} GB
-          </TypographyMuted>
+          {/* Summary Stats with Distinct Colors */}
+          <div className="mt-auto space-y-2">
+            <div className="flex justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: '#3b82f6' }} />
+                <TypographyMuted>
+                  Used: {formatGB(memory.used)} GB
+                </TypographyMuted>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: '#10b981' }} />
+                <TypographyMuted>
+                  Free: {formatGB(freeMemory)} GB
+                </TypographyMuted>
+              </div>
+            </div>
+
+            {/* Additional Info */}
+            <TypographyMuted className="text-xs text-center">
+              Total: {formatGB(memory.total)} GB
+            </TypographyMuted>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -107,29 +111,33 @@ export function MemoryUsageCardSkeleton() {
   const { t } = useTranslation();
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
           <BarChart className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
           <TypographySmall>{t('dashboard.memory.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <Skeleton className="mx-auto aspect-square max-h-[200px] w-[200px] rounded-full" />
-
-          <div className="flex justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-3 w-3 rounded-sm" />
-              <Skeleton className="h-4 w-20" />
-            </div>
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-3 w-3 rounded-sm" />
-              <Skeleton className="h-4 w-20" />
-            </div>
+      <CardContent className="flex-1 flex flex-col">
+        <div className="space-y-4 flex-1 flex flex-col">
+          <div className="flex-1 flex items-center justify-center">
+            <Skeleton className="mx-auto aspect-square max-h-[200px] w-[200px] rounded-full" />
           </div>
 
-          <Skeleton className="h-4 w-32 mx-auto" />
+          <div className="mt-auto space-y-2">
+            <div className="flex justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-3 w-3 rounded-sm" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-3 w-3 rounded-sm" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+            </div>
+
+            <Skeleton className="h-4 w-32 mx-auto" />
+          </div>
         </div>
       </CardContent>
     </Card>
