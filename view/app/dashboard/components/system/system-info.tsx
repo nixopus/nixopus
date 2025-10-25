@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Server } from 'lucide-react';
+import { Server, Cpu, HardDrive, Activity, Terminal, Box, CpuIcon, ScreenShare, ServerCog } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SystemStatsType } from '@/redux/types/monitor';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,55 +14,82 @@ interface SystemInfoCardProps {
 
 const SystemInfoCard: React.FC<SystemInfoCardProps> = ({ systemStats }) => {
   const { t } = useTranslation();
-  
+
   if (!systemStats) {
     return <SystemInfoCardSkeleton />;
   }
-  
-  const { load } = systemStats;
+
+  const { load, memory, os_type, cpu_info, cpu_cores, hostname, kernel_version, architecture } = systemStats;
+
+  // Format memory display
+  const memoryDisplay = `${memory.used.toFixed(1)} / ${memory.total.toFixed(1)} GB (${memory.percentage.toFixed(1)}%)`;
+
+  const systemInfoItems = [
+    {
+      icon: <Server className="h-4 w-4 text-blue-500" />,
+      label: t('dashboard.system.labels.operatingSystem'),
+      value: os_type || 'N/A'
+    },
+    {
+      icon: <ScreenShare className="h-4 w-4 text-purple-500" />,
+      label: t('dashboard.system.labels.hostname'),
+      value: hostname || 'N/A'
+    },
+    {
+      icon: <ServerCog className="h-4 w-4 text-green-500" />,
+      label: t('dashboard.system.labels.cpu'),
+      value: cpu_info || 'N/A'
+    },
+    {
+      icon: <CpuIcon className="h-4 w-4 text-teal-500" />,
+      label: t('dashboard.system.labels.cpuCores'),
+      value: cpu_cores > 0 ? `${cpu_cores} cores` : 'N/A'
+    },
+    {
+      icon: <HardDrive className="h-4 w-4 text-orange-500" />,
+      label: t('dashboard.system.labels.memory'),
+      value: memoryDisplay
+    },
+    {
+      icon: <Terminal className="h-4 w-4 text-sky-500" />,
+      label: t('dashboard.system.labels.kernelVersion'),
+      value: kernel_version || 'N/A'
+    },
+    {
+      icon: <Activity className="h-4 w-4 text-emerald-500" />,
+      label: t('dashboard.system.labels.uptime'),
+      value: load.uptime?.replaceAll(/([hms])(\d)/g, '$1 $2')
+    },
+    {
+      icon: <Box className="h-4 w-4 text-red-500" />,
+      label: t('dashboard.system.labels.architecture'),
+      value: architecture || 'N/A'
+    }
+  ];
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
-          <Server className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-bold flex items-center">
+          <Server className="h-4 w-4 mr-2 text-muted-foreground" />
           <TypographySmall>{t('dashboard.system.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-1 sm:space-y-2">
-          <div className="flex justify-between">
-            <TypographyMuted className="text-xs sm:text-sm">
-              {t('dashboard.system.osType')}
-            </TypographyMuted>
-            <TypographySmall className="truncate max-w-[60%] text-right">
-              {systemStats.os_type}
-            </TypographySmall>
-          </div>
-          <div className="flex justify-between">
-            <TypographyMuted className="text-xs sm:text-sm">
-              {t('dashboard.system.cpu')}
-            </TypographyMuted>
-            <TypographySmall className="truncate max-w-[60%] text-right">
-              {systemStats.cpu_info}
-            </TypographySmall>
-          </div>
-          <div className="flex justify-between">
-            <TypographyMuted className="text-xs sm:text-sm">
-              {t('dashboard.system.uptime')}
-            </TypographyMuted>
-            <TypographySmall className="truncate max-w-[60%] text-right">
-              {load.uptime}
-            </TypographySmall>
-          </div>
-          <div className="flex justify-between">
-            <TypographyMuted className="text-xs sm:text-sm">
-              {t('dashboard.system.lastUpdated')}
-            </TypographyMuted>
-            <TypographySmall className="truncate max-w-[60%] text-right">
-              {new Date(systemStats.timestamp).toLocaleTimeString()}
-            </TypographySmall>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {systemInfoItems.map((item, index) => (
+            <div key={index} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+              <div className="mt-0.5">{item.icon}</div>
+              <div className="flex-1 min-w-0">
+                <TypographyMuted className="text-xs font-medium">
+                  {item.label}
+                </TypographyMuted>
+                <TypographySmall className="text-xs font-semibold truncate">
+                  {item.value}
+                </TypographySmall>
+              </div>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>
@@ -76,38 +103,23 @@ export function SystemInfoCardSkeleton() {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
-          <Server className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-bold flex items-center">
+          <Server className="h-4 w-4 mr-2 text-muted-foreground" />
           <TypographySmall>{t('dashboard.system.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-1 sm:space-y-2">
-          <div className="flex justify-between">
-            <TypographyMuted className="text-xs sm:text-sm">
-              {t('dashboard.system.osType')}
-            </TypographyMuted>
-            <Skeleton className="h-4 w-24" />
-          </div>
-          <div className="flex justify-between">
-            <TypographyMuted className="text-xs sm:text-sm">
-              {t('dashboard.system.cpu')}
-            </TypographyMuted>
-            <Skeleton className="h-4 w-32" />
-          </div>
-          <div className="flex justify-between">
-            <TypographyMuted className="text-xs sm:text-sm">
-              {t('dashboard.system.uptime')}
-            </TypographyMuted>
-            <Skeleton className="h-4 w-20" />
-          </div>
-          <div className="flex justify-between">
-            <TypographyMuted className="text-xs sm:text-sm">
-              {t('dashboard.system.lastUpdated')}
-            </TypographyMuted>
-            <Skeleton className="h-4 w-24" />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[...Array(8)].map((_, index) => (
+            <div key={index} className="flex items-start gap-3 p-2">
+              <Skeleton className="h-4 w-4 mt-0.5" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>

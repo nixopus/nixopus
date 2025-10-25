@@ -58,9 +58,13 @@ export interface DiskStats {
 
 export interface SystemStatsType {
   os_type: string;
+  hostname: string;
   cpu_info: string;
+  cpu_cores: number;
   memory: MemoryStats;
   load: LoadStats;
   disk: DiskStats;
+  kernel_version: string;
+  architecture: string;
   timestamp: number;
 }

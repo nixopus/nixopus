@@ -47,17 +47,51 @@ func (m *DashboardMonitor) GetSystemStats() {
 		Disk:      DiskStats{AllMounts: []DiskMount{}},
 	}
 
-	if hostInfo, err := host.Info(); err == nil {
-		stats.Load.Uptime = time.Duration(hostInfo.Uptime * uint64(time.Second)).String()
+	// Get hostname
+	if hostname, err := m.getCommandOutput("hostname"); err == nil {
+		stats.Hostname = strings.TrimSpace(hostname)
 	}
 
+	// Get kernel version
+	if kernelVersion, err := m.getCommandOutput("uname -r"); err == nil {
+		stats.KernelVersion = strings.TrimSpace(kernelVersion)
+	}
+
+	// Get architecture
+	if architecture, err := m.getCommandOutput("uname -m"); err == nil {
+		stats.Architecture = strings.TrimSpace(architecture)
+	}
+
+	// Get uptime 
+	var uptime string
+	if hostInfo, err := host.Info(); err == nil {
+		uptime = time.Duration(hostInfo.Uptime * uint64(time.Second)).String()
+	}
+
+	// Parse load averages
 	if loadAvg, err := m.getCommandOutput("uptime"); err == nil {
 		loadAvgStr := strings.TrimSpace(loadAvg)
 		stats.Load = parseLoadAverage(loadAvgStr)
 	}
 
+	// Set uptime after parsing load averages
+	stats.Load.Uptime = uptime
+
+	// Get CPU info
 	if cpuInfo, err := cpu.Info(); err == nil && len(cpuInfo) > 0 {
 		stats.CPUInfo = cpuInfo[0].ModelName
+	}
+
+	// Get CPU cores count
+	if cores, err := cpu.Counts(true); err == nil {
+		stats.CPUCores = cores
+	} else {
+		// Fallback: use nproc command
+		if coresStr, err := m.getCommandOutput("nproc"); err == nil {
+			if coresInt, err := strconv.Atoi(strings.TrimSpace(coresStr)); err == nil {
+				stats.CPUCores = coresInt
+			}
+		}
 	}
 
 	if memInfo, err := mem.VirtualMemory(); err == nil {
