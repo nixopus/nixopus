@@ -69,7 +69,7 @@ const SystemInfoCard: React.FC<SystemInfoCardProps> = ({ systemStats }) => {
 
   return (
     <Card className="overflow-hidden h-full flex flex-col w-full">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <CardTitle className="text-sm font-bold flex items-center">
           <Server className="h-4 w-4 mr-2 text-muted-foreground" />
           <TypographySmall>{t('dashboard.system.title')}</TypographySmall>
@@ -103,7 +103,7 @@ export function SystemInfoCardSkeleton() {
 
   return (
     <Card className="overflow-hidden h-full flex flex-col w-full">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <CardTitle className="text-sm font-bold flex items-center">
           <Server className="h-4 w-4 mr-2 text-muted-foreground" />
           <TypographySmall>{t('dashboard.system.title')}</TypographySmall>

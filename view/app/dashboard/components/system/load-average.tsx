@@ -64,9 +64,9 @@ const LoadAverageCard: React.FC<LoadAverageCardProps> = ({ systemStats }) => {
           <TypographySmall>{t('dashboard.load.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
-        <div className="space-y-4 flex-1 flex flex-col">
-          <div className="flex-1">
+      <CardContent className="flex-1">
+        <div className="space-y-4">
+          <div>
             <BarChartComponent
               data={chartData}
               chartConfig={chartConfig}
@@ -78,7 +78,7 @@ const LoadAverageCard: React.FC<LoadAverageCardProps> = ({ systemStats }) => {
           </div>
           
           {/* Summary Stats with Color Indicators */}
-          <div className="mt-auto grid grid-cols-3 gap-2 text-center">
+          <div className="grid grid-cols-3 gap-2 text-center">
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-1">
                 <div className="h-2 w-2 rounded-full" style={{ backgroundColor: '#3b82f6' }} />
@@ -120,12 +120,12 @@ export function LoadAverageCardSkeleton() {
           <TypographySmall>{t('dashboard.load.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
-        <div className="space-y-4 flex-1 flex flex-col">
-          <div className="flex-1">
+      <CardContent className="flex-1">
+        <div className="space-y-4">
+          <div>
             <Skeleton className="h-[180px] w-full rounded-lg" />
           </div>
-          <div className="mt-auto grid grid-cols-3 gap-2 text-center">
+          <div className="grid grid-cols-3 gap-2 text-center">
             <div>
               <TypographyMuted className="text-xs">1 min</TypographyMuted>
               <Skeleton className="h-4 w-12 mx-auto mt-1" />

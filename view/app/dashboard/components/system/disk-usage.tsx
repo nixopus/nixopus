@@ -30,14 +30,14 @@ const DiskUsageCard: React.FC<DiskUsageCardProps> = ({ systemStats }) => {
   const { disk } = systemStats;
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-xs sm:text-sm font-bold flex items-center">
           <HardDrive className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
           <TypographySmall>{t('dashboard.disk.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1">
         <div className="space-y-2 sm:space-y-3">
           <div className="w-full h-2 bg-gray-200 rounded-full">
             <div
@@ -125,14 +125,14 @@ const DiskUsageCardSkeleton = () => {
   const { t } = useTranslation();
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
           <HardDrive className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
           <TypographySmall>{t('dashboard.disk.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1">
         <div className="space-y-2 sm:space-y-3">
           <div className="w-full h-2 bg-gray-200 rounded-full">
             <div className="h-2 rounded-full bg-gray-400" />

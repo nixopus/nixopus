@@ -64,7 +64,7 @@ function SortableItem({
             ref={setNodeRef}
             style={style}
             className={cn(
-                'relative group',
+                'relative group h-full',
                 item.className,
                 isItemDragging && 'opacity-50 z-50',
                 'transition-all duration-200'
@@ -81,7 +81,7 @@ function SortableItem({
                 </div>
             </div>
             <div className={cn(
-                'transition-all duration-200',
+                'transition-all duration-200 h-full',
                 isItemDragging && 'ring-2 ring-primary/50 rounded-xl'
             )}>
                 {item.component}
@@ -217,7 +217,7 @@ export function DraggableGrid({
                 items={orderedItems.map(item => item.id)}
                 strategy={verticalListSortingStrategy}
             >
-                <div className={cn('grid gap-4', gridCols, className)}>
+                <div className={cn('grid gap-4 items-stretch', gridCols, className)}>
                     {orderedItems.map((item) => (
                         <SortableItem key={item.id} item={item} />
                     ))}

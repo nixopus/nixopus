@@ -60,10 +60,10 @@ const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
           <TypographySmall>{t('dashboard.memory.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
-        <div className="space-y-4 flex-1 flex flex-col">
+      <CardContent className="flex-1">
+        <div className="space-y-4">
           {/* Doughnut Chart */}
-          <div className="flex-1 flex items-center justify-center min-h-[200px]">
+          <div className="flex items-center justify-center h-[200px]">
             <DoughnutChartComponent
               data={chartData}
               chartConfig={chartConfig}
@@ -78,7 +78,7 @@ const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
           </div>
 
           {/* Summary Stats with Distinct Colors */}
-          <div className="mt-auto space-y-2">
+          <div className="space-y-2">
             <div className="flex justify-between text-xs">
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: '#3b82f6' }} />
@@ -118,13 +118,13 @@ export function MemoryUsageCardSkeleton() {
           <TypographySmall>{t('dashboard.memory.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
-        <div className="space-y-4 flex-1 flex flex-col">
-          <div className="flex-1 flex items-center justify-center min-h-[200px]">
+      <CardContent className="flex-1">
+        <div className="space-y-4">
+          <div className="flex items-center justify-center h-[200px]">
             <Skeleton className="mx-auto aspect-square max-h-[200px] w-[200px] rounded-full" />
           </div>
 
-          <div className="mt-auto space-y-2">
+          <div className="space-y-2">
             <div className="flex justify-between text-xs">
               <div className="flex items-center gap-2">
                 <Skeleton className="h-3 w-3 rounded-sm" />
