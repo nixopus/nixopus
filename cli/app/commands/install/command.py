@@ -102,7 +102,7 @@ def main_install_callback(value: bool):
 def development(
     path: str = typer.Option(None, "--path", "-p", help="Installation directory (defaults to current directory)"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show more details while installing"),
-    timeout: int = typer.Option(300, "--timeout", "-t", help="How long to wait for each step (in seconds)"),
+    timeout: int = typer.Option(1800, "--timeout", "-t", help="How long to wait for each step (in seconds)"),
     force: bool = typer.Option(False, "--force", "-f", help="Replace files if they already exist"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="See what would happen, but don't make changes"),
     config_file: str = typer.Option(
