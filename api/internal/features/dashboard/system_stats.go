@@ -62,7 +62,7 @@ func (m *DashboardMonitor) GetSystemStats() {
 		stats.Architecture = strings.TrimSpace(architecture)
 	}
 
-	// Get uptime 
+	// Get uptime
 	var uptime string
 	if hostInfo, err := host.Info(); err == nil {
 		uptime = time.Duration(hostInfo.Uptime * uint64(time.Second)).String()
@@ -83,14 +83,9 @@ func (m *DashboardMonitor) GetSystemStats() {
 	}
 
 	// Get CPU cores count
-	if cores, err := cpu.Counts(true); err == nil {
-		stats.CPUCores = cores
-	} else {
-		// Fallback: use nproc command
-		if coresStr, err := m.getCommandOutput("nproc"); err == nil {
-			if coresInt, err := strconv.Atoi(strings.TrimSpace(coresStr)); err == nil {
-				stats.CPUCores = coresInt
-			}
+	if coresStr, err := m.getCommandOutput("nproc"); err == nil {
+		if coresInt, err := strconv.Atoi(strings.TrimSpace(coresStr)); err == nil {
+			stats.CPUCores = coresInt
 		}
 	}
 
