@@ -32,7 +32,7 @@ services:
       - POSTGRES_PASSWORD=${PASSWORD}
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_HOST_AUTH_METHOD=trust
-
+    command: ["postgres", "-c", "jit=0"]
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
