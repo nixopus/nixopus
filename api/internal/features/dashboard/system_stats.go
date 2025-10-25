@@ -83,9 +83,9 @@ func (m *DashboardMonitor) GetSystemStats() {
 	}
 
 	// Get CPU cores count
-	if coresStr, err := m.getCommandOutput("nproc"); err == nil {
-		if coresInt, err := strconv.Atoi(strings.TrimSpace(coresStr)); err == nil {
-			stats.CPUCores = coresInt
+	if stats.CPUCores == 0 {
+		if coreCount, err := cpu.Counts(true); err == nil {
+			stats.CPUCores = coreCount
 		}
 	}
 
