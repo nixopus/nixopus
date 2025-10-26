@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { SystemStatsType } from '@/redux/types/monitor';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation, translationKey } from '@/hooks/use-translation';
 
 interface UseSystemMetricOptions<T> {
   systemStats: SystemStatsType | null;
@@ -11,7 +11,7 @@ interface UseSystemMetricOptions<T> {
 interface UseSystemMetricResult<T> {
   data: T;
   isLoading: boolean;
-  t: (key: string) => string;
+  t: (key: translationKey, params?: Record<string, string>) => string;
 }
 
 /**
