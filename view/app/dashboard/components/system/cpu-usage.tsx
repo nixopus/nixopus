@@ -116,7 +116,7 @@ function CPUUsageCardSkeletonContent() {
       </div>
       <div className="grid grid-cols-3 gap-2 text-center">
         {[0, 1, 2].map((i) => (
-          <div key={i}>
+          <div key={i} className="flex flex-col items-center gap-1">
             <TypographyMuted className="text-xs">Core {i}</TypographyMuted>
             <Skeleton className="h-4 w-12 mx-auto mt-1" />
           </div>

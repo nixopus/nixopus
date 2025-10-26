@@ -32,6 +32,7 @@ const LoadAverageCard: React.FC<LoadAverageCardProps> = ({ systemStats }) => {
       isLoading={isLoading}
       skeletonContent={<LoadAverageCardSkeletonContent />}
     >
+      <br /><br /><br />
       <div className="space-y-4">
         <div>
           <BarChartComponent
