@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import useMonitor from './hooks/use-monitor';
+import { useDashboard } from './hooks/use-dashboard';
 import ContainersTable from './components/containers/container-table';
 import SystemInfoCard from './components/system/system-info';
 import LoadAverageCard from './components/system/load-average';
@@ -11,12 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, ArrowRight, RefreshCw, Info } from 'lucide-react';
 import DiskUsageCard from './components/system/disk-usage';
 import { useTranslation } from '@/hooks/use-translation';
-import { useAppSelector } from '@/redux/hooks';
-import { useGetSMTPConfigurationsQuery } from '@/redux/services/settings/notificationApi';
 import { SMTPBanner } from './components/smtp-banner';
-import { useFeatureFlags } from '@/hooks/features_provider';
 import DisabledFeature from '@/components/features/disabled-feature';
-import { FeatureNames } from '@/types/feature-flags';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
@@ -28,40 +24,24 @@ import { DraggableGrid, DraggableItem } from '@/components/ui/draggable-grid';
 // for dashboard page, we need to check if the user has the dashboard:read permission
 function DashboardPage() {
   const { t } = useTranslation();
-  const { containersData, systemStats } = useMonitor();
-  const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
-  const { data: smtpConfig } = useGetSMTPConfigurationsQuery(activeOrganization?.id, {
-    skip: !activeOrganization
-  });
-  const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
-  const [showDragHint, setShowDragHint] = React.useState(false);
-  const [mounted, setMounted] = React.useState(false);
-  const [layoutResetKey, setLayoutResetKey] = React.useState(0);
-
-  React.useEffect(() => {
-    setMounted(true);
-    // Check if user has seen the hint before
-    const hasSeenHint = localStorage.getItem('dashboard-drag-hint-seen');
-    if (!hasSeenHint) {
-      setShowDragHint(true);
-    }
-  }, []);
-
-  const dismissHint = () => {
-    setShowDragHint(false);
-    localStorage.setItem('dashboard-drag-hint-seen', 'true');
-  };
-
-  const handleResetLayout = () => {
-    localStorage.removeItem('dashboard-card-order');
-    setLayoutResetKey(prev => prev + 1);
-  };
+  const {
+    isFeatureFlagsLoading,
+    isDashboardEnabled,
+    containersData,
+    systemStats,
+    smtpConfig,
+    showDragHint,
+    mounted,
+    layoutResetKey,
+    dismissHint,
+    handleResetLayout,
+  } = useDashboard();
 
   if (isFeatureFlagsLoading) {
     return <Skeleton />;
   }
 
-  if (!isFeatureEnabled(FeatureNames.FeatureMonitoring)) {
+  if (!isDashboardEnabled) {
     return <DisabledFeature />;
   }
 
