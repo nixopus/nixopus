@@ -789,6 +789,13 @@
         "fifteenMin": "15 minutes"
       }
     },
+    "cpu": {
+      "title": "Utilisation du CPU",
+      "overall": "Global",
+      "usage": "Utilisation (%)",
+      "cores": "Cœurs",
+      "perCore": "Par cœur"
+    },
     "memory": {
       "title": "Utilisation de la mémoire",
       "used": "{value} Go utilisé",

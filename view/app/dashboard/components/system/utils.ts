@@ -70,3 +70,49 @@ export const createMemoryChartConfig = () => ({
     color: CHART_COLORS.green,
   },
 });
+
+// CPU Chart utilities
+export const createCPUChartData = (
+  perCore: Array<{ core_id: number; usage: number }>
+): BarChartDataItem[] => {
+  if (!perCore || perCore.length === 0) {
+    return [];
+  }
+
+  // Define a color palette for cores (cycle through colors)
+  const colors = [
+    CHART_COLORS.blue,
+    CHART_COLORS.green,
+    CHART_COLORS.orange,
+    CHART_COLORS.purple,
+    CHART_COLORS.red,
+    CHART_COLORS.yellow,
+  ];
+
+  return perCore.map((core) => ({
+    name: `Core ${core.core_id}`,
+    value: core.usage,
+    fill: colors[core.core_id % colors.length],
+  }));
+};
+
+export const createCPUChartConfig = (coreCount: number) => {
+  const config: Record<string, { label: string; color: string }> = {};
+  const colors = [
+    CHART_COLORS.blue,
+    CHART_COLORS.green,
+    CHART_COLORS.orange,
+    CHART_COLORS.purple,
+    CHART_COLORS.red,
+    CHART_COLORS.yellow,
+  ];
+
+  for (let i = 0; i < coreCount; i++) {
+    config[`core${i}`] = {
+      label: `Core ${i}`,
+      color: colors[i % colors.length],
+    };
+  }
+
+  return config;
+};

@@ -42,6 +42,7 @@ func (m *DashboardMonitor) GetSystemStats() {
 	stats := SystemStats{
 		OSType:    osType,
 		Timestamp: time.Now(),
+		CPU:       CPUStats{PerCore: []CPUCore{}},
 		Memory:    MemoryStats{},
 		Load:      LoadStats{},
 		Disk:      DiskStats{AllMounts: []DiskMount{}},
@@ -88,6 +89,9 @@ func (m *DashboardMonitor) GetSystemStats() {
 			stats.CPUCores = coreCount
 		}
 	}
+
+	// Get CPU usage (overall and per-core)
+	stats.CPU = m.getCPUStats()
 
 	if memInfo, err := mem.VirtualMemory(); err == nil {
 		stats.Memory = MemoryStats{
@@ -153,6 +157,38 @@ func parseLoadAverage(loadStr string) LoadStats {
 	}
 
 	return loadStats
+}
+
+func (m *DashboardMonitor) getCPUStats() CPUStats {
+	cpuStats := CPUStats{
+		Overall: 0.0,
+		PerCore: []CPUCore{},
+	}
+
+	// Get per-core CPU usage
+	perCorePercent, err := cpu.Percent(time.Second, true)
+	if err == nil && len(perCorePercent) > 0 {
+		cpuStats.PerCore = make([]CPUCore, len(perCorePercent))
+		var totalUsage float64 = 0
+
+		for i, usage := range perCorePercent {
+			cpuStats.PerCore[i] = CPUCore{
+				CoreID: i,
+				Usage:  usage,
+			}
+			totalUsage += usage
+		}
+
+		// Calculate overall average
+		cpuStats.Overall = totalUsage / float64(len(perCorePercent))
+	} else {
+
+		if overallPercent, err := cpu.Percent(time.Second, false); err == nil && len(overallPercent) > 0 {
+			cpuStats.Overall = overallPercent[0]
+		}
+	}
+
+	return cpuStats
 }
 
 func (m *DashboardMonitor) getCommandOutput(cmd string) (string, error) {

@@ -785,6 +785,13 @@
         "fifteenMin": "15 ನಿಮಿಷಗಳು"
       }
     },
+    "cpu": {
+      "title": "CPU ಬಳಕೆ",
+      "overall": "ಒಟ್ಟಾರೆ",
+      "usage": "ಬಳಕೆ (%)",
+      "cores": "ಕೋರ್‌ಗಳು",
+      "perCore": "ಪ್ರತಿ ಕೋರ್"
+    },
     "memory": {
       "title": "ಮೆಮೊರಿ ಬಳಕೆ",
       "used": "{value} GB ಬಳಸಲಾಗಿದೆ",

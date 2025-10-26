@@ -5,6 +5,7 @@ import useMonitor from './hooks/use-monitor';
 import ContainersTable from './components/containers/container-table';
 import SystemInfoCard from './components/system/system-info';
 import LoadAverageCard from './components/system/load-average';
+import CPUUsageCard from './components/system/cpu-usage';
 import MemoryUsageCard from './components/system/memory-usage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, ArrowRight, RefreshCw, Info } from 'lucide-react';
@@ -160,6 +161,10 @@ const MonitoringSection = ({
     {
       id: 'load-average',
       component: <LoadAverageCard systemStats={systemStats} />
+    },
+    {
+      id: 'cpu-usage',
+      component: <CPUUsageCard systemStats={systemStats} />
     },
     {
       id: 'memory-usage',

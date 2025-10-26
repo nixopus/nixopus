@@ -788,6 +788,13 @@
         "fifteenMin": "15 minutos"
       }
     },
+    "cpu": {
+      "title": "Uso de CPU",
+      "overall": "General",
+      "usage": "Uso (%)",
+      "cores": "Núcleos",
+      "perCore": "Por núcleo"
+    },
     "memory": {
       "title": "Uso de memoria",
       "used": "{value} MB usado",
