@@ -8,6 +8,9 @@ import { useTranslation } from '@/hooks/use-translation';
 import { DataTable, TableColumn } from '@/components/ui/data-table';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 import { SystemMetricCard } from './system-metric-card';
+import { useSystemMetric } from '../../hooks/use-system-metric';
+import { formatPercentage } from './utils';
+import { DEFAULT_METRICS } from './constants';
 
 interface DiskUsageCardProps {
   systemStats: SystemStatsType | null;
@@ -21,17 +24,11 @@ interface MountData {
 }
 
 const DiskUsageCard: React.FC<DiskUsageCardProps> = ({ systemStats }) => {
-  const { t } = useTranslation();
-  const isLoading = !systemStats;
-
-  const { disk } = systemStats || {
-    disk: {
-      percentage: 0,
-      used: 0,
-      total: 0,
-      allMounts: []
-    }
-  };
+  const { data: disk, isLoading, t } = useSystemMetric({
+    systemStats,
+    extractData: (stats) => stats.disk,
+    defaultData: DEFAULT_METRICS.disk,
+  });
 
   return (
     <SystemMetricCard
@@ -52,7 +49,7 @@ const DiskUsageCard: React.FC<DiskUsageCardProps> = ({ systemStats }) => {
             {t('dashboard.disk.used').replace('{value}', disk.used.toFixed(2))}
           </TypographyMuted>
           <TypographyMuted className="text-xs truncate max-w-[60px] sm:max-w-[80px]">
-            {t('dashboard.disk.percentage').replace('{value}', disk.percentage.toFixed(1))}
+            {t('dashboard.disk.percentage').replace('{value}', formatPercentage(disk.percentage))}
           </TypographyMuted>
           <TypographyMuted className="text-xs truncate max-w-[80px] sm:max-w-[100px]">
             {t('dashboard.disk.total').replace('{value}', disk.total.toFixed(2))}
@@ -184,7 +181,11 @@ function DiskUsageCardSkeletonContent() {
 }
 
 const DiskUsageCardSkeleton = () => {
-  const { t } = useTranslation();
+  const { t } = useSystemMetric({
+    systemStats: null,
+    extractData: (stats) => stats.disk,
+    defaultData: DEFAULT_METRICS.disk,
+  });
 
   return (
     <SystemMetricCard

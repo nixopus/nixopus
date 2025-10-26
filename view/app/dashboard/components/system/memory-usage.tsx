@@ -4,56 +4,29 @@ import React from 'react';
 import { BarChart } from 'lucide-react';
 import { SystemStatsType } from '@/redux/types/monitor';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useTranslation } from '@/hooks/use-translation';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
-import { DoughnutChartComponent, DoughnutChartDataItem } from '@/components/ui/doughnut-chart-component';
+import { DoughnutChartComponent } from '@/components/ui/doughnut-chart-component';
 import { SystemMetricCard } from './system-metric-card';
+import { useSystemMetric } from '../../hooks/use-system-metric';
+import { formatGB, createMemoryChartData, createMemoryChartConfig } from './utils';
+import { DEFAULT_METRICS, CHART_COLORS } from './constants';
 
 interface MemoryUsageCardProps {
   systemStats: SystemStatsType | null;
 }
 
-const formatGB = (value: number) => `${value.toFixed(2)}`;
-
 const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
-  const { t } = useTranslation();
-  const isLoading = !systemStats;
-
-  const { memory } = systemStats || {
-    memory: {
-      total: 0,
-      used: 0,
-      percentage: 0
-    }
-  };
+  const { data: memory, isLoading, t } = useSystemMetric({
+    systemStats,
+    extractData: (stats) => stats.memory,
+    defaultData: DEFAULT_METRICS.memory,
+  });
 
   // Calculate free memory
   const freeMemory = memory.total - memory.used;
 
-  // Prepare data for doughnut chart with distinct colors
-  const chartData: DoughnutChartDataItem[] = [
-    {
-      name: 'Used',
-      value: memory.used,
-      fill: '#3b82f6' // Bright blue for used memory
-    },
-    {
-      name: 'Free',
-      value: freeMemory,
-      fill: '#10b981' // Bright green for free memory
-    }
-  ];
-
-  const chartConfig = {
-    used: {
-      label: 'Used Memory',
-      color: '#3b82f6'
-    },
-    free: {
-      label: 'Free Memory',
-      color: '#10b981'
-    }
-  };
+  const chartData = createMemoryChartData(memory.used, freeMemory);
+  const chartConfig = createMemoryChartConfig();
 
   return (
     <SystemMetricCard
@@ -82,13 +55,13 @@ const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
         <div className="space-y-2">
           <div className="flex justify-between text-xs">
             <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: '#3b82f6' }} />
+              <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: CHART_COLORS.blue }} />
               <TypographyMuted>
                 Used: {formatGB(memory.used)} GB
               </TypographyMuted>
             </div>
             <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: '#10b981' }} />
+              <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: CHART_COLORS.green }} />
               <TypographyMuted>
                 Free: {formatGB(freeMemory)} GB
               </TypographyMuted>
@@ -133,7 +106,11 @@ function MemoryUsageCardSkeletonContent() {
 }
 
 export function MemoryUsageCardSkeleton() {
-  const { t } = useTranslation();
+  const { t } = useSystemMetric({
+    systemStats: null,
+    extractData: (stats) => stats.memory,
+    defaultData: DEFAULT_METRICS.memory,
+  });
 
   return (
     <SystemMetricCard
