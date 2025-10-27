@@ -35,6 +35,8 @@ function DashboardPage() {
     layoutResetKey,
     dismissHint,
     handleResetLayout,
+    hasCustomLayout,
+    handleLayoutChange,
   } = useDashboard();
 
   if (isFeatureFlagsLoading) {
@@ -57,15 +59,17 @@ function DashboardPage() {
             <TypographyH1>{t('dashboard.title')}</TypographyH1>
             <TypographyMuted>{t('dashboard.description')}</TypographyMuted>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleResetLayout}
-            className="shrink-0"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Reset Layout
-          </Button>
+          {hasCustomLayout && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResetLayout}
+              className="shrink-0"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Reset Layout
+            </Button>
+          )}
         </div>
         {mounted && showDragHint && (
           <div className="mb-4 p-4 bg-primary/5 border border-primary/20 rounded-lg flex items-start justify-between gap-4">
@@ -96,6 +100,7 @@ function DashboardPage() {
           containersData={containersData}
           t={t}
           layoutResetKey={layoutResetKey}
+          onLayoutChange={handleLayoutChange}
         />
       </PageLayout>
     </ResourceGuard>
@@ -108,12 +113,14 @@ const MonitoringSection = ({
   systemStats,
   containersData,
   t,
-  layoutResetKey
+  layoutResetKey,
+  onLayoutChange
 }: {
   systemStats: any;
   containersData: any;
   t: any;
   layoutResetKey: number;
+  onLayoutChange: () => void;
 }) => {
   const router = useRouter();
 
@@ -184,6 +191,7 @@ const MonitoringSection = ({
       storageKey="dashboard-card-order"
       gridCols="grid-cols-1 md:grid-cols-2"
       resetKey={layoutResetKey}
+      onReorder={() => onLayoutChange()}
     />
   );
 };

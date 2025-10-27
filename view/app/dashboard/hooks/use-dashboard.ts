@@ -19,6 +19,7 @@ export function useDashboard() {
   const [showDragHint, setShowDragHint] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [layoutResetKey, setLayoutResetKey] = React.useState(0);
+  const [hasCustomLayout, setHasCustomLayout] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
@@ -27,6 +28,10 @@ export function useDashboard() {
     if (!hasSeenHint) {
       setShowDragHint(true);
     }
+    
+    // Check if layout has been modified
+    const savedOrder = localStorage.getItem('dashboard-card-order');
+    setHasCustomLayout(!!savedOrder);
   }, []);
 
   const dismissHint = React.useCallback(() => {
@@ -37,6 +42,12 @@ export function useDashboard() {
   const handleResetLayout = React.useCallback(() => {
     localStorage.removeItem('dashboard-card-order');
     setLayoutResetKey((prev) => prev + 1);
+    setHasCustomLayout(false);
+  }, []);
+
+  const handleLayoutChange = React.useCallback(() => {
+    const savedOrder = localStorage.getItem('dashboard-card-order');
+    setHasCustomLayout(!!savedOrder);
   }, []);
 
   const isDashboardEnabled = React.useMemo(() => {
@@ -57,9 +68,11 @@ export function useDashboard() {
     showDragHint,
     mounted,
     layoutResetKey,
+    hasCustomLayout,
 
     // Actions
     dismissHint,
-    handleResetLayout
+    handleResetLayout,
+    handleLayoutChange
   };
 }
