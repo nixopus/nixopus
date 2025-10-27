@@ -3,3 +3,5 @@ export { LoadAverageCardSkeleton, LoadAverageCardSkeletonContent } from './load-
 export { MemoryUsageCardSkeleton, MemoryUsageCardSkeletonContent } from './memory-usage';
 export { DiskUsageCardSkeleton, DiskUsageCardSkeletonContent } from './disk-usage';
 export { SystemInfoCardSkeleton } from './system-info';
+export { ClockCardSkeletonContent } from './clock';
+export { WeatherCardSkeletonContent } from './weather';

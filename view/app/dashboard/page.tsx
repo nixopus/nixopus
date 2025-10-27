@@ -10,6 +10,9 @@ import MemoryUsageCard from './components/system/memory-usage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, ArrowRight, RefreshCw, Info } from 'lucide-react';
 import DiskUsageCard from './components/system/disk-usage';
+import ClockWidget from './components/system/clock';
+// TODO: Add weather widget back in with configuration for api key 
+// import WeatherWidget from './components/system/weather';
 import { useTranslation } from '@/hooks/use-translation';
 import { SMTPBanner } from './components/smtp-banner';
 import DisabledFeature from '@/components/features/disabled-feature';
@@ -187,6 +190,14 @@ const MonitoringSection = ({
       component: <SystemInfoCard systemStats={systemStats} />,
       className: 'md:col-span-2'
     },
+    {
+      id: 'clock',
+      component: <ClockWidget />
+    },
+    // {
+    //   id: 'weather',
+    //   component: <WeatherWidget />
+    // },
     {
       id: 'load-average',
       component: <LoadAverageCard systemStats={systemStats} />
