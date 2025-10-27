@@ -2,10 +2,14 @@
 
 import React from 'react';
 import { SystemStatsType } from '@/redux/types/monitor';
-import SystemInfoCard, { SystemInfoCardSkeleton } from './system-info';
-import LoadAverageCard, { LoadAverageCardSkeleton } from './load-average';
-import CPUUsageCard, { CPUUsageCardSkeleton } from './cpu-usage';
-import MemoryUsageCard, { MemoryUsageCardSkeleton } from './memory-usage';
+import SystemInfoCard from './system-info';
+import LoadAverageCard from './load-average';
+import CPUUsageCard from './cpu-usage';
+import MemoryUsageCard from './memory-usage';
+import { SystemInfoCardSkeleton } from './skeletons/system-info';
+import { LoadAverageCardSkeleton } from './skeletons/load-average';
+import { CPUUsageCardSkeleton } from './skeletons/cpu-usage';
+import { MemoryUsageCardSkeleton } from './skeletons/memory-usage';
 import { DraggableGrid, DraggableItem } from '@/components/ui/draggable-grid';
 
 export interface SystemStatsProps {

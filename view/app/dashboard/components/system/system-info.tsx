@@ -98,4 +98,3 @@ const SystemInfoCard: React.FC<SystemInfoCardProps> = ({ systemStats }) => {
 
 export default SystemInfoCard;
 
-export { SystemInfoCardSkeleton } from './skeletons/system-info';

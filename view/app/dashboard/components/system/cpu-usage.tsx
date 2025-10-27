@@ -15,21 +15,111 @@ interface CPUUsageCardProps {
   systemStats: SystemStatsType | null;
 }
 
+interface CPUUsageHeaderProps {
+  overallUsage: number;
+  label: string;
+}
+
+interface CPUUsageChartProps {
+  chartData: ReturnType<typeof createCPUChartData>;
+  chartConfig: ReturnType<typeof createCPUChartConfig>;
+  yAxisLabel: string;
+  xAxisLabel: string;
+}
+
+interface TopCoresListProps {
+  cores: Array<{ core_id: number; usage: number }>;
+}
+
+interface CoreItemProps {
+  coreId: number;
+  usage: number;
+  color: string;
+}
+
+const CPU_COLORS = [
+  CHART_COLORS.blue,
+  CHART_COLORS.green,
+  CHART_COLORS.orange,
+  CHART_COLORS.purple,
+  CHART_COLORS.red,
+  CHART_COLORS.yellow,
+];
+
+const CPUUsageHeader: React.FC<CPUUsageHeaderProps> = ({ overallUsage, label }) => {
+  return (
+    <div className="text-center">
+      <TypographyMuted className="text-xs">{label}</TypographyMuted>
+      <div className="text-3xl font-bold text-primary mt-1">
+        {formatPercentage(overallUsage)}%
+      </div>
+    </div>
+  );
+};
+
+const CPUUsageChart: React.FC<CPUUsageChartProps> = ({
+  chartData,
+  chartConfig,
+  yAxisLabel,
+  xAxisLabel,
+}) => {
+  return (
+    <div>
+      <BarChartComponent
+        data={chartData}
+        chartConfig={chartConfig}
+        height="h-[180px]"
+        yAxisLabel={yAxisLabel}
+        xAxisLabel={xAxisLabel}
+        showAxisLabels={true}
+      />
+    </div>
+  );
+};
+
+const CoreItem: React.FC<CoreItemProps> = ({ coreId, usage, color }) => {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className="flex items-center gap-1">
+        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+        <TypographyMuted className="text-xs">Core {coreId}</TypographyMuted>
+      </div>
+      <TypographySmall className="text-sm font-bold">
+        {formatPercentage(usage)}%
+      </TypographySmall>
+    </div>
+  );
+};
+
+const TopCoresList: React.FC<TopCoresListProps> = ({ cores }) => {
+  return (
+    <div className="grid grid-cols-3 gap-2 text-center">
+      {cores.map((core) => {
+        const color = CPU_COLORS[core.core_id % CPU_COLORS.length];
+        return (
+          <CoreItem
+            key={core.core_id}
+            coreId={core.core_id}
+            usage={core.usage}
+            color={color}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
 const CPUUsageCard: React.FC<CPUUsageCardProps> = ({ systemStats }) => {
   const { data: cpu, isLoading, t } = useSystemMetric({
     systemStats,
-    extractData: (stats) => stats.cpu || DEFAULT_METRICS.cpu,
+    extractData: (stats) => stats.cpu,
     defaultData: DEFAULT_METRICS.cpu,
   });
 
-  const perCoreData = cpu?.per_core || [];
+  const perCoreData = cpu.per_core;
   const chartData = createCPUChartData(perCoreData);
   const chartConfig = createCPUChartConfig(perCoreData.length);
-
-  // Get top 3 cores by usage
-  const topCores = perCoreData.length > 0
-    ? [...perCoreData].sort((a, b) => b.usage - a.usage).slice(0, 3)
-    : [];
+  const topCores = [...perCoreData].sort((a, b) => b.usage - a.usage).slice(0, 3);
 
   return (
     <SystemMetricCard
@@ -39,64 +129,19 @@ const CPUUsageCard: React.FC<CPUUsageCardProps> = ({ systemStats }) => {
       skeletonContent={<CPUUsageCardSkeletonContent />}
     >
       <div className="space-y-4">
-        {/* Overall CPU Usage */}
-        <div className="text-center">
-          <TypographyMuted className="text-xs">{t('dashboard.cpu.overall')}</TypographyMuted>
-          <div className="text-3xl font-bold text-primary mt-1">
-            {formatPercentage(cpu?.overall || 0)}%
-          </div>
-        </div>
+        <CPUUsageHeader
+          overallUsage={cpu.overall}
+          label={t('dashboard.cpu.overall')}
+        />
 
-        {/* Bar Chart for Per-Core Usage */}
-        {perCoreData.length > 0 ? (
-          <>
-            <div>
-              <BarChartComponent
-                data={chartData}
-                chartConfig={chartConfig}
-                height="h-[180px]"
-                yAxisLabel={t('dashboard.cpu.usage')}
-                xAxisLabel={t('dashboard.cpu.cores')}
-                showAxisLabels={true}
-              />
-            </div>
+        <CPUUsageChart
+          chartData={chartData}
+          chartConfig={chartConfig}
+          yAxisLabel={t('dashboard.cpu.usage')}
+          xAxisLabel={t('dashboard.cpu.cores')}
+        />
 
-            {/* Top 3 Cores Summary */}
-            {topCores.length > 0 && (
-              <div className="grid grid-cols-3 gap-2 text-center">
-                {topCores.map((core) => {
-                  const colors = [
-                    CHART_COLORS.blue,
-                    CHART_COLORS.green,
-                    CHART_COLORS.orange,
-                    CHART_COLORS.purple,
-                    CHART_COLORS.red,
-                    CHART_COLORS.yellow,
-                  ];
-                  const color = colors[core.core_id % colors.length];
-
-                  return (
-                    <div key={core.core_id} className="flex flex-col items-center gap-1">
-                      <div className="flex items-center gap-1">
-                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-                        <TypographyMuted className="text-xs">Core {core.core_id}</TypographyMuted>
-                      </div>
-                      <TypographySmall className="text-sm font-bold">
-                        {formatPercentage(core.usage)}%
-                      </TypographySmall>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-8">
-            <TypographyMuted className="text-sm">
-              No CPU data available
-            </TypographyMuted>
-          </div>
-        )}
+        <TopCoresList cores={topCores} />
       </div>
     </SystemMetricCard>
   );
