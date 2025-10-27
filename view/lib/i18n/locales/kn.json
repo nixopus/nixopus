@@ -785,6 +785,13 @@
         "fifteenMin": "15 ನಿಮಿಷಗಳು"
       }
     },
+    "cpu": {
+      "title": "CPU ಬಳಕೆ",
+      "overall": "ಒಟ್ಟಾರೆ",
+      "usage": "ಬಳಕೆ (%)",
+      "cores": "ಕೋರ್‌ಗಳು",
+      "perCore": "ಪ್ರತಿ ಕೋರ್"
+    },
     "memory": {
       "title": "ಮೆಮೊರಿ ಬಳಕೆ",
       "used": "{value} GB ಬಳಸಲಾಗಿದೆ",
@@ -802,7 +809,21 @@
       "osType": "OS ಪ್ರಕಾರ",
       "cpu": "CPU",
       "uptime": "ಅಪ್ಟೈಮ್",
-      "lastUpdated": "ಕೊನೆಯ ನವೀಕರಣ"
+      "lastUpdated": "ಕೊನೆಯ ನವೀಕರಣ",
+      "hostname": "ಹೋಸ್ಟ್ನೇಮ್",
+      "kernelVersion": "ಕರ್ನಲ್ ಆವೃತ್ತಿ",
+      "architecture": "ಆರ್ಕಿಟೆಕ್ಚರ್",
+      "memory": "ಮೆಮೊರಿ",
+      "labels": {
+        "operatingSystem": "ಆಪರೇಟಿಂಗ್ ಸಿಸ್ಟಮ್",
+        "hostname": "ಹೋಸ್ಟ್ನೇಮ್",
+        "cpu": "CPU",
+        "cpuCores": "CPU ಕೋರ್‌ಗಳು",
+        "memory": "ಮೆಮೊರಿ",
+        "kernelVersion": "ಕರ್ನಲ್ ಆವೃತ್ತಿ",
+        "uptime": "ಅಪ್ಟೈಮ್",
+        "architecture": "ಆರ್ಕಿಟೆಕ್ಚರ್"
+      }
     },
     "smtpBanner": {
       "message": "ಅಧಿಸೂಚನೆಗಳನ್ನು ಸ್ವೀಕರಿಸಲು SMTP ಸೆಟ್ಟಿಂಗ್ಗಳನ್ನು ಕಾನ್ಫಿಗರ್ ಮಾಡಿ",

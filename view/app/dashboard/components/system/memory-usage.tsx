@@ -2,85 +2,76 @@
 
 import React from 'react';
 import { BarChart } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SystemStatsType } from '@/redux/types/monitor';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useTranslation } from '@/hooks/use-translation';
-import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
+import { TypographyMuted } from '@/components/ui/typography';
+import { DoughnutChartComponent } from '@/components/ui/doughnut-chart-component';
+import { SystemMetricCard } from './system-metric-card';
+import { useSystemMetric } from '../../hooks/use-system-metric';
+import { formatGB, createMemoryChartData, createMemoryChartConfig } from '../utils/utils';
+import { DEFAULT_METRICS, CHART_COLORS } from '../utils/constants';
+import { MemoryUsageCardSkeletonContent } from './skeletons/memory-usage';
 
 interface MemoryUsageCardProps {
-  systemStats: SystemStatsType;
+  systemStats: SystemStatsType | null;
 }
 
-const formatGB = (value: number) => `${value.toFixed(2)}`;
-
 const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
-  const { t } = useTranslation();
-  const { memory } = systemStats;
+  const { data: memory, isLoading, t } = useSystemMetric({
+    systemStats,
+    extractData: (stats) => stats.memory,
+    defaultData: DEFAULT_METRICS.memory,
+  });
+
+  const freeMemory = memory.total - memory.used;
+
+  const chartData = createMemoryChartData(memory.used, freeMemory);
+  const chartConfig = createMemoryChartConfig();
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
-          <BarChart className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
-          <TypographySmall>{t('dashboard.memory.title')}</TypographySmall>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2 sm:space-y-3">
-          <div className="w-full h-2 bg-gray-200 rounded-full">
-            <div
-              className={`h-2 rounded-full bg-primary`}
-              style={{ width: `${memory.percentage}%` }}
-            />
+    <SystemMetricCard
+      title={t('dashboard.memory.title')}
+      icon={BarChart}
+      isLoading={isLoading}
+      skeletonContent={<MemoryUsageCardSkeletonContent />}
+    >
+      <div className="space-y-4">
+        <div className="flex items-center justify-center h-[200px]">
+          <DoughnutChartComponent
+            data={chartData}
+            chartConfig={chartConfig}
+            centerLabel={{
+              value: `${memory.percentage.toFixed(1)}%`,
+              subLabel: 'Used'
+            }}
+            innerRadius={60}
+            outerRadius={80}
+            maxHeight="max-h-[200px]"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: CHART_COLORS.blue }} />
+              <TypographyMuted>
+                Used: {formatGB(memory.used)} GB
+              </TypographyMuted>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: CHART_COLORS.green }} />
+              <TypographyMuted>
+                Free: {formatGB(freeMemory)} GB
+              </TypographyMuted>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <TypographyMuted className="text-xs truncate max-w-[80px] sm:max-w-[100px]">
-              {t('dashboard.memory.used').replace('{value}', formatGB(memory.used))}
-            </TypographyMuted>
-            <TypographyMuted className="text-xs truncate max-w-[60px] sm:max-w-[80px]">
-              {t('dashboard.memory.percentage').replace('{value}', memory.percentage.toFixed(1))}
-            </TypographyMuted>
-            <TypographyMuted className="text-xs truncate max-w-[80px] sm:max-w-[100px]">
-              {t('dashboard.memory.total').replace('{value}', formatGB(memory.total))}
-            </TypographyMuted>
-          </div>
-          <TypographyMuted className="text-xs mt-1 sm:mt-2 line-clamp-2 sm:line-clamp-none break-all">
-            {memory.rawInfo}
+
+          <TypographyMuted className="text-xs text-center">
+            Total: {formatGB(memory.total)} GB
           </TypographyMuted>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </SystemMetricCard>
   );
 };
 
 export default MemoryUsageCard;
-
-export function MemoryUsageCardSkeleton() {
-  const { t } = useTranslation();
-
-  return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
-          <BarChart className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
-          <TypographySmall>{t('dashboard.memory.title')}</TypographySmall>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2 sm:space-y-3">
-          <Skeleton className="w-full h-2 rounded-full" />
-
-          <div className="flex justify-between">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-10" />
-            <Skeleton className="h-4 w-20" />
-          </div>
-
-          <Skeleton className="h-4 w-full mt-1 sm:mt-2" />
-          <Skeleton className="h-4 w-2/3" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}

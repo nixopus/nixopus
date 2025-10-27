@@ -804,6 +804,13 @@
         "fifteenMin": "15 മിനിറ്റ്"
       }
     },
+    "cpu": {
+      "title": "CPU ഉപയോഗം",
+      "overall": "മൊത്തത്തിൽ",
+      "usage": "ഉപയോഗം (%)",
+      "cores": "കോറുകൾ",
+      "perCore": "ഓരോ കോറിനും"
+    },
     "memory": {
       "title": "മെമ്മറി ഉപയോഗം",
       "used": "{മൂല്യം} GB ഉപയോഗിച്ചു",
@@ -821,7 +828,21 @@
       "osType": "OS തരം",
       "cpu": "CPU",
       "uptime": "അപ്‌ടൈം",
-      "lastUpdated": "അവസാനം അപ്ഡേറ്റ് ചെയ്തത്"
+      "lastUpdated": "അവസാനം അപ്ഡേറ്റ് ചെയ്തത്",
+      "hostname": "ഹോസ്റ്റ്നേം",
+      "kernelVersion": "കേർണൽ പതിപ്പ്",
+      "architecture": "ആർക്കിടെക്ചർ",
+      "memory": "മെമ്മറി",
+      "labels": {
+        "operatingSystem": "ഓപ്പറേറ്റിംഗ് സിസ്റ്റം",
+        "hostname": "ഹോസ്റ്റ്നേം",
+        "cpu": "CPU",
+        "cpuCores": "CPU കോറുകൾ",
+        "memory": "മെമ്മറി",
+        "kernelVersion": "കേർണൽ പതിപ്പ്",
+        "uptime": "അപ്‌ടൈം",
+        "architecture": "ആർക്കിടെക്ചർ"
+      }
     },
     "smtpBanner": {
       "message": "അറിയിപ്പുകൾക്കായി SMTP ക്രമീകരിക്കുക",

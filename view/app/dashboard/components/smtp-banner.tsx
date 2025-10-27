@@ -1,35 +1,13 @@
 'use client';
 
-import React from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
-import { useRouter } from 'next/navigation';
 import { TypographyMuted } from '@/components/ui/typography';
-
-const SMTP_BANNER_KEY = 'smtp_banner_dismissed';
+import useSmtpBanner from '../hooks/use-smtp-banner';
 
 export function SMTPBanner() {
-  const { t } = useTranslation();
-  const router = useRouter();
-  const [isVisible, setIsVisible] = React.useState(false);
-
-  React.useEffect(() => {
-    const dismissed = localStorage.getItem(SMTP_BANNER_KEY);
-    if (!dismissed) {
-      setIsVisible(true);
-    }
-  }, []);
-
-  const handleDismiss = () => {
-    localStorage.setItem(SMTP_BANNER_KEY, 'true');
-    setIsVisible(false);
-  };
-
-  const handleConfigure = () => {
-    router.push('/settings/notifications');
-  };
+  const { handleDismiss, handleConfigure, t, isVisible } = useSmtpBanner();
 
   if (!isVisible) return null;
 

@@ -789,6 +789,13 @@
         "fifteenMin": "15 minutes"
       }
     },
+    "cpu": {
+      "title": "Utilisation du CPU",
+      "overall": "Global",
+      "usage": "Utilisation (%)",
+      "cores": "Cœurs",
+      "perCore": "Par cœur"
+    },
     "memory": {
       "title": "Utilisation de la mémoire",
       "used": "{value} Go utilisé",
@@ -806,7 +813,21 @@
       "osType": "Type d'OS",
       "cpu": "CPU",
       "uptime": "Temps de fonctionnement",
-      "lastUpdated": "Dernière mise à jour"
+      "lastUpdated": "Dernière mise à jour",
+      "hostname": "Nom d'hôte",
+      "kernelVersion": "Version du noyau",
+      "architecture": "Architecture",
+      "memory": "Mémoire",
+      "labels": {
+        "operatingSystem": "Système d'exploitation",
+        "hostname": "Nom d'hôte",
+        "cpu": "CPU",
+        "cpuCores": "Cœurs CPU",
+        "memory": "Mémoire",
+        "kernelVersion": "Version du noyau",
+        "uptime": "Temps de fonctionnement",
+        "architecture": "Architecture"
+      }
     },
     "smtpBanner": {
       "message": "Configurez les paramètres SMTP pour recevoir des notifications",

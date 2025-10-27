@@ -43,12 +43,27 @@ type DashboardMonitor struct {
 }
 
 type SystemStats struct {
-	OSType    string      `json:"os_type"`
-	CPUInfo   string      `json:"cpu_info"`
-	Memory    MemoryStats `json:"memory"`
-	Load      LoadStats   `json:"load"`
-	Disk      DiskStats   `json:"disk"`
-	Timestamp time.Time   `json:"timestamp"`
+	OSType        string      `json:"os_type"`
+	Hostname      string      `json:"hostname"`
+	CPUInfo       string      `json:"cpu_info"`
+	CPUCores      int         `json:"cpu_cores"`
+	CPU           CPUStats    `json:"cpu"`
+	Memory        MemoryStats `json:"memory"`
+	Load          LoadStats   `json:"load"`
+	Disk          DiskStats   `json:"disk"`
+	KernelVersion string      `json:"kernel_version"`
+	Architecture  string      `json:"architecture"`
+	Timestamp     time.Time   `json:"timestamp"`
+}
+
+type CPUCore struct {
+	CoreID     int     `json:"core_id"`
+	Usage      float64 `json:"usage"`
+}
+
+type CPUStats struct {
+	Overall     float64   `json:"overall"`
+	PerCore     []CPUCore `json:"per_core"`
 }
 
 type MemoryStats struct {

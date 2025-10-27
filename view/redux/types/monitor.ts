@@ -56,11 +56,26 @@ export interface DiskStats {
   allMounts: DiskMount[];
 }
 
+export interface CPUCore {
+  core_id: number;
+  usage: number;
+}
+
+export interface CPUStats {
+  overall: number;
+  per_core: CPUCore[];
+}
+
 export interface SystemStatsType {
   os_type: string;
+  hostname: string;
   cpu_info: string;
+  cpu_cores: number;
+  cpu: CPUStats;
   memory: MemoryStats;
   load: LoadStats;
   disk: DiskStats;
+  kernel_version: string;
+  architecture: string;
   timestamp: number;
 }

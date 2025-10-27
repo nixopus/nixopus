@@ -1,3 +1,12 @@
+# [0.1.0-alpha.52](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.51...v0.1.0-alpha.52) (2025-10-25)
+
+
+### Bug Fixes
+
+* disable just in time compilation (JIT) of postgres ([#539](https://github.com/raghavyuva/nixopus/issues/539)) ([b2c35bd](https://github.com/raghavyuva/nixopus/commit/b2c35bd29349f565aa66617a164d687faf060778))
+
+
+
 # [0.1.0-alpha.51](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.50...v0.1.0-alpha.51) (2025-10-25)
 
 
