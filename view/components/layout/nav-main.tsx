@@ -11,8 +11,10 @@ import {
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
-  SidebarMenuSubItem
+  SidebarMenuSubItem,
+  useSidebar
 } from '@/components/ui/sidebar';
+import { SidebarHoverMenu } from '@/components/ui/sidebar-hover-menu';
 import Link from 'next/link';
 import { useCollapsibleState } from '@/hooks/use-collapsible-state';
 
@@ -32,6 +34,7 @@ interface NavMainProps {
 export function NavMain({ items, onItemClick }: NavMainProps) {
   const router = useRouter();
   const { isItemCollapsed, toggleItem } = useCollapsibleState();
+  const { state } = useSidebar();
 
   const handleClick = (url: string) => {
     onItemClick?.(url);
@@ -41,46 +44,68 @@ export function NavMain({ items, onItemClick }: NavMainProps) {
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {items.map((item) => (
-          <Collapsible
-            key={item.title}
-            asChild
-            open={!isItemCollapsed(item.title)}
-            onOpenChange={() => toggleItem(item.title)}
-            className="group/collapsible"
-          >
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton
-                  className="cursor-pointer"
-                  tooltip={item.title}
-                  onClick={() => handleClick(item.url)}
-                >
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                  {(item.items?.length || 0) > 0 && (
-                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                  )}
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              {(item.items?.length || 0) > 0 && (
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    {item.items?.map((subItem) => (
-                      <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton asChild>
-                          <Link href={subItem.url}>
-                            <span>{subItem.title}</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              )}
-            </SidebarMenuItem>
-          </Collapsible>
-        ))}
+        {items.map((item) => {
+          const hasNestedItems = (item.items?.length || 0) > 0;
+          const isCollapsed = state === 'collapsed';
+
+          if (hasNestedItems && isCollapsed) {
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarHoverMenu items={item.items || []}>
+                  <SidebarMenuButton
+                    className="cursor-pointer"
+                    tooltip={item.title}
+                    onClick={() => handleClick(item.url)}
+                  >
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarHoverMenu>
+              </SidebarMenuItem>
+            );
+          }
+
+          return (
+            <Collapsible
+              key={item.title}
+              asChild
+              open={!isItemCollapsed(item.title)}
+              onOpenChange={() => toggleItem(item.title)}
+              className="group/collapsible"
+            >
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton
+                    className="cursor-pointer"
+                    tooltip={item.title}
+                    onClick={() => handleClick(item.url)}
+                  >
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                    {hasNestedItems && (
+                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    )}
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                {hasNestedItems && (
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {item.items?.map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton asChild>
+                            <Link href={subItem.url}>
+                              <span>{subItem.title}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                )}
+              </SidebarMenuItem>
+            </Collapsible>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );

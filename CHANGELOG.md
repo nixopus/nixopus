@@ -1,3 +1,30 @@
+# [0.1.0-alpha.52](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.51...v0.1.0-alpha.52) (2025-10-25)
+
+
+### Bug Fixes
+
+* disable just in time compilation (JIT) of postgres ([#539](https://github.com/raghavyuva/nixopus/issues/539)) ([b2c35bd](https://github.com/raghavyuva/nixopus/commit/b2c35bd29349f565aa66617a164d687faf060778))
+
+
+
+# [0.1.0-alpha.51](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.50...v0.1.0-alpha.51) (2025-10-25)
+
+
+### Bug Fixes
+
+* menu for closed sidebar items on hover ([#526](https://github.com/raghavyuva/nixopus/issues/526)) ([ca423ed](https://github.com/raghavyuva/nixopus/commit/ca423ed2e3a53c5a1e96048914316399274afcf0))
+
+
+
+# [0.1.0-alpha.50](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.49...v0.1.0-alpha.50) (2025-10-25)
+
+
+### Features
+
+* update command to not reference .env ([af13242](https://github.com/raghavyuva/nixopus/commit/af13242c25e2cc8b02e965e8b3645df84e372c9b))
+
+
+
 # [0.1.0-alpha.49](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.48...v0.1.0-alpha.49) (2025-10-22)
 
 
@@ -727,5 +754,6 @@
 * **update-nixopus:** routes for checking for updates / auto updates, and force update of the nixopus app itself todo (implement the service layer for how do we compare the docker image versions and update ([48af332](https://github.com/raghavyuva/nixopus/commit/48af3324bd098992df515430eeb63080c5f2e324))
 * **user-settings:** user settings are no more stored in localstorage, it now uses database for patching individual preference like language font etc, user can toggle to choose auto update of nixopus ([98231ad](https://github.com/raghavyuva/nixopus/commit/98231ad1869b801b0047721d5614f288bd6c7112))
 * **vulnerability:** fixes CVE-2024-21538 (HIGH) and CVE-2025-30204 (HIGH) ([c25e0c7](https://github.com/raghavyuva/nixopus/commit/c25e0c7fa9ad742a25f95ae7e2a780a881cad573))
+
 
 

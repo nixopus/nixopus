@@ -28,13 +28,12 @@ class Update:
     def run(self):
         compose_file = self.config.get_yaml_value(DEFAULT_COMPOSE_FILE)
         compose_file_path = self.config.get_yaml_value(NIXOPUS_CONFIG_DIR) + "/" + compose_file
-        env_file_path = self.config.get_yaml_value(NIXOPUS_CONFIG_DIR) + "/.env"
         self.logger.info(updating_nixopus)
         
         docker_service = BaseDockerService(self.logger, "pull")
         
         self.logger.debug(pulling_latest_images)
-        success, output = docker_service.execute_services(compose_file=compose_file_path, env_file=env_file_path)
+        success, output = docker_service.execute_services(compose_file=compose_file_path)
         
         if not success:
             self.logger.error(failed_to_pull_images.format(error=output))
@@ -44,7 +43,7 @@ class Update:
         
         docker_service_up = BaseDockerService(self.logger, "up")
         self.logger.debug(starting_services)
-        success, output = docker_service_up.execute_services(compose_file=compose_file_path, env_file=env_file_path, detach=True)
+        success, output = docker_service_up.execute_services(compose_file=compose_file_path, detach=True)
         
         if not success:
             self.logger.error(failed_to_start_services.format(error=output))
