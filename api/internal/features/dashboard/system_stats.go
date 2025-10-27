@@ -31,6 +31,8 @@ func formatBytes(bytes uint64, unit string) string {
 	}
 }
 
+// TODO: Add support for multi server management 
+// solution: create a bridge between the gopsutil and the ssh client
 func (m *DashboardMonitor) GetSystemStats() {
 	osType, err := m.getCommandOutput("uname -s")
 	if err != nil {
@@ -48,49 +50,40 @@ func (m *DashboardMonitor) GetSystemStats() {
 		Disk:      DiskStats{AllMounts: []DiskMount{}},
 	}
 
-	// Get hostname
 	if hostname, err := m.getCommandOutput("hostname"); err == nil {
 		stats.Hostname = strings.TrimSpace(hostname)
 	}
 
-	// Get kernel version
 	if kernelVersion, err := m.getCommandOutput("uname -r"); err == nil {
 		stats.KernelVersion = strings.TrimSpace(kernelVersion)
 	}
 
-	// Get architecture
 	if architecture, err := m.getCommandOutput("uname -m"); err == nil {
 		stats.Architecture = strings.TrimSpace(architecture)
 	}
 
-	// Get uptime
 	var uptime string
 	if hostInfo, err := host.Info(); err == nil {
 		uptime = time.Duration(hostInfo.Uptime * uint64(time.Second)).String()
 	}
 
-	// Parse load averages
 	if loadAvg, err := m.getCommandOutput("uptime"); err == nil {
 		loadAvgStr := strings.TrimSpace(loadAvg)
 		stats.Load = parseLoadAverage(loadAvgStr)
 	}
 
-	// Set uptime after parsing load averages
 	stats.Load.Uptime = uptime
 
-	// Get CPU info
 	if cpuInfo, err := cpu.Info(); err == nil && len(cpuInfo) > 0 {
 		stats.CPUInfo = cpuInfo[0].ModelName
 	}
 
-	// Get CPU cores count
 	if stats.CPUCores == 0 {
 		if coreCount, err := cpu.Counts(true); err == nil {
 			stats.CPUCores = coreCount
 		}
 	}
 
-	// Get CPU usage (overall and per-core)
 	stats.CPU = m.getCPUStats()
 
 	if memInfo, err := mem.VirtualMemory(); err == nil {
@@ -165,7 +158,6 @@ func (m *DashboardMonitor) getCPUStats() CPUStats {
 		PerCore: []CPUCore{},
 	}
 
-	// Get per-core CPU usage
 	perCorePercent, err := cpu.Percent(time.Second, true)
 	if err == nil && len(perCorePercent) > 0 {
 		cpuStats.PerCore = make([]CPUCore, len(perCorePercent))
@@ -179,7 +171,6 @@ func (m *DashboardMonitor) getCPUStats() CPUStats {
 			totalUsage += usage
 		}
 
-		// Calculate overall average
 		cpuStats.Overall = totalUsage / float64(len(perCorePercent))
 	} else {
 

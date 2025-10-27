@@ -7,7 +7,7 @@ import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 import { BarChartComponent } from '@/components/ui/bar-chart-component';
 import { SystemMetricCard } from './system-metric-card';
 import { useSystemMetric } from '../../hooks/use-system-metric';
-import { createCPUChartData, createCPUChartConfig, formatPercentage } from './utils';
+import { createCPUChartData, createCPUChartConfig, formatPercentage } from '../utils/utils';
 import { DEFAULT_METRICS, CHART_COLORS } from '../utils/constants';
 import { CPUUsageCardSkeletonContent } from './skeletons/cpu-usage';
 

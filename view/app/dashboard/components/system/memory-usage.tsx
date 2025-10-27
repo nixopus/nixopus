@@ -3,11 +3,11 @@
 import React from 'react';
 import { BarChart } from 'lucide-react';
 import { SystemStatsType } from '@/redux/types/monitor';
-import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
+import { TypographyMuted } from '@/components/ui/typography';
 import { DoughnutChartComponent } from '@/components/ui/doughnut-chart-component';
 import { SystemMetricCard } from './system-metric-card';
 import { useSystemMetric } from '../../hooks/use-system-metric';
-import { formatGB, createMemoryChartData, createMemoryChartConfig } from './utils';
+import { formatGB, createMemoryChartData, createMemoryChartConfig } from '../utils/utils';
 import { DEFAULT_METRICS, CHART_COLORS } from '../utils/constants';
 import { MemoryUsageCardSkeletonContent } from './skeletons/memory-usage';
 
@@ -22,7 +22,6 @@ const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
     defaultData: DEFAULT_METRICS.memory,
   });
 
-  // Calculate free memory
   const freeMemory = memory.total - memory.used;
 
   const chartData = createMemoryChartData(memory.used, freeMemory);
@@ -36,7 +35,6 @@ const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
       skeletonContent={<MemoryUsageCardSkeletonContent />}
     >
       <div className="space-y-4">
-        {/* Doughnut Chart */}
         <div className="flex items-center justify-center h-[200px]">
           <DoughnutChartComponent
             data={chartData}
@@ -51,7 +49,6 @@ const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
           />
         </div>
 
-        {/* Summary Stats with Distinct Colors */}
         <div className="space-y-2">
           <div className="flex justify-between text-xs">
             <div className="flex items-center gap-2">
@@ -68,7 +65,6 @@ const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
             </div>
           </div>
 
-          {/* Additional Info */}
           <TypographyMuted className="text-xs text-center">
             Total: {formatGB(memory.total)} GB
           </TypographyMuted>

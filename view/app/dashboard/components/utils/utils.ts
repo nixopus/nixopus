@@ -1,12 +1,10 @@
-import { CHART_COLORS } from '../utils/constants';
+import { CHART_COLORS } from './constants';
 import { BarChartDataItem } from '@/components/ui/bar-chart-component';
 import { DoughnutChartDataItem } from '@/components/ui/doughnut-chart-component';
 
-// Format utilities
 export const formatGB = (value: number): string => `${value.toFixed(2)}`;
 export const formatPercentage = (value: number): string => `${value.toFixed(1)}`;
 
-// Chart data transformers
 export const createLoadAverageChartData = (load: {
   oneMin: number;
   fiveMin: number;
@@ -71,7 +69,6 @@ export const createMemoryChartConfig = () => ({
   },
 });
 
-// CPU Chart utilities
 export const createCPUChartData = (
   perCore: Array<{ core_id: number; usage: number }>
 ): BarChartDataItem[] => {
@@ -79,7 +76,6 @@ export const createCPUChartData = (
     return [];
   }
 
-  // Define a color palette for cores (cycle through colors)
   const colors = [
     CHART_COLORS.blue,
     CHART_COLORS.green,

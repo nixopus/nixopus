@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Server, Cpu, HardDrive, Activity, Terminal, Box, CpuIcon, ScreenShare, ServerCog } from 'lucide-react';
+import { Server, HardDrive, Activity, Terminal, Box, CpuIcon, ScreenShare, ServerCog } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SystemStatsType } from '@/redux/types/monitor';
 import { useTranslation } from '@/hooks/use-translation';
@@ -12,6 +12,28 @@ interface SystemInfoCardProps {
   systemStats: SystemStatsType | null;
 }
 
+interface SystemInfoItemProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}
+
+const SystemInfoItem: React.FC<SystemInfoItemProps> = ({ icon, label, value }) => {
+  return (
+    <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+      <div className="mt-0.5">{icon}</div>
+      <div className="flex-1 min-w-0">
+        <TypographyMuted className="text-xs font-medium">
+          {label}
+        </TypographyMuted>
+        <TypographySmall className="text-xs font-semibold truncate">
+          {value}
+        </TypographySmall>
+      </div>
+    </div>
+  );
+};
+
 const SystemInfoCard: React.FC<SystemInfoCardProps> = ({ systemStats }) => {
   const { t } = useTranslation();
 
@@ -21,7 +43,6 @@ const SystemInfoCard: React.FC<SystemInfoCardProps> = ({ systemStats }) => {
 
   const { load, memory, os_type, cpu_info, cpu_cores, hostname, kernel_version, architecture } = systemStats;
 
-  // Format memory display
   const memoryDisplay = `${memory.used.toFixed(1)} / ${memory.total.toFixed(1)} GB (${memory.percentage.toFixed(1)}%)`;
 
   const systemInfoItems = [
@@ -78,17 +99,12 @@ const SystemInfoCard: React.FC<SystemInfoCardProps> = ({ systemStats }) => {
       <CardContent className="flex-1">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {systemInfoItems.map((item, index) => (
-            <div key={index} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-              <div className="mt-0.5">{item.icon}</div>
-              <div className="flex-1 min-w-0">
-                <TypographyMuted className="text-xs font-medium">
-                  {item.label}
-                </TypographyMuted>
-                <TypographySmall className="text-xs font-semibold truncate">
-                  {item.value}
-                </TypographySmall>
-              </div>
-            </div>
+            <SystemInfoItem
+              key={index}
+              icon={item.icon}
+              label={item.label}
+              value={item.value}
+            />
           ))}
         </div>
       </CardContent>
@@ -97,4 +113,3 @@ const SystemInfoCard: React.FC<SystemInfoCardProps> = ({ systemStats }) => {
 };
 
 export default SystemInfoCard;
-
