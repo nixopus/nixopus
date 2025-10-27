@@ -1,4 +1,4 @@
-import { CHART_COLORS } from './constants';
+import { CHART_COLORS } from '../utils/constants';
 import { BarChartDataItem } from '@/components/ui/bar-chart-component';
 import { DoughnutChartDataItem } from '@/components/ui/doughnut-chart-component';
 

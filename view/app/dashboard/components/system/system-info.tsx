@@ -4,9 +4,9 @@ import React from 'react';
 import { Server, Cpu, HardDrive, Activity, Terminal, Box, CpuIcon, ScreenShare, ServerCog } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SystemStatsType } from '@/redux/types/monitor';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/use-translation';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
+import { SystemInfoCardSkeleton } from './skeletons/system-info';
 
 interface SystemInfoCardProps {
   systemStats: SystemStatsType | null;
@@ -98,30 +98,4 @@ const SystemInfoCard: React.FC<SystemInfoCardProps> = ({ systemStats }) => {
 
 export default SystemInfoCard;
 
-export function SystemInfoCardSkeleton() {
-  const { t } = useTranslation();
-
-  return (
-    <Card className="overflow-hidden h-full flex flex-col w-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-bold flex items-center">
-          <Server className="h-4 w-4 mr-2 text-muted-foreground" />
-          <TypographySmall>{t('dashboard.system.title')}</TypographySmall>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[...Array(8)].map((_, index) => (
-            <div key={index} className="flex items-start gap-3 p-2">
-              <Skeleton className="h-4 w-4 mt-0.5" />
-              <div className="flex-1 space-y-1">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-3 w-32" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+export { SystemInfoCardSkeleton } from './skeletons/system-info';

@@ -51,50 +51,20 @@ function DashboardPage() {
     <ResourceGuard
       resource="dashboard"
       action="read"
-    // fallback={<div>You are not authorized to access this page</div>}
     >
       <PageLayout maxWidth="6xl" padding="md" spacing="lg">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
-          <div>
-            <TypographyH1>{t('dashboard.title')}</TypographyH1>
-            <TypographyMuted>{t('dashboard.description')}</TypographyMuted>
-          </div>
-          {hasCustomLayout && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleResetLayout}
-              className="shrink-0"
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Reset Layout
-            </Button>
-          )}
-        </div>
-        {mounted && showDragHint && (
-          <div className="mb-4 p-4 bg-primary/5 border border-primary/20 rounded-lg flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 text-primary">
-                <Info className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Customize Your Dashboard</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Hover over any card to see the drag handle on the left. Click and drag to rearrange cards in your preferred order. Your layout will be saved automatically.
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="default"
-              onClick={dismissHint}
-              className="shrink-0"
-            >
-              Got it
-            </Button>
-          </div>
-        )}
-        {!smtpConfig && <SMTPBanner />}
+        <DashboardHeader
+          hasCustomLayout={hasCustomLayout}
+          onResetLayout={handleResetLayout}
+          title={t('dashboard.title')}
+          description={t('dashboard.description')}
+        />
+        <DragHintBanner
+          mounted={mounted}
+          showDragHint={showDragHint}
+          onDismiss={dismissHint}
+        />
+        <SMTPBannerConditional hasSMTPConfig={!!smtpConfig} />
         <MonitoringSection
           systemStats={systemStats}
           containersData={containersData}
@@ -108,6 +78,77 @@ function DashboardPage() {
 }
 
 export default DashboardPage;
+
+const DashboardHeader = ({
+  hasCustomLayout,
+  onResetLayout,
+  title,
+  description
+}: {
+  hasCustomLayout: boolean;
+  onResetLayout: () => void;
+  title: string;
+  description: string;
+}) => (
+  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
+    <div>
+      <TypographyH1>{title}</TypographyH1>
+      <TypographyMuted>{description}</TypographyMuted>
+    </div>
+    {hasCustomLayout && (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onResetLayout}
+        className="shrink-0"
+      >
+        <RefreshCw className="mr-2 h-4 w-4" />
+        Reset Layout
+      </Button>
+    )}
+  </div>
+);
+
+const DragHintBanner = ({
+  mounted,
+  showDragHint,
+  onDismiss
+}: {
+  mounted: boolean;
+  showDragHint: boolean;
+  onDismiss: () => void;
+}) => {
+  if (!mounted || !showDragHint) return null;
+
+  return (
+    <div className="mb-4 p-4 bg-primary/5 border border-primary/20 rounded-lg flex items-start justify-between gap-4">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 text-primary">
+          <Info className="h-5 w-5" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-foreground">Customize Your Dashboard</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Hover over any card to see the drag handle on the left. Click and drag to rearrange cards in your preferred order. Your layout will be saved automatically.
+          </p>
+        </div>
+      </div>
+      <Button
+        variant="ghost"
+        size="default"
+        onClick={onDismiss}
+        className="shrink-0"
+      >
+        Got it
+      </Button>
+    </div>
+  );
+};
+
+const SMTPBannerConditional = ({ hasSMTPConfig }: { hasSMTPConfig: boolean }) => {
+  if (hasSMTPConfig) return null;
+  return <SMTPBanner />;
+};
 
 const MonitoringSection = ({
   systemStats,
