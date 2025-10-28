@@ -1240,7 +1240,7 @@
 "domain": {
 "minLength": "ଡୋମେନ୍ ନାମ କମେ କମେ ୩ଟି ଅକ୍ଷର ହେବା ଆବଶ୍ୟକ।",
 "invalidFormat": "ଦୟାକରି ବ validଳ ଡୋମେନ୍ ନାମ ଦିଅନ୍ତୁ (ଯେପରି, example.com)।",
-"notAllowed": "ଏହି ଡୋମେନ୍ ଅନୁମତିନଟି। Settings > Domains ରେ ଯୋଡିଲେ ଉପଲବ୍ଧ ହେବ।"
+"notAllowed": "ଏହି ଡୋମେନ୍ ଅନୁମତି ନାହିଁ। Settings > Domains ରେ ଯୋଡିଲେ ଉପଲବ୍ଧ ହେବ।"
 },
 "repository": {
 "minLength": "ରିପୋଜିଟରି ନାମ କମେ କମେ ୩ଟି ଅକ୍ଷର ହେବା ଆବଶ୍ୟକ।",
@@ -1353,7 +1353,7 @@
 "execution": "ନିଷ୍ପାଦନ",
 "runSteps": "ରନ୍ ପଦକ୍ଷେପ",
 "validateSteps": "ପଦକ୍ଷେପ ଯାଞ୍ଚ କରନ୍ତୁ",
-"forkYaml": "YAML (໐ପ୍ସନାଲ୍)",
+"forkYaml": "YAML (ଇଚ୍ଛାଧୀନ)",
 "remove": "ହଟାନ୍ତୁ",
 "deleteSuccess": "ଏକ୍ସଟେନ୍ସନ୍ ହଟାଗଲା",
 "deleteFailed": "ଏକ୍ସଟେନ୍ସନ୍ ହଟାଇବା ବିଫଳ",
