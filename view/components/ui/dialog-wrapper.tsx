@@ -135,24 +135,19 @@ export function DialogWrapper({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent 
-        className={cn(
-          getSizeClasses(),
-          contentClassName
-        )}
-      >
+      <DialogContent className={cn(getSizeClasses(), contentClassName)}>
         {(title || description) && (
           <DialogHeader className={headerClassName}>
             {title && <DialogTitle>{title}</DialogTitle>}
             {description && <DialogDescription>{description}</DialogDescription>}
           </DialogHeader>
         )}
-        
+
         <div className={cn('space-y-4', className)}>
           {renderStatusMessage()}
           {children}
         </div>
-        
+
         {renderActions()}
       </DialogContent>
     </Dialog>

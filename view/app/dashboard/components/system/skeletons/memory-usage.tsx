@@ -36,7 +36,7 @@ export function MemoryUsageCardSkeleton() {
   const { t } = useSystemMetric({
     systemStats: null,
     extractData: (stats) => stats.memory,
-    defaultData: DEFAULT_METRICS.memory,
+    defaultData: DEFAULT_METRICS.memory
   });
 
   return (

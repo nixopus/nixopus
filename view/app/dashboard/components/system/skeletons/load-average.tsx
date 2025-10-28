@@ -36,7 +36,7 @@ export function LoadAverageCardSkeleton() {
   const { t } = useSystemMetric({
     systemStats: null,
     extractData: (stats) => stats.load,
-    defaultData: DEFAULT_METRICS.load,
+    defaultData: DEFAULT_METRICS.load
   });
 
   return (

@@ -61,7 +61,7 @@ export function SidebarHoverMenu({ items, children, className }: SidebarHoverMen
       )}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      style={{ 
+      style={{
         position: 'fixed',
         left: `${buttonRect.right + 8}px`,
         top: `${buttonRect.top}px`,
@@ -76,9 +76,7 @@ export function SidebarHoverMenu({ items, children, className }: SidebarHoverMen
                 {item.title}
               </Link>
             </div>
-            {index < items.length - 1 && (
-              <div className="border-t border-muted my-1"></div>
-            )}
+            {index < items.length - 1 && <div className="border-t border-muted my-1"></div>}
           </React.Fragment>
         ))}
       </div>

@@ -17,16 +17,11 @@ const ClockWidget: React.FC = () => {
       skeletonContent={<ClockCardSkeletonContent />}
     >
       <div className="flex flex-col items-center justify-center h-full space-y-3">
-        <div className="text-5xl font-bold text-primary tabular-nums">
-          {formattedTime}
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {formattedDate}
-        </div>
+        <div className="text-5xl font-bold text-primary tabular-nums">{formattedTime}</div>
+        <div className="text-sm text-muted-foreground">{formattedDate}</div>
       </div>
     </SystemMetricCard>
   );
 };
 
 export default ClockWidget;
-

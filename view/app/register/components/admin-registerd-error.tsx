@@ -2,10 +2,9 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/lib/utils';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 export const AdminRegisteredError = () => {
   const { t } = useTranslation();

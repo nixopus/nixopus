@@ -28,7 +28,7 @@ export function useDashboard() {
     if (!hasSeenHint) {
       setShowDragHint(true);
     }
-    
+
     // Check if layout has been modified
     const savedOrder = localStorage.getItem('dashboard-card-order');
     setHasCustomLayout(!!savedOrder);

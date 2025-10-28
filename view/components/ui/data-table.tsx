@@ -80,25 +80,25 @@ export function DataTable<T = any>({
 
   const getRowClassName = (record: T, index: number) => {
     const baseClasses = [];
-    
+
     if (hoverable && onRowClick) {
       baseClasses.push('cursor-pointer');
     }
-    
+
     if (striped && index % 2 === 0) {
       baseClasses.push('bg-muted/25');
     }
-    
+
     if (!striped) {
       baseClasses.push('border-0');
     }
-    
+
     if (typeof rowClassName === 'function') {
       baseClasses.push(rowClassName(record, index));
     } else if (rowClassName) {
       baseClasses.push(rowClassName);
     }
-    
+
     return baseClasses.join(' ');
   };
 
@@ -136,11 +136,7 @@ export function DataTable<T = any>({
 
   const renderCellContent = (column: TableColumn<T>, record: T, index: number) => {
     if (column.render) {
-      return column.render(
-        column.dataIndex ? record[column.dataIndex] : undefined,
-        record,
-        index
-      );
+      return column.render(column.dataIndex ? record[column.dataIndex] : undefined, record, index);
     }
 
     const value = column.dataIndex ? record[column.dataIndex] : undefined;
@@ -155,24 +151,16 @@ export function DataTable<T = any>({
 
     return (
       <span className="ml-1 opacity-40">
-        {isActive ? (
-          <span className="opacity-100">
-            {isAsc ? '↑' : '↓'}
-          </span>
-        ) : (
-          <span>↕</span>
-        )}
+        {isActive ? <span className="opacity-100">{isAsc ? '↑' : '↓'}</span> : <span>↕</span>}
       </span>
     );
   };
 
   return (
     <div className={cn('relative w-full overflow-x-auto', containerClassName)}>
-      <Table className={cn(
-        'w-full caption-bottom text-sm',
-        showBorder && 'border',
-        tableClassName
-      )}>
+      <Table
+        className={cn('w-full caption-bottom text-sm', showBorder && 'border', tableClassName)}
+      >
         <TableHeader>
           <TableRow>
             {columns.map((column) => (
@@ -187,11 +175,13 @@ export function DataTable<T = any>({
                 )}
                 onClick={() => column.sortable && handleSort(column.key)}
               >
-                <div className={cn(
-                  "flex items-center gap-1",
-                  column.align === 'center' && 'justify-center',
-                  column.align === 'right' && 'justify-end'
-                )}>
+                <div
+                  className={cn(
+                    'flex items-center gap-1',
+                    column.align === 'center' && 'justify-center',
+                    column.align === 'right' && 'justify-end'
+                  )}
+                >
                   <span>{column.title}</span>
                   {getSortIcon(column)}
                 </div>
@@ -200,32 +190,30 @@ export function DataTable<T = any>({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {loading ? (
-            renderLoadingRows()
-          ) : data.length === 0 ? (
-            renderEmptyState()
-          ) : (
-            data.map((record, index) => (
-              <TableRow
-                key={index}
-                className={getRowClassName(record, index)}
-                onClick={() => handleRowClick(record, index)}
-              >
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.key}
-                    className={cn(
-                      column.align === 'center' && 'text-center',
-                      column.align === 'right' && 'text-right',
-                      column.className
-                    )}
+          {loading
+            ? renderLoadingRows()
+            : data.length === 0
+              ? renderEmptyState()
+              : data.map((record, index) => (
+                  <TableRow
+                    key={index}
+                    className={getRowClassName(record, index)}
+                    onClick={() => handleRowClick(record, index)}
                   >
-                    {renderCellContent(column, record, index)}
-                  </TableCell>
+                    {columns.map((column) => (
+                      <TableCell
+                        key={column.key}
+                        className={cn(
+                          column.align === 'center' && 'text-center',
+                          column.align === 'right' && 'text-right',
+                          column.className
+                        )}
+                      >
+                        {renderCellContent(column, record, index)}
+                      </TableCell>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
-            ))
-          )}
         </TableBody>
       </Table>
     </div>

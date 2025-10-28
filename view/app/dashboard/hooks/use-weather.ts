@@ -32,11 +32,11 @@ const useWeather = ({ latitude, longitude, location = 'Default Location' }: UseW
             });
           },
           () => {
-            setUserLocation({ lat: 40.7128, lon: -74.0060 });
+            setUserLocation({ lat: 40.7128, lon: -74.006 });
           }
         );
       } else {
-        setUserLocation({ lat: 40.7128, lon: -74.0060 });
+        setUserLocation({ lat: 40.7128, lon: -74.006 });
       }
     }
   }, [latitude, longitude]);
@@ -49,11 +49,11 @@ const useWeather = ({ latitude, longitude, location = 'Default Location' }: UseW
 
         const locationToUse = userLocation || {
           lat: latitude ?? 40.7128,
-          lon: longitude ?? -74.0060
+          lon: longitude ?? -74.006
         };
 
         const apiKey = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
-        
+
         if (!apiKey) {
           const mockData: WeatherData = {
             temperature: Math.round(Math.random() * 30 + 10),
@@ -77,7 +77,7 @@ const useWeather = ({ latitude, longitude, location = 'Default Location' }: UseW
         }
 
         const data = await response.json();
-        
+
         const weatherData: WeatherData = {
           temperature: Math.round(data.main.temp),
           condition: data.weather[0].main,
@@ -120,4 +120,3 @@ const useWeather = ({ latitude, longitude, location = 'Default Location' }: UseW
 
 export default useWeather;
 export type { WeatherData };
-

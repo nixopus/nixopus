@@ -28,7 +28,7 @@ export const BarChartComponent: React.FC<BarChartComponentProps> = ({
   showAxisLabels = true
 }) => {
   // Calculate max value for Y-axis (round up with 20% padding)
-  const maxValue = Math.max(...data.map(item => item.value));
+  const maxValue = Math.max(...data.map((item) => item.value));
   const yAxisMax = Math.ceil(maxValue * 1.2);
 
   return (

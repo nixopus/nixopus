@@ -47,4 +47,3 @@ export function WidgetSelector({ availableWidgets, onAddWidget }: WidgetSelector
     </DropdownMenu>
   );
 }
-

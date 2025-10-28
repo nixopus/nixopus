@@ -16,10 +16,14 @@ interface MemoryUsageCardProps {
 }
 
 const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
-  const { data: memory, isLoading, t } = useSystemMetric({
+  const {
+    data: memory,
+    isLoading,
+    t
+  } = useSystemMetric({
     systemStats,
     extractData: (stats) => stats.memory,
-    defaultData: DEFAULT_METRICS.memory,
+    defaultData: DEFAULT_METRICS.memory
   });
 
   const freeMemory = memory.total - memory.used;
@@ -53,15 +57,11 @@ const MemoryUsageCard: React.FC<MemoryUsageCardProps> = ({ systemStats }) => {
           <div className="flex justify-between text-xs">
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: CHART_COLORS.blue }} />
-              <TypographyMuted>
-                Used: {formatGB(memory.used)} GB
-              </TypographyMuted>
+              <TypographyMuted>Used: {formatGB(memory.used)} GB</TypographyMuted>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: CHART_COLORS.green }} />
-              <TypographyMuted>
-                Free: {formatGB(freeMemory)} GB
-              </TypographyMuted>
+              <TypographyMuted>Free: {formatGB(freeMemory)} GB</TypographyMuted>
             </div>
           </div>
 

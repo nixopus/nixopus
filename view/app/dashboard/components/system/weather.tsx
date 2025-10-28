@@ -38,12 +38,8 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
         skeletonContent={<WeatherCardSkeletonContent />}
       >
         <div className="flex flex-col items-center justify-center h-full space-y-3">
-          <div className="text-5xl font-bold text-primary tabular-nums">
-            --
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Loading...
-          </div>
+          <div className="text-5xl font-bold text-primary tabular-nums">--</div>
+          <div className="text-sm text-muted-foreground">Loading...</div>
         </div>
       </SystemMetricCard>
     );
@@ -58,9 +54,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
         skeletonContent={<WeatherCardSkeletonContent />}
       >
         <div className="flex flex-col items-center justify-center h-full space-y-2 text-center">
-          <div className="text-sm text-muted-foreground">
-            {error}
-          </div>
+          <div className="text-sm text-muted-foreground">{error}</div>
         </div>
       </SystemMetricCard>
     );
@@ -95,4 +89,3 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
 };
 
 export default WeatherWidget;
-

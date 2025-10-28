@@ -43,16 +43,14 @@ const CPU_COLORS = [
   CHART_COLORS.orange,
   CHART_COLORS.purple,
   CHART_COLORS.red,
-  CHART_COLORS.yellow,
+  CHART_COLORS.yellow
 ];
 
 const CPUUsageHeader: React.FC<CPUUsageHeaderProps> = ({ overallUsage, label }) => {
   return (
     <div className="text-center">
       <TypographyMuted className="text-xs">{label}</TypographyMuted>
-      <div className="text-3xl font-bold text-primary mt-1">
-        {formatPercentage(overallUsage)}%
-      </div>
+      <div className="text-3xl font-bold text-primary mt-1">{formatPercentage(overallUsage)}%</div>
     </div>
   );
 };
@@ -61,7 +59,7 @@ const CPUUsageChart: React.FC<CPUUsageChartProps> = ({
   chartData,
   chartConfig,
   yAxisLabel,
-  xAxisLabel,
+  xAxisLabel
 }) => {
   return (
     <div>
@@ -84,9 +82,7 @@ const CoreItem: React.FC<CoreItemProps> = ({ coreId, usage, color }) => {
         <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
         <TypographyMuted className="text-xs">Core {coreId}</TypographyMuted>
       </div>
-      <TypographySmall className="text-sm font-bold">
-        {formatPercentage(usage)}%
-      </TypographySmall>
+      <TypographySmall className="text-sm font-bold">{formatPercentage(usage)}%</TypographySmall>
     </div>
   );
 };
@@ -97,12 +93,7 @@ const TopCoresList: React.FC<TopCoresListProps> = ({ cores }) => {
       {cores.map((core) => {
         const color = CPU_COLORS[core.core_id % CPU_COLORS.length];
         return (
-          <CoreItem
-            key={core.core_id}
-            coreId={core.core_id}
-            usage={core.usage}
-            color={color}
-          />
+          <CoreItem key={core.core_id} coreId={core.core_id} usage={core.usage} color={color} />
         );
       })}
     </div>
@@ -110,10 +101,14 @@ const TopCoresList: React.FC<TopCoresListProps> = ({ cores }) => {
 };
 
 const CPUUsageCard: React.FC<CPUUsageCardProps> = ({ systemStats }) => {
-  const { data: cpu, isLoading, t } = useSystemMetric({
+  const {
+    data: cpu,
+    isLoading,
+    t
+  } = useSystemMetric({
     systemStats,
     extractData: (stats) => stats.cpu,
-    defaultData: DEFAULT_METRICS.cpu,
+    defaultData: DEFAULT_METRICS.cpu
   });
 
   const perCoreData = cpu.per_core;
@@ -129,10 +124,7 @@ const CPUUsageCard: React.FC<CPUUsageCardProps> = ({ systemStats }) => {
       skeletonContent={<CPUUsageCardSkeletonContent />}
     >
       <div className="space-y-4">
-        <CPUUsageHeader
-          overallUsage={cpu.overall}
-          label={t('dashboard.cpu.overall')}
-        />
+        <CPUUsageHeader overallUsage={cpu.overall} label={t('dashboard.cpu.overall')} />
 
         <CPUUsageChart
           chartData={chartData}

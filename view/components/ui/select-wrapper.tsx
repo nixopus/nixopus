@@ -129,20 +129,12 @@ export function SelectWrapper({
           ) : (
             <>
               {clearable && value && onClear && (
-                <SelectItem
-                  value=""
-                  onSelect={onClear}
-                  className="text-muted-foreground"
-                >
+                <SelectItem value="" onSelect={onClear} className="text-muted-foreground">
                   Clear selection
                 </SelectItem>
               )}
               {options.map((option) => (
-                <SelectItem
-                  key={option.value}
-                  value={option.value}
-                  disabled={option.disabled}
-                >
+                <SelectItem key={option.value} value={option.value} disabled={option.disabled}>
                   {option.label}
                 </SelectItem>
               ))}

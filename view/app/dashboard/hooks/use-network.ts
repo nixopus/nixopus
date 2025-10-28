@@ -86,4 +86,3 @@ export function useNetwork({ systemStats }: UseNetworkProps) {
 
   return { networkData };
 }
-

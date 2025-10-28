@@ -32,11 +32,11 @@ function DomainsTable({ domains }: DomainsTableProps) {
   ];
 
   return (
-      <DataTable
-        data={domains}
-        columns={columns}
-        containerClassName="divide-y divide-border"
-        showBorder={true}
+    <DataTable
+      data={domains}
+      columns={columns}
+      containerClassName="divide-y divide-border"
+      showBorder={true}
     />
   );
 }

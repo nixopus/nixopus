@@ -114,9 +114,7 @@ function ActivitiesTable({ activities }: { activities: ActivityMessage[] }) {
       title: '',
       width: '50px',
       render: (_, activity) => (
-        <div
-          className={`h-3 w-3 rounded-full ${getActionColor(activity.action_color)}`}
-        />
+        <div className={`h-3 w-3 rounded-full ${getActionColor(activity.action_color)}`} />
       )
     },
     {
@@ -124,11 +122,7 @@ function ActivitiesTable({ activities }: { activities: ActivityMessage[] }) {
       title: 'Message',
       dataIndex: 'message',
       className: 'max-w-md',
-      render: (message) => (
-        <TypographySmall className="text-foreground">
-          {message}
-        </TypographySmall>
-      )
+      render: (message) => <TypographySmall className="text-foreground">{message}</TypographySmall>
     },
     {
       key: 'timestamp',
@@ -144,12 +138,7 @@ function ActivitiesTable({ activities }: { activities: ActivityMessage[] }) {
 
   return (
     <div className="rounded-md border">
-      <DataTable
-        data={activities}
-        columns={columns}
-        showBorder={false}
-        hoverable={false}
-      />
+      <DataTable data={activities} columns={columns} showBorder={false} hoverable={false} />
     </div>
   );
 }

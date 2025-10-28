@@ -183,9 +183,7 @@ function TeamMembers({
     {
       key: 'role',
       title: t('settings.teams.members.table.headers.role'),
-      render: (_, user) => (
-        <Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge>
-      )
+      render: (_, user) => <Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge>
     },
     {
       key: 'permissions',
@@ -248,12 +246,7 @@ function TeamMembers({
           <TypographyMuted>{t('settings.teams.members.description')}</TypographyMuted>
         </CardHeader>
         <CardContent>
-          <DataTable
-            data={users}
-            columns={columns}
-            showBorder={false}
-            hoverable={false}
-          />
+          <DataTable data={users} columns={columns} showBorder={false} hoverable={false} />
         </CardContent>
       </Card>
 

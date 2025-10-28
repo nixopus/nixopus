@@ -13,60 +13,57 @@ export const createLoadAverageChartData = (load: {
   {
     name: '1 min',
     value: load.oneMin,
-    fill: CHART_COLORS.blue,
+    fill: CHART_COLORS.blue
   },
   {
     name: '5 min',
     value: load.fiveMin,
-    fill: CHART_COLORS.green,
+    fill: CHART_COLORS.green
   },
   {
     name: '15 min',
     value: load.fifteenMin,
-    fill: CHART_COLORS.orange,
-  },
+    fill: CHART_COLORS.orange
+  }
 ];
 
 export const createLoadAverageChartConfig = () => ({
   oneMin: {
     label: '1 min',
-    color: CHART_COLORS.blue,
+    color: CHART_COLORS.blue
   },
   fiveMin: {
     label: '5 min',
-    color: CHART_COLORS.green,
+    color: CHART_COLORS.green
   },
   fifteenMin: {
     label: '15 min',
-    color: CHART_COLORS.orange,
-  },
+    color: CHART_COLORS.orange
+  }
 });
 
-export const createMemoryChartData = (
-  used: number,
-  free: number
-): DoughnutChartDataItem[] => [
+export const createMemoryChartData = (used: number, free: number): DoughnutChartDataItem[] => [
   {
     name: 'Used',
     value: used,
-    fill: CHART_COLORS.blue,
+    fill: CHART_COLORS.blue
   },
   {
     name: 'Free',
     value: free,
-    fill: CHART_COLORS.green,
-  },
+    fill: CHART_COLORS.green
+  }
 ];
 
 export const createMemoryChartConfig = () => ({
   used: {
     label: 'Used Memory',
-    color: CHART_COLORS.blue,
+    color: CHART_COLORS.blue
   },
   free: {
     label: 'Free Memory',
-    color: CHART_COLORS.green,
-  },
+    color: CHART_COLORS.green
+  }
 });
 
 export const createCPUChartData = (
@@ -82,13 +79,13 @@ export const createCPUChartData = (
     CHART_COLORS.orange,
     CHART_COLORS.purple,
     CHART_COLORS.red,
-    CHART_COLORS.yellow,
+    CHART_COLORS.yellow
   ];
 
   return perCore.map((core) => ({
     name: `Core ${core.core_id}`,
     value: core.usage,
-    fill: colors[core.core_id % colors.length],
+    fill: colors[core.core_id % colors.length]
   }));
 };
 
@@ -100,13 +97,13 @@ export const createCPUChartConfig = (coreCount: number) => {
     CHART_COLORS.orange,
     CHART_COLORS.purple,
     CHART_COLORS.red,
-    CHART_COLORS.yellow,
+    CHART_COLORS.yellow
   ];
 
   for (let i = 0; i < coreCount; i++) {
     config[`core${i}`] = {
       label: `Core ${i}`,
-      color: colors[i % colors.length],
+      color: colors[i % colors.length]
     };
   }
 

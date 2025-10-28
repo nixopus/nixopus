@@ -16,10 +16,14 @@ interface LoadAverageCardProps {
 }
 
 const LoadAverageCard: React.FC<LoadAverageCardProps> = ({ systemStats }) => {
-  const { data: load, isLoading, t } = useSystemMetric({
+  const {
+    data: load,
+    isLoading,
+    t
+  } = useSystemMetric({
     systemStats,
     extractData: (stats) => stats.load,
-    defaultData: DEFAULT_METRICS.load,
+    defaultData: DEFAULT_METRICS.load
   });
 
   const chartData = createLoadAverageChartData(load);
@@ -32,7 +36,9 @@ const LoadAverageCard: React.FC<LoadAverageCardProps> = ({ systemStats }) => {
       isLoading={isLoading}
       skeletonContent={<LoadAverageCardSkeletonContent />}
     >
-      <br /><br /><br />
+      <br />
+      <br />
+      <br />
       <div className="space-y-4">
         <div>
           <BarChartComponent
@@ -48,24 +54,39 @@ const LoadAverageCard: React.FC<LoadAverageCardProps> = ({ systemStats }) => {
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-1">
-              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: CHART_COLORS.blue }} />
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: CHART_COLORS.blue }}
+              />
               <TypographyMuted className="text-xs">1 min</TypographyMuted>
             </div>
-            <TypographySmall className="text-sm font-bold">{load.oneMin.toFixed(2)}</TypographySmall>
+            <TypographySmall className="text-sm font-bold">
+              {load.oneMin.toFixed(2)}
+            </TypographySmall>
           </div>
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-1">
-              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: CHART_COLORS.green }} />
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: CHART_COLORS.green }}
+              />
               <TypographyMuted className="text-xs">5 min</TypographyMuted>
             </div>
-            <TypographySmall className="text-sm font-bold">{load.fiveMin.toFixed(2)}</TypographySmall>
+            <TypographySmall className="text-sm font-bold">
+              {load.fiveMin.toFixed(2)}
+            </TypographySmall>
           </div>
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-1">
-              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: CHART_COLORS.orange }} />
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: CHART_COLORS.orange }}
+              />
               <TypographyMuted className="text-xs">15 min</TypographyMuted>
             </div>
-            <TypographySmall className="text-sm font-bold">{load.fifteenMin.toFixed(2)}</TypographySmall>
+            <TypographySmall className="text-sm font-bold">
+              {load.fifteenMin.toFixed(2)}
+            </TypographySmall>
           </div>
         </div>
       </div>

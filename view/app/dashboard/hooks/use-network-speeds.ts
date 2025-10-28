@@ -58,4 +58,3 @@ export function useNetworkSpeeds(systemStats: SystemStatsType | null) {
 
   return { networkSpeeds };
 }
-

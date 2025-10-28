@@ -34,7 +34,7 @@ export function CPUUsageCardSkeleton() {
   const { t } = useSystemMetric({
     systemStats: null,
     extractData: (stats) => stats.cpu,
-    defaultData: DEFAULT_METRICS.cpu,
+    defaultData: DEFAULT_METRICS.cpu
   });
 
   return (

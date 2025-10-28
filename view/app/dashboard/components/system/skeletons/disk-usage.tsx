@@ -74,7 +74,7 @@ export function DiskUsageCardSkeleton() {
   const { t } = useSystemMetric({
     systemStats: null,
     extractData: (stats) => stats.disk,
-    defaultData: DEFAULT_METRICS.disk,
+    defaultData: DEFAULT_METRICS.disk
   });
 
   return (

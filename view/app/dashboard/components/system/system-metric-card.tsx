@@ -30,9 +30,7 @@ export const SystemMetricCard: React.FC<SystemMetricCardProps> = ({
           <TypographySmall>{title}</TypographySmall>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1">
-        {content}
-      </CardContent>
+      <CardContent className="flex-1">{content}</CardContent>
     </Card>
   );
 };

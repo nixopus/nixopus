@@ -29,12 +29,12 @@ function DeploymentsList({
   const formatDate = (created_at: string) =>
     deployments
       ? new Date(created_at).toLocaleString('en-US', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
       : 'N/A';
 
   const calculateRunTime = (updated_at: string, created_at: string) => {
@@ -62,9 +62,7 @@ function DeploymentsList({
   };
 
   const handleRowClick = (deployment: ApplicationDeployment) => {
-    router.push(
-      `/self-host/application/${deployment.application_id}/deployments/${deployment.id}`
-    );
+    router.push(`/self-host/application/${deployment.application_id}/deployments/${deployment.id}`);
   };
 
   const columns: TableColumn<ApplicationDeployment>[] = [

@@ -12,7 +12,7 @@ import { Package, ArrowRight, RefreshCw, Info } from 'lucide-react';
 import DiskUsageCard from './components/system/disk-usage';
 import ClockWidget from './components/system/clock';
 import NetworkWidget from './components/system/network';
-// TODO: Add weather widget back in with configuration for api key 
+// TODO: Add weather widget back in with configuration for api key
 // import WeatherWidget from './components/system/weather';
 import { useTranslation } from '@/hooks/use-translation';
 import { SMTPBanner } from './components/smtp-banner';
@@ -41,7 +41,7 @@ function DashboardPage() {
     dismissHint,
     handleResetLayout,
     hasCustomLayout,
-    handleLayoutChange,
+    handleLayoutChange
   } = useDashboard();
 
   const defaultHiddenWidgets = ['clock', 'network'];
@@ -64,7 +64,7 @@ function DashboardPage() {
   };
 
   const handleAddWidget = (widgetId: string) => {
-    const newHidden = hiddenWidgets.filter(id => id !== widgetId);
+    const newHidden = hiddenWidgets.filter((id) => id !== widgetId);
     setHiddenWidgets(newHidden);
     localStorage.setItem('dashboard-hidden-widgets', JSON.stringify(newHidden));
   };
@@ -91,16 +91,13 @@ function DashboardPage() {
     { id: 'cpu-usage', label: 'CPU Usage' },
     { id: 'memory-usage', label: 'Memory Usage' },
     { id: 'disk-usage', label: 'Disk Usage' },
-    { id: 'containers', label: 'Containers' },
+    { id: 'containers', label: 'Containers' }
   ];
 
-  const availableWidgets = allWidgetLabels.filter(widget => hiddenWidgets.includes(widget.id));
+  const availableWidgets = allWidgetLabels.filter((widget) => hiddenWidgets.includes(widget.id));
 
   return (
-    <ResourceGuard
-      resource="dashboard"
-      action="read"
-    >
+    <ResourceGuard resource="dashboard" action="read">
       <PageLayout maxWidth="6xl" padding="md" spacing="lg">
         <DashboardHeader
           hasCustomLayout={hasCustomLayout}
@@ -110,11 +107,7 @@ function DashboardPage() {
           onAddWidget={handleAddWidget}
           availableWidgets={availableWidgets}
         />
-        <DragHintBanner
-          mounted={mounted}
-          showDragHint={showDragHint}
-          onDismiss={dismissHint}
-        />
+        <DragHintBanner mounted={mounted} showDragHint={showDragHint} onDismiss={dismissHint} />
         <SMTPBannerConditional hasSMTPConfig={!!smtpConfig} />
         <MonitoringSection
           systemStats={systemStats}
@@ -155,12 +148,7 @@ const DashboardHeader = ({
     <div className="flex items-center gap-2">
       <WidgetSelector availableWidgets={availableWidgets} onAddWidget={onAddWidget} />
       {hasCustomLayout && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onResetLayout}
-          className="shrink-0"
-        >
+        <Button variant="outline" size="sm" onClick={onResetLayout} className="shrink-0">
           <RefreshCw className="mr-2 h-4 w-4" />
           Reset Layout
         </Button>
@@ -189,16 +177,12 @@ const DragHintBanner = ({
         <div className="flex-1">
           <p className="text-sm font-medium text-foreground">Customize Your Dashboard</p>
           <p className="text-xs text-muted-foreground mt-1">
-            Hover over any card to see the drag handle on the left. Click and drag to rearrange cards in your preferred order. Your layout will be saved automatically.
+            Hover over any card to see the drag handle on the left. Click and drag to rearrange
+            cards in your preferred order. Your layout will be saved automatically.
           </p>
         </div>
       </div>
-      <Button
-        variant="ghost"
-        size="default"
-        onClick={onDismiss}
-        className="shrink-0"
-      >
+      <Button variant="ghost" size="default" onClick={onDismiss} className="shrink-0">
         Got it
       </Button>
     </div>
@@ -243,7 +227,6 @@ const MonitoringSection = ({
       </div>
     );
   }
-
 
   const allWidgetDefinitions = [
     {
@@ -290,11 +273,11 @@ const MonitoringSection = ({
     }
   ];
 
-  const visibleItems = allWidgetDefinitions.filter(widget => {
+  const visibleItems = allWidgetDefinitions.filter((widget) => {
     return !hiddenWidgets.includes(widget.id);
   });
 
-  const dashboardItems = visibleItems.map(w => ({
+  const dashboardItems = visibleItems.map((w) => ({
     id: w.id,
     component: w.component,
     className: w.className

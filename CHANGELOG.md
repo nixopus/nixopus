@@ -1,3 +1,12 @@
+# [0.1.0-alpha.54](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.53...v0.1.0-alpha.54) (2025-10-28)
+
+
+### Features
+
+* configurable dashboard widgets with topbar  ([#541](https://github.com/raghavyuva/nixopus/issues/541)) ([b150d69](https://github.com/raghavyuva/nixopus/commit/b150d6937db92fa288b40bffe54f4579a95f252a))
+
+
+
 # [0.1.0-alpha.53](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.52...v0.1.0-alpha.53) (2025-10-27)
 
 

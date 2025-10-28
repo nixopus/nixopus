@@ -24,10 +24,14 @@ interface MountData {
 }
 
 const DiskUsageCard: React.FC<DiskUsageCardProps> = ({ systemStats }) => {
-  const { data: disk, isLoading, t } = useSystemMetric({
+  const {
+    data: disk,
+    isLoading,
+    t
+  } = useSystemMetric({
     systemStats,
     extractData: (stats) => stats.disk,
-    defaultData: DEFAULT_METRICS.disk,
+    defaultData: DEFAULT_METRICS.disk
   });
 
   return (
@@ -39,10 +43,7 @@ const DiskUsageCard: React.FC<DiskUsageCardProps> = ({ systemStats }) => {
     >
       <div className="space-y-2 sm:space-y-3">
         <div className="w-full h-2 bg-gray-200 rounded-full">
-          <div
-            className={`h-2 rounded-full bg-primary`}
-            style={{ width: `${disk.percentage}%` }}
-          />
+          <div className={`h-2 rounded-full bg-primary`} style={{ width: `${disk.percentage}%` }} />
         </div>
         <div className="flex justify-between">
           <TypographyMuted className="text-xs truncate max-w-[80px] sm:max-w-[100px]">
@@ -74,36 +75,28 @@ function DiskMountsTable({ mounts }: { mounts: MountData[] }) {
       title: t('dashboard.disk.table.headers.mount'),
       dataIndex: 'mountPoint',
       className: 'text-xs pr-1 sm:pr-2',
-      render: (mountPoint) => (
-        <TypographySmall className="text-xs">{mountPoint}</TypographySmall>
-      )
+      render: (mountPoint) => <TypographySmall className="text-xs">{mountPoint}</TypographySmall>
     },
     {
       key: 'size',
       title: t('dashboard.disk.table.headers.size'),
       dataIndex: 'size',
       className: 'text-xs pr-1 sm:pr-2',
-      render: (size) => (
-        <TypographySmall className="text-xs">{size}</TypographySmall>
-      )
+      render: (size) => <TypographySmall className="text-xs">{size}</TypographySmall>
     },
     {
       key: 'used',
       title: t('dashboard.disk.table.headers.used'),
       dataIndex: 'used',
       className: 'text-xs pr-1 sm:pr-2',
-      render: (used) => (
-        <TypographySmall className="text-xs">{used}</TypographySmall>
-      )
+      render: (used) => <TypographySmall className="text-xs">{used}</TypographySmall>
     },
     {
       key: 'capacity',
       title: t('dashboard.disk.table.headers.percentage'),
       dataIndex: 'capacity',
       className: 'text-xs',
-      render: (capacity) => (
-        <TypographySmall className="text-xs">{capacity}</TypographySmall>
-      )
+      render: (capacity) => <TypographySmall className="text-xs">{capacity}</TypographySmall>
     }
   ];
 

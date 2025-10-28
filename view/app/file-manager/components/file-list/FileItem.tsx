@@ -93,11 +93,7 @@ export function FileItem({
           />
         </div>
 
-        <DialogWrapper
-          open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          size="lg"
-        >
+        <DialogWrapper open={isDialogOpen} onOpenChange={setIsDialogOpen} size="lg">
           <FileInfo file={file} isLoading={isSizeLoading} fileSize={fileSize || null} />
         </DialogWrapper>
 
@@ -183,11 +179,7 @@ export function FileItem({
           )}
         </div>
 
-        <DialogWrapper
-          open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          size="lg"
-        >
+        <DialogWrapper open={isDialogOpen} onOpenChange={setIsDialogOpen} size="lg">
           <FileInfo file={file} isLoading={isSizeLoading} fileSize={fileSize || null} />
         </DialogWrapper>
 

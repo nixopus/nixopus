@@ -38,4 +38,3 @@ const ContainersWidget: React.FC<ContainersWidgetProps> = ({ containersData }) =
 };
 
 export default ContainersWidget;
-

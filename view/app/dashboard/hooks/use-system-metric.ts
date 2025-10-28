@@ -21,7 +21,7 @@ interface UseSystemMetricResult<T> {
 export function useSystemMetric<T>({
   systemStats,
   extractData,
-  defaultData,
+  defaultData
 }: UseSystemMetricOptions<T>): UseSystemMetricResult<T> {
   const { t } = useTranslation();
   const isLoading = !systemStats;
@@ -36,6 +36,6 @@ export function useSystemMetric<T>({
   return {
     data,
     isLoading,
-    t,
+    t
   };
 }

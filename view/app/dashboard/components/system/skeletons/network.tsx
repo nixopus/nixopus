@@ -12,4 +12,3 @@ export const NetworkCardSkeletonContent: React.FC = () => {
     </div>
   );
 };
-

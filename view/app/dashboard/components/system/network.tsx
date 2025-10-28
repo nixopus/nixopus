@@ -51,4 +51,3 @@ const NetworkWidget: React.FC<NetworkWidgetProps> = ({ systemStats }) => {
 };
 
 export default NetworkWidget;
-
