@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useDashboard } from './hooks/use-dashboard';
-import ContainersTable from './components/containers/container-table';
+import ContainersWidget from './components/containers/containers-widget';
 import SystemInfoCard from './components/system/system-info';
 import LoadAverageCard from './components/system/load-average';
 import CPUUsageCard from './components/system/cpu-usage';
@@ -284,23 +284,7 @@ const MonitoringSection = ({
     },
     {
       id: 'containers',
-      component: (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xs sm:text-sm font-bold flex items-center">
-              <Package className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
-              <TypographySmall>{t('dashboard.containers.title')}</TypographySmall>
-            </CardTitle>
-            <Button variant="outline" size="sm" onClick={() => router.push('/containers')}>
-              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
-              {t('dashboard.containers.viewAll')}
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <ContainersTable containersData={containersData} />
-          </CardContent>
-        </Card>
-      ),
+      component: <ContainersWidget containersData={containersData} />,
       className: 'md:col-span-2',
       isDefault: true
     }
