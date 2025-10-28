@@ -1,3 +1,12 @@
+# [0.1.0-alpha.53](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.52...v0.1.0-alpha.53) (2025-10-27)
+
+
+### Features
+
+* dashboard with draggable layout, charts, and extended system metrics ([#536](https://github.com/raghavyuva/nixopus/issues/536)) ([e13c24a](https://github.com/raghavyuva/nixopus/commit/e13c24aeefeb67fb64da1809bc23695f3076bf46))
+
+
+
 # [0.1.0-alpha.52](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.51...v0.1.0-alpha.52) (2025-10-25)
 
 

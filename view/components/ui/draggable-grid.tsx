@@ -20,7 +20,7 @@ import {
     useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface DraggableItem {
@@ -32,6 +32,7 @@ export interface DraggableItem {
 interface DraggableGridProps {
     items: DraggableItem[];
     onReorder?: (items: DraggableItem[]) => void;
+    onDelete?: (itemId: string) => void;
     storageKey?: string;
     className?: string;
     gridCols?: string; // e.g., "grid-cols-1 md:grid-cols-2"
@@ -40,10 +41,12 @@ interface DraggableGridProps {
 
 function SortableItem({
     item,
-    isDragging
+    isDragging,
+    onDelete
 }: {
     item: DraggableItem;
     isDragging?: boolean;
+    onDelete?: (id: string) => void;
 }) {
     const {
         attributes,
@@ -80,6 +83,20 @@ function SortableItem({
                     <GripVertical className="h-4 w-4 text-primary" />
                 </div>
             </div>
+            {onDelete && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(item.id);
+                    }}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    title="Remove widget"
+                >
+                    <div className="bg-destructive/10 hover:bg-destructive/20 rounded-lg p-2 backdrop-blur-sm border border-destructive/20 shadow-sm">
+                        <X className="h-4 w-4 text-destructive" />
+                    </div>
+                </button>
+            )}
             <div className={cn(
                 'transition-all duration-200 h-full',
                 isItemDragging && 'ring-2 ring-primary/50 rounded-xl'
@@ -93,6 +110,7 @@ function SortableItem({
 export function DraggableGrid({
     items,
     onReorder,
+    onDelete,
     storageKey = 'dashboard-layout',
     className,
     gridCols = 'grid-cols-1',
@@ -219,7 +237,7 @@ export function DraggableGrid({
             >
                 <div className={cn('grid gap-4 items-stretch', gridCols, className)}>
                     {orderedItems.map((item) => (
-                        <SortableItem key={item.id} item={item} />
+                        <SortableItem key={item.id} item={item} onDelete={onDelete} />
                     ))}
                 </div>
             </SortableContext>

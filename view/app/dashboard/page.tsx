@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useDashboard } from './hooks/use-dashboard';
-import ContainersTable from './components/containers/container-table';
+import ContainersWidget from './components/containers/containers-widget';
 import SystemInfoCard from './components/system/system-info';
 import LoadAverageCard from './components/system/load-average';
 import CPUUsageCard from './components/system/cpu-usage';
@@ -10,6 +10,10 @@ import MemoryUsageCard from './components/system/memory-usage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, ArrowRight, RefreshCw, Info } from 'lucide-react';
 import DiskUsageCard from './components/system/disk-usage';
+import ClockWidget from './components/system/clock';
+import NetworkWidget from './components/system/network';
+// TODO: Add weather widget back in with configuration for api key 
+// import WeatherWidget from './components/system/weather';
 import { useTranslation } from '@/hooks/use-translation';
 import { SMTPBanner } from './components/smtp-banner';
 import DisabledFeature from '@/components/features/disabled-feature';
@@ -20,6 +24,7 @@ import { TypographyH1, TypographyMuted, TypographySmall } from '@/components/ui/
 import { Skeleton } from '@/components/ui/skeleton';
 import PageLayout from '@/components/layout/page-layout';
 import { DraggableGrid, DraggableItem } from '@/components/ui/draggable-grid';
+import { WidgetSelector } from './components/widget-selector';
 
 // for dashboard page, we need to check if the user has the dashboard:read permission
 function DashboardPage() {
@@ -39,6 +44,37 @@ function DashboardPage() {
     handleLayoutChange,
   } = useDashboard();
 
+  const defaultHiddenWidgets = ['clock', 'network'];
+
+  const [hiddenWidgets, setHiddenWidgets] = React.useState<string[]>(defaultHiddenWidgets);
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem('dashboard-hidden-widgets');
+    if (saved) {
+      setHiddenWidgets(JSON.parse(saved));
+    } else {
+      setHiddenWidgets(defaultHiddenWidgets);
+    }
+  }, []);
+
+  const handleDeleteWidget = (widgetId: string) => {
+    const newHidden = [...hiddenWidgets, widgetId];
+    setHiddenWidgets(newHidden);
+    localStorage.setItem('dashboard-hidden-widgets', JSON.stringify(newHidden));
+  };
+
+  const handleAddWidget = (widgetId: string) => {
+    const newHidden = hiddenWidgets.filter(id => id !== widgetId);
+    setHiddenWidgets(newHidden);
+    localStorage.setItem('dashboard-hidden-widgets', JSON.stringify(newHidden));
+  };
+
+  const handleResetLayoutWithWidgets = () => {
+    setHiddenWidgets([]);
+    localStorage.removeItem('dashboard-hidden-widgets');
+    handleResetLayout();
+  };
+
   if (isFeatureFlagsLoading) {
     return <Skeleton />;
   }
@@ -46,6 +82,19 @@ function DashboardPage() {
   if (!isDashboardEnabled) {
     return <DisabledFeature />;
   }
+
+  const allWidgetLabels = [
+    { id: 'system-info', label: 'System Information' },
+    { id: 'clock', label: 'Clock' },
+    { id: 'network', label: 'Network Traffic' },
+    { id: 'load-average', label: 'Load Average' },
+    { id: 'cpu-usage', label: 'CPU Usage' },
+    { id: 'memory-usage', label: 'Memory Usage' },
+    { id: 'disk-usage', label: 'Disk Usage' },
+    { id: 'containers', label: 'Containers' },
+  ];
+
+  const availableWidgets = allWidgetLabels.filter(widget => hiddenWidgets.includes(widget.id));
 
   return (
     <ResourceGuard
@@ -55,9 +104,11 @@ function DashboardPage() {
       <PageLayout maxWidth="6xl" padding="md" spacing="lg">
         <DashboardHeader
           hasCustomLayout={hasCustomLayout}
-          onResetLayout={handleResetLayout}
+          onResetLayout={handleResetLayoutWithWidgets}
           title={t('dashboard.title')}
           description={t('dashboard.description')}
+          onAddWidget={handleAddWidget}
+          availableWidgets={availableWidgets}
         />
         <DragHintBanner
           mounted={mounted}
@@ -71,6 +122,8 @@ function DashboardPage() {
           t={t}
           layoutResetKey={layoutResetKey}
           onLayoutChange={handleLayoutChange}
+          onDeleteWidget={handleDeleteWidget}
+          hiddenWidgets={hiddenWidgets}
         />
       </PageLayout>
     </ResourceGuard>
@@ -83,29 +136,36 @@ const DashboardHeader = ({
   hasCustomLayout,
   onResetLayout,
   title,
-  description
+  description,
+  onAddWidget,
+  availableWidgets
 }: {
   hasCustomLayout: boolean;
   onResetLayout: () => void;
   title: string;
   description: string;
+  onAddWidget: (widgetId: string) => void;
+  availableWidgets: Array<{ id: string; label: string }>;
 }) => (
   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
     <div>
       <TypographyH1>{title}</TypographyH1>
       <TypographyMuted>{description}</TypographyMuted>
     </div>
-    {hasCustomLayout && (
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onResetLayout}
-        className="shrink-0"
-      >
-        <RefreshCw className="mr-2 h-4 w-4" />
-        Reset Layout
-      </Button>
-    )}
+    <div className="flex items-center gap-2">
+      <WidgetSelector availableWidgets={availableWidgets} onAddWidget={onAddWidget} />
+      {hasCustomLayout && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onResetLayout}
+          className="shrink-0"
+        >
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Reset Layout
+        </Button>
+      )}
+    </div>
   </div>
 );
 
@@ -155,13 +215,17 @@ const MonitoringSection = ({
   containersData,
   t,
   layoutResetKey,
-  onLayoutChange
+  onLayoutChange,
+  onDeleteWidget,
+  hiddenWidgets
 }: {
   systemStats: any;
   containersData: any;
   t: any;
   layoutResetKey: number;
   onLayoutChange: () => void;
+  onDeleteWidget: (id: string) => void;
+  hiddenWidgets: string[];
 }) => {
   const router = useRouter();
 
@@ -181,50 +245,60 @@ const MonitoringSection = ({
   }
 
 
-  const dashboardItems: DraggableItem[] = [
+  const allWidgetDefinitions = [
     {
       id: 'system-info',
       component: <SystemInfoCard systemStats={systemStats} />,
-      className: 'md:col-span-2'
+      className: 'md:col-span-2',
+      isDefault: true
+    },
+    {
+      id: 'clock',
+      component: <ClockWidget />,
+      isDefault: false
+    },
+    {
+      id: 'network',
+      component: <NetworkWidget systemStats={systemStats} />,
+      isDefault: false
     },
     {
       id: 'load-average',
-      component: <LoadAverageCard systemStats={systemStats} />
+      component: <LoadAverageCard systemStats={systemStats} />,
+      isDefault: true
     },
     {
       id: 'cpu-usage',
-      component: <CPUUsageCard systemStats={systemStats} />
+      component: <CPUUsageCard systemStats={systemStats} />,
+      isDefault: true
     },
     {
       id: 'memory-usage',
-      component: <MemoryUsageCard systemStats={systemStats} />
+      component: <MemoryUsageCard systemStats={systemStats} />,
+      isDefault: true
     },
     {
       id: 'disk-usage',
-      component: <DiskUsageCard systemStats={systemStats} />
+      component: <DiskUsageCard systemStats={systemStats} />,
+      isDefault: true
     },
     {
       id: 'containers',
-      component: (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xs sm:text-sm font-bold flex items-center">
-              <Package className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
-              <TypographySmall>{t('dashboard.containers.title')}</TypographySmall>
-            </CardTitle>
-            <Button variant="outline" size="sm" onClick={() => router.push('/containers')}>
-              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
-              {t('dashboard.containers.viewAll')}
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <ContainersTable containersData={containersData} />
-          </CardContent>
-        </Card>
-      ),
-      className: 'md:col-span-2'
+      component: <ContainersWidget containersData={containersData} />,
+      className: 'md:col-span-2',
+      isDefault: true
     }
   ];
+
+  const visibleItems = allWidgetDefinitions.filter(widget => {
+    return !hiddenWidgets.includes(widget.id);
+  });
+
+  const dashboardItems = visibleItems.map(w => ({
+    id: w.id,
+    component: w.component,
+    className: w.className
+  }));
 
   return (
     <DraggableGrid
@@ -233,6 +307,7 @@ const MonitoringSection = ({
       gridCols="grid-cols-1 md:grid-cols-2"
       resetKey={layoutResetKey}
       onReorder={() => onLayoutChange()}
+      onDelete={onDeleteWidget}
     />
   );
 };

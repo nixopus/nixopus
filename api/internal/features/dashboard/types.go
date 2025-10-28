@@ -43,27 +43,28 @@ type DashboardMonitor struct {
 }
 
 type SystemStats struct {
-	OSType        string      `json:"os_type"`
-	Hostname      string      `json:"hostname"`
-	CPUInfo       string      `json:"cpu_info"`
-	CPUCores      int         `json:"cpu_cores"`
-	CPU           CPUStats    `json:"cpu"`
-	Memory        MemoryStats `json:"memory"`
-	Load          LoadStats   `json:"load"`
-	Disk          DiskStats   `json:"disk"`
-	KernelVersion string      `json:"kernel_version"`
-	Architecture  string      `json:"architecture"`
-	Timestamp     time.Time   `json:"timestamp"`
+	OSType        string       `json:"os_type"`
+	Hostname      string       `json:"hostname"`
+	CPUInfo       string       `json:"cpu_info"`
+	CPUCores      int          `json:"cpu_cores"`
+	CPU           CPUStats     `json:"cpu"`
+	Memory        MemoryStats  `json:"memory"`
+	Load          LoadStats    `json:"load"`
+	Disk          DiskStats    `json:"disk"`
+	Network       NetworkStats `json:"network"`
+	KernelVersion string       `json:"kernel_version"`
+	Architecture  string       `json:"architecture"`
+	Timestamp     time.Time    `json:"timestamp"`
 }
 
 type CPUCore struct {
-	CoreID     int     `json:"core_id"`
-	Usage      float64 `json:"usage"`
+	CoreID int     `json:"core_id"`
+	Usage  float64 `json:"usage"`
 }
 
 type CPUStats struct {
-	Overall     float64   `json:"overall"`
-	PerCore     []CPUCore `json:"per_core"`
+	Overall float64   `json:"overall"`
+	PerCore []CPUCore `json:"per_core"`
 }
 
 type MemoryStats struct {
@@ -96,4 +97,26 @@ type DiskStats struct {
 	Percentage float64     `json:"percentage"`
 	MountPoint string      `json:"mountPoint"`
 	AllMounts  []DiskMount `json:"allMounts"`
+}
+
+type NetworkInterface struct {
+	Name        string `json:"name"`
+	BytesSent   uint64 `json:"bytesSent"`
+	BytesRecv   uint64 `json:"bytesRecv"`
+	PacketsSent uint64 `json:"packetsSent"`
+	PacketsRecv uint64 `json:"packetsRecv"`
+	ErrorIn     uint64 `json:"errorIn"`
+	ErrorOut    uint64 `json:"errorOut"`
+	DropIn      uint64 `json:"dropIn"`
+	DropOut     uint64 `json:"dropOut"`
+}
+
+type NetworkStats struct {
+	TotalBytesSent   uint64             `json:"totalBytesSent"`
+	TotalBytesRecv   uint64             `json:"totalBytesRecv"`
+	TotalPacketsSent uint64             `json:"totalPacketsSent"`
+	TotalPacketsRecv uint64             `json:"totalPacketsRecv"`
+	Interfaces       []NetworkInterface `json:"interfaces"`
+	UploadSpeed      float64            `json:"uploadSpeed"`
+	DownloadSpeed    float64            `json:"downloadSpeed"`
 }
