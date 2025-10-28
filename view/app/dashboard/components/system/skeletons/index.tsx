@@ -5,3 +5,4 @@ export { DiskUsageCardSkeleton, DiskUsageCardSkeletonContent } from './disk-usag
 export { SystemInfoCardSkeleton } from './system-info';
 export { ClockCardSkeletonContent } from './clock';
 export { WeatherCardSkeletonContent } from './weather';
+export { NetworkCardSkeletonContent } from './network';

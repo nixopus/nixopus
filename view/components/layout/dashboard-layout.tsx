@@ -25,6 +25,7 @@ import { HelpCircle } from 'lucide-react';
 import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { ModeToggler } from '@/components/ui/theme-toggler';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
+import { TopbarWidgets } from './topbar-widgets';
 
 enum TERMINAL_POSITION {
   BOTTOM = 'bottom',
@@ -96,6 +97,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
             </div>
             <div className="flex items-center gap-4">
+              <TopbarWidgets />
               <Button
                 variant="outline"
                 size="icon"

@@ -13,6 +13,7 @@ import (
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/host"
 	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v3/net"
 )
 
 const (
@@ -31,7 +32,7 @@ func formatBytes(bytes uint64, unit string) string {
 	}
 }
 
-// TODO: Add support for multi server management 
+// TODO: Add support for multi server management
 // solution: create a bridge between the gopsutil and the ssh client
 func (m *DashboardMonitor) GetSystemStats() {
 	osType, err := m.getCommandOutput("uname -s")
@@ -48,6 +49,7 @@ func (m *DashboardMonitor) GetSystemStats() {
 		Memory:    MemoryStats{},
 		Load:      LoadStats{},
 		Disk:      DiskStats{AllMounts: []DiskMount{}},
+		Network:   NetworkStats{Interfaces: []NetworkInterface{}},
 	}
 
 	if hostname, err := m.getCommandOutput("hostname"); err == nil {
@@ -129,6 +131,8 @@ func (m *DashboardMonitor) GetSystemStats() {
 		stats.Disk = diskStats
 	}
 
+	stats.Network = m.getNetworkStats()
+
 	m.Broadcast(string(GetSystemStats), stats)
 }
 
@@ -180,6 +184,44 @@ func (m *DashboardMonitor) getCPUStats() CPUStats {
 	}
 
 	return cpuStats
+}
+
+func (m *DashboardMonitor) getNetworkStats() NetworkStats {
+	networkStats := NetworkStats{
+		Interfaces: []NetworkInterface{},
+	}
+
+	if ioCounters, err := net.IOCounters(true); err == nil {
+		var totalSent, totalRecv, totalPacketsSent, totalPacketsRecv uint64
+
+		for _, counter := range ioCounters {
+			interfaces := NetworkInterface{
+				Name:        counter.Name,
+				BytesSent:   counter.BytesSent,
+				BytesRecv:   counter.BytesRecv,
+				PacketsSent: counter.PacketsSent,
+				PacketsRecv: counter.PacketsRecv,
+				ErrorIn:     counter.Errin,
+				ErrorOut:    counter.Errout,
+				DropIn:      counter.Dropin,
+				DropOut:     counter.Dropout,
+			}
+
+			networkStats.Interfaces = append(networkStats.Interfaces, interfaces)
+
+			totalSent += counter.BytesSent
+			totalRecv += counter.BytesRecv
+			totalPacketsSent += counter.PacketsSent
+			totalPacketsRecv += counter.PacketsRecv
+		}
+
+		networkStats.TotalBytesSent = totalSent
+		networkStats.TotalBytesRecv = totalRecv
+		networkStats.TotalPacketsSent = totalPacketsSent
+		networkStats.TotalPacketsRecv = totalPacketsRecv
+	}
+
+	return networkStats
 }
 
 func (m *DashboardMonitor) getCommandOutput(cmd string) (string, error) {

@@ -13,6 +13,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { WebSocketProvider } from '@/hooks/socket-provider';
 import DashboardLayout from '@/components/layout/dashboard-layout';
 import { FeatureFlagsProvider } from '@/hooks/features_provider';
+import { SystemStatsProvider } from '@/hooks/system-stats-provider';
 import { palette } from '@/components/colors';
 import { SuperTokensProvider } from '@/components/supertokensProvider';
 import { useSessionContext } from 'supertokens-auth-react/recipe/session';
@@ -114,7 +115,13 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
       >
         <WebSocketProvider>
           <FeatureFlagsProvider>
-            {isPublicRoute ? <>{children}</> : <DashboardLayout>{children}</DashboardLayout>}
+            {isPublicRoute ? (
+              <>{children}</>
+            ) : (
+              <SystemStatsProvider>
+                <DashboardLayout>{children}</DashboardLayout>
+              </SystemStatsProvider>
+            )}
           </FeatureFlagsProvider>
         </WebSocketProvider>
       </ThemeProvider>
