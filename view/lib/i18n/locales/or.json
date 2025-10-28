@@ -1,0 +1,1432 @@
+{
+  "common": {
+"welcome": "ସ୍ୱାଗତ",
+"dashboard": "ଡ୍ୟାଶବୋର୍ଡ",
+"settings": "ସେଟିଂସ୍",
+"profile": "ପ୍ରୋଫାଇଲ୍",
+"logout": "ଲଗଅଉଟ୍",
+"accessDenied": "ଅନୁମତି ନାହିଁ",
+"noPermissionView": "ଏହି ପୃଷ୍ଠା ଦେଖିବା ପାଇଁ ଆପଣଙ୍କ ପାଖରେ ଅଧିକାର ନାହିଁ",
+"searchFiles": "ଫାଇଲ୍ ଖୋଜନ୍ତୁ…",
+"featureDisabled": "ବୈଶିଷ୍ଟ୍ୟ ନିଷ୍କ୍ରିୟ",
+"featureNotAvailable": "ଏହି ବୈଶିଷ୍ଟ୍ୟ ଆପଣଙ୍କ ସଂଗଠନ ପାଇଁ ଉପଲବ୍ଧ ନୁହେଁ",
+"goBack": "ପଛକୁ ଯାଆନ୍ତୁ",
+"refreshPage": "ପୃଷ୍ଠା ରିଫ୍ରେଶ୍ କରନ୍ତୁ",
+"loading": "ଲୋଡ୍ ହେଉଛି…",
+"installed": "ଇନ୍‌ସ୍ଟଲ୍ ହୋଇଛି",
+"cancel": "ବାତିଲ୍",
+"delete": "ଡିଲିଟ୍",
+"edit": "ଏଡିଟ୍",
+"preview": "ପ୍ରିଭ୍ୟୁ",
+"enabled": "ସକ୍ରିୟ",
+"disabled": "ନିଷ୍କ୍ରିୟ",
+"readMore": "ଅଧିକ ପଢନ୍ତୁ",
+"readLess": "କମ୍ ପଢନ୍ତୁ"
+},
+"containers": {
+"title": "କଣ୍ଟେନର୍ସ",
+"description": "ସମସ୍ତ କଣ୍ଟେନର୍ଙ୍କ ପ୍ରିଭ୍ୟୁ",
+"list": "କଣ୍ଟେନର ତାଲିକା",
+"name": "ନାମ",
+"image": "ଇମେଜ୍",
+"status": "ସ୍ଥିତି",
+"ports": "ପୋର୍ଟ୍ସ",
+"actions": "କାର୍ଯ୍ୟ",
+"refresh": "ରିଫ୍ରେଶ୍",
+"start": "ସ୍ଟାର୍ଟ୍",
+"stop": "ଷ୍ଟପ୍",
+"remove": "ରିମୁଭ୍",
+"restart": "ରିଷ୍ଟାର୍ଟ୍",
+"start_success": "କଣ୍ଟେନର ସଫଳତାର ସହ ସ୍ଟାର୍ଟ୍ ହେଲା",
+"stop_success": "କଣ୍ଟେନର ସଫଳତାର ସହ ଷ୍ଟପ୍ ହେଲା",
+"prune_images": "ଇମେଜ୍ ପ୍ରୁନ୍",
+"prune_build_cache": "ବିଲ୍ଡ୍ କ୍ୟାଚ୍ ପ୍ରୁନ୍",
+"prune_images_success": "ଇମେଜ୍‌ଗୁଡିକ ସଫଳତାର ସହ ପ୍ରୁନ୍ ହେଲା",
+"prune_build_cache_success": "ବିଲ୍ଡ୍ କ୍ୟାଚ୍ ସଫଳତାର ସହ ପ୍ରୁନ୍ ହେଲା",
+"prune_images_error": "ଇମେଜ୍ ପ୍ରୁନ୍ କରିବାରେ ବିଫଳ",
+"prune_build_cache_error": "ବିଲ୍ଡ୍ କ୍ୟାଚ୍ ପ୍ରୁନ୍ କରିବାରେ ବିଫଳ",
+"remove_success": "କଣ୍ଟେନର ସଫଳତାର ସହ ରିମୁଭ୍ ହେଲା",
+"start_error": "କଣ୍ଟେନର ସ୍ଟାର୍ଟ୍ କରିବାରେ ବିଫଳ",
+"stop_error": "କଣ୍ଟେନର ଷ୍ଟପ୍ କରିବାରେ ବିଫଳ",
+"remove_error": "କଣ୍ଟେନର ରିମୁଭ୍ କରିବାରେ ବିଫଳ",
+"restart_success": "କଣ୍ଟେନର ସଫଳତାର ସହ ରିଷ୍ଟାର୍ଟ୍ ହେଲା",
+"restart_error": "କଣ୍ଟେନର ରିଷ୍ଟାର୍ଟ୍ କରିବାରେ ବିଫଳ",
+"fetch_error": "କଣ୍ଟେନର ଆଣିବାରେ ବିଫଳ",
+"overview": "ଓଭରଭ୍ୟୁ",
+"logs": "ଲଗ୍ସ",
+"details": "ବିବରଣୀ",
+"basic_info": "ମୌଳିକ ସୂଚନା",
+"resources": "ରିସୋର୍ସେସ୍",
+"cpu_shares": "ସିପିଉ ଶେୟର୍ସ",
+"memory": "ମେମୋରି",
+"command": "କମାଣ୍ଡ",
+"created": "ସୃଷ୍ଟି ତାରିଖ",
+"ip_address": "ଆଇପି ଠିକଣା",
+"load_more_logs": "ଆଉ ଲଗ୍ ଲୋଡ୍ କରନ୍ତୁ",
+"no_logs": "କୌଣସି ଲଗ୍ ମିଳିଲା ନାହିଁ",
+"no_containers": "କୌଣସି କଣ୍ଟେନର ମିଳିଲା ନାହିଁ",
+"more_ports": "+{count} ଅଧିକ",
+"no_ports_exposed": "କୌଣସି ପୋର୍ଟ୍ ଏକ୍ସପୋଜ୍ ହୋଇନାହିଁ",
+"deleteDialog": {
+"title": "କଣ୍ଟେନର ଡିଲିଟ୍",
+"description": "ଆପଣ ନିଶ୍ଚିତ କି ଏହି କଣ୍ଟେନର କୁ ଡିଲିଟ୍ କରିବେ?",
+"confirm": "ଡିଲିଟ୍",
+"cancel": "ବାତିଲ୍"
+},
+"pruneImagesDialog": {
+"title": "ଇମେଜ୍ ପ୍ରୁନ୍",
+"description": "ସମସ୍ତ ଇମେଜ୍ ପ୍ରୁନ୍ କରିବାକୁ ନିଶ୍ଚିତ କି?",
+"confirm": "ପ୍ରୁନ୍",
+"cancel": "ବାତିଲ୍"
+},
+"pruneBuildCacheDialog": {
+"title": "ବିଲ୍ଡ୍ କ୍ୟାଚ୍ ପ୍ରୁନ୍",
+"description": "ସମସ୍ତ ବିଲ୍ଡ୍ କ୍ୟାଚ୍ ପ୍ରୁନ୍ କରିବାକୁ ନିଶ୍ଚିତ କି?",
+"confirm": "ପ୍ରୁନ୍",
+"cancel": "ବାତିଲ୍"
+},
+"images": {
+"title": "ଇମେଜ୍‌ଗୁଡିକ",
+"id": "ID",
+"tags": "ଟ୍ୟାଗ୍ସ",
+"created": "ସୃଷ୍ଟି ତାରିଖ",
+"size": "ଆକାର",
+"containers": "କଣ୍ଟେନର୍ସ",
+"none": "<କିଛି ନାହିଁ>"
+}
+},
+"auth": {
+"login": {
+"title": "ପୁଣି ଫେରିଲେ",
+"description": "ଆପଣଙ୍କ Nixopus ଅକାଉଣ୍ଟରେ ଲଗଇନ୍ କରନ୍ତୁ",
+"email": "ଇମେଲ୍",
+"password": "ପାସ୍ୱାର୍ଡ୍",
+"submit": "ଲଗଇନ୍",
+"emailPlaceholder": "m@example.com",
+"loading": "ଲୋଡ୍ ହେଉଛି…",
+"terms": "ଆଗକୁ ବଢ଼ିଲେ, ଆପଣ ଆମ",
+"termsOfService": "ସେବା ନିୟମାବଳୀ",
+"and": "ଏବଂ",
+"privacyPolicy": "ଗୋପନୀୟତା ନୀତି",
+"forgotPassword": "ପାସ୍ୱାର୍ଡ୍ ଭୁଲିଗଲେ?",
+"errors": {
+"loginFailed": "ଲଗଇନ୍ ବିଫଳ",
+"invalidCredentials": "ଅବୈଧ ଇମେଲ୍ କିମ୍ବା ପାସ୍ୱାର୍ଡ୍",
+"requiredFields": "ଇମେଲ୍ ଏବଂ ପାସ୍ୱାର୍ଡ୍ ଆବଶ୍ୟକ",
+"2faFailed": "ଅବୈଧ ୨FA କୋଡ୍"
+},
+"2fa": {
+"title": "ଦୁଇ-ଘଟକ ପ୍ରମାଣିକରଣ",
+"description": "ଆପଣଙ୍କ ଅଥେଣ୍ଟିକେଟର ଆପ୍‌ରୁ ଯାଞ୍ଚ କୋଡ୍ ଦିଅନ୍ତୁ",
+"enterCode": "ଭେରିଫିକେଶନ୍ କୋଡ୍",
+"codePlaceholder": "୬-ଅଙ୍କିଆ କୋଡ୍ ଦିଅନ୍ତୁ",
+"verifyButton": "ଭେରିଫାଇ",
+"verifying": "ଭେରିଫାଇ ହେଉଛି…"
+}
+},
+"register": {
+"title": "ରେଜିଷ୍ଟର",
+"description": "ନୂତନ ଅକାଉଣ୍ଟ ସୃଷ୍ଟି କରନ୍ତୁ",
+"email": "ଇମେଲ୍",
+"password": "ପାସ୍ୱାର୍ଡ୍",
+"confirmPassword": "ପାସ୍ୱାର୍ଡ୍ ନିଶ୍ଚିତ କରନ୍ତୁ",
+"submit": "ରେଜିଷ୍ଟର",
+"emailPlaceholder": "m@example.com",
+"loading": "ଲୋଡ୍ ହେଉଛି…",
+"terms": "କନ୍ଟିନ୍ୟୁ କଲେ, ଆପଣ ଆମ",
+"termsOfService": "ସେବା ନିୟମାବଳୀ",
+"and": "ଏବଂ",
+"privacyPolicy": "ଗୋପନୀୟତା ନୀତି",
+"alreadyHaveAccount": "ପୂର୍ବରୁ ଅକାଉଣ୍ଟ ଅଛି କି?",
+"success": "ରେଜିଷ୍ଟ୍ରେସନ୍ ସଫଳ! ଦୟାକରି ଆପଣଙ୍କ ଇମେଲ୍ ଯାଞ୍ଚ କରନ୍ତୁ।",
+"errors": {
+"invalidEmail": "ଅବୈଧ ଇମେଲ୍",
+"passwordMismatch": "ପାସ୍ୱାର୍ଡ୍ ମେଳିଲା ନାହିଁ",
+"passwordRequirements": {
+"minLength": "ପାସ୍ୱାର୍ଡ୍ କମେ କମେ ୮ଟି ଅକ୍ଷର ହେବା ଉଚିତ",
+"uppercase": "କମେ କମେ ୧ଟି ବଡ଼ ଅକ୍ଷର ଥାଇବା ଉଚିତ",
+"lowercase": "କମେ କମେ ୧ଟି ଛୋଟ ଅକ୍ଷର ଥାଇବା ଉଚିତ",
+"number": "କମେ କମେ ୧ଟି ସଂଖ୍ୟା ଥାଇବା ଉଚିତ",
+"specialChar": "କମେ କମେ ୧ଟି ବିଶେଷ ଚରିତ୍ର ଥାଇବା ଉଚିତ"
+},
+"adminAlreadyRegistered": "ଅ୍ୟାଡମିନ୍ ପୂର୍ବରୁ ରେଜିଷ୍ଟର ଅଛନ୍ତି",
+"adminAlreadyRegisteredDescription": "ଅ୍ୟାଡମିନ୍ ସହ ଯୋଗାଯୋଗ କରି ଅଭିଗମ ନିଅନ୍ତୁ।",
+"loginButton": "ଲଗଇନ୍",
+"somethingWentWrong": "କିଛି ଭୁଲ୍ ହେଲା",
+"loadingAdminRegistration": "ଅ୍ୟାଡମିନ୍ ରେଜିଷ୍ଟର ଅଛନ୍ତି କି ଯାଞ୍ଚ ହେଉଛି…",
+"tryAgain": "ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ",
+"registerFailed": "ରେଜିଷ୍ଟର କରିବାରେ ବିଫଳ"
+}
+},
+"email": "ଇମେଲ୍",
+"password": "ପାସ୍ୱାର୍ଡ୍",
+"resetPassword": {
+"title": "ପାସ୍ୱାର୍ଡ୍ ରିସେଟ୍",
+"description": "ନୂତନ ପାସ୍ୱାର୍ଡ୍ ନିମ୍ନରେ ଦିଅନ୍ତୁ।",
+"newPassword": "ନୂତନ ପାସ୍ୱାର୍ଡ୍",
+"confirmPassword": "ପାସ୍ୱାର୍ଡ୍ ନିଶ୍ଚିତ କରନ୍ତୁ",
+"submit": "ପାସ୍ୱାର୍ଡ୍ ରିସେଟ୍",
+"submitting": "ପାସ୍ୱାର୍ଡ୍ ରିସେଟ୍ ହେଉଛି…",
+"success": "ପାସ୍ୱାର୍ଡ୍ ସଫଳତାର ସହ ରିସେଟ୍ ହେଲା",
+"errors": {
+"invalidLink": "ଅବୈଧ ରିସେଟ୍ ଲିଙ୍କ୍",
+"resetFailed": "ପାସ୍ୱାର୍ଡ୍ ରିସେଟ୍ ବିଫଳ",
+"passwordMismatch": "ପାସ୍ୱାର୍ଡ୍ ମେଳିଲା ନାହିଁ",
+"passwordRequirements": {
+"minLength": "ପାସ୍ୱାର୍ଡ୍ କମେ କମେ ୮ଟି ଅକ୍ଷର ହେବା ଉଚିତ",
+"uppercase": "କମେ କମେ ୧ଟି ବଡ଼ ଅକ୍ଷର ଥାଇବା ଉଚିତ",
+"lowercase": "କମେ କମେ ୧ଟି ଛୋଟ ଅକ୍ଷର ଥାଇବା ଉଚିତ",
+"number": "କମେ କମେ ୧ଟି ସଂଖ୍ୟା ଥାଇବା ଉଚିତ",
+"specialChar": "କମେ କମେ ୧ଟି ବିଶେଷ ଚରିତ୍ର ଥାଇବା ଉଚିତ"
+}
+}
+},
+"verifyEmail": {
+"title": "ଇମେଲ୍ ଯାଞ୍ଚ",
+"description": "ଆମେ ଆପଣଙ୍କ ଇମେଲ୍ ଯାଞ୍ଚ କରୁଛୁ, ଦୟାକରି ଅପେକ୍ଷା କରନ୍ତୁ",
+"loading": "ଆପଣଙ୍କ ଇମେଲ୍ ଭେରିଫାଇ ହେଉଛି…",
+"success": {
+"title": "ଇମେଲ୍ ଭେରିଫାଏଡ୍",
+"message": "ଇମେଲ୍ ସଫଳତାର ସହ ଭେରିଫାଇ ହେଲା! ଏବେ ଆପଣ ଲଗଇନ୍ କରିପାରିବେ।"
+},
+"error": {
+"title": "ଭେରିଫିକେଶନ୍ ବିଫଳ",
+"message": "ଇମେଲ୍ ଯାଞ୍ଚ ବିଫଳ। ଲିଙ୍କ୍ ସମୟସୀମା ଅତିକ୍ରମିତ କିମ୍ବା ଅବୈଧ ହୋଇପାରେ।",
+"invalidLink": "ଅବୈଧ ଭେରିଫିକେଶନ୍ ଲିଙ୍କ୍"
+},
+"buttons": {
+"goToLogin": "ଲଗଇନ୍ କୁ ଯାଆନ୍ତୁ",
+"backToLogin": "ଲଗଇନ୍ କୁ ଫେରନ୍ତୁ"
+}
+}
+},
+"settings": {
+"title": "ସେଟିଂସ୍",
+"description": "ଆପଣଙ୍କ ଅକାଉଣ୍ଟ ପରିଚାଳନା କରନ୍ତୁ",
+"tabs": {
+"account": "ଅକାଉଣ୍ଟ",
+"security": "ସୁରକ୍ଷା",
+"featureFlags": "ବୈଶିଷ୍ଟ୍ୟ"
+},
+"preferences": {
+"language": {
+"title": "ଭାଷା ପସନ୍ଦ",
+"description": "ଆପ୍‌ ପାଇଁ ପସନ୍ଦୀୟ ଭାଷା ଚୟନ କରନ୍ତୁ",
+"select": "ଭାଷା ବାଛନ୍ତୁ"
+},
+"font": "ଫଣ୍ଟ",
+"fontOptions": {
+"geist": "Geist",
+"inter": "Inter",
+"roboto": "Roboto",
+"poppins": "Poppins",
+"montserrat": "Montserrat",
+"spaceGrotesk": "Space Grotesk",
+"outfit": "Outfit",
+"jakarta": "Plus Jakarta Sans",
+"system": "ସିଷ୍ଟମ୍"
+},
+"autoUpdate": {
+"title": "ସ୍ୱୟଂଚାଳିତ ଅପଡେଟ୍",
+"description": "ନୂତନ ସଂସ୍କରଣ ଆସିଲେ nixopus କୁ ଆପୋଅପେ ଅପଡେଟ୍ କରନ୍ତୁ",
+"select": "ଅଟୋ ଅପଡେଟ୍ ବାଛନ୍ତୁ"
+}
+},
+"featureFlags": {
+"title": "ବୈଶିଷ୍ଟ୍ୟ",
+"description": "ଆପଣଙ୍କ ସଂଗଠନ ପାଇଁ ନିର୍ଦ୍ଦିଷ୍ଟ ବୈଶିଷ୍ଟ୍ୟଗୁଡିକ ସକ୍ରିୟ/ନିଷ୍କ୍ରିୟ କରନ୍ତୁ",
+"groups": {
+"infrastructure": {
+"title": "ଇନ୍‌ଫ୍ରାସ୍ଟ୍ରକ୍ଚର",
+"description": "ଇନ୍‌ଫ୍ରାସ୍ଟ୍ରକ୍ଚର ବୈଶିଷ୍ଟ୍ୟଗୁଡିକ ସକ୍ରିୟ/ନିଷ୍କ୍ରିୟ କରନ୍ତୁ"
+},
+"development": {
+"title": "ଡିଭେଲପମେଣ୍ଟ",
+"description": "ଡିଭେଲପମେଣ୍ଟ ବୈଶିଷ୍ଟ୍ୟଗୁଡିକ ସକ୍ରିୟ/ନିଷ୍କ୍ରିୟ କରନ୍ତୁ"
+},
+"monitoring": {
+"title": "ମନିଟରିଂ",
+"description": "ମନିଟରିଂ ବୈଶିଷ୍ଟ୍ୟଗୁଡିକ ସକ୍ରିୟ/ନିଷ୍କ୍ରିୟ କରନ୍ତୁ"
+},
+"notifications": {
+"title": "ନୋଟିଫିକେଶନ୍ସ",
+"description": "ନୋଟିଫିକେଶନ୍ ବୈଶିଷ୍ଟ୍ୟଗୁଡିକ ସକ୍ରିୟ/ନିଷ୍କ୍ରିୟ କରନ୍ତୁ"
+}
+},
+"features": {
+"terminal": {
+"title": "ଟର୍ମିନାଲ୍",
+"description": "ଟର୍ମିନାଲ୍ ବୈଶିଷ୍ଟ୍ୟର ଅଭିଗମ"
+},
+"file_manager": {
+"title": "ଫାଇଲ୍ ମ୍ୟାନେଜର୍",
+"description": "ଫାଇଲ୍ ମ୍ୟାନେଜର୍ ବୈଶିଷ୍ଟ୍ୟର ଅଭିଗମ"
+},
+"self_hosted": {
+"title": "ସେଲ୍ଫ୍ ହୋଷ୍ଟେଡ୍",
+"description": "ସେଲ୍ଫ୍ ହୋଷ୍ଟେଡ୍ ବୈଶିଷ୍ଟ୍ୟର ଅଭିଗମ"
+},
+"domain": {
+"title": "ଡୋମେନ୍",
+"description": "ଡୋମେନ୍ ବୈଶିଷ୍ଟ୍ୟର ଅଭିଗମ"
+},
+"container": {
+"title": "କଣ୍ଟେନର୍",
+"description": "କଣ୍ଟେନର ବୈଶିଷ୍ଟ୍ୟର ଅଭିଗମ"
+},
+"monitoring": {
+"title": "ମନିଟରିଂ",
+"description": "ମନିଟରିଂ ବୈଶିଷ୍ଟ୍ୟର ଅଭିଗମ"
+},
+"proxy_config": {
+"title": "ପ୍ରୋକ୍ସି ବିନ୍ୟାସ",
+"description": "ପ୍ରୋକ୍ସି ବିନ୍ୟାସ ବୈଶିଷ୍ଟ୍ୟର ଅଭିଗମ"
+},
+"github_connector": {
+"title": "ଗିଟହବ କନେକ୍ଟର",
+"description": "ଗିଟହବ କନେକ୍ଟର ବୈଶିଷ୍ଟ୍ୟର ଅଭିଗମ"
+},
+"audit": {
+"title": "ଅଡିଟ୍ ଲଗ୍ସ",
+"description": "ଅଡିଟ୍ ଲଗ୍ ବୈଶିଷ୍ଟ୍ୟର ଅଭିଗମ"
+},
+"notifications": {
+"title": "ନୋଟିଫିକେଶନ୍ସ",
+"description": "ନୋଟିଫିକେଶନ୍ ବୈଶିଷ୍ଟ୍ୟର ଅଭିଗମ"
+}
+},
+"messages": {
+"updated": "ଫିଚର୍ ଫ୍ଲାଗ୍ ସଫଳତାର ସହ ଅଦ୍ୟତନ ହେଲା",
+"updateFailed": "ଫିଚର୍ ଫ୍ଲାଗ୍ ଅଦ୍ୟତନ ବିଫଳ"
+},
+"searchPlaceholder": "ବୈଶିଷ୍ଟ୍ୟ ଖୋଜନ୍ତୁ…",
+"filters": {
+"all": "ସବୁ",
+"enabled": "ସକ୍ରିୟ",
+"disabled": "ନିଷ୍କ୍ରିୟ"
+},
+"noResults": "ଆପଣଙ୍କ ସନ୍ଧାନ ସହ ମେଳ ହୋଇଥିବା ବୈଶିଷ୍ଟ୍ୟ ମିଳିଲା ନାହିଁ",
+"noFeatures": "କୌଣସି ବୈଶିଷ୍ଟ୍ୟ ଉପଲବ୍ଧ ନାହିଁ"
+},
+"account": {
+"title": "ଅକାଉଣ୍ଟ ସୂଚନା",
+"description": "ଆପଣଙ୍କ ଅକାଉଣ୍ଟର ବିବରଣୀ ଅଦ୍ୟତନ କରନ୍ତୁ",
+"username": {
+"label": "ଉପଯୋଗକର୍ତ୍ତାନାମ",
+"placeholder": "ଆପଣଙ୍କ ଉପଯୋଗକର୍ତ୍ତାନାମ ଲେଖନ୍ତୁ",
+"update": "ଅଦ୍ୟତନ",
+"success": "ଆପଣଙ୍କ ଉପଯୋଗକର୍ତ୍ତାନାମ ସଫଳତାର ସହ ଅଦ୍ୟତନ ହେଲା!",
+"error": "ଉପଯୋଗକର୍ତ୍ତାନାମ ଅଦ୍ୟତନ ବିଫଳ"
+},
+"email": {
+"label": "ଇମେଲ୍ ଠିକଣା",
+"notVerified": {
+"title": "ଇମେଲ୍ ଯାଞ୍ଚିତ ନୁହେଁ",
+"description": "ଆପଣଙ୍କ ଇମେଲ୍ ଯାଞ୍ଚିତ ନୁହେଁ। ସମସ୍ତ ବୈଶିଷ୍ଟ୍ୟ ପାଇଁ ଦୟାକରି ଯାଞ୍ଚ କରନ୍ତୁ।",
+"sendButton": "ଭେରିଫିକେଶନ୍ ଇମେଲ୍ ପଠାନ୍ତୁ",
+"sending": "ପଠାଯାଉଛି…",
+"sent": "ଭେରିଫିକେଶନ୍ ଇମେଲ୍ ପଠାଯାଇଛି",
+"error": "ଇମେଲ୍ ପଠାଇବାରେ ବିଫଳ। କିଛି ଖଣ୍ଡ ପରେ ଚେଷ୍ଟା କରନ୍ତୁ।",
+"checkEmail": "ଦୟାକରି ଇମେଲ୍ ଯାଞ୍ଚ କରି ଲିଙ୍କ୍ କ୍ଲିକ୍ କରନ୍ତୁ।"
+}
+},
+"preferences": {
+"title": "ଅକାଉଣ୍ଟ ପସନ୍ଦ",
+"description": "ନୋଟିଫିକେଶନ୍ ଏବଂ ଡିସ୍ପ୍ଲେ ସେଟିଂସ୍ ପରିଚାଳନା",
+"appearance": "ଦେଖାଶୁଣା"
+},
+"avatar": {
+"title": "ପ୍ରୋଫାଇଲ୍",
+"description": "ଆପଣଙ୍କ ପବ୍ଲିକ୍ ପ୍ରୋଫାଇଲ୍ ପରିଚାଳନା କରନ୍ତୁ",
+"upload": "ଆଭାଟାର୍ ଅପଲୋଡ୍",
+"uploadSuccess": "ଆଭାଟାର୍ ସଫଳତାର ସହ ଅପଲୋଡ୍ ହେଲା",
+"uploadError": "ଆଭାଟାର୍ ଅପଲୋଡ୍ ବିଫଳ"
+},
+"success": {
+"avatarUpdated": "ଆଭାଟାର୍ ଅଦ୍ୟତନ ହେଲା",
+"usernameUpdated": "ଉପଯୋଗକର୍ତ୍ତାନାମ ଅଦ୍ୟତନ ହେଲା"
+},
+"errors": {
+"emptyUsername": "ଉପଯୋଗକର୍ତ୍ତାନାମ ଖାଲି ହୋଇପାରିବ ନାହିଁ",
+"sameUsername": "ଭିନ୍ନ ଉପଯୋଗକର୍ତ୍ତାନାମ ଦିଅନ୍ତୁ",
+"updateFailed": "ଅଦ୍ୟତନ ବିଫଳ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+"resetEmailFailed": "ରିସେଟ୍ ଇମେଲ୍ ପଠାଇବାରେ ବିଫଳ",
+"imageNotImplemented": "ଏପର୍ଯ୍ୟନ୍ତ କାର୍ଯ୍ୟରତ ନୁହେଁ",
+"noImageSelected": "କୌଣସି ଛବି ବାଛାଯାଇନି",
+"avatarUpdateFailed": "ଆଭାଟାର୍ ଅଦ୍ୟତନ ବିଫଳ",
+"fontUpdateFailed": "ଫଣ୍ଟ ସେଟିଂସ୍ ଅଦ୍ୟତନ ବିଫଳ",
+"themeUpdateFailed": "ଥିମ୍ ଅଦ୍ୟତନ ବିଫଳ",
+"languageUpdateFailed": "ଭାଷା ଅଦ୍ୟତନ ବିଫଳ",
+"autoUpdateUpdateFailed": "ଅଟୋ-ଅପଡେଟ୍ ସେଟିଂ ଅଦ୍ୟତନ ବିଫଳ"
+}
+},
+"security": {
+"password": {
+"title": "ପାସ୍ୱାର୍ଡ୍",
+"description": "ଆପଣଙ୍କ ପାସ୍ୱାର୍ଡ୍ ପରିବର୍ତ୍ତନ କରନ୍ତୁ",
+"reset": {
+"label": "ପାସ୍ୱାର୍ଡ୍ ରିସେଟ୍",
+"description": "ଆମେ ଆପଣଙ୍କ ଇମେଲ୍ କୁ ରିସେଟ୍ ଲିଙ୍କ୍ ପଠାଇବୁ",
+"button": "ପାସ୍ୱାର୍ଡ୍ ରିସେଟ୍ ଲିଙ୍କ୍ ପଠାନ୍ତୁ",
+"emailSent": {
+"title": "ଇମେଲ୍ ପଠାଯାଇଛି!",
+"description": "ଇନ୍‌ବକ୍ସ ଯାଞ୍ଚ କରି ପାସ୍ୱାର୍ଡ୍ ରିସେଟ୍ କରନ୍ତୁ"
+}
+}
+},
+"2fa": {
+"title": "ଦୁଇ-ଘଟକ ପ୍ରମାଣିକରଣ",
+"description": "ଆପଣଙ୍କ ଅକାଉଣ୍ଟ ପାଇଁ ଅଧିକ ସୁରକ୍ଷା",
+"setupButton": "୨FA ସେଟ୍‌ଆପ୍",
+"verifyButton": "ଭେରିଫାଇ",
+"enterCode": "ଭେରିଫିକେଶନ୍ କୋଡ୍ ଦିଅନ୍ତୁ",
+"codePlaceholder": "୬-ଅଙ୍କିଆ କୋଡ୍ ଦିଅନ୍ତୁ",
+"setupSuccess": "୨FA ସେଟ୍‌ଆପ୍ ସଫଳ",
+"setupError": "୨FA ସେଟ୍‌ଆପ୍ ବିଫଳ",
+"verifySuccess": "୨FA ଭେରିଫିକେଶନ୍ ସଫଳ",
+"verifyError": "ଅବୈଧ ଭେରିଫିକେଶନ୍ କୋଡ୍",
+"enabledTitle": "୨FA ସକ୍ରିୟ",
+"enabledDescription": "ଦୁଇ-ଘଟକ ସୁରକ୍ଷା ସକ୍ରିୟ ଅଛି",
+"disableButton": "୨FA ନିଷ୍କ୍ରିୟ କରନ୍ତୁ",
+"disableSuccess": "୨FA ନିଷ୍କ୍ରିୟ ହେଲା",
+"disableError": "୨FA ନିଷ୍କ୍ରିୟ କରିବାରେ ବିଫଳ"
+}
+},
+"domains": {
+"page": {
+"title": "ଡୋମେନ୍ସ",
+"description": "ଆପ୍ଲିକେଶନ୍ ଡିପ୍ଲୟ ପାଇଁ ଡୋମେନ୍ ବ୍ୟବହୃତ",
+"noOrganization": {
+"title": "କୌଣସି ସଂଗଠନ ବାଛା ହୋଇନି",
+"description": "ଡୋମେନ୍ ଦେଖିବା ଏବଂ ପରିଚାଳନା ପାଇଁ ଦୟାକରି ଗୋଟିଏ ସଂଗଠନ ବାଛନ୍ତୁ।"
+},
+"accessDenied": {
+"title": "ଅନୁମତି ନାହିଁ",
+"description": "ଏହି ସଂଗଠନ ପାଇଁ ଡୋମେନ୍ ଦେଖିବାର ଅଧିକାର ନାହିଁ।"
+},
+"loading": "ଡୋମେନ୍ ଲୋଡ୍ ହେଉଛି…",
+"error": "ଡୋମେନ୍ ଲୋଡ୍ ବିଫଳ। କିଛି ଖଣ୍ଡ ପରେ ଚେଷ୍ଟା କରନ୍ତୁ।",
+"domainsList": {
+"title": "ଡୋମେନ୍ସ",
+"addButton": "ଡୋମେନ୍ ଯୋଡନ୍ତୁ"
+},
+"noDomains": {
+"title": "କୌଣସି ଡୋମେନ୍ ମିଳିଲା ନାହିଁ",
+"noPermission": "ଡୋମେନ୍ ଯୋଡିବାର ଅନୁମତି ନାହିଁ।"
+}
+},
+"actions": {
+"edit": "ଏଡିଟ୍",
+"delete": "ଡିଲିଟ୍"
+},
+"delete": {
+"title": "ଡୋମେନ୍ ଡିଲିଟ୍",
+"description": "ଏହି ଡୋମେନ୍ କୁ ଡିଲିଟ୍ କରିବାକୁ ନିଶ୍ଚିତ କି?",
+"cancel": "ବାତିଲ୍",
+"delete": "ଡିଲିଟ୍",
+"deleting": "ଡିଲିଟ୍ ହେଉଛି…",
+"success": "ଡୋମେନ୍ ସଫଳତାର ସହ ଡିଲିଟ୍ ହେଲା",
+"error": "ଡୋମେନ୍ ଡିଲିଟ୍ ବିଫଳ"
+},
+"types": {
+"wildcard": "ୱାଇଲ୍ଡକାର୍ଡ",
+"standard": "ସ୍ଟାଣ୍ଡାର୍ଡ"
+},
+"table": {
+"headers": {
+"domain": "ଡୋମେନ୍",
+"type": "ପ୍ରକାର",
+"actions": "କାର୍ଯ୍ୟ"
+}
+},
+"update": {
+"addButton": "ଡୋମେନ୍ ଯୋଡନ୍ତୁ",
+"addTitle": "ଡୋମେନ୍ ଯୋଡନ୍ତୁ",
+"updateTitle": "ଡୋମେନ୍ ଅଦ୍ୟତନ",
+"description": "ଡୋମେନ୍ ଆପ୍ଲିକେଶନ୍ ଡିପ୍ଲୟରେ ସାହାଯ୍ୟ କରିବ",
+"form": {
+"placeholder": "example.com",
+"validation": {
+"minLength": "ଡୋମେନ୍ ନାମ କମେ କମେ ୩ଟି ଅକ୍ଷର ହେବା ଉଚିତ।",
+"invalidFormat": "ଦୟାକରି ବ validଳ ଡୋମେନ୍ ନାମ ଦିଅନ୍ତୁ (ଯେପରି, example.com)।"
+}
+},
+"buttons": {
+"cancel": "ବାତିଲ୍",
+"save": "ସେଭ୍",
+"saving": "ସେଭ୍ ହେଉଛି…"
+},
+"success": "ଡୋମେନ୍ ସଫଳତାର ସହ ଯୋଡାଗଲା",
+"error": "ଡୋମେନ୍ ଯୋଡିବାରେ ବିଫଳ"
+}
+},
+"notifications": {
+"page": {
+"title": "ନୋଟିଫିକେଶନ୍ସ",
+"description": "ନୋଟିଫିକେଶନ୍ ପସନ୍ଦ ଏବଂ ଚ୍ୟାନେଲ୍ ପରିଚାଳନା",
+"accessDenied": {
+"title": "ଅନୁମତି ନାହିଁ",
+"description": "ନୋଟିଫିକେଶନ୍ ସେଟିଂସ୍ ଦେଖିବାର ଅଧିକାର ନାହିଁ"
+},
+"tabs": {
+"channels": "ଚ୍ୟାନେଲ୍",
+"preferences": "ପସନ୍ଦ"
+},
+"permissions": {
+"update": "ନୋଟିଫିକେଶନ୍ ସେଟିଂସ୍ ଅଦ୍ୟତନ କରିବାର ଅନୁମତି ନାହିଁ",
+"create": "ନୋଟିଫିକେଶନ୍ ସେଟିଂସ୍ ତିଆରି କରିବାର ଅନୁମତି ନାହିଁ"
+}
+},
+"channels": {
+"email": {
+"title": "ଇମେଲ୍",
+"description": "SMTP ସେଟିଂସ୍ ସଜାଇ ଇମେଲ୍ ନୋଟିଫିକେଶନ୍ ପଠାନ୍ତୁ",
+"fields": {
+"smtp_host": {
+"label": "SMTP ସର୍ଭର",
+"placeholder": "smtp.example.com"
+},
+"smtp_port": {
+"label": "ପୋର୍ଟ",
+"placeholder": "୫୮୭"
+},
+"smtp_username": {
+"label": "ଉପଯୋଗକର୍ତ୍ତାନାମ",
+"placeholder": "your-email@example.com"
+},
+"smtp_password": {
+"label": "ପାସ୍ୱାର୍ଡ୍",
+"placeholder": "••••••••"
+},
+"smtp_from_email": {
+"label": "ଫ୍ରମ୍ ଇମେଲ୍",
+"placeholder": "notifications@example.com"
+},
+"smtp_from_name": {
+"label": "ଫ୍ରମ୍ ନାମ",
+"placeholder": "ଆପଣଙ୍କ ସଂଗଠନର ନାମ"
+}
+},
+"buttons": {
+"save": "କନଫିଗରେଶନ୍ ସେଭ୍ କରନ୍ତୁ"
+}
+},
+"slack": {
+"title": "ସ୍ଲାକ୍",
+"description": "ସ୍ଲାକ୍ ନୋଟିଫିକେଶନ୍ ସେଟଅପ୍",
+"fields": {
+"webhook_url": {
+"label": "ୱେବହୁକ URL",
+"placeholder": "ଆପଣଙ୍କ ସ୍ଲାକ୍ ୱେବହୁକ URL ଦିଅନ୍ତୁ"
+},
+"is_active": {
+"label": "ସକ୍ରିୟ"
+}
+},
+"buttons": {
+"save": "କନଫିଗରେଶନ୍ ସେଭ୍ କରନ୍ତୁ"
+}
+},
+"discord": {
+"title": "ଡିସ୍କର୍ଡ",
+"description": "ଡିସ୍କର୍ଡ ନୋଟିଫିକେଶନ୍ ସେଟିଂସ୍",
+"fields": {
+"webhook_url": {
+"label": "ୱେବହୁକ URL",
+"placeholder": "ଆପଣଙ୍କ ଡିସ୍କର୍ଡ ୱେବହୁକ URL ଦିଅନ୍ତୁ"
+},
+"is_active": {
+"label": "ସକ୍ରିୟ"
+}
+},
+"buttons": {
+"save": "କନଫିଗରେଶନ୍ ସେଭ୍ କରନ୍ତୁ"
+}
+},
+"save": "କନଫିଗରେଶନ୍ ସେଭ୍ କରନ୍ତୁ"
+},
+"preferences": {
+"activity": {
+"title": "କାର୍ଯ୍ୟକଳାପ ନୋଟିଫିକେଶନ୍",
+"description": "ଟିମ୍ ର କାର୍ଯ୍ୟକଳାପ ସନ୍ଦେଶ"
+},
+"security": {
+"title": "ସୁରକ୍ଷା ନୋଟିଫିକେଶନ୍",
+"description": "ଡିପ୍ଲଏଡ୍ ଆପ୍‌ ଏବଂ ତ୍ରୁଟି ସମ୍ବନ୍ଧୀୟ ଗୁରୁତ୍ୱପୂର୍ଣ୍ଣ ସତର୍କତା"
+},
+"updates": {
+"title": "ଅପଡେଟ୍ ଏବଂ ମାର୍କେଟିଂ",
+"description": "ଆମ ପ୍ରୋଡକ୍ଟ ଓ ସେବା ସମ୍ବନ୍ଧୀୟ ସୂଚନା ରଖନ୍ତୁ"
+}
+},
+"messages": {
+"email": {
+"success": "ଇମେଲ୍ କନଫିଗରେଶନ୍ ସେଭ୍ ହେଲା",
+"error": "ଇମେଲ୍ କନଫିଗରେଶନ୍ ସେଭ୍ ବିଫଳ"
+},
+"slack": {
+"success": "ସ୍ଲାକ୍ କନଫିଗରେଶନ୍ ସେଭ୍ ହେଲା",
+"error": "ସ୍ଲାକ୍ କନଫିଗରେଶନ୍ ସେଭ୍ ବିଫଳ"
+},
+"discord": {
+"success": "ଡିସ୍କର୍ଡ କନଫିଗରେଶନ୍ ସେଭ୍ ହେଲା",
+"error": "ଡିସ୍କର୍ଡ କନଫିଗରେଶନ୍ ସେଭ୍ ବିଫଳ"
+},
+"webhookConfigSaved": "ୱେବହୁକ ବିନ୍ୟାସ ସେଭ୍ ହେଲା",
+"webhookConfigUpdated": "ୱେବହୁକ ବିନ୍ୟାସ ଅଦ୍ୟତନ ହେଲା",
+"webhookConfigDeleted": "ୱେବହୁକ ବିନ୍ୟାସ ଡିଲିଟ୍ ହେଲା",
+"webhookConfigFailed": "ୱେବହୁକ ବିନ୍ୟାସ ସେଭ୍ ବିଫଳ",
+"preferencesUpdated": "ପସନ୍ଦ ସଫଳତାର ସହ ଅଦ୍ୟତନ ହେଲା",
+"preferencesFailed": "ପସନ୍ଦ ଅଦ୍ୟତନ ବିଫଳ"
+}
+},
+"teams": {
+"addMember": {
+"button": "ଉପଯୋଗକର୍ତ୍ତା ଯୋଡନ୍ତୁ",
+"dialog": {
+"title": "ନୂତନ ଉପଯୋଗକର୍ତ୍ତା ଯୋଡନ୍ତୁ",
+"description": "ଆପଣଙ୍କ ସଂଗଠନରେ ନୂତନ ଉପଯୋଗକର୍ତ୍ତା ଯୋଡନ୍ତୁ",
+"fields": {
+"name": {
+"label": "ନାମ",
+"placeholder": "ଉପଯୋଗକର୍ତ୍ତାର ନାମ ଲେଖନ୍ତୁ"
+},
+"email": {
+"label": "ଇମେଲ୍",
+"placeholder": "ଉପଯୋଗକର୍ତ୍ତାର ଇମେଲ୍ ଲେଖନ୍ତୁ"
+},
+"role": {
+"label": "ଭୂମିକା",
+"placeholder": "ଗୋଟିଏ ଭୂମିକା ବାଛନ୍ତୁ",
+"options": {
+"admin": "ଅ୍ୟାଡମିନ୍",
+"member": "ସଦସ୍ୟ",
+"viewer": "ଦର୍ଶକ"
+}
+},
+"password": {
+"label": "ପାସ୍ୱାର୍ଡ୍",
+"placeholder": "ଉପଯୋଗକର୍ତ୍ତାର ପାସ୍ୱାର୍ଡ୍ ଲେଖନ୍ତୁ"
+}
+},
+"buttons": {
+"cancel": "ବାତିଲ୍",
+"add": "ଉପଯୋଗକର୍ତ୍ତା ଯୋଡନ୍ତୁ"
+}
+}
+},
+"editTeam": {
+"dialog": {
+"title": "ଟିମ୍ ବିବରଣୀ ସମ୍ପାଦନା",
+"description": "ଟିମ୍ ବିବରଣୀ ଆପଣଙ୍କ ଟିମ୍ କୁ ଚିହ୍ନଟ କରିବାରେ ସାହାଯ୍ୟ କରେ",
+"fields": {
+"name": {
+"label": "ନାମ",
+"placeholder": "ଟିମ୍ ନାମ ଲେଖନ୍ତୁ"
+},
+"description": {
+"label": "ବର୍ଣ୍ଣନା",
+"placeholder": "ଟିମ୍ ବର୍ଣ୍ଣନା ଲେଖନ୍ତୁ"
+}
+},
+"buttons": {
+"cancel": "ବାତିଲ୍",
+"update": "ଅଦ୍ୟତନ",
+"updating": "ଅଦ୍ୟତନ ହେଉଛି…"
+}
+}
+},
+"editUser": {
+"dialog": {
+"title": "ଉପଯୋଗକର୍ତ୍ତାର ଭୂମିକା ସମ୍ପାଦନା",
+"description": "{name} ପାଇଁ ଭୂମିକା ଅଦ୍ୟତନ",
+"fields": {
+"role": {
+"label": "ଭୂମିକା",
+"placeholder": "ଗୋଟିଏ ଭୂମିକା ବାଛନ୍ତୁ"
+}
+},
+"buttons": {
+"cancel": "ବାତିଲ୍",
+"save": "ପରିବର୍ତ୍ତନ ସେଭ୍ କରନ୍ତୁ"
+},
+"errors": {
+"noRole": "ଦୟାକରି ଗୋଟିଏ ଭୂମିକା ବାଛନ୍ତୁ"
+}
+}
+},
+"recentActivity": {
+"title": "ସମ୍ପ୍ରତି କାର୍ଯ୍ୟକଳାପ",
+"description": "ଆପଣଙ୍କ ସଂଗଠନର ସମ୍ପ୍ରତି ପରିବର୍ତ୍ତନ",
+"loading": "କାର୍ଯ୍ୟକଳାପ ଲୋଡ୍ ହେଉଛି…",
+"error": "କାର୍ଯ୍ୟକଳାପ ଲୋଡ୍ ବିଫଳ",
+"noActivities": "କୌଣସି ସମ୍ପ୍ରତି କାର୍ଯ୍ୟକଳାପ ନାହିଁ",
+"viewAll": "ସବୁ ଦେଖନ୍ତୁ",
+"actions": {
+"create": "{username} ଏକ ନୂତନ {resource} ସୃଷ୍ଟି କଲେ",
+"update": "{username} ଗୋଟିଏ {resource} ଅଦ୍ୟତନ କଲେ",
+"delete": "{username} ଗୋଟିଏ {resource} ଡିଲିଟ୍ କଲେ",
+"default": "{username} ଏକ {resource} ଅଭିଗମ କଲେ"
+}
+},
+"members": {
+"title": "ଟିମ୍ ସଦସ୍ୟ",
+"description": "ଟିମ୍‌ରେ ଉପଯୋଗକର୍ତ୍ତା ଏବଂ ତାଙ୍କ ଭୂମିକା ପରିଚାଳନା",
+"table": {
+"headers": {
+"user": "ଉପଯୋଗକର୍ତ୍ତା",
+"role": "ଭୂମିକା",
+"permissions": "ଅନୁମତି",
+"actions": "କାର୍ଯ୍ୟ"
+}
+},
+"actions": {
+"edit": "ଉପଯୋଗକର୍ତ୍ତା ଏଡିଟ୍",
+"remove": "ଉପଯୋଗକର୍ତ୍ତା ହଟାନ୍ତୁ",
+"showMore": "ଅଧିକ ଦେଖନ୍ତୁ",
+"showLess": "କମ୍ ଦେଖନ୍ତୁ"
+},
+"deleteDialog": {
+"title": "{name} କୁ ହଟାନ୍ତୁ",
+"description": "ଆପଣ ନିଶ୍ଚିତ କି {name} କୁ ଟିମ୍ ରୁ ହଟାଇବେ? ଏହା ପୁନରୁଦ୍ଧାର ହେବନାହିଁ।",
+"confirm": "ଉପଯୋଗକର୍ତ୍ତା ହଟାନ୍ତୁ"
+}
+},
+"stats": {
+"title": "ଟିମ୍ ସିଂଖ୍ୟାତ୍ମକ",
+"description": "ଟିମ୍ ର ଓଭରଭ୍ୟୁ",
+"totalMembers": "ମୋଟ ସଦସ୍ୟ",
+"owners": "ମାଲିକ",
+"members": "ସଦସ୍ୟ",
+"viewers": "ଦର୍ଶକ"
+},
+"noMembers": "କୌଣସି ଟିମ୍ ସଦସ୍ୟ ମିଳିଲା ନାହିଁ",
+"messages": {
+"userAdded": "ଉପଯୋଗକର୍ତ୍ତା ସଫଳତାର ସହ ଯୋଡାଗଲା",
+"userAddFailed": "ଉପଯୋଗକର୍ତ୍ତା ଯୋଡାଇବା ବିଫଳ",
+"userRemoved": "ଉପଯୋଗକର୍ତ୍ତା ସଫଳତାର ସହ ହଟାଗଲେ",
+"userRemoveFailed": "ଉପଯୋଗକର୍ତ୍ତା ହଟାଇବା ବିଫଳ",
+"userUpdated": "ଉପଯୋଗକର୍ତ୍ତା ଅଦ୍ୟତନ ହେଲେ",
+"userUpdateFailed": "ଉପଯୋଗକର୍ତ୍ତା ଅଦ୍ୟତନ ବିଫଳ",
+"teamUpdated": "ଟିମ୍ ବିବରଣୀ ଅଦ୍ୟତନ ହେଲା",
+"teamUpdateFailed": "ଟିମ୍ ବିବରଣୀ ଅଦ୍ୟତନ ବିଫଳ",
+"requiredFields": "ଟିମ୍ ନାମ ଏବଂ ବର୍ଣ୍ଣନା ଆବଶ୍ୟକ"
+},
+"createTeam": {
+"title": "ଟିମ୍ ସୃଷ୍ଟି କରନ୍ତୁ",
+"description": "ଅନ୍ୟମାନଙ୍କ ସହ କାମ ପାଇଁ ନୂତନ ଟିମ୍ ତିଆରି କରନ୍ତୁ",
+"fields": {
+"name": {
+"label": "ନାମ",
+"placeholder": "ଟିମ୍ ନାମ ଲେଖନ୍ତୁ"
+},
+"description": {
+"label": "ବର୍ଣ୍ଣନା",
+"placeholder": "ଟିମ୍ ବର୍ଣ୍ଣନା ଲେଖନ୍ତୁ"
+}
+},
+"buttons": {
+"create": "ସୃଷ୍ଟି କରନ୍ତୁ",
+"creating": "ସୃଷ୍ଟି ହେଉଛି…"
+}
+}
+},
+"2fa": {
+"title": "ଦୁଇ-ଘଟକ ପ୍ରମାଣିକରଣ",
+"description": "ଆପଣଙ୍କ ଅକାଉଣ୍ଟ ପାଇଁ ଅଧିକ ସୁରକ୍ଷା",
+"setupButton": "୨FA ସେଟ୍‌ଆପ୍",
+"verifyButton": "ଭେରିଫାଇ",
+"enterCode": "ଭେରିଫିକେଶନ୍ କୋଡ୍ ଦିଅନ୍ତୁ",
+"codePlaceholder": "୬-ଅଙ୍କିଆ କୋଡ୍ ଦିଅନ୍ତୁ",
+"setupSuccess": "୨FA ସେଟ୍‌ଆପ୍ ସଫଳ",
+"setupError": "୨FA ସେଟ୍‌ଆପ୍ ବିଫଳ",
+"verifySuccess": "୨FA ଭେରିଫିକେଶନ୍ ସଫଳ",
+"verifyError": "ଅବୈଧ ଭେରିଫିକେଶନ୍ କୋଡ୍",
+"enabledTitle": "୨FA ସକ୍ରିୟ",
+"enabledDescription": "ଦୁଇ-ଘଟକ ପ୍ରମାଣିକରଣ ସକ୍ରିୟ",
+"disableButton": "୨FA ନିଷ୍କ୍ରିୟ କରନ୍ତୁ",
+"disableSuccess": "୨FA ନିଷ୍କ୍ରିୟ ହେଲା",
+"disableError": "୨FA ନିଷ୍କ୍ରିୟ କରିବାରେ ବିଫଳ"
+}
+},
+  "activities": {
+"title": "କାର୍ଯ୍ୟକଳାପ",
+"description": "ଆପଣଙ୍କ ସଂଗଠନର ସମସ୍ତ କାର୍ଯ୍ୟକଳାପ ଏବଂ ପରିବର୍ତ୍ତନ ଦେଖନ୍ତୁ",
+"list": {
+"title": "ଟିମ୍ କାର୍ଯ୍ୟକଳାପ",
+"description": "ଆପଣଙ୍କ ସଂଗଠନର ସମ୍ପ୍ରତି କାର୍ଯ୍ୟକଳାପ"
+}
+},
+"languages": {
+"en": "ଇଂରାଜୀ",
+"es": "ସ୍ପାନିଶ୍",
+"fr": "ଫ୍ରେଞ୍ଚ୍",
+"kn": "କନ୍ନଡ",
+"ml": "ମାଲୟାଳମ୍",
+"or": "ଓଡ଼ିଆ"
+},
+"dashboard": {
+"title": "ଡ୍ୟାଶବୋର୍ଡ",
+"description": "ଆପଣଙ୍କ ଆପ୍ଲିକେଶନ୍ ଏବଂ ସିଷ୍ଟମ୍ ସମ୍ପଦ ମନିଟର୍ କରନ୍ତୁ",
+"containers": {
+"title": "କଣ୍ଟେନର୍ସ",
+"table": {
+"headers": {
+"id": "ID",
+"name": "ନାମ",
+"image": "ଇମେଜ୍",
+"status": "ସ୍ଥିତି",
+"ports": "ପୋର୍ଟ୍ସ",
+"created": "ସୃଷ୍ଟି ତାରିଖ"
+},
+"noContainers": "କୌଣସି କଣ୍ଟେନର ମିଳିଲା ନାହିଁ",
+"morePorts": "+{count} ଅଧିକ"
+},
+"viewAll": "ସବୁ ଦେଖନ୍ତୁ"
+},
+"disk": {
+"title": "ଡିସ୍କ ବ୍ୟବହାର",
+"used": "{value} GB ବ୍ୟବହୃତ",
+"total": "{value} GB ମୋଟ",
+"percentage": "{value}%",
+"table": {
+"headers": {
+"mount": "ମାଉଣ୍ଟ",
+"size": "ଆକାର",
+"used": "ବ୍ୟବହୃତ",
+"percentage": "%"
+}
+}
+},
+"load": {
+"title": "ଲୋଡ୍ ଅଭାରେଜ୍",
+"labels": {
+"oneMin": "୧ ମିନିଟ୍",
+"fiveMin": "୫ ମିନିଟ୍",
+"fifteenMin": "୧୫ ମିନିଟ୍"
+}
+},
+"memory": {
+"title": "ମେମୋରି ବ୍ୟବହାର",
+"used": "{value} GB ବ୍ୟବହୃତ",
+"total": "{value} GB ମୋଟ",
+"percentage": "{value}%"
+},
+"errors": {
+"parseMessage": "ମେସେଜ୍ ପାର୍ସ କରିବାରେ ବିଫଳ",
+"unknownError": "ଅଜଣା ତ୍ରୁଟି ହେଲା",
+"connectionLost": "ଯୋଗାଯୋଗ ଛିନ୍ଦିତ। ପୁନଃ ସଂଯୋଗ କରିବାକୁ ଚେଷ୍ଟା ହେଉଛି…",
+"reconnectFailed": "ପୁନଃ ସଂଯୋଗ ବିଫଳ। କିଛି ଖଣ୍ଡ ପରେ ଚେଷ୍ଟା କରନ୍ତୁ।"
+},
+"system": {
+"title": "ସିଷ୍ଟମ୍ ସୂଚନା",
+"osType": "OS ପ୍ରକାର",
+"cpu": "ସିପିଉ",
+"uptime": "ଅପ୍‌ଟାଇମ୍",
+"lastUpdated": "ଶେଷ ଅଦ୍ୟତନ"
+},
+"smtpBanner": {
+"message": "ନୋଟିଫିକେଶନ୍ ପାଇଁ SMTP ସେଟିଂସ୍ କନଫିଗର୍ କରନ୍ତୁ",
+"configure": "କନଫିଗର୍ କରନ୍ତୁ"
+}
+},
+"fileManager": {
+"header": {
+"title": "ଫାଇଲ୍ ମ୍ୟାନେଜର୍",
+"subtitle": "ଏଠାରେ ଆପଣଙ୍କ ଫାଇଲ୍‌ଗୁଡିକ ପରିଚାଳନା କରନ୍ତୁ"
+},
+"actions": {
+"upload": "ଫାଇଲ୍ ଅପଲୋଡ୍",
+"createDirectory": "ଡିରେକ୍ଟୋରି ସୃଷ୍ଟି କରନ୍ତୁ",
+"showHidden": "ଲୁଚିଥିବା ଫାଇଲ୍ ଦେଖାନ୍ତୁ",
+"hideHidden": "ଲୁଚିଥିବା ଫାଇଲ୍ ଲୁଚାନ୍ତୁ",
+"newFolder": "ନୂତନ ଫୋଲ୍ଡର {number}",
+"errors": {
+"createDirectory": "ଡିରେକ୍ଟୋରି ସୃଷ୍ଟି ବିଫଳ"
+}
+},
+"sort": {
+"title": "ଅନୁସାରେ ଗୋଛାନ୍ତୁ",
+"methods": {
+"name": "ନାମ",
+"updated_at": "ସଂଶୋଧିତ ତାରିଖ",
+"created_at": "ସୃଷ୍ଟି ତାରିଖ",
+"size": "ଆକାର",
+"file_type": "ପ୍ରକାର"
+}
+},
+"upload": {
+"title": "ଫାଇଲ୍ ଅପଲୋଡ୍",
+"dragDrop": "ଫାଇଲ୍‌ଗୁଡିକ ଏଠାରେ ଟାଣି ଆଣନ୍ତୁ, କିମ୍ବା ଚୟନ କରିବାକୁ କ୍ଲିକ୍ କରନ୍ତୁ",
+"errors": {
+"uploadFailed": "ଫାଇଲ୍ ଅପଲୋଡ୍ ବିଫଳ",
+"fileTooLarge": "ଫାଇଲ୍ ଆକାର ସୀମା ଅତିକ୍ରମ କରିଛି",
+"invalidType": "ଅବୈଧ ଫାଇଲ୍ ପ୍ରକାର"
+}
+},
+"info": {
+"labels": {
+"path": "ପଥ",
+"size": "ଆକାର",
+"created": "ସୃଷ୍ଟି",
+"updated": "ଅଦ୍ୟତନ",
+"type": "ପ୍ରକାର",
+"hidden": "ଲୁଚିଥିବା",
+"permissions": "ଅନୁମତି"
+},
+"calculating": "ହିସାବ ହେଉଛି…",
+"yes": "ହଁ",
+"no": "ନା"
+},
+"item": {
+"actions": {
+"info": "ବିବରଣୀ",
+"rename": "ନାମ ପରିବର୍ତ୍ତନ",
+"copy": "କପି",
+"move": "ସଞ୍ଚାଳନ",
+"delete": "ଟ୍ରାଶ୍‌କୁ ସଞ୍ଚାଳନ",
+"moveHere": "ଏଠାକୁ ଆଣନ୍ତୁ",
+"pasteHere": "ଏଠାରେ ପେଷ୍ଟ୍ କରନ୍ତୁ"
+}
+},
+"noFiles": "କୌଣସି ଫାଇଲ୍ ମିଳିଲା ନାହିଁ",
+"deleteDialog": {
+"title": "ଡିଲିଟ୍ ସୁନିଶ୍ଚିତତା",
+"descriptionFile": "ଆପଣ ନିଶ୍ଚିତ କି '{name}' ଫାଇଲ୍ ଡିଲିଟ୍ କରିବେ? ଏହି କାର୍ଯ୍ୟ ପୁନଃ କରିହେବ ନାହିଁ।",
+"descriptionDirectory": "ଆପଣ ନିଶ୍ଚିତ କି '{name}' ଡିରେକ୍ଟୋରି ଏବଂ ତାହାର ସମସ୍ତ ବସ୍ତୁ ଡିଲିଟ୍ କରିବେ? ଏହି କାର୍ଯ୍ୟ ପୁନଃ କରିହେବ ନାହିଁ।",
+"confirm": "ଡିଲିଟ୍",
+"cancel": "ବାତିଲ୍"
+},
+"contextMenu": {
+"info": "ବିବରଣୀ",
+"rename": "ନାମ ପରିବର୍ତ୍ତନ",
+"copy": "କପି",
+"move": "ସଞ୍ଚାଳନ",
+"share": "ସେୟାର୍",
+"download": "ଡାଉନଲୋଡ୍",
+"delete": "ଡିଲିଟ୍",
+"cancel": "ବାତିଲ୍"
+},
+"noPermissionCreate": "ଫାଇଲ୍ ସୃଷ୍ଟି କରିବାକୁ ଆପଣଙ୍କ ଅନୁମତି ନାହିଁ",
+"noPermissionUpdate": "ଫାଇଲ୍ ଅଦ୍ୟତନ କରିବାର ଅନୁମତି ନାହିଁ",
+"copiedToClipboard": "କ୍ଲିପବୋର୍ଡ୍‌କୁ କପି ହେଲା",
+"copySuccess": "ଫାଇଲ୍ ସଫଳତାର ସହ କପି ହେଲା",
+"errors": {
+"fileExists": "ଫାଇଲ୍ ପୂର୍ବରୁ ଅବସ୍ଥିତ ଅଛି"
+}
+},
+"selfHost": {
+"deployment": {
+"title": "ଡିପ୍ଲୟମେଣ୍ଟ ବିବରଣୀ",
+"logs": {
+"title": "ଡିପ୍ଲୟମେଣ୍ଟ ଲଗ୍ସ",
+"refresh": "ଲଗ୍ସ ରିଫ୍ରେଶ୍ କରନ୍ତୁ",
+"loading": "ଲଗ୍ସ ଲୋଡ୍ ହେଉଛି…",
+"noLogs": "କୌଣସି ଲଗ୍ ଉପଲବ୍ଧ ନାହିଁ",
+"pagination": {
+"previous": "ପୂର୍ବ",
+"next": "ପରବର୍ତ୍ତୀ",
+"page": "ପୃଷ୍ଠା {current} ମଧ୍ୟରୁ {total}"
+}
+},
+"list": {
+"title": "ଡିପ୍ଲୟମେଣ୍ଟସ୍",
+"noDeployments": "କୌଣସି ଡିପ୍ଲୟମେଣ୍ଟ ମିଳିଲା ନାହିଁ",
+"card": {
+"runTime": "ଚଳାଣ ସମୟ",
+"viewButton": "ବିବରଣୀ ଦେଖନ୍ତୁ",
+"rollback": {
+"title": "ରୋଲ୍ବ୍ୟାକ୍"
+}
+},
+"table": {
+"status": "ସ୍ଥିତି",
+"container": "କଣ୍ଟେନର୍",
+"created": "ସୃଷ୍ଟି",
+"runTime": "ଚଳାଣ ସମୟ",
+"actions": "କାର୍ଯ୍ୟ",
+"unknown": "ଅଜଣା"
+}
+}
+},
+"application": {
+"accessDenied": {
+"title": "ଅନୁମତି ନାହିଁ",
+"description": "ଆପଣଙ୍କ ପାଖରେ ଆପ୍ଲିକେଶନ୍ ବିବରଣୀ ଦେଖିବାର ଅଧିକାର ନାହିଁ"
+},
+"tabs": {
+"monitoring": "ମନିଟରିଂ",
+"configuration": "କନଫିଗରେଶନ୍",
+"deployments": "ଡିପ୍ଲୟମେଣ୍ଟସ୍",
+"logs": "ଲଗ୍ସ"
+}
+},
+"page": {
+"title": "ସେଲ୍ଫ୍-ହୋଷ୍ଟେଡ୍ ଆପ୍ଲିକେଶନ୍ସ",
+"description": "ଆପଣଙ୍କ ସେଲ୍ଫ୍-ହୋଷ୍ଟେଡ୍ ଆପ୍ଲିକେଶନ୍ସ ପରିଚାଳନା କରନ୍ତୁ",
+"accessDenied": {
+"title": "ଅନୁମତି ନାହିଁ",
+"description": "ସେଲ୍ଫ୍-ହୋଷ୍ଟେଡ୍ ଆପ୍ଲିକେଶନ୍ସ ଦେଖିବାର ଅଧିକାର ନାହିଁ"
+},
+"createButton": "ସୃଷ୍ଟି କରନ୍ତୁ",
+"loading": "ଆପ୍ଲିକେଶନ୍‌ଗୁଡିକ ଲୋଡ୍ ହେଉଛି…",
+"noApplications": "କୌଣସି ଆପ୍ଲିକେଶନ୍ ମିଳିଲା ନାହିଁ",
+"search": {
+"placeholder": "ଆପ୍ଲିକେଶନ୍ ଖୋଜନ୍ତୁ…"
+},
+"sort": {
+"name": "ନାମ",
+"created": "ସୃଷ୍ଟି",
+"updated": "ଅଦ୍ୟତନ",
+"status": "ସ୍ଥିତି"
+}
+},
+"configuration": {
+"sections": {
+"basicConfiguration": "ମୌଳିକ କନଫିଗରେଶନ୍",
+"dockerConfiguration": "ଡକର କନଫିଗରେଶନ୍",
+"environmentVariables": "ପରିବେଶ ଭେରିୟାବଲ୍ସ",
+"commands": "କମାଣ୍ଡସ୍",
+"deploymentInformation": "ଡିପ୍ଲୟମେଣ୍ଟ ସୂଚନା"
+},
+"fields": {
+"applicationName": {
+"label": "ଆପ୍ଲିକେଶନ୍ ନାମ",
+"description": "ଆପ୍ଲିକେଶନ୍ ନାମ"
+},
+"port": {
+"label": "ପୋର୍ଟ",
+"description": "ଯେପୋର୍ଟ୍‌ରେ ଆପ୍ଲିକେଶନ୍ ଉପଲବ୍ଧ ରହିବ"
+},
+"basePath": {
+"label": "ବେସ୍ ପାଥ୍",
+"description": "ଆପ୍ଲିକେଶନ୍ ପାଇଁ ବିଲ୍ଡ୍ କନ୍ଟେକ୍ସ୍ଟ ପାଥ୍"
+},
+"dockerfilePath": {
+"label": "ଡକରଫାଇଲ୍ ପାଥ୍",
+"description": "ବେସ୍ ପାଥ୍ ସହ ଆପେକ୍ଷିକ ଡକରଫାଇଲ୍ ପାଥ୍"
+},
+"environmentVariables": {
+"label": "ପରିବେଶ ଭେରିୟାବଲ୍ସ",
+"description": "KEY=VALUE ଟାଇପ୍ କରି Enter ଦବାନ୍ତୁ",
+"placeholder": "NODE_ENV=production"
+},
+"buildVariables": {
+"label": "ବିଲ୍ଡ୍ ଭେରିୟାବଲ୍ସ",
+"description": "KEY=VALUE ଟାଇପ୍ କରି Enter ଦବାନ୍ତୁ",
+"placeholder": "DEBUG=false"
+},
+"preRunCommands": {
+"label": "ପ୍ରି-ରନ୍ କମାଣ୍ଡସ୍",
+"description": "ଡିପ୍ଲୟମେଣ୍ଟ ପୂର୍ବରୁ ଚାଲିବା କମାଣ୍ଡସ୍",
+"placeholder": "npm install"
+},
+"postRunCommands": {
+"label": "ପୋଷ୍ଟ-ରନ୍ କମାଣ୍ଡସ୍",
+"description": "ଡିପ୍ଲୟମେଣ୍ଟ ପରେ ଚାଲିବା କମାଣ୍ଡସ୍",
+"placeholder": "npm run test"
+},
+"environment": {
+"label": "ପରିବେଶ",
+"description": "ଡିପ୍ଲୟମେଣ୍ଟର ପରିବେଶ"
+},
+"branch": {
+"label": "ବ୍ରାଞ୍ଚ୍",
+"description": "ଯେଠାରୁ ଆପଣ ଡିପ୍ଲୟ କରିବାକୁ ଚାହୁଁଛନ୍ତି ସେ ବ୍ରାଞ୍ଚ୍"
+},
+"domain": {
+"label": "ଡୋମେନ୍",
+"description": "ଯେ ଡୋମେନ୍‌ରେ ଆପ୍ଲିକେଶନ୍ ଉପଲବ୍ଧ"
+},
+"buildPack": {
+"label": "ବିଲ୍ଡ୍ ପ୍ୟାକ୍",
+"description": "ଆପ୍ଲିକେଶନ୍ ପାଇଁ ବ୍ୟବହୃତ ବିଲ୍ଡ୍ ପ୍ୟାକ୍"
+}
+},
+"buttons": {
+"update": "ଡିପ୍ଲୟମେଣ୍ଟ ଅଦ୍ୟତନ",
+"updating": "ଅଦ୍ୟତନ ହେଉଛି…"
+}
+},
+"deployments": {
+"list": {
+"title": "ଡିପ୍ଲୟମେଣ୍ଟସ୍",
+"noDeployments": "କୌଣସି ଡିପ୍ଲୟମେଣ୍ଟ ମିଳିଲା ନାହିଁ",
+"card": {
+"status": {
+"completed": "ସମାପ୍ତ"
+},
+"runTime": "ଚଳାଣ ସମୟ",
+"viewButton": "ଦେଖନ୍ତୁ",
+"rollback": {
+"title": "ଡିପ୍ଲୟମେଣ୍ଟ ରୋଲ୍ବ୍ୟାକ୍"
+}
+}
+},
+"chart": {
+"title": "ଡିପ୍ଲୟମେଣ୍ଟ ସଙ୍ଖ୍ୟାନ",
+"description": "ସମସ୍ତ ଡିପ୍ଲୟମେଣ୍ଟର ଏବେର ସ୍ଥିତି",
+"status": {
+"building": "ବିଲ୍ଡ୍ ହେଉଛି",
+"deployed": "ଡିପ୍ଲୟ ହୋଇଛି",
+"deploying": "ଡିପ୍ଲୟ ହେଉଛି",
+"failed": "ବିଫଳ"
+},
+"total": "ମୋଟ ଡିପ୍ଲୟମେଣ୍ଟ: {count}"
+}
+},
+"applicationDetails": {
+"header": {
+"actions": {
+"restart": {
+"button": "ଆପ୍ଲିକେଶନ୍ ରିଷ୍ଟାର୍ଟ୍",
+"success": "ଆପ୍ଲିକେଶନ୍ ରିଷ୍ଟାର୍ଟ୍ ଆରମ୍ଭ ହେଲା",
+"error": "ଆପ୍ଲିକେଶନ୍ ରିଷ୍ଟାର୍ଟ୍ ବିଫଳ",
+"permissionError": "ଆପ୍ଲିକେଶନ୍ ରିଷ୍ଟାର୍ଟ୍ କରିବାର ଅନୁମତି ନାହିଁ"
+},
+"delete": {
+"button": "ଡିଲିଟ୍",
+"dialog": {
+"title": "{name} କୁ ଡିଲିଟ୍ କରନ୍ତୁ",
+"description": "ଆପଣ ନିଶ୍ଚିତ କି {name} କୁ ଡିଲିଟ୍ କରିବେ? ଏହି କାର୍ଯ୍ୟ ପୁନଃ କରିହେବ ନାହିଁ।"
+},
+"success": "ଆପ୍ଲିକେଶନ୍ ସଫଳତାର ସହ ଡିଲିଟ୍ ହେଲା",
+"error": "ଆପ୍ଲିକେଶନ୍ ଡିଲିଟ୍ ବିଫଳ",
+"permissionError": "ଆପ୍ଲିକେଶନ୍ ଡିଲିଟ୍ କରିବାର ଅନୁମତି ନାହିଁ"
+},
+"redeploy": {
+"button": "ପୁନଃ-ଡିପ୍ଲୟ",
+"forceButton": "କ୍ୟାଚ୍ ବିନା ଫୋର୍ସ ଡିପ୍ଲୟ",
+"success": "ଆପ୍ଲିକେଶନ୍ ପୁନଃ ଡିପ୍ଲୟମେଣ୍ଟ ଆରମ୍ଭ ହେଲା",
+"error": "ଆପ୍ଲିକେଶନ୍ ପୁନଃ ଡିପ୍ଲୟ ବିଫଳ",
+"permissionError": "ପୁନଃ ଡିପ୍ଲୟ କରିବାର ଅନୁମତି ନାହିଁ"
+},
+"open": "ନୂତନ ଟ୍ୟାବ୍‌ରେ ଆପ୍ଲିକେଶନ୍ ଖୋଲନ୍ତୁ"
+}
+}
+},
+"logViewer": {
+"title": "ଲଗ୍ ଭ୍ୟୁଅର୍",
+"description": "ରିଅଲ୍-ଟାଇମ୍ ଇନ୍‌ଷ୍ଟଲେସନ୍ ଲଗ୍ସ",
+"actions": {
+"fetchMore": "ଆଉ ଆଣନ୍ତୁ",
+"refresh": "ରିଫ୍ରେଶ୍",
+"fullscreen": "ଫୁଲ୍ସ୍କ୍ରିନ୍",
+"exitFullscreen": "ଫୁଲ୍ସ୍କ୍ରିନ୍ ଛାଡନ୍ତୁ",
+"download": "ଡାଉନଲୋଡ୍",
+"search": {
+"placeholder": "ଲଗ୍ସ ଖୋଜନ୍ତୁ…",
+"previous": "ପୂର୍ବ",
+"next": "ପରବର୍ତ୍ତୀ",
+"results": "{total} ମଧ୍ୟରୁ {current}"
+},
+"filter": {
+"level": {
+"label": "ଲେଭେଲ୍ ଅନୁସାରେ ଫିଲ୍ଟର୍",
+"all": "ସମସ୍ତ ଲେଭେଲ୍"
+},
+"time": {
+"label": "ସମୟସୀମା",
+"all": "ସମସ୍ତ ସମୟ",
+"5m": "ଶେଷ ୫ ମିନିଟ୍",
+"15m": "ଶେଷ ୧୫ ମିନିଟ୍",
+"1h": "ଶେଷ ୧ ଘଣ୍ଟା",
+"24h": "ଶେଷ ୨୪ ଘଣ୍ଟା"
+}
+},
+"autoScroll": "ଅଟୋ-ସ୍କ୍ରଲ୍"
+}
+},
+"deployForm": {
+"accessDenied": {
+"title": "ଅନୁମତି ନାହିଁ",
+"description": "ନୂତନ ଆପ୍ଲିକେଶନ୍ ଡିପ୍ଲୟ କରିବାର ଅନୁମତି ନାହିଁ"
+},
+"success": {
+"update": "ଡିପ୍ଲୟମେଣ୍ଟ ସଫଳତାର ସହ ଅଦ୍ୟତନ ହେଲା"
+},
+"errors": {
+"createFailed": "ଡିପ୍ଲୟମେଣ୍ଟ ସୃଷ୍ଟି ବିଫଳ",
+"updateFailed": "ଡିପ୍ଲୟମେଣ୍ଟ ଅଦ୍ୟତନ ବିଫଳ"
+},
+"fields": {
+"applicationName": {
+"label": "ଆପ୍ଲିକେଶନ୍ ନାମ",
+"description": "ଆପ୍ଲିକେଶନ୍ ନାମ",
+"placeholder": "ଆପ୍ଲିକେଶନ୍ ନାମ"
+},
+"environment": {
+"label": "ପରିବେଶ",
+"description": "ଭିନ୍ନ ସ୍ପେସ୍‌ରେ ଡିପ୍ଲୟ କରିବାରେ ସହାଯ୍ୟ କରେ",
+"placeholder": "ପରିବେଶ",
+"options": {
+"staging": "ଷ୍ଟେଜିଂ",
+"production": "ପ୍ରଡକ୍ସନ୍",
+"development": "ଡିଭେଲପମେଣ୍ଟ"
+}
+},
+"basePath": {
+"label": "ବେସ୍ ପାଥ୍",
+"description": "ଆପଣଙ୍କ ଆପ୍ଲିକେଶନ୍ ପାଇଁ ବିଲ୍ଡ୍ କନ୍ଟେକ୍ସ୍ଟ ପାଥ୍",
+"placeholder": "/"
+},
+"dockerfilePath": {
+"label": "ଡକରଫାଇଲ୍ ପାଥ୍",
+"description": "ବେସ୍ ପାଥ୍ ସହ ଆପେକ୍ଷିକ ଡକରଫାଇଲ୍ ପାଥ୍",
+"placeholder": "Dockerfile"
+},
+"branch": {
+"label": "ବ୍ରାଞ୍ଚ୍",
+"description": "ଯେ ବ୍ରାଞ୍ଚ୍ ରୁ ଆପଣ ଡିପ୍ଲୟ କରିବାକୁ ଚାହୁଁଛନ୍ତି",
+"placeholder": "Branch"
+},
+"port": {
+"label": "ପୋର୍ଟ",
+"description": "ଯେ ପୋର୍ଟ୍‌ରେ ଆପ୍ଲିକେଶନ୍ ଉପଲବ୍ଧ ହେବ",
+"placeholder": "3000"
+},
+"domain": {
+"label": "ଡୋମେନ୍",
+"description": "ଯେ ଡୋମେନ୍‌ରେ ଆପ୍ଲିକେଶନ୍ ଉପଲବ୍ଧ ହେବ",
+"placeholder": "Domain"
+},
+"buildPack": {
+"label": "ବିଲ୍ଡ୍ ପ୍ୟାକ୍",
+"description": "ଆପ୍ ଗଠନ ସହ ସର୍ବାଧିକ ମେଳ ଥିବା ଟିକେ ବାଛନ୍ତୁ",
+"placeholder": "Build Pack",
+"options": {
+"dockerfile": "Dockerfile",
+"dockerCompose": "DockerCompose",
+"static": "Static"
+}
+},
+"envVariables": {
+"label": "ପରିବେଶ ଭେରିୟାବଲ୍ସ",
+"description": "KEY=VALUE ଟାଇପ୍ କରି Enter ଦବାନ୍ତୁ",
+"placeholder": "NODE_ENV=production"
+},
+"buildVariables": {
+"label": "ବିଲ୍ଡ୍ ଭେରିୟାବଲ୍ସ",
+"description": "KEY=VALUE ଟାଇପ୍ କରି Enter ଦବାନ୍ତୁ",
+"placeholder": "DEBUG=false"
+},
+"preRunCommands": {
+"label": "ପ୍ରି-ରନ୍ କମାଣ୍ଡସ୍",
+"description": "ଡିପ୍ଲୟ ପୂର୍ବରୁ ଚାଲିବା କମାଣ୍ଡସ୍",
+"placeholder": "npm install"
+},
+"postRunCommands": {
+"label": "ପୋଷ୍ଟ-ରନ୍ କମାଣ୍ଡସ୍",
+"description": "ଡିପ୍ଲୟ ପରେ ଚାଲିବା କମାଣ୍ଡସ୍",
+"placeholder": "npm run test"
+}
+},
+"submit": "ଡିପ୍ଲୟ",
+"validation": {
+"applicationName": {
+"minLength": "ଆପ୍ଲିକେଶନ୍ ନାମ କମେ କମେ ୩ଟି ଅକ୍ଷର ହେବା ଆବଶ୍ୟକ।",
+"invalidFormat": "ଆପ୍ଲିକେଶନ୍ ନାମ ବ validଳ ହେବା ଆବଶ୍ୟକ।"
+},
+"environment": {
+"invalidValue": "ପରିବେଶ ‘production’, ‘staging’, କିମ୍ବା ‘development’ ହେବା ଆବଶ୍ୟକ।"
+},
+"branch": {
+"minLength": "ବ୍ରାଞ୍ଚ୍ ନାମ କମେ କମେ ୩ଟି ଅକ୍ଷର ହେବା ଆବଶ୍ୟକ।",
+"invalidFormat": "ବ୍ରାଞ୍ଚ୍ ନାମ ବ validଳ ହେବା ଆବଶ୍ୟକ।"
+},
+"port": {
+"invalidFormat": "ପୋର୍ଟ ସଂଖ୍ୟା ହେବା ଉଚିତ।"
+},
+"domain": {
+"minLength": "ଡୋମେନ୍ ନାମ କମେ କମେ ୩ଟି ଅକ୍ଷର ହେବା ଆବଶ୍ୟକ।",
+"invalidFormat": "ଦୟାକରି ବ validଳ ଡୋମେନ୍ ନାମ ଦିଅନ୍ତୁ (ଯେପରି, example.com)।",
+"notAllowed": "ଏହି ଡୋମେନ୍ ଅନୁମତିନଟି। Settings > Domains ରେ ଯୋଡିଲେ ଉପଲବ୍ଧ ହେବ।"
+},
+"repository": {
+"minLength": "ରିପୋଜିଟରି ନାମ କମେ କମେ ୩ଟି ଅକ୍ଷର ହେବା ଆବଶ୍ୟକ।",
+"invalidFormat": "ରିପୋଜିଟରି ନାମ ବ validଳ ହେବା ଆବଶ୍ୟକ।"
+},
+"buildPack": {
+"invalidValue": "ବିଲ୍ଡ୍ ପ୍ୟାକ୍ ହେବା ଉଚିତ Dockerfile, DockerCompose, କିମ୍ବା Static।"
+},
+"envVariables": {
+"emptyInput": "ଇନ୍‌ପୁଟ୍ ଖାଲି ହୋଇପାରିବ ନାହିଁ",
+"invalidFormat": "KEY=VALUE ଫର୍ମାଟ୍ ରେ ଥିବା ଉଚିତ",
+"emptyKey": "Key ଖାଲି ହୋଇପାରିବ ନାହିଁ"
+}
+}
+},
+"githubInstaller": {
+"title": "ଗିଟହବ ଆପ୍ ଇନ୍‌ସ୍ଟଲ୍",
+"description": "ଆମେ ଏମିତି ତିଆରି କରା ଆପ୍ ସହ ସଂଯୋଗ କରିବା",
+"connectButton": "ଗିଟହବ ସଙ୍ଗେ ଯୋଡନ୍ତୁ",
+"terms": "ସଂଯୋଗ କରିବା ସହିତ, ଆପଣ ଆମର ସର୍ଭିସ ଟର୍ମ୍ସ ଏବଂ ପ୍ରାଇଭେସି ପଲିସି ସହ ସମ୍ମତ।"
+},
+"githubManifest": {
+"title": "ଗିଟହବ ଆପ୍ ସୃଷ୍ଟି କରନ୍ତୁ",
+"appName": {
+"label": "ଆପ୍ ନାମ",
+"placeholder": "ଆପ୍ ନାମ ଦିଅନ୍ତୁ",
+"generate": "ନୂତନ ନାମ ସୃଷ୍ଟି କରନ୍ତୁ"
+},
+"createButton": "ଗିଟହବ ଆପ୍ ସୃଷ୍ଟି କରନ୍ତୁ",
+"status": {
+"redirecting": "ଗିଟହବ କୁ ରିଡିରେକ୍ଟ୍ ହେଉଛି…",
+"converting": "ଆପଣଙ୍କ ଗିଟହବ ଆପ୍ ସେଟଅପ୍ ହେଉଛି…",
+"success": "ଗିଟହବ ଆପ୍ ସଫଳତାର ସହ ସୃଷ୍ଟି ହେଲା!"
+}
+},
+"repositories": {
+"title": "ରିପୋଜିଟରିସ୍",
+"noRepositories": "କୌଣସି ରିପୋଜିଟରି ମିଳିଲା ନାହିଁ",
+"search": {
+"placeholder": "ରିପୋଜିଟରି ଖୋଜନ୍ତୁ…"
+},
+"sort": {
+"name": "ନାମ",
+"created": "ସୃଷ୍ଟି",
+"updated": "ଅଦ୍ୟତନ",
+"stars": "ସ୍ଟାର୍ସ"
+}
+},
+"repositoryCard": {
+"viewOnGithub": "ଗିଟହବ ରେ ଦେଖନ୍ତୁ",
+"unnamed": "ନାମବିହୀନ ରିପୋଜିଟରି",
+"visibility": {
+"private": "ପ୍ରାଇଭେଟ୍",
+"public": "ପବ୍ଲିକ୍"
+},
+"topics": {
+"more": "+{count} ଅଧିକ"
+}
+},
+"create": {
+"title": "ରିପୋଜିଟରି",
+"description": "ଆପଣ ଆପ୍ଲିକେଶନ୍ କିପରି ଡିପ୍ଲୟ କରିବାକୁ ଚାହୁଁଛନ୍ତି ତାହା କନଫିଗର୍ କରନ୍ତୁ",
+"accessDenied": {
+"title": "ଅନୁମତି ନାହିଁ",
+"description": "ସେଲ୍ଫ୍-ହୋଷ୍ଟ ଆପ୍ଲିକେଶନ୍ ସୃଷ୍ଟି କରିବାର ଅନୁମତି ନାହିଁ"
+}
+},
+"githubCallback": {
+"processing": "ଗିଟହବ ଇନ୍‌ଷ୍ଟଲେସନ୍ ପ୍ରକ୍ରିୟା ହେଉଛି…",
+"success": "ଗିଟହବ ସହ ସଫଳ ଭାବେ ସଂଯୋଗ ହେଲା!",
+"error": {
+"invalidParams": "ଅବୈଧ ଇନ୍‌ଷ୍ଟଲେସନ୍ ପାରାମିଟର୍ସ",
+"installationFailed": "ଇନ୍‌ଷ୍ଟଲେସନ୍ ବିଫଳ"
+}
+}
+},
+"terminal": {
+"title": "ଟର୍ମିନାଲ୍",
+"shortcut": "⌘J",
+"close": "ଟର୍ମିନାଲ୍ ବନ୍ଦ କରନ୍ତୁ",
+"newTab": "ନୂତନ ଟ୍ୟାବ୍"
+},
+"extensions": {
+"title": "ଏକ୍ସଟେନ୍ସନ୍ସ",
+"subtitle": "ବୁଲରପ୍ଲେଟ୍ ଏଡ଼ାନ୍ତୁ, କିଛି ସେକେଣ୍ଡ୍‌ରେ ସର୍ଭର ସେଟ୍‌ଅପ୍ ଆରମ୍ଭ କରନ୍ତୁ",
+"exploreExtensions": "ଏକ୍ସଟେନ୍ସନ୍ସ ହବ୍ ଖୋଜନ୍ତୁ",
+"exploreExtensionsTitle": "ଏକ୍ସଟେନ୍ସନ୍ସ ଏକ୍ସପ୍ଲୋର୍ କରନ୍ତୁ",
+"install": "ଇନ୍‌ଷ୍ଟଲ୍",
+"run": "ରନ୍",
+"viewDetails": "ବିବରଣୀ ଦେଖନ୍ତୁ",
+"madeBy": "ତିଆରିକର୍ତ୍ତା",
+"beta": "ବେଟା",
+"searchPlaceholder": "ଏକ୍ସଟେନ୍ସନ୍ସ ଖୋଜନ୍ତୁ...",
+"sortBy": "ଅନୁସାରେ ଗୋଛାନ୍ତୁ",
+"sortOptions": {
+"name": "ନାମ",
+"popularity": "ଲୋକପ୍ରିୟତା",
+"recent": "ସମ୍ପ୍ରତି",
+"rating": "ରେଟିଂ"
+},
+"noExtensions": "କୌଣସି ଏକ୍ସଟେନ୍ସନ୍ ମିଳିଲା ନାହିଁ",
+"noVariables": "ଏହି ଏକ୍ସଟେନ୍ସନ୍‌ର କୌଣସି ଇନ୍‌ପୁଟ୍ ନାହିଁ",
+"loading": "ଏକ୍ସଟେନ୍ସନ୍ସ ଲୋଡ୍ ହେଉଛି...",
+"error": "ଏକ୍ସଟେନ୍ସନ୍ସ ଲୋଡ୍ କରିବା ବିଫଳ",
+"fork": "ଫର୍କ୍",
+"forkSuccess": "ଏକ୍ସଟେନ୍ସନ୍ ସଫଳତାର ସହ ଫର୍କ୍ ହେଲା",
+"forkFailed": "ଫର୍କ୍ କରିବା ବିଫଳ",
+"type": "ପ୍ରକାର",
+"category": "ଶ୍ରେଣୀ",
+"execution": "ନିଷ୍ପାଦନ",
+"runSteps": "ରନ୍ ପଦକ୍ଷେପ",
+"validateSteps": "ପଦକ୍ଷେପ ଯାଞ୍ଚ କରନ୍ତୁ",
+"forkYaml": "YAML (໐ପ୍ସନାଲ୍)",
+"remove": "ହଟାନ୍ତୁ",
+"deleteSuccess": "ଏକ୍ସଟେନ୍ସନ୍ ହଟାଗଲା",
+"deleteFailed": "ଏକ୍ସଟେନ୍ସନ୍ ହଟାଇବା ବିଫଳ",
+"confirmDeleteTitle": "ଫର୍କ୍ ହଟାଇବେ?",
+"confirmDeleteMessage": "ଏହା ଆପଣଙ୍କ ଫର୍କ୍ କଲା ଏକ୍ସଟେନ୍ସନ୍‌କୁ ହଟାଇଦେବ। ଏହି କାର୍ଯ୍ୟ ପୁନଃ କରିହେବ ନାହିଁ।",
+"overview": "ଓଭରଭିଉ",
+"logs": "ଲଗ୍ସ",
+"executions": "ନିଷ୍ପାଦନଗୁଡିକ",
+"executionId": "ନିଷ୍ପାଦନ ID",
+"status": "ସ୍ଥିତି",
+"startedAt": "ଆରମ୍ଭ ସମୟ",
+"completedAt": "ସମାପ୍ତ ସମୟ",
+"noExecutions": "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ନିଷ୍ପାଦନ ନାହିଁ।",
+"variables": "ଭେରିୟାବଲ୍ସ",
+"logsEmpty": "ଉପଲବ୍ଧ ହେଲେ ଏଠାରେ ନିଷ୍ପାଦନ ଲଗ୍ସ ଦେଖାଯିବ।"
+},
+"navigation": {
+"dashboard": "ଡ୍ୟାଶବୋର୍ଡ",
+"selfHost": "ସେଲ୍ଫ୍ ହୋଷ୍ଟ",
+"fileManager": "ଫାଇଲ୍ ମ୍ୟାନେଜର୍",
+"extensions": "ଏକ୍ସଟେନ୍ସନ୍ସ",
+"settings": "ସେଟିଂସ୍",
+"general": "ଜେନେରାଲ୍",
+"notifications": "ନୋଟିଫିକେଶନ୍ସ",
+"team": "ଟିମ୍",
+"domains": "ଡୋମେନ୍ସ",
+"update": "ଅଦ୍ୟତନ",
+"containers": "କଣ୍ଟେନର୍ସ"
+},
+"layout": {
+"breadcrumbs": {
+"home": "ହୋମ୍",
+"dashboard": "ଡ୍ୟାଶବୋର୍ଡ",
+"selfHost": "ସେଲ୍ଫ୍ ହୋଷ୍ଟ",
+"fileManager": "ଫାଇଲ୍ ମ୍ୟାନେଜର୍",
+"settings": "ସେଟିଂସ୍",
+"general": "ଜେନେରାଲ୍",
+"notifications": "ନୋଟିଫିକେଶନ୍ସ",
+"team": "ଟିମ୍",
+"domains": "ଡୋମେନ୍ସ"
+},
+"terminal": {
+"togglePosition": "ଟର୍ମିନାଲ୍ ଅବସ୍ଥାନ ପରିବର୍ତ୍ତନ (Ctrl+T)"
+}
+},
+"user": {
+"menu": {
+"sponsor": "ସ୍ପନ୍ସର୍",
+"help": "ସାହାଯ୍ୟ",
+"reportIssue": "ସମସ୍ୟା ରିପୋର୍ଟ କରନ୍ତୁ",
+"logout": "ଲଗ୍ ଆଉଟ୍"
+}
+},
+"toasts": {
+"success": {
+"uploadFile": "ଫାଇଲ୍ ସଫଳତାର ସହ ଅପଲୋଡ୍ ହେଲା",
+"copyFile": "ଫାଇଲ୍ ସଫଳତାର ସହ କପି ହେଲା"
+},
+"errors": {
+"realtimeMonitor": "ରିଅଲ୍‌ଟାଇମ୍ ମୋନିଟର୍ ସେବା ସହ ସଂଯୋଗ ତ୍ରୁଟି",
+"setFileToCopy": "କପି ପାଇଁ ଫାଇଲ୍ ସେଟ୍ କରିବାରେ ତ୍ରୁଟି",
+"moveFile": "ଫାଇଲ୍ ସଞ୍ଚାଳନରେ ତ୍ରୁଟି",
+"copyFile": "ଫାଇଲ୍ କପି କରିବାରେ ତ୍ରୁଟି",
+"renameFile": "ଫାଇଲ୍ ନାମ ପରିବର୍ତ୍ତନରେ ତ୍ରୁଟି",
+"startRenaming": "ରିନେମ୍ ଆରମ୍ଭ କରିବାରେ ତ୍ରୁଟି",
+"navigateToFile": "ଫାଇଲ୍‌କୁ ଯିବାବେଳେ ତ୍ରୁଟି",
+"createNewFolder": "ନୂତନ ଫୋଲ୍ଡର ସୃଷ୍ଟିରେ ତ୍ରୁଟି",
+"createDirectory": "ଡିରେକ୍ଟୋରି ସୃଷ୍ଟିରେ ତ୍ରୁଟି",
+"uploadFile": "ଫାଇଲ୍ ଅପଲୋଡ୍ ବିଫଳ",
+"deleteFile": "ଫାଇଲ୍ ଡିଲିଟ୍ କରିବାରେ ତ୍ରୁଟି",
+"calculateSize": "ଆକାର ଗଣନାରେ ତ୍ରୁଟି",
+"setEmail": "ଇମେଲ୍ ସେଟ୍ କରିବାରେ ତ୍ରୁଟି",
+"setPassword": "ପାସୱାର୍ଡ ସେଟ୍ କରିବାରେ ତ୍ରୁଟି"
+}
+}
+}
