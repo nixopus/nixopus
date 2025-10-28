@@ -206,7 +206,10 @@ function AccountSection({
                   { value: 'roboto', label: t('settings.preferences.fontOptions.roboto') },
                   { value: 'poppins', label: t('settings.preferences.fontOptions.poppins') },
                   { value: 'montserrat', label: t('settings.preferences.fontOptions.montserrat') },
-                  { value: 'space-grotesk', label: t('settings.preferences.fontOptions.spaceGrotesk') },
+                  {
+                    value: 'space-grotesk',
+                    label: t('settings.preferences.fontOptions.spaceGrotesk')
+                  },
                   { value: 'outfit', label: t('settings.preferences.fontOptions.outfit') },
                   { value: 'jakarta', label: t('settings.preferences.fontOptions.jakarta') },
                   { value: 'system', label: t('settings.preferences.fontOptions.system') }

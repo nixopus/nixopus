@@ -2,111 +2,96 @@
 
 import React from 'react';
 import { Activity } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SystemStatsType } from '@/redux/types/monitor';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useTranslation } from '@/hooks/use-translation';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
+import { BarChartComponent } from '@/components/ui/bar-chart-component';
+import { SystemMetricCard } from './system-metric-card';
+import { useSystemMetric } from '../../hooks/use-system-metric';
+import { createLoadAverageChartData, createLoadAverageChartConfig } from '../utils/utils';
+import { DEFAULT_METRICS, CHART_COLORS } from '../utils/constants';
+import { LoadAverageCardSkeletonContent } from './skeletons/load-average';
 
 interface LoadAverageCardProps {
-  systemStats: SystemStatsType;
+  systemStats: SystemStatsType | null;
 }
 
 const LoadAverageCard: React.FC<LoadAverageCardProps> = ({ systemStats }) => {
-  const { t } = useTranslation();
-  const { load } = systemStats;
+  const {
+    data: load,
+    isLoading,
+    t
+  } = useSystemMetric({
+    systemStats,
+    extractData: (stats) => stats.load,
+    defaultData: DEFAULT_METRICS.load
+  });
+
+  const chartData = createLoadAverageChartData(load);
+  const chartConfig = createLoadAverageChartConfig();
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
-          <Activity className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
-          <TypographySmall>{t('dashboard.load.title')}</TypographySmall>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <TypographyMuted>{t('dashboard.load.labels.oneMin')}</TypographyMuted>
-            <TypographySmall>{load.oneMin.toFixed(2)}</TypographySmall>
+    <SystemMetricCard
+      title={t('dashboard.load.title')}
+      icon={Activity}
+      isLoading={isLoading}
+      skeletonContent={<LoadAverageCardSkeletonContent />}
+    >
+      <br />
+      <br />
+      <br />
+      <div className="space-y-4">
+        <div>
+          <BarChartComponent
+            data={chartData}
+            chartConfig={chartConfig}
+            height="h-[180px]"
+            yAxisLabel="Load"
+            xAxisLabel="Time Period"
+            showAxisLabels={true}
+          />
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1">
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: CHART_COLORS.blue }}
+              />
+              <TypographyMuted className="text-xs">1 min</TypographyMuted>
+            </div>
+            <TypographySmall className="text-sm font-bold">
+              {load.oneMin.toFixed(2)}
+            </TypographySmall>
           </div>
-          <div className="flex items-center justify-between">
-            <TypographyMuted>{t('dashboard.load.labels.fiveMin')}</TypographyMuted>
-            <TypographySmall>{load.fiveMin.toFixed(2)}</TypographySmall>
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1">
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: CHART_COLORS.green }}
+              />
+              <TypographyMuted className="text-xs">5 min</TypographyMuted>
+            </div>
+            <TypographySmall className="text-sm font-bold">
+              {load.fiveMin.toFixed(2)}
+            </TypographySmall>
           </div>
-          <div className="flex items-center justify-between">
-            <TypographyMuted>{t('dashboard.load.labels.fifteenMin')}</TypographyMuted>
-            <TypographySmall>{load.fifteenMin.toFixed(2)}</TypographySmall>
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1">
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: CHART_COLORS.orange }}
+              />
+              <TypographyMuted className="text-xs">15 min</TypographyMuted>
+            </div>
+            <TypographySmall className="text-sm font-bold">
+              {load.fifteenMin.toFixed(2)}
+            </TypographySmall>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </SystemMetricCard>
   );
 };
 
-interface LoadBarProps {
-  label: string;
-  value: number;
-}
-
-const LoadBar: React.FC<LoadBarProps> = ({ label, value }) => (
-  <div className="flex justify-between items-center">
-    <TypographyMuted className="text-xs sm:text-sm">{label}</TypographyMuted>
-    <div className="flex items-center">
-      <div className="w-20 sm:w-32 h-2 bg-gray-200 rounded-full mr-1 sm:mr-2">
-        <div
-          className={`h-2 rounded-full ${value > 80 ? 'bg-destructive' : 'bg-primary'}`}
-          style={{ width: `${Math.min(value * 25, 100)}%` }}
-        />
-      </div>
-      <TypographySmall className="text-xs sm:text-sm">{value.toFixed(2)}</TypographySmall>
-    </div>
-  </div>
-);
-
 export default LoadAverageCard;
-
-export function LoadAverageCardSkeleton() {
-  const { t } = useTranslation();
-
-  return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xs sm:text-sm font-medium flex items-center">
-          <Activity className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-muted-foreground" />
-          <TypographySmall>{t('dashboard.load.title')}</TypographySmall>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <TypographyMuted>{t('dashboard.load.labels.oneMin')}</TypographyMuted>
-            <Skeleton className="h-4 w-12" />
-          </div>
-          <div className="flex items-center justify-between">
-            <TypographyMuted>{t('dashboard.load.labels.fiveMin')}</TypographyMuted>
-            <Skeleton className="h-4 w-12" />
-          </div>
-          <div className="flex items-center justify-between">
-            <TypographyMuted>{t('dashboard.load.labels.fifteenMin')}</TypographyMuted>
-            <Skeleton className="h-4 w-12" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface LoadBarSkeletonProps {
-  label: string;
-}
-
-const LoadBarSkeleton: React.FC<LoadBarSkeletonProps> = ({ label }) => (
-  <div className="flex justify-between items-center">
-    <TypographyMuted className="text-xs sm:text-sm">{label}</TypographyMuted>
-    <div className="flex items-center">
-      <Skeleton className="w-20 sm:w-32 h-2 rounded-full mr-1 sm:mr-2" />
-      <Skeleton className="w-8 h-4" />
-    </div>
-  </div>
-);

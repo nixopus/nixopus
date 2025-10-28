@@ -219,7 +219,7 @@ Add any other context about the problem here.`;
 
   const handleLogoutConfirm = async () => {
     setShowLogoutDialog(false);
-    
+
     try {
       clearLocalStorage();
       resetApiStates();

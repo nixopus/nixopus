@@ -4,7 +4,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
@@ -21,11 +21,16 @@ export function LogoutDialog({ open, onConfirm, onCancel }: LogoutDialogProps) {
         <DialogHeader>
           <DialogTitle>Confirm Logout</DialogTitle>
           <DialogDescription>
-            Are you sure you want to logout? This will clear your session and redirect you to the login page.
+            Are you sure you want to logout? This will clear your session and redirect you to the
+            login page.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={onCancel} className="bg-gray-500 hover:bg-gray-600 text-white">
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            className="bg-gray-500 hover:bg-gray-600 text-white"
+          >
             Cancel
           </Button>
           <Button onClick={onConfirm} className="bg-red-500 hover:bg-red-600 text-white">

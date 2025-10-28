@@ -71,9 +71,7 @@ const ContainersTable = ({
       dataIndex: 'state',
       sortable: true,
       render: (state, container) => (
-        <Badge className={getStatusColor(container.status)}>
-          {state || 'Unknown'}
-        </Badge>
+        <Badge className={getStatusColor(container.status)}>{state || 'Unknown'}</Badge>
       )
     },
     {
@@ -81,7 +79,7 @@ const ContainersTable = ({
       title: t('dashboard.containers.table.headers.ports'),
       render: (_, container) => {
         const hasPorts = container.ports && container.ports.length > 0;
-        
+
         if (!hasPorts) {
           return <TypographySmall>-</TypographySmall>;
         }
@@ -136,19 +134,19 @@ const ContainersTable = ({
   }
 
   return (
-      <DataTable
-        data={containersData}
-        columns={columns}
-        onRowClick={handleRowClick}
-        onSort={handleSort}
-        sortConfig={{
-          field: sortBy,
-          order: sortOrder
-        }}
-        emptyMessage={t('dashboard.containers.table.noContainers')}
-        hoverable={true}
-        showBorder={true}
-      />
+    <DataTable
+      data={containersData}
+      columns={columns}
+      onRowClick={handleRowClick}
+      onSort={handleSort}
+      sortConfig={{
+        field: sortBy,
+        order: sortOrder
+      }}
+      emptyMessage={t('dashboard.containers.table.noContainers')}
+      hoverable={true}
+      showBorder={true}
+    />
   );
 };
 

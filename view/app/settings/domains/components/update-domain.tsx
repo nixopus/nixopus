@@ -81,9 +81,10 @@ function UpdateDomainDialog({ open, setOpen, id, data }: UpdateDomainDialogProps
       variant: 'outline'
     },
     {
-      label: isLoading || isUpdating
-        ? t('settings.domains.update.buttons.saving')
-        : t('settings.domains.update.buttons.save'),
+      label:
+        isLoading || isUpdating
+          ? t('settings.domains.update.buttons.saving')
+          : t('settings.domains.update.buttons.save'),
       onClick: form.handleSubmit(onSubmit),
       disabled: isLoading || isUpdating,
       loading: isLoading || isUpdating,

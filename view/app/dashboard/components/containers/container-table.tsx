@@ -17,17 +17,16 @@ const ContainersTable = ({ containersData }: { containersData: ContainerData[] }
       title: t('dashboard.containers.table.headers.id'),
       dataIndex: 'Id',
       width: '100px',
-      render: (id) => (
-        <TypographySmall className="font-mono">{truncateId(id)}</TypographySmall>
-      )
+      render: (id) => <TypographySmall className="font-mono">{truncateId(id)}</TypographySmall>
     },
     {
       key: 'name',
       title: t('dashboard.containers.table.headers.name'),
       render: (_, container) => {
-        const containerName = container.Names && container.Names.length > 0
-          ? container.Names[0].replace(/^\//, '')
-          : '-';
+        const containerName =
+          container.Names && container.Names.length > 0
+            ? container.Names[0].replace(/^\//, '')
+            : '-';
         return <TypographySmall>{containerName}</TypographySmall>;
       }
     },
@@ -46,9 +45,7 @@ const ContainersTable = ({ containersData }: { containersData: ContainerData[] }
       key: 'status',
       title: t('dashboard.containers.table.headers.status'),
       render: (_, container) => (
-        <Badge className={getStatusColor(container.Status)}>
-          {container.State || 'Unknown'}
-        </Badge>
+        <Badge className={getStatusColor(container.Status)}>{container.State || 'Unknown'}</Badge>
       )
     },
     {
@@ -88,8 +85,8 @@ const ContainersTable = ({ containersData }: { containersData: ContainerData[] }
       render: (created) => {
         const formattedDate = created
           ? new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'long' }).format(
-            new Date(created * 1000)
-          )
+              new Date(created * 1000)
+            )
           : '-';
         return <TypographySmall>{formattedDate}</TypographySmall>;
       }
