@@ -127,7 +127,7 @@ export const extensionsApi = createApi({
       transformResponse: (response: ExtensionExecution[]) => response
     }),
     getExecutionLogs: builder.query<
-      { logs: any[]; next_after: number },
+      { logs: any[]; next_after: number; execution_status?: string },
       { executionId: string; afterSeq?: number; limit?: number }
     >({
       query: ({ executionId, afterSeq = 0, limit = 200 }) => ({
@@ -135,7 +135,7 @@ export const extensionsApi = createApi({
         method: 'GET'
       }),
       providesTags: (result, error, { executionId }) => [{ type: 'Execution', id: executionId }],
-      transformResponse: (response: { logs: any[]; next_after: number }) => response
+      transformResponse: (response: { logs: any[]; next_after: number; execution_status?: string }) => response
     })
   })
 });
