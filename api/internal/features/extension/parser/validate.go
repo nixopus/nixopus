@@ -156,10 +156,8 @@ func (p *Parser) validateProxyStep(step ExecutionStep) error {
 	}
 	action, _ := step.Properties["action"].(string)
 	switch action {
-	case "add", "update":
-		return p.requireProps(step, map[string]bool{"domain": true, "port": true})
-	case "remove":
-		return p.requireProps(step, map[string]bool{"domain": true})
+	case "add", "update", "remove":
+		return nil
 	default:
 		return fmt.Errorf("unsupported proxy action: %s", action)
 	}

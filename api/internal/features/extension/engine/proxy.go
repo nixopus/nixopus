@@ -57,7 +57,7 @@ func (proxyModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[str
 	switch action {
 	case "add":
 		if domain == "" || port == "" {
-			return "", nil, fmt.Errorf("domain and port are required")
+			return "proxy step skipped: domain and port are optional", nil, nil
 		}
 		if err := AddDomainToProxy(domain, port); err != nil {
 			return "", nil, err
@@ -65,7 +65,7 @@ func (proxyModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[str
 		return fmt.Sprintf("proxy added for %s -> %s:%s", domain, config.AppConfig.SSH.Host, port), nil, nil
 	case "update":
 		if domain == "" || port == "" {
-			return "", nil, fmt.Errorf("domain and port are required")
+			return "proxy step skipped: domain and port are optional", nil, nil
 		}
 		if err := UpdateDomainInProxy(domain, port); err != nil {
 			return "", nil, err
@@ -73,7 +73,7 @@ func (proxyModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[str
 		return fmt.Sprintf("proxy updated for %s -> %s:%s", domain, config.AppConfig.SSH.Host, port), nil, nil
 	case "remove":
 		if domain == "" {
-			return "", nil, fmt.Errorf("domain is required")
+			return "proxy step skipped: domain is optional", nil, nil
 		}
 		if err := RemoveDomainFromProxy(domain); err != nil {
 			return "", nil, err
