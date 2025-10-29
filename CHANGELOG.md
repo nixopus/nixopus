@@ -1,3 +1,12 @@
+# [0.1.0-alpha.55](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.54...v0.1.0-alpha.55) (2025-10-29)
+
+
+### Bug Fixes
+
+* make domain validation less restrictive for extension deployments ([#543](https://github.com/raghavyuva/nixopus/issues/543)) ([72cc971](https://github.com/raghavyuva/nixopus/commit/72cc971f0f8df0897c60b31379090248ec771f74))
+
+
+
 # [0.1.0-alpha.54](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.53...v0.1.0-alpha.54) (2025-10-28)
 
 

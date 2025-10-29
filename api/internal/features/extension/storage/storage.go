@@ -356,7 +356,7 @@ func (s *ExtensionStorage) ListExtensionLogs(executionID string, afterSeq int64,
 	if afterSeq > 0 {
 		q = q.Where("sequence > ?", afterSeq)
 	}
-	err := q.Order("sequence ASC").Limit(limit).Scan(s.Ctx)
+	err := q.Order("created_at ASC").Order("sequence ASC").Limit(limit).Scan(s.Ctx)
 	if err != nil {
 		return nil, err
 	}
