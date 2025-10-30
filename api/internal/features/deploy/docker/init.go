@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -20,9 +21,17 @@ import (
 )
 
 type DockerService struct {
-	Cli    *client.Client
-	Ctx    context.Context
-	logger logger.Logger
+	Cli       *client.Client
+	Ctx       context.Context
+	logger    logger.Logger
+	sshTunnel *SSHTunnel
+}
+
+type SSHTunnel struct {
+	localSocket string
+	sshClient   *ssh.SSH
+	listener    net.Listener
+	cleanup     func() error
 }
 
 type DockerRepository interface {
@@ -79,27 +88,48 @@ type DockerClient struct {
 
 // NewDockerService creates a new instance of DockerService using the default docker client.
 func NewDockerService() *DockerService {
-	client := NewDockerClient()
-	service := &DockerService{
-		Cli:    client,
-		Ctx:    context.Background(),
-		logger: logger.NewLogger(),
-	}
+	lgr := logger.NewLogger()
+	cli, tunnel := newDockerClientWithOptionalSSHTunnel(lgr)
+	svc := &DockerService{Cli: cli, Ctx: context.Background(), logger: lgr, sshTunnel: tunnel}
 
-	// Initialize cluster if not already initialized, this should be run on master node only
-	// TODO: Add a check to see if the node is the master node
-	// WARNING: This should be thought again during multi-server architecture feature
-	if !isClusterInitialized(client) {
-		if err := service.InitCluster(); err != nil {
-			service.logger.Log(logger.Warning, "Failed to initialize cluster", err.Error())
+	if !isClusterInitialized(svc.Cli) {
+		if err := svc.InitCluster(); err != nil {
+			svc.logger.Log(logger.Warning, "Failed to initialize cluster", err.Error())
 		} else {
-			service.logger.Log(logger.Info, "Cluster initialized successfully", "")
+			svc.logger.Log(logger.Info, "Cluster initialized successfully", "")
 		}
 	} else {
-		service.logger.Log(logger.Info, "Cluster already initialized", "")
+		svc.logger.Log(logger.Info, "Cluster already initialized", "")
 	}
 
-	return service
+	return svc
+}
+
+func newDockerClientWithOptionalSSHTunnel(lgr logger.Logger) (*client.Client, *SSHTunnel) {
+	sshClient := ssh.NewSSH()
+	// Try to create an SSH tunnel to the remote Docker daemon socket, if it fails, use the local docker socket
+	tunnel, err := CreateSSHTunnel(sshClient, lgr)
+	if err != nil || tunnel == nil {
+		if err != nil {
+			lgr.Log(logger.Info, "SSH tunnel not established, using local docker socket", err.Error())
+		}
+		// If the SSH tunnel creation fails, use the local docker socket
+		lgr.Log(logger.Info, "Using local docker socket", "")
+		return NewDockerClient(), nil
+	}
+
+	host := fmt.Sprintf("unix://%s", tunnel.localSocket)
+	lgr.Log(logger.Info, "SSH tunnel established; using tunneled docker socket", host)
+	cli, cliErr := client.NewClientWithOpts(
+		client.WithHost(host),
+		client.WithAPIVersionNegotiation(),
+	)
+	if cliErr != nil {
+		lgr.Log(logger.Warning, "Failed to create docker client over SSH tunnel, using local", cliErr.Error())
+		return NewDockerClient(), nil
+	}
+	lgr.Log(logger.Info, "Docker client created over SSH tunnel", "")
+	return cli, tunnel
 }
 
 func isClusterInitialized(cli *client.Client) bool {
