@@ -1,0 +1,126 @@
+metadata:
+  id: "deploy-netdata"
+  name: "Netdata"
+  description: "Real-time performance monitoring and troubleshooting for systems and applications"
+  author: "Nixopus Team"
+  icon: "📈"
+  category: "Monitoring"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Netdata"
+    default: "netdata/netdata"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "edge"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Netdata container"
+    default: "netdata"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Netdata"
+    default: 19999
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Netdata"
+    default: 19999
+    is_required: true
+
+  netdata_config_volume:
+    type: "string"
+    description: "Named volume for Netdata configuration"
+    default: "netdataconfig"
+    is_required: true
+
+  netdata_lib_volume:
+    type: "string"
+    description: "Named volume for Netdata library data"
+    default: "netdatalib"
+    is_required: true
+
+  netdata_cache_volume:
+    type: "string"
+    description: "Named volume for Netdata cache"
+    default: "netdatacache"
+    is_required: true
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Netdata (optional)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull Netdata image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Netdata container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        restart: "unless-stopped"
+        privileged: true
+        volumes:
+          - "{{ netdata_config_volume }}:/etc/netdata"
+          - "{{ netdata_lib_volume }}:/var/lib/netdata"
+          - "{{ netdata_cache_volume }}:/var/cache/netdata"
+          - "/:/host/root:ro"
+          - "/etc/passwd:/host/etc/passwd:ro"
+          - "/etc/group:/host/etc/group:ro"
+          - "/etc/localtime:/etc/localtime:ro"
+          - "/proc:/host/proc:ro"
+          - "/sys:/host/sys:ro"
+          - "/etc/os-release:/host/etc/os-release:ro"
+          - "/var/log:/host/var/log:ro"
+          - "/var/run/docker.sock:/var/run/docker.sock:ro"
+          - "/run/dbus:/run/dbus:ro"
+        env:
+          NETDATA_CLAIM_TOKEN: ""
+          NETDATA_CLAIM_URL: "https://app.netdata.cloud"
+          NETDATA_CLAIM_ROOMS: ""
+      timeout: 180
+
+    - name: "Add proxy for Netdata"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
+
+  validate:
+    - name: "Check Netdata HTTP response"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 2; done; exit 1'"
+      timeout: 60
+
+    - name: "Verify Netdata is accessible"
+      type: "command"
+      properties:
+        cmd: "sh -c 'curl -fsS http://localhost:{{ host_port }}/api/v1/info | grep -i netdata >/dev/null && exit 0 || exit 1'"
+      timeout: 30

@@ -1,0 +1,91 @@
+metadata:
+  id: "deploy-redisinsight"
+  name: "RedisInsight"
+  description: "RedisInsight is a powerful visual Redis GUI tool that provides an intuitive interface to explore, visualize, and manage your Redis data. It offers real-time performance monitoring, profiling, and debugging capabilities."
+  author: "Nixopus Team"
+  icon: "🔍"
+  category: "Database"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for RedisInsight"
+    default: "redis/redisinsight"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the RedisInsight container"
+    default: "redisinsight"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose RedisInsight web interface"
+    default: 5540
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for RedisInsight"
+    default: 5540
+    is_required: true
+
+  data_volume_name:
+    type: "string"
+    description: "Named Docker volume for RedisInsight data persistence"
+    default: "redisinsight-data"
+    is_required: true
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for RedisInsight (optional)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull RedisInsight image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run RedisInsight container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        restart: "unless-stopped"
+        volumes:
+          - "{{ data_volume_name }}:/data"
+      timeout: 180
+
+    - name: "Add proxy for RedisInsight"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
+
+  validate:
+    - name: "Check HTTP response from RedisInsight"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 2; done; exit 1'"
+      timeout: 60

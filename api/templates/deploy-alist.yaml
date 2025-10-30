@@ -1,0 +1,114 @@
+metadata:
+  id: "deploy-alist"
+  name: "AList"
+  description: "AList is a file list/WebDAV program that supports multiple storage providers and provides a self-hosted file sharing/indexing solution."
+  author: "Nixopus Team"
+  icon: "📁"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for AList"
+    default: "xhofe/alist"
+    is_required: true
+  tag:
+    type: "string"
+    description: "Docker image tag for AList"
+    default: "latest"
+    is_required: true
+  container_name:
+    type: "string"
+    description: "Name of the AList container"
+    default: "alist"
+    is_required: true
+  host_port:
+    type: "integer"
+    description: "Host port to expose for AList"
+    default: 5244
+    is_required: true
+  container_port:
+    type: "integer"
+    description: "Container port AList listens on"
+    default: 5244
+    is_required: true
+  data_volume:
+    type: "string"
+    description: "Docker volume name for AList persistent data"
+    default: "alist_data"
+    is_required: true
+  PUID:
+    type: "integer"
+    description: "Host user ID to run container"
+    default: 0
+    is_required: false
+  PGID:
+    type: "integer"
+    description: "Host group ID to run container"
+    default: 0
+    is_required: false
+  UMASK:
+    type: "string"
+    description: "Umask for container file permissions"
+    default: "022"
+    is_required: false
+  admin_username:
+    type: "string"
+    description: "Admin username for AList"
+    default: "admin"
+    is_required: true
+  admin_password:
+    type: "string"
+    description: "Admin password for AList"
+    default: "admin"
+    is_required: true
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for AList (optional)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull AList image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run AList container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ data_volume }}:/opt/alist/data"
+        environment:
+          - "PUID={{ PUID }}"
+          - "PGID={{ PGID }}"
+          - "UMASK={{ UMASK }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+    - name: "Set admin credentials"
+      type: "command"
+      properties:
+        cmd: "docker exec {{ container_name }} ./alist admin set {{ admin_password }}"
+      timeout: 30
+
+    - name: "Add proxy for AList"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30

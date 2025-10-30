@@ -1,0 +1,89 @@
+metadata:
+  id: "deploy-webhook-tester"
+  name: "Webhook Tester"
+  description: "A simple webhook testing tool for capturing and inspecting HTTP requests"
+  author: "Nixopus Team"
+  icon: "🪝"
+  category: "Development"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Webhook Tester"
+    default: "ghcr.io/tarampampam/webhook-tester"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "2"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Webhook Tester container"
+    default: "webhook-tester"
+    is_required: true
+
+  http_port:
+    type: "integer"
+    description: "Host port to expose Webhook Tester HTTP interface"
+    default: 8080
+    is_required: true
+
+  http_container_port:
+    type: "integer"
+    description: "Container port for Webhook Tester HTTP interface"
+    default: 8080
+    is_required: true
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Webhook Tester (optional)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull Webhook Tester image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Webhook Tester container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ http_port }}:{{ http_container_port }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+    - name: "Add proxy for Webhook Tester"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ http_port }}"
+      timeout: 30
+
+  validate:
+    - name: "Wait for container health check"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do status=$(docker inspect --format=\"{{.State.Health.Status}}\" {{ container_name }} 2>/dev/null); [ \"$status\" = \"healthy\" ] && exit 0; sleep 1; done; exit 1'"
+      timeout: 60
+
+    - name: "Verify Webhook Tester is responding"
+      type: "command"
+      properties:
+        cmd: "sh -c 'curl -fsS --connect-timeout 2 -m 5 -I http://localhost:{{ http_port }} | grep -q \"HTTP\"'"
+      timeout: 10
