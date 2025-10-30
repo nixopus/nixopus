@@ -2,9 +2,8 @@
 <a href="https://nixopus.com"><img width="1800" height="520" alt="Heading(4)" src="https://github.com/user-attachments/assets/e103a9df-7abf-4f78-b75a-221331231247" /></a>
 </div>
 
-
 <p align="center">
- Open Source alternative to vercel, heroku, netlify with Terminal integration, and Self Hosting capabilities. 
+ Open Source alternative to vercel, heroku, netlify with Terminal integration, and Self Hosting capabilities.
 </p>
 
 <p align="center">
@@ -15,8 +14,7 @@
   <a href="https://github.com/raghavyuva/nixopus/discussions/262"><b>Roadmap</b></a>
 </p>
 
-<img width="1210" height="764" alt="image" src="https://github.com/user-attachments/assets/3f1dc1e0-956d-4785-8745-ed59d0390afd" />
-
+<img width="1210" height="764" alt="image" src="assets/nixopus_dashboard.png" />
 
 > ⚠️ **Important Note**: Nixopus is currently in alpha/pre-release stage and is not yet ready for production use. While you're welcome to try it out, we recommend waiting for the beta or stable release before using it in production environments. The platform is still undergoing testing and development.
 
@@ -35,9 +33,10 @@
 
 This section will help you set up Nixopus on your VPS quickly.
 
-### Install Nixopus:
+### Install Nixopus
 
 **To get started without domain names, and to try out over ip:port deployment:**
+
 ```bash
 curl -sSL https://install.nixopus.com | bash
 ```
@@ -81,4 +80,3 @@ Nixopus is derived from the combination of "octopus" and the Linux penguin (Tux)
 <a href="https://github.com/raghavyuva/nixopus/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=raghavyuva/nixopus" alt="Nixopus project contributors" />
 </a>
-
