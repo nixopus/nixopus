@@ -275,11 +275,18 @@ func (s *ExtensionService) appendLog(executionID uuid.UUID, stepID *uuid.UUID, l
 	_ = s.storage.CreateExtensionLog(log)
 }
 
-func (s *ExtensionService) ListExecutionLogs(executionID string, afterSeq int64, limit int) ([]types.ExtensionLog, error) {
+func (s *ExtensionService) ListExecutionLogs(executionID string, afterSeq int64, limit int) ([]types.ExtensionLog, *types.ExecutionStatus, error) {
 	logs, err := s.storage.ListExtensionLogs(executionID, afterSeq, limit)
 	if err != nil {
 		s.logger.Log(logger.Error, err.Error(), "")
-		return nil, err
+		return nil, nil, err
 	}
-	return logs, nil
+
+	exec, err := s.storage.GetExecutionByID(executionID)
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return nil, nil, err
+	}
+
+	return logs, &exec.Status, nil
 }
