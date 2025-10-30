@@ -70,6 +70,12 @@ variables:
     default: "INFO"
     is_required: false
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Qdrant (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Qdrant image"
@@ -95,6 +101,14 @@ execution:
         volumes:
           - "{{ storage_volume_name }}:/qdrant/storage:z"
       timeout: 180
+
+    - name: "Add proxy for Qdrant"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ rest_port }}"
+      timeout: 30
 
   validate:
     - name: "Check Qdrant health endpoint"

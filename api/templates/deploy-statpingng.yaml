@@ -64,6 +64,12 @@ variables:
     default: "Monitor your services"
     is_required: false
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Statping-ng (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Statping-ng image"
@@ -90,6 +96,14 @@ execution:
           NAME: "{{ name }}"
           DESCRIPTION: "{{ description }}"
       timeout: 180
+
+    - name: "Add proxy for Statping-ng"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Wait for Statping-ng to be ready"

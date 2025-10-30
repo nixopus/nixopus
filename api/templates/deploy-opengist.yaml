@@ -64,6 +64,12 @@ variables:
     default: "info"
     is_required: false
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Opengist (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Opengist image"
@@ -88,6 +94,14 @@ execution:
         volumes:
           - "{{ data_volume_name }}:/opengist"
       timeout: 180
+
+    - name: "Add proxy for Opengist"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ http_port }}"
+      timeout: 30
 
   validate:
     - name: "Check Opengist health endpoint"

@@ -82,6 +82,12 @@ variables:
     default: 1440
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Tasks.md (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull Tasks.md image"
@@ -111,6 +117,14 @@ execution:
           BASE_PATH: "{{ base_path }}"
           LOCAL_IMAGES_CLEANUP_INTERVAL: "{{ local_images_cleanup_interval }}"
       timeout: 180
+
+    - name: "Add proxy for Tasks.md"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Wait for Tasks.md to be ready"
