@@ -1,8 +1,6 @@
 package types
 
 import (
-	"net"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,65 +19,21 @@ type Domain struct {
 }
 
 type Server struct {
-	bun.BaseModel `bun:"table:servers,alias:s" swaggerignore:"true"`
-	ID            uuid.UUID  `json:"id" bun:"id,pk,type:uuid"`
-	UserID        uuid.UUID  `json:"user_id" bun:"user_id,notnull,type:uuid"`
-	CreatedAt     time.Time  `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
-	UpdatedAt     time.Time  `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
-	DeletedAt     *time.Time `json:"deleted_at,omitempty" bun:"deleted_at"`
-	Name          string     `json:"name" bun:"name,notnull"`
-	IP            string     `json:"ip" bun:"ip,notnull"`
-	Hostname      string     `json:"hostname" bun:"hostname,notnull"`
-}
-
-func GetDefaultServer() Server {
-	ip := getHostIP()
-
-	hostname, _ := os.Hostname()
-
-	return Server{
-		ID:        uuid.UUID{},
-		UserID:    uuid.UUID{},
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		DeletedAt: nil,
-		Name:      "Default",
-		IP:        ip,
-		Hostname:  hostname,
-	}
-}
-
-// this logic has to be rechecked for when app is running inside a docker container
-func getHostIP() string {
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		return ""
-	}
-
-	for _, iface := range interfaces {
-		if iface.Flags&net.FlagLoopback != 0 || iface.Flags&net.FlagUp == 0 {
-			continue
-		}
-		addrs, err := iface.Addrs()
-		if err != nil {
-			continue
-		}
-
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-			if ip == nil || ip.IsLoopback() || ip.To4() == nil {
-				continue
-			}
-
-			return ip.String()
-		}
-	}
-
-	return ""
+	bun.BaseModel     `bun:"table:servers,alias:s" swaggerignore:"true"`
+	ID                uuid.UUID     `json:"id" bun:"id,pk,type:uuid"`
+	Name              string        `json:"name" bun:"name,notnull"`
+	Description       string        `json:"description" bun:"description"`
+	Host              string        `json:"host" bun:"host,notnull"`
+	Port              int           `json:"port" bun:"port,notnull"`
+	Username          string        `json:"username" bun:"username,notnull"`
+	SSHPassword       *string       `json:"ssh_password,omitempty" bun:"ssh_password"`
+	SSHPrivateKeyPath *string       `json:"ssh_private_key_path,omitempty" bun:"ssh_private_key_path"`
+	Status            string        `json:"status" bun:"status,notnull,default:'inactive'"`
+	CreatedAt         time.Time     `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
+	UpdatedAt         time.Time     `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
+	DeletedAt         *time.Time    `json:"deleted_at,omitempty" bun:"deleted_at"`
+	UserID            uuid.UUID     `json:"user_id" bun:"user_id,notnull,type:uuid"`
+	OrganizationID    uuid.UUID     `json:"organization_id" bun:"organization_id,notnull,type:uuid"`
+	User              *User         `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
+	Organization      *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }

@@ -44,6 +44,7 @@ var (
 		"terminal:create", "terminal:read", "terminal:update", "terminal:delete",
 		"feature_flags:read", "feature_flags:update",
 		"dashboard:read", "extension:read", "extension:create", "extension:update", "extension:delete",
+		"server:create", "server:read", "server:update", "server:delete",
 	}
 
 	memberPermissions = []string{
@@ -58,11 +59,12 @@ var (
 		"feature_flags:read",
 		"dashboard:read",
 		"extension:read",
+		"server:read",
 	}
 
 	viewerPermissions = []string{
 		"user:read", "organization:read", "container:read", "audit:read", "domain:read", "notification:read", "file-manager:read", "deploy:read", "feature_flags:read", "dashboard:read",
-		"extension:read",
+		"extension:read", "server:read",
 	}
 )
 
@@ -316,6 +318,7 @@ func createDefaultFeatureFlags(organizationID uuid.UUID, tx *bun.Tx) error {
 		types.FeatureGithubConnector,
 		types.FeatureMonitoring,
 		types.FeatureContainer,
+		types.FeatureServers,
 	}
 
 	for _, feature := range defaultFeatures {

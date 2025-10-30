@@ -33,6 +33,7 @@ const (
 	FeatureDomain          FeatureName = "domain"
 	FeatureSelfHosted      FeatureName = "self_hosted"
 	FeatureContainer       FeatureName = "container"
+	FeatureServers         FeatureName = "servers"
 )
 
 type UpdateFeatureFlagRequest struct {
