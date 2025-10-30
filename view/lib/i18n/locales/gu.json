@@ -1,0 +1,1432 @@
+{
+  "common": {
+    "welcome": "સ્વાગત છે",
+    "dashboard": "ડેશબોર્ડ",
+    "settings": "સેટિંગ્સ",
+    "profile": "પ્રોફાઇલ",
+    "logout": "લોગઆઉટ",
+    "accessDenied": "ઍક્સેસ નકારી",
+    "noPermissionView": "તમને આ પૃષ્ઠ જોવાની પરવાનગી નથી",
+    "searchFiles": "ફાઇલો શોધો...",
+    "featureDisabled": "સુવિધા અક્ષમ છે",
+    "featureNotAvailable": "આ સુવિધા તમારી સંસ્થા માટે ઉપલબ્ધ નથી",
+    "goBack": "પાછા જાઓ",
+    "refreshPage": "પૃષ્ઠ તાજું કરો",
+    "loading": "લોડ કરી રહ્યું છે...",
+    "installed": "ઇન્સ્ટોલ કરેલ",
+    "cancel": "રદ કરો",
+    "delete": "કાઢી નાખો",
+    "edit": "સંપાદિત કરો",
+    "preview": "પૂર્વાવલોકન",
+    "enabled": "સક્ષમ",
+    "disabled": "અક્ષમ",
+    "readMore": "વધુ વાંચો",
+    "readLess": "ઓછું વાંચો"
+  },
+  "containers": {
+    "title": "કન્ટેનર",
+    "description": "બધા કન્ટેનરનું પૂર્વાવલોકન કરો",
+    "list": "કન્ટેનર સૂચિ",
+    "name": "નામ",
+    "image": "છબી",
+    "status": "સ્થિતિ",
+    "ports": "બંદરો",
+    "actions": "ક્રિયાઓ",
+    "refresh": "તાજું કરો",
+    "start": "શરૂ કરો",
+    "stop": "રોકો",
+    "remove": "દૂર કરો",
+    "restart": "પુનઃપ્રારંભ કરો",
+    "start_success": "કન્ટેનર સફળતાપૂર્વક શરૂ થયું",
+    "stop_success": "કન્ટેનર સફળતાપૂર્વક બંધ થયું",
+    "prune_images": "છબીઓ કાપો",
+    "prune_build_cache": "કેશ બનાવો",
+    "prune_images_success": "છબીઓ સફળતાપૂર્વક કાપવામાં આવી",
+    "prune_build_cache_success": "બિલ્ડ કેશ સફળતાપૂર્વક કાપવામાં આવી",
+    "prune_images_error": "છબીઓને કાપવામાં નિષ્ફળ",
+    "prune_build_cache_error": "બિલ્ડ કૅશને કાપવામાં નિષ્ફળ",
+    "remove_success": "કન્ટેનર સફળતાપૂર્વક દૂર કર્યું",
+    "start_error": "કન્ટેનર શરૂ કરવામાં નિષ્ફળ",
+    "stop_error": "કન્ટેનર રોકવામાં નિષ્ફળ",
+    "remove_error": "કન્ટેનર દૂર કરવામાં નિષ્ફળ",
+    "restart_success": "કન્ટેનર સફળતાપૂર્વક પુનઃપ્રારંભ થયું",
+    "restart_error": "કન્ટેનર પુનઃપ્રારંભ કરવામાં નિષ્ફળ",
+    "fetch_error": "કન્ટેનર લાવવામાં નિષ્ફળ",
+    "overview": "વિહંગાવલોકન",
+    "logs": "લોગ્સ",
+    "details": "વિગતો",
+    "basic_info": "મૂળભૂત માહિતી",
+    "resources": "સંસાધનો",
+    "cpu_shares": "સીપીયુ શેર્સ",
+    "memory": "સ્મૃતિ",
+    "command": "આદેશ",
+    "created": "બનાવ્યું",
+    "ip_address": "આઈપી સરનામું",
+    "load_more_logs": "વધુ લોગ લોડ કરો",
+    "no_logs": "કોઈ લોગ મળ્યા નથી",
+    "no_containers": "કોઈ કન્ટેનર મળ્યું નથી",
+    "more_ports": "+{count} વધુ",
+    "no_ports_exposed": "કોઈ પોર્ટ ખુલ્લા નથી",
+    "deleteDialog": {
+      "title": "કન્ટેનર કાઢી નાખો",
+      "description": "શું તમે ખરેખર આ કન્ટેનર કાઢી નાખવા માંગો છો?",
+      "confirm": "કાઢી નાખો",
+      "cancel": "રદ કરો"
+    },
+    "pruneImagesDialog": {
+      "title": "છબીઓ કાપો",
+      "description": "શું તમે ખરેખર બધી છબીઓને કાપવા માંગો છો?",
+      "confirm": "કાપણી",
+      "cancel": "રદ કરો"
+    },
+    "pruneBuildCacheDialog": {
+      "title": "કેશ બનાવો",
+      "description": "શું તમે ખરેખર તમામ બિલ્ડ કેશને કાપવા માંગો છો?",
+      "confirm": "કાપણી",
+      "cancel": "રદ કરો"
+    },
+    "images": {
+      "title": "છબીઓ",
+      "id": "આઈડી",
+      "tags": "ટૅગ્સ",
+      "created": "બનાવ્યું",
+      "size": "કદ",
+      "containers": "કન્ટેનર",
+      "none": "<કોઈ નથી>"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "ફરી સ્વાગત છે",
+      "description": "તમારા નિક્સોપસ એકાઉન્ટમાં લોગિન કરો",
+      "email": "ઈમેલ",
+      "password": "પાસવર્ડ",
+      "submit": "લૉગિન કરો",
+      "emailPlaceholder": "m@example.com",
+      "loading": "લોડ કરી રહ્યું છે...",
+      "terms": "ચાલુ રાખીને, તમે અમારી સાથે સંમત થાઓ છો",
+      "termsOfService": "સેવાની શરતો",
+      "and": "અને",
+      "privacyPolicy": "ગોપનીયતા નીતિ",
+      "forgotPassword": "તમારો પાસવર્ડ ભૂલી ગયા છો?",
+      "errors": {
+        "loginFailed": "લૉગિન નિષ્ફળ થયું",
+        "invalidCredentials": "અમાન્ય ઇમેઇલ અથવા પાસવર્ડ",
+        "requiredFields": "ઈમેલ અને પાસવર્ડ જરૂરી છે",
+        "2faFailed": "અમાન્ય ૨એફએ કોડ"
+      },
+      "2fa": {
+        "title": "દ્વિ-પરિબળ પ્રમાણીકરણ",
+        "description": "કૃપા કરીને તમારી પ્રમાણકર્તા એપ્લિકેશનમાંથી ચકાસણી કોડ દાખલ કરો",
+        "enterCode": "ચકાસણી કોડ",
+        "codePlaceholder": "૬-અંકનો કોડ દાખલ કરો",
+        "verifyButton": "ચકાસો",
+        "verifying": "ચકાસી રહ્યું છે..."
+      }
+    },
+    "register": {
+      "title": "નોંધણી કરો",
+      "description": "નવું ખાતું બનાવો",
+      "email": "ઈમેલ",
+      "password": "પાસવર્ડ",
+      "confirmPassword": "પાસવર્ડની પુષ્ટિ કરો",
+      "submit": "નોંધણી કરો",
+      "emailPlaceholder": "m@example.com",
+      "loading": "લોડ કરી રહ્યું છે...",
+      "terms": "ચાલુ રાખો ક્લિક કરીને, તમે અમારી સાથે સંમત થાઓ છો",
+      "termsOfService": "સેવાની શરતો",
+      "and": "અને",
+      "privacyPolicy": "ગોપનીયતા નીતિ",
+      "alreadyHaveAccount": "પહેલેથી જ એકાઉન્ટ છે?",
+      "success": "નોંધણી સફળ! તમારું એકાઉન્ટ ચકાસવા માટે કૃપા કરીને તમારી ઇમેઇલ તપાસો.",
+      "errors": {
+        "invalidEmail": "અમાન્ય ઇમેઇલ",
+        "passwordMismatch": "પાસવર્ડ મેળ ખાતા નથી",
+        "passwordRequirements": {
+          "minLength": "પાસવર્ડ ઓછામાં ઓછો ૮ અક્ષરનો હોવો જોઈએ",
+          "uppercase": "પાસવર્ડમાં ઓછામાં ઓછો એક અપરકેસ અક્ષર હોવો આવશ્યક છે",
+          "lowercase": "પાસવર્ડમાં ઓછામાં ઓછો એક લોઅરકેસ અક્ષર હોવો આવશ્યક છે",
+          "number": "પાસવર્ડમાં ઓછામાં ઓછો એક નંબર હોવો આવશ્યક છે",
+          "specialChar": "પાસવર્ડમાં ઓછામાં ઓછો એક વિશેષ અક્ષર હોવો જોઈએ"
+        },
+        "adminAlreadyRegistered": "એડમિન પહેલેથી જ નોંધાયેલ છે",
+        "adminAlreadyRegisteredDescription": "ઍક્સેસ મેળવવા માટે કૃપા કરીને વ્યવસ્થાપકનો સંપર્ક કરો.",
+        "loginButton": "લૉગિન કરો",
+        "somethingWentWrong": "કંઈક ખોટું થયું",
+        "loadingAdminRegistration": "એડમિન નોંધાયેલ છે કે કેમ તે તપાસી રહ્યું છે...",
+        "tryAgain": "ફરી પ્રયાસ કરો",
+        "registerFailed": "નોંધણી કરવામાં નિષ્ફળ"
+      }
+    },
+    "email": "ઈમેલ",
+    "password": "પાસવર્ડ",
+    "resetPassword": {
+      "title": "પાસવર્ડ રીસેટ કરો",
+      "description": "કૃપા કરીને નીચે તમારો નવો પાસવર્ડ દાખલ કરો.",
+      "newPassword": "નવો પાસવર્ડ",
+      "confirmPassword": "પાસવર્ડની પુષ્ટિ કરો",
+      "submit": "પાસવર્ડ રીસેટ કરો",
+      "submitting": "પાસવર્ડ રીસેટ કરી રહ્યા છીએ...",
+      "success": "પાસવર્ડ સફળતાપૂર્વક રીસેટ",
+      "errors": {
+        "invalidLink": "અમાન્ય રીસેટ લિંક",
+        "resetFailed": "પાસવર્ડ રીસેટ કરવામાં નિષ્ફળ",
+        "passwordMismatch": "પાસવર્ડ મેળ ખાતા નથી",
+        "passwordRequirements": {
+          "minLength": "પાસવર્ડ ઓછામાં ઓછો ૮ અક્ષરનો હોવો જોઈએ",
+          "uppercase": "પાસવર્ડમાં ઓછામાં ઓછો એક અપરકેસ અક્ષર હોવો આવશ્યક છે",
+          "lowercase": "પાસવર્ડમાં ઓછામાં ઓછો એક લોઅરકેસ અક્ષર હોવો આવશ્યક છે",
+          "number": "પાસવર્ડમાં ઓછામાં ઓછો એક નંબર હોવો આવશ્યક છે",
+          "specialChar": "પાસવર્ડમાં ઓછામાં ઓછો એક વિશેષ અક્ષર હોવો જોઈએ"
+        }
+      }
+    },
+    "verifyEmail": {
+      "title": "ઇમેઇલ ચકાસણી",
+      "description": "અમે તમારું ઇમેઇલ સરનામું ચકાસીએ ત્યાં સુધી કૃપા કરીને રાહ જુઓ",
+      "loading": "તમારા ઇમેઇલની ચકાસણી કરી રહ્યાં છીએ...",
+      "success": {
+        "title": "ઇમેઇલ ચકાસાયેલ",
+        "message": "ઇમેઇલ સફળતાપૂર્વક ચકાસાયેલ! તમે હવે લૉગ ઇન કરી શકો છો."
+      },
+      "error": {
+        "title": "ચકાસણી નિષ્ફળ",
+        "message": "ઇમેઇલ ચકાસવામાં નિષ્ફળ. લિંકની સમયસીમા સમાપ્ત થઈ ગઈ હોઈ શકે છે અથવા તે અમાન્ય છે.",
+        "invalidLink": "અમાન્ય ચકાસણી લિંક"
+      },
+      "buttons": {
+        "goToLogin": "લોગિન પર જાઓ",
+        "backToLogin": "લૉગિન પર પાછા જાઓ"
+      }
+    }
+  },
+  "settings": {
+    "title": "સેટિંગ્સ",
+    "description": "તમારું એકાઉન્ટ મેનેજ કરો",
+    "tabs": {
+      "account": "એકાઉન્ટ",
+      "security": "સુરક્ષા",
+      "featureFlags": "લક્ષણો"
+    },
+    "preferences": {
+      "language": {
+        "title": "ભાષા પસંદગીઓ",
+        "description": "એપ્લિકેશન માટે તમારી પસંદગીની ભાષા પસંદ કરો",
+        "select": "ભાષા પસંદ કરો"
+      },
+      "font": "ફોન્ટ",
+      "fontOptions": {
+        "geist": "ગાઇસ્ટ",
+        "inter": "ઇન્ટર",
+        "roboto": "રોબોટો",
+        "poppins": "પોપિન્સ",
+        "montserrat": "મોન્ટસેરાત",
+        "spaceGrotesk": "સ્પેસ ગ્રોટેસ્ક",
+        "outfit": "આઉટફિટ",
+        "jakarta": "પ્લસ જકાર્તા સાન્સ",
+        "system": "સિસ્ટમ"
+      },
+      "autoUpdate": {
+        "title": "ઓટો અપડેટ",
+        "description": "જ્યારે નવું સંસ્કરણ ઉપલબ્ધ હોય ત્યારે નિક્સોપસને આપમેળે અપડેટ કરો",
+        "select": "સ્વતઃ અપડેટ પસંદ કરો"
+      }
+    },
+    "featureFlags": {
+      "title": "લક્ષણો",
+      "description": "તમારી સંસ્થા માટે વિશિષ્ટ સુવિધાઓને સક્ષમ અથવા અક્ષમ કરો",
+      "groups": {
+        "infrastructure": {
+          "title": "ઈન્ફ્રાસ્ટ્રક્ચર",
+          "description": "તમારી સંસ્થા માટે વિશિષ્ટ માળખાકીય સુવિધાઓને સક્ષમ અથવા અક્ષમ કરો"
+        },
+        "development": {
+          "title": "વિકાસ",
+          "description": "તમારી સંસ્થા માટે વિશિષ્ટ વિકાસ સુવિધાઓને સક્ષમ અથવા અક્ષમ કરો"
+        },
+        "monitoring": {
+          "title": "મોનીટરીંગ",
+          "description": "તમારી સંસ્થા માટે વિશિષ્ટ મોનિટરિંગ સુવિધાઓને સક્ષમ અથવા અક્ષમ કરો"
+        },
+        "notifications": {
+          "title": "સૂચનાઓ",
+          "description": "તમારી સંસ્થા માટે વિશિષ્ટ સૂચના સુવિધાઓને સક્ષમ અથવા અક્ષમ કરો"
+        }
+      },
+      "features": {
+        "terminal": {
+          "title": "ટર્મિનલ",
+          "description": "ટર્મિનલ સુવિધાની ઍક્સેસ"
+        },
+        "file_manager": {
+          "title": "ફાઇલ મેનેજર",
+          "description": "ફાઇલ મેનેજર સુવિધાની ઍક્સેસ"
+        },
+        "self_hosted": {
+          "title": "સ્વ યજમાન",
+          "description": "સેલ્ફ હોસ્ટેડ ફીચરની ઍક્સેસ"
+        },
+        "domain": {
+          "title": "ડોમેન",
+          "description": "ડોમેન સુવિધાની ઍક્સેસ"
+        },
+        "container": {
+          "title": "કન્ટેનર",
+          "description": "કન્ટેનર સુવિધાની ઍક્સેસ"
+        },
+        "monitoring": {
+          "title": "મોનીટરીંગ",
+          "description": "મોનિટરિંગ સુવિધાની ઍક્સેસ"
+        },
+        "proxy_config": {
+          "title": "પ્રોક્સી રૂપરેખાંકન",
+          "description": "પ્રોક્સી રૂપરેખાંકન સુવિધાની ઍક્સેસ"
+        },
+        "github_connector": {
+          "title": "ગિટહબ કનેક્ટર",
+          "description": "ગિટહબ કનેક્ટર સુવિધાની ઍક્સેસ"
+        },
+        "audit": {
+          "title": "ઓડિટ લોગ્સ",
+          "description": "ઑડિટ લૉગ સુવિધાની ઍક્સેસ"
+        },
+        "notifications": {
+          "title": "સૂચનાઓ",
+          "description": "સૂચના સુવિધાની ઍક્સેસ"
+        }
+      },
+      "messages": {
+        "updated": "સુવિધા ધ્વજ સફળતાપૂર્વક અપડેટ થયો",
+        "updateFailed": "લક્ષણ ફ્લેગ અપડેટ કરવામાં નિષ્ફળ"
+      },
+      "searchPlaceholder": "શોધ સુવિધાઓ...",
+      "filters": {
+        "all": "બધા",
+        "enabled": "સક્ષમ",
+        "disabled": "અક્ષમ"
+      },
+      "noResults": "તમારા શોધ માપદંડ સાથે મેળ ખાતી કોઈ વિશેષતા મળી નથી",
+      "noFeatures": "કોઈ સુવિધાઓ ઉપલબ્ધ નથી"
+    },
+    "account": {
+      "title": "એકાઉન્ટ માહિતી",
+      "description": "તમારી એકાઉન્ટ વિગતો અપડેટ કરો",
+      "username": {
+        "label": "વપરાશકર્તા નામ",
+        "placeholder": "તમારું વપરાશકર્તા નામ દાખલ કરો",
+        "update": "અપડેટ કરો",
+        "success": "તમારું વપરાશકર્તાનામ સફળતાપૂર્વક અપડેટ કરવામાં આવ્યું છે!",
+        "error": "વપરાશકર્તાનામ અપડેટ કરવામાં નિષ્ફળ"
+      },
+      "email": {
+        "label": "ઇમેઇલ સરનામું",
+        "notVerified": {
+          "title": "ઇમેઇલ ચકાસાયેલ નથી",
+          "description": "તમારું ઇમેઇલ સરનામું ચકાસાયેલ નથી. કૃપા કરીને તમામ સુવિધાઓને ઍક્સેસ કરવા માટે તમારા ઇમેઇલને ચકાસો.",
+          "sendButton": "ચકાસણી ઈમેલ મોકલો",
+          "sending": "મોકલી રહ્યું છે...",
+          "sent": "ચકાસણી ઈમેલ મોકલ્યો",
+          "error": "ચકાસણી ઇમેઇલ મોકલવામાં નિષ્ફળ. કૃપા કરીને પછીથી ફરી પ્રયાસ કરો.",
+          "checkEmail": "કૃપા કરીને તમારું ઇમેઇલ તપાસો અને તમારું ઇમેઇલ સરનામું ચકાસવા માટે ચકાસણી લિંકને ક્લિક કરો."
+        }
+      },
+      "preferences": {
+        "title": "એકાઉન્ટ પસંદગીઓ",
+        "description": "તમારી સૂચના અને પ્રદર્શન સેટિંગ્સ મેનેજ કરો",
+        "appearance": "દેખાવ"
+      },
+      "avatar": {
+        "title": "પ્રોફાઇલ",
+        "description": "તમારી સાર્વજનિક પ્રોફાઇલ મેનેજ કરો",
+        "upload": "અવતાર અપલોડ કરો",
+        "uploadSuccess": "અવતાર સફળતાપૂર્વક અપલોડ થયો",
+        "uploadError": "અવતાર અપલોડ કરવામાં નિષ્ફળ"
+      },
+      "success": {
+        "avatarUpdated": "અવતાર સફળતાપૂર્વક અપડેટ થયો",
+        "usernameUpdated": "વપરાશકર્તાનામ સફળતાપૂર્વક અપડેટ થયું"
+      },
+      "errors": {
+        "emptyUsername": "વપરાશકર્તા નામ ખાલી હોઈ શકતું નથી",
+        "sameUsername": "કૃપા કરીને એક અલગ વપરાશકર્તા નામ દાખલ કરો",
+        "updateFailed": "વપરાશકર્તાનામ અપડેટ કરવામાં નિષ્ફળ. કૃપા કરીને ફરી પ્રયાસ કરો.",
+        "resetEmailFailed": "રીસેટ ઇમેઇલ મોકલવામાં નિષ્ફળ",
+        "imageNotImplemented": "હજુ અમલમાં આવ્યો નથી",
+        "noImageSelected": "કોઈ છબી પસંદ કરી નથી",
+        "avatarUpdateFailed": "અવતાર અપડેટ કરવામાં નિષ્ફળ",
+        "fontUpdateFailed": "ફોન્ટ સેટિંગ્સ અપડેટ કરવામાં નિષ્ફળ",
+        "themeUpdateFailed": "થીમ અપડેટ કરવામાં નિષ્ફળ",
+        "languageUpdateFailed": "ભાષા અપડેટ કરવામાં નિષ્ફળ",
+        "autoUpdateUpdateFailed": "સ્વતઃ-અપડેટ સેટિંગ અપડેટ કરવામાં નિષ્ફળ"
+      }
+    },
+    "security": {
+      "password": {
+        "title": "પાસવર્ડ",
+        "description": "તમારો પાસવર્ડ બદલો",
+        "reset": {
+          "label": "પાસવર્ડ રીસેટ કરો",
+          "description": "અમે તમારા ઇમેઇલ સરનામાં પર પાસવર્ડ રીસેટ લિંક મોકલીશું",
+          "button": "પાસવર્ડ રીસેટ લિંક મોકલો",
+          "emailSent": {
+            "title": "ઈમેલ મોકલ્યો!",
+            "description": "પાસવર્ડ રીસેટ લિંક માટે તમારું ઇનબોક્સ તપાસો"
+          }
+        }
+      },
+      "2fa": {
+        "title": "દ્વિ-પરિબળ પ્રમાણીકરણ",
+        "description": "તમારા એકાઉન્ટમાં સુરક્ષાનું વધારાનું સ્તર ઉમેરો",
+        "setupButton": "સેટઅપ ૨એફએ",
+        "verifyButton": "ચકાસો",
+        "enterCode": "ચકાસણી કોડ દાખલ કરો",
+        "codePlaceholder": "૬-અંકનો કોડ દાખલ કરો",
+        "setupSuccess": "૨એફએ સેટઅપ સફળ",
+        "setupError": "૨એફએ સેટઅપ કરવામાં નિષ્ફળ",
+        "verifySuccess": "૨એફએ ચકાસણી સફળ",
+        "verifyError": "અમાન્ય ચકાસણી કોડ",
+        "enabledTitle": "૨એફએ સક્ષમ છે",
+        "enabledDescription": "તમારું એકાઉન્ટ દ્વિ-પરિબળ પ્રમાણીકરણ દ્વારા સુરક્ષિત છે",
+        "disableButton": "૨એફએ અક્ષમ કરો",
+        "disableSuccess": "૨એફએ અક્ષમ કરવામાં આવ્યું છે",
+        "disableError": "૨એફએ અક્ષમ કરવામાં નિષ્ફળ"
+      }
+    },
+    "domains": {
+      "page": {
+        "title": "ડોમેન્સ",
+        "description": "ડોમેન્સનો ઉપયોગ તમારી એપ્લીકેશનને જમાવવા માટે થાય છે",
+        "noOrganization": {
+          "title": "કોઈ સંસ્થા પસંદ નથી",
+          "description": "ડોમેન્સ જોવા અને મેનેજ કરવા માટે કૃપા કરીને સંસ્થા પસંદ કરો."
+        },
+        "accessDenied": {
+          "title": "ઍક્સેસ નકારી",
+          "description": "તમને આ સંસ્થા માટે ડોમેન્સ જોવાની પરવાનગી નથી."
+        },
+        "loading": "ડોમેન્સ લોડ કરી રહ્યું છે...",
+        "error": "ડોમેન્સ લોડ કરવામાં નિષ્ફળ. કૃપા કરીને પછીથી ફરી પ્રયાસ કરો.",
+        "domainsList": {
+          "title": "ડોમેન્સ",
+          "addButton": "ડોમેન ઉમેરો"
+        },
+        "noDomains": {
+          "title": "કોઈ ડોમેન્સ મળ્યાં નથી",
+          "noPermission": "તમને ડોમેન્સ ઉમેરવાની પરવાનગી નથી."
+        }
+      },
+      "actions": {
+        "edit": "સંપાદિત કરો",
+        "delete": "કાઢી નાખો"
+      },
+      "delete": {
+        "title": "ડોમેન કાઢી નાખો",
+        "description": "શું તમે ખરેખર આ ડોમેન કાઢી નાખવા માંગો છો?",
+        "cancel": "રદ કરો",
+        "delete": "કાઢી નાખો",
+        "deleting": "કાઢી રહ્યું છે...",
+        "success": "ડોમેન સફળતાપૂર્વક કાઢી નાખ્યું",
+        "error": "ડોમેન કાઢી નાખવામાં નિષ્ફળ"
+      },
+      "types": {
+        "wildcard": "વાઇલ્ડકાર્ડ",
+        "standard": "ધોરણ"
+      },
+      "table": {
+        "headers": {
+          "domain": "ડોમેન",
+          "type": "પ્રકાર",
+          "actions": "ક્રિયાઓ"
+        }
+      },
+      "update": {
+        "addButton": "ડોમેન ઉમેરો",
+        "addTitle": "ડોમેન ઉમેરો",
+        "updateTitle": "ડોમેન અપડેટ કરો",
+        "description": "ડોમેન તમારી એપ્લિકેશનને જમાવવામાં મદદ કરશે",
+        "form": {
+          "placeholder": "example.com",
+          "validation": {
+            "minLength": "ડોમેન નામ ઓછામાં ઓછા ૩ અક્ષરોનું હોવું જોઈએ.",
+            "invalidFormat": "કૃપા કરીને માન્ય ડોમેન નામ દાખલ કરો (દા.ત., example.com)."
+          }
+        },
+        "buttons": {
+          "cancel": "રદ કરો",
+          "save": "સાચવો",
+          "saving": "સાચવી રહ્યું છે..."
+        },
+        "success": "ડોમેન સફળતાપૂર્વક ઉમેર્યું",
+        "error": "ડોમેન ઉમેરવામાં નિષ્ફળ"
+      }
+    },
+    "notifications": {
+      "page": {
+        "title": "સૂચનાઓ",
+        "description": "તમારી સૂચના પસંદગીઓ અને ચેનલોનું સંચાલન કરો",
+        "accessDenied": {
+          "title": "ઍક્સેસ નકારી",
+          "description": "તમને સૂચના સેટિંગ્સ જોવાની પરવાનગી નથી"
+        },
+        "tabs": {
+          "channels": "ચેનલો",
+          "preferences": "પસંદગીઓ"
+        },
+        "permissions": {
+          "update": "તમને સૂચના સેટિંગ્સ અપડેટ કરવાની પરવાનગી નથી",
+          "create": "તમને સૂચના સેટિંગ્સ બનાવવાની પરવાનગી નથી"
+        }
+      },
+      "channels": {
+        "email": {
+          "title": "ઈમેલ",
+          "description": "ઇમેઇલ સૂચનાઓ મોકલવા માટે એસએમટિપિ સેટિંગ્સને ગોઠવો",
+          "fields": {
+            "smtp_host": {
+              "label": "એસએમટિપિ સર્વર",
+              "placeholder": "smtp.example.com"
+            },
+            "smtp_port": {
+              "label": "બંદર",
+              "placeholder": "૫૮૭"
+            },
+            "smtp_username": {
+              "label": "વપરાશકર્તા નામ",
+              "placeholder": "your-email@example.com"
+            },
+            "smtp_password": {
+              "label": "પાસવર્ડ",
+              "placeholder": "••••••••"
+            },
+            "smtp_from_email": {
+              "label": "ઈમેલમાંથી",
+              "placeholder": "notifications@example.com"
+            },
+            "smtp_from_name": {
+              "label": "નામ પરથી",
+              "placeholder": "તમારી સંસ્થાનું નામ"
+            }
+          },
+          "buttons": {
+            "save": "રૂપરેખાંકન સાચવો"
+          }
+        },
+        "slack": {
+          "title": "સ્લેક",
+          "description": "સ્લૅક સૂચનાઓ ગોઠવો",
+          "fields": {
+            "webhook_url": {
+              "label": "વેબહૂક યુઆરએલ",
+              "placeholder": "તમારું સ્લેક વેબહૂક યુઆરએલ દાખલ કરો"
+            },
+            "is_active": {
+              "label": "સક્રિય"
+            }
+          },
+          "buttons": {
+            "save": "રૂપરેખાંકન સાચવો"
+          }
+        },
+        "discord": {
+          "title": "વિખવાદ",
+          "description": "સૂચનાઓ મોકલવા માટે ડિસ્કોર્ડ સેટિંગ્સને ગોઠવો",
+          "fields": {
+            "webhook_url": {
+              "label": "વેબહૂક યુઆરએલ",
+              "placeholder": "તમારું ડિસ્કોર્ડ વેબહૂક યુઆરએલ દાખલ કરો"
+            },
+            "is_active": {
+              "label": "સક્રિય"
+            }
+          },
+          "buttons": {
+            "save": "રૂપરેખાંકન સાચવો"
+          }
+        },
+        "save": "રૂપરેખાંકન સાચવો"
+      },
+      "preferences": {
+        "activity": {
+          "title": "પ્રવૃત્તિ સૂચનાઓ",
+          "description": "તમારી ટીમમાં પ્રવૃત્તિ વિશે સૂચનાઓ"
+        },
+        "security": {
+          "title": "સુરક્ષા સૂચનાઓ",
+          "description": "તૈનાત એપ્લિકેશનો અને ભૂલો વિશે મહત્વપૂર્ણ ચેતવણીઓ"
+        },
+        "updates": {
+          "title": "અપડેટ્સ અને માર્કેટિંગ",
+          "description": "અમારા ઉત્પાદન અને સેવાઓ વિશે માહિતગાર રહો"
+        }
+      },
+      "messages": {
+        "email": {
+          "success": "ઇમેઇલ ગોઠવણી સફળતાપૂર્વક સાચવવામાં આવી",
+          "error": "ઇમેઇલ ગોઠવણી સાચવવામાં નિષ્ફળ"
+        },
+        "slack": {
+          "success": "સ્લૅક ગોઠવણી સફળતાપૂર્વક સાચવવામાં આવી",
+          "error": "સ્લેક રૂપરેખાંકન સાચવવામાં નિષ્ફળ"
+        },
+        "discord": {
+          "success": "ડિસ્કોર્ડ ગોઠવણી સફળતાપૂર્વક સાચવવામાં આવી",
+          "error": "ડિસ્કોર્ડ ગોઠવણી સાચવવામાં નિષ્ફળ"
+        },
+        "webhookConfigSaved": "વેબહૂક ગોઠવણી સફળતાપૂર્વક સાચવવામાં આવી",
+        "webhookConfigUpdated": "વેબહૂક ગોઠવણી સફળતાપૂર્વક અપડેટ થઈ",
+        "webhookConfigDeleted": "વેબહૂક ગોઠવણી સફળતાપૂર્વક કાઢી નાખી",
+        "webhookConfigFailed": "વેબહૂક ગોઠવણી સાચવવામાં નિષ્ફળ",
+        "preferencesUpdated": "પસંદગીઓ સફળતાપૂર્વક અપડેટ થઈ",
+        "preferencesFailed": "પસંદગીઓ અપડેટ કરવામાં નિષ્ફળ"
+      }
+    },
+    "teams": {
+      "addMember": {
+        "button": "વપરાશકર્તા ઉમેરો",
+        "dialog": {
+          "title": "નવો વપરાશકર્તા ઉમેરો",
+          "description": "તમારી સંસ્થામાં એક નવો વપરાશકર્તા ઉમેરો",
+          "fields": {
+            "name": {
+              "label": "નામ",
+              "placeholder": "વપરાશકર્તાનું નામ દાખલ કરો"
+            },
+            "email": {
+              "label": "ઈમેલ",
+              "placeholder": "વપરાશકર્તાની ઇમેઇલ દાખલ કરો"
+            },
+            "role": {
+              "label": "ભૂમિકા",
+              "placeholder": "ભૂમિકા પસંદ કરો",
+              "options": {
+                "admin": "એડમિન",
+                "member": "સભ્ય",
+                "viewer": "દર્શક"
+              }
+            },
+            "password": {
+              "label": "પાસવર્ડ",
+              "placeholder": "વપરાશકર્તાનો પાસવર્ડ દાખલ કરો"
+            }
+          },
+          "buttons": {
+            "cancel": "રદ કરો",
+            "add": "વપરાશકર્તા ઉમેરો"
+          }
+        }
+      },
+      "editTeam": {
+        "dialog": {
+          "title": "ટીમ વિગતો સંપાદિત કરો",
+          "description": "ટીમની વિગતો તમને તમારી ટીમને ઓળખવામાં મદદ કરે છે",
+          "fields": {
+            "name": {
+              "label": "નામ",
+              "placeholder": "ટીમનું નામ દાખલ કરો"
+            },
+            "description": {
+              "label": "વર્ણન",
+              "placeholder": "ટીમનું વર્ણન દાખલ કરો"
+            }
+          },
+          "buttons": {
+            "cancel": "રદ કરો",
+            "update": "અપડેટ કરો",
+            "updating": "અપડેટ કરી રહ્યું છે..."
+          }
+        }
+      },
+      "editUser": {
+        "dialog": {
+          "title": "વપરાશકર્તા ભૂમિકા સંપાદિત કરો",
+          "description": "{name} માટે ભૂમિકા અપડેટ કરો",
+          "fields": {
+            "role": {
+              "label": "ભૂમિકા",
+              "placeholder": "ભૂમિકા પસંદ કરો"
+            }
+          },
+          "buttons": {
+            "cancel": "રદ કરો",
+            "save": "ફેરફારો સાચવો"
+          },
+          "errors": {
+            "noRole": "કૃપા કરીને ભૂમિકા પસંદ કરો"
+          }
+        }
+      },
+      "recentActivity": {
+        "title": "તાજેતરની પ્રવૃત્તિઓ",
+        "description": "તમારી સંસ્થામાં તાજેતરના ફેરફારો",
+        "loading": "તાજેતરની પ્રવૃત્તિઓ લોડ કરી રહ્યું છે...",
+        "error": "તાજેતરની પ્રવૃત્તિઓ લોડ કરવામાં નિષ્ફળ",
+        "noActivities": "કોઈ તાજેતરની પ્રવૃત્તિઓ મળી નથી",
+        "viewAll": "બધા જુઓ",
+        "actions": {
+          "create": "{username} એ એક નવું {resource} બનાવ્યું",
+          "update": "{username} એ {resource} ને અપડેટ કર્યું",
+          "delete": "{username} એ {resource} કાઢી નાખ્યું",
+          "default": "{username} એ {resource} ને ઍક્સેસ કર્યું"
+        }
+      },
+      "members": {
+        "title": "ટીમના સભ્યો",
+        "description": "તમારી ટીમમાં વપરાશકર્તાઓ અને તેમની ભૂમિકાઓનું સંચાલન કરો",
+        "table": {
+          "headers": {
+            "user": "વપરાશકર્તા",
+            "role": "ભૂમિકા",
+            "permissions": "પરવાનગીઓ",
+            "actions": "ક્રિયાઓ"
+          }
+        },
+        "actions": {
+          "edit": "વપરાશકર્તાને સંપાદિત કરો",
+          "remove": "વપરાશકર્તાને દૂર કરો",
+          "showMore": "વધુ બતાવો",
+          "showLess": "ઓછું બતાવો"
+        },
+        "deleteDialog": {
+          "title": "{name} દૂર કરો",
+          "description": "શું તમે ખરેખર ટીમમાંથી {name} ને દૂર કરવા માંગો છો? આ ક્રિયા પૂર્વવત્ કરી શકાતી નથી.",
+          "confirm": "વપરાશકર્તાને દૂર કરો"
+        }
+      },
+      "stats": {
+        "title": "ટીમ આંકડા",
+        "description": "તમારી ટીમની ઝાંખી",
+        "totalMembers": "કુલ સભ્યો",
+        "owners": "માલિકો",
+        "members": "સભ્યો",
+        "viewers": "દર્શકો"
+      },
+      "noMembers": "ટીમના કોઈ સભ્યો મળ્યા નથી",
+      "messages": {
+        "userAdded": "વપરાશકર્તા સફળતાપૂર્વક ઉમેરાયો",
+        "userAddFailed": "વપરાશકર્તા ઉમેરવામાં નિષ્ફળ",
+        "userRemoved": "વપરાશકર્તાને સફળતાપૂર્વક દૂર કર્યા",
+        "userRemoveFailed": "વપરાશકર્તાને દૂર કરવામાં નિષ્ફળ",
+        "userUpdated": "વપરાશકર્તા સફળતાપૂર્વક અપડેટ થયા",
+        "userUpdateFailed": "વપરાશકર્તાને અપડેટ કરવામાં નિષ્ફળ",
+        "teamUpdated": "ટીમ વિગતો સફળતાપૂર્વક અપડેટ થઈ",
+        "teamUpdateFailed": "ટીમ વિગતો અપડેટ કરવામાં નિષ્ફળ",
+        "requiredFields": "ટીમનું નામ અને વર્ણન જરૂરી છે"
+      },
+      "createTeam": {
+        "title": "ટીમ બનાવો",
+        "description": "અન્ય લોકો સાથે સહયોગ કરવા માટે એક નવી ટીમ બનાવો",
+        "fields": {
+          "name": {
+            "label": "નામ",
+            "placeholder": "ટીમનું નામ દાખલ કરો"
+          },
+          "description": {
+            "label": "વર્ણન",
+            "placeholder": "ટીમનું વર્ણન દાખલ કરો"
+          }
+        },
+        "buttons": {
+          "create": "બનાવો",
+          "creating": "બનાવી રહ્યું છે..."
+        }
+      }
+    },
+    "2fa": {
+      "title": "દ્વિ-પરિબળ પ્રમાણીકરણ",
+      "description": "તમારા એકાઉન્ટમાં સુરક્ષાનું વધારાનું સ્તર ઉમેરો",
+      "setupButton": "સેટઅપ ૨એફએ",
+      "verifyButton": "ચકાસો",
+      "enterCode": "ચકાસણી કોડ દાખલ કરો",
+      "codePlaceholder": "૬-અંકનો કોડ દાખલ કરો",
+      "setupSuccess": "૨એફએ સેટઅપ સફળ",
+      "setupError": "૨એફએ સેટઅપ કરવામાં નિષ્ફળ",
+      "verifySuccess": "૨એફએ ચકાસણી સફળ",
+      "verifyError": "અમાન્ય ચકાસણી કોડ",
+      "enabledTitle": "૨એફએ સક્ષમ છે",
+      "enabledDescription": "તમારું એકાઉન્ટ દ્વિ-પરિબળ પ્રમાણીકરણ દ્વારા સુરક્ષિત છે",
+      "disableButton": "૨એફએ અક્ષમ કરો",
+      "disableSuccess": "૨એફએ અક્ષમ કરવામાં આવ્યું છે",
+      "disableError": "૨એફએ અક્ષમ કરવામાં નિષ્ફળ"
+    }
+  },
+  "activities": {
+    "title": "પ્રવૃત્તિઓ",
+    "description": "તમારી સંસ્થામાં તમામ પ્રવૃત્તિઓ અને ફેરફારો જુઓ",
+    "list": {
+      "title": "ટીમ પ્રવૃત્તિઓ",
+      "description": "તમારી સંસ્થામાં તાજેતરની પ્રવૃત્તિઓ"
+    }
+  },
+  "languages": {
+    "en": "અંગ્રેજી",
+    "es": "સ્પેનિશ",
+    "fr": "ફ્રેન્ચ",
+    "kn": "કન્નડ",
+    "ml": "મલયાલમ",
+    "gu": "ગુજરાતી"
+  },
+  "dashboard": {
+    "title": "ડેશબોર્ડ",
+    "description": "તમારી એપ્લિકેશન્સ અને સિસ્ટમ સંસાધનોનું નિરીક્ષણ કરો",
+    "containers": {
+      "title": "કન્ટેનર",
+      "table": {
+        "headers": {
+          "id": "આઈડી",
+          "name": "નામ",
+          "image": "છબી",
+          "status": "સ્થિતિ",
+          "ports": "બંદરો",
+          "created": "બનાવ્યું"
+        },
+        "noContainers": "કોઈ કન્ટેનર મળ્યું નથી",
+        "morePorts": "+{count} વધુ"
+      },
+      "viewAll": "બધા જુઓ"
+    },
+    "disk": {
+      "title": "ડિસ્ક વપરાશ",
+      "used": "{value} જીબી વપરાયેલ",
+      "total": "{value} જીબી કુલ",
+      "percentage": "{value}%",
+      "table": {
+        "headers": {
+          "mount": "માઉન્ટ",
+          "size": "કદ",
+          "used": "વપરાયેલ",
+          "percentage": "%"
+        }
+      }
+    },
+    "load": {
+      "title": "લોડ એવરેજ",
+      "labels": {
+        "oneMin": "૧ મિનિટ",
+        "fiveMin": "૫ મિનિટ",
+        "fifteenMin": "૧૫ મિનિટ"
+      }
+    },
+    "memory": {
+      "title": "મેમરી વપરાશ",
+      "used": "{value} જીબી વપરાયેલ",
+      "total": "{value} જીબી કુલ",
+      "percentage": "{value}%"
+    },
+    "errors": {
+      "parseMessage": "સંદેશનું વિશ્લેષણ કરવામાં નિષ્ફળ",
+      "unknownError": "અજાણી ભૂલ આવી",
+      "connectionLost": "કનેક્શન તૂટી ગયું. ફરીથી કનેક્ટ કરવાનો પ્રયાસ કરી રહ્યાં છીએ...",
+      "reconnectFailed": "ફરીથી કનેક્ટ કરવામાં નિષ્ફળ. કૃપા કરીને પછીથી ફરી પ્રયાસ કરો."
+    },
+    "system": {
+      "title": "સિસ્ટમ માહિતી",
+      "osType": "ઓએસ પ્રકાર",
+      "cpu": "સીપીયુ",
+      "uptime": "અપટાઇમ",
+      "lastUpdated": "છેલ્લું અપડેટ"
+    },
+    "smtpBanner": {
+      "message": "સૂચનાઓ પ્રાપ્ત કરવા માટે એસએમટિપિ સેટિંગ્સને ગોઠવો",
+      "configure": "રૂપરેખાંકિત કરો"
+    }
+  },
+  "fileManager": {
+    "header": {
+      "title": "ફાઇલ મેનેજર",
+      "subtitle": "તમારી ફાઇલોને અહીં મેનેજ કરો"
+    },
+    "actions": {
+      "upload": "ફાઇલ અપલોડ કરો",
+      "createDirectory": "ડિરેક્ટરી બનાવો",
+      "showHidden": "હિડન ફાઇલો બતાવો",
+      "hideHidden": "હિડન ફાઇલો છુપાવો",
+      "newFolder": "નવું ફોલ્ડર {number}",
+      "errors": {
+        "createDirectory": "ડિરેક્ટરી બનાવવામાં નિષ્ફળ"
+      }
+    },
+    "sort": {
+      "title": "દ્વારા સૉર્ટ કરો",
+      "methods": {
+        "name": "નામ",
+        "updated_at": "તારીખ સંશોધિત",
+        "created_at": "બનાવવાની તારીખ",
+        "size": "કદ",
+        "file_type": "પ્રકાર"
+      }
+    },
+    "upload": {
+      "title": "ફાઇલ અપલોડ કરો",
+      "dragDrop": "ફાઇલોને અહીં ખેંચો અને છોડો, અથવા ફાઇલો પસંદ કરવા માટે ક્લિક કરો",
+      "errors": {
+        "uploadFailed": "ફાઇલ અપલોડ કરવામાં નિષ્ફળ",
+        "fileTooLarge": "ફાઇલનું કદ મર્યાદા ઓળંગે છે",
+        "invalidType": "અમાન્ય ફાઇલ પ્રકાર"
+      }
+    },
+    "info": {
+      "labels": {
+        "path": "પાથ",
+        "size": "કદ",
+        "created": "બનાવ્યું",
+        "updated": "અપડેટ કરેલ",
+        "type": "પ્રકાર",
+        "hidden": "છુપાયેલ",
+        "permissions": "પરવાનગીઓ"
+      },
+      "calculating": "ગણતરી કરી રહ્યું છે...",
+      "yes": "હા",
+      "no": "ના"
+    },
+    "item": {
+      "actions": {
+        "info": "માહિતી",
+        "rename": "નામ બદલો",
+        "copy": "નકલ કરો",
+        "move": "ચાલ",
+        "delete": "ટ્રેશમાં ખસેડો",
+        "moveHere": "અહીં ખસેડો",
+        "pasteHere": "અહીં પેસ્ટ કરો"
+      }
+    },
+    "noFiles": "કોઈ ફાઇલો મળી નથી",
+    "deleteDialog": {
+      "title": "પુષ્ટિકરણ કાઢી નાખો",
+      "descriptionFile": "શું તમે ખરેખર '{name}' ફાઇલ કાઢી નાખવા માંગો છો? આ ક્રિયા પૂર્વવત્ કરી શકાતી નથી.",
+      "descriptionDirectory": "શું તમે ખરેખર '{name}' ડિરેક્ટરી અને તેની બધી સામગ્રીઓ કાઢી નાખવા માંગો છો? આ ક્રિયા પૂર્વવત્ કરી શકાતી નથી.",
+      "confirm": "કાઢી નાખો",
+      "cancel": "રદ કરો"
+    },
+    "contextMenu": {
+      "info": "વિગતો",
+      "rename": "નામ બદલો",
+      "copy": "નકલ કરો",
+      "move": "ચાલ",
+      "share": "શેર કરો",
+      "download": "ડાઉનલોડ કરો",
+      "delete": "કાઢી નાખો",
+      "cancel": "રદ કરો"
+    },
+    "noPermissionCreate": "તમને ફાઇલો બનાવવાની પરવાનગી નથી",
+    "noPermissionUpdate": "તમને ફાઇલો અપડેટ કરવાની પરવાનગી નથી",
+    "copiedToClipboard": "ક્લિપબોર્ડ પર કૉપિ કરી",
+    "copySuccess": "ફાઇલ સફળતાપૂર્વક કૉપિ કરી",
+    "errors": {
+      "fileExists": "ફાઇલ પહેલેથી જ અસ્તિત્વમાં છે"
+    }
+  },
+  "selfHost": {
+    "deployment": {
+      "title": "જમાવટ વિગતો",
+      "logs": {
+        "title": "જમાવટ લોગ્સ",
+        "refresh": "લૉગ્સ તાજું કરો",
+        "loading": "લોગ લોડ કરી રહ્યું છે...",
+        "noLogs": "કોઈ લૉગ્સ ઉપલબ્ધ નથી",
+        "pagination": {
+          "previous": "ગત",
+          "next": "આગળ",
+          "page": "{total} માંથી પૃષ્ઠ {current}"
+        }
+      },
+      "list": {
+        "title": "જમાવટ",
+        "noDeployments": "કોઈ જમાવટ મળી નથી",
+        "card": {
+          "runTime": "રન ટાઈમ",
+          "viewButton": "વિગતો જુઓ",
+          "rollback": {
+            "title": "રોલબેક"
+          }
+        },
+        "table": {
+          "status": "સ્થિતિ",
+          "container": "કન્ટેનર",
+          "created": "બનાવ્યું",
+          "runTime": "રન ટાઈમ",
+          "actions": "ક્રિયાઓ",
+          "unknown": "અજ્ઞાત"
+        }
+      }
+    },
+    "application": {
+      "accessDenied": {
+        "title": "ઍક્સેસ નકારી",
+        "description": "તમને એપ્લિકેશન વિગતો જોવાની પરવાનગી નથી"
+      },
+      "tabs": {
+        "monitoring": "મોનીટરીંગ",
+        "configuration": "રૂપરેખાંકન",
+        "deployments": "જમાવટ",
+        "logs": "લોગ્સ"
+      }
+    },
+    "page": {
+      "title": "સ્વ-હોસ્ટેડ એપ્લિકેશન્સ",
+      "description": "તમારી સ્વ-હોસ્ટેડ એપ્લિકેશન્સનું સંચાલન કરો",
+      "accessDenied": {
+        "title": "ઍક્સેસ નકારી",
+        "description": "તમારી પાસે સ્વ-હોસ્ટેડ એપ્લિકેશન્સ જોવાની પરવાનગી નથી"
+      },
+      "createButton": "બનાવો",
+      "loading": "એપ્લિકેશનો લોડ કરી રહ્યું છે...",
+      "noApplications": "કોઈ એપ્લિકેશન મળી નથી",
+      "search": {
+        "placeholder": "એપ્લિકેશન શોધો..."
+      },
+      "sort": {
+        "name": "નામ",
+        "created": "બનાવ્યું",
+        "updated": "અપડેટ કરેલ",
+        "status": "સ્થિતિ"
+      }
+    },
+    "configuration": {
+      "sections": {
+        "basicConfiguration": "મૂળભૂત રૂપરેખાંકન",
+        "dockerConfiguration": "ડોકર રૂપરેખાંકન",
+        "environmentVariables": "પર્યાવરણ ચલો",
+        "commands": "આદેશો",
+        "deploymentInformation": "જમાવટ માહિતી"
+      },
+      "fields": {
+        "applicationName": {
+          "label": "અરજીનું નામ",
+          "description": "એપ્લિકેશનનું નામ"
+        },
+        "port": {
+          "label": "બંદર",
+          "description": "પોર્ટ કે જેના પર તમારી એપ્લિકેશન ઉપલબ્ધ હશે"
+        },
+        "basePath": {
+          "label": "આધાર પાથ",
+          "description": "તમારી એપ્લિકેશન માટે બિલ્ડ સંદર્ભ પાથ"
+        },
+        "dockerfilePath": {
+          "label": "ડોકરફાઇલ પાથ",
+          "description": "બેઝ પાથને સંબંધિત ડોકરફાઇલનો પાથ"
+        },
+        "environmentVariables": {
+          "label": "પર્યાવરણ ચલો",
+          "description": "KEY=VALUE લખો અને ઉમેરવા માટે એન્ટર દબાવો",
+          "placeholder": "NODE_ENV=ઉત્પાદન"
+        },
+        "buildVariables": {
+          "label": "ચલો બનાવો",
+          "description": "KEY=VALUE લખો અને ઉમેરવા માટે એન્ટર દબાવો",
+          "placeholder": "DEBUG=false"
+        },
+        "preRunCommands": {
+          "label": "પ્રી-રન કમાન્ડ",
+          "description": "જમાવટ પહેલાં ચલાવવા માટે આદેશો",
+          "placeholder": "એનપીએમ ઇન્સ્ટોલ કરો"
+        },
+        "postRunCommands": {
+          "label": "પોસ્ટ રન આદેશો",
+          "description": "જમાવટ પછી ચલાવવા માટે આદેશો",
+          "placeholder": "એનપીએમ રન ટેસ્ટ"
+        },
+        "environment": {
+          "label": "પર્યાવરણ",
+          "description": "જમાવટનું વાતાવરણ"
+        },
+        "branch": {
+          "label": "શાખા",
+          "description": "જ્યાંથી તમે જમાવટ કરવા માંગો છો તે શાખા"
+        },
+        "domain": {
+          "label": "ડોમેન",
+          "description": "ડોમેન કે જેના પર તમારી અરજી ઉપલબ્ધ છે"
+        },
+        "buildPack": {
+          "label": "પેક બનાવો",
+          "description": "એપ્લિકેશન માટે ઉપયોગમાં લેવાતા પેક બનાવો"
+        }
+      },
+      "buttons": {
+        "update": "ડિપ્લોયમેન્ટ અપડેટ કરો",
+        "updating": "અપડેટ કરી રહ્યું છે..."
+      }
+    },
+    "deployments": {
+      "list": {
+        "title": "જમાવટ",
+        "noDeployments": "કોઈ જમાવટ મળી નથી",
+        "card": {
+          "status": {
+            "completed": "પૂર્ણ થયું"
+          },
+          "runTime": "રન ટાઈમ",
+          "viewButton": "જુઓ",
+          "rollback": {
+            "title": "રોલબેક જમાવટ"
+          }
+        }
+      },
+      "chart": {
+        "title": "જમાવટના આંકડા",
+        "description": "તમામ જમાવટની વર્તમાન સ્થિતિ",
+        "status": {
+          "building": "બિલ્ડીંગ",
+          "deployed": "તૈનાત",
+          "deploying": "જમાવટ",
+          "failed": "નિષ્ફળ"
+        },
+        "total": "કુલ જમાવટ: {count}"
+      }
+    },
+    "applicationDetails": {
+      "header": {
+        "actions": {
+          "restart": {
+            "button": "એપ્લિકેશન પુનઃપ્રારંભ કરો",
+            "success": "એપ્લિકેશન પુનઃપ્રારંભ શરૂ",
+            "error": "એપ્લિકેશન પુનઃપ્રારંભ કરવામાં નિષ્ફળ",
+            "permissionError": "તમને એપ્લીકેશન પુનઃપ્રારંભ કરવાની પરવાનગી નથી"
+          },
+          "delete": {
+            "button": "કાઢી નાખો",
+            "dialog": {
+              "title": "કાઢી નાખો {name}",
+              "description": "શું તમે ખરેખર {name} ને કાઢી નાખવા માંગો છો? આ ક્રિયા પૂર્વવત્ કરી શકાતી નથી."
+            },
+            "success": "એપ્લિકેશન સફળતાપૂર્વક કાઢી નાખવામાં આવી",
+            "error": "એપ્લિકેશન કાઢી નાખવામાં નિષ્ફળ",
+            "permissionError": "તમારી પાસે એપ્લિકેશનો કાઢી નાખવાની પરવાનગી નથી"
+          },
+          "redeploy": {
+            "button": "ફરી જમાવટ કરો",
+            "forceButton": "કેશ વગર ફોર્સ ડિપ્લોય કરો",
+            "success": "એપ્લિકેશન રિડેપ્લોયમેન્ટ શરૂ",
+            "error": "એપ્લિકેશન ફરીથી ગોઠવવામાં નિષ્ફળ",
+            "permissionError": "તમને એપ્લીકેશનો ફરીથી ગોઠવવાની પરવાનગી નથી"
+          },
+          "open": "નવી ટેબમાં એપ્લિકેશન ખોલો"
+        }
+      }
+    },
+    "logViewer": {
+      "title": "લોગ વ્યૂઅર",
+      "description": "રીઅલ-ટાઇમ ઇન્સ્ટોલેશન લૉગ્સ",
+      "actions": {
+        "fetchMore": "વધુ મેળવો",
+        "refresh": "તાજું કરો",
+        "fullscreen": "પૂર્ણસ્ક્રીન",
+        "exitFullscreen": "પૂર્ણસ્ક્રીનથી બહાર નીકળો",
+        "download": "ડાઉનલોડ કરો",
+        "search": {
+          "placeholder": "લૉગ્સ શોધો...",
+          "previous": "ગત",
+          "next": "આગળ",
+          "results": "{total} માંથી {current}"
+        },
+        "filter": {
+          "level": {
+            "label": "સ્તર દ્વારા ફિલ્ટર કરો",
+            "all": "બધા સ્તરો"
+          },
+          "time": {
+            "label": "સમય શ્રેણી",
+            "all": "બધા સમય",
+            "5m": "છેલ્લી ૫ મિનિટ",
+            "15m": "છેલ્લી ૧૫ મિનિટ",
+            "1h": "છેલ્લો કલાક",
+            "24h": "છેલ્લા ૨૪ કલાક"
+          }
+        },
+        "autoScroll": "સ્વતઃ સ્ક્રોલ કરો"
+      }
+    },
+    "deployForm": {
+      "accessDenied": {
+        "title": "ઍક્સેસ નકારી",
+        "description": "તમારી પાસે નવી એપ્લિકેશનો જમાવવાની પરવાનગી નથી"
+      },
+      "success": {
+        "update": "ડિપ્લોયમેન્ટ સફળતાપૂર્વક અપડેટ થયું"
+      },
+      "errors": {
+        "createFailed": "જમાવટ બનાવવામાં નિષ્ફળ",
+        "updateFailed": "જમાવટ અપડેટ કરવામાં નિષ્ફળ"
+      },
+      "fields": {
+        "applicationName": {
+          "label": "અરજીનું નામ",
+          "description": "એપ્લિકેશનનું નામ",
+          "placeholder": "એપ્લિકેશનનું નામ"
+        },
+        "environment": {
+          "label": "પર્યાવરણ",
+          "description": "પર્યાવરણ તમને વિવિધ જગ્યાઓ પર જમાવવામાં મદદ કરે છે",
+          "placeholder": "પર્યાવરણ",
+          "options": {
+            "staging": "સ્ટેજીંગ",
+            "production": "ઉત્પાદન",
+            "development": "વિકાસ"
+          }
+        },
+        "basePath": {
+          "label": "આધાર પાથ",
+          "description": "તમારી એપ્લિકેશન માટે બિલ્ડ સંદર્ભ પાથ",
+          "placeholder": "/"
+        },
+        "dockerfilePath": {
+          "label": "ડોકરફાઇલ પાથ",
+          "description": "બેઝ પાથને સંબંધિત ડોકરફાઇલનો પાથ",
+          "placeholder": "ડોકરફાઇલ"
+        },
+        "branch": {
+          "label": "શાખા",
+          "description": "જ્યાંથી તમે જમાવટ કરવા માંગો છો તે શાખા",
+          "placeholder": "શાખા"
+        },
+        "port": {
+          "label": "બંદર",
+          "description": "પોર્ટ કે જેના પર તમારી એપ્લિકેશન ઉપલબ્ધ હશે",
+          "placeholder": "૩૦૦૦"
+        },
+        "domain": {
+          "label": "ડોમેન",
+          "description": "ડોમેન કે જેના પર તમારી અરજી ઉપલબ્ધ હશે",
+          "placeholder": "ડોમેન"
+        },
+        "buildPack": {
+          "label": "પેક બનાવો",
+          "description": "તમારા એપ્લિકેશન સ્ટ્રક્ચરને શ્રેષ્ઠ રીતે બંધબેસતું એક પસંદ કરો",
+          "placeholder": "પેક બનાવો",
+          "options": {
+            "dockerfile": "ડોકરફાઇલ",
+            "dockerCompose": "ડોકર કમ્પોઝ",
+            "static": "સ્થિર"
+          }
+        },
+        "envVariables": {
+          "label": "પર્યાવરણ ચલો",
+          "description": "KEY=VALUE લખો અને ઉમેરવા માટે એન્ટર દબાવો",
+          "placeholder": "NODE_ENV=ઉત્પાદન"
+        },
+        "buildVariables": {
+          "label": "ચલો બનાવો",
+          "description": "KEY=VALUE લખો અને ઉમેરવા માટે એન્ટર દબાવો",
+          "placeholder": "DEBUG=false"
+        },
+        "preRunCommands": {
+          "label": "પ્રી-રન કમાન્ડ",
+          "description": "જમાવટ પહેલાં ચલાવવા માટે આદેશો",
+          "placeholder": "એનપીએમ ઇન્સ્ટોલ કરો"
+        },
+        "postRunCommands": {
+          "label": "પોસ્ટ રન આદેશો",
+          "description": "જમાવટ પછી ચલાવવા માટે આદેશો",
+          "placeholder": "એનપીએમ રન ટેસ્ટ"
+        }
+      },
+      "submit": "જમાવટ કરો",
+      "validation": {
+        "applicationName": {
+          "minLength": "એપ્લિકેશનનું નામ ઓછામાં ઓછું ૩ અક્ષરનું હોવું જોઈએ.",
+          "invalidFormat": "એપ્લિકેશનનું નામ માન્ય નામ હોવું આવશ્યક છે."
+        },
+        "environment": {
+          "invalidValue": "પર્યાવરણનું નામ ઉત્પાદન, સ્ટેજીંગ અથવા ડેવલપમેન્ટ હોવું આવશ્યક છે."
+        },
+        "branch": {
+          "minLength": "શાખાનું નામ ઓછામાં ઓછું ૩ અક્ષરનું હોવું જોઈએ.",
+          "invalidFormat": "શાખાનું નામ માન્ય નામ હોવું આવશ્યક છે."
+        },
+        "port": {
+          "invalidFormat": "પોર્ટ એક નંબર હોવો જોઈએ."
+        },
+        "domain": {
+          "minLength": "ડોમેન નામ ઓછામાં ઓછા ૩ અક્ષર લાંબું હોવું જોઈએ.",
+          "invalidFormat": "કૃપા કરીને માન્ય ડોમેન નામ દાખલ કરો (દા.ત., example.com).",
+          "notAllowed": "આ ડોમેનને મંજૂરી નથી. તમે તેને ઉપલબ્ધ કરાવવા માટે સેટિંગ્સ > ડોમેન્સ વિભાગમાં ઉમેરી શકો છો."
+        },
+        "repository": {
+          "minLength": "રિપોઝીટરીનું નામ ઓછામાં ઓછું ૩ અક્ષરનું હોવું જોઈએ.",
+          "invalidFormat": "રિપોઝીટરીનું નામ માન્ય નામ હોવું આવશ્યક છે."
+        },
+        "buildPack": {
+          "invalidValue": "બિલ્ડ પેક ડોકરફાઇલ, ડોકરકમ્પોઝ અથવા સ્ટેટિક હોવું આવશ્યક છે."
+        },
+        "envVariables": {
+          "emptyInput": "ઇનપુટ ખાલી હોઈ શકતું નથી",
+          "invalidFormat": "KEY=VALUE ફોર્મેટમાં હોવું જોઈએ",
+          "emptyKey": "કી ખાલી હોઈ શકતી નથી"
+        }
+      }
+    },
+    "githubInstaller": {
+      "title": "ગિટહબ એપ્લિકેશન ઇન્સ્ટોલ કરો",
+      "description": "ચાલો આપણે હમણાં જ બનાવેલ એપ સાથે કનેક્ટ કરીએ",
+      "connectButton": "ગિટહબ ને કનેક્ટ કરો",
+      "terms": "કનેક્ટ કરીને, તમે અમારી સેવાની શરતો અને ગોપનીયતા નીતિ સાથે સંમત થાઓ છો."
+    },
+    "githubManifest": {
+      "title": "ગિટહબ એપ્લિકેશન બનાવો",
+      "appName": {
+        "label": "એપ્લિકેશન નામ",
+        "placeholder": "એપ્લિકેશન નામ દાખલ કરો",
+        "generate": "નવું નામ બનાવો"
+      },
+      "createButton": "ગિટહબ એપ્લિકેશન બનાવો",
+      "status": {
+        "redirecting": "ગિટહબ પર રીડાયરેક્ટ કરી રહ્યું છે...",
+        "converting": "તમારી ગિટહબ એપ્લિકેશન સેટ કરી રહ્યાં છીએ...",
+        "success": "ગિટહબ એપ્લિકેશન સફળતાપૂર્વક બનાવવામાં આવી!"
+      }
+    },
+    "repositories": {
+      "title": "રિપોઝીટરીઝ",
+      "noRepositories": "કોઈ ભંડાર મળ્યાં નથી",
+      "search": {
+        "placeholder": "ભંડાર શોધો..."
+      },
+      "sort": {
+        "name": "નામ",
+        "created": "બનાવ્યું",
+        "updated": "અપડેટ કરેલ",
+        "stars": "તારાઓ"
+      }
+    },
+    "repositoryCard": {
+      "viewOnGithub": "ગિટહબ પર જુઓ",
+      "unnamed": "અનામી રીપોઝીટરી",
+      "visibility": {
+        "private": "ખાનગી",
+        "public": "જાહેર"
+      },
+      "topics": {
+        "more": "+{count} વધુ"
+      }
+    },
+    "create": {
+      "title": "ભંડાર",
+      "description": "તમે તમારી એપ્લિકેશનને કેવી રીતે જમાવવા માંગો છો તે ગોઠવો",
+      "accessDenied": {
+        "title": "ઍક્સેસ નકારી",
+        "description": "તમારી પાસે સ્વ-હોસ્ટ એપ્લિકેશન્સ બનાવવાની પરવાનગી નથી"
+      }
+    },
+    "githubCallback": {
+      "processing": "ગિટહબ ઇન્સ્ટોલેશન પર પ્રક્રિયા કરી રહ્યું છે...",
+      "success": "ગિટહબ સાથે સફળતાપૂર્વક કનેક્ટ થયું!",
+      "error": {
+        "invalidParams": "અમાન્ય સ્થાપન પરિમાણો",
+        "installationFailed": "ઇન્સ્ટોલેશન નિષ્ફળ થયું"
+      }
+    }
+  },
+  "terminal": {
+    "title": "ટર્મિનલ",
+    "shortcut": "⌘જે",
+    "close": "ટર્મિનલ બંધ કરો",
+    "newTab": "નવું ટેબ"
+  },
+  "extensions": {
+    "title": "એક્સ્ટેન્શન્સ",
+    "subtitle": "બોઈલરપ્લેટ છોડો, સેકન્ડોમાં તમારા સર્વર સેટઅપને દૂર કરો",
+    "exploreExtensions": "એક્સટેન્શન હબનું અન્વેષણ કરો",
+    "exploreExtensionsTitle": "એક્સ્ટેન્શન્સનું અન્વેષણ કરો",
+    "install": "ઇન્સ્ટોલ કરો",
+    "run": "ચલાવો",
+    "viewDetails": "વિગતો જુઓ",
+    "madeBy": "દ્વારા કરવામાં આવેલ છે",
+    "beta": "બેટા",
+    "searchPlaceholder": "એક્સ્ટેન્શન્સ શોધો...",
+    "sortBy": "દ્વારા સૉર્ટ કરો",
+    "sortOptions": {
+      "name": "નામ",
+      "popularity": "લોકપ્રિયતા",
+      "recent": "તાજેતરના",
+      "rating": "રેટિંગ"
+    },
+    "noExtensions": "કોઈ એક્સટેન્શન મળ્યું નથી",
+    "noVariables": "આ એક્સ્ટેંશનમાં કોઈ ઇનપુટ નથી",
+    "loading": "એક્સ્ટેંશન લોડ કરી રહ્યું છે...",
+    "error": "એક્સ્ટેંશન લોડ કરવામાં નિષ્ફળ",
+    "fork": "કાંટો",
+    "forkSuccess": "એક્સ્ટેંશન સફળતાપૂર્વક ફોર્ક કર્યું",
+    "forkFailed": "એક્સ્ટેંશન ફોર્ક કરવામાં નિષ્ફળ",
+    "type": "પ્રકાર",
+    "category": "શ્રેણી",
+    "execution": "અમલ",
+    "runSteps": "પગલાંઓ ચલાવો",
+    "validateSteps": "પગલાંઓ માન્ય કરો",
+    "forkYaml": "વાયએમએલ (વૈકલ્પિક)",
+    "remove": "દૂર કરો",
+    "deleteSuccess": "એક્સ્ટેંશન દૂર કર્યું",
+    "deleteFailed": "એક્સ્ટેંશન દૂર કરવામાં નિષ્ફળ",
+    "confirmDeleteTitle": "કાંટો કાઢી નાખીએ?",
+    "confirmDeleteMessage": "આ તમારા ફોર્ક્ડ એક્સ્ટેંશનને દૂર કરશે. આ ક્રિયા પૂર્વવત્ કરી શકાતી નથી.",
+    "overview": "વિહંગાવલોકન",
+    "logs": "લોગ્સ",
+    "executions": "ફાંસીની",
+    "executionId": "એક્ઝેક્યુશન આઈડી",
+    "status": "સ્થિતિ",
+    "startedAt": "ખાતે શરૂ",
+    "completedAt": "ખાતે પૂર્ણ",
+    "noExecutions": "હજુ સુધી કોઈ ફાંસી નથી.",
+    "variables": "ચલો",
+    "logsEmpty": "એક્ઝેક્યુશન લૉગ ઉપલબ્ધ હશે ત્યારે અહીં દેખાશે."
+  },
+  "navigation": {
+    "dashboard": "ડેશબોર્ડ",
+    "selfHost": "સ્વ યજમાન",
+    "fileManager": "ફાઇલ મેનેજર",
+    "extensions": "એક્સ્ટેન્શન્સ",
+    "settings": "સેટિંગ્સ",
+    "general": "જનરલ",
+    "notifications": "સૂચનાઓ",
+    "team": "ટીમ",
+    "domains": "ડોમેન્સ",
+    "update": "અપડેટ કરો",
+    "containers": "કન્ટેનર"
+  },
+  "layout": {
+    "breadcrumbs": {
+      "home": "ઘર",
+      "dashboard": "ડેશબોર્ડ",
+      "selfHost": "સ્વ યજમાન",
+      "fileManager": "ફાઇલ મેનેજર",
+      "settings": "સેટિંગ્સ",
+      "general": "જનરલ",
+      "notifications": "સૂચનાઓ",
+      "team": "ટીમ",
+      "domains": "ડોમેન્સ"
+    },
+    "terminal": {
+      "togglePosition": "ટર્મિનલ પોઝિશન ટૉગલ કરો (કન્ટ્રોલ+ટી)"
+    }
+  },
+  "user": {
+    "menu": {
+      "sponsor": "સ્પોન્સર",
+      "help": "મદદ",
+      "reportIssue": "સમસ્યાની જાણ કરો",
+      "logout": "લોગ આઉટ કરો"
+    }
+  },
+  "toasts": {
+    "success": {
+      "uploadFile": "ફાઇલ સફળતાપૂર્વક અપલોડ થઈ",
+      "copyFile": "ફાઇલ સફળતાપૂર્વક કૉપિ કરી"
+    },
+    "errors": {
+      "realtimeMonitor": "રીયલટાઇમ મોનિટર સેવા સાથે કનેક્ટ કરવામાં ભૂલ",
+      "setFileToCopy": "કૉપિ કરવા માટે ફાઇલ સેટ કરવામાં ભૂલ",
+      "moveFile": "ફાઇલ ખસેડવામાં ભૂલ",
+      "copyFile": "ફાઇલની નકલ કરવામાં ભૂલ",
+      "renameFile": "ફાઇલનું નામ બદલવામાં ભૂલ",
+      "startRenaming": "નામ બદલવાની શરૂઆત કરવામાં ભૂલ",
+      "navigateToFile": "ફાઇલ પર નેવિગેટ કરવામાં ભૂલ",
+      "createNewFolder": "નવું ફોલ્ડર બનાવવામાં ભૂલ",
+      "createDirectory": "ડિરેક્ટરી બનાવવામાં ભૂલ",
+      "uploadFile": "ફાઇલ અપલોડ કરવામાં નિષ્ફળ",
+      "deleteFile": "ફાઇલ કાઢી નાખવામાં ભૂલ",
+      "calculateSize": "કદની ગણતરી કરવામાં ભૂલ",
+      "setEmail": "ઇમેઇલ સેટ કરવામાં ભૂલ",
+      "setPassword": "પાસવર્ડ સેટ કરવામાં ભૂલ"
+    }
+  }
+}

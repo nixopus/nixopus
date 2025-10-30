@@ -745,7 +745,8 @@
     "es": "Español",
     "fr": "Francés",
     "kn": "Canarés",
-    "ml": "Malayalam"
+    "ml": "Malayalam",
+    "gu": "Gujarati"
   },
   "dashboard": {
     "title": "Panel de control",
