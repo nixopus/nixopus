@@ -46,6 +46,12 @@ variables:
     default: "redisinsight-data"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for RedisInsight (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull RedisInsight image"
@@ -68,6 +74,14 @@ execution:
         volumes:
           - "{{ data_volume_name }}:/data"
       timeout: 180
+
+    - name: "Add proxy for RedisInsight"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check HTTP response from RedisInsight"

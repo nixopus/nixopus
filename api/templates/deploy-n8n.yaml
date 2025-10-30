@@ -52,6 +52,12 @@ variables:
     default: "UTC"
     is_required: false
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for n8n (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Remove existing n8n container if present"
@@ -84,6 +90,14 @@ execution:
           - "TZ={{ timezone }}"
         restart: "unless-stopped"
       timeout: 120
+
+    - name: "Add proxy for n8n"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check n8n web interface is accessible"

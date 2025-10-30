@@ -64,6 +64,12 @@ variables:
     default: "admin"
     is_required: false
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Gotify (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Remove existing Gotify container if present"
@@ -96,6 +102,14 @@ execution:
           - "GOTIFY_DEFAULTUSER_PASS={{ default_password }}"
         restart: "unless-stopped"
       timeout: 120
+
+    - name: "Add proxy for Gotify"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
 
   validate:
     - name: "Check Gotify web interface is accessible"

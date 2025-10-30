@@ -66,6 +66,12 @@ variables:
     default: "admin"
     is_required: true
 
+  proxy_domain:
+    type: "string"
+    description: "Domain name for AList (optional)"
+    default: ""
+    is_required: false
+
 execution:
   run:
     - name: "Pull AList image"
@@ -97,4 +103,12 @@ execution:
       type: "command"
       properties:
         cmd: "docker exec {{ container_name }} ./alist admin set {{ admin_password }}"
+      timeout: 30
+
+    - name: "Add proxy for AList"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
       timeout: 30
