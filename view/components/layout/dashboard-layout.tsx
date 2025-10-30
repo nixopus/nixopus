@@ -26,6 +26,7 @@ import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { ModeToggler } from '@/components/ui/theme-toggler';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
 import { TopbarWidgets } from './topbar-widgets';
+import { ServerSelector } from './server-selector';
 
 enum TERMINAL_POSITION {
   BOTTOM = 'bottom',
@@ -98,6 +99,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <div className="flex items-center gap-4">
               <TopbarWidgets />
+              <RBACGuard resource="server" action="update" loadingFallback={null}>
+                <ServerSelector />
+              </RBACGuard>
               <Button
                 variant="outline"
                 size="icon"

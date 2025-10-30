@@ -95,6 +95,146 @@
       "none": "<none>"
     }
   },
+  "servers": {
+    "page": {
+      "title": "Servers",
+      "description": "Manage your server connections",
+      "error": "Failed to load servers. Please try again."
+    },
+    "table": {
+      "headers": {
+        "name": "Name",
+        "host": "Host",
+        "port": "Port",
+        "username": "Username",
+        "created": "Created"
+      },
+      "search": {
+        "placeholder": "Search servers..."
+      },
+      "sort": {
+        "placeholder": "Sort servers",
+        "name_asc": "Name (A-Z)",
+        "name_desc": "Name (Z-A)",
+        "host_asc": "Host (A-Z)",
+        "host_desc": "Host (Z-A)",
+        "port_asc": "Port (Low-High)",
+        "port_desc": "Port (High-Low)",
+        "username_asc": "Username (A-Z)",
+        "username_desc": "Username (Z-A)",
+        "created_newest": "Created (Newest)",
+        "created_oldest": "Created (Oldest)"
+      },
+      "pagination": {
+        "itemsPerPage": "Items per page:"
+      },
+      "empty": {
+        "noServers": {
+          "title": "No servers",
+          "description": "Get started by creating your first server."
+        },
+        "noResults": {
+          "title": "No servers found",
+          "description": "Try adjusting your search terms or filters."
+        }
+      }
+    },
+    "create": {
+      "button": "Add Server",
+      "dialog": {
+        "title": {
+          "add": "Add New Server",
+          "update": "Update Server"
+        },
+        "description": "Configure your server connection details. Choose either password or private key authentication.",
+        "fields": {
+          "name": {
+            "label": "Server Name",
+            "placeholder": "My Production Server"
+          },
+          "description": {
+            "label": "Description (Optional)",
+            "placeholder": "Short Details to identify this server"
+          },
+          "host": {
+            "label": "Host",
+            "placeholder": "192.168.1.100 or server.com"
+          },
+          "port": {
+            "label": "Port",
+            "placeholder": "22"
+          },
+          "username": {
+            "label": "Username",
+            "placeholder": "root"
+          },
+          "authMethod": {
+            "label": "Authentication Method",
+            "password": "Password",
+            "privateKey": "Private Key"
+          },
+          "sshPassword": {
+            "label": "SSH Password",
+            "placeholder": "Your SSH password"
+          },
+          "privateKeyPath": {
+            "label": "Private Key Path",
+            "placeholder": "/path/to/private/key"
+          }
+        },
+        "validation": {
+          "nameRequired": "Server name must be at least 2 characters",
+          "nameMaxLength": "Server name must be less than 255 characters",
+          "descriptionMaxLength": "Description must be less than 500 characters",
+          "hostRequired": "Host is required",
+          "invalidHost": "Invalid IP address or hostname",
+          "portRange": "Port must be between 1 and 65535",
+          "usernameRequired": "Username is required",
+          "usernameInvalid": "Username can only contain alphanumeric characters, hyphens, and underscores",
+          "authRequired": "Either SSH password or private key path is required"
+        },
+        "buttons": {
+          "cancel": "Cancel",
+          "create": "Create Server",
+          "creating": "Creating...",
+          "update": "Update Server",
+          "updating": "Updating..."
+        }
+      }
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleting": "Deleting..."
+    },
+    "delete": {
+      "dialog": {
+        "title": "Delete Server",
+        "description": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+        "buttons": {
+          "delete": "Delete",
+          "deleting": "Deleting..."
+        }
+      }
+    },
+    "selector": {
+      "placeholder": "Select server",
+      "default": "Default",
+      "status": {
+        "active": "Active",
+        "maintenance": "Maintenance",
+        "inactive": "Inactive"
+      }
+    },
+    "messages": {
+      "createSuccess": "Server created successfully",
+      "createError": "Failed to create server",
+      "updateSuccess": "Server updated successfully",
+      "updateError": "Failed to update server",
+      "deleteSuccess": "Server deleted successfully",
+      "deleteError": "Failed to delete server"
+    }
+  },
   "auth": {
     "login": {
       "title": "Welcome back",

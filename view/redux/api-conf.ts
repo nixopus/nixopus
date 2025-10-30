@@ -140,3 +140,11 @@ export enum EXTENSIONURLS {
   LIST_EXECUTIONS = 'v1/extensions/by-extension-id/{extension_id}/executions',
   GET_EXECUTION_LOGS = 'v1/extensions/execution/{execution_id}/logs'
 }
+
+export enum SERVER_SETTINGS {
+  CREATE_SERVER = 'v1/server',
+  GET_SERVERS = 'v1/servers',
+  UPDATE_SERVER = 'v1/server',
+  UPDATE_SERVER_STATUS = 'v1/server/status',
+  DELETE_SERVER = 'v1/server'
+}
