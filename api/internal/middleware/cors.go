@@ -46,10 +46,10 @@ func CorsMiddleware(next http.Handler) http.Handler {
 		}
 
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
-		w.Header().Set("Access-Control-Expose-Headers", "Authorization, X-Organization-Id")
+		w.Header().Set("Access-Control-Expose-Headers", "Authorization, X-Organization-Id, X-Server-Id")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Access-Control-Max-Age", "300")
-		headers := []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Organization-Id"}
+		headers := []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Organization-Id", "X-Server-Id"}
 		supertokensHeaders := supertokens.GetAllCORSHeaders()
 		w.Header().Set("Access-Control-Allow-Headers", strings.Join(append(headers, supertokensHeaders...), ","))
 
