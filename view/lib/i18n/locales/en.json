@@ -1541,7 +1541,8 @@
     "team": "Team",
     "domains": "Domains",
     "update": "Update",
-    "containers": "Containers"
+    "containers": "Containers",
+    "servers": "Servers"
   },
   "layout": {
     "breadcrumbs": {
@@ -1553,7 +1554,8 @@
       "general": "General",
       "notifications": "Notifications",
       "team": "Team",
-      "domains": "Domains"
+      "domains": "Domains",
+      "servers": "Servers"
     },
     "terminal": {
       "togglePosition": "Toggle Terminal Position (Ctrl+T)"

@@ -1493,6 +1493,7 @@
     "team": "Equipo",
     "domains": "Dominios",
     "containers": "Contenedores",
+    "servers": "Servidores",
     "layout": {
       "breadcrumbs": {
         "home": "Inicio",
@@ -1505,7 +1506,8 @@
         "team": "Equipo",
         "domains": "Dominios",
         "update": "Actualizar",
-        "containers": "Contenedores"
+        "containers": "Contenedores",
+        "servers": "Servidores"
       },
       "terminal": {
         "togglePosition": "Cambiar Posición del Terminal (Ctrl+T)"

@@ -1488,7 +1488,8 @@
     "team": "ತಂಡ",
     "domains": "ಡೊಮೇನ್‌ಗಳು",
     "update": "ಅಪ್ಡೇಟ್",
-    "containers": "ಕಂಟೇನರ್ಗಳು"
+    "containers": "ಕಂಟೇನರ್ಗಳು",
+    "servers": "ಸರ್ವರ್ಗಳು"
   },
   "layout": {
     "breadcrumbs": {
@@ -1500,7 +1501,8 @@
       "general": "ಸಾಮಾನ್ಯ",
       "notifications": "ಅಧಿಸೂಚನೆಗಳು",
       "team": "ತಂಡ",
-      "domains": "ಡೊಮೇನ್‌ಗಳು"
+      "domains": "ಡೊಮೇನ್‌ಗಳು",
+      "servers": "ಸರ್ವರ್ಗಳು"
     },
     "terminal": {
       "togglePosition": "ಟರ್ಮಿನಲ್ ಸ್ಥಾನವನ್ನು ಟಾಗಲ್ ಮಾಡಿ (Ctrl+T)"

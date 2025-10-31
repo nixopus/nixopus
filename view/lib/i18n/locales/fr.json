@@ -1489,7 +1489,8 @@
     "team": "Équipe",
     "domains": "Domaines",
     "update": "Mettre à jour",
-    "containers": "Conteneurs"
+    "containers": "Conteneurs",
+    "servers": "Serveurs"
   },
   "layout": {
     "breadcrumbs": {
@@ -1501,7 +1502,8 @@
       "general": "Général",
       "notifications": "Notifications",
       "team": "Équipe",
-      "domains": "Domaines"
+      "domains": "Domaines",
+      "servers": "Serveurs"
     },
     "terminal": {
       "togglePosition": "Basculer la Position du Terminal (Ctrl+T)"

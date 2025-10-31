@@ -10,6 +10,8 @@ import PaginationWrapper from '@/components/ui/pagination';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { DataTable } from '@/components/ui/data-table';
 import useServersTable from '@/app/settings/servers/hooks/use-servers-table';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import CreateServerDialog from '@/app/settings/servers/components/create-server';
 
 interface ServersTableProps {
   servers: Server[];
@@ -18,9 +20,11 @@ interface ServersTableProps {
   queryParams: GetServersRequest;
   onQueryChange: (params: Partial<GetServersRequest>) => void;
   onEditServer: (server: Server) => void;
+  createDialogOpen: boolean;
+  setCreateDialogOpen: (open: boolean) => void;
 }
 
-function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChange, onEditServer }: ServersTableProps) {
+function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChange, onEditServer, createDialogOpen, setCreateDialogOpen }: ServersTableProps) {
   const { t } = useTranslation();
   const {
     columns,
@@ -50,7 +54,7 @@ function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChan
         sortConfig={headerSortConfig as any}
         onSortChange={handleSortChange}
         sortOptions={sortOptions}
-        label={t('servers.table.search.placeholder')}
+        label={t('servers.page.title')}
         searchPlaceHolder={t('servers.table.search.placeholder')}
       >
         <div className="flex items-center gap-2">
@@ -66,6 +70,12 @@ function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChan
             ]}
             className="w-[90px]"
           />
+                <ResourceGuard resource="server" action="create">
+            <CreateServerDialog
+              open={createDialogOpen}
+              setOpen={setCreateDialogOpen}
+            />
+          </ResourceGuard>
         </div>
       </DahboardUtilityHeader>
 

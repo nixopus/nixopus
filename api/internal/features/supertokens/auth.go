@@ -150,6 +150,11 @@ func Init(appInstance *storage.App) {
 	if seedErr := seedDefaultRolesAndPermissions(); seedErr != nil {
 		log.Printf("Failed to seed roles and permissions via SuperTokens: %v", seedErr)
 	}
+
+	// Ensure any existing roles  are updated with newly added permissions
+	if syncErr := syncExistingRolesPermissions(); syncErr != nil {
+		log.Printf("Failed to sync existing SuperTokens roles with latest permissions: %v", syncErr)
+	}
 }
 
 // addRolesAndPermissionsToSession fetches and sets the user's roles and permissions claims in the session
@@ -401,4 +406,56 @@ func GetRolesAndPermissionsForUserInOrganization(userId, organizationId string) 
 	}
 
 	return orgRoles, allPermissions, nil
+}
+
+// syncExistingRolesPermissions updates global and organization scoped roles to include any newly added permissions
+func syncExistingRolesPermissions() error {
+	rolesResponse, err := userroles.GetAllRoles(nil)
+	if err != nil {
+		return err
+	}
+
+	for _, roleName := range rolesResponse.OK.Roles {
+		if roleName == "admin" {
+			if _, err := userroles.CreateNewRoleOrAddPermissions(roleName, GetAdminPermissions(), nil); err != nil {
+				log.Printf("sync roles: failed updating %s: %v", roleName, err)
+			}
+			continue
+		}
+		if roleName == "member" {
+			if _, err := userroles.CreateNewRoleOrAddPermissions(roleName, GetMemberPermissions(), nil); err != nil {
+				log.Printf("sync roles: failed updating %s: %v", roleName, err)
+			}
+			continue
+		}
+		if roleName == "viewer" {
+			if _, err := userroles.CreateNewRoleOrAddPermissions(roleName, GetViewerPermissions(), nil); err != nil {
+				log.Printf("sync roles: failed updating %s: %v", roleName, err)
+			}
+			continue
+		}
+
+		if strings.HasPrefix(roleName, "orgid_") {
+			if strings.HasSuffix(roleName, "_admin") {
+				if _, err := userroles.CreateNewRoleOrAddPermissions(roleName, GetAdminPermissions(), nil); err != nil {
+					log.Printf("sync roles: failed updating %s: %v", roleName, err)
+				}
+				continue
+			}
+			if strings.HasSuffix(roleName, "_member") {
+				if _, err := userroles.CreateNewRoleOrAddPermissions(roleName, GetMemberPermissions(), nil); err != nil {
+					log.Printf("sync roles: failed updating %s: %v", roleName, err)
+				}
+				continue
+			}
+			if strings.HasSuffix(roleName, "_viewer") {
+				if _, err := userroles.CreateNewRoleOrAddPermissions(roleName, GetViewerPermissions(), nil); err != nil {
+					log.Printf("sync roles: failed updating %s: %v", roleName, err)
+				}
+				continue
+			}
+		}
+	}
+
+	return nil
 }

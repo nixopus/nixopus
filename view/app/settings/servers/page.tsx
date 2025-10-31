@@ -28,31 +28,12 @@ function Page() {
 
   return (
     <>
-    <div className="container mx-auto py-6 space-y-8 max-w-4xl">
-      <DashboardPageHeader
-        label="Server Settings"
-        description="Manage your servers and their configurations"
-      />
-    </div>
     <ResourceGuard
       resource="server"
       action="read"
       loadingFallback={<Skeleton className="h-96" />}
     >
       <div className="container mx-auto py-6 space-y-8 max-w-6xl">
-        <div className="flex justify-between items-center">
-          <DashboardPageHeader
-            label={t('servers.page.title')}
-            description={t('servers.page.description')}
-          />
-          <ResourceGuard resource="server" action="create">
-            <CreateServerDialog
-              open={createDialogOpen}
-              setOpen={setCreateDialogOpen}
-            />
-          </ResourceGuard>
-        </div>
-
         <div className="space-y-6">
           {error ? (
             <div className="text-center py-12">
@@ -64,6 +45,8 @@ function Page() {
               pagination={serverResponse?.pagination}
               isLoading={isLoading}
               queryParams={queryParams}
+              createDialogOpen={createDialogOpen}
+              setCreateDialogOpen={setCreateDialogOpen}
               onQueryChange={handleQueryChange}
               onEditServer={handleEditServer}
             />

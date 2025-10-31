@@ -1400,7 +1400,8 @@
     "team": "ടീം",
     "domains": "ഡൊമെയിനുകൾ",
     "update": "അപ്‌ഡേറ്റ്",
-    "containers": "കണ്ടെയ്‌നറുകൾ"
+    "containers": "കണ്ടെയ്‌നറുകൾ",
+    "servers": "സർവരുകൾ"
   },
   "layout": {
     "breadcrumbs": {
@@ -1412,7 +1413,8 @@
       "general": "ജനറൽ",
       "notifications": "അറിയിപ്പുകൾ",
       "team": "ടീം",
-      "domains": "ഡൊമെയിനുകൾ"
+      "domains": "ഡൊമെയിനുകൾ",
+      "servers": "സർവരുകൾ"
     },
     "terminal": {
       "togglePosition": "ടെർമിനൽ സ്ഥാനം മാറ്റുക (Ctrl+T)"

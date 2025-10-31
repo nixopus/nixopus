@@ -304,6 +304,7 @@ func (router *Router) Routes() {
 		return middleware.AuditMiddleware(next, router.app, l, "server")
 	})
 	router.ServerRoutes(serverGroup, serversController)
+	router.ServersRoutes(serversAllGroup, serversController)
 
 	log.Printf("Server starting on port %s", PORT)
 	log.Printf("Swagger UI available at: http://localhost:%s/swagger/", PORT)
