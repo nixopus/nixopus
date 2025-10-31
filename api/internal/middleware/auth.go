@@ -2,14 +2,15 @@ package middleware
 
 import (
 	"context"
+	"net/http"
+	"strings"
+
 	"github.com/raghavyuva/nixopus-api/internal/cache"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 	"github.com/supertokens/supertokens-golang/recipe/session"
-	"net/http"
-	"strings"
 )
 
 // AuthMiddleware is a middleware that checks if the request has a valid
@@ -94,6 +95,23 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 			}
 
 			ctx = context.WithValue(ctx, types.OrganizationIDKey, organizationID)
+
+			// Handle X-Server-Id header if present (multi server setups)
+			serverID := r.Header.Get("X-Server-Id")
+			if serverID != "" {
+				server, err := utils.ValidateServerAccess(app.Store.DB, ctx, user.ID.String(), serverID)
+				if err != nil {
+					utils.SendErrorResponse(w, "Error verifying server access", http.StatusForbidden)
+					return
+				}
+
+				if server == nil {
+					utils.SendErrorResponse(w, "Server not found", http.StatusNotFound)
+					return
+				}
+
+				ctx = context.WithValue(ctx, types.ServerIDKey, server)
+			}
 		}
 
 		r = r.WithContext(ctx)

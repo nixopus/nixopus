@@ -39,6 +39,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/realtime"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	api "github.com/raghavyuva/nixopus-api/internal/version-manager"
+	serverController "github.com/raghavyuva/nixopus-api/internal/features/servers/controller"
 )
 
 type Router struct {
@@ -277,6 +278,33 @@ func (router *Router) Routes() {
 	})
 	router.ExtensionRoutes(extensionGroup, extensionController)
 
+
+	serversController := serverController.NewServersController(router.app.Store, router.app.Ctx, l, notificationManager)
+	serverGroup := fuego.Group(server, apiV1.Path+"/server")
+	serversAllGroup := fuego.Group(server, apiV1.Path+"/servers")
+	fuego.Use(serverGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "server")
+	})
+	fuego.Use(serversAllGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "server")
+	})
+	fuego.Use(serverGroup, func(next http.Handler) http.Handler {
+		return middleware.FeatureFlagMiddleware(next, router.app, "server", router.cache)
+	})
+	fuego.Use(serversAllGroup, func(next http.Handler) http.Handler {
+		return middleware.FeatureFlagMiddleware(next, router.app, "server", router.cache)
+	})
+	fuego.Use(serverGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "server")
+	})
+	fuego.Use(serversAllGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "server")
+	})
+	fuego.Use(serversAllGroup, func(next http.Handler) http.Handler {
+		return middleware.AuditMiddleware(next, router.app, l, "server")
+	})
+	router.ServerRoutes(serverGroup, serversController)
+
 	log.Printf("Server starting on port %s", PORT)
 	log.Printf("Swagger UI available at: http://localhost:%s/swagger/", PORT)
 	server.Run()
@@ -452,4 +480,16 @@ func (router *Router) OrganizationRoutes(f *fuego.Server, organizationController
 	fuego.Get(f, "/all", organizationController.GetOrganizations)
 	fuego.Post(f, "/invite/send", organizationController.SendInvite)
 	fuego.Post(f, "/invite/resend", organizationController.ResendInvite)
+}
+
+func (router *Router) ServerRoutes(s *fuego.Server, serverController *serverController.ServersController) {
+	fuego.Post(s, "", serverController.CreateServer)
+	fuego.Get(s, "", serverController.GetServer)
+	fuego.Put(s, "", serverController.UpdateServer)
+	fuego.Patch(s, "/status", serverController.UpdateServerStatus)
+	fuego.Delete(s, "", serverController.DeleteServer)
+}
+
+func (router *Router) ServersRoutes(s *fuego.Server, serverController *serverController.ServersController) {
+	fuego.Get(s, "", serverController.GetServers)
 }
