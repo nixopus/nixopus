@@ -95,6 +95,146 @@
       "none": "<aucun>"
     }
   },
+  "servers": {
+    "page": {
+      "title": "Serveurs",
+      "description": "Gérez vos connexions serveur",
+      "error": "Échec du chargement des serveurs. Veuillez réessayer."
+    },
+    "table": {
+      "headers": {
+        "name": "Nom",
+        "host": "Hôte",
+        "port": "Port",
+        "username": "Nom d'utilisateur",
+        "created": "Créé"
+      },
+      "search": {
+        "placeholder": "Rechercher des serveurs..."
+      },
+      "sort": {
+        "placeholder": "Trier les serveurs",
+        "name_asc": "Nom (A-Z)",
+        "name_desc": "Nom (Z-A)",
+        "host_asc": "Hôte (A-Z)",
+        "host_desc": "Hôte (Z-A)",
+        "port_asc": "Port (Bas-Haut)",
+        "port_desc": "Port (Haut-Bas)",
+        "username_asc": "Nom d'utilisateur (A-Z)",
+        "username_desc": "Nom d'utilisateur (Z-A)",
+        "created_newest": "Créé (Plus récent)",
+        "created_oldest": "Créé (Plus ancien)"
+      },
+      "pagination": {
+        "itemsPerPage": "Éléments par page :"
+      },
+      "empty": {
+        "noServers": {
+          "title": "Aucun serveur",
+          "description": "Commencez par créer votre premier serveur."
+        },
+        "noResults": {
+          "title": "Aucun serveur trouvé",
+          "description": "Essayez d'ajuster vos termes de recherche ou filtres."
+        }
+      }
+    },
+    "create": {
+      "button": "Ajouter un Serveur",
+      "dialog": {
+        "title": {
+          "add": "Ajouter un Nouveau Serveur",
+          "update": "Mettre à jour le Serveur"
+        },
+        "description": "Configurez les détails de connexion de votre serveur. Choisissez entre l'authentification par mot de passe ou clé privée.",
+        "fields": {
+          "name": {
+            "label": "Nom du Serveur",
+            "placeholder": "Mon Serveur de Production"
+          },
+          "description": {
+            "label": "Description (Optionnel)",
+            "placeholder": "Détails courts pour identifier ce serveur"
+          },
+          "host": {
+            "label": "Hôte",
+            "placeholder": "192.168.1.100 ou serveur.com"
+          },
+          "port": {
+            "label": "Port",
+            "placeholder": "22"
+          },
+          "username": {
+            "label": "Nom d'utilisateur",
+            "placeholder": "root"
+          },
+          "authMethod": {
+            "label": "Méthode d'Authentification",
+            "password": "Mot de passe",
+            "privateKey": "Clé Privée"
+          },
+          "sshPassword": {
+            "label": "Mot de passe SSH",
+            "placeholder": "Votre mot de passe SSH"
+          },
+          "privateKeyPath": {
+            "label": "Chemin de la Clé Privée",
+            "placeholder": "/chemin/vers/clé/privée"
+          }
+        },
+        "validation": {
+          "nameRequired": "Le nom du serveur doit contenir au moins 2 caractères",
+          "nameMaxLength": "Le nom du serveur doit contenir moins de 255 caractères",
+          "descriptionMaxLength": "La description doit contenir moins de 500 caractères",
+          "hostRequired": "L'hôte est requis",
+          "invalidHost": "Adresse IP ou nom d'hôte invalide",
+          "portRange": "Le port doit être entre 1 et 65535",
+          "usernameRequired": "Le nom d'utilisateur est requis",
+          "usernameInvalid": "Le nom d'utilisateur ne peut contenir que des caractères alphanumériques, des tirets et des tirets bas",
+          "authRequired": "Mot de passe SSH ou chemin de clé privée requis"
+        },
+        "buttons": {
+          "cancel": "Annuler",
+          "create": "Créer le Serveur",
+          "creating": "Création en cours...",
+          "update": "Mettre à jour le Serveur",
+          "updating": "Mise à jour en cours..."
+        }
+      }
+    },
+    "actions": {
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "deleting": "Suppression en cours..."
+    },
+    "delete": {
+      "dialog": {
+        "title": "Supprimer le Serveur",
+        "description": "Êtes-vous sûr de vouloir supprimer \"{name}\" ? Cette action ne peut pas être annulée.",
+        "buttons": {
+          "delete": "Supprimer",
+          "deleting": "Suppression en cours..."
+        }
+      }
+    },
+    "selector": {
+      "placeholder": "Sélectionner un serveur",
+      "default": "Par défaut",
+      "status": {
+        "active": "Actif",
+        "maintenance": "Maintenance",
+        "inactive": "Inactif"
+      }
+    },
+    "messages": {
+      "createSuccess": "Serveur créé avec succès",
+      "createError": "Échec de la création du serveur",
+      "updateSuccess": "Serveur mis à jour avec succès",
+      "updateError": "Échec de la mise à jour du serveur",
+      "deleteSuccess": "Serveur supprimé avec succès",
+      "deleteError": "Échec de la suppression du serveur"
+    }
+  },
   "auth": {
     "login": {
       "title": "Bienvenue",

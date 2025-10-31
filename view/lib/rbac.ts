@@ -19,7 +19,8 @@ export type Resource =
   | 'container'
   | 'terminal'
   | 'update'
-  | 'extensions';
+  | 'extensions'
+  | 'server';
 
 export type Action = 'create' | 'read' | 'update' | 'delete';
 

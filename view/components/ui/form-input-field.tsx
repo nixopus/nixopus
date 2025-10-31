@@ -16,6 +16,8 @@ interface FormInputFieldProps {
   description?: string;
   placeholder?: string;
   required?: boolean;
+  type?: string;
+  onValueChange?: (value: string) => unknown;
   validator?: (value: string) => boolean;
 }
 
@@ -26,6 +28,8 @@ function FormInputField({
   description,
   placeholder,
   required = true,
+  type = 'text',
+  onValueChange,
   validator
 }: FormInputFieldProps) {
   return (
@@ -52,7 +56,16 @@ function FormInputField({
               </span>
             </div>
             <FormControl>
-              <Input placeholder={placeholder} {...field} />
+              <Input
+                type={type}
+                placeholder={placeholder}
+                {...field}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const transformed = onValueChange ? onValueChange(value) : value;
+                  field.onChange(transformed);
+                }}
+              />
             </FormControl>
             {description && <FormDescription>{description}</FormDescription>}
             <FormMessage />

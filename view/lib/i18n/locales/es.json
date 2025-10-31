@@ -94,6 +94,146 @@
       "none": "<ninguno>"
     }
   },
+  "servers": {
+    "page": {
+      "title": "Servidores",
+      "description": "Administra las conexiones de tus servidores",
+      "error": "Error al cargar los servidores. Por favor, inténtalo de nuevo."
+    },
+    "table": {
+      "headers": {
+        "name": "Nombre",
+        "host": "Host",
+        "port": "Puerto",
+        "username": "Usuario",
+        "created": "Creado"
+      },
+      "search": {
+        "placeholder": "Buscar servidores..."
+      },
+      "sort": {
+        "placeholder": "Ordenar servidores",
+        "name_asc": "Nombre (A-Z)",
+        "name_desc": "Nombre (Z-A)",
+        "host_asc": "Host (A-Z)",
+        "host_desc": "Host (Z-A)",
+        "port_asc": "Puerto (Bajo-Alto)",
+        "port_desc": "Puerto (Alto-Bajo)",
+        "username_asc": "Usuario (A-Z)",
+        "username_desc": "Usuario (Z-A)",
+        "created_newest": "Creado (Más reciente)",
+        "created_oldest": "Creado (Más antiguo)"
+      },
+      "pagination": {
+        "itemsPerPage": "Elementos por página:"
+      },
+      "empty": {
+        "noServers": {
+          "title": "No hay servidores",
+          "description": "Comienza creando tu primer servidor."
+        },
+        "noResults": {
+          "title": "No se encontraron servidores",
+          "description": "Intenta ajustar tus términos de búsqueda o filtros."
+        }
+      }
+    },
+    "create": {
+      "button": "Agregar Servidor",
+      "dialog": {
+        "title": {
+          "add": "Agregar Nuevo Servidor",
+          "update": "Actualizar Servidor"
+        },
+        "description": "Configura los detalles de conexión de tu servidor. Elige entre autenticación por contraseña o clave privada.",
+        "fields": {
+          "name": {
+            "label": "Nombre del Servidor",
+            "placeholder": "Mi Servidor de Producción"
+          },
+          "description": {
+            "label": "Descripción (Opcional)",
+            "placeholder": "Detalles breves para identificar este servidor"
+          },
+          "host": {
+            "label": "Host",
+            "placeholder": "192.168.1.100 o servidor.com"
+          },
+          "port": {
+            "label": "Puerto",
+            "placeholder": "22"
+          },
+          "username": {
+            "label": "Usuario",
+            "placeholder": "root"
+          },
+          "authMethod": {
+            "label": "Método de Autenticación",
+            "password": "Contraseña",
+            "privateKey": "Clave Privada"
+          },
+          "sshPassword": {
+            "label": "Contraseña SSH",
+            "placeholder": "Tu contraseña SSH"
+          },
+          "privateKeyPath": {
+            "label": "Ruta de Clave Privada",
+            "placeholder": "/ruta/a/clave/privada"
+          }
+        },
+        "validation": {
+          "nameRequired": "El nombre del servidor debe tener al menos 2 caracteres",
+          "nameMaxLength": "El nombre del servidor debe tener menos de 255 caracteres",
+          "descriptionMaxLength": "La descripción debe tener menos de 500 caracteres",
+          "hostRequired": "El host es requerido",
+          "invalidHost": "Dirección IP o nombre de host inválido",
+          "portRange": "El puerto debe estar entre 1 y 65535",
+          "usernameRequired": "El usuario es requerido",
+          "usernameInvalid": "El usuario solo puede contener caracteres alfanuméricos, guiones y guiones bajos",
+          "authRequired": "Se requiere contraseña SSH o ruta de clave privada"
+        },
+        "buttons": {
+          "cancel": "Cancelar",
+          "create": "Crear Servidor",
+          "creating": "Creando...",
+          "update": "Actualizar Servidor",
+          "updating": "Actualizando..."
+        }
+      }
+    },
+    "actions": {
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "deleting": "Eliminando..."
+    },
+    "delete": {
+      "dialog": {
+        "title": "Eliminar Servidor",
+        "description": "¿Estás seguro de que quieres eliminar \"{name}\"? Esta acción no se puede deshacer.",
+        "buttons": {
+          "delete": "Eliminar",
+          "deleting": "Eliminando..."
+        }
+      }
+    },
+    "selector": {
+      "placeholder": "Seleccionar servidor",
+      "default": "Por defecto",
+      "status": {
+        "active": "Activo",
+        "maintenance": "Mantenimiento",
+        "inactive": "Inactivo"
+      }
+    },
+    "messages": {
+      "createSuccess": "Servidor creado exitosamente",
+      "createError": "Error al crear el servidor",
+      "updateSuccess": "Servidor actualizado exitosamente",
+      "updateError": "Error al actualizar el servidor",
+      "deleteSuccess": "Servidor eliminado exitosamente",
+      "deleteError": "Error al eliminar el servidor"
+    }
+  },
   "auth": {
     "login": {
       "title": "Bienvenido de nuevo",
