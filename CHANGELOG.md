@@ -1,3 +1,21 @@
+# [0.1.0-alpha.56](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.55...v0.1.0-alpha.56) (2025-10-30)
+
+
+### Features
+
+* add extension templates for gotify, n8n, netdata, qdrant, and more ([#545](https://github.com/raghavyuva/nixopus/issues/545)) ([ecb332c](https://github.com/raghavyuva/nixopus/commit/ecb332c51b0f99beff625856f2ff7a7ec4e9d33c))
+
+
+
+# [0.1.0-alpha.55](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.54...v0.1.0-alpha.55) (2025-10-29)
+
+
+### Bug Fixes
+
+* make domain validation less restrictive for extension deployments ([#543](https://github.com/raghavyuva/nixopus/issues/543)) ([72cc971](https://github.com/raghavyuva/nixopus/commit/72cc971f0f8df0897c60b31379090248ec771f74))
+
+
+
 # [0.1.0-alpha.54](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.53...v0.1.0-alpha.54) (2025-10-28)
 
 

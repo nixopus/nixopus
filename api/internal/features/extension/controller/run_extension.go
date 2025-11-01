@@ -52,8 +52,9 @@ func (c *ExtensionsController) CancelExecution(ctx fuego.ContextNoBody) (*types.
 }
 
 type ListLogsResponse struct {
-	Logs      []types.ExtensionLog `json:"logs"`
-	NextAfter int64                `json:"next_after"`
+	Logs            []types.ExtensionLog   `json:"logs"`
+	NextAfter       int64                  `json:"next_after"`
+	ExecutionStatus *types.ExecutionStatus `json:"execution_status,omitempty"`
 }
 
 func (c *ExtensionsController) ListExecutionLogs(ctx fuego.ContextNoBody) (*ListLogsResponse, error) {
@@ -73,7 +74,7 @@ func (c *ExtensionsController) ListExecutionLogs(ctx fuego.ContextNoBody) (*List
 			limit = parsed
 		}
 	}
-	logs, err := c.service.ListExecutionLogs(execID, afterSeq, limit)
+	logs, execStatus, err := c.service.ListExecutionLogs(execID, afterSeq, limit)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
@@ -82,5 +83,9 @@ func (c *ExtensionsController) ListExecutionLogs(ctx fuego.ContextNoBody) (*List
 	if len(logs) > 0 {
 		next = logs[len(logs)-1].Sequence
 	}
-	return &ListLogsResponse{Logs: logs, NextAfter: next}, nil
+	return &ListLogsResponse{
+		Logs:            logs,
+		NextAfter:       next,
+		ExecutionStatus: execStatus,
+	}, nil
 }

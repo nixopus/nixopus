@@ -1,0 +1,119 @@
+metadata:
+  id: "deploy-gotify"
+  name: "Gotify"
+  description: "Gotify is a simple server for sending and receiving messages in real-time, perfect for push notifications and alerts."
+  author: "Nixopus Team"
+  icon: "📨"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Gotify"
+    default: "ghcr.io/gotify/server"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "gotify"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose"
+    default: 80
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port to map"
+    default: 80
+    is_required: true
+
+  data_volume:
+    type: "string"
+    description: "Docker volume name for Gotify persistent data"
+    default: "gotify_data"
+    is_required: true
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "UTC"
+    is_required: false
+
+  default_user:
+    type: "string"
+    description: "Default admin username"
+    default: "admin"
+    is_required: false
+
+  default_password:
+    type: "string"
+    description: "Default admin password"
+    default: "admin"
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Gotify (optional)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing Gotify container if present"
+      type: "command"
+      properties:
+        cmd: "docker rm -f {{ container_name }} || true"
+      timeout: 30
+
+    - name: "Pull Gotify image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Gotify container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ data_volume }}:/app/data"
+        environment:
+          - "TZ={{ timezone }}"
+          - "GOTIFY_DEFAULTUSER_NAME={{ default_user }}"
+          - "GOTIFY_DEFAULTUSER_PASS={{ default_password }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+    - name: "Add proxy for Gotify"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
+
+  validate:
+    - name: "Check Gotify web interface is accessible"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 2; done; exit 1'"
+      timeout: 60
