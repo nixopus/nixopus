@@ -45,6 +45,12 @@ def install_callback(
         "-vd",
         help="The domain where the nixopus view will be accessible (e.g. nixopus.com), if not provided you can use the ip address of the server and the port (e.g. 192.168.1.100:80)",
     ),
+    host_ip: str = typer.Option(
+        None,
+        "--host-ip",
+        "-ip",
+        help="The IP address of the server to use when no domains are provided (e.g. 10.0.0.154 or 192.168.1.100). If not provided, the public IP will be automatically detected.",
+    ),
     repo: str = typer.Option(None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"),
     branch: str = typer.Option(None, "--branch", "-b", help="Git branch to clone (defaults to config value)"),
 ):
@@ -77,6 +83,7 @@ def install_callback(
                 config_file=config_file,
                 api_domain=api_domain,
                 view_domain=view_domain,
+                host_ip=host_ip,
                 repo=repo,
                 branch=branch,
             )
