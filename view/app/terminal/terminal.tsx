@@ -99,7 +99,10 @@ export const Terminal: React.FC<TerminalProps> = ({
 }) => {
   const { t } = useTranslation();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [sessions, setSessions] = useState([{ id: uuidv4(), label: 'Session 1' }]);
+  const [sessions, setSessions] = useState(() => {
+    const id = uuidv4();
+    return [{ id, label: `Session ${id.slice(0, 3)}` }];
+  });
   const [activeSessionId, setActiveSessionId] = useState(sessions[0].id);
   const containerRef = useRef<HTMLDivElement>(null);
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -156,9 +159,10 @@ export const Terminal: React.FC<TerminalProps> = ({
     if (sessions.length >= SESSION_LIMIT) {
       return;
     }
+    const id = uuidv4();
     const newSession = {
-      id: uuidv4(),
-      label: `Session ${sessions.length + 1}`
+      id,
+      label: `Session ${id.slice(0, 3)}`
     };
     setSessions((prev) => [...prev, newSession]);
     setActiveSessionId(newSession.id);
@@ -206,6 +210,7 @@ export const Terminal: React.FC<TerminalProps> = ({
             {sessions.map((session) => (
               <div
                 key={session.id}
+                title={`Terminal ID: ${session.id}`}
                 className={`flex items-center px-2 py-1 rounded-t-md cursor-pointer ${
                   session.id === activeSessionId
                     ? 'bg-[#232323] border border-[#333]'
