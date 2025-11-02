@@ -8,6 +8,11 @@ export type ExtensionCategory =
   | 'Storage'
   | 'Network'
   | 'Development'
+  | 'Media'
+  | 'Game'
+  | 'Utility'
+  | 'Productivity'
+  | 'Social'
   | 'Other';
 
 export type ValidationStatus = 'not_validated' | 'valid' | 'invalid';

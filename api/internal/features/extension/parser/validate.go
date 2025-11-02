@@ -176,7 +176,8 @@ func (p *Parser) isValidCategory(category string) bool {
 	validCategories := []string{
 		"Security", "Containers", "Database", "Web Server",
 		"Maintenance", "Monitoring", "Storage", "Network",
-		"Development", "Other",
+		"Development", "Media", "Game", "Utility", "Productivity", "Other",
+		"Social",
 	}
 	for _, valid := range validCategories {
 		if category == valid {
