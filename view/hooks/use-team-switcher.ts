@@ -10,6 +10,7 @@ import { domainsApi } from '@/redux/services/settings/domainsApi';
 import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorApi';
 import { deployApi } from '@/redux/services/deploy/applicationsApi';
 import { notificationApi } from '@/redux/services/settings/notificationApi';
+import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { UserOrganization } from '@/redux/types/orgs';
 
 const ACTIVE_ORGANIZATION_KEY = 'active_organization';
@@ -49,6 +50,7 @@ function useTeamSwitcher() {
       dispatch(GithubConnectorApi.util.invalidateTags([{ type: 'GithubConnector', id: 'LIST' }]));
       dispatch(deployApi.util.invalidateTags([{ type: 'Deploy', id: 'LIST' }]));
       dispatch(notificationApi.util.invalidateTags([{ type: 'Notification', id: 'LIST' }]));
+      dispatch(FeatureFlagsApi.util.invalidateTags([{ type: 'FeatureFlags', id: 'LIST' }]));
     } catch (error) {
       console.error('Failed to invalidate cache:', error);
     }
