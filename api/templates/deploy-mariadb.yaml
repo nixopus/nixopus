@@ -1,0 +1,135 @@
+metadata:
+  id: "deploy-mariadb"
+  name: "MariaDB"
+  description: "MariaDB is one of the most popular database servers. Made by the original developers of MySQL. Uses mariadb image from linuxserver.io. Note: Changing any MYSQL_ variables after initial setup has no effect - use mysqladmin tool or CLI to make changes. Note: If using MYSQL_DATABASE, MYSQL_USER, and MYSQL_PASSWORD, all three must be set."
+  author: "Nixopus Team"
+  icon: "🗄️"
+  category: "Database"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for MariaDB"
+    default: "lscr.io/linuxserver/mariadb"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the MariaDB container"
+    default: "mariadb"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port for MariaDB (standard MySQL/MariaDB port)"
+    default: 3306
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for MariaDB"
+    default: 3306
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for MariaDB persistent configuration and database files"
+    default: "mariadb-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  mysql_root_password:
+    type: "string"
+    description: "Root password for MariaDB installation (minimum 4 characters, non-alphanumeric passwords must be properly escaped, valid only for first run)"
+    default: ""
+    is_required: false
+
+  mysql_database:
+    type: "string"
+    description: "Name of a database to be created (valid only for first run, requires MYSQL_USER and MYSQL_PASSWORD to be set)"
+    default: ""
+    is_required: false
+
+  mysql_user:
+    type: "string"
+    description: "User with superuser access to MYSQL_DATABASE (do not use root here, valid only for first run, requires MYSQL_DATABASE and MYSQL_PASSWORD to be set)"
+    default: ""
+    is_required: false
+
+  mysql_password:
+    type: "string"
+    description: "Password for MYSQL_USER (minimum 4 characters, non-alphanumeric passwords must be properly escaped, valid only for first run, requires MYSQL_DATABASE and MYSQL_USER to be set)"
+    default: ""
+    is_required: false
+
+  remote_sql:
+    type: "string"
+    description: "Comma-separated URLs of SQL files to ingest on init (optional, e.g., http://URL1/your.sql,https://URL2/your.sql)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing MariaDB container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull MariaDB image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run MariaDB container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+          MYSQL_DATABASE: "{{ mysql_database }}"
+          MYSQL_USER: "{{ mysql_user }}"
+          MYSQL_PASSWORD: "{{ mysql_password }}"
+          REMOTE_SQL: "{{ remote_sql }}"
+        restart: "unless-stopped"
+      timeout: 180
+
