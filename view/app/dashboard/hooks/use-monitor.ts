@@ -1,7 +1,7 @@
 'use client';
 import { useWebSocket } from '@/hooks/socket-provider';
 import { ContainerData, SystemStatsType } from '@/redux/types/monitor';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 function use_monitor() {
   const { sendJsonMessage, message, isReady } = useWebSocket();
@@ -12,6 +12,33 @@ function use_monitor() {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const isInitializedRef = useRef(false);
 
+  const startMonitoring = useCallback(() => {
+    if (!isReady) {
+      console.log('WebSocket not ready, skipping monitoring start');
+      return;
+    }
+    
+    console.log('Starting dashboard monitoring');
+    sendJsonMessage({
+      action: 'dashboard_monitor',
+      data: {
+        interval: 10,
+        operations: ['get_containers', 'get_system_stats']
+      }
+    });
+    setIsMonitoring(true);
+    setLastError(null);
+  }, [isReady, sendJsonMessage]);
+
+  const stopMonitoring = useCallback(() => {
+    console.log('Stopping dashboard monitoring');
+    sendJsonMessage({
+      action: 'stop_dashboard_monitor'
+    });
+    setIsMonitoring(false);
+  }, [sendJsonMessage]);
+
+  // Handle incoming WebSocket messages
   useEffect(() => {
     if (message) {
       try {
@@ -30,65 +57,50 @@ function use_monitor() {
           setLastError(null);
         } else if (parsedMessage.action === 'error') {
           setLastError(parsedMessage.error || 'Unknown error occurred');
-          if (isMonitoring) {
-            stopMonitoring();
-            setTimeout(startMonitoring, 5000);
-          }
+          // Retry after error
+          setTimeout(() => {
+            if (isReady) {
+              startMonitoring();
+            }
+          }, 5000);
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
         setLastError('Failed to parse message');
       }
     }
-  }, [message]);
+  }, [message, isReady, startMonitoring]);
 
-  const startMonitoring = () => {
-    if (!isMonitoring) {
-      sendJsonMessage({
-        action: 'dashboard_monitor',
-        data: {
-          interval: 10,
-          operations: ['get_containers', 'get_system_stats']
-        }
-      });
-      setIsMonitoring(true);
-      setLastError(null);
-    }
-  };
-
-  const stopMonitoring = () => {
-    if (isMonitoring) {
-      sendJsonMessage({
-        action: 'stop_dashboard_monitor'
-      });
-      setIsMonitoring(false);
-    }
-  };
-
+  // Initialize monitoring when WebSocket is ready
   useEffect(() => {
     if (isReady && !isInitializedRef.current) {
+      console.log('WebSocket ready, initializing monitoring');
       startMonitoring();
       isInitializedRef.current = true;
     }
+    
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [isReady]);
+  }, [isReady, startMonitoring]);
 
+  // Retry monitoring on error
   useEffect(() => {
     if (isReady && !isMonitoring && lastError) {
+      console.log('Retrying monitoring after error');
       reconnectTimeoutRef.current = setTimeout(() => {
         startMonitoring();
       }, 5000);
     }
+    
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [isReady, isMonitoring, lastError]);
+  }, [isReady, isMonitoring, lastError, startMonitoring]);
 
   return {
     containersData,

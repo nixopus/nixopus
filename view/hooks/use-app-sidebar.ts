@@ -14,6 +14,7 @@ import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorAp
 import { deployApi } from '@/redux/services/deploy/applicationsApi';
 import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
+import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
 import { Folder, Home, Package, SettingsIcon, Container, Puzzle } from 'lucide-react';
 
@@ -132,7 +133,8 @@ export function useAppSidebar() {
       GithubConnectorApi,
       deployApi,
       fileManagersApi,
-      auditApi
+      auditApi,
+      FeatureFlagsApi
     ];
     apis.forEach((api) => dispatch(api.util.resetApiState()));
   };
