@@ -110,8 +110,12 @@ var actionHandlers = map[string]fileAction{
 
 func (fileModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
 	action, _ := step.Properties["action"].(string)
-	src, _ := step.Properties["src"].(string)
-	dest, _ := step.Properties["dest"].(string)
+	srcRaw, _ := step.Properties["src"].(string)
+	destRaw, _ := step.Properties["dest"].(string)
+
+	// Replace variables in src and dest paths
+	src := replaceVars(srcRaw, vars)
+	dest := replaceVars(destRaw, vars)
 
 	if action == "mkdir" && dest == "" {
 		return "", nil, fmt.Errorf("dest is required for mkdir action")

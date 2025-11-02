@@ -14,12 +14,14 @@ type dockerComposeModule struct{}
 func (dockerComposeModule) Type() string { return "docker_compose" }
 
 func (dockerComposeModule) Execute(_ *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
-	file, _ := step.Properties["file"].(string)
+	fileRaw, _ := step.Properties["file"].(string)
 	action, _ := step.Properties["action"].(string) // up, down, pull, build, restart
 	_, _ = step.Properties["project"].(string)
 	_, _ = step.Properties["args"].(string)
 	revertCmdRaw, _ := step.Properties["revert_cmd"].(string)
 	_, _ = step.Properties["user"].(string)
+
+	file := replaceVars(fileRaw, vars)
 
 	if action == "" {
 		return "", nil, fmt.Errorf("docker_compose action is required")

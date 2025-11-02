@@ -12,10 +12,14 @@ type serviceModule struct{}
 func (serviceModule) Type() string { return "service" }
 
 func (serviceModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
-	name, _ := step.Properties["name"].(string)
+	nameRaw, _ := step.Properties["name"].(string)
 	action, _ := step.Properties["action"].(string)
 	revertAction, _ := step.Properties["revert_action"].(string)
-	runAsUser, _ := step.Properties["user"].(string)
+	runAsUserRaw, _ := step.Properties["user"].(string)
+
+	name := replaceVars(nameRaw, vars)
+	runAsUser := replaceVars(runAsUserRaw, vars)
+
 	if name == "" {
 		return "", nil, fmt.Errorf("service name is required for service step")
 	}

@@ -13,12 +13,17 @@ type userModule struct{}
 func (userModule) Type() string { return "user" }
 
 func (userModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
-	username, _ := step.Properties["username"].(string)
+	usernameRaw, _ := step.Properties["username"].(string)
 	action, _ := step.Properties["action"].(string)
-	shell, _ := step.Properties["shell"].(string)
-	home, _ := step.Properties["home"].(string)
-	groups, _ := step.Properties["groups"].(string)
+	shellRaw, _ := step.Properties["shell"].(string)
+	homeRaw, _ := step.Properties["home"].(string)
+	groupsRaw, _ := step.Properties["groups"].(string)
 	revertAction, _ := step.Properties["revert_action"].(string)
+
+	username := replaceVars(usernameRaw, vars)
+	shell := replaceVars(shellRaw, vars)
+	home := replaceVars(homeRaw, vars)
+	groups := replaceVars(groupsRaw, vars)
 
 	if username == "" {
 		return "", nil, fmt.Errorf("username is required for user operations")
