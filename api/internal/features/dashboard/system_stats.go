@@ -165,8 +165,9 @@ func parseLoadAverage(loadStr string) LoadStats {
 
 func (m *DashboardMonitor) getCPUStats() CPUStats {
 	cpuStats := CPUStats{
-		Overall: 0.0,
-		PerCore: []CPUCore{},
+		Overall:     0.0,
+		PerCore:     []CPUCore{},
+		Temperature: 0.0,
 	}
 
 	perCorePercent, err := cpu.Percent(time.Second, true)
@@ -187,6 +188,25 @@ func (m *DashboardMonitor) getCPUStats() CPUStats {
 
 		if overallPercent, err := cpu.Percent(time.Second, false); err == nil && len(overallPercent) > 0 {
 			cpuStats.Overall = overallPercent[0]
+		}
+	}
+
+	// Get CPU temperature using host.SensorsTemperatures
+	if temps, err := host.SensorsTemperatures(); err == nil && len(temps) > 0 {
+		// Calculate average temperature from all sensors
+		var totalTemp float64
+		var validReadings int
+
+		for _, temp := range temps {
+			// Filter for CPU-related sensors and valid temperature readings
+			if temp.Temperature > 0 && temp.Temperature < 150 { // Reasonable temperature range in Celsius
+				totalTemp += temp.Temperature
+				validReadings++
+			}
+		}
+
+		if validReadings > 0 {
+			cpuStats.Temperature = totalTemp / float64(validReadings)
 		}
 	}
 

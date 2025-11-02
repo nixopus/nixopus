@@ -809,7 +809,9 @@
       "overall": "മൊത്തത്തിൽ",
       "usage": "ഉപയോഗം (%)",
       "cores": "കോറുകൾ",
-      "perCore": "ഓരോ കോറിനും"
+      "perCore": "ഓരോ കോറിനും",
+      "temperature": "CPU താപനില",
+      "current_temp": "നിലവിലെ താപനില"
     },
     "memory": {
       "title": "മെമ്മറി ഉപയോഗം",

@@ -63,8 +63,9 @@ type CPUCore struct {
 }
 
 type CPUStats struct {
-	Overall float64   `json:"overall"`
-	PerCore []CPUCore `json:"per_core"`
+	Overall     float64   `json:"overall"`
+	PerCore     []CPUCore `json:"per_core"`
+	Temperature float64   `json:"temperature"`
 }
 
 type MemoryStats struct {

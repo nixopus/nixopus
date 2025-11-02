@@ -64,6 +64,7 @@ export interface CPUCore {
 export interface CPUStats {
   overall: number;
   per_core: CPUCore[];
+  temperature: number;
 }
 
 export interface NetworkInterface {

@@ -794,7 +794,9 @@
       "overall": "Global",
       "usage": "Utilisation (%)",
       "cores": "Cœurs",
-      "perCore": "Par cœur"
+      "perCore": "Par cœur",
+      "temperature": "Température du CPU",
+      "current_temp": "Température Actuelle"
     },
     "memory": {
       "title": "Utilisation de la mémoire",

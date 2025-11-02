@@ -810,7 +810,9 @@
       "overall": "Overall",
       "usage": "Usage (%)",
       "cores": "Cores",
-      "perCore": "Per Core"
+      "perCore": "Per Core",
+      "temperature": "CPU Temperature",
+      "current_temp": "Current Temperature"
     },
     "memory": {
       "title": "Memory Usage",

@@ -793,7 +793,9 @@
       "overall": "General",
       "usage": "Uso (%)",
       "cores": "Núcleos",
-      "perCore": "Por núcleo"
+      "perCore": "Por núcleo",
+      "temperature": "Temperatura de CPU",
+      "current_temp": "Temperatura Actual"
     },
     "memory": {
       "title": "Uso de memoria",

@@ -17,7 +17,8 @@ export const DEFAULT_METRICS = {
   },
   cpu: {
     overall: 0 as number,
-    per_core: [] as Array<{ core_id: number; usage: number }>
+    per_core: [] as Array<{ core_id: number; usage: number }>,
+    temperature: 0 as number
   },
   memory: {
     total: 0 as number,

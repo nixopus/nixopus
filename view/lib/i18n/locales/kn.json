@@ -790,7 +790,9 @@
       "overall": "ಒಟ್ಟಾರೆ",
       "usage": "ಬಳಕೆ (%)",
       "cores": "ಕೋರ್‌ಗಳು",
-      "perCore": "ಪ್ರತಿ ಕೋರ್"
+      "perCore": "ಪ್ರತಿ ಕೋರ್",
+      "temperature": "CPU ತಾಪಮಾನ",
+      "current_temp": "ಪ್ರಸ್ತುತ ತಾಪಮಾನ"
     },
     "memory": {
       "title": "ಮೆಮೊರಿ ಬಳಕೆ",

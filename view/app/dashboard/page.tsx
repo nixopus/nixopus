@@ -6,6 +6,7 @@ import ContainersWidget from './components/containers/containers-widget';
 import SystemInfoCard from './components/system/system-info';
 import LoadAverageCard from './components/system/load-average';
 import CPUUsageCard from './components/system/cpu-usage';
+import CPUTemperatureCard from './components/system/cpu-temperature';
 import MemoryUsageCard from './components/system/memory-usage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, ArrowRight, RefreshCw, Info } from 'lucide-react';
@@ -44,7 +45,7 @@ function DashboardPage() {
     handleLayoutChange
   } = useDashboard();
 
-  const defaultHiddenWidgets = ['clock', 'network'];
+  const defaultHiddenWidgets = ['clock', 'network', 'cpu-temperature'];
 
   const [hiddenWidgets, setHiddenWidgets] = React.useState<string[]>(defaultHiddenWidgets);
 
@@ -89,6 +90,7 @@ function DashboardPage() {
     { id: 'network', label: 'Network Traffic' },
     { id: 'load-average', label: 'Load Average' },
     { id: 'cpu-usage', label: 'CPU Usage' },
+    { id: 'cpu-temperature', label: 'CPU Temperature' },
     { id: 'memory-usage', label: 'Memory Usage' },
     { id: 'disk-usage', label: 'Disk Usage' },
     { id: 'containers', label: 'Containers' }
@@ -254,6 +256,11 @@ const MonitoringSection = ({
       id: 'cpu-usage',
       component: <CPUUsageCard systemStats={systemStats} />,
       isDefault: true
+    },
+    {
+      id: 'cpu-temperature',
+      component: <CPUTemperatureCard systemStats={systemStats} />,
+      isDefault: false
     },
     {
       id: 'memory-usage',
