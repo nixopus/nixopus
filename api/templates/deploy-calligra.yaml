@@ -1,0 +1,147 @@
+metadata:
+  id: "deploy-calligra"
+  name: "Calligra"
+  description: "Calligra is an office and graphic art suite by KDE. It is available for desktop PCs, tablet computers, and smartphones. It contains applications for word processing, spreadsheets, presentation, vector graphics, and editing databases. Uses calligra image from linuxserver.io. HTTPS is required for full functionality. Note: This container provides privileged access - secure it properly. The web interface includes a terminal with passwordless sudo access."
+  author: "Nixopus Team"
+  icon: "📊"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Calligra"
+    default: "lscr.io/linuxserver/calligra"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Calligra container"
+    default: "calligra"
+    is_required: true
+
+  http_host_port:
+    type: "integer"
+    description: "Host port for HTTP (must be proxied)"
+    default: 3000
+    is_required: true
+
+  https_host_port:
+    type: "integer"
+    description: "Host port for HTTPS (primary access)"
+    default: 3001
+    is_required: true
+
+  http_container_port:
+    type: "integer"
+    description: "Container port for HTTP"
+    default: 3000
+    is_required: true
+
+  https_container_port:
+    type: "integer"
+    description: "Container port for HTTPS"
+    default: 3001
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Calligra configuration and user data"
+    default: "calligra-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  custom_user:
+    type: "string"
+    description: "HTTP Basic auth username (optional, default is abc)"
+    default: ""
+    is_required: false
+
+  password:
+    type: "string"
+    description: "HTTP Basic auth password (optional, default is abc, leave empty for no auth)"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Calligra HTTPS (optional, recommended for internet access)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing Calligra container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull Calligra image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Calligra container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ http_host_port }}:{{ http_container_port }},{{ https_host_port }}:{{ https_container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          CUSTOM_USER: "{{ custom_user }}"
+          PASSWORD: "{{ password }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+    - name: "Add proxy for Calligra HTTPS"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ https_host_port }}"
+      timeout: 30
+
+  # validate:
+  #   - name: "Check Calligra HTTPS interface is accessible"
+  #     type: "command"
+  #     properties:
+  #       cmd: "sh -c 'for i in $(seq 1 30); do code=$(curl -fsSk -o /dev/null -w \"%{http_code}\\n\" https://localhost:{{ https_host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 2; done; exit 1'"
+  #     timeout: 60
+

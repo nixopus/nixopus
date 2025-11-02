@@ -1,0 +1,156 @@
+metadata:
+  id: "deploy-flexget"
+  name: "FlexGet"
+  description: "Flexget is a multipurpose automation tool for all of your media. Uses flexget image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "⚙️"
+  category: "Media"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for FlexGet"
+    default: "lscr.io/linuxserver/flexget"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the FlexGet container"
+    default: "flexget"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose FlexGet WebUI"
+    default: 5050
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for FlexGet WebUI"
+    default: 5050
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for FlexGet config files (default config file is /config/.flexget)"
+    default: "flexget-config"
+    is_required: true
+
+  data_volume_name:
+    type: "string"
+    description: "Named Docker volume for downloads (optional, default path for downloads)"
+    default: "flexget-data"
+    is_required: false
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  fg_log_level:
+    type: "string"
+    description: "Set the FlexGet logging level (e.g., info, debug, warning, error)"
+    default: "info"
+    is_required: false
+
+  fg_log_file:
+    type: "string"
+    description: "Set the FlexGet log file location"
+    default: "/config/flexget.log"
+    is_required: false
+
+  fg_config_file:
+    type: "string"
+    description: "Set the FlexGet config file location"
+    default: "/config/.flexget/config.yml"
+    is_required: false
+
+  fg_webui_password:
+    type: "string"
+    description: "Set the FlexGet WebUI password (optional, pay attention to Bash/YAML reserved characters)"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for FlexGet (optional)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing FlexGet container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull FlexGet image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run FlexGet container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+          - "{{ data_volume_name }}:/data"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          FG_LOG_LEVEL: "{{ fg_log_level }}"
+          FG_LOG_FILE: "{{ fg_log_file }}"
+          FG_CONFIG_FILE: "{{ fg_config_file }}"
+          FG_WEBUI_PASSWORD: "{{ fg_webui_password }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+    - name: "Add proxy for FlexGet"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
+
+  # validate:
+  #   - name: "Check FlexGet WebUI is accessible"
+  #     type: "command"
+  #     properties:
+  #       cmd: "sh -c 'for i in $(seq 1 30); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 2; done; exit 1'"
+  #     timeout: 60
+

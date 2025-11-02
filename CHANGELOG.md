@@ -1,3 +1,12 @@
+# [0.1.0-alpha.57](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.56...v0.1.0-alpha.57) (2025-11-02)
+
+
+### Features
+
+* improve dashboard monitoring & reset cache feature flags ([#557](https://github.com/raghavyuva/nixopus/issues/557)) ([fdf26bb](https://github.com/raghavyuva/nixopus/commit/fdf26bb9d84d5499912a8ce5e88a07e9e95d8655))
+
+
+
 # [0.1.0-alpha.56](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.55...v0.1.0-alpha.56) (2025-10-30)
 
 

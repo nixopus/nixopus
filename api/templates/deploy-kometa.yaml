@@ -1,0 +1,122 @@
+metadata:
+  id: "deploy-kometa"
+  name: "Kometa"
+  description: "Kometa is a powerful tool designed to give you complete control over your media libraries. With Kometa, you can take your customization to the next level, with granular control over metadata, collections, overlays, and much more. Uses kometa image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "⭐"
+  category: "Media"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Kometa"
+    default: "lscr.io/linuxserver/kometa"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag (latest for stable releases, develop for develop branch, nightly for nightly branch)"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Kometa container"
+    default: "kometa"
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Kometa persistent configuration files"
+    default: "kometa-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  kometa_config:
+    type: "string"
+    description: "Specify a custom config file to use (default /config/config.yml)"
+    default: "/config/config.yml"
+    is_required: false
+
+  kometa_time:
+    type: "string"
+    description: "Comma-separated list of times to update each day in HH:MM format (e.g., 03:00 or 03:00,15:00)"
+    default: "03:00"
+    is_required: false
+
+  kometa_run:
+    type: "string"
+    description: "Set to True to run without the scheduler (one-time run)"
+    default: "False"
+    is_required: false
+
+  kometa_test:
+    type: "string"
+    description: "Set to True to run in debug mode with only collections that have test: true"
+    default: "False"
+    is_required: false
+
+  kometa_no_missing:
+    type: "string"
+    description: "Set to True to run without any of the missing movie/show functions"
+    default: "False"
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing Kometa container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull Kometa image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Kometa container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          KOMETA_CONFIG: "{{ kometa_config }}"
+          KOMETA_TIME: "{{ kometa_time }}"
+          KOMETA_RUN: "{{ kometa_run }}"
+          KOMETA_TEST: "{{ kometa_test }}"
+          KOMETA_NO_MISSING: "{{ kometa_no_missing }}"
+        restart: "unless-stopped"
+      timeout: 180
+

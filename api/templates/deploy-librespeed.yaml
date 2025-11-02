@@ -1,0 +1,177 @@
+metadata:
+  id: "deploy-librespeed"
+  name: "LibreSpeed"
+  description: "LibreSpeed is a very lightweight Speedtest implemented in Javascript, using XMLHttpRequest and Web Workers. No Flash, No Java, No Websocket. Uses librespeed image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "🚀"
+  category: "Network"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for LibreSpeed"
+    default: "lscr.io/linuxserver/librespeed"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the LibreSpeed container"
+    default: "librespeed"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port for LibreSpeed web GUI"
+    default: 80
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for LibreSpeed web GUI"
+    default: 80
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for LibreSpeed persistent configuration files"
+    default: "librespeed-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  password:
+    type: "string"
+    description: "Password for the results database"
+    default: ""
+    is_required: true
+
+  custom_results:
+    type: "string"
+    description: "Set to true to enable custom results page in /config/www/results/index.php"
+    default: "false"
+    is_required: false
+
+  db_type:
+    type: "string"
+    description: "Database type (sqlite, mysql, or postgresql, default is sqlite)"
+    default: "sqlite"
+    is_required: false
+
+  db_name:
+    type: "string"
+    description: "Database name (required for mysql and postgresql)"
+    default: ""
+    is_required: false
+
+  db_hostname:
+    type: "string"
+    description: "Database address (required for mysql and postgresql)"
+    default: ""
+    is_required: false
+
+  db_username:
+    type: "string"
+    description: "Database username (required for mysql and postgresql)"
+    default: ""
+    is_required: false
+
+  db_password:
+    type: "string"
+    description: "Database password (required for mysql and postgresql)"
+    default: ""
+    is_required: false
+
+  db_port:
+    type: "integer"
+    description: "Database port (required for mysql)"
+    default: 3306
+    is_required: false
+
+  ipinfo_apikey:
+    type: "string"
+    description: "Access token from ipinfo.io for detailed IP information (optional)"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for LibreSpeed web GUI (optional, recommended for internet access)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing LibreSpeed container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull LibreSpeed image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run LibreSpeed container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          PASSWORD: "{{ password }}"
+          CUSTOM_RESULTS: "{{ custom_results }}"
+          DB_TYPE: "{{ db_type }}"
+          DB_NAME: "{{ db_name }}"
+          DB_HOSTNAME: "{{ db_hostname }}"
+          DB_USERNAME: "{{ db_username }}"
+          DB_PASSWORD: "{{ db_password }}"
+          DB_PORT: "{{ db_port }}"
+          IPINFO_APIKEY: "{{ ipinfo_apikey }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+    - name: "Add proxy for LibreSpeed web GUI"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
+

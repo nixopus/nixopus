@@ -1,0 +1,128 @@
+metadata:
+  id: "deploy-babybuddy"
+  name: "BabyBuddy"
+  description: "BabyBuddy is a buddy for babies! Helps caregivers track sleep, feedings, diaper changes, tummy time and more to learn about and predict baby's needs without (as much) guess work. Uses babybuddy image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "👶"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for BabyBuddy"
+    default: "lscr.io/linuxserver/babybuddy"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the BabyBuddy container"
+    default: "babybuddy"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose BabyBuddy web UI"
+    default: 8000
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for BabyBuddy web UI"
+    default: 8000
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for BabyBuddy persistent configuration files"
+    default: "babybuddy-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  csrf_trusted_origins:
+    type: "string"
+    description: "CSRF trusted origins (comma separated, no spaces). Required for reverse proxy access. Example: http://127.0.0.1:8000,https://babybuddy.domain.com"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for BabyBuddy (optional)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing BabyBuddy container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull BabyBuddy image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run BabyBuddy container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          CSRF_TRUSTED_ORIGINS: "{{ csrf_trusted_origins }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+    - name: "Add proxy for BabyBuddy"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
+
+  # validate:
+  #   - name: "Check BabyBuddy web UI is accessible"
+  #     type: "command"
+  #     properties:
+  #       cmd: "sh -c 'for i in $(seq 1 30); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 2; done; exit 1'"
+  #     timeout: 60
+

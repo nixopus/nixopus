@@ -1,0 +1,213 @@
+metadata:
+  id: "deploy-doplarr"
+  name: "Doplarr"
+  description: "Doplarr is an *arr request bot for Discord. Uses doplarr image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "🤖"
+  category: "Media"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Doplarr"
+    default: "lscr.io/linuxserver/doplarr"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Doplarr container"
+    default: "doplarr"
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Doplarr persistent configuration files"
+    default: "doplarr-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  discord_token:
+    type: "string"
+    description: "Discord bot token (required)"
+    default: ""
+    is_required: true
+
+  overseerr_api:
+    type: "string"
+    description: "Overseerr API key (leave blank if using Radarr/Sonarr)"
+    default: ""
+    is_required: false
+
+  overseerr_url:
+    type: "string"
+    description: "Overseerr URL (leave blank if using Radarr/Sonarr)"
+    default: "http://localhost:5055"
+    is_required: false
+
+  radarr_api:
+    type: "string"
+    description: "Radarr API key (leave blank if using Overseerr)"
+    default: ""
+    is_required: false
+
+  radarr_url:
+    type: "string"
+    description: "Radarr URL (leave blank if using Overseerr)"
+    default: "http://localhost:7878"
+    is_required: false
+
+  sonarr_api:
+    type: "string"
+    description: "Sonarr API key (leave blank if using Overseerr)"
+    default: ""
+    is_required: false
+
+  sonarr_url:
+    type: "string"
+    description: "Sonarr URL (leave blank if using Overseerr)"
+    default: "http://localhost:8989"
+    is_required: false
+
+  discord_max_results:
+    type: "integer"
+    description: "Maximum size of the search results selection (optional)"
+    default: 25
+    is_required: false
+
+  discord_requested_msg_style:
+    type: "string"
+    description: "Style of the request alert message. One of :plain :embed :none (optional)"
+    default: ":plain"
+    is_required: false
+
+  sonarr_quality_profile:
+    type: "string"
+    description: "The name of the quality profile to use by default for Sonarr (optional)"
+    default: ""
+    is_required: false
+
+  radarr_quality_profile:
+    type: "string"
+    description: "The name of the quality profile to use by default for Radarr (optional)"
+    default: ""
+    is_required: false
+
+  sonarr_rootfolder:
+    type: "string"
+    description: "The root folder to use by default for Sonarr (optional)"
+    default: ""
+    is_required: false
+
+  radarr_rootfolder:
+    type: "string"
+    description: "The root folder to use by default for Radarr (optional)"
+    default: ""
+    is_required: false
+
+  sonarr_language_profile:
+    type: "string"
+    description: "The name of the language profile to use by default for Sonarr (optional)"
+    default: ""
+    is_required: false
+
+  overseerr_default_id:
+    type: "string"
+    description: "The Overseerr user id to use by default if there is no associated discord account for the requester (optional)"
+    default: ""
+    is_required: false
+
+  partial_seasons:
+    type: "string"
+    description: "Sets whether users can request partial seasons. true or false (optional)"
+    default: "true"
+    is_required: false
+
+  log_level:
+    type: "string"
+    description: "The log level for the logging backend. One of trace :debug :info :warn :error :fatal :report (optional)"
+    default: ":info"
+    is_required: false
+
+  java_opts:
+    type: "string"
+    description: "Additional Java options (optional, e.g., -Xmx256m -Xms256m)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing Doplarr container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull Doplarr image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Doplarr container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          DISCORD__TOKEN: "{{ discord_token }}"
+          OVERSEERR__API: "{{ overseerr_api }}"
+          OVERSEERR__URL: "{{ overseerr_url }}"
+          RADARR__API: "{{ radarr_api }}"
+          RADARR__URL: "{{ radarr_url }}"
+          SONARR__API: "{{ sonarr_api }}"
+          SONARR__URL: "{{ sonarr_url }}"
+          DISCORD__MAX_RESULTS: "{{ discord_max_results }}"
+          DISCORD__REQUESTED_MSG_STYLE: "{{ discord_requested_msg_style }}"
+          SONARR__QUALITY_PROFILE: "{{ sonarr_quality_profile }}"
+          RADARR__QUALITY_PROFILE: "{{ radarr_quality_profile }}"
+          SONARR__ROOTFOLDER: "{{ sonarr_rootfolder }}"
+          RADARR__ROOTFOLDER: "{{ radarr_rootfolder }}"
+          SONARR__LANGUAGE_PROFILE: "{{ sonarr_language_profile }}"
+          OVERSEERR__DEFAULT_ID: "{{ overseerr_default_id }}"
+          PARTIAL_SEASONS: "{{ partial_seasons }}"
+          LOG_LEVEL: "{{ log_level }}"
+          JAVA_OPTS: "{{ java_opts }}"
+        restart: "unless-stopped"
+      timeout: 120
+

@@ -1,0 +1,385 @@
+metadata:
+  id: "deploy-mastodon"
+  name: "Mastodon"
+  description: "Mastodon is a free, open-source social network server based on ActivityPub where users can follow friends and discover new ones. Uses mastodon image from linuxserver.io. Requires separate postgres and redis instances. Note: This container automatically redirects to HTTPS with a self-signed certificate."
+  author: "Nixopus Team"
+  icon: "🐘"
+  category: "Social"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Mastodon"
+    default: "lscr.io/linuxserver/mastodon"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag (latest for stable releases, develop for pre-releases, glitch for glitch-soc fork)"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Mastodon container"
+    default: "mastodon"
+    is_required: true
+
+  http_host_port:
+    type: "integer"
+    description: "Host port for HTTP web frontend"
+    default: 80
+    is_required: true
+
+  http_container_port:
+    type: "integer"
+    description: "Container port for HTTP web frontend"
+    default: 80
+    is_required: true
+
+  https_host_port:
+    type: "integer"
+    description: "Host port for HTTPS web frontend"
+    default: 443
+    is_required: true
+
+  https_container_port:
+    type: "integer"
+    description: "Container port for HTTPS web frontend"
+    default: 443
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Mastodon configuration files"
+    default: "mastodon-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  local_domain:
+    type: "string"
+    description: "Unique identifier of your server in the network (cannot be safely changed later, e.g., example.com)"
+    default: ""
+    is_required: true
+
+  redis_host:
+    type: "string"
+    description: "Redis server hostname"
+    default: ""
+    is_required: true
+
+  redis_port:
+    type: "integer"
+    description: "Redis port"
+    default: 6379
+    is_required: true
+
+  db_host:
+    type: "string"
+    description: "Postgres database hostname"
+    default: ""
+    is_required: true
+
+  db_user:
+    type: "string"
+    description: "Postgres username"
+    default: "mastodon"
+    is_required: true
+
+  db_name:
+    type: "string"
+    description: "Postgres database name"
+    default: "mastodon"
+    is_required: true
+
+  db_pass:
+    type: "string"
+    description: "Postgres password"
+    default: ""
+    is_required: true
+
+  db_port:
+    type: "integer"
+    description: "Postgres port"
+    default: 5432
+    is_required: true
+
+  es_enabled:
+    type: "string"
+    description: "Enable or disable Elasticsearch (requires a separate ES instance)"
+    default: "false"
+    is_required: false
+
+  active_record_encryption_primary_key:
+    type: "string"
+    description: "Primary key for Active Record Encryption (generate with: docker run --rm -it --entrypoint /bin/bash lscr.io/linuxserver/mastodon:latest generate-active-record)"
+    default: ""
+    is_required: false
+
+  active_record_encryption_deterministic_key:
+    type: "string"
+    description: "Deterministic key for Active Record Encryption"
+    default: ""
+    is_required: false
+
+  active_record_encryption_key_derivation_salt:
+    type: "string"
+    description: "Derivation salt for Active Record Encryption"
+    default: ""
+    is_required: false
+
+  secret_key_base:
+    type: "string"
+    description: "Browser session secret (generate with: docker run --rm -it --entrypoint /bin/bash lscr.io/linuxserver/mastodon:latest generate-secret, changing it will break all active browser sessions)"
+    default: ""
+    is_required: false
+
+  otp_secret:
+    type: "string"
+    description: "MFA secret (generate with: docker run --rm -it --entrypoint /bin/bash lscr.io/linuxserver/mastodon:latest generate-secret, changing it will break two-factor authentication)"
+    default: ""
+    is_required: false
+
+  vapid_private_key:
+    type: "string"
+    description: "Push notification private key (generate with: docker run --rm -it --entrypoint /bin/bash lscr.io/linuxserver/mastodon:latest generate-vapid, changing it will break push notifications)"
+    default: ""
+    is_required: false
+
+  vapid_public_key:
+    type: "string"
+    description: "Push notification public key (generate with: docker run --rm -it --entrypoint /bin/bash lscr.io/linuxserver/mastodon:latest generate-vapid, changing it will break push notifications)"
+    default: ""
+    is_required: false
+
+  smtp_server:
+    type: "string"
+    description: "SMTP server for email notifications (e.g., mail.example.com)"
+    default: ""
+    is_required: true
+
+  smtp_port:
+    type: "integer"
+    description: "SMTP server port"
+    default: 25
+    is_required: true
+
+  smtp_login:
+    type: "string"
+    description: "SMTP username"
+    default: ""
+    is_required: false
+
+  smtp_password:
+    type: "string"
+    description: "SMTP password"
+    default: ""
+    is_required: false
+
+  smtp_from_address:
+    type: "string"
+    description: "From address for emails sent from Mastodon (e.g., notifications@example.com)"
+    default: ""
+    is_required: true
+
+  s3_enabled:
+    type: "string"
+    description: "Enable or disable S3 storage of uploaded files"
+    default: "false"
+    is_required: false
+
+  web_domain:
+    type: "string"
+    description: "Set if server identifier differs from subdomain hosting Mastodon (optional, e.g., mastodon.example.com)"
+    default: ""
+    is_required: false
+
+  es_host:
+    type: "string"
+    description: "Elasticsearch server hostname (optional, required if ES_ENABLED=true)"
+    default: ""
+    is_required: false
+
+  es_port:
+    type: "integer"
+    description: "Elasticsearch port (optional, default is 9200)"
+    default: 9200
+    is_required: false
+
+  es_user:
+    type: "string"
+    description: "Elasticsearch username (optional, default is elastic)"
+    default: "elastic"
+    is_required: false
+
+  es_pass:
+    type: "string"
+    description: "Elasticsearch password (optional, default is elastic)"
+    default: "elastic"
+    is_required: false
+
+  s3_bucket:
+    type: "string"
+    description: "S3 bucket hostname (optional, required if S3_ENABLED=true)"
+    default: ""
+    is_required: false
+
+  aws_access_key_id:
+    type: "string"
+    description: "S3 bucket access key ID (optional, required if S3_ENABLED=true)"
+    default: ""
+    is_required: false
+
+  aws_secret_access_key:
+    type: "string"
+    description: "S3 bucket secret access key (optional, required if S3_ENABLED=true)"
+    default: ""
+    is_required: false
+
+  s3_alias_host:
+    type: "string"
+    description: "Alternate hostname for object fetching if fronting S3 connections (optional)"
+    default: ""
+    is_required: false
+
+  sidekiq_only:
+    type: "string"
+    description: "Only run the sidekiq service in this container instance (optional, for large scale instances, default is false)"
+    default: "false"
+    is_required: false
+
+  sidekiq_queue:
+    type: "string"
+    description: "Name of the sidekiq queue to run in this container (optional, see docs)"
+    default: ""
+    is_required: false
+
+  sidekiq_default:
+    type: "string"
+    description: "Set to true on main container if running additional sidekiq instances (optional, default is false)"
+    default: "false"
+    is_required: false
+
+  sidekiq_threads:
+    type: "integer"
+    description: "Number of threads for sidekiq to use (optional, default is 5)"
+    default: 5
+    is_required: false
+
+  db_pool:
+    type: "integer"
+    description: "Size of the DB connection pool, must be at least the same as SIDEKIQ_THREADS (optional, default is 5)"
+    default: 5
+    is_required: false
+
+  no_chown:
+    type: "string"
+    description: "Set to true to skip chown of /config on init (optional, DO NOT set on first run, read docs before using)"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Mastodon web frontend (optional, recommended for internet access)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing Mastodon container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull Mastodon image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Mastodon container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ http_host_port }}:{{ http_container_port }},{{ https_host_port }}:{{ https_container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          LOCAL_DOMAIN: "{{ local_domain }}"
+          REDIS_HOST: "{{ redis_host }}"
+          REDIS_PORT: "{{ redis_port }}"
+          DB_HOST: "{{ db_host }}"
+          DB_USER: "{{ db_user }}"
+          DB_NAME: "{{ db_name }}"
+          DB_PASS: "{{ db_pass }}"
+          DB_PORT: "{{ db_port }}"
+          ES_ENABLED: "{{ es_enabled }}"
+          ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: "{{ active_record_encryption_primary_key }}"
+          ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: "{{ active_record_encryption_deterministic_key }}"
+          ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: "{{ active_record_encryption_key_derivation_salt }}"
+          SECRET_KEY_BASE: "{{ secret_key_base }}"
+          OTP_SECRET: "{{ otp_secret }}"
+          VAPID_PRIVATE_KEY: "{{ vapid_private_key }}"
+          VAPID_PUBLIC_KEY: "{{ vapid_public_key }}"
+          SMTP_SERVER: "{{ smtp_server }}"
+          SMTP_PORT: "{{ smtp_port }}"
+          SMTP_LOGIN: "{{ smtp_login }}"
+          SMTP_PASSWORD: "{{ smtp_password }}"
+          SMTP_FROM_ADDRESS: "{{ smtp_from_address }}"
+          S3_ENABLED: "{{ s3_enabled }}"
+          WEB_DOMAIN: "{{ web_domain }}"
+          ES_HOST: "{{ es_host }}"
+          ES_PORT: "{{ es_port }}"
+          ES_USER: "{{ es_user }}"
+          ES_PASS: "{{ es_pass }}"
+          S3_BUCKET: "{{ s3_bucket }}"
+          AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+          AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+          S3_ALIAS_HOST: "{{ s3_alias_host }}"
+          SIDEKIQ_ONLY: "{{ sidekiq_only }}"
+          SIDEKIQ_QUEUE: "{{ sidekiq_queue }}"
+          SIDEKIQ_DEFAULT: "{{ sidekiq_default }}"
+          SIDEKIQ_THREADS: "{{ sidekiq_threads }}"
+          DB_POOL: "{{ db_pool }}"
+          NO_CHOWN: "{{ no_chown }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+    - name: "Add proxy for Mastodon web frontend"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ http_host_port }}"
+      timeout: 30
+
