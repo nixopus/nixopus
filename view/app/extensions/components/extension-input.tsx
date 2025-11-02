@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useTranslation } from '@/hooks/use-translation';
 import { Extension, ExtensionVariable } from '@/redux/types/extension';
 import { useExtensionInput } from '@/app/extensions/hooks/use-extension-input';
-import { Info, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Info, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ExtensionInputProps {
@@ -32,10 +32,6 @@ export default function ExtensionInput({
     onClose: () => onOpenChange(false)
   });
 
-  const submit = () => {
-    handleSubmit();
-  };
-
   const actions: DialogAction[] = [
     {
       label: t('common.cancel'),
@@ -44,7 +40,7 @@ export default function ExtensionInput({
     },
     {
       label: t('extensions.run'),
-      onClick: submit,
+      onClick: handleSubmit,
       variant: 'default'
     }
   ];
@@ -87,7 +83,6 @@ export default function ExtensionInput({
               {requiredFields.map((v) => (
                 <FieldWrapper
                   key={v.id}
-                  variable={v}
                   error={errors[v.variable_name]}
                   fullWidth={v.variable_type === 'array'}
                 >
@@ -110,7 +105,6 @@ export default function ExtensionInput({
               {optionalFields.map((v) => (
                 <FieldWrapper
                   key={v.id}
-                  variable={v}
                   error={errors[v.variable_name]}
                   fullWidth={v.variable_type === 'array'}
                 >
@@ -126,19 +120,14 @@ export default function ExtensionInput({
 }
 
 function FieldWrapper({
-  variable,
   error,
   children,
   fullWidth = false
 }: {
-  variable: ExtensionVariable;
   error?: string;
   children: React.ReactNode;
   fullWidth?: boolean;
 }) {
-  const [showHelp, setShowHelp] = React.useState(false);
-  const hasDetailedHelp = variable.description && variable.description.length > 60;
-
   return (
     <div
       className={cn(
@@ -156,25 +145,6 @@ function FieldWrapper({
           {error}
         </div>
       )}
-      {hasDetailedHelp && (
-        <button
-          type="button"
-          onClick={() => setShowHelp(!showHelp)}
-          className="flex items-center gap-1 mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {showHelp ? (
-            <ChevronUp className="h-3 w-3" />
-          ) : (
-            <ChevronDown className="h-3 w-3" />
-          )}
-          {showHelp ? 'Show help' : 'Show help'}
-        </button>
-      )}
-      {showHelp && hasDetailedHelp && (
-        <div className="mt-2 p-3 rounded-md bg-muted/50 text-xs text-muted-foreground border border-border/50">
-          {variable.description}
-        </div>
-      )}
     </div>
   );
 }
@@ -189,7 +159,6 @@ function Field({
   onChange: (name: string, value: unknown) => void;
 }) {
   const id = `var-${variable.variable_name}`;
-  const shortDescription = variable.description && variable.description.length <= 60;
 
   if (variable.variable_type === 'boolean') {
     return (
@@ -205,7 +174,7 @@ function Field({
             {formatVariableName(variable.variable_name)}
             {variable.is_required && <span className="text-destructive ml-1">*</span>}
           </Label>
-          {shortDescription && (
+          {variable.description && (
             <span className="text-xs text-muted-foreground leading-relaxed">
               {variable.description}
             </span>
@@ -225,7 +194,7 @@ function Field({
           {formatVariableName(variable.variable_name)}
           {variable.is_required && <span className="text-destructive ml-1">*</span>}
         </Label>
-        {shortDescription && (
+        {variable.description && (
           <span className="text-xs text-muted-foreground -mt-1">{variable.description}</span>
         )}
         <textarea
@@ -254,7 +223,7 @@ function Field({
         {formatVariableName(variable.variable_name)}
         {variable.is_required && <span className="text-destructive ml-1">*</span>}
       </Label>
-      {shortDescription && (
+      {variable.description && (
         <span className="text-xs text-muted-foreground -mt-1">{variable.description}</span>
       )}
       <Input
