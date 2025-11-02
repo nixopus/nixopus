@@ -399,7 +399,7 @@ execution:
     - name: "Cleanup existing Postiz containers"
       type: "command"
       properties:
-        cmd: "cd {{ compose_dir }} 2>/dev/null && docker compose down --remove-orphans 2>/dev/null || true"
+        cmd: "sh -c 'cd {{ compose_dir }} 2>/dev/null && docker compose down --remove-orphans 2>/dev/null || true'"
       timeout: 60
       ignore_errors: true
 
@@ -413,7 +413,7 @@ execution:
     - name: "Download docker-compose.yml from repository"
       type: "command"
       properties:
-        cmd: "curl -fsSL '{{ compose_url }}' -o {{ compose_dir }}/docker-compose.yml"
+        cmd: "sh -c 'curl -fsSL \"{{ compose_url }}\" -o {{ compose_dir }}/docker-compose.yml'"
       timeout: 60
 
     - name: "Create .env file with configuration"
@@ -488,7 +488,7 @@ execution:
     - name: "Pull Docker images"
       type: "command"
       properties:
-        cmd: "cd {{ compose_dir }} && docker compose pull"
+        cmd: "sh -c 'cd {{ compose_dir }} && docker compose pull'"
       timeout: 600
 
     - name: "Start Postiz stack with Docker Compose"
