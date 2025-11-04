@@ -20,7 +20,12 @@ const (
 	ExtensionCategoryStorage     ExtensionCategory = "Storage"
 	ExtensionCategoryNetwork     ExtensionCategory = "Network"
 	ExtensionCategoryDevelopment ExtensionCategory = "Development"
+	ExtensionCategoryMedia       ExtensionCategory = "Media"
+	ExtensionCategoryGame        ExtensionCategory = "Game"
+	ExtensionCategoryUtility     ExtensionCategory = "Utility"
 	ExtensionCategoryOther       ExtensionCategory = "Other"
+	ExtensionCategoryProductivity ExtensionCategory = "Productivity"
+	ExtensionCategorySocial       ExtensionCategory = "Social"
 )
 
 type ValidationStatus string

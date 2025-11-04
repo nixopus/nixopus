@@ -1,0 +1,135 @@
+metadata:
+  id: "deploy-beets"
+  name: "Beets"
+  description: "Beets is a music library manager and not, for the most part, a music player. It does include a simple player plugin and an experimental Web-based player, but it generally leaves actual sound-reproduction to specialized tools. Uses beets image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "🎵"
+  category: "Media"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Beets"
+    default: "lscr.io/linuxserver/beets"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag (latest for stable releases, nightly for unstable git head)"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Beets container"
+    default: "beets"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Beets application WebUI"
+    default: 8337
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Beets application WebUI"
+    default: 8337
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Beets persistent configuration files"
+    default: "beets-config"
+    is_required: true
+
+  music_volume_name:
+    type: "string"
+    description: "Named Docker volume for music library"
+    default: "beets-music"
+    is_required: true
+
+  downloads_volume_name:
+    type: "string"
+    description: "Named Docker volume for non-processed music (ingest location)"
+    default: "beets-downloads"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Beets (optional)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing Beets container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull Beets image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Beets container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+          - "{{ music_volume_name }}:/music"
+          - "{{ downloads_volume_name }}:/downloads"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+    - name: "Add proxy for Beets"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
+
+  # validate:
+  #   - name: "Check Beets web UI is accessible"
+  #     type: "command"
+  #     properties:
+  #       cmd: "sh -c 'for i in $(seq 1 30); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 2; done; exit 1'"
+  #     timeout: 60
+
