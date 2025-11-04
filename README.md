@@ -41,6 +41,12 @@ This section will help you set up Nixopus on your VPS quickly.
 curl -sSL https://install.nixopus.com | bash
 ```
 
+**For custom ip setups:**
+
+```bash
+curl -sSL https://install.nixopus.com | bash -s -- --host-ip 10.0.0.154
+```
+
 **To install only the CLI tool without running `nixopus install`:**
 
 ```bash
@@ -53,6 +59,7 @@ You can customize your installation by providing the following optional paramete
 
 - `--api-domain` or `-ad`: Specify the domain where the Nixopus API will be accessible (e.g., `nixopusapi.example.tld`)
 - `--view-domain` or `-vd`: Specify the domain where the Nixopus app will be accessible (e.g., `nixopus.example.tld`)
+- `--host-ip` or `-ip`: Specify the IP address of the server to use when no domains are provided (e.g., `10.0.0.154` or `192.168.1.100`). If not provided, the public IP will be automatically detected.
 - `--verbose` or `-v`: Show more details while installing
 - `--timeout` or `-t`: Set timeout for each step (default: 300 seconds)
 - `--force` or `-f`: Replace files if they already exist
@@ -67,6 +74,14 @@ nixopus install \
   --view-domain nixopus.example.tld \
   --verbose \
   --timeout 600
+```
+
+Example for custom ip setup:
+
+```bash
+nixopus install \
+  --host-ip 10.0.0.154 \
+  --verbose
 ```
 
 You can also install the CLI and run `nixopus install` with options in a single command, refer [installation documentation](https://docs.nixopus.com/install/#installation-options) for more details on options

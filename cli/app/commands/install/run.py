@@ -99,6 +99,7 @@ class Install:
         config_file: str = None,
         api_domain: str = None,
         view_domain: str = None,
+        host_ip: str = None,
         repo: str = None,
         branch: str = None,
     ):
@@ -110,6 +111,7 @@ class Install:
         self.config_file = config_file
         self.api_domain = api_domain
         self.view_domain = view_domain
+        self.host_ip = host_ip
         self.repo = repo
         self.branch = branch
         self._user_config = _config.load_user_config(self.config_file)
@@ -117,6 +119,7 @@ class Install:
         self.main_task = None
         self._validate_domains()
         self._validate_repo()
+        self._validate_host_ip()
         # Log when using custom repository/branch and staging compose file
         if self._is_custom_repo_or_branch():
             if self.logger:
@@ -161,6 +164,13 @@ class Install:
             ):
                 raise ValueError("Invalid repository URL format")
 
+    def _validate_host_ip(self):
+        if self.host_ip:
+            try:
+                ipaddress.ip_address(self.host_ip)
+            except ValueError:
+                raise ValueError(f"Invalid IP address format: {self.host_ip}")
+
     def _is_custom_repo_or_branch(self):
         """Check if custom repository or branch is provided (different from defaults)"""
         default_repo = _config.get_yaml_value(DEFAULT_REPO)  # "https://github.com/raghavyuva/nixopus"
@@ -171,6 +181,11 @@ class Install:
         branch_differs = self.branch is not None and self.branch != default_branch
 
         return repo_differs or branch_differs
+
+    def _get_host_ip(self) -> str:
+        if self.host_ip:
+            return self.host_ip
+        return HostInformation.get_public_ip()
 
     def run(self):
         steps = [
@@ -342,7 +357,7 @@ class Install:
             with open(caddy_json_template, "r") as f:
                 config_str = f.read()
 
-            host_ip = HostInformation.get_public_ip()
+            host_ip = self._get_host_ip()
             view_port = self._get_config("view_port")
             api_port = self._get_config("api_port")
 
@@ -451,7 +466,7 @@ class Install:
 
     def _update_environment_variables(self, env_values: dict) -> dict:
         updated_env = env_values.copy()
-        host_ip = HostInformation.get_public_ip()
+        host_ip = self._get_host_ip()
         secure = self.api_domain is not None and self.view_domain is not None
 
         api_host = self.api_domain if secure else f"{host_ip}:{self._get_config('api_port')}"
@@ -505,5 +520,5 @@ class Install:
             return f"https://{self.api_domain}"
         else:
             view_port = self._get_config("view_port")
-            host_ip = HostInformation.get_public_ip()
+            host_ip = self._get_host_ip()
             return f"http://{host_ip}:{view_port}"
