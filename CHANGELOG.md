@@ -1,3 +1,12 @@
+# [0.1.0-alpha.59](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.58...v0.1.0-alpha.59) (2025-11-04)
+
+
+### Features
+
+* add support for custom ip address deployments ([#554](https://github.com/raghavyuva/nixopus/issues/554)) ([d1fb0b4](https://github.com/raghavyuva/nixopus/commit/d1fb0b42fdfad3709180c0ffb1d4725d1e5c8e7b))
+
+
+
 # [0.1.0-alpha.58](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.57...v0.1.0-alpha.58) (2025-11-02)
 
 

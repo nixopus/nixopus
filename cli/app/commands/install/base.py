@@ -29,24 +29,14 @@ class BaseInstall:
         self.config_file = config_file
         self.repo = repo
         self.branch = branch
-        self._user_config = Config().load_user_config(self.config_file)
+        self._config = Config()
+        self._config.load_user_config(self.config_file)
         self.progress = None
         self.main_task = None
     
-    def _get_config(self, key: str, user_config: dict = None, defaults: dict = None):
+    def _get_config(self, path: str):
         """Base config getter - override in subclasses for specific behavior"""
-        config = Config()
-        
-        # Override repo_url and branch_name if provided via command line
-        if key == "repo_url" and self.repo is not None:
-            return self.repo
-        if key == "branch_name" and self.branch is not None:
-            return self.branch
-        
-        try:
-            return config.get_config_value(key, user_config or self._user_config, defaults or {})
-        except ValueError:
-            raise ValueError(configuration_key_has_no_default_value.format(key=key))
+        return self._config.get(path)
     
     def _validate_domains(self, api_domain: str = None, view_domain: str = None):
         """Validate domain format"""

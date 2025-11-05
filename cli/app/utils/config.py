@@ -11,17 +11,14 @@ class Config:
     def __init__(self, default_env="PRODUCTION"):
         self.default_env = default_env
         self._yaml_config = None
+        self._user_config_file = None
         self._cache = {}
 
-        # Determine config file based on environment
         config_file = "config.dev.yaml" if default_env.upper() == "DEVELOPMENT" else "config.prod.yaml"
 
-        # Check if running as PyInstaller bundle
         if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-            # Running as PyInstaller bundle
             self._yaml_path = os.path.join(sys._MEIPASS, "helpers", config_file)
         else:
-            # Running as normal Python script
             self._yaml_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../helpers", config_file))
 
     def get_env(self):
@@ -30,51 +27,60 @@ class Config:
     def is_development(self):
         return self.get_env().upper() == "DEVELOPMENT"
 
-    def load_yaml_config(self):
+    def load_user_config(self, config_file: str):
+        """Set user config file to replace default config."""
+        if config_file and not os.path.exists(config_file):
+            raise FileNotFoundError(f"Config file not found: {config_file}")
+        self._user_config_file = config_file
+        self._yaml_config = None
+        self._cache = {}
+
+    def _get_active_config(self):
+        """Get the active config (user config if provided, else default)."""
+        if self._user_config_file:
+            if self._yaml_config is None:
+                with open(self._user_config_file, "r") as f:
+                    self._yaml_config = yaml.safe_load(f)
+            return self._yaml_config
+
         if self._yaml_config is None:
             with open(self._yaml_path, "r") as f:
                 self._yaml_config = yaml.safe_load(f)
         return self._yaml_config
 
-    def get_yaml_value(self, path: str):
-        config = self.load_yaml_config()
+    def get(self, path: str):
+        """Get config value using dot notation path."""
+        if path in self._cache:
+            return self._cache[path]
+
+        config = self._get_active_config()
         keys = path.split(".")
         for key in keys:
             if isinstance(config, dict) and key in config:
                 config = config[key]
             else:
                 raise KeyError(MISSING_CONFIG_KEY_MESSAGE.format(path=path, key=key))
+
         if isinstance(config, str):
             config = expand_env_placeholders(config)
+
+        self._cache[path] = config
         return config
 
     def get_service_env_values(self, service_env_path: str):
-        config = self.get_yaml_value(service_env_path)
-        return {key: expand_env_placeholders(value) for key, value in config.items()}
+        """Get service environment values as a dictionary."""
+        env_config = self.get(service_env_path)
+        if not isinstance(env_config, dict):
+            raise ValueError(f"Expected dictionary at path '{service_env_path}'")
+        return {key: expand_env_placeholders(value) if isinstance(value, str) else value for key, value in env_config.items()}
 
-    def load_user_config(self, config_file: str):
-        """Load and parse user config file, returning flattened config dict."""
-        if not config_file:
-            return {}
+    def load_yaml_config(self):
+        """Return the active config dict (for backward compatibility)."""
+        return self._get_active_config()
 
-        if not os.path.exists(config_file):
-            raise FileNotFoundError(f"Config file not found: {config_file}")
-
-        with open(config_file, "r") as f:
-            user_config = yaml.safe_load(f)
-
-        flattened = {}
-        self.flatten_config(user_config, flattened)
-        return flattened
-
-    def flatten_config(self, config: dict, result: dict, prefix: str = ""):
-        """Flatten nested config dict into dot notation keys."""
-        for key, value in config.items():
-            new_key = f"{prefix}.{key}" if prefix else key
-            if isinstance(value, dict):
-                self.flatten_config(value, result, new_key)
-            else:
-                result[new_key] = value
+    def get_yaml_value(self, path: str):
+        """Alias for get() for backward compatibility."""
+        return self.get(path)
 
     def unflatten_config(self, flattened_config: dict) -> dict:
         """Convert flattened config back to nested structure."""
@@ -88,34 +94,6 @@ class Config:
                 current = current[k]
             current[keys[-1]] = value
         return nested
-
-    def get_config_value(self, key: str, user_config: dict, defaults: dict):
-        """Get config value from user config with fallback to defaults and caching."""
-        if key in self._cache:
-            return self._cache[key]
-
-        # Key mappings for user config lookup
-        key_mappings = {
-            "proxy_port": "services.caddy.env.PROXY_PORT",
-            "repo_url": "clone.repo",
-            "branch_name": "clone.branch",
-            "source_path": "clone.source-path",
-            "config_dir": "nixopus-config-dir",
-            "api_env_file_path": "services.api.env.API_ENV_FILE",
-            "view_env_file_path": "services.view.env.VIEW_ENV_FILE",
-            "compose_file": "compose-file-path",
-            "required_ports": "ports",
-        }
-
-        config_path = key_mappings.get(key, key)
-        user_value = user_config.get(config_path)
-        value = user_value if user_value is not None else defaults.get(key)
-
-        if value is None and key not in ["ssh_passphrase"]:
-            raise ValueError(f"Configuration key '{key}' has no default value")
-
-        self._cache[key] = value
-        return value
 
 
 def expand_env_placeholders(value: str) -> str:

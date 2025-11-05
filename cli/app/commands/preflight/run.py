@@ -34,9 +34,6 @@ class PreflightRunner:
         self, config_key: str = "required_ports", user_config: dict = None, defaults: dict = None
     ) -> None:
         """Check ports using configuration values"""
-        if user_config is not None and defaults is not None:
-            ports = self.config.get_config_value(config_key, user_config, defaults)
-        else:
-            ports = self.config.get_yaml_value("ports")
-
+        ports = self.config.get("ports")
+        ports = [int(port) for port in ports] if isinstance(ports, list) else [int(ports)]
         self.check_required_ports(ports)
