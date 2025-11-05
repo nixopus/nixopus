@@ -57,6 +57,7 @@ class Uninstall:
         self.force = force
         self.progress = None
         self.main_task = None
+        self._confirm_remove_config = False
 
     def run(self):
         steps = [
@@ -71,6 +72,9 @@ class Uninstall:
                 for step_name, _ in steps:
                     self.logger.info(f"Would execute: {step_name}")
                 return
+
+            config_dir_path = Path(_config_dir)
+            self._confirm_remove_config = True
 
             with Progress(
                 SpinnerColumn(),
@@ -181,7 +185,7 @@ class Uninstall:
             return
 
         try:
-            if self.force or self._confirm_removal(config_dir_path):
+            if self.force or self._confirm_remove_config:
                 shutil.rmtree(config_dir_path)
                 self.logger.debug(removed_config_dir.format(config_dir_path=config_dir_path))
             else:
