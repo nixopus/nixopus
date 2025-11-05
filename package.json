@@ -3,13 +3,13 @@
   "version": "0.1.0-alpha.59",
   "description": "A modern container management platform",
   "private": false,
-  "cli-version": "0.1.20",
+  "cli-version": "0.1.21",
   "cli-packages": [
-    "nixopus-0.1.20-1.x86_64.rpm",
-    "nixopus_0.1.20_amd64.deb",
-    "nixopus_0.1.20_amd64.apk",
+    "nixopus-0.1.21-1.x86_64.rpm",
+    "nixopus_0.1.21_amd64.apk",
     "nixopus.tar",
-    "nixopus-0.1.20-darwin-amd64.pkg",
-    "nixopus-0.1.20-darwin-arm64.pkg"
+    "nixopus_0.1.21_amd64.deb",
+    "nixopus-0.1.21-darwin-amd64.pkg",
+    "nixopus-0.1.21-darwin-arm64.pkg"
   ]
 }
