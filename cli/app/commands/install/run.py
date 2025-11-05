@@ -58,34 +58,6 @@ from .messages import (
 from .ssh import SSH, SSHConfig
 
 _config = Config()
-_config_dir = _config.get_yaml_value(NIXOPUS_CONFIG_DIR)
-_source_path = _config.get_yaml_value(DEFAULT_PATH)
-
-DEFAULTS = {
-    "proxy_port": _config.get_yaml_value(PROXY_PORT),
-    "ssh_key_type": _config.get_yaml_value(SSH_KEY_TYPE),
-    "ssh_key_size": _config.get_yaml_value(SSH_KEY_SIZE),
-    "ssh_passphrase": None,
-    "service_name": "all",
-    "service_detach": True,
-    "required_ports": [int(port) for port in _config.get_yaml_value(PORTS)],
-    "repo_url": _config.get_yaml_value(DEFAULT_REPO),
-    "branch_name": _config.get_yaml_value(DEFAULT_BRANCH),
-    "source_path": _source_path,
-    "config_dir": _config_dir,
-    "api_env_file_path": _config.get_yaml_value(API_ENV_FILE),
-    "view_env_file_path": _config.get_yaml_value(VIEW_ENV_FILE),
-    "compose_file": _config.get_yaml_value(DEFAULT_COMPOSE_FILE),
-    "full_source_path": os.path.join(_config_dir, _source_path),
-    "ssh_key_path": _config_dir + "/" + _config.get_yaml_value(SSH_FILE_PATH),
-    "compose_file_path": _config_dir + "/" + _config.get_yaml_value(DEFAULT_COMPOSE_FILE),
-    "host_os": HostInformation.get_os_name(),
-    "package_manager": HostInformation.get_package_manager(),
-    "view_port": _config.get_yaml_value(VIEW_PORT),
-    "api_port": _config.get_yaml_value(API_PORT),
-    "docker_port": _config.get_yaml_value(DOCKER_PORT),
-    "supertokens_api_port": _config.get_yaml_value(SUPERTOKENS_API_PORT),
-}
 
 
 class Install:
@@ -114,7 +86,7 @@ class Install:
         self.host_ip = host_ip
         self.repo = repo
         self.branch = branch
-        self._user_config = _config.load_user_config(self.config_file)
+        _config.load_user_config(self.config_file)
         self.progress = None
         self.main_task = None
         self._validate_domains()
@@ -125,23 +97,25 @@ class Install:
             if self.logger:
                 self.logger.info("Custom repository/branch detected - will use docker-compose-staging.yml")
 
-    def _get_config(self, key: str):
-        # Override repo_url and branch_name if provided via command line
-        if key == "repo_url" and self.repo is not None:
+    def _get_config(self, path: str):
+        if path == DEFAULT_REPO and self.repo is not None:
             return self.repo
-        if key == "branch_name" and self.branch is not None:
+        if path == DEFAULT_BRANCH and self.branch is not None:
             return self.branch
 
-        # Override compose_file_path to use docker-compose-staging.yml when custom repo/branch is provided
-        if key == "compose_file_path" and self._is_custom_repo_or_branch():
-            # Get the base directory and replace docker-compose.yml with docker-compose-staging.yml
-            default_compose_path = _config.get_config_value(key, self._user_config, DEFAULTS)
-            return default_compose_path.replace("docker-compose.yml", "docker-compose-staging.yml")
+        if path == "full_source_path":
+            return os.path.join(_config.get(NIXOPUS_CONFIG_DIR), _config.get(DEFAULT_PATH))
 
-        try:
-            return _config.get_config_value(key, self._user_config, DEFAULTS)
-        except ValueError:
-            raise ValueError(configuration_key_has_no_default_value.format(key=key))
+        if path == "ssh_key_path":
+            return os.path.join(_config.get(NIXOPUS_CONFIG_DIR), _config.get(SSH_FILE_PATH))
+
+        if path == "compose_file_path":
+            compose_path = os.path.join(_config.get(NIXOPUS_CONFIG_DIR), _config.get(DEFAULT_COMPOSE_FILE))
+            if self._is_custom_repo_or_branch():
+                return compose_path.replace("docker-compose.yml", "docker-compose-staging.yml")
+            return compose_path
+
+        return _config.get(path)
 
     def _validate_domains(self):
         if (self.api_domain is None) != (self.view_domain is None):
@@ -173,8 +147,9 @@ class Install:
 
     def _is_custom_repo_or_branch(self):
         """Check if custom repository or branch is provided (different from defaults)"""
-        default_repo = _config.get_yaml_value(DEFAULT_REPO)  # "https://github.com/raghavyuva/nixopus"
-        default_branch = _config.get_yaml_value(DEFAULT_BRANCH)  # "master"
+        temp_config = Config()
+        default_repo = temp_config.get(DEFAULT_REPO)
+        default_branch = temp_config.get(DEFAULT_BRANCH)
 
         # Check if either repo or branch differs from defaults
         repo_differs = self.repo is not None and self.repo != default_repo
@@ -277,7 +252,9 @@ class Install:
 
     def _run_preflight_checks(self):
         preflight_runner = PreflightRunner(logger=self.logger, verbose=self.verbose)
-        preflight_runner.check_ports_from_config(config_key="required_ports", user_config=self._user_config, defaults=DEFAULTS)
+        ports = _config.get(PORTS)
+        ports = [int(port) for port in ports] if isinstance(ports, list) else [int(ports)]
+        preflight_runner.check_required_ports(ports)
 
     def _install_dependencies(self):
         try:
@@ -288,8 +265,8 @@ class Install:
 
     def _setup_clone_and_config(self):
         clone_config = CloneConfig(
-            repo=self._get_config("repo_url"),
-            branch=self._get_config("branch_name"),
+            repo=self._get_config(DEFAULT_REPO),
+            branch=self._get_config(DEFAULT_BRANCH),
             path=self._get_config("full_source_path"),
             force=self.force,
             verbose=self.verbose,
@@ -306,8 +283,8 @@ class Install:
             raise Exception(f"{clone_failed}: {result.error}")
 
     def _create_env_files(self):
-        api_env_file = self._get_config("api_env_file_path")
-        view_env_file = self._get_config("view_env_file_path")
+        api_env_file = self._get_config(API_ENV_FILE)
+        view_env_file = self._get_config(VIEW_ENV_FILE)
 
         full_source_path = self._get_config("full_source_path")
         combined_env_file = os.path.join(full_source_path, ".env")
@@ -321,8 +298,7 @@ class Install:
         ]
         env_manager = BaseEnvironmentManager(self.logger)
 
-        # individual service env files
-        for i, (service_name, service_key, env_file) in enumerate(services):
+        for service_name, service_key, env_file in services:
             env_values = _config.get_service_env_values(service_key)
             updated_env_values = self._update_environment_variables(env_values)
             success, error = env_manager.write_env_file(env_file, updated_env_values)
@@ -358,8 +334,8 @@ class Install:
                 config_str = f.read()
 
             host_ip = self._get_host_ip()
-            view_port = self._get_config("view_port")
-            api_port = self._get_config("api_port")
+            view_port = self._get_config(VIEW_PORT)
+            api_port = self._get_config(API_PORT)
 
             view_domain = self.view_domain if self.view_domain is not None else host_ip
             api_domain = self.api_domain if self.api_domain is not None else host_ip
@@ -382,9 +358,9 @@ class Install:
     def _setup_ssh(self):
         config = SSHConfig(
             path=self._get_config("ssh_key_path"),
-            key_type=self._get_config("ssh_key_type"),
-            key_size=self._get_config("ssh_key_size"),
-            passphrase=self._get_config("ssh_passphrase"),
+            key_type=_config.get(SSH_KEY_TYPE),
+            key_size=_config.get(SSH_KEY_SIZE),
+            passphrase=None,
             verbose=self.verbose,
             output="text",
             dry_run=self.dry_run,
@@ -404,8 +380,8 @@ class Install:
 
     def _start_services(self):
         config = UpConfig(
-            name=self._get_config("service_name"),
-            detach=self._get_config("service_detach"),
+            name="all",
+            detach=True,
             env_file=None,
             verbose=self.verbose,
             output="text",
@@ -423,7 +399,7 @@ class Install:
             raise Exception(services_start_failed)
 
     def _load_proxy(self):
-        proxy_port = self._get_config("proxy_port")
+        proxy_port = self._get_config(PROXY_PORT)
         full_source_path = self._get_config("full_source_path")
         caddy_json_config = os.path.join(full_source_path, "helpers", "caddy.json")
         config = LoadConfig(
@@ -469,11 +445,11 @@ class Install:
         host_ip = self._get_host_ip()
         secure = self.api_domain is not None and self.view_domain is not None
 
-        api_host = self.api_domain if secure else f"{host_ip}:{self._get_config('api_port')}"
-        view_host = self.view_domain if secure else f"{host_ip}:{self._get_config('view_port')}"
+        api_host = self.api_domain if secure else f"{host_ip}:{self._get_config(API_PORT)}"
+        view_host = self.view_domain if secure else f"{host_ip}:{self._get_config(VIEW_PORT)}"
         protocol = "https" if secure else "http"
         ws_protocol = "wss" if secure else "ws"
-        supertokens_api_port = self._get_config("supertokens_api_port") or 3567
+        supertokens_api_port = self._get_config(SUPERTOKENS_API_PORT) or 3567
         key_map = {
             "ALLOWED_ORIGIN": f"{protocol}://{view_host}",
             "SSH_HOST": host_ip,
@@ -500,7 +476,7 @@ class Install:
     def _copy_caddyfile_to_target(self, full_source_path: str):
         try:
             source_caddyfile = os.path.join(full_source_path, "helpers", "Caddyfile")
-            target_dir = _config.get_yaml_value(CADDY_CONFIG_VOLUME)
+            target_dir = _config.get(CADDY_CONFIG_VOLUME)
             target_caddyfile = os.path.join(target_dir, "Caddyfile")
             FileManager.create_directory(target_dir, logger=self.logger)
             if os.path.exists(source_caddyfile):
@@ -519,6 +495,6 @@ class Install:
         elif self.api_domain:
             return f"https://{self.api_domain}"
         else:
-            view_port = self._get_config("view_port")
+            view_port = self._get_config(VIEW_PORT)
             host_ip = self._get_host_ip()
             return f"http://{host_ip}:{view_port}"
