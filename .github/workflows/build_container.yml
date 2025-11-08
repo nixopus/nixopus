@@ -40,6 +40,8 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
 
       - name: Cache Docker layers
         uses: actions/cache@v4
@@ -72,6 +74,7 @@ jobs:
         with:
           context: ./api
           push: true
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           tags: ${{ steps.meta-api.outputs.tags }}
           labels: ${{ steps.meta-api.outputs.labels }}
           build-args: |
@@ -100,6 +103,7 @@ jobs:
         with:
           context: ./view
           push: true
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           tags: ${{ steps.meta-view.outputs.tags }}
           labels: ${{ steps.meta-view.outputs.labels }}
           build-args: |
