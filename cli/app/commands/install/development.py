@@ -220,17 +220,33 @@ class DevelopmentInstall(BaseInstall):
             return str(self.api_port)
         if key == "view_port" and self.view_port is not None:
             return str(self.view_port)
-        if key == "db_port" and self.db_port is not None:
-            return str(self.db_port)
-        if key == "redis_port" and self.redis_port is not None:
-            return str(self.redis_port)
+        if key == "db_port":
+            if self.db_port is not None:
+                return str(self.db_port)
+            return str(self._config.get("services.db.env.DB_PORT") or "5432")
+        if key == "redis_port":
+            if self.redis_port is not None:
+                return str(self.redis_port)
+            return str(self._config.get("services.redis.env.REDIS_PORT") or "6379")
         if key == "proxy_port" and self.caddy_admin_port is not None:
             return str(self.caddy_admin_port)
-        if key == "supertokens_api_port" and self.supertokens_port is not None:
-            return str(self.supertokens_port)
+        if key == "supertokens_api_port":
+            if self.supertokens_port is not None:
+                return str(self.supertokens_port)
+            return str(self._config.get("services.api.env.SUPERTOKENS_API_PORT") or "3567")
+        if key == "services.caddy.env.CADDY_HTTP_PORT" and self.caddy_http_port is not None:
+            return str(self.caddy_http_port)
+        if key == "services.caddy.env.CADDY_HTTPS_PORT" and self.caddy_https_port is not None:
+            return str(self.caddy_https_port)
 
-        # Use parent's _get_config with dev defaults
-        return super()._get_config(key, user_config or self._user_config, defaults or self._defaults)
+        active_defaults = defaults or self._defaults
+        if active_defaults and key in active_defaults:
+            return active_defaults[key]
+
+        try:
+            return self._config.get(key)
+        except KeyError:
+            return super()._get_config(key)
 
     def run(self):
         """Execute development installation workflow"""
@@ -686,9 +702,9 @@ class DevelopmentInstall(BaseInstall):
         # Get ports from config
         api_port = self._get_config("api_port") or "8080"
         view_port = self._get_config("view_port") or "3000"
-        db_port = self._config.get("services.db.env.DB_PORT") or "5432"
-        redis_port = self._config.get("services.redis.env.REDIS_PORT") or "6379"
-        supertokens_port = self._config.get("services.api.env.SUPERTOKENS_API_PORT") or "3567"
+        db_port = self._get_config("db_port") or "5432"
+        redis_port = self._get_config("redis_port") or "6379"
+        supertokens_port = self._get_config("supertokens_api_port") or "3567"
         caddy_admin_port = self._get_config("proxy_port") or "2019"
 
         if not self.verbose:

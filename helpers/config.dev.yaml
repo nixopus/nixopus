@@ -69,8 +69,8 @@ services:
       CADDY_PORTS: "${CADDY_ADMIN_PORT:-2019}:2019,${CADDY_HTTP_PORT:-80}:80,${CADDY_HTTPS_PORT:-443}:443"
       API_DOMAIN: ${API_DOMAIN:-api.localhost}
       VIEW_DOMAIN: ${VIEW_DOMAIN:-app.localhost}
-      BASE_URL: ${BASE_URL:-http://localhost:${CADDY_ADMIN_PORT:-2019}}
-      PROXY_PORT: ${PROXY_PORT:-${CADDY_ADMIN_PORT:-2019}}
+      BASE_URL: ${BASE_URL:-http://localhost:2019}
+      PROXY_PORT: ${PROXY_PORT:-2019}
       CONFIG_ENDPOINT: ${CONFIG_ENDPOINT:-/config}
       LOAD_ENDPOINT: ${LOAD_ENDPOINT:-/load}
       STOP_ENDPOINT: ${STOP_ENDPOINT:-/stop}

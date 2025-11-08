@@ -433,7 +433,6 @@ class Install:
         if self.supertokens_port is not None:
             env_vars["SUPERTOKENS_PORT"] = str(self.supertokens_port)
 
-        import os
         original_env = os.environ.copy()
         os.environ.update(env_vars)
 
