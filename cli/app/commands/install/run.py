@@ -74,6 +74,14 @@ class Install:
         host_ip: str = None,
         repo: str = None,
         branch: str = None,
+        api_port: int = None,
+        view_port: int = None,
+        db_port: int = None,
+        redis_port: int = None,
+        caddy_admin_port: int = None,
+        caddy_http_port: int = None,
+        caddy_https_port: int = None,
+        supertokens_port: int = None,
     ):
         self.logger = logger
         self.verbose = verbose
@@ -86,6 +94,14 @@ class Install:
         self.host_ip = host_ip
         self.repo = repo
         self.branch = branch
+        self.api_port = api_port
+        self.view_port = view_port
+        self.db_port = db_port
+        self.redis_port = redis_port
+        self.caddy_admin_port = caddy_admin_port
+        self.caddy_http_port = caddy_http_port
+        self.caddy_https_port = caddy_https_port
+        self.supertokens_port = supertokens_port
         _config.load_user_config(self.config_file)
         self.progress = None
         self.main_task = None
@@ -114,6 +130,25 @@ class Install:
             if self._is_custom_repo_or_branch():
                 return compose_path.replace("docker-compose.yml", "docker-compose-staging.yml")
             return compose_path
+
+        if path == API_PORT and self.api_port is not None:
+            return str(self.api_port)
+        if path == VIEW_PORT and self.view_port is not None:
+            return str(self.view_port)
+        if path == "services.db.env.DB_PORT" and self.db_port is not None:
+            return str(self.db_port)
+        if path == "services.redis.env.REDIS_PORT" and self.redis_port is not None:
+            return str(self.redis_port)
+        if path == PROXY_PORT and self.caddy_admin_port is not None:
+            return str(self.caddy_admin_port)
+        if path == "services.caddy.env.CADDY_ADMIN_PORT" and self.caddy_admin_port is not None:
+            return str(self.caddy_admin_port)
+        if path == "services.caddy.env.CADDY_HTTP_PORT" and self.caddy_http_port is not None:
+            return str(self.caddy_http_port)
+        if path == "services.caddy.env.CADDY_HTTPS_PORT" and self.caddy_https_port is not None:
+            return str(self.caddy_https_port)
+        if path == SUPERTOKENS_API_PORT and self.supertokens_port is not None:
+            return str(self.supertokens_port)
 
         return _config.get(path)
 
@@ -379,24 +414,53 @@ class Install:
             raise Exception(ssh_setup_failed)
 
     def _start_services(self):
-        config = UpConfig(
-            name="all",
-            detach=True,
-            env_file=None,
-            verbose=self.verbose,
-            output="text",
-            dry_run=self.dry_run,
-            compose_file=self._get_config("compose_file_path"),
-        )
+        env_vars = {}
+        if self.api_port is not None:
+            env_vars["API_PORT"] = str(self.api_port)
+        if self.view_port is not None:
+            env_vars["NEXT_PUBLIC_PORT"] = str(self.view_port)
+            env_vars["VIEW_PORT"] = str(self.view_port)
+        if self.db_port is not None:
+            env_vars["DB_PORT"] = str(self.db_port)
+        if self.redis_port is not None:
+            env_vars["REDIS_PORT"] = str(self.redis_port)
+        if self.caddy_admin_port is not None:
+            env_vars["CADDY_ADMIN_PORT"] = str(self.caddy_admin_port)
+        if self.caddy_http_port is not None:
+            env_vars["CADDY_HTTP_PORT"] = str(self.caddy_http_port)
+        if self.caddy_https_port is not None:
+            env_vars["CADDY_HTTPS_PORT"] = str(self.caddy_https_port)
+        if self.supertokens_port is not None:
+            env_vars["SUPERTOKENS_PORT"] = str(self.supertokens_port)
 
-        up_service = Up(logger=self.logger)
+        original_env = os.environ.copy()
+        os.environ.update(env_vars)
+
         try:
-            with TimeoutWrapper(self.timeout):
-                result = up_service.up(config)
-        except TimeoutError:
-            raise Exception(f"{services_start_failed}: {operation_timed_out}")
-        if not result.success:
-            raise Exception(services_start_failed)
+            config = UpConfig(
+                name="all",
+                detach=True,
+                env_file=None,
+                verbose=self.verbose,
+                output="text",
+                dry_run=self.dry_run,
+                compose_file=self._get_config("compose_file_path"),
+            )
+
+            up_service = Up(logger=self.logger)
+            try:
+                with TimeoutWrapper(self.timeout):
+                    result = up_service.up(config)
+            except TimeoutError:
+                raise Exception(f"{services_start_failed}: {operation_timed_out}")
+            if not result.success:
+                raise Exception(services_start_failed)
+        finally:
+            for key in env_vars:
+                if key in original_env:
+                    os.environ[key] = original_env[key]
+                else:
+                    os.environ.pop(key, None)
 
     def _load_proxy(self):
         proxy_port = self._get_config(PROXY_PORT)

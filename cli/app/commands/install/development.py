@@ -64,6 +64,14 @@ class DevelopmentInstall(BaseInstall):
         repo: str = None,
         branch: str = None,
         install_path: str = None,
+        api_port: int = None,
+        view_port: int = None,
+        db_port: int = None,
+        redis_port: int = None,
+        caddy_admin_port: int = None,
+        caddy_http_port: int = None,
+        caddy_https_port: int = None,
+        supertokens_port: int = None,
     ):
         super().__init__(
             logger=logger,
@@ -75,6 +83,14 @@ class DevelopmentInstall(BaseInstall):
             repo=repo,
             branch=branch,
         )
+        self.api_port = api_port
+        self.view_port = view_port
+        self.db_port = db_port
+        self.redis_port = redis_port
+        self.caddy_admin_port = caddy_admin_port
+        self.caddy_http_port = caddy_http_port
+        self.caddy_https_port = caddy_https_port
+        self.supertokens_port = supertokens_port
 
         # safe fallback incase cwd is not accessible
         if install_path:
@@ -199,8 +215,38 @@ class DevelopmentInstall(BaseInstall):
         if key == "ssh_key_path":
             return os.path.expanduser("~/.ssh/id_rsa_nixopus")
 
-        # Use parent's _get_config with dev defaults
-        return super()._get_config(key, user_config or self._user_config, defaults or self._defaults)
+        # Port overrides from CLI options
+        if key == "api_port" and self.api_port is not None:
+            return str(self.api_port)
+        if key == "view_port" and self.view_port is not None:
+            return str(self.view_port)
+        if key == "db_port":
+            if self.db_port is not None:
+                return str(self.db_port)
+            return str(self._config.get("services.db.env.DB_PORT") or "5432")
+        if key == "redis_port":
+            if self.redis_port is not None:
+                return str(self.redis_port)
+            return str(self._config.get("services.redis.env.REDIS_PORT") or "6379")
+        if key == "proxy_port" and self.caddy_admin_port is not None:
+            return str(self.caddy_admin_port)
+        if key == "supertokens_api_port":
+            if self.supertokens_port is not None:
+                return str(self.supertokens_port)
+            return str(self._config.get("services.api.env.SUPERTOKENS_API_PORT") or "3567")
+        if key == "services.caddy.env.CADDY_HTTP_PORT" and self.caddy_http_port is not None:
+            return str(self.caddy_http_port)
+        if key == "services.caddy.env.CADDY_HTTPS_PORT" and self.caddy_https_port is not None:
+            return str(self.caddy_https_port)
+
+        active_defaults = defaults or self._defaults
+        if active_defaults and key in active_defaults:
+            return active_defaults[key]
+
+        try:
+            return self._config.get(key)
+        except KeyError:
+            return super()._get_config(key)
 
     def run(self):
         """Execute development installation workflow"""
@@ -528,24 +574,53 @@ class DevelopmentInstall(BaseInstall):
 
     def _start_all_services(self):
         """Start all services (API, View, DB, Redis, Caddy) using Docker Compose"""
-        config = UpConfig(
-            name=self._get_config("service_name"),
-            detach=self._get_config("service_detach"),
-            env_file=None,
-            verbose=self.verbose,
-            output="text",
-            dry_run=self.dry_run,
-            compose_file=self._get_config("compose_file_path"),
-        )
+        env_vars = {}
+        if self.api_port is not None:
+            env_vars["API_PORT"] = str(self.api_port)
+        if self.view_port is not None:
+            env_vars["NEXT_PUBLIC_PORT"] = str(self.view_port)
+            env_vars["VIEW_PORT"] = str(self.view_port)
+        if self.db_port is not None:
+            env_vars["DB_PORT"] = str(self.db_port)
+        if self.redis_port is not None:
+            env_vars["REDIS_PORT"] = str(self.redis_port)
+        if self.caddy_admin_port is not None:
+            env_vars["CADDY_ADMIN_PORT"] = str(self.caddy_admin_port)
+        if self.caddy_http_port is not None:
+            env_vars["CADDY_HTTP_PORT"] = str(self.caddy_http_port)
+        if self.caddy_https_port is not None:
+            env_vars["CADDY_HTTPS_PORT"] = str(self.caddy_https_port)
+        if self.supertokens_port is not None:
+            env_vars["SUPERTOKENS_PORT"] = str(self.supertokens_port)
 
-        up_service = Up(logger=self.logger)
+        original_env = os.environ.copy()
+        os.environ.update(env_vars)
+
         try:
-            with TimeoutWrapper(self.timeout):
-                result = up_service.up(config)
-        except TimeoutError:
-            raise Exception(f"{services_start_failed}: {operation_timed_out}")
-        if not result.success:
-            raise Exception(services_start_failed)
+            config = UpConfig(
+                name=self._get_config("service_name"),
+                detach=self._get_config("service_detach"),
+                env_file=None,
+                verbose=self.verbose,
+                output="text",
+                dry_run=self.dry_run,
+                compose_file=self._get_config("compose_file_path"),
+            )
+
+            up_service = Up(logger=self.logger)
+            try:
+                with TimeoutWrapper(self.timeout):
+                    result = up_service.up(config)
+            except TimeoutError:
+                raise Exception(f"{services_start_failed}: {operation_timed_out}")
+            if not result.success:
+                raise Exception(services_start_failed)
+        finally:
+            for key in env_vars:
+                if key in original_env:
+                    os.environ[key] = original_env[key]
+                else:
+                    os.environ.pop(key, None)
 
     def _validate_services(self):
         """Validate all Docker services are running and accessible through Caddy proxy"""
@@ -627,6 +702,10 @@ class DevelopmentInstall(BaseInstall):
         # Get ports from config
         api_port = self._get_config("api_port") or "8080"
         view_port = self._get_config("view_port") or "3000"
+        db_port = self._get_config("db_port") or "5432"
+        redis_port = self._get_config("redis_port") or "6379"
+        supertokens_port = self._get_config("supertokens_api_port") or "3567"
+        caddy_admin_port = self._get_config("proxy_port") or "2019"
 
         if not self.verbose:
             # Minimal output
@@ -664,10 +743,10 @@ class DevelopmentInstall(BaseInstall):
             self.logger.info(" Direct Container Access:")
             self.logger.info(f"  • Frontend:    http://localhost:{view_port}")
             self.logger.info(f"  • Backend:     http://localhost:{api_port}")
-            self.logger.info(f"  • Database:    localhost:5432 (postgres/changeme)")
-            self.logger.info("  • Redis:       localhost:6379")
-            self.logger.info(f"  • SuperTokens: http://localhost:3567")
-            self.logger.info("  • Caddy Admin: http://localhost:2019")
+            self.logger.info(f"  • Database:    localhost:{db_port} (postgres/changeme)")
+            self.logger.info(f"  • Redis:       localhost:{redis_port}")
+            self.logger.info(f"  • SuperTokens: http://localhost:{supertokens_port}")
+            self.logger.info(f"  • Caddy Admin: http://localhost:{caddy_admin_port}")
             self.logger.info("")
             self.logger.info("  View Logs:")
             self.logger.info("  • Frontend:  docker logs -f nixopus-view-dev")

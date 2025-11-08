@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/raghavyuva/nixopus-api/internal/config"
@@ -15,7 +16,11 @@ import (
 func NewCaddy(logger *logger.Logger, rootDir string, domain string, port string, fileServerType FileServerType) *Caddy {
 	endpoint := config.AppConfig.Proxy.CaddyEndpoint
 	if endpoint == "" {
-		endpoint = "http://127.0.0.1:2019"
+		caddyPort := os.Getenv("CADDY_ADMIN_PORT")
+		if caddyPort == "" {
+			caddyPort = "2019"
+		}
+		endpoint = "http://127.0.0.1:" + caddyPort
 	}
 	return &Caddy{
 		Logger:   logger,
