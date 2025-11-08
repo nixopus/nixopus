@@ -5,7 +5,7 @@ services:
     image: ghcr.io/${GITHUB_REPOSITORY:-raghavyuva/nixopus}-api:latest
     container_name: nixopus-api
     ports:
-      - "${API_PORT:-8443}:${API_PORT:-8443}"
+      - "${API_PORT:-8443}:8443"
     restart: unless-stopped
     env_file:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/api/.env
@@ -52,7 +52,7 @@ services:
       args:
         - NEXT_PUBLIC_PORT=${NEXT_PUBLIC_PORT}
     ports:
-      - "${NEXT_PUBLIC_PORT:-7443}:${NEXT_PUBLIC_PORT:-7443}"
+      - "${NEXT_PUBLIC_PORT:-7443}:7443"
     restart: unless-stopped
     env_file:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/view/.env
