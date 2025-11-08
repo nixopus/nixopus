@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import subprocess
+from urllib.parse import urlparse
 
 import typer
 import yaml
@@ -496,13 +497,22 @@ class Install:
 
     def _get_supertokens_connection_uri(self, protocol: str, api_host: str, supertokens_api_port: int, host_ip: str):
         protocol = protocol.replace("https", "http")
+        
+        host_without_port = api_host
+        
+        if api_host.startswith(("http://", "https://")):
+            parsed = urlparse(api_host)
+            host_without_port = parsed.hostname or api_host
+        elif ":" in api_host:
+            parts = api_host.rsplit(":", 1)
+            if len(parts) == 2 and parts[1].isdigit():
+                host_without_port = parts[0]
+        
         try:
-            ipaddress.ip_address(api_host)
-            # If api_host is an IP, use the host_ip instead, x.y.z.w:supertokens_api_port
+            ipaddress.ip_address(host_without_port)
             return f"{protocol}://{host_ip}:{supertokens_api_port}"
         except ValueError:
-            # If api_host is not IP rather domain, then use domain:supertokens_api_port
-            return f"{protocol}://{api_host}:{supertokens_api_port}"
+            return f"{protocol}://{host_without_port}:{supertokens_api_port}"
 
     def _update_environment_variables(self, env_values: dict) -> dict:
         updated_env = env_values.copy()
