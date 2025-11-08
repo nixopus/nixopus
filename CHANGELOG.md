@@ -1,3 +1,21 @@
+# [0.1.0-alpha.64](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.63...v0.1.0-alpha.64) (2025-11-08)
+
+
+### Bug Fixes
+
+* update docker compose files to use internal ports for supertokens postgres connection ([9a23b2c](https://github.com/raghavyuva/nixopus/commit/9a23b2c4552b4f6905dd6d501ed0a40cddf362c0))
+
+
+
+# [0.1.0-alpha.63](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.62...v0.1.0-alpha.63) (2025-11-08)
+
+
+### Bug Fixes
+
+* malformed supertokens connection uri during ip based installations ([b6b1ad5](https://github.com/raghavyuva/nixopus/commit/b6b1ad5ec11b3eda9caac692c0cad3cba59adbc9))
+
+
+
 # [0.1.0-alpha.62](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.61...v0.1.0-alpha.62) (2025-11-08)
 
 

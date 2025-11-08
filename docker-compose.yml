@@ -112,7 +112,7 @@ services:
     environment:
       # This is to avoid conflicts with the nixopus database
       POSTGRESQL_TABLE_NAMES_PREFIX: "supertokens_"
-      POSTGRESQL_CONNECTION_URI: "postgresql://${USERNAME}:${PASSWORD}@nixopus-db:${DB_PORT}/${DB_NAME}"
+      POSTGRESQL_CONNECTION_URI: "postgresql://${USERNAME}:${PASSWORD}@nixopus-db:5432/${DB_NAME}"
     networks:
       - nixopus-network
     restart: unless-stopped
