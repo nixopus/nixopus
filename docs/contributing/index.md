@@ -1,192 +1,247 @@
-# Contributing to Nixopus
+# Development Guide
 
-Thank you for your interest in contributing to Nixopus! This guide will help you get started with the development setup and explain the contribution process.
+Quick setup guide for Nixopus development.
 
-## Table of Contents
+## Prerequisites
 
-- [Contributing to Nixopus](#contributing-to-nixopus)
-  - [Table of Contents](#table-of-contents)
-  - [Specialized Contribution Guides](#specialized-contribution-guides)
-  - [Code of Conduct](#code-of-conduct)
-  - [Development Setup](#development-setup)
-  - [Running the Application](#running-the-application)
-  - [Making Changes](#making-changes)
-  - [Submitting a Pull Request](#submitting-a-pull-request)
-  - [Proposing New Features](#proposing-new-features)
-  - [Extending Documentation](#extending-documentation)
-  - [Gratitude](#gratitude)
+Before you begin, ensure you have the following installed:
 
-## Specialized Contribution Guides
+::: info Prerequisites Checklist
+- **Go** 1.23.6 or higher
+- **Node.js** 18 or higher  
+- **Docker** and **Docker Compose** (handles PostgreSQL and SuperTokens)
+:::
 
-We provide detailed guides for specific types of contributions:
-
-- [Getting Started with contribution](README.md) - For general contribution guidelines
-- [Backend Development Guide](backend.md) - For Go backend contributions
-- [Frontend Development Guide](frontend.md) - For Next.js/React frontend contributions
-- [Documentation Guide](documentation.md) - For improving or extending documentation
-- [Self-Hosting Guide](self-hosting.md) - For improving installation and self-hosting
-- [Docker Guide](docker.md) - For Docker builds and container optimization
-- [Development Fixtures Guide](fixtures.md) - For working with development data and fixtures
-
-## Code of Conduct
-
-Before contributing, please review and agree to our [Code of Conduct](/code-of-conduct/index.md). We're committed to maintaining a welcoming and inclusive community.
-
-## Development Setup
-
-If you prefer to set up your development environment manually:
-
-1. Fork the repository: Go to [nixopus GitHub repository](https://github.com/raghavyuva/nixopus). Click on Fork to create your own copy under your GitHub account.
-
-1. Clone the repository:
-
+::: tip Verify Your Setup
+You can verify your installations with:
 ```bash
+go version
+node --version
+docker --version
+docker compose version
+```
+:::
+
+## Setup
+
+### 1. Fork and Clone
+
+First, fork the [nixopus repository](https://github.com/raghavyuva/nixopus) on GitHub, then clone your fork. Replace `your_username` with your actual GitHub username:
+
+::: code-group
+
+```bash [SSH]
 git clone git@github.com:your_username/nixopus.git
 cd nixopus
 ```
 
-2. Install Go (version 1.23.6 or newer) and PostgreSQL.
-
-3. Set up PostgreSQL databases:
-
-```bash
-createdb nixopus -U postgres
-createdb nixopus_test -U postgres
+```bash [HTTPS]
+git clone https://github.com/your_username/nixopus.git
+cd nixopus
 ```
 
-4. Copy and configure environment variables (API service):
+:::
+
+::: tip Which Clone Method?
+- **SSH**: Requires SSH keys set up with GitHub (faster for frequent pushes)
+- **HTTPS**: Works out of the box, may prompt for credentials
+:::
+
+### 2. Start Database and SuperTokens
+
+::: warning Port Availability Check
+Before starting services, ensure these ports are available on your machine:
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| PostgreSQL | `5432` | Database |
+| SuperTokens | `3567` | Authentication |
+| API | `8080` | Backend server |
+| Frontend | `3000` | Next.js dev server |
+
+If any port is in use, stop the conflicting service before proceeding.
+:::
+
+The docker compose command will automatically start both the PostgreSQL database (`nixopus-db`) and SuperTokens service. The database is a required dependency, so docker compose will start it first and wait for it to be healthy before starting SuperTokens.
+
+::: details Custom Database Credentials
+If you need custom database credentials, create a `.env` file in the project root with:
+
+```bash
+USERNAME=postgres
+PASSWORD=changeme
+DB_NAME=postgres
+SUPERTOKENS_PORT=3567
+```
+
+**Defaults** (used if `.env` is not provided):
+- `USERNAME` → `postgres`
+- `PASSWORD` → `changeme`
+- `DB_NAME` → `postgres`
+- `SUPERTOKENS_PORT` → `3567`
+:::
+
+Start the services:
+
+```bash
+docker compose up supertokens -d
+```
+
+Verify containers are running:
+
+```bash
+docker ps
+```
+
+You should see `nixopus-db` and `supertokens` containers running.
+
+::: tip Container Health
+Docker Compose automatically waits for the database to be healthy before starting SuperTokens. This ensures proper initialization order.
+:::
+
+### 3. Backend Setup
+
+Navigate to the backend directory:
 
 ```bash
 cd api
-cp .env.sample .env
-# Update .env to match your local DB (e.g., DB_NAME=nixopus, USERNAME=postgres, PASSWORD=...)
-# Configure SuperTokens authentication:
-# SUPERTOKENS_API_KEY=your-secure-api-key
-# SUPERTOKENS_API_DOMAIN=http://localhost:3567
-# SUPERTOKENS_WEBSITE_DOMAIN=http://localhost:3000
-# SUPERTOKENS_CONNECTION_URI=http://localhost:3567
 ```
 
-5. Set up SuperTokens Core (required for authentication):
+Copy the sample environment file:
 
 ```bash
-# Using Docker (recommended)
-docker run -p 3567:3567 -d \
-  --name supertokens-core \
-  registry.supertokens.io/supertokens/supertokens-postgresql
-
-# Or install locally
-npm install -g supertokens
-supertokens start
+cp .env.sample .env
 ```
 
-6. Install project dependencies:
+::: warning Database Configuration Match
+**Critical**: Update the database connection settings in `api/.env` to match your docker compose configuration. The backend connects to the database running in Docker, so these values must match:
+
+- `USERNAME` (must match docker compose)
+- `PASSWORD` (must match docker compose)
+- `DB_NAME` (must match docker compose)
+
+If they don't match, the backend won't be able to connect to the database.
+:::
+
+::: details Missing .env.sample
+If `.env.sample` doesn't exist, check the repository structure or create `.env` manually based on the application's configuration requirements.
+:::
+
+Download Go dependencies:
 
 ```bash
 go mod download
+```
 
+Install the Air hot reload tool:
+
+```bash
+go install github.com/air-verse/air@latest
+```
+
+::: tip Air PATH Configuration
+Ensure `$GOPATH/bin` or `$HOME/go/bin` is in your `PATH` environment variable so the `air` command is available. Air provides automatic code reloading during development - your Go server will restart automatically when you save changes.
+:::
+
+### 4. Frontend Setup
+
+Navigate to the frontend directory:
+
+```bash
 cd ../view
+```
+
+Copy the sample environment file:
+
+```bash
+cp .env.sample .env.local
+```
+
+::: details Missing .env.sample
+If `.env.sample` doesn't exist, check the repository structure or create `.env.local` manually.
+:::
+
+Install Node.js dependencies:
+
+```bash
 yarn install
 ```
 
-7. Load development fixtures (optional but recommended):
+::: tip Package Manager
+This guide uses `yarn`, but `npm` or `pnpm` will work as well. Use whichever you prefer.
+:::
 
-```bash
-cd ../api
+## Run
 
-# Load fixtures without affecting existing data
-make fixtures-load
+You'll need **two terminal windows** to run both the backend and frontend simultaneously.
 
-# Or for a clean slate (drops and recreates tables)
-make fixtures-recreate
+### Start Backend
 
-# Get help on fixtures commands
-make fixtures-help
-```
-
-The fixtures system provides sample data including users, organizations, roles, permissions, and feature flags to help you get started quickly with development.
-
-## Running the Application
-
-1. Start the API service:
-
-```bash
-air
-```
-
-2. Start the view service:
-
-```bash
-cd ../view
-yarn dev
-```
-
-The view service uses:
-
-- Next.js 15 with App Router
-- React 19
-- Redux Toolkit for state management
-- Tailwind CSS for styling
-- Radix UI for accessible components (Shadcn Components)
-- TypeScript for type safety
-
-## Making Changes
-
-Nixopus follows [trunk-based-development](https://www.atlassian.com/continuous-delivery/continuous-integration/trunk-based-development) conventions.
-
-1. Create a new branch:
-
-```bash
-git checkout -b feature/your-feature-name
-```
-
-2. Make your changes following the project structure:
-   - Place new features under `api/internal/features/`
-   - Add tests for new functionality
-   - Update migrations if needed
-   - Follow existing patterns for controllers, services, and storage
-   - For frontend changes, follow the Next.js app directory structure
-
-3. Run tests:
+In your **first terminal**, start the backend with Air for hot reloading:
 
 ```bash
 cd api
-make test
-
-# View linting
-cd view
-yarn lint
+air
 ```
 
-4. Commit your changes with clear messages.
+::: info Backend Status
+- **URL**: `http://localhost:8080`
+- **Hot Reload**: Enabled via Air
+- **Auto-restart**: Changes to Go files trigger automatic rebuild and restart
+:::
 
-## Submitting a Pull Request
+### Start Frontend
 
-1. Push your branch and create a pull request.
+In your **second terminal**, start the frontend development server:
 
-2. Ensure your code:
-   - Follows the project structure
-   - Includes tests
-   - Updates documentation if needed
-   - Passes all CI checks
+```bash
+cd view
+yarn dev
+```
 
-3. Be prepared to address feedback.
+::: info Frontend Status
+- **URL**: `http://localhost:3000`
+- **Hot Module Replacement**: Enabled
+- **Fast Refresh**: Changes appear instantly in the browser
+:::
 
-## Proposing New Features
+### Verify Everything is Running
 
-1. Check existing issues and pull requests.
+Once both servers are running, you should have access to:
 
-2. Create a new issue with the `Feature request` template.
+| Service | URL | Status Check |
+|---------|-----|--------------|
+| Frontend | `http://localhost:3000` | Open in browser |
+| API | `http://localhost:8080` | Check health endpoint |
+| Database | Docker (port 5432) | `docker ps` |
+| SuperTokens | Docker (port 3567) | `docker ps` |
 
-3. Include:
-   - Feature description
-   - Technical implementation details
-   - Impact on existing code
+::: warning Troubleshooting Connection Issues
+If you encounter connection issues, verify:
 
-## Extending Documentation
+1. **Docker containers are running**:
+   ```bash
+   docker ps
+   ```
+   You should see `nixopus-db` and `supertokens` containers.
 
-Documentation is located in the `docs/` directory. Follow the existing structure and style when adding new content.
+2. **Environment variables match**: 
+   - Check that `api/.env` database credentials match docker compose configuration
 
-## Gratitude
+3. **Ports are available**:
+   - Ensure ports 3000, 8080, 3567, and 5432 are not blocked or in use
 
-Thank you for contributing to Nixopus! Your efforts help make this project better for everyone.
+4. **Database is healthy**:
+   - Docker Compose waits for health checks, but verify with `docker ps` that containers show as healthy
+:::
+
+## Need Help? 🆘
+
+If you run into issues or have questions:
+
+- 💬 [Discord Community](https://discord.gg/skdcq39Wpv) - Get real-time help from the community
+- 💡 [GitHub Discussions](https://github.com/raghavyuva/nixopus/discussions) - Ask questions and share ideas
+
+::: tip Contributing
+Found a bug or want to improve the docs? Contributions are welcome! Check out the repository for contribution guidelines.
+:::
