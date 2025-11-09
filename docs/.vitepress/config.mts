@@ -60,77 +60,55 @@ export default withMermaid(
       sidebar: [
         {
           text: "Get Started",
+          collapsed: false,
           items: [
             { text: "Introduction", link: "/introduction/index.md" },
             { text: "Installation", link: "/install/index.md" },
-            { text: "Architecture", link: "/architecture/index.md" },
             { text: "Preferences", link: "/preferences/index.md" }
           ]
         },
         {
           text: 'Features',
+          collapsed: false,
           items: [
             { text: "Hosting Projects", link: "/self-host/index.md" },
             { text: 'Terminal', link: '/terminal/index.md' },
             { text: "File Manager", link: "/file-manager/index.md" },
+            { text: "Extensions", link: "/extensions/index.md" },
             { text: "Notifications", link: "/notifications/index.md" }
           ]
         },
         {
           text: 'CLI',
+          collapsed: false,
           items: [
             { text: 'Overview', link: '/cli/index.md' },
-            { text: 'Installation', link: '/cli/installation.md' },
-            { text: 'Configuration', link: '/cli/config.md' },
-            {
-              text: 'Commands',
-              collapsed: true,
-              items: [
-                { text: 'preflight', link: '/cli/commands/preflight.md' },
-                { text: 'conflict', link: '/cli/commands/conflict.md' },
-                { text: 'install', link: '/cli/commands/install.md' },
-                { text: 'uninstall', link: '/cli/commands/uninstall.md' },
-                { text: 'service', link: '/cli/commands/service.md' },
-                { text: 'conf', link: '/cli/commands/conf.md' },
-                { text: 'proxy', link: '/cli/commands/proxy.md' },
-                { text: 'clone', link: '/cli/commands/clone.md' },
-                { text: 'version', link: '/cli/commands/version.md' },
-                { text: 'test', link: '/cli/commands/test.md' }
-              ]
-            },
-            { text: 'Reference', link: '/cli/cli-reference.md' },
-            { text: 'Development', link: '/cli/development.md' }
+            { text: 'Reference', link: '/cli/cli-reference.md' }
+          ]
+        },
+        {
+          text: 'Workflows',
+          collapsed: false,
+          items: [
+            { text: 'Overview', link: '/workflows/index.md' }
           ]
         },
         {
           text: 'Blog',
+          collapsed: true,
           items: [
-            { text: 'Latest Posts', link: '/blog/' }
+            { text: 'Latest Posts', link: '/blog/' },
+            { text: 'Introduction', link: '/blog/posts/2025-06-06-intro.md' },
+            { text: 'Docker Context', link: '/blog/posts/2025-06-10-docker-context.md' },
+            { text: 'QEMU Action', link: '/blog/posts/2025-06-14-qemu-action.md' }
           ]
         },
         {
           text: 'Development',
+          collapsed: true,
           items: [
-            {
-              text: 'Contribution',
-              items: [
-                { text: 'Overview', link: '/contributing/index.md' },
-                { text: 'Backend', link: '/contributing/backend.md' },
-                { text: 'Frontend', link: '/contributing/frontend.md' },
-                { text: 'Documentation', link: '/contributing/documentation.md' },
-                { text: 'Docker', link: '/contributing/docker.md' },
-                { text: 'Self Hosting', link: '/contributing/self-hosting.md' },
-                { text: 'Fixtures', link: '/contributing/fixtures.md' }
-              ]
-            },
-            {
-              text: 'Database',
-              items: [
-                { text: 'Migrations Guide', link: '/migrations/index.md' },
-                { text: 'Quick Reference', link: '/migrations/quick-reference.md' },
-                { text: 'Templates', link: '/migrations/templates.md' }
-              ]
-            },
+            { text: 'Contribution', link: '/contributing/index.md' },
+           
             { text: "Code of Conduct", link: "/code-of-conduct/index.md" },
             { text: "Changelogs", link: "https://github.com/raghavyuva/nixopus/releases" },
             { text: "License", link: "/license/index.md" },
@@ -140,6 +118,7 @@ export default withMermaid(
         },
         {
           text: "Support",
+          collapsed: false,
           items: [
             { text: "Sponsor", link: '/sponsor/index.md' },
             { text: "Contact", link: '/contact/index.md' }
@@ -147,6 +126,7 @@ export default withMermaid(
         },
         {
           text: "API Reference",
+          collapsed: true,
           items: [
             ...sidebar.generateSidebarGroups().map((group) => ({
               ...group,

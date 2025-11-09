@@ -20,18 +20,20 @@ nixopus install
 
 ## Available Commands
 
+For detailed command reference, see the [CLI Reference](./cli-reference.md) page.
+
 | Command | Description | Key Subcommands |
 |---------|-------------|-----------------|
-| **[preflight](./commands/preflight.md)** | System readiness checks | check, ports, deps |
-| **[conflict](./commands/conflict.md)** | Tool version conflict detection | - |
-| **[install](./commands/install.md)** | Complete Nixopus installation | ssh, deps |
-| **[uninstall](./commands/uninstall.md)** | Remove Nixopus from system | - |
-| **[service](./commands/service.md)** | Control Docker services | up, down, ps, restart |
-| **[conf](./commands/conf.md)** | Manage application settings | list, set, delete |
-| **[proxy](./commands/proxy.md)** | Caddy proxy management | load, status, stop |
-| **[clone](./commands/clone.md)** | Repository cloning with Git | - |
-| **[version](./commands/version.md)** | Display CLI version information | - |
-| **[test](./commands/test.md)** | Run CLI tests (development only) | - |
+| **preflight** | System readiness checks | check, ports, deps |
+| **conflict** | Tool version conflict detection | - |
+| **install** | Complete Nixopus installation | ssh, deps |
+| **uninstall** | Remove Nixopus from system | - |
+| **service** | Control Docker services | up, down, ps, restart |
+| **conf** | Manage application settings | list, set, delete |
+| **proxy** | Caddy proxy management | load, status, stop |
+| **clone** | Repository cloning with Git | - |
+| **version** | Display CLI version information | - |
+| **test** | Run CLI tests (development only) | - |
 
 ## Common Workflows
 
@@ -113,10 +115,6 @@ nixopus service --help
 nixopus service up --help
 ```
 
-## Installation
+## Reference
 
-See the [Installation Guide](./installation.md) for detailed setup instructions including binary installation, Poetry setup, and development environment configuration.
-
-## Development
-
-See the [Development Guide](./development.md) for information on contributing to the CLI, project structure, and testing procedures.
+For complete command reference and detailed documentation, see the [CLI Reference](./cli-reference.md) page.

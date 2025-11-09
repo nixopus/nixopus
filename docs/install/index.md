@@ -7,6 +7,14 @@ Welcome to the Nixopus installation guide. This section will help you set up Nix
 - **VPS with sudo access**
 - **Nixopus CLI installed** (see [CLI Installation Guide](../cli/installation.md))
 
+## System Requirements
+
+- **Operating System**: Linux (Ubuntu 20.04+, Debian 11+, or similar distributions)
+- **CPU**: Minimum 2 cores (4+ cores recommended for production)
+- **RAM**: Minimum 2GB (4GB+ recommended for production)
+- **Storage**: Minimum 5GB free disk space 
+- **Network**: Internet connection for downloading dependencies and updates
+
 ## Quick Installation
 
 ### Step 1: Install the Nixopus CLI
