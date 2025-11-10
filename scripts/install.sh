@@ -63,6 +63,17 @@ nixopus install Options (passed through to 'nixopus install'):
   -vd, --view-domain DOMAIN The domain where the nixopus view will be accessible
                            (e.g. nixopus.com), if not provided you can use
                            the ip address and port (e.g. 192.168.1.100:80)
+  -ip, --host-ip IP       The IP address of the server to use when no domains
+                           are provided (e.g. 10.0.0.154 or 192.168.1.100).
+                           If not provided, the public IP will be automatically detected.
+  --api-port PORT          Port for the API service (default: 8443 for production, 8080 for development)
+  --view-port PORT         Port for the View/Frontend service (default: 7443 for production, 3000 for development)
+  --db-port PORT           Port for the PostgreSQL database (default: 5432)
+  --redis-port PORT        Port for the Redis service (default: 6379)
+  --caddy-admin-port PORT  Port for Caddy admin API (default: 2019)
+  --caddy-http-port PORT   Port for Caddy HTTP traffic (default: 80)
+  --caddy-https-port PORT  Port for Caddy HTTPS traffic (default: 443)
+  --supertokens-port PORT  Port for SuperTokens service (default: 3567)
   -h, --help               Show this help message
 
 Subcommands (passed through to 'nixopus install SUBCOMMAND'):
@@ -79,6 +90,8 @@ Quick Install with Options:
   curl -sSL https://install.nixopus.com | bash -s -- --verbose
   curl -sSL https://install.nixopus.com | bash -s -- --dry-run
   curl -sSL https://install.nixopus.com | bash -s -- --api-domain api.example.com
+  curl -sSL https://install.nixopus.com | bash -s -- --host-ip 10.0.0.154
+  curl -sSL https://install.nixopus.com | bash -s -- --api-port 9000 --view-port 9001
   curl -sSL https://install.nixopus.com | bash -s -- ssh --verbose
   curl -sSL https://install.nixopus.com | bash -s -- --repo https://github.com/user/fork --branch develop
 
@@ -330,6 +343,42 @@ main() {
                 shift 2
                 ;;
             --view-domain|-vd)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --host-ip|-ip)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --api-port)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --view-port)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --db-port)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --redis-port)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --caddy-admin-port)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --caddy-http-port)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --caddy-https-port)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --supertokens-port)
                 NIXOPUS_INSTALL_ARGS+=("$1" "$2")
                 shift 2
                 ;;

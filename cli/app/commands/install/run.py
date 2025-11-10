@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import subprocess
+from urllib.parse import urlparse
 
 import typer
 import yaml
@@ -58,34 +59,6 @@ from .messages import (
 from .ssh import SSH, SSHConfig
 
 _config = Config()
-_config_dir = _config.get_yaml_value(NIXOPUS_CONFIG_DIR)
-_source_path = _config.get_yaml_value(DEFAULT_PATH)
-
-DEFAULTS = {
-    "proxy_port": _config.get_yaml_value(PROXY_PORT),
-    "ssh_key_type": _config.get_yaml_value(SSH_KEY_TYPE),
-    "ssh_key_size": _config.get_yaml_value(SSH_KEY_SIZE),
-    "ssh_passphrase": None,
-    "service_name": "all",
-    "service_detach": True,
-    "required_ports": [int(port) for port in _config.get_yaml_value(PORTS)],
-    "repo_url": _config.get_yaml_value(DEFAULT_REPO),
-    "branch_name": _config.get_yaml_value(DEFAULT_BRANCH),
-    "source_path": _source_path,
-    "config_dir": _config_dir,
-    "api_env_file_path": _config.get_yaml_value(API_ENV_FILE),
-    "view_env_file_path": _config.get_yaml_value(VIEW_ENV_FILE),
-    "compose_file": _config.get_yaml_value(DEFAULT_COMPOSE_FILE),
-    "full_source_path": os.path.join(_config_dir, _source_path),
-    "ssh_key_path": _config_dir + "/" + _config.get_yaml_value(SSH_FILE_PATH),
-    "compose_file_path": _config_dir + "/" + _config.get_yaml_value(DEFAULT_COMPOSE_FILE),
-    "host_os": HostInformation.get_os_name(),
-    "package_manager": HostInformation.get_package_manager(),
-    "view_port": _config.get_yaml_value(VIEW_PORT),
-    "api_port": _config.get_yaml_value(API_PORT),
-    "docker_port": _config.get_yaml_value(DOCKER_PORT),
-    "supertokens_api_port": _config.get_yaml_value(SUPERTOKENS_API_PORT),
-}
 
 
 class Install:
@@ -99,8 +72,17 @@ class Install:
         config_file: str = None,
         api_domain: str = None,
         view_domain: str = None,
+        host_ip: str = None,
         repo: str = None,
         branch: str = None,
+        api_port: int = None,
+        view_port: int = None,
+        db_port: int = None,
+        redis_port: int = None,
+        caddy_admin_port: int = None,
+        caddy_http_port: int = None,
+        caddy_https_port: int = None,
+        supertokens_port: int = None,
     ):
         self.logger = logger
         self.verbose = verbose
@@ -110,35 +92,66 @@ class Install:
         self.config_file = config_file
         self.api_domain = api_domain
         self.view_domain = view_domain
+        self.host_ip = host_ip
         self.repo = repo
         self.branch = branch
-        self._user_config = _config.load_user_config(self.config_file)
+        self.api_port = api_port
+        self.view_port = view_port
+        self.db_port = db_port
+        self.redis_port = redis_port
+        self.caddy_admin_port = caddy_admin_port
+        self.caddy_http_port = caddy_http_port
+        self.caddy_https_port = caddy_https_port
+        self.supertokens_port = supertokens_port
+        _config.load_user_config(self.config_file)
         self.progress = None
         self.main_task = None
         self._validate_domains()
         self._validate_repo()
+        self._validate_host_ip()
         # Log when using custom repository/branch and staging compose file
         if self._is_custom_repo_or_branch():
             if self.logger:
                 self.logger.info("Custom repository/branch detected - will use docker-compose-staging.yml")
 
-    def _get_config(self, key: str):
-        # Override repo_url and branch_name if provided via command line
-        if key == "repo_url" and self.repo is not None:
+    def _get_config(self, path: str):
+        if path == DEFAULT_REPO and self.repo is not None:
             return self.repo
-        if key == "branch_name" and self.branch is not None:
+        if path == DEFAULT_BRANCH and self.branch is not None:
             return self.branch
 
-        # Override compose_file_path to use docker-compose-staging.yml when custom repo/branch is provided
-        if key == "compose_file_path" and self._is_custom_repo_or_branch():
-            # Get the base directory and replace docker-compose.yml with docker-compose-staging.yml
-            default_compose_path = _config.get_config_value(key, self._user_config, DEFAULTS)
-            return default_compose_path.replace("docker-compose.yml", "docker-compose-staging.yml")
+        if path == "full_source_path":
+            return os.path.join(_config.get(NIXOPUS_CONFIG_DIR), _config.get(DEFAULT_PATH))
 
-        try:
-            return _config.get_config_value(key, self._user_config, DEFAULTS)
-        except ValueError:
-            raise ValueError(configuration_key_has_no_default_value.format(key=key))
+        if path == "ssh_key_path":
+            return os.path.join(_config.get(NIXOPUS_CONFIG_DIR), _config.get(SSH_FILE_PATH))
+
+        if path == "compose_file_path":
+            compose_path = os.path.join(_config.get(NIXOPUS_CONFIG_DIR), _config.get(DEFAULT_COMPOSE_FILE))
+            if self._is_custom_repo_or_branch():
+                return compose_path.replace("docker-compose.yml", "docker-compose-staging.yml")
+            return compose_path
+
+        if path == API_PORT and self.api_port is not None:
+            return str(self.api_port)
+        if path == VIEW_PORT and self.view_port is not None:
+            return str(self.view_port)
+        if path == "services.db.env.DB_PORT" and self.db_port is not None:
+            return str(self.db_port)
+        if path == "services.redis.env.REDIS_PORT" and self.redis_port is not None:
+            return str(self.redis_port)
+        if path == PROXY_PORT and self.caddy_admin_port is not None:
+            return str(self.caddy_admin_port)
+        if path == "services.caddy.env.CADDY_ADMIN_PORT" and self.caddy_admin_port is not None:
+            return str(self.caddy_admin_port)
+        if path == "services.caddy.env.CADDY_HTTP_PORT" and self.caddy_http_port is not None:
+            return str(self.caddy_http_port)
+        if path == "services.caddy.env.CADDY_HTTPS_PORT" and self.caddy_https_port is not None:
+            return str(self.caddy_https_port)
+        if path == SUPERTOKENS_API_PORT and self.supertokens_port is not None:
+            return str(self.supertokens_port)
+
+        return _config.get(path)
 
     def _validate_domains(self):
         if (self.api_domain is None) != (self.view_domain is None):
@@ -161,16 +174,29 @@ class Install:
             ):
                 raise ValueError("Invalid repository URL format")
 
+    def _validate_host_ip(self):
+        if self.host_ip:
+            try:
+                ipaddress.ip_address(self.host_ip)
+            except ValueError:
+                raise ValueError(f"Invalid IP address format: {self.host_ip}")
+
     def _is_custom_repo_or_branch(self):
         """Check if custom repository or branch is provided (different from defaults)"""
-        default_repo = _config.get_yaml_value(DEFAULT_REPO)  # "https://github.com/raghavyuva/nixopus"
-        default_branch = _config.get_yaml_value(DEFAULT_BRANCH)  # "master"
+        temp_config = Config()
+        default_repo = temp_config.get(DEFAULT_REPO)
+        default_branch = temp_config.get(DEFAULT_BRANCH)
 
         # Check if either repo or branch differs from defaults
         repo_differs = self.repo is not None and self.repo != default_repo
         branch_differs = self.branch is not None and self.branch != default_branch
 
         return repo_differs or branch_differs
+
+    def _get_host_ip(self) -> str:
+        if self.host_ip:
+            return self.host_ip
+        return HostInformation.get_public_ip()
 
     def run(self):
         steps = [
@@ -262,7 +288,9 @@ class Install:
 
     def _run_preflight_checks(self):
         preflight_runner = PreflightRunner(logger=self.logger, verbose=self.verbose)
-        preflight_runner.check_ports_from_config(config_key="required_ports", user_config=self._user_config, defaults=DEFAULTS)
+        ports = _config.get(PORTS)
+        ports = [int(port) for port in ports] if isinstance(ports, list) else [int(ports)]
+        preflight_runner.check_required_ports(ports)
 
     def _install_dependencies(self):
         try:
@@ -273,8 +301,8 @@ class Install:
 
     def _setup_clone_and_config(self):
         clone_config = CloneConfig(
-            repo=self._get_config("repo_url"),
-            branch=self._get_config("branch_name"),
+            repo=self._get_config(DEFAULT_REPO),
+            branch=self._get_config(DEFAULT_BRANCH),
             path=self._get_config("full_source_path"),
             force=self.force,
             verbose=self.verbose,
@@ -291,8 +319,8 @@ class Install:
             raise Exception(f"{clone_failed}: {result.error}")
 
     def _create_env_files(self):
-        api_env_file = self._get_config("api_env_file_path")
-        view_env_file = self._get_config("view_env_file_path")
+        api_env_file = self._get_config(API_ENV_FILE)
+        view_env_file = self._get_config(VIEW_ENV_FILE)
 
         full_source_path = self._get_config("full_source_path")
         combined_env_file = os.path.join(full_source_path, ".env")
@@ -306,8 +334,7 @@ class Install:
         ]
         env_manager = BaseEnvironmentManager(self.logger)
 
-        # individual service env files
-        for i, (service_name, service_key, env_file) in enumerate(services):
+        for service_name, service_key, env_file in services:
             env_values = _config.get_service_env_values(service_key)
             updated_env_values = self._update_environment_variables(env_values)
             success, error = env_manager.write_env_file(env_file, updated_env_values)
@@ -342,9 +369,9 @@ class Install:
             with open(caddy_json_template, "r") as f:
                 config_str = f.read()
 
-            host_ip = HostInformation.get_public_ip()
-            view_port = self._get_config("view_port")
-            api_port = self._get_config("api_port")
+            host_ip = self._get_host_ip()
+            view_port = self._get_config(VIEW_PORT)
+            api_port = self._get_config(API_PORT)
 
             view_domain = self.view_domain if self.view_domain is not None else host_ip
             api_domain = self.api_domain if self.api_domain is not None else host_ip
@@ -367,9 +394,9 @@ class Install:
     def _setup_ssh(self):
         config = SSHConfig(
             path=self._get_config("ssh_key_path"),
-            key_type=self._get_config("ssh_key_type"),
-            key_size=self._get_config("ssh_key_size"),
-            passphrase=self._get_config("ssh_passphrase"),
+            key_type=_config.get(SSH_KEY_TYPE),
+            key_size=_config.get(SSH_KEY_SIZE),
+            passphrase=None,
             verbose=self.verbose,
             output="text",
             dry_run=self.dry_run,
@@ -388,27 +415,56 @@ class Install:
             raise Exception(ssh_setup_failed)
 
     def _start_services(self):
-        config = UpConfig(
-            name=self._get_config("service_name"),
-            detach=self._get_config("service_detach"),
-            env_file=None,
-            verbose=self.verbose,
-            output="text",
-            dry_run=self.dry_run,
-            compose_file=self._get_config("compose_file_path"),
-        )
+        env_vars = {}
+        if self.api_port is not None:
+            env_vars["API_PORT"] = str(self.api_port)
+        if self.view_port is not None:
+            env_vars["NEXT_PUBLIC_PORT"] = str(self.view_port)
+            env_vars["VIEW_PORT"] = str(self.view_port)
+        if self.db_port is not None:
+            env_vars["DB_PORT"] = str(self.db_port)
+        if self.redis_port is not None:
+            env_vars["REDIS_PORT"] = str(self.redis_port)
+        if self.caddy_admin_port is not None:
+            env_vars["CADDY_ADMIN_PORT"] = str(self.caddy_admin_port)
+        if self.caddy_http_port is not None:
+            env_vars["CADDY_HTTP_PORT"] = str(self.caddy_http_port)
+        if self.caddy_https_port is not None:
+            env_vars["CADDY_HTTPS_PORT"] = str(self.caddy_https_port)
+        if self.supertokens_port is not None:
+            env_vars["SUPERTOKENS_PORT"] = str(self.supertokens_port)
 
-        up_service = Up(logger=self.logger)
+        original_env = os.environ.copy()
+        os.environ.update(env_vars)
+
         try:
-            with TimeoutWrapper(self.timeout):
-                result = up_service.up(config)
-        except TimeoutError:
-            raise Exception(f"{services_start_failed}: {operation_timed_out}")
-        if not result.success:
-            raise Exception(services_start_failed)
+            config = UpConfig(
+                name="all",
+                detach=True,
+                env_file=None,
+                verbose=self.verbose,
+                output="text",
+                dry_run=self.dry_run,
+                compose_file=self._get_config("compose_file_path"),
+            )
+
+            up_service = Up(logger=self.logger)
+            try:
+                with TimeoutWrapper(self.timeout):
+                    result = up_service.up(config)
+            except TimeoutError:
+                raise Exception(f"{services_start_failed}: {operation_timed_out}")
+            if not result.success:
+                raise Exception(services_start_failed)
+        finally:
+            for key in env_vars:
+                if key in original_env:
+                    os.environ[key] = original_env[key]
+                else:
+                    os.environ.pop(key, None)
 
     def _load_proxy(self):
-        proxy_port = self._get_config("proxy_port")
+        proxy_port = self._get_config(PROXY_PORT)
         full_source_path = self._get_config("full_source_path")
         caddy_json_config = os.path.join(full_source_path, "helpers", "caddy.json")
         config = LoadConfig(
@@ -441,24 +497,33 @@ class Install:
 
     def _get_supertokens_connection_uri(self, protocol: str, api_host: str, supertokens_api_port: int, host_ip: str):
         protocol = protocol.replace("https", "http")
+        
+        host_without_port = api_host
+        
+        if api_host.startswith(("http://", "https://")):
+            parsed = urlparse(api_host)
+            host_without_port = parsed.hostname or api_host
+        elif ":" in api_host:
+            parts = api_host.rsplit(":", 1)
+            if len(parts) == 2 and parts[1].isdigit():
+                host_without_port = parts[0]
+        
         try:
-            ipaddress.ip_address(api_host)
-            # If api_host is an IP, use the host_ip instead, x.y.z.w:supertokens_api_port
+            ipaddress.ip_address(host_without_port)
             return f"{protocol}://{host_ip}:{supertokens_api_port}"
         except ValueError:
-            # If api_host is not IP rather domain, then use domain:supertokens_api_port
-            return f"{protocol}://{api_host}:{supertokens_api_port}"
+            return f"{protocol}://{host_without_port}:{supertokens_api_port}"
 
     def _update_environment_variables(self, env_values: dict) -> dict:
         updated_env = env_values.copy()
-        host_ip = HostInformation.get_public_ip()
+        host_ip = self._get_host_ip()
         secure = self.api_domain is not None and self.view_domain is not None
 
-        api_host = self.api_domain if secure else f"{host_ip}:{self._get_config('api_port')}"
-        view_host = self.view_domain if secure else f"{host_ip}:{self._get_config('view_port')}"
+        api_host = self.api_domain if secure else f"{host_ip}:{self._get_config(API_PORT)}"
+        view_host = self.view_domain if secure else f"{host_ip}:{self._get_config(VIEW_PORT)}"
         protocol = "https" if secure else "http"
         ws_protocol = "wss" if secure else "ws"
-        supertokens_api_port = self._get_config("supertokens_api_port") or 3567
+        supertokens_api_port = self._get_config(SUPERTOKENS_API_PORT) or 3567
         key_map = {
             "ALLOWED_ORIGIN": f"{protocol}://{view_host}",
             "SSH_HOST": host_ip,
@@ -485,7 +550,7 @@ class Install:
     def _copy_caddyfile_to_target(self, full_source_path: str):
         try:
             source_caddyfile = os.path.join(full_source_path, "helpers", "Caddyfile")
-            target_dir = _config.get_yaml_value(CADDY_CONFIG_VOLUME)
+            target_dir = _config.get(CADDY_CONFIG_VOLUME)
             target_caddyfile = os.path.join(target_dir, "Caddyfile")
             FileManager.create_directory(target_dir, logger=self.logger)
             if os.path.exists(source_caddyfile):
@@ -504,6 +569,6 @@ class Install:
         elif self.api_domain:
             return f"https://{self.api_domain}"
         else:
-            view_port = self._get_config("view_port")
-            host_ip = HostInformation.get_public_ip()
+            view_port = self._get_config(VIEW_PORT)
+            host_ip = self._get_host_ip()
             return f"http://{host_ip}:{view_port}"
