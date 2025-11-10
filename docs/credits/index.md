@@ -4,7 +4,7 @@ This file lists the contributors and acknowledgments for the Nixopus project. We
 
 ## Core Developers
 
-[raghavyuva@gmail.com](mailto:raghavyuva@gmail.com)
+[nixopus@gmail.com](mailto:nixopus@gmail.com)
 
 ## Community Support
 

@@ -88,4 +88,4 @@ We may update this Privacy Policy periodically. We will notify you of any change
 
 ## Contact Us
 
-If you have questions about this Privacy Policy, please contact us at [raghavyuva@gmail.com](mailto:raghavyuva@gmail.com).
+If you have questions about this Privacy Policy, please contact us at [nixopus@gmail.com](mailto:nixopus@gmail.com).
