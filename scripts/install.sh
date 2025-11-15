@@ -63,6 +63,9 @@ nixopus install Options (passed through to 'nixopus install'):
   -vd, --view-domain DOMAIN The domain where the nixopus view will be accessible
                            (e.g. nixopus.com), if not provided you can use
                            the ip address and port (e.g. 192.168.1.100:80)
+  --db-port PORT           Database port (default: 5432)
+  --redis-port PORT        Redis port (default: 6379)
+  --caddy-admin-port PORT  Caddy admin port (default: 2019)
   -h, --help               Show this help message
 
 Subcommands (passed through to 'nixopus install SUBCOMMAND'):
@@ -78,7 +81,8 @@ Quick Install (one-liner):
 Quick Install with Options:
   curl -sSL https://install.nixopus.com | bash -s -- --verbose
   curl -sSL https://install.nixopus.com | bash -s -- --dry-run
-  curl -sSL https://install.nixopus.com | bash -s -- --api-domain api.example.com
+  curl -sSL https://install.nixopus.com | bash -s -- --api-domain api.example.com --view-domain example.com
+  curl -sSL https://install.nixopus.com | bash -s -- --db-port 15432 --redis-port 16379
   curl -sSL https://install.nixopus.com | bash -s -- ssh --verbose
   curl -sSL https://install.nixopus.com | bash -s -- --repo https://github.com/user/fork --branch develop
 
@@ -88,6 +92,8 @@ Local Examples:
   $0 --verbose                                 # Install CLI and run 'nixopus install' with verbose output
   $0 --force --timeout 600                     # Install CLI and run 'nixopus install' with force and custom timeout
   $0 --api-domain api.example.com --view-domain example.com  # Install CLI and run 'nixopus install' with custom domains
+  $0 --db-port 15432 --redis-port 16379        # Install CLI and run 'nixopus install' with custom ports
+  $0 --api-domain api.example.com --view-domain example.com --db-port 15432 --redis-port 16379  # With domains and custom ports
   $0 --dry-run --config-file /path/to/config   # Install CLI and run 'nixopus install' in dry-run mode with custom config
   $0 --repo https://github.com/user/fork --branch develop  # Install CLI from custom repository and branch
   $0 ssh --verbose                             # Install CLI and run 'nixopus install ssh --verbose'
@@ -330,6 +336,18 @@ main() {
                 shift 2
                 ;;
             --view-domain|-vd)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --db-port)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --redis-port)
+                NIXOPUS_INSTALL_ARGS+=("$1" "$2")
+                shift 2
+                ;;
+            --caddy-admin-port)
                 NIXOPUS_INSTALL_ARGS+=("$1" "$2")
                 shift 2
                 ;;
