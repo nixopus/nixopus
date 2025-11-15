@@ -27,7 +27,7 @@ As a sponsor, you'll receive:
 ## How to Support
 
 1. Visit our GitHub Sponsors page to make a contribution
-2. Contact us at [raghavyuva@gmail.com](mailto:raghavyuva@gmail.com) for custom sponsorship arrangements
+2. Contact us at [nixopus@gmail.com](mailto:nixopus@gmail.com) for custom sponsorship arrangements
 3. We'll work with you to determine the best way to recognize your support
 
 [![Sponsor on GitHub](https://img.shields.io/badge/Sponsor%20on%20GitHub-%2300A67E?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sponsors/raghavyuva)

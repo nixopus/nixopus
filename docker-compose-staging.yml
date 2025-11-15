@@ -69,9 +69,9 @@ services:
     image: caddy:latest
     container_name: nixopus-staging-caddy
     ports:
-      - "2019:2019"
-      - "80:80"
-      - "443:443"
+      - "${CADDY_ADMIN_PORT:-2019}:2019"
+      - "${CADDY_HTTP_PORT:-80}:80"
+      - "${CADDY_HTTPS_PORT:-443}:443"
     volumes:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/helpers/Caddyfile:/etc/caddy/Caddyfile
       - ${NIXOPUS_HOME:-/etc/nixopus}/caddy:/data

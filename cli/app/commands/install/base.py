@@ -35,36 +35,36 @@ class BaseInstall:
         self.db_port = db_port
         self.redis_port = redis_port
         self.caddy_admin_port = caddy_admin_port
-        self._user_config = Config().load_user_config(self.config_file)
+        self._config = Config()
+        self._config.load_user_config(self.config_file)
         self.progress = None
         self.main_task = None
     
-    def _get_config(self, key: str, user_config: dict = None, defaults: dict = None):
+    def _get_config(self, path: str):
         """Base config getter - override in subclasses for specific behavior"""
-        config = Config()
         
         # Override repo_url and branch_name if provided via command line
-        if key == "repo_url" and self.repo is not None:
+        if path == "repo_url" and self.repo is not None:
             return self.repo
-        if key == "branch_name" and self.branch is not None:
+        if path == "branch_name" and self.branch is not None:
             return self.branch
         
         # Override port values if provided via command line
-        if key == "db_port" and self.db_port is not None:
+        if path == "db_port" and self.db_port is not None:
             return int(self.db_port)
-        if key == "redis_port" and self.redis_port is not None:
+        if path == "redis_port" and self.redis_port is not None:
             return int(self.redis_port)
-        if key == "proxy_port" and self.caddy_admin_port is not None:
+        if path == "proxy_port" and self.caddy_admin_port is not None:
             return int(self.caddy_admin_port)
         
-        try:
-            value = config.get_config_value(key, user_config or self._user_config, defaults or {})
-            # Convert port values to integers if they're port-related keys
-            if key in ["db_port", "redis_port", "proxy_port", "api_port", "view_port", "docker_port", "supertokens_api_port"] and isinstance(value, str):
-                return int(value)
-            return value
-        except ValueError:
-            raise ValueError(configuration_key_has_no_default_value.format(key=key))
+        # Get value from config
+        value = self._config.get(path)
+        
+        # Convert port values to integers if they're port-related keys
+        if path in ["db_port", "redis_port", "proxy_port", "api_port", "view_port", "docker_port", "supertokens_api_port"] and isinstance(value, str):
+            return int(value)
+        
+        return value
     
     def _validate_domains(self, api_domain: str = None, view_domain: str = None):
         """Validate domain format"""
