@@ -101,6 +101,9 @@ class Install:
         view_domain: str = None,
         repo: str = None,
         branch: str = None,
+        db_port: int = None,
+        redis_port: int = None,
+        caddy_admin_port: int = None,
     ):
         self.logger = logger
         self.verbose = verbose
@@ -112,6 +115,9 @@ class Install:
         self.view_domain = view_domain
         self.repo = repo
         self.branch = branch
+        self.db_port = db_port
+        self.redis_port = redis_port
+        self.caddy_admin_port = caddy_admin_port
         self._user_config = _config.load_user_config(self.config_file)
         self.progress = None
         self.main_task = None
@@ -128,6 +134,14 @@ class Install:
             return self.repo
         if key == "branch_name" and self.branch is not None:
             return self.branch
+        
+        # Override port values if provided via command line
+        if key == "db_port" and self.db_port is not None:
+            return int(self.db_port)
+        if key == "redis_port" and self.redis_port is not None:
+            return int(self.redis_port)
+        if key == "proxy_port" and self.caddy_admin_port is not None:
+            return int(self.caddy_admin_port)
 
         # Override compose_file_path to use docker-compose-staging.yml when custom repo/branch is provided
         if key == "compose_file_path" and self._is_custom_repo_or_branch():
@@ -136,7 +150,11 @@ class Install:
             return default_compose_path.replace("docker-compose.yml", "docker-compose-staging.yml")
 
         try:
-            return _config.get_config_value(key, self._user_config, DEFAULTS)
+            value = _config.get_config_value(key, self._user_config, DEFAULTS)
+            # Convert port values to integers if they're port-related keys
+            if key in ["db_port", "redis_port", "proxy_port", "api_port", "view_port", "docker_port", "supertokens_api_port"] and isinstance(value, str):
+                return int(value)
+            return value
         except ValueError:
             raise ValueError(configuration_key_has_no_default_value.format(key=key))
 
@@ -409,6 +427,9 @@ class Install:
 
     def _load_proxy(self):
         proxy_port = self._get_config("proxy_port")
+        # Ensure proxy_port is an integer
+        if isinstance(proxy_port, str):
+            proxy_port = int(proxy_port)
         full_source_path = self._get_config("full_source_path")
         caddy_json_config = os.path.join(full_source_path, "helpers", "caddy.json")
         config = LoadConfig(
@@ -459,6 +480,12 @@ class Install:
         protocol = "https" if secure else "http"
         ws_protocol = "wss" if secure else "ws"
         supertokens_api_port = self._get_config("supertokens_api_port") or 3567
+        
+        # Get custom ports if provided
+        db_port = self._get_config("db_port")
+        redis_port = self._get_config("redis_port")
+        proxy_port = self._get_config("proxy_port")
+        
         key_map = {
             "ALLOWED_ORIGIN": f"{protocol}://{view_host}",
             "SSH_HOST": host_ip,
@@ -475,6 +502,14 @@ class Install:
                 protocol, api_host, supertokens_api_port, host_ip
             ),
         }
+        
+        # Add custom ports if provided via CLI
+        if self.db_port is not None:
+            key_map["DB_PORT"] = str(db_port)
+        if self.redis_port is not None:
+            key_map["REDIS_PORT"] = str(redis_port)
+        if self.caddy_admin_port is not None:
+            key_map["PROXY_PORT"] = str(proxy_port)
 
         for key, value in key_map.items():
             if key in updated_env:

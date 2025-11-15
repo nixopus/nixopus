@@ -114,6 +114,10 @@ class Config:
         if value is None and key not in ["ssh_passphrase"]:
             raise ValueError(f"Configuration key '{key}' has no default value")
 
+        # Expand environment variables if the value is a string
+        if isinstance(value, str):
+            value = expand_env_placeholders(value)
+
         self._cache[key] = value
         return value
 

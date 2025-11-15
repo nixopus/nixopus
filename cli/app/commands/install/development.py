@@ -64,6 +64,9 @@ class DevelopmentInstall(BaseInstall):
         repo: str = None,
         branch: str = None,
         install_path: str = None,
+        db_port: int = None,
+        redis_port: int = None,
+        caddy_admin_port: int = None,
     ):
         super().__init__(
             logger=logger,
@@ -74,6 +77,9 @@ class DevelopmentInstall(BaseInstall):
             config_file=config_file,
             repo=repo,
             branch=branch,
+            db_port=db_port,
+            redis_port=redis_port,
+            caddy_admin_port=caddy_admin_port,
         )
 
         # safe fallback incase cwd is not accessible
@@ -393,6 +399,9 @@ class DevelopmentInstall(BaseInstall):
         # Get values from config
         api_port = self._get_config("api_port") or "8080"
         view_port = self._get_config("view_port") or "3000"
+        db_port = self._get_config("db_port")
+        redis_port = self._get_config("redis_port")
+        proxy_port = self._get_config("proxy_port")
         current_user = os.getenv("USER", "user")
 
         # Development-specific overrides
@@ -408,6 +417,14 @@ class DevelopmentInstall(BaseInstall):
             "NEXT_PUBLIC_WEBSITE_DOMAIN": f"http://localhost:{view_port}",
             "WEBHOOK_URL": f"http://localhost:{api_port}/api/v1/webhook",
         }
+        
+        # Add custom ports if provided via CLI
+        if self.db_port is not None:
+            key_map["DB_PORT"] = str(db_port)
+        if self.redis_port is not None:
+            key_map["REDIS_PORT"] = str(redis_port)
+        if self.caddy_admin_port is not None:
+            key_map["PROXY_PORT"] = str(proxy_port)
 
         for key, value in key_map.items():
             if key in updated_env:
@@ -498,7 +515,12 @@ class DevelopmentInstall(BaseInstall):
 
     def _load_proxy(self):
         """Load Caddy proxy configuration via Admin API"""
-        proxy_port = int(self._get_config("proxy_port") or 2019)
+        proxy_port = self._get_config("proxy_port") or 2019
+        # Ensure proxy_port is an integer
+        if isinstance(proxy_port, str):
+            proxy_port = int(proxy_port)
+        elif not isinstance(proxy_port, int):
+            proxy_port = 2019
         caddy_json_config = os.path.join(self.install_path, "helpers", "caddy.json")
 
         if self.dry_run:

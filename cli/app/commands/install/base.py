@@ -20,6 +20,9 @@ class BaseInstall:
         config_file: str = None,
         repo: str = None,
         branch: str = None,
+        db_port: int = None,
+        redis_port: int = None,
+        caddy_admin_port: int = None,
     ):
         self.logger = logger
         self.verbose = verbose
@@ -29,6 +32,9 @@ class BaseInstall:
         self.config_file = config_file
         self.repo = repo
         self.branch = branch
+        self.db_port = db_port
+        self.redis_port = redis_port
+        self.caddy_admin_port = caddy_admin_port
         self._user_config = Config().load_user_config(self.config_file)
         self.progress = None
         self.main_task = None
@@ -43,8 +49,20 @@ class BaseInstall:
         if key == "branch_name" and self.branch is not None:
             return self.branch
         
+        # Override port values if provided via command line
+        if key == "db_port" and self.db_port is not None:
+            return int(self.db_port)
+        if key == "redis_port" and self.redis_port is not None:
+            return int(self.redis_port)
+        if key == "proxy_port" and self.caddy_admin_port is not None:
+            return int(self.caddy_admin_port)
+        
         try:
-            return config.get_config_value(key, user_config or self._user_config, defaults or {})
+            value = config.get_config_value(key, user_config or self._user_config, defaults or {})
+            # Convert port values to integers if they're port-related keys
+            if key in ["db_port", "redis_port", "proxy_port", "api_port", "view_port", "docker_port", "supertokens_api_port"] and isinstance(value, str):
+                return int(value)
+            return value
         except ValueError:
             raise ValueError(configuration_key_has_no_default_value.format(key=key))
     

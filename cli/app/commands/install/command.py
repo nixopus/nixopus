@@ -47,6 +47,9 @@ def install_callback(
     ),
     repo: str = typer.Option(None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"),
     branch: str = typer.Option(None, "--branch", "-b", help="Git branch to clone (defaults to config value)"),
+    db_port: int = typer.Option(None, "--db-port", help="Database port (defaults to 5432)"),
+    redis_port: int = typer.Option(None, "--redis-port", help="Redis port (defaults to 6379)"),
+    caddy_admin_port: int = typer.Option(None, "--caddy-admin-port", help="Caddy admin port (defaults to 2019)"),
 ):
     """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
@@ -65,6 +68,9 @@ def install_callback(
                 repo=repo,
                 branch=branch,
                 install_path=dev_path,
+                db_port=db_port,
+                redis_port=redis_port,
+                caddy_admin_port=caddy_admin_port,
             )
             dev_install.run()
         else:
@@ -79,6 +85,9 @@ def install_callback(
                 view_domain=view_domain,
                 repo=repo,
                 branch=branch,
+                db_port=db_port,
+                redis_port=redis_port,
+                caddy_admin_port=caddy_admin_port,
             )
             install.run()
 
