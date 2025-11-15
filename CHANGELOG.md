@@ -1,3 +1,76 @@
+# [0.1.0-alpha.65](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.64...v0.1.0-alpha.65) (2025-11-09)
+
+
+### Bug Fixes
+
+* remove linux/arm/v7 support since no native support from postcss and Nextjs sharp ([#576](https://github.com/raghavyuva/nixopus/issues/576)) ([dc84f0e](https://github.com/raghavyuva/nixopus/commit/dc84f0ef1c1a2568885fdd02e144b91ebe19d8a1))
+
+
+
+# [0.1.0-alpha.64](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.63...v0.1.0-alpha.64) (2025-11-08)
+
+
+### Bug Fixes
+
+* update docker compose files to use internal ports for supertokens postgres connection ([9a23b2c](https://github.com/raghavyuva/nixopus/commit/9a23b2c4552b4f6905dd6d501ed0a40cddf362c0))
+
+
+
+# [0.1.0-alpha.63](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.62...v0.1.0-alpha.63) (2025-11-08)
+
+
+### Bug Fixes
+
+* malformed supertokens connection uri during ip based installations ([b6b1ad5](https://github.com/raghavyuva/nixopus/commit/b6b1ad5ec11b3eda9caac692c0cad3cba59adbc9))
+
+
+
+# [0.1.0-alpha.62](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.61...v0.1.0-alpha.62) (2025-11-08)
+
+
+### Bug Fixes
+
+* always binds predictable ports inside the container, and uses dynamic ports for the host ([#569](https://github.com/raghavyuva/nixopus/issues/569)) ([e5e637e](https://github.com/raghavyuva/nixopus/commit/e5e637eabddfa02ed03b32de338004ed5efcfaa8))
+
+
+### Features
+
+* add support for linux/amd64 linux/arm54 linux/arm/v7 ([#570](https://github.com/raghavyuva/nixopus/issues/570)) ([59938ad](https://github.com/raghavyuva/nixopus/commit/59938ad28932854c9b0d2388b37ceeb28a8a1ab9))
+
+
+
+# [0.1.0-alpha.61](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.60...v0.1.0-alpha.61) (2025-11-08)
+
+
+### Features
+
+* add support for custom ports during nixopus install ([#567](https://github.com/raghavyuva/nixopus/issues/567)) ([01c4b1d](https://github.com/raghavyuva/nixopus/commit/01c4b1d8a116fde1cf992cef4face3728e55e039))
+
+
+
+# [0.1.0-alpha.60](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.59...v0.1.0-alpha.60) (2025-11-05)
+
+
+### Bug Fixes
+
+* nixopus uninstall hangs or silently asks for confirmation from user which is not identical ([#560](https://github.com/raghavyuva/nixopus/issues/560)) ([5a9c7f8](https://github.com/raghavyuva/nixopus/commit/5a9c7f8cb7ec347a907ba51de4a9e6bc59f707ec))
+
+
+### Features
+
+* add support for custom config file during nixopus installation ([#561](https://github.com/raghavyuva/nixopus/issues/561)) ([0b34f84](https://github.com/raghavyuva/nixopus/commit/0b34f84e02345f2bb583be587c7f4676b72c6523))
+
+
+
+# [0.1.0-alpha.59](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.58...v0.1.0-alpha.59) (2025-11-04)
+
+
+### Features
+
+* add support for custom ip address deployments ([#554](https://github.com/raghavyuva/nixopus/issues/554)) ([d1fb0b4](https://github.com/raghavyuva/nixopus/commit/d1fb0b42fdfad3709180c0ffb1d4725d1e5c8e7b))
+
+
+
 # [0.1.0-alpha.58](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.57...v0.1.0-alpha.58) (2025-11-02)
 
 
