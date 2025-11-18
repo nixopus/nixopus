@@ -104,11 +104,21 @@ Thank you so much for helping and supporting Nixopus to grow and evolve.
   </thead>
   <tbody>
     <tr>
-      <td><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgIGjpjf-iao9c_pb2udOflQRZucZ4e62kNw&s" alt="letscloud.io"></td>
+      <td>
+      <div style="text-align: center;">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgIGjpjf-iao9c_pb2udOflQRZucZ4e62kNw&s" alt="letscloud.io" width="30%">
+        <h6>Lets Cloud</h6>
+      </div>
+      </td>
       <td>Developer-centric cloud infrastructure company focused on delivering fast, secure, and scalable virtual machines worldwide</td>
     </tr>
     <tr>
-      <td><img src="https://media.licdn.com/dms/image/v2/D4D0BAQFC-65aZcu-8g/company-logo_200_200/company-logo_200_200/0/1711678709605/hostup_logo?e=2147483647&v=beta&t=KEegISV4VeuBUSWlLQz4h-kM2BLJz0tGhmOUtrp8two" alt="hostup"></td>
+      <td>
+      <div style="text-align: center;">
+        <img src="https://media.licdn.com/dms/image/v2/D4D0BAQFC-65aZcu-8g/company-logo_200_200/company-logo_200_200/0/1711678709605/hostup_logo?e=2147483647&v=beta&t=KEegISV4VeuBUSWlLQz4h-kM2BLJz0tGhmOUtrp8two" alt="hostup" width="30%">
+        <h6>HostUp</h6>
+      </div>
+      </td>
       <td>all-in-one web hosting, domain name and VPS platform</td>
     </tr>
   </tbody>
