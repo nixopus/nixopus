@@ -99,7 +99,6 @@ Thank you so much for helping and supporting Nixopus to grow and evolve.
     <tr>
       <th>Sponsors</th>
       <th>Who are they</th>
-
     </tr>
   </thead>
   <tbody>
