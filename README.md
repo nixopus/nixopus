@@ -94,10 +94,8 @@ Nixopus is derived from the combination of "octopus" and the Linux penguin (Tux)
 
 Thank you so much for helping and supporting Nixopus to grow and evolve.
 
-| Sponsors | Who are they |
-| :---: | :--- |
-| <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgIGjpjf-iao9c_pb2udOflQRZucZ4e62kNw&s" alt="letscloud.io" width="30%"> <br/> **Lets Cloud** | Developer-centric cloud infrastructure company focused on delivering fast, secure, and scalable virtual machines worldwide |
-| <img src="https://media.licdn.com/dms/image/v2/D4D0BAQFC-65aZcu-8g/company-logo_200_200/company-logo_200_200/0/1711678709605/hostup_logo?e=2147483647&v=beta&t=KEegISV4VeuBUSWlLQz4h-kM2BLJz0tGhmOUtrp8two" alt="hostup" width="30%"> <br/> **HostUp** | all-in-one web hosting, domain name and VPS platform |
+| <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgIGjpjf-iao9c_pb2udOflQRZucZ4e62kNw&s" alt="letscloud.io" width="30%"> <br/> **[Lets Cloud](https://www.letscloud.io/)** | <img src="https://media.licdn.com/dms/image/v2/D4D0BAQFC-65aZcu-8g/company-logo_200_200/company-logo_200_200/0/1711678709605/hostup_logo?e=2147483647&v=beta&t=KEegISV4VeuBUSWlLQz4h-kM2BLJz0tGhmOUtrp8two" alt="hostup" width="30%"> <br/> **[HostUp](https://hostup.se/en/)** |
+| :---: | :---: |
 
 ## Contributors
 
