@@ -35,6 +35,12 @@
           </div>
         </div>
       </div>
+
+      <div class="sponsors-cta">
+        <a href="/sponsor/" class="sponsor-details-link">
+          View All Sponsors & Partnerships
+        </a>
+      </div>
     </div>
   </div>
 </template>
@@ -347,6 +353,53 @@ onMounted(async () => {
   .sponsor-type {
     font-size: 0.75rem;
     padding: 0.2rem 0.5rem;
+  }
+}
+
+/* CTA section */
+.sponsors-cta {
+  text-align: center;
+  margin-top: 3rem;
+}
+
+.sponsor-details-link {
+  display: inline-block;
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg, #9be935 0%, #7bc91f 100%);
+  color: #1a1a1a;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(155, 233, 53, 0.25);
+  border: 1px solid transparent;
+}
+
+.sponsor-details-link:hover {
+  background: linear-gradient(135deg, #a8f03d 0%, #89d827 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(155, 233, 53, 0.35);
+  border-color: rgba(155, 233, 53, 0.3);
+}
+
+.dark .sponsor-details-link {
+  color: #0a0a0a;
+  box-shadow: 0 4px 12px rgba(155, 233, 53, 0.3);
+}
+
+.dark .sponsor-details-link:hover {
+  box-shadow: 0 6px 20px rgba(155, 233, 53, 0.4);
+}
+
+@media (max-width: 768px) {
+  .sponsors-cta {
+    margin-top: 2rem;
+  }
+
+  .sponsor-details-link {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
   }
 }
 </style>

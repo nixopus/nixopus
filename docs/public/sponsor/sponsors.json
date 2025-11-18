@@ -1,5 +1,14 @@
 [
   {
+    "name": "Lets Cloud",
+    "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgIGjpjf-iao9c_pb2udOflQRZucZ4e62kNw&s",
+    "type": "Organization",
+    "contribution": "Partnership",
+    "description": "Offering $300 credit for new users, 1-click Nixopus installation, and complimentary VPS for the Nixopus team",
+    "website": "https://www.letscloud.io/",
+    "github": "https://github.com/letscloud-community"
+  },
+  {
     "name": "HostUp",
     "avatar": "https://media.licdn.com/dms/image/v2/D4D0BAQFC-65aZcu-8g/company-logo_200_200/company-logo_200_200/0/1711678709605/hostup_logo?e=2147483647&v=beta&t=KEegISV4VeuBUSWlLQz4h-kM2BLJz0tGhmOUtrp8two",
     "type": "Organization",
@@ -8,12 +17,12 @@
     "website": "https://hostup.se/en/"
   },
   {
-    "name": "@shravan20",
+    "name": "@zhravan",
     "avatar": "https://avatars.githubusercontent.com/u/47430686?v=4",
     "type": "Individual",
     "contribution": "",
     "description": "Technology enthusiast and open source supporter",
-    "github": "https://github.com/shravan20",
+    "github": "https://github.com/zhravan",
     "website": "https://ohmyscript.com/"
   }
 ]
