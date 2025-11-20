@@ -360,6 +360,42 @@ class TestExpandEnvPlaceholders(unittest.TestCase):
         result = expand_env_placeholders("${API_PORT:-8443} and ${DB_NAME:-postgres}")
         self.assertEqual(result, "9000 and production_db")
 
+    def test_expand_env_placeholders_nested_single_level(self):
+        # Test nested expansion: ${VAR1:-${VAR2:-default}}
+        # Neither VAR1 nor VAR2 is set, should use final default
+        result = expand_env_placeholders("${VAR1:-${VAR2:-2019}}")
+        self.assertEqual(result, "2019")
+
+    def test_expand_env_placeholders_nested_first_var_set(self):
+        # First variable is set, should use it
+        os.environ["PROXY_PORT"] = "3000"
+        result = expand_env_placeholders("${PROXY_PORT:-${CADDY_ADMIN_PORT:-2019}}")
+        self.assertEqual(result, "3000")
+
+    def test_expand_env_placeholders_nested_second_var_set(self):
+        # First variable not set, second variable is set
+        os.environ["CADDY_ADMIN_PORT"] = "2020"
+        result = expand_env_placeholders("${PROXY_PORT:-${CADDY_ADMIN_PORT:-2019}}")
+        self.assertEqual(result, "2020")
+
+    def test_expand_env_placeholders_nested_both_vars_set(self):
+        # Both variables set, should use first one (higher priority)
+        os.environ["PROXY_PORT"] = "3000"
+        os.environ["CADDY_ADMIN_PORT"] = "2020"
+        result = expand_env_placeholders("${PROXY_PORT:-${CADDY_ADMIN_PORT:-2019}}")
+        self.assertEqual(result, "3000")
+
+    def test_expand_env_placeholders_nested_multiple_levels(self):
+        # Test triple nesting
+        result = expand_env_placeholders("${VAR1:-${VAR2:-${VAR3:-final}}}")
+        self.assertEqual(result, "final")
+
+    def test_expand_env_placeholders_nested_in_url(self):
+        # Test nested expansion in a URL context (real-world scenario)
+        os.environ["CADDY_ADMIN_PORT"] = "2020"
+        result = expand_env_placeholders("http://localhost:${PROXY_PORT:-${CADDY_ADMIN_PORT:-2019}}")
+        self.assertEqual(result, "http://localhost:2020")
+
 
 if __name__ == "__main__":
     unittest.main()
