@@ -13,8 +13,12 @@ type packageModule struct{}
 func (packageModule) Type() string { return "package" }
 
 func (packageModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
-	name, _ := step.Properties["name"].(string)
-	state, _ := step.Properties["state"].(string)
+	nameRaw, _ := step.Properties["name"].(string)
+	stateRaw, _ := step.Properties["state"].(string)
+
+	name := replaceVars(nameRaw, vars)
+	state := replaceVars(stateRaw, vars)
+
 	if name == "" {
 		return "", nil, fmt.Errorf("package name is required")
 	}

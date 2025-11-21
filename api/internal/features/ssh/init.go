@@ -135,10 +135,11 @@ func (s *SSH) RunCommand(cmd string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	output, err := client.Run(cmd)
+	defer client.Close()
 
+	output, err := client.Run(cmd)
 	if err != nil {
-		return "", err
+		return string(output), err
 	}
 
 	return string(output), nil

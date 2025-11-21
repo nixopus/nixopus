@@ -27,7 +27,7 @@ export interface DialogAction {
 export interface DialogWrapperProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  title?: string;
+  title?: string | React.ReactNode;
   description?: string;
   children?: React.ReactNode;
   trigger?: React.ReactNode;

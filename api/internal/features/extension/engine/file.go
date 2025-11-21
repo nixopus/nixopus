@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/sftp"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
@@ -108,10 +109,36 @@ var actionHandlers = map[string]fileAction{
 	"mkdir":  handleMkdir,
 }
 
+// expandTilde expands ~ to the actual home directory path for SFTP compatibility
+func expandTilde(path string, sshClient *ssh.SSH) string {
+	if len(path) > 0 && path[0] == '~' {
+		if len(path) == 1 || path[1] == '/' {
+			// Get home directory via command
+			homeOutput, err := sshClient.RunCommand("echo $HOME")
+			if err == nil && len(homeOutput) > 0 {
+				home := strings.TrimSpace(homeOutput)
+				if len(path) == 1 {
+					return home
+				}
+				return home + path[1:]
+			}
+		}
+	}
+	return path
+}
+
 func (fileModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
 	action, _ := step.Properties["action"].(string)
-	src, _ := step.Properties["src"].(string)
-	dest, _ := step.Properties["dest"].(string)
+	srcRaw, _ := step.Properties["src"].(string)
+	destRaw, _ := step.Properties["dest"].(string)
+
+	// Replace variables in src and dest paths
+	src := replaceVars(srcRaw, vars)
+	dest := replaceVars(destRaw, vars)
+
+	// Expand tilde to $HOME for SFTP compatibility
+	src = expandTilde(src, sshClient)
+	dest = expandTilde(dest, sshClient)
 
 	if action == "mkdir" && dest == "" {
 		return "", nil, fmt.Errorf("dest is required for mkdir action")
