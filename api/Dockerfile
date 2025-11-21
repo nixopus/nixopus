@@ -1,17 +1,23 @@
 FROM golang:1.25-alpine AS builder
 ARG API_PORT
+ARG TARGETOS
+ARG TARGETARCH
 RUN apk add --no-cache make git
 
 WORKDIR /app
 
+# Cache dependencies separately
 COPY go.mod go.sum ./
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
+# Copy source code
 COPY . .
-COPY ./migrations /app/migrations
-COPY ./templates /app/templates
 
-RUN make build
+# Build with cache mounts and cross-compilation
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    GOOS=${TARGETOS} GOARCH=${TARGETARCH} make build
 
 FROM alpine:3.18
 ARG API_PORT

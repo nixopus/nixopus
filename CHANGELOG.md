@@ -1,3 +1,12 @@
+# [0.1.0-alpha.67](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.66...v0.1.0-alpha.67) (2025-11-21)
+
+
+### Features
+
+* compose as extensions ([#555](https://github.com/raghavyuva/nixopus/issues/555)) ([741aa6a](https://github.com/raghavyuva/nixopus/commit/741aa6ab30520f46cc796c6510ea9c2551c4fd8e))
+
+
+
 # [0.1.0-alpha.66](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.65...v0.1.0-alpha.66) (2025-11-21)
 
 
