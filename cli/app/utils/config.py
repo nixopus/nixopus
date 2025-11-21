@@ -98,14 +98,22 @@ class Config:
 
 def expand_env_placeholders(value: str) -> str:
     # Expand environment placeholders in the form ${ENV_VAR:-default}
+    # Supports nested expansions like ${VAR1:-${VAR2:-default}}
     pattern = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(:-([^}]*))?}")
+    max_iterations = 10  # Prevent infinite loops
+    iteration = 0
 
     def replacer(match):
         var_name = match.group(1)
         default = match.group(3) if match.group(2) else ""
         return os.environ.get(var_name, default)
 
-    return pattern.sub(replacer, value)
+    # Keep expanding until no more placeholders are found or max iterations reached
+    while pattern.search(value) and iteration < max_iterations:
+        value = pattern.sub(replacer, value)
+        iteration += 1
+
+    return value
 
 
 VIEW_ENV_FILE = "services.view.env.VIEW_ENV_FILE"
@@ -130,5 +138,8 @@ SSH_FILE_PATH = "ssh_file_path"
 VIEW_PORT = "services.view.env.NEXT_PUBLIC_PORT"
 API_PORT = "services.api.env.PORT"
 CADDY_CONFIG_VOLUME = "services.caddy.env.CADDY_CONFIG_VOLUME"
+CADDY_ADMIN_PORT = "services.caddy.env.CADDY_ADMIN_PORT"
+CADDY_HTTP_PORT = "services.caddy.env.CADDY_HTTP_PORT"
+CADDY_HTTPS_PORT = "services.caddy.env.CADDY_HTTPS_PORT"
 DOCKER_PORT = "services.api.env.DOCKER_PORT"
 SUPERTOKENS_API_PORT = "services.api.env.SUPERTOKENS_API_PORT"

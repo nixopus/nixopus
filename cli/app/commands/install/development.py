@@ -82,15 +82,15 @@ class DevelopmentInstall(BaseInstall):
             config_file=config_file,
             repo=repo,
             branch=branch,
+            api_port=api_port,
+            view_port=view_port,
+            db_port=db_port,
+            redis_port=redis_port,
+            caddy_admin_port=caddy_admin_port,
+            caddy_http_port=caddy_http_port,
+            caddy_https_port=caddy_https_port,
+            supertokens_port=supertokens_port,
         )
-        self.api_port = api_port
-        self.view_port = view_port
-        self.db_port = db_port
-        self.redis_port = redis_port
-        self.caddy_admin_port = caddy_admin_port
-        self.caddy_http_port = caddy_http_port
-        self.caddy_https_port = caddy_https_port
-        self.supertokens_port = supertokens_port
 
         # safe fallback incase cwd is not accessible
         if install_path:
