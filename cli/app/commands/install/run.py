@@ -19,7 +19,10 @@ from app.commands.service.up import Up, UpConfig
 from app.utils.config import (
     API_ENV_FILE,
     API_PORT,
+    CADDY_ADMIN_PORT,
     CADDY_CONFIG_VOLUME,
+    CADDY_HTTP_PORT,
+    CADDY_HTTPS_PORT,
     DEFAULT_BRANCH,
     DEFAULT_COMPOSE_FILE,
     DEFAULT_PATH,
@@ -140,13 +143,22 @@ class Install:
             return str(self.db_port)
         if path == "services.redis.env.REDIS_PORT" and self.redis_port is not None:
             return str(self.redis_port)
-        if path == PROXY_PORT and self.caddy_admin_port is not None:
+        
+        # Handle PROXY_PORT (which is an alias for CADDY_ADMIN_PORT)
+        if path == PROXY_PORT:
+            if self.caddy_admin_port is not None:
+                return str(self.caddy_admin_port)
+            # Fall back to CADDY_ADMIN_PORT from config, default to 2019
+            try:
+                return str(_config.get(CADDY_ADMIN_PORT))
+            except (KeyError, ValueError):
+                return "2019"
+        
+        if path == CADDY_ADMIN_PORT and self.caddy_admin_port is not None:
             return str(self.caddy_admin_port)
-        if path == "services.caddy.env.CADDY_ADMIN_PORT" and self.caddy_admin_port is not None:
-            return str(self.caddy_admin_port)
-        if path == "services.caddy.env.CADDY_HTTP_PORT" and self.caddy_http_port is not None:
+        if path == CADDY_HTTP_PORT and self.caddy_http_port is not None:
             return str(self.caddy_http_port)
-        if path == "services.caddy.env.CADDY_HTTPS_PORT" and self.caddy_https_port is not None:
+        if path == CADDY_HTTPS_PORT and self.caddy_https_port is not None:
             return str(self.caddy_https_port)
         if path == SUPERTOKENS_API_PORT and self.supertokens_port is not None:
             return str(self.supertokens_port)
@@ -465,6 +477,12 @@ class Install:
 
     def _load_proxy(self):
         proxy_port = self._get_config(PROXY_PORT)
+        # Ensure proxy_port is an integer
+        try:
+            proxy_port = int(proxy_port)
+        except (ValueError, TypeError):
+            proxy_port = 2019  # Default fallback
+        
         full_source_path = self._get_config("full_source_path")
         caddy_json_config = os.path.join(full_source_path, "helpers", "caddy.json")
         config = LoadConfig(

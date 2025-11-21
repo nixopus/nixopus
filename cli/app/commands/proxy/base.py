@@ -179,7 +179,7 @@ class BaseCaddyService:
             error_msg = invalid_json_error.format(error=str(e))
             self.logger.debug(error_msg)
             return False, error_msg
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError as e:
             error_msg = caddy_connection_failed.format(error=str(e))
             self.logger.debug(error_msg)
             return False, error_msg

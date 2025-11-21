@@ -104,6 +104,10 @@ class LoadService(BaseService[LoadConfig, LoadResult]):
         if not self.config.config_file:
             return self._create_result(False, "Configuration file is required")
 
+        # In dry-run mode, just return success without actually connecting to Caddy
+        if self.config.dry_run:
+            return self._create_result(True, None)
+
         success, message = self.caddy_service.load_config_file(self.config.config_file, self.config.proxy_port)
         return self._create_result(success, None if success else message)
 

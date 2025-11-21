@@ -83,6 +83,10 @@ class StatusService(BaseService[StatusConfig, StatusResult]):
         return self.execute()
 
     def execute(self) -> StatusResult:
+        # In dry-run mode, just return success without actually connecting to Caddy
+        if self.config.dry_run:
+            return self._create_result(True, None)
+
         success, message = self.caddy_service.get_status(self.config.proxy_port)
         return self._create_result(success, None if success else message)
 

@@ -90,6 +90,10 @@ class StopService(BaseService[StopConfig, StopResult]):
         return self.execute()
 
     def execute(self) -> StopResult:
+        # In dry-run mode, just return success without actually connecting to Caddy
+        if self.config.dry_run:
+            return self._create_result(True, None)
+
         success, message = self.caddy_service.stop_caddy(self.config.proxy_port)
         return self._create_result(success, None if success else message)
 
