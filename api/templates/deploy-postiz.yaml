@@ -1,0 +1,546 @@
+metadata:
+  id: "deploy-postiz"
+  name: "Postiz"
+  description: "Postiz is an open-source social media management platform for scheduling posts across multiple platforms including X/Twitter, LinkedIn, Reddit, Facebook, Instagram, TikTok, YouTube, Pinterest, and more."
+  author: "Nixopus Team"
+  icon: "📱"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  container_name:
+    type: "string"
+    description: "Name of the Postiz container"
+    default: "postiz"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Postiz"
+    default: 5001
+    is_required: true
+
+  main_url:
+    type: "string"
+    description: "Main URL for Postiz (e.g., https://postiz.your-domain.com)"
+    default: "http://localhost:5001"
+    is_required: true
+
+  jwt_secret:
+    type: "string"
+    description: "JWT secret for authentication (use a strong random string)"
+    default: "CHANGE_ME_IN_PRODUCTION_USE_A_STRONG_SECRET"
+    is_required: true
+
+  postgres_user:
+    type: "string"
+    description: "PostgreSQL database user"
+    default: "postiz-user"
+    is_required: true
+
+  postgres_password:
+    type: "string"
+    description: "PostgreSQL database password"
+    default: "postiz-password"
+    is_required: true
+
+  postgres_db:
+    type: "string"
+    description: "PostgreSQL database name"
+    default: "postiz-db-local"
+    is_required: true
+
+  disable_registration:
+    type: "string"
+    description: "Disable new user registration (true/false)"
+    default: "false"
+    is_required: false
+
+  storage_provider:
+    type: "string"
+    description: "Storage provider (local or cloudflare)"
+    default: "local"
+    is_required: false
+
+  cloudflare_account_id:
+    type: "string"
+    description: "Cloudflare R2 Account ID (optional)"
+    default: ""
+    is_required: false
+
+  cloudflare_access_key:
+    type: "string"
+    description: "Cloudflare R2 Access Key (optional)"
+    default: ""
+    is_required: false
+
+  cloudflare_secret_access_key:
+    type: "string"
+    description: "Cloudflare R2 Secret Access Key (optional)"
+    default: ""
+    is_required: false
+
+  cloudflare_bucketname:
+    type: "string"
+    description: "Cloudflare R2 Bucket Name (optional)"
+    default: ""
+    is_required: false
+
+  cloudflare_bucket_url:
+    type: "string"
+    description: "Cloudflare R2 Bucket URL (optional)"
+    default: ""
+    is_required: false
+
+  openai_api_key:
+    type: "string"
+    description: "OpenAI API Key for AI features (optional)"
+    default: ""
+    is_required: false
+
+  x_api_key:
+    type: "string"
+    description: "X (Twitter) API Key"
+    default: ""
+    is_required: false
+
+  x_api_secret:
+    type: "string"
+    description: "X (Twitter) API Secret"
+    default: ""
+    is_required: false
+
+  linkedin_client_id:
+    type: "string"
+    description: "LinkedIn Client ID"
+    default: ""
+    is_required: false
+
+  linkedin_client_secret:
+    type: "string"
+    description: "LinkedIn Client Secret"
+    default: ""
+    is_required: false
+
+  reddit_client_id:
+    type: "string"
+    description: "Reddit Client ID"
+    default: ""
+    is_required: false
+
+  reddit_client_secret:
+    type: "string"
+    description: "Reddit Client Secret"
+    default: ""
+    is_required: false
+
+  github_client_id:
+    type: "string"
+    description: "GitHub Client ID"
+    default: ""
+    is_required: false
+
+  github_client_secret:
+    type: "string"
+    description: "GitHub Client Secret"
+    default: ""
+    is_required: false
+
+  beehiive_api_key:
+    type: "string"
+    description: "Beehiiv API Key"
+    default: ""
+    is_required: false
+
+  beehiive_publication_id:
+    type: "string"
+    description: "Beehiiv Publication ID"
+    default: ""
+    is_required: false
+
+  threads_app_id:
+    type: "string"
+    description: "Threads App ID"
+    default: ""
+    is_required: false
+
+  threads_app_secret:
+    type: "string"
+    description: "Threads App Secret"
+    default: ""
+    is_required: false
+
+  facebook_app_id:
+    type: "string"
+    description: "Facebook App ID"
+    default: ""
+    is_required: false
+
+  facebook_app_secret:
+    type: "string"
+    description: "Facebook App Secret"
+    default: ""
+    is_required: false
+
+  youtube_client_id:
+    type: "string"
+    description: "YouTube Client ID"
+    default: ""
+    is_required: false
+
+  youtube_client_secret:
+    type: "string"
+    description: "YouTube Client Secret"
+    default: ""
+    is_required: false
+
+  tiktok_client_id:
+    type: "string"
+    description: "TikTok Client ID"
+    default: ""
+    is_required: false
+
+  tiktok_client_secret:
+    type: "string"
+    description: "TikTok Client Secret"
+    default: ""
+    is_required: false
+
+  pinterest_client_id:
+    type: "string"
+    description: "Pinterest Client ID"
+    default: ""
+    is_required: false
+
+  pinterest_client_secret:
+    type: "string"
+    description: "Pinterest Client Secret"
+    default: ""
+    is_required: false
+
+  dribbble_client_id:
+    type: "string"
+    description: "Dribbble Client ID"
+    default: ""
+    is_required: false
+
+  dribbble_client_secret:
+    type: "string"
+    description: "Dribbble Client Secret"
+    default: ""
+    is_required: false
+
+  discord_client_id:
+    type: "string"
+    description: "Discord Client ID"
+    default: ""
+    is_required: false
+
+  discord_client_secret:
+    type: "string"
+    description: "Discord Client Secret"
+    default: ""
+    is_required: false
+
+  discord_bot_token_id:
+    type: "string"
+    description: "Discord Bot Token ID"
+    default: ""
+    is_required: false
+
+  slack_id:
+    type: "string"
+    description: "Slack Client ID"
+    default: ""
+    is_required: false
+
+  slack_secret:
+    type: "string"
+    description: "Slack Client Secret"
+    default: ""
+    is_required: false
+
+  slack_signing_secret:
+    type: "string"
+    description: "Slack Signing Secret"
+    default: ""
+    is_required: false
+
+  mastodon_url:
+    type: "string"
+    description: "Mastodon Instance URL"
+    default: "https://mastodon.social"
+    is_required: false
+
+  mastodon_client_id:
+    type: "string"
+    description: "Mastodon Client ID"
+    default: ""
+    is_required: false
+
+  mastodon_client_secret:
+    type: "string"
+    description: "Mastodon Client Secret"
+    default: ""
+    is_required: false
+
+  oauth_display_name:
+    type: "string"
+    description: "OAuth Provider Display Name (e.g., Authentik)"
+    default: ""
+    is_required: false
+
+  oauth_logo_url:
+    type: "string"
+    description: "OAuth Provider Logo URL"
+    default: ""
+    is_required: false
+
+  postiz_generic_oauth:
+    type: "string"
+    description: "Enable Generic OAuth (true/false)"
+    default: "false"
+    is_required: false
+
+  postiz_oauth_url:
+    type: "string"
+    description: "OAuth Provider Base URL"
+    default: ""
+    is_required: false
+
+  postiz_oauth_auth_url:
+    type: "string"
+    description: "OAuth Authorization URL"
+    default: ""
+    is_required: false
+
+  postiz_oauth_token_url:
+    type: "string"
+    description: "OAuth Token URL"
+    default: ""
+    is_required: false
+
+  postiz_oauth_userinfo_url:
+    type: "string"
+    description: "OAuth UserInfo URL"
+    default: ""
+    is_required: false
+
+  postiz_oauth_client_id:
+    type: "string"
+    description: "OAuth Client ID"
+    default: ""
+    is_required: false
+
+  postiz_oauth_client_secret:
+    type: "string"
+    description: "OAuth Client Secret"
+    default: ""
+    is_required: false
+
+  discord_support:
+    type: "string"
+    description: "Discord Support Server Invite URL"
+    default: ""
+    is_required: false
+
+  polotno:
+    type: "string"
+    description: "Polotno API Key for design features"
+    default: ""
+    is_required: false
+
+  stripe_publishable_key:
+    type: "string"
+    description: "Stripe Publishable Key"
+    default: ""
+    is_required: false
+
+  stripe_secret_key:
+    type: "string"
+    description: "Stripe Secret Key"
+    default: ""
+    is_required: false
+
+  stripe_signing_key:
+    type: "string"
+    description: "Stripe Webhook Signing Key"
+    default: ""
+    is_required: false
+
+  stripe_signing_key_connect:
+    type: "string"
+    description: "Stripe Connect Signing Key"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for reverse proxy (optional, leave empty to skip)"
+    default: ""
+    is_required: false
+
+  compose_dir:
+    type: "string"
+    description: "Directory to deploy Postiz stack"
+    default: "/opt/postiz"
+    is_required: true
+
+  compose_url:
+    type: "string"
+    description: "URL to download docker-compose.yml from"
+    default: "https://raw.githubusercontent.com/zhravan/nixopus-docker-extensions/refs/heads/main/postiz/docker-compose.yml"
+    is_required: true
+
+execution:
+  run:
+    - name: "Cleanup existing Postiz containers"
+      type: "command"
+      properties:
+        cmd: "sh -c 'cd {{ compose_dir }} 2>/dev/null && docker compose down --remove-orphans 2>/dev/null || true'"
+      timeout: 60
+      ignore_errors: true
+
+    - name: "Create Postiz deployment directory"
+      type: "file"
+      properties:
+        action: "mkdir"
+        dest: "{{ compose_dir }}"
+      timeout: 30
+
+    - name: "Download docker-compose.yml from repository"
+      type: "command"
+      properties:
+        cmd: "sh -c 'curl -fsSL \"{{ compose_url }}\" -o {{ compose_dir }}/docker-compose.yml'"
+      timeout: 60
+
+    - name: "Create .env file with configuration"
+      type: "command"
+      properties:
+        cmd: |
+          cat > {{ compose_dir }}/.env << 'ENV_EOF'
+          CONTAINER_NAME={{ container_name }}
+          HOST_PORT={{ host_port }}
+          MAIN_URL={{ main_url }}
+          JWT_SECRET={{ jwt_secret }}
+          POSTGRES_USER={{ postgres_user }}
+          POSTGRES_PASSWORD={{ postgres_password }}
+          POSTGRES_DB={{ postgres_db }}
+          DISABLE_REGISTRATION={{ disable_registration }}
+          STORAGE_PROVIDER={{ storage_provider }}
+          CLOUDFLARE_ACCOUNT_ID={{ cloudflare_account_id }}
+          CLOUDFLARE_ACCESS_KEY={{ cloudflare_access_key }}
+          CLOUDFLARE_SECRET_ACCESS_KEY={{ cloudflare_secret_access_key }}
+          CLOUDFLARE_BUCKETNAME={{ cloudflare_bucketname }}
+          CLOUDFLARE_BUCKET_URL={{ cloudflare_bucket_url }}
+          OPENAI_API_KEY={{ openai_api_key }}
+          X_API_KEY={{ x_api_key }}
+          X_API_SECRET={{ x_api_secret }}
+          LINKEDIN_CLIENT_ID={{ linkedin_client_id }}
+          LINKEDIN_CLIENT_SECRET={{ linkedin_client_secret }}
+          REDDIT_CLIENT_ID={{ reddit_client_id }}
+          REDDIT_CLIENT_SECRET={{ reddit_client_secret }}
+          GITHUB_CLIENT_ID={{ github_client_id }}
+          GITHUB_CLIENT_SECRET={{ github_client_secret }}
+          BEEHIIVE_API_KEY={{ beehiive_api_key }}
+          BEEHIIVE_PUBLICATION_ID={{ beehiive_publication_id }}
+          THREADS_APP_ID={{ threads_app_id }}
+          THREADS_APP_SECRET={{ threads_app_secret }}
+          FACEBOOK_APP_ID={{ facebook_app_id }}
+          FACEBOOK_APP_SECRET={{ facebook_app_secret }}
+          YOUTUBE_CLIENT_ID={{ youtube_client_id }}
+          YOUTUBE_CLIENT_SECRET={{ youtube_client_secret }}
+          TIKTOK_CLIENT_ID={{ tiktok_client_id }}
+          TIKTOK_CLIENT_SECRET={{ tiktok_client_secret }}
+          PINTEREST_CLIENT_ID={{ pinterest_client_id }}
+          PINTEREST_CLIENT_SECRET={{ pinterest_client_secret }}
+          DRIBBBLE_CLIENT_ID={{ dribbble_client_id }}
+          DRIBBBLE_CLIENT_SECRET={{ dribbble_client_secret }}
+          DISCORD_CLIENT_ID={{ discord_client_id }}
+          DISCORD_CLIENT_SECRET={{ discord_client_secret }}
+          DISCORD_BOT_TOKEN_ID={{ discord_bot_token_id }}
+          SLACK_ID={{ slack_id }}
+          SLACK_SECRET={{ slack_secret }}
+          SLACK_SIGNING_SECRET={{ slack_signing_secret }}
+          MASTODON_URL={{ mastodon_url }}
+          MASTODON_CLIENT_ID={{ mastodon_client_id }}
+          MASTODON_CLIENT_SECRET={{ mastodon_client_secret }}
+          OAUTH_DISPLAY_NAME={{ oauth_display_name }}
+          OAUTH_LOGO_URL={{ oauth_logo_url }}
+          POSTIZ_GENERIC_OAUTH={{ postiz_generic_oauth }}
+          POSTIZ_OAUTH_URL={{ postiz_oauth_url }}
+          POSTIZ_OAUTH_AUTH_URL={{ postiz_oauth_auth_url }}
+          POSTIZ_OAUTH_TOKEN_URL={{ postiz_oauth_token_url }}
+          POSTIZ_OAUTH_USERINFO_URL={{ postiz_oauth_userinfo_url }}
+          POSTIZ_OAUTH_CLIENT_ID={{ postiz_oauth_client_id }}
+          POSTIZ_OAUTH_CLIENT_SECRET={{ postiz_oauth_client_secret }}
+          DISCORD_SUPPORT={{ discord_support }}
+          POLOTNO={{ polotno }}
+          STRIPE_PUBLISHABLE_KEY={{ stripe_publishable_key }}
+          STRIPE_SECRET_KEY={{ stripe_secret_key }}
+          STRIPE_SIGNING_KEY={{ stripe_signing_key }}
+          STRIPE_SIGNING_KEY_CONNECT={{ stripe_signing_key_connect }}
+          ENV_EOF
+      timeout: 60
+
+    - name: "Pull Docker images"
+      type: "command"
+      properties:
+        cmd: "sh -c 'cd {{ compose_dir }} && docker compose pull'"
+      timeout: 600
+
+    - name: "Start Postiz stack with Docker Compose"
+      type: "docker_compose"
+      properties:
+        action: "up"
+        file: "{{ compose_dir }}/docker-compose.yml"
+      timeout: 300
+
+    - name: "Add reverse proxy configuration"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
+      ignore_errors: true
+
+  validate:
+    - name: "Wait for Postiz to be ready"
+      type: "command"
+      properties:
+        cmd: "sleep 60"
+      timeout: 65
+
+    - name: "Check PostgreSQL container"
+      type: "command"
+      properties:
+        cmd: "docker ps --filter name=postiz-postgres --filter status=running --format '{{.Names}}' | grep -q postiz-postgres"
+      timeout: 30
+
+    - name: "Check Redis container"
+      type: "command"
+      properties:
+        cmd: "docker ps --filter name=postiz-redis --filter status=running --format '{{.Names}}' | grep -q postiz-redis"
+      timeout: 30
+
+    - name: "Check Postiz container"
+      type: "command"
+      properties:
+        cmd: "docker ps --filter name={{ container_name }} --filter status=running --format '{{.Names}}' | grep -q {{ container_name }}"
+      timeout: 30
+      
+
+    - name: "Check PostgreSQL health"
+      type: "command"
+      properties:
+        cmd: "docker exec postiz-postgres pg_isready -U {{ postgres_user }} -d {{ postgres_db }}"
+      timeout: 30
+
+    - name: "Check Redis health"
+      type: "command"
+      properties:
+        cmd: "docker exec postiz-redis redis-cli ping | grep -q PONG"
+      timeout: 30
