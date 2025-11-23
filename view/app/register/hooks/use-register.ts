@@ -9,6 +9,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useIsAdminRegisteredQuery } from '@/redux/services/users/authApi';
+import { useAppDispatch } from '@/redux/hooks';
+import { initializeAuth } from '@/redux/features/users/authSlice';
 
 const registerSchema = (t: (key: translationKey, params?: Record<string, string>) => string) =>
   z
@@ -36,6 +38,7 @@ type RegisterForm = z.infer<ReturnType<typeof registerSchema>>;
 function useRegister() {
   const { t } = useTranslation();
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const {
     data: isAdminRegistered,
@@ -69,7 +72,16 @@ function useRegister() {
         toast.error('Sign up is not allowed');
       } else {
         toast.success(t('auth.register.success'));
-        router.push('/auth');
+
+        try {
+          await (dispatch(initializeAuth() as any) as any).unwrap();
+        } catch (authError) {
+          console.warn('Auth initialization after registration failed:', authError);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 200));
+
+        router.push('/dashboard');
       }
     } catch (error) {
       toast.error(t('auth.register.errors.registerFailed'));
