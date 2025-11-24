@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Session from 'supertokens-web-js/recipe/session';
 import { UserRoleClaim, PermissionClaim } from 'supertokens-web-js/recipe/userroles';
+import { useAppSelector } from '@/redux/hooks';
 
 export type Resource =
   | 'organization'
@@ -29,43 +30,69 @@ export const useRBAC = () => {
   const [roles, setRoles] = useState<string[] | undefined>(undefined);
   const [permissions, setPermissions] = useState<string[] | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+  const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchRBAC = useCallback(async () => {
+    try {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+
+      const hasSession = await Session.doesSessionExist();
+      if (!hasSession) {
+        setRoles(undefined);
+        setPermissions(undefined);
+        setIsLoading(false);
+        return;
+      }
+
+      const [sessionRoles, sessionPerms] = await Promise.all([
+        Session.getClaimValue({ claim: UserRoleClaim }),
+        Session.getClaimValue({ claim: PermissionClaim })
+      ]);
+
+      if ((!sessionRoles || sessionRoles.length === 0) && (!sessionPerms || sessionPerms.length === 0)) {
+        retryTimeoutRef.current = setTimeout(() => {
+          fetchRBAC();
+        }, 1000);
+        return;
+      }
+
+      setRoles(sessionRoles ?? undefined);
+      setPermissions(sessionPerms ?? undefined);
+      setIsLoading(false);
+    } catch (err) {
+      retryTimeoutRef.current = setTimeout(() => {
+        fetchRBAC();
+      }, 1000);
+    }
+  }, [isAuthenticated, isInitialized, activeOrganization?.id]);
 
   useEffect(() => {
-    let isMounted = true;
-    (async () => {
-      try {
-        const hasSession = await Session.doesSessionExist();
-        if (!hasSession) {
-          if (isMounted) {
-            setRoles(undefined);
-            setPermissions(undefined);
-            setIsLoading(false);
-          }
-          return;
-        }
-
-        const [sessionRoles, sessionPerms] = await Promise.all([
-          Session.getClaimValue({ claim: UserRoleClaim }),
-          Session.getClaimValue({ claim: PermissionClaim })
-        ]);
-
-        if (isMounted) {
-          setRoles(sessionRoles ?? undefined);
-          setPermissions(sessionPerms ?? undefined);
-          setIsLoading(false);
-        }
-      } catch (_err) {
-        if (isMounted) {
-          setRoles(undefined);
-          setPermissions(undefined);
-          setIsLoading(false);
-        }
-      }
-    })();
     return () => {
-      isMounted = false;
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
     };
   }, []);
+
+  useEffect(() => {
+    if (!isInitialized) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setRoles(undefined);
+      setPermissions(undefined);
+      setIsLoading(false);
+      return;
+    }
+
+    fetchRBAC();
+  }, [isAuthenticated, isInitialized, activeOrganization?.id, fetchRBAC]);
 
   const isAdmin = useMemo(() => {
     if (!Array.isArray(roles)) return false;
