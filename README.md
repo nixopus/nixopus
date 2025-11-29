@@ -69,7 +69,7 @@ You can customize your installation by providing the following optional paramete
 Example with optional parameters:
 
 ```bash
-nixopus install \
+sudo nixopus install \
   --api-domain nixopusapi.example.tld \
   --view-domain nixopus.example.tld \
   --verbose \
@@ -79,10 +79,13 @@ nixopus install \
 Example for custom ip setup:
 
 ```bash
-nixopus install \
+sudo nixopus install \
   --host-ip 10.0.0.154 \
   --verbose
 ```
+
+> [!NOTE]  
+> Running `nixopus install` requires root privileges (sudo) to install system dependencies like Docker. If you encounter permission errors, make sure to run the command with `sudo`.
 
 You can also install the CLI and run `nixopus install` with options in a single command, refer [installation documentation](https://docs.nixopus.com/install/#installation-options) for more details on options
 
