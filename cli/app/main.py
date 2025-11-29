@@ -1,6 +1,5 @@
 import os
 import time
-from importlib.metadata import version as get_version
 
 import typer
 from rich.console import Console
@@ -73,7 +72,8 @@ def main(
 
         console.print(panel)
 
-        cli_version = get_version("nixopus")
+        version_cmd = VersionCommand()
+        cli_version = version_cmd._get_version()
         version_text = Text()
         version_text.append("Version: ", style="bold white")
         version_text.append(f"v{cli_version}", style="green")

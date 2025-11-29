@@ -1,3 +1,12 @@
+# [0.1.0-alpha.68](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.67...v0.1.0-alpha.68) (2025-11-24)
+
+
+### Bug Fixes
+
+* feature disabled error on signup ([#587](https://github.com/raghavyuva/nixopus/issues/587)) ([8af20ab](https://github.com/raghavyuva/nixopus/commit/8af20abf6c02706e6e726e63da4df7a1399645a3))
+
+
+
 # [0.1.0-alpha.67](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.66...v0.1.0-alpha.67) (2025-11-21)
 
 
