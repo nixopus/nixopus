@@ -190,11 +190,11 @@ Once the CLI is installed, you can use it to install Nixopus on your VPS:
 ::: code-group
 
 ```bash [Basic Installation]
-nixopus install
+sudo nixopus install
 ```
 
 ```bash [With Custom Domains]
-nixopus install \
+sudo nixopus install \
   --api-domain api.example.com \
   --view-domain app.example.com \
   --verbose
@@ -205,9 +205,13 @@ nixopus preflight
 ```
 
 ```bash [Install Dependencies Only]
-nixopus install deps
+sudo nixopus install deps
 ```
 
+:::
+
+::: warning Root Privileges Required
+The `nixopus install` command requires root privileges to install system dependencies like Docker. Always use `sudo` unless you're already running as root. If you encounter permission errors or "exit status 100", ensure you're using sudo.
 :::
 
 ::: tip Preflight Check

@@ -61,8 +61,12 @@ curl -sSL https://install.nixopus.com | bash -s -- --skip-nixopus-install
 Once the CLI is installed, you can install Nixopus on your VPS:
 
 ```bash
-nixopus install
+sudo nixopus install
 ```
+
+::: warning Sudo Required
+Running `nixopus install` requires root privileges to install system dependencies (like Docker). Always use `sudo` when running the install command. If you encounter "exit status 100" or permission errors, ensure you're using sudo.
+:::
 
 ::: info CLI Verification
 Before proceeding, verify the CLI is working:
@@ -251,25 +255,35 @@ If you've already installed the CLI separately, you can run `nixopus install` di
 ::: code-group
 
 ```bash [With Domains]
-nixopus install \
+sudo nixopus install \
   --api-domain api.example.com \
   --view-domain example.com \
   --verbose
 ```
 
 ```bash [With IP]
-nixopus install \
+sudo nixopus install \
   --host-ip 192.168.1.100 \
   --verbose
 ```
 
 ```bash [Custom Ports]
-nixopus install \
+sudo nixopus install \
   --api-port 9000 \
   --view-port 9001 \
   --timeout 600
 ```
 
+:::
+
+::: tip Why Sudo?
+The `nixopus install` command needs root privileges to:
+
+- Install Docker and other system dependencies
+- Configure system-level services
+- Set up network configurations
+
+If you're already running as root user, you can omit `sudo`.
 :::
 
 ## Accessing Nixopus
