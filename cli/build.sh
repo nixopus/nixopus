@@ -81,6 +81,7 @@ a = Analysis(
     datas=[
         ('../helpers/config.prod.yaml', 'helpers/'),
         ('../helpers/config.dev.yaml', 'helpers/'),
+        ('../version.txt', '.'),
     ],
     hiddenimports=[
         'app.commands.clone.command',

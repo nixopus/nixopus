@@ -64,7 +64,12 @@ def install_dep(dep, package_manager, logger, dry_run=False):
             if dry_run:
                 logger.info(f"[DRY RUN] Would run: {install_command}")
                 return True
-            subprocess.check_call(install_command, shell=True)
+            result = subprocess.run(install_command, shell=True, capture_output=True, text=True)
+            if result.returncode != 0:
+                error_output = result.stderr.strip() or result.stdout.strip()
+                if error_output:
+                    logger.error(f"Installation command output: {error_output}")
+                raise subprocess.CalledProcessError(result.returncode, install_command, result.stdout, result.stderr)
             return True
         if package_manager == "apt":
             cmd = ["sudo", "apt-get", "install", "-y", package]
@@ -86,6 +91,15 @@ def install_dep(dep, package_manager, logger, dry_run=False):
             return True
         subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
+    except subprocess.CalledProcessError as e:
+        error_msg = str(e)
+        if "docker" in package.lower() and (e.returncode == 100 or "permission" in error_msg.lower()):
+            logger.error(failed_to_install.format(dep=package, error=f"Exit code {e.returncode}"))
+            logger.error("Docker installation requires root privileges.")
+            logger.error("Please run: sudo nixopus install")
+        else:
+            logger.error(failed_to_install.format(dep=package, error=e))
+        return False
     except Exception as e:
         logger.error(failed_to_install.format(dep=package, error=e))
         return False
