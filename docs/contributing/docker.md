@@ -249,7 +249,7 @@ When optimizing Docker images:
          matrix:
            service: [api, view]
        steps:
-       - uses: actions/checkout@v3
+       - uses: actions/checkout@v6
        
        - name: Set up Docker Buildx
          uses: docker/setup-buildx-action@v2
