@@ -1,3 +1,15 @@
+# [0.1.0-alpha.70](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.68...v0.1.0-alpha.70) (2025-12-01)
+
+
+### Features
+
+* bump to alpha-v69 to mark release ([#592](https://github.com/raghavyuva/nixopus/issues/592)) ([a521d60](https://github.com/raghavyuva/nixopus/commit/a521d602e1e756c071128c7731a4e8f65bcc2a13))
+* include version.txt to bundler ([a986b9a](https://github.com/raghavyuva/nixopus/commit/a986b9a72132c524d7e8d561845eb26989547371))
+* read version from installed pkg with fallback to bundler/src ([f79d808](https://github.com/raghavyuva/nixopus/commit/f79d808fff46db0cffb5a7260c433dad60298fb2))
+* sudo requirement non root user & improve installation error handling ([#589](https://github.com/raghavyuva/nixopus/issues/589)) ([d56f902](https://github.com/raghavyuva/nixopus/commit/d56f902bd532ab9c7c271ac3f2224f5d077a466a))
+
+
+
 # [0.1.0-alpha.68](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.67...v0.1.0-alpha.68) (2025-11-24)
 
 
