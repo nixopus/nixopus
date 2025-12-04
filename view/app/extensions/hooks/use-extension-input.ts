@@ -3,6 +3,13 @@ import { Extension, ExtensionVariable } from '@/redux/types/extension';
 
 type SubmitFn = (values: Record<string, unknown>) => void;
 
+const formatVariableName = (name: string): string => {
+  return name
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const normalizeDefault = (value: unknown, type: string): unknown => {
   if (value === undefined || value === null) {
     if (type === 'boolean') return false;
@@ -64,16 +71,43 @@ export function useExtensionInput(args: {
   const { extension, open, onSubmit, onClose } = args;
 
   const variables = useMemo(() => extension?.variables || [], [extension]);
-
   const initialValues = useMemo(() => buildInitialValues(variables), [variables]);
 
   const [values, setValues] = useState<Record<string, unknown>>(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showOptional, setShowOptional] = useState(false);
 
   useEffect(() => {
     setValues(initialValues);
     setErrors({});
+    setSearchQuery('');
+    setShowOptional(false);
   }, [initialValues, open]);
+
+  const filteredVariables = useMemo(() => {
+    if (!searchQuery.trim()) return variables;
+    const query = searchQuery.toLowerCase();
+    return variables.filter(
+      (v) =>
+        v.variable_name.toLowerCase().includes(query) ||
+        v.description?.toLowerCase().includes(query) ||
+        formatVariableName(v.variable_name).toLowerCase().includes(query)
+    );
+  }, [variables, searchQuery]);
+
+  const requiredFields = useMemo(
+    () => filteredVariables.filter((v) => v.is_required),
+    [filteredVariables]
+  );
+
+  const optionalFields = useMemo(
+    () => filteredVariables.filter((v) => !v.is_required),
+    [filteredVariables]
+  );
+
+  const hasManyVariables = variables.length > 6;
+  const showSearch = hasManyVariables && open;
 
   const handleChange = (name: string, value: unknown) => {
     setValues((prev) => ({ ...prev, [name]: value }));
@@ -109,6 +143,15 @@ export function useExtensionInput(args: {
     values,
     errors,
     handleChange,
-    handleSubmit
+    handleSubmit,
+    searchQuery,
+    setSearchQuery,
+    showOptional,
+    setShowOptional,
+    requiredFields,
+    optionalFields,
+    showSearch,
+    hasVariables: variables.length > 0,
+    hasSearchResults: filteredVariables.length > 0
   };
 }
