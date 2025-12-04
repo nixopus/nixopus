@@ -8,8 +8,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useTranslation } from '@/hooks/use-translation';
 import { Extension, ExtensionVariable } from '@/redux/types/extension';
 import { useExtensionInput } from '@/app/extensions/hooks/use-extension-input';
-import { Info, Sparkles } from 'lucide-react';
+import { Info, Sparkles, ChevronDown, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface ExtensionInputProps {
   open: boolean;
@@ -25,7 +28,21 @@ export default function ExtensionInput({
   onSubmit
 }: ExtensionInputProps) {
   const { t } = useTranslation();
-  const { variables, values, errors, handleChange, handleSubmit } = useExtensionInput({
+  const {
+    values,
+    errors,
+    handleChange,
+    handleSubmit,
+    searchQuery,
+    setSearchQuery,
+    showOptional,
+    setShowOptional,
+    requiredFields,
+    optionalFields,
+    showSearch,
+    hasVariables,
+    hasSearchResults
+  } = useExtensionInput({
     extension,
     open,
     onSubmit,
@@ -45,9 +62,6 @@ export default function ExtensionInput({
     }
   ];
 
-  const requiredFields = variables.filter((v) => v.is_required);
-  const optionalFields = variables.filter((v) => !v.is_required);
-
   return (
     <DialogWrapper
       open={open}
@@ -62,8 +76,8 @@ export default function ExtensionInput({
       actions={actions}
       size="xl"
     >
-      <div className="space-y-6 py-2 max-h-[65vh] overflow-y-auto px-1">
-        {variables.length === 0 && (
+      <div className="space-y-4 py-2 max-h-[65vh] overflow-y-auto px-1">
+        {!hasVariables && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Sparkles className="h-12 w-12 text-muted-foreground/40 mb-3" />
             <p className="text-sm text-muted-foreground">{t('extensions.noVariables')}</p>
@@ -73,45 +87,94 @@ export default function ExtensionInput({
           </div>
         )}
 
+        {showSearch && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search variables..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                onClick={() => setSearchQuery('')}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+        )}
+
         {requiredFields.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 pb-1.5">
               <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-              <h3 className="text-sm font-semibold text-foreground">Required Configuration</h3>
+              <h3 className="text-sm font-semibold text-foreground">
+                Required ({requiredFields.length})
+              </h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {requiredFields.map((v) => (
-                <FieldWrapper
+                <FieldItem
                   key={v.id}
+                  variable={v}
+                  value={values[v.variable_name]}
                   error={errors[v.variable_name]}
-                  fullWidth={v.variable_type === 'array'}
-                >
-                  <Field variable={v} value={values[v.variable_name]} onChange={handleChange} />
-                </FieldWrapper>
+                  onChange={handleChange}
+                />
               ))}
             </div>
           </div>
         )}
 
         {optionalFields.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b">
-              <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-              <h3 className="text-sm font-medium text-muted-foreground">
-                Optional Configuration
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {optionalFields.map((v) => (
-                <FieldWrapper
-                  key={v.id}
-                  error={errors[v.variable_name]}
-                  fullWidth={v.variable_type === 'array'}
-                >
-                  <Field variable={v} value={values[v.variable_name]} onChange={handleChange} />
-                </FieldWrapper>
-              ))}
-            </div>
+          <Collapsible open={showOptional} onOpenChange={setShowOptional}>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                className="w-full justify-between p-3 h-auto hover:bg-muted/50"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    Optional Configuration ({optionalFields.length})
+                  </h3>
+                </div>
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 text-muted-foreground transition-transform duration-200',
+                    showOptional && 'rotate-180'
+                  )}
+                />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-3 pt-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {optionalFields.map((v) => (
+                  <FieldItem
+                    key={v.id}
+                    variable={v}
+                    value={values[v.variable_name]}
+                    error={errors[v.variable_name]}
+                    onChange={handleChange}
+                  />
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
+        {searchQuery && !hasSearchResults && (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <p className="text-sm text-muted-foreground">No variables found</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              Try adjusting your search query
+            </p>
           </div>
         )}
       </div>
@@ -119,26 +182,122 @@ export default function ExtensionInput({
   );
 }
 
-function FieldWrapper({
+function FieldItem({
+  variable,
+  value,
   error,
-  children,
-  fullWidth = false
+  onChange
 }: {
+  variable: ExtensionVariable;
+  value: unknown;
   error?: string;
-  children: React.ReactNode;
-  fullWidth?: boolean;
+  onChange: (name: string, value: unknown) => void;
 }) {
+  const id = `var-${variable.variable_name}`;
+  const displayName = variable.variable_name
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  const labelWithTooltip = (
+    <div className="flex items-center gap-1.5">
+      <Label
+        htmlFor={id}
+        className={cn('font-medium text-sm', variable.variable_type === 'boolean' && 'cursor-pointer')}
+      >
+        {displayName}
+      </Label>
+      {variable.description && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+          </TooltipTrigger>
+          <TooltipContent side="right" className="max-w-xs">
+            {variable.description}
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  );
+
+  const renderInput = () => {
+    if (variable.variable_type === 'boolean') {
+      return (
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id={id}
+            checked={Boolean(value)}
+            onCheckedChange={(v) => onChange(variable.variable_name, Boolean(v))}
+            className="mt-0.5"
+          />
+          <div className="flex-1">{labelWithTooltip}</div>
+        </div>
+      );
+    }
+
+    if (variable.variable_type === 'array') {
+      const textValue = Array.isArray(value)
+        ? (value as unknown[]).map((v) => String(v)).join('\n')
+        : String(value ?? '');
+      return (
+        <>
+          {labelWithTooltip}
+          <textarea
+            id={id}
+            className="min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 transition-shadow"
+            value={textValue}
+            onChange={(e) =>
+              onChange(
+                variable.variable_name,
+                e.target.value
+                  .split('\n')
+                  .map((s) => s.trim())
+                  .filter((s) => s.length > 0)
+              )
+            }
+            placeholder="Enter each item on a new line..."
+          />
+          <span className="text-xs text-muted-foreground/70">One item per line</span>
+        </>
+      );
+    }
+
+    return (
+      <>
+        {labelWithTooltip}
+        <Input
+          id={id}
+          type={variable.variable_type === 'integer' ? 'number' : 'text'}
+          value={(value as string) ?? ''}
+          onChange={(e) =>
+            onChange(
+              variable.variable_name,
+              variable.variable_type === 'integer' ? Number(e.target.value) : e.target.value
+            )
+          }
+          placeholder={`Enter ${displayName.toLowerCase()}...`}
+          className={cn(
+            'focus-visible:ring-primary',
+            variable.variable_type === 'integer' &&
+              '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+          )}
+        />
+      </>
+    );
+  };
+
   return (
     <div
       className={cn(
-        'relative rounded-lg border p-4 transition-all duration-200',
+        'relative rounded-lg p-3 transition-all duration-200',
         error
-          ? 'border-destructive bg-destructive/5'
-          : 'border-border bg-card hover:border-primary/50 hover:shadow-sm',
-        fullWidth && 'md:col-span-2'
+          ? 'bg-destructive/5 border border-destructive'
+          : 'bg-muted/30 hover:bg-muted/50',
+        variable.variable_type === 'array' && 'md:col-span-2',
+        variable.variable_type !== 'boolean' && 'grid gap-2'
       )}
     >
-      {children}
+      {renderInput()}
       {error && (
         <div className="flex items-center gap-1.5 mt-2 text-xs text-destructive font-medium">
           <Info className="h-3.5 w-3.5" />
@@ -147,105 +306,4 @@ function FieldWrapper({
       )}
     </div>
   );
-}
-
-function Field({
-  variable,
-  value,
-  onChange
-}: {
-  variable: ExtensionVariable;
-  value: unknown;
-  onChange: (name: string, value: unknown) => void;
-}) {
-  const id = `var-${variable.variable_name}`;
-
-  if (variable.variable_type === 'boolean') {
-    return (
-      <div className="flex items-start gap-3">
-        <Checkbox
-          id={id}
-          checked={Boolean(value)}
-          onCheckedChange={(v) => onChange(variable.variable_name, Boolean(v))}
-          className="mt-0.5"
-        />
-        <div className="flex-1 grid gap-1.5">
-          <Label htmlFor={id} className="font-medium text-sm cursor-pointer">
-            {formatVariableName(variable.variable_name)}
-            {variable.is_required && <span className="text-destructive ml-1">*</span>}
-          </Label>
-          {variable.description && (
-            <span className="text-xs text-muted-foreground leading-relaxed">
-              {variable.description}
-            </span>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (variable.variable_type === 'array') {
-    const textValue = Array.isArray(value)
-      ? (value as unknown[]).map((v) => String(v)).join('\n')
-      : String(value ?? '');
-    return (
-      <div className="grid gap-2">
-        <Label htmlFor={id} className="font-medium text-sm">
-          {formatVariableName(variable.variable_name)}
-          {variable.is_required && <span className="text-destructive ml-1">*</span>}
-        </Label>
-        {variable.description && (
-          <span className="text-xs text-muted-foreground -mt-1">{variable.description}</span>
-        )}
-        <textarea
-          id={id}
-          className="min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 transition-shadow"
-          value={textValue}
-          onChange={(e) =>
-            onChange(
-              variable.variable_name,
-              e.target.value
-                .split('\n')
-                .map((s) => s.trim())
-                .filter((s) => s.length > 0)
-            )
-          }
-          placeholder={`Enter each item on a new line...`}
-        />
-        <span className="text-xs text-muted-foreground/70">One item per line</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid gap-2">
-      <Label htmlFor={id} className="font-medium text-sm">
-        {formatVariableName(variable.variable_name)}
-        {variable.is_required && <span className="text-destructive ml-1">*</span>}
-      </Label>
-      {variable.description && (
-        <span className="text-xs text-muted-foreground -mt-1">{variable.description}</span>
-      )}
-      <Input
-        id={id}
-        type={variable.variable_type === 'integer' ? 'number' : 'text'}
-        value={(value as string) ?? ''}
-        onChange={(e) =>
-          onChange(
-            variable.variable_name,
-            variable.variable_type === 'integer' ? Number(e.target.value) : e.target.value
-          )
-        }
-        placeholder={`Enter ${formatVariableName(variable.variable_name).toLowerCase()}...`}
-        className="focus-visible:ring-primary"
-      />
-    </div>
-  );
-}
-
-function formatVariableName(name: string): string {
-  return name
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
