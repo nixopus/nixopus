@@ -5,7 +5,7 @@ import ListRepositories from './components/github-repositories/list-repositories
 import AppItem, { AppItemSkeleton } from './components/application';
 import useGetDeployedApplications from './hooks/use_get_deployed_applications';
 import PaginationWrapper from '@/components/ui/pagination';
-import { DahboardUtilityHeader } from '@/components/layout/dashboard-page-header';
+import DashboardPageHeader, { DahboardUtilityHeader } from '@/components/layout/dashboard-page-header';
 import { Application } from '@/redux/types/applications';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/use-translation';
@@ -81,6 +81,10 @@ function page() {
       }
     >
       <PageLayout maxWidth="6xl" padding="md" spacing="lg">
+        <DashboardPageHeader
+          label={t('selfHost.page.title')}
+          description={t('selfHost.page.description')}
+        />
         {renderContent()}
 
         {showApplications && (

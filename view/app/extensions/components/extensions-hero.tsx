@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
+import { TypographyH1, TypographyMuted } from '@/components/ui/typography';
 
 interface ExtensionsHeroProps {
   isLoading?: boolean;
@@ -25,10 +26,8 @@ function ExtensionsHero({ isLoading = false }: ExtensionsHeroProps) {
           <div className="inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
             {t('extensions.beta')}
           </div>
-          <h1 className="text-xl font-bold tracking-tight md:text-2xl lg:text-3xl">
-            {t('extensions.title')}
-          </h1>
-          <p className="text-sm text-muted-foreground md:text-base">{t('extensions.subtitle')}</p>
+          <TypographyH1>{t('extensions.title')}</TypographyH1>
+          <TypographyMuted>{t('extensions.subtitle')}</TypographyMuted>
         </div>
         <div className="flex-1">
           <div className="relative mx-auto max-w-xs">

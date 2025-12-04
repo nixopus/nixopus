@@ -8,7 +8,7 @@ import TeamMembers from './components/TeamMembers';
 import EditTeam from './components/EditTeam';
 import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
-import { TypographyH2, TypographyMuted } from '@/components/ui/typography';
+import { TypographyH1, TypographyMuted } from '@/components/ui/typography';
 import PageLayout from '@/components/layout/page-layout';
 
 function Page() {
@@ -40,7 +40,7 @@ function Page() {
         <div className={'flex items-center justify-between space-y-2'}>
           <div className="flex items-center">
             <span className="">
-              <TypographyH2>{teamName}</TypographyH2>
+              <TypographyH1>{teamName}</TypographyH1>
               <TypographyMuted>{teamDescription}</TypographyMuted>
             </span>
 
