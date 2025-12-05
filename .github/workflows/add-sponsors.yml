@@ -23,7 +23,7 @@ jobs:
       - name: Fetch sponsors
         id: fetch-sponsors
         run: |
-          SPONSORS_JSON=$(curl -s -H "Authorization: token ${{ secrets.PAT }}" \
+          SPONSORS_JSON=$(curl -s -H "Authorization: bearer ${{ secrets.PAT }}" \
             -X POST -d '{
               "query": "query { user(login:\"${{ github.repository_owner }}\") { sponsorshipsAsMaintainer(first: 100) { nodes { sponsor { login, avatarUrl, url } } } } }"
             }' https://api.github.com/graphql)
