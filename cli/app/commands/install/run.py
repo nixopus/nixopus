@@ -42,7 +42,7 @@ from app.utils.directory_manager import create_directory
 from app.utils.file_manager import get_directory_path, set_permissions
 from app.utils.host_information import get_public_ip
 from app.utils.protocols import LoggerProtocol
-from app.utils.timeout import TimeoutWrapper
+from app.utils.timeout import timeout_wrapper
 
 from .deps import install_all_deps
 from .messages import (
@@ -306,7 +306,7 @@ class Install:
 
     def _install_dependencies(self):
         try:
-            with TimeoutWrapper(self.timeout):
+            with timeout_wrapper(self.timeout):
                 result = install_all_deps(verbose=self.verbose, output="json", dry_run=self.dry_run)
         except TimeoutError:
             raise Exception(dependency_installation_timeout)
@@ -317,7 +317,7 @@ class Install:
             return
 
         try:
-            with TimeoutWrapper(self.timeout):
+            with timeout_wrapper(self.timeout):
                 success, error = clone_repository(
                     repo=self._get_config(DEFAULT_REPO),
                     path=self._get_config("full_source_path"),
@@ -417,7 +417,7 @@ class Install:
         )
         ssh_operation = SSH(logger=self.logger)
         try:
-            with TimeoutWrapper(self.timeout):
+            with timeout_wrapper(self.timeout):
                 result = ssh_operation.generate(config)
         except TimeoutError:
             raise Exception(f"{ssh_setup_failed}: {operation_timed_out}")
@@ -455,7 +455,7 @@ class Install:
 
         try:
             try:
-                with TimeoutWrapper(self.timeout):
+                with timeout_wrapper(self.timeout):
                     success, error = start_services(
                         name="all",
                         detach=True,
@@ -490,7 +490,7 @@ class Install:
             return
 
         try:
-            with TimeoutWrapper(self.timeout):
+            with timeout_wrapper(self.timeout):
                 success, error = load_config(caddy_json_config, proxy_port, self.logger)
         except TimeoutError:
             raise Exception(f"{proxy_load_failed}: {operation_timed_out}")

@@ -1,26 +1,24 @@
 import signal
+from contextlib import contextmanager
+from typing import Generator
 
 from app.commands.install.messages import timeout_error
 
 
-class TimeoutWrapper:
-    """Context manager for timeout operations"""
+@contextmanager
+def timeout_wrapper(timeout: int) -> Generator[None, None, None]:
+    """Context manager for timeout operations using functional approach"""
+    if timeout > 0:
+        def timeout_handler(signum, frame):
+            raise TimeoutError(timeout_error.format(timeout=timeout))
 
-    def __init__(self, timeout: int):
-        self.timeout = timeout
-        self.original_handler = None
-
-    def __enter__(self):
-        if self.timeout > 0:
-
-            def timeout_handler(signum, frame):
-                raise TimeoutError(timeout_error.format(timeout=self.timeout))
-
-            self.original_handler = signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(self.timeout)
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.timeout > 0:
+        original_handler = signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(timeout)
+        
+        try:
+            yield
+        finally:
             signal.alarm(0)
-            signal.signal(signal.SIGALRM, self.original_handler)
+            signal.signal(signal.SIGALRM, original_handler)
+    else:
+        yield
