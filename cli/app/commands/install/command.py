@@ -2,7 +2,7 @@ import typer
 
 from app.utils.config import Config
 from app.utils.logger import create_logger, log_error, log_success, log_warning
-from app.utils.timeout import TimeoutWrapper
+from app.utils.timeout import timeout_wrapper
 
 from .deps import install_all_deps
 from .run import Install
@@ -211,7 +211,7 @@ def ssh(
         )
         ssh_operation = SSH(logger=logger)
 
-        with TimeoutWrapper(timeout):
+        with timeout_wrapper(timeout):
             result = ssh_operation.generate(config)
 
         log_success(result.output, verbose=verbose)
@@ -234,7 +234,7 @@ def deps(
     logger = create_logger(verbose=verbose)
     try:
 
-        with TimeoutWrapper(timeout):
+        with timeout_wrapper(timeout):
             result = install_all_deps(verbose=verbose, output=output, dry_run=dry_run)
 
         if output == "json":

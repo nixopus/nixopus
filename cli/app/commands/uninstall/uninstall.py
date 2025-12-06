@@ -8,7 +8,7 @@ from app.commands.service.service import stop_services
 from app.utils.config import DEFAULT_COMPOSE_FILE, NIXOPUS_CONFIG_DIR, SSH_FILE_PATH, Config
 from app.utils.logger import create_logger
 from app.utils.protocols import LoggerProtocol
-from app.utils.timeout import TimeoutWrapper
+from app.utils.timeout import timeout_wrapper
 
 from .messages import (
     authorized_keys_not_found,
@@ -108,7 +108,7 @@ def stop_services_step(
         return True, None
 
     try:
-        with TimeoutWrapper(timeout):
+        with timeout_wrapper(timeout):
             success, error = stop_services(
                 name="all",
                 env_file=None,

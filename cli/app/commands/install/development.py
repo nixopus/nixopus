@@ -33,7 +33,7 @@ from app.utils.directory_manager import create_directory
 from app.utils.file_manager import get_directory_path, set_permissions
 from app.utils.host_information import get_os_name, get_package_manager
 from app.utils.protocols import LoggerProtocol
-from app.utils.timeout import TimeoutWrapper
+from app.utils.timeout import timeout_wrapper
 
 from .base import BaseInstall
 from .deps import get_deps_from_config, get_installed_deps, install_dep
@@ -361,7 +361,7 @@ class DevelopmentInstall(BaseInstall):
             return
 
         try:
-            with TimeoutWrapper(self.timeout):
+            with timeout_wrapper(self.timeout):
                 success, error = clone_repository(
                     repo=self._get_config("repo_url"),
                     path=self._get_config("full_source_path"),
@@ -475,7 +475,7 @@ class DevelopmentInstall(BaseInstall):
 
         ssh_operation = SSH(logger=self.logger)
         try:
-            with TimeoutWrapper(self.timeout):
+            with timeout_wrapper(self.timeout):
                 result = ssh_operation.generate(config)
         except TimeoutError:
             raise Exception(f"{ssh_setup_failed}: {operation_timed_out}")
@@ -548,7 +548,7 @@ class DevelopmentInstall(BaseInstall):
             return
 
         try:
-            with TimeoutWrapper(self.timeout):
+            with timeout_wrapper(self.timeout):
                 success, error = load_config(caddy_json_config, proxy_port, self.logger)
         except TimeoutError:
             raise Exception(f"Proxy load failed: {operation_timed_out}")
@@ -591,7 +591,7 @@ class DevelopmentInstall(BaseInstall):
 
         try:
             try:
-                with TimeoutWrapper(self.timeout):
+                with timeout_wrapper(self.timeout):
                     success, error = start_services(
                         name=self._get_config("service_name"),
                         detach=self._get_config("service_detach"),
