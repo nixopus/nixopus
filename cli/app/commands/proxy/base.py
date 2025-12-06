@@ -5,7 +5,7 @@ import requests
 from pydantic import BaseModel, Field, field_validator
 
 from app.utils.config import CADDY_BASE_URL, CONFIG_ENDPOINT, LOAD_ENDPOINT, PROXY_PORT, STOP_ENDPOINT, Config
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
@@ -246,7 +246,7 @@ class BaseResult(BaseModel):
 class BaseService(Generic[TConfig, TResult]):
     def __init__(self, config: TConfig, logger: LoggerProtocol = None, caddy_service: CaddyServiceProtocol = None):
         self.config = config
-        self.logger = logger or Logger(verbose=config.verbose)
+        self.logger = logger or create_logger(verbose=config.verbose)
         self.caddy_service = caddy_service
         self.formatter = None
 

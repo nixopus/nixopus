@@ -5,7 +5,7 @@ from typing import Optional, Protocol
 from pydantic import BaseModel, Field, field_validator
 
 from app.utils.lib import DirectoryManager
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
@@ -179,7 +179,7 @@ class CloneConfig(BaseModel):
 class CloneService:
     def __init__(self, config: CloneConfig, logger: LoggerProtocol = None, cloner: GitCloneProtocol = None):
         self.config = config
-        self.logger = logger or Logger(verbose=config.verbose)
+        self.logger = logger or create_logger(verbose=config.verbose)
         self.cloner = cloner or GitClone(self.logger)
         self.formatter = CloneFormatter()
         self.dir_manager = DirectoryManager()

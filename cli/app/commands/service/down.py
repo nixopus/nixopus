@@ -4,7 +4,7 @@ from typing import Optional, Protocol
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 from app.utils.protocols import LoggerProtocol
 
 from .base import BaseAction, BaseConfig, BaseDockerCommandBuilder, BaseDockerService, BaseFormatter, BaseResult, BaseService

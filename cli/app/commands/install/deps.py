@@ -4,7 +4,7 @@ import subprocess
 
 from app.utils.config import DEPS, Config
 from app.utils.lib import HostInformation, ParallelProcessor
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 
 from .messages import (
     dry_run_install_cmd,
@@ -31,7 +31,7 @@ def get_deps_from_config():
 
 
 def get_installed_deps(deps, os_name, package_manager, timeout=2, verbose=False):
-    checker = DependencyChecker(Logger(verbose=verbose))
+    checker = DependencyChecker(create_logger(verbose=verbose))
     return {dep["name"]: checker.check_dependency(dep, package_manager) for dep in deps}
 
 
@@ -120,7 +120,7 @@ class DependencyChecker:
 
 
 def install_all_deps(verbose=False, output="text", dry_run=False):
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
     deps = get_deps_from_config()
     os_name = HostInformation.get_os_name()
     package_manager = HostInformation.get_package_manager()

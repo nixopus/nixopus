@@ -3,7 +3,7 @@ import json
 import typer
 
 from app.utils.config import DEFAULT_COMPOSE_FILE, NIXOPUS_CONFIG_DIR, Config
-from app.utils.logger import Logger
+from app.utils.logger import create_logger, log_error, log_info, log_success
 from app.utils.output_formatter import OutputFormatter
 from app.utils.timeout import TimeoutWrapper
 
@@ -38,7 +38,7 @@ def up(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Start Nixopus services"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = UpConfig(
@@ -56,7 +56,7 @@ def up(
         with TimeoutWrapper(timeout):
             if config.dry_run:
                 formatted_output = up_service.format_dry_run(config)
-                logger.info(formatted_output)
+                log_info(formatted_output, verbose=verbose)
                 return
             else:
                 result = up_service.up(config)
@@ -64,20 +64,20 @@ def up(
         if result.success:
             formatted_output = up_service.format_output(result, output)
             if output == "json":
-                logger.info(formatted_output)
+                log_info(formatted_output, verbose=verbose)
             else:
-                logger.success(services_started_successfully.format(services=result.name))
+                log_success(services_started_successfully.format(services=result.name), verbose=verbose)
                 if formatted_output:
-                    logger.info(formatted_output)
+                    log_info(formatted_output, verbose=verbose)
         else:
-            logger.error(result.error if result.error is not None else "Unknown error")
+            log_error(result.error if result.error is not None else "Unknown error", verbose=verbose)
             raise typer.Exit(1)
 
     except TimeoutError as e:
-        logger.error(e)
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
 
 
@@ -92,7 +92,7 @@ def down(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Stop Nixopus services"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = DownConfig(
@@ -104,7 +104,7 @@ def down(
         with TimeoutWrapper(timeout):
             if config.dry_run:
                 formatted_output = down_service.format_dry_run(config)
-                logger.info(formatted_output)
+                log_info(formatted_output, verbose=verbose)
                 return
             else:
                 result = down_service.down(config)
@@ -112,20 +112,20 @@ def down(
         if result.success:
             formatted_output = down_service.format_output(result, output)
             if output == "json":
-                logger.info(formatted_output)
+                log_info(formatted_output, verbose=verbose)
             else:
-                logger.success(services_stopped_successfully.format(services=result.name))
+                log_success(services_stopped_successfully.format(services=result.name), verbose=verbose)
                 if formatted_output:
-                    logger.info(formatted_output)
+                    log_info(formatted_output, verbose=verbose)
         else:
-            logger.error(result.error)
+            log_error(result.error, verbose=verbose)
             raise typer.Exit(1)
 
     except TimeoutError as e:
-        logger.error(e)
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
 
 
@@ -140,7 +140,7 @@ def ps(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Show status of Nixopus services"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = PsConfig(
@@ -152,23 +152,23 @@ def ps(
         with TimeoutWrapper(timeout):
             if config.dry_run:
                 formatted_output = ps_service.format_dry_run(config)
-                logger.info(formatted_output)
+                log_info(formatted_output, verbose=verbose)
                 return
             else:
                 result = ps_service.ps(config)
 
         if result.success:
             formatted_output = ps_service.format_output(result, output)
-            logger.info(formatted_output)
+            log_info(formatted_output, verbose=verbose)
         else:
-            logger.error(result.error)
+            log_error(result.error, verbose=verbose)
             raise typer.Exit(1)
 
     except TimeoutError as e:
-        logger.error(e)
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
 
 
@@ -183,7 +183,7 @@ def restart(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Restart Nixopus services"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = RestartConfig(
@@ -195,7 +195,7 @@ def restart(
         with TimeoutWrapper(timeout):
             if config.dry_run:
                 formatted_output = restart_service.format_dry_run(config)
-                logger.info(formatted_output)
+                log_info(formatted_output, verbose=verbose)
                 return
             else:
                 result = restart_service.restart(config)
@@ -203,18 +203,18 @@ def restart(
         if result.success:
             formatted_output = restart_service.format_output(result, output)
             if output == "json":
-                logger.info(formatted_output)
+                log_info(formatted_output, verbose=verbose)
             else:
-                logger.success(services_restarted_successfully.format(services=result.name))
+                log_success(services_restarted_successfully.format(services=result.name), verbose=verbose)
                 if formatted_output:
-                    logger.info(formatted_output)
+                    log_info(formatted_output, verbose=verbose)
         else:
-            logger.error(result.error)
+            log_error(result.error, verbose=verbose)
             raise typer.Exit(1)
 
     except TimeoutError as e:
-        logger.error(e)
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)

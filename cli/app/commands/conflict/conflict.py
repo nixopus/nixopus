@@ -9,7 +9,7 @@ from packaging.version import Version
 
 from app.utils.config import DEPS, Config
 from app.utils.lib import ParallelProcessor
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
@@ -386,7 +386,7 @@ class ConflictService:
 
     def __init__(self, config: ConflictConfig, logger: Optional[LoggerProtocol] = None):
         self.config = config
-        self.logger = logger or Logger(verbose=config.verbose)
+        self.logger = logger or create_logger(verbose=config.verbose)
         self.checker = ConflictChecker(config, self.logger)
         self.formatter = ConflictFormatter()
 

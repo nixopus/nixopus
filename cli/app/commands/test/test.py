@@ -3,7 +3,7 @@ import subprocess
 import typer
 
 from app.utils.config import Config
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 
 from .messages import development_only_error, running_command
 
@@ -11,7 +11,7 @@ from .messages import development_only_error, running_command
 class TestCommand:
     def __init__(self):
         self.config = Config()
-        self.logger = Logger()
+        self.logger = create_logger()
 
     def run(self, target: str = typer.Argument(None, help="Test target (e.g., version)")):
         if not self.config.is_development():
