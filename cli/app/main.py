@@ -16,8 +16,7 @@ from app.commands.service.command import service_app
 from app.commands.test.command import test_app
 from app.commands.uninstall.command import uninstall_app
 from app.commands.update.command import update_app
-from app.commands.version.command import main_version_callback, version_app
-from app.commands.version.version import VersionCommand
+from app.commands.version.command import get_version, main_version_callback, version_app
 from app.utils.config import Config
 from app.utils.message import application_add_completion, application_description, application_name, application_version_help
 
@@ -72,8 +71,7 @@ def main(
 
         console.print(panel)
 
-        version_cmd = VersionCommand()
-        cli_version = version_cmd._get_version()
+        cli_version = get_version()
         version_text = Text()
         version_text.append("Version: ", style="bold white")
         version_text.append(f"v{cli_version}", style="green")
