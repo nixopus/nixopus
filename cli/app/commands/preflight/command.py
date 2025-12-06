@@ -1,7 +1,7 @@
 import typer
 
 from app.utils.lib import HostInformation
-from app.utils.logger import Logger, log_debug, log_error, log_info, log_success
+from app.utils.logger import create_logger, log_debug, log_error, log_info, log_success
 from app.utils.timeout import TimeoutWrapper
 
 from .deps import Deps, DepsConfig
@@ -46,7 +46,7 @@ def check(
 ):
     """Run all preflight checks"""
     try:
-        logger = Logger(verbose=verbose)
+        logger = create_logger(verbose=verbose)
         log_debug(debug_starting_preflight_check, verbose=verbose)
         log_info(running_preflight_checks, verbose=verbose)
 
@@ -77,7 +77,7 @@ def ports(
 ) -> None:
     """Check if list of ports are available on a host"""
     try:
-        logger = Logger(verbose=verbose)
+        logger = create_logger(verbose=verbose)
         log_debug(debug_starting_ports_check, verbose=verbose)
 
         log_debug(debug_creating_port_config, verbose=verbose)
@@ -118,7 +118,7 @@ def deps(
 ) -> None:
     """Check if list of dependencies are available on the system"""
     try:
-        logger = Logger(verbose=verbose)
+        logger = create_logger(verbose=verbose)
         log_debug(debug_starting_deps_check, verbose=verbose)
 
         log_debug(debug_creating_deps_config, verbose=verbose)

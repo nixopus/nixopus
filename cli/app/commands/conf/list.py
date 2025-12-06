@@ -3,7 +3,7 @@ from typing import Dict, Optional, Protocol
 
 from pydantic import BaseModel, Field
 
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 

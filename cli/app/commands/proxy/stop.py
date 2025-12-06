@@ -3,7 +3,7 @@ from typing import Protocol
 from pydantic import BaseModel
 
 from app.utils.config import PROXY_PORT, Config
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 

@@ -6,7 +6,7 @@ from typing import Optional, Protocol
 from pydantic import BaseModel, Field, field_validator
 
 from app.utils.lib import FileManager
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
@@ -370,7 +370,7 @@ class SSHConfig(BaseModel):
 
 class SSHService:
     def __init__(self, config: SSHConfig, logger: LoggerProtocol = None, ssh_manager: SSHKeyProtocol = None):
-        self.logger = logger or Logger(verbose=config.verbose)
+        self.logger = logger or create_logger(verbose=config.verbose)
         self.config = config
         self.ssh_manager = ssh_manager or SSHKeyManager(self.logger)
         self.formatter = SSHFormatter()
@@ -474,7 +474,7 @@ class SSHService:
 
 class SSH:
     def __init__(self, logger: LoggerProtocol = None):
-        self.logger = logger or Logger()
+        self.logger = logger or create_logger()
 
     def generate(self, config: SSHConfig) -> SSHResult:
         service = SSHService(config, self.logger)

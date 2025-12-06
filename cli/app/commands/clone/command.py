@@ -1,7 +1,7 @@
 import typer
 
 from app.utils.config import DEFAULT_BRANCH, DEFAULT_PATH, DEFAULT_REPO, NIXOPUS_CONFIG_DIR, Config
-from app.utils.logger import Logger, log_debug, log_error, log_success
+from app.utils.logger import create_logger, log_debug, log_error, log_success
 from app.utils.timeout import TimeoutWrapper
 
 from .clone import Clone, CloneConfig
@@ -52,7 +52,7 @@ def clone_callback(
 ):
     """Clone a repository"""
     try:
-        logger = Logger(verbose=verbose)
+        logger = create_logger(verbose=verbose)
         log_debug(debug_clone_command_invoked, verbose=verbose)
         log_debug(debug_repo_param.format(repo=repo), verbose=verbose)
         log_debug(debug_branch_param.format(branch=branch), verbose=verbose)

@@ -3,7 +3,7 @@ import json
 import typer
 
 from app.utils.config import DEFAULT_COMPOSE_FILE, NIXOPUS_CONFIG_DIR, Config
-from app.utils.logger import Logger, log_error, log_info, log_success
+from app.utils.logger import create_logger, log_error, log_info, log_success
 from app.utils.output_formatter import OutputFormatter
 from app.utils.timeout import TimeoutWrapper
 
@@ -38,7 +38,7 @@ def up(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Start Nixopus services"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = UpConfig(
@@ -92,7 +92,7 @@ def down(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Stop Nixopus services"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = DownConfig(
@@ -140,7 +140,7 @@ def ps(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Show status of Nixopus services"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = PsConfig(
@@ -183,7 +183,7 @@ def restart(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Restart Nixopus services"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = RestartConfig(

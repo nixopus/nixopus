@@ -1,6 +1,6 @@
 import typer
 
-from app.utils.logger import Logger, log_error, log_info, log_success, log_warning
+from app.utils.logger import create_logger, log_error, log_info, log_success, log_warning
 from app.utils.timeout import TimeoutWrapper
 
 from .conflict import ConflictConfig, ConflictService
@@ -31,7 +31,7 @@ def conflict_callback(
     """Check for tool version conflicts"""
     if ctx.invoked_subcommand is None:
         # Initialize logger once and reuse throughout
-        logger = Logger(verbose=verbose)
+        logger = create_logger(verbose=verbose)
 
         try:
             log_info(checking_conflicts_info, verbose=verbose)

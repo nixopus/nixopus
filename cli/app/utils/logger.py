@@ -1,4 +1,5 @@
 import typer
+from types import SimpleNamespace
 
 from .message import DEBUG_MESSAGE, ERROR_MESSAGE, HIGHLIGHT_MESSAGE, INFO_MESSAGE, SUCCESS_MESSAGE, WARNING_MESSAGE
 
@@ -54,34 +55,18 @@ def log_highlight(message: str, verbose: bool = False, quiet: bool = False) -> N
         typer.secho(HIGHLIGHT_MESSAGE.format(message=message), fg=typer.colors.MAGENTA)
 
 
-class Logger:
-    """Compatibility wrapper class for LoggerProtocol - delegates to functional functions"""
+def create_logger(verbose: bool = False, quiet: bool = False):
+    """Create a LoggerProtocol-compatible object using functional functions"""
+    validate_logger_flags(verbose, quiet)
 
-    def __init__(self, verbose: bool = False, quiet: bool = False):
-        validate_logger_flags(verbose, quiet)
-        self.verbose = verbose
-        self.quiet = quiet
+    # Use closure to capture verbose/quiet and return object with methods
 
-    def info(self, message: str) -> None:
-        """Prints an info message"""
-        log_info(message, self.verbose, self.quiet)
+    logger_obj = SimpleNamespace()
+    logger_obj.info = lambda msg: log_info(msg, verbose, quiet)
+    logger_obj.debug = lambda msg: log_debug(msg, verbose, quiet)
+    logger_obj.warning = lambda msg: log_warning(msg, verbose, quiet)
+    logger_obj.error = lambda msg: log_error(msg, verbose, quiet)
+    logger_obj.success = lambda msg: log_success(msg, verbose, quiet)
+    logger_obj.highlight = lambda msg: log_highlight(msg, verbose, quiet)
 
-    def debug(self, message: str) -> None:
-        """Prints a debug message if verbose is enabled"""
-        log_debug(message, self.verbose, self.quiet)
-
-    def warning(self, message: str) -> None:
-        """Prints a warning message"""
-        log_warning(message, self.verbose, self.quiet)
-
-    def error(self, message: str) -> None:
-        """Prints an error message"""
-        log_error(message, self.verbose, self.quiet)
-
-    def success(self, message: str) -> None:
-        """Prints a success message"""
-        log_success(message, self.verbose, self.quiet)
-
-    def highlight(self, message: str) -> None:
-        """Prints a highlighted message"""
-        log_highlight(message, self.verbose, self.quiet)
+    return logger_obj

@@ -1,6 +1,6 @@
 import typer
 
-from app.utils.logger import Logger, log_debug, log_error, log_info, log_success
+from app.utils.logger import create_logger, log_debug, log_error, log_info, log_success
 from app.utils.timeout import TimeoutWrapper
 
 from .delete import Delete, DeleteConfig
@@ -51,7 +51,7 @@ def list(
 ):
     """List all configuration"""
     try:
-        logger = Logger(verbose=verbose)
+        logger = create_logger(verbose=verbose)
 
         log_debug(debug_conf_command_invoked, verbose=verbose)
         log_debug(debug_service_param.format(service=service), verbose=verbose)
@@ -117,7 +117,7 @@ def delete(
 ):
     """Delete a configuration"""
     try:
-        logger = Logger(verbose=verbose)
+        logger = create_logger(verbose=verbose)
 
         log_debug(debug_conf_command_invoked, verbose=verbose)
         log_debug(debug_service_param.format(service=service), verbose=verbose)
@@ -184,7 +184,7 @@ def set(
 ):
     """Set a configuration"""
     try:
-        logger = Logger(verbose=verbose)
+        logger = create_logger(verbose=verbose)
 
         log_debug(debug_conf_command_invoked, verbose=verbose)
         log_debug(debug_service_param.format(service=service), verbose=verbose)

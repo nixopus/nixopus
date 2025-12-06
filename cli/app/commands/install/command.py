@@ -1,7 +1,7 @@
 import typer
 
 from app.utils.config import Config
-from app.utils.logger import Logger, log_error, log_success, log_warning
+from app.utils.logger import create_logger, log_error, log_success, log_warning
 from app.utils.timeout import TimeoutWrapper
 
 from .deps import install_all_deps
@@ -64,7 +64,7 @@ def install_callback(
 ):
     """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
-        logger = Logger(verbose=verbose)
+        logger = create_logger(verbose=verbose)
         if development:
             # Warn when incompatible production-only options are provided alongside --development
             if api_domain or view_domain:
@@ -116,7 +116,7 @@ def install_callback(
 
 def main_install_callback(value: bool):
     if value:
-        logger = Logger(verbose=False)
+        logger = create_logger(verbose=False)
         install = Install(
             logger=logger,
             verbose=False,
@@ -151,7 +151,7 @@ def development(
     supertokens_port: int = typer.Option(None, "--supertokens-port", help="Port for SuperTokens service (default: 3567)"),
 ):
     """Install Nixopus for local development in specified or current directory"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
     install = DevelopmentInstall(
         logger=logger,
         verbose=verbose,
@@ -194,7 +194,7 @@ def ssh(
     timeout: int = typer.Option(10, "--timeout", "-T", help="Timeout in seconds"),
 ):
     """Generate an SSH key pair with proper permissions and optional authorized_keys integration"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
     try:
         config = SSHConfig(
             path=path,
@@ -231,7 +231,7 @@ def deps(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Install dependencies"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
     try:
 
         with TimeoutWrapper(timeout):

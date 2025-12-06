@@ -1,7 +1,7 @@
 import typer
 
 from app.utils.config import PROXY_PORT, Config
-from app.utils.logger import Logger, log_error, log_success
+from app.utils.logger import create_logger, log_error, log_success
 from app.utils.timeout import TimeoutWrapper
 
 from .load import Load, LoadConfig
@@ -28,7 +28,7 @@ def load(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Load Caddy proxy configuration"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = LoadConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run, config_file=config_file)
@@ -65,7 +65,7 @@ def status(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Check Caddy proxy status"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = StatusConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run)
@@ -102,7 +102,7 @@ def stop(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Stop Caddy proxy"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = StopConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run)
