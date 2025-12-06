@@ -1250,6 +1250,44 @@
         "success": "¡Aplicación de GitHub creada exitosamente!"
       }
     },
+    "githubSetup": {
+      "steps": {
+        "welcome": {
+          "title": "Comenzar",
+          "description": "Conecta tu cuenta de GitHub"
+        },
+        "createApp": {
+          "title": "Crear Aplicación",
+          "description": "Configurar Aplicación de GitHub"
+        },
+        "installApp": {
+          "title": "Instalar",
+          "description": "Conectar repositorios"
+        }
+      },
+      "welcome": {
+        "title": "Conecta tu cuenta de GitHub",
+        "description": "Crea una Aplicación de GitHub para desplegar aplicaciones directamente desde tus repositorios. Esta configuración solo toma unos minutos.",
+        "benefits": {
+          "secure": {
+            "title": "Manifiesto de Aplicación GitHub",
+            "description": "Crearemos una Aplicación de GitHub usando el flujo de manifiesto. Tus credenciales se gestionan de forma segura a través del sistema de aplicaciones de GitHub."
+          },
+          "automated": {
+            "title": "Despliegues Automatizados",
+            "description": "Despliega automáticamente tus aplicaciones cuando subes código a tus repositorios."
+          },
+          "repositories": {
+            "title": "Accede a tus Repositorios",
+            "description": "Selecciona y despliega desde cualquiera de tus repositorios de GitHub con solo unos clics."
+          }
+        }
+      },
+      "buttons": {
+        "next": "Continuar",
+        "back": "Atrás"
+      }
+    },
     "repositories": {
       "title": "Repositorios",
       "noRepositories": "No se encontraron repositorios",
@@ -1261,6 +1299,52 @@
         "created": "Creado",
         "updated": "Actualizado",
         "stars": "Estrellas"
+      }
+    },
+    "connectorSettings": {
+      "title": "Configuración del Conector de GitHub",
+      "description": "Administra tus conectores de GitHub, cambia entre ellos o agrega nuevos",
+      "active": "Activo",
+      "noConnectors": "No se encontraron conectores de GitHub. Por favor crea uno para comenzar.",
+      "connector": {
+        "slug": "Slug",
+        "installationId": "ID de Instalación"
+      },
+      "currentConnector": {
+        "title": "Conector Actual",
+        "description": "Si falta algún repositorio o deseas agregar más repositorios, haz clic en el enlace a continuación para administrar la configuración de tu instalación de GitHub.",
+        "viewOnGithub": "Administrar Instalación de GitHub"
+      },
+      "actions": {
+        "addNew": "Agregar Nuevo Conector",
+        "switch": {
+          "label": "Cambiar",
+          "success": "Conector cambiado exitosamente"
+        },
+        "delete": {
+          "label": "Eliminar",
+          "success": "Conector eliminado exitosamente",
+          "error": {
+            "generic": "Error al eliminar el conector",
+            "lastConnector": "No se puede eliminar el último conector. Por favor agrega otro conector primero."
+          },
+          "dialog": {
+            "title": "Eliminar Conector",
+            "description": "¿Estás seguro de que deseas eliminar {name}? Esta acción no se puede deshacer.",
+            "confirm": "Eliminar",
+            "cancel": "Cancelar",
+            "deleting": "Eliminando..."
+          }
+        },
+        "update": {
+          "success": "Conector actualizado exitosamente",
+          "error": "Error al actualizar el conector"
+        },
+        "reset": {
+          "label": "Restablecer",
+          "info": "Abriendo la configuración de instalación de GitHub. Por favor reconfigura la instalación allí.",
+          "error": "No se puede abrir la configuración de GitHub. ID de instalación no encontrado."
+        }
       }
     },
     "repositoryCard": {

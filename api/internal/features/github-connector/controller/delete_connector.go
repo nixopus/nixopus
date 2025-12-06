@@ -4,17 +4,15 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
-
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.ContextWithBody[types.UpdateGithubConnectorRequest]) (*shared_types.Response, error) {
-
-	UpdateConnectorRequest, err := f.Body()
+func (c *GithubConnectorController) DeleteGithubConnector(f fuego.ContextWithBody[types.DeleteGithubConnectorRequest]) (*shared_types.Response, error) {
+	deleteRequest, err := f.Body()
 
 	if err != nil {
 		return nil, fuego.HTTPError{
@@ -25,11 +23,9 @@ func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.Context
 
 	w, r := f.Response(), f.Request()
 
-	if !c.parseAndValidate(w, r, &UpdateConnectorRequest) {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusBadRequest,
-		}
+	if !c.parseAndValidate(w, r, &deleteRequest) {
+		// parseAndValidate already sent the error response, so return nil to prevent duplicate response
+		return nil, nil
 	}
 
 	user := utils.GetUser(w, r)
@@ -41,9 +37,21 @@ func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.Context
 		}
 	}
 
-	err = c.service.UpdateGithubConnectorRequest(UpdateConnectorRequest.InstallationID, user.ID.String(), UpdateConnectorRequest.ConnectorID)
+	err = c.service.DeleteConnector(deleteRequest.ID, user.ID.String())
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
+		if err == types.ErrConnectorDoesNotExist {
+			return nil, fuego.HTTPError{
+				Err:    err,
+				Status: http.StatusNotFound,
+			}
+		}
+		if err == types.ErrPermissionDenied {
+			return nil, fuego.HTTPError{
+				Err:    err,
+				Status: http.StatusForbidden,
+			}
+		}
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,
@@ -52,6 +60,6 @@ func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.Context
 
 	return &shared_types.Response{
 		Status:  "success",
-		Message: "Github Connector Request Updated",
+		Message: "Github Connector deleted successfully",
 	}, nil
 }

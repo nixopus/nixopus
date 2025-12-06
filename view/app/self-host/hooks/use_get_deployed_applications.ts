@@ -1,6 +1,6 @@
 import { SortOption } from '@/components/ui/sort-selector';
 import { useSearchable } from '@/hooks/use-searchable';
-import { useAppSelector } from '@/redux/hooks';
+import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import {
   useGetAllGithubConnectorQuery,
   useUpdateGithubConnectorMutation
@@ -9,6 +9,7 @@ import { useGetApplicationsQuery } from '@/redux/services/deploy/applicationsApi
 import { Application } from '@/redux/types/applications';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
+import { setActiveConnectorId } from '@/redux/features/github-connector/githubConnectorSlice';
 
 /**
  * Hook to get the deployed applications.
@@ -105,37 +106,121 @@ function useGetDeployedApplications() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
+  const dispatch = useAppDispatch();
   const [updateGithubConnector, { isLoading: isUpdatingConnector }] =
     useUpdateGithubConnectorMutation();
   const [inGitHubFlow, setInGitHubFlow] = useState(false);
+  const [pendingConnectorId, setPendingConnectorId] = useState<string | null>(null);
+  const activeConnectorId = useAppSelector(
+    (state) => state.githubConnector.activeConnectorId
+  );
   const code = searchParams.get('code');
   const installationId = searchParams.get('installation_id');
+  const githubSetup = searchParams.get('github_setup');
+  const connectorIdParam = searchParams.get('connector_id');
   const showApplications = paginatedApplications?.length > 0 || isLoadingApplications;
 
   useEffect(() => {
-    if (code) {
+    if (code || githubSetup === 'true') {
       setInGitHubFlow(true);
     }
-  }, [code]);
+  }, [code, githubSetup]);
+
+  // Track connector ID from URL parameter or find newly created connector
+  useEffect(() => {
+    if (connectorIdParam) {
+      setPendingConnectorId(connectorIdParam);
+    } else if (connectors && connectors.length > 0 && inGitHubFlow) {
+      // Find the connector without installation_id (newly created)
+      const newConnector = connectors.find(
+        (c) => !c.installation_id || c.installation_id.trim() === ''
+      );
+      if (newConnector) {
+        setPendingConnectorId(newConnector.id);
+      }
+    }
+  }, [connectors, connectorIdParam, inGitHubFlow]);
+
+  // Initialize active connector if not set and connectors are available
+  useEffect(() => {
+    if (!activeConnectorId && connectors && connectors.length > 0) {
+      dispatch(setActiveConnectorId(connectors[0].id));
+    }
+  }, [activeConnectorId, connectors, dispatch]);
+
+  // Clean up github_setup query parameter after setting the flow
+  useEffect(() => {
+    if (githubSetup === 'true' && inGitHubFlow) {
+      // Remove the query parameter from URL without reloading
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('github_setup');
+      router.replace(newUrl.pathname + newUrl.search, { scroll: false });
+    }
+  }, [githubSetup, inGitHubFlow, router]);
 
   useEffect(() => {
     if (installationId) {
       const githubConnector = async () => {
         try {
-          await updateGithubConnector({
+          // Determine which connector to update
+          let connectorIdToUpdate = pendingConnectorId;
+          
+          // If no pending connector ID, try to find one without installation_id
+          if (!connectorIdToUpdate && connectors && connectors.length > 0) {
+            const newConnector = connectors.find(
+              (c) => !c.installation_id || c.installation_id.trim() === ''
+            );
+            if (newConnector) {
+              connectorIdToUpdate = newConnector.id;
+            } else if (connectors.length === 1) {
+              connectorIdToUpdate = connectors[0].id;
+            } else {
+              // Multiple connectors exist and we can't determine which one
+              // Use active connector as fallback
+              connectorIdToUpdate = activeConnectorId || connectors[0].id;
+            }
+          }
+
+          // When multiple connectors exist, connector_id is required
+          const updatePayload: { installation_id: string; connector_id?: string } = {
             installation_id: installationId
-          });
+          };
+          
+          if (connectors && connectors.length > 1) {
+            if (!connectorIdToUpdate) {
+              throw new Error('connector_id is required when multiple connectors exist');
+            }
+            updatePayload.connector_id = connectorIdToUpdate;
+          } else if (connectorIdToUpdate) {
+            // Include connector_id even for single connector for clarity
+            updatePayload.connector_id = connectorIdToUpdate;
+          }
+
+          await updateGithubConnector(updatePayload);
           await GetGithubConnectors();
+          
+          // Set the updated connector as active
+          if (connectorIdToUpdate) {
+            dispatch(setActiveConnectorId(connectorIdToUpdate));
+          }
+          
           setInGitHubFlow(false);
-          router.push('/self-host/create');
+          setPendingConnectorId(null);
+          // Clean up URL parameters
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('installation_id');
+          newUrl.searchParams.delete('connector_id');
+          router.replace(newUrl.pathname + newUrl.search, { scroll: false });
+          router.push('/self-host');
         } catch (error) {
           console.error('Failed to update GitHub connector:', error);
           setInGitHubFlow(false);
+          setPendingConnectorId(null);
         }
       };
       githubConnector();
     }
-  }, [installationId, router, GetGithubConnectors, updateGithubConnector]);
+  }, [installationId, pendingConnectorId, router, GetGithubConnectors, updateGithubConnector, connectors, activeConnectorId, dispatch]);
 
   return {
     connectors,

@@ -60,13 +60,21 @@ export const GithubConnectorApi = createApi({
     }),
     getAllGithubRepositories: builder.query<
       { repositories: GithubRepository[]; total_count: number; page: number; page_size: number },
-      { page?: number; page_size?: number } | void
+      { page?: number; page_size?: number; connector_id?: string } | void
     >({
       query: (args) => {
         const page = args && args.page ? args.page : 1;
         const page_size = args && args.page_size ? args.page_size : 10;
+        const connector_id = args && args.connector_id ? args.connector_id : undefined;
+        const params = new URLSearchParams({
+          page: page.toString(),
+          page_size: page_size.toString()
+        });
+        if (connector_id) {
+          params.append('connector_id', connector_id);
+        }
         return {
-          url: `${GITHUB_CONNECTOR.ALL_REPOSITORIES}?page=${page}&page_size=${page_size}`,
+          url: `${GITHUB_CONNECTOR.ALL_REPOSITORIES}?${params.toString()}`,
           method: 'GET'
         };
       },

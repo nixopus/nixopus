@@ -5,7 +5,9 @@ import ListRepositories from './components/github-repositories/list-repositories
 import AppItem, { AppItemSkeleton } from './components/application';
 import useGetDeployedApplications from './hooks/use_get_deployed_applications';
 import PaginationWrapper from '@/components/ui/pagination';
-import DashboardPageHeader, { DahboardUtilityHeader } from '@/components/layout/dashboard-page-header';
+import DashboardPageHeader, {
+  DahboardUtilityHeader
+} from '@/components/layout/dashboard-page-header';
 import { Application } from '@/redux/types/applications';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/use-translation';
@@ -48,6 +50,10 @@ function page() {
     return <DisabledFeature />;
   }
 
+  const isShowingGitHubSetup = inGitHubFlow || (!showApplications && !inGitHubFlow && !connectors?.length);
+  const isShowingRepositories = !showApplications && !inGitHubFlow && connectors?.length && connectors.length > 0;
+  const shouldShowHeader = !isShowingGitHubSetup && !isShowingRepositories;
+
   const renderContent = () => {
     return (
       <AnyPermissionGuard permissions={['deploy:create']} loadingFallback={null}>
@@ -81,10 +87,12 @@ function page() {
       }
     >
       <PageLayout maxWidth="6xl" padding="md" spacing="lg">
-        <DashboardPageHeader
-          label={t('selfHost.page.title')}
-          description={t('selfHost.page.description')}
-        />
+        {shouldShowHeader && (
+          <DashboardPageHeader
+            label={t('selfHost.page.title')}
+            description={t('selfHost.page.description')}
+          />
+        )}
         {renderContent()}
 
         {showApplications && (

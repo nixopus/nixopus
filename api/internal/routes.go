@@ -365,6 +365,7 @@ func (router *Router) DomainRoutes(s *fuego.Server, domainsGroup *fuego.Server, 
 func (router *Router) GithubConnectorRoutes(s *fuego.Server, githubConnectorController *githubConnector.GithubConnectorController) {
 	fuego.Post(s, "", githubConnectorController.CreateGithubConnector)
 	fuego.Put(s, "", githubConnectorController.UpdateGithubConnectorRequest)
+	fuego.Delete(s, "", githubConnectorController.DeleteGithubConnector)
 	fuego.Get(s, "/all", githubConnectorController.GetGithubConnectors)
 	fuego.Get(s, "/repositories", githubConnectorController.GetGithubRepositories)
 	fuego.Post(s, "/repository/branches", githubConnectorController.GetGithubRepositoryBranches)
