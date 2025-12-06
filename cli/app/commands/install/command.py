@@ -1,7 +1,7 @@
 import typer
 
 from app.utils.config import Config
-from app.utils.logger import Logger
+from app.utils.logger import Logger, log_error, log_success, log_warning
 from app.utils.timeout import TimeoutWrapper
 
 from .deps import install_all_deps
@@ -68,7 +68,7 @@ def install_callback(
         if development:
             # Warn when incompatible production-only options are provided alongside --development
             if api_domain or view_domain:
-                logger.warning("Ignoring --api-domain/--view-domain in development mode")
+                log_warning("Ignoring --api-domain/--view-domain in development mode", verbose=verbose)
             dev_install = DevelopmentInstall(
                 logger=logger,
                 verbose=verbose,
@@ -214,12 +214,12 @@ def ssh(
         with TimeoutWrapper(timeout):
             result = ssh_operation.generate(config)
 
-        logger.success(result.output)
+        log_success(result.output, verbose=verbose)
     except TimeoutError as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
 
 
@@ -240,10 +240,10 @@ def deps(
         if output == "json":
             print(result)
         else:
-            logger.success("All dependencies installed successfully.")
+            log_success("All dependencies installed successfully.", verbose=verbose)
     except TimeoutError as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
