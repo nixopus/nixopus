@@ -84,7 +84,6 @@ a = Analysis(
         ('../version.txt', '.'),
     ],
     hiddenimports=[
-        'app.commands.clone.command',
         'app.commands.install.command',
         'app.commands.uninstall.command',
         'app.commands.version.command',

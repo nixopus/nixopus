@@ -7,7 +7,7 @@ import urllib.request
 import typer
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 
-from app.commands.clone.clone import Clone, CloneConfig
+from app.commands.clone.clone import clone_repository
 from app.commands.conf.conf import write_env_file
 from app.commands.preflight.preflight import check_ports_from_config
 from app.commands.proxy.proxy import load_config
@@ -354,23 +354,23 @@ class DevelopmentInstall(BaseInstall):
 
     def _setup_clone_and_config(self):
         """Clone repository to installation directory"""
-        clone_config = CloneConfig(
-            repo=self._get_config("repo_url"),
-            branch=self._get_config("branch_name"),
-            path=self._get_config("full_source_path"),
-            force=self.force,
-            verbose=self.verbose,
-            output="text",
-            dry_run=self.dry_run,
-        )
-        clone_service = Clone(logger=self.logger)
+        if self.dry_run:
+            self.logger.info(f"[DRY RUN] Would clone {self._get_config('repo_url')} to {self._get_config('full_source_path')}")
+            return
+
         try:
             with TimeoutWrapper(self.timeout):
-                result = clone_service.clone(clone_config)
+                success, error = clone_repository(
+                    repo=self._get_config("repo_url"),
+                    path=self._get_config("full_source_path"),
+                    branch=self._get_config("branch_name"),
+                    force=self.force,
+                    logger=self.logger,
+                )
         except TimeoutError:
             raise Exception(f"{clone_failed}: {operation_timed_out}")
-        if not result.success:
-            raise Exception(f"{clone_failed}: {result.error}")
+        if not success:
+            raise Exception(f"{clone_failed}: {error}")
 
     def _create_env_files(self):
         """Create environment files for backend and frontend"""

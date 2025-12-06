@@ -10,7 +10,7 @@ import typer
 import yaml
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 
-from app.commands.clone.clone import Clone, CloneConfig
+from app.commands.clone.clone import clone_repository
 from app.commands.conf.conf import write_env_file
 from app.commands.preflight.preflight import check_required_ports
 from app.commands.proxy.proxy import load_config
@@ -310,23 +310,23 @@ class Install:
             raise Exception(dependency_installation_timeout)
 
     def _setup_clone_and_config(self):
-        clone_config = CloneConfig(
-            repo=self._get_config(DEFAULT_REPO),
-            branch=self._get_config(DEFAULT_BRANCH),
-            path=self._get_config("full_source_path"),
-            force=self.force,
-            verbose=self.verbose,
-            output="text",
-            dry_run=self.dry_run,
-        )
-        clone_service = Clone(logger=self.logger)
+        if self.dry_run:
+            self.logger.info(f"[DRY RUN] Would clone {self._get_config(DEFAULT_REPO)} to {self._get_config('full_source_path')}")
+            return
+
         try:
             with TimeoutWrapper(self.timeout):
-                result = clone_service.clone(clone_config)
+                success, error = clone_repository(
+                    repo=self._get_config(DEFAULT_REPO),
+                    path=self._get_config("full_source_path"),
+                    branch=self._get_config(DEFAULT_BRANCH),
+                    force=self.force,
+                    logger=self.logger,
+                )
         except TimeoutError:
             raise Exception(f"{clone_failed}: {operation_timed_out}")
-        if not result.success:
-            raise Exception(f"{clone_failed}: {result.error}")
+        if not success:
+            raise Exception(f"{clone_failed}: {error}")
 
     def _create_env_files(self):
         api_env_file = self._get_config(API_ENV_FILE)
