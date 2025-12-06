@@ -1,7 +1,7 @@
 import platform
 import subprocess
 
-from app.commands.service.base import BaseDockerCommandBuilder, BaseDockerService
+from app.commands.service.service import execute_services, start_services
 from app.utils.logger import create_logger
 from app.utils.config import Config, DEFAULT_COMPOSE_FILE
 from app.utils.config import NIXOPUS_CONFIG_DIR
@@ -30,10 +30,8 @@ class Update:
         compose_file_path = self.config.get_yaml_value(NIXOPUS_CONFIG_DIR) + "/" + compose_file
         self.logger.info(updating_nixopus)
         
-        docker_service = BaseDockerService(self.logger, "pull")
-        
         self.logger.debug(pulling_latest_images)
-        success, output = docker_service.execute_services(compose_file=compose_file_path)
+        success, output = execute_services("pull", compose_file=compose_file_path, logger=self.logger)
         
         if not success:
             self.logger.error(failed_to_pull_images.format(error=output))
@@ -41,9 +39,8 @@ class Update:
         
         self.logger.debug(images_pulled_successfully)
         
-        docker_service_up = BaseDockerService(self.logger, "up")
         self.logger.debug(starting_services)
-        success, output = docker_service_up.execute_services(compose_file=compose_file_path, detach=True)
+        success, output = start_services(compose_file=compose_file_path, detach=True, logger=self.logger)
         
         if not success:
             self.logger.error(failed_to_start_services.format(error=output))

@@ -11,8 +11,7 @@ from app.commands.clone.clone import Clone, CloneConfig
 from app.commands.conf.conf import write_env_file
 from app.commands.preflight.preflight import check_ports_from_config
 from app.commands.proxy.proxy import load_config
-from app.commands.service.base import BaseDockerService
-from app.commands.service.up import Up, UpConfig
+from app.commands.service.service import cleanup_docker_resources, start_services
 from app.utils.config import (
     API_ENV_FILE,
     API_PORT,
@@ -268,9 +267,9 @@ class DevelopmentInstall(BaseInstall):
                 compose_file = self._get_config("compose_file_path")
                 if os.path.exists(compose_file):
                     try:
-                        BaseDockerService.cleanup_docker_resources(
-                            logger=self.logger,
+                        cleanup_docker_resources(
                             compose_file=compose_file,
+                            logger=self.logger,
                             remove_images="all",
                             remove_volumes=True,
                             remove_orphans=True,
@@ -583,24 +582,19 @@ class DevelopmentInstall(BaseInstall):
         os.environ.update(env_vars)
 
         try:
-            config = UpConfig(
-                name=self._get_config("service_name"),
-                detach=self._get_config("service_detach"),
-                env_file=None,
-                verbose=self.verbose,
-                output="text",
-                dry_run=self.dry_run,
-                compose_file=self._get_config("compose_file_path"),
-            )
-
-            up_service = Up(logger=self.logger)
             try:
                 with TimeoutWrapper(self.timeout):
-                    result = up_service.up(config)
+                    success, error = start_services(
+                        name=self._get_config("service_name"),
+                        detach=self._get_config("service_detach"),
+                        env_file=None,
+                        compose_file=self._get_config("compose_file_path"),
+                        logger=self.logger,
+                    )
             except TimeoutError:
                 raise Exception(f"{services_start_failed}: {operation_timed_out}")
-            if not result.success:
-                raise Exception(services_start_failed)
+            if not success:
+                raise Exception(f"{services_start_failed}: {error}")
         finally:
             for key in env_vars:
                 if key in original_env:
