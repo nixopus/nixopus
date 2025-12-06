@@ -46,4 +46,3 @@ func (c *GithubConnectorService) DeleteConnector(ConnectorID string, UserID stri
 
 	return nil
 }
-

@@ -97,7 +97,7 @@ func (c *GithubConnectorService) UpdateGithubConnectorRequest(InstallationID str
 			}
 		}
 
-		// If no connector without installation_id found, use first connector 
+		// If no connector without installation_id found, use first connector
 		if connectorToUpdate == nil {
 			connectorToUpdate = &connectors[0]
 		}

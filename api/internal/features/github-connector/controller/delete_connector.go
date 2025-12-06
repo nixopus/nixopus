@@ -63,4 +63,3 @@ func (c *GithubConnectorController) DeleteGithubConnector(f fuego.ContextWithBod
 		Message: "Github Connector deleted successfully",
 	}, nil
 }
-
