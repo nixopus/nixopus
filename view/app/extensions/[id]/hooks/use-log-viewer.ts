@@ -15,18 +15,18 @@ export function useLogViewer(params: {
   useEffect(() => {
     const stepCompletedIds = new Set<string>(
       logs
-        .filter(log => log.message?.startsWith('step_completed'))
-        .map(log => log.step_id)
+        .filter((log) => log.message?.startsWith('step_completed'))
+        .map((log) => log.step_id)
         .filter((id): id is string => Boolean(id))
     );
-    
+
     const stepFailedIds = new Set<string>(
       logs
-        .filter(log => log.message?.startsWith('step_failed'))
-        .map(log => log.step_id)
+        .filter((log) => log.message?.startsWith('step_failed'))
+        .map((log) => log.step_id)
         .filter((id): id is string => Boolean(id))
     );
-    
+
     const formatted = logs.map((log) => {
       const isStepCompleted = Boolean(log.step_id && stepCompletedIds.has(log.step_id));
       const isStepFailed = Boolean(log.step_id && stepFailedIds.has(log.step_id));

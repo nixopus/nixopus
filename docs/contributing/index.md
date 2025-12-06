@@ -171,6 +171,23 @@ yarn install
 This guide uses `yarn`, but `npm` or `pnpm` will work as well. Use whichever you prefer.
 :::
 
+::: info Automatic Git Hooks Setup
+When you run `yarn install` (or `npm install`) in the `view` directory, Husky will automatically set up git hooks for commit message validation. This ensures all commits follow the [Conventional Commits](https://www.conventionalcommits.org/) format.
+
+**Commit message format**: `type(scope): description`
+
+**Valid types**: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`
+
+**Examples**:
+- ✅ `feat: add user authentication`
+- ✅ `fix(api): resolve database connection issue`
+- ✅ `docs: update contributing guide`
+- ❌ `update code` (missing type)
+- ❌ `fix bug` (missing colon)
+
+If your commit message doesn't follow the format, the commit will be rejected with helpful error messages.
+:::
+
 ## Run
 
 You'll need **two terminal windows** to run both the backend and frontend simultaneously.
