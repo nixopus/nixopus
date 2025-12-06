@@ -15,7 +15,7 @@ from app.utils.file_manager import (
     set_permissions,
 )
 from app.utils.logger import create_logger
-from app.utils.output_formatter import OutputFormatter
+from app.utils.output_formatter import create_error_message, create_success_message, format_output
 from app.utils.protocols import LoggerProtocol
 
 from .messages import (
@@ -116,18 +116,15 @@ class SSHCommandBuilder:
 
 
 class SSHFormatter:
-    def __init__(self):
-        self.output_formatter = OutputFormatter()
-
     def format_output(self, result: "SSHResult", output: str) -> str:
         if result.success:
             message = successfully_generated_ssh_key.format(key=result.path)
-            output_message = self.output_formatter.create_success_message(message, result.model_dump())
+            output_message = create_success_message(message, result.model_dump())
         else:
             error = result.error or unknown_error
-            output_message = self.output_formatter.create_error_message(error, result.model_dump())
+            output_message = create_error_message(error, result.model_dump())
 
-        return self.output_formatter.format_output(output_message, output)
+        return format_output(output_message, output)
 
     def format_dry_run(self, config: "SSHConfig") -> str:
         cmd = SSHCommandBuilder.build_ssh_keygen_command(config.path, config.key_type, config.key_size, config.passphrase)
