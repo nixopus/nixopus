@@ -1,0 +1,51 @@
+# Get the remote and branch names
+while read local_ref local_sha remote_ref remote_sha
+do
+  if [ -z "$remote_sha" ]; then
+    # New branch, compare with remote
+    range="origin/master..$local_sha"
+  else
+    # Existing branch, compare with remote
+    range="$remote_sha..$local_sha"
+  fi
+done
+
+# Check if API files changed
+CHANGED_API=$(git diff --name-only $range | grep -E '^api/.*\.go$' || true)
+
+# Check if view files changed
+CHANGED_VIEW=$(git diff --name-only $range | grep -E '^view/' || true)
+
+# Build API if changed
+if [ -n "$CHANGED_API" ]; then
+  echo "Building API..."
+  cd api
+  if ! go build -o /tmp/nixopus-api-test .; then
+    echo "ERROR: API build failed"
+    exit 1
+  fi
+  rm -f /tmp/nixopus-api-test
+  cd ..
+else
+  echo "Skipping API build (no Go files changed)"
+fi
+
+# Build view if changed
+if [ -n "$CHANGED_VIEW" ]; then
+  echo "Building view..."
+  cd view
+  if [ -f yarn.lock ] || [ -f package-lock.json ]; then
+    if ! (yarn build 2>/dev/null || npm run build 2>/dev/null); then
+      echo "ERROR: View build failed"
+      exit 1
+    fi
+  else
+    echo "WARNING: No package manager lockfile found in view directory"
+  fi
+  cd ..
+else
+  echo "Skipping view build (no view files changed)"
+fi
+
+echo "Build verification passed"
+
