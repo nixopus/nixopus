@@ -4,7 +4,8 @@ from typing import Optional, Protocol
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.utils.lib import ParallelProcessor, Supported
+from app.utils.parallel_processor import process_parallel
+from app.utils.supported import get_supported_os_list, is_supported_os, is_supported_package_manager
 from app.utils.logger import create_logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
@@ -46,12 +47,12 @@ class DependencyChecker:
 
 class DependencyValidator:
     def validate_os(self, os: str) -> str:
-        if not Supported.os(os):
+        if not is_supported_os(os):
             raise ValueError(invalid_os.format(os=os))
         return os
 
     def validate_package_manager(self, package_manager: str) -> str:
-        if not Supported.package_manager(package_manager):
+        if not is_supported_package_manager(package_manager):
             raise ValueError(invalid_package_manager.format(package_manager=package_manager))
         return package_manager
 
@@ -119,7 +120,7 @@ class DepsConfig(BaseModel):
     deps: list[str] = Field(..., min_length=1, description="The list of dependencies to check")
     verbose: bool = Field(False, description="Verbose output")
     output: str = Field("text", description="Output format, text, json")
-    os: str = Field(..., description=f"The operating system to check, available: {Supported.get_os()}")
+    os: str = Field(..., description=f"The operating system to check, available: {get_supported_os_list()}")
     package_manager: str = Field(..., description="The package manager to use")
 
     @field_validator("os")
@@ -171,7 +172,7 @@ class DepsService:
                 self.logger.error(error_checking_dependency.format(dep=dep, error=error))
             return self._create_result(dep, False, str(error))
 
-        results = ParallelProcessor.process_items(
+        results = process_parallel(
             items=self.config.deps,
             processor_func=process_dep,
             max_workers=min(len(self.config.deps), 50),

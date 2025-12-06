@@ -3,7 +3,8 @@ import shutil
 import subprocess
 
 from app.utils.config import DEPS, Config
-from app.utils.lib import HostInformation, ParallelProcessor
+from app.utils.host_information import get_os_name, get_package_manager
+from app.utils.parallel_processor import process_parallel
 from app.utils.logger import create_logger
 
 from .messages import (
@@ -122,8 +123,8 @@ class DependencyChecker:
 def install_all_deps(verbose=False, output="text", dry_run=False):
     logger = create_logger(verbose=verbose)
     deps = get_deps_from_config()
-    os_name = HostInformation.get_os_name()
-    package_manager = HostInformation.get_package_manager()
+    os_name = get_os_name()
+    package_manager = get_package_manager()
     if not package_manager:
         raise Exception(no_supported_package_manager)
     installed = get_installed_deps(deps, os_name, package_manager, verbose=verbose)
@@ -138,7 +139,7 @@ def install_all_deps(verbose=False, output="text", dry_run=False):
         logger.error(f"Failed to install {dep['name']}: {exc}")
         return {"dependency": dep["name"], "installed": False}
 
-    results = ParallelProcessor.process_items(
+    results = process_parallel(
         to_install,
         install_wrapper,
         max_workers=min(len(to_install), 8),

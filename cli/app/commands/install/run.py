@@ -39,7 +39,9 @@ from app.utils.config import (
     VIEW_PORT,
     Config,
 )
-from app.utils.lib import FileManager, HostInformation
+from app.utils.directory_manager import create_directory
+from app.utils.file_manager import get_directory_path, set_permissions
+from app.utils.host_information import get_public_ip
 from app.utils.protocols import LoggerProtocol
 from app.utils.timeout import TimeoutWrapper
 
@@ -208,7 +210,7 @@ class Install:
     def _get_host_ip(self) -> str:
         if self.host_ip:
             return self.host_ip
-        return HostInformation.get_public_ip()
+        return get_public_ip()
 
     def run(self):
         steps = [
@@ -336,9 +338,9 @@ class Install:
 
         full_source_path = self._get_config("full_source_path")
         combined_env_file = os.path.join(full_source_path, ".env")
-        FileManager.create_directory(FileManager.get_directory_path(api_env_file), logger=self.logger)
-        FileManager.create_directory(FileManager.get_directory_path(view_env_file), logger=self.logger)
-        FileManager.create_directory(FileManager.get_directory_path(combined_env_file), logger=self.logger)
+        create_directory(get_directory_path(api_env_file), logger=self.logger)
+        create_directory(get_directory_path(view_env_file), logger=self.logger)
+        create_directory(get_directory_path(combined_env_file), logger=self.logger)
 
         services = [
             ("api", "services.api.env", api_env_file),
@@ -350,7 +352,7 @@ class Install:
             success, error = write_env_file(env_file, updated_env_values, self.logger)
             if not success:
                 raise Exception(f"{env_file_creation_failed} {service_name}: {error}")
-            file_perm_success, file_perm_error = FileManager.set_permissions(env_file, 0o644)
+            file_perm_success, file_perm_error = set_permissions(env_file, 0o644)
             if not file_perm_success:
                 raise Exception(f"{env_file_permissions_failed} {service_name}: {file_perm_error}")
             self.logger.debug(created_env_file.format(service_name=service_name, env_file=env_file))
@@ -366,7 +368,7 @@ class Install:
 
         if not success:
             raise Exception(f"{env_file_creation_failed} combined: {error}")
-        file_perm_success, file_perm_error = FileManager.set_permissions(combined_env_file, 0o644)
+        file_perm_success, file_perm_error = set_permissions(combined_env_file, 0o644)
         if not file_perm_success:
             raise Exception(f"{env_file_permissions_failed} combined: {file_perm_error}")
         self.logger.debug(created_env_file.format(service_name="combined", env_file=combined_env_file))
@@ -568,10 +570,10 @@ class Install:
             source_caddyfile = os.path.join(full_source_path, "helpers", "Caddyfile")
             target_dir = _config.get(CADDY_CONFIG_VOLUME)
             target_caddyfile = os.path.join(target_dir, "Caddyfile")
-            FileManager.create_directory(target_dir, logger=self.logger)
+            create_directory(target_dir, logger=self.logger)
             if os.path.exists(source_caddyfile):
                 shutil.copy2(source_caddyfile, target_caddyfile)
-                FileManager.set_permissions(target_caddyfile, 0o644, logger=self.logger)
+                set_permissions(target_caddyfile, 0o644, logger=self.logger)
                 self.logger.debug(f"Copied Caddyfile from {source_caddyfile} to {target_caddyfile}")
             else:
                 self.logger.warning(f"Source Caddyfile not found at {source_caddyfile}")

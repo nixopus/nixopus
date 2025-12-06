@@ -4,7 +4,7 @@ from typing import Optional, Protocol
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.utils.lib import DirectoryManager
+from app.utils.directory_manager import path_exists_and_not_force, remove_directory
 from app.utils.logger import create_logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
@@ -182,19 +182,18 @@ class CloneService:
         self.logger = logger or create_logger(verbose=config.verbose)
         self.cloner = cloner or GitClone(self.logger)
         self.formatter = CloneFormatter()
-        self.dir_manager = DirectoryManager()
 
     def _prepare_target_directory(self) -> bool:
         if self.config.force and os.path.exists(self.config.path):
             self.logger.debug(debug_removing_directory.format(path=self.config.path))
-            success = self.dir_manager.remove_directory(self.config.path, self.logger)
+            success = remove_directory(self.config.path, self.logger)
             if not success:
                 self.logger.debug(debug_directory_removal_failed)
             return success
         return True
 
     def _validate_prerequisites(self) -> bool:
-        if self.dir_manager.path_exists_and_not_force(self.config.path, self.config.force):
+        if path_exists_and_not_force(self.config.path, self.config.force):
             self.logger.debug(debug_path_exists_force_disabled.format(path=self.config.path))
             self.logger.error(path_already_exists_use_force.format(path=self.config.path))
             return False

@@ -1,6 +1,6 @@
 import typer
 
-from app.utils.lib import HostInformation
+from app.utils.host_information import get_os_name, get_package_manager
 from app.utils.logger import create_logger, log_debug, log_error, log_info, log_success
 from app.utils.timeout import TimeoutWrapper
 
@@ -126,8 +126,8 @@ def deps(
             deps=deps,
             verbose=verbose,
             output=output,
-            os=HostInformation.get_os_name(),
-            package_manager=HostInformation.get_package_manager(),
+            os=get_os_name(),
+            package_manager=get_package_manager(),
         )
 
         log_debug(debug_initializing_deps_service, verbose=verbose)

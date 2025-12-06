@@ -4,7 +4,7 @@ from typing import Any, List, Optional, Protocol, TypedDict, Union
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.utils.lib import ParallelProcessor
+from app.utils.parallel_processor import process_parallel
 from app.utils.logger import create_logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
@@ -149,7 +149,7 @@ class PortService:
                 self.logger.error(error_checking_port.format(port=port, error=str(error)))
             return self.checker._create_result(port, self.config, not_available, str(error))
 
-        results = ParallelProcessor.process_items(
+        results = process_parallel(
             items=self.config.ports,
             processor_func=process_port,
             max_workers=min(len(self.config.ports), 50),
