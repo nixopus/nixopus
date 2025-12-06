@@ -85,7 +85,7 @@ a = Analysis(
     ],
     hiddenimports=[
         'app.commands.install.command',
-        'app.commands.uninstall.command',
+        'app.commands.uninstall.uninstall',
         'app.commands.version.command',
     ],
     hookspath=[],
