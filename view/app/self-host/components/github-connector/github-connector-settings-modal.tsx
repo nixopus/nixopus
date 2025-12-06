@@ -250,15 +250,6 @@ const GitHubConnectorSettingsModal: React.FC<GitHubConnectorSettingsModalProps> 
                           href={installationUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          onClick={(e) => {
-                            console.log('[GitHubConnectorSettingsModal] Link clicked:', {
-                              href: installationUrl,
-                              connectorId: currentActiveConnector.id,
-                              installationId: currentActiveConnector.installation_id,
-                              activeConnectorId,
-                              timestamp: new Date().toISOString()
-                            });
-                          }}
                           className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
                         >
                           {t('selfHost.connectorSettings.currentConnector.viewOnGithub' as any)}
