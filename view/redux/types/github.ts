@@ -33,6 +33,7 @@ export interface GitHubAppProps {
   redirectUrl?: string;
   onSuccess?: (credentials: GitHubAppCredentials) => void;
   onError?: (error: Error) => void;
+  onCreateClick?: (createFn: () => void) => void;
 }
 
 export type GitHubAppStatus = 'initial' | 'redirecting' | 'converting' | 'success' | 'error';
