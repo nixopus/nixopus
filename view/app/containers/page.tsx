@@ -79,7 +79,8 @@ export default function ContainersPage() {
       <PageLayout maxWidth="6xl" padding="md" spacing="lg" className="relative z-10">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <span>
-            <TypographyH1 className="text-2xl font-bold">{t('containers.title')}</TypographyH1>
+            <TypographyH1>{t('containers.title')}</TypographyH1>
+            <TypographyMuted>{t('containers.description')}</TypographyMuted>
           </span>
           <div className="flex items-center gap-2 flex-wrap">
             <Button

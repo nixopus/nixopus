@@ -1,3 +1,12 @@
+# [0.1.0-alpha.71](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.70...v0.1.0-alpha.71) (2025-12-04)
+
+
+### Features
+
+* standardize page titles and headers across UI ([#588](https://github.com/raghavyuva/nixopus/issues/588)) ([f44759a](https://github.com/raghavyuva/nixopus/commit/f44759a34a0546ce497b7d2ea4a715c5ba6dd048))
+
+
+
 # [0.1.0-alpha.70](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.68...v0.1.0-alpha.70) (2025-12-01)
 
 

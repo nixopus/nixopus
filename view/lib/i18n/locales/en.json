@@ -25,7 +25,7 @@
   },
   "containers": {
     "title": "Containers",
-    "description": "Preview all the containers",
+    "description": "Manage and monitor your containers",
     "list": "Container List",
     "name": "Name",
     "image": "Image",
