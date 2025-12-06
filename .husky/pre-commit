@@ -6,16 +6,23 @@ STAGED_VIEW_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\
 if [ -n "$STAGED_GO_FILES" ]; then
   echo "Formatting Go files..."
   cd api
-  if ! go fmt ./...; then
-    echo "ERROR: Go formatting failed"
-    exit 1
-  fi
-  if command -v goimports >/dev/null 2>&1; then
-    if ! goimports -w .; then
-      echo "ERROR: goimports failed"
-      exit 1
+  for file in $STAGED_GO_FILES; do
+    # Remove 'api/' prefix since we're already in api directory
+    rel_file="${file#api/}"
+    if [ -f "$rel_file" ]; then
+      if ! go fmt "$rel_file"; then
+        echo "ERROR: Go formatting failed for $file"
+        exit 1
+      fi
+      if command -v goimports >/dev/null 2>&1; then
+        if ! goimports -w "$rel_file"; then
+          echo "ERROR: goimports failed for $file"
+          exit 1
+        fi
+      fi
     fi
-  else
+  done
+  if ! command -v goimports >/dev/null 2>&1; then
     echo "WARNING: goimports not found. Install with: go install golang.org/x/tools/cmd/goimports@latest"
   fi
   cd ..
