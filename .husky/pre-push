@@ -1,58 +1,22 @@
-# Read refs from stdin (pre-push hook receives: local_ref local_sha remote_ref remote_sha)
-while read local_ref local_sha remote_ref remote_sha; do
-  if [ -z "$remote_sha" ]; then
-    # New branch, compare with remote master
-    if git rev-parse --verify origin/master >/dev/null 2>&1; then
-      range="origin/master..$local_sha"
-    else
-      # No remote master, build everything to be safe
-      range=""
-    fi
-  else
-    # Existing branch, compare with remote
-    range="$remote_sha..$local_sha"
+echo "Building API..."
+cd api
+if ! go build -o /tmp/nixopus-api-test .; then
+  echo "ERROR: API build failed"
+  exit 1
+fi
+rm -f /tmp/nixopus-api-test
+cd ..
+
+echo "Building view..."
+cd view
+if [ -f yarn.lock ] || [ -f package-lock.json ]; then
+  if ! (yarn build 2>/dev/null || npm run build 2>/dev/null); then
+    echo "ERROR: View build failed"
+    exit 1
   fi
-  
-  # Check if API files changed
-  if [ -n "$range" ]; then
-    CHANGED_API=$(git diff --name-only $range | grep -E '^api/.*\.go$' || true)
-    CHANGED_VIEW=$(git diff --name-only $range | grep -E '^view/' || true)
-  else
-    # No range, build everything
-    CHANGED_API="force"
-    CHANGED_VIEW="force"
-  fi
-  
-  # Build API if changed
-  if [ "$CHANGED_API" = "force" ] || [ -n "$CHANGED_API" ]; then
-    echo "Building API..."
-    cd api
-    if ! go build -o /tmp/nixopus-api-test .; then
-      echo "ERROR: API build failed"
-      exit 1
-    fi
-    rm -f /tmp/nixopus-api-test
-    cd ..
-  else
-    echo "Skipping API build (no Go files changed)"
-  fi
-  
-  # Build view if changed
-  if [ "$CHANGED_VIEW" = "force" ] || [ -n "$CHANGED_VIEW" ]; then
-    echo "Building view..."
-    cd view
-    if [ -f yarn.lock ] || [ -f package-lock.json ]; then
-      if ! (yarn build 2>/dev/null || npm run build 2>/dev/null); then
-        echo "ERROR: View build failed"
-        exit 1
-      fi
-    else
-      echo "WARNING: No package manager lockfile found in view directory"
-    fi
-    cd ..
-  else
-    echo "Skipping view build (no view files changed)"
-  fi
-done
+else
+  echo "WARNING: No package manager lockfile found in view directory"
+fi
+cd ..
 
 echo "Build verification passed"
