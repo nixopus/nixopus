@@ -8,9 +8,6 @@ from rich.text import Text
 
 from app.commands.clone.command import clone_app
 from app.commands.install.command import install_app
-from app.commands.preflight.command import preflight_app
-from app.commands.proxy.command import proxy_app
-from app.commands.service.command import service_app
 from app.commands.test.command import test_app
 from app.commands.uninstall.command import uninstall_app
 from app.commands.update.command import update_app
@@ -88,10 +85,7 @@ def main(
         console.print(help_text)
 
 
-app.add_typer(preflight_app, name="preflight")
 app.add_typer(clone_app, name="clone")
-app.add_typer(service_app, name="service")
-app.add_typer(proxy_app, name="proxy")
 app.add_typer(install_app, name="install")
 app.add_typer(uninstall_app, name="uninstall")
 app.add_typer(update_app, name="update")

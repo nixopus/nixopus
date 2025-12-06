@@ -12,10 +12,9 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn
 
 from app.commands.clone.clone import Clone, CloneConfig
 from app.commands.conf.conf import write_env_file
-from app.commands.preflight.run import PreflightRunner
-from app.commands.proxy.load import Load, LoadConfig
-from app.commands.service.base import BaseDockerService
-from app.commands.service.up import Up, UpConfig
+from app.commands.preflight.preflight import check_required_ports
+from app.commands.proxy.proxy import load_config
+from app.commands.service.service import cleanup_docker_resources, start_services
 from app.utils.config import (
     API_ENV_FILE,
     API_PORT,
@@ -278,9 +277,9 @@ class Install:
 
         # Use shared cleanup helper to keep behavior consistent across commands
         try:
-            success, output = BaseDockerService.cleanup_docker_resources(
-                logger=self.logger,
+            success, output = cleanup_docker_resources(
                 compose_file=compose_file,
+                logger=self.logger,
                 remove_images="all",
                 remove_volumes=True,
                 remove_orphans=True,
@@ -301,10 +300,9 @@ class Install:
             self.logger.error(f"{installation_failed}{context_msg}")
 
     def _run_preflight_checks(self):
-        preflight_runner = PreflightRunner(logger=self.logger, verbose=self.verbose)
         ports = _config.get(PORTS)
         ports = [int(port) for port in ports] if isinstance(ports, list) else [int(ports)]
-        preflight_runner.check_required_ports(ports)
+        check_required_ports(ports, logger=self.logger)
 
     def _install_dependencies(self):
         try:
@@ -450,24 +448,19 @@ class Install:
         os.environ.update(env_vars)
 
         try:
-            config = UpConfig(
-                name="all",
-                detach=True,
-                env_file=None,
-                verbose=self.verbose,
-                output="text",
-                dry_run=self.dry_run,
-                compose_file=self._get_config("compose_file_path"),
-            )
-
-            up_service = Up(logger=self.logger)
             try:
                 with TimeoutWrapper(self.timeout):
-                    result = up_service.up(config)
+                    success, error = start_services(
+                        name="all",
+                        detach=True,
+                        env_file=None,
+                        compose_file=self._get_config("compose_file_path"),
+                        logger=self.logger,
+                    )
             except TimeoutError:
                 raise Exception(f"{services_start_failed}: {operation_timed_out}")
-            if not result.success:
-                raise Exception(services_start_failed)
+            if not success:
+                raise Exception(f"{services_start_failed}: {error}")
         finally:
             for key in env_vars:
                 if key in original_env:
@@ -485,23 +478,23 @@ class Install:
         
         full_source_path = self._get_config("full_source_path")
         caddy_json_config = os.path.join(full_source_path, "helpers", "caddy.json")
-        config = LoadConfig(
-            proxy_port=proxy_port, verbose=self.verbose, output="text", dry_run=self.dry_run, config_file=caddy_json_config
-        )
+        
+        if self.dry_run:
+            self.logger.info(f"[DRY RUN] Would load proxy config from {caddy_json_config}")
+            return
 
-        load_service = Load(logger=self.logger)
         try:
             with TimeoutWrapper(self.timeout):
-                result = load_service.load(config)
+                success, error = load_config(caddy_json_config, proxy_port, self.logger)
         except TimeoutError:
             raise Exception(f"{proxy_load_failed}: {operation_timed_out}")
 
-        if result.success:
+        if success:
             if not self.dry_run:
-                self.logger.success(load_service.format_output(result, "text"))
+                self.logger.success("Caddy proxy configuration loaded successfully")
         else:
-            self.logger.error(result.error)
-            raise Exception(proxy_load_failed)
+            self.logger.error(error)
+            raise Exception(f"{proxy_load_failed}: {error}")
 
     def _show_success_message(self):
         nixopus_accessible_at = self._get_access_url()
