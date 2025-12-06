@@ -43,6 +43,8 @@ const ConnectorItem: React.FC<ConnectorItemProps> = ({
   const { t } = useTranslation();
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
   const handleDelete = () => {
     setShowDeleteDialog(true);
   };
@@ -52,6 +54,21 @@ const ConnectorItem: React.FC<ConnectorItemProps> = ({
     setShowDeleteDialog(false);
   };
 
+  const handleCardClick = () => {
+    if (!isActive && !isDeleting && !isUpdating) {
+      onSetActive(connector.id);
+    }
+  };
+
+  return (
+    <>
+      <div
+        onClick={handleCardClick}
+        className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
+          isActive
+            ? 'border-primary bg-primary/5 cursor-default'
+            : 'border-border bg-card cursor-pointer hover:border-primary/50 hover:bg-muted/50'
+        } ${isDeleting || isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
   return (
     <>
       <div
@@ -84,6 +101,7 @@ const ConnectorItem: React.FC<ConnectorItemProps> = ({
             )}
           </div>
         </div>
+        <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2 shrink-0">
           {!isActive && (
             <Button

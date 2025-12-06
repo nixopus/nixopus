@@ -8,6 +8,7 @@ import {
 import { useSearchable } from '@/hooks/use-searchable';
 import { GithubRepository } from '@/redux/types/github';
 import { SortOption } from '@/components/ui/sort-selector';
+import { useAppSelector } from '@/redux/hooks';
 
 /**
  * @function useGithubRepoPagination
@@ -48,9 +49,15 @@ function useGithubRepoPagination() {
     key: 'name',
     direction: 'asc'
   });
+  // Get active connector ID from Redux
+  const activeConnectorId = useAppSelector(
+    (state) => state.githubConnector.activeConnectorId
+  );
+
   const { data, isLoading } = useGetAllGithubRepositoriesQuery({
     page: currentPage,
-    page_size: PAGE_SIZE
+    page_size: PAGE_SIZE,
+    connector_id: activeConnectorId || undefined
   });
   // Re-wire the searchable array to API data
   const { filteredAndSortedData: filteredAndSortedApplications } = useSearchable<GithubRepository>(
@@ -69,10 +76,10 @@ function useGithubRepoPagination() {
     setCurrentPage(pageNumber);
   };
 
-  // Reset the current page when the search term or sort config changes
+  // Reset the current page when the search term, sort config, or connector changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, sortConfig]);
+  }, [searchTerm, sortConfig, activeConnectorId]);
 
   const onSortChange = (newSort: SortOption<GithubRepository>) => {
     handleSortChange(newSort.value as keyof GithubRepository);

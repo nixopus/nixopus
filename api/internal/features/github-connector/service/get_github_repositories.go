@@ -11,7 +11,8 @@ import (
 )
 
 // GetGithubRepositoriesPaginated fetches repositories for the user's GitHub installation with pagination.
-func (c *GithubConnectorService) GetGithubRepositoriesPaginated(userID string, page int, pageSize int) ([]shared_types.GithubRepository, int, error) {
+// If connectorID is provided, it uses that specific connector. Otherwise, it finds a connector with a valid installation_id.
+func (c *GithubConnectorService) GetGithubRepositoriesPaginated(userID string, page int, pageSize int, connectorID string) ([]shared_types.GithubRepository, int, error) {
 	connectors, err := c.storage.GetAllConnectors(userID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
@@ -23,8 +24,43 @@ func (c *GithubConnectorService) GetGithubRepositoriesPaginated(userID string, p
 		return []shared_types.GithubRepository{}, 0, nil
 	}
 
-	installation_id := connectors[0].InstallationID
-	jwt := GenerateJwt(&connectors[0])
+	var connectorToUse *shared_types.GithubConnector
+
+	// If connectorID is provided, find that specific connector
+	if connectorID != "" {
+		for i := range connectors {
+			if connectors[i].ID.String() == connectorID {
+				connectorToUse = &connectors[i]
+				break
+			}
+		}
+		if connectorToUse == nil {
+			c.logger.Log(logger.Error, fmt.Sprintf("Connector with id %s not found for user", connectorID), userID)
+			return nil, 0, fmt.Errorf("connector not found")
+		}
+	} else {
+		// Find connector with valid installation_id (not empty)
+		for i := range connectors {
+			if connectors[i].InstallationID != "" && connectors[i].InstallationID != " " {
+				connectorToUse = &connectors[i]
+				break
+			}
+		}
+		// If no connector with installation_id found, return error
+		if connectorToUse == nil {
+			c.logger.Log(logger.Error, "No connector with valid installation_id found for user", userID)
+			return nil, 0, fmt.Errorf("no connector with valid installation found")
+		}
+	}
+
+	// Validate installation_id is not empty
+	if connectorToUse.InstallationID == "" || connectorToUse.InstallationID == " " {
+		c.logger.Log(logger.Error, fmt.Sprintf("Connector %s has empty installation_id", connectorToUse.ID.String()), userID)
+		return nil, 0, fmt.Errorf("connector has no installation_id")
+	}
+
+	installation_id := connectorToUse.InstallationID
+	jwt := GenerateJwt(connectorToUse)
 
 	accessToken, err := c.getInstallationToken(jwt, installation_id)
 	if err != nil {

@@ -14,6 +14,7 @@ type GithubConnectorStorage struct {
 type GithubConnectorRepository interface {
 	CreateConnector(connector *shared_types.GithubConnector) error
 	UpdateConnector(ConnectorID, InstallationID string) error
+	DeleteConnector(ConnectorID string, UserID string) error
 	GetConnector(ConnectorID string) (*shared_types.GithubConnector, error)
 	GetAllConnectors(UserID string) ([]shared_types.GithubConnector, error)
 	GetConnectorByAppID(AppID string) (*shared_types.GithubConnector, error)
@@ -92,7 +93,7 @@ func (s *GithubConnectorStorage) UpdateConnector(ConnectorID, InstallationID str
 //	error - an error if the connector cannot be retrieved or does not exist.
 func (s *GithubConnectorStorage) GetConnector(ConnectorID string) (*shared_types.GithubConnector, error) {
 	var connector shared_types.GithubConnector
-	err := s.DB.NewSelect().Model(&connector).Where("id = ?", ConnectorID).Scan(s.Ctx)
+	err := s.DB.NewSelect().Model(&connector).Where("id = ? AND deleted_at IS NULL", ConnectorID).Scan(s.Ctx)
 	return &connector, err
 }
 
@@ -112,8 +113,46 @@ func (s *GithubConnectorStorage) GetConnector(ConnectorID string) (*shared_types
 //	error - an error if the connectors cannot be retrieved or do not exist.
 func (s *GithubConnectorStorage) GetAllConnectors(UserID string) ([]shared_types.GithubConnector, error) {
 	var connectors []shared_types.GithubConnector
-	err := s.DB.NewSelect().Model(&connectors).Where("user_id = ?", UserID).Scan(s.Ctx)
+	err := s.DB.NewSelect().Model(&connectors).Where("user_id = ? AND deleted_at IS NULL", UserID).Scan(s.Ctx)
 	return connectors, err
+}
+
+// DeleteConnector performs a soft delete on a GitHub connector.
+//
+// The method sets the DeletedAt field to the current time, effectively
+// marking the connector as deleted without removing it from the database.
+// It also verifies that the connector belongs to the provided UserID.
+//
+// Parameters:
+//
+//	ConnectorID - the unique identifier of the connector to delete.
+//	UserID - the unique identifier of the user who owns the connector.
+//
+// Returns:
+//
+//	error - an error if the connector cannot be deleted or does not exist.
+func (s *GithubConnectorStorage) DeleteConnector(ConnectorID string, UserID string) error {
+	tx, err := s.DB.BeginTx(s.Ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var connector shared_types.GithubConnector
+	_, err = tx.NewUpdate().Model(&connector).
+		Set("deleted_at = NOW()").
+		Set("updated_at = NOW()").
+		Where("id = ? AND user_id = ? AND deleted_at IS NULL", ConnectorID, UserID).
+		Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetConnectorByAppID retrieves a GitHub connector by its GitHub app ID.

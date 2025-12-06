@@ -29,6 +29,7 @@ func NewValidator(storage GithubConnectorRepository) *Validator {
 // The supported request types are:
 // - types.CreateGithubConnectorRequest
 // - types.UpdateGithubConnectorRequest
+// - types.DeleteGithubConnectorRequest
 //
 // If the request object is not of one of the above types, it returns
 // types.ErrInvalidRequestType.
@@ -38,6 +39,8 @@ func (v *Validator) ValidateRequest(req any) error {
 		return v.validateCreateGithubConnectorRequest(*r)
 	case *types.UpdateGithubConnectorRequest:
 		return v.validateUpdateGithubConnectorRequest(*r)
+	case *types.DeleteGithubConnectorRequest:
+		return v.validateDeleteGithubConnectorRequest(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}
@@ -77,6 +80,14 @@ func (v *Validator) validateCreateGithubConnectorRequest(req types.CreateGithubC
 func (v *Validator) validateUpdateGithubConnectorRequest(req types.UpdateGithubConnectorRequest) error {
 	if req.InstallationID == "" {
 		return types.ErrMissingInstallationID
+	}
+
+	return nil
+}
+
+func (v *Validator) validateDeleteGithubConnectorRequest(req types.DeleteGithubConnectorRequest) error {
+	if req.ID == "" {
+		return types.ErrMissingID
 	}
 
 	return nil
