@@ -21,11 +21,13 @@ export function useExecutionLogs(extensionId: string) {
   );
 
   const [executionStatus, setExecutionStatus] = useState<string | null>(null);
-  const poll = !!selectedExecId && open && 
-    executionStatus !== 'completed' && 
-    executionStatus !== 'failed' && 
+  const poll =
+    !!selectedExecId &&
+    open &&
+    executionStatus !== 'completed' &&
+    executionStatus !== 'failed' &&
     executionStatus !== 'cancelled';
-  
+
   const shouldFetch = !!selectedExecId && open;
   const { data: logsResp, refetch } = useGetExecutionLogsQuery(
     { executionId: selectedExecId || '', afterSeq, limit: 200 },
@@ -53,7 +55,7 @@ export function useExecutionLogs(extensionId: string) {
       prevExecIdRef.current = null;
       return;
     }
-    
+
     const execIdChanged = prevExecIdRef.current !== selectedExecId;
     if (execIdChanged) {
       setAfterSeq(0);
@@ -67,18 +69,24 @@ export function useExecutionLogs(extensionId: string) {
   }, [selectedExecId, open, refetch]);
 
   useEffect(() => {
-    if (open && selectedExecId && prevExecIdRef.current === selectedExecId && afterSeq === 0 && allLogs.length === 0) {
+    if (
+      open &&
+      selectedExecId &&
+      prevExecIdRef.current === selectedExecId &&
+      afterSeq === 0 &&
+      allLogs.length === 0
+    ) {
       refetch();
     }
   }, [open, selectedExecId, afterSeq, allLogs.length, refetch]);
 
   useEffect(() => {
     if (!logsResp || !selectedExecId) return;
-    
+
     if (logsResp.execution_status) {
       setExecutionStatus(logsResp.execution_status);
     }
-    
+
     if (logsResp.logs && logsResp.logs.length > 0) {
       setAfterSeq(logsResp.next_after);
       setAllLogs((prev) => {
@@ -119,4 +127,3 @@ export function useExecutionLogs(extensionId: string) {
     onOpenLogs
   };
 }
-

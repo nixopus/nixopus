@@ -33,6 +33,7 @@ export interface GitHubAppProps {
   redirectUrl?: string;
   onSuccess?: (credentials: GitHubAppCredentials) => void;
   onError?: (error: Error) => void;
+  onCreateClick?: (createFn: () => void) => void;
 }
 
 export type GitHubAppStatus = 'initial' | 'redirecting' | 'converting' | 'success' | 'error';
@@ -59,6 +60,7 @@ export interface CreateGithubConnectorRequest {
 
 export interface UpdateGithubConnectorRequest {
   installation_id: string;
+  connector_id?: string; // Optional: if provided, update this specific connector
 }
 
 export interface GithubRepository {
