@@ -5,9 +5,15 @@ import { DahboardUtilityHeader } from '@/components/layout/dashboard-page-header
 import GithubRepositories, { GithubRepositoriesSkeletonLoader } from './repository-card';
 import PaginationWrapper from '@/components/ui/pagination';
 import { useTranslation } from '@/hooks/use-translation';
+import { Button } from '@/components/ui/button';
+import { Settings } from 'lucide-react';
+import GitHubConnectorSettingsModal from '../github-connector/github-connector-settings-modal';
+import useGithubConnectorSettings from '../../hooks/use-github-connector-settings';
+import { useRouter } from 'next/navigation';
 
 function ListRepositories() {
   const { t } = useTranslation();
+  const router = useRouter();
   const {
     isLoading,
     setSelectedRepository,
@@ -22,6 +28,15 @@ function ListRepositories() {
     paginatedApplications,
     onSelectRepository
   } = useGithubRepoPagination();
+  const {
+    isSettingsModalOpen,
+    openSettingsModal,
+    closeSettingsModal
+  } = useGithubConnectorSettings();
+
+  const handleAddNewConnector = () => {
+    router.push('/self-host?github_setup=true');
+  };
 
   const renderGithubRepositories = () => {
     if (isLoading) {
@@ -66,8 +81,24 @@ function ListRepositories() {
         sortOptions={sortOptions}
         label={t('selfHost.repositories.title')}
         className="mt-5 mb-5"
+        children={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openSettingsModal}
+            className="flex items-center gap-2"
+          >
+            <Settings size={16} />
+            {t('selfHost.repositories.settings' as any)}
+          </Button>
+        }
       />
       {renderGithubRepositories()}
+      <GitHubConnectorSettingsModal
+        open={isSettingsModalOpen}
+        onOpenChange={closeSettingsModal}
+        onAddNew={handleAddNewConnector}
+      />
     </div>
   );
 }
