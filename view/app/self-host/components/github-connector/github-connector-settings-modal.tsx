@@ -10,6 +10,7 @@ import {
   Github,
   Settings,
   Trash2,
+  RefreshCw,
   Plus,
   Check,
   ExternalLink,
@@ -25,6 +26,7 @@ interface ConnectorItemProps {
   isActive: boolean;
   onSetActive: (id: string) => void;
   onDelete: (id: string) => void;
+  onReset: (id: string) => void;
   isDeleting: boolean;
   isUpdating: boolean;
 }
@@ -34,6 +36,7 @@ const ConnectorItem: React.FC<ConnectorItemProps> = ({
   isActive,
   onSetActive,
   onDelete,
+  onReset,
   isDeleting,
   isUpdating
 }) => {
@@ -42,6 +45,7 @@ const ConnectorItem: React.FC<ConnectorItemProps> = ({
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
+  const handleDelete = () => {
     setShowDeleteDialog(true);
   };
 
@@ -92,6 +96,26 @@ const ConnectorItem: React.FC<ConnectorItemProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2 shrink-0">
+          {!isActive && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onSetActive(connector.id)}
+              disabled={isDeleting || isUpdating}
+            >
+              {t('selfHost.connectorSettings.actions.switch.label' as any)}
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onReset(connector.id)}
+            disabled={isDeleting || isUpdating}
+            title={t('selfHost.connectorSettings.actions.reset.label' as any)}
+          >
+            <RefreshCw size={16} />
+          </Button>
           <Button
             variant="destructive"
             size="sm"

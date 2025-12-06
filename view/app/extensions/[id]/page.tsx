@@ -42,12 +42,7 @@ export default function ExtensionDetailsPage() {
         />
       </div>
 
-      <ExtensionTabs
-        tab={tab}
-        onTabChange={setTab}
-        extension={extension}
-        isLoading={isLoading}
-      />
+      <ExtensionTabs tab={tab} onTabChange={setTab} extension={extension} isLoading={isLoading} />
 
       <ExtensionModal
         open={runModalOpen}

@@ -10,12 +10,7 @@ interface ExtensionModalProps {
   onSubmit: (values: Record<string, unknown>) => Promise<void>;
 }
 
-export function ExtensionModal({
-  open,
-  onOpenChange,
-  extension,
-  onSubmit
-}: ExtensionModalProps) {
+export function ExtensionModal({ open, onOpenChange, extension, onSubmit }: ExtensionModalProps) {
   return (
     <ExtensionInput
       open={open}
@@ -25,4 +20,3 @@ export function ExtensionModal({
     />
   );
 }
-
