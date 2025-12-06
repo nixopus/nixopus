@@ -5,7 +5,7 @@ from typing import Optional, Protocol
 from pydantic import BaseModel, Field, field_validator
 
 from app.utils.lib import ParallelProcessor, Supported
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
@@ -138,7 +138,7 @@ class DepsConfig(BaseModel):
 class DepsService:
     def __init__(self, config: DepsConfig, logger: LoggerProtocol = None, checker: DependencyCheckerProtocol = None):
         self.config = config
-        self.logger = logger or Logger(verbose=config.verbose)
+        self.logger = logger or create_logger(verbose=config.verbose)
         self.checker = checker or DependencyChecker(self.logger)
         self.formatter = DependencyFormatter()
 

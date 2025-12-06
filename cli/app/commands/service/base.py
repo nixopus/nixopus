@@ -4,7 +4,7 @@ from typing import Generic, Optional, Protocol, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
@@ -293,7 +293,7 @@ class BaseResult(BaseModel):
 class BaseService(Generic[TConfig, TResult]):
     def __init__(self, config: TConfig, logger: LoggerProtocol = None, docker_service: DockerServiceProtocol = None):
         self.config = config
-        self.logger = logger or Logger(verbose=config.verbose)
+        self.logger = logger or create_logger(verbose=config.verbose)
         self.docker_service = docker_service
         self.formatter = None
 

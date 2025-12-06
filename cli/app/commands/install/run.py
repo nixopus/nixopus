@@ -11,7 +11,7 @@ import yaml
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 
 from app.commands.clone.clone import Clone, CloneConfig
-from app.commands.conf.base import BaseEnvironmentManager
+from app.commands.conf.conf import write_env_file
 from app.commands.preflight.run import PreflightRunner
 from app.commands.proxy.load import Load, LoadConfig
 from app.commands.service.base import BaseDockerService
@@ -344,12 +344,10 @@ class Install:
             ("api", "services.api.env", api_env_file),
             ("view", "services.view.env", view_env_file),
         ]
-        env_manager = BaseEnvironmentManager(self.logger)
-
         for service_name, service_key, env_file in services:
             env_values = _config.get_service_env_values(service_key)
             updated_env_values = self._update_environment_variables(env_values)
-            success, error = env_manager.write_env_file(env_file, updated_env_values)
+            success, error = write_env_file(env_file, updated_env_values, self.logger)
             if not success:
                 raise Exception(f"{env_file_creation_failed} {service_name}: {error}")
             file_perm_success, file_perm_error = FileManager.set_permissions(env_file, 0o644)
@@ -364,7 +362,7 @@ class Install:
         combined_env_values = {}
         combined_env_values.update(self._update_environment_variables(api_env_values))
         combined_env_values.update(self._update_environment_variables(view_env_values))
-        success, error = env_manager.write_env_file(combined_env_file, combined_env_values)
+        success, error = write_env_file(combined_env_file, combined_env_values, self.logger)
 
         if not success:
             raise Exception(f"{env_file_creation_failed} combined: {error}")
