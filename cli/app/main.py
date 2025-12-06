@@ -8,7 +8,7 @@ from rich.text import Text
 
 from app.commands.install.command import install_app
 from app.commands.uninstall.uninstall import uninstall_app
-from app.commands.update.command import update_app
+from app.commands.update.update import update_app
 from app.commands.version.command import get_version, main_version_callback, version_app
 from app.utils.config import Config
 from app.utils.message import application_add_completion, application_description, application_name, application_version_help
