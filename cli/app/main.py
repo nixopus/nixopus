@@ -7,7 +7,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 from app.commands.install.command import install_app
-from app.commands.uninstall.command import uninstall_app
+from app.commands.uninstall.uninstall import uninstall_app
 from app.commands.update.command import update_app
 from app.commands.version.command import get_version, main_version_callback, version_app
 from app.utils.config import Config
