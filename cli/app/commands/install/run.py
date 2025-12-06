@@ -13,7 +13,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn
 from app.commands.clone.clone import Clone, CloneConfig
 from app.commands.conf.conf import write_env_file
 from app.commands.preflight.preflight import check_required_ports
-from app.commands.proxy.load import Load, LoadConfig
+from app.commands.proxy.proxy import load_config
 from app.commands.service.base import BaseDockerService
 from app.commands.service.up import Up, UpConfig
 from app.utils.config import (
@@ -482,23 +482,23 @@ class Install:
         
         full_source_path = self._get_config("full_source_path")
         caddy_json_config = os.path.join(full_source_path, "helpers", "caddy.json")
-        config = LoadConfig(
-            proxy_port=proxy_port, verbose=self.verbose, output="text", dry_run=self.dry_run, config_file=caddy_json_config
-        )
+        
+        if self.dry_run:
+            self.logger.info(f"[DRY RUN] Would load proxy config from {caddy_json_config}")
+            return
 
-        load_service = Load(logger=self.logger)
         try:
             with TimeoutWrapper(self.timeout):
-                result = load_service.load(config)
+                success, error = load_config(caddy_json_config, proxy_port, self.logger)
         except TimeoutError:
             raise Exception(f"{proxy_load_failed}: {operation_timed_out}")
 
-        if result.success:
+        if success:
             if not self.dry_run:
-                self.logger.success(load_service.format_output(result, "text"))
+                self.logger.success("Caddy proxy configuration loaded successfully")
         else:
-            self.logger.error(result.error)
-            raise Exception(proxy_load_failed)
+            self.logger.error(error)
+            raise Exception(f"{proxy_load_failed}: {error}")
 
     def _show_success_message(self):
         nixopus_accessible_at = self._get_access_url()

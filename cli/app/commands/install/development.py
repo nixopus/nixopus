@@ -10,7 +10,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn
 from app.commands.clone.clone import Clone, CloneConfig
 from app.commands.conf.conf import write_env_file
 from app.commands.preflight.preflight import check_ports_from_config
-from app.commands.proxy.load import Load, LoadConfig
+from app.commands.proxy.proxy import load_config
 from app.commands.service.base import BaseDockerService
 from app.commands.service.up import Up, UpConfig
 from app.utils.config import (
@@ -546,26 +546,17 @@ class DevelopmentInstall(BaseInstall):
             self.logger.info(f"[DRY RUN] Would load proxy config from {caddy_json_config}")
             return
 
-        config = LoadConfig(
-            proxy_port=proxy_port,
-            verbose=self.verbose,
-            output="text",
-            dry_run=self.dry_run,
-            config_file=caddy_json_config,
-        )
-
-        load_service = Load(logger=self.logger)
         try:
             with TimeoutWrapper(self.timeout):
-                result = load_service.load(config)
+                success, error = load_config(caddy_json_config, proxy_port, self.logger)
         except TimeoutError:
             raise Exception(f"Proxy load failed: {operation_timed_out}")
 
-        if result.success:
+        if success:
             if not self.dry_run and self.verbose:
                 self.logger.info("Caddy proxy configuration loaded successfully")
         else:
-            raise Exception(f"Proxy load failed: {result.error}")
+            raise Exception(f"Proxy load failed: {error}")
 
     def _start_all_services(self):
         """Start all services (API, View, DB, Redis, Caddy) using Docker Compose"""
