@@ -29,7 +29,9 @@ from app.utils.config import (
     VIEW_ENV_FILE,
     VIEW_PORT,
 )
-from app.utils.lib import FileManager, HostInformation
+from app.utils.directory_manager import create_directory
+from app.utils.file_manager import get_directory_path, set_permissions
+from app.utils.host_information import get_os_name, get_package_manager
 from app.utils.protocols import LoggerProtocol
 from app.utils.timeout import TimeoutWrapper
 
@@ -323,8 +325,8 @@ class DevelopmentInstall(BaseInstall):
     def _check_and_install_dependencies(self):
         """Check dependencies and install only if missing"""
         deps = get_deps_from_config()
-        os_name = HostInformation.get_os_name()
-        package_manager = HostInformation.get_package_manager()
+        os_name = get_os_name()
+        package_manager = get_package_manager()
 
         if not package_manager:
             raise Exception("No supported package manager found")
@@ -383,13 +385,13 @@ class DevelopmentInstall(BaseInstall):
             self.logger.info(f"  - View: {view_env_file}")
             return
 
-        FileManager.create_directory(FileManager.get_directory_path(api_env_file), logger=self.logger)
-        FileManager.create_directory(FileManager.get_directory_path(view_env_file), logger=self.logger)
+        create_directory(get_directory_path(api_env_file), logger=self.logger)
+        create_directory(get_directory_path(view_env_file), logger=self.logger)
 
         # Get combined env file path
         full_source_path = self._get_config("full_source_path")
         combined_env_file = os.path.join(full_source_path, ".env")
-        FileManager.create_directory(FileManager.get_directory_path(combined_env_file), logger=self.logger)
+        create_directory(get_directory_path(combined_env_file), logger=self.logger)
 
         services = [
             ("api", "services.api.env", api_env_file),
@@ -403,7 +405,7 @@ class DevelopmentInstall(BaseInstall):
             success, error = write_env_file(env_file, updated_env_values, self.logger)
             if not success:
                 raise Exception(f"{env_file_creation_failed} {service_name}: {error}")
-            file_perm_success, file_perm_error = FileManager.set_permissions(env_file, 0o644)
+            file_perm_success, file_perm_error = set_permissions(env_file, 0o644)
             if not file_perm_success:
                 raise Exception(f"{env_file_permissions_failed} {service_name}: {file_perm_error}")
             self.logger.debug(created_env_file.format(service_name=service_name, env_file=env_file))
@@ -420,7 +422,7 @@ class DevelopmentInstall(BaseInstall):
         if not success:
             raise Exception(f"{env_file_creation_failed} combined: {error}")
 
-        file_perm_success, file_perm_error = FileManager.set_permissions(combined_env_file, 0o644)
+        file_perm_success, file_perm_error = set_permissions(combined_env_file, 0o644)
         if not file_perm_success:
             raise Exception(f"{env_file_permissions_failed} combined: {file_perm_error}")
 
@@ -559,6 +561,12 @@ class DevelopmentInstall(BaseInstall):
 
     def _start_all_services(self):
         """Start all services (API, View, DB, Redis, Caddy) using Docker Compose"""
+        compose_file = self._get_config("compose_file_path")
+        
+        if self.dry_run:
+            self.logger.info(f"[DRY RUN] Would start services using {compose_file}")
+            return
+        
         env_vars = {}
         if self.api_port is not None:
             env_vars["API_PORT"] = str(self.api_port)
@@ -588,7 +596,7 @@ class DevelopmentInstall(BaseInstall):
                         name=self._get_config("service_name"),
                         detach=self._get_config("service_detach"),
                         env_file=None,
-                        compose_file=self._get_config("compose_file_path"),
+                        compose_file=compose_file,
                         logger=self.logger,
                     )
             except TimeoutError:

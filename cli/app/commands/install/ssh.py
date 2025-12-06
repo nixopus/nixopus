@@ -5,7 +5,15 @@ from typing import Optional, Protocol
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.utils.lib import FileManager
+from app.utils.directory_manager import create_directory
+from app.utils.file_manager import (
+    append_to_file,
+    expand_user_path,
+    get_directory_path,
+    get_public_key_path,
+    read_file_content,
+    set_permissions,
+)
 from app.utils.logger import create_logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
@@ -140,7 +148,6 @@ class SSHFormatter:
 
 class SSHKeyManager:
     def __init__(self, logger: LoggerProtocol):
-        self.file_manager = FileManager()
         self.logger = logger
 
     def _check_ssh_keygen_availability(self) -> tuple[bool, str]:
@@ -201,7 +208,7 @@ class SSHKeyManager:
         self.logger.debug(debug_ssh_permission_setting.format(private_key=private_key_path, public_key=public_key_path))
         try:
             self.logger.debug(debug_ssh_private_key_permissions.format(path=private_key_path))
-            private_success, private_error = self.file_manager.set_permissions(
+            private_success, private_error = set_permissions(
                 private_key_path, stat.S_IRUSR | stat.S_IWUSR, self.logger
             )
             if not private_success:
@@ -209,7 +216,7 @@ class SSHKeyManager:
                 return False, private_error
 
             self.logger.debug(debug_ssh_public_key_permissions.format(path=public_key_path))
-            public_success, public_error = self.file_manager.set_permissions(
+            public_success, public_error = set_permissions(
                 public_key_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH, self.logger
             )
             if not public_success:
@@ -227,7 +234,7 @@ class SSHKeyManager:
         self.logger.debug(debug_ssh_directory_creation.format(directory=ssh_dir, permissions=oct(permissions)))
         try:
             self.logger.debug(debug_ssh_directory_check.format(directory=ssh_dir))
-            success, error = self.file_manager.create_directory(ssh_dir, permissions, self.logger)
+            success, error = create_directory(ssh_dir, permissions, self.logger)
             if success:
                 self.logger.debug(debug_ssh_directory_created.format(directory=ssh_dir))
             else:
@@ -242,12 +249,12 @@ class SSHKeyManager:
             self.logger.debug(adding_to_authorized_keys)
             self.logger.debug(debug_ssh_authorized_keys_read.format(path=public_key_path))
 
-            success, content, error = self.file_manager.read_file_content(public_key_path, self.logger)
+            success, content, error = read_file_content(public_key_path, self.logger)
             if not success:
                 self.logger.debug(debug_ssh_public_key_read_failed.format(error=error))
                 return False, error or failed_to_read_public_key
 
-            ssh_dir = self.file_manager.expand_user_path("~/.ssh")
+            ssh_dir = expand_user_path("~/.ssh")
             authorized_keys_path = os.path.join(ssh_dir, "authorized_keys")
             self.logger.debug(debug_ssh_authorized_keys_path.format(path=authorized_keys_path))
 
@@ -269,7 +276,7 @@ class SSHKeyManager:
                     return False, f"Failed to create authorized_keys file: {e}"
 
             self.logger.debug(debug_ssh_authorized_keys_append.format(path=authorized_keys_path))
-            success, error = self.file_manager.append_to_file(authorized_keys_path, content, self.logger)
+            success, error = append_to_file(authorized_keys_path, content, logger=self.logger)
             if not success:
                 self.logger.debug(debug_ssh_authorized_keys_append_failed.format(error=error))
                 return False, error or failed_to_append_to_authorized_keys
@@ -374,7 +381,6 @@ class SSHService:
         self.config = config
         self.ssh_manager = ssh_manager or SSHKeyManager(self.logger)
         self.formatter = SSHFormatter()
-        self.file_manager = FileManager()
 
     def _validate_prerequisites(self) -> bool:
         self.logger.debug(
@@ -383,7 +389,7 @@ class SSHService:
             )
         )
 
-        expanded_key_path = self.file_manager.expand_user_path(self.config.path)
+        expanded_key_path = expand_user_path(self.config.path)
         self.logger.debug(debug_ssh_path_expansion.format(original=self.config.path, expanded=expanded_key_path))
 
         if os.path.exists(expanded_key_path):
@@ -428,8 +434,8 @@ class SSHService:
             dry_run_output = self.formatter.format_dry_run(self.config)
             return self._create_result(True, dry_run_output)
 
-        expanded_path = self.file_manager.expand_user_path(self.config.path)
-        ssh_dir = self.file_manager.get_directory_path(expanded_path)
+        expanded_path = expand_user_path(self.config.path)
+        ssh_dir = get_directory_path(expanded_path)
         self.logger.debug(debug_ssh_key_directory_info.format(directory=ssh_dir))
 
         if self.config.create_ssh_directory:
@@ -449,7 +455,7 @@ class SSHService:
 
         if self.config.set_permissions:
             self.logger.debug(debug_ssh_permissions_enabled)
-            public_key_path = self.file_manager.get_public_key_path(expanded_path)
+            public_key_path = get_public_key_path(expanded_path)
             self.logger.debug(debug_ssh_public_key_path_info.format(path=public_key_path))
             success, error = self.ssh_manager.set_key_permissions(expanded_path, public_key_path)
             if not success:
@@ -458,7 +464,7 @@ class SSHService:
 
         if self.config.add_to_authorized_keys:
             self.logger.debug(debug_ssh_authorized_keys_enabled)
-            public_key_path = self.file_manager.get_public_key_path(expanded_path)
+            public_key_path = get_public_key_path(expanded_path)
             success, error = self.ssh_manager.add_to_authorized_keys(public_key_path)
             if not success:
                 self.logger.debug(debug_ssh_authorized_keys_failed_abort.format(error=error))

@@ -2,7 +2,7 @@ import os
 import subprocess
 from typing import Optional
 
-from app.utils.lib import DirectoryManager
+from app.utils.directory_manager import path_exists_and_not_force, remove_directory
 from app.utils.protocols import LoggerProtocol
 
 from .messages import (
@@ -60,10 +60,12 @@ def _build_clone_command(repo: str, path: str, branch: Optional[str] = None) -> 
     return cmd
 
 
-def _execute_git_clone(repo: str, path: str, branch: Optional[str], logger: Optional[LoggerProtocol] = None) -> tuple[bool, Optional[str]]:
+def _execute_git_clone(
+    repo: str, path: str, branch: Optional[str], logger: Optional[LoggerProtocol] = None
+) -> tuple[bool, Optional[str]]:
     """Execute git clone command."""
     cmd = _build_clone_command(repo, path, branch)
-    
+
     if logger:
         logger.debug(debug_executing_git_clone.format(command=" ".join(cmd)))
 
@@ -89,8 +91,7 @@ def _prepare_target_directory(path: str, force: bool, logger: Optional[LoggerPro
     if force and os.path.exists(path):
         if logger:
             logger.debug(debug_removing_directory.format(path=path))
-        dir_manager = DirectoryManager()
-        success = dir_manager.remove_directory(path, logger)
+        success = remove_directory(path, logger)
         if not success and logger:
             logger.debug(debug_directory_removal_failed)
         return success
@@ -99,8 +100,7 @@ def _prepare_target_directory(path: str, force: bool, logger: Optional[LoggerPro
 
 def _validate_prerequisites(path: str, force: bool, logger: Optional[LoggerProtocol] = None) -> bool:
     """Validate prerequisites for cloning."""
-    dir_manager = DirectoryManager()
-    if dir_manager.path_exists_and_not_force(path, force):
+    if path_exists_and_not_force(path, force):
         if logger:
             logger.debug(debug_path_exists_force_disabled.format(path=path))
             logger.error(path_already_exists_use_force.format(path=path))
@@ -117,25 +117,25 @@ def clone_repository(
 ) -> tuple[bool, Optional[str]]:
     """Clone a git repository."""
     import time
-    
+
     start_time = time.time()
-    
+
     repo = _validate_repo(repo)
     path = _validate_path(path)
-    
+
     if logger:
         logger.debug(debug_cloning_repo.format(repo=repo, path=path, force=force))
-    
+
     if not _validate_prerequisites(path, force, logger):
         return False, prerequisites_validation_failed
-    
+
     if not _prepare_target_directory(path, force, logger):
         return False, failed_to_prepare_target_directory
-    
+
     success, error = _execute_git_clone(repo, path, branch, logger)
-    
+
     duration = time.time() - start_time
     if logger:
         logger.debug(debug_clone_completed.format(duration=f"{duration:.2f}", success=success))
-    
+
     return success, error
