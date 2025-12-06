@@ -60,6 +60,7 @@ export interface CreateGithubConnectorRequest {
 
 export interface UpdateGithubConnectorRequest {
   installation_id: string;
+  connector_id?: string; // Optional: if provided, update this specific connector
 }
 
 export interface GithubRepository {
