@@ -425,6 +425,12 @@ class Install:
             raise Exception(ssh_setup_failed)
 
     def _start_services(self):
+        compose_file = self._get_config("compose_file_path")
+        
+        if self.dry_run:
+            self.logger.info(f"[DRY RUN] Would start services using {compose_file}")
+            return
+        
         env_vars = {}
         if self.api_port is not None:
             env_vars["API_PORT"] = str(self.api_port)
@@ -454,7 +460,7 @@ class Install:
                         name="all",
                         detach=True,
                         env_file=None,
-                        compose_file=self._get_config("compose_file_path"),
+                        compose_file=compose_file,
                         logger=self.logger,
                     )
             except TimeoutError:
