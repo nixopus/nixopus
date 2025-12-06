@@ -1257,6 +1257,44 @@
         "success": "Application GitHub créée avec succès !"
       }
     },
+    "githubSetup": {
+      "steps": {
+        "welcome": {
+          "title": "Commencer",
+          "description": "Connectez votre compte GitHub"
+        },
+        "createApp": {
+          "title": "Créer l'Application",
+          "description": "Configurer l'Application GitHub"
+        },
+        "installApp": {
+          "title": "Installer",
+          "description": "Connecter les dépôts"
+        }
+      },
+      "welcome": {
+        "title": "Connectez votre compte GitHub",
+        "description": "Créez une Application GitHub pour déployer des applications directement depuis vos dépôts. Cette configuration ne prend que quelques minutes.",
+        "benefits": {
+          "secure": {
+            "title": "Manifeste d'Application GitHub",
+            "description": "Nous créerons une Application GitHub en utilisant le flux de manifeste. Vos identifiants sont gérés en toute sécurité via le système d'applications de GitHub."
+          },
+          "automated": {
+            "title": "Déploiements Automatisés",
+            "description": "Déployez automatiquement vos applications lorsque vous poussez du code vers vos dépôts."
+          },
+          "repositories": {
+            "title": "Accédez à vos Dépôts",
+            "description": "Sélectionnez et déployez depuis n'importe lequel de vos dépôts GitHub en quelques clics."
+          }
+        }
+      },
+      "buttons": {
+        "next": "Continuer",
+        "back": "Retour"
+      }
+    },
     "repositoryCard": {
       "viewOnGithub": "Voir sur GitHub",
       "unnamed": "Dépôt Sans Nom",

@@ -1296,6 +1296,44 @@
         "success": "GitHub App created successfully!"
       }
     },
+    "githubSetup": {
+      "steps": {
+        "welcome": {
+          "title": "Get Started",
+          "description": "Connect your GitHub account"
+        },
+        "createApp": {
+          "title": "Create App",
+          "description": "Set up GitHub App"
+        },
+        "installApp": {
+          "title": "Install",
+          "description": "Connect repositories"
+        }
+      },
+      "welcome": {
+        "title": "Connect Your GitHub Account",
+        "description": "Create a GitHub App to deploy applications directly from your repositories. This setup takes just a few minutes.",
+        "benefits": {
+          "secure": {
+            "title": "GitHub App Manifest",
+            "description": "We'll create a GitHub App using the manifest flow. Your credentials are securely managed through GitHub's app system."
+          },
+          "automated": {
+            "title": "Automated Deployments",
+            "description": "Automatically deploy your applications when you push code to your repositories."
+          },
+          "repositories": {
+            "title": "Access Your Repositories",
+            "description": "Select and deploy from any of your GitHub repositories with just a few clicks."
+          }
+        }
+      },
+      "buttons": {
+        "next": "Continue",
+        "back": "Back"
+      }
+    },
     "repositories": {
       "title": "Repositories",
       "noRepositories": "No repositories found",

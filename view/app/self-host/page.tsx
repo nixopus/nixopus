@@ -48,6 +48,10 @@ function page() {
     return <DisabledFeature />;
   }
 
+  const isShowingGitHubSetup = inGitHubFlow || (!showApplications && !inGitHubFlow && !connectors?.length);
+  const isShowingRepositories = !showApplications && !inGitHubFlow && connectors?.length && connectors.length > 0;
+  const shouldShowHeader = !isShowingGitHubSetup && !isShowingRepositories;
+
   const renderContent = () => {
     return (
       <AnyPermissionGuard permissions={['deploy:create']} loadingFallback={null}>
@@ -81,10 +85,12 @@ function page() {
       }
     >
       <PageLayout maxWidth="6xl" padding="md" spacing="lg">
-        <DashboardPageHeader
-          label={t('selfHost.page.title')}
-          description={t('selfHost.page.description')}
-        />
+        {shouldShowHeader && (
+          <DashboardPageHeader
+            label={t('selfHost.page.title')}
+            description={t('selfHost.page.description')}
+          />
+        )}
         {renderContent()}
 
         {showApplications && (

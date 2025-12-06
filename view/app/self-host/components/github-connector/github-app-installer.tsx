@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Github } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
@@ -8,9 +7,11 @@ interface GithubInstallProps {
   appSlug: string;
   organization?: string;
   callbackUrl: string;
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
 }
 
-const GithubInstaller = ({ appSlug, organization, callbackUrl }: GithubInstallProps) => {
+const GithubInstaller = ({ appSlug, organization, callbackUrl, onSuccess, onError }: GithubInstallProps) => {
   const { t } = useTranslation();
 
   const handleConnectGithub = () => {
@@ -27,25 +28,23 @@ const GithubInstaller = ({ appSlug, organization, callbackUrl }: GithubInstallPr
   };
 
   return (
-    <Card className="w-[350px]">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="w-full max-w-md space-y-6">
+      <div className="text-center space-y-2">
+        <div className="flex items-center justify-center gap-2">
           <Github size={24} />
-          {t('selfHost.githubInstaller.title')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="mb-4 text-sm text-muted-foreground">
+          <h3 className="text-lg font-semibold">{t('selfHost.githubInstaller.title')}</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">
           {t('selfHost.githubInstaller.description')}
         </p>
-        <Button className="w-full" onClick={handleConnectGithub}>
-          {t('selfHost.githubInstaller.connectButton')}
-        </Button>
-      </CardContent>
-      <CardFooter className="text-xs text-muted-foreground/40">
-        <p>{t('selfHost.githubInstaller.terms')}</p>
-      </CardFooter>
-    </Card>
+      </div>
+      <Button className="w-full" onClick={handleConnectGithub} size="lg">
+        {t('selfHost.githubInstaller.connectButton')}
+      </Button>
+      <p className="text-xs text-center text-muted-foreground/60">
+        {t('selfHost.githubInstaller.terms')}
+      </p>
+    </div>
   );
 };
 
