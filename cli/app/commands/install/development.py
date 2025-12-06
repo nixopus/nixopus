@@ -9,7 +9,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn
 
 from app.commands.clone.clone import Clone, CloneConfig
 from app.commands.conf.conf import write_env_file
-from app.commands.preflight.run import PreflightRunner
+from app.commands.preflight.preflight import check_ports_from_config
 from app.commands.proxy.load import Load, LoadConfig
 from app.commands.service.base import BaseDockerService
 from app.commands.service.up import Up, UpConfig
@@ -319,10 +319,7 @@ class DevelopmentInstall(BaseInstall):
 
     def _run_preflight_checks(self):
         """Check ports and system requirements"""
-        preflight_runner = PreflightRunner(logger=self.logger, verbose=self.verbose)
-        preflight_runner.check_ports_from_config(
-            config_key="required_ports", user_config=self._user_config, defaults=self._defaults
-        )
+        check_ports_from_config(logger=self.logger)
 
     def _check_and_install_dependencies(self):
         """Check dependencies and install only if missing"""

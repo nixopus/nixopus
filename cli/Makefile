@@ -57,9 +57,6 @@ nixopus: ## Run nixopus CLI
 		poetry run nixopus $(ARGS); \
 	fi
 
-preflight: ## Run preflight command
-	@poetry run nixopus preflight $(ARGS)
-
 version: ## Show version
 	@poetry run nixopus version
 
