@@ -12,7 +12,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn
 
 from app.commands.clone.clone import Clone, CloneConfig
 from app.commands.conf.conf import write_env_file
-from app.commands.preflight.run import PreflightRunner
+from app.commands.preflight.preflight import check_required_ports
 from app.commands.proxy.load import Load, LoadConfig
 from app.commands.service.base import BaseDockerService
 from app.commands.service.up import Up, UpConfig
@@ -299,10 +299,9 @@ class Install:
             self.logger.error(f"{installation_failed}{context_msg}")
 
     def _run_preflight_checks(self):
-        preflight_runner = PreflightRunner(logger=self.logger, verbose=self.verbose)
         ports = _config.get(PORTS)
         ports = [int(port) for port in ports] if isinstance(ports, list) else [int(ports)]
-        preflight_runner.check_required_ports(ports)
+        check_required_ports(ports, logger=self.logger)
 
     def _install_dependencies(self):
         try:
