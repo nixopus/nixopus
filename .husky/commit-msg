@@ -1,0 +1,7 @@
+echo "Validating commit message..."
+cd view
+if ! npx --no -- commitlint --edit "$(git rev-parse --show-toplevel)/${1}"; then
+  echo "ERROR: Commit message validation failed"
+  exit 1
+fi
+echo "Commit message validation passed"

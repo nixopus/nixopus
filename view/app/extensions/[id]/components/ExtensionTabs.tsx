@@ -17,12 +17,7 @@ interface ExtensionTabsProps {
   isLoading: boolean;
 }
 
-export function ExtensionTabs({
-  tab,
-  onTabChange,
-  extension,
-  isLoading
-}: ExtensionTabsProps) {
+export function ExtensionTabs({ tab, onTabChange, extension, isLoading }: ExtensionTabsProps) {
   const { t } = useTranslation();
   const params = useParams();
   const id = (params?.id as string) || '';
@@ -73,4 +68,3 @@ export function ExtensionTabs({
     </div>
   );
 }
-

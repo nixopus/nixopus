@@ -135,7 +135,11 @@ export const extensionsApi = createApi({
         method: 'GET'
       }),
       providesTags: (result, error, { executionId }) => [{ type: 'Execution', id: executionId }],
-      transformResponse: (response: { logs: any[]; next_after: number; execution_status?: string }) => response
+      transformResponse: (response: {
+        logs: any[];
+        next_after: number;
+        execution_status?: string;
+      }) => response
     })
   })
 });

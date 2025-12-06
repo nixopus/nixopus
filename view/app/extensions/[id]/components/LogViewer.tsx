@@ -30,13 +30,12 @@ export function LogViewer({ open, onOpenChange, executionId, logs }: LogViewerPr
         </SheetHeader>
         <div className="flex flex-col h-[calc(100vh-120px)] mt-4">
           <div className="mb-3 text-xs text-muted-foreground px-1">
-            {t('extensions.executionId') || 'Execution ID'}: <span className="font-mono">{executionId}</span>
+            {t('extensions.executionId') || 'Execution ID'}:{' '}
+            <span className="font-mono">{executionId}</span>
           </div>
           <div className="flex-1 overflow-y-auto space-y-1 pr-2 min-h-0">
             {isEmpty ? (
-              <div className="text-sm text-muted-foreground text-center py-8">
-                No logs yet...
-              </div>
+              <div className="text-sm text-muted-foreground text-center py-8">No logs yet...</div>
             ) : (
               formattedLogs.map((log) => (
                 <LogEntry
@@ -54,4 +53,3 @@ export function LogViewer({ open, onOpenChange, executionId, logs }: LogViewerPr
     </Sheet>
   );
 }
-

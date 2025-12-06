@@ -25,4 +25,3 @@ export function ExtensionHeader({ extension, isLoading }: ExtensionHeaderProps) 
     </div>
   );
 }
-

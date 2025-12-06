@@ -172,9 +172,7 @@ export default function ExtensionInput({
         {searchQuery && !hasSearchResults && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <p className="text-sm text-muted-foreground">No variables found</p>
-            <p className="text-xs text-muted-foreground/70 mt-1">
-              Try adjusting your search query
-            </p>
+            <p className="text-xs text-muted-foreground/70 mt-1">Try adjusting your search query</p>
           </div>
         )}
       </div>
@@ -203,7 +201,10 @@ function FieldItem({
     <div className="flex items-center gap-1.5">
       <Label
         htmlFor={id}
-        className={cn('font-medium text-sm', variable.variable_type === 'boolean' && 'cursor-pointer')}
+        className={cn(
+          'font-medium text-sm',
+          variable.variable_type === 'boolean' && 'cursor-pointer'
+        )}
       >
         {displayName}
       </Label>
@@ -290,9 +291,7 @@ function FieldItem({
     <div
       className={cn(
         'relative rounded-lg p-3 transition-all duration-200',
-        error
-          ? 'bg-destructive/5 border border-destructive'
-          : 'bg-muted/30 hover:bg-muted/50',
+        error ? 'bg-destructive/5 border border-destructive' : 'bg-muted/30 hover:bg-muted/50',
         variable.variable_type === 'array' && 'md:col-span-2',
         variable.variable_type !== 'boolean' && 'grid gap-2'
       )}

@@ -17,7 +17,7 @@ function use_monitor() {
       console.log('WebSocket not ready, skipping monitoring start');
       return;
     }
-    
+
     console.log('Starting dashboard monitoring');
     sendJsonMessage({
       action: 'dashboard_monitor',
@@ -78,7 +78,7 @@ function use_monitor() {
       startMonitoring();
       isInitializedRef.current = true;
     }
-    
+
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
@@ -94,7 +94,7 @@ function use_monitor() {
         startMonitoring();
       }, 5000);
     }
-    
+
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);

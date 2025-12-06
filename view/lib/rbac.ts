@@ -54,7 +54,10 @@ export const useRBAC = () => {
         Session.getClaimValue({ claim: PermissionClaim })
       ]);
 
-      if ((!sessionRoles || sessionRoles.length === 0) && (!sessionPerms || sessionPerms.length === 0)) {
+      if (
+        (!sessionRoles || sessionRoles.length === 0) &&
+        (!sessionPerms || sessionPerms.length === 0)
+      ) {
         retryTimeoutRef.current = setTimeout(() => {
           fetchRBAC();
         }, 1000);
