@@ -11,10 +11,6 @@ import {
 import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorApi';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setActiveConnectorId } from '@/redux/features/github-connector/githubConnectorSlice';
-import { useAppDispatch } from '@/redux/hooks';
-
-const ACTIVE_CONNECTOR_KEY = 'active_github_connector';
-
 
 function useGithubConnectorSettings() {
   const { t } = useTranslation();
@@ -26,10 +22,6 @@ function useGithubConnectorSettings() {
   const activeConnectorId = useAppSelector(
     (state) => state.githubConnector.activeConnectorId
   );
-
-  const [activeConnectorId, setActiveConnectorId] = React.useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
-  const [isUpdating, setIsUpdating] = React.useState<string | null>(null);
 
   const {
     data: connectors,
@@ -46,35 +38,17 @@ function useGithubConnectorSettings() {
       dispatch(setActiveConnectorId(connectors[0].id));
     }
   }, [activeConnectorId, connectors, dispatch]);
-  // Load active connector from localStorage on mount
-  React.useEffect(() => {
-    const storedConnectorId = localStorage.getItem(ACTIVE_CONNECTOR_KEY);
-    if (storedConnectorId && connectors) {
-      const connectorExists = connectors.some((c) => c.id === storedConnectorId);
-      if (connectorExists) {
-        setActiveConnectorId(storedConnectorId);
-      } else if (connectors.length > 0) {
-        // If stored connector doesn't exist, use first available
-        setActiveConnectorId(connectors[0].id);
-        localStorage.setItem(ACTIVE_CONNECTOR_KEY, connectors[0].id);
-      }
-    } else if (connectors && connectors.length > 0 && !storedConnectorId) {
-      // If no stored connector, use first available
-      setActiveConnectorId(connectors[0].id);
-      localStorage.setItem(ACTIVE_CONNECTOR_KEY, connectors[0].id);
-    }
-  }, [connectors]);
 
   const activeConnector = React.useMemo(() => {
-    if (!activeConnectorId || !connectors) return null;
+    if (!activeConnectorId || !connectors) {
+      return null;
+    }
     return connectors.find((c) => c.id === activeConnectorId) || null;
   }, [activeConnectorId, connectors]);
 
   const handleSetActiveConnector = React.useCallback(
     (connectorId: string) => {
       dispatch(setActiveConnectorId(connectorId));
-      setActiveConnectorId(connectorId);
-      localStorage.setItem(ACTIVE_CONNECTOR_KEY, connectorId);
       // Invalidate cache to refetch repositories with new connector
       dispatch(GithubConnectorApi.util.invalidateTags([{ type: 'GithubConnector', id: 'LIST' }]));
       toast.success(t('selfHost.connectorSettings.actions.switch.success' as any));
@@ -117,7 +91,10 @@ function useGithubConnectorSettings() {
     async (connectorId: string, installationId: string) => {
       setIsUpdating(connectorId);
       try {
-        await updateConnector({ installation_id: installationId }).unwrap();
+        await updateConnector({ 
+          installation_id: installationId,
+          connector_id: connectorId 
+        }).unwrap();
         toast.success(t('selfHost.connectorSettings.actions.update.success' as any));
         await refetchConnectors();
         // Invalidate cache to refetch repositories
