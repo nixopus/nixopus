@@ -1295,6 +1295,65 @@
         "back": "Retour"
       }
     },
+    "repositories": {
+      "title": "Dépôts",
+      "noRepositories": "Aucun dépôt trouvé",
+      "search": {
+        "placeholder": "Rechercher des dépôts..."
+      },
+      "sort": {
+        "name": "Nom",
+        "created": "Créé",
+        "updated": "Mis à jour",
+        "stars": "Étoiles"
+      }
+    },
+    "connectorSettings": {
+      "title": "Paramètres du Connecteur GitHub",
+      "description": "Gérez vos connecteurs GitHub, basculez entre eux ou ajoutez-en de nouveaux",
+      "active": "Actif",
+      "noConnectors": "Aucun connecteur GitHub trouvé. Veuillez en créer un pour commencer.",
+      "connector": {
+        "slug": "Slug",
+        "installationId": "ID d'Installation"
+      },
+      "currentConnector": {
+        "title": "Connecteur Actuel",
+        "description": "Si un dépôt manque ou si vous souhaitez ajouter plus de dépôts, cliquez sur le lien ci-dessous pour gérer les paramètres de votre installation GitHub.",
+        "viewOnGithub": "Gérer l'Installation GitHub"
+      },
+      "actions": {
+        "addNew": "Ajouter un Nouveau Connecteur",
+        "switch": {
+          "label": "Changer",
+          "success": "Connecteur changé avec succès"
+        },
+        "delete": {
+          "label": "Supprimer",
+          "success": "Connecteur supprimé avec succès",
+          "error": {
+            "generic": "Échec de la suppression du connecteur",
+            "lastConnector": "Impossible de supprimer le dernier connecteur. Veuillez d'abord ajouter un autre connecteur."
+          },
+          "dialog": {
+            "title": "Supprimer le Connecteur",
+            "description": "Êtes-vous sûr de vouloir supprimer {name} ? Cette action est irréversible.",
+            "confirm": "Supprimer",
+            "cancel": "Annuler",
+            "deleting": "Suppression..."
+          }
+        },
+        "update": {
+          "success": "Connecteur mis à jour avec succès",
+          "error": "Échec de la mise à jour du connecteur"
+        },
+        "reset": {
+          "label": "Réinitialiser",
+          "info": "Ouverture des paramètres d'installation GitHub. Veuillez reconfigurer l'installation là-bas.",
+          "error": "Impossible d'ouvrir les paramètres GitHub. ID d'installation introuvable."
+        }
+      }
+    },
     "repositoryCard": {
       "viewOnGithub": "Voir sur GitHub",
       "unnamed": "Dépôt Sans Nom",

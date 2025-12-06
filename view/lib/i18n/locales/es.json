@@ -1301,6 +1301,52 @@
         "stars": "Estrellas"
       }
     },
+    "connectorSettings": {
+      "title": "Configuración del Conector de GitHub",
+      "description": "Administra tus conectores de GitHub, cambia entre ellos o agrega nuevos",
+      "active": "Activo",
+      "noConnectors": "No se encontraron conectores de GitHub. Por favor crea uno para comenzar.",
+      "connector": {
+        "slug": "Slug",
+        "installationId": "ID de Instalación"
+      },
+      "currentConnector": {
+        "title": "Conector Actual",
+        "description": "Si falta algún repositorio o deseas agregar más repositorios, haz clic en el enlace a continuación para administrar la configuración de tu instalación de GitHub.",
+        "viewOnGithub": "Administrar Instalación de GitHub"
+      },
+      "actions": {
+        "addNew": "Agregar Nuevo Conector",
+        "switch": {
+          "label": "Cambiar",
+          "success": "Conector cambiado exitosamente"
+        },
+        "delete": {
+          "label": "Eliminar",
+          "success": "Conector eliminado exitosamente",
+          "error": {
+            "generic": "Error al eliminar el conector",
+            "lastConnector": "No se puede eliminar el último conector. Por favor agrega otro conector primero."
+          },
+          "dialog": {
+            "title": "Eliminar Conector",
+            "description": "¿Estás seguro de que deseas eliminar {name}? Esta acción no se puede deshacer.",
+            "confirm": "Eliminar",
+            "cancel": "Cancelar",
+            "deleting": "Eliminando..."
+          }
+        },
+        "update": {
+          "success": "Conector actualizado exitosamente",
+          "error": "Error al actualizar el conector"
+        },
+        "reset": {
+          "label": "Restablecer",
+          "info": "Abriendo la configuración de instalación de GitHub. Por favor reconfigura la instalación allí.",
+          "error": "No se puede abrir la configuración de GitHub. ID de instalación no encontrado."
+        }
+      }
+    },
     "repositoryCard": {
       "viewOnGithub": "Ver en GitHub",
       "unnamed": "Repositorio Sin Nombre",

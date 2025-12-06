@@ -1345,6 +1345,53 @@
         "created": "Created",
         "updated": "Updated",
         "stars": "Stars"
+      },
+      "settings": "Settings"
+    },
+    "connectorSettings": {
+      "title": "GitHub Connector Settings",
+      "description": "Manage your GitHub connectors, switch between them, or add new ones",
+      "active": "Active",
+      "noConnectors": "No GitHub connectors found. Please create one to get started.",
+      "connector": {
+        "slug": "Slug",
+        "installationId": "Installation ID"
+      },
+      "currentConnector": {
+        "title": "Current Connector",
+        "description": "If any repository is missing or you want to add more repositories, click the link below to manage your GitHub installation settings.",
+        "viewOnGithub": "Manage GitHub Installation"
+      },
+      "actions": {
+        "addNew": "Add New Connector",
+        "switch": {
+          "label": "Switch",
+          "success": "Connector switched successfully"
+        },
+        "delete": {
+          "label": "Delete",
+          "success": "Connector deleted successfully",
+          "error": {
+            "generic": "Failed to delete connector",
+            "lastConnector": "Cannot delete the last connector. Please add another connector first."
+          },
+          "dialog": {
+            "title": "Delete Connector",
+            "description": "Are you sure you want to delete {name}? This action cannot be undone.",
+            "confirm": "Delete",
+            "cancel": "Cancel",
+            "deleting": "Deleting..."
+          }
+        },
+        "update": {
+          "success": "Connector updated successfully",
+          "error": "Failed to update connector"
+        },
+        "reset": {
+          "label": "Reset",
+          "info": "Opening GitHub installation settings. Please reconfigure the installation there.",
+          "error": "Unable to open GitHub settings. Installation ID not found."
+        }
       }
     },
     "repositoryCard": {
