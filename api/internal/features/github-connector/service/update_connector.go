@@ -12,7 +12,7 @@ import (
 //
 // If ConnectorID is provided, it updates that specific connector.
 // Otherwise, it finds the connector without an installation_id and updates that one.
-// If no connector without installation_id is found, it updates the first connector (backward compatibility).
+// If multiple connectors exist and ConnectorID is not provided, it returns an error to prevent ambiguity.
 //
 // If any errors occur during the update process, the method returns the error.
 func (c *GithubConnectorService) UpdateGithubConnectorRequest(InstallationID string, UserID string, ConnectorID string) error {
@@ -24,7 +24,7 @@ func (c *GithubConnectorService) UpdateGithubConnectorRequest(InstallationID str
 
 	if len(connectors) == 0 {
 		fmt.Println("no connector found")
-		return nil
+		return fmt.Errorf("no connectors found for user")
 	}
 
 	var connectorToUpdate *shared_types.GithubConnector
@@ -48,6 +48,11 @@ func (c *GithubConnectorService) UpdateGithubConnectorRequest(InstallationID str
 			return fmt.Errorf("connector with id %s not found", ConnectorID)
 		}
 	} else {
+		// If multiple connectors exist, connector_id is required to avoid ambiguity
+		if len(connectors) > 1 {
+			return fmt.Errorf("connector_id is required when multiple connectors exist")
+		}
+
 		// Find connector without installation_id (newly created connector)
 		for i := range connectors {
 			if connectors[i].InstallationID == "" || strings.TrimSpace(connectors[i].InstallationID) == "" {
@@ -56,7 +61,7 @@ func (c *GithubConnectorService) UpdateGithubConnectorRequest(InstallationID str
 			}
 		}
 
-		// If no connector without installation_id found, use first connector 
+		// If no connector without installation_id found, use first connector (backward compatibility for single connector)
 		if connectorToUpdate == nil {
 			connectorToUpdate = &connectors[0]
 		}

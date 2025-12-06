@@ -218,39 +218,58 @@ const GitHubConnectorSettingsModal: React.FC<GitHubConnectorSettingsModalProps> 
                 />
               ))}
             </div>
-            {activeConnector && (
-              <div className="pt-4 border-t">
-                <div className="flex items-start gap-3">
-                  <Settings size={18} className="text-muted-foreground mt-0.5 shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div>
-                      <p className="text-sm font-medium mb-1">
-                        {t('selfHost.connectorSettings.currentConnector.title' as any)}
-                      </p>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="secondary" className="text-xs">
-                          {activeConnector.name || activeConnector.slug}
-                        </Badge>
+            {(() => {
+              const currentActiveConnector = connectors.find((c) => c.id === activeConnectorId);
+
+              if (!currentActiveConnector) {
+                return null;
+              }
+
+              const installationUrl = `https://github.com/settings/installations/${currentActiveConnector.installation_id}`;
+
+              return (
+                <div className="pt-4 border-t">
+                  <div className="flex items-start gap-3">
+                    <Settings size={18} className="text-muted-foreground mt-0.5 shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div>
+                        <p className="text-sm font-medium mb-1">
+                          {t('selfHost.connectorSettings.currentConnector.title' as any)}
+                        </p>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {currentActiveConnector.name || currentActiveConnector.slug}
+                          </Badge>
+                        </div>
                       </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {t('selfHost.connectorSettings.currentConnector.description' as any)}
+                      </p>
+                      {currentActiveConnector.installation_id && (
+                        <a
+                          href={installationUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => {
+                            console.log('[GitHubConnectorSettingsModal] Link clicked:', {
+                              href: installationUrl,
+                              connectorId: currentActiveConnector.id,
+                              installationId: currentActiveConnector.installation_id,
+                              activeConnectorId,
+                              timestamp: new Date().toISOString()
+                            });
+                          }}
+                          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
+                        >
+                          {t('selfHost.connectorSettings.currentConnector.viewOnGithub' as any)}
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {t('selfHost.connectorSettings.currentConnector.description' as any)}
-                    </p>
-                    {activeConnector.installation_id && (
-                      <a
-                        href={`https://github.com/settings/installations/${activeConnector.installation_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
-                      >
-                        {t('selfHost.connectorSettings.currentConnector.viewOnGithub' as any)}
-                        <ExternalLink size={12} />
-                      </a>
-                    )}
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </>
         )}
       </div>

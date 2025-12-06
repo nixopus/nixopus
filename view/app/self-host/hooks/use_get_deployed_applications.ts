@@ -162,15 +162,48 @@ function useGetDeployedApplications() {
     if (installationId) {
       const githubConnector = async () => {
         try {
-          await updateGithubConnector({
-            installation_id: installationId,
-            connector_id: pendingConnectorId || undefined
-          });
-          await GetGithubConnectors();
-          // Set the updated connector as active if it was the pending one
-          if (pendingConnectorId) {
-            dispatch(setActiveConnectorId(pendingConnectorId));
+          // Determine which connector to update
+          let connectorIdToUpdate = pendingConnectorId;
+          
+          // If no pending connector ID, try to find one without installation_id
+          if (!connectorIdToUpdate && connectors && connectors.length > 0) {
+            const newConnector = connectors.find(
+              (c) => !c.installation_id || c.installation_id.trim() === ''
+            );
+            if (newConnector) {
+              connectorIdToUpdate = newConnector.id;
+            } else if (connectors.length === 1) {
+              connectorIdToUpdate = connectors[0].id;
+            } else {
+              // Multiple connectors exist and we can't determine which one
+              // Use active connector as fallback
+              connectorIdToUpdate = activeConnectorId || connectors[0].id;
+            }
           }
+
+          // When multiple connectors exist, connector_id is required
+          const updatePayload: { installation_id: string; connector_id?: string } = {
+            installation_id: installationId
+          };
+          
+          if (connectors && connectors.length > 1) {
+            if (!connectorIdToUpdate) {
+              throw new Error('connector_id is required when multiple connectors exist');
+            }
+            updatePayload.connector_id = connectorIdToUpdate;
+          } else if (connectorIdToUpdate) {
+            // Include connector_id even for single connector for clarity
+            updatePayload.connector_id = connectorIdToUpdate;
+          }
+
+          await updateGithubConnector(updatePayload);
+          await GetGithubConnectors();
+          
+          // Set the updated connector as active
+          if (connectorIdToUpdate) {
+            dispatch(setActiveConnectorId(connectorIdToUpdate));
+          }
+          
           setInGitHubFlow(false);
           setPendingConnectorId(null);
           // Clean up URL parameters
@@ -187,7 +220,7 @@ function useGetDeployedApplications() {
       };
       githubConnector();
     }
-  }, [installationId, pendingConnectorId, router, GetGithubConnectors, updateGithubConnector]);
+  }, [installationId, pendingConnectorId, router, GetGithubConnectors, updateGithubConnector, connectors, activeConnectorId, dispatch]);
 
   return {
     connectors,

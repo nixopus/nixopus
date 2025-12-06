@@ -40,7 +40,9 @@ function useGithubConnectorSettings() {
   }, [activeConnectorId, connectors, dispatch]);
 
   const activeConnector = React.useMemo(() => {
-    if (!activeConnectorId || !connectors) return null;
+    if (!activeConnectorId || !connectors) {
+      return null;
+    }
     return connectors.find((c) => c.id === activeConnectorId) || null;
   }, [activeConnectorId, connectors]);
 
@@ -89,7 +91,10 @@ function useGithubConnectorSettings() {
     async (connectorId: string, installationId: string) => {
       setIsUpdating(connectorId);
       try {
-        await updateConnector({ installation_id: installationId }).unwrap();
+        await updateConnector({ 
+          installation_id: installationId,
+          connector_id: connectorId 
+        }).unwrap();
         toast.success(t('selfHost.connectorSettings.actions.update.success' as any));
         await refetchConnectors();
         // Invalidate cache to refetch repositories
