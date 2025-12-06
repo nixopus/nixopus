@@ -86,7 +86,6 @@ a = Analysis(
     hiddenimports=[
         'app.commands.clone.command',
         'app.commands.install.command',
-        'app.commands.test.command',
         'app.commands.uninstall.command',
         'app.commands.version.command',
     ],
