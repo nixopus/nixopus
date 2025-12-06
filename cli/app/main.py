@@ -8,8 +8,6 @@ from rich.text import Text
 
 from app.commands.clone.command import clone_app
 from app.commands.install.command import install_app
-from app.commands.service.command import service_app
-from app.commands.test.command import test_app
 from app.commands.uninstall.command import uninstall_app
 from app.commands.update.command import update_app
 from app.commands.version.command import get_version, main_version_callback, version_app
@@ -87,15 +85,10 @@ def main(
 
 
 app.add_typer(clone_app, name="clone")
-app.add_typer(service_app, name="service")
 app.add_typer(install_app, name="install")
 app.add_typer(uninstall_app, name="uninstall")
 app.add_typer(update_app, name="update")
 app.add_typer(version_app, name="version")
-
-config = Config()
-if config.is_development():
-    app.add_typer(test_app, name="test")
 
 if __name__ == "__main__":
     app()
