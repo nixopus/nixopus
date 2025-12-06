@@ -3,7 +3,7 @@ import socket
 from typing import Any, Dict, List, Optional
 
 from app.utils.config import Config
-from app.utils.lib import ParallelProcessor
+from app.utils.parallel_processor import process_parallel
 from app.utils.protocols import LoggerProtocol
 
 from .messages import (
@@ -81,7 +81,7 @@ def check_ports(ports: List[int], host: str = "localhost", logger: Optional[Logg
             "is_available": False,
         }
 
-    results = ParallelProcessor.process_items(
+    results = process_parallel(
         items=ports,
         processor_func=process_port,
         max_workers=min(len(ports), 50),
@@ -152,7 +152,7 @@ def check_dependencies(deps: List[str], logger: Optional[LoggerProtocol] = None)
             "error": str(error),
         }
 
-    results = ParallelProcessor.process_items(
+    results = process_parallel(
         items=deps,
         processor_func=process_dep,
         max_workers=min(len(deps), 50),
