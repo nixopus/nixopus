@@ -1,7 +1,7 @@
 import typer
 
 from app.utils.config import DEFAULT_BRANCH, DEFAULT_PATH, DEFAULT_REPO, NIXOPUS_CONFIG_DIR, Config
-from app.utils.logger import Logger
+from app.utils.logger import create_logger, log_debug, log_error, log_success
 from app.utils.timeout import TimeoutWrapper
 
 from .clone import Clone, CloneConfig
@@ -52,54 +52,54 @@ def clone_callback(
 ):
     """Clone a repository"""
     try:
-        logger = Logger(verbose=verbose)
-        logger.debug(debug_clone_command_invoked)
-        logger.debug(debug_repo_param.format(repo=repo))
-        logger.debug(debug_branch_param.format(branch=branch))
-        logger.debug(debug_path_param.format(path=path))
-        logger.debug(debug_force_param.format(force=force))
-        logger.debug(debug_verbose_param.format(verbose=verbose))
-        logger.debug(debug_output_param.format(output=output))
-        logger.debug(debug_dry_run_param.format(dry_run=dry_run))
-        logger.debug(debug_timeout_param.format(timeout=timeout))
+        logger = create_logger(verbose=verbose)
+        log_debug(debug_clone_command_invoked, verbose=verbose)
+        log_debug(debug_repo_param.format(repo=repo), verbose=verbose)
+        log_debug(debug_branch_param.format(branch=branch), verbose=verbose)
+        log_debug(debug_path_param.format(path=path), verbose=verbose)
+        log_debug(debug_force_param.format(force=force), verbose=verbose)
+        log_debug(debug_verbose_param.format(verbose=verbose), verbose=verbose)
+        log_debug(debug_output_param.format(output=output), verbose=verbose)
+        log_debug(debug_dry_run_param.format(dry_run=dry_run), verbose=verbose)
+        log_debug(debug_timeout_param.format(timeout=timeout), verbose=verbose)
 
         config = CloneConfig(repo=repo, branch=branch, path=path, force=force, verbose=verbose, output=output, dry_run=dry_run)
-        logger.debug(debug_config_created.format(config_type="CloneConfig"))
+        log_debug(debug_config_created.format(config_type="CloneConfig"), verbose=verbose)
 
         clone_operation = Clone(logger=logger)
-        logger.debug(debug_action_created.format(action_type="Clone"))
+        log_debug(debug_action_created.format(action_type="Clone"), verbose=verbose)
 
-        logger.debug(debug_timeout_wrapper_created.format(timeout=timeout))
-        logger.debug(debug_executing_with_timeout.format(timeout=timeout))
+        log_debug(debug_timeout_wrapper_created.format(timeout=timeout), verbose=verbose)
+        log_debug(debug_executing_with_timeout.format(timeout=timeout), verbose=verbose)
 
         with TimeoutWrapper(timeout):
             if config.dry_run:
-                logger.debug(debug_executing_dry_run)
+                log_debug(debug_executing_dry_run, verbose=verbose)
                 formatted_output = clone_operation.clone_and_format(config)
-                logger.success(formatted_output)
-                logger.debug(debug_dry_run_completed)
+                log_success(formatted_output, verbose=verbose)
+                log_debug(debug_dry_run_completed, verbose=verbose)
             else:
                 result = clone_operation.clone(config)
-                logger.debug(debug_clone_operation_result.format(success=result.success))
+                log_debug(debug_clone_operation_result.format(success=result.success), verbose=verbose)
 
                 if not result.success:
-                    logger.error(result.output)
-                    logger.debug(debug_clone_operation_failed)
+                    log_error(result.output, verbose=verbose)
+                    log_debug(debug_clone_operation_failed, verbose=verbose)
                     raise typer.Exit(1)
 
-                logger.debug(debug_clone_operation_completed)
-                logger.success(result.output)
+                log_debug(debug_clone_operation_completed, verbose=verbose)
+                log_success(result.output, verbose=verbose)
 
-        logger.debug(debug_timeout_completed)
+        log_debug(debug_timeout_completed, verbose=verbose)
 
     except TimeoutError as e:
-        logger.debug(debug_timeout_error.format(error=str(e)))
+        log_debug(debug_timeout_error.format(error=str(e)), verbose=verbose)
         if not isinstance(e, typer.Exit):
-            logger.error(str(e))
+            log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.debug(debug_exception_caught.format(error_type=type(e).__name__, error=str(e)))
-        logger.debug(debug_exception_details.format(error=e))
+        log_debug(debug_exception_caught.format(error_type=type(e).__name__, error=str(e)), verbose=verbose)
+        log_debug(debug_exception_details.format(error=e), verbose=verbose)
         if not isinstance(e, typer.Exit):
-            logger.error(str(e))
+            log_error(str(e), verbose=verbose)
         raise typer.Exit(1)

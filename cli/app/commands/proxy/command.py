@@ -1,7 +1,7 @@
 import typer
 
 from app.utils.config import PROXY_PORT, Config
-from app.utils.logger import Logger
+from app.utils.logger import create_logger, log_error, log_success
 from app.utils.timeout import TimeoutWrapper
 
 from .load import Load, LoadConfig
@@ -28,7 +28,7 @@ def load(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Load Caddy proxy configuration"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = LoadConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run, config_file=config_file)
@@ -39,20 +39,20 @@ def load(
 
         output_text = load_service.format_output(result, output)
         if result.success:
-            logger.success(output_text)
+            log_success(output_text, verbose=verbose)
         else:
-            logger.error(output_text)
+            log_error(output_text, verbose=verbose)
             raise typer.Exit(1)
 
     except TimeoutError:
-        logger.error(operation_timed_out.format(timeout=timeout))
+        log_error(operation_timed_out.format(timeout=timeout), verbose=verbose)
         raise typer.Exit(1)
     except ValueError as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
         if not isinstance(e, typer.Exit):
-            logger.error(unexpected_error.format(error=str(e)))
+            log_error(unexpected_error.format(error=str(e)), verbose=verbose)
         raise typer.Exit(1)
 
 
@@ -65,7 +65,7 @@ def status(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Check Caddy proxy status"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = StatusConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run)
@@ -76,20 +76,20 @@ def status(
 
         output_text = status_service.format_output(result, output)
         if result.success:
-            logger.success(output_text)
+            log_success(output_text, verbose=verbose)
         else:
-            logger.error(output_text)
+            log_error(output_text, verbose=verbose)
             raise typer.Exit(1)
 
     except TimeoutError:
-        logger.error(operation_timed_out.format(timeout=timeout))
+        log_error(operation_timed_out.format(timeout=timeout), verbose=verbose)
         raise typer.Exit(1)
     except ValueError as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
         if not isinstance(e, typer.Exit):
-            logger.error(unexpected_error.format(error=str(e)))
+            log_error(unexpected_error.format(error=str(e)), verbose=verbose)
         raise typer.Exit(1)
 
 
@@ -102,7 +102,7 @@ def stop(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Stop Caddy proxy"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
 
     try:
         config = StopConfig(proxy_port=proxy_port, verbose=verbose, output=output, dry_run=dry_run)
@@ -113,18 +113,18 @@ def stop(
 
         output_text = stop_service.format_output(result, output)
         if result.success:
-            logger.success(output_text)
+            log_success(output_text, verbose=verbose)
         else:
-            logger.error(output_text)
+            log_error(output_text, verbose=verbose)
             raise typer.Exit(1)
 
     except TimeoutError:
-        logger.error(operation_timed_out.format(timeout=timeout))
+        log_error(operation_timed_out.format(timeout=timeout), verbose=verbose)
         raise typer.Exit(1)
     except ValueError as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
         if not isinstance(e, typer.Exit):
-            logger.error(unexpected_error.format(error=str(e)))
+            log_error(unexpected_error.format(error=str(e)), verbose=verbose)
         raise typer.Exit(1)

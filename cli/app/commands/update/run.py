@@ -2,7 +2,7 @@ import platform
 import subprocess
 
 from app.commands.service.base import BaseDockerCommandBuilder, BaseDockerService
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 from app.utils.config import Config, DEFAULT_COMPOSE_FILE
 from app.utils.config import NIXOPUS_CONFIG_DIR
 from .messages import (
@@ -21,7 +21,7 @@ PACKAGE_JSON_URL = "https://raw.githubusercontent.com/raghavyuva/nixopus/master/
 RELEASES_BASE_URL = "https://github.com/raghavyuva/nixopus/releases/download"
 
 class Update:
-    def __init__(self, logger: Logger):
+    def __init__(self, logger):
         self.logger = logger
         self.config = Config()
 

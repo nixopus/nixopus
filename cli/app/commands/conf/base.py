@@ -6,7 +6,7 @@ from typing import Dict, Generic, Optional, Protocol, TypeVar
 from pydantic import BaseModel, Field, field_validator
 
 from app.utils.config import API_ENV_FILE, VIEW_ENV_FILE, Config
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 from app.utils.protocols import LoggerProtocol
 
 from .messages import (
@@ -204,7 +204,7 @@ class BaseResult(BaseModel):
 class BaseService(Generic[TConfig, TResult]):
     def __init__(self, config: TConfig, logger: LoggerProtocol = None, environment_service: EnvironmentServiceProtocol = None):
         self.config = config
-        self.logger = logger or Logger(verbose=config.verbose)
+        self.logger = logger or create_logger(verbose=config.verbose)
         self.environment_service = environment_service
         self.formatter = None
 

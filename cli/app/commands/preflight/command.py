@@ -1,7 +1,7 @@
 import typer
 
 from app.utils.lib import HostInformation
-from app.utils.logger import Logger
+from app.utils.logger import create_logger, log_debug, log_error, log_info, log_success
 from app.utils.timeout import TimeoutWrapper
 
 from .deps import Deps, DepsConfig
@@ -46,24 +46,24 @@ def check(
 ):
     """Run all preflight checks"""
     try:
-        logger = Logger(verbose=verbose)
-        logger.debug(debug_starting_preflight_check)
-        logger.info(running_preflight_checks)
+        logger = create_logger(verbose=verbose)
+        log_debug(debug_starting_preflight_check, verbose=verbose)
+        log_info(running_preflight_checks, verbose=verbose)
 
-        logger.debug(debug_timeout_wrapper_start.format(timeout=timeout))
+        log_debug(debug_timeout_wrapper_start.format(timeout=timeout), verbose=verbose)
         with TimeoutWrapper(timeout):
             preflight_runner = PreflightRunner(logger=logger, verbose=verbose)
             preflight_runner.check_ports_from_config()
-            logger.debug(debug_timeout_wrapper_end)
-            logger.debug(debug_preflight_check_completed)
+            log_debug(debug_timeout_wrapper_end, verbose=verbose)
+            log_debug(debug_preflight_check_completed, verbose=verbose)
 
-        logger.success("All preflight checks completed successfully")
+        log_success("All preflight checks completed successfully", verbose=verbose)
     except TimeoutError as e:
-        logger.error(error_timeout_occurred.format(timeout=timeout))
+        log_error(error_timeout_occurred.format(timeout=timeout), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
         if not isinstance(e, typer.Exit):
-            logger.error(f"Unexpected error during preflight check: {e}")
+            log_error(f"Unexpected error during preflight check: {e}", verbose=verbose)
         raise typer.Exit(1)
 
 
@@ -77,35 +77,35 @@ def ports(
 ) -> None:
     """Check if list of ports are available on a host"""
     try:
-        logger = Logger(verbose=verbose)
-        logger.debug(debug_starting_ports_check)
+        logger = create_logger(verbose=verbose)
+        log_debug(debug_starting_ports_check, verbose=verbose)
 
-        logger.debug(debug_creating_port_config)
+        log_debug(debug_creating_port_config, verbose=verbose)
         config = PortConfig(ports=ports, host=host, verbose=verbose)
 
-        logger.debug(debug_initializing_port_service)
+        log_debug(debug_initializing_port_service, verbose=verbose)
         port_service = PortService(config, logger=logger)
 
-        logger.debug(debug_timeout_wrapper_start.format(timeout=timeout))
+        log_debug(debug_timeout_wrapper_start.format(timeout=timeout), verbose=verbose)
         with TimeoutWrapper(timeout):
             results = port_service.check_ports()
-        logger.debug(debug_timeout_wrapper_end)
+        log_debug(debug_timeout_wrapper_end, verbose=verbose)
 
-        logger.debug(debug_formatting_output.format(format=output))
+        log_debug(debug_formatting_output.format(format=output), verbose=verbose)
         formatted_output = port_service.formatter.format_output(results, output)
 
-        logger.success(formatted_output)
-        logger.debug(debug_ports_check_completed)
+        log_success(formatted_output, verbose=verbose)
+        log_debug(debug_ports_check_completed, verbose=verbose)
 
     except ValueError as e:
-        logger.error(error_validation_failed.format(error=e))
+        log_error(error_validation_failed.format(error=e), verbose=verbose)
         raise typer.Exit(1)
     except TimeoutError as e:
-        logger.error(error_timeout_occurred.format(timeout=timeout))
+        log_error(error_timeout_occurred.format(timeout=timeout), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
         if not isinstance(e, typer.Exit):
-            logger.error(error_checking_ports.format(error=e))
+            log_error(error_checking_ports.format(error=e), verbose=verbose)
         raise typer.Exit(1)
 
 
@@ -118,10 +118,10 @@ def deps(
 ) -> None:
     """Check if list of dependencies are available on the system"""
     try:
-        logger = Logger(verbose=verbose)
-        logger.debug(debug_starting_deps_check)
+        logger = create_logger(verbose=verbose)
+        log_debug(debug_starting_deps_check, verbose=verbose)
 
-        logger.debug(debug_creating_deps_config)
+        log_debug(debug_creating_deps_config, verbose=verbose)
         config = DepsConfig(
             deps=deps,
             verbose=verbose,
@@ -130,27 +130,27 @@ def deps(
             package_manager=HostInformation.get_package_manager(),
         )
 
-        logger.debug(debug_initializing_deps_service)
+        log_debug(debug_initializing_deps_service, verbose=verbose)
         deps_checker = Deps(logger=logger)
 
-        logger.debug(debug_timeout_wrapper_start.format(timeout=timeout))
+        log_debug(debug_timeout_wrapper_start.format(timeout=timeout), verbose=verbose)
         with TimeoutWrapper(timeout):
             results = deps_checker.check(config)
-        logger.debug(debug_timeout_wrapper_end)
+        log_debug(debug_timeout_wrapper_end, verbose=verbose)
 
-        logger.debug(debug_formatting_output.format(format=output))
+        log_debug(debug_formatting_output.format(format=output), verbose=verbose)
         formatted_output = deps_checker.format_output(results, output)
 
-        logger.success(formatted_output)
-        logger.debug(debug_deps_check_completed)
+        log_success(formatted_output, verbose=verbose)
+        log_debug(debug_deps_check_completed, verbose=verbose)
 
     except ValueError as e:
-        logger.error(error_validation_failed.format(error=e))
+        log_error(error_validation_failed.format(error=e), verbose=verbose)
         raise typer.Exit(1)
     except TimeoutError as e:
-        logger.error(error_timeout_occurred.format(timeout=timeout))
+        log_error(error_timeout_occurred.format(timeout=timeout), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
         if not isinstance(e, typer.Exit):
-            logger.error(error_checking_deps.format(error=e))
+            log_error(error_checking_deps.format(error=e), verbose=verbose)
         raise typer.Exit(1)

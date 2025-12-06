@@ -5,7 +5,7 @@ from typing import Any, List, Optional, Protocol, TypedDict, Union
 from pydantic import BaseModel, Field, field_validator
 
 from app.utils.lib import ParallelProcessor
-from app.utils.logger import Logger
+from app.utils.logger import create_logger
 from app.utils.output_formatter import OutputFormatter
 from app.utils.protocols import LoggerProtocol
 
@@ -134,7 +134,7 @@ class PortChecker:
 class PortService:
     def __init__(self, config: PortConfig, logger: LoggerProtocol = None, checker: PortCheckerProtocol = None):
         self.config = config
-        self.logger = logger or Logger(verbose=config.verbose)
+        self.logger = logger or create_logger(verbose=config.verbose)
         self.checker = checker or PortChecker(self.logger)
         self.formatter = PortFormatter()
 

@@ -1,6 +1,7 @@
-from app.commands.update.run import Update
-from app.utils.logger import Logger
 import typer
+
+from app.commands.update.run import Update
+from app.utils.logger import create_logger
 
 update_app = typer.Typer(help="Update Nixopus", invoke_without_command=True)
 
@@ -10,7 +11,7 @@ def update_callback(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show more details while updating"),
 ):
     """Update Nixopus"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
     update = Update(logger=logger)
     update.run()
 
@@ -20,6 +21,6 @@ def cli(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show more details while updating"),
 ):
     """Update CLI tool"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
     update = Update(logger=logger)
     update.update_cli()

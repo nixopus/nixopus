@@ -1,6 +1,6 @@
 import typer
 
-from app.utils.logger import Logger
+from app.utils.logger import create_logger, log_debug, log_error, log_info, log_success
 from app.utils.timeout import TimeoutWrapper
 
 from .delete import Delete, DeleteConfig
@@ -51,55 +51,55 @@ def list(
 ):
     """List all configuration"""
     try:
-        logger = Logger(verbose=verbose)
+        logger = create_logger(verbose=verbose)
 
-        logger.debug(debug_conf_command_invoked)
-        logger.debug(debug_service_param.format(service=service))
-        logger.debug(debug_verbose_param.format(verbose=verbose))
-        logger.debug(debug_output_param.format(output=output))
-        logger.debug(debug_dry_run_param.format(dry_run=dry_run))
-        logger.debug(debug_env_file_param.format(env_file=env_file))
-        logger.debug(debug_timeout_param.format(timeout=timeout))
+        log_debug(debug_conf_command_invoked, verbose=verbose)
+        log_debug(debug_service_param.format(service=service), verbose=verbose)
+        log_debug(debug_verbose_param.format(verbose=verbose), verbose=verbose)
+        log_debug(debug_output_param.format(output=output), verbose=verbose)
+        log_debug(debug_dry_run_param.format(dry_run=dry_run), verbose=verbose)
+        log_debug(debug_env_file_param.format(env_file=env_file), verbose=verbose)
+        log_debug(debug_timeout_param.format(timeout=timeout), verbose=verbose)
 
         config = ListConfig(service=service, verbose=verbose, output=output, dry_run=dry_run, env_file=env_file)
-        logger.debug(debug_config_created.format(config_type="ListConfig"))
+        log_debug(debug_config_created.format(config_type="ListConfig"), verbose=verbose)
 
         list_action = List(logger=logger)
-        logger.debug(debug_action_created.format(action_type="List"))
+        log_debug(debug_action_created.format(action_type="List"), verbose=verbose)
 
-        logger.debug(debug_timeout_wrapper_created.format(timeout=timeout))
-        logger.debug(debug_executing_with_timeout.format(timeout=timeout))
+        log_debug(debug_timeout_wrapper_created.format(timeout=timeout), verbose=verbose)
+        log_debug(debug_executing_with_timeout.format(timeout=timeout), verbose=verbose)
 
         with TimeoutWrapper(timeout):
             if config.dry_run:
-                logger.debug(debug_executing_dry_run)
+                log_debug(debug_executing_dry_run, verbose=verbose)
                 formatted_output = list_action.list_and_format(config)
-                logger.info(formatted_output)
-                logger.debug(debug_dry_run_completed)
+                log_info(formatted_output, verbose=verbose)
+                log_debug(debug_dry_run_completed, verbose=verbose)
             else:
                 result = list_action.list(config)
-                logger.debug(debug_conf_operation_result.format(success=result.success))
+                log_debug(debug_conf_operation_result.format(success=result.success), verbose=verbose)
 
                 if result.success:
                     formatted_output = list_action.format_output(result, output)
-                    logger.success(formatted_output)
-                    logger.debug(debug_conf_operation_completed)
+                    log_success(formatted_output, verbose=verbose)
+                    log_debug(debug_conf_operation_completed, verbose=verbose)
                 else:
-                    logger.error(result.error)
-                    logger.debug(debug_conf_operation_failed)
+                    log_error(result.error, verbose=verbose)
+                    log_debug(debug_conf_operation_failed, verbose=verbose)
                     raise typer.Exit(1)
 
-        logger.debug(debug_timeout_completed)
+        log_debug(debug_timeout_completed, verbose=verbose)
 
     except TimeoutError as e:
-        logger.debug(debug_timeout_error.format(error=str(e)))
-        logger.error(str(e))
+        log_debug(debug_timeout_error.format(error=str(e)), verbose=verbose)
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.debug(debug_exception_caught.format(error_type=type(e).__name__, error=str(e)))
-        logger.debug(debug_exception_details.format(error=e))
+        log_debug(debug_exception_caught.format(error_type=type(e).__name__, error=str(e)), verbose=verbose)
+        log_debug(debug_exception_details.format(error=e), verbose=verbose)
         if not isinstance(e, typer.Exit):
-            logger.error(str(e))
+            log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
 
 
@@ -117,56 +117,56 @@ def delete(
 ):
     """Delete a configuration"""
     try:
-        logger = Logger(verbose=verbose)
+        logger = create_logger(verbose=verbose)
 
-        logger.debug(debug_conf_command_invoked)
-        logger.debug(debug_service_param.format(service=service))
-        logger.debug(debug_key_param.format(key=key))
-        logger.debug(debug_verbose_param.format(verbose=verbose))
-        logger.debug(debug_output_param.format(output=output))
-        logger.debug(debug_dry_run_param.format(dry_run=dry_run))
-        logger.debug(debug_env_file_param.format(env_file=env_file))
-        logger.debug(debug_timeout_param.format(timeout=timeout))
+        log_debug(debug_conf_command_invoked, verbose=verbose)
+        log_debug(debug_service_param.format(service=service), verbose=verbose)
+        log_debug(debug_key_param.format(key=key), verbose=verbose)
+        log_debug(debug_verbose_param.format(verbose=verbose), verbose=verbose)
+        log_debug(debug_output_param.format(output=output), verbose=verbose)
+        log_debug(debug_dry_run_param.format(dry_run=dry_run), verbose=verbose)
+        log_debug(debug_env_file_param.format(env_file=env_file), verbose=verbose)
+        log_debug(debug_timeout_param.format(timeout=timeout), verbose=verbose)
 
         config = DeleteConfig(service=service, key=key, verbose=verbose, output=output, dry_run=dry_run, env_file=env_file)
-        logger.debug(debug_config_created.format(config_type="DeleteConfig"))
+        log_debug(debug_config_created.format(config_type="DeleteConfig"), verbose=verbose)
 
         delete_action = Delete(logger=logger)
-        logger.debug(debug_action_created.format(action_type="Delete"))
+        log_debug(debug_action_created.format(action_type="Delete"), verbose=verbose)
 
-        logger.debug(debug_timeout_wrapper_created.format(timeout=timeout))
-        logger.debug(debug_executing_with_timeout.format(timeout=timeout))
+        log_debug(debug_timeout_wrapper_created.format(timeout=timeout), verbose=verbose)
+        log_debug(debug_executing_with_timeout.format(timeout=timeout), verbose=verbose)
 
         with TimeoutWrapper(timeout):
             if config.dry_run:
-                logger.debug(debug_executing_dry_run)
+                log_debug(debug_executing_dry_run, verbose=verbose)
                 formatted_output = delete_action.delete_and_format(config)
-                logger.info(formatted_output)
-                logger.debug(debug_dry_run_completed)
+                log_info(formatted_output, verbose=verbose)
+                log_debug(debug_dry_run_completed, verbose=verbose)
             else:
                 result = delete_action.delete(config)
-                logger.debug(debug_conf_operation_result.format(success=result.success))
+                log_debug(debug_conf_operation_result.format(success=result.success), verbose=verbose)
 
                 if result.success:
                     formatted_output = delete_action.format_output(result, output)
-                    logger.success(formatted_output)
-                    logger.debug(debug_conf_operation_completed)
+                    log_success(formatted_output, verbose=verbose)
+                    log_debug(debug_conf_operation_completed, verbose=verbose)
                 else:
-                    logger.error(result.error)
-                    logger.debug(debug_conf_operation_failed)
+                    log_error(result.error, verbose=verbose)
+                    log_debug(debug_conf_operation_failed, verbose=verbose)
                     raise typer.Exit(1)
 
-        logger.debug(debug_timeout_completed)
+        log_debug(debug_timeout_completed, verbose=verbose)
 
     except TimeoutError as e:
-        logger.debug(debug_timeout_error.format(error=str(e)))
-        logger.error(str(e))
+        log_debug(debug_timeout_error.format(error=str(e)), verbose=verbose)
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.debug(debug_exception_caught.format(error_type=type(e).__name__, error=str(e)))
-        logger.debug(debug_exception_details.format(error=e))
+        log_debug(debug_exception_caught.format(error_type=type(e).__name__, error=str(e)), verbose=verbose)
+        log_debug(debug_exception_details.format(error=e), verbose=verbose)
         if not isinstance(e, typer.Exit):
-            logger.error(str(e))
+            log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
 
 
@@ -184,64 +184,64 @@ def set(
 ):
     """Set a configuration"""
     try:
-        logger = Logger(verbose=verbose)
+        logger = create_logger(verbose=verbose)
 
-        logger.debug(debug_conf_command_invoked)
-        logger.debug(debug_service_param.format(service=service))
-        logger.debug(debug_verbose_param.format(verbose=verbose))
-        logger.debug(debug_output_param.format(output=output))
-        logger.debug(debug_dry_run_param.format(dry_run=dry_run))
-        logger.debug(debug_env_file_param.format(env_file=env_file))
-        logger.debug(debug_timeout_param.format(timeout=timeout))
-        logger.debug(debug_parsing_key_value.format(key_value=key_value))
+        log_debug(debug_conf_command_invoked, verbose=verbose)
+        log_debug(debug_service_param.format(service=service), verbose=verbose)
+        log_debug(debug_verbose_param.format(verbose=verbose), verbose=verbose)
+        log_debug(debug_output_param.format(output=output), verbose=verbose)
+        log_debug(debug_dry_run_param.format(dry_run=dry_run), verbose=verbose)
+        log_debug(debug_env_file_param.format(env_file=env_file), verbose=verbose)
+        log_debug(debug_timeout_param.format(timeout=timeout), verbose=verbose)
+        log_debug(debug_parsing_key_value.format(key_value=key_value), verbose=verbose)
 
         if "=" not in key_value:
-            logger.debug(debug_key_value_parse_failed.format(key_value=key_value))
-            logger.error(argument_must_be_in_form)
+            log_debug(debug_key_value_parse_failed.format(key_value=key_value), verbose=verbose)
+            log_error(argument_must_be_in_form, verbose=verbose)
             raise typer.Exit(1)
 
         key, value = key_value.split("=", 1)
-        logger.debug(debug_key_value_parsed.format(key=key, value=value))
+        log_debug(debug_key_value_parsed.format(key=key, value=value), verbose=verbose)
 
         config = SetConfig(
             service=service, key=key, value=value, verbose=verbose, output=output, dry_run=dry_run, env_file=env_file
         )
-        logger.debug(debug_config_created.format(config_type="SetConfig"))
+        log_debug(debug_config_created.format(config_type="SetConfig"), verbose=verbose)
 
         set_action = Set(logger=logger)
-        logger.debug(debug_action_created.format(action_type="Set"))
+        log_debug(debug_action_created.format(action_type="Set"), verbose=verbose)
 
-        logger.debug(debug_timeout_wrapper_created.format(timeout=timeout))
-        logger.debug(debug_executing_with_timeout.format(timeout=timeout))
+        log_debug(debug_timeout_wrapper_created.format(timeout=timeout), verbose=verbose)
+        log_debug(debug_executing_with_timeout.format(timeout=timeout), verbose=verbose)
 
         with TimeoutWrapper(timeout):
             if config.dry_run:
-                logger.debug(debug_executing_dry_run)
+                log_debug(debug_executing_dry_run, verbose=verbose)
                 formatted_output = set_action.set_and_format(config)
-                logger.info(formatted_output)
-                logger.debug(debug_dry_run_completed)
+                log_info(formatted_output, verbose=verbose)
+                log_debug(debug_dry_run_completed, verbose=verbose)
             else:
                 result = set_action.set(config)
-                logger.debug(debug_conf_operation_result.format(success=result.success))
+                log_debug(debug_conf_operation_result.format(success=result.success), verbose=verbose)
 
                 if result.success:
                     formatted_output = set_action.format_output(result, output)
-                    logger.success(formatted_output)
-                    logger.debug(debug_conf_operation_completed)
+                    log_success(formatted_output, verbose=verbose)
+                    log_debug(debug_conf_operation_completed, verbose=verbose)
                 else:
-                    logger.error(result.error)
-                    logger.debug(debug_conf_operation_failed)
+                    log_error(result.error, verbose=verbose)
+                    log_debug(debug_conf_operation_failed, verbose=verbose)
                     raise typer.Exit(1)
 
-        logger.debug(debug_timeout_completed)
+        log_debug(debug_timeout_completed, verbose=verbose)
 
     except TimeoutError as e:
-        logger.debug(debug_timeout_error.format(error=str(e)))
-        logger.error(str(e))
+        log_debug(debug_timeout_error.format(error=str(e)), verbose=verbose)
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.debug(debug_exception_caught.format(error_type=type(e).__name__, error=str(e)))
-        logger.debug(debug_exception_details.format(error=e))
+        log_debug(debug_exception_caught.format(error_type=type(e).__name__, error=str(e)), verbose=verbose)
+        log_debug(debug_exception_details.format(error=e), verbose=verbose)
         if not isinstance(e, typer.Exit):
-            logger.error(str(e))
+            log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
