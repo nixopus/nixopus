@@ -68,41 +68,6 @@ func (c *GithubConnectorService) UpdateGithubConnectorRequest(InstallationID str
 		}
 	}
 
-	var connectorToUpdate *shared_types.GithubConnector
-
-	// If ConnectorID is provided, find and update that specific connector
-	if ConnectorID != "" {
-		// Validate UUID format
-		if _, err := uuid.Parse(ConnectorID); err != nil {
-			return fmt.Errorf("invalid connector_id format: %v", err)
-		}
-
-		// Find the connector with matching ID
-		for i := range connectors {
-			if connectors[i].ID.String() == ConnectorID {
-				connectorToUpdate = &connectors[i]
-				break
-			}
-		}
-
-		if connectorToUpdate == nil {
-			return fmt.Errorf("connector with id %s not found", ConnectorID)
-		}
-	} else {
-		// Find connector without installation_id (newly created connector)
-		for i := range connectors {
-			if connectors[i].InstallationID == "" || strings.TrimSpace(connectors[i].InstallationID) == "" {
-				connectorToUpdate = &connectors[i]
-				break
-			}
-		}
-
-		// If no connector without installation_id found, use first connector
-		if connectorToUpdate == nil {
-			connectorToUpdate = &connectors[0]
-		}
-	}
-
 	err = c.storage.UpdateConnector(connectorToUpdate.ID.String(), InstallationID)
 	if err != nil {
 		return err
