@@ -5,7 +5,9 @@ import ListRepositories from './components/github-repositories/list-repositories
 import AppItem, { AppItemSkeleton } from './components/application';
 import useGetDeployedApplications from './hooks/use_get_deployed_applications';
 import PaginationWrapper from '@/components/ui/pagination';
-import DashboardPageHeader, { DahboardUtilityHeader } from '@/components/layout/dashboard-page-header';
+import DashboardPageHeader, {
+  DahboardUtilityHeader
+} from '@/components/layout/dashboard-page-header';
 import { Application } from '@/redux/types/applications';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/use-translation';

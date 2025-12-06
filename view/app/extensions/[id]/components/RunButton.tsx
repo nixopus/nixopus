@@ -25,13 +25,8 @@ export function RunButton({ extension, isLoading, isRunning, onClick }: RunButto
       : t('extensions.run') || 'Run';
 
   return (
-    <Button
-      className="min-w-[112px]"
-      onClick={onClick}
-      disabled={!extension || isRunning}
-    >
+    <Button className="min-w-[112px]" onClick={onClick} disabled={!extension || isRunning}>
       {buttonText}
     </Button>
   );
 }
-
