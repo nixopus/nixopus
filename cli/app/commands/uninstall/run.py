@@ -6,7 +6,7 @@ from pathlib import Path
 import typer
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 
-from app.commands.service.down import Down, DownConfig
+from app.commands.service.service import stop_services
 from app.utils.config import DEFAULT_COMPOSE_FILE, NIXOPUS_CONFIG_DIR, SSH_FILE_PATH, Config
 from app.utils.protocols import LoggerProtocol
 from app.utils.timeout import TimeoutWrapper
@@ -120,17 +120,16 @@ class Uninstall:
             return
 
         try:
-            config = DownConfig(
-                name="all", env_file=None, verbose=self.verbose, output="text", dry_run=False, compose_file=compose_file_path
-            )
-
-            down_service = Down(logger=self.logger)
-
             with TimeoutWrapper(self.timeout):
-                result = down_service.down(config)
+                success, error = stop_services(
+                    name="all",
+                    env_file=None,
+                    compose_file=compose_file_path,
+                    logger=self.logger,
+                )
 
-            if not result.success:
-                raise Exception(f"{services_stop_failed}: {result.error}")
+            if not success:
+                raise Exception(f"{services_stop_failed}: {error}")
 
         except TimeoutError:
             raise Exception(f"{services_stop_failed}: {operation_timed_out}")
