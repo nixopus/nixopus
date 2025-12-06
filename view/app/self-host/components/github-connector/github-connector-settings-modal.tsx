@@ -10,6 +10,7 @@ import {
   Github,
   Settings,
   Trash2,
+  RefreshCw,
   Plus,
   Check,
   ExternalLink,
@@ -25,6 +26,7 @@ interface ConnectorItemProps {
   isActive: boolean;
   onSetActive: (id: string) => void;
   onDelete: (id: string) => void;
+  onReset: (id: string) => void;
   isDeleting: boolean;
   isUpdating: boolean;
 }
@@ -34,6 +36,7 @@ const ConnectorItem: React.FC<ConnectorItemProps> = ({
   isActive,
   onSetActive,
   onDelete,
+  onReset,
   isDeleting,
   isUpdating
 }) => {
@@ -42,6 +45,7 @@ const ConnectorItem: React.FC<ConnectorItemProps> = ({
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
+  const handleDelete = () => {
     setShowDeleteDialog(true);
   };
 
@@ -65,6 +69,12 @@ const ConnectorItem: React.FC<ConnectorItemProps> = ({
             ? 'border-primary bg-primary/5 cursor-default'
             : 'border-border bg-card cursor-pointer hover:border-primary/50 hover:bg-muted/50'
         } ${isDeleting || isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+  return (
+    <>
+      <div
+        className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+          isActive ? 'border-primary bg-primary/5' : 'border-border bg-card'
+        }`}
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="rounded-full bg-primary/10 p-2 shrink-0">
@@ -92,6 +102,26 @@ const ConnectorItem: React.FC<ConnectorItemProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2 shrink-0">
+          {!isActive && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onSetActive(connector.id)}
+              disabled={isDeleting || isUpdating}
+            >
+              {t('selfHost.connectorSettings.actions.switch.label' as any)}
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onReset(connector.id)}
+            disabled={isDeleting || isUpdating}
+            title={t('selfHost.connectorSettings.actions.reset.label' as any)}
+          >
+            <RefreshCw size={16} />
+          </Button>
           <Button
             variant="destructive"
             size="sm"
@@ -213,6 +243,7 @@ const GitHubConnectorSettingsModal: React.FC<GitHubConnectorSettingsModalProps> 
                   isActive={connector.id === activeConnectorId}
                   onSetActive={handleSetActiveConnector}
                   onDelete={handleDeleteConnector}
+                  onReset={handleResetConnector}
                   isDeleting={isDeleting === connector.id}
                   isUpdating={isUpdating === connector.id}
                 />
