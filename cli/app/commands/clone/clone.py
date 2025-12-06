@@ -2,7 +2,7 @@ import os
 import subprocess
 from typing import Optional
 
-from app.utils.lib import DirectoryManager
+from app.utils.directory_manager import path_exists_and_not_force, remove_directory
 from app.utils.protocols import LoggerProtocol
 
 from .messages import (
@@ -91,8 +91,7 @@ def _prepare_target_directory(path: str, force: bool, logger: Optional[LoggerPro
     if force and os.path.exists(path):
         if logger:
             logger.debug(debug_removing_directory.format(path=path))
-        dir_manager = DirectoryManager()
-        success = dir_manager.remove_directory(path, logger)
+        success = remove_directory(path, logger)
         if not success and logger:
             logger.debug(debug_directory_removal_failed)
         return success
@@ -101,8 +100,7 @@ def _prepare_target_directory(path: str, force: bool, logger: Optional[LoggerPro
 
 def _validate_prerequisites(path: str, force: bool, logger: Optional[LoggerProtocol] = None) -> bool:
     """Validate prerequisites for cloning."""
-    dir_manager = DirectoryManager()
-    if dir_manager.path_exists_and_not_force(path, force):
+    if path_exists_and_not_force(path, force):
         if logger:
             logger.debug(debug_path_exists_force_disabled.format(path=path))
             logger.error(path_already_exists_use_force.format(path=path))
