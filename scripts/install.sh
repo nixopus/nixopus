@@ -48,8 +48,8 @@ This script installs the nixopus CLI and optionally runs 'nixopus install' with 
 
 CLI Installation Options:
   --skip-nixopus-install    Skip running 'nixopus install' after CLI installation
-  --repo REPOSITORY         GitHub repository URL for CLI installation and passed to 'nixopus install' (default: https://github.com/raghavyuva/nixopus). When custom repo/branch is used, docker-compose-staging.yml will be used instead of docker-compose.yml
-  --branch BRANCH           Git branch to use for CLI installation and passed to 'nixopus install' (default: master). When custom repo/branch is used, docker-compose-staging.yml will be used instead of docker-compose.yml
+  --repo REPOSITORY         GitHub repository URL for CLI installation and passed to 'nixopus install' (default: https://github.com/raghavyuva/nixopus)
+  --branch BRANCH           Git branch to use for CLI installation and passed to 'nixopus install' (default: master)
 
 nixopus install Options (passed through to 'nixopus install'):
   -v, --verbose             Show more details while installing

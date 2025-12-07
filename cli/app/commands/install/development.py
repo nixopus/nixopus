@@ -74,6 +74,7 @@ class DevelopmentInstall(BaseInstall):
         caddy_http_port: int = None,
         caddy_https_port: int = None,
         supertokens_port: int = None,
+        external_db_url: str = None,
     ):
         super().__init__(
             logger=logger,
@@ -92,6 +93,7 @@ class DevelopmentInstall(BaseInstall):
             caddy_http_port=caddy_http_port,
             caddy_https_port=caddy_https_port,
             supertokens_port=supertokens_port,
+            external_db_url=external_db_url,
         )
 
         # safe fallback incase cwd is not accessible

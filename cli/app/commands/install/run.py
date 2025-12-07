@@ -70,6 +70,7 @@ class InstallParams:
     caddy_http_port: Optional[int] = None
     caddy_https_port: Optional[int] = None
     supertokens_port: Optional[int] = None
+    external_db_url: Optional[str] = None
 
 
 def validate_install_params(params: InstallParams) -> None:
@@ -143,7 +144,8 @@ def create_env_files_step(config: Config, config_resolver: ConfigResolver, param
         get_host_ip_or_default(params.host_ip),
         params.api_domain,
         params.view_domain,
-        params.logger,
+        external_db_url=params.external_db_url,
+        logger=params.logger,
     )
     if not success:
         raise Exception(error)
@@ -199,12 +201,18 @@ def start_services_step(config_resolver: ConfigResolver, params: InstallParams) 
         params.caddy_https_port,
         params.supertokens_port,
     )
+    profiles = None
+    if params.external_db_url:
+        profiles = []
+    else:
+        profiles = ["local-db"]
     success, error = start_docker_services(
         compose_file,
         env_vars,
         params.timeout,
         params.dry_run,
         params.logger,
+        profiles=profiles,
     )
     if not success:
         raise Exception(f"{services_start_failed}: {error}")
@@ -291,7 +299,7 @@ def run_installation(params: InstallParams) -> None:
     
     if is_custom_repo_or_branch(params.repo, params.branch):
         if params.logger:
-            params.logger.info("Custom repository/branch detected - will use docker-compose-staging.yml")
+            params.logger.info("Custom repository/branch detected - will use docker-compose.yml")
     
     config_resolver = create_config_resolver(config, params)
     steps = build_installation_steps(config, config_resolver, params)
@@ -349,6 +357,7 @@ class Install:
         caddy_http_port: int = None,
         caddy_https_port: int = None,
         supertokens_port: int = None,
+        external_db_url: str = None,
     ):
         self.params = InstallParams(
             logger=logger,
@@ -370,6 +379,7 @@ class Install:
             caddy_http_port=caddy_http_port,
             caddy_https_port=caddy_https_port,
             supertokens_port=supertokens_port,
+            external_db_url=external_db_url,
         )
 
     def run(self):

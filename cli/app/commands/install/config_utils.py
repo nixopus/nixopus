@@ -2,8 +2,9 @@ import os
 import ipaddress
 import json
 import shutil
+import socket
 from typing import Dict, Optional
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs, unquote
 
 from app.utils.config import (
     CADDY_ADMIN_PORT,
@@ -22,6 +23,58 @@ from app.utils.host_information import get_public_ip
 from app.utils.protocols import LoggerProtocol
 
 from .config_schema import ENV_VAR_KEYS
+
+
+def resolve_hostname_to_ipv4(hostname: str) -> str:
+    try:
+        ip = ipaddress.ip_address(hostname)
+        if isinstance(ip, ipaddress.IPv4Address):
+            return hostname
+        elif isinstance(ip, ipaddress.IPv6Address):
+            try:
+                addr_info = socket.getaddrinfo(hostname, None, socket.AF_INET, socket.SOCK_STREAM)
+                if addr_info:
+                    return addr_info[0][4][0]
+            except (socket.gaierror, OSError):
+                pass
+            return hostname
+    except ValueError:
+        pass
+    
+    try:
+        addr_info = socket.getaddrinfo(hostname, None, socket.AF_INET, socket.SOCK_STREAM)
+        if addr_info:
+            ipv4_address = addr_info[0][4][0]
+            return ipv4_address
+    except (socket.gaierror, OSError):
+        pass
+    
+    return hostname
+
+
+def parse_db_url(db_url: str) -> Dict[str, str]:
+    parsed = urlparse(db_url)
+    
+    username = unquote(parsed.username or "")
+    password = unquote(parsed.password or "")
+    hostname = parsed.hostname or ""
+    port = parsed.port or 5432
+    database = unquote(parsed.path.lstrip("/") or "")
+    
+    query_params = parse_qs(parsed.query)
+    ssl_mode = query_params.get("sslmode", ["disable"])[0] if query_params.get("sslmode") else "disable"
+    
+    resolved_host = resolve_hostname_to_ipv4(hostname)
+    
+    return {
+        "HOST_NAME": resolved_host,
+        "DB_PORT": str(port),
+        "USERNAME": username,
+        "PASSWORD": password,
+        "DB_NAME": database,
+        "SSL_MODE": ssl_mode,
+        "POSTGRESQL_CONNECTION_URI": db_url,
+    }
 
 
 def is_custom_repo_or_branch(repo: Optional[str], branch: Optional[str]) -> bool:
@@ -128,8 +181,13 @@ def update_environment_variables(
     view_port: str,
     supertokens_api_port: str,
     ssh_key_path: str,
+    external_db_url: Optional[str] = None,
 ) -> dict:
     updated_env = env_values.copy()
+    
+    if external_db_url:
+        db_config = parse_db_url(external_db_url)
+        updated_env.update(db_config)
     
     env_map = build_env_variable_map(
         host_ip=host_ip,
