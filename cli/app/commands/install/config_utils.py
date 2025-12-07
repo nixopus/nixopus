@@ -2,6 +2,7 @@ import os
 import ipaddress
 import json
 import shutil
+import socket
 from typing import Dict, Optional
 from urllib.parse import urlparse, parse_qs, unquote
 
@@ -24,6 +25,33 @@ from app.utils.protocols import LoggerProtocol
 from .config_schema import ENV_VAR_KEYS
 
 
+def resolve_hostname_to_ipv4(hostname: str) -> str:
+    try:
+        ip = ipaddress.ip_address(hostname)
+        if isinstance(ip, ipaddress.IPv4Address):
+            return hostname
+        elif isinstance(ip, ipaddress.IPv6Address):
+            try:
+                addr_info = socket.getaddrinfo(hostname, None, socket.AF_INET, socket.SOCK_STREAM)
+                if addr_info:
+                    return addr_info[0][4][0]
+            except (socket.gaierror, OSError):
+                pass
+            return hostname
+    except ValueError:
+        pass
+    
+    try:
+        addr_info = socket.getaddrinfo(hostname, None, socket.AF_INET, socket.SOCK_STREAM)
+        if addr_info:
+            ipv4_address = addr_info[0][4][0]
+            return ipv4_address
+    except (socket.gaierror, OSError):
+        pass
+    
+    return hostname
+
+
 def parse_db_url(db_url: str) -> Dict[str, str]:
     parsed = urlparse(db_url)
     
@@ -36,8 +64,10 @@ def parse_db_url(db_url: str) -> Dict[str, str]:
     query_params = parse_qs(parsed.query)
     ssl_mode = query_params.get("sslmode", ["disable"])[0] if query_params.get("sslmode") else "disable"
     
+    resolved_host = resolve_hostname_to_ipv4(hostname)
+    
     return {
-        "HOST_NAME": hostname,
+        "HOST_NAME": resolved_host,
         "DB_PORT": str(port),
         "USERNAME": username,
         "PASSWORD": password,
