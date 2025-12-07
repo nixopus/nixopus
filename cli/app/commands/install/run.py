@@ -357,6 +357,7 @@ class Install:
         caddy_http_port: int = None,
         caddy_https_port: int = None,
         supertokens_port: int = None,
+        external_db_url: str = None,
     ):
         self.params = InstallParams(
             logger=logger,
