@@ -5,7 +5,13 @@ from pathlib import Path
 from typing import Optional
 
 from app.commands.service.service import stop_services
-from app.utils.config import DEFAULT_COMPOSE_FILE, NIXOPUS_CONFIG_DIR, SSH_FILE_PATH, Config
+from app.utils.config import (
+    DEFAULT_COMPOSE_FILE,
+    NIXOPUS_CONFIG_DIR,
+    SSH_FILE_PATH,
+    get_active_config,
+    get_yaml_value,
+)
 from app.utils.logger import create_logger
 from app.utils.protocols import LoggerProtocol
 from app.utils.timeout import timeout_wrapper
@@ -33,10 +39,10 @@ from .messages import (
     uninstall_thank_you,
 )
 
-_config = Config()
-_config_dir = _config.get_yaml_value(NIXOPUS_CONFIG_DIR)
-_compose_file = _config.get_yaml_value(DEFAULT_COMPOSE_FILE)
-_ssh_key_path = _config_dir + "/" + _config.get_yaml_value(SSH_FILE_PATH)
+_config = get_active_config()
+_config_dir = get_yaml_value(_config, NIXOPUS_CONFIG_DIR)
+_compose_file = get_yaml_value(_config, DEFAULT_COMPOSE_FILE)
+_ssh_key_path = _config_dir + "/" + get_yaml_value(_config, SSH_FILE_PATH)
 
 
 def _get_compose_file_path() -> str:

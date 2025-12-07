@@ -15,7 +15,8 @@ from app.utils.config import (
     DEFAULT_REPO,
     NIXOPUS_CONFIG_DIR,
     SSH_FILE_PATH,
-    Config,
+    get_active_config,
+    get_config_value,
 )
 from app.utils.directory_manager import create_directory
 from app.utils.file_manager import set_permissions
@@ -78,9 +79,9 @@ def parse_db_url(db_url: str) -> Dict[str, str]:
 
 
 def is_custom_repo_or_branch(repo: Optional[str], branch: Optional[str]) -> bool:
-    temp_config = Config()
-    default_repo = temp_config.get(DEFAULT_REPO)
-    default_branch = temp_config.get(DEFAULT_BRANCH)
+    temp_config = get_active_config()
+    default_repo = get_config_value(temp_config, DEFAULT_REPO)
+    default_branch = get_config_value(temp_config, DEFAULT_BRANCH)
 
     repo_differs = repo is not None and repo != default_repo
     branch_differs = branch is not None and branch != default_branch
@@ -94,26 +95,26 @@ def get_host_ip_or_default(host_ip: Optional[str]) -> str:
     return get_public_ip()
 
 
-def get_full_source_path(config: Config) -> str:
-    return os.path.join(config.get(NIXOPUS_CONFIG_DIR), config.get(DEFAULT_PATH))
+def get_full_source_path(config: dict) -> str:
+    return os.path.join(get_config_value(config, NIXOPUS_CONFIG_DIR), get_config_value(config, DEFAULT_PATH))
 
 
-def get_ssh_key_path(config: Config) -> str:
-    return os.path.join(config.get(NIXOPUS_CONFIG_DIR), config.get(SSH_FILE_PATH))
+def get_ssh_key_path(config: dict) -> str:
+    return os.path.join(get_config_value(config, NIXOPUS_CONFIG_DIR), get_config_value(config, SSH_FILE_PATH))
 
 
-def get_compose_file_path(config: Config, use_staging: bool) -> str:
-    compose_path = os.path.join(config.get(NIXOPUS_CONFIG_DIR), config.get(DEFAULT_COMPOSE_FILE))
+def get_compose_file_path(config: dict, use_staging: bool) -> str:
+    compose_path = os.path.join(get_config_value(config, NIXOPUS_CONFIG_DIR), get_config_value(config, DEFAULT_COMPOSE_FILE))
     if use_staging:
         return compose_path.replace("docker-compose.yml", "docker-compose-staging.yml")
     return compose_path
 
 
-def get_proxy_port(config: Config, caddy_admin_port: Optional[int]) -> int:
+def get_proxy_port(config: dict, caddy_admin_port: Optional[int]) -> int:
     if caddy_admin_port is not None:
         return caddy_admin_port
     try:
-        return int(config.get(CADDY_ADMIN_PORT))
+        return int(get_config_value(config, CADDY_ADMIN_PORT))
     except (KeyError, ValueError):
         return 2019
 
@@ -237,10 +238,10 @@ def setup_proxy_config(
     return caddy_json_template
 
 
-def copy_caddyfile_to_target(full_source_path: str, config: Config, logger: Optional[LoggerProtocol] = None):
+def copy_caddyfile_to_target(full_source_path: str, config: dict, logger: Optional[LoggerProtocol] = None):
     try:
         source_caddyfile = os.path.join(full_source_path, "helpers", "Caddyfile")
-        target_dir = config.get(CADDY_CONFIG_VOLUME)
+        target_dir = get_config_value(config, CADDY_CONFIG_VOLUME)
         target_caddyfile = os.path.join(target_dir, "Caddyfile")
         create_directory(target_dir, logger=logger)
         if os.path.exists(source_caddyfile):

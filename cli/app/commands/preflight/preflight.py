@@ -2,7 +2,7 @@ import shutil
 import socket
 from typing import Any, Dict, List, Optional
 
-from app.utils.config import Config
+from app.utils.config import get_active_config, get_config_value
 from app.utils.parallel_processor import process_parallel
 from app.utils.protocols import LoggerProtocol
 
@@ -102,8 +102,8 @@ def check_required_ports(ports: List[int], host: str = "localhost", logger: Opti
 
 def check_ports_from_config(logger: Optional[LoggerProtocol] = None) -> None:
     """Check ports using configuration values."""
-    config = Config()
-    ports = config.get("ports")
+    config = get_active_config()
+    ports = get_config_value(config, "ports")
     ports = [int(port) for port in ports] if isinstance(ports, list) else [int(ports)]
     check_required_ports(ports, logger=logger)
 

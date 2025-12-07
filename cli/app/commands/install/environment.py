@@ -14,7 +14,8 @@ from app.utils.config import (
     SUPERTOKENS_API_PORT,
     VIEW_ENV_FILE,
     VIEW_PORT,
-    Config,
+    get_config_value,
+    get_service_env_values,
 )
 from app.utils.directory_manager import create_directory
 from app.utils.file_manager import get_directory_path, set_permissions
@@ -35,7 +36,7 @@ from .config_utils import (
 class ConfigResolver:
     def __init__(
         self,
-        config: Config,
+        config: dict,
         repo: Optional[str] = None,
         branch: Optional[str] = None,
         api_port: Optional[int] = None,
@@ -97,7 +98,7 @@ class ConfigResolver:
         if path == SUPERTOKENS_API_PORT and self.supertokens_port is not None:
             return str(self.supertokens_port)
 
-        return self.config.get(path)
+        return str(get_config_value(self.config, path))
 
 
 def create_env_file_with_permissions(
@@ -117,7 +118,7 @@ def create_env_file_with_permissions(
 
 
 def create_service_env_files(
-    config: Config,
+    config: dict,
     config_resolver: ConfigResolver,
     host_ip: str,
     api_domain: Optional[str],
@@ -140,7 +141,7 @@ def create_service_env_files(
     ]
     
     for service_name, service_key, env_file in services:
-        env_values = config.get_service_env_values(service_key)
+        env_values = get_service_env_values(config, service_key)
         updated_env_values = update_environment_variables(
             env_values,
             host_ip,
@@ -158,8 +159,8 @@ def create_service_env_files(
         if logger:
             logger.debug(f"Created {service_name} env file: {env_file}")
 
-    api_env_values = config.get_service_env_values("services.api.env")
-    view_env_values = config.get_service_env_values("services.view.env")
+    api_env_values = get_service_env_values(config, "services.api.env")
+    view_env_values = get_service_env_values(config, "services.view.env")
 
     combined_env_values = {}
     combined_env_values.update(update_environment_variables(

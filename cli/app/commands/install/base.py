@@ -1,6 +1,17 @@
 import os
- 
-from app.utils.config import Config
+import re
+
+from app.utils.config import (
+    API_PORT,
+    CADDY_ADMIN_PORT,
+    CADDY_HTTP_PORT,
+    CADDY_HTTPS_PORT,
+    PROXY_PORT,
+    SUPERTOKENS_API_PORT,
+    VIEW_PORT,
+    get_active_config,
+    get_config_value,
+)
 from app.utils.protocols import LoggerProtocol
 
 from .config_utils import get_proxy_port
@@ -48,8 +59,7 @@ class BaseInstall:
         self.caddy_https_port = caddy_https_port
         self.supertokens_port = supertokens_port
         self.external_db_url = external_db_url
-        self._config = Config()
-        self._config.load_user_config(self.config_file)
+        self._config = get_active_config(user_config_file=self.config_file)
         self._user_config = None
         self.progress = None
         self.main_task = None
@@ -80,10 +90,20 @@ class BaseInstall:
             param_value, config_key = port_mappings[path]
             return self._get_port_override(param_value, config_key)
         
+        # Handle PROXY_PORT (which is an alias for CADDY_ADMIN_PORT)
+        if path == PROXY_PORT:
+            if self.caddy_admin_port is not None:
+                return str(self.caddy_admin_port)
+            # Fall back to CADDY_ADMIN_PORT from config, default to 2019
+            try:
+                return str(get_config_value(self._config, CADDY_ADMIN_PORT))
+            except (KeyError, ValueError):
+                return "2019"
+        
         if path == "proxy_port":
             return str(get_proxy_port(self._config, self.caddy_admin_port))
         
-        return self._config.get(path)
+        return get_config_value(self._config, path)
     
     def _validate_domains(self, api_domain: str = None, view_domain: str = None):
         validate_domains(api_domain, view_domain)

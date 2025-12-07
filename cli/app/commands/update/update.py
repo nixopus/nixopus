@@ -8,7 +8,7 @@ import urllib.request
 from typing import Optional
 
 from app.commands.service.service import execute_services, start_services
-from app.utils.config import Config, DEFAULT_COMPOSE_FILE, NIXOPUS_CONFIG_DIR
+from app.utils.config import DEFAULT_COMPOSE_FILE, NIXOPUS_CONFIG_DIR, get_active_config, get_yaml_value
 from app.utils.logger import create_logger
 from app.utils.protocols import LoggerProtocol
 
@@ -28,9 +28,9 @@ RELEASES_BASE_URL = "https://github.com/raghavyuva/nixopus/releases/download"
 
 def _get_compose_file_path() -> str:
     """Get the full path to the compose file."""
-    config = Config()
-    compose_file = config.get_yaml_value(DEFAULT_COMPOSE_FILE)
-    config_dir = config.get_yaml_value(NIXOPUS_CONFIG_DIR)
+    config = get_active_config()
+    compose_file = get_yaml_value(config, DEFAULT_COMPOSE_FILE)
+    config_dir = get_yaml_value(config, NIXOPUS_CONFIG_DIR)
     return f"{config_dir}/{compose_file}"
 
 

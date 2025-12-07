@@ -3,7 +3,6 @@ from typing import Dict, Optional, Tuple
 
 from app.commands.proxy.proxy import load_config
 from app.commands.service.service import cleanup_docker_resources, start_services
-from app.utils.config import Config
 from app.utils.protocols import LoggerProtocol
 from app.utils.timeout import timeout_wrapper
 
@@ -54,7 +53,7 @@ def setup_proxy_configuration(
     api_domain: Optional[str],
     view_port: str,
     api_port: str,
-    config: Config,
+    config: dict,
     dry_run: bool,
     logger: Optional[LoggerProtocol] = None,
 ) -> None:

@@ -1,6 +1,5 @@
 import typer
 
-from app.utils.config import Config
 from app.utils.logger import create_logger, log_error, log_success, log_warning
 from app.utils.timeout import timeout_wrapper
 

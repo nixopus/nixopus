@@ -4,7 +4,7 @@ from typing import Optional
 
 import requests
 
-from app.utils.config import CADDY_BASE_URL, LOAD_ENDPOINT, PROXY_PORT, Config
+from app.utils.config import CADDY_BASE_URL, LOAD_ENDPOINT, PROXY_PORT, get_active_config, get_yaml_value
 from app.utils.protocols import LoggerProtocol
 
 from .messages import (
@@ -20,10 +20,10 @@ from .messages import (
     unexpected_error,
 )
 
-config = Config()
-default_proxy_port = config.get_yaml_value(PROXY_PORT)
-caddy_load_endpoint = config.get_yaml_value(LOAD_ENDPOINT)
-caddy_base_url = config.get_yaml_value(CADDY_BASE_URL)
+_config = get_active_config()
+default_proxy_port = get_yaml_value(_config, PROXY_PORT)
+caddy_load_endpoint = get_yaml_value(_config, LOAD_ENDPOINT)
+caddy_base_url = get_yaml_value(_config, CADDY_BASE_URL)
 
 
 def _get_caddy_url(port: int, endpoint: str) -> str:
