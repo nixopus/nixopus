@@ -15,7 +15,6 @@ from app.commands.service.service import cleanup_docker_resources, start_service
 from app.utils.config import (
     API_ENV_FILE,
     API_PORT,
-    Config,
     DEFAULT_BRANCH,
     DEFAULT_COMPOSE_FILE,
     DEFAULT_PATH,
@@ -28,6 +27,10 @@ from app.utils.config import (
     SSH_KEY_TYPE,
     VIEW_ENV_FILE,
     VIEW_PORT,
+    get_active_config,
+    get_config_value,
+    get_service_env_values,
+    get_yaml_value,
 )
 from app.utils.directory_manager import create_directory
 from app.utils.file_manager import get_directory_path, set_permissions
@@ -115,7 +118,7 @@ class DevelopmentInstall(BaseInstall):
         self._check_platform_support()
 
         # Load config from config.dev.yaml
-        self._config = Config(default_env="DEVELOPMENT")
+        self._config = get_active_config(default_env="DEVELOPMENT")
         self._defaults = self._load_dev_defaults()
 
         if self.logger:
@@ -177,29 +180,29 @@ class DevelopmentInstall(BaseInstall):
 
     def _load_dev_defaults(self):
         """Load defaults from config.dev.yaml"""
-        config_dir = self._config.get_yaml_value(NIXOPUS_CONFIG_DIR)
-        source_path = self._config.get_yaml_value(DEFAULT_PATH)
+        config_dir = get_yaml_value(self._config, NIXOPUS_CONFIG_DIR)
+        source_path = get_yaml_value(self._config, DEFAULT_PATH)
 
         return {
-            "ssh_key_type": self._config.get_yaml_value(SSH_KEY_TYPE),
-            "ssh_key_size": self._config.get_yaml_value(SSH_KEY_SIZE),
+            "ssh_key_type": get_yaml_value(self._config, SSH_KEY_TYPE),
+            "ssh_key_size": get_yaml_value(self._config, SSH_KEY_SIZE),
             "ssh_passphrase": None,
             "service_name": "all",
             "service_detach": True,
-            "required_ports": [int(port) for port in self._config.get_yaml_value(PORTS)],
-            "repo_url": self._config.get_yaml_value(DEFAULT_REPO),
-            "branch_name": self._config.get_yaml_value(DEFAULT_BRANCH),
+            "required_ports": [int(port) for port in get_yaml_value(self._config, PORTS)],
+            "repo_url": get_yaml_value(self._config, DEFAULT_REPO),
+            "branch_name": get_yaml_value(self._config, DEFAULT_BRANCH),
             "source_path": source_path,
             "config_dir": config_dir,
-            "api_env_file_path": self._config.get_yaml_value(API_ENV_FILE),
-            "view_env_file_path": self._config.get_yaml_value(VIEW_ENV_FILE),
-            "compose_file": self._config.get_yaml_value(DEFAULT_COMPOSE_FILE),
+            "api_env_file_path": get_yaml_value(self._config, API_ENV_FILE),
+            "view_env_file_path": get_yaml_value(self._config, VIEW_ENV_FILE),
+            "compose_file": get_yaml_value(self._config, DEFAULT_COMPOSE_FILE),
             "full_source_path": self.install_path,
             "ssh_key_path": os.path.expanduser("~/.ssh/id_rsa_nixopus"),
             "compose_file_path": os.path.join(self.install_path, "docker-compose-dev.yml"),
-            "view_port": self._config.get_yaml_value(VIEW_PORT),
-            "api_port": self._config.get_yaml_value(API_PORT),
-            "proxy_port": self._config.get_yaml_value(PROXY_PORT),
+            "view_port": get_yaml_value(self._config, VIEW_PORT),
+            "api_port": get_yaml_value(self._config, API_PORT),
+            "proxy_port": get_yaml_value(self._config, PROXY_PORT),
             "nixopus_config_dir": os.path.join(self.install_path, "nixopus-dev"),
         }
 
@@ -227,17 +230,17 @@ class DevelopmentInstall(BaseInstall):
         if key == "db_port":
             if self.db_port is not None:
                 return str(self.db_port)
-            return str(self._config.get("services.db.env.DB_PORT") or "5432")
+            return str(get_config_value(self._config, "services.db.env.DB_PORT") or "5432")
         if key == "redis_port":
             if self.redis_port is not None:
                 return str(self.redis_port)
-            return str(self._config.get("services.redis.env.REDIS_PORT") or "6379")
+            return str(get_config_value(self._config, "services.redis.env.REDIS_PORT") or "6379")
         if key == "proxy_port" and self.caddy_admin_port is not None:
             return str(self.caddy_admin_port)
         if key == "supertokens_api_port":
             if self.supertokens_port is not None:
                 return str(self.supertokens_port)
-            return str(self._config.get("services.api.env.SUPERTOKENS_API_PORT") or "3567")
+            return str(get_config_value(self._config, "services.api.env.SUPERTOKENS_API_PORT") or "3567")
         if key == "services.caddy.env.CADDY_HTTP_PORT" and self.caddy_http_port is not None:
             return str(self.caddy_http_port)
         if key == "services.caddy.env.CADDY_HTTPS_PORT" and self.caddy_https_port is not None:
@@ -248,7 +251,7 @@ class DevelopmentInstall(BaseInstall):
             return active_defaults[key]
 
         try:
-            return self._config.get(key)
+            return get_config_value(self._config, key)
         except KeyError:
             return super()._get_config(key)
 
@@ -403,7 +406,7 @@ class DevelopmentInstall(BaseInstall):
 
         # Create individual service env files
         for service_name, service_key, env_file in services:
-            env_values = self._config.get_service_env_values(service_key)
+            env_values = get_service_env_values(self._config, service_key)
             updated_env_values = self._update_environment_variables(env_values)
             success, error = write_env_file(env_file, updated_env_values, self.logger)
             if not success:
@@ -414,8 +417,8 @@ class DevelopmentInstall(BaseInstall):
             self.logger.debug(created_env_file.format(service_name=service_name, env_file=env_file))
 
         # Create combined env file with both API and view variables (for docker-compose)
-        api_env_values = self._config.get_service_env_values("services.api.env")
-        view_env_values = self._config.get_service_env_values("services.view.env")
+        api_env_values = get_service_env_values(self._config, "services.api.env")
+        view_env_values = get_service_env_values(self._config, "services.view.env")
 
         combined_env_values = {}
         combined_env_values.update(self._update_environment_variables(api_env_values))

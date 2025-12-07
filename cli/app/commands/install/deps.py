@@ -2,7 +2,7 @@ import json
 import shutil
 import subprocess
 
-from app.utils.config import DEPS, Config
+from app.utils.config import DEPS, get_active_config, get_yaml_value
 from app.utils.host_information import get_os_name, get_package_manager
 from app.utils.parallel_processor import process_parallel
 from app.utils.logger import create_logger
@@ -18,8 +18,8 @@ from .messages import (
 
 
 def get_deps_from_config():
-    config = Config()
-    deps = config.get_yaml_value(DEPS)
+    config = get_active_config()
+    deps = get_yaml_value(config, DEPS)
     return [
         {
             "name": name,

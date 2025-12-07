@@ -48,15 +48,8 @@ def is_development(default_env: str = "PRODUCTION") -> bool:
 def get_config_value(
     config: Dict[str, Any],
     path: str,
-    cache: Optional[Dict[str, Any]] = None
 ) -> Any:
     """Get config value using dot notation path"""
-    if cache is None:
-        cache = {}
-    
-    if path in cache:
-        return cache[path]
-    
     keys = path.split(".")
     value = config
     for key in keys:
@@ -68,7 +61,6 @@ def get_config_value(
     if isinstance(value, str):
         value = expand_env_placeholders(value)
     
-    cache[path] = value
     return value
 
 
@@ -88,10 +80,9 @@ def load_yaml_config(user_config_file: Optional[str] = None, default_env: str = 
 def get_yaml_value(
     config: Dict[str, Any],
     path: str,
-    cache: Optional[Dict[str, Any]] = None
 ) -> Any:
     """Alias for get_config_value() for backward compatibility"""
-    return get_config_value(config, path, cache)
+    return get_config_value(config, path)
 
 
 def unflatten_config(flattened_config: dict) -> dict:
