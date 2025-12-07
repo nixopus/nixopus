@@ -88,6 +88,7 @@ def install_callback(
                 caddy_http_port=caddy_http_port,
                 caddy_https_port=caddy_https_port,
                 supertokens_port=supertokens_port,
+                external_db_url=external_db_url,
             )
             dev_install.run()
         else:
@@ -151,6 +152,7 @@ def development(
     caddy_http_port: int = typer.Option(None, "--caddy-http-port", help="Port for Caddy HTTP traffic (default: 80)"),
     caddy_https_port: int = typer.Option(None, "--caddy-https-port", help="Port for Caddy HTTPS traffic (default: 443)"),
     supertokens_port: int = typer.Option(None, "--supertokens-port", help="Port for SuperTokens service (default: 3567)"),
+    external_db_url: str = typer.Option(None, "--external-db-url", help="External PostgreSQL database connection URL (e.g. postgresql://user:password@host:port/dbname?sslmode=require). If provided, local DB service will be excluded"),
 ):
     """Install Nixopus for local development in specified or current directory"""
     logger = create_logger(verbose=verbose)
