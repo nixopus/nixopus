@@ -9,8 +9,6 @@ services:
     restart: unless-stopped
     env_file:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/api/.env
-    environment:
-      - HOST_NAME=nixopus-db
 
     volumes:
       - ./logs:/app/logs
@@ -22,11 +20,14 @@ services:
     depends_on:
       nixopus-db:
         condition: service_healthy
+        required: false
 
   nixopus-db:
     image: postgres:14-alpine
     container_name: nixopus-db
     restart: unless-stopped
+    profiles:
+      - local-db
     environment:
       - POSTGRES_USER=${USERNAME}
       - POSTGRES_PASSWORD=${PASSWORD}
@@ -107,12 +108,12 @@ services:
     depends_on:
       nixopus-db:
         condition: service_healthy
+        required: false
     ports:
       - "${SUPERTOKENS_PORT:-3567}:3567"
     environment:
-      # This is to avoid conflicts with the nixopus database
       POSTGRESQL_TABLE_NAMES_PREFIX: "supertokens_"
-      POSTGRESQL_CONNECTION_URI: "postgresql://${USERNAME}:${PASSWORD}@nixopus-db:5432/${DB_NAME}"
+      POSTGRESQL_CONNECTION_URI: "${POSTGRESQL_CONNECTION_URI:-postgresql://${USERNAME}:${PASSWORD}@nixopus-db:5432/${DB_NAME}}"
     networks:
       - nixopus-network
     restart: unless-stopped

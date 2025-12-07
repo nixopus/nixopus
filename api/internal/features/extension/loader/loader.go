@@ -40,7 +40,9 @@ func (l *ExtensionLoader) LoadExtensionsFromDirectory(ctx context.Context, dirPa
 			continue
 		}
 
-		// log.Printf("Successfully loaded extension: %s (%s)", extension.Name, extension.ExtensionID)
+		if (i+1)%10 == 0 || i == len(extensions)-1 {
+			log.Printf("Processed %d/%d extensions", i+1, len(extensions))
+		}
 	}
 
 	return nil

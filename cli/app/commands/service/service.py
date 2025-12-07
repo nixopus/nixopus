@@ -24,6 +24,12 @@ def _build_command(action: str, name: str = "all", env_file: str = None, compose
         cmd.extend(["-f", compose_file])
     if env_file:
         cmd.extend(["--env-file", env_file])
+    
+    profiles = kwargs.get("profiles")
+    if profiles:
+        for profile in profiles:
+            cmd.extend(["--profile", profile])
+    
     cmd.append(action)
 
     if action == "up" and kwargs.get("detach", False):
@@ -205,9 +211,10 @@ def start_services(
     env_file: str = None,
     compose_file: str = None,
     logger: Optional[LoggerProtocol] = None,
+    profiles: Optional[list[str]] = None,
 ) -> tuple[bool, str]:
     """Start docker compose services."""
-    return execute_services("up", name, env_file, compose_file, logger, detach=detach)
+    return execute_services("up", name, env_file, compose_file, logger, detach=detach, profiles=profiles)
 
 
 def stop_services(

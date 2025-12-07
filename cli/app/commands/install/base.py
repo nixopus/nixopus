@@ -29,6 +29,7 @@ class BaseInstall:
         caddy_http_port: int = None,
         caddy_https_port: int = None,
         supertokens_port: int = None,
+        external_db_url: str = None,
     ):
         self.logger = logger
         self.verbose = verbose
@@ -46,6 +47,7 @@ class BaseInstall:
         self.caddy_http_port = caddy_http_port
         self.caddy_https_port = caddy_https_port
         self.supertokens_port = supertokens_port
+        self.external_db_url = external_db_url
         self._config = Config()
         self._config.load_user_config(self.config_file)
         self._user_config = None
