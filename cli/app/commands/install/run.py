@@ -8,6 +8,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn
 from app.commands.clone.clone import clone_repository
 from app.commands.preflight.preflight import check_required_ports
 from app.utils.config import (
+    API_ENV_FILE,
     API_PORT,
     DEFAULT_BRANCH,
     DEFAULT_REPO,
@@ -15,6 +16,7 @@ from app.utils.config import (
     PROXY_PORT,
     SSH_KEY_SIZE,
     SSH_KEY_TYPE,
+    VIEW_ENV_FILE,
     VIEW_PORT,
     Config,
 )
@@ -137,6 +139,13 @@ def cleanup_docker_step(config_resolver: ConfigResolver, params: InstallParams) 
 
 
 def create_env_files_step(config: Config, config_resolver: ConfigResolver, params: InstallParams) -> None:
+    if params.dry_run:
+        if params.logger:
+            api_env_file = config_resolver.get(API_ENV_FILE)
+            view_env_file = config_resolver.get(VIEW_ENV_FILE)
+            params.logger.info(f"[DRY RUN] Would create env files: {api_env_file}, {view_env_file}")
+        return
+    
     success, error = create_service_env_files(
         config,
         config_resolver,

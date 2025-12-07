@@ -59,7 +59,15 @@ detect_binary() {
         BINARY_NAME="${BINARY_NAME}.exe"
     fi
     
-    BINARY_PATH="$BUILD_DIR/$BINARY_NAME"
+    BINARY_DIR_PATH="$BUILD_DIR/$BINARY_NAME"
+    BINARY_PATH="$BINARY_DIR_PATH"
+    
+    if [[ -d "$BINARY_DIR_PATH" ]]; then
+        BINARY_PATH="$BINARY_DIR_PATH/$APP_NAME"
+        if [[ "$OS" == "mingw"* || "$OS" == "cygwin"* || "$OS" == "msys"* ]]; then
+            BINARY_PATH="$BINARY_DIR_PATH/${APP_NAME}.exe"
+        fi
+    fi
     
     if [[ ! -f "$BINARY_PATH" ]]; then
         log_error "Binary not found: $BINARY_PATH"
@@ -78,16 +86,31 @@ install_binary() {
         mkdir -p "$INSTALL_DIR"
     fi
     
-    if [[ "$INSTALL_DIR" == "/usr/local/bin" ]] && [[ $EUID -ne 0 ]]; then
-        log_info "Installing to system directory requires sudo..."
-        sudo cp "$BINARY_PATH" "$INSTALL_DIR/$APP_NAME"
-        sudo chmod +x "$INSTALL_DIR/$APP_NAME"
+    if [[ -d "$BINARY_DIR_PATH" ]]; then
+        if [[ "$INSTALL_DIR" == "/usr/local/bin" ]] && [[ $EUID -ne 0 ]]; then
+            log_info "Installing to system directory requires sudo..."
+            log_info "Copying binary directory structure..."
+            sudo cp -r "$BINARY_DIR_PATH" "$INSTALL_DIR/"
+            sudo ln -sf "$INSTALL_DIR/$BINARY_NAME/$APP_NAME" "$INSTALL_DIR/$APP_NAME"
+            sudo chmod +x "$INSTALL_DIR/$BINARY_NAME/$APP_NAME"
+        else
+            log_info "Copying binary directory structure..."
+            cp -r "$BINARY_DIR_PATH" "$INSTALL_DIR/"
+            ln -sf "$INSTALL_DIR/$BINARY_NAME/$APP_NAME" "$INSTALL_DIR/$APP_NAME"
+            chmod +x "$INSTALL_DIR/$BINARY_NAME/$APP_NAME"
+        fi
+        log_success "$APP_NAME installed to $INSTALL_DIR/$APP_NAME (with dependencies in $INSTALL_DIR/$BINARY_NAME/)"
     else
-        cp "$BINARY_PATH" "$INSTALL_DIR/$APP_NAME"
-        chmod +x "$INSTALL_DIR/$APP_NAME"
+        if [[ "$INSTALL_DIR" == "/usr/local/bin" ]] && [[ $EUID -ne 0 ]]; then
+            log_info "Installing to system directory requires sudo..."
+            sudo cp "$BINARY_PATH" "$INSTALL_DIR/$APP_NAME"
+            sudo chmod +x "$INSTALL_DIR/$APP_NAME"
+        else
+            cp "$BINARY_PATH" "$INSTALL_DIR/$APP_NAME"
+            chmod +x "$INSTALL_DIR/$APP_NAME"
+        fi
+        log_success "$APP_NAME installed to $INSTALL_DIR/$APP_NAME"
     fi
-    
-    log_success "$APP_NAME installed to $INSTALL_DIR/$APP_NAME"
 }
 
 update_shell_profile() {

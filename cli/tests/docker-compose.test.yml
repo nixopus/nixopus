@@ -1,0 +1,15 @@
+services:
+  debian12-clean:
+    build:
+      context: .
+      dockerfile: debian/Dockerfile.debian12
+    container_name: nixopus-test-debian12-clean
+    volumes:
+      - ../:/nixopus-cli
+    command: /bin/bash -c "sleep infinity"
+    networks:
+      - nixopus-test-network
+
+networks:
+  nixopus-test-network:
+    driver: bridge
