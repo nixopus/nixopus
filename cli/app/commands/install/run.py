@@ -1,7 +1,9 @@
 import ipaddress
 import json
 import os
+import re
 import shutil
+from dataclasses import dataclass
 from typing import Callable, List, Optional, Tuple
 from urllib.parse import urlparse
 
@@ -18,6 +20,8 @@ from app.utils.config import (
     API_PORT,
     CADDY_ADMIN_PORT,
     CADDY_CONFIG_VOLUME,
+    CADDY_HTTP_PORT,
+    CADDY_HTTPS_PORT,
     DEFAULT_BRANCH,
     DEFAULT_COMPOSE_FILE,
     DEFAULT_PATH,
@@ -75,6 +79,294 @@ from .validate import validate_domains, validate_host_ip, validate_repo
 _config = get_active_config()
 
 
+@dataclass
+class InstallParams:
+    logger: Optional[LoggerProtocol] = None
+    verbose: bool = False
+    timeout: int = 300
+    force: bool = False
+    dry_run: bool = False
+    config_file: Optional[str] = None
+    api_domain: Optional[str] = None
+    view_domain: Optional[str] = None
+    host_ip: Optional[str] = None
+    repo: Optional[str] = None
+    branch: Optional[str] = None
+    api_port: Optional[int] = None
+    view_port: Optional[int] = None
+    db_port: Optional[int] = None
+    redis_port: Optional[int] = None
+    caddy_admin_port: Optional[int] = None
+    caddy_http_port: Optional[int] = None
+    caddy_https_port: Optional[int] = None
+    supertokens_port: Optional[int] = None
+    external_db_url: Optional[str] = None
+    staging: bool = False
+
+
+def validate_install_params(params: InstallParams) -> None:
+    validate_domains(params.api_domain, params.view_domain)
+    validate_repo(params.repo)
+    validate_host_ip(params.host_ip)
+
+
+def create_config_resolver(config: dict, params: InstallParams) -> ConfigResolver:
+    return ConfigResolver(
+        config,
+        repo=params.repo,
+        branch=params.branch,
+        api_port=params.api_port,
+        view_port=params.view_port,
+        db_port=params.db_port,
+        redis_port=params.redis_port,
+        caddy_admin_port=params.caddy_admin_port,
+        caddy_http_port=params.caddy_http_port,
+        caddy_https_port=params.caddy_https_port,
+        supertokens_port=params.supertokens_port,
+        staging=params.staging,
+    )
+
+
+def run_preflight_checks(config: dict, params: InstallParams) -> None:
+    ports = get_config_value(config, PORTS)
+    ports = [int(port) for port in ports] if isinstance(ports, list) else [int(ports)]
+    check_required_ports(ports, logger=params.logger)
+
+
+def install_dependencies(params: InstallParams) -> None:
+    try:
+        with timeout_wrapper(params.timeout):
+            result = install_all_deps(verbose=params.verbose, output="json", dry_run=params.dry_run)
+    except TimeoutError:
+        raise Exception(dependency_installation_timeout)
+
+
+def setup_clone_and_config(config_resolver: ConfigResolver, params: InstallParams) -> None:
+    if params.dry_run:
+        if params.logger:
+            params.logger.info(
+                f"[DRY RUN] Would clone {config_resolver.get(DEFAULT_REPO)} to {config_resolver.get('full_source_path')}"
+            )
+        return
+
+    try:
+        with timeout_wrapper(params.timeout):
+            success, error = clone_repository(
+                repo=config_resolver.get(DEFAULT_REPO),
+                path=config_resolver.get("full_source_path"),
+                branch=config_resolver.get(DEFAULT_BRANCH),
+                force=params.force,
+                logger=params.logger,
+            )
+    except TimeoutError:
+        raise Exception(f"{clone_failed}: {operation_timed_out}")
+    if not success:
+        raise Exception(f"{clone_failed}: {error}")
+
+
+def cleanup_docker_step(config_resolver: ConfigResolver, params: InstallParams) -> None:
+    compose_file = config_resolver.get("compose_file_path")
+    cleanup_docker_services(compose_file, params.dry_run, params.logger)
+
+
+def create_env_files_step(config: dict, config_resolver: ConfigResolver, params: InstallParams) -> None:
+    success, error = create_service_env_files(
+        config,
+        config_resolver,
+        get_host_ip_or_default(params.host_ip),
+        params.api_domain,
+        params.view_domain,
+        external_db_url=params.external_db_url,
+        logger=params.logger,
+    )
+    if not success:
+        raise Exception(error)
+
+
+def setup_proxy_config_step(config: dict, config_resolver: ConfigResolver, params: InstallParams) -> None:
+    full_source_path = config_resolver.get("full_source_path")
+    setup_proxy_configuration(
+        full_source_path,
+        get_host_ip_or_default(params.host_ip),
+        params.view_domain,
+        params.api_domain,
+        config_resolver.get(VIEW_PORT),
+        config_resolver.get(API_PORT),
+        config,
+        params.dry_run,
+        params.logger,
+    )
+
+
+def setup_ssh_step(config: dict, config_resolver: ConfigResolver, params: InstallParams) -> None:
+    ssh_config = SSHConfig(
+        path=config_resolver.get("ssh_key_path"),
+        key_type=get_config_value(config, SSH_KEY_TYPE),
+        key_size=get_config_value(config, SSH_KEY_SIZE),
+        passphrase=None,
+        verbose=params.verbose,
+        output="text",
+        dry_run=params.dry_run,
+        force=params.force,
+        set_permissions=True,
+        add_to_authorized_keys=True,
+        create_ssh_directory=True,
+    )
+    try:
+        with timeout_wrapper(params.timeout):
+            result = generate_ssh_key_with_config(ssh_config, logger=params.logger)
+    except TimeoutError:
+        raise Exception(f"{ssh_setup_failed}: {operation_timed_out}")
+    if not result.success:
+        raise Exception(ssh_setup_failed)
+
+
+def start_services_step(config_resolver: ConfigResolver, params: InstallParams) -> None:
+    compose_file = config_resolver.get("compose_file_path")
+    env_vars = build_service_env_vars(
+        params.api_port,
+        params.view_port,
+        params.db_port,
+        params.redis_port,
+        params.caddy_admin_port,
+        params.caddy_http_port,
+        params.caddy_https_port,
+        params.supertokens_port,
+    )
+    profiles = None
+    if params.external_db_url:
+        profiles = []
+    else:
+        profiles = ["local-db"]
+    success, error = start_docker_services(
+        compose_file,
+        env_vars,
+        params.timeout,
+        params.dry_run,
+        params.logger,
+        profiles=profiles,
+    )
+    if not success:
+        raise Exception(f"{services_start_failed}: {error}")
+
+
+def load_proxy_step(config_resolver: ConfigResolver, params: InstallParams) -> None:
+    proxy_port = config_resolver.get(PROXY_PORT)
+    try:
+        proxy_port = int(proxy_port)
+    except (ValueError, TypeError):
+        proxy_port = 2019
+
+    full_source_path = config_resolver.get("full_source_path")
+    caddy_json_config = os.path.join(full_source_path, "helpers", "caddy.json")
+
+    success, error = load_proxy_config(
+        caddy_json_config,
+        proxy_port,
+        params.timeout,
+        params.dry_run,
+        params.logger,
+    )
+    if not success:
+        raise Exception(f"{proxy_load_failed}: {error}")
+
+
+def show_success_message(config_resolver: ConfigResolver, params: InstallParams) -> None:
+    nixopus_accessible_at = get_access_url(
+        params.view_domain,
+        params.api_domain,
+        get_host_ip_or_default(params.host_ip),
+        config_resolver.get(VIEW_PORT),
+    )
+
+    if params.logger:
+        params.logger.success("Installation Complete!")
+        params.logger.info(f"Nixopus is accessible at: {nixopus_accessible_at}")
+        params.logger.highlight("Thank you for installing Nixopus!")
+        params.logger.info("Please visit the documentation at https://docs.nixopus.com for more information.")
+        params.logger.info("If you have any questions, please visit the community forum at https://discord.gg/skdcq39Wpv")
+        params.logger.highlight("See you in the community!")
+
+
+def handle_installation_error(error: Exception, params: InstallParams, context: str = "") -> None:
+    if not params.logger:
+        return
+    
+    context_msg = f" during {context}" if context else ""
+    if params.verbose:
+        params.logger.error(f"{installation_failed}{context_msg}: {str(error)}")
+    else:
+        params.logger.error(f"{installation_failed}{context_msg}")
+
+
+def build_installation_steps(
+    config: dict,
+    config_resolver: ConfigResolver,
+    params: InstallParams,
+) -> List[Tuple[str, Callable[[], None]]]:
+    steps = [
+        ("Preflight checks", lambda: run_preflight_checks(config, params)),
+        ("Installing dependencies", lambda: install_dependencies(params)),
+        ("Cloning repository", lambda: setup_clone_and_config(config_resolver, params)),
+        ("Setting up proxy config", lambda: setup_proxy_config_step(config, config_resolver, params)),
+        ("Creating environment files", lambda: create_env_files_step(config, config_resolver, params)),
+        ("Generating SSH keys", lambda: setup_ssh_step(config, config_resolver, params)),
+        ("Starting services", lambda: start_services_step(config_resolver, params)),
+    ]
+
+    if params.force:
+        steps.insert(2, ("Cleaning up Docker resources", lambda: cleanup_docker_step(config_resolver, params)))
+
+    if params.api_domain and params.view_domain:
+        steps.append(("Loading proxy configuration", lambda: load_proxy_step(config_resolver, params)))
+
+    return steps
+
+
+def run_installation(params: InstallParams) -> None:
+    config = get_active_config(user_config_file=params.config_file)
+    
+    validate_install_params(params)
+    
+    if is_custom_repo_or_branch(params.repo, params.branch):
+        if params.logger:
+            compose_file = "docker-compose-staging.yml" if params.staging else "docker-compose.yml"
+            params.logger.info(f"Custom repository/branch detected - will use {compose_file}")
+    
+    config_resolver = create_config_resolver(config, params)
+    steps = build_installation_steps(config, config_resolver, params)
+
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            transient=True,
+            refresh_per_second=2,
+        ) as progress:
+            main_task = progress.add_task(installing_nixopus, total=len(steps))
+
+            for i, (step_name, step_func) in enumerate(steps):
+                progress.update(main_task, description=f"{installing_nixopus} - {step_name} ({i+1}/{len(steps)})")
+                try:
+                    step_func()
+                    progress.advance(main_task, 1)
+                except Exception as e:
+                    progress.update(main_task, description=f"Failed at {step_name}")
+                    raise
+
+            progress.update(main_task, completed=True, description="Installation completed")
+
+        show_success_message(config_resolver, params)
+
+    except Exception as e:
+        handle_installation_error(e, params)
+        if params.logger:
+            params.logger.error(f"{installation_failed}: {str(e)}")
+        raise typer.Exit(1)
+
+
 class Install:
     def __init__(
         self,
@@ -98,6 +390,7 @@ class Install:
         caddy_https_port: int = None,
         supertokens_port: int = None,
         external_db_url: str = None,
+        staging: bool = False,
     ):
         self.logger = logger
         self.verbose = verbose
@@ -118,6 +411,8 @@ class Install:
         self.caddy_http_port = caddy_http_port
         self.caddy_https_port = caddy_https_port
         self.supertokens_port = supertokens_port
+        self.external_db_url = external_db_url
+        self.staging = staging
         # Reload config if user config file is provided
         global _config
         if self.config_file:
@@ -130,7 +425,8 @@ class Install:
         # Log when using custom repository/branch and staging compose file
         if self._is_custom_repo_or_branch():
             if self.logger:
-                self.logger.info("Custom repository/branch detected - will use docker-compose-staging.yml")
+                compose_file = "docker-compose-staging.yml" if self.staging else "docker-compose.yml"
+                self.logger.info(f"Custom repository/branch detected - will use {compose_file}")
 
     def _get_config(self, path: str):
         if path == DEFAULT_REPO and self.repo is not None:
@@ -146,7 +442,7 @@ class Install:
 
         if path == "compose_file_path":
             compose_path = os.path.join(get_config_value(_config, NIXOPUS_CONFIG_DIR), get_config_value(_config, DEFAULT_COMPOSE_FILE))
-            if self._is_custom_repo_or_branch():
+            if self._is_custom_repo_or_branch() or self.staging:
                 return compose_path.replace("docker-compose.yml", "docker-compose-staging.yml")
             return compose_path
 

@@ -47,6 +47,7 @@ class ConfigResolver:
         caddy_http_port: Optional[int] = None,
         caddy_https_port: Optional[int] = None,
         supertokens_port: Optional[int] = None,
+        staging: bool = False,
     ):
         self.config = config
         self.repo = repo
@@ -59,6 +60,7 @@ class ConfigResolver:
         self.caddy_http_port = caddy_http_port
         self.caddy_https_port = caddy_https_port
         self.supertokens_port = supertokens_port
+        self.staging = staging
 
     def get(self, path: str) -> str:
         if path == DEFAULT_REPO and self.repo is not None:
@@ -73,7 +75,7 @@ class ConfigResolver:
             return get_ssh_key_path(self.config)
 
         if path == "compose_file_path":
-            return get_compose_file_path(self.config, use_staging=False)
+            return get_compose_file_path(self.config, use_staging=self.staging)
 
         if path == API_PORT and self.api_port is not None:
             return str(self.api_port)
