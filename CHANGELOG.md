@@ -1,3 +1,12 @@
+# [0.1.0-alpha.74](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.73...v0.1.0-alpha.74) (2025-12-07)
+
+
+### Bug Fixes
+
+* add retry mechanism for service registration to caddy ([#656](https://github.com/raghavyuva/nixopus/issues/656)) ([4579278](https://github.com/raghavyuva/nixopus/commit/457927891d470173a67395be34ac8366a66f2eab))
+
+
+
 # [0.1.0-alpha.73](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.72...v0.1.0-alpha.73) (2025-12-07)
 
 
