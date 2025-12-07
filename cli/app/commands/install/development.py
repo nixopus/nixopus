@@ -37,6 +37,7 @@ from app.utils.timeout import timeout_wrapper
 
 from .base import BaseInstall
 from .deps import get_deps_from_config, get_installed_deps, install_dep
+from .services import build_service_env_vars
 from .messages import (
     clone_failed,
     created_env_file,
@@ -566,24 +567,16 @@ class DevelopmentInstall(BaseInstall):
             self.logger.info(f"[DRY RUN] Would start services using {compose_file}")
             return
         
-        env_vars = {}
-        if self.api_port is not None:
-            env_vars["API_PORT"] = str(self.api_port)
-        if self.view_port is not None:
-            env_vars["NEXT_PUBLIC_PORT"] = str(self.view_port)
-            env_vars["VIEW_PORT"] = str(self.view_port)
-        if self.db_port is not None:
-            env_vars["DB_PORT"] = str(self.db_port)
-        if self.redis_port is not None:
-            env_vars["REDIS_PORT"] = str(self.redis_port)
-        if self.caddy_admin_port is not None:
-            env_vars["CADDY_ADMIN_PORT"] = str(self.caddy_admin_port)
-        if self.caddy_http_port is not None:
-            env_vars["CADDY_HTTP_PORT"] = str(self.caddy_http_port)
-        if self.caddy_https_port is not None:
-            env_vars["CADDY_HTTPS_PORT"] = str(self.caddy_https_port)
-        if self.supertokens_port is not None:
-            env_vars["SUPERTOKENS_PORT"] = str(self.supertokens_port)
+        env_vars = build_service_env_vars(
+            self.api_port,
+            self.view_port,
+            self.db_port,
+            self.redis_port,
+            self.caddy_admin_port,
+            self.caddy_http_port,
+            self.caddy_https_port,
+            self.supertokens_port,
+        )
 
         original_env = os.environ.copy()
         os.environ.update(env_vars)
