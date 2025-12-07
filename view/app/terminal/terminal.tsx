@@ -63,8 +63,6 @@ const TerminalSession: React.FC<{
   onFocus,
   containerRef
 }) => {
-  console.log(`[TerminalSession] Component rendered with terminalId: ${terminalId.slice(0, 8)}, isActive: ${isActive}`);
-  
   const paneRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -134,13 +132,11 @@ const TerminalSession: React.FC<{
     };
   }, [isTerminalOpen, updateDimensions]);
 
-  // allowInput should be based on permissions, not isActive
-  // Each split terminal needs its own active backend session regardless of focus
   const { terminalRef, fitAddonRef, initializeTerminal, destroyTerminal, isWebSocketReady } = useTerminal(
     isTerminalOpen,
     dimensions.width,
     dimensions.height,
-    canCreate || canUpdate,  // All terminals can send input if user has permission
+    canCreate || canUpdate,
     terminalId
   );
   const isContainerReady = useContainerReady(
@@ -148,8 +144,6 @@ const TerminalSession: React.FC<{
     terminalRef as React.RefObject<HTMLDivElement>
   );
 
-  // Initialize terminal when conditions are met - with retry logic
-  // Use isWebSocketReady from the hook which tracks the current WebSocket state
   useEffect(() => {
     if (!isTerminalOpen || !isWebSocketReady) return;
 
@@ -417,17 +411,13 @@ export const Terminal: React.FC<TerminalProps> = ({
   };
 
   const addSplitPane = () => {
-    if (splitPanes.length >= MAX_SPLITS) {
-      return;
-    }
-    const newTerminalId = uuidv4();
+    if (splitPanes.length >= MAX_SPLITS) return;
+    
     const newPane: SplitPane = {
       id: uuidv4(),
       label: `Terminal ${splitPanes.length + 1}`,
-      terminalId: newTerminalId
+      terminalId: uuidv4()
     };
-    console.log(`[addSplitPane] Creating new split pane with terminalId: ${newTerminalId.slice(0, 8)}`);
-    console.log(`[addSplitPane] Existing panes:`, splitPanes.map(p => ({ id: p.id.slice(0, 8), terminalId: p.terminalId.slice(0, 8) })));
     setSessions((prev) =>
       prev.map((session) =>
         session.id === activeSessionId
@@ -559,10 +549,8 @@ export const Terminal: React.FC<TerminalProps> = ({
                 }}
               >
                 <ResizablePanelGroup direction="horizontal" className="h-full">
-                  {(() => { console.log(`[Render] Session ${session.id.slice(0, 8)} has ${session.splitPanes.length} panes:`, session.splitPanes.map(p => p.terminalId.slice(0, 8))); return null; })()}
                   {session.splitPanes.map((pane, index) => (
                     <React.Fragment key={pane.id}>
-                      {(() => { console.log(`[Render] Rendering pane ${index}: terminalId=${pane.terminalId.slice(0, 8)}`); return null; })()}
                       <ResizablePanel
                         defaultSize={100 / session.splitPanes.length}
                         minSize={20}

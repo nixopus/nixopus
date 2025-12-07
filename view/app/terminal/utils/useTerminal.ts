@@ -32,11 +32,9 @@ export const useTerminal = (
   const [terminalInstance, setTerminalInstance] = useState<any | null>(null);
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   
-  // Use refs to always have access to current values in callbacks
   const isReadyRef = useRef(isReady);
   const sendJsonMessageRef = useRef(sendJsonMessage);
   
-  // Keep refs updated with current values
   useEffect(() => {
     isReadyRef.current = isReady;
   }, [isReady]);
@@ -45,7 +43,6 @@ export const useTerminal = (
     sendJsonMessageRef.current = sendJsonMessage;
   }, [sendJsonMessage]);
   
-  // Safe send function that always checks current WebSocket state
   const safeSendMessage = useCallback((data: any) => {
     if (isReadyRef.current) {
       sendJsonMessageRef.current(data);
@@ -70,28 +67,13 @@ export const useTerminal = (
   }, [isStopped, safeSendMessage, setIsStopped, terminalInstance, terminalId]);
 
   useEffect(() => {
-    if (!message) return;
-    
-    // Debug: Log when terminal receives any message
-    console.log(`[Terminal ${terminalId.slice(0, 8)}] Received message, hasInstance: ${!!terminalInstance}`);
-    
-    if (!terminalInstance) {
-      console.log(`[Terminal ${terminalId.slice(0, 8)}] No terminal instance, skipping message`);
-      return;
-    }
+    if (!message || !terminalInstance) return;
 
     try {
       const parsedMessage =
         typeof message === 'string' && message.startsWith('{') ? JSON.parse(message) : message;
 
-      console.log(`[Terminal ${terminalId.slice(0, 8)}] Message terminal_id: ${parsedMessage.terminal_id?.slice(0, 8)}, My terminalId: ${terminalId.slice(0, 8)}`);
-
-      if (parsedMessage.terminal_id !== terminalId) {
-        console.log(`[Terminal ${terminalId.slice(0, 8)}] Message NOT for this terminal, ignoring`);
-        return;
-      }
-
-      console.log(`[Terminal ${terminalId.slice(0, 8)}] Message IS for this terminal, processing...`);
+      if (parsedMessage.terminal_id !== terminalId) return;
 
       if (parsedMessage.action === 'error') {
         console.error('Terminal error:', parsedMessage.data);
@@ -102,7 +84,6 @@ export const useTerminal = (
         if (parsedMessage.type === OutputType.EXIT) {
           destroyTerminal();
         } else if (parsedMessage.data) {
-          console.log(`[Terminal ${terminalId.slice(0, 8)}] Writing data to terminal`);
           terminalInstance.write(parsedMessage.data);
         }
       }
@@ -112,21 +93,8 @@ export const useTerminal = (
   }, [message, terminalInstance, destroyTerminal, terminalId]);
 
   const initializeTerminal = useCallback(async () => {
-    console.log(`[Terminal ${terminalId.slice(0, 8)}] initializeTerminal called, ref: ${!!terminalRef.current}, wsReady: ${isReadyRef.current}, hasInstance: ${!!terminalInstance}`);
-    
-    // Check current isReady value from ref
-    if (!terminalRef.current || !isReadyRef.current) {
-      console.log(`[Terminal ${terminalId.slice(0, 8)}] Cannot initialize: ref=${!!terminalRef.current}, wsReady=${isReadyRef.current}`);
-      return;
-    }
-    
-    // If terminal already exists, don't reinitialize unless it was disposed
-    if (terminalInstance) {
-      console.log(`[Terminal ${terminalId.slice(0, 8)}] Terminal already exists, skipping initialization`);
-      return;
-    }
-    
-    console.log(`[Terminal ${terminalId.slice(0, 8)}] Starting terminal initialization...`);
+    if (!terminalRef.current || !isReadyRef.current) return;
+    if (terminalInstance) return;
 
     try {
       const { Terminal } = await import('@xterm/xterm');
@@ -176,10 +144,6 @@ export const useTerminal = (
       fitAddonRef.current = fitAddon;
 
       if (terminalRef.current) {
-        console.log(`[Terminal ${terminalId.slice(0, 8)}] Opening terminal on DOM element:`, terminalRef.current);
-        const containerRect = terminalRef.current.getBoundingClientRect();
-        console.log(`[Terminal ${terminalId.slice(0, 8)}] Container dimensions: ${containerRect.width}x${containerRect.height}`);
-        
         terminalRef.current.innerHTML = '';
         term.open(terminalRef.current);
         fitAddon.activate(term);
@@ -187,9 +151,7 @@ export const useTerminal = (
         requestAnimationFrame(() => {
           fitAddon.fit();
           const dimensions = fitAddon.proposeDimensions();
-          console.log(`[Terminal ${terminalId.slice(0, 8)}] Terminal fitted, dimensions: ${dimensions?.cols}x${dimensions?.rows}`);
           if (dimensions) {
-            console.log(`[Terminal ${terminalId.slice(0, 8)}] Sending resize message`);
             safeSendMessage({
               action: 'terminal_resize',
               data: {
@@ -202,7 +164,6 @@ export const useTerminal = (
         });
 
         if (allowInput) {
-          console.log(`[Terminal ${terminalId.slice(0, 8)}] Sending initial terminal message to start session`);
           safeSendMessage({
             action: 'terminal',
             data: { value: '\r', terminalId }
@@ -233,8 +194,6 @@ export const useTerminal = (
             return true;
           });
           term.onData((data) => {
-            // Use ref-based send to always have current WebSocket state
-            console.log(`[Terminal ${terminalId.slice(0, 8)}] User input: ${JSON.stringify(data)}`);
             safeSendMessage({
               action: 'terminal',
               data: { value: data, terminalId }
@@ -243,7 +202,6 @@ export const useTerminal = (
         }
 
         term.onResize((size) => {
-          // Use ref-based send to always have current WebSocket state
           safeSendMessage({
             action: 'terminal_resize',
             data: {
@@ -255,10 +213,9 @@ export const useTerminal = (
         });
       }
 
-      console.log(`[Terminal ${terminalId.slice(0, 8)}] Terminal initialized successfully, setting instance`);
       setTerminalInstance(term);
     } catch (error) {
-      console.error(`[Terminal ${terminalId.slice(0, 8)}] Error initializing terminal:`, error);
+      console.error('Error initializing terminal:', error);
     }
   }, [safeSendMessage, terminalRef, terminalInstance, allowInput, terminalId]);
 
