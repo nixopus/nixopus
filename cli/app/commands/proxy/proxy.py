@@ -6,14 +6,7 @@ import requests
 
 from app.utils.config import CADDY_BASE_URL, LOAD_ENDPOINT, PROXY_PORT, get_active_config, get_yaml_value
 from app.utils.protocols import LoggerProtocol
-from app.utils.retry import (
-    DEFAULT_BACKOFF_FACTOR,
-    DEFAULT_INITIAL_DELAY,
-    DEFAULT_MAX_DELAY,
-    DEFAULT_MAX_RETRIES,
-    retry_with_backoff,
-    wait_for_condition,
-)
+from app.utils.retry import retry_with_backoff, wait_for_condition
 
 from .messages import (
     caddy_connection_failed,
@@ -52,24 +45,16 @@ def _check_caddy_ready(proxy_port: int) -> bool:
 
 def _wait_for_caddy(
     proxy_port: int,
-    max_retries: int = DEFAULT_MAX_RETRIES,
-    initial_delay: float = DEFAULT_INITIAL_DELAY,
-    max_delay: float = DEFAULT_MAX_DELAY,
-    backoff_factor: float = DEFAULT_BACKOFF_FACTOR,
     logger: Optional[LoggerProtocol] = None,
 ) -> tuple[bool, Optional[str]]:
     """Wait for Caddy to be ready to accept connections with exponential backoff."""
 
     def on_retry(attempt: int, delay: float) -> None:
         if logger:
-            logger.debug(f"Waiting for Caddy to be ready (attempt {attempt}/{max_retries}, retrying in {delay:.1f}s)")
+            logger.debug(f"Waiting for Caddy to be ready (attempt {attempt}, retrying in {delay:.1f}s)")
 
     success, error = wait_for_condition(
         check_func=lambda: _check_caddy_ready(proxy_port),
-        max_retries=max_retries,
-        initial_delay=initial_delay,
-        max_delay=max_delay,
-        backoff_factor=backoff_factor,
         on_retry=on_retry,
         timeout_message="Caddy not ready",
     )
@@ -84,10 +69,6 @@ def load_config(
     config_file: str,
     proxy_port: int = default_proxy_port,
     logger: Optional[LoggerProtocol] = None,
-    max_retries: int = DEFAULT_MAX_RETRIES,
-    initial_delay: float = DEFAULT_INITIAL_DELAY,
-    max_delay: float = DEFAULT_MAX_DELAY,
-    backoff_factor: float = DEFAULT_BACKOFF_FACTOR,
 ) -> tuple[bool, Optional[str]]:
     """Load Caddy proxy configuration from a JSON file with retry logic."""
     if not config_file:
@@ -123,14 +104,7 @@ def load_config(
     # Wait for Caddy to be ready before attempting to load config
     if logger:
         logger.debug("Waiting for Caddy to be ready...")
-    ready, ready_error = _wait_for_caddy(
-        proxy_port,
-        max_retries=max_retries,
-        initial_delay=initial_delay,
-        max_delay=max_delay,
-        backoff_factor=backoff_factor,
-        logger=logger,
-    )
+    ready, ready_error = _wait_for_caddy(proxy_port, logger)
     if not ready:
         return False, ready_error
 
@@ -162,14 +136,7 @@ def load_config(
             logger.debug(f"Failed to load config (attempt {attempt}): {last_error}")
             logger.debug(f"Retrying in {delay:.1f}s...")
 
-    success, error = retry_with_backoff(
-        func=post_config,
-        max_retries=max_retries,
-        initial_delay=initial_delay,
-        max_delay=max_delay,
-        backoff_factor=backoff_factor,
-        on_retry=on_retry,
-    )
+    success, error = retry_with_backoff(func=post_config, on_retry=on_retry)
 
     if success and logger:
         logger.debug(debug_config_loaded_success)
