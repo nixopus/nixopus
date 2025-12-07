@@ -1,3 +1,21 @@
+# [0.1.0-alpha.73](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.72...v0.1.0-alpha.73) (2025-12-07)
+
+
+### Bug Fixes
+
+* add --no-scripts in dockerfile to support multi platform builds ([6a5cd5c](https://github.com/raghavyuva/nixopus/commit/6a5cd5cc937f8b6fa5416bdb35d04f81e7a2f83f))
+
+
+### Features
+
+* add support for external database connectivity ([#651](https://github.com/raghavyuva/nixopus/issues/651)) ([5f85177](https://github.com/raghavyuva/nixopus/commit/5f85177adc564c7109f831a448ea71e706398ad1))
+* add support for staging compose file if --staging option used in cli ([0765460](https://github.com/raghavyuva/nixopus/commit/0765460ddee03048760ff4915c5f2f3ba0852b31))
+* convert config class to functional ([#641](https://github.com/raghavyuva/nixopus/issues/641)) ([37e99ef](https://github.com/raghavyuva/nixopus/commit/37e99efd3421edac74f8d1ce17bcb12889c4f464))
+* **timeout:** convert util/timeout to functional ([#639](https://github.com/raghavyuva/nixopus/issues/639)) ([77a31a5](https://github.com/raghavyuva/nixopus/commit/77a31a5d8830162e12e0753b2fc8b8af54029cb2))
+* update config usages across cli ([#653](https://github.com/raghavyuva/nixopus/issues/653)) ([4ff6dc0](https://github.com/raghavyuva/nixopus/commit/4ff6dc08a0bf0f125d8d99a401388db1529e05b2))
+
+
+
 # [0.1.0-alpha.72](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.71...v0.1.0-alpha.72) (2025-12-06)
 
 
