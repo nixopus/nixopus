@@ -27,7 +27,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ssh-key: ${{ secrets.DEPLOY_KEY }}
 
       # dev builds run on host, prod uses PyInstaller on host
       - name: Set up Python
@@ -193,7 +192,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ssh-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
