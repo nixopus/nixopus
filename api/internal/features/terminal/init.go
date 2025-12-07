@@ -161,12 +161,8 @@ func (t *Terminal) readOutput(r io.Reader) {
 				return
 			}
 
-			func() {
-				t.wsLock.Lock()
-				defer t.wsLock.Unlock()
-				t.outputBuf = append(t.outputBuf, buf[:n]...)
-			}()
-
+			// Send output immediately to frontend
+			// Don't buffer - this prevents duplicate sends
 			msg := TerminalMessage{
 				TerminalId: t.TerminalId,
 				Type:       "stdout",
