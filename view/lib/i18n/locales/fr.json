@@ -153,12 +153,13 @@
       },
       "successAdmin": {
         "title": "Inscription Administrateur Réussie",
-        "message": "Vous êtes maintenant l'administrateur de cette instance Nixopus. Redirection vers la connexion...",
+        "message": "Vous êtes maintenant l'administrateur de cette instance Nixopus. Vous avez été connecté automatiquement.",
         "whatsNext": "Prochaines Étapes ?",
         "nextStep1": "Vous êtes maintenant l'administrateur de cette instance",
         "nextStep2": "Vous pouvez gérer les utilisateurs, les paramètres et toutes les fonctionnalités",
-        "nextStep3": "Connectez-vous pour accéder à votre tableau de bord administrateur",
-        "loginButton": "Aller à la Connexion"
+        "nextStep3": "Accédez à votre tableau de bord administrateur pour commencer",
+        "goToDashboard": "Aller au Tableau de Bord",
+        "redirecting": "Redirection vers le tableau de bord dans {count} secondes..."
       },
       "errors": {
         "invalidEmail": "E-mail invalide",

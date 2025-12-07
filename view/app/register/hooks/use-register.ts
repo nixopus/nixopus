@@ -91,9 +91,8 @@ function useRegister() {
           description: t('auth.register.successAdmin.message' as any)
         });
         await dispatch(initializeAuth() as any);
-        setTimeout(() => {
-          router.push('/auth');
-        }, 2000);
+        // Note: User is already logged in after signUp, so we'll redirect to dashboard
+        // The success component will handle the redirect after showing the success message
       }
     } catch (error) {
       if (isNetworkError(error)) {

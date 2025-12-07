@@ -152,12 +152,13 @@
       },
       "successAdmin": {
         "title": "Registro de Administrador Exitoso",
-        "message": "Ahora eres el administrador de esta instancia de Nixopus. Redirigiendo al inicio de sesión...",
+        "message": "Ahora eres el administrador de esta instancia de Nixopus. Has sido iniciado sesión automáticamente.",
         "whatsNext": "¿Qué sigue?",
         "nextStep1": "Ahora eres el administrador de esta instancia",
         "nextStep2": "Puedes gestionar usuarios, configuraciones y todas las funciones",
-        "nextStep3": "Inicia sesión para acceder a tu panel de administración",
-        "loginButton": "Ir a Iniciar Sesión"
+        "nextStep3": "Accede a tu panel de administración para comenzar",
+        "goToDashboard": "Ir al Panel",
+        "redirecting": "Redirigiendo al panel en {count} segundos..."
       },
       "errors": {
         "invalidEmail": "Correo electrónico inválido",

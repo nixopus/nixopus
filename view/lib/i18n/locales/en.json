@@ -153,12 +153,13 @@
       },
       "successAdmin": {
         "title": "Admin Registration Successful",
-        "message": "You are now the admin of this Nixopus instance. Redirecting to login...",
+        "message": "You are now the admin of this Nixopus instance. You have been automatically logged in.",
         "whatsNext": "What's Next?",
         "nextStep1": "You are now the administrator of this instance",
         "nextStep2": "You can manage users, settings, and all features",
-        "nextStep3": "Log in to access your admin dashboard",
-        "loginButton": "Go to Login"
+        "nextStep3": "Access your admin dashboard to get started",
+        "goToDashboard": "Go to Dashboard",
+        "redirecting": "Redirecting to dashboard in {count} seconds..."
       },
       "errors": {
         "invalidEmail": "Invalid email",

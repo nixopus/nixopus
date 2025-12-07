@@ -3,12 +3,41 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/use-translation';
-import { CheckCircle2, LogIn } from 'lucide-react';
+import { CheckCircle2, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useSessionContext } from 'supertokens-auth-react/recipe/session';
+import { useEffect, useState } from 'react';
 
 export const AdminRegistrationSuccess = () => {
   const { t } = useTranslation();
   const router = useRouter();
+  const session = useSessionContext();
+  const [countdown, setCountdown] = useState(3);
+
+  // User is already logged in after registration, so redirect to dashboard
+  useEffect(() => {
+    if (!session.loading) {
+      const sessionExists = 'doesSessionExist' in session ? session.doesSessionExist : false;
+      if (sessionExists) {
+        const timer = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              router.push('/dashboard');
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
+        return () => clearInterval(timer);
+      }
+    }
+  }, [session, router]);
+
+  const handleGoToDashboard = () => {
+    router.push('/dashboard');
+  };
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
@@ -36,12 +65,17 @@ export const AdminRegistrationSuccess = () => {
                 <li>{t('auth.register.successAdmin.nextStep3' as any)}</li>
               </ul>
             </div>
+            {countdown > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {t('auth.register.successAdmin.redirecting' as any, { count: countdown.toString() })}
+              </p>
+            )}
           </div>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <Button onClick={() => router.push('/auth')} className="w-full">
-            <LogIn className="mr-2 h-4 w-4" />
-            {t('auth.register.successAdmin.loginButton' as any)}
+          <Button onClick={handleGoToDashboard} className="w-full">
+            <ArrowRight className="mr-2 h-4 w-4" />
+            {t('auth.register.successAdmin.goToDashboard' as any)}
           </Button>
         </CardFooter>
       </Card>
