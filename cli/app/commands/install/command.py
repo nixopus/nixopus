@@ -61,6 +61,7 @@ def install_callback(
     supertokens_port: int = typer.Option(None, "--supertokens-port", help="Port for SuperTokens service (default: 3567)"),
     repo: str = typer.Option(None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"),
     branch: str = typer.Option(None, "--branch", "-b", help="Git branch to clone (defaults to config value)"),
+    external_db_url: str = typer.Option(None, "--external-db-url", help="External PostgreSQL database connection URL (e.g. postgresql://user:password@host:port/dbname?sslmode=require). If provided, local DB service will be excluded"),
 ):
     """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
@@ -110,6 +111,7 @@ def install_callback(
                 caddy_http_port=caddy_http_port,
                 caddy_https_port=caddy_https_port,
                 supertokens_port=supertokens_port,
+                external_db_url=external_db_url,
             )
             install.run()
 
@@ -170,6 +172,7 @@ def development(
         caddy_http_port=caddy_http_port,
         caddy_https_port=caddy_https_port,
         supertokens_port=supertokens_port,
+        external_db_url=external_db_url,
     )
     install.run()
 

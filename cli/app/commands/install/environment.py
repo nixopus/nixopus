@@ -27,6 +27,7 @@ from .config_utils import (
     get_proxy_port,
     get_ssh_key_path,
     is_custom_repo_or_branch,
+    parse_db_url,
     update_environment_variables,
 )
 
@@ -120,6 +121,7 @@ def create_service_env_files(
     host_ip: str,
     api_domain: Optional[str],
     view_domain: Optional[str],
+    external_db_url: Optional[str] = None,
     logger: Optional[LoggerProtocol] = None,
 ) -> Tuple[bool, Optional[str]]:
     api_env_file = config_resolver.get(API_ENV_FILE)
@@ -147,6 +149,7 @@ def create_service_env_files(
             config_resolver.get(VIEW_PORT),
             str(config_resolver.get(SUPERTOKENS_API_PORT) or 3567),
             config_resolver.get("ssh_key_path"),
+            external_db_url=external_db_url,
         )
         success, error = create_env_file_with_permissions(env_file, updated_env_values, logger)
         if not success:
@@ -167,6 +170,7 @@ def create_service_env_files(
         config_resolver.get(VIEW_PORT),
         str(config_resolver.get(SUPERTOKENS_API_PORT) or 3567),
         config_resolver.get("ssh_key_path"),
+        external_db_url=external_db_url,
     ))
     combined_env_values.update(update_environment_variables(
         view_env_values,
@@ -177,6 +181,7 @@ def create_service_env_files(
         config_resolver.get(VIEW_PORT),
         str(config_resolver.get(SUPERTOKENS_API_PORT) or 3567),
         config_resolver.get("ssh_key_path"),
+        external_db_url=external_db_url,
     ))
     success, error = create_env_file_with_permissions(combined_env_file, combined_env_values, logger)
     if not success:

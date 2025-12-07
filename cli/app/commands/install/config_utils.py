@@ -3,7 +3,7 @@ import ipaddress
 import json
 import shutil
 from typing import Dict, Optional
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs, unquote
 
 from app.utils.config import (
     CADDY_ADMIN_PORT,
@@ -22,6 +22,29 @@ from app.utils.host_information import get_public_ip
 from app.utils.protocols import LoggerProtocol
 
 from .config_schema import ENV_VAR_KEYS
+
+
+def parse_db_url(db_url: str) -> Dict[str, str]:
+    parsed = urlparse(db_url)
+    
+    username = unquote(parsed.username or "")
+    password = unquote(parsed.password or "")
+    hostname = parsed.hostname or ""
+    port = parsed.port or 5432
+    database = unquote(parsed.path.lstrip("/") or "")
+    
+    query_params = parse_qs(parsed.query)
+    ssl_mode = query_params.get("sslmode", ["disable"])[0] if query_params.get("sslmode") else "disable"
+    
+    return {
+        "HOST_NAME": hostname,
+        "DB_PORT": str(port),
+        "USERNAME": username,
+        "PASSWORD": password,
+        "DB_NAME": database,
+        "SSL_MODE": ssl_mode,
+        "POSTGRESQL_CONNECTION_URI": db_url,
+    }
 
 
 def is_custom_repo_or_branch(repo: Optional[str], branch: Optional[str]) -> bool:
@@ -128,8 +151,13 @@ def update_environment_variables(
     view_port: str,
     supertokens_api_port: str,
     ssh_key_path: str,
+    external_db_url: Optional[str] = None,
 ) -> dict:
     updated_env = env_values.copy()
+    
+    if external_db_url:
+        db_config = parse_db_url(external_db_url)
+        updated_env.update(db_config)
     
     env_map = build_env_variable_map(
         host_ip=host_ip,

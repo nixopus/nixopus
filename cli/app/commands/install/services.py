@@ -104,6 +104,7 @@ def start_docker_services(
     timeout: int,
     dry_run: bool,
     logger: Optional[LoggerProtocol] = None,
+    profiles: Optional[list[str]] = None,
 ) -> Tuple[bool, Optional[str]]:
     if dry_run:
         if logger:
@@ -122,6 +123,7 @@ def start_docker_services(
                     env_file=None,
                     compose_file=compose_file,
                     logger=logger,
+                    profiles=profiles,
                 )
         except TimeoutError:
             return False, "Operation timed out"
