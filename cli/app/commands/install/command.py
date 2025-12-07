@@ -7,7 +7,7 @@ from app.utils.timeout import timeout_wrapper
 from .deps import install_all_deps
 from .run import Install
 from .development import DevelopmentInstall
-from .ssh import SSH, SSHConfig
+from .ssh import SSHConfig, format_ssh_output, generate_ssh_key_with_config
 
 install_app = typer.Typer(help="Install Nixopus", invoke_without_command=True)
 
@@ -209,12 +209,11 @@ def ssh(
             add_to_authorized_keys=add_to_authorized_keys,
             create_ssh_directory=create_ssh_directory,
         )
-        ssh_operation = SSH(logger=logger)
-
         with timeout_wrapper(timeout):
-            result = ssh_operation.generate(config)
+            result = generate_ssh_key_with_config(config, logger=logger)
 
-        log_success(result.output, verbose=verbose)
+        output = format_ssh_output(result, result.output)
+        log_success(output, verbose=verbose)
     except TimeoutError as e:
         log_error(str(e), verbose=verbose)
         raise typer.Exit(1)

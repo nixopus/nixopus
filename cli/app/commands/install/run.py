@@ -60,7 +60,7 @@ from .messages import (
     services_start_failed,
     ssh_setup_failed,
 )
-from .ssh import SSH, SSHConfig
+from .ssh import SSHConfig, generate_ssh_key_with_config
 
 _config = Config()
 
@@ -415,10 +415,9 @@ class Install:
             add_to_authorized_keys=True,
             create_ssh_directory=True,
         )
-        ssh_operation = SSH(logger=self.logger)
         try:
             with timeout_wrapper(self.timeout):
-                result = ssh_operation.generate(config)
+                result = generate_ssh_key_with_config(config, logger=self.logger)
         except TimeoutError:
             raise Exception(f"{ssh_setup_failed}: {operation_timed_out}")
         if not result.success:
