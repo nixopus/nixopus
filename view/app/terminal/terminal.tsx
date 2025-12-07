@@ -3,8 +3,8 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import '@xterm/xterm/css/xterm.css';
 import { useTerminal } from './utils/useTerminal';
 import { useContainerReady } from './utils/isContainerReady';
-import { Plus, X } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { Plus, X, SplitSquareVertical, Maximize2, Minimize2 } from 'lucide-react';
+import { useTranslation, translationKey } from '@/hooks/use-translation';
 import { useFeatureFlags } from '@/hooks/features_provider';
 import DisabledFeature from '@/components/features/disabled-feature';
 import Skeleton from '@/app/file-manager/components/skeleton/Skeleton';
@@ -13,6 +13,7 @@ import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { useRBAC } from '@/lib/rbac';
 import { Button } from '@/components/ui/button';
 import { v4 as uuidv4 } from 'uuid';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 const globalStyles = `
   .xterm-viewport::-webkit-scrollbar {
@@ -31,40 +32,218 @@ type TerminalProps = {
   setFitAddonRef: React.Dispatch<React.SetStateAction<any | null>>;
 };
 
+type SplitPane = {
+  id: string;
+  label: string;
+  terminalId: string;
+};
+
+type Session = {
+  id: string;
+  label: string;
+  splitPanes: SplitPane[];
+};
+
 const TerminalSession: React.FC<{
   isActive: boolean;
   isTerminalOpen: boolean;
-  dimensions: { width: number; height: number };
   canCreate: boolean;
   canUpdate: boolean;
   setFitAddonRef: React.Dispatch<React.SetStateAction<any | null>>;
   terminalId: string;
+  onFocus: () => void;
+  containerRef?: React.RefObject<HTMLDivElement>;
 }> = ({
   isActive,
   isTerminalOpen,
-  dimensions,
   canCreate,
   canUpdate,
   setFitAddonRef,
-  terminalId
+  terminalId,
+  onFocus,
+  containerRef
 }) => {
-  const { terminalRef, fitAddonRef, initializeTerminal, destroyTerminal } = useTerminal(
-    isTerminalOpen && isActive,
+  console.log(`[TerminalSession] Component rendered with terminalId: ${terminalId.slice(0, 8)}, isActive: ${isActive}`);
+  
+  const paneRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  const updateDimensions = useCallback(() => {
+    if (!paneRef.current) return;
+
+    if (resizeTimeoutRef.current) {
+      clearTimeout(resizeTimeoutRef.current);
+    }
+
+    resizeTimeoutRef.current = setTimeout(() => {
+      if (paneRef.current) {
+        setDimensions({
+          width: paneRef.current.offsetWidth,
+          height: paneRef.current.offsetHeight
+        });
+      }
+    }, 100);
+  }, []);
+
+  useEffect(() => {
+    if (!paneRef.current) return;
+
+    // Force immediate dimension check
+    const immediateCheck = () => {
+      if (paneRef.current) {
+        const rect = paneRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          setDimensions({
+            width: rect.width,
+            height: rect.height
+          });
+        }
+      }
+    };
+
+    // Check immediately
+    immediateCheck();
+
+    // Also use the callback-based update
+    updateDimensions();
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === paneRef.current) {
+          updateDimensions();
+        }
+      }
+    });
+    resizeObserver.observe(paneRef.current);
+
+    // Multiple delayed checks to catch cases where ResizeObserver doesn't fire immediately
+    const delayedChecks = [100, 200, 500].map((delay) =>
+      setTimeout(() => {
+        immediateCheck();
+        updateDimensions();
+      }, delay)
+    );
+
+    return () => {
+      resizeObserver.disconnect();
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+      delayedChecks.forEach((timeout) => clearTimeout(timeout));
+    };
+  }, [isTerminalOpen, updateDimensions]);
+
+  // allowInput should be based on permissions, not isActive
+  // Each split terminal needs its own active backend session regardless of focus
+  const { terminalRef, fitAddonRef, initializeTerminal, destroyTerminal, isWebSocketReady } = useTerminal(
+    isTerminalOpen,
     dimensions.width,
     dimensions.height,
-    canCreate || canUpdate,
+    canCreate || canUpdate,  // All terminals can send input if user has permission
     terminalId
   );
   const isContainerReady = useContainerReady(
-    isTerminalOpen && isActive,
+    isTerminalOpen,
     terminalRef as React.RefObject<HTMLDivElement>
   );
 
+  // Initialize terminal when conditions are met - with retry logic
+  // Use isWebSocketReady from the hook which tracks the current WebSocket state
   useEffect(() => {
-    if (isTerminalOpen && isActive && isContainerReady) {
-      initializeTerminal();
+    if (!isTerminalOpen || !isWebSocketReady) return;
+
+    let initialized = false;
+
+    const attemptInitialization = () => {
+      // Prevent multiple initializations
+      if (initialized) return true;
+
+      // Check if terminalRef is attached
+      if (!terminalRef?.current) return false;
+
+      // Try to get dimensions from paneRef if state dimensions are 0
+      let finalWidth = dimensions.width;
+      let finalHeight = dimensions.height;
+      
+      if (finalWidth === 0 || finalHeight === 0) {
+        if (paneRef.current) {
+          const rect = paneRef.current.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            finalWidth = rect.width;
+            finalHeight = rect.height;
+            // Update dimensions state immediately
+            setDimensions({
+              width: finalWidth,
+              height: finalHeight
+            });
+          }
+        }
+      }
+
+      // Also check terminalRef dimensions as fallback
+      if (finalWidth === 0 || finalHeight === 0) {
+        if (terminalRef.current) {
+          const rect = terminalRef.current.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            finalWidth = rect.width;
+            finalHeight = rect.height;
+          }
+        }
+      }
+
+      // Initialize if we have valid dimensions and container is ready
+      if (finalWidth > 0 && finalHeight > 0 && (isContainerReady || terminalRef.current)) {
+        initializeTerminal();
+        initialized = true;
+        return true;
+      }
+      return false;
+    };
+
+    // Try immediately
+    if (attemptInitialization()) {
+      return;
     }
-  }, [isTerminalOpen, isActive, isContainerReady, initializeTerminal]);
+
+    // Retry with delays to handle async updates
+    const retryDelays = [50, 100, 200, 500];
+    const timeouts: NodeJS.Timeout[] = [];
+
+    retryDelays.forEach((delay) => {
+      const timeout = setTimeout(() => {
+        if (attemptInitialization()) {
+          // Clear remaining timeouts if initialization succeeds
+          timeouts.forEach((t) => clearTimeout(t));
+        }
+      }, delay);
+      timeouts.push(timeout);
+    });
+
+    return () => {
+      timeouts.forEach((timeout) => clearTimeout(timeout));
+    };
+  }, [isTerminalOpen, isContainerReady, initializeTerminal, dimensions.width, dimensions.height, isWebSocketReady]);
+
+  // Cleanup: destroy terminal when component unmounts
+  useEffect(() => {
+    return () => {
+      destroyTerminal();
+    };
+  }, [destroyTerminal]);
+
+  // Re-fit terminal when dimensions change - but only if WebSocket is ready
+  useEffect(() => {
+    if (fitAddonRef?.current && dimensions.width > 0 && dimensions.height > 0 && isWebSocketReady) {
+      requestAnimationFrame(() => {
+        try {
+          fitAddonRef.current?.fit();
+        } catch (error) {
+          // Ignore fit errors
+        }
+      });
+    }
+  }, [fitAddonRef, dimensions.width, dimensions.height, isWebSocketReady]);
 
   useEffect(() => {
     if (fitAddonRef) {
@@ -74,20 +253,70 @@ const TerminalSession: React.FC<{
 
   return (
     <div
-      ref={terminalRef}
+      ref={paneRef}
       className="flex-1 relative"
       style={{
-        visibility: isTerminalOpen && isActive ? 'visible' : 'hidden',
         minHeight: '200px',
+        minWidth: '200px',
         padding: '4px',
         overflow: 'hidden',
         backgroundColor: '#1e1e1e',
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
         height: '100%',
-        width: '100%'
+        width: '100%',
+        position: 'relative'
       }}
-    />
+      onClick={onFocus}
+      onFocus={onFocus}
+      tabIndex={0}
+    >
+      <div
+        ref={terminalRef}
+        className="absolute inset-0"
+        style={{
+          padding: '4px',
+          height: '100%',
+          width: '100%'
+        }}
+      />
+    </div>
+  );
+};
+
+const SplitPaneHeader: React.FC<{
+  pane: SplitPane;
+  isActive: boolean;
+  canClose: boolean;
+  onFocus: () => void;
+  onClose: () => void;
+  t: (key: translationKey, params?: Record<string, string>) => string;
+}> = ({ pane, isActive, canClose, onFocus, onClose, t }) => {
+  return (
+    <div
+      className={`flex items-center justify-between h-7 px-2 border-r cursor-pointer ${
+        isActive
+          ? 'bg-[#2d2d2d] border-[#007acc]'
+          : 'bg-[#1e1e1e] border-[#2d2d2d] hover:bg-[#252525]'
+      }`}
+      onClick={onFocus}
+    >
+      <span className="text-xs text-[#cccccc]">{pane.label}</span>
+      <div className="flex items-center gap-1">
+        {canClose && (
+          <button
+            className="p-1 text-[#666] hover:text-[#ccc] rounded"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            title={t('terminal.close')}
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -98,50 +327,35 @@ export const Terminal: React.FC<TerminalProps> = ({
   setFitAddonRef
 }) => {
   const { t } = useTranslation();
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [sessions, setSessions] = useState([{ id: uuidv4(), label: 'Session 1' }]);
-  const [activeSessionId, setActiveSessionId] = useState(sessions[0].id);
+  const initialSessionId = uuidv4();
+  const initialPaneId = uuidv4();
+  const [sessions, setSessions] = useState<Session[]>([
+    {
+      id: initialSessionId,
+      label: 'Session 1',
+      splitPanes: [{ id: initialPaneId, label: 'Terminal 1', terminalId: uuidv4() }]
+    }
+  ]);
+  const [activeSessionId, setActiveSessionId] = useState<string>(initialSessionId);
+  const [activePaneId, setActivePaneId] = useState<string>(initialPaneId);
   const containerRef = useRef<HTMLDivElement>(null);
-  const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  // Track active pane per session
+  const [activePaneBySession, setActivePaneBySession] = useState<Record<string, string>>({
+    [initialSessionId]: initialPaneId
+  });
+
+  // Get current active session's split panes
+  const activeSession = sessions.find((s) => s.id === activeSessionId);
+  const splitPanes = activeSession?.splitPanes || [];
+  const activePaneIdForSession = activePaneBySession[activeSessionId] || splitPanes[0]?.id || '';
   const { canAccessResource } = useRBAC();
 
   const canCreate = canAccessResource('terminal', 'create');
   const canUpdate = canAccessResource('terminal', 'update');
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
   const SESSION_LIMIT = 3;
-
-  const updateDimensions = useCallback(() => {
-    if (!containerRef.current) return;
-
-    if (resizeTimeoutRef.current) {
-      clearTimeout(resizeTimeoutRef.current);
-    }
-
-    resizeTimeoutRef.current = setTimeout(() => {
-      if (containerRef.current) {
-        setDimensions({
-          width: containerRef.current.offsetWidth,
-          height: containerRef.current.offsetHeight
-        });
-      }
-    }, 100);
-  }, []);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    updateDimensions();
-
-    const resizeObserver = new ResizeObserver(updateDimensions);
-    resizeObserver.observe(containerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current);
-      }
-    };
-  }, [isTerminalOpen, updateDimensions]);
+  const MAX_SPLITS = 3;
 
   useEffect(() => {
     const style = document.createElement('style');
@@ -156,12 +370,20 @@ export const Terminal: React.FC<TerminalProps> = ({
     if (sessions.length >= SESSION_LIMIT) {
       return;
     }
-    const newSession = {
-      id: uuidv4(),
-      label: `Session ${sessions.length + 1}`
+    const newPaneId = uuidv4();
+    const newSessionId = uuidv4();
+    const newSession: Session = {
+      id: newSessionId,
+      label: `Session ${sessions.length + 1}`,
+      splitPanes: [{ id: newPaneId, label: 'Terminal 1', terminalId: uuidv4() }]
     };
     setSessions((prev) => [...prev, newSession]);
-    setActiveSessionId(newSession.id);
+    setActiveSessionId(newSessionId);
+    setActivePaneId(newPaneId);
+    setActivePaneBySession((prev) => ({
+      ...prev,
+      [newSessionId]: newPaneId
+    }));
   };
 
   const closeSession = (id: string) => {
@@ -169,14 +391,77 @@ export const Terminal: React.FC<TerminalProps> = ({
       const idx = prev.findIndex((s) => s.id === id);
       const newSessions = prev.filter((s) => s.id !== id);
       if (id === activeSessionId && newSessions.length > 0) {
-        setActiveSessionId(newSessions[Math.max(0, idx - 1)].id);
+        const newActiveSession = newSessions[Math.max(0, idx - 1)];
+        const newActivePaneId = activePaneBySession[newActiveSession.id] || newActiveSession.splitPanes[0]?.id || '';
+        setActiveSessionId(newActiveSession.id);
+        setActivePaneId(newActivePaneId);
       }
       return newSessions;
+    });
+    // Clean up active pane tracking for closed session
+    setActivePaneBySession((prev) => {
+      const updated = { ...prev };
+      delete updated[id];
+      return updated;
     });
   };
 
   const switchSession = (id: string) => {
-    setActiveSessionId(id);
+    const session = sessions.find((s) => s.id === id);
+    if (session) {
+      setActiveSessionId(id);
+      // Restore the active pane for this session, or use the first one
+      const savedActivePane = activePaneBySession[id] || session.splitPanes[0]?.id || '';
+      setActivePaneId(savedActivePane);
+    }
+  };
+
+  const addSplitPane = () => {
+    if (splitPanes.length >= MAX_SPLITS) {
+      return;
+    }
+    const newTerminalId = uuidv4();
+    const newPane: SplitPane = {
+      id: uuidv4(),
+      label: `Terminal ${splitPanes.length + 1}`,
+      terminalId: newTerminalId
+    };
+    console.log(`[addSplitPane] Creating new split pane with terminalId: ${newTerminalId.slice(0, 8)}`);
+    console.log(`[addSplitPane] Existing panes:`, splitPanes.map(p => ({ id: p.id.slice(0, 8), terminalId: p.terminalId.slice(0, 8) })));
+    setSessions((prev) =>
+      prev.map((session) =>
+        session.id === activeSessionId
+          ? { ...session, splitPanes: [...session.splitPanes, newPane] }
+          : session
+      )
+    );
+    setActivePaneId(newPane.id);
+  };
+
+  const closeSplitPane = (paneId: string) => {
+    if (splitPanes.length <= 1) return;
+    setSessions((prev) =>
+      prev.map((session) => {
+        if (session.id === activeSessionId) {
+          const idx = session.splitPanes.findIndex((p) => p.id === paneId);
+          const newPanes = session.splitPanes.filter((p) => p.id !== paneId);
+          if (paneId === activePaneId && newPanes.length > 0) {
+            setActivePaneId(newPanes[Math.max(0, idx - 1)].id);
+          }
+          return { ...session, splitPanes: newPanes };
+        }
+        return session;
+      })
+    );
+  };
+
+  const focusPane = (paneId: string) => {
+    setActivePaneId(paneId);
+    // Save the active pane for the current session
+    setActivePaneBySession((prev) => ({
+      ...prev,
+      [activeSessionId]: paneId
+    }));
   };
 
   if (isFeatureFlagsLoading) {
@@ -238,6 +523,15 @@ export const Terminal: React.FC<TerminalProps> = ({
                 <Plus className="h-3 w-3" />
               </button>
             )}
+            {splitPanes.length < MAX_SPLITS && (
+              <button
+                className="ml-2 text-[#666] hover:text-[#ccc]"
+                onClick={addSplitPane}
+                title="Split Terminal"
+              >
+                <SplitSquareVertical className="h-3 w-3" />
+              </button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -248,23 +542,73 @@ export const Terminal: React.FC<TerminalProps> = ({
             </Button>
           </div>
         </div>
-        <div className="flex-1 relative" style={{ height: '100%', width: '100%' }}>
-          {sessions.map((session) => (
-            <div
-              key={session.id}
-              style={{ display: session.id === activeSessionId ? 'block' : 'none', height: '100%' }}
-            >
-              <TerminalSession
-                isActive={session.id === activeSessionId}
-                isTerminalOpen={isTerminalOpen}
-                dimensions={dimensions}
-                canCreate={canCreate}
-                canUpdate={canUpdate}
-                setFitAddonRef={setFitAddonRef}
-                terminalId={session.id}
-              />
-            </div>
-          ))}
+        <div className="flex-1 relative overflow-hidden" style={{ height: '100%', width: '100%' }}>
+          {sessions.map((session) => {
+            const isActiveSession = session.id === activeSessionId;
+            return (
+              <div
+                key={session.id}
+                style={{
+                  position: isActiveSession ? 'relative' : 'absolute',
+                  visibility: isActiveSession ? 'visible' : 'hidden',
+                  height: '100%',
+                  width: '100%',
+                  top: 0,
+                  left: 0,
+                  zIndex: isActiveSession ? 1 : 0
+                }}
+              >
+                <ResizablePanelGroup direction="horizontal" className="h-full">
+                  {(() => { console.log(`[Render] Session ${session.id.slice(0, 8)} has ${session.splitPanes.length} panes:`, session.splitPanes.map(p => p.terminalId.slice(0, 8))); return null; })()}
+                  {session.splitPanes.map((pane, index) => (
+                    <React.Fragment key={pane.id}>
+                      {(() => { console.log(`[Render] Rendering pane ${index}: terminalId=${pane.terminalId.slice(0, 8)}`); return null; })()}
+                      <ResizablePanel
+                        defaultSize={100 / session.splitPanes.length}
+                        minSize={20}
+                        className="flex flex-col"
+                      >
+                        <SplitPaneHeader
+                          pane={pane}
+                          isActive={pane.id === activePaneIdForSession && isActiveSession}
+                          canClose={session.splitPanes.length > 1}
+                          onFocus={() => {
+                            if (!isActiveSession) {
+                              switchSession(session.id);
+                            }
+                            focusPane(pane.id);
+                          }}
+                          onClose={() => closeSplitPane(pane.id)}
+                          t={t}
+                        />
+                        <div className="flex-1 relative" style={{ height: 'calc(100% - 28px)' }}>
+                          <TerminalSession
+                            key={`${session.id}-${pane.terminalId}`}
+                            isActive={pane.id === activePaneIdForSession && isActiveSession}
+                            isTerminalOpen={isTerminalOpen}
+                            canCreate={canCreate}
+                            canUpdate={canUpdate}
+                            setFitAddonRef={setFitAddonRef}
+                            terminalId={pane.terminalId}
+                            onFocus={() => {
+                              if (!isActiveSession) {
+                                switchSession(session.id);
+                              }
+                              focusPane(pane.id);
+                            }}
+                            containerRef={containerRef as React.RefObject<HTMLDivElement>}
+                          />
+                        </div>
+                      </ResizablePanel>
+                      {index < session.splitPanes.length - 1 && (
+                        <ResizableHandle withHandle className="bg-[#2d2d2d] hover:bg-[#3d3d3d]" />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </ResizablePanelGroup>
+              </div>
+            );
+          })}
         </div>
       </div>
     </AnyPermissionGuard>

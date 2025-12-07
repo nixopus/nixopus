@@ -31,6 +31,26 @@ export const useTerminal = (
   const { sendJsonMessage, message, isReady } = useWebSocket();
   const [terminalInstance, setTerminalInstance] = useState<any | null>(null);
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  
+  // Use refs to always have access to current values in callbacks
+  const isReadyRef = useRef(isReady);
+  const sendJsonMessageRef = useRef(sendJsonMessage);
+  
+  // Keep refs updated with current values
+  useEffect(() => {
+    isReadyRef.current = isReady;
+  }, [isReady]);
+  
+  useEffect(() => {
+    sendJsonMessageRef.current = sendJsonMessage;
+  }, [sendJsonMessage]);
+  
+  // Safe send function that always checks current WebSocket state
+  const safeSendMessage = useCallback((data: any) => {
+    if (isReadyRef.current) {
+      sendJsonMessageRef.current(data);
+    }
+  }, []);
 
   const destroyTerminal = useCallback(() => {
     if (terminalInstance) {
@@ -44,22 +64,34 @@ export const useTerminal = (
 
   useEffect(() => {
     if (isStopped && terminalInstance) {
-      sendJsonMessage({ action: 'terminal', data: { value: CTRL_C, terminalId } });
+      safeSendMessage({ action: 'terminal', data: { value: CTRL_C, terminalId } });
       setIsStopped(false);
     }
-  }, [isStopped, sendJsonMessage, setIsStopped, terminalInstance, terminalId]);
+  }, [isStopped, safeSendMessage, setIsStopped, terminalInstance, terminalId]);
 
   useEffect(() => {
-    if (!message || !terminalInstance) return;
+    if (!message) return;
+    
+    // Debug: Log when terminal receives any message
+    console.log(`[Terminal ${terminalId.slice(0, 8)}] Received message, hasInstance: ${!!terminalInstance}`);
+    
+    if (!terminalInstance) {
+      console.log(`[Terminal ${terminalId.slice(0, 8)}] No terminal instance, skipping message`);
+      return;
+    }
 
     try {
       const parsedMessage =
         typeof message === 'string' && message.startsWith('{') ? JSON.parse(message) : message;
 
+      console.log(`[Terminal ${terminalId.slice(0, 8)}] Message terminal_id: ${parsedMessage.terminal_id?.slice(0, 8)}, My terminalId: ${terminalId.slice(0, 8)}`);
+
       if (parsedMessage.terminal_id !== terminalId) {
-        console.log('Message is not for this terminal session');
+        console.log(`[Terminal ${terminalId.slice(0, 8)}] Message NOT for this terminal, ignoring`);
         return;
       }
+
+      console.log(`[Terminal ${terminalId.slice(0, 8)}] Message IS for this terminal, processing...`);
 
       if (parsedMessage.action === 'error') {
         console.error('Terminal error:', parsedMessage.data);
@@ -70,6 +102,7 @@ export const useTerminal = (
         if (parsedMessage.type === OutputType.EXIT) {
           destroyTerminal();
         } else if (parsedMessage.data) {
+          console.log(`[Terminal ${terminalId.slice(0, 8)}] Writing data to terminal`);
           terminalInstance.write(parsedMessage.data);
         }
       }
@@ -79,7 +112,21 @@ export const useTerminal = (
   }, [message, terminalInstance, destroyTerminal, terminalId]);
 
   const initializeTerminal = useCallback(async () => {
-    if (!terminalRef.current || terminalInstance || !isReady) return;
+    console.log(`[Terminal ${terminalId.slice(0, 8)}] initializeTerminal called, ref: ${!!terminalRef.current}, wsReady: ${isReadyRef.current}, hasInstance: ${!!terminalInstance}`);
+    
+    // Check current isReady value from ref
+    if (!terminalRef.current || !isReadyRef.current) {
+      console.log(`[Terminal ${terminalId.slice(0, 8)}] Cannot initialize: ref=${!!terminalRef.current}, wsReady=${isReadyRef.current}`);
+      return;
+    }
+    
+    // If terminal already exists, don't reinitialize unless it was disposed
+    if (terminalInstance) {
+      console.log(`[Terminal ${terminalId.slice(0, 8)}] Terminal already exists, skipping initialization`);
+      return;
+    }
+    
+    console.log(`[Terminal ${terminalId.slice(0, 8)}] Starting terminal initialization...`);
 
     try {
       const { Terminal } = await import('@xterm/xterm');
@@ -129,22 +176,21 @@ export const useTerminal = (
       fitAddonRef.current = fitAddon;
 
       if (terminalRef.current) {
+        console.log(`[Terminal ${terminalId.slice(0, 8)}] Opening terminal on DOM element:`, terminalRef.current);
+        const containerRect = terminalRef.current.getBoundingClientRect();
+        console.log(`[Terminal ${terminalId.slice(0, 8)}] Container dimensions: ${containerRect.width}x${containerRect.height}`);
+        
         terminalRef.current.innerHTML = '';
         term.open(terminalRef.current);
         fitAddon.activate(term);
 
-        if (allowInput) {
-          sendJsonMessage({
-            action: 'terminal',
-            data: { value: '\r', terminalId }
-          });
-        }
-
         requestAnimationFrame(() => {
           fitAddon.fit();
           const dimensions = fitAddon.proposeDimensions();
+          console.log(`[Terminal ${terminalId.slice(0, 8)}] Terminal fitted, dimensions: ${dimensions?.cols}x${dimensions?.rows}`);
           if (dimensions) {
-            sendJsonMessage({
+            console.log(`[Terminal ${terminalId.slice(0, 8)}] Sending resize message`);
+            safeSendMessage({
               action: 'terminal_resize',
               data: {
                 cols: dimensions.cols,
@@ -154,6 +200,14 @@ export const useTerminal = (
             });
           }
         });
+
+        if (allowInput) {
+          console.log(`[Terminal ${terminalId.slice(0, 8)}] Sending initial terminal message to start session`);
+          safeSendMessage({
+            action: 'terminal',
+            data: { value: '\r', terminalId }
+          });
+        }
 
         if (allowInput) {
           term.attachCustomKeyEventHandler((event: KeyboardEvent) => {
@@ -179,7 +233,9 @@ export const useTerminal = (
             return true;
           });
           term.onData((data) => {
-            sendJsonMessage({
+            // Use ref-based send to always have current WebSocket state
+            console.log(`[Terminal ${terminalId.slice(0, 8)}] User input: ${JSON.stringify(data)}`);
+            safeSendMessage({
               action: 'terminal',
               data: { value: data, terminalId }
             });
@@ -187,7 +243,8 @@ export const useTerminal = (
         }
 
         term.onResize((size) => {
-          sendJsonMessage({
+          // Use ref-based send to always have current WebSocket state
+          safeSendMessage({
             action: 'terminal_resize',
             data: {
               cols: size.cols,
@@ -198,17 +255,19 @@ export const useTerminal = (
         });
       }
 
+      console.log(`[Terminal ${terminalId.slice(0, 8)}] Terminal initialized successfully, setting instance`);
       setTerminalInstance(term);
     } catch (error) {
-      console.error('Error initializing terminal:', error);
+      console.error(`[Terminal ${terminalId.slice(0, 8)}] Error initializing terminal:`, error);
     }
-  }, [sendJsonMessage, isReady, terminalRef, terminalInstance, allowInput, terminalId]);
+  }, [safeSendMessage, terminalRef, terminalInstance, allowInput, terminalId]);
 
   return {
     terminalRef,
     initializeTerminal,
     destroyTerminal,
     fitAddonRef,
-    terminalInstance
+    terminalInstance,
+    isWebSocketReady: isReady
   };
 };
