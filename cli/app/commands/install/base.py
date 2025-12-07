@@ -3,7 +3,7 @@ import os
 from app.utils.config import Config
 from app.utils.protocols import LoggerProtocol
 
-from .config_schema import get_proxy_port
+from .config_utils import get_proxy_port
 from .messages import configuration_key_has_no_default_value
 from .validate import validate_domains, validate_repo
 
