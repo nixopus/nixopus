@@ -139,6 +139,27 @@
       "privacyPolicy": "Privacy Policy",
       "alreadyHaveAccount": "Already have an account?",
       "success": "Registration successful! Please check your email to verify your account.",
+      "loadingStatus": "Checking registration status...",
+      "adminInfoBanner": "You are registering as the admin user. Only one admin can be registered per Nixopus instance.",
+      "adminAlreadyRegistered": {
+        "title": "Admin Registration Already Exists",
+        "description": "This Nixopus instance already has an admin user registered.",
+        "policyTitle": "Single Admin Policy",
+        "policyPoint1": "Only 1 admin registration is allowed per instance",
+        "policyPoint2": "If you are the admin, please log in with your credentials",
+        "nextSteps": "If you need access, please contact the existing admin or reach out to our support team.",
+        "goToLogin": "Go to Login",
+        "contactSupport": "Contact Support"
+      },
+      "successAdmin": {
+        "title": "Admin Registration Successful",
+        "message": "You are now the admin of this Nixopus instance. Redirecting to login...",
+        "whatsNext": "What's Next?",
+        "nextStep1": "You are now the administrator of this instance",
+        "nextStep2": "You can manage users, settings, and all features",
+        "nextStep3": "Log in to access your admin dashboard",
+        "loginButton": "Go to Login"
+      },
       "errors": {
         "invalidEmail": "Invalid email",
         "passwordMismatch": "Passwords don't match",
@@ -153,9 +174,25 @@
         "adminAlreadyRegisteredDescription": "Please contact the administrator to get access.",
         "loginButton": "Login",
         "somethingWentWrong": "Something went wrong",
-        "loadingAdminRegistration": "Checking if admin is registered...",
+        "loadingAdminRegistration": "Unable to check registration status. Please try again.",
         "tryAgain": "Try again",
-        "registerFailed": "Failed to register"
+        "registerFailed": "Failed to register",
+        "unknownError": "An unexpected error occurred. Please try again.",
+        "contactSupport": "Contact Support",
+        "showDetails": "Show Details",
+        "hideDetails": "Hide Details",
+        "networkError": {
+          "title": "Connection Failed",
+          "description": "Unable to connect to the server. Please check your internet connection and try again."
+        },
+        "serverError": {
+          "title": "Server Unavailable",
+          "description": "The server is currently unavailable. Please try again later."
+        },
+        "signUpNotAllowed": {
+          "message": "Registration Not Available",
+          "description": "Admin registration is not available. This instance already has an admin user registered."
+        }
       }
     },
     "email": "Email",
