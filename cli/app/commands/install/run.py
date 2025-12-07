@@ -71,6 +71,7 @@ class InstallParams:
     caddy_https_port: Optional[int] = None
     supertokens_port: Optional[int] = None
     external_db_url: Optional[str] = None
+    staging: bool = False
 
 
 def validate_install_params(params: InstallParams) -> None:
@@ -92,6 +93,7 @@ def create_config_resolver(config: Config, params: InstallParams) -> ConfigResol
         caddy_http_port=params.caddy_http_port,
         caddy_https_port=params.caddy_https_port,
         supertokens_port=params.supertokens_port,
+        staging=params.staging,
     )
 
 
@@ -299,7 +301,8 @@ def run_installation(params: InstallParams) -> None:
     
     if is_custom_repo_or_branch(params.repo, params.branch):
         if params.logger:
-            params.logger.info("Custom repository/branch detected - will use docker-compose.yml")
+            compose_file = "docker-compose-staging.yml" if params.staging else "docker-compose.yml"
+            params.logger.info(f"Custom repository/branch detected - will use {compose_file}")
     
     config_resolver = create_config_resolver(config, params)
     steps = build_installation_steps(config, config_resolver, params)
@@ -358,6 +361,7 @@ class Install:
         caddy_https_port: int = None,
         supertokens_port: int = None,
         external_db_url: str = None,
+        staging: bool = False,
     ):
         self.params = InstallParams(
             logger=logger,
@@ -380,6 +384,7 @@ class Install:
             caddy_https_port=caddy_https_port,
             supertokens_port=supertokens_port,
             external_db_url=external_db_url,
+            staging=staging,
         )
 
     def run(self):
