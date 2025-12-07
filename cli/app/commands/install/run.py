@@ -299,7 +299,7 @@ def run_installation(params: InstallParams) -> None:
     
     if is_custom_repo_or_branch(params.repo, params.branch):
         if params.logger:
-            params.logger.info("Custom repository/branch detected - will use docker-compose-staging.yml")
+            params.logger.info("Custom repository/branch detected - will use docker-compose.yml")
     
     config_resolver = create_config_resolver(config, params)
     steps = build_installation_steps(config, config_resolver, params)
