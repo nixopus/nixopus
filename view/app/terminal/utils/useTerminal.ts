@@ -140,9 +140,7 @@ export const useTerminal = (
         scrollback: 1000,
         tabStopWidth: 8,
         macOptionIsMeta: true,
-        macOptionClickForcesSelection: true,
-        // Ensure proper input handling - backend echo will handle all display
-        // This prevents sync issues between local display and backend echo
+        macOptionClickForcesSelection: true
       });
 
       const fitAddon = new FitAddon();
@@ -182,12 +180,12 @@ export const useTerminal = (
         if (allowInput) {
           term.attachCustomKeyEventHandler((event: KeyboardEvent) => {
             const key = event.key.toLowerCase();
-            
+
             // Handle Ctrl+J or Cmd+J (toggle terminal shortcut)
             if (key === 'j' && (event.ctrlKey || event.metaKey)) {
               return false;
             }
-            
+
             // Handle Ctrl+C or Cmd+C for copy (when there's a selection)
             if (key === 'c' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
               if (event.type === 'keydown') {
@@ -203,13 +201,12 @@ export const useTerminal = (
                   console.error('Error in Ctrl+C handler:', error);
                 }
               }
-              // If no selection, let it pass through as Ctrl+C signal
             }
-            
+
             // Allow xterm to process all other keys normally
             return true;
           });
-          
+
           // onData is called when xterm processes input
           // Send all input to backend - backend echo will handle display
           term.onData((data) => {
