@@ -6,6 +6,7 @@ import shutil
 from dataclasses import dataclass
 from typing import Callable, List, Optional, Tuple
 from urllib.parse import urlparse
+from .config_utils import parse_db_url
 
 import typer
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
@@ -851,7 +852,6 @@ class Install:
         
         updated_env = env_values.copy()
         if self.external_db_url:
-            from .config_utils import parse_db_url
             db_config = parse_db_url(self.external_db_url)
             updated_env.update(db_config)
 
