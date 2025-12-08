@@ -1,3 +1,17 @@
+# [0.1.0-alpha.78](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.77...v0.1.0-alpha.78) (2025-12-08)
+
+
+### Bug Fixes
+
+* unsynced line buffer on backspace or on keyboard type ([#645](https://github.com/raghavyuva/nixopus/issues/645)) ([934b853](https://github.com/raghavyuva/nixopus/commit/934b853f62963af0858d37b03e695d49a757ec4b))
+
+
+### Reverts
+
+* Revert "fix: unsynced line buffer on backspace or on keyboard type (#645)" (#666) ([24ff60a](https://github.com/raghavyuva/nixopus/commit/24ff60a785fe5392f29ce64db8918be89bbb56b7)), closes [#645](https://github.com/raghavyuva/nixopus/issues/645) [#666](https://github.com/raghavyuva/nixopus/issues/666)
+
+
+
 # [0.1.0-alpha.77](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.76...v0.1.0-alpha.77) (2025-12-08)
 
 

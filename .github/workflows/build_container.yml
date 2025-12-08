@@ -76,8 +76,9 @@ jobs:
           labels: ${{ steps.meta-api.outputs.labels }}
           build-args: |
             API_PORT=${{ env.API_PORT }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.API_IMAGE }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.API_IMAGE }}:buildcache,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
 
   build-and-push-view:
     runs-on: ubuntu-latest
@@ -87,7 +88,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ssh-key: ${{ secrets.DEPLOY_KEY }}
@@ -131,5 +132,6 @@ jobs:
           labels: ${{ steps.meta-view.outputs.labels }}
           build-args: |
             NEXT_PUBLIC_PORT=${{ env.NEXT_PUBLIC_PORT }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}:buildcache,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false

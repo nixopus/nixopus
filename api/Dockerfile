@@ -8,16 +8,13 @@ WORKDIR /app
 
 # Cache dependencies separately
 COPY go.mod go.sum ./
-RUN --mount=type=cache,target=/go/pkg/mod \
-    go mod download
+RUN go mod download
 
 # Copy source code
 COPY . .
 
-# Build with cache mounts and cross-compilation
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    GOOS=${TARGETOS} GOARCH=${TARGETARCH} make build
+# Build with cross-compilation
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} make build
 
 FROM alpine:3.18
 ARG API_PORT
