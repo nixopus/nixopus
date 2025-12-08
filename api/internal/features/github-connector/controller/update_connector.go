@@ -41,7 +41,7 @@ func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.Context
 		}
 	}
 
-	err = c.service.UpdateGithubConnectorRequest(UpdateConnectorRequest.InstallationID, user.ID.String())
+	err = c.service.UpdateGithubConnectorRequest(UpdateConnectorRequest.InstallationID, user.ID.String(), UpdateConnectorRequest.ConnectorID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
