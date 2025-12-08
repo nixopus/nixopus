@@ -759,6 +759,12 @@ class Install:
         if self.supertokens_port is not None:
             env_vars["SUPERTOKENS_PORT"] = str(self.supertokens_port)
 
+        profiles = None
+        if self.external_db_url:
+            profiles = []
+        else:
+            profiles = ["local-db"]
+
         original_env = os.environ.copy()
         os.environ.update(env_vars)
 
@@ -771,6 +777,7 @@ class Install:
                         env_file=None,
                         compose_file=compose_file,
                         logger=self.logger,
+                        profiles=profiles,
                     )
             except TimeoutError:
                 raise Exception(f"{services_start_failed}: {operation_timed_out}")
