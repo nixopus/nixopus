@@ -57,12 +57,6 @@ nixopus: ## Run nixopus CLI
 		poetry run nixopus $(ARGS); \
 	fi
 
-conflict: ## Run conflict command
-	@poetry run nixopus conflict $(ARGS)
-
-preflight: ## Run preflight command
-	@poetry run nixopus preflight $(ARGS)
-
 version: ## Show version
 	@poetry run nixopus version
 

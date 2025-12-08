@@ -7,16 +7,14 @@ import urllib.request
 import typer
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 
-from app.commands.clone.clone import Clone, CloneConfig
-from app.commands.conf.base import BaseEnvironmentManager
-from app.commands.preflight.run import PreflightRunner
-from app.commands.proxy.load import Load, LoadConfig
-from app.commands.service.base import BaseDockerService
-from app.commands.service.up import Up, UpConfig
+from app.commands.clone.clone import clone_repository
+from app.commands.conf.conf import write_env_file
+from app.commands.preflight.preflight import check_ports_from_config
+from app.commands.proxy.proxy import load_config
+from app.commands.service.service import cleanup_docker_resources, start_services
 from app.utils.config import (
     API_ENV_FILE,
     API_PORT,
-    Config,
     DEFAULT_BRANCH,
     DEFAULT_COMPOSE_FILE,
     DEFAULT_PATH,
@@ -29,13 +27,20 @@ from app.utils.config import (
     SSH_KEY_TYPE,
     VIEW_ENV_FILE,
     VIEW_PORT,
+    get_active_config,
+    get_config_value,
+    get_service_env_values,
+    get_yaml_value,
 )
-from app.utils.lib import FileManager, HostInformation
+from app.utils.directory_manager import create_directory
+from app.utils.file_manager import get_directory_path, set_permissions
+from app.utils.host_information import get_os_name, get_package_manager
 from app.utils.protocols import LoggerProtocol
-from app.utils.timeout import TimeoutWrapper
+from app.utils.timeout import timeout_wrapper
 
 from .base import BaseInstall
 from .deps import get_deps_from_config, get_installed_deps, install_dep
+from .services import build_service_env_vars
 from .messages import (
     clone_failed,
     created_env_file,
@@ -47,7 +52,7 @@ from .messages import (
     services_start_failed,
     ssh_setup_failed,
 )
-from .ssh import SSH, SSHConfig
+from .ssh import SSHConfig, generate_ssh_key_with_config
 
 
 class DevelopmentInstall(BaseInstall):
@@ -72,6 +77,7 @@ class DevelopmentInstall(BaseInstall):
         caddy_http_port: int = None,
         caddy_https_port: int = None,
         supertokens_port: int = None,
+        external_db_url: str = None,
     ):
         super().__init__(
             logger=logger,
@@ -90,6 +96,7 @@ class DevelopmentInstall(BaseInstall):
             caddy_http_port=caddy_http_port,
             caddy_https_port=caddy_https_port,
             supertokens_port=supertokens_port,
+            external_db_url=external_db_url,
         )
 
         # safe fallback incase cwd is not accessible
@@ -111,7 +118,7 @@ class DevelopmentInstall(BaseInstall):
         self._check_platform_support()
 
         # Load config from config.dev.yaml
-        self._config = Config(default_env="DEVELOPMENT")
+        self._config = get_active_config(default_env="DEVELOPMENT")
         self._defaults = self._load_dev_defaults()
 
         if self.logger:
@@ -173,29 +180,29 @@ class DevelopmentInstall(BaseInstall):
 
     def _load_dev_defaults(self):
         """Load defaults from config.dev.yaml"""
-        config_dir = self._config.get_yaml_value(NIXOPUS_CONFIG_DIR)
-        source_path = self._config.get_yaml_value(DEFAULT_PATH)
+        config_dir = get_yaml_value(self._config, NIXOPUS_CONFIG_DIR)
+        source_path = get_yaml_value(self._config, DEFAULT_PATH)
 
         return {
-            "ssh_key_type": self._config.get_yaml_value(SSH_KEY_TYPE),
-            "ssh_key_size": self._config.get_yaml_value(SSH_KEY_SIZE),
+            "ssh_key_type": get_yaml_value(self._config, SSH_KEY_TYPE),
+            "ssh_key_size": get_yaml_value(self._config, SSH_KEY_SIZE),
             "ssh_passphrase": None,
             "service_name": "all",
             "service_detach": True,
-            "required_ports": [int(port) for port in self._config.get_yaml_value(PORTS)],
-            "repo_url": self._config.get_yaml_value(DEFAULT_REPO),
-            "branch_name": self._config.get_yaml_value(DEFAULT_BRANCH),
+            "required_ports": [int(port) for port in get_yaml_value(self._config, PORTS)],
+            "repo_url": get_yaml_value(self._config, DEFAULT_REPO),
+            "branch_name": get_yaml_value(self._config, DEFAULT_BRANCH),
             "source_path": source_path,
             "config_dir": config_dir,
-            "api_env_file_path": self._config.get_yaml_value(API_ENV_FILE),
-            "view_env_file_path": self._config.get_yaml_value(VIEW_ENV_FILE),
-            "compose_file": self._config.get_yaml_value(DEFAULT_COMPOSE_FILE),
+            "api_env_file_path": get_yaml_value(self._config, API_ENV_FILE),
+            "view_env_file_path": get_yaml_value(self._config, VIEW_ENV_FILE),
+            "compose_file": get_yaml_value(self._config, DEFAULT_COMPOSE_FILE),
             "full_source_path": self.install_path,
             "ssh_key_path": os.path.expanduser("~/.ssh/id_rsa_nixopus"),
             "compose_file_path": os.path.join(self.install_path, "docker-compose-dev.yml"),
-            "view_port": self._config.get_yaml_value(VIEW_PORT),
-            "api_port": self._config.get_yaml_value(API_PORT),
-            "proxy_port": self._config.get_yaml_value(PROXY_PORT),
+            "view_port": get_yaml_value(self._config, VIEW_PORT),
+            "api_port": get_yaml_value(self._config, API_PORT),
+            "proxy_port": get_yaml_value(self._config, PROXY_PORT),
             "nixopus_config_dir": os.path.join(self.install_path, "nixopus-dev"),
         }
 
@@ -223,17 +230,17 @@ class DevelopmentInstall(BaseInstall):
         if key == "db_port":
             if self.db_port is not None:
                 return str(self.db_port)
-            return str(self._config.get("services.db.env.DB_PORT") or "5432")
+            return str(get_config_value(self._config, "services.db.env.DB_PORT") or "5432")
         if key == "redis_port":
             if self.redis_port is not None:
                 return str(self.redis_port)
-            return str(self._config.get("services.redis.env.REDIS_PORT") or "6379")
+            return str(get_config_value(self._config, "services.redis.env.REDIS_PORT") or "6379")
         if key == "proxy_port" and self.caddy_admin_port is not None:
             return str(self.caddy_admin_port)
         if key == "supertokens_api_port":
             if self.supertokens_port is not None:
                 return str(self.supertokens_port)
-            return str(self._config.get("services.api.env.SUPERTOKENS_API_PORT") or "3567")
+            return str(get_config_value(self._config, "services.api.env.SUPERTOKENS_API_PORT") or "3567")
         if key == "services.caddy.env.CADDY_HTTP_PORT" and self.caddy_http_port is not None:
             return str(self.caddy_http_port)
         if key == "services.caddy.env.CADDY_HTTPS_PORT" and self.caddy_https_port is not None:
@@ -244,7 +251,7 @@ class DevelopmentInstall(BaseInstall):
             return active_defaults[key]
 
         try:
-            return self._config.get(key)
+            return get_config_value(self._config, key)
         except KeyError:
             return super()._get_config(key)
 
@@ -268,9 +275,9 @@ class DevelopmentInstall(BaseInstall):
                 compose_file = self._get_config("compose_file_path")
                 if os.path.exists(compose_file):
                     try:
-                        BaseDockerService.cleanup_docker_resources(
-                            logger=self.logger,
+                        cleanup_docker_resources(
                             compose_file=compose_file,
+                            logger=self.logger,
                             remove_images="all",
                             remove_volumes=True,
                             remove_orphans=True,
@@ -319,16 +326,13 @@ class DevelopmentInstall(BaseInstall):
 
     def _run_preflight_checks(self):
         """Check ports and system requirements"""
-        preflight_runner = PreflightRunner(logger=self.logger, verbose=self.verbose)
-        preflight_runner.check_ports_from_config(
-            config_key="required_ports", user_config=self._user_config, defaults=self._defaults
-        )
+        check_ports_from_config(logger=self.logger)
 
     def _check_and_install_dependencies(self):
         """Check dependencies and install only if missing"""
         deps = get_deps_from_config()
-        os_name = HostInformation.get_os_name()
-        package_manager = HostInformation.get_package_manager()
+        os_name = get_os_name()
+        package_manager = get_package_manager()
 
         if not package_manager:
             raise Exception("No supported package manager found")
@@ -358,23 +362,23 @@ class DevelopmentInstall(BaseInstall):
 
     def _setup_clone_and_config(self):
         """Clone repository to installation directory"""
-        clone_config = CloneConfig(
-            repo=self._get_config("repo_url"),
-            branch=self._get_config("branch_name"),
-            path=self._get_config("full_source_path"),
-            force=self.force,
-            verbose=self.verbose,
-            output="text",
-            dry_run=self.dry_run,
-        )
-        clone_service = Clone(logger=self.logger)
+        if self.dry_run:
+            self.logger.info(f"[DRY RUN] Would clone {self._get_config('repo_url')} to {self._get_config('full_source_path')}")
+            return
+
         try:
-            with TimeoutWrapper(self.timeout):
-                result = clone_service.clone(clone_config)
+            with timeout_wrapper(self.timeout):
+                success, error = clone_repository(
+                    repo=self._get_config("repo_url"),
+                    path=self._get_config("full_source_path"),
+                    branch=self._get_config("branch_name"),
+                    force=self.force,
+                    logger=self.logger,
+                )
         except TimeoutError:
             raise Exception(f"{clone_failed}: {operation_timed_out}")
-        if not result.success:
-            raise Exception(f"{clone_failed}: {result.error}")
+        if not success:
+            raise Exception(f"{clone_failed}: {error}")
 
     def _create_env_files(self):
         """Create environment files for backend and frontend"""
@@ -387,46 +391,44 @@ class DevelopmentInstall(BaseInstall):
             self.logger.info(f"  - View: {view_env_file}")
             return
 
-        FileManager.create_directory(FileManager.get_directory_path(api_env_file), logger=self.logger)
-        FileManager.create_directory(FileManager.get_directory_path(view_env_file), logger=self.logger)
+        create_directory(get_directory_path(api_env_file), logger=self.logger)
+        create_directory(get_directory_path(view_env_file), logger=self.logger)
 
         # Get combined env file path
         full_source_path = self._get_config("full_source_path")
         combined_env_file = os.path.join(full_source_path, ".env")
-        FileManager.create_directory(FileManager.get_directory_path(combined_env_file), logger=self.logger)
+        create_directory(get_directory_path(combined_env_file), logger=self.logger)
 
         services = [
             ("api", "services.api.env", api_env_file),
             ("view", "services.view.env", view_env_file),
         ]
 
-        env_manager = BaseEnvironmentManager(self.logger)
-
         # Create individual service env files
         for service_name, service_key, env_file in services:
-            env_values = self._config.get_service_env_values(service_key)
+            env_values = get_service_env_values(self._config, service_key)
             updated_env_values = self._update_environment_variables(env_values)
-            success, error = env_manager.write_env_file(env_file, updated_env_values)
+            success, error = write_env_file(env_file, updated_env_values, self.logger)
             if not success:
                 raise Exception(f"{env_file_creation_failed} {service_name}: {error}")
-            file_perm_success, file_perm_error = FileManager.set_permissions(env_file, 0o644)
+            file_perm_success, file_perm_error = set_permissions(env_file, 0o644)
             if not file_perm_success:
                 raise Exception(f"{env_file_permissions_failed} {service_name}: {file_perm_error}")
             self.logger.debug(created_env_file.format(service_name=service_name, env_file=env_file))
 
         # Create combined env file with both API and view variables (for docker-compose)
-        api_env_values = self._config.get_service_env_values("services.api.env")
-        view_env_values = self._config.get_service_env_values("services.view.env")
+        api_env_values = get_service_env_values(self._config, "services.api.env")
+        view_env_values = get_service_env_values(self._config, "services.view.env")
 
         combined_env_values = {}
         combined_env_values.update(self._update_environment_variables(api_env_values))
         combined_env_values.update(self._update_environment_variables(view_env_values))
 
-        success, error = env_manager.write_env_file(combined_env_file, combined_env_values)
+        success, error = write_env_file(combined_env_file, combined_env_values, self.logger)
         if not success:
             raise Exception(f"{env_file_creation_failed} combined: {error}")
 
-        file_perm_success, file_perm_error = FileManager.set_permissions(combined_env_file, 0o644)
+        file_perm_success, file_perm_error = set_permissions(combined_env_file, 0o644)
         if not file_perm_success:
             raise Exception(f"{env_file_permissions_failed} combined: {file_perm_error}")
 
@@ -477,10 +479,9 @@ class DevelopmentInstall(BaseInstall):
             create_ssh_directory=True,
         )
 
-        ssh_operation = SSH(logger=self.logger)
         try:
-            with TimeoutWrapper(self.timeout):
-                result = ssh_operation.generate(config)
+            with timeout_wrapper(self.timeout):
+                result = generate_ssh_key_with_config(config, logger=self.logger)
         except TimeoutError:
             raise Exception(f"{ssh_setup_failed}: {operation_timed_out}")
         if not result.success:
@@ -551,70 +552,54 @@ class DevelopmentInstall(BaseInstall):
             self.logger.info(f"[DRY RUN] Would load proxy config from {caddy_json_config}")
             return
 
-        config = LoadConfig(
-            proxy_port=proxy_port,
-            verbose=self.verbose,
-            output="text",
-            dry_run=self.dry_run,
-            config_file=caddy_json_config,
-        )
-
-        load_service = Load(logger=self.logger)
         try:
-            with TimeoutWrapper(self.timeout):
-                result = load_service.load(config)
+            with timeout_wrapper(self.timeout):
+                success, error = load_config(caddy_json_config, proxy_port, self.logger)
         except TimeoutError:
             raise Exception(f"Proxy load failed: {operation_timed_out}")
 
-        if result.success:
+        if success:
             if not self.dry_run and self.verbose:
                 self.logger.info("Caddy proxy configuration loaded successfully")
         else:
-            raise Exception(f"Proxy load failed: {result.error}")
+            raise Exception(f"Proxy load failed: {error}")
 
     def _start_all_services(self):
         """Start all services (API, View, DB, Redis, Caddy) using Docker Compose"""
-        env_vars = {}
-        if self.api_port is not None:
-            env_vars["API_PORT"] = str(self.api_port)
-        if self.view_port is not None:
-            env_vars["NEXT_PUBLIC_PORT"] = str(self.view_port)
-            env_vars["VIEW_PORT"] = str(self.view_port)
-        if self.db_port is not None:
-            env_vars["DB_PORT"] = str(self.db_port)
-        if self.redis_port is not None:
-            env_vars["REDIS_PORT"] = str(self.redis_port)
-        if self.caddy_admin_port is not None:
-            env_vars["CADDY_ADMIN_PORT"] = str(self.caddy_admin_port)
-        if self.caddy_http_port is not None:
-            env_vars["CADDY_HTTP_PORT"] = str(self.caddy_http_port)
-        if self.caddy_https_port is not None:
-            env_vars["CADDY_HTTPS_PORT"] = str(self.caddy_https_port)
-        if self.supertokens_port is not None:
-            env_vars["SUPERTOKENS_PORT"] = str(self.supertokens_port)
+        compose_file = self._get_config("compose_file_path")
+        
+        if self.dry_run:
+            self.logger.info(f"[DRY RUN] Would start services using {compose_file}")
+            return
+        
+        env_vars = build_service_env_vars(
+            self.api_port,
+            self.view_port,
+            self.db_port,
+            self.redis_port,
+            self.caddy_admin_port,
+            self.caddy_http_port,
+            self.caddy_https_port,
+            self.supertokens_port,
+        )
 
         original_env = os.environ.copy()
         os.environ.update(env_vars)
 
         try:
-            config = UpConfig(
-                name=self._get_config("service_name"),
-                detach=self._get_config("service_detach"),
-                env_file=None,
-                verbose=self.verbose,
-                output="text",
-                dry_run=self.dry_run,
-                compose_file=self._get_config("compose_file_path"),
-            )
-
-            up_service = Up(logger=self.logger)
             try:
-                with TimeoutWrapper(self.timeout):
-                    result = up_service.up(config)
+                with timeout_wrapper(self.timeout):
+                    success, error = start_services(
+                        name=self._get_config("service_name"),
+                        detach=self._get_config("service_detach"),
+                        env_file=None,
+                        compose_file=compose_file,
+                        logger=self.logger,
+                    )
             except TimeoutError:
                 raise Exception(f"{services_start_failed}: {operation_timed_out}")
-            if not result.success:
-                raise Exception(services_start_failed)
+            if not success:
+                raise Exception(f"{services_start_failed}: {error}")
         finally:
             for key in env_vars:
                 if key in original_env:
