@@ -12,16 +12,9 @@ export default function ExecutionsTab() {
   const { t } = useTranslation();
   const params = useParams();
   const id = (params?.id as string) || '';
-  
-  const {
-    executions,
-    isLoading,
-    allLogs,
-    open,
-    selectedExecId,
-    setOpen,
-    onOpenLogs
-  } = useExecutionLogs(id);
+
+  const { executions, isLoading, allLogs, open, selectedExecId, setOpen, onOpenLogs } =
+    useExecutionLogs(id);
 
   const StatusBadge = ({ status }: { status: string }) => {
     const s = (status || '').toLowerCase();
@@ -93,12 +86,7 @@ export default function ExecutionsTab() {
         </div>
       </div>
 
-      <LogViewer
-        open={open}
-        onOpenChange={setOpen}
-        executionId={selectedExecId}
-        logs={allLogs}
-      />
+      <LogViewer open={open} onOpenChange={setOpen} executionId={selectedExecId} logs={allLogs} />
     </div>
   );
 }

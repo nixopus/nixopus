@@ -81,16 +81,11 @@ a = Analysis(
     datas=[
         ('../helpers/config.prod.yaml', 'helpers/'),
         ('../helpers/config.dev.yaml', 'helpers/'),
+        ('../version.txt', '.'),
     ],
     hiddenimports=[
-        'app.commands.clone.command',
-        'app.commands.conf.command',
         'app.commands.install.command',
-        'app.commands.preflight.command',
-        'app.commands.proxy.command',
-        'app.commands.service.command',
-        'app.commands.test.command',
-        'app.commands.uninstall.command',
+        'app.commands.uninstall.uninstall',
         'app.commands.version.command',
     ],
     hookspath=[],

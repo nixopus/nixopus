@@ -2,8 +2,8 @@ FROM node:18-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile --network-timeout 600000 --production=false && \
-    yarn cache clean
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
+    yarn install --frozen-lockfile --network-timeout 600000 --production=false
 
 FROM node:18-alpine AS builder
 WORKDIR /app
@@ -15,8 +15,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=$NEXT_PUBLIC_PORT
 ENV NEXT_PUBLIC_PORT=$NEXT_PUBLIC_PORT
 
-RUN yarn build && \
-    rm -rf node_modules/.cache
+RUN --mount=type=cache,target=/app/.next/cache \
+    yarn build
 
 FROM node:18-alpine AS runner
 WORKDIR /app

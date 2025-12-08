@@ -75,8 +75,12 @@ func Init(appInstance *storage.App) {
 	apiBasePath := "/auth"
 	websiteBasePath := "/auth"
 
+	// Disable debug logs in development mode
+	isDevelopment := strings.ToLower(config.App.Environment) == "development" || strings.ToLower(config.App.Environment) == "dev"
+	debugEnabled := !isDevelopment
+
 	err := supertokens.Init(supertokens.TypeInput{
-		Debug: false,
+		Debug: debugEnabled,
 		Supertokens: &supertokens.ConnectionInfo{
 			ConnectionURI: config.Supertokens.ConnectionURI,
 			APIKey:        config.Supertokens.APIKey,

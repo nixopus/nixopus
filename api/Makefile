@@ -14,7 +14,16 @@ test-all:
 test-routes:
 	@go test -p 1 ./internal/tests/routes/... -v -count=1
 
-.PHONY: fixtures-load fixtures-recreate fixtures-clean fixtures-help
+format:
+	@echo "Formatting Go files..."
+	@go fmt ./...
+	@if command -v goimports >/dev/null 2>&1; then \
+		goimports -w .; \
+	else \
+		echo "goimports not found. Install with: go install golang.org/x/tools/cmd/goimports@latest"; \
+	fi
+
+.PHONY: fixtures-load fixtures-recreate fixtures-clean fixtures-help format
 
 fixtures-help:
 	@echo "Nixopus API Fixtures Commands:"

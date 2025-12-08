@@ -3,6 +3,7 @@ import { getWebsocketUrl } from '@/redux/conf';
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { useSelector } from 'react-redux';
 import { getAccessToken } from 'supertokens-auth-react/recipe/session';
+import { useAppSelector } from '@/redux/hooks';
 
 type WebSocketContextValue = {
   isReady: boolean;
@@ -37,7 +38,7 @@ export const WebSocketProvider = ({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const isConnectingRef = useRef(false);
-  const activeServerId = useSelector((state: any) => state.server.activeServerId);
+  const { isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
 
   const connectWebSocket = async () => {
     if (isConnectingRef.current) {
@@ -129,6 +130,10 @@ export const WebSocketProvider = ({
   };
 
   useEffect(() => {
+    if (!isInitialized || !isAuthenticated) {
+      return;
+    }
+
     reconnectAttemptsRef.current = 0;
     isConnectingRef.current = false;
 
@@ -161,7 +166,7 @@ export const WebSocketProvider = ({
         wsRef.current = null;
       }
     };
-  }, []);
+  }, [isAuthenticated, isInitialized]);
 
   const sendMessage = (data: string) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {

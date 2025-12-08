@@ -35,6 +35,13 @@ func formatBytes(bytes uint64, unit string) string {
 // TODO: Add support for multi server management
 // solution: create a bridge between the gopsutil and the ssh client
 func (m *DashboardMonitor) GetSystemStats() {
+	// Check if context is cancelled before proceeding
+	select {
+	case <-m.ctx.Done():
+		return
+	default:
+	}
+
 	osType, err := m.getCommandOutput("uname -s")
 	if err != nil {
 		m.BroadcastError(err.Error(), GetSystemStats)
@@ -225,6 +232,10 @@ func (m *DashboardMonitor) getNetworkStats() NetworkStats {
 }
 
 func (m *DashboardMonitor) getCommandOutput(cmd string) (string, error) {
+	if m.client == nil {
+		return "", fmt.Errorf("SSH client is not connected")
+	}
+
 	session, err := m.client.NewSession()
 	if err != nil {
 		m.log.Log(logger.Error, "Failed to create new session", err.Error())

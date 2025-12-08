@@ -1,4 +1,4 @@
-# `nixopus`
+# Nixopus CLI Reference
 
 Nixopus CLI - A powerful deployment and management tool
 
@@ -15,407 +15,10 @@ $ nixopus [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `preflight`: Preflight checks for system compatibility
-* `clone`: Clone a repository
-* `conflict`: Check for tool version conflicts
-* `conf`: Manage configuration
-* `service`: Manage Nixopus services
-* `proxy`: Manage Nixopus proxy (Caddy) configuration
 * `install`: Install Nixopus
 * `uninstall`: Uninstall Nixopus
+* `update`: Update Nixopus
 * `version`: Show version information
-
-## `nixopus preflight`
-
-Preflight checks for system compatibility
-
-**Usage**:
-
-```console
-$ nixopus preflight [OPTIONS] COMMAND [ARGS]...
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-**Commands**:
-
-* `check`: Run all preflight checks
-* `ports`: Check if list of ports are available on a...
-* `deps`: Check if list of dependencies are...
-
-### `nixopus preflight check`
-
-Run all preflight checks
-
-**Usage**:
-
-```console
-$ nixopus preflight check [OPTIONS]
-```
-
-**Options**:
-
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format, text,json  [default: text]
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
-
-### `nixopus preflight ports`
-
-Check if list of ports are available on a host
-
-**Usage**:
-
-```console
-$ nixopus preflight ports [OPTIONS] PORTS...
-```
-
-**Arguments**:
-
-* `PORTS...`: The list of ports to check  [required]
-
-**Options**:
-
-* `-h, --host TEXT`: The host to check  [default: localhost]
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format, text, json  [default: text]
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
-
-### `nixopus preflight deps`
-
-Check if list of dependencies are available on the system
-
-**Usage**:
-
-```console
-$ nixopus preflight deps [OPTIONS] DEPS...
-```
-
-**Arguments**:
-
-* `DEPS...`: The list of dependencies to check  [required]
-
-**Options**:
-
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format, text, json  [default: text]
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
-
-## `nixopus clone`
-
-Clone a repository
-
-**Usage**:
-
-```console
-$ nixopus clone [OPTIONS] COMMAND [ARGS]...
-```
-
-**Options**:
-
-* `-r, --repo TEXT`: The repository to clone  [default: https://github.com/raghavyuva/nixopus]
-* `-b, --branch TEXT`: The branch to clone  [default: master]
-* `-p, --path TEXT`: The path to clone the repository to  [default: /etc/nixopus/source]
-* `-f, --force`: Force the clone
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format, text, json  [default: text]
-* `-d, --dry-run`: Dry run
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
-
-## `nixopus conflict`
-
-Check for tool version conflicts
-
-**Usage**:
-
-```console
-$ nixopus conflict [OPTIONS] COMMAND [ARGS]...
-```
-
-**Options**:
-
-* `-c, --config-file TEXT`: Path to configuration file  [default: helpers/config.prod.yaml]
-* `-t, --timeout INTEGER`: Timeout for tool checks in seconds  [default: 5]
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format (text/json)  [default: text]
-* `--help`: Show this message and exit.
-
-## `nixopus conf`
-
-Manage configuration
-
-**Usage**:
-
-```console
-$ nixopus conf [OPTIONS] COMMAND [ARGS]...
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-**Commands**:
-
-* `list`: List all configuration
-* `delete`: Delete a configuration
-* `set`: Set a configuration
-
-### `nixopus conf list`
-
-List all configuration
-
-**Usage**:
-
-```console
-$ nixopus conf list [OPTIONS]
-```
-
-**Options**:
-
-* `-s, --service TEXT`: The name of the service to list configuration for, e.g api,view  [default: api]
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format, text, json  [default: text]
-* `-d, --dry-run`: Dry run
-* `-e, --env-file TEXT`: Path to the environment file
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
-
-### `nixopus conf delete`
-
-Delete a configuration
-
-**Usage**:
-
-```console
-$ nixopus conf delete [OPTIONS] KEY
-```
-
-**Arguments**:
-
-* `KEY`: The key of the configuration to delete  [required]
-
-**Options**:
-
-* `-s, --service TEXT`: The name of the service to delete configuration for, e.g api,view  [default: api]
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format, text, json  [default: text]
-* `-d, --dry-run`: Dry run
-* `-e, --env-file TEXT`: Path to the environment file
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
-
-### `nixopus conf set`
-
-Set a configuration
-
-**Usage**:
-
-```console
-$ nixopus conf set [OPTIONS] KEY_VALUE
-```
-
-**Arguments**:
-
-* `KEY_VALUE`: Configuration in the form KEY=VALUE  [required]
-
-**Options**:
-
-* `-s, --service TEXT`: The name of the service to set configuration for, e.g api,view  [default: api]
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format, text, json  [default: text]
-* `-d, --dry-run`: Dry run
-* `-e, --env-file TEXT`: Path to the environment file
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
-
-## `nixopus service`
-
-Manage Nixopus services
-
-**Usage**:
-
-```console
-$ nixopus service [OPTIONS] COMMAND [ARGS]...
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-**Commands**:
-
-* `up`: Start Nixopus services
-* `down`: Stop Nixopus services
-* `ps`: Show status of Nixopus services
-* `restart`: Restart Nixopus services
-
-### `nixopus service up`
-
-Start Nixopus services
-
-**Usage**:
-
-```console
-$ nixopus service up [OPTIONS]
-```
-
-**Options**:
-
-* `-n, --name TEXT`: The name of the service to start, defaults to all  [default: all]
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format, text, json  [default: text]
-* `--dry-run`: Dry run
-* `-d, --detach`: Detach from the service and run in the background
-* `-e, --env-file TEXT`: Path to the environment file
-* `-f, --compose-file TEXT`: Path to the compose file  [default: /etc/nixopus/source/docker-compose.yml]
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
-
-### `nixopus service down`
-
-Stop Nixopus services
-
-**Usage**:
-
-```console
-$ nixopus service down [OPTIONS]
-```
-
-**Options**:
-
-* `-n, --name TEXT`: The name of the service to stop, defaults to all  [default: all]
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format, text, json  [default: text]
-* `--dry-run`: Dry run
-* `-e, --env-file TEXT`: Path to the environment file
-* `-f, --compose-file TEXT`: Path to the compose file  [default: /etc/nixopus/source/docker-compose.yml]
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
-
-### `nixopus service ps`
-
-Show status of Nixopus services
-
-**Usage**:
-
-```console
-$ nixopus service ps [OPTIONS]
-```
-
-**Options**:
-
-* `-n, --name TEXT`: The name of the service to show, defaults to all  [default: all]
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format, text, json  [default: text]
-* `-d, --dry-run`: Dry run
-* `-e, --env-file TEXT`: Path to the environment file
-* `-f, --compose-file TEXT`: Path to the compose file  [default: /etc/nixopus/source/docker-compose.yml]
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
-
-### `nixopus service restart`
-
-Restart Nixopus services
-
-**Usage**:
-
-```console
-$ nixopus service restart [OPTIONS]
-```
-
-**Options**:
-
-* `-n, --name TEXT`: The name of the service to restart, defaults to all  [default: all]
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format, text, json  [default: text]
-* `-d, --dry-run`: Dry run
-* `-e, --env-file TEXT`: Path to the environment file
-* `-f, --compose-file TEXT`: Path to the compose file  [default: /etc/nixopus/source/docker-compose.yml]
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
-
-## `nixopus proxy`
-
-Manage Nixopus proxy (Caddy) configuration
-
-**Usage**:
-
-```console
-$ nixopus proxy [OPTIONS] COMMAND [ARGS]...
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-**Commands**:
-
-* `load`: Load Caddy proxy configuration
-* `status`: Check Caddy proxy status
-* `stop`: Stop Caddy proxy
-
-### `nixopus proxy load`
-
-Load Caddy proxy configuration
-
-**Usage**:
-
-```console
-$ nixopus proxy load [OPTIONS]
-```
-
-**Options**:
-
-* `-p, --proxy-port INTEGER`: Caddy admin port  [default: 2019]
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format: text, json  [default: text]
-* `--dry-run`: Dry run
-* `-c, --config-file TEXT`: Path to Caddy config file
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
-
-### `nixopus proxy status`
-
-Check Caddy proxy status
-
-**Usage**:
-
-```console
-$ nixopus proxy status [OPTIONS]
-```
-
-**Options**:
-
-* `-p, --proxy-port INTEGER`: Caddy admin port  [default: 2019]
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format: text, json  [default: text]
-* `--dry-run`: Dry run
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
-
-### `nixopus proxy stop`
-
-Stop Caddy proxy
-
-**Usage**:
-
-```console
-$ nixopus proxy stop [OPTIONS]
-```
-
-**Options**:
-
-* `-p, --proxy-port INTEGER`: Caddy admin port  [default: 2019]
-* `-v, --verbose`: Verbose output
-* `-o, --output TEXT`: Output format: text, json  [default: text]
-* `--dry-run`: Dry run
-* `-t, --timeout INTEGER`: Timeout in seconds  [default: 10]
-* `--help`: Show this message and exit.
 
 ## `nixopus install`
 
@@ -434,14 +37,58 @@ $ nixopus install [OPTIONS] COMMAND [ARGS]...
 * `-f, --force`: Replace files if they already exist
 * `-d, --dry-run`: See what would happen, but don&#x27;t make changes
 * `-c, --config-file TEXT`: Path to custom config file (defaults to built-in config)
+* `-D, --development`: Use development workflow (local setup, dev compose, dev env)
+* `--dev-path TEXT`: Installation directory for development workflow (defaults to current directory)
 * `-ad, --api-domain TEXT`: The domain where the nixopus api will be accessible (e.g. api.nixopus.com), if not provided you can use the ip address of the server and the port (e.g. 192.168.1.100:8443)
 * `-vd, --view-domain TEXT`: The domain where the nixopus view will be accessible (e.g. nixopus.com), if not provided you can use the ip address of the server and the port (e.g. 192.168.1.100:80)
+* `-ip, --host-ip TEXT`: The IP address of the server to use when no domains are provided (e.g. 10.0.0.154 or 192.168.1.100). If not provided, the public IP will be automatically detected.
+* `--api-port INTEGER`: Port for the API service (default: 8443 for production, 8080 for development)
+* `--view-port INTEGER`: Port for the View/Frontend service (default: 7443 for production, 3000 for development)
+* `--db-port INTEGER`: Port for the PostgreSQL database (default: 5432)
+* `--redis-port INTEGER`: Port for the Redis service (default: 6379)
+* `--caddy-admin-port INTEGER`: Port for Caddy admin API (default: 2019)
+* `--caddy-http-port INTEGER`: Port for Caddy HTTP traffic (default: 80)
+* `--caddy-https-port INTEGER`: Port for Caddy HTTPS traffic (default: 443)
+* `--supertokens-port INTEGER`: Port for SuperTokens service (default: 3567)
+* `-r, --repo TEXT`: GitHub repository URL to clone (defaults to config value)
+* `-b, --branch TEXT`: Git branch to clone (defaults to config value)
 * `--help`: Show this message and exit.
 
 **Commands**:
 
+* `development`: Install Nixopus for local development in...
 * `ssh`: Generate an SSH key pair with proper...
 * `deps`: Install dependencies
+
+### `nixopus install development`
+
+Install Nixopus for local development in specified or current directory
+
+**Usage**:
+
+```console
+$ nixopus install development [OPTIONS]
+```
+
+**Options**:
+
+* `-p, --path TEXT`: Installation directory (defaults to current directory)
+* `-v, --verbose`: Show more details while installing
+* `-t, --timeout INTEGER`: How long to wait for each step (in seconds)  [default: 1800]
+* `-f, --force`: Replace files if they already exist
+* `-d, --dry-run`: See what would happen, but don&#x27;t make changes
+* `-c, --config-file TEXT`: Path to custom config file (defaults to config.dev.yaml)
+* `-r, --repo TEXT`: GitHub repository URL to clone (defaults to config value)
+* `-b, --branch TEXT`: Git branch to clone (defaults to config value)
+* `--api-port INTEGER`: Port for the API service (default: 8080)
+* `--view-port INTEGER`: Port for the View/Frontend service (default: 3000)
+* `--db-port INTEGER`: Port for the PostgreSQL database (default: 5432)
+* `--redis-port INTEGER`: Port for the Redis service (default: 6379)
+* `--caddy-admin-port INTEGER`: Port for Caddy admin API (default: 2019)
+* `--caddy-http-port INTEGER`: Port for Caddy HTTP traffic (default: 80)
+* `--caddy-https-port INTEGER`: Port for Caddy HTTPS traffic (default: 443)
+* `--supertokens-port INTEGER`: Port for SuperTokens service (default: 3567)
+* `--help`: Show this message and exit.
 
 ### `nixopus install ssh`
 
@@ -503,6 +150,40 @@ $ nixopus uninstall [OPTIONS] COMMAND [ARGS]...
 * `-t, --timeout INTEGER`: How long to wait for each step (in seconds)  [default: 300]
 * `-d, --dry-run`: See what would happen, but don&#x27;t make changes
 * `-f, --force`: Remove files without confirmation prompts
+* `--help`: Show this message and exit.
+
+## `nixopus update`
+
+Update Nixopus
+
+**Usage**:
+
+```console
+$ nixopus update [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `-v, --verbose`: Show more details while updating
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `cli`: Update CLI tool
+
+### `nixopus update cli`
+
+Update CLI tool
+
+**Usage**:
+
+```console
+$ nixopus update cli [OPTIONS]
+```
+
+**Options**:
+
+* `-v, --verbose`: Show more details while updating
 * `--help`: Show this message and exit.
 
 ## `nixopus version`

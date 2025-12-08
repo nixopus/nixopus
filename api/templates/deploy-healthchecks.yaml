@@ -1,0 +1,259 @@
+metadata:
+  id: "deploy-healthchecks"
+  name: "Healthchecks"
+  description: "Healthchecks is a watchdog for your cron jobs. It's a web server that listens for pings from your cron jobs, plus a web interface. Uses healthchecks image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "💚"
+  category: "Network"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Healthchecks"
+    default: "lscr.io/linuxserver/healthchecks"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Healthchecks container"
+    default: "healthchecks"
+    is_required: true
+
+  webui_host_port:
+    type: "integer"
+    description: "Host port for Healthchecks Web UI"
+    default: 8000
+    is_required: true
+
+  webui_container_port:
+    type: "integer"
+    description: "Container port for Healthchecks Web UI"
+    default: 8000
+    is_required: true
+
+  smtp_host_port:
+    type: "integer"
+    description: "Host port for inbound SMTP pings (optional)"
+    default: 2525
+    is_required: false
+
+  smtp_container_port:
+    type: "integer"
+    description: "Container port for inbound SMTP pings"
+    default: 2525
+    is_required: false
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Healthchecks persistent configuration files"
+    default: "healthchecks-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  site_root:
+    type: "string"
+    description: "The site's top-level URL and the port it listens to if different than 80 or 443 (e.g., https://healthchecks.example.com:8000)"
+    default: ""
+    is_required: false
+
+  site_name:
+    type: "string"
+    description: "The site's name (e.g., Example Corp HealthChecks)"
+    default: ""
+    is_required: false
+
+  superuser_email:
+    type: "string"
+    description: "Superuser email"
+    default: ""
+    is_required: false
+
+  superuser_password:
+    type: "string"
+    description: "Superuser password"
+    default: ""
+    is_required: false
+
+  allowed_hosts:
+    type: "string"
+    description: "A comma-separated list of valid hostnames for the server. Default is the domain portion of SITE_ROOT"
+    default: ""
+    is_required: false
+
+  apprise_enabled:
+    type: "string"
+    description: "Set to True to enable the Apprise integration (default False)"
+    default: "False"
+    is_required: false
+
+  csrf_trusted_origins:
+    type: "string"
+    description: "A list of trusted origins for unsafe requests (e.g. POST). Defaults to the value of SITE_ROOT"
+    default: ""
+    is_required: false
+
+  debug:
+    type: "string"
+    description: "Set to False to disable. Debug mode relaxes CSRF protections and increases logging verbosity (default True)"
+    default: "True"
+    is_required: false
+
+  default_from_email:
+    type: "string"
+    description: "From email for alerts"
+    default: ""
+    is_required: false
+
+  email_host:
+    type: "string"
+    description: "SMTP host"
+    default: ""
+    is_required: false
+
+  email_port:
+    type: "string"
+    description: "SMTP port"
+    default: ""
+    is_required: false
+
+  email_host_user:
+    type: "string"
+    description: "SMTP user"
+    default: ""
+    is_required: false
+
+  email_host_password:
+    type: "string"
+    description: "SMTP password"
+    default: ""
+    is_required: false
+
+  email_use_tls:
+    type: "string"
+    description: "Use TLS for SMTP (True or False)"
+    default: ""
+    is_required: false
+
+  integrations_allow_private_ips:
+    type: "string"
+    description: "Set to True to allow integrations to connect to private IP addresses (default False)"
+    default: ""
+    is_required: false
+
+  ping_email_domain:
+    type: "string"
+    description: "The domain to use for generating ping email addresses. Defaults to localhost"
+    default: ""
+    is_required: false
+
+  rp_id:
+    type: "string"
+    description: "If using webauthn for 2FA set this to match your Healthchecks domain. Webauthn will only work over https"
+    default: ""
+    is_required: false
+
+  secret_key:
+    type: "string"
+    description: "A secret key used for cryptographic signing. Will generate a random value if one is not supplied"
+    default: ""
+    is_required: false
+
+  site_logo_url:
+    type: "string"
+    description: "Full URL to custom site logo"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Healthchecks web UI (optional, recommended for internet access)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing Healthchecks container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull Healthchecks image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Healthchecks container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ webui_host_port }}:{{ webui_container_port }},{{ smtp_host_port }}:{{ smtp_container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          SITE_ROOT: "{{ site_root }}"
+          SITE_NAME: "{{ site_name }}"
+          SUPERUSER_EMAIL: "{{ superuser_email }}"
+          SUPERUSER_PASSWORD: "{{ superuser_password }}"
+          ALLOWED_HOSTS: "{{ allowed_hosts }}"
+          APPRISE_ENABLED: "{{ apprise_enabled }}"
+          CSRF_TRUSTED_ORIGINS: "{{ csrf_trusted_origins }}"
+          DEBUG: "{{ debug }}"
+          DEFAULT_FROM_EMAIL: "{{ default_from_email }}"
+          EMAIL_HOST: "{{ email_host }}"
+          EMAIL_PORT: "{{ email_port }}"
+          EMAIL_HOST_USER: "{{ email_host_user }}"
+          EMAIL_HOST_PASSWORD: "{{ email_host_password }}"
+          EMAIL_USE_TLS: "{{ email_use_tls }}"
+          INTEGRATIONS_ALLOW_PRIVATE_IPS: "{{ integrations_allow_private_ips }}"
+          PING_EMAIL_DOMAIN: "{{ ping_email_domain }}"
+          RP_ID: "{{ rp_id }}"
+          SECRET_KEY: "{{ secret_key }}"
+          SITE_LOGO_URL: "{{ site_logo_url }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+    - name: "Add proxy for Healthchecks web UI"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ webui_host_port }}"
+      timeout: 30
+
