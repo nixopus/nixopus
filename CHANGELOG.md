@@ -1,3 +1,12 @@
+# [0.1.0-alpha.75](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.74...v0.1.0-alpha.75) (2025-12-08)
+
+
+### Bug Fixes
+
+* docker compose file profiles not considered during install ([eebd07e](https://github.com/raghavyuva/nixopus/commit/eebd07ec055e38d97ceb71a522d35ab908b53593))
+
+
+
 # [0.1.0-alpha.74](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.73...v0.1.0-alpha.74) (2025-12-07)
 
 
