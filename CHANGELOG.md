@@ -1,3 +1,12 @@
+# [0.1.0-alpha.79](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.78...v0.1.0-alpha.79) (2025-12-08)
+
+
+### Bug Fixes
+
+* enable gha caching on github action ([#669](https://github.com/raghavyuva/nixopus/issues/669)) ([1c35657](https://github.com/raghavyuva/nixopus/commit/1c356577d9989743b9ed106513c8cda85a56e745))
+
+
+
 # [0.1.0-alpha.78](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.77...v0.1.0-alpha.78) (2025-12-08)
 
 
