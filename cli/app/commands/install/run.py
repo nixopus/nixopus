@@ -848,7 +848,13 @@ class Install:
             return f"{protocol}://{host_without_port}:{supertokens_api_port}"
 
     def _update_environment_variables(self, env_values: dict) -> dict:
+        
         updated_env = env_values.copy()
+        if self.external_db_url:
+            from .config_utils import parse_db_url
+            db_config = parse_db_url(self.external_db_url)
+            updated_env.update(db_config)
+
         host_ip = self._get_host_ip()
         secure = self.api_domain is not None and self.view_domain is not None
 
