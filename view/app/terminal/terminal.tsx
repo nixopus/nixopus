@@ -63,24 +63,14 @@ const TerminalSession: React.FC<{
   useEffect(() => {
     if (isTerminalOpen && isActive && isContainerReady) {
       initializeTerminal();
-    } else {
-      // Cleanup: destroy terminal when it's closed or becomes inactive
-      destroyTerminal();
     }
-  }, [isTerminalOpen, isActive, isContainerReady, initializeTerminal, destroyTerminal]);
+  }, [isTerminalOpen, isActive, isContainerReady, initializeTerminal]);
 
   useEffect(() => {
     if (fitAddonRef) {
       setFitAddonRef(fitAddonRef);
     }
   }, [fitAddonRef, setFitAddonRef]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      destroyTerminal();
-    };
-  }, [destroyTerminal]);
 
   return (
     <div

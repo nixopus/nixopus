@@ -31,23 +31,16 @@ export const useTerminal = (
   const { sendJsonMessage, message, isReady } = useWebSocket();
   const [terminalInstance, setTerminalInstance] = useState<any | null>(null);
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  const terminalInstanceRef = useRef<any | null>(null);
 
   const destroyTerminal = useCallback(() => {
-    const instance = terminalInstanceRef.current;
-    if (instance) {
-      instance.dispose();
-      terminalInstanceRef.current = null;
+    if (terminalInstance) {
+      terminalInstance.dispose();
       setTerminalInstance(null);
-    }
-    // Clear the terminal container to remove any stale input
-    if (terminalRef.current) {
-      terminalRef.current.innerHTML = '';
     }
     if (resizeTimeoutRef.current) {
       clearTimeout(resizeTimeoutRef.current);
     }
-  }, []);
+  }, [terminalInstance, terminalId]);
 
   useEffect(() => {
     if (isStopped && terminalInstance) {
@@ -77,8 +70,6 @@ export const useTerminal = (
         if (parsedMessage.type === OutputType.EXIT) {
           destroyTerminal();
         } else if (parsedMessage.data) {
-          // Write output from backend - this includes echoed input
-          // Using write ensures proper synchronization with terminal state
           terminalInstance.write(parsedMessage.data);
         }
       }
@@ -86,19 +77,6 @@ export const useTerminal = (
       console.error('Error processing WebSocket message:', error);
     }
   }, [message, terminalInstance, destroyTerminal, terminalId]);
-
-  // Cleanup effect: destroy terminal when isTerminalOpen becomes false or component unmounts
-  useEffect(() => {
-    if (!isTerminalOpen && terminalInstanceRef.current) {
-      destroyTerminal();
-    }
-    return () => {
-      // Cleanup on unmount
-      if (terminalInstanceRef.current) {
-        destroyTerminal();
-      }
-    };
-  }, [isTerminalOpen, destroyTerminal]);
 
   const initializeTerminal = useCallback(async () => {
     if (!terminalRef.current || terminalInstance || !isReady) return;
@@ -180,20 +158,15 @@ export const useTerminal = (
         if (allowInput) {
           term.attachCustomKeyEventHandler((event: KeyboardEvent) => {
             const key = event.key.toLowerCase();
-
-            // Handle Ctrl+J or Cmd+J (toggle terminal shortcut)
             if (key === 'j' && (event.ctrlKey || event.metaKey)) {
               return false;
-            }
-
-            // Handle Ctrl+C or Cmd+C for copy (when there's a selection)
-            if (key === 'c' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
+            } else if (key === 'c' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
               if (event.type === 'keydown') {
                 try {
                   const selection = term.getSelection();
                   if (selection) {
                     navigator.clipboard.writeText(selection).then(() => {
-                      term.clearSelection();
+                      term.clearSelection(); // Clear selection after successful copy
                     });
                     return false;
                   }
@@ -201,14 +174,10 @@ export const useTerminal = (
                   console.error('Error in Ctrl+C handler:', error);
                 }
               }
+              return false;
             }
-
-            // Allow xterm to process all other keys normally
             return true;
           });
-
-          // onData is called when xterm processes input
-          // Send all input to backend - backend echo will handle display
           term.onData((data) => {
             sendJsonMessage({
               action: 'terminal',
@@ -229,7 +198,6 @@ export const useTerminal = (
         });
       }
 
-      terminalInstanceRef.current = term;
       setTerminalInstance(term);
     } catch (error) {
       console.error('Error initializing terminal:', error);
