@@ -1,3 +1,21 @@
+# [0.1.0-alpha.77](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.76...v0.1.0-alpha.77) (2025-12-08)
+
+
+### Features
+
+* optimize build parallelization using mooby/buildkit & cache mounts ([a424af7](https://github.com/raghavyuva/nixopus/commit/a424af7005fef15331ed0657b47d920f3e52a93e))
+
+
+
+# [0.1.0-alpha.76](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.75...v0.1.0-alpha.76) (2025-12-08)
+
+
+### Bug Fixes
+
+* external database URL parsing .env creation in install command ([#663](https://github.com/raghavyuva/nixopus/issues/663)) ([a2f6dd1](https://github.com/raghavyuva/nixopus/commit/a2f6dd1502ee716b62ee39cf8160813a29849cf0))
+
+
+
 # [0.1.0-alpha.75](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.74...v0.1.0-alpha.75) (2025-12-08)
 
 

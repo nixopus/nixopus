@@ -161,12 +161,6 @@ func (t *Terminal) readOutput(r io.Reader) {
 				return
 			}
 
-			func() {
-				t.wsLock.Lock()
-				defer t.wsLock.Unlock()
-				t.outputBuf = append(t.outputBuf, buf[:n]...)
-			}()
-
 			msg := TerminalMessage{
 				TerminalId: t.TerminalId,
 				Type:       "stdout",
