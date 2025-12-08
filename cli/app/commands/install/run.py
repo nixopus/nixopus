@@ -735,11 +735,11 @@ class Install:
 
     def _start_services(self):
         compose_file = self._get_config("compose_file_path")
-        
+
         if self.dry_run:
             self.logger.info(f"[DRY RUN] Would start services using {compose_file}")
             return
-        
+
         env_vars = {}
         if self.api_port is not None:
             env_vars["API_PORT"] = str(self.api_port)
@@ -759,6 +759,13 @@ class Install:
         if self.supertokens_port is not None:
             env_vars["SUPERTOKENS_PORT"] = str(self.supertokens_port)
 
+        # Determine which profiles to use based on external_db_url
+        profiles = None
+        if self.external_db_url:
+            profiles = []
+        else:
+            profiles = ["local-db"]
+
         original_env = os.environ.copy()
         os.environ.update(env_vars)
 
@@ -771,6 +778,7 @@ class Install:
                         env_file=None,
                         compose_file=compose_file,
                         logger=self.logger,
+                        profiles=profiles,
                     )
             except TimeoutError:
                 raise Exception(f"{services_start_failed}: {operation_timed_out}")

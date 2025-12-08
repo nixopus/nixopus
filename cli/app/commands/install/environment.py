@@ -85,10 +85,10 @@ class ConfigResolver:
             return str(self.db_port)
         if path == "services.redis.env.REDIS_PORT" and self.redis_port is not None:
             return str(self.redis_port)
-        
+
         if path == PROXY_PORT:
             return str(get_proxy_port(self.config, self.caddy_admin_port))
-        
+
         if path == CADDY_ADMIN_PORT and self.caddy_admin_port is not None:
             return str(self.caddy_admin_port)
         if path == CADDY_HTTP_PORT and self.caddy_http_port is not None:
@@ -109,11 +109,11 @@ def create_env_file_with_permissions(
     success, error = write_env_file(env_file, env_values, logger)
     if not success:
         return False, error
-    
+
     file_perm_success, file_perm_error = set_permissions(env_file, 0o644)
     if not file_perm_success:
         return False, file_perm_error
-    
+
     return True, None
 
 
@@ -130,7 +130,7 @@ def create_service_env_files(
     view_env_file = config_resolver.get(VIEW_ENV_FILE)
     full_source_path = config_resolver.get("full_source_path")
     combined_env_file = os.path.join(full_source_path, ".env")
-    
+
     create_directory(get_directory_path(api_env_file), logger=logger)
     create_directory(get_directory_path(view_env_file), logger=logger)
     create_directory(get_directory_path(combined_env_file), logger=logger)
@@ -139,7 +139,7 @@ def create_service_env_files(
         ("api", "services.api.env", api_env_file),
         ("view", "services.view.env", view_env_file),
     ]
-    
+
     for service_name, service_key, env_file in services:
         env_values = get_service_env_values(config, service_key)
         updated_env_values = update_environment_variables(
@@ -153,6 +153,11 @@ def create_service_env_files(
             config_resolver.get("ssh_key_path"),
             external_db_url=external_db_url,
         )
+
+        # Log external DB configuration if provided
+        if logger and external_db_url and service_name == "api":
+            logger.debug(f"Using external database: {external_db_url}")
+
         success, error = create_env_file_with_permissions(env_file, updated_env_values, logger)
         if not success:
             return False, f"Failed to create {service_name} env file: {error}"
@@ -163,33 +168,36 @@ def create_service_env_files(
     view_env_values = get_service_env_values(config, "services.view.env")
 
     combined_env_values = {}
-    combined_env_values.update(update_environment_variables(
-        api_env_values,
-        host_ip,
-        api_domain,
-        view_domain,
-        config_resolver.get(API_PORT),
-        config_resolver.get(VIEW_PORT),
-        str(config_resolver.get(SUPERTOKENS_API_PORT) or 3567),
-        config_resolver.get("ssh_key_path"),
-        external_db_url=external_db_url,
-    ))
-    combined_env_values.update(update_environment_variables(
-        view_env_values,
-        host_ip,
-        api_domain,
-        view_domain,
-        config_resolver.get(API_PORT),
-        config_resolver.get(VIEW_PORT),
-        str(config_resolver.get(SUPERTOKENS_API_PORT) or 3567),
-        config_resolver.get("ssh_key_path"),
-        external_db_url=external_db_url,
-    ))
+    combined_env_values.update(
+        update_environment_variables(
+            api_env_values,
+            host_ip,
+            api_domain,
+            view_domain,
+            config_resolver.get(API_PORT),
+            config_resolver.get(VIEW_PORT),
+            str(config_resolver.get(SUPERTOKENS_API_PORT) or 3567),
+            config_resolver.get("ssh_key_path"),
+            external_db_url=external_db_url,
+        )
+    )
+    combined_env_values.update(
+        update_environment_variables(
+            view_env_values,
+            host_ip,
+            api_domain,
+            view_domain,
+            config_resolver.get(API_PORT),
+            config_resolver.get(VIEW_PORT),
+            str(config_resolver.get(SUPERTOKENS_API_PORT) or 3567),
+            config_resolver.get("ssh_key_path"),
+            external_db_url=external_db_url,
+        )
+    )
     success, error = create_env_file_with_permissions(combined_env_file, combined_env_values, logger)
     if not success:
         return False, f"Failed to create combined env file: {error}"
     if logger:
         logger.debug(f"Created combined env file: {combined_env_file}")
-    
-    return True, None
 
+    return True, None

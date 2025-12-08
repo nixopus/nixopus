@@ -567,11 +567,11 @@ class DevelopmentInstall(BaseInstall):
     def _start_all_services(self):
         """Start all services (API, View, DB, Redis, Caddy) using Docker Compose"""
         compose_file = self._get_config("compose_file_path")
-        
+
         if self.dry_run:
             self.logger.info(f"[DRY RUN] Would start services using {compose_file}")
             return
-        
+
         env_vars = build_service_env_vars(
             self.api_port,
             self.view_port,
@@ -582,6 +582,13 @@ class DevelopmentInstall(BaseInstall):
             self.caddy_https_port,
             self.supertokens_port,
         )
+
+        # Determine which profiles to use based on external_db_url
+        profiles = None
+        if self.external_db_url:
+            profiles = []
+        else:
+            profiles = ["local-db"]
 
         original_env = os.environ.copy()
         os.environ.update(env_vars)
@@ -595,6 +602,7 @@ class DevelopmentInstall(BaseInstall):
                         env_file=None,
                         compose_file=compose_file,
                         logger=self.logger,
+                        profiles=profiles,
                     )
             except TimeoutError:
                 raise Exception(f"{services_start_failed}: {operation_timed_out}")

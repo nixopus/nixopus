@@ -26,7 +26,7 @@ def _build_command(action: str, name: str = "all", env_file: str = None, compose
         cmd.extend(["--env-file", env_file])
     
     profiles = kwargs.get("profiles")
-    if profiles:
+    if profiles is not None and len(profiles) > 0:
         for profile in profiles:
             cmd.extend(["--profile", profile])
     
@@ -147,6 +147,10 @@ def execute_services(
     """Execute docker compose command for services."""
     cmd = _build_command(action, name, env_file, compose_file, **kwargs)
     _log_command_info(cmd, action, name, logger)
+    
+    # Log the actual command being executed for debugging
+    if logger:
+        logger.debug(f"Executing command: {' '.join(cmd)}")
 
     try:
         if action == "up" and not kwargs.get("detach", False):

@@ -115,34 +115,50 @@ def update(
 ) -> tuple[bool, Optional[str]]:
     """Update Nixopus services."""
     compose_file_path = _get_compose_file_path()
-    
+
     if logger:
         logger.info(updating_nixopus)
         logger.debug(pulling_latest_images)
-    
+
     success, output = execute_services("pull", compose_file=compose_file_path, logger=logger)
-    
+
     if not success:
         error_msg = failed_to_pull_images.format(error=output)
         if logger:
             logger.error(error_msg)
         return False, error_msg
-    
+
     if logger:
         logger.debug(images_pulled_successfully)
         logger.debug(starting_services)
-    
-    success, output = start_services(compose_file=compose_file_path, detach=True, logger=logger)
-    
+
+    # Check if nixopus-db container exists to determine if we should use local-db profile
+    # This preserves the profile configuration from the original installation
+    try:
+        result = subprocess.run(
+            ["docker", "ps", "-a", "--filter", "name=nixopus-db", "--format", "{{.Names}}"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        has_local_db = "nixopus-db" in result.stdout
+    except Exception:
+        # If we can't determine, assume local DB for safety
+        has_local_db = True
+
+    profiles = ["local-db"] if has_local_db else []
+
+    success, output = start_services(compose_file=compose_file_path, detach=True, logger=logger, profiles=profiles)
+
     if not success:
         error_msg = failed_to_start_services.format(error=output)
         if logger:
             logger.error(error_msg)
         return False, error_msg
-    
+
     if logger:
         logger.info(nixopus_updated_successfully)
-    
+
     return True, None
 
 

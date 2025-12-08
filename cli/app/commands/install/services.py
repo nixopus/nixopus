@@ -110,6 +110,13 @@ def start_docker_services(
             logger.info(f"[DRY RUN] Would start services using {compose_file}")
         return True, None
 
+    # Log profile configuration for debugging
+    if logger:
+        if profiles:
+            logger.debug(f"Starting services with profiles: {profiles}")
+        else:
+            logger.debug("Starting services without profile filter (all services without profiles will start)")
+
     original_env = os.environ.copy()
     os.environ.update(env_vars)
 
