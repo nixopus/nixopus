@@ -1,3 +1,12 @@
+# [0.1.0-alpha.80](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.79...v0.1.0-alpha.80) (2025-12-08)
+
+
+### Bug Fixes
+
+* load caddy rules on ip-based installation ([#670](https://github.com/raghavyuva/nixopus/issues/670)) ([6261e4e](https://github.com/raghavyuva/nixopus/commit/6261e4e4b5ab4425bb83695be1729836ffcdd2ad))
+
+
+
 # [0.1.0-alpha.79](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.78...v0.1.0-alpha.79) (2025-12-08)
 
 
