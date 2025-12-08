@@ -1,3 +1,5 @@
+// TODO: Re-enable domains page when feature is required
+/*
 'use client';
 import DashboardPageHeader from '@/components/layout/dashboard-page-header';
 import { Button } from '@/components/ui/button';
@@ -122,3 +124,11 @@ const NoDomainsFound = ({ onPressAddDomain }: NoDomainsFoundProps) => {
     </div>
   );
 };
+*/
+
+// Temporary placeholder component
+const Page = () => {
+  return null;
+};
+
+export default Page;
