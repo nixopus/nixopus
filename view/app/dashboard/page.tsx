@@ -46,16 +46,10 @@ function DashboardPage() {
 
   const defaultHiddenWidgets = ['clock', 'network'];
 
-  const [hiddenWidgets, setHiddenWidgets] = React.useState<string[]>(defaultHiddenWidgets);
-
-  React.useEffect(() => {
+  const [hiddenWidgets, setHiddenWidgets] = React.useState<string[]>(()=>{
     const saved = localStorage.getItem('dashboard-hidden-widgets');
-    if (saved) {
-      setHiddenWidgets(JSON.parse(saved));
-    } else {
-      setHiddenWidgets(defaultHiddenWidgets);
-    }
-  }, []);
+    return saved ? JSON.parse(saved) : defaultHiddenWidgets
+  });
 
   const handleDeleteWidget = (widgetId: string) => {
     const newHidden = [...hiddenWidgets, widgetId];
