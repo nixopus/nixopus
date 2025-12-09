@@ -24,7 +24,11 @@ jobs:
           cd api
           go get -u ./...
           go mod tidy
-          
+
+      - name: Set PR date
+        id: vars
+        run: echo "DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
+        
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
@@ -34,5 +38,5 @@ jobs:
           body: |
             This PR updates the following dependencies:
             - Go dependencies
-          branch: "deps/update-$(date +%Y%m%d)"
+          branch: "deps/update-${{ env.DATE }}"
           base: "master" 
