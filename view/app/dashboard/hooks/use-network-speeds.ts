@@ -39,10 +39,11 @@ export function useNetworkSpeeds(systemStats: SystemStatsType | null) {
       const bytesUploaded = Math.max(0, bytesSent - previousNetworkStatsRef.current.bytesSent);
       const downloadSpeed = formatBytes(bytesDownloaded / timeDiff, true);
       const uploadSpeed = formatBytes(bytesUploaded / timeDiff, true);
-      setNetworkSpeeds((prev)=>{
+      setNetworkSpeeds(prev =>
         prev.downloadSpeed === downloadSpeed && prev.uploadSpeed === uploadSpeed
-        ? prev : { downloadSpeed, uploadSpeed }
-      });
+        ? prev 
+        : { downloadSpeed, uploadSpeed }
+      );
     }
 
     previousNetworkStatsRef.current = {
