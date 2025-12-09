@@ -1,9 +1,10 @@
 import React from 'react';
 import { GithubRepository } from '@/redux/types/github';
 import useGithubRepoPagination from '../../hooks/use_github_repo_pagination';
-import { DahboardUtilityHeader } from '@/components/layout/dashboard-page-header';
 import GithubRepositories, { GithubRepositoriesSkeletonLoader } from './repository-card';
 import PaginationWrapper from '@/components/ui/pagination';
+import { SearchBar } from '@/components/ui/search-bar';
+import { SortSelect } from '@/components/ui/sort-selector';
 import { useTranslation } from '@/hooks/use-translation';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
@@ -28,11 +29,8 @@ function ListRepositories() {
     paginatedApplications,
     onSelectRepository
   } = useGithubRepoPagination();
-  const {
-    isSettingsModalOpen,
-    openSettingsModal,
-    closeSettingsModal
-  } = useGithubConnectorSettings();
+  const { isSettingsModalOpen, openSettingsModal, closeSettingsModal } =
+    useGithubConnectorSettings();
 
   const handleAddNewConnector = () => {
     router.push('/self-host?github_setup=true');
@@ -73,15 +71,29 @@ function ListRepositories() {
 
   return (
     <div>
-      <DahboardUtilityHeader<GithubRepository>
-        searchTerm={searchTerm}
-        handleSearchChange={handleSearchChange}
-        sortConfig={sortConfig}
-        onSortChange={onSortChange}
-        sortOptions={sortOptions}
-        label={t('selfHost.repositories.title')}
-        className="mt-5 mb-5"
-        children={
+      <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
+        <div className="flex-1 min-w-[220px]">
+          <SearchBar
+            searchTerm={searchTerm}
+            handleSearchChange={handleSearchChange}
+            label={t('selfHost.repositories.search.placeholder')}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <SortSelect<GithubRepository>
+            options={sortOptions}
+            currentSort={{
+              value: sortConfig.key,
+              direction: sortConfig.direction,
+              label:
+                sortOptions.find(
+                  (option) =>
+                    option.value === sortConfig.key && option.direction === sortConfig.direction
+                )?.label || ''
+            }}
+            onSortChange={onSortChange}
+            placeholder="Sort by"
+          />
           <Button
             variant="outline"
             size="sm"
@@ -91,8 +103,8 @@ function ListRepositories() {
             <Settings size={16} />
             {t('selfHost.repositories.settings' as any)}
           </Button>
-        }
-      />
+        </div>
+      </div>
       {renderGithubRepositories()}
       <GitHubConnectorSettingsModal
         open={isSettingsModalOpen}
