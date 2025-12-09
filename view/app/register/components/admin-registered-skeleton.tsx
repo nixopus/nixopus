@@ -2,8 +2,11 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/hooks/use-translation';
 
 export const AdminRegisteredSkeleton = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm md:max-w-3xl">
@@ -15,6 +18,11 @@ export const AdminRegisteredSkeleton = () => {
                   <div className="flex flex-col items-center text-center">
                     <Skeleton className="h-8 w-48" />
                     <Skeleton className="mt-4 h-4 w-64" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">
+                      {t('auth.register.loadingStatus' as any)}
+                    </p>
                   </div>
                   <div className="space-y-4">
                     <div className="grid gap-3">

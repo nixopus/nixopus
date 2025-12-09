@@ -139,6 +139,27 @@
       "privacyPolicy": "Politique de Confidentialité",
       "alreadyHaveAccount": "Vous avez déjà un compte ?",
       "success": "Inscription réussie ! Veuillez vérifier votre e-mail pour vérifier votre compte.",
+      "loadingStatus": "Vérification du statut d'inscription...",
+      "adminInfoBanner": "Vous vous inscrivez en tant qu'utilisateur administrateur. Un seul administrateur peut être enregistré par instance Nixopus.",
+      "adminAlreadyRegistered": {
+        "title": "Inscription Administrateur Terminée",
+        "description": "Cette instance Nixopus a déjà un utilisateur administrateur enregistré.",
+        "policyTitle": "Politique d'Administrateur Unique",
+        "policy": "Un seul enregistrement d'administrateur est autorisé par instance",
+        "nextSteps": "Si vous avez besoin d'accès, veuillez contacter l'administrateur existant ou contacter notre équipe de support.",
+        "goToLogin": "Aller à la Connexion",
+        "contactSupport": "Contacter le Support"
+      },
+      "successAdmin": {
+        "title": "Inscription Administrateur Réussie",
+        "message": "Vous êtes maintenant l'administrateur de cette instance Nixopus. Vous avez été connecté automatiquement.",
+        "whatsNext": "Prochaines Étapes ?",
+        "nextStep1": "Vous êtes maintenant l'administrateur de cette instance",
+        "nextStep2": "Vous pouvez gérer les utilisateurs, les paramètres et toutes les fonctionnalités",
+        "nextStep3": "Accédez à votre tableau de bord administrateur pour commencer",
+        "goToDashboard": "Aller au Tableau de Bord",
+        "redirecting": "Redirection vers le tableau de bord dans {count} secondes..."
+      },
       "errors": {
         "invalidEmail": "E-mail invalide",
         "passwordMismatch": "Les mots de passe ne correspondent pas",
@@ -153,9 +174,25 @@
         "adminAlreadyRegisteredDescription": "Veuillez contacter l'administrateur pour obtenir l'accès.",
         "loginButton": "Se connecter",
         "somethingWentWrong": "Une erreur est survenue",
-        "loadingAdminRegistration": "Vérification de l'enregistrement de l'administrateur...",
+        "loadingAdminRegistration": "Impossible de vérifier le statut d'inscription. Veuillez réessayer.",
         "tryAgain": "Réessayer",
-        "registerFailed": "Échec de l'inscription"
+        "registerFailed": "Échec de l'inscription",
+        "unknownError": "Une erreur inattendue s'est produite. Veuillez réessayer.",
+        "contactSupport": "Contacter le Support",
+        "showDetails": "Afficher les Détails",
+        "hideDetails": "Masquer les Détails",
+        "networkError": {
+          "title": "Échec de la Connexion",
+          "description": "Impossible de se connecter au serveur. Veuillez vérifier votre connexion Internet et réessayer."
+        },
+        "serverError": {
+          "title": "Serveur Indisponible",
+          "description": "Le serveur n'est pas disponible pour le moment. Veuillez réessayer plus tard."
+        },
+        "signUpNotAllowed": {
+          "message": "Inscription Non Disponible",
+          "description": "L'inscription administrateur n'est pas disponible. Cette instance a déjà un utilisateur administrateur enregistré."
+        }
       }
     },
     "email": "E-mail",
