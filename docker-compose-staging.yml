@@ -7,12 +7,10 @@ services:
       dockerfile: Dockerfile
     container_name: nixopus-staging-api
     ports:
-      - "${API_PORT:-8443}:${API_PORT:-8443}"
+      - "${API_PORT:-8443}:8443"
     restart: unless-stopped
     env_file:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/api/.env
-    environment:
-      - HOST_NAME=nixopus-staging-db
     volumes:
       - ./logs:/app/logs
       - ${NIXOPUS_HOME:-/etc/nixopus}:/etc/nixopus
@@ -23,22 +21,24 @@ services:
     depends_on:
       nixopus-staging-db:
         condition: service_healthy
-      nixopus-staging-redis:
-        condition: service_healthy
+        required: false
 
   nixopus-staging-db:
     image: postgres:14-alpine
     container_name: nixopus-staging-db
     restart: unless-stopped
+    profiles:
+      - local-db
     environment:
       - POSTGRES_USER=${USERNAME}
       - POSTGRES_PASSWORD=${PASSWORD}
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_HOST_AUTH_METHOD=trust
+    command: ["postgres", "-c", "jit=0"]
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
-      - ${NIXOPUS_HOME:-/etc/nixopus}/db:/var/lib/postgresql/data
+      - nixopus-staging-db-data:/var/lib/postgresql/data
     networks:
       - nixopus-network
     healthcheck:
@@ -55,36 +55,13 @@ services:
         - NEXT_PUBLIC_PORT=${NEXT_PUBLIC_PORT}
     container_name: nixopus-staging-view
     ports:
-      - "${NEXT_PUBLIC_PORT:-7443}:${NEXT_PUBLIC_PORT:-7443}"
+      - "${NEXT_PUBLIC_PORT:-7443}:7443"
     restart: unless-stopped
     env_file:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/view/.env
     volumes:
       - ./logs:/app/logs
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/view/.env:/app/.env
-    networks:
-      - nixopus-network
-
-  nixopus-staging-caddy:
-    image: caddy:latest
-    container_name: nixopus-staging-caddy
-    ports:
-      - "${CADDY_ADMIN_PORT:-2019}:2019"
-      - "${CADDY_HTTP_PORT:-80}:80"
-      - "${CADDY_HTTPS_PORT:-443}:443"
-    volumes:
-      - ${NIXOPUS_HOME:-/etc/nixopus}/source/helpers/Caddyfile:/etc/caddy/Caddyfile
-      - ${NIXOPUS_HOME:-/etc/nixopus}/caddy:/data
-      - ${NIXOPUS_HOME:-/etc/nixopus}/caddy:/config
-    command:
-      [
-        "caddy",
-        "run",
-        "--config",
-        "/etc/caddy/Caddyfile",
-        "--adapter",
-        "caddyfile"
-      ]
     networks:
       - nixopus-network
 
@@ -105,6 +82,53 @@ services:
       timeout: 5s
       retries: 5
 
+  nixopus-staging-caddy:
+    image: caddy:latest
+    container_name: nixopus-staging-caddy
+    ports:
+      - "${CADDY_ADMIN_PORT:-2019}:2019"
+      - "${CADDY_HTTP_PORT:-80}:80"
+      - "${CADDY_HTTPS_PORT:-443}:443"
+    volumes:
+      - ${NIXOPUS_HOME:-/etc/nixopus}/source/helpers/Caddyfile:/etc/caddy/Caddyfile
+      - ${NIXOPUS_HOME:-/etc/nixopus}/caddy:/data
+      - ${NIXOPUS_HOME:-/etc/nixopus}/caddy:/config
+    command:
+      [
+        "caddy",
+        "run",
+        "--config",
+        "/etc/caddy/Caddyfile",
+        "--adapter",
+        "caddyfile",
+      ]
+    networks:
+      - nixopus-network
+
+  supertokens:
+    image: registry.supertokens.io/supertokens/supertokens-postgresql:latest
+    depends_on:
+      nixopus-staging-db:
+        condition: service_healthy
+        required: false
+    ports:
+      - "${SUPERTOKENS_PORT:-3567}:3567"
+    environment:
+      POSTGRESQL_TABLE_NAMES_PREFIX: "supertokens_"
+      POSTGRESQL_CONNECTION_URI: "${POSTGRESQL_CONNECTION_URI:-postgresql://${USERNAME}:${PASSWORD}@nixopus-staging-db:5432/${DB_NAME}}"
+    networks:
+      - nixopus-network
+    restart: unless-stopped
+    healthcheck:
+      test: >
+        bash -c 'exec 3<>/dev/tcp/127.0.0.1/${SUPERTOKENS_PORT:-3567} && echo -e "GET /hello HTTP/1.1\r\nhost: 127.0.0.1:${SUPERTOKENS_PORT:-3567}\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep "Hello"'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 networks:
   nixopus-network:
     driver: bridge
+
+volumes:
+  nixopus-staging-db-data:

@@ -186,7 +186,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-13, macos-14]
+        os: [macos-14]
 
     steps:
       - name: Checkout code
@@ -312,6 +312,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
