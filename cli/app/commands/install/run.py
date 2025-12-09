@@ -538,9 +538,8 @@ class Install:
             # Insert cleanup as the third step (index 2), right before cloning the repo
             steps.insert(2, ("Cleaning up Docker resources", self._cleanup_docker))
 
-        # Only add proxy steps if both api_domain and view_domain are provided
-        if self.api_domain and self.view_domain:
-            steps.append(("Loading proxy configuration", self._load_proxy))
+        # Always load proxy configuration after services are started (works for both domain and IP-based installations)
+        steps.append(("Loading proxy configuration", self._load_proxy))
 
         try:
             with Progress(

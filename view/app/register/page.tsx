@@ -11,7 +11,11 @@ import { PasswordInputField } from '@/components/ui/password-input-field';
 import { AdminRegisteredSkeleton } from './components/admin-registered-skeleton';
 import { AdminRegisteredError } from './components/admin-registerd-error';
 import { AdminRegistered } from './components/admin-registered';
+import { AdminRegistrationSuccess } from './components/admin-registration-success';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 import useRegister from './hooks/use-register';
+import { useIsAdminRegisteredQuery } from '@/redux/services/users/authApi';
 
 export default function RegisterPage() {
   const {
@@ -21,19 +25,33 @@ export default function RegisterPage() {
     isAdminRegistered,
     isAdminRegisteredLoading,
     isAdminRegisteredError,
+    registrationSuccess,
     t
   } = useRegister();
+
+  const { error: adminRegisteredQueryError } = useIsAdminRegisteredQuery();
 
   if (isAdminRegisteredLoading) {
     return <AdminRegisteredSkeleton />;
   }
 
   if (isAdminRegisteredError) {
-    return <AdminRegisteredError />;
+    const errorDetails = adminRegisteredQueryError
+      ? {
+          type: 'network' as const,
+          message: (adminRegisteredQueryError as any)?.message,
+          code: (adminRegisteredQueryError as any)?.code
+        }
+      : undefined;
+    return <AdminRegisteredError error={errorDetails} />;
   }
 
   if (isAdminRegistered) {
     return <AdminRegistered />;
+  }
+
+  if (registrationSuccess) {
+    return <AdminRegistrationSuccess />;
   }
 
   return (
@@ -50,6 +68,10 @@ export default function RegisterPage() {
                       {t('auth.register.description')}
                     </p>
                   </div>
+                  <Alert className="border-0 bg-muted/30">
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>{t('auth.register.adminInfoBanner' as any)}</AlertDescription>
+                  </Alert>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="grid gap-3">
                       <Label htmlFor="email">{t('auth.email')}</Label>
