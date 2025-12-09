@@ -65,7 +65,7 @@ export const AdminRegisteredError = ({ error }: AdminRegisteredErrorProps = {}) 
                 </p>
               </div>
               {(errorMessage || errorCode) && (
-                <Alert>
+                <Alert className="border-0 bg-muted/30">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
                     <div className="space-y-2">

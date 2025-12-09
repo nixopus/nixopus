@@ -24,16 +24,13 @@ export const AdminRegistered = () => {
                 {t('auth.register.adminAlreadyRegistered.description' as any)}
               </p>
             </div>
-            <Alert>
+            <Alert className="border-0 bg-muted/30">
               <Info className="h-4 w-4" />
               <AlertDescription className="text-left">
                 <p className="font-medium mb-2">
                   {t('auth.register.adminAlreadyRegistered.policyTitle' as any)}
                 </p>
-                <ul className="text-sm space-y-1 list-disc list-inside ml-2">
-                  <li>{t('auth.register.adminAlreadyRegistered.policyPoint1' as any)}</li>
-                  <li>{t('auth.register.adminAlreadyRegistered.policyPoint2' as any)}</li>
-                </ul>
+                <p className="text-sm">{t('auth.register.adminAlreadyRegistered.policy' as any)}</p>
               </AlertDescription>
             </Alert>
             <div className="space-y-2">

@@ -144,8 +144,7 @@
         "title": "Registro de Administrador Completo",
         "description": "Esta instancia de Nixopus ya tiene un usuario administrador registrado.",
         "policyTitle": "Política de Administrador Único",
-        "policyPoint1": "Solo se permite UN registro de administrador por instancia",
-        "policyPoint2": "Si eres el administrador, por favor inicia sesión con tus credenciales",
+        "policy": "Solo se permite UN registro de administrador por instancia",
         "nextSteps": "Si necesitas acceso, por favor contacta al administrador existente o comunícate con nuestro equipo de soporte.",
         "goToLogin": "Ir a Iniciar Sesión",
         "contactSupport": "Contactar Soporte"

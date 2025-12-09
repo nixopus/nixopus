@@ -145,8 +145,7 @@
         "title": "Inscription Administrateur Terminée",
         "description": "Cette instance Nixopus a déjà un utilisateur administrateur enregistré.",
         "policyTitle": "Politique d'Administrateur Unique",
-        "policyPoint1": "Un seul enregistrement d'administrateur est autorisé par instance",
-        "policyPoint2": "Si vous êtes l'administrateur, veuillez vous connecter avec vos identifiants",
+        "policy": "Un seul enregistrement d'administrateur est autorisé par instance",
         "nextSteps": "Si vous avez besoin d'accès, veuillez contacter l'administrateur existant ou contacter notre équipe de support.",
         "goToLogin": "Aller à la Connexion",
         "contactSupport": "Contacter le Support"

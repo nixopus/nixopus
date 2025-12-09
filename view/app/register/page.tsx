@@ -29,9 +29,7 @@ export default function RegisterPage() {
     t
   } = useRegister();
 
-  const {
-    error: adminRegisteredQueryError
-  } = useIsAdminRegisteredQuery();
+  const { error: adminRegisteredQueryError } = useIsAdminRegisteredQuery();
 
   if (isAdminRegisteredLoading) {
     return <AdminRegisteredSkeleton />;
@@ -70,11 +68,9 @@ export default function RegisterPage() {
                       {t('auth.register.description')}
                     </p>
                   </div>
-                  <Alert>
+                  <Alert className="border-0 bg-muted/30">
                     <Info className="h-4 w-4" />
-                    <AlertDescription>
-                      {t('auth.register.adminInfoBanner' as any)}
-                    </AlertDescription>
+                    <AlertDescription>{t('auth.register.adminInfoBanner' as any)}</AlertDescription>
                   </Alert>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="grid gap-3">
