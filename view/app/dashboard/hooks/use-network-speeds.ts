@@ -37,15 +37,11 @@ export function useNetworkSpeeds(systemStats: SystemStatsType | null) {
       const timeDiff = Math.max(0.001, (now - previousNetworkStatsRef.current.timestamp) / 1000);
       const bytesDownloaded = Math.max(0, bytesRecv - previousNetworkStatsRef.current.bytesRecv);
       const bytesUploaded = Math.max(0, bytesSent - previousNetworkStatsRef.current.bytesSent);
-
-      setNetworkSpeeds({
-        downloadSpeed: formatBytes(bytesDownloaded / timeDiff, true),
-        uploadSpeed: formatBytes(bytesUploaded / timeDiff, true)
-      });
-    } else {
-      setNetworkSpeeds({
-        downloadSpeed: '0 B/s',
-        uploadSpeed: '0 B/s'
+      const downloadSpeed = formatBytes(bytesDownloaded / timeDiff, true);
+      const uploadSpeed = formatBytes(bytesUploaded / timeDiff, true);
+      setNetworkSpeeds((prev)=>{
+        prev.downloadSpeed === downloadSpeed && prev.uploadSpeed === uploadSpeed
+        ? prev : { downloadSpeed, uploadSpeed }
       });
     }
 
