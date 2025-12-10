@@ -1,3 +1,12 @@
+# [0.1.0-alpha.83](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.82...v0.1.0-alpha.83) (2025-12-09)
+
+
+### Features
+
+* **ui:** pointer cursor when hover over breadcrumbs ([#608](https://github.com/raghavyuva/nixopus/issues/608)) ([c5697a3](https://github.com/raghavyuva/nixopus/commit/c5697a344c8e7aa8f635eb741a00f23ff6857dc3))
+
+
+
 # [0.1.0-alpha.82](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.81...v0.1.0-alpha.82) (2025-12-09)
 
 

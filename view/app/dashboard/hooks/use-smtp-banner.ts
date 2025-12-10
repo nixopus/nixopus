@@ -22,7 +22,10 @@ export default function useSmtpBanner() {
   };
 
   const handleConfigure = () => {
-    router.push('/settings/notifications');
+    // TODO: Re-enable when notifications feature is working
+    // router.push('/settings/notifications');
+    // Temporarily disabled - redirect to general settings instead
+    router.push('/settings/general');
   };
 
   return {
