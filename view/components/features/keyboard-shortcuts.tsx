@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface Shortcut {
   keys: string[];
+  macKeys: string[];
   description: string;
 }
 
