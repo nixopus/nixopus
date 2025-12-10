@@ -61,7 +61,7 @@ function AppItem({
 
   return (
     <Card
-      className={`relative w-full bg-secondary cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-xl  group`}
+      className={`relative w-full  cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-xl  group`}
       onClick={() => {
         router.push(`/self-host/application/${id}`);
       }}
@@ -103,11 +103,10 @@ function AppItem({
         </div>
       </CardContent>
 
-      <CardFooter className="flex items-center justify-between pt-2 pb-3 border-t border-border z-10 relative">
+      <CardFooter className="flex items-center justify-between pt-2 pb-3 z-10 relative">
         <Badge className={`${getEnvironmentStyles()} shadow-sm px-3 py-1`}>{environment}</Badge>
 
         <div className="flex items-center">
-          <Server size={14} className="mr-1 text-muted-foreground/70" />
           <Badge variant="outline" className="text-xs font-mono">
             {port}
           </Badge>

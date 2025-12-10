@@ -88,37 +88,52 @@ export const useTerminal = (
 
       const term = new Terminal({
         cursorBlink: true,
-        fontFamily: '"Menlo", "DejaVu Sans Mono", "Consolas", monospace',
-        fontSize: 14,
+        cursorStyle: 'bar',
+        cursorWidth: 2,
+        fontFamily:
+          '"JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Menlo, Monaco, "Courier New", monospace',
+        fontSize: 13,
+        fontWeight: '400',
+        fontWeightBold: '600',
+        letterSpacing: 0,
+        lineHeight: 1.4,
         theme: {
-          foreground: '#cccccc',
-          background: '#1e1e1e',
-          cursor: '#cccccc',
-          black: '#000000',
-          red: '#cd3131',
-          green: '#0dbc79',
-          yellow: '#e5e510',
-          blue: '#2472c8',
-          magenta: '#bc3fbc',
-          cyan: '#11a8cd',
-          white: '#e5e5e5',
-          brightBlack: '#666666',
-          brightRed: '#f14c4c',
-          brightGreen: '#23d18b',
-          brightYellow: '#f5f543',
-          brightBlue: '#3b8eea',
-          brightMagenta: '#d670d6',
-          brightCyan: '#29b8db',
-          brightWhite: '#e5e5e5'
+          // Warp-inspired dark theme with vibrant accents
+          foreground: '#e4e4e7',
+          background: '#0c0c0f',
+          cursor: '#22d3ee',
+          cursorAccent: '#0c0c0f',
+          selectionBackground: '#3b82f620',
+          selectionForeground: '#ffffff',
+          selectionInactiveBackground: '#3b82f610',
+          // ANSI colors - vibrant and modern
+          black: '#18181b',
+          red: '#f87171',
+          green: '#4ade80',
+          yellow: '#facc15',
+          blue: '#60a5fa',
+          magenta: '#c084fc',
+          cyan: '#22d3ee',
+          white: '#e4e4e7',
+          // Bright variants
+          brightBlack: '#52525b',
+          brightRed: '#fca5a5',
+          brightGreen: '#86efac',
+          brightYellow: '#fde047',
+          brightBlue: '#93c5fd',
+          brightMagenta: '#d8b4fe',
+          brightCyan: '#67e8f9',
+          brightWhite: '#fafafa'
         },
         allowTransparency: true,
         rightClickSelectsWord: true,
         disableStdin: !allowInput,
         convertEol: true,
-        scrollback: 1000,
-        tabStopWidth: 8,
+        scrollback: 5000,
+        tabStopWidth: 4,
         macOptionIsMeta: true,
-        macOptionClickForcesSelection: true
+        macOptionClickForcesSelection: true,
+        smoothScrollDuration: 100
       });
 
       const fitAddon = new FitAddon();

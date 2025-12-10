@@ -1,3 +1,13 @@
+# [0.1.0-alpha.86](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.85...v0.1.0-alpha.86) (2025-12-10)
+
+
+### Features
+
+* add support for deployment logs table with improved styling and performance ([508207d](https://github.com/raghavyuva/nixopus/commit/508207d7fd7a2972ab05b65c754c5a30d6749305))
+* improvise container listing and details page ([8c22094](https://github.com/raghavyuva/nixopus/commit/8c22094a1c22cb4405126db8590a1fb2f2060822))
+
+
+
 # [0.1.0-alpha.85](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.84...v0.1.0-alpha.85) (2025-12-10)
 
 
