@@ -12,22 +12,24 @@ interface Shortcut {
 }
 
 const shortcuts: Shortcut[] = [
-  { keys: ['Ctrl', 'J'], description: 'Toggle terminal' },
-  { keys: ['Ctrl', 'T'], description: 'Change terminal position' },
-  { keys: ['Ctrl', 'B'], description: 'Toggle sidebar' },
-  { keys: ['Ctrl', 'C'], description: 'Copy file' },
-  { keys: ['Ctrl', 'X'], description: 'Cut file' },
-  { keys: ['Ctrl', 'V'], description: 'Paste file' },
-  { keys: ['Ctrl', 'H'], description: 'Toggle hidden files' },
-  { keys: ['Ctrl', 'L'], description: 'Toggle layout (grid/list)' },
-  { keys: ['Ctrl', 'Shift', 'N'], description: 'Create new folder' },
-  { keys: ['F2'], description: 'Rename file' }
+  { keys: ['Ctrl', 'J'], macKeys: ['Cmd', 'J'], description: 'Toggle terminal' },
+  { keys: ['Ctrl', 'T'], macKeys: ['Cmd', 'T'], description: 'Change terminal position' },
+  { keys: ['Ctrl', 'B'], macKeys: ['Cmd', 'B'], description: 'Toggle sidebar' },
+  { keys: ['Ctrl', 'C'], macKeys: ['Cmd', 'C'], description: 'Copy file' },
+  { keys: ['Ctrl', 'X'], macKeys: ['Cmd', 'X'], description: 'Cut file' },
+  { keys: ['Ctrl', 'V'], macKeys: ['Cmd', 'V'], description: 'Paste file' },
+  { keys: ['Ctrl', 'H'], macKeys: ['Cmd', 'H'], description: 'Toggle hidden files' },
+  { keys: ['Ctrl', 'L'], macKeys: ['Cmd', 'L'], description: 'Toggle layout (grid/list)' },
+  { keys: ['Ctrl', 'Shift', 'N'], macKeys: ['Cmd', 'Shift', 'N'], description: 'Create new folder' },
+  { keys: ['F2'], macKeys: ['F2'], description: 'Rename file' }
 ];
 
 export function KeyboardShortcuts() {
   const [isOpen, setIsOpen] = useState(false);
-
+  const [isMac, setIsMac] = useState(false);
   useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.platform))
+    
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 's' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -38,7 +40,11 @@ export function KeyboardShortcuts() {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
-
+  
+  const getPlatformKeys = (shortcut: Shortcut) => {
+    return isMac && shortcut.macKeys ? shortcut.macKeys : shortcut.keys
+  }
+  
   const halfLength = Math.ceil(shortcuts.length / 2);
   const leftColumn = shortcuts.slice(0, halfLength);
   const rightColumn = shortcuts.slice(halfLength);
@@ -63,12 +69,12 @@ export function KeyboardShortcuts() {
             <div key={index} className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">{shortcut.description}</div>
               <div className="flex items-center gap-1">
-                {shortcut.keys.map((key, keyIndex) => (
+                {getPlatformKeys(shortcut).map((key, keyIndex) => (
                   <React.Fragment key={keyIndex}>
                     <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
                       {key}
                     </kbd>
-                    {keyIndex < shortcut.keys.length - 1 && (
+                    {keyIndex < getPlatformKeys(shortcut).length - 1 && (
                       <span className="text-muted-foreground">+</span>
                     )}
                   </React.Fragment>
@@ -82,12 +88,12 @@ export function KeyboardShortcuts() {
             <div key={index} className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">{shortcut.description}</div>
               <div className="flex items-center gap-1">
-                {shortcut.keys.map((key, keyIndex) => (
+                {getPlatformKeys(shortcut).map((key, keyIndex) => (
                   <React.Fragment key={keyIndex}>
                     <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
                       {key}
                     </kbd>
-                    {keyIndex < shortcut.keys.length - 1 && (
+                    {keyIndex < getPlatformKeys(shortcut).length - 1 && (
                       <span className="text-muted-foreground">+</span>
                     )}
                   </React.Fragment>
