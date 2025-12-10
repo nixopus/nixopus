@@ -40,6 +40,7 @@ function useRegister() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const {
     data: isAdminRegistered,
     isLoading: isAdminRegisteredLoading,
@@ -53,6 +54,18 @@ function useRegister() {
       confirmPassword: ''
     }
   });
+
+  const isNetworkError = (error: unknown): boolean => {
+    if (error instanceof Error) {
+      return (
+        error.message.includes('network') ||
+        error.message.includes('fetch') ||
+        error.message.includes('Failed to fetch') ||
+        error.name === 'NetworkError'
+      );
+    }
+    return false;
+  };
 
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
@@ -69,14 +82,37 @@ function useRegister() {
           toast.error(field.error);
         });
       } else if (response.status === 'SIGN_UP_NOT_ALLOWED') {
-        toast.error('Sign up is not allowed');
+        toast.error(t('auth.register.errors.signUpNotAllowed.message' as any), {
+          description: t('auth.register.errors.signUpNotAllowed.description' as any)
+        });
       } else {
-        toast.success(t('auth.register.success'));
+        setRegistrationSuccess(true);
+        toast.success(t('auth.register.successAdmin.title' as any), {
+          description: t('auth.register.successAdmin.message' as any)
+        });
         await dispatch(initializeAuth() as any);
-        router.push('/auth');
+        // Note: User is already logged in after signUp, so we'll redirect to dashboard
+        // The success component will handle the redirect after showing the success message
       }
     } catch (error) {
-      toast.error(t('auth.register.errors.registerFailed'));
+      if (isNetworkError(error)) {
+        toast.error(t('auth.register.errors.networkError.title' as any), {
+          description: t('auth.register.errors.networkError.description' as any)
+        });
+      } else if (error instanceof Error) {
+        const errorMessage = error.message.toLowerCase();
+        if (errorMessage.includes('server') || errorMessage.includes('500')) {
+          toast.error(t('auth.register.errors.serverError.title' as any), {
+            description: t('auth.register.errors.serverError.description' as any)
+          });
+        } else {
+          toast.error(t('auth.register.errors.registerFailed'), {
+            description: error.message || t('auth.register.errors.unknownError' as any)
+          });
+        }
+      } else {
+        toast.error(t('auth.register.errors.registerFailed'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -89,6 +125,7 @@ function useRegister() {
     isAdminRegistered,
     isAdminRegisteredLoading,
     isAdminRegisteredError,
+    registrationSuccess,
     t
   };
 }

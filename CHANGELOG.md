@@ -1,3 +1,30 @@
+# [0.1.0-alpha.83](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.82...v0.1.0-alpha.83) (2025-12-09)
+
+
+### Features
+
+* **ui:** pointer cursor when hover over breadcrumbs ([#608](https://github.com/raghavyuva/nixopus/issues/608)) ([c5697a3](https://github.com/raghavyuva/nixopus/commit/c5697a344c8e7aa8f635eb741a00f23ff6857dc3))
+
+
+
+# [0.1.0-alpha.82](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.81...v0.1.0-alpha.82) (2025-12-09)
+
+
+### Features
+
+* conveyable messages to register screen after admin registration ([#648](https://github.com/raghavyuva/nixopus/issues/648)) ([726765f](https://github.com/raghavyuva/nixopus/commit/726765f2f66eda04c4976efbc17d83aa925e0835))
+
+
+
+# [0.1.0-alpha.81](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.80...v0.1.0-alpha.81) (2025-12-09)
+
+
+### Features
+
+* **ui:** refactor page headers for UI consistency ([#673](https://github.com/raghavyuva/nixopus/issues/673)) ([79971f4](https://github.com/raghavyuva/nixopus/commit/79971f4531a0cee6e0dd92b0e7985b9d7c917aa9))
+
+
+
 # [0.1.0-alpha.80](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.79...v0.1.0-alpha.80) (2025-12-08)
 
 
