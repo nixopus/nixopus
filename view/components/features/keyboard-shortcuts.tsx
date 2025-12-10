@@ -28,7 +28,7 @@ export function KeyboardShortcuts() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMac, setIsMac] = useState(false);
   useEffect(() => {
-    setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.platform))
+    setIsMac(navigator.userAgentData?.platform === "macOS" || /Macintosh|MacIntel|Mac OS X/.test(navigator.userAgent));
     
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 's' && (e.metaKey || e.ctrlKey)) {
