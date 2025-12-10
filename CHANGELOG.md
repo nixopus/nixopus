@@ -1,3 +1,12 @@
+# [0.1.0-alpha.85](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.84...v0.1.0-alpha.85) (2025-12-10)
+
+
+### Bug Fixes
+
+* disable security tab from settings ([11da19b](https://github.com/raghavyuva/nixopus/commit/11da19bc009446232cf37eec320219d5700dd54c))
+
+
+
 # [0.1.0-alpha.84](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.83...v0.1.0-alpha.84) (2025-12-10)
 
 
