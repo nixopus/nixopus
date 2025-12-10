@@ -1,22 +1,12 @@
 'use client';
 
-import { Play, Pause, Trash2 } from 'lucide-react';
+import { Play, Square, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { isNixopusContainer } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Action } from './card';
-
-const resourceName = 'container';
-const ghostVariant = 'ghost';
-const iconSize = 'icon';
-const iconStyle = 'h-4 w-4';
-const containerStatusRunning = 'running';
-
-enum ResourceActions {
-  UPDATE = 'update',
-  DELETE = 'delete'
-}
+import { cn } from '@/lib/utils';
 
 interface ContainerActionsProps {
   container: any;
@@ -26,81 +16,91 @@ interface ContainerActionsProps {
 export const ContainerActions = ({ container, onAction }: ContainerActionsProps) => {
   const containerName: string = typeof container?.name === 'string' ? container.name : '';
   const isProtected = isNixopusContainer(containerName);
-  const isContainerRunning =
-    (container.state || '').toLowerCase() === containerStatusRunning ||
-    (container.status || '').toLowerCase() === containerStatusRunning;
+  const isRunning =
+    (container.state || '').toLowerCase() === 'running' ||
+    (container.status || '').toLowerCase() === 'running';
   const containerId = container.id;
 
-  function onClickHandler(e: any, action: Action) {
+  function handleClick(e: React.MouseEvent, action: Action) {
     e.stopPropagation();
     onAction(containerId, action);
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex items-center gap-1">
       <ResourceGuard
-        resource={resourceName}
-        action={ResourceActions.UPDATE}
-        loadingFallback={<LoadingFallback />}
+        resource="container"
+        action="update"
+        loadingFallback={<Skeleton className="h-8 w-8 rounded-lg" />}
       >
-        <ActionIconsRenderer
-          isContainerRunning={isContainerRunning}
-          isProtected={isProtected}
-          onClickHandler={onClickHandler}
-        />
+        {isRunning ? (
+          <ActionButton
+            icon={Square}
+            onClick={(e) => handleClick(e, Action.STOP)}
+            disabled={isProtected}
+            tooltip="Stop container"
+            variant="warning"
+          />
+        ) : (
+          <ActionButton
+            icon={Play}
+            onClick={(e) => handleClick(e, Action.START)}
+            disabled={isProtected}
+            tooltip="Start container"
+            variant="success"
+          />
+        )}
       </ResourceGuard>
       <ResourceGuard
-        resource={resourceName}
-        action={ResourceActions.DELETE}
-        loadingFallback={<LoadingFallback />}
+        resource="container"
+        action="delete"
+        loadingFallback={<Skeleton className="h-8 w-8 rounded-lg" />}
       >
-        <Button
-          variant={ghostVariant}
-          size={iconSize}
+        <ActionButton
+          icon={Trash2}
+          onClick={(e) => handleClick(e, Action.REMOVE)}
           disabled={isProtected}
-          onClick={(e) => onClickHandler(e, Action.REMOVE)}
-        >
-          <Trash2 className={iconStyle} />
-        </Button>
+          tooltip="Remove container"
+          variant="danger"
+        />
       </ResourceGuard>
     </div>
   );
 };
 
-function ActionIconsRenderer({
-  onClickHandler,
-  isContainerRunning,
-  isProtected
+function ActionButton({
+  icon: Icon,
+  onClick,
+  disabled,
+  tooltip,
+  variant
 }: {
-  onClickHandler(e: any, action: Action): void;
-  isContainerRunning: boolean;
-  isProtected: boolean;
+  icon: React.ElementType;
+  onClick: (e: React.MouseEvent) => void;
+  disabled?: boolean;
+  tooltip?: string;
+  variant?: 'success' | 'warning' | 'danger';
 }) {
-  // toggle: show Play when not running, Pause when running
-  if (isContainerRunning) {
-    return (
-      <Button
-        variant={ghostVariant}
-        size={iconSize}
-        disabled={isProtected}
-        onClick={(e) => onClickHandler(e, Action.STOP)}
-      >
-        <Pause className={iconStyle} />
-      </Button>
-    );
-  }
+  const variantStyles = {
+    success: 'hover:bg-emerald-500/10 hover:text-emerald-500',
+    warning: 'hover:bg-amber-500/10 hover:text-amber-500',
+    danger: 'hover:bg-red-500/10 hover:text-red-500'
+  };
+
   return (
     <Button
-      variant={ghostVariant}
-      size={iconSize}
-      disabled={isProtected}
-      onClick={(e) => onClickHandler(e, Action.START)}
+      variant="ghost"
+      size="icon"
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        'h-8 w-8 text-muted-foreground transition-colors',
+        variant && variantStyles[variant],
+        disabled && 'opacity-50 cursor-not-allowed'
+      )}
+      title={tooltip}
     >
-      <Play className={iconStyle} />
+      <Icon className="h-4 w-4" />
     </Button>
   );
-}
-
-function LoadingFallback() {
-  return <Skeleton className="h-8 w-8" />;
 }
