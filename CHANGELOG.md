@@ -1,3 +1,12 @@
+# [0.1.0-alpha.84](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.83...v0.1.0-alpha.84) (2025-12-10)
+
+
+### Bug Fixes
+
+* websocket race condition in monitoring the dashboard ([#684](https://github.com/raghavyuva/nixopus/issues/684)) ([68dd11d](https://github.com/raghavyuva/nixopus/commit/68dd11da81564d7316de188920199efd41976643))
+
+
+
 # [0.1.0-alpha.83](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.82...v0.1.0-alpha.83) (2025-12-09)
 
 

@@ -6,7 +6,8 @@ import useGeneralSettings from '../hooks/use-general-settings';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AvatarSection from './components/AvatarSection';
 import AccountSection from './components/AccountSection';
-import SecuritySection from './components/SecuritySection';
+// Security section hidden for now - enable when required
+// import SecuritySection from './components/SecuritySection';
 import { useTranslation } from '@/hooks/use-translation';
 import FeatureFlagsSettings from './components/FeatureFlagsSettings';
 import { useRBAC } from '@/lib/rbac';
@@ -48,10 +49,12 @@ function Page() {
         <div className="col-span-1 lg:col-span-2">
           <Tabs defaultValue="account" className="w-full">
             <TabsList
-              className={`grid w-full ${hasFeatureFlagsReadPermission ? 'grid-cols-3' : 'grid-cols-2'}`}
+              className={`grid w-full ${hasFeatureFlagsReadPermission ? 'grid-cols-2' : 'grid-cols-1'}`}
             >
               <TabsTrigger value="account">{t('settings.tabs.account')}</TabsTrigger>
+              {/* Security tab hidden for now - enable when required
               <TabsTrigger value="security">{t('settings.tabs.security')}</TabsTrigger>
+              */}
               {hasFeatureFlagsReadPermission && (
                 <TabsTrigger value="feature-flags">{t('settings.tabs.featureFlags')}</TabsTrigger>
               )}
@@ -89,7 +92,9 @@ function Page() {
               // handleAutoUpdateChange={handleAutoUpdateChange}
               handleFontUpdate={handleFontUpdate}
             />
+            {/* Security section hidden for now - enable when required
             <SecuritySection />
+            */}
             {hasFeatureFlagsReadPermission && <FeatureFlagsSettings />}
           </Tabs>
         </div>
