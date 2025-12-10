@@ -15,7 +15,8 @@ import NetworkWidget from './components/system/network';
 // TODO: Add weather widget back in with configuration for api key
 // import WeatherWidget from './components/system/weather';
 import { useTranslation } from '@/hooks/use-translation';
-import { SMTPBanner } from './components/smtp-banner';
+// TODO: Re-enable SMTP banner when notifications feature is working
+// import { SMTPBanner } from './components/smtp-banner';
 import DisabledFeature from '@/components/features/disabled-feature';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
@@ -34,7 +35,8 @@ function DashboardPage() {
     isDashboardEnabled,
     containersData,
     systemStats,
-    smtpConfig,
+    // TODO: Re-enable when SMTP banner is working
+    // smtpConfig,
     showDragHint,
     mounted,
     layoutResetKey,
@@ -108,7 +110,8 @@ function DashboardPage() {
           availableWidgets={availableWidgets}
         />
         <DragHintBanner mounted={mounted} showDragHint={showDragHint} onDismiss={dismissHint} />
-        <SMTPBannerConditional hasSMTPConfig={!!smtpConfig} />
+        {/* TODO: Re-enable SMTP banner when notifications feature is working */}
+        {/* <SMTPBannerConditional hasSMTPConfig={!!smtpConfig} /> */}
         <MonitoringSection
           systemStats={systemStats}
           containersData={containersData}
@@ -189,10 +192,11 @@ const DragHintBanner = ({
   );
 };
 
-const SMTPBannerConditional = ({ hasSMTPConfig }: { hasSMTPConfig: boolean }) => {
-  if (hasSMTPConfig) return null;
-  return <SMTPBanner />;
-};
+// TODO: Re-enable SMTP banner when notifications feature is working
+// const SMTPBannerConditional = ({ hasSMTPConfig }: { hasSMTPConfig: boolean }) => {
+//   if (hasSMTPConfig) return null;
+//   return <SMTPBanner />;
+// };
 
 const MonitoringSection = ({
   systemStats,

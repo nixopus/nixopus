@@ -83,7 +83,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {breadcrumbs.map((breadcrumb, idx) => (
                       <React.Fragment key={idx}>
                         <BreadcrumbItem className="hidden md:block">
-                          <BreadcrumbLink onClick={() => router.push(breadcrumb.href)}>
+                          <BreadcrumbLink
+                            onClick={() => router.push(breadcrumb.href)}
+                            className="cursor-pointer"
+                          >
                             {breadcrumb.label}
                           </BreadcrumbLink>
                         </BreadcrumbItem>

@@ -138,6 +138,27 @@
       "privacyPolicy": "Política de Privacidad",
       "alreadyHaveAccount": "¿Ya tienes una cuenta?",
       "success": "¡Registro exitoso! Por favor revisa tu correo electrónico para verificar tu cuenta.",
+      "loadingStatus": "Verificando estado de registro...",
+      "adminInfoBanner": "Te estás registrando como usuario administrador. Solo se puede registrar un administrador por instancia de Nixopus.",
+      "adminAlreadyRegistered": {
+        "title": "Registro de Administrador Completo",
+        "description": "Esta instancia de Nixopus ya tiene un usuario administrador registrado.",
+        "policyTitle": "Política de Administrador Único",
+        "policy": "Solo se permite UN registro de administrador por instancia",
+        "nextSteps": "Si necesitas acceso, por favor contacta al administrador existente o comunícate con nuestro equipo de soporte.",
+        "goToLogin": "Ir a Iniciar Sesión",
+        "contactSupport": "Contactar Soporte"
+      },
+      "successAdmin": {
+        "title": "Registro de Administrador Exitoso",
+        "message": "Ahora eres el administrador de esta instancia de Nixopus. Has sido iniciado sesión automáticamente.",
+        "whatsNext": "¿Qué sigue?",
+        "nextStep1": "Ahora eres el administrador de esta instancia",
+        "nextStep2": "Puedes gestionar usuarios, configuraciones y todas las funciones",
+        "nextStep3": "Accede a tu panel de administración para comenzar",
+        "goToDashboard": "Ir al Panel",
+        "redirecting": "Redirigiendo al panel en {count} segundos..."
+      },
       "errors": {
         "invalidEmail": "Correo electrónico inválido",
         "passwordMismatch": "Las contraseñas no coinciden",
@@ -152,9 +173,25 @@
         "adminAlreadyRegisteredDescription": "Por favor contacta al administrador para obtener acceso.",
         "loginButton": "Iniciar sesión",
         "somethingWentWrong": "Algo salió mal",
-        "loadingAdminRegistration": "Verificando si el administrador está registrado...",
+        "loadingAdminRegistration": "No se pudo verificar el estado de registro. Por favor intenta de nuevo.",
         "tryAgain": "Intentar de nuevo",
-        "registerFailed": "Error al registrarse"
+        "registerFailed": "Error al registrarse",
+        "unknownError": "Ocurrió un error inesperado. Por favor intenta de nuevo.",
+        "contactSupport": "Contactar Soporte",
+        "showDetails": "Mostrar Detalles",
+        "hideDetails": "Ocultar Detalles",
+        "networkError": {
+          "title": "Error de Conexión",
+          "description": "No se pudo conectar al servidor. Por favor verifica tu conexión a internet e intenta de nuevo."
+        },
+        "serverError": {
+          "title": "Servidor No Disponible",
+          "description": "El servidor no está disponible en este momento. Por favor intenta más tarde."
+        },
+        "signUpNotAllowed": {
+          "message": "Registro No Disponible",
+          "description": "El registro de administrador no está disponible. Esta instancia ya tiene un usuario administrador registrado."
+        }
       }
     },
     "email": "Correo electrónico",
