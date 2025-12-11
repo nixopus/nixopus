@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 const TOUR_SEEN_KEY = 'nixopus_tour_seen';
 
 export const useTour = () => {
-  const [hasSeenTour, setHasSeenTour] = useState(() => {
+  const [hasSeenTour, setHasSeenTour] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem(TOUR_SEEN_KEY) === 'true';
     }
