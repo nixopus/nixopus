@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Keyboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DialogWrapper } from '@/components/ui/dialog-wrapper';
-import { Separator } from '@/components/ui/separator';
 
 interface Shortcut {
   keys: string[];
