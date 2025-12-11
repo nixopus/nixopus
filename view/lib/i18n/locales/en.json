@@ -1019,7 +1019,7 @@
       }
     },
     "page": {
-      "title": "Self-Hosted Applications",
+      "title": "Apps",
       "description": "Manage your self-hosted applications",
       "accessDenied": {
         "title": "Access Denied",
@@ -1130,6 +1130,22 @@
           "failed": "Failed"
         },
         "total": "Total deployments: {count}"
+      }
+    },
+    "monitoring": {
+      "containerStats": {
+        "title": "Container Stats",
+        "description": "Real-time resource usage for {name}",
+        "noContainer": "No deployed container available. Deploy your application to see container stats.",
+        "error": "Failed to fetch container stats",
+        "cpu": "CPU",
+        "cpuUsage": "CPU Usage",
+        "memory": "Memory",
+        "memoryUsage": "Memory Usage",
+        "network": "Network I/O",
+        "diskIO": "Disk I/O",
+        "processes": "Processes",
+        "lastUpdated": "Last updated"
       }
     },
     "applicationDetails": {
