@@ -6,7 +6,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select';
 import { Server } from '@/redux/types/server';
 import {
@@ -32,13 +32,16 @@ import { imagesApi } from '@/redux/services/container/imagesApi';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ServerIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation, type translationKey } from '@/hooks/use-translation';
 
 interface ServerSelectorProps {
   className?: string;
 }
 
-const getStatusLabel = (status: string, t: (key: string) => string) => {
+const getStatusLabel = (
+  status: string,
+  t: (key: translationKey, params?: Record<string, string>) => string
+) => {
   switch (status) {
     case 'active':
       return t('servers.selector.status.active');
@@ -82,9 +85,19 @@ export function ServerSelector({ className }: ServerSelectorProps) {
       dispatch(userApi.util.invalidateTags([{ type: 'User', id: 'LIST' }]));
       dispatch(notificationApi.util.invalidateTags([{ type: 'Notification', id: 'LIST' }]));
       dispatch(domainsApi.util.invalidateTags([{ type: 'Domains', id: 'LIST' }]));
-      dispatch(serversApi.util.invalidateTags([{ type: 'Servers', id: 'LIST' }, { type: 'Servers', id: 'ACTIVE' }]));
+      dispatch(
+        serversApi.util.invalidateTags([
+          { type: 'Servers', id: 'LIST' },
+          { type: 'Servers', id: 'ACTIVE' }
+        ])
+      );
       dispatch(GithubConnectorApi.util.invalidateTags([{ type: 'GithubConnector', id: 'LIST' }]));
-      dispatch(deployApi.util.invalidateTags([{ type: 'Deploy', id: 'LIST' }, { type: 'Applications', id: 'LIST' }]));
+      dispatch(
+        deployApi.util.invalidateTags([
+          { type: 'Deploy', id: 'LIST' },
+          { type: 'Applications', id: 'LIST' }
+        ])
+      );
       dispatch(fileManagersApi.util.invalidateTags([{ type: 'FileListAll', id: 'LIST' }]));
       dispatch(auditApi.util.invalidateTags([{ type: 'AuditLogs', id: 'LIST' }]));
       dispatch(FeatureFlagsApi.util.invalidateTags([{ type: 'FeatureFlags', id: 'LIST' }]));
@@ -138,19 +151,12 @@ export function ServerSelector({ className }: ServerSelectorProps) {
   }
 
   return (
-    <Select
-      value={activeServer?.id || 'default'}
-      onValueChange={handleServerChange}
-    >
+    <Select value={activeServer?.id || 'default'} onValueChange={handleServerChange}>
       <SelectTrigger className={cn('w-[200px]', className)}>
         <div className="flex items-center gap-2">
           <ServerIcon className="h-4 w-4" />
           <SelectValue placeholder={t('servers.selector.placeholder')}>
-            {activeServer ? (
-              <span>{activeServer.name}</span>
-            ) : (
-              t('servers.selector.default')
-            )}
+            {activeServer ? <span>{activeServer.name}</span> : t('servers.selector.default')}
           </SelectValue>
         </div>
       </SelectTrigger>
@@ -164,7 +170,9 @@ export function ServerSelector({ className }: ServerSelectorProps) {
           <SelectItem key={server.id} value={server.id}>
             <div className="flex items-center gap-2">
               <span>{server.name}</span>
-              <span className="text-xs text-muted-foreground">{getStatusLabel(server.status, t)}</span>
+              <span className="text-xs text-muted-foreground">
+                {getStatusLabel(server.status, t)}
+              </span>
             </div>
           </SelectItem>
         ))}
