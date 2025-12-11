@@ -61,26 +61,28 @@ const data = {
           url: '/settings/general',
           resource: 'settings'
         },
-        {
-          title: 'navigation.notifications',
-          url: '/settings/notifications',
-          resource: 'notification'
-        },
+        // TODO: Re-enable notifications when feature is working
+        // {
+        //   title: 'navigation.notifications',
+        //   url: '/settings/notifications',
+        //   resource: 'notification'
+        // },
         {
           title: 'navigation.team',
           url: '/settings/teams',
           resource: 'organization'
         },
         {
-          title: 'navigation.domains',
-          url: '/settings/domains',
-          resource: 'domain'
-        },
-        {
-          title: "navigation.servers",
-          url: "/settings/servers",
-          resource: "server"
+          title: 'navigation.servers',
+          url: '/settings/servers',
+          resource: 'server'
         }
+        // TODO: Re-enable domains when feature is required
+        // {
+        //   title: 'navigation.domains',
+        //   url: '/settings/domains',
+        //   resource: 'domain'
+        // }
       ]
     }
   ]
