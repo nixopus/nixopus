@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -35,7 +36,12 @@ func GetUser(w http.ResponseWriter, r *http.Request) *types.User {
 }
 
 func GetOrganizationID(r *http.Request) uuid.UUID {
-	organizationIDAny := r.Context().Value(types.OrganizationIDKey)
+	return GetOrganizationIDFromContext(r.Context())
+}
+
+// GetOrganizationIDFromContext extracts organization ID from a context
+func GetOrganizationIDFromContext(ctx context.Context) uuid.UUID {
+	organizationIDAny := ctx.Value(types.OrganizationIDKey)
 	if organizationIDAny == nil {
 		return uuid.Nil
 	}

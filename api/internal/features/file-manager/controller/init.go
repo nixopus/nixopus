@@ -6,6 +6,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/file-manager/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
+	"github.com/uptrace/bun"
 )
 
 type FileManagerController struct {
@@ -19,9 +20,10 @@ func NewFileManagerController(
 	ctx context.Context,
 	l logger.Logger,
 	notificationManager *notification.NotificationManager,
+	db *bun.DB,
 ) *FileManagerController {
 	return &FileManagerController{
-		service:      service.NewFileManagerService(ctx, l),
+		service:      service.NewFileManagerService(l, db),
 		ctx:          ctx,
 		logger:       l,
 		notification: notificationManager,

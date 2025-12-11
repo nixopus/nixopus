@@ -1,12 +1,17 @@
 package ssh
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/config"
+	server_storage "github.com/raghavyuva/nixopus-api/internal/features/servers/storage"
+	"github.com/uptrace/bun"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -30,6 +35,47 @@ func NewSSH() *SSH {
 		Password:            config.AppConfig.SSH.Password,
 		PrivateKeyProtected: config.AppConfig.SSH.PrivateKeyProtected,
 	}
+}
+
+// getStringValue returns the string value if the pointer is not nil, otherwise returns empty string
+func getStringValue(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+// NewSSHWithServer creates SSH client by querying the database for the active server
+// If an active server is found, it uses that server's SSH config
+// Otherwise falls back to default config
+func NewSSHWithServer(db *bun.DB, ctx context.Context, organizationID uuid.UUID) *SSH {
+	// Query database for active server
+	serverStorage := server_storage.ServerStorage{
+		DB:  db,
+		Ctx: ctx,
+	}
+
+	server, err := serverStorage.GetActiveServer(organizationID)
+	if err != nil {
+		log.Printf("Error querying active server: %v, falling back to default SSH config", err)
+		return NewSSH()
+	}
+
+	// Check if server is provided
+	if server != nil {
+		log.Printf("Using server SSH config: %s@%s:%d", server.Username, server.Host, server.Port)
+		return &SSH{
+			PrivateKey: getStringValue(server.SSHPrivateKeyPath),
+			Host:       server.Host,
+			User:       server.Username,
+			Port:       uint(server.Port),
+			Password:   getStringValue(server.SSHPassword),
+		}
+	}
+
+	log.Printf("No active server found, using default SSH config")
+	// Fallback to default config
+	return NewSSH()
 }
 
 func (s *SSH) ConnectWithPassword() (*goph.Client, error) {

@@ -31,6 +31,7 @@ import (
 	organization_service "github.com/raghavyuva/nixopus-api/internal/features/organization/service"
 	organization_storage "github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 
+	serverController "github.com/raghavyuva/nixopus-api/internal/features/servers/controller"
 	"github.com/raghavyuva/nixopus-api/internal/features/supertokens"
 	update "github.com/raghavyuva/nixopus-api/internal/features/update/controller"
 	update_service "github.com/raghavyuva/nixopus-api/internal/features/update/service"
@@ -39,7 +40,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/realtime"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	api "github.com/raghavyuva/nixopus-api/internal/version-manager"
-	serverController "github.com/raghavyuva/nixopus-api/internal/features/servers/controller"
 )
 
 type Router struct {
@@ -200,7 +200,7 @@ func (router *Router) Routes() {
 	})
 	router.OrganizationRoutes(organizationGroup, organizationController)
 
-	fileManagerController := file_manager.NewFileManagerController(router.app.Ctx, l, notificationManager)
+	fileManagerController := file_manager.NewFileManagerController(router.app.Ctx, l, notificationManager, router.app.Store.DB)
 	fileManagerGroup := fuego.Group(server, apiV1.Path+"/file-manager")
 	fuego.Use(fileManagerGroup, func(next http.Handler) http.Handler {
 		return middleware.RBACMiddleware(next, router.app, "file-manager")
@@ -277,7 +277,6 @@ func (router *Router) Routes() {
 		return middleware.AuditMiddleware(next, router.app, l, "extension")
 	})
 	router.ExtensionRoutes(extensionGroup, extensionController)
-
 
 	serversController := serverController.NewServersController(router.app.Store, router.app.Ctx, l, notificationManager)
 	serverGroup := fuego.Group(server, apiV1.Path+"/server")

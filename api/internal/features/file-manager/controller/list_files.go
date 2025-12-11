@@ -24,7 +24,7 @@ func (c *FileManagerController) ListFiles(f fuego.ContextWithBody[ListFilesReque
 		}
 	}
 
-	files, err := c.service.ListFiles(path)
+	files, err := c.service.ListFiles(r.Context(), path)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

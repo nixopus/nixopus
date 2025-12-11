@@ -22,7 +22,7 @@ func (c *FileManagerController) CreateDirectory(f fuego.ContextWithBody[CreateDi
 		}
 	}
 
-	err = c.service.CreateDirectory(request.Path)
+	err = c.service.CreateDirectory(f.Request().Context(), request.Path)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

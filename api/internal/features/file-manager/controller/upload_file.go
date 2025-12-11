@@ -24,7 +24,7 @@ func (c *FileManagerController) UploadFile(f fuego.ContextNoBody) (*shared_types
 		path = "."
 	}
 
-	err = c.service.UploadFile(file, path, header.Filename)
+	err = c.service.UploadFile(f.Request().Context(), file, path, header.Filename)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

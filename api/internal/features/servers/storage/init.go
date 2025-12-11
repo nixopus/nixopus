@@ -26,6 +26,7 @@ type ServerStorageInterface interface {
 	GetServersCount(OrganizationID string, UserID uuid.UUID, search string) (int, error)
 	GetServerName(name string, organizationID uuid.UUID) (*shared_types.Server, error)
 	GetServerByHost(host string, port int, organizationID uuid.UUID) (*shared_types.Server, error)
+	GetActiveServer(organizationID uuid.UUID) (*shared_types.Server, error)
 	BeginTx() (bun.Tx, error)
 	WithTx(tx bun.Tx) ServerStorageInterface
 }
@@ -180,6 +181,17 @@ func (s *ServerStorage) GetServerByHost(host string, port int, organizationID uu
 	var server shared_types.Server
 	err := s.getDB().NewSelect().Model(&server).
 		Where("host = ? AND port = ? AND organization_id = ? AND deleted_at IS NULL", host, port, organizationID).
+		Scan(s.Ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &server, nil
+}
+
+func (s *ServerStorage) GetActiveServer(organizationID uuid.UUID) (*shared_types.Server, error) {
+	var server shared_types.Server
+	err := s.getDB().NewSelect().Model(&server).
+		Where("organization_id = ? AND status = ? AND deleted_at IS NULL", organizationID, "active").
 		Scan(s.Ctx)
 	if err != nil {
 		return nil, err
