@@ -40,7 +40,7 @@ const persistConfig = {
   key: 'root',
   version: 1,
   storage,
-  whitelist: ['auth', 'user'],
+  whitelist: ['auth', 'user', 'server'],
   migrate: (state: any) => {
     if (!state) return Promise.resolve(undefined);
     return Promise.resolve(state);

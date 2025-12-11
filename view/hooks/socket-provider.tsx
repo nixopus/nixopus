@@ -85,7 +85,13 @@ export const WebSocketProvider = ({
 
     try {
       const token = await getAccessToken();
-      const wsUrl = url || (await getWebsocketUrl()) + '?token=' + token;
+      let wsUrl = url || (await getWebsocketUrl()) + '?token=' + token;
+
+      // Include server ID in WebSocket URL for multi-server setups
+      if (activeServerId) {
+        wsUrl += '&server_id=' + encodeURIComponent(activeServerId);
+      }
+
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {

@@ -33,25 +33,28 @@ export const serverSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addMatcher(
-        serversApi.endpoints.getActiveServer.matchFulfilled,
-        (state, action) => {
+      .addMatcher(serversApi.endpoints.getActiveServer.matchFulfilled, (state, action) => {
+        // Only update if we got a server from the API, or if we don't have a persisted server
+        // This preserves persisted server state if API returns null but we have a persisted server
+        if (action.payload) {
           state.activeServer = action.payload;
-          state.activeServerId = action.payload?.id || null;
+          state.activeServerId = action.payload.id;
+        } else if (!state.activeServer) {
+          // Only clear if we don't have a persisted server
+          state.activeServer = null;
+          state.activeServerId = null;
         }
-      )
-      .addMatcher(
-        serversApi.endpoints.updateServerStatus.matchFulfilled,
-        (state, action) => {
-          if (action.payload.status === 'active') {
-            state.activeServer = action.payload;
-            state.activeServerId = action.payload.id;
-          } else if (state.activeServerId === action.payload.id) {
-            state.activeServer = null;
-            state.activeServerId = null;
-          }
+        // If action.payload is null but state.activeServer exists, keep the persisted server
+      })
+      .addMatcher(serversApi.endpoints.updateServerStatus.matchFulfilled, (state, action) => {
+        if (action.payload.status === 'active') {
+          state.activeServer = action.payload;
+          state.activeServerId = action.payload.id;
+        } else if (state.activeServerId === action.payload.id) {
+          state.activeServer = null;
+          state.activeServerId = null;
         }
-      );
+      });
   }
 });
 
