@@ -23,7 +23,7 @@ func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.Con
 		}
 	}
 
-	logsReader, err := c.dockerService.GetContainerLogs(req.ID, container.LogsOptions{
+	logsReader, err := c.getDockerService(f.Request().Context()).GetContainerLogs(req.ID, container.LogsOptions{
 		Follow:     req.Follow,
 		Tail:       strconv.Itoa(req.Tail),
 		Since:      req.Since,

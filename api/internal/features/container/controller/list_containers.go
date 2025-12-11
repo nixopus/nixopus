@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 	"sort"
 	"strconv"
@@ -19,7 +20,7 @@ func (c *ContainerController) ListContainers(fuegoCtx fuego.ContextNoBody) (*sha
 	params := parseContainerListParams(fuegoCtx.Request())
 
 	// Get pre-filtered summaries from Docker
-	containers, err := c.dockerService.ListContainers(container.ListOptions{
+	containers, err := c.getDockerService(fuegoCtx.Request().Context()).ListContainers(container.ListOptions{
 		All:     true,
 		Filters: buildDockerFilters(params),
 	})
@@ -34,7 +35,7 @@ func (c *ContainerController) ListContainers(fuegoCtx fuego.ContextNoBody) (*sha
 	rows := summarizeContainers(containers)
 	pageRows, totalCount := applySearchSortPaginate(rows, params)
 
-	result := c.appendContainerInfo(pageRows, containers)
+	result := c.appendContainerInfo(fuegoCtx.Request().Context(), pageRows, containers)
 
 	return &shared_types.Response{
 		Status:  "success",
@@ -186,10 +187,11 @@ func applySearchSortPaginate(rows []containertypes.ContainerListRow, p container
 	return rows[start:end], totalCount
 }
 
-func (c *ContainerController) appendContainerInfo(pageRows []containertypes.ContainerListRow, summaries []container.Summary) []containertypes.Container {
+func (c *ContainerController) appendContainerInfo(ctx context.Context, pageRows []containertypes.ContainerListRow, summaries []container.Summary) []containertypes.Container {
+	dockerService := c.getDockerService(ctx)
 	result := make([]containertypes.Container, 0, len(pageRows))
 	for _, r := range pageRows {
-		info, err := c.dockerService.GetContainerById(r.ID)
+		info, err := dockerService.GetContainerById(r.ID)
 		if err != nil {
 			c.logger.Log(logger.Error, "Error inspecting container", r.ID)
 			continue

@@ -45,7 +45,7 @@ func NewUpdateService(storage *storage.App, logger *logger.Logger, ctx context.C
 		storage: storage,
 		logger:  logger,
 		ctx:     ctx,
-		docker:  docker.NewDockerService(),
+		docker:  docker.NewDockerServiceWithServer(storage.Store.DB, ctx, uuid.Nil),
 		env:     getEnvironment(),
 	}
 }

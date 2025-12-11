@@ -13,7 +13,7 @@ import (
 func (c *ContainerController) GetContainer(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	containerID := f.PathParam("container_id")
 
-	containerInfo, err := c.dockerService.GetContainerById(containerID)
+	containerInfo, err := c.getDockerService(f.Request().Context()).GetContainerById(containerID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

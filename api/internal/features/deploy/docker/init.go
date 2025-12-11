@@ -15,9 +15,12 @@ import (
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
+	"github.com/google/uuid"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/uptrace/bun"
 )
 
 type DockerService struct {
@@ -87,9 +90,17 @@ type DockerClient struct {
 }
 
 // NewDockerService creates a new instance of DockerService using the default docker client.
+// For server-specific SSH configuration, use NewDockerServiceWithServer instead.
 func NewDockerService() *DockerService {
+	return NewDockerServiceWithServer(nil, nil, uuid.Nil)
+}
+
+// NewDockerServiceWithServer creates a new instance of DockerService using server SSH configuration when available.
+// If db, ctx, and organizationID are provided, it will use the active server from the database.
+// Otherwise, it falls back to the default SSH configuration.
+func NewDockerServiceWithServer(db *bun.DB, ctx context.Context, organizationID uuid.UUID) *DockerService {
 	lgr := logger.NewLogger()
-	cli, tunnel := newDockerClientWithOptionalSSHTunnel(lgr)
+	cli, tunnel := newDockerClientWithOptionalSSHTunnel(lgr, db, ctx, organizationID)
 	svc := &DockerService{Cli: cli, Ctx: context.Background(), logger: lgr, sshTunnel: tunnel}
 
 	if !isClusterInitialized(svc.Cli) {
@@ -105,8 +116,30 @@ func NewDockerService() *DockerService {
 	return svc
 }
 
-func newDockerClientWithOptionalSSHTunnel(lgr logger.Logger) (*client.Client, *SSHTunnel) {
-	sshClient := ssh.NewSSH()
+func newDockerClientWithOptionalSSHTunnel(lgr logger.Logger, db *bun.DB, ctx context.Context, organizationID uuid.UUID) (*client.Client, *SSHTunnel) {
+	var sshClient *ssh.SSH
+
+	// Try to use server SSH configuration if db, ctx, and organizationID are available
+	if db != nil && ctx != nil {
+		// If organizationID is not provided, try to get it from context
+		if organizationID == uuid.Nil {
+			organizationID = utils.GetOrganizationIDFromContext(ctx)
+		}
+
+		// If we have organizationID, use server SSH configuration
+		if organizationID != uuid.Nil {
+			lgr.Log(logger.Info, "Using SSH with server configuration", fmt.Sprintf("organizationID: %s", organizationID.String()))
+			sshClient = ssh.NewSSHWithServer(db, ctx, organizationID)
+		} else {
+			lgr.Log(logger.Info, "No organization ID available, using default SSH config", "")
+			sshClient = ssh.NewSSH()
+		}
+	} else {
+		// Fall back to default SSH configuration
+		lgr.Log(logger.Info, "Using default SSH configuration", "")
+		sshClient = ssh.NewSSH()
+	}
+
 	// Try to create an SSH tunnel to the remote Docker daemon socket, if it fails, use the local docker socket
 	tunnel, err := CreateSSHTunnel(sshClient, lgr)
 	if err != nil || tunnel == nil {

@@ -11,12 +11,13 @@ import (
 
 func (c *ContainerController) StopContainer(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	containerID := f.PathParam("container_id")
+	ctx := f.Request().Context()
 
-	if resp, skipped := c.isProtectedContainer(containerID, "stop"); skipped {
+	if resp, skipped := c.isProtectedContainer(ctx, containerID, "stop"); skipped {
 		return resp, nil
 	}
 
-	err := c.dockerService.StopContainer(containerID, container.StopOptions{})
+	err := c.getDockerService(ctx).StopContainer(containerID, container.StopOptions{})
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
