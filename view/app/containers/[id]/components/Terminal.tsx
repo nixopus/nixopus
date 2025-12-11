@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useTerminal } from '@/app/terminal/utils/useTerminal';
 import { useContainerReady } from '@/app/terminal/utils/isContainerReady';
 import { useWebSocket } from '@/hooks/socket-provider';
+import { useActiveServer } from '@/hooks/use-active-server';
 
 type TerminalProps = {
   containerId: string;
@@ -14,6 +15,7 @@ export const Terminal: React.FC<TerminalProps> = ({ containerId }) => {
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const sessionId = useMemo(() => `container-${containerId}-${uuidv4()}`, [containerId]);
   const { sendJsonMessage, isReady } = useWebSocket();
+  const { activeServerId } = useActiveServer();
 
   const {
     terminalRef: termRef,
@@ -36,10 +38,13 @@ export const Terminal: React.FC<TerminalProps> = ({ containerId }) => {
       // TODO: optimize this such that backend handles this instead of client.
       const cmd = `if docker ps >/dev/null 2>&1; then D=docker; else D='sudo -n docker'; fi; $D exec -it ${containerId} /bin/bash || $D exec -it ${containerId} /bin/sh\r`;
       setTimeout(() => {
-        sendJsonMessage({ action: 'terminal', data: { value: cmd, terminalId: sessionId } });
+        sendJsonMessage({
+          action: 'terminal',
+          data: { value: cmd, terminalId: sessionId, serverId: activeServerId }
+        });
       }, 150);
     }
-  }, [terminalInstance, isReady, sendJsonMessage, containerId, sessionId]);
+  }, [terminalInstance, isReady, sendJsonMessage, containerId, sessionId, activeServerId]);
 
   return (
     <div

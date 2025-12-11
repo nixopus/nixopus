@@ -123,7 +123,7 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.conns.Store(conn, user.ID)
+	s.conns.Store(conn, user)
 	defer s.handleDisconnect(conn)
 
 	log.Printf("User authenticated: %s", user.ID)
@@ -139,8 +139,12 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 // Returns:
 //   - nil
 func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
-	userID, _ := s.conns.Load(conn)
+	userAny, _ := s.conns.Load(conn)
 	s.conns.Delete(conn)
+	var userID interface{}
+	if user, ok := userAny.(*types.User); ok {
+		userID = user.ID
+	}
 
 	s.topicsMu.Lock()
 	for topic, connections := range s.topics {
@@ -190,7 +194,11 @@ func (s *SocketServer) Shutdown() {
 }
 
 func (s *SocketServer) handlePing(conn *websocket.Conn) {
-	userID, _ := s.conns.Load(conn)
+	userAny, _ := s.conns.Load(conn)
+	var userID interface{}
+	if user, ok := userAny.(*types.User); ok {
+		userID = user.ID
+	}
 	fmt.Printf("Received ping from %s (User ID: %v)\n", conn.RemoteAddr(), userID)
 }
 

@@ -1,18 +1,31 @@
 package terminal
 
 import (
+	"context"
 	"fmt"
 	"io"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	"github.com/uptrace/bun"
 	"golang.org/x/crypto/ssh"
 )
+
+// TerminalConfig holds the configuration for creating a new terminal
+type TerminalConfig struct {
+	Conn           *websocket.Conn
+	Log            *logger.Logger
+	TerminalId     string
+	DB             *bun.DB
+	Ctx            context.Context
+	OrganizationID uuid.UUID // Organization ID to find active server
+	ServerID       string    // Optional: specific server ID to connect to
+}
 
 type TermSize struct {
 	Rows uint16 `json:"rows"`
@@ -40,11 +53,22 @@ type Terminal struct {
 	session *ssh.Session
 	stdin   io.WriteCloser
 
-	TerminalId string
+	TerminalId     string
+	db             *bun.DB
+	ctx            context.Context
+	organizationID uuid.UUID
+	serverID       string
 }
 
+// NewTerminal creates a new terminal instance
+// Deprecated: Use NewTerminalWithConfig for multi-server support
 func NewTerminal(conn *websocket.Conn, log *logger.Logger, terminalId string) (*Terminal, error) {
 	ssh_client := sshpkg.NewSSH()
+
+	if log == nil {
+		log = &logger.Logger{}
+	}
+
 	terminal := &Terminal{
 		ssh:        ssh_client,
 		conn:       conn,
@@ -57,6 +81,41 @@ func NewTerminal(conn *websocket.Conn, log *logger.Logger, terminalId string) (*
 
 	terminal.bufferTick = time.NewTicker(terminal.bufferTime)
 	terminal.log.Log(logger.Info, "Terminal created", ssh_client.Host)
+	return terminal, nil
+}
+
+// NewTerminalWithConfig creates a new terminal with the given configuration
+// It connects to the specified server or the active server for the organization
+func NewTerminalWithConfig(config TerminalConfig) (*Terminal, error) {
+	// Connect to the specified server or active server for the organization
+	var ssh_client *sshpkg.SSH
+	if config.ServerID != "" {
+		ssh_client = sshpkg.NewSSHWithServerID(config.DB, config.Ctx, config.ServerID)
+	} else {
+		ssh_client = sshpkg.NewSSHWithServer(config.DB, config.Ctx, config.OrganizationID)
+	}
+
+	log := config.Log
+	if log == nil {
+		log = &logger.Logger{}
+	}
+
+	terminal := &Terminal{
+		ssh:            ssh_client,
+		conn:           config.Conn,
+		done:           make(chan struct{}),
+		outputBuf:      make([]byte, 0, 4096),
+		bufferTime:     10 * time.Millisecond,
+		log:            *log,
+		TerminalId:     config.TerminalId,
+		db:             config.DB,
+		ctx:            config.Ctx,
+		organizationID: config.OrganizationID,
+		serverID:       config.ServerID,
+	}
+
+	terminal.bufferTick = time.NewTicker(terminal.bufferTime)
+	terminal.log.Log(logger.Info, "Terminal created for org", config.OrganizationID.String())
 	return terminal, nil
 }
 
@@ -120,19 +179,6 @@ func (t *Terminal) Start() {
 			t.log.Log(logger.Error, "Failed to request PTY", err.Error())
 			close(t.done)
 			return
-		}
-
-		envVars := []string{
-			"TERM=xterm-256color",
-			"COLORTERM=truecolor",
-			"LANG=en_US.UTF-8",
-			"LC_ALL=en_US.UTF-8",
-		}
-
-		for _, env := range envVars {
-			if err := session.Setenv(strings.Split(env, "=")[0], strings.Split(env, "=")[1]); err != nil {
-				t.log.Log(logger.Info, fmt.Sprintf("Failed to set environment variable %s: %s", env, err.Error()), "")
-			}
 		}
 
 		if err = session.Shell(); err != nil {

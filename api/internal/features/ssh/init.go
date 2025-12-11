@@ -78,6 +78,39 @@ func NewSSHWithServer(db *bun.DB, ctx context.Context, organizationID uuid.UUID)
 	return NewSSH()
 }
 
+// NewSSHWithServerID creates SSH client by querying the database for a specific server by ID
+// If the server is found, it uses that server's SSH config
+// Otherwise falls back to default config
+func NewSSHWithServerID(db *bun.DB, ctx context.Context, serverID string) *SSH {
+	// Query database for specific server
+	serverStorage := server_storage.ServerStorage{
+		DB:  db,
+		Ctx: ctx,
+	}
+
+	server, err := serverStorage.GetServer(serverID)
+	if err != nil {
+		log.Printf("Error querying server by ID %s: %v, falling back to default SSH config", serverID, err)
+		return NewSSH()
+	}
+
+	// Check if server is provided
+	if server != nil {
+		log.Printf("Using server SSH config (by ID): %s@%s:%d", server.Username, server.Host, server.Port)
+		return &SSH{
+			PrivateKey: getStringValue(server.SSHPrivateKeyPath),
+			Host:       server.Host,
+			User:       server.Username,
+			Port:       uint(server.Port),
+			Password:   getStringValue(server.SSHPassword),
+		}
+	}
+
+	log.Printf("Server not found by ID %s, using default SSH config", serverID)
+	// Fallback to default config
+	return NewSSH()
+}
+
 func (s *SSH) ConnectWithPassword() (*goph.Client, error) {
 	if s.Password == "" {
 		return nil, fmt.Errorf("password is required for SSH connection")

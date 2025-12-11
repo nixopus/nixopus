@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { StopExecution } from './stopExecution';
 import { useWebSocket } from '@/hooks/socket-provider';
+import { useActiveServer } from '@/hooks/use-active-server';
 
 const CTRL_C = '\x03';
 
@@ -23,7 +24,8 @@ export const useTerminal = (
   width: number,
   height: number,
   allowInput: boolean = true,
-  terminalId: string = 'terminal_id'
+  terminalId: string = 'terminal_id',
+  serverId?: string
 ) => {
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const fitAddonRef = useRef<any | null>(null);
@@ -31,6 +33,10 @@ export const useTerminal = (
   const { sendJsonMessage, message, isReady } = useWebSocket();
   const [terminalInstance, setTerminalInstance] = useState<any | null>(null);
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const { activeServerId } = useActiveServer();
+
+  // Use provided serverId or fall back to activeServerId
+  const effectiveServerId = serverId ?? activeServerId;
 
   const destroyTerminal = useCallback(() => {
     if (terminalInstance) {
@@ -44,10 +50,13 @@ export const useTerminal = (
 
   useEffect(() => {
     if (isStopped && terminalInstance) {
-      sendJsonMessage({ action: 'terminal', data: { value: CTRL_C, terminalId } });
+      sendJsonMessage({
+        action: 'terminal',
+        data: { value: CTRL_C, terminalId, serverId: effectiveServerId }
+      });
       setIsStopped(false);
     }
-  }, [isStopped, sendJsonMessage, setIsStopped, terminalInstance, terminalId]);
+  }, [isStopped, sendJsonMessage, setIsStopped, terminalInstance, terminalId, effectiveServerId]);
 
   useEffect(() => {
     if (!message || !terminalInstance) return;
@@ -151,7 +160,7 @@ export const useTerminal = (
         if (allowInput) {
           sendJsonMessage({
             action: 'terminal',
-            data: { value: '\r', terminalId }
+            data: { value: '\r', terminalId, serverId: effectiveServerId }
           });
         }
 
@@ -164,7 +173,8 @@ export const useTerminal = (
               data: {
                 cols: dimensions.cols,
                 rows: dimensions.rows,
-                terminalId
+                terminalId,
+                serverId: effectiveServerId
               }
             });
           }
@@ -196,7 +206,7 @@ export const useTerminal = (
           term.onData((data) => {
             sendJsonMessage({
               action: 'terminal',
-              data: { value: data, terminalId }
+              data: { value: data, terminalId, serverId: effectiveServerId }
             });
           });
         }
@@ -207,7 +217,8 @@ export const useTerminal = (
             data: {
               cols: size.cols,
               rows: size.rows,
-              terminalId
+              terminalId,
+              serverId: effectiveServerId
             }
           });
         });
@@ -217,7 +228,15 @@ export const useTerminal = (
     } catch (error) {
       console.error('Error initializing terminal:', error);
     }
-  }, [sendJsonMessage, isReady, terminalRef, terminalInstance, allowInput, terminalId]);
+  }, [
+    sendJsonMessage,
+    isReady,
+    terminalRef,
+    terminalInstance,
+    allowInput,
+    terminalId,
+    effectiveServerId
+  ]);
 
   return {
     terminalRef,
