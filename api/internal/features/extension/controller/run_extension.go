@@ -5,8 +5,10 @@ import (
 	"strconv"
 
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/extension/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 func (c *ExtensionsController) RunExtension(ctx fuego.ContextWithBody[RunExtensionRequest]) (*types.ExtensionExecution, error) {
@@ -14,13 +16,21 @@ func (c *ExtensionsController) RunExtension(ctx fuego.ContextWithBody[RunExtensi
 	if extensionID == "" {
 		return nil, fuego.HTTPError{Err: nil, Status: http.StatusBadRequest}
 	}
+
+	// Get server from request context (set by auth middleware if X-Server-Id header is present)
+	server := utils.GetServer(nil, ctx.Request())
+
 	contentType := ctx.Request().Header.Get("Content-Type")
 	if contentType != "" && (len(contentType) >= 19 && contentType[:19] == "multipart/form-data") {
 		vars, err := c.service.ParseMultipartRunRequest(ctx.Request())
 		if err != nil {
 			return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
 		}
-		exec, err := c.service.StartRun(extensionID, vars)
+		exec, err := c.service.StartRunWithServer(service.StartRunOptions{
+			ExtensionID:    extensionID,
+			VariableValues: vars,
+			Server:         server,
+		})
 		if err != nil {
 			c.logger.Log(logger.Error, err.Error(), "")
 			return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
@@ -32,7 +42,11 @@ func (c *ExtensionsController) RunExtension(ctx fuego.ContextWithBody[RunExtensi
 	if err != nil {
 		return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
 	}
-	exec, err := c.service.StartRun(extensionID, req.Variables)
+	exec, err := c.service.StartRunWithServer(service.StartRunOptions{
+		ExtensionID:    extensionID,
+		VariableValues: req.Variables,
+		Server:         server,
+	})
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}

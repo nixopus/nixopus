@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { LogViewer } from './LogViewer';
 import { useExecutionLogs } from '../hooks/use-execution-logs';
+import { Server } from 'lucide-react';
 
 export default function ExecutionsTab() {
   const { t } = useTranslation();
@@ -27,6 +28,20 @@ export default function ExecutionsTab() {
     return <Badge className={cls}>{status}</Badge>;
   };
 
+  const ServerBadge = ({ hostname }: { hostname?: string }) => {
+    if (!hostname) return null;
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+    return (
+      <Badge
+        variant="outline"
+        className="text-xs flex items-center gap-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+      >
+        <Server className="h-3 w-3" />
+        {isLocal ? 'Local' : hostname}
+      </Badge>
+    );
+  };
+
   const ExecutionRow = useMemo(
     () =>
       ({ e }: { e: any }) => (
@@ -35,11 +50,14 @@ export default function ExecutionsTab() {
           className="grid grid-cols-12 px-3 py-3 text-sm items-center cursor-pointer hover:bg-muted/30"
           onClick={() => onOpenLogs(e.id)}
         >
-          <div className="col-span-4 truncate">{e.id}</div>
+          <div className="col-span-3 truncate">{e.id}</div>
           <div className="col-span-2 capitalize">
             <StatusBadge status={e.status} />
           </div>
-          <div className="col-span-3 text-muted-foreground">
+          <div className="col-span-2">
+            <ServerBadge hostname={e.server_hostname} />
+          </div>
+          <div className="col-span-2 text-muted-foreground">
             {new Date(e.started_at).toLocaleString()}
           </div>
           <div className="col-span-3 text-muted-foreground">
@@ -54,26 +72,30 @@ export default function ExecutionsTab() {
     <div className="space-y-3">
       <div className="rounded-md border overflow-hidden">
         <div className="grid grid-cols-12 bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
-          <div className="col-span-4">{t('extensions.executionId') || 'Execution ID'}</div>
+          <div className="col-span-3">{t('extensions.executionId') || 'Execution ID'}</div>
           <div className="col-span-2">{t('extensions.status') || 'Status'}</div>
-          <div className="col-span-3">{t('extensions.startedAt') || 'Started At'}</div>
+          <div className="col-span-2">{t('extensions.server') || 'Server'}</div>
+          <div className="col-span-2">{t('extensions.startedAt') || 'Started At'}</div>
           <div className="col-span-3">{t('extensions.completedAt') || 'Completed At'}</div>
         </div>
         <div className="divide-y">
           {isLoading &&
             Array.from({ length: 5 }).map((_, i) => (
               <div key={`s-${i}`} className="grid grid-cols-12 px-3 py-3 text-sm">
-                <div className="col-span-4">
-                  <Skeleton className="h-4 w-40" />
+                <div className="col-span-3">
+                  <Skeleton className="h-4 w-32" />
                 </div>
                 <div className="col-span-2">
                   <Skeleton className="h-4 w-20" />
                 </div>
-                <div className="col-span-3">
-                  <Skeleton className="h-4 w-28" />
+                <div className="col-span-2">
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <div className="col-span-2">
+                  <Skeleton className="h-4 w-24" />
                 </div>
                 <div className="col-span-3">
-                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-24" />
                 </div>
               </div>
             ))}

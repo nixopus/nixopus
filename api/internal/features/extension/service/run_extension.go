@@ -9,8 +9,23 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// StartRunOptions contains options for starting an extension run
+type StartRunOptions struct {
+	ExtensionID    string
+	VariableValues map[string]interface{}
+	Server         *types.Server // Optional: specific server to run on
+}
+
 func (s *ExtensionService) StartRun(extensionID string, variableValues map[string]interface{}) (*types.ExtensionExecution, error) {
-	ext, err := s.storage.GetExtensionByID(extensionID)
+	return s.StartRunWithServer(StartRunOptions{
+		ExtensionID:    extensionID,
+		VariableValues: variableValues,
+		Server:         nil,
+	})
+}
+
+func (s *ExtensionService) StartRunWithServer(opts StartRunOptions) (*types.ExtensionExecution, error) {
+	ext, err := s.storage.GetExtensionByID(opts.ExtensionID)
 	if err != nil {
 		return nil, err
 	}
@@ -31,9 +46,21 @@ func (s *ExtensionService) StartRun(extensionID string, variableValues map[strin
 
 	s.logger.Log(logger.Info, fmt.Sprintf("Parsed spec - Run steps: %d, Validate steps: %d", len(spec.Execution.Run), len(spec.Execution.Validate)), "")
 
-	varsJSON, _ := json.Marshal(variableValues)
+	varsJSON, _ := json.Marshal(opts.VariableValues)
+
+	// Determine server hostname for the execution record
+	serverHostname := ""
+	if opts.Server != nil {
+		serverHostname = opts.Server.Host
+		s.logger.Log(logger.Info, fmt.Sprintf("Running extension on server: %s", serverHostname), "")
+	} else {
+		serverHostname = "localhost"
+		s.logger.Log(logger.Info, "Running extension on default/local server", "")
+	}
+
 	exec := &types.ExtensionExecution{
 		ExtensionID:    ext.ID,
+		ServerHostname: serverHostname,
 		VariableValues: string(varsJSON),
 		Status:         types.ExecutionStatusRunning,
 	}
@@ -69,7 +96,15 @@ func (s *ExtensionService) StartRun(extensionID string, variableValues map[strin
 		return nil, err
 	}
 
-	ctx := NewRunContext(exec, spec, variableValues, ssh.NewSSH(), steps)
+	// Create SSH client based on server configuration
+	var sshClient *ssh.SSH
+	if opts.Server != nil {
+		sshClient = ssh.NewSSHWithServerID(s.store.DB, s.ctx, opts.Server.ID.String())
+	} else {
+		sshClient = ssh.NewSSH()
+	}
+
+	ctx := NewRunContext(exec, spec, opts.VariableValues, sshClient, steps)
 	go s.executeRun(ctx)
 	return exec, nil
 }
