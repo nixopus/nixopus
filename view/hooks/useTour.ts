@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const TOUR_SEEN_KEY = 'nixopus_tour_seen';
 
