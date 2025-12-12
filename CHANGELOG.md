@@ -1,3 +1,17 @@
+# [0.1.0-alpha.89](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.88...v0.1.0-alpha.89) (2025-12-12)
+
+
+### Bug Fixes
+
+* apply security patches from nextjs to prevent recent malware attack ([2b0a90f](https://github.com/raghavyuva/nixopus/commit/2b0a90fa176f6990efde5751faa57dd9ac53d7f3))
+
+
+### Features
+
+* docker compose dev file to only include dependencies ([6a23edc](https://github.com/raghavyuva/nixopus/commit/6a23edc1ce83c88cfcb21e8bafdc9c4d3387bb97))
+
+
+
 # [0.1.0-alpha.88](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.87...v0.1.0-alpha.88) (2025-12-12)
 
 
