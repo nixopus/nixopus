@@ -973,7 +973,7 @@
       }
     },
     "page": {
-      "title": "Aplicaciones Autoalojadas",
+      "title": "Apps",
       "description": "Administra tus aplicaciones autoalojadas",
       "accessDenied": {
         "title": "Acceso Denegado",
