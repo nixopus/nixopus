@@ -5,7 +5,6 @@ from app.utils.timeout import timeout_wrapper
 
 from .deps import install_all_deps
 from .run import Install
-from .development import DevelopmentInstall
 from .ssh import SSHConfig, format_ssh_output, generate_ssh_key_with_config
 
 install_app = typer.Typer(help="Install Nixopus", invoke_without_command=True)
@@ -20,17 +19,6 @@ def install_callback(
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="See what would happen, but don't make changes"),
     config_file: str = typer.Option(
         None, "--config-file", "-c", help="Path to custom config file (defaults to built-in config)"
-    ),
-    development: bool = typer.Option(
-        False,
-        "--development",
-        "-D",
-        help="Use development workflow (local setup, dev compose, dev env)",
-    ),
-    dev_path: str = typer.Option(
-        None,
-        "--dev-path",
-        help="Installation directory for development workflow (defaults to current directory)",
     ),
     api_domain: str = typer.Option(
         None,
@@ -50,8 +38,8 @@ def install_callback(
         "-ip",
         help="The IP address of the server to use when no domains are provided (e.g. 10.0.0.154 or 192.168.1.100). If not provided, the public IP will be automatically detected.",
     ),
-    api_port: int = typer.Option(None, "--api-port", help="Port for the API service (default: 8443 for production, 8080 for development)"),
-    view_port: int = typer.Option(None, "--view-port", help="Port for the View/Frontend service (default: 7443 for production, 3000 for development)"),
+    api_port: int = typer.Option(None, "--api-port", help="Port for the API service (default: 8443)"),
+    view_port: int = typer.Option(None, "--view-port", help="Port for the View/Frontend service (default: 7443)"),
     db_port: int = typer.Option(None, "--db-port", help="Port for the PostgreSQL database (default: 5432)"),
     redis_port: int = typer.Option(None, "--redis-port", help="Port for the Redis service (default: 6379)"),
     caddy_admin_port: int = typer.Option(None, "--caddy-admin-port", help="Port for Caddy admin API (default: 2019)"),
@@ -66,56 +54,30 @@ def install_callback(
     """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
         logger = create_logger(verbose=verbose)
-        if development:
-            # Warn when incompatible production-only options are provided alongside --development
-            if api_domain or view_domain:
-                log_warning("Ignoring --api-domain/--view-domain in development mode", verbose=verbose)
-            dev_install = DevelopmentInstall(
-                logger=logger,
-                verbose=verbose,
-                timeout=timeout,
-                force=force,
-                dry_run=dry_run,
-                config_file=config_file,
-                repo=repo,
-                branch=branch,
-                install_path=dev_path,
-                api_port=api_port,
-                view_port=view_port,
-                db_port=db_port,
-                redis_port=redis_port,
-                caddy_admin_port=caddy_admin_port,
-                caddy_http_port=caddy_http_port,
-                caddy_https_port=caddy_https_port,
-                supertokens_port=supertokens_port,
-                external_db_url=external_db_url,
-            )
-            dev_install.run()
-        else:
-            install = Install(
-                logger=logger,
-                verbose=verbose,
-                timeout=timeout,
-                force=force,
-                dry_run=dry_run,
-                config_file=config_file,
-                api_domain=api_domain,
-                view_domain=view_domain,
-                host_ip=host_ip,
-                repo=repo,
-                branch=branch,
-                api_port=api_port,
-                view_port=view_port,
-                db_port=db_port,
-                redis_port=redis_port,
-                caddy_admin_port=caddy_admin_port,
-                caddy_http_port=caddy_http_port,
-                caddy_https_port=caddy_https_port,
-                supertokens_port=supertokens_port,
-                external_db_url=external_db_url,
-                staging=staging,
-            )
-            install.run()
+        install = Install(
+            logger=logger,
+            verbose=verbose,
+            timeout=timeout,
+            force=force,
+            dry_run=dry_run,
+            config_file=config_file,
+            api_domain=api_domain,
+            view_domain=view_domain,
+            host_ip=host_ip,
+            repo=repo,
+            branch=branch,
+            api_port=api_port,
+            view_port=view_port,
+            db_port=db_port,
+            redis_port=redis_port,
+            caddy_admin_port=caddy_admin_port,
+            caddy_http_port=caddy_http_port,
+            caddy_https_port=caddy_https_port,
+            supertokens_port=supertokens_port,
+            external_db_url=external_db_url,
+            staging=staging,
+        )
+        install.run()
 
 
 def main_install_callback(value: bool):
@@ -131,53 +93,6 @@ def main_install_callback(value: bool):
         )
         install.run()
         raise typer.Exit()
-
-
-@install_app.command(name="development")
-def development(
-    path: str = typer.Option(None, "--path", "-p", help="Installation directory (defaults to current directory)"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show more details while installing"),
-    timeout: int = typer.Option(1800, "--timeout", "-t", help="How long to wait for each step (in seconds)"),
-    force: bool = typer.Option(False, "--force", "-f", help="Replace files if they already exist"),
-    dry_run: bool = typer.Option(False, "--dry-run", "-d", help="See what would happen, but don't make changes"),
-    config_file: str = typer.Option(
-        None, "--config-file", "-c", help="Path to custom config file (defaults to config.dev.yaml)"
-    ),
-    repo: str = typer.Option(None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"),
-    branch: str = typer.Option(None, "--branch", "-b", help="Git branch to clone (defaults to config value)"),
-    api_port: int = typer.Option(None, "--api-port", help="Port for the API service (default: 8080)"),
-    view_port: int = typer.Option(None, "--view-port", help="Port for the View/Frontend service (default: 3000)"),
-    db_port: int = typer.Option(None, "--db-port", help="Port for the PostgreSQL database (default: 5432)"),
-    redis_port: int = typer.Option(None, "--redis-port", help="Port for the Redis service (default: 6379)"),
-    caddy_admin_port: int = typer.Option(None, "--caddy-admin-port", help="Port for Caddy admin API (default: 2019)"),
-    caddy_http_port: int = typer.Option(None, "--caddy-http-port", help="Port for Caddy HTTP traffic (default: 80)"),
-    caddy_https_port: int = typer.Option(None, "--caddy-https-port", help="Port for Caddy HTTPS traffic (default: 443)"),
-    supertokens_port: int = typer.Option(None, "--supertokens-port", help="Port for SuperTokens service (default: 3567)"),
-    external_db_url: str = typer.Option(None, "--external-db-url", help="External PostgreSQL database connection URL (e.g. postgresql://user:password@host:port/dbname?sslmode=require). If provided, local DB service will be excluded"),
-):
-    """Install Nixopus for local development in specified or current directory"""
-    logger = create_logger(verbose=verbose)
-    install = DevelopmentInstall(
-        logger=logger,
-        verbose=verbose,
-        timeout=timeout,
-        force=force,
-        dry_run=dry_run,
-        config_file=config_file,
-        repo=repo,
-        branch=branch,
-        install_path=path,
-        api_port=api_port,
-        view_port=view_port,
-        db_port=db_port,
-        redis_port=redis_port,
-        caddy_admin_port=caddy_admin_port,
-        caddy_http_port=caddy_http_port,
-        caddy_https_port=caddy_https_port,
-        supertokens_port=supertokens_port,
-        external_db_url=external_db_url,
-    )
-    install.run()
 
 
 @install_app.command(name="ssh")

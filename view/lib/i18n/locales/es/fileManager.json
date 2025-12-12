@@ -1,0 +1,77 @@
+{
+  "fileManager": {
+    "header": {
+      "title": "Gestor de Archivos",
+      "subtitle": "Administra tus archivos aquí"
+    },
+    "contextMenu": {
+      "info": "Detalles",
+      "rename": "Renombrar",
+      "copy": "Copiar",
+      "move": "Mover",
+      "share": "Compartir",
+      "download": "Descargar",
+      "delete": "Eliminar",
+      "cancel": "Cancelar"
+    },
+    "actions": {
+      "upload": "Subir Archivo",
+      "createDirectory": "Crear Directorio",
+      "showHidden": "Mostrar Archivos Ocultos",
+      "hideHidden": "Ocultar Archivos Ocultos",
+      "newFolder": "Nueva Carpeta {number}",
+      "errors": {
+        "createDirectory": "Error al crear el directorio"
+      }
+    },
+    "sort": {
+      "title": "Ordenar por",
+      "methods": {
+        "name": "Nombre",
+        "updated_at": "Fecha de Modificación",
+        "created_at": "Fecha de Creación",
+        "size": "Tamaño",
+        "file_type": "Tipo"
+      }
+    },
+    "upload": {
+      "title": "Subir Archivo",
+      "dragDrop": "Arrastra y suelta archivos aquí, o haz clic para seleccionar archivos",
+      "errors": {
+        "uploadFailed": "Error al subir el archivo",
+        "fileTooLarge": "El tamaño del archivo excede el límite",
+        "invalidType": "Tipo de archivo inválido"
+      }
+    },
+    "info": {
+      "labels": {
+        "path": "Ruta",
+        "size": "Tamaño",
+        "created": "Creado",
+        "updated": "Actualizado",
+        "type": "Tipo",
+        "hidden": "Oculto",
+        "permissions": "Permisos"
+      },
+      "calculating": "Calculando...",
+      "yes": "Sí",
+      "no": "No"
+    },
+    "item": {
+      "actions": {
+        "info": "Información",
+        "rename": "Renombrar",
+        "copy": "Copiar",
+        "move": "Mover",
+        "delete": "Mover a Papelera"
+      }
+    },
+    "noPermissionCreate": "No tienes permiso para crear archivos",
+    "noPermissionUpdate": "No tienes permiso para actualizar archivos",
+    "copiedToClipboard": "Copiado al portapapeles",
+    "copySuccess": "Archivo copiado exitosamente",
+    "errors": {
+      "fileExists": "El archivo ya existe"
+    }
+  }
+}

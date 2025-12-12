@@ -1,3 +1,72 @@
+# [0.1.0-alpha.90](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.89...v0.1.0-alpha.90) (2025-12-12)
+
+
+### Features
+
+* add support for parallel execution of arm64 and amd architecture ([#704](https://github.com/raghavyuva/nixopus/issues/704)) ([bcc080d](https://github.com/raghavyuva/nixopus/commit/bcc080dbae2f6128ed4538cee4958b0f7b93b34e))
+
+
+
+# [0.1.0-alpha.89](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.88...v0.1.0-alpha.89) (2025-12-12)
+
+
+### Bug Fixes
+
+* apply security patches from nextjs to prevent recent malware attack ([2b0a90f](https://github.com/raghavyuva/nixopus/commit/2b0a90fa176f6990efde5751faa57dd9ac53d7f3))
+
+
+### Features
+
+* docker compose dev file to only include dependencies ([6a23edc](https://github.com/raghavyuva/nixopus/commit/6a23edc1ce83c88cfcb21e8bafdc9c4d3387bb97))
+
+
+
+# [0.1.0-alpha.88](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.87...v0.1.0-alpha.88) (2025-12-12)
+
+
+### Bug Fixes
+
+* split locales into multiple chunks based on domain ([#702](https://github.com/raghavyuva/nixopus/issues/702)) ([42ae8e4](https://github.com/raghavyuva/nixopus/commit/42ae8e4938582a2366dc49de8dbb80858c151e36))
+
+
+
+# [0.1.0-alpha.87](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.86...v0.1.0-alpha.87) (2025-12-11)
+
+
+### Performance Improvements
+
+* improve terminal ux and performance ([2797286](https://github.com/raghavyuva/nixopus/commit/2797286585803c3d2ff440dec31dcc136868cac9))
+
+
+
+# [0.1.0-alpha.86](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.85...v0.1.0-alpha.86) (2025-12-10)
+
+
+### Features
+
+* add support for deployment logs table with improved styling and performance ([508207d](https://github.com/raghavyuva/nixopus/commit/508207d7fd7a2972ab05b65c754c5a30d6749305))
+* improvise container listing and details page ([8c22094](https://github.com/raghavyuva/nixopus/commit/8c22094a1c22cb4405126db8590a1fb2f2060822))
+
+
+
+# [0.1.0-alpha.85](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.84...v0.1.0-alpha.85) (2025-12-10)
+
+
+### Bug Fixes
+
+* disable security tab from settings ([11da19b](https://github.com/raghavyuva/nixopus/commit/11da19bc009446232cf37eec320219d5700dd54c))
+
+
+
+# [0.1.0-alpha.84](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.83...v0.1.0-alpha.84) (2025-12-10)
+
+
+### Bug Fixes
+
+* websocket race condition in monitoring the dashboard ([#684](https://github.com/raghavyuva/nixopus/issues/684)) ([68dd11d](https://github.com/raghavyuva/nixopus/commit/68dd11da81564d7316de188920199efd41976643))
+
+
+
 # [0.1.0-alpha.83](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.82...v0.1.0-alpha.83) (2025-12-09)
 
 

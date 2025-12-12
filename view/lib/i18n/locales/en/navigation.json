@@ -1,0 +1,15 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "selfHost": "Self Host",
+    "fileManager": "File Manager",
+    "extensions": "Extensions",
+    "settings": "Settings",
+    "general": "General",
+    "notifications": "Notifications",
+    "team": "Team",
+    "domains": "Domains",
+    "update": "Update",
+    "containers": "Containers"
+  }
+}
