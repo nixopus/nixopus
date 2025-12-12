@@ -44,23 +44,32 @@ export const TerminalSession: React.FC<TerminalSessionProps> = ({
   const onStatusChangeRef = useRef(onStatusChange);
   onStatusChangeRef.current = onStatusChange;
 
-  const hasInitializedRef = useRef(false);
-
   useEffect(() => {
-    if (isTerminalOpen && isActive && isContainerReady && !hasInitializedRef.current) {
-      hasInitializedRef.current = true;
+    // Keep terminal lifecycle tightly coupled to visibility/activity to avoid “unsync”/ghost sessions.
+    if (isTerminalOpen && isActive && isContainerReady) {
       onStatusChangeRef.current?.('loading');
       initializeTerminal();
       const timer = setTimeout(() => onStatusChangeRef.current?.('active'), 500);
       return () => clearTimeout(timer);
     }
-  }, [isTerminalOpen, isActive, isContainerReady, initializeTerminal]);
+
+    // If the session is not visible/active, tear it down to prevent hidden instances consuming output.
+    destroyTerminal();
+    onStatusChangeRef.current?.('idle');
+  }, [isTerminalOpen, isActive, isContainerReady, initializeTerminal, destroyTerminal]);
 
   useEffect(() => {
     if (fitAddonRef) {
       setFitAddonRef(fitAddonRef);
     }
   }, [fitAddonRef, setFitAddonRef]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      destroyTerminal();
+    };
+  }, [destroyTerminal]);
 
   return (
     <div
