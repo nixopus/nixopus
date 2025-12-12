@@ -1,0 +1,469 @@
+{
+  "selfHost": {
+    "deployment": {
+      "title": "Detalles del Despliegue",
+      "logs": {
+        "title": "Registros del Despliegue",
+        "refresh": "Actualizar Registros",
+        "loading": "Cargando registros...",
+        "noLogs": "No hay registros disponibles",
+        "pagination": {
+          "previous": "Anterior",
+          "next": "Siguiente",
+          "page": "Página {current} de {total}"
+        }
+      }
+    },
+    "application": {
+      "accessDenied": {
+        "title": "Acceso Denegado",
+        "description": "No tienes permiso para ver los detalles de la aplicación"
+      },
+      "tabs": {
+        "monitoring": "Monitoreo",
+        "configuration": "Configuración",
+        "deployments": "Despliegues",
+        "logs": "Registros"
+      }
+    },
+    "page": {
+      "title": "Apps",
+      "description": "Administra tus aplicaciones autoalojadas",
+      "accessDenied": {
+        "title": "Acceso Denegado",
+        "description": "No tienes permiso para ver las aplicaciones autoalojadas"
+      },
+      "createButton": "Crear",
+      "loading": "Cargando aplicaciones...",
+      "noApplications": "No se encontraron aplicaciones",
+      "search": {
+        "placeholder": "Buscar aplicaciones..."
+      },
+      "sort": {
+        "name": "Nombre",
+        "created": "Creado",
+        "updated": "Actualizado",
+        "status": "Estado"
+      }
+    },
+    "configuration": {
+      "sections": {
+        "basicConfiguration": "Configuración Básica",
+        "dockerConfiguration": "Configuración Docker",
+        "environmentVariables": "Variables de Entorno",
+        "commands": "Comandos",
+        "deploymentInformation": "Información de Despliegue"
+      },
+      "fields": {
+        "applicationName": {
+          "label": "Nombre de la Aplicación",
+          "description": "Nombre de la aplicación"
+        },
+        "port": {
+          "label": "Puerto",
+          "description": "Puerto en el que estará disponible tu aplicación"
+        },
+        "basePath": {
+          "label": "Ruta Base",
+          "description": "La ruta del contexto de compilación para tu aplicación"
+        },
+        "dockerfilePath": {
+          "label": "Ruta del Dockerfile",
+          "description": "Ruta del dockerfile relativa a la ruta base"
+        },
+        "environmentVariables": {
+          "label": "Variables de Entorno",
+          "description": "Escribe CLAVE=VALOR y presiona Enter para agregar",
+          "placeholder": "NODE_ENV=production"
+        },
+        "buildVariables": {
+          "label": "Variables de Compilación",
+          "description": "Escribe CLAVE=VALOR y presiona Enter para agregar",
+          "placeholder": "DEBUG=false"
+        },
+        "preRunCommands": {
+          "label": "Comandos Pre Ejecución",
+          "description": "Comandos a ejecutar antes del despliegue",
+          "placeholder": "npm install"
+        },
+        "postRunCommands": {
+          "label": "Comandos Post Ejecución",
+          "description": "Comandos a ejecutar después del despliegue",
+          "placeholder": "npm run test"
+        },
+        "environment": {
+          "label": "Entorno",
+          "description": "Entorno del despliegue"
+        },
+        "branch": {
+          "label": "Rama",
+          "description": "Rama desde donde quieres desplegar"
+        },
+        "domain": {
+          "label": "Dominio",
+          "description": "Dominio en el que está disponible tu aplicación"
+        },
+        "buildPack": {
+          "label": "Paquete de Compilación",
+          "description": "Paquete de compilación usado para la aplicación"
+        }
+      },
+      "buttons": {
+        "update": "Actualizar Despliegue",
+        "updating": "Actualizando..."
+      }
+    },
+    "deployments": {
+      "list": {
+        "title": "Despliegues",
+        "noDeployments": "No se encontraron despliegues",
+        "card": {
+          "status": {
+            "completed": "Completado"
+          },
+          "runTime": "Tiempo de Ejecución",
+          "viewButton": "Ver",
+          "rollback": {
+            "title": "Revertir despliegue"
+          }
+        }
+      },
+      "chart": {
+        "title": "Estadísticas de Despliegues",
+        "description": "Estado actual de todos los despliegues",
+        "status": {
+          "building": "En Construcción",
+          "deployed": "Desplegado",
+          "deploying": "Desplegando",
+          "failed": "Fallido"
+        },
+        "total": "Total de despliegues: {count}"
+      }
+    },
+    "applicationDetails": {
+      "header": {
+        "actions": {
+          "restart": {
+            "button": "Reiniciar Aplicación",
+            "success": "Reinicio de aplicación iniciado",
+            "error": "Error al reiniciar la aplicación",
+            "permissionError": "No tienes permiso para reiniciar aplicaciones"
+          },
+          "delete": {
+            "button": "Eliminar",
+            "dialog": {
+              "title": "Eliminar {name}",
+              "description": "¿Estás seguro de que quieres eliminar {name}? Esta acción no se puede deshacer."
+            },
+            "success": "Aplicación eliminada correctamente",
+            "error": "Error al eliminar la aplicación",
+            "permissionError": "No tienes permiso para eliminar aplicaciones"
+          },
+          "redeploy": {
+            "button": "Re-Desplegar",
+            "forceButton": "Forzar Despliegue Sin Caché",
+            "success": "Re-despliegue de aplicación iniciado",
+            "error": "Error al re-desplegar la aplicación",
+            "permissionError": "No tienes permiso para re-desplegar aplicaciones"
+          },
+          "open": "Abrir aplicación en nueva pestaña"
+        }
+      }
+    },
+    "logViewer": {
+      "title": "Visor de Registros",
+      "description": "Registros de instalación en tiempo real",
+      "actions": {
+        "fetchMore": "Cargar Más",
+        "refresh": "Actualizar",
+        "fullscreen": "Pantalla Completa",
+        "exitFullscreen": "Salir de Pantalla Completa",
+        "download": "Descargar",
+        "search": {
+          "placeholder": "Buscar registros...",
+          "previous": "Anterior",
+          "next": "Siguiente",
+          "results": "{current} de {total}"
+        },
+        "filter": {
+          "level": {
+            "label": "Filtrar por nivel",
+            "all": "Todos los Niveles"
+          },
+          "time": {
+            "label": "Rango de tiempo",
+            "all": "Todo el Tiempo",
+            "5m": "Últimos 5 minutos",
+            "15m": "Últimos 15 minutos",
+            "1h": "Última hora",
+            "24h": "Últimas 24 horas"
+          }
+        },
+        "autoScroll": "Desplazamiento Automático"
+      }
+    },
+    "deployForm": {
+      "accessDenied": {
+        "title": "Acceso Denegado",
+        "description": "No tienes permiso para desplegar nuevas aplicaciones"
+      },
+      "success": {
+        "update": "Despliegue actualizado exitosamente"
+      },
+      "errors": {
+        "createFailed": "Error al crear el despliegue",
+        "updateFailed": "Error al actualizar el despliegue"
+      },
+      "fields": {
+        "applicationName": {
+          "label": "Nombre de la Aplicación",
+          "description": "Nombre de la aplicación",
+          "placeholder": "Nombre de la aplicación"
+        },
+        "environment": {
+          "label": "Entorno",
+          "description": "Los entornos te ayudan a desplegar en diferentes espacios",
+          "placeholder": "Entorno",
+          "options": {
+            "staging": "Staging",
+            "production": "Producción",
+            "development": "Desarrollo"
+          }
+        },
+        "basePath": {
+          "label": "Ruta Base",
+          "description": "La ruta del contexto de compilación para tu aplicación",
+          "placeholder": "/"
+        },
+        "dockerfilePath": {
+          "label": "Ruta del Dockerfile",
+          "description": "Ruta del dockerfile relativa a la ruta base",
+          "placeholder": "Dockerfile"
+        },
+        "branch": {
+          "label": "Rama",
+          "description": "Rama desde donde quieres desplegar",
+          "placeholder": "Rama"
+        },
+        "port": {
+          "label": "Puerto",
+          "description": "Puerto en el que estará disponible tu aplicación",
+          "placeholder": "3000"
+        },
+        "domain": {
+          "label": "Dominio",
+          "description": "Dominio en el que estará disponible tu aplicación",
+          "placeholder": "Dominio"
+        },
+        "buildPack": {
+          "label": "Paquete de Compilación",
+          "description": "Elige el que mejor se adapte a la estructura de tu aplicación",
+          "placeholder": "Paquete de Compilación",
+          "options": {
+            "dockerfile": "Dockerfile",
+            "dockerCompose": "DockerCompose",
+            "static": "Estático"
+          }
+        },
+        "envVariables": {
+          "label": "Variables de Entorno",
+          "description": "Escribe CLAVE=VALOR y presiona Enter para agregar",
+          "placeholder": "NODE_ENV=production"
+        },
+        "buildVariables": {
+          "label": "Variables de Compilación",
+          "description": "Escribe CLAVE=VALOR y presiona Enter para agregar",
+          "placeholder": "DEBUG=false"
+        },
+        "preRunCommands": {
+          "label": "Comandos Pre Ejecución",
+          "description": "Comandos a ejecutar antes del despliegue",
+          "placeholder": "npm install"
+        },
+        "postRunCommands": {
+          "label": "Comandos Post Ejecución",
+          "description": "Comandos a ejecutar después del despliegue",
+          "placeholder": "npm run test"
+        }
+      },
+      "submit": "Desplegar",
+      "validation": {
+        "applicationName": {
+          "minLength": "El nombre de la aplicación debe tener al menos 3 caracteres.",
+          "invalidFormat": "El nombre de la aplicación debe ser un nombre válido."
+        },
+        "environment": {
+          "invalidValue": "El nombre del entorno debe ser producción, staging o desarrollo."
+        },
+        "branch": {
+          "minLength": "El nombre de la rama debe tener al menos 3 caracteres.",
+          "invalidFormat": "El nombre de la rama debe ser un nombre válido."
+        },
+        "port": {
+          "invalidFormat": "El puerto debe ser un número."
+        },
+        "domain": {
+          "minLength": "El nombre del dominio debe tener al menos 3 caracteres.",
+          "invalidFormat": "Por favor ingrese un nombre de dominio válido (ejemplo: ejemplo.com).",
+          "notAllowed": "Este dominio no está permitido. Puede agregarlo en la sección Configuración > Dominios para hacerlo disponible."
+        },
+        "repository": {
+          "minLength": "El nombre del repositorio debe tener al menos 3 caracteres.",
+          "invalidFormat": "El nombre del repositorio debe ser un nombre válido."
+        },
+        "buildPack": {
+          "invalidValue": "El paquete de compilación debe ser Dockerfile, DockerCompose o Static."
+        },
+        "envVariables": {
+          "emptyInput": "La entrada no puede estar vacía",
+          "invalidFormat": "Debe estar en formato CLAVE=VALOR",
+          "emptyKey": "La clave no puede estar vacía"
+        }
+      }
+    },
+    "githubInstaller": {
+      "title": "Instalar Aplicación de GitHub",
+      "description": "Conectemos con la aplicación que acabamos de crear",
+      "connectButton": "Conectar GitHub",
+      "terms": "Al conectar, aceptas nuestros Términos de Servicio y Política de Privacidad."
+    },
+    "githubManifest": {
+      "title": "Crear Aplicación de GitHub",
+      "appName": {
+        "label": "Nombre de la Aplicación",
+        "placeholder": "Ingresa el nombre de la aplicación",
+        "generate": "Generar nuevo nombre"
+      },
+      "createButton": "Crear Aplicación de GitHub",
+      "status": {
+        "redirecting": "Redirigiendo a GitHub...",
+        "converting": "Configurando tu Aplicación de GitHub...",
+        "success": "¡Aplicación de GitHub creada exitosamente!"
+      }
+    },
+    "githubSetup": {
+      "steps": {
+        "welcome": {
+          "title": "Comenzar",
+          "description": "Conecta tu cuenta de GitHub"
+        },
+        "createApp": {
+          "title": "Crear Aplicación",
+          "description": "Configurar Aplicación de GitHub"
+        },
+        "installApp": {
+          "title": "Instalar",
+          "description": "Conectar repositorios"
+        }
+      },
+      "welcome": {
+        "title": "Conecta tu cuenta de GitHub",
+        "description": "Crea una Aplicación de GitHub para desplegar aplicaciones directamente desde tus repositorios. Esta configuración solo toma unos minutos.",
+        "benefits": {
+          "secure": {
+            "title": "Manifiesto de Aplicación GitHub",
+            "description": "Crearemos una Aplicación de GitHub usando el flujo de manifiesto. Tus credenciales se gestionan de forma segura a través del sistema de aplicaciones de GitHub."
+          },
+          "automated": {
+            "title": "Despliegues Automatizados",
+            "description": "Despliega automáticamente tus aplicaciones cuando subes código a tus repositorios."
+          },
+          "repositories": {
+            "title": "Accede a tus Repositorios",
+            "description": "Selecciona y despliega desde cualquiera de tus repositorios de GitHub con solo unos clics."
+          }
+        }
+      },
+      "buttons": {
+        "next": "Continuar",
+        "back": "Atrás"
+      }
+    },
+    "repositories": {
+      "title": "Repositorios",
+      "noRepositories": "No se encontraron repositorios",
+      "search": {
+        "placeholder": "Buscar repositorios..."
+      },
+      "sort": {
+        "name": "Nombre",
+        "created": "Creado",
+        "updated": "Actualizado",
+        "stars": "Estrellas"
+      }
+    },
+    "connectorSettings": {
+      "title": "Configuración del Conector de GitHub",
+      "description": "Administra tus conectores de GitHub, cambia entre ellos o agrega nuevos",
+      "active": "Activo",
+      "noConnectors": "No se encontraron conectores de GitHub. Por favor crea uno para comenzar.",
+      "connector": {
+        "slug": "Slug",
+        "installationId": "ID de Instalación"
+      },
+      "currentConnector": {
+        "title": "Conector Actual",
+        "description": "Si falta algún repositorio o deseas agregar más repositorios, haz clic en el enlace a continuación para administrar la configuración de tu instalación de GitHub.",
+        "viewOnGithub": "Administrar Instalación de GitHub"
+      },
+      "actions": {
+        "addNew": "Agregar Nuevo Conector",
+        "switch": {
+          "label": "Cambiar",
+          "success": "Conector cambiado exitosamente"
+        },
+        "delete": {
+          "label": "Eliminar",
+          "success": "Conector eliminado exitosamente",
+          "error": {
+            "generic": "Error al eliminar el conector",
+            "lastConnector": "No se puede eliminar el último conector. Por favor agrega otro conector primero."
+          },
+          "dialog": {
+            "title": "Eliminar Conector",
+            "description": "¿Estás seguro de que deseas eliminar {name}? Esta acción no se puede deshacer.",
+            "confirm": "Eliminar",
+            "cancel": "Cancelar",
+            "deleting": "Eliminando..."
+          }
+        },
+        "update": {
+          "success": "Conector actualizado exitosamente",
+          "error": "Error al actualizar el conector"
+        },
+        "reset": {
+          "label": "Restablecer",
+          "info": "Abriendo la configuración de instalación de GitHub. Por favor reconfigura la instalación allí.",
+          "error": "No se puede abrir la configuración de GitHub. ID de instalación no encontrado."
+        }
+      }
+    },
+    "repositoryCard": {
+      "viewOnGithub": "Ver en GitHub",
+      "unnamed": "Repositorio Sin Nombre",
+      "visibility": {
+        "private": "Privado",
+        "public": "Público"
+      },
+      "topics": {
+        "more": "+{count} más"
+      }
+    },
+    "create": {
+      "title": "Repositorio",
+      "description": "Configura cómo deseas desplegar tu aplicación",
+      "accessDenied": {
+        "title": "Acceso Denegado",
+        "description": "No tienes permiso para crear aplicaciones autoalojadas"
+      }
+    },
+    "githubCallback": {
+      "processing": "Procesando instalación de GitHub...",
+      "success": "¡Conectado a GitHub exitosamente!",
+      "error": {
+        "invalidParams": "Parámetros de instalación inválidos",
+        "installationFailed": "Error en la instalación"
+      }
+    }
+  }
+}

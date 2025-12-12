@@ -1,0 +1,32 @@
+{
+  "navigation": {
+    "dashboard": "Panel de Control",
+    "selfHost": "Autoalojado",
+    "fileManager": "Gestor de Archivos",
+    "extensions": "Extensiones",
+    "settings": "Configuración",
+    "general": "General",
+    "notifications": "Notificaciones",
+    "team": "Equipo",
+    "domains": "Dominios",
+    "containers": "Contenedores",
+    "layout": {
+      "breadcrumbs": {
+        "home": "Inicio",
+        "dashboard": "Panel de Control",
+        "selfHost": "Autoalojado",
+        "fileManager": "Gestor de Archivos",
+        "settings": "Configuración",
+        "general": "General",
+        "notifications": "Notificaciones",
+        "team": "Equipo",
+        "domains": "Dominios",
+        "update": "Actualizar",
+        "containers": "Contenedores"
+      },
+      "terminal": {
+        "togglePosition": "Cambiar Posición del Terminal (Ctrl+T)"
+      }
+    }
+  }
+}

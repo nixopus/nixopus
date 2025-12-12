@@ -1,0 +1,18 @@
+{
+  "layout": {
+    "breadcrumbs": {
+      "home": "Home",
+      "dashboard": "Dashboard",
+      "selfHost": "Self Host",
+      "fileManager": "File Manager",
+      "settings": "Settings",
+      "general": "General",
+      "notifications": "Notifications",
+      "team": "Team",
+      "domains": "Domains"
+    },
+    "terminal": {
+      "togglePosition": "Toggle Terminal Position (Ctrl+T)"
+    }
+  }
+}

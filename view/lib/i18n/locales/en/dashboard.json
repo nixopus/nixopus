@@ -1,0 +1,88 @@
+{
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Monitor your applications and system resources",
+    "containers": {
+      "title": "Containers",
+      "table": {
+        "headers": {
+          "id": "ID",
+          "name": "Name",
+          "image": "Image",
+          "status": "Status",
+          "ports": "Ports",
+          "created": "Created"
+        },
+        "noContainers": "No containers found",
+        "morePorts": "+{count} more"
+      },
+      "viewAll": "View All"
+    },
+    "disk": {
+      "title": "Disk Usage",
+      "used": "{value} GB used",
+      "total": "{value} GB total",
+      "percentage": "{value}%",
+      "table": {
+        "headers": {
+          "mount": "Mount",
+          "size": "Size",
+          "used": "Used",
+          "percentage": "%"
+        }
+      }
+    },
+    "load": {
+      "title": "Load Average",
+      "labels": {
+        "oneMin": "1 minute",
+        "fiveMin": "5 minutes",
+        "fifteenMin": "15 minutes"
+      }
+    },
+    "cpu": {
+      "title": "CPU Usage (per core)",
+      "overall": "Overall",
+      "usage": "Usage (%)",
+      "cores": "Cores",
+      "perCore": "Per Core"
+    },
+    "memory": {
+      "title": "Memory Usage",
+      "used": "{value} GB used",
+      "total": "{value} GB total",
+      "percentage": "{value}%"
+    },
+    "errors": {
+      "parseMessage": "Failed to parse message",
+      "unknownError": "Unknown error occurred",
+      "connectionLost": "Connection lost. Attempting to reconnect...",
+      "reconnectFailed": "Failed to reconnect. Please try again later."
+    },
+    "system": {
+      "title": "System Information",
+      "osType": "OS Type",
+      "cpu": "CPU",
+      "uptime": "Uptime",
+      "lastUpdated": "Last Updated",
+      "hostname": "Hostname",
+      "kernelVersion": "Kernel Version",
+      "architecture": "Architecture",
+      "memory": "Memory",
+      "labels": {
+        "operatingSystem": "Operating System",
+        "hostname": "Hostname",
+        "cpu": "CPU",
+        "cpuCores": "CPU Cores",
+        "memory": "Memory",
+        "kernelVersion": "Kernel Version",
+        "uptime": "Uptime",
+        "architecture": "Architecture"
+      }
+    },
+    "smtpBanner": {
+      "message": "Configure SMTP settings to receive notifications",
+      "configure": "Configure"
+    }
+  }
+}

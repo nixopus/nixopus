@@ -1,0 +1,10 @@
+{
+  "user": {
+    "menu": {
+      "sponsor": "Sponsor",
+      "help": "Help",
+      "reportIssue": "Report an issue",
+      "logout": "Log out"
+    }
+  }
+}

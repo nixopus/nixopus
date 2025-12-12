@@ -1,0 +1,18 @@
+{
+  "layout": {
+    "breadcrumbs": {
+      "home": "ഹോം",
+      "dashboard": "ഡാഷ്‌ബോർഡ്",
+      "selfHost": "സ്വയം ഹോസ്റ്റ്",
+      "fileManager": "ഫയൽ മാനേജർ",
+      "settings": "ക്രമീകരണങ്ങൾ",
+      "general": "ജനറൽ",
+      "notifications": "അറിയിപ്പുകൾ",
+      "team": "ടീം",
+      "domains": "ഡൊമെയിനുകൾ"
+    },
+    "terminal": {
+      "togglePosition": "ടെർമിനൽ സ്ഥാനം മാറ്റുക (Ctrl+T)"
+    }
+  }
+}

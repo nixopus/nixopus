@@ -1,0 +1,488 @@
+{
+  "selfHost": {
+    "deployment": {
+      "title": "വിന്യാസ വിശദാംശങ്ങൾ",
+      "logs": {
+        "title": "വിന്യാസ ലോഗുകൾ",
+        "refresh": "ലോഗുകൾ പുതുക്കുക",
+        "loading": "ലോഗുകൾ ലോഡുചെയ്യുന്നു...",
+        "noLogs": "ലോഗുകൾ ഇല്ല",
+        "pagination": {
+          "previous": "മുൻപ്",
+          "next": "അടുത്തത്",
+          "page": "ആകെ {നിലവിലുള്ളത്} പേജ്"
+        }
+      },
+      "list": {
+        "title": "വിന്യാസങ്ങൾ",
+        "noDeployments": "വിന്യാസങ്ങളൊന്നുമില്ല",
+        "card": {
+          "runTime": "പ്രവർത്തന സമയം",
+          "viewButton": "കാണുക",
+          "rollback": {
+            "title": "റോള്ബാക്ക്"
+          }
+        },
+        "table": {
+          "status": "സ്റ്റാറ്റസ്",
+          "container": "കണ്ടെയ്നർ",
+          "created": "സൃഷ്ടിച്ചു",
+          "runTime": "പ്രവൃത്തി സമയം",
+          "actions": "പ്രവർത്തനങ്ങൾ",
+          "unknown": "അജ്ഞാതം"
+        }
+      }
+    },
+    "application": {
+      "accessDenied": {
+        "title": "പ്രവേശനം നിരസിച്ചു",
+        "description": "ആപ്ലിക്കേഷൻ വിവരങ്ങൾ കാണാൻ അനുമതി ഇല്ല"
+      },
+      "tabs": {
+        "monitoring": "നിരീക്ഷണം",
+        "configuration": "കോൺഫിഗറേഷൻ",
+        "deployments": "വിന്യാസങ്ങൾ",
+        "logs": "ലോഗുകൾ"
+      }
+    },
+    "page": {
+      "title": "Apps",
+      "description": "നിങ്ങളുടെ ആപ്ലിക്കേഷനുകൾ കൈകാര്യം ചെയ്യുക",
+      "accessDenied": {
+        "title": "പ്രവേശനം നിരസിച്ചു",
+        "description": "സ്വയം ഹോസ്റ്റ് ആപ്ലിക്കേഷനുകൾ കാണാൻ അനുമതി ഇല്ല"
+      },
+      "createButton": "പുതിയത് സൃഷ്ടിക്കുക",
+      "loading": "ലോഡുചെയ്യുന്നു...",
+      "noApplications": "ആപ്ലിക്കേഷനുകളൊന്നുമില്ല",
+      "search": {
+        "placeholder": "തിരയുക..."
+      },
+      "sort": {
+        "name": "പേര്",
+        "created": "സൃഷ്ടിച്ചത്",
+        "updated": "അപ്‌ഡേറ്റ് ചെയ്തത്",
+        "status": "സ്ഥിതി"
+      }
+    },
+    "configuration": {
+      "sections": {
+        "basicConfiguration": "അടിസ്ഥാന ക്രമീകരണം",
+        "dockerConfiguration": "ഡോക്കർ ക്രമീകരണം",
+        "environmentVariables": "എൻവയോൺമെന്റ് വേരിയബിളുകൾ",
+        "commands": "കമാൻഡുകൾ",
+        "deploymentInformation": "വിന്യാസ വിവരം"
+      },
+      "fields": {
+        "applicationName": {
+          "label": "ആപ്ലിക്കേഷൻ പേര്",
+          "description": "പേര് നൽകുക"
+        },
+        "port": {
+          "label": "പോർട്ട്",
+          "description": "ആപ്ലിക്കേഷൻ ലഭ്യമായ പോർട്ട്"
+        },
+        "basePath": {
+          "label": "ബേസ് പാത",
+          "description": "ബിൽഡ് കോൺടെക്സ്റ്റ് പാത"
+        },
+        "dockerfilePath": {
+          "label": "ഡോക്കർഫയൽ പാത",
+          "description": "ബേസ് പാത്തിനോടനുബന്ധിച്ച്"
+        },
+        "environmentVariables": {
+          "label": "എൻവയോൺമെന്റ് വേരിയബിളുകൾ",
+          "description": "KEY=VALUE നൽകി എൻറ്റർ അമർത്തുക",
+          "placeholder": "NODE_ENV=production"
+        },
+        "buildVariables": {
+          "label": "ബിൽഡ് വേരിയബിളുകൾ",
+          "description": "KEY=VALUE നൽകി ചേർക്കുക",
+          "placeholder": "DEBUG=false"
+        },
+        "preRunCommands": {
+          "label": "ഡിപ്ലോയ്മെന്റിന് മുമ്പ്",
+          "description": "പ്രവർത്തിപ്പിക്കേണ്ട കമാൻഡുകൾ",
+          "placeholder": "npm install"
+        },
+        "postRunCommands": {
+          "label": "ഡിപ്ലോയ്മെന്റിന് ശേഷം",
+          "description": "പ്രവർത്തിപ്പിക്കേണ്ട കമാൻഡുകൾ",
+          "placeholder": "npm run test"
+        },
+        "environment": {
+          "label": "എൻവയോൺമെന്റ്",
+          "description": "വിന്യാസത്തിനുള്ള എൻവയോൺമെന്റ്"
+        },
+        "branch": {
+          "label": "ബ്രാഞ്ച്",
+          "description": "ഡിപ്ലോയ് ചെയ്യേണ്ട ബ്രാഞ്ച്"
+        },
+        "domain": {
+          "label": "ഡൊമെയിൻ",
+          "description": "ആപ്ലിക്കേഷൻ ലഭ്യമായ ഡൊമെയിൻ"
+        },
+        "buildPack": {
+          "label": "ബിൽഡ് പാക്ക്",
+          "description": "ഉപയോഗിക്കുന്ന ബിൽഡ് പാക്ക്"
+        }
+      },
+      "buttons": {
+        "update": "ഡിപ്ലോയ്മെന്റ് അപ്‌ഡേറ്റ്",
+        "updating": "അപ്‌ഡേറ്റ് ചെയ്യുന്നു..."
+      }
+    },
+    "deployments": {
+      "list": {
+        "title": "ഡിപ്ലോയ്മെന്റുകൾ",
+        "noDeployments": "ഒന്നുമില്ല",
+        "card": {
+          "status": {
+            "completed": "പൂർത്തിയായി"
+          },
+          "runTime": "സമയം",
+          "viewButton": "കാണുക",
+          "rollback": {
+            "title": "റോള്ബാക്ക്"
+          }
+        }
+      },
+      "chart": {
+        "title": "വിന്യാസ സ്ഥിതിവിവരങ്ങൾ",
+        "description": "നിലവിലെ സ്ഥിതി",
+        "status": {
+          "building": "നിർമ്മിക്കുന്നു",
+          "deployed": "ഡിപ്ലോയ് ചെയ്തു",
+          "deploying": "ഡിപ്ലോയ് ചെയ്യുന്നു",
+          "failed": "പരാജയപ്പെട്ടു"
+        },
+        "total": "മൊത്തം: {count}"
+      }
+    },
+    "applicationDetails": {
+      "header": {
+        "actions": {
+          "restart": {
+            "button": "റീസ്റ്റാർട്ട്",
+            "success": "റീസ്റ്റാർട്ട് ആരംഭിച്ചു",
+            "error": "റീസ്റ്റാർട്ട് പരാജയം",
+            "permissionError": "റീസ്റ്റാർട്ട് ചെയ്യാൻ അനുവാദമില്ല"
+          },
+          "delete": {
+            "button": "ഇല്ലാതാക്കുക",
+            "dialog": {
+              "title": "{പേര്} ഇല്ലാതാക്കുക",
+              "description": "{പേര്} ഇല്ലാതാക്കണോ? ഈ പ്രവർത്തി പിന്‍വലിക്കാനാവില്ല."
+            },
+            "success": "ഇല്ലാതാക്കി",
+            "error": "ഇല്ലാതാക്കൽ പരാജയം",
+            "permissionError": "ഇല്ലാതാക്കാൻ അനുവാദമില്ല"
+          },
+          "redeploy": {
+            "button": "പുനർഡിപ്ലോയ്",
+            "forceButton": "ഫോഴ്‌സ് ഡിപ്ലോയ് (ക്യാഷ് ഇല്ലാതെ)",
+            "success": "പുനർഡിപ്ലോയ് ആരംഭിച്ചു",
+            "error": "പുനർഡിപ്ലോയ് പരാജയം",
+            "permissionError": "പുനർഡിപ്ലോയ് ചെയ്യാൻ അനുവാദമില്ല"
+          },
+          "open": "പുതിയ ടാബിൽ തുറക്കുക"
+        }
+      }
+    },
+    "logViewer": {
+      "title": "ലോഗ് വ്യൂവർ",
+      "description": "രിയൽ-ടൈം ലോഗുകൾ",
+      "actions": {
+        "fetchMore": "കൂടുതൽ",
+        "refresh": "പുതുക്കുക",
+        "fullscreen": "പൂർണ്ണസ്ക്രീൻ",
+        "exitFullscreen": "പുറത്തുകടക്കുക",
+        "download": "ഡൗൺലോഡ്",
+        "search": {
+          "placeholder": "ലോഗുകൾ തിരയുക...",
+          "previous": "മുൻപത്തെത്",
+          "next": "അടുത്തത്",
+          "results": "{നിലവിലെ} / {ആകെ}"
+        },
+        "filter": {
+          "level": {
+            "label": "നില",
+            "all": "എല്ലാം"
+          },
+          "time": {
+            "label": "സമയ പരിധി",
+            "all": "എല്ലാ സമയം",
+            "5m": "അവസാന 5 മിനിറ്റ്",
+            "15m": "അവസാന 15 മിനിറ്റ്",
+            "1h": "അവസാന 1 മണിക്കൂർ",
+            "24h": "അവസാന 24 മണിക്കൂർ"
+          }
+        },
+        "autoScroll": "ഓട്ടോ സ്ക്രോൾ"
+      }
+    },
+    "deployForm": {
+      "accessDenied": {
+        "title": "പ്രവേശനം നിരസിച്ചു",
+        "description": "ഡിപ്ലോയ് ചെയ്യാൻ അനുവാദമില്ല"
+      },
+      "success": {
+        "update": "അപ്‌ഡേറ്റ് ചെയ്തു"
+      },
+      "errors": {
+        "createFailed": "സൃഷ്ടിക്കൽ പരാജയം",
+        "updateFailed": "അപ്‌ഡേറ്റ് പരാജയം"
+      },
+      "fields": {
+        "applicationName": {
+          "label": "ആപ്ലിക്കേഷൻ പേര്",
+          "description": "പേര് നൽകുക",
+          "placeholder": "ആപ്ലിക്കേഷൻ പേര്"
+        },
+        "environment": {
+          "label": "എൻവയോൺമെന്റ്",
+          "description": "എൻവയോൺമെന്റ് തിരഞ്ഞെടുക്കുക",
+          "placeholder": "എൻവയോൺമെന്റ്",
+          "options": {
+            "staging": "സ്റ്റേജിംഗ്",
+            "production": "പ്രൊഡക്ഷൻ",
+            "development": "ഡെവലപ്പ്മെന്റ്"
+          }
+        },
+        "basePath": {
+          "label": "ബേസ് പാത",
+          "description": "ബിൽഡ് കോൺടെക്‌സ്‌റ്റ് പാത",
+          "placeholder": "/"
+        },
+        "dockerfilePath": {
+          "label": "ഡോക്കർഫയൽ പാത",
+          "description": "ബേസ് പാത്ത് അനുസരിച്ച് ഡോക്കർഫയൽ പാത",
+          "placeholder": "ഡോക്കർഫയൽ"
+        },
+        "branch": {
+          "label": "ബ്രാഞ്ച്",
+          "description": "ഡിപ്ലോയ് ചെയ്യേണ്ട ബ്രാഞ്ച്",
+          "placeholder": "ബ്രാഞ്ച്"
+        },
+        "port": {
+          "label": "പോർട്ട്",
+          "description": "ആപ്പ് ലഭ്യമാകുന്ന പോർട്ട്",
+          "placeholder": "3000"
+        },
+        "domain": {
+          "label": "ഡൊമെയിൻ",
+          "description": "ആപ്പ് ലഭ്യമാകുന്ന ഡൊമെയിൻ",
+          "placeholder": "ഡൊമെയിൻ"
+        },
+        "buildPack": {
+          "label": "ബിൽഡ് പാക്ക്",
+          "description": "ആപ്പ് സ്ട്രക്ചറിന് അനുയോജ്യം തിരഞ്ഞെടുക്കുക",
+          "placeholder": "ബിൽഡ് പാക്ക്",
+          "options": {
+            "dockerfile": "ഡോക്കർഫയൽ",
+            "dockerCompose": "DockerCompose",
+            "static": "സ്റ്റാറ്റിക്"
+          }
+        },
+        "envVariables": {
+          "label": "എൻവയർമെന്റ് വേരിയബിൾസ്",
+          "description": "താക്കോൽ=മൂല്യം നൽകി എൻറ്റർ അമർത്തുക",
+          "placeholder": "NODE_ENV=production"
+        },
+        "buildVariables": {
+          "label": "ബിൽഡ് വേരിയബിൾസ്",
+          "description": "താക്കോൽ=മൂല്യം നൽകി എൻറ്റർ അമർത്തുക",
+          "placeholder": "DEBUG=false"
+        },
+        "preRunCommands": {
+          "label": "പ്രി റൺ കമാൻഡുകൾ",
+          "description": "ഡിപ്ലോയിന് മുമ്പ് പ്രവർത്തിപ്പിക്കേണ്ട കമാൻഡുകൾ",
+          "placeholder": "npm install"
+        },
+        "postRunCommands": {
+          "label": "പോസ്റ്റ് റൺ കമാൻഡുകൾ",
+          "description": "ഡിപ്ലോയിന് ശേഷം പ്രവർത്തിപ്പിക്കേണ്ട കമാൻഡുകൾ",
+          "placeholder": "npm run test"
+        }
+      },
+      "submit": "ഡിപ്ലോയ് ചെയ്യുക",
+      "validation": {
+        "applicationName": {
+          "minLength": "ആപ്പ് പേര് കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം.",
+          "invalidFormat": "സാധുവായ ആപ്പ് പേര് നൽകുക."
+        },
+        "environment": {
+          "invalidValue": "എൻവയർമെന്റ് production, staging, അല്ലെങ്കിൽ development ആയിരിക്കണം."
+        },
+        "branch": {
+          "minLength": "ബ്രാഞ്ച് പേര് കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം.",
+          "invalidFormat": "സാധുവായ ബ്രാഞ്ച് പേര് നൽകുക."
+        },
+        "port": {
+          "invalidFormat": "പോർട്ട് ഒരു സംഖ്യയായിരിക്കണം."
+        },
+        "domain": {
+          "minLength": "ഡൊമെയിൻ പേര് കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം.",
+          "invalidFormat": "സാധുവായ ഡൊമെയിൻ പേര് നൽകുക (ഉദാ: example.com).",
+          "notAllowed": "ഈ ഡൊമെയിൻ അനുവദനീയമല്ല. ക്രമീകരണങ്ങൾ > ഡൊമെയിനുകൾ-ൽ ചേർക്കുക."
+        },
+        "repository": {
+          "minLength": "റിപ്പോസിറ്ററി പേര് കുറഞ്ഞത് 3 അക്ഷരങ്ങൾ വേണം.",
+          "invalidFormat": "സാധുവായ റിപ്പോസിറ്ററി പേര് നൽകുക."
+        },
+        "buildPack": {
+          "invalidValue": "ബിൽഡ് പാക്ക് Dockerfile, DockerCompose, അല്ലെങ്കിൽ Static ആയിരിക്കണം."
+        },
+        "envVariables": {
+          "emptyInput": "ഇൻപുട്ട് ഒഴിവാക്കരുത്",
+          "invalidFormat": "താക്കോൽ=മൂല്യം ഫോർമാറ്റ് വേണം",
+          "emptyKey": "കീ ഒഴിവാക്കരുത്"
+        }
+      }
+    },
+    "githubInstaller": {
+      "title": "GitHub ആപ്പ് ഇൻസ്റ്റാൾ",
+      "description": "പുതിയ ആപ്പിലേക്ക് കണക്റ്റ് ചെയ്യുക",
+      "connectButton": "GitHub കണക്റ്റ് ചെയ്യുക",
+      "terms": "കണക്റ്റ് ചെയ്താൽ സേവന നിബന്ധനകളും സ്വകാര്യതാ നയവും അംഗീകരിക്കുന്നു."
+    },
+    "githubManifest": {
+      "title": "GitHub ആപ്പ് സൃഷ്ടിക്കുക",
+      "appName": {
+        "label": "ആപ്പ് പേര്",
+        "placeholder": "ആപ്പ് പേര് നൽകുക",
+        "generate": "പുതിയ പേര് സൃഷ്ടിക്കുക"
+      },
+      "createButton": "GitHub ആപ്പ് സൃഷ്ടിക്കുക",
+      "status": {
+        "redirecting": "GitHub-ലേക്ക് റീഡയറക്‌ട് ചെയ്യുന്നു...",
+        "converting": "GitHub ആപ്പ് ക്രമീകരിക്കുന്നു...",
+        "success": "GitHub ആപ്പ് സൃഷ്ടിച്ചു!"
+      }
+    },
+    "githubSetup": {
+      "steps": {
+        "welcome": {
+          "title": "ആരംഭിക്കുക",
+          "description": "നിങ്ങളുടെ GitHub അക്കൗണ്ട് കണക്റ്റ് ചെയ്യുക"
+        },
+        "createApp": {
+          "title": "ആപ്പ് സൃഷ്ടിക്കുക",
+          "description": "GitHub ആപ്പ് സജ്ജമാക്കുക"
+        },
+        "installApp": {
+          "title": "ഇൻസ്റ്റാൾ ചെയ്യുക",
+          "description": "റിപ്പോസിറ്ററികൾ കണക്റ്റ് ചെയ്യുക"
+        }
+      },
+      "welcome": {
+        "title": "നിങ്ങളുടെ GitHub അക്കൗണ്ട് കണക്റ്റ് ചെയ്യുക",
+        "description": "നിങ്ങളുടെ റിപ്പോസിറ്ററികളിൽ നിന്ന് നേരിട്ട് അപ്ലിക്കേഷനുകൾ വിന്യസിക്കാൻ ഒരു GitHub ആപ്പ് സൃഷ്ടിക്കുക. ഈ സജ്ജീകരണം കുറച്ച് മിനിറ്റുകൾ മാത്രമേ എടുക്കൂ.",
+        "benefits": {
+          "secure": {
+            "title": "GitHub ആപ്പ് മാനിഫെസ്റ്റ്",
+            "description": "മാനിഫെസ്റ്റ് ഫ്ലോ ഉപയോഗിച്ച് ഞങ്ങൾ ഒരു GitHub ആപ്പ് സൃഷ്ടിക്കും. നിങ്ങളുടെ ക്രെഡൻഷ്യലുകൾ GitHub-ന്റെ ആപ്പ് സിസ്റ്റം വഴി സുരക്ഷിതമായി നിയന്ത്രിക്കപ്പെടുന്നു."
+          },
+          "automated": {
+            "title": "യാന്ത്രിക വിന്യാസങ്ങൾ",
+            "description": "നിങ്ങളുടെ റിപ്പോസിറ്ററികളിലേക്ക് കോഡ് പുഷ് ചെയ്യുമ്പോൾ നിങ്ങളുടെ അപ്ലിക്കേഷനുകൾ സ്വയമേവ വിന്യസിക്കുക."
+          },
+          "repositories": {
+            "title": "നിങ്ങളുടെ റിപ്പോസിറ്ററികളിലേക്ക് പ്രവേശിക്കുക",
+            "description": "കുറച്ച് ക്ലിക്കുകളിൽ നിങ്ങളുടെ ഏതെങ്കിലും GitHub റിപ്പോസിറ്ററികളിൽ നിന്ന് തിരഞ്ഞെടുത്ത് വിന്യസിക്കുക."
+          }
+        }
+      },
+      "buttons": {
+        "next": "തുടരുക",
+        "back": "പിന്നിലേക്ക്"
+      }
+    },
+    "repositories": {
+      "title": "റിപ്പോസിറ്ററികൾ",
+      "noRepositories": "റിപ്പോസിറ്ററികളൊന്നും കണ്ടെത്തിയില്ല",
+      "search": {
+        "placeholder": "റിപ്പോസിറ്ററികൾ തിരയുക..."
+      },
+      "sort": {
+        "name": "പേര്",
+        "created": "സൃഷ്ടിച്ചത്",
+        "updated": "അപ്‌ഡേറ്റ് ചെയ്തത്",
+        "stars": "സ്റ്റാർസ്"
+      }
+    },
+    "connectorSettings": {
+      "title": "GitHub കണക്റ്റർ സെറ്റിംഗുകൾ",
+      "description": "നിങ്ങളുടെ GitHub കണക്റ്ററുകൾ നിയന്ത്രിക്കുക, അവയ്ക്കിടയിൽ മാറുക അല്ലെങ്കിൽ പുതിയവ ചേർക്കുക",
+      "active": "സജീവം",
+      "noConnectors": "GitHub കണക്റ്ററുകളൊന്നും കണ്ടെത്തിയില്ല. ആരംഭിക്കുന്നതിന് ദയവായി ഒന്ന് സൃഷ്ടിക്കുക.",
+      "connector": {
+        "slug": "സ്ലഗ്",
+        "installationId": "ഇൻസ്റ്റാളേഷൻ ID"
+      },
+      "currentConnector": {
+        "title": "നിലവിലെ കണക്റ്റർ",
+        "description": "ഏതെങ്കിലും റിപ്പോസിറ്ററി കാണുന്നില്ലെങ്കിൽ അല്ലെങ്കിൽ നിങ്ങൾക്ക് കൂടുതൽ റിപ്പോസിറ്ററികൾ ചേർക്കണമെങ്കിൽ, നിങ്ങളുടെ GitHub ഇൻസ്റ്റാളേഷൻ സെറ്റിംഗുകൾ നിയന്ത്രിക്കുന്നതിന് ചുവടെയുള്ള ലിങ്ക് ക്ലിക്ക് ചെയ്യുക.",
+        "viewOnGithub": "GitHub ഇൻസ്റ്റാളേഷൻ നിയന്ത്രിക്കുക"
+      },
+      "actions": {
+        "addNew": "പുതിയ കണക്റ്റർ ചേർക്കുക",
+        "switch": {
+          "label": "മാറുക",
+          "success": "കണക്റ്റർ വിജയകരമായി മാറ്റി"
+        },
+        "delete": {
+          "label": "ഇല്ലാതാക്കുക",
+          "success": "കണക്റ്റർ വിജയകരമായി ഇല്ലാതാക്കി",
+          "error": {
+            "generic": "കണക്റ്റർ ഇല്ലാതാക്കുന്നതിൽ പരാജയപ്പെട്ടു",
+            "lastConnector": "അവസാന കണക്റ്റർ ഇല്ലാതാക്കാൻ കഴിയില്ല. ദയവായി ആദ്യം മറ്റൊരു കണക്റ്റർ ചേർക്കുക."
+          },
+          "dialog": {
+            "title": "കണക്റ്റർ ഇല്ലാതാക്കുക",
+            "description": "നിങ്ങൾക്ക് {name} ഇല്ലാതാക്കണമെന്ന് ഉറപ്പാണോ? ഈ പ്രവർത്തനം പൂർവ്വസ്ഥയിലാക്കാൻ കഴിയില്ല.",
+            "confirm": "ഇല്ലാതാക്കുക",
+            "cancel": "റദ്ദാക്കുക",
+            "deleting": "ഇല്ലാതാക്കുന്നു..."
+          }
+        },
+        "update": {
+          "success": "കണക്റ്റർ വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു",
+          "error": "കണക്റ്റർ അപ്ഡേറ്റ് ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു"
+        },
+        "reset": {
+          "label": "പുനഃസജ്ജമാക്കുക",
+          "info": "GitHub ഇൻസ്റ്റാളേഷൻ സെറ്റിംഗുകൾ തുറക്കുന്നു. ദയവായി അവിടെ ഇൻസ്റ്റാളേഷൻ പുനഃസംവിധാനം ചെയ്യുക.",
+          "error": "GitHub സെറ്റിംഗുകൾ തുറക്കാൻ കഴിയില്ല. ഇൻസ്റ്റാളേഷൻ ID കണ്ടെത്തിയില്ല."
+        }
+      }
+    },
+    "repositoryCard": {
+      "viewOnGithub": "GitHub-ൽ കാണുക",
+      "unnamed": "പേരില്ലാത്ത റിപ്പോസിറ്ററി",
+      "visibility": {
+        "private": "സ്വകാര്യ",
+        "public": "പൊതു"
+      },
+      "topics": {
+        "more": "+{എണ്ണം} കൂടി"
+      }
+    },
+    "create": {
+      "title": "റിപ്പോസിറ്ററി",
+      "description": "ആപ്പ് ഡിപ്ലോയ് ചെയ്യുന്നതിന് ക്രമീകരിക്കുക",
+      "accessDenied": {
+        "title": "പ്രവേശനം നിരസിച്ചു",
+        "description": "സ്വയം ഹോസ്റ്റ് ആപ്പുകൾ സൃഷ്ടിക്കാനാവില്ല"
+      }
+    },
+    "githubCallback": {
+      "processing": "GitHub ഇൻസ്റ്റലേഷൻ പ്രോസസ് ചെയ്യുന്നു...",
+      "success": "GitHub-ലേക്ക് കണക്റ്റ് ചെയ്തു!",
+      "error": {
+        "invalidParams": "അസാധുവായ ഇൻസ്റ്റലേഷൻ പാരാമീറ്റർ",
+        "installationFailed": "ഇൻസ്റ്റലേഷൻ പരാജയപ്പെട്ടു"
+      }
+    }
+  }
+}

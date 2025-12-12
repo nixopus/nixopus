@@ -1,0 +1,8 @@
+{
+  "terminal": {
+    "title": "Terminal",
+    "shortcut": "⌘J",
+    "close": "Cerrar Terminal",
+    "newTab": "Nueva Pestaña"
+  }
+}

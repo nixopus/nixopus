@@ -1,0 +1,26 @@
+{
+  "common": {
+    "welcome": "Welcome",
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "profile": "Profile",
+    "logout": "Logout",
+    "accessDenied": "Access Denied",
+    "noPermissionView": "You don't have permission to view this page",
+    "searchFiles": "Search files...",
+    "featureDisabled": "Feature Disabled",
+    "featureNotAvailable": "This feature is not available for your organization",
+    "goBack": "Go Back",
+    "refreshPage": "Refresh Page",
+    "loading": "Loading...",
+    "installed": "Installed",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "preview": "Preview",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "readMore": "Read more",
+    "readLess": "Read less"
+  }
+}

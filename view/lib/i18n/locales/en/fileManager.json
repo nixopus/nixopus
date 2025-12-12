@@ -1,0 +1,87 @@
+{
+  "fileManager": {
+    "header": {
+      "title": "File Manager",
+      "subtitle": "Manage your files here"
+    },
+    "actions": {
+      "upload": "Upload File",
+      "createDirectory": "Create Directory",
+      "showHidden": "Show Hidden Files",
+      "hideHidden": "Hide Hidden Files",
+      "newFolder": "New Folder {number}",
+      "errors": {
+        "createDirectory": "Failed to create directory"
+      }
+    },
+    "sort": {
+      "title": "Sort by",
+      "methods": {
+        "name": "Name",
+        "updated_at": "Date Modified",
+        "created_at": "Date Created",
+        "size": "Size",
+        "file_type": "Type"
+      }
+    },
+    "upload": {
+      "title": "Upload File",
+      "dragDrop": "Drag and drop files here, or click to select files",
+      "errors": {
+        "uploadFailed": "Failed to upload file",
+        "fileTooLarge": "File size exceeds limit",
+        "invalidType": "Invalid file type"
+      }
+    },
+    "info": {
+      "labels": {
+        "path": "Path",
+        "size": "Size",
+        "created": "Created",
+        "updated": "Updated",
+        "type": "Type",
+        "hidden": "Hidden",
+        "permissions": "Permissions"
+      },
+      "calculating": "Calculating...",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "item": {
+      "actions": {
+        "info": "Info",
+        "rename": "Rename",
+        "copy": "Copy",
+        "move": "Move",
+        "delete": "Move to Trash",
+        "moveHere": "Move here",
+        "pasteHere": "Paste here"
+      }
+    },
+    "noFiles": "No files found",
+    "deleteDialog": {
+      "title": "Delete Confirmation",
+      "descriptionFile": "Are you sure you want to delete the file '{name}'? This action cannot be undone.",
+      "descriptionDirectory": "Are you sure you want to delete the directory '{name}' and all its contents? This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "contextMenu": {
+      "info": "Details",
+      "rename": "Rename",
+      "copy": "Copy",
+      "move": "Move",
+      "share": "Share",
+      "download": "Download",
+      "delete": "Delete",
+      "cancel": "Cancel"
+    },
+    "noPermissionCreate": "You don't have permission to create files",
+    "noPermissionUpdate": "You don't have permission to update files",
+    "copiedToClipboard": "Copied to clipboard",
+    "copySuccess": "File copied successfully",
+    "errors": {
+      "fileExists": "File already exists"
+    }
+  }
+}

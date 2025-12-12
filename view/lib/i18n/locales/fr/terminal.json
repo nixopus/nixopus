@@ -1,0 +1,8 @@
+{
+  "terminal": {
+    "title": "Terminal",
+    "shortcut": "⌘J",
+    "close": "Fermer le Terminal",
+    "newTab": "Nouvel Onglet"
+  }
+}

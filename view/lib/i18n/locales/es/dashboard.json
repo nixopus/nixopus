@@ -1,0 +1,88 @@
+{
+  "dashboard": {
+    "title": "Panel de control",
+    "description": "Monitorea tus aplicaciones y recursos del sistema",
+    "containers": {
+      "title": "Contenedores",
+      "table": {
+        "headers": {
+          "id": "ID",
+          "name": "Nombre",
+          "image": "Imagen",
+          "status": "Estado",
+          "ports": "Puertos",
+          "created": "Creado"
+        },
+        "noContainers": "No se encontraron contenedores",
+        "morePorts": "+{count} más"
+      },
+      "viewAll": "Ver Todo"
+    },
+    "disk": {
+      "title": "Uso del disco",
+      "used": "{value} GB usado",
+      "total": "{value} GB total",
+      "percentage": "{value}%",
+      "table": {
+        "headers": {
+          "mount": "Punto de montaje",
+          "size": "Tamaño",
+          "used": "Usado",
+          "percentage": "%"
+        }
+      }
+    },
+    "load": {
+      "title": "Carga promedio",
+      "labels": {
+        "oneMin": "1 minuto",
+        "fiveMin": "5 minutos",
+        "fifteenMin": "15 minutos"
+      }
+    },
+    "cpu": {
+      "title": "Uso de CPU",
+      "overall": "General",
+      "usage": "Uso (%)",
+      "cores": "Núcleos",
+      "perCore": "Por núcleo"
+    },
+    "memory": {
+      "title": "Uso de memoria",
+      "used": "{value} MB usado",
+      "total": "{value} MB total",
+      "percentage": "{value}%"
+    },
+    "errors": {
+      "parseMessage": "Error al analizar el mensaje",
+      "unknownError": "Ocurrió un error desconocido",
+      "connectionLost": "Conexión perdida. Intentando reconectar...",
+      "reconnectFailed": "Error al reconectar. Por favor, inténtalo más tarde."
+    },
+    "system": {
+      "title": "Información del sistema",
+      "osType": "Tipo de SO",
+      "cpu": "CPU",
+      "uptime": "Tiempo de actividad",
+      "lastUpdated": "Última actualización",
+      "hostname": "Nombre del host",
+      "kernelVersion": "Versión del kernel",
+      "architecture": "Arquitectura",
+      "memory": "Memoria",
+      "labels": {
+        "operatingSystem": "Sistema Operativo",
+        "hostname": "Nombre del host",
+        "cpu": "CPU",
+        "cpuCores": "Núcleos de CPU",
+        "memory": "Memoria",
+        "kernelVersion": "Versión del kernel",
+        "uptime": "Tiempo de actividad",
+        "architecture": "Arquitectura"
+      }
+    },
+    "smtpBanner": {
+      "message": "Configura los ajustes SMTP para recibir notificaciones",
+      "configure": "Configurar"
+    }
+  }
+}

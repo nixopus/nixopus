@@ -1,0 +1,10 @@
+{
+  "user": {
+    "menu": {
+      "sponsor": "Sponsoriser",
+      "help": "Aide",
+      "reportIssue": "Signaler un problème",
+      "logout": "Se déconnecter"
+    }
+  }
+}
