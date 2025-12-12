@@ -92,6 +92,8 @@ export const useTerminal = (
           return;
         }
 
+        // Write output even when terminal is inactive (hidden) to preserve state.
+        // When user switches back, they'll see all output that happened while inactive.
         instance.write(parsedMessage.data);
       }
     },
@@ -103,13 +105,15 @@ export const useTerminal = (
     return subscribe(handleTerminalFrame);
   }, [subscribe, handleTerminalFrame]);
 
-  // Cleanup effect: destroy terminal when isTerminalOpen becomes false or component unmounts
+  // Cleanup and dstroy terminal only when terminal panel is closed or component unmounts
+  // Keep terminal alive when just switching tabs (inactive) to preserve state
   useEffect(() => {
     if (!isTerminalOpen && terminalInstanceRef.current) {
+      // Terminal panel closed - destroy all terminals
       destroyTerminal();
     }
     return () => {
-      // Cleanup on unmount
+      // Cleanup on unmount (session closed)
       if (terminalInstanceRef.current) {
         destroyTerminal();
       }

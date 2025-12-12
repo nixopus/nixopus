@@ -29,7 +29,7 @@ export const TerminalSession: React.FC<TerminalSessionProps> = ({
   onStatusChange
 }) => {
   const { terminalRef, fitAddonRef, initializeTerminal, destroyTerminal } = useTerminal(
-    isTerminalOpen && isActive,
+    isTerminalOpen,
     dimensions.width,
     dimensions.height,
     canCreate || canUpdate,
@@ -45,7 +45,7 @@ export const TerminalSession: React.FC<TerminalSessionProps> = ({
   onStatusChangeRef.current = onStatusChange;
 
   useEffect(() => {
-    // Keep terminal lifecycle tightly coupled to visibility/activity to avoid “unsync”/ghost sessions.
+    // Initialize terminal when visible and active, but keep it alive when inactive to preserve state.
     if (isTerminalOpen && isActive && isContainerReady) {
       onStatusChangeRef.current?.('loading');
       initializeTerminal();
@@ -53,10 +53,12 @@ export const TerminalSession: React.FC<TerminalSessionProps> = ({
       return () => clearTimeout(timer);
     }
 
-    // If the session is not visible/active, tear it down to prevent hidden instances consuming output.
-    destroyTerminal();
-    onStatusChangeRef.current?.('idle');
-  }, [isTerminalOpen, isActive, isContainerReady, initializeTerminal, destroyTerminal]);
+    // When inactive, just mark as idle but keep terminal instance alive to preserve state.
+    // Output will continue to be processed in the background.
+    if (!isActive && isTerminalOpen) {
+      onStatusChangeRef.current?.('idle');
+    }
+  }, [isTerminalOpen, isActive, isContainerReady, initializeTerminal]);
 
   useEffect(() => {
     if (fitAddonRef) {
