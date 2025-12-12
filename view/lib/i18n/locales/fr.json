@@ -977,7 +977,7 @@
       }
     },
     "page": {
-      "title": "Applications Auto-hébergées",
+      "title": "Apps",
       "description": "Gérez vos applications auto-hébergées",
       "accessDenied": {
         "title": "Accès Refusé",

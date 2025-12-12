@@ -1,18 +1,12 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { ExternalLink, Clock, Package, Server } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { ExternalLink, GitBranch } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Application } from '@/redux/types/applications';
-import { Environment } from '@/redux/types/deploy-form';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
 
 function AppItem({
   name,
@@ -20,99 +14,128 @@ function AppItem({
   environment,
   updated_at,
   build_pack,
-  port,
+  branch,
   id,
-  status
+  status,
+  deployments
 }: Application) {
   const router = useRouter();
-  const formattedDate = updated_at
-    ? new Date(updated_at).toLocaleString('en-US', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    : 'N/A';
 
-  const formattedBuildPack = build_pack
-    .replace(/([A-Z])/g, ' $1')
-    .trim()
-    .toLowerCase();
+  const latestDeployment = deployments?.[0];
+  const currentStatus = latestDeployment?.status?.status || status?.status;
 
-  const getEnvironmentStyles = () => {
-    switch (environment) {
-      case Environment.Development.toLowerCase():
-        return 'bg-yellow-500 text-white font-medium';
-      case Environment.Staging.toLowerCase():
-        return 'bg-orange-400 text-black font-medium';
+  const getStatusConfig = (statusValue?: string) => {
+    switch (statusValue) {
+      case 'deployed':
+        return { bg: 'bg-emerald-500/10', dot: 'bg-emerald-500', pulse: true, label: 'Live' };
+      case 'failed':
+        return { bg: 'bg-red-500/10', dot: 'bg-red-500', pulse: false, label: 'Failed' };
+      case 'building':
+      case 'deploying':
+      case 'cloning':
+        return { bg: 'bg-amber-500/10', dot: 'bg-amber-500', pulse: true, label: 'Building' };
       default:
-        return 'bg-primary text-primary-foreground font-medium';
+        return { bg: 'bg-zinc-500/10', dot: 'bg-zinc-500', pulse: false, label: 'Inactive' };
     }
   };
 
-  const getStatusStyles = () => {
-    return status?.status === 'failed'
-      ? 'bg-destructive text-white'
-      : status?.status === 'deployed'
-        ? 'bg-success text-success-foreground'
-        : 'bg-secondary text-secondary-foreground';
+  const statusConfig = getStatusConfig(currentStatus);
+
+  const getEnvironmentStyles = () => {
+    switch (environment) {
+      case 'development':
+        return 'border-blue-500/30 text-blue-500 bg-blue-500/10';
+      case 'staging':
+        return 'border-amber-500/30 text-amber-500 bg-amber-500/10';
+      case 'production':
+        return 'border-emerald-500/30 text-emerald-500 bg-emerald-500/10';
+      default:
+        return 'border-zinc-500/30 text-zinc-500 bg-zinc-500/10';
+    }
   };
+
+  const timeAgo = updated_at ? formatDistanceToNow(new Date(updated_at), { addSuffix: true }) : '';
 
   return (
     <Card
-      className={`relative w-full  cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-xl  group`}
-      onClick={() => {
-        router.push(`/self-host/application/${id}`);
-      }}
+      className="relative w-full cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary/30 group"
+      onClick={() => router.push(`/self-host/application/${id}`)}
     >
-      {/* <div className="absolute inset-0 bg-gradient-to-br from-transparent to-muted opacity-50"></div> */}
-
-      <div className="absolute right-3 top-3 z-10 transition-transform duration-300 group-hover:scale-110">
-        {domain && (
-          <a
-            href={`https://${domain}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors duration-200 hover:bg-primary hover:text-primary-foreground"
-            title={`View on ${domain}`}
-            onClick={(e) => e.stopPropagation()}
+      <CardContent className="p-5">
+        <div className="flex items-start gap-4">
+          {/* Status Indicator */}
+          <div
+            className={cn(
+              'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors',
+              statusConfig.bg
+            )}
           >
-            <ExternalLink size={16} />
-          </a>
-        )}
-      </div>
+            <div
+              className={cn(
+                'w-2.5 h-2.5 rounded-full',
+                statusConfig.dot,
+                statusConfig.pulse && 'animate-pulse'
+              )}
+            />
+          </div>
 
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between pr-8">
-          <CardTitle className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors duration-300">
-            {name}
-          </CardTitle>
-        </div>
-      </CardHeader>
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-semibold text-base tracking-tight truncate group-hover:text-primary transition-colors">
+                {name}
+              </h3>
+              {domain && (
+                <a
+                  href={`https://${domain}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  title={`Open ${domain}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+            </div>
 
-      <CardContent className="flex flex-col space-y-3 pb-2 z-10 relative">
-        <div className="flex items-center text-sm text-muted-foreground">
-          <Clock size={16} className="mr-2 text-muted-foreground/70" />
-          <CardDescription className="text-sm">{formattedDate}</CardDescription>
-        </div>
+            {/* Domain */}
+            {domain && (
+              <p className="text-xs text-muted-foreground font-mono truncate mt-1">{domain}</p>
+            )}
 
-        <div className="flex items-center text-sm text-muted-foreground">
-          <Package size={16} className="mr-2 text-muted-foreground/70" />
-          <CardDescription className="text-sm capitalize">{formattedBuildPack}</CardDescription>
+            {/* Meta info */}
+            <div className="flex items-center gap-3 mt-3">
+              <Badge variant="outline" className={cn('text-xs capitalize', getEnvironmentStyles())}>
+                {environment}
+              </Badge>
+              {branch && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <GitBranch className="h-3 w-3" />
+                  {branch}
+                </span>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
+              <span className="text-xs text-muted-foreground">{timeAgo}</span>
+              <span
+                className={cn(
+                  'text-xs font-medium',
+                  currentStatus === 'deployed'
+                    ? 'text-emerald-500'
+                    : currentStatus === 'failed'
+                      ? 'text-red-500'
+                      : 'text-muted-foreground'
+                )}
+              >
+                {statusConfig.label}
+              </span>
+            </div>
+          </div>
         </div>
       </CardContent>
-
-      <CardFooter className="flex items-center justify-between pt-2 pb-3 z-10 relative">
-        <Badge className={`${getEnvironmentStyles()} shadow-sm px-3 py-1`}>{environment}</Badge>
-
-        <div className="flex items-center">
-          <Badge variant="outline" className="text-xs font-mono">
-            {port}
-          </Badge>
-        </div>
-      </CardFooter>
-      <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
     </Card>
   );
 }
@@ -121,32 +144,27 @@ export default AppItem;
 
 export function AppItemSkeleton() {
   return (
-    <Card className="relative w-full max-w-md">
-      <div className="absolute right-2 top-2">
-        <Skeleton className="h-5 w-5" />
-      </div>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between pr-8">
-          <CardTitle className="text-xl font-bold">
-            <Skeleton className="h-6 w-32" />
-          </CardTitle>
+    <Card className="relative w-full">
+      <CardContent className="p-5">
+        <div className="flex items-start gap-4">
+          <Skeleton className="w-10 h-10 rounded-lg flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-7 w-7 rounded-md" />
+            </div>
+            <Skeleton className="h-3 w-48 mt-2" />
+            <div className="flex items-center gap-3 mt-3">
+              <Skeleton className="h-5 w-20 rounded-full" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-3 w-12" />
+            </div>
+          </div>
         </div>
-        <CardDescription>
-          <Skeleton className="h-4 w-full" />
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col space-y-1 pb-2">
-        <CardDescription>
-          <Skeleton className="h-4 w-48" />
-        </CardDescription>
-        <CardDescription>
-          <Skeleton className="h-4 w-32" />
-        </CardDescription>
       </CardContent>
-      <CardFooter className="flex items-center justify-between py-4">
-        <Skeleton className="h-5 w-16" />
-        <Skeleton className="h-5 w-16" />
-      </CardFooter>
     </Card>
   );
 }

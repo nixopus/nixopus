@@ -1018,8 +1018,43 @@
         "logs": "Logs"
       }
     },
+    "monitoring": {
+      "overview": {
+        "title": "Deployment Overview",
+        "description": "Current status and deployment statistics",
+        "status": "Current Status",
+        "totalDeployments": "Total Deployments",
+        "successful": "Successful",
+        "failed": "Failed",
+        "allTime": "All time",
+        "noDeployment": "No Deployment"
+      },
+      "chart": {
+        "title": "Deployment Health",
+        "description": "Overview of your deployment success rate and distribution",
+        "successRate": "Success Rate",
+        "deployments": "deployments",
+        "noData": "No deployment data",
+        "noDataDescription": "Deploy your application to see health metrics",
+        "healthStatus": {
+          "healthy": "Healthy",
+          "warning": "Warning",
+          "critical": "Critical"
+        }
+      },
+      "latestDeployment": {
+        "title": "Latest Deployment",
+        "deployment": "Deployment",
+        "commitHash": "Commit Hash",
+        "containerId": "Container ID",
+        "image": "Image",
+        "deployedAt": "Deployed At",
+        "noDeployment": "No deployments yet",
+        "noDeploymentDescription": "Deploy your application to see deployment details here"
+      }
+    },
     "page": {
-      "title": "Self-Hosted Applications",
+      "title": "Apps",
       "description": "Manage your self-hosted applications",
       "accessDenied": {
         "title": "Access Denied",
@@ -1132,11 +1167,27 @@
         "total": "Total deployments: {count}"
       }
     },
+    "monitoring": {
+      "containerStats": {
+        "title": "Container Stats",
+        "description": "Real-time resource usage for {name}",
+        "noContainer": "No deployed container available. Deploy your application to see container stats.",
+        "error": "Failed to fetch container stats",
+        "cpu": "CPU",
+        "cpuUsage": "CPU Usage",
+        "memory": "Memory",
+        "memoryUsage": "Memory Usage",
+        "network": "Network I/O",
+        "diskIO": "Disk I/O",
+        "processes": "Processes",
+        "lastUpdated": "Last updated"
+      }
+    },
     "applicationDetails": {
       "header": {
         "actions": {
           "restart": {
-            "button": "Restart Application",
+            "button": "Restart",
             "success": "Application restart started",
             "error": "Failed to restart application",
             "permissionError": "You do not have permission to restart applications"
