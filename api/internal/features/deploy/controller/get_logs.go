@@ -12,15 +12,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-type GetLogsRequest struct {
-	Page       int       `json:"page"`
-	PageSize   int       `json:"page_size"`
-	Level      string    `json:"level"`
-	StartTime  time.Time `json:"start_time"`
-	EndTime    time.Time `json:"end_time"`
-	SearchTerm string    `json:"search_term"`
-}
-
 func (c *DeployController) GetLogs(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	applicationID := f.PathParam("application_id")
 	page, _ := strconv.Atoi(f.QueryParam("page"))

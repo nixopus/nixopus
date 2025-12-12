@@ -10,19 +10,25 @@ import (
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
 )
 
-func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger) (*DashboardMonitor, error) {
-	ssh_client := sshpkg.NewSSH()
+// NewDashboardMonitor creates a new dashboard monitor using the provided configuration.
+// It uses the server SSH configuration based on the organization's active server.
+func NewDashboardMonitor(config DashboardMonitorConfig) (*DashboardMonitor, error) {
+	// Use SSH with server configuration for the organization's active server
+	ssh_client := sshpkg.NewSSHWithServer(config.DB, config.Ctx, config.OrganizationID)
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	monitor := &DashboardMonitor{
-		conn:          conn,
-		sshpkg:        ssh_client,
-		log:           log,
-		ctx:           ctx,
-		cancel:        cancel,
-		Interval:      time.Second * 10,
-		Operations:    AllOperations,
-		dockerService: docker.NewDockerService(),
+		conn:           config.Conn,
+		sshpkg:         ssh_client,
+		log:            config.Log,
+		ctx:            ctx,
+		cancel:         cancel,
+		Interval:       time.Second * 10,
+		Operations:     AllOperations,
+		dockerService:  docker.NewDockerServiceWithServer(config.DB, config.Ctx, config.OrganizationID),
+		db:             config.DB,
+		organizationID: config.OrganizationID,
 	}
 
 	return monitor, nil

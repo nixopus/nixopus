@@ -110,7 +110,7 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 					return
 				}
 
-				ctx = context.WithValue(ctx, types.ServerIDKey, server)
+				ctx = context.WithValue(ctx, types.ServerContextKey, server)
 			}
 		}
 

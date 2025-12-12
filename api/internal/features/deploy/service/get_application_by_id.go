@@ -5,6 +5,6 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (s *DeployService) GetApplicationById(id string, organizationID uuid.UUID) (shared_types.Application, error) {
-	return s.storage.GetApplicationById(id, organizationID)
+func (s *DeployService) GetApplicationById(id string, organizationID uuid.UUID, serverID *uuid.UUID) (shared_types.Application, error) {
+	return s.storage.GetApplicationById(id, organizationID, serverID)
 }

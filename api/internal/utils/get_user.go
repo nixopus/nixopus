@@ -58,3 +58,19 @@ func GetOrganizationIDFromContext(ctx context.Context) uuid.UUID {
 
 	return uuid.Nil
 }
+
+// GetServer retrieves the server from the request context.
+// Returns nil if the server is not found in the context.
+func GetServerFromContext(r *http.Request) *types.Server {
+	serverAny := r.Context().Value(types.ServerContextKey)
+	if serverAny == nil {
+		return nil
+	}
+
+	server, ok := serverAny.(*types.Server)
+	if !ok {
+		return nil
+	}
+
+	return server
+}

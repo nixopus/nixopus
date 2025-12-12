@@ -90,7 +90,7 @@ func NewTerminalWithConfig(config TerminalConfig) (*Terminal, error) {
 	// Connect to the specified server or active server for the organization
 	var ssh_client *sshpkg.SSH
 	if config.ServerID != "" {
-		ssh_client = sshpkg.NewSSHWithServerID(config.DB, config.Ctx, config.ServerID)
+		ssh_client = sshpkg.NewSSHWithServer(config.DB, config.Ctx, uuid.MustParse(config.ServerID))
 	} else {
 		ssh_client = sshpkg.NewSSHWithServer(config.DB, config.Ctx, config.OrganizationID)
 	}

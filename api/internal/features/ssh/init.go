@@ -3,13 +3,13 @@ package ssh
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	server_storage "github.com/raghavyuva/nixopus-api/internal/features/servers/storage"
 	"github.com/uptrace/bun"
 	"golang.org/x/crypto/ssh"
@@ -37,19 +37,12 @@ func NewSSH() *SSH {
 	}
 }
 
-// getStringValue returns the string value if the pointer is not nil, otherwise returns empty string
-func getStringValue(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
-
-// NewSSHWithServer creates SSH client by querying the database for the active server
-// If an active server is found, it uses that server's SSH config
-// Otherwise falls back to default config
+// NewSSHWithServer creates a new SSH client using server configuration from the database.
+// It fetches the active server for the organization and uses its SSH configuration.
 func NewSSHWithServer(db *bun.DB, ctx context.Context, organizationID uuid.UUID) *SSH {
-	// Query database for active server
+	log := logger.NewLogger()
+
+	// Fetch the active server for the organization
 	serverStorage := server_storage.ServerStorage{
 		DB:  db,
 		Ctx: ctx,
@@ -57,58 +50,43 @@ func NewSSHWithServer(db *bun.DB, ctx context.Context, organizationID uuid.UUID)
 
 	server, err := serverStorage.GetActiveServer(organizationID)
 	if err != nil {
-		log.Printf("Error querying active server: %v, falling back to default SSH config", err)
+		log.Log(logger.Warning, "Failed to fetch active server, falling back to default SSH config", fmt.Sprintf("organizationID: %s, error: %v", organizationID.String(), err))
 		return NewSSH()
 	}
 
-	// Check if server is provided
-	if server != nil {
-		log.Printf("Using server SSH config: %s@%s:%d", server.Username, server.Host, server.Port)
-		return &SSH{
-			PrivateKey: getStringValue(server.SSHPrivateKeyPath),
-			Host:       server.Host,
-			User:       server.Username,
-			Port:       uint(server.Port),
-			Password:   getStringValue(server.SSHPassword),
-		}
-	}
-
-	log.Printf("No active server found, using default SSH config")
-	// Fallback to default config
-	return NewSSH()
-}
-
-// NewSSHWithServerID creates SSH client by querying the database for a specific server by ID
-// If the server is found, it uses that server's SSH config
-// Otherwise falls back to default config
-func NewSSHWithServerID(db *bun.DB, ctx context.Context, serverID string) *SSH {
-	// Query database for specific server
-	serverStorage := server_storage.ServerStorage{
-		DB:  db,
-		Ctx: ctx,
-	}
-
-	server, err := serverStorage.GetServer(serverID)
-	if err != nil {
-		log.Printf("Error querying server by ID %s: %v, falling back to default SSH config", serverID, err)
+	if server == nil {
+		log.Log(logger.Warning, "No active server found, falling back to default SSH config", fmt.Sprintf("organizationID: %s", organizationID.String()))
 		return NewSSH()
 	}
 
-	// Check if server is provided
-	if server != nil {
-		log.Printf("Using server SSH config (by ID): %s@%s:%d", server.Username, server.Host, server.Port)
-		return &SSH{
-			PrivateKey: getStringValue(server.SSHPrivateKeyPath),
-			Host:       server.Host,
-			User:       server.Username,
-			Port:       uint(server.Port),
-			Password:   getStringValue(server.SSHPassword),
-		}
+	log.Log(logger.Info, "Using SSH with server configuration", fmt.Sprintf("organizationID: %s, server: %s, host: %s, port: %d, user: %s", organizationID.String(), server.Name, server.Host, server.Port, server.Username))
+
+	// Create SSH config from server configuration
+	sshConfig := &SSH{
+		Host: server.Host,
+		User: server.Username,
+		Port: uint(server.Port),
 	}
 
-	log.Printf("Server not found by ID %s, using default SSH config", serverID)
-	// Fallback to default config
-	return NewSSH()
+	// Set authentication method (password or private key)
+	if server.SSHPassword != nil && *server.SSHPassword != "" {
+		sshConfig.Password = *server.SSHPassword
+		log.Log(logger.Info, "Using password authentication", fmt.Sprintf("server: %s", server.Name))
+	} else if server.SSHPrivateKeyPath != nil && *server.SSHPrivateKeyPath != "" {
+		// Read private key from file path
+		privateKeyBytes, err := os.ReadFile(*server.SSHPrivateKeyPath)
+		if err != nil {
+			log.Log(logger.Error, "Failed to read SSH private key file, falling back to default SSH config", fmt.Sprintf("server: %s, path: %s, error: %v", server.Name, *server.SSHPrivateKeyPath, err))
+			return NewSSH()
+		}
+		sshConfig.PrivateKey = string(privateKeyBytes)
+		log.Log(logger.Info, "Using private key authentication", fmt.Sprintf("server: %s, path: %s", server.Name, *server.SSHPrivateKeyPath))
+	} else {
+		log.Log(logger.Warning, "No SSH authentication method configured for server, falling back to default SSH config", fmt.Sprintf("server: %s", server.Name))
+		return NewSSH()
+	}
+
+	return sshConfig
 }
 
 func (s *SSH) ConnectWithPassword() (*goph.Client, error) {

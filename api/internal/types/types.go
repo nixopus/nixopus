@@ -80,7 +80,7 @@ const UserContextKey contextKey = "user"
 const AuthTokenKey ClientContext = "auth_token"
 const DBContextKey ClientContext = "db"
 const OrganizationIDKey contextKey = "organization_id"
-const ServerIDKey contextKey = "server_id"
+const ServerContextKey contextKey = "server"
 
 type AvailableActions string
 
@@ -103,7 +103,6 @@ type Payload struct {
 }
 
 var JWTSecretKey = []byte("secret-key")
-
 
 type ValidationError struct {
 	Field   string `json:"field"`

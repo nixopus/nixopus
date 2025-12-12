@@ -40,7 +40,7 @@ func (s *DeployService) CreateDeployment(deployment *types.CreateDeploymentReque
 // Deprecated: This method is deprecated and will be removed in a future version.
 // Use TaskService.UpdateDeployment instead for better queue-based deployment handling.
 func (s *DeployService) UpdateDeployment(deployment *types.UpdateDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
-	application, err := s.storage.GetApplicationById(deployment.ID.String(), organizationID)
+	application, err := s.storage.GetApplicationById(deployment.ID.String(), organizationID, nil)
 	if err != nil {
 		return shared_types.Application{}, err
 	}
@@ -62,7 +62,7 @@ func (s *DeployService) UpdateDeployment(deployment *types.UpdateDeploymentReque
 // Deprecated: This method is deprecated and will be removed in a future version.
 // Use TaskService.ReDeployApplication instead for queue-based handling.
 func (s *DeployService) ReDeployApplication(redeployRequest *types.ReDeployApplicationRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
-	application, err := s.storage.GetApplicationById(redeployRequest.ID.String(), organizationID)
+	application, err := s.storage.GetApplicationById(redeployRequest.ID.String(), organizationID, nil)
 	if err != nil {
 		return shared_types.Application{}, err
 	}
@@ -156,7 +156,7 @@ func (s *DeployService) GetDeploymentById(deploymentID string) (shared_types.App
 // Deprecated: This method is deprecated and will be removed in a future version.
 // Use TaskService.DeleteDeployment instead for better queue-based deployment handling.
 func (s *DeployService) DeleteDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) error {
-	application, err := s.storage.GetApplicationById(deployment.ID.String(), organizationID)
+	application, err := s.storage.GetApplicationById(deployment.ID.String(), organizationID, nil)
 	if err != nil {
 		return fmt.Errorf("failed to get application details: %w", err)
 	}
@@ -207,7 +207,7 @@ func (s *DeployService) RollbackDeployment(deployment *types.RollbackDeploymentR
 		return err
 	}
 
-	application_details, err := s.storage.GetApplicationById(string(deployment_details.ApplicationID.String()), organizationID)
+	application_details, err := s.storage.GetApplicationById(string(deployment_details.ApplicationID.String()), organizationID, nil)
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func (s *DeployService) RestartDeployment(deployment *types.RestartDeploymentReq
 		return err
 	}
 
-	application_details, err := s.storage.GetApplicationById(string(deployment_details.ApplicationID.String()), organizationID)
+	application_details, err := s.storage.GetApplicationById(string(deployment_details.ApplicationID.String()), organizationID, nil)
 	if err != nil {
 		return err
 	}

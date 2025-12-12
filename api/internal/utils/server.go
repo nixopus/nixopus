@@ -50,7 +50,7 @@ func ValidateServerAccess(db *bun.DB, ctx context.Context, userID, serverID stri
 
 // GetServerDetails extracts server details from request context
 func GetServerDetailsWithErr(r *http.Request) (*types.Server, error) {
-	serverAny := r.Context().Value(types.ServerIDKey)
+	serverAny := r.Context().Value(types.ServerContextKey)
 	server, ok := serverAny.(*types.Server)
 
 	if !ok {
@@ -62,7 +62,7 @@ func GetServerDetailsWithErr(r *http.Request) (*types.Server, error) {
 
 // GetServer retrieves the current server from the request context (similar to GetUser pattern)
 func GetServer(w http.ResponseWriter, r *http.Request) *types.Server {
-	serverAny := r.Context().Value(types.ServerIDKey)
+	serverAny := r.Context().Value(types.ServerContextKey)
 	server, ok := serverAny.(*types.Server)
 
 	if !ok {

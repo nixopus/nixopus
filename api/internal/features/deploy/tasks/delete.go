@@ -14,8 +14,8 @@ import (
 // DeleteDeployment deletes a deployment and its associated resources.
 // It stops and removes the service, image, and repository.
 // It returns an error if any operation fails.
-func (s *TaskService) DeleteDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) error {
-	application, err := s.Storage.GetApplicationById(deployment.ID.String(), organizationID)
+func (s *TaskService) DeleteDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID, serverID *uuid.UUID) error {
+	application, err := s.Storage.GetApplicationById(deployment.ID.String(), organizationID, serverID)
 	if err != nil {
 		return fmt.Errorf("failed to get application details: %w", err)
 	}

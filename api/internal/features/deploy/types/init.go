@@ -37,6 +37,7 @@ type CreateDeploymentRequest struct {
 	Port                 int                      `json:"port"`
 	DockerfilePath       string                   `json:"dockerfile_path,omitempty"`
 	BasePath             string                   `json:"base_path,omitempty"`
+	ServerID             *uuid.UUID               `json:"server_id,omitempty"`
 }
 
 type UpdateDeploymentRequest struct {

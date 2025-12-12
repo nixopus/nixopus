@@ -93,7 +93,7 @@ func (s *TaskService) AtomicUpdateContainer(r shared_types.TaskPayload, taskCont
 	// Check if service already exists
 	existingService, err := s.getExistingService(r, taskContext)
 	if err != nil {
-		s.formatLog(taskContext, "No existing service found, creating new service", "")
+		s.formatLog(taskContext, "No existing service found, creating new service")
 	}
 
 	// Create service spec

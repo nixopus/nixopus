@@ -61,7 +61,14 @@ func (c *DeployController) HandleRollback(f fuego.ContextWithBody[types.Rollback
 
 	c.logger.Log(logger.Info, "attempting to rollback application", "id: "+data.ID.String()+", user_id: "+user.ID.String())
 
-	err = c.taskService.RollbackDeployment(&data, user.ID, organizationID)
+	// Get server ID from request context (set by auth middleware from X-Server-Id header)
+	var serverID *uuid.UUID
+	server := utils.GetServer(f.Response(), f.Request())
+	if server != nil {
+		serverID = &server.ID
+	}
+
+	err = c.taskService.RollbackDeployment(&data, user.ID, organizationID, serverID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to rollback application", "id: "+data.ID.String()+", error: "+err.Error())
 		return nil, fuego.HTTPError{

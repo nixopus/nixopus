@@ -10,13 +10,7 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-type GetApplicationDeploymentsRequest struct {
-	ID       string `json:"id"`
-	Page     string `json:"page"`
-	PageSize string `json:"limit"`
-}
-
-func (c *DeployController) GetApplicationDeployments(f fuego.ContextWithBody[GetApplicationDeploymentsRequest]) (*shared_types.Response, error) {
+func (c *DeployController) GetApplicationDeployments(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	r := f.Request()
 	id := r.URL.Query().Get("id")
 	page := r.URL.Query().Get("page")

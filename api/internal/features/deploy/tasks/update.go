@@ -14,8 +14,8 @@ import (
 
 // UpdateDeployment updates an existing application deployment
 // in the database and starts the deployment process with the queue
-func (s *TaskService) UpdateDeployment(deployment *types.UpdateDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
-	application, err := s.Storage.GetApplicationById(deployment.ID.String(), organizationID)
+func (s *TaskService) UpdateDeployment(deployment *types.UpdateDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID, serverID *uuid.UUID) (shared_types.Application, error) {
+	application, err := s.Storage.GetApplicationById(deployment.ID.String(), organizationID, serverID)
 	if err != nil {
 		return shared_types.Application{}, err
 	}

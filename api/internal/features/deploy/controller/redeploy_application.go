@@ -61,7 +61,14 @@ func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReD
 
 	c.logger.Log(logger.Info, "attempting to redeploy application", "id: "+data.ID.String()+", user_id: "+user.ID.String())
 
-	application, err := c.taskService.ReDeployApplication(&data, user.ID, organizationID)
+	// Get server ID from request context (set by auth middleware from X-Server-Id header)
+	var serverID *uuid.UUID
+	server := utils.GetServer(f.Response(), f.Request())
+	if server != nil {
+		serverID = &server.ID
+	}
+
+	application, err := c.taskService.ReDeployApplication(&data, user.ID, organizationID, serverID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to redeploy application", "id: "+data.ID.String()+", error: "+err.Error())
 		return nil, fuego.HTTPError{

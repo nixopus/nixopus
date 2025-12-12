@@ -1,4 +1,5 @@
 import { User } from './user';
+import { Server } from './server';
 
 export type Application = {
   id: string;
@@ -14,6 +15,7 @@ export type Application = {
   post_run_command: string;
   domain_id: string;
   user_id: string;
+  server_id?: string;
   created_at: Date;
   updated_at: Date;
   domain?: string;
@@ -23,6 +25,7 @@ export type Application = {
   deployments?: ApplicationDeployment[];
   dockerfile_path?: string;
   base_path?: string;
+  server?: Server;
 };
 
 export type ApplicationStatus = {
@@ -96,6 +99,7 @@ export interface CreateApplicationRequest {
   post_run_command: string;
   dockerfile_path: string;
   base_path: string;
+  server_id?: string;
 }
 
 export interface UpdateDeploymentRequest {

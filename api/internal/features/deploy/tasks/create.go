@@ -105,8 +105,8 @@ func (t *TaskService) HandleCreateStaticDeployment(ctx context.Context, TaskPayl
 }
 
 // TODOD: Shravan implement types and get back
-func (t *TaskService) ReDeployApplication(request *types.ReDeployApplicationRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
-	application, err := t.Storage.GetApplicationById(request.ID.String(), organizationID)
+func (t *TaskService) ReDeployApplication(request *types.ReDeployApplicationRequest, userID uuid.UUID, organizationID uuid.UUID, serverID *uuid.UUID) (shared_types.Application, error) {
+	application, err := t.Storage.GetApplicationById(request.ID.String(), organizationID, serverID)
 	if err != nil {
 		return shared_types.Application{}, err
 	}

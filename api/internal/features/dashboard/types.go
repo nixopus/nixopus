@@ -5,11 +5,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	"github.com/uptrace/bun"
 )
 
 type DashboardOperation string
@@ -29,17 +31,28 @@ type MonitoringConfig struct {
 	Operations []DashboardOperation `json:"operations"`
 }
 
+// DashboardMonitorConfig holds the configuration for creating a new DashboardMonitor
+type DashboardMonitorConfig struct {
+	Conn           *websocket.Conn
+	Log            logger.Logger
+	DB             *bun.DB
+	Ctx            context.Context
+	OrganizationID uuid.UUID
+}
+
 type DashboardMonitor struct {
-	conn          *websocket.Conn
-	connMutex     sync.Mutex
-	sshpkg        *sshpkg.SSH
-	log           logger.Logger
-	client        *goph.Client
-	Interval      time.Duration
-	Operations    []DashboardOperation
-	cancel        context.CancelFunc
-	ctx           context.Context
-	dockerService *docker.DockerService
+	conn           *websocket.Conn
+	connMutex      sync.Mutex
+	sshpkg         *sshpkg.SSH
+	log            logger.Logger
+	client         *goph.Client
+	Interval       time.Duration
+	Operations     []DashboardOperation
+	cancel         context.CancelFunc
+	ctx            context.Context
+	dockerService  *docker.DockerService
+	db             *bun.DB
+	organizationID uuid.UUID
 }
 
 type SystemStats struct {

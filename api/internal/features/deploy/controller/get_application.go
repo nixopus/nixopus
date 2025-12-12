@@ -32,7 +32,14 @@ func (c *DeployController) GetApplicationById(f fuego.ContextNoBody) (*shared_ty
 		}
 	}
 
-	application, err := c.service.GetApplicationById(id, organizationID)
+	// Get server ID from request context (set by auth middleware from X-Server-Id header)
+	var serverID *uuid.UUID
+	server := utils.GetServer(f.Response(), f.Request())
+	if server != nil {
+		serverID = &server.ID
+	}
+
+	application, err := c.service.GetApplicationById(id, organizationID, serverID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

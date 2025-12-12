@@ -51,6 +51,13 @@ func (c *DeployController) HandleDeploy(f fuego.ContextWithBody[types.CreateDepl
 		}
 	}
 
+	// Get active server from request context (set by auth middleware if X-Server-Id header is present)
+	server := utils.GetServer(f.Response(), f.Request())
+	if server != nil {
+		data.ServerID = &server.ID
+		c.logger.Log(logger.Info, "deploying to server", "server_id: "+server.ID.String()+", server_name: "+server.Name)
+	}
+
 	c.logger.Log(logger.Info, "attempting to create deployment", "name: "+data.Name+", user_id: "+user.ID.String())
 
 	application, err := c.taskService.CreateDeploymentTask(&data, user.ID, organizationID)

@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,6 +12,11 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
+
+// contains checks if a string contains a substring (case-insensitive)
+func contains(s, substr string) bool {
+	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
+}
 
 type DeployStorage struct {
 	DB  *bun.DB
@@ -25,9 +31,9 @@ type DeployRepository interface {
 	AddApplication(application *shared_types.Application) error
 	AddApplicationLogs(applicationLogs *shared_types.ApplicationLogs) error
 	AddApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
-	GetApplications(page int, pageSize int, organizationID uuid.UUID) ([]shared_types.Application, int, error)
+	GetApplications(page int, pageSize int, organizationID uuid.UUID, serverID *uuid.UUID) ([]shared_types.Application, int, error)
 	UpdateApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
-	GetApplicationById(id string, organizationID uuid.UUID) (shared_types.Application, error)
+	GetApplicationById(id string, organizationID uuid.UUID, serverID *uuid.UUID) (shared_types.Application, error)
 	AddApplicationDeployment(deployment *shared_types.ApplicationDeployment) error
 	AddApplicationDeploymentStatus(deployment_status *shared_types.ApplicationDeploymentStatus) error
 	UpdateApplicationDeploymentStatus(applicationStatus *shared_types.ApplicationDeploymentStatus) error
@@ -154,46 +160,108 @@ func (s *DeployStorage) AddApplicationLogs(applicationLogs *shared_types.Applica
 	return nil
 }
 
-func (s *DeployStorage) GetApplications(page, pageSize int, organizationID uuid.UUID) ([]shared_types.Application, int, error) {
+func (s *DeployStorage) GetApplications(page, pageSize int, organizationID uuid.UUID, serverID *uuid.UUID) ([]shared_types.Application, int, error) {
 	var applications []shared_types.Application
 
 	offset := (page - 1) * pageSize
 
-	totalCount, err := s.DB.NewSelect().
+	countQuery := s.DB.NewSelect().
 		Model((*shared_types.Application)(nil)).
-		Count(s.Ctx)
+		Where("a.organization_id = ?", organizationID)
+
+	if serverID != nil {
+		countQuery = countQuery.Where("server_id = ?", *serverID)
+	}
+
+	totalCount, err := countQuery.Count(s.Ctx)
 
 	if err != nil {
 		return nil, 0, err
 	}
 
-	err = s.DB.NewSelect().
+	query := s.DB.NewSelect().
 		Model(&applications).
 		Relation("Status").
 		Relation("Logs").
+		Relation("Server").
 		Order("created_at DESC").
 		Limit(pageSize).
 		Offset(offset).
-		Where("organization_id = ?", organizationID).
-		Scan(s.Ctx)
+		Where("a.organization_id = ?", organizationID)
 
-	if err != nil {
+	if serverID != nil {
+		query = query.Where("server_id = ?", *serverID)
+	}
+
+	err = query.Scan(s.Ctx)
+
+	// Fallback: if Server relation fails (e.g., servers table doesn't exist or missing columns),
+	// retry without the Server relation for backward compatibility
+	if err != nil && err.Error() != "" &&
+		(contains(err.Error(), "server.ip") ||
+			contains(err.Error(), "does not exist") ||
+			(contains(err.Error(), "column") && contains(err.Error(), "server"))) {
+		// Retry without Server relation
+		queryWithoutServer := s.DB.NewSelect().
+			Model(&applications).
+			Relation("Status").
+			Relation("Logs").
+			Order("created_at DESC").
+			Limit(pageSize).
+			Offset(offset).
+			Where("a.organization_id = ?", organizationID)
+
+		if serverID != nil {
+			queryWithoutServer = queryWithoutServer.Where("server_id = ?", *serverID)
+		}
+
+		err = queryWithoutServer.Scan(s.Ctx)
+		if err != nil {
+			return nil, 0, err
+		}
+	} else if err != nil {
 		return nil, 0, err
 	}
 
 	return applications, totalCount, nil
 }
 
-func (s *DeployStorage) GetApplicationById(id string, organizationID uuid.UUID) (shared_types.Application, error) {
+func (s *DeployStorage) GetApplicationById(id string, organizationID uuid.UUID, serverID *uuid.UUID) (shared_types.Application, error) {
 	var application shared_types.Application
 
-	err := s.DB.NewSelect().
+	query := s.DB.NewSelect().
 		Model(&application).
 		Relation("Status").
-		Where("a.id = ? AND a.organization_id = ?", id, organizationID).
-		Scan(s.Ctx)
+		Relation("Server").
+		Where("a.id = ? AND a.organization_id = ?", id, organizationID)
 
-	if err != nil {
+	if serverID != nil {
+		query = query.Where("a.server_id = ?", *serverID)
+	}
+
+	err := query.Scan(s.Ctx)
+
+	// Fallback: if Server relation fails (e.g., servers table doesn't exist or missing columns),
+	// retry without the Server relation for backward compatibility
+	if err != nil && err.Error() != "" &&
+		(contains(err.Error(), "server.ip") ||
+			contains(err.Error(), "does not exist") ||
+			(contains(err.Error(), "column") && contains(err.Error(), "server"))) {
+		// Retry without Server relation
+		queryWithoutServer := s.DB.NewSelect().
+			Model(&application).
+			Relation("Status").
+			Where("a.id = ? AND a.organization_id = ?", id, organizationID)
+
+		if serverID != nil {
+			queryWithoutServer = queryWithoutServer.Where("a.server_id = ?", *serverID)
+		}
+
+		err = queryWithoutServer.Scan(s.Ctx)
+		if err != nil {
+			return shared_types.Application{}, err
+		}
+	} else if err != nil {
 		return shared_types.Application{}, err
 	}
 

@@ -44,7 +44,37 @@ func (s *SocketServer) handleDashboardMonitor(conn *websocket.Conn, msg types.Pa
 	s.dashboardMutex.Lock()
 	monitor, exists := s.dashboardMonitors[conn]
 	if !exists {
-		newMonitor, err := dashboard.NewDashboardMonitor(conn, logger.NewLogger())
+		// Get user from connection to retrieve organization ID
+		userAny, ok := s.conns.Load(conn)
+		if !ok {
+			s.dashboardMutex.Unlock()
+			s.sendError(conn, "User not found for connection")
+			return
+		}
+		user, ok := userAny.(*types.User)
+		if !ok {
+			s.dashboardMutex.Unlock()
+			s.sendError(conn, "Invalid user data")
+			return
+		}
+
+		// Get the user's first organization ID
+		if len(user.Organizations) == 0 {
+			s.dashboardMutex.Unlock()
+			s.sendError(conn, "User has no organizations")
+			return
+		}
+		organizationID := user.Organizations[0].ID
+
+		config := dashboard.DashboardMonitorConfig{
+			Conn:           conn,
+			Log:            logger.NewLogger(),
+			DB:             s.db,
+			Ctx:            s.ctx,
+			OrganizationID: organizationID,
+		}
+
+		newMonitor, err := dashboard.NewDashboardMonitor(config)
 		if err != nil {
 			s.dashboardMutex.Unlock()
 			s.sendError(conn, "Failed to create dashboard monitor")

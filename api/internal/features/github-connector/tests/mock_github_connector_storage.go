@@ -116,6 +116,33 @@ func (m *MockGithubConnectorStorage) GetConnectorByAppID(AppID string) (*shared_
 	return nil, errors.New("connector not found")
 }
 
+func (m *MockGithubConnectorStorage) DeleteConnector(ConnectorID string, UserID string) error {
+	m.methodCalls["DeleteConnector"] = m.methodCalls["DeleteConnector"] + 1
+
+	args := m.Called(ConnectorID, UserID)
+	if args.Get(0) != nil {
+		return args.Error(0)
+	}
+
+	if connector, exists := m.connectors[ConnectorID]; exists {
+		// Remove from connectors map
+		delete(m.connectors, ConnectorID)
+		// Remove from app mapping
+		delete(m.appMapping, connector.AppID)
+		// Remove from user connectors list
+		if connectorIDs, exists := m.userConnectors[UserID]; exists {
+			for i, id := range connectorIDs {
+				if id == ConnectorID {
+					m.userConnectors[UserID] = append(connectorIDs[:i], connectorIDs[i+1:]...)
+					break
+				}
+			}
+		}
+		return nil
+	}
+	return errors.New("connector not found")
+}
+
 // MockGithubConnectorStorageWithErr implements GithubConnectorRepository with error responses
 type MockGithubConnectorStorageWithErr struct {
 	mock.Mock
@@ -164,6 +191,14 @@ func (m *MockGithubConnectorStorageWithErr) GetConnectorByAppID(AppID string) (*
 		return args.Get(0).(*shared_types.GithubConnector), args.Error(1)
 	}
 	return nil, errors.New("failed to get connector by app ID")
+}
+
+func (m *MockGithubConnectorStorageWithErr) DeleteConnector(ConnectorID string, UserID string) error {
+	args := m.Called(ConnectorID, UserID)
+	if args.Get(0) != nil {
+		return args.Error(0)
+	}
+	return errors.New("failed to delete connector")
 }
 
 type CustomMockStorage struct {
@@ -217,6 +252,10 @@ func (m *CustomMockStorage) GetConnector(connectorID string) (*shared_types.Gith
 
 func (m *CustomMockStorage) GetConnectorByAppID(appID string) (*shared_types.GithubConnector, error) {
 	return nil, errors.New("not implemented for this test")
+}
+
+func (m *CustomMockStorage) DeleteConnector(ConnectorID string, UserID string) error {
+	return errors.New("not implemented for this test")
 }
 
 func (m *CustomMockStorage) VerifyExpectations(t *testing.T) {

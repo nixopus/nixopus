@@ -70,7 +70,8 @@ export const DeployForm = ({
     pre_run_commands,
     post_run_commands,
     DockerfilePath,
-    base_path
+    base_path,
+    server_id: ''
   });
 
   const [currentStepId, setCurrentStepId] = useState('basic-info');
@@ -373,7 +374,16 @@ export const DeployForm = ({
       default:
         return null;
     }
-  }, [currentStepId, form, t, isStaticBuildPack, parsePort, validateEnvVar]);
+  }, [
+    currentStepId,
+    form,
+    t,
+    isStaticBuildPack,
+    parsePort,
+    validateEnvVar,
+    availableBranches,
+    isLoadingBranches
+  ]);
 
   const setStepperMethods = useCallback((methods: any) => {
     stepperMethodsRef.current = methods;

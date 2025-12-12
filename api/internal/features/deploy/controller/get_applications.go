@@ -11,14 +11,8 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-type GetApplicationsRequest struct {
-	Page       string `json:"page"`
-	PageSize   string `json:"page_size"`
-	Repository string `json:"repository"`
-}
-
-func (c *DeployController) GetApplications(f fuego.ContextWithBody[GetApplicationsRequest]) (*shared_types.Response, error) {
-	w, r := f.Response(), f.Request()
+func (c *DeployController) GetApplications(f fuego.ContextNoBody) (*shared_types.Response, error) {
+	r := f.Request()
 	page := r.URL.Query().Get("page")
 	pageSize := r.URL.Query().Get("page_size")
 	organizationID := utils.GetOrganizationID(r)
@@ -38,7 +32,7 @@ func (c *DeployController) GetApplications(f fuego.ContextWithBody[GetApplicatio
 		pageSize = "10"
 	}
 
-	user := utils.GetUser(w, r)
+	user := utils.GetUser(f.Response(), f.Request())
 
 	if user == nil {
 		c.logger.Log(logger.Error, "user not found", "")
@@ -48,7 +42,14 @@ func (c *DeployController) GetApplications(f fuego.ContextWithBody[GetApplicatio
 		}
 	}
 
-	applications, totalCount, err := c.service.GetApplications(page, pageSize, organizationID)
+	// Get server ID from request context (set by auth middleware from X-Server-Id header)
+	var serverID *uuid.UUID
+	server := utils.GetServer(f.Response(), f.Request())
+	if server != nil {
+		serverID = &server.ID
+	}
+
+	applications, totalCount, err := c.service.GetApplications(page, pageSize, organizationID, serverID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

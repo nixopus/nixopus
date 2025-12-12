@@ -24,6 +24,7 @@ interface DeploymentFormValues {
   post_run_commands: string;
   DockerfilePath: string;
   base_path: string;
+  server_id: string;
 }
 
 function useCreateDeployment({
@@ -39,7 +40,8 @@ function useCreateDeployment({
   pre_run_commands = '',
   post_run_commands = '',
   DockerfilePath = '/Dockerfile',
-  base_path = '/'
+  base_path = '/',
+  server_id = ''
 }: DeploymentFormValues) {
   const { isReady, message, sendJsonMessage } = useWebSocket();
   const [createDeployment, { isLoading }] = useCreateDeploymentMutation();
@@ -93,7 +95,8 @@ function useCreateDeployment({
     pre_run_commands: z.string().optional(),
     post_run_commands: z.string().optional(),
     DockerfilePath: z.string().optional().default(DockerfilePath),
-    base_path: z.string().optional().default(base_path)
+    base_path: z.string().optional().default(base_path),
+    server_id: z.string().optional().default('')
   });
 
   const form = useForm<z.infer<typeof deploymentFormSchema>>({
@@ -111,7 +114,8 @@ function useCreateDeployment({
       pre_run_commands,
       post_run_commands,
       DockerfilePath,
-      base_path
+      base_path,
+      server_id
     }
   });
 
@@ -131,6 +135,7 @@ function useCreateDeployment({
     if (post_run_commands) form.setValue('post_run_commands', post_run_commands);
     if (DockerfilePath) form.setValue('DockerfilePath', DockerfilePath);
     if (base_path) form.setValue('base_path', base_path);
+    if (server_id) form.setValue('server_id', server_id);
   }, [
     form,
     application_name,
@@ -145,7 +150,8 @@ function useCreateDeployment({
     pre_run_commands,
     post_run_commands,
     DockerfilePath,
-    base_path
+    base_path,
+    server_id
   ]);
 
   async function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
@@ -163,7 +169,8 @@ function useCreateDeployment({
         pre_run_command: values.pre_run_commands as string,
         post_run_command: values.post_run_commands as string,
         dockerfile_path: values.DockerfilePath,
-        base_path: values.base_path
+        base_path: values.base_path,
+        server_id: values.server_id || undefined
       }).unwrap();
 
       if (data?.deployments?.[0]?.id) {

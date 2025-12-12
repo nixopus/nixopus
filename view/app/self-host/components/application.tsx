@@ -22,7 +22,8 @@ function AppItem({
   build_pack,
   port,
   id,
-  status
+  status,
+  server
 }: Application) {
   const router = useRouter();
   const formattedDate = updated_at
@@ -101,6 +102,13 @@ function AppItem({
           <Package size={16} className="mr-2 text-muted-foreground/70" />
           <CardDescription className="text-sm capitalize">{formattedBuildPack}</CardDescription>
         </div>
+
+        {server && (
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Server size={16} className="mr-2 text-muted-foreground/70" />
+            <CardDescription className="text-sm">{server.name}</CardDescription>
+          </div>
+        )}
       </CardContent>
 
       <CardFooter className="flex items-center justify-between pt-2 pb-3 z-10 relative">

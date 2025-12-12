@@ -26,6 +26,7 @@ type Application struct {
 	BasePath             string                   `json:"base_path" bun:"base_path,notnull,default:/"`
 	UserID               uuid.UUID                `json:"user_id" bun:"user_id,notnull,type:uuid"`
 	OrganizationID       uuid.UUID                `json:"organization_id" bun:"organization_id,notnull,type:uuid"`
+	ServerID             *uuid.UUID               `json:"server_id,omitempty" bun:"server_id,type:uuid"`
 	CreatedAt            time.Time                `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt            time.Time                `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 	User                 *User                    `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
@@ -33,6 +34,7 @@ type Application struct {
 	Logs                 []*ApplicationLogs       `json:"logs,omitempty" bun:"rel:has-many,join:id=application_id"`
 	Deployments          []*ApplicationDeployment `json:"deployments,omitempty" bun:"rel:has-many,join:id=application_id"`
 	Organization         *Organization            `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	Server               *Server                  `json:"server,omitempty" bun:"rel:belongs-to,join:server_id=id"`
 }
 
 type ApplicationDeployment struct {

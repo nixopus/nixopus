@@ -10,13 +10,13 @@ import (
 )
 
 // RollbackDeployment enqueues a rollback task to rebuild and deploy a previous commit
-func (t *TaskService) RollbackDeployment(request *types.RollbackDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) error {
+func (t *TaskService) RollbackDeployment(request *types.RollbackDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID, serverID *uuid.UUID) error {
 	dep, err := t.Storage.GetApplicationDeploymentById(request.ID.String())
 	if err != nil {
 		return err
 	}
 
-	app, err := t.Storage.GetApplicationById(dep.ApplicationID.String(), organizationID)
+	app, err := t.Storage.GetApplicationById(dep.ApplicationID.String(), organizationID, serverID)
 	if err != nil {
 		return err
 	}
