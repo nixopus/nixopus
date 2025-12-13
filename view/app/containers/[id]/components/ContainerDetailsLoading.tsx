@@ -5,7 +5,7 @@ import PageLayout from '@/components/layout/page-layout';
 
 function ContainerDetailsLoading() {
   return (
-    <PageLayout maxWidth="6xl" padding="md" spacing="lg">
+    <PageLayout maxWidth="full" padding="md" spacing="lg">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-4">
           <Skeleton className="w-12 h-12 rounded-xl" />

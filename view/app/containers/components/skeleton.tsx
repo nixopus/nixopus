@@ -5,7 +5,7 @@ import PageLayout from '@/components/layout/page-layout';
 
 export default function ContainersLoading() {
   return (
-    <PageLayout maxWidth="6xl" padding="md" spacing="lg">
+    <PageLayout maxWidth="full" padding="md" spacing="lg">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div className="space-y-2">

@@ -79,7 +79,7 @@ export default function ContainersPage() {
 
   return (
     <ResourceGuard resource="container" action="read" loadingFallback={<ContainersLoading />}>
-      <PageLayout maxWidth="6xl" padding="md" spacing="lg" className="relative z-10">
+      <PageLayout maxWidth="full" padding="md" spacing="lg" className="relative z-10">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">{t('containers.title')}</h1>

@@ -83,7 +83,7 @@ const Page: React.FC = () => {
 
   return (
     <ResourceGuard resource="notification" action="read">
-      <PageLayout maxWidth="6xl" padding="md" spacing="lg">
+      <PageLayout maxWidth="full" padding="md" spacing="lg">
         <DashboardPageHeader
           label={t('settings.notifications.page.title')}
           description={t('settings.notifications.page.description')}

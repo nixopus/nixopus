@@ -100,7 +100,7 @@ function DashboardPage() {
 
   return (
     <ResourceGuard resource="dashboard" action="read">
-      <PageLayout maxWidth="6xl" padding="md" spacing="lg">
+      <PageLayout maxWidth="full" padding="md" spacing="lg">
         <DashboardHeader
           hasCustomLayout={hasCustomLayout}
           onResetLayout={handleResetLayoutWithWidgets}
