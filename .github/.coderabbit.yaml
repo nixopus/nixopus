@@ -1,3 +1,5 @@
+language: 'en'
+
 version: 1
 
 review:
@@ -29,3 +31,67 @@ comments:
   inline: true
   summary: true
   suggestions: true 
+
+reviews:
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  path_instructions:
+    - path: 'api/**/*'
+      instructions: |
+        "Confirm that the code adheres to the following:
+        - Proper backend architecture (modules, services, controllers, or equivalent).
+        - Dependency injection patterns and service encapsulation.
+        - Integration and unit testing coverage and practices."
+    - path: 'view/**/*'
+      instructions: |
+        "Confirm that the code adheres to the following:
+        - NextJS/React best practices, including file structure, API routes, and static generation methods.
+        - Efficient state management and server-side rendering techniques.
+        - Optimal use of TypeScript for component and utility type safety."
+    - path: 'cli/**/*'
+      instructions: |
+        "Confirm that the code adheres to the following:
+        - CLI tooling follows best practices (e.g., modular commands, input validation).
+        - Proper dependency management and packaging.
+        - Tests exist for core CLI functionality."
+    - path: 'helpers/**/*'
+      instructions: |
+        "Confirm that the code adheres to the following:
+        - Utility functions and modules are reusable across the repo.
+        - TypeScript best practices to ensure type safety and reusability.
+        - Proper documentation and examples for consumers of the helpers."
+    - path: 'scripts/**/*'
+      instructions: |
+        "Confirm that the code adheres to the following:
+        - Script efficiency, readability, and maintainability.
+        - Usage of environment variables and configuration files for flexibility.
+        - Integration with repo tooling and automation workflows."
+    - path: 'docs/**/*'
+      instructions: |
+        "Confirm that the documentation adheres to the following:
+        - Clarity and completeness of instructions for developers and users.
+        - Up-to-date references to repo structure and tooling.
+        - Markdown formatting and examples follow best practices."
+    - path: 'assets/**/*'
+      instructions: |
+        "Confirm that the assets adhere to the following:
+        - Proper organization and naming conventions.
+        - Optimized sizes and formats for web or CLI use.
+        - Correct usage references in code."
+    - path: '.*'
+      instructions: |
+        "Confirm that the repo-level files and configs adhere to the following:
+        - GitHub workflows, Husky hooks, Docker Compose, and devcontainer settings are properly configured.
+        - Versioning, package.json, and license files are consistent and accurate."
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - 'master'
+
+chat:
+  auto_reply: true
