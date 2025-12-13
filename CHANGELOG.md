@@ -1,3 +1,12 @@
+# [0.1.0-alpha.90](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.89...v0.1.0-alpha.90) (2025-12-12)
+
+
+### Features
+
+* add support for parallel execution of arm64 and amd architecture ([#704](https://github.com/raghavyuva/nixopus/issues/704)) ([bcc080d](https://github.com/raghavyuva/nixopus/commit/bcc080dbae2f6128ed4538cee4958b0f7b93b34e))
+
+
+
 # [0.1.0-alpha.89](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.88...v0.1.0-alpha.89) (2025-12-12)
 
 

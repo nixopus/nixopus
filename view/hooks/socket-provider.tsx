@@ -17,13 +17,15 @@ type WebSocketContextValue = {
   message: string | null;
   sendMessage: (data: string) => void;
   sendJsonMessage: (data: any) => void;
+  subscribe: (listener: (data: string) => void) => () => void;
 };
 
 const WebSocketContext = createContext<WebSocketContextValue>({
   isReady: false,
   message: null,
   sendMessage: () => {},
-  sendJsonMessage: () => {}
+  sendJsonMessage: () => {},
+  subscribe: () => () => {}
 });
 
 interface WebSocketProviderProps {
@@ -46,6 +48,7 @@ export const WebSocketProvider = ({
   const reconnectAttemptsRef = useRef(0);
   const isConnectingRef = useRef(false);
   const messageQueueRef = useRef<string[]>([]);
+  const listenersRef = useRef(new Set<(data: string) => void>());
   const { isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
 
   const connectWebSocket = async () => {
@@ -112,7 +115,17 @@ export const WebSocketProvider = ({
       };
 
       socket.onmessage = (event) => {
+        // Backwards compatible: some parts of the app consume only the latest message.
         setMessage(event.data);
+
+        // Critical: terminals require *every* WS frame; React state can drop/coalesce updates under load.
+        for (const listener of listenersRef.current) {
+          try {
+            listener(event.data);
+          } catch (e) {
+            console.error('WebSocket listener error:', e);
+          }
+        }
       };
 
       socket.onerror = () => {
@@ -202,11 +215,19 @@ export const WebSocketProvider = ({
     }
   }, []);
 
+  const subscribe = useCallback((listener: (data: string) => void) => {
+    listenersRef.current.add(listener);
+    return () => {
+      listenersRef.current.delete(listener);
+    };
+  }, []);
+
   const contextValue: WebSocketContextValue = {
     isReady,
     message,
     sendMessage,
-    sendJsonMessage
+    sendJsonMessage,
+    subscribe
   };
 
   return <WebSocketContext.Provider value={contextValue}>{children}</WebSocketContext.Provider>;
