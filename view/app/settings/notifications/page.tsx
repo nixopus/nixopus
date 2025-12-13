@@ -1,38 +1,17 @@
 'use client';
-import React from 'react';
-import DashboardPageHeader from '@/components/layout/dashboard-page-header';
-import PageLayout from '@/components/layout/page-layout';
-// TODO: Re-enable notifications when feature is working
-// import NotificationPreferencesTab from './components/preferenceTab';
-// import NotificationChannelsTab from './components/channelTab';
-// import useNotificationSettings from '../hooks/use-notification-settings';
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { useTranslation } from '@/hooks/use-translation';
-// import { SMTPFormData } from '@/redux/types/notification';
-// import { useFeatureFlags } from '@/hooks/features_provider';
-// import Skeleton from '@/app/file-manager/components/skeleton/Skeleton';
-// import DisabledFeature from '@/components/features/disabled-feature';
-// import { FeatureNames } from '@/types/feature-flags';
-// import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 
-export type NotificationChannelConfig = {
-  [key: string]: string;
-};
+import { useEffect } from 'react';
+import { useSettingsModal } from '@/hooks/use-settings-modal';
+import { useRouter } from 'next/navigation';
 
 const Page: React.FC = () => {
-  // TODO: Re-enable notifications when feature is working
-  // Temporarily disabled - notifications feature is not working
-  return (
-    <PageLayout maxWidth="6xl" padding="md" spacing="lg">
-      <DashboardPageHeader
-        label="Notifications"
-        description="Notifications feature is temporarily disabled"
-      />
-      <div className="text-center py-8 text-muted-foreground">
-        Notifications feature is currently disabled. This will be re-enabled in a future update.
-      </div>
-    </PageLayout>
-  );
+  const { openSettings } = useSettingsModal();
+  const router = useRouter();
+  useEffect(() => {
+    openSettings('notifications');
+    router.replace('/dashboard');
+  }, [openSettings, router]);
+  return null;
 
   /* COMMENTED OUT - Re-enable when notifications feature is working
   const { t } = useTranslation();

@@ -1,7 +1,6 @@
 'use client';
 import React, { useEffect } from 'react';
 import { Mail, Slack, MessageSquare } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/use-translation';
 import { SMTPConfig, WebhookConfig, SMTPFormData } from '@/redux/types/notification';
 import { useForm } from 'react-hook-form';
@@ -149,18 +148,18 @@ const ChannelTab: React.FC<ChannelTabProps> = ({
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-1">
-      <Card>
-        <CardHeader>
-          <TypographySmall className="flex items-center gap-2">
+    <div className="space-y-8">
+      <div className="space-y-6">
+        <div>
+          <TypographySmall className="text-sm font-medium flex items-center gap-2">
             <Mail className="h-5 w-5" />
             {t('settings.notifications.channels.email.title')}
           </TypographySmall>
-          <TypographyMuted>
+          <TypographyMuted className="text-xs mt-1">
             {t('settings.notifications.channels.email.description')}
           </TypographyMuted>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div>
           <Form {...emailForm}>
             <form onSubmit={emailForm.handleSubmit(onSubmitEmail)} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -293,20 +292,20 @@ const ChannelTab: React.FC<ChannelTabProps> = ({
               </div>
             </form>
           </Form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <TypographySmall className="flex items-center gap-2">
+      <div className="space-y-6">
+        <div>
+          <TypographySmall className="text-sm font-medium flex items-center gap-2">
             <Slack className="h-5 w-5" />
             {t('settings.notifications.channels.slack.title')}
           </TypographySmall>
-          <TypographyMuted>
+          <TypographyMuted className="text-xs mt-1">
             {t('settings.notifications.channels.slack.description')}
           </TypographyMuted>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div>
           <Form {...slackForm}>
             <form onSubmit={slackForm.handleSubmit(onSubmitSlack)} className="space-y-4">
               <FormField
@@ -360,20 +359,20 @@ const ChannelTab: React.FC<ChannelTabProps> = ({
               </div>
             </form>
           </Form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <TypographySmall className="flex items-center gap-2">
+      <div className="space-y-6">
+        <div>
+          <TypographySmall className="text-sm font-medium flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
             {t('settings.notifications.channels.discord.title')}
           </TypographySmall>
-          <TypographyMuted>
+          <TypographyMuted className="text-xs mt-1">
             {t('settings.notifications.channels.discord.description')}
           </TypographyMuted>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div>
           <Form {...discordForm}>
             <form onSubmit={discordForm.handleSubmit(onSubmitDiscord)} className="space-y-4">
               <FormField
@@ -421,8 +420,8 @@ const ChannelTab: React.FC<ChannelTabProps> = ({
               </div>
             </form>
           </Form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

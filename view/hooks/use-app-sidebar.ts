@@ -16,7 +16,7 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Folder, Home, Package, SettingsIcon, Container, Puzzle } from 'lucide-react';
+import { Folder, Home, Package, Container, Puzzle } from 'lucide-react';
 
 const data = {
   navMain: [
@@ -49,36 +49,6 @@ const data = {
       url: '/file-manager',
       icon: Folder,
       resource: 'file-manager'
-    },
-    {
-      title: 'navigation.settings',
-      url: '/settings/general',
-      icon: SettingsIcon,
-      resource: 'settings',
-      items: [
-        {
-          title: 'navigation.general',
-          url: '/settings/general',
-          resource: 'settings'
-        },
-        // TODO: Re-enable notifications when feature is working
-        // {
-        //   title: 'navigation.notifications',
-        //   url: '/settings/notifications',
-        //   resource: 'notification'
-        // },
-        {
-          title: 'navigation.team',
-          url: '/settings/teams',
-          resource: 'organization'
-        }
-        // TODO: Re-enable domains when feature is required
-        // {
-        //   title: 'navigation.domains',
-        //   url: '/settings/domains',
-        //   resource: 'domain'
-        // }
-      ]
     }
   ]
 };
@@ -250,23 +220,36 @@ Add any other context about the problem here.`;
         .filter((item) => {
           if (!item.resource) return false;
 
-          if (item.items) {
+          if ('items' in item && item.items && Array.isArray(item.items)) {
             const filteredSubItems = item.items.filter(
-              (subItem) => subItem.resource && hasAnyPermission(subItem.resource)
+              (subItem: { resource?: string }) =>
+                subItem.resource && hasAnyPermission(subItem.resource)
             );
             return filteredSubItems.length > 0;
           }
 
           return hasAnyPermission(item.resource);
         })
-        .map((item) => ({
-          ...item,
-          title: t(item.title as any),
-          items: item.items?.map((subItem) => ({
-            ...subItem,
-            title: t(subItem.title as any)
-          }))
-        })),
+        .map((item) => {
+          const baseItem = {
+            ...item,
+            title: t(item.title as any)
+          };
+
+          if ('items' in item && item.items && Array.isArray(item.items)) {
+            return {
+              ...baseItem,
+              items: item.items.map(
+                (subItem: { title: string; url: string; resource?: string }) => ({
+                  ...subItem,
+                  title: t(subItem.title as any)
+                })
+              )
+            };
+          }
+
+          return baseItem;
+        }),
     [data.navMain, hasAnyPermission, t]
   );
 

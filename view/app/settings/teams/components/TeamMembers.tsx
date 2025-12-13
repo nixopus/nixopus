@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { DataTable, TableColumn } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -240,15 +239,17 @@ function TeamMembers({
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <TypographySmall>{t('settings.teams.members.title')}</TypographySmall>
-          <TypographyMuted>{t('settings.teams.members.description')}</TypographyMuted>
-        </CardHeader>
-        <CardContent>
-          <DataTable data={users} columns={columns} showBorder={false} hoverable={false} />
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <div>
+          <TypographySmall className="text-sm font-medium">
+            {t('settings.teams.members.title')}
+          </TypographySmall>
+          <TypographyMuted className="text-xs mt-1">
+            {t('settings.teams.members.description')}
+          </TypographyMuted>
+        </div>
+        <DataTable data={users} columns={columns} showBorder={false} hoverable={false} />
+      </div>
 
       {editingUser && (
         <EditUserDialog

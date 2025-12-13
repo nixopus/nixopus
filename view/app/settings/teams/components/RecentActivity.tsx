@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useGetRecentAuditLogsQuery } from '@/redux/services/audit';
 import { formatDistanceToNow } from 'date-fns';
@@ -31,25 +30,27 @@ function RecentActivity() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <TypographySmall>{t('settings.teams.recentActivity.title')}</TypographySmall>
-            <TypographyMuted>{t('settings.teams.recentActivity.description')}</TypographyMuted>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleViewAll}
-            className="flex items-center gap-1"
-          >
-            {t('settings.teams.recentActivity.viewAll')}
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <TypographySmall className="text-sm font-medium">
+            {t('settings.teams.recentActivity.title')}
+          </TypographySmall>
+          <TypographyMuted className="text-xs mt-1">
+            {t('settings.teams.recentActivity.description')}
+          </TypographyMuted>
         </div>
-      </CardHeader>
-      <CardContent>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleViewAll}
+          className="flex items-center gap-1"
+        >
+          {t('settings.teams.recentActivity.viewAll')}
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
+      <div>
         {isLoading ? (
           <div className="flex items-center justify-center p-4">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -77,8 +78,8 @@ function RecentActivity() {
             {t('settings.teams.recentActivity.noActivities')}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

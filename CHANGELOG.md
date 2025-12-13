@@ -1,3 +1,12 @@
+# [0.1.0-alpha.91](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.90...v0.1.0-alpha.91) (2025-12-13)
+
+
+### Bug Fixes
+
+* resolve terminal unsync issues with frame processing & state preservation ([#680](https://github.com/raghavyuva/nixopus/issues/680)) ([0c7d68b](https://github.com/raghavyuva/nixopus/commit/0c7d68ba054abf231c55fef7545f52393e378f58))
+
+
+
 # [0.1.0-alpha.90](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.89...v0.1.0-alpha.90) (2025-12-12)
 
 

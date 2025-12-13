@@ -11,7 +11,6 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useRouter } from 'next/navigation';
 import { CreateTeam } from '@/components/features/create-team';
-import { KeyboardShortcuts } from '@/components/features/keyboard-shortcuts';
 import useTeamSwitcher from '@/hooks/use-team-switcher';
 import useBreadCrumbs from '@/hooks/use-bread-crumbs';
 import React, { useEffect } from 'react';
@@ -21,11 +20,13 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { Tour } from '@/components/Tour';
 import { useTour } from '@/hooks/useTour';
 import { Button } from '@/components/ui/button';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Settings } from 'lucide-react';
 import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { ModeToggler } from '@/components/ui/theme-toggler';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
 import { TopbarWidgets } from './topbar-widgets';
+import { useSettingsModal } from '@/hooks/use-settings-modal';
+import { useTranslation } from '@/hooks/use-translation';
 
 enum TERMINAL_POSITION {
   BOTTOM = 'bottom',
@@ -52,6 +53,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [TerminalPosition, setTerminalPosition] = React.useState(TERMINAL_POSITION.BOTTOM);
   const [fitAddonRef, setFitAddonRef] = React.useState<any | null>(null);
   const { startTour } = useTour();
+  const { openSettings } = useSettingsModal();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -104,13 +107,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Button
                 variant="outline"
                 size="icon"
+                onClick={() => openSettings()}
+                title={t('settings.title')}
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
                 className="ml-auto"
                 onClick={startTour}
                 data-slot="tour-trigger"
               >
                 <HelpCircle className="h-5 w-5" />
               </Button>
-              <KeyboardShortcuts />
               <RBACGuard resource="user" action="update">
                 <ModeToggler />
               </RBACGuard>

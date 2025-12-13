@@ -61,9 +61,12 @@ export function AppSidebar({
           items={filteredNavItems.map((item) => ({
             ...item,
             isActive: item.url === activeNav,
-            items: item.items?.filter(
-              (subItem) => subItem.resource && hasAnyPermission(subItem.resource)
-            )
+            items:
+              'items' in item && item.items
+                ? item.items.filter(
+                    (subItem) => subItem.resource && hasAnyPermission(subItem.resource)
+                  )
+                : undefined
           }))}
           onItemClick={(url) => setActiveNav(url)}
         />
