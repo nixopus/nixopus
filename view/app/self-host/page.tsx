@@ -5,9 +5,8 @@ import ListRepositories from './components/github-repositories/list-repositories
 import AppItem, { AppItemSkeleton } from './components/application';
 import useGetDeployedApplications from './hooks/use_get_deployed_applications';
 import PaginationWrapper from '@/components/ui/pagination';
-import DashboardPageHeader, {
-  DahboardUtilityHeader
-} from '@/components/layout/dashboard-page-header';
+import { SearchBar } from '@/components/ui/search-bar';
+import { SortSelect } from '@/components/ui/sort-selector';
 import { Application } from '@/redux/types/applications';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/use-translation';
@@ -17,8 +16,8 @@ import { FeatureNames } from '@/types/feature-flags';
 import DisabledFeature from '@/components/features/disabled-feature';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import PageLayout from '@/components/layout/page-layout';
-import { TypographyH2 } from '@/components/ui/typography';
-import { TypographyMuted } from '@/components/ui/typography';
+import { TypographyH2, TypographyMuted } from '@/components/ui/typography';
+import { Plus } from 'lucide-react';
 
 function page() {
   const { t } = useTranslation();
@@ -50,9 +49,10 @@ function page() {
     return <DisabledFeature />;
   }
 
-  const isShowingGitHubSetup = inGitHubFlow || (!showApplications && !inGitHubFlow && !connectors?.length);
-  const isShowingRepositories = !showApplications && !inGitHubFlow && connectors?.length && connectors.length > 0;
-  const shouldShowHeader = !isShowingGitHubSetup && !isShowingRepositories;
+  const isShowingGitHubSetup =
+    inGitHubFlow || (!showApplications && !inGitHubFlow && !connectors?.length);
+  const isShowingRepositories =
+    !showApplications && !inGitHubFlow && connectors?.length && connectors.length > 0;
 
   const renderContent = () => {
     return (
@@ -87,46 +87,71 @@ function page() {
       }
     >
       <PageLayout maxWidth="6xl" padding="md" spacing="lg">
-        {shouldShowHeader && (
-          <DashboardPageHeader
-            label={t('selfHost.page.title')}
-            description={t('selfHost.page.description')}
-          />
+        {!isShowingGitHubSetup && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">
+                {isShowingRepositories
+                  ? t('selfHost.repositories.title')
+                  : t('selfHost.page.title')}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                {isShowingRepositories
+                  ? t('selfHost.repositories.search.placeholder')
+                  : t('selfHost.page.description')}
+              </p>
+            </div>
+            {showApplications && (
+              <AnyPermissionGuard permissions={['deploy:create']} loadingFallback={null}>
+                <Button onClick={() => router.push('/self-host/create')} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  {t('selfHost.page.createButton')}
+                </Button>
+              </AnyPermissionGuard>
+            )}
+          </div>
         )}
+
         {renderContent()}
 
         {showApplications && (
           <>
-            <DahboardUtilityHeader<Application>
-              searchTerm={searchTerm}
-              handleSearchChange={handleSearchChange}
-              sortConfig={sortConfig}
-              onSortChange={onSortChange}
-              sortOptions={sortOptions}
-              label={t('selfHost.page.title')}
-              className="mt-5 mb-5 justify-between items-center"
-              children={
-                <AnyPermissionGuard permissions={['deploy:create']} loadingFallback={null}>
-                  <Button
-                    className="mb-4 w-max flex justify-self-end mt-4"
-                    onClick={() => {
-                      router.push('/self-host/create');
-                    }}
-                  >
-                    {t('selfHost.page.createButton')}
-                  </Button>
-                </AnyPermissionGuard>
-              }
-            />
+            <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
+              <div className="flex-1 min-w-[220px]">
+                <SearchBar
+                  searchTerm={searchTerm}
+                  handleSearchChange={handleSearchChange}
+                  label={t('selfHost.page.search.placeholder')}
+                />
+              </div>
+              <SortSelect<Application>
+                options={sortOptions}
+                currentSort={{
+                  value: sortConfig.key,
+                  direction: sortConfig.direction,
+                  label:
+                    sortOptions.find(
+                      (option) =>
+                        option.value === sortConfig.key && option.direction === sortConfig.direction
+                    )?.label || ''
+                }}
+                onSortChange={onSortChange}
+                placeholder="Sort by"
+              />
+            </div>
+
             {isLoading || isLoadingApplications ? (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <AppItemSkeleton />
+                <AppItemSkeleton />
+                <AppItemSkeleton />
                 <AppItemSkeleton />
                 <AppItemSkeleton />
                 <AppItemSkeleton />
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {applications &&
                     applications.map((app: any) => <AppItem key={app.id} {...app} />)}
                 </div>

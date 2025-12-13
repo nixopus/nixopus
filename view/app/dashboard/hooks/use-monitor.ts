@@ -13,10 +13,7 @@ function use_monitor() {
   const isInitializedRef = useRef(false);
 
   const startMonitoring = useCallback(() => {
-    if (!isReady) {
-      console.log('WebSocket not ready, skipping monitoring start');
-      return;
-    }
+    if (!isReady) return;
 
     console.log('Starting dashboard monitoring');
     sendJsonMessage({
@@ -77,6 +74,11 @@ function use_monitor() {
       console.log('WebSocket ready, initializing monitoring');
       startMonitoring();
       isInitializedRef.current = true;
+    }
+
+    if (!isReady && isInitializedRef.current) {
+      isInitializedRef.current = false;
+      setIsMonitoring(false);
     }
 
     return () => {

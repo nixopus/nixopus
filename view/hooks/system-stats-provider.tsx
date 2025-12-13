@@ -1,6 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useState, useRef, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useEffect,
+  ReactNode,
+  useCallback
+} from 'react';
 import { useWebSocket } from '@/hooks/socket-provider';
 import { SystemStatsType } from '@/redux/types/monitor';
 
@@ -51,40 +59,46 @@ export function SystemStatsProvider({ children }: { children: ReactNode }) {
     }
   }, [message]);
 
-  const startMonitoring = () => {
-    if (!isMonitoring) {
-      sendJsonMessage({
-        action: 'dashboard_monitor',
-        data: {
-          interval: 10,
-          operations: ['get_system_stats']
-        }
-      });
-      setIsMonitoring(true);
-      setError(null);
-    }
-  };
+  const startMonitoring = useCallback(() => {
+    if (!isReady || isMonitoring) return;
 
-  const stopMonitoring = () => {
-    if (isMonitoring) {
-      sendJsonMessage({
-        action: 'stop_dashboard_monitor'
-      });
-      setIsMonitoring(false);
-    }
-  };
+    sendJsonMessage({
+      action: 'dashboard_monitor',
+      data: {
+        interval: 10,
+        operations: ['get_system_stats']
+      }
+    });
+    setIsMonitoring(true);
+    setError(null);
+  }, [isReady, isMonitoring, sendJsonMessage]);
+
+  const stopMonitoring = useCallback(() => {
+    if (!isMonitoring) return;
+
+    sendJsonMessage({
+      action: 'stop_dashboard_monitor'
+    });
+    setIsMonitoring(false);
+  }, [isMonitoring, sendJsonMessage]);
 
   useEffect(() => {
     if (isReady && !isInitializedRef.current) {
       startMonitoring();
       isInitializedRef.current = true;
     }
+
+    if (!isReady && isInitializedRef.current) {
+      isInitializedRef.current = false;
+      setIsMonitoring(false);
+    }
+
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [isReady]);
+  }, [isReady, startMonitoring]);
 
   useEffect(() => {
     if (isReady && !isMonitoring && error) {
@@ -97,7 +111,7 @@ export function SystemStatsProvider({ children }: { children: ReactNode }) {
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [isReady, isMonitoring, error]);
+  }, [isReady, isMonitoring, error, startMonitoring]);
 
   return (
     <SystemStatsContext.Provider value={{ systemStats, isMonitoring, error }}>

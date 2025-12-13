@@ -1,0 +1,26 @@
+{
+  "common": {
+    "welcome": "Bienvenue",
+    "dashboard": "Tableau de bord",
+    "settings": "Paramètres",
+    "profile": "Profil",
+    "logout": "Déconnexion",
+    "accessDenied": "Accès Refusé",
+    "noPermissionView": "Vous n'avez pas la permission de voir cette page",
+    "searchFiles": "Rechercher des fichiers...",
+    "featureDisabled": "Caractéristique Désactivée",
+    "featureNotAvailable": "Cette caractéristique n'est pas disponible pour votre organisation",
+    "goBack": "Retour",
+    "refreshPage": "Actualiser la page",
+    "loading": "Chargement...",
+    "installed": "Installé",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "preview": "Aperçu",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "readMore": "Lire plus",
+    "readLess": "Lire moins"
+  }
+}

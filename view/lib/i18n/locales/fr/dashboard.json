@@ -1,0 +1,88 @@
+{
+  "dashboard": {
+    "title": "Tableau de bord",
+    "description": "Surveillez vos applications et ressources système",
+    "containers": {
+      "title": "Conteneurs",
+      "table": {
+        "headers": {
+          "id": "ID",
+          "name": "Nom",
+          "image": "Image",
+          "status": "Statut",
+          "ports": "Ports",
+          "created": "Créé"
+        },
+        "noContainers": "Aucun conteneur trouvé",
+        "morePorts": "+{count} de plus"
+      },
+      "viewAll": "Voir Tout"
+    },
+    "disk": {
+      "title": "Utilisation du disque",
+      "used": "{value} Go utilisé",
+      "total": "{value} Go total",
+      "percentage": "{value}%",
+      "table": {
+        "headers": {
+          "mount": "Point de montage",
+          "size": "Taille",
+          "used": "Utilisé",
+          "percentage": "%"
+        }
+      }
+    },
+    "load": {
+      "title": "Charge moyenne",
+      "labels": {
+        "oneMin": "1 minute",
+        "fiveMin": "5 minutes",
+        "fifteenMin": "15 minutes"
+      }
+    },
+    "cpu": {
+      "title": "Utilisation du CPU",
+      "overall": "Global",
+      "usage": "Utilisation (%)",
+      "cores": "Cœurs",
+      "perCore": "Par cœur"
+    },
+    "memory": {
+      "title": "Utilisation de la mémoire",
+      "used": "{value} Go utilisé",
+      "total": "{value} Go total",
+      "percentage": "{value}%"
+    },
+    "errors": {
+      "parseMessage": "Échec de l'analyse du message",
+      "unknownError": "Une erreur inconnue s'est produite",
+      "connectionLost": "Connexion perdue. Tentative de reconnexion...",
+      "reconnectFailed": "Échec de la reconnexion. Veuillez réessayer plus tard."
+    },
+    "system": {
+      "title": "Informations système",
+      "osType": "Type d'OS",
+      "cpu": "CPU",
+      "uptime": "Temps de fonctionnement",
+      "lastUpdated": "Dernière mise à jour",
+      "hostname": "Nom d'hôte",
+      "kernelVersion": "Version du noyau",
+      "architecture": "Architecture",
+      "memory": "Mémoire",
+      "labels": {
+        "operatingSystem": "Système d'exploitation",
+        "hostname": "Nom d'hôte",
+        "cpu": "CPU",
+        "cpuCores": "Cœurs CPU",
+        "memory": "Mémoire",
+        "kernelVersion": "Version du noyau",
+        "uptime": "Temps de fonctionnement",
+        "architecture": "Architecture"
+      }
+    },
+    "smtpBanner": {
+      "message": "Configurez les paramètres SMTP pour recevoir des notifications",
+      "configure": "Configurer"
+    }
+  }
+}

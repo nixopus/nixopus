@@ -1,6 +1,14 @@
 'use client';
 import { getWebsocketUrl } from '@/redux/conf';
-import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  ReactNode,
+  useCallback
+} from 'react';
 import { getAccessToken } from 'supertokens-auth-react/recipe/session';
 import { useAppSelector } from '@/redux/hooks';
 
@@ -9,13 +17,15 @@ type WebSocketContextValue = {
   message: string | null;
   sendMessage: (data: string) => void;
   sendJsonMessage: (data: any) => void;
+  subscribe: (listener: (data: string) => void) => () => void;
 };
 
 const WebSocketContext = createContext<WebSocketContextValue>({
   isReady: false,
   message: null,
   sendMessage: () => {},
-  sendJsonMessage: () => {}
+  sendJsonMessage: () => {},
+  subscribe: () => () => {}
 });
 
 interface WebSocketProviderProps {
@@ -37,6 +47,8 @@ export const WebSocketProvider = ({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const isConnectingRef = useRef(false);
+  const messageQueueRef = useRef<string[]>([]);
+  const listenersRef = useRef(new Set<(data: string) => void>());
   const { isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
 
   const connectWebSocket = async () => {
@@ -60,7 +72,7 @@ export const WebSocketProvider = ({
         try {
           wsRef.current.close();
         } catch (e) {
-          console.warn('Error closing existing WebSocket:', e);
+          console.error('Error closing existing WebSocket:', e);
         }
         wsRef.current = null;
       } else {
@@ -82,12 +94,20 @@ export const WebSocketProvider = ({
         setIsReady(true);
         reconnectAttemptsRef.current = 0;
         isConnectingRef.current = false;
+
+        while (messageQueueRef.current.length > 0) {
+          const queuedMessage = messageQueueRef.current.shift();
+          if (queuedMessage && socket.readyState === WebSocket.OPEN) {
+            socket.send(queuedMessage);
+          }
+        }
       };
 
       socket.onclose = (event) => {
         console.log(`WebSocket connection closed: ${event.code} ${event.reason}`);
         setIsReady(false);
         isConnectingRef.current = false;
+        messageQueueRef.current = [];
 
         if (!event.wasClean) {
           handleReconnect();
@@ -95,12 +115,22 @@ export const WebSocketProvider = ({
       };
 
       socket.onmessage = (event) => {
+        // Backwards compatible: some parts of the app consume only the latest message.
         setMessage(event.data);
+
+        // Critical: terminals require *every* WS frame; React state can drop/coalesce updates under load.
+        for (const listener of listenersRef.current) {
+          try {
+            listener(event.data);
+          } catch (e) {
+            console.error('WebSocket listener error:', e);
+          }
+        }
       };
 
-      socket.onerror = (error) => {
-        console.log('WebSocket error:', error);
+      socket.onerror = () => {
         isConnectingRef.current = false;
+        setIsReady(false);
       };
 
       wsRef.current = socket;
@@ -161,27 +191,43 @@ export const WebSocketProvider = ({
     };
   }, [isAuthenticated, isInitialized]);
 
-  const sendMessage = (data: string) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(data);
-    } else {
-      console.warn('Cannot send message, WebSocket is not connected');
-    }
-  };
+  const sendMessage = useCallback((data: string) => {
+    const ws = wsRef.current;
+    if (!ws) return;
 
-  const sendJsonMessage = (data: any) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(data));
-    } else {
-      console.warn('Cannot send message, WebSocket is not connected');
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(data);
+    } else if (ws.readyState === WebSocket.CONNECTING) {
+      messageQueueRef.current.push(data);
     }
-  };
+  }, []);
+
+  const sendJsonMessage = useCallback((data: any) => {
+    const ws = wsRef.current;
+    if (!ws) return;
+
+    const jsonData = JSON.stringify(data);
+
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(jsonData);
+    } else if (ws.readyState === WebSocket.CONNECTING) {
+      messageQueueRef.current.push(jsonData);
+    }
+  }, []);
+
+  const subscribe = useCallback((listener: (data: string) => void) => {
+    listenersRef.current.add(listener);
+    return () => {
+      listenersRef.current.delete(listener);
+    };
+  }, []);
 
   const contextValue: WebSocketContextValue = {
     isReady,
     message,
     sendMessage,
-    sendJsonMessage
+    sendJsonMessage,
+    subscribe
   };
 
   return <WebSocketContext.Provider value={contextValue}>{children}</WebSocketContext.Provider>;

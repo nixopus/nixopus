@@ -1,0 +1,80 @@
+{
+  "fileManager": {
+    "header": {
+      "title": "Gestionnaire de Fichiers",
+      "subtitle": "Gérez vos fichiers ici"
+    },
+    "contextMenu": {
+      "info": "Détails",
+      "rename": "Renommer",
+      "copy": "Copier",
+      "move": "Déplacer",
+      "share": "Partager",
+      "download": "Télécharger",
+      "delete": "Supprimer",
+      "cancel": "Annuler"
+    },
+    "actions": {
+      "upload": "Télécharger un Fichier",
+      "createDirectory": "Créer un Répertoire",
+      "showHidden": "Afficher les Fichiers Cachés",
+      "hideHidden": "Masquer les Fichiers Cachés",
+      "newFolder": "Nouveau Dossier {number}",
+      "errors": {
+        "createDirectory": "Échec de la création du répertoire"
+      }
+    },
+    "sort": {
+      "title": "Trier par",
+      "methods": {
+        "name": "Nom",
+        "updated_at": "Date de Modification",
+        "created_at": "Date de Création",
+        "size": "Taille",
+        "file_type": "Type"
+      }
+    },
+    "upload": {
+      "title": "Télécharger un Fichier",
+      "dragDrop": "Glissez et déposez des fichiers ici, ou cliquez pour sélectionner des fichiers",
+      "errors": {
+        "uploadFailed": "Échec du téléchargement du fichier",
+        "fileTooLarge": "La taille du fichier dépasse la limite",
+        "invalidType": "Type de fichier invalide"
+      }
+    },
+    "info": {
+      "labels": {
+        "path": "Chemin",
+        "size": "Taille",
+        "created": "Créé",
+        "updated": "Mis à jour",
+        "type": "Type",
+        "hidden": "Caché",
+        "permissions": "Permissions"
+      },
+      "calculating": "Calcul en cours...",
+      "yes": "Oui",
+      "no": "Non"
+    },
+    "item": {
+      "actions": {
+        "info": "Informations",
+        "rename": "Renommer",
+        "copy": "Copier",
+        "move": "Déplacer",
+        "delete": "Déplacer vers la Corbeille",
+        "moveHere": "Déplacer ici",
+        "pasteHere": "Coller ici"
+      }
+    },
+    "noFiles": "Aucun fichier trouvé",
+    "noPermissionCreate": "Vous n'avez pas la permission de créer des fichiers",
+    "noPermissionUpdate": "Vous n'avez pas la permission de mettre à jour des fichiers",
+    "copiedToClipboard": "Copié dans le presse-papiers",
+    "copySuccess": "Fichier copié avec succès",
+    "errors": {
+      "fileExists": "Le fichier existe déjà"
+    }
+  }
+}

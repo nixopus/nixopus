@@ -1,0 +1,10 @@
+{
+  "user": {
+    "menu": {
+      "sponsor": "Patrocinar",
+      "help": "Ayuda",
+      "reportIssue": "Reportar un problema",
+      "logout": "Cerrar sesión"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "toasts": {
+    "success": {
+      "uploadFile": "Archivo subido exitosamente",
+      "copyFile": "Archivo copiado exitosamente"
+    },
+    "errors": {
+      "realtimeMonitor": "Error al conectar con el servicio de monitorización en tiempo real",
+      "setFileToCopy": "Error al establecer el archivo para copiar",
+      "moveFile": "Error al mover el archivo",
+      "copyFile": "Error al copiar el archivo",
+      "renameFile": "Error al renombrar el archivo",
+      "startRenaming": "Error al iniciar el renombrado",
+      "navigateToFile": "Error al navegar al archivo",
+      "createNewFolder": "Error al crear nueva carpeta",
+      "createDirectory": "Error al crear directorio",
+      "uploadFile": "Error al subir el archivo",
+      "deleteFile": "Error al eliminar el archivo",
+      "calculateSize": "Error al calcular el tamaño",
+      "setEmail": "Error al establecer el correo electrónico",
+      "setPassword": "Error al establecer la contraseña"
+    }
+  }
+}

@@ -28,10 +28,13 @@ export const useTerminal = (
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const fitAddonRef = useRef<any | null>(null);
   const { isStopped, setIsStopped } = StopExecution();
-  const { sendJsonMessage, message, isReady } = useWebSocket();
+  const { sendJsonMessage, subscribe, isReady } = useWebSocket();
   const [terminalInstance, setTerminalInstance] = useState<any | null>(null);
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const terminalInstanceRef = useRef<any | null>(null);
+  const pendingOutputRef = useRef<string[]>([]);
   
+  // Keep refs for WebSocket to ensure we always use the latest values
   const isReadyRef = useRef(isReady);
   const sendJsonMessageRef = useRef(sendJsonMessage);
   
@@ -50,14 +53,21 @@ export const useTerminal = (
   }, []);
 
   const destroyTerminal = useCallback(() => {
-    if (terminalInstance) {
-      terminalInstance.dispose();
+    const instance = terminalInstanceRef.current;
+    if (instance) {
+      instance.dispose();
+      terminalInstanceRef.current = null;
       setTerminalInstance(null);
+    }
+    pendingOutputRef.current = [];
+    // Clear the terminal container to remove any stale input
+    if (terminalRef.current) {
+      terminalRef.current.innerHTML = '';
     }
     if (resizeTimeoutRef.current) {
       clearTimeout(resizeTimeoutRef.current);
     }
-  }, [terminalInstance, terminalId]);
+  }, []);
 
   useEffect(() => {
     if (isStopped && terminalInstance) {
@@ -66,31 +76,67 @@ export const useTerminal = (
     }
   }, [isStopped, safeSendMessage, setIsStopped, terminalInstance, terminalId]);
 
-  useEffect(() => {
-    if (!message || !terminalInstance) return;
+  const handleTerminalFrame = useCallback(
+    (raw: string) => {
+      if (!raw) return;
 
-    try {
-      const parsedMessage =
-        typeof message === 'string' && message.startsWith('{') ? JSON.parse(message) : message;
+      let parsedMessage: any;
+      try {
+        parsedMessage = typeof raw === 'string' && raw.startsWith('{') ? JSON.parse(raw) : raw;
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+        return;
+      }
 
-      if (parsedMessage.terminal_id !== terminalId) return;
+      if (parsedMessage?.terminal_id !== terminalId) {
+        return;
+      }
 
-      if (parsedMessage.action === 'error') {
+      if (parsedMessage?.action === 'error') {
         console.error('Terminal error:', parsedMessage.data);
         return;
       }
 
-      if (parsedMessage.type) {
-        if (parsedMessage.type === OutputType.EXIT) {
-          destroyTerminal();
-        } else if (parsedMessage.data) {
-          terminalInstance.write(parsedMessage.data);
-        }
+      if (parsedMessage?.type === OutputType.EXIT) {
+        destroyTerminal();
+        return;
       }
-    } catch (error) {
-      console.error('Error processing WebSocket message:', error);
+
+      if (parsedMessage?.data) {
+        const instance = terminalInstanceRef.current;
+        if (!instance) {
+          // Terminal not ready yet; buffer output so we don't lose early frames.
+          pendingOutputRef.current.push(parsedMessage.data);
+          return;
+        }
+
+        // Write output even when terminal is inactive (hidden) to preserve state.
+        // When user switches back, they'll see all output that happened while inactive.
+        instance.write(parsedMessage.data);
+      }
+    },
+    [destroyTerminal, terminalId]
+  );
+
+  useEffect(() => {
+    // Critical: process every WS frame. Using a single `message` state drops frames under load.
+    return subscribe(handleTerminalFrame);
+  }, [subscribe, handleTerminalFrame]);
+
+  // Cleanup and dstroy terminal only when terminal panel is closed or component unmounts
+  // Keep terminal alive when just switching tabs (inactive) to preserve state
+  useEffect(() => {
+    if (!isTerminalOpen && terminalInstanceRef.current) {
+      // Terminal panel closed - destroy all terminals
+      destroyTerminal();
     }
-  }, [message, terminalInstance, destroyTerminal, terminalId]);
+    return () => {
+      // Cleanup on unmount (session closed)
+      if (terminalInstanceRef.current) {
+        destroyTerminal();
+      }
+    };
+  }, [isTerminalOpen, destroyTerminal]);
 
   const initializeTerminal = useCallback(async () => {
     if (!terminalRef.current || !isReadyRef.current) return;
@@ -103,37 +149,52 @@ export const useTerminal = (
 
       const term = new Terminal({
         cursorBlink: true,
-        fontFamily: '"Menlo", "DejaVu Sans Mono", "Consolas", monospace',
-        fontSize: 14,
+        cursorStyle: 'bar',
+        cursorWidth: 2,
+        fontFamily:
+          '"JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Menlo, Monaco, "Courier New", monospace',
+        fontSize: 13,
+        fontWeight: '400',
+        fontWeightBold: '600',
+        letterSpacing: 0,
+        lineHeight: 1.4,
         theme: {
-          foreground: '#cccccc',
-          background: '#1e1e1e',
-          cursor: '#cccccc',
-          black: '#000000',
-          red: '#cd3131',
-          green: '#0dbc79',
-          yellow: '#e5e510',
-          blue: '#2472c8',
-          magenta: '#bc3fbc',
-          cyan: '#11a8cd',
-          white: '#e5e5e5',
-          brightBlack: '#666666',
-          brightRed: '#f14c4c',
-          brightGreen: '#23d18b',
-          brightYellow: '#f5f543',
-          brightBlue: '#3b8eea',
-          brightMagenta: '#d670d6',
-          brightCyan: '#29b8db',
-          brightWhite: '#e5e5e5'
+          // Warp-inspired dark theme with vibrant accents
+          foreground: '#e4e4e7',
+          background: '#0c0c0f',
+          cursor: '#22d3ee',
+          cursorAccent: '#0c0c0f',
+          selectionBackground: '#3b82f620',
+          selectionForeground: '#ffffff',
+          selectionInactiveBackground: '#3b82f610',
+          // ANSI colors - vibrant and modern
+          black: '#18181b',
+          red: '#f87171',
+          green: '#4ade80',
+          yellow: '#facc15',
+          blue: '#60a5fa',
+          magenta: '#c084fc',
+          cyan: '#22d3ee',
+          white: '#e4e4e7',
+          // Bright variants
+          brightBlack: '#52525b',
+          brightRed: '#fca5a5',
+          brightGreen: '#86efac',
+          brightYellow: '#fde047',
+          brightBlue: '#93c5fd',
+          brightMagenta: '#d8b4fe',
+          brightCyan: '#67e8f9',
+          brightWhite: '#fafafa'
         },
         allowTransparency: true,
         rightClickSelectsWord: true,
         disableStdin: !allowInput,
         convertEol: true,
-        scrollback: 1000,
-        tabStopWidth: 8,
+        scrollback: 5000,
+        tabStopWidth: 4,
         macOptionIsMeta: true,
-        macOptionClickForcesSelection: true
+        macOptionClickForcesSelection: true,
+        smoothScrollDuration: 100
       });
 
       const fitAddon = new FitAddon();
@@ -173,15 +234,20 @@ export const useTerminal = (
         if (allowInput) {
           term.attachCustomKeyEventHandler((event: KeyboardEvent) => {
             const key = event.key.toLowerCase();
+
+            // Handle Ctrl+J or Cmd+J (toggle terminal shortcut)
             if (key === 'j' && (event.ctrlKey || event.metaKey)) {
               return false;
-            } else if (key === 'c' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
+            }
+
+            // Handle Ctrl+C or Cmd+C for copy (when there's a selection)
+            if (key === 'c' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
               if (event.type === 'keydown') {
                 try {
                   const selection = term.getSelection();
                   if (selection) {
                     navigator.clipboard.writeText(selection).then(() => {
-                      term.clearSelection(); // Clear selection after successful copy
+                      term.clearSelection();
                     });
                     return false;
                   }
@@ -189,10 +255,14 @@ export const useTerminal = (
                   console.error('Error in Ctrl+C handler:', error);
                 }
               }
-              return false;
             }
+
+            // Allow xterm to process all other keys normally
             return true;
           });
+
+          // onData is called when xterm processes input
+          // Send all input to backend - backend echo will handle display
           term.onData((data) => {
             safeSendMessage({
               action: 'terminal',
@@ -213,7 +283,15 @@ export const useTerminal = (
         });
       }
 
+      terminalInstanceRef.current = term;
       setTerminalInstance(term);
+
+      // Flush any buffered output we received before xterm was ready.
+      if (pendingOutputRef.current.length > 0) {
+        const buffered = pendingOutputRef.current.join('');
+        pendingOutputRef.current = [];
+        term.write(buffered);
+      }
     } catch (error) {
       console.error('Error initializing terminal:', error);
     }
