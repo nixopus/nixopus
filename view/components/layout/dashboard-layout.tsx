@@ -20,12 +20,11 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { Tour } from '@/components/Tour';
 import { useTour } from '@/hooks/useTour';
 import { Button } from '@/components/ui/button';
-import { HelpCircle, Settings } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { ModeToggler } from '@/components/ui/theme-toggler';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
 import { TopbarWidgets } from './topbar-widgets';
-import { useSettingsModal } from '@/hooks/use-settings-modal';
 import { useTranslation } from '@/hooks/use-translation';
 
 enum TERMINAL_POSITION {
@@ -53,7 +52,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [TerminalPosition, setTerminalPosition] = React.useState(TERMINAL_POSITION.BOTTOM);
   const [fitAddonRef, setFitAddonRef] = React.useState<any | null>(null);
   const { startTour } = useTour();
-  const { openSettings } = useSettingsModal();
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -104,14 +102,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <div className="flex items-center gap-4">
               <TopbarWidgets />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => openSettings()}
-                title={t('settings.title')}
-              >
-                <Settings className="h-5 w-5" />
-              </Button>
               <Button
                 variant="outline"
                 size="icon"

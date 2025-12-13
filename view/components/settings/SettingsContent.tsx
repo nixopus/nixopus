@@ -13,7 +13,7 @@ interface SettingsContentProps {
 
 export function SettingsContent({ activeCategory }: SettingsContentProps) {
   return (
-    <div className="flex-1 overflow-y-auto p-6">
+    <div className="flex-1 flex flex-col overflow-hidden p-6">
       {activeCategory === 'general' && <GeneralSettingsContent />}
       {activeCategory === 'notifications' && <NotificationsSettingsContent />}
       {activeCategory === 'teams' && <TeamsSettingsContent />}

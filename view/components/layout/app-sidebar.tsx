@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { AlertCircle, HelpCircle, Heart, LogOut } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { NavMain } from '@/components/layout/nav-main';
 import { TeamSwitcher } from '@/components/ui/team-switcher';
 import {
@@ -15,7 +15,7 @@ import {
   SidebarMenuItem
 } from '@/components/ui/sidebar';
 import { useAppSidebar } from '@/hooks/use-app-sidebar';
-import { LogoutDialog } from '@/components/ui/logout-dialog';
+import { useSettingsModal } from '@/hooks/use-settings-modal';
 
 export function AppSidebar({
   toggleAddTeamModal,
@@ -33,15 +33,9 @@ export function AppSidebar({
     activeOrg,
     hasAnyPermission,
     t,
-    showLogoutDialog,
-    filteredNavItems,
-    handleSponsor,
-    handleReportIssue,
-    handleHelp,
-    handleLogoutClick,
-    handleLogoutConfirm,
-    handleLogoutCancel
+    filteredNavItems
   } = useAppSidebar();
+  const { openSettings } = useSettingsModal();
 
   if (!user || !activeOrg) {
     return null;
@@ -74,37 +68,14 @@ export function AppSidebar({
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleSponsor} className="cursor-pointer">
-              <Heart className="text-red-500" />
-              <span>{t('user.menu.sponsor')}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleHelp} className="cursor-pointer">
-              <HelpCircle />
-              <span>{t('user.menu.help')}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleReportIssue} className="cursor-pointer">
-              <AlertCircle />
-              <span>{t('user.menu.reportIssue')}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogoutClick} className="cursor-pointer">
-              <LogOut />
-              <span>{t('user.menu.logout')}</span>
+            <SidebarMenuButton onClick={() => openSettings()} className="cursor-pointer">
+              <Settings />
+              <span>{t('settings.title')}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />
-      <LogoutDialog
-        open={showLogoutDialog}
-        onConfirm={handleLogoutConfirm}
-        onCancel={handleLogoutCancel}
-      />
     </Sidebar>
   );
 }
