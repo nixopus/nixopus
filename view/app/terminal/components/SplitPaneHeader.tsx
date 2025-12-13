@@ -35,17 +35,15 @@ export const SplitPaneHeader: React.FC<SplitPaneHeaderProps> = ({
   return (
     <div
       className={cn(
-        'flex items-center justify-between h-6 px-2 border-b cursor-pointer transition-all duration-200',
-        isActive
-          ? 'bg-[#1a1a1f] border-[#2d2d2d]'
-          : 'bg-[#16161a] border-[#252525] hover:bg-[#1a1a1f]'
+        'flex items-center justify-between h-6 px-2 cursor-pointer transition-all duration-200',
+        'bg-transparent hover:bg-white/[0.02]'
       )}
       onClick={onFocus}
     >
       <div className="flex items-center gap-1.5">
         <Triangle
           className={cn(
-            'h-3 w-3 transition-all duration-300',
+            'h-3 w-3 transition-all duration-300 rotate-[180deg]',
             isActive && 'drop-shadow-[0_0_4px_currentColor]'
           )}
           style={{ 
@@ -60,7 +58,7 @@ export const SplitPaneHeader: React.FC<SplitPaneHeaderProps> = ({
           <button
             className={cn(
               'p-0.5 rounded transition-all duration-200',
-              'text-[#666] hover:text-[#fff] hover:bg-[#3d3d3d]'
+              'text-[#666] hover:text-[#fff] hover:bg-white/10'
             )}
             onClick={(e) => {
               e.stopPropagation();
