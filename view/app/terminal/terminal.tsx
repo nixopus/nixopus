@@ -109,6 +109,7 @@ export const Terminal: React.FC<TerminalProps> = ({
         >
           {sessions.map((session) => {
             const isActiveSession = session.id === activeSessionId;
+            const hasMultiplePanes = session.splitPanes.length > 1;
             return (
               <div
                 key={session.id}
@@ -125,25 +126,37 @@ export const Terminal: React.FC<TerminalProps> = ({
                 <ResizablePanelGroup direction="horizontal" className="h-full w-full">
                   {session.splitPanes.map((pane, index) => (
                     <React.Fragment key={pane.id}>
+                      {index > 0 && (
+                        <ResizableHandle
+                          withHandle
+                          className="bg-[#2d2d2d] hover:bg-[#007acc] transition-colors duration-200 w-[2px]"
+                        />
+                      )}
                       <ResizablePanel
                         defaultSize={100 / session.splitPanes.length}
                         minSize={20}
                         className="flex flex-col"
                       >
-                        <SplitPaneHeader
-                          paneIndex={index}
-                          isActive={pane.id === activePaneId && isActiveSession}
-                          canClose={session.splitPanes.length > 1}
-                          onFocus={() => {
-                            if (!isActiveSession) {
-                              switchSession(session.id);
-                            }
-                            focusPane(pane.id);
-                          }}
-                          onClose={() => closeSplitPane(pane.id)}
-                          closeLabel={t('terminal.close')}
-                        />
-                        <div className="flex-1 relative" style={{ height: 'calc(100% - 24px)' }}>
+                        {hasMultiplePanes && (
+                          <SplitPaneHeader
+                            paneIndex={index}
+                            isActive={pane.id === activePaneId && isActiveSession}
+                            canClose={session.splitPanes.length > 1}
+                            totalPanes={session.splitPanes.length}
+                            onFocus={() => {
+                              if (!isActiveSession) {
+                                switchSession(session.id);
+                              }
+                              focusPane(pane.id);
+                            }}
+                            onClose={() => closeSplitPane(pane.id)}
+                            closeLabel={t('terminal.close')}
+                          />
+                        )}
+                        <div 
+                          className="flex-1 relative" 
+                          style={{ height: hasMultiplePanes ? 'calc(100% - 24px)' : '100%' }}
+                        >
                           <TerminalPane
                             key={`${session.id}-${pane.terminalId}`}
                             isActive={pane.id === activePaneId && isActiveSession}
@@ -162,12 +175,6 @@ export const Terminal: React.FC<TerminalProps> = ({
                           />
                         </div>
                       </ResizablePanel>
-                      {index < session.splitPanes.length - 1 && (
-                        <ResizableHandle
-                          withHandle
-                          className="bg-[#2d2d2d] hover:bg-[#007acc] transition-colors duration-200"
-                        />
-                      )}
                     </React.Fragment>
                   ))}
                 </ResizablePanelGroup>

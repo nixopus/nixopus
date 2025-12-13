@@ -33,19 +33,19 @@ export const useTerminal = (
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const terminalInstanceRef = useRef<any | null>(null);
   const pendingOutputRef = useRef<string[]>([]);
-  
+
   // Keep refs for WebSocket to ensure we always use the latest values
   const isReadyRef = useRef(isReady);
   const sendJsonMessageRef = useRef(sendJsonMessage);
-  
+
   useEffect(() => {
     isReadyRef.current = isReady;
   }, [isReady]);
-  
+
   useEffect(() => {
     sendJsonMessageRef.current = sendJsonMessage;
   }, [sendJsonMessage]);
-  
+
   const safeSendMessage = useCallback((data: any) => {
     if (isReadyRef.current) {
       sendJsonMessageRef.current(data);
@@ -221,13 +221,6 @@ export const useTerminal = (
         });
 
         if (allowInput) {
-          safeSendMessage({
-            action: 'terminal',
-            data: { value: '\r', terminalId }
-          });
-        }
-
-        if (allowInput) {
           term.attachCustomKeyEventHandler((event: KeyboardEvent) => {
             const key = event.key.toLowerCase();
 
@@ -287,6 +280,16 @@ export const useTerminal = (
         const buffered = pendingOutputRef.current.join('');
         pendingOutputRef.current = [];
         term.write(buffered);
+      }
+
+      // instance is created and buffered output is flushed
+      if (allowInput) {
+        setTimeout(() => {
+          safeSendMessage({
+            action: 'terminal',
+            data: { value: '\n', terminalId }
+          });
+        }, 100);
       }
     } catch (error) {
       console.error('Error initializing terminal:', error);

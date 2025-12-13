@@ -16,6 +16,7 @@ type SplitPaneHeaderProps = {
   paneIndex: number;
   isActive: boolean;
   canClose: boolean;
+  totalPanes: number;
   onFocus: () => void;
   onClose: () => void;
   closeLabel: string;
@@ -25,12 +26,14 @@ export const SplitPaneHeader: React.FC<SplitPaneHeaderProps> = ({
   paneIndex,
   isActive,
   canClose,
+  totalPanes,
   onFocus,
   onClose,
   closeLabel
 }) => {
   const color = PANE_COLORS[paneIndex % PANE_COLORS.length];
   const triangleColor = isActive ? color.active : color.inactive;
+  const showTriangle = totalPanes > 1 && isActive;
 
   return (
     <div
@@ -41,17 +44,18 @@ export const SplitPaneHeader: React.FC<SplitPaneHeaderProps> = ({
       onClick={onFocus}
     >
       <div className="flex items-center gap-1.5">
-        <Triangle
-          className={cn(
-            'h-3 w-3 transition-all duration-300 rotate-[180deg]',
-            isActive && 'drop-shadow-[0_0_4px_currentColor]'
-          )}
-          style={{ 
-            color: triangleColor,
-            fill: triangleColor,
-            opacity: isActive ? 1 : 0.6
-          }}
-        />
+        {showTriangle && (
+          <Triangle
+            className={cn(
+              'h-3 w-3 transition-all duration-300 rotate-[180deg]',
+              'drop-shadow-[0_0_4px_currentColor]'
+            )}
+            style={{ 
+              color: triangleColor,
+              fill: triangleColor
+            }}
+          />
+        )}
       </div>
       <div className="flex items-center">
         {canClose && (
