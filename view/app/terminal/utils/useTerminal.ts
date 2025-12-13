@@ -123,20 +123,16 @@ export const useTerminal = (
     return subscribe(handleTerminalFrame);
   }, [subscribe, handleTerminalFrame]);
 
-  // Cleanup and dstroy terminal only when terminal panel is closed or component unmounts
-  // Keep terminal alive when just switching tabs (inactive) to preserve state
+  // Cleanup terminal only when component unmounts (session/pane actually closed)
+  // Keep terminal alive when panel is hidden or tabs are switched to preserve state
   useEffect(() => {
-    if (!isTerminalOpen && terminalInstanceRef.current) {
-      // Terminal panel closed - destroy all terminals
-      destroyTerminal();
-    }
     return () => {
-      // Cleanup on unmount (session closed)
+      // Only cleanup on unmount (when session/pane is actually closed)
       if (terminalInstanceRef.current) {
         destroyTerminal();
       }
     };
-  }, [isTerminalOpen, destroyTerminal]);
+  }, [destroyTerminal]);
 
   const initializeTerminal = useCallback(async () => {
     if (!terminalRef.current || !isReadyRef.current) return;
