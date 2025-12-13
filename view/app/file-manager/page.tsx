@@ -362,7 +362,7 @@ function FileManager() {
         onMove={handleMoveFile}
         onPaste={handlePasteFile}
       >
-        <PageLayout maxWidth="6xl" padding="md" spacing="lg" className="min-h-[calc(100vh-100px)]">
+        <PageLayout maxWidth="full" padding="md" spacing="lg" className="min-h-[calc(100vh-100px)]">
           <CopyFeedback show={showCopyFeedback} message={copyFeedbackMessage} />
 
           <div className="mb-6 flex flex-col gap-4 px-0 lg:px-6">

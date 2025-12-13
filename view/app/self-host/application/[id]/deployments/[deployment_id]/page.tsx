@@ -6,6 +6,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DeploymentLogsTable } from '@/app/self-host/components/deployment-logs';
+import PageLayout from '@/components/layout/page-layout';
 
 function page() {
   const { t } = useTranslation();
@@ -14,9 +15,9 @@ function page() {
 
   return (
     <ResourceGuard resource="deploy" action="read" loadingFallback={<Skeleton className="h-96" />}>
-      <div className="py-6 space-y-8 w-full">
+      <PageLayout maxWidth="full" padding="md" spacing="lg">
         <DeploymentLogsTable id={deploymentId} isDeployment={true} title="Deployment Logs" />
-      </div>
+      </PageLayout>
     </ResourceGuard>
   );
 }

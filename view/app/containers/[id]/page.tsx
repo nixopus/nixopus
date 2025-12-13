@@ -55,7 +55,7 @@ export default function ContainerDetailsPage() {
 
   return (
     <ResourceGuard resource="container" action="read" loadingFallback={<ContainerDetailsLoading />}>
-      <PageLayout maxWidth="6xl" padding="md" spacing="lg">
+      <PageLayout maxWidth="full" padding="md" spacing="lg">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-4">

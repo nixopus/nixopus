@@ -15,19 +15,20 @@ import useActivities, {
   getActionColor,
   resourceTypeOptions
 } from './hooks/use-activities';
+import PageLayout from '@/components/layout/page-layout';
 
 export default function ActivitiesPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="">
+    <PageLayout maxWidth="full" padding="md" spacing="lg">
       <ActivityList
         title={t('activities.list.title')}
         description={t('activities.list.description')}
         showFilters={true}
         pageSize={20}
       />
-    </div>
+    </PageLayout>
   );
 }
 
@@ -53,7 +54,7 @@ function ActivityList({
   } = useActivities();
 
   return (
-    <div className="space-y-4">
+    <>
       <DahboardUtilityHeader<ActivityMessage>
         searchTerm={searchTerm}
         handleSearchChange={handleSearchChange}
@@ -103,7 +104,7 @@ function ActivityList({
             : 'No activities yet.'}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
