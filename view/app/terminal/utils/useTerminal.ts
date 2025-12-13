@@ -28,19 +28,28 @@ export const useTerminal = (
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const fitAddonRef = useRef<any | null>(null);
   const { isStopped, setIsStopped } = StopExecution();
-  const { sendJsonMessage, message, isReady } = useWebSocket();
+  const { sendJsonMessage, subscribe, isReady } = useWebSocket();
   const [terminalInstance, setTerminalInstance] = useState<any | null>(null);
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const terminalInstanceRef = useRef<any | null>(null);
+  const pendingOutputRef = useRef<string[]>([]);
 
   const destroyTerminal = useCallback(() => {
-    if (terminalInstance) {
-      terminalInstance.dispose();
+    const instance = terminalInstanceRef.current;
+    if (instance) {
+      instance.dispose();
+      terminalInstanceRef.current = null;
       setTerminalInstance(null);
+    }
+    pendingOutputRef.current = [];
+    // Clear the terminal container to remove any stale input
+    if (terminalRef.current) {
+      terminalRef.current.innerHTML = '';
     }
     if (resizeTimeoutRef.current) {
       clearTimeout(resizeTimeoutRef.current);
     }
-  }, [terminalInstance, terminalId]);
+  }, []);
 
   useEffect(() => {
     if (isStopped && terminalInstance) {
@@ -49,34 +58,67 @@ export const useTerminal = (
     }
   }, [isStopped, sendJsonMessage, setIsStopped, terminalInstance, terminalId]);
 
-  useEffect(() => {
-    if (!message || !terminalInstance) return;
+  const handleTerminalFrame = useCallback(
+    (raw: string) => {
+      if (!raw) return;
 
-    try {
-      const parsedMessage =
-        typeof message === 'string' && message.startsWith('{') ? JSON.parse(message) : message;
-
-      if (parsedMessage.terminal_id !== terminalId) {
-        console.log('Message is not for this terminal session');
+      let parsedMessage: any;
+      try {
+        parsedMessage = typeof raw === 'string' && raw.startsWith('{') ? JSON.parse(raw) : raw;
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
         return;
       }
 
-      if (parsedMessage.action === 'error') {
+      if (parsedMessage?.terminal_id !== terminalId) {
+        return;
+      }
+
+      if (parsedMessage?.action === 'error') {
         console.error('Terminal error:', parsedMessage.data);
         return;
       }
 
-      if (parsedMessage.type) {
-        if (parsedMessage.type === OutputType.EXIT) {
-          destroyTerminal();
-        } else if (parsedMessage.data) {
-          terminalInstance.write(parsedMessage.data);
-        }
+      if (parsedMessage?.type === OutputType.EXIT) {
+        destroyTerminal();
+        return;
       }
-    } catch (error) {
-      console.error('Error processing WebSocket message:', error);
+
+      if (parsedMessage?.data) {
+        const instance = terminalInstanceRef.current;
+        if (!instance) {
+          // Terminal not ready yet; buffer output so we don't lose early frames.
+          pendingOutputRef.current.push(parsedMessage.data);
+          return;
+        }
+
+        // Write output even when terminal is inactive (hidden) to preserve state.
+        // When user switches back, they'll see all output that happened while inactive.
+        instance.write(parsedMessage.data);
+      }
+    },
+    [destroyTerminal, terminalId]
+  );
+
+  useEffect(() => {
+    // Critical: process every WS frame. Using a single `message` state drops frames under load.
+    return subscribe(handleTerminalFrame);
+  }, [subscribe, handleTerminalFrame]);
+
+  // Cleanup and dstroy terminal only when terminal panel is closed or component unmounts
+  // Keep terminal alive when just switching tabs (inactive) to preserve state
+  useEffect(() => {
+    if (!isTerminalOpen && terminalInstanceRef.current) {
+      // Terminal panel closed - destroy all terminals
+      destroyTerminal();
     }
-  }, [message, terminalInstance, destroyTerminal, terminalId]);
+    return () => {
+      // Cleanup on unmount (session closed)
+      if (terminalInstanceRef.current) {
+        destroyTerminal();
+      }
+    };
+  }, [isTerminalOpen, destroyTerminal]);
 
   const initializeTerminal = useCallback(async () => {
     if (!terminalRef.current || terminalInstance || !isReady) return;
@@ -173,15 +215,20 @@ export const useTerminal = (
         if (allowInput) {
           term.attachCustomKeyEventHandler((event: KeyboardEvent) => {
             const key = event.key.toLowerCase();
+
+            // Handle Ctrl+J or Cmd+J (toggle terminal shortcut)
             if (key === 'j' && (event.ctrlKey || event.metaKey)) {
               return false;
-            } else if (key === 'c' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
+            }
+
+            // Handle Ctrl+C or Cmd+C for copy (when there's a selection)
+            if (key === 'c' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
               if (event.type === 'keydown') {
                 try {
                   const selection = term.getSelection();
                   if (selection) {
                     navigator.clipboard.writeText(selection).then(() => {
-                      term.clearSelection(); // Clear selection after successful copy
+                      term.clearSelection();
                     });
                     return false;
                   }
@@ -189,10 +236,14 @@ export const useTerminal = (
                   console.error('Error in Ctrl+C handler:', error);
                 }
               }
-              return false;
             }
+
+            // Allow xterm to process all other keys normally
             return true;
           });
+
+          // onData is called when xterm processes input
+          // Send all input to backend - backend echo will handle display
           term.onData((data) => {
             sendJsonMessage({
               action: 'terminal',
@@ -213,7 +264,15 @@ export const useTerminal = (
         });
       }
 
+      terminalInstanceRef.current = term;
       setTerminalInstance(term);
+
+      // Flush any buffered output we received before xterm was ready.
+      if (pendingOutputRef.current.length > 0) {
+        const buffered = pendingOutputRef.current.join('');
+        pendingOutputRef.current = [];
+        term.write(buffered);
+      }
     } catch (error) {
       console.error('Error initializing terminal:', error);
     }
