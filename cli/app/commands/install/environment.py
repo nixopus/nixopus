@@ -75,7 +75,9 @@ class ConfigResolver:
             return get_ssh_key_path(self.config)
 
         if path == "compose_file_path":
-            return get_compose_file_path(self.config, use_staging=self.staging)
+            # Use staging compose file if staging flag is set OR if custom repo/branch is used
+            use_staging = self.staging or is_custom_repo_or_branch(self.repo, self.branch)
+            return get_compose_file_path(self.config, use_staging=use_staging)
 
         if path == API_PORT and self.api_port is not None:
             return str(self.api_port)
