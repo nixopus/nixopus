@@ -129,7 +129,7 @@ export const Terminal: React.FC<TerminalProps> = ({
                       {index > 0 && (
                         <ResizableHandle
                           withHandle
-                          className="bg-[#2d2d2d] hover:bg-[#007acc] transition-colors duration-200 w-[2px]"
+                          className="bg-[#3a3a3a] hover:bg-[#4a4a4a] transition-colors duration-200 w-[2px] focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       )}
                       <ResizablePanel

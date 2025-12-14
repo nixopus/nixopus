@@ -24,8 +24,8 @@ export const terminalStyles = `
     --terminal-text: #e4e4e7;
     --terminal-text-muted: #71717a;
     --terminal-glow: 0 0 20px rgba(34, 211, 238, 0.15);
-    --terminal-split-border: #2d2d2d;
-    --terminal-split-active: #007acc;
+    --terminal-split-border: #3a3a3a;
+    --terminal-split-active: #4a4a4a;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -76,25 +76,33 @@ export const terminalStyles = `
   }
   
   /* Resizable handle improvements */
-  [data-panel-resize-handle-id] {
+  .terminal-container [data-panel-resize-handle-id] {
     transition: background-color 0.2s ease;
     width: 2px;
+    background-color: var(--terminal-split-border) !important;
   }
-  
-  [data-panel-resize-handle-id]:hover {
+
+  .terminal-container [data-panel-resize-handle-id]:hover {
     background-color: var(--terminal-split-active) !important;
     width: 3px;
   }
-  
-  [data-panel-resize-handle-id]:active {
-    background-color: var(--terminal-accent) !important;
+
+  .terminal-container [data-panel-resize-handle-id]:active {
+    background-color: #5a5a5a !important;
     width: 4px;
   }
-  
+
+  .terminal-container [data-panel-resize-handle-id]:focus,
+  .terminal-container [data-panel-resize-handle-id]:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
   /* Add a visual indicator when dragging */
-  [data-panel-resize-handle-id][data-resize-handle-active] {
-    background-color: var(--terminal-accent) !important;
-    box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+  .terminal-container [data-panel-resize-handle-id][data-resize-handle-active] {
+    background-color: #5a5a5a !important;
+    box-shadow: 0 0 8px rgba(90, 90, 90, 0.4);
     width: 4px;
   }
   

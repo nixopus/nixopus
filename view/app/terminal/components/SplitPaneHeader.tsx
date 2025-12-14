@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, Triangle } from 'lucide-react';
+import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Color palette for split panes
@@ -38,25 +38,21 @@ export const SplitPaneHeader: React.FC<SplitPaneHeaderProps> = ({
   return (
     <div
       className={cn(
-        'flex items-center justify-between h-6 px-2 cursor-pointer transition-all duration-200',
+        'relative flex items-center justify-between h-6 px-2 cursor-pointer transition-all duration-200',
         'bg-transparent hover:bg-white/[0.02]'
       )}
       onClick={onFocus}
     >
-      <div className="flex items-center gap-1.5">
-        {showTriangle && (
-          <Triangle
-            className={cn(
-              'h-3 w-3 transition-all duration-300 rotate-[180deg]',
-              'drop-shadow-[0_0_4px_currentColor]'
-            )}
-            style={{ 
-              color: triangleColor,
-              fill: triangleColor
-            }}
-          />
-        )}
-      </div>
+      {showTriangle && (
+        <div
+          className="absolute top-0 left-0 w-0 h-0 z-10"
+          style={{
+            borderTop: `8px solid ${triangleColor}`,
+            borderRight: '8px solid transparent',
+          }}
+        />
+      )}
+      <div className="flex-1" />
       <div className="flex items-center">
         {canClose && (
           <button
