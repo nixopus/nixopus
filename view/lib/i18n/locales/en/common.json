@@ -5,6 +5,7 @@
     "settings": "Settings",
     "profile": "Profile",
     "logout": "Logout",
+    "loggingOut": "Logging out...",
     "accessDenied": "Access Denied",
     "noPermissionView": "You don't have permission to view this page",
     "searchFiles": "Search files...",

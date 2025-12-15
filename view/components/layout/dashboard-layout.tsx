@@ -26,6 +26,7 @@ import { ModeToggler } from '@/components/ui/theme-toggler';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
 import { TopbarWidgets } from './topbar-widgets';
 import { useTranslation } from '@/hooks/use-translation';
+import { useAppSelector } from '@/redux/hooks';
 
 enum TERMINAL_POSITION {
   BOTTOM = 'bottom',
@@ -53,6 +54,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [fitAddonRef, setFitAddonRef] = React.useState<any | null>(null);
   const { startTour } = useTour();
   const { t } = useTranslation();
+  const isLoggingOut = useAppSelector((state) => state.auth.isLoggingOut);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -68,6 +70,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  if (isLoggingOut) {
+    return (
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-background backdrop-blur-sm">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-primary"></div>
+          <p className="text-sm text-muted-foreground">{t('common.loggingOut') || 'Logging out...'}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider defaultOpen={false}>

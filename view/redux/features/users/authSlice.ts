@@ -14,6 +14,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isInitialized: boolean;
   isLoading: boolean;
+  isLoggingOut: boolean;
   twoFactor: {
     isRequired: boolean;
     tempToken: string | undefined;
@@ -85,6 +86,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isInitialized: false,
   isLoading: false,
+  isLoggingOut: false,
   twoFactor: {
     isRequired: false,
     tempToken: undefined
@@ -142,6 +144,7 @@ export const authSlice = createSlice({
       state.token = undefined;
       state.refreshToken = undefined;
       state.isAuthenticated = false;
+      state.isLoggingOut = false;
       state.twoFactor.isRequired = false;
       state.twoFactor.tempToken = undefined;
       clearAuthTokens();
@@ -154,6 +157,9 @@ export const authSlice = createSlice({
       if (state.user) {
         state.user.two_factor_enabled = action.payload;
       }
+    },
+    setLoggingOut: (state, action: PayloadAction<boolean>) => {
+      state.isLoggingOut = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -176,6 +182,15 @@ export const authSlice = createSlice({
       .addCase(initializeAuth.rejected, (state) => {
         state.isInitialized = true;
         state.isLoading = false;
+      })
+      .addCase(logoutUser.pending, (state) => {
+        state.isLoggingOut = true;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.isLoggingOut = false;
+      })
+      .addCase(logoutUser.rejected, (state) => {
+        state.isLoggingOut = false;
       })
       .addMatcher(authApi.endpoints.loginUser.matchPending, (state) => {
         state.isLoading = true;
@@ -276,5 +291,5 @@ export const authSlice = createSlice({
   }
 });
 
-export const { setCredentials, logout, clearTwoFactor, setTwoFactorEnabled } = authSlice.actions;
+export const { setCredentials, logout, clearTwoFactor, setTwoFactorEnabled, setLoggingOut } = authSlice.actions;
 export default authSlice.reducer;

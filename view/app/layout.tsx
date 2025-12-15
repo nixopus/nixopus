@@ -62,6 +62,7 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const router = useRouter();
   const session = useSessionContext();
+  const isLoggingOut = useAppSelector((state) => state.auth.isLoggingOut);
 
   useEffect(() => {
     dispatch(initializeAuth() as any);
@@ -102,6 +103,17 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (isLoggingOut) {
+    return (
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-primary"></div>
+          <p className="text-sm text-muted-foreground">Logging out...</p>
+        </div>
       </div>
     );
   }

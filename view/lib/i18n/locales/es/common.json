@@ -5,6 +5,7 @@
     "settings": "Configuración",
     "profile": "Perfil",
     "logout": "Cerrar sesión",
+    "loggingOut": "Cerrando sesión...",
     "accessDenied": "Acceso Denegado",
     "noPermissionView": "No tienes permiso para ver esta página",
     "featureDisabled": "Característica Deshabilitada",

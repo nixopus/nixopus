@@ -5,6 +5,7 @@
     "settings": "Paramètres",
     "profile": "Profil",
     "logout": "Déconnexion",
+    "loggingOut": "Déconnexion...",
     "accessDenied": "Accès Refusé",
     "noPermissionView": "Vous n'avez pas la permission de voir cette page",
     "searchFiles": "Rechercher des fichiers...",

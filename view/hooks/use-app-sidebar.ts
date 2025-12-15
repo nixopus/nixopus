@@ -5,7 +5,7 @@ import { useNavigationState } from '@/hooks/use_navigation_state';
 import { setActiveOrganization } from '@/redux/features/users/userSlice';
 import { useTranslation } from '@/hooks/use-translation';
 import { useRBAC } from '@/lib/rbac';
-import { logout, logoutUser } from '@/redux/features/users/authSlice';
+import { logout, logoutUser, setLoggingOut } from '@/redux/features/users/authSlice';
 import { authApi } from '@/redux/services/users/authApi';
 import { userApi } from '@/redux/services/users/userApi';
 import { notificationApi } from '@/redux/services/settings/notificationApi';
@@ -193,6 +193,8 @@ Add any other context about the problem here.`;
 
   const handleLogoutConfirm = async () => {
     setShowLogoutDialog(false);
+    // Set logging out state immediately to hide UI
+    dispatch(setLoggingOut(true));
 
     try {
       clearLocalStorage();
