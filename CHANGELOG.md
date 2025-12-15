@@ -1,3 +1,22 @@
+# [0.1.0-alpha.93](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.92...v0.1.0-alpha.93) (2025-12-13)
+
+
+### Bug Fixes
+
+* keyboard shortcuts to be in full width instead of grid ([9856a79](https://github.com/raghavyuva/nixopus/commit/9856a791ea2c35491c65803eb09173ead8a79e1f))
+
+
+
+# [0.1.0-alpha.92](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.91...v0.1.0-alpha.92) (2025-12-13)
+
+
+### Bug Fixes
+
+* build errors ([dbea6ba](https://github.com/raghavyuva/nixopus/commit/dbea6bab9ff2999939797b3204d79f6233696ce3))
+* remove settings icon from sidebar ([141ef3b](https://github.com/raghavyuva/nixopus/commit/141ef3b097b2a21e2ec5b1a4cc96f8feb7c23e28))
+
+
+
 # [0.1.0-alpha.91](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.90...v0.1.0-alpha.91) (2025-12-13)
 
 

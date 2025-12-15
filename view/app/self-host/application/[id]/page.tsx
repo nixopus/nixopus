@@ -33,7 +33,7 @@ function Page() {
 
   return (
     <ResourceGuard resource="deploy" action="read" loadingFallback={<Skeleton className="h-96" />}>
-      <PageLayout maxWidth="6xl" padding="md" spacing="lg">
+      <PageLayout maxWidth="full" padding="md" spacing="lg">
         <ApplicationDetailsHeader application={application} />
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="w-full justify-start rounded-none h-auto p-0 bg-transparent gap-2">

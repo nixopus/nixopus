@@ -31,7 +31,7 @@ export default function ExtensionDetailsPage() {
   };
 
   return (
-    <PageLayout maxWidth="6xl" padding="md" spacing="lg">
+    <PageLayout maxWidth="full" padding="md" spacing="lg">
       <div className="flex items-center justify-between">
         <ExtensionHeader extension={extension} isLoading={isLoading} />
         <RunButton
