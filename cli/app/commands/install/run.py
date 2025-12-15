@@ -870,7 +870,7 @@ class Install:
             "API_URL": f"{protocol}://{api_host}/api",
             "WEBHOOK_URL": f"{protocol}://{api_host}/api/v1/webhook",
             "VIEW_DOMAIN": f"{protocol}://{view_host}",
-            "SUPERTOKENS_API_KEY": "NixopusSuperTokensAPIKey",
+            "SUPERTOKENS_API_KEY": os.environ.get("SUPERTOKENS_API_KEY", "NixopusSuperTokensAPIKey"),
             "SUPERTOKENS_API_DOMAIN": f"{protocol}://{api_host}/api",
             "SUPERTOKENS_WEBSITE_DOMAIN": f"{protocol}://{view_host}",
             # TODO: temp fix, remove this once we have a secure connection

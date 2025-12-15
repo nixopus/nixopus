@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
@@ -106,8 +107,8 @@ ENV_VAR_KEYS = {
     "SUPERTOKENS_API_KEY": EnvVarDefinition(
         key="SUPERTOKENS_API_KEY",
         var_type=EnvVarType.STRING,
-        description="SuperTokens API authentication key",
-        default="NixopusSuperTokensAPIKey",
+        description="SuperTokens API authentication key (override in production)",
+        default=os.environ.get("SUPERTOKENS_API_KEY", "NixopusSuperTokensAPIKey"),
         computed=False,
     ),
     "SUPERTOKENS_API_DOMAIN": EnvVarDefinition(

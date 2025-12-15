@@ -1,3 +1,12 @@
+# [0.1.0-alpha.93](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.92...v0.1.0-alpha.93) (2025-12-13)
+
+
+### Bug Fixes
+
+* keyboard shortcuts to be in full width instead of grid ([9856a79](https://github.com/raghavyuva/nixopus/commit/9856a791ea2c35491c65803eb09173ead8a79e1f))
+
+
+
 # [0.1.0-alpha.92](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.91...v0.1.0-alpha.92) (2025-12-13)
 
 
