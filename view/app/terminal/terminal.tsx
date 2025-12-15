@@ -9,8 +9,9 @@ import Skeleton from '@/app/file-manager/components/skeleton/Skeleton';
 import { FeatureNames } from '@/types/feature-flags';
 import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { useRBAC } from '@/lib/rbac';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
-import { TerminalSession, TerminalHeader } from './components';
+import { TerminalHeader, TerminalPane, SplitPaneHeader } from './components';
 import { useTerminalSessions, useTerminalDimensions, useTerminalStyles } from './hooks';
 
 type TerminalProps = {
@@ -37,11 +38,17 @@ export const Terminal: React.FC<TerminalProps> = ({
   const {
     sessions,
     activeSessionId,
+    activePaneId,
     sessionStatuses,
     sessionLimit,
+    maxSplits,
+    splitPanes,
     addSession,
     closeSession,
     switchSession,
+    addSplitPane,
+    closeSplitPane,
+    focusPane,
     getStatusChangeHandler
   } = useTerminalSessions();
 
@@ -78,10 +85,13 @@ export const Terminal: React.FC<TerminalProps> = ({
           activeSessionId={activeSessionId}
           sessionStatuses={sessionStatuses}
           sessionLimit={sessionLimit}
+          maxSplits={maxSplits}
+          splitPanesCount={splitPanes.length}
           onAddSession={addSession}
           onCloseSession={closeSession}
           onSwitchSession={switchSession}
           onToggleTerminal={toggleTerminal}
+          onAddSplitPane={addSplitPane}
           closeLabel={t('terminal.close')}
           newTabLabel={t('terminal.newTab')}
         />
@@ -97,30 +107,80 @@ export const Terminal: React.FC<TerminalProps> = ({
             contain: 'inline-size'
           }}
         >
-          {sessions.map((session) => (
-            <div
-              key={session.id}
-              style={{
-                display: session.id === activeSessionId ? 'block' : 'none',
-                height: '100%',
-                width: '100%',
-                maxWidth: '100%',
-                overflow: 'hidden',
-                contain: 'inline-size'
-              }}
-            >
-              <TerminalSession
-                isActive={session.id === activeSessionId}
-                isTerminalOpen={isTerminalOpen}
-                dimensions={dimensions}
-                canCreate={canCreate}
-                canUpdate={canUpdate}
-                setFitAddonRef={setFitAddonRef}
-                terminalId={session.id}
-                onStatusChange={getStatusChangeHandler(session.id)}
-              />
-            </div>
-          ))}
+          {sessions.map((session) => {
+            const isActiveSession = session.id === activeSessionId;
+            const hasMultiplePanes = session.splitPanes.length > 1;
+            return (
+              <div
+                key={session.id}
+                style={{
+                  position: isActiveSession ? 'relative' : 'absolute',
+                  visibility: isActiveSession ? 'visible' : 'hidden',
+                  height: '100%',
+                  width: '100%',
+                  top: 0,
+                  left: 0,
+                  zIndex: isActiveSession ? 1 : 0
+                }}
+              >
+                <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+                  {session.splitPanes.map((pane, index) => (
+                    <React.Fragment key={pane.id}>
+                      {index > 0 && (
+                        <ResizableHandle
+                          withHandle
+                          className="bg-[#3a3a3a] hover:bg-[#4a4a4a] transition-colors duration-200 w-[2px] focus-visible:ring-0 focus-visible:ring-offset-0"
+                        />
+                      )}
+                      <ResizablePanel
+                        defaultSize={100 / session.splitPanes.length}
+                        minSize={20}
+                        className="flex flex-col"
+                      >
+                        {hasMultiplePanes && (
+                          <SplitPaneHeader
+                            paneIndex={index}
+                            isActive={pane.id === activePaneId && isActiveSession}
+                            canClose={session.splitPanes.length > 1}
+                            totalPanes={session.splitPanes.length}
+                            onFocus={() => {
+                              if (!isActiveSession) {
+                                switchSession(session.id);
+                              }
+                              focusPane(pane.id);
+                            }}
+                            onClose={() => closeSplitPane(pane.id)}
+                            closeLabel={t('terminal.close')}
+                          />
+                        )}
+                        <div 
+                          className="flex-1 relative" 
+                          style={{ height: hasMultiplePanes ? 'calc(100% - 24px)' : '100%' }}
+                        >
+                          <TerminalPane
+                            key={`${session.id}-${pane.terminalId}`}
+                            isActive={pane.id === activePaneId && isActiveSession}
+                            isTerminalOpen={isTerminalOpen}
+                            canCreate={canCreate}
+                            canUpdate={canUpdate}
+                            setFitAddonRef={setFitAddonRef}
+                            terminalId={pane.terminalId}
+                            onFocus={() => {
+                              if (!isActiveSession) {
+                                switchSession(session.id);
+                              }
+                              focusPane(pane.id);
+                            }}
+                            onStatusChange={getStatusChangeHandler(pane.terminalId)}
+                          />
+                        </div>
+                      </ResizablePanel>
+                    </React.Fragment>
+                  ))}
+                </ResizablePanelGroup>
+              </div>
+            );
+          })}
         </div>
       </div>
     </AnyPermissionGuard>

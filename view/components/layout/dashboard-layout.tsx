@@ -137,7 +137,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="flex-grow"
               >
                 <ResizablePanel
-                  defaultSize={80}
+                  defaultSize={65}
                   minSize={30}
                   className="overflow-auto no-scrollbar"
                 >
@@ -145,9 +145,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </ResizablePanel>
                 {isTerminalOpen && <ResizableHandle draggable withHandle />}
                 <ResizablePanel
-                  defaultSize={20}
+                  defaultSize={35}
                   minSize={15}
-                  maxSize={50}
+                  maxSize={60}
                   hidden={!isTerminalOpen}
                   onResize={() => {
                     if (fitAddonRef?.current) {

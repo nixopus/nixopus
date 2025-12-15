@@ -34,6 +34,24 @@ export const useTerminal = (
   const terminalInstanceRef = useRef<any | null>(null);
   const pendingOutputRef = useRef<string[]>([]);
 
+  // Keep refs for WebSocket to ensure we always use the latest values
+  const isReadyRef = useRef(isReady);
+  const sendJsonMessageRef = useRef(sendJsonMessage);
+
+  useEffect(() => {
+    isReadyRef.current = isReady;
+  }, [isReady]);
+
+  useEffect(() => {
+    sendJsonMessageRef.current = sendJsonMessage;
+  }, [sendJsonMessage]);
+
+  const safeSendMessage = useCallback((data: any) => {
+    if (isReadyRef.current) {
+      sendJsonMessageRef.current(data);
+    }
+  }, []);
+
   const destroyTerminal = useCallback(() => {
     const instance = terminalInstanceRef.current;
     if (instance) {
@@ -53,10 +71,10 @@ export const useTerminal = (
 
   useEffect(() => {
     if (isStopped && terminalInstance) {
-      sendJsonMessage({ action: 'terminal', data: { value: CTRL_C, terminalId } });
+      safeSendMessage({ action: 'terminal', data: { value: CTRL_C, terminalId } });
       setIsStopped(false);
     }
-  }, [isStopped, sendJsonMessage, setIsStopped, terminalInstance, terminalId]);
+  }, [isStopped, safeSendMessage, setIsStopped, terminalInstance, terminalId]);
 
   const handleTerminalFrame = useCallback(
     (raw: string) => {
@@ -105,23 +123,20 @@ export const useTerminal = (
     return subscribe(handleTerminalFrame);
   }, [subscribe, handleTerminalFrame]);
 
-  // Cleanup and dstroy terminal only when terminal panel is closed or component unmounts
-  // Keep terminal alive when just switching tabs (inactive) to preserve state
+  // Cleanup terminal only when component unmounts (session/pane actually closed)
+  // Keep terminal alive when panel is hidden or tabs are switched to preserve state
   useEffect(() => {
-    if (!isTerminalOpen && terminalInstanceRef.current) {
-      // Terminal panel closed - destroy all terminals
-      destroyTerminal();
-    }
     return () => {
-      // Cleanup on unmount (session closed)
+      // Only cleanup on unmount (when session/pane is actually closed)
       if (terminalInstanceRef.current) {
         destroyTerminal();
       }
     };
-  }, [isTerminalOpen, destroyTerminal]);
+  }, [destroyTerminal]);
 
   const initializeTerminal = useCallback(async () => {
-    if (!terminalRef.current || terminalInstance || !isReady) return;
+    if (!terminalRef.current || !isReadyRef.current) return;
+    if (terminalInstance) return;
 
     try {
       const { Terminal } = await import('@xterm/xterm');
@@ -190,18 +205,11 @@ export const useTerminal = (
         term.open(terminalRef.current);
         fitAddon.activate(term);
 
-        if (allowInput) {
-          sendJsonMessage({
-            action: 'terminal',
-            data: { value: '\r', terminalId }
-          });
-        }
-
         requestAnimationFrame(() => {
           fitAddon.fit();
           const dimensions = fitAddon.proposeDimensions();
           if (dimensions) {
-            sendJsonMessage({
+            safeSendMessage({
               action: 'terminal_resize',
               data: {
                 cols: dimensions.cols,
@@ -245,7 +253,7 @@ export const useTerminal = (
           // onData is called when xterm processes input
           // Send all input to backend - backend echo will handle display
           term.onData((data) => {
-            sendJsonMessage({
+            safeSendMessage({
               action: 'terminal',
               data: { value: data, terminalId }
             });
@@ -253,7 +261,7 @@ export const useTerminal = (
         }
 
         term.onResize((size) => {
-          sendJsonMessage({
+          safeSendMessage({
             action: 'terminal_resize',
             data: {
               cols: size.cols,
@@ -273,16 +281,27 @@ export const useTerminal = (
         pendingOutputRef.current = [];
         term.write(buffered);
       }
+
+      // instance is created and buffered output is flushed
+      if (allowInput) {
+        setTimeout(() => {
+          safeSendMessage({
+            action: 'terminal',
+            data: { value: '\n', terminalId }
+          });
+        }, 100);
+      }
     } catch (error) {
       console.error('Error initializing terminal:', error);
     }
-  }, [sendJsonMessage, isReady, terminalRef, terminalInstance, allowInput, terminalId]);
+  }, [safeSendMessage, terminalRef, terminalInstance, allowInput, terminalId]);
 
   return {
     terminalRef,
     initializeTerminal,
     destroyTerminal,
     fitAddonRef,
-    terminalInstance
+    terminalInstance,
+    isWebSocketReady: isReady
   };
 };

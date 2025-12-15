@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, X, Zap } from 'lucide-react';
+import { Plus, X, Zap, SplitSquareVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { SessionTab } from './SessionTab';
@@ -17,10 +17,13 @@ type TerminalHeaderProps = {
   activeSessionId: string;
   sessionStatuses: Record<string, SessionStatus>;
   sessionLimit: number;
+  maxSplits: number;
+  splitPanesCount: number;
   onAddSession: () => void;
   onCloseSession: (id: string) => void;
   onSwitchSession: (id: string) => void;
   onToggleTerminal: () => void;
+  onAddSplitPane: () => void;
   closeLabel: string;
   newTabLabel: string;
 };
@@ -30,10 +33,13 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
   activeSessionId,
   sessionStatuses,
   sessionLimit,
+  maxSplits,
+  splitPanesCount,
   onAddSession,
   onCloseSession,
   onSwitchSession,
   onToggleTerminal,
+  onAddSplitPane,
   closeLabel,
   newTabLabel
 }) => {
@@ -80,6 +86,20 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-1 shrink-0">
+        {splitPanesCount < maxSplits && (
+          <button
+            className={cn(
+              'flex items-center justify-center w-7 h-7 rounded-md transition-all duration-200 shrink-0',
+              'hover:bg-[var(--terminal-tab-hover)] text-[var(--terminal-text-muted)]',
+              'hover:text-[var(--terminal-accent)] hover:scale-105'
+            )}
+            onClick={onAddSplitPane}
+            title="Split Terminal"
+          >
+            <SplitSquareVertical className="h-3.5 w-3.5" />
+          </button>
+        )}
+
         <div className="hidden sm:flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/5">
           <Zap className="h-2.5 w-2.5 text-amber-400" />
           <span className="text-[9px] font-medium text-[var(--terminal-text-muted)]">

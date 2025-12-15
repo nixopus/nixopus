@@ -41,10 +41,7 @@ export const SessionTab: React.FC<SessionTabProps> = ({
           <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
         ) : status === 'active' ? (
           <div
-            className={cn(
-              'w-2 h-2 rounded-full bg-emerald-400',
-              isActive && 'terminal-ready-indicator'
-            )}
+            className="w-2 h-2 rounded-full bg-emerald-400 terminal-ready-indicator"
           />
         ) : (
           <div className="w-2 h-2 rounded-full bg-zinc-500" />

@@ -1,3 +1,12 @@
+# [0.1.0-alpha.94](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.93...v0.1.0-alpha.94) (2025-12-15)
+
+
+### Performance Improvements
+
+* security hardening for production compose files ([cb765ed](https://github.com/raghavyuva/nixopus/commit/cb765ed14ba7fee63ae641b15c3818e590ce2810))
+
+
+
 # [0.1.0-alpha.93](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.92...v0.1.0-alpha.93) (2025-12-13)
 
 
