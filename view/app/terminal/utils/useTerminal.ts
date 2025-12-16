@@ -98,7 +98,32 @@ export const useTerminal = (
       }
 
       if (parsedMessage?.type === OutputType.EXIT) {
-        destroyTerminal();
+        // Show termination message before destroying terminal
+        const instance = terminalInstanceRef.current;
+        if (instance) {
+          // Write a clear termination message
+          instance.write('\r\n\r\n');
+          instance.write('\x1b[31m'); // Red color
+          instance.write('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\r\n');
+          instance.write('  Session terminated. Terminal closed.\r\n');
+          instance.write('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\r\n');
+          instance.write('\x1b[0m'); // Reset color
+          instance.write('\r\n');
+          
+          // Disable input to prevent further interaction
+          instance.options.disableStdin = true;
+          
+          // Scroll to bottom to ensure message is visible
+          instance.scrollToBottom();
+          
+          // Keep terminal visible for a bit longer so user can see the message
+          setTimeout(() => {
+            destroyTerminal();
+          }, 2000);
+        } else {
+          // Terminal not initialized yet, destroy immediately
+          destroyTerminal();
+        }
         return;
       }
 

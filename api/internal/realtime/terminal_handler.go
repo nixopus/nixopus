@@ -45,6 +45,10 @@ func (s *SocketServer) handleTerminal(conn *websocket.Conn, msg types.Payload) {
 			s.sendError(conn, "Failed to start terminal")
 			return
 		}
+		// Set cleanup callback to remove terminal from map when it terminates
+		newTerminal.SetCleanupCallback(func(tid string) {
+			s.removeTerminal(conn, tid)
+		})
 		s.terminals[conn][terminalId] = newTerminal
 		go newTerminal.Start()
 		term = newTerminal
@@ -94,4 +98,20 @@ func (s *SocketServer) handleTerminalResize(conn *websocket.Conn, msg types.Payl
 	}
 
 	term.ResizeTerminal(uint16(rows), uint16(cols))
+}
+
+// removeTerminal removes a terminated terminal from the terminals map
+func (s *SocketServer) removeTerminal(conn *websocket.Conn, terminalId string) {
+	s.terminalMutex.Lock()
+	defer s.terminalMutex.Unlock()
+
+	if terminals, exists := s.terminals[conn]; exists {
+		if _, termExists := terminals[terminalId]; termExists {
+			delete(terminals, terminalId)
+			// Clean up the connection map if no terminals remain
+			if len(terminals) == 0 {
+				delete(s.terminals, conn)
+			}
+		}
+	}
 }
