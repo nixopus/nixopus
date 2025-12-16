@@ -5,7 +5,9 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 	"github.com/raghavyuva/nixopus-api/internal"
 	"github.com/raghavyuva/nixopus-api/internal/config"
@@ -16,6 +18,20 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/vmihailenco/taskq/v3"
 )
+
+// testRedisConnection tests the Redis connection and fails early in production if connection fails
+func testRedisConnection(ctx context.Context, redisClient *redis.Client) {
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		env := strings.ToLower(config.AppConfig.App.Environment)
+		isProduction := env == "production" || env == "prod"
+		if isProduction {
+			log.Fatalf("failed to connect to Redis in production: %v", err)
+		}
+		log.Printf("Warning: failed to connect to Redis: %v (continuing in non-production environment)", err)
+	} else {
+		log.Println("Successfully connected to Redis")
+	}
+}
 
 func main() {
 	err := godotenv.Load()
@@ -32,6 +48,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create redis client for queue due to %v", err)
 	}
+
+	// Test Redis connection - fail early in production if connection fails
+	testRedisConnection(ctx, redisClient)
+
 	taskq.SetLogger(log.New(io.Discard, "", 0))
 	queue.Init(redisClient)
 	router := internal.NewRouter(app)
