@@ -41,6 +41,9 @@ type Terminal struct {
 	stdin   io.WriteCloser
 
 	TerminalId string
+
+	// cleanupCallback is called when the terminal session terminates
+	cleanupCallback func(terminalId string)
 }
 
 func NewTerminal(conn *websocket.Conn, log *logger.Logger, terminalId string) (*Terminal, error) {
@@ -58,6 +61,11 @@ func NewTerminal(conn *websocket.Conn, log *logger.Logger, terminalId string) (*
 	terminal.bufferTick = time.NewTicker(terminal.bufferTime)
 	terminal.log.Log(logger.Info, "Terminal created", ssh_client.Host)
 	return terminal, nil
+}
+
+// SetCleanupCallback sets a callback function that will be called when the terminal session terminates
+func (t *Terminal) SetCleanupCallback(callback func(terminalId string)) {
+	t.cleanupCallback = callback
 }
 
 func (t *Terminal) Start() {
@@ -141,7 +149,19 @@ func (t *Terminal) Start() {
 			return
 		}
 
+		// Wait for session to complete (shell exits)
 		session.Wait()
+
+		// Session has terminated - send EXIT message to frontend
+		t.sendExitMessage()
+
+		// Clean up resources
+		t.cleanup()
+
+		// Notify cleanup callback to remove terminal from map
+		if t.cleanupCallback != nil {
+			t.cleanupCallback(t.TerminalId)
+		}
 	}()
 }
 
@@ -257,4 +277,54 @@ func (t *Terminal) ResizeTerminal(rows, cols uint16) error {
 	}
 
 	return t.session.WindowChange(int(rows), int(cols))
+}
+
+// sendExitMessage sends an EXIT message to the frontend when the terminal session ends
+func (t *Terminal) sendExitMessage() {
+	msg := TerminalMessage{
+		TerminalId: t.TerminalId,
+		Type:       "exit",
+		Data:       "",
+	}
+	t.wsLock.Lock()
+	defer t.wsLock.Unlock()
+
+	err := t.conn.WriteJSON(msg)
+	if err != nil {
+		t.log.Log(logger.Error, "Error sending exit message", err.Error())
+	}
+}
+
+// cleanup releases terminal resources without closing the websocket connection
+// The websocket connection is managed by the realtime handler
+func (t *Terminal) cleanup() {
+	// Signal that terminal is done
+	select {
+	case <-t.done:
+	default:
+		close(t.done)
+	}
+
+	// Stop buffer ticker
+	if t.bufferTick != nil {
+		t.bufferTick.Stop()
+	}
+
+	// Flush any remaining buffer
+	t.flushBuffer()
+
+	// Close stdin pipe
+	if t.stdin != nil {
+		t.stdin.Close()
+		t.stdin = nil
+	}
+
+	// Close SSH session (already closed by defer, but ensure it's nil)
+	if t.session != nil {
+		t.session = nil
+	}
+
+	// Note: We don't close the SSH client or websocket connection here
+	// as they may be reused or managed by the realtime handler
+	t.log.Log(logger.Info, "Terminal session cleaned up", t.TerminalId)
 }
