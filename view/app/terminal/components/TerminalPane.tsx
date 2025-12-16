@@ -13,12 +13,8 @@ type TerminalPaneProps = {
   canUpdate: boolean;
   setFitAddonRef: React.Dispatch<React.SetStateAction<any | null>>;
   terminalId: string;
-  paneId: string;
-  splitPanesCount: number;
   onFocus: () => void;
   onStatusChange?: (status: SessionStatus) => void;
-  onClosePane?: () => void;
-  onCloseSession?: () => void;
 };
 
 export const TerminalPane: React.FC<TerminalPaneProps> = ({
@@ -28,12 +24,8 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
   canUpdate,
   setFitAddonRef,
   terminalId,
-  paneId,
-  splitPanesCount,
   onFocus,
-  onStatusChange,
-  onClosePane,
-  onCloseSession
+  onStatusChange
 }) => {
   const paneRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -104,25 +96,14 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
     };
   }, [isTerminalOpen, updateDimensions]);
 
-  // Handle terminal exit: close pane if multiple panes exist, otherwise close session
-  const handleTerminalExit = useCallback(() => {
-    if (splitPanesCount > 1 && onClosePane) {
-      // Multiple panes: close this pane
-      onClosePane();
-    } else if (splitPanesCount === 1 && onCloseSession) {
-      // Single pane: close the entire session
-      onCloseSession();
-    }
-  }, [splitPanesCount, onClosePane, onCloseSession]);
-
-  const { terminalRef, fitAddonRef, initializeTerminal, destroyTerminal, isWebSocketReady } = useTerminal(
-    isTerminalOpen,
-    dimensions.width,
-    dimensions.height,
-    canCreate || canUpdate,
-    terminalId,
-    handleTerminalExit
-  );
+  const { terminalRef, fitAddonRef, initializeTerminal, destroyTerminal, isWebSocketReady } =
+    useTerminal(
+      isTerminalOpen,
+      dimensions.width,
+      dimensions.height,
+      canCreate || canUpdate,
+      terminalId
+    );
 
   const isContainerReady = useContainerReady(
     isTerminalOpen,
@@ -209,7 +190,15 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
     return () => {
       timeouts.forEach((timeout) => clearTimeout(timeout));
     };
-  }, [isTerminalOpen, isContainerReady, initializeTerminal, dimensions.width, dimensions.height, isWebSocketReady, terminalRef]);
+  }, [
+    isTerminalOpen,
+    isContainerReady,
+    initializeTerminal,
+    dimensions.width,
+    dimensions.height,
+    isWebSocketReady,
+    terminalRef
+  ]);
 
   // Cleanup: destroy terminal when component unmounts
   useEffect(() => {
@@ -273,4 +262,3 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
     </div>
   );
 };
-

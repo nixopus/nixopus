@@ -41,9 +41,6 @@ type Terminal struct {
 	stdin   io.WriteCloser
 
 	TerminalId string
-	
-	// cleanupCallback is called when the terminal session terminates
-	cleanupCallback func(terminalId string)
 }
 
 func NewTerminal(conn *websocket.Conn, log *logger.Logger, terminalId string) (*Terminal, error) {
@@ -61,11 +58,6 @@ func NewTerminal(conn *websocket.Conn, log *logger.Logger, terminalId string) (*
 	terminal.bufferTick = time.NewTicker(terminal.bufferTime)
 	terminal.log.Log(logger.Info, "Terminal created", ssh_client.Host)
 	return terminal, nil
-}
-
-// SetCleanupCallback sets a callback function that will be called when the terminal session terminates
-func (t *Terminal) SetCleanupCallback(callback func(terminalId string)) {
-	t.cleanupCallback = callback
 }
 
 func (t *Terminal) Start() {
@@ -149,19 +141,7 @@ func (t *Terminal) Start() {
 			return
 		}
 
-		// Wait for session to complete (shell exits)
 		session.Wait()
-		
-		// Session has terminated - send EXIT message to frontend
-		t.sendExitMessage()
-		
-		// Clean up resources
-		t.cleanup()
-		
-		// Notify cleanup callback to remove terminal from map
-		if t.cleanupCallback != nil {
-			t.cleanupCallback(t.TerminalId)
-		}
 	}()
 }
 
@@ -175,9 +155,7 @@ func (t *Terminal) readOutput(r io.Reader) {
 			n, err := r.Read(buf)
 			if err != nil {
 				if err == io.EOF {
-					// EOF means the pipe is closed (session ended)
-					// Exit the goroutine as there's no more data to read
-					return
+					continue
 				}
 				t.log.Log(logger.Error, "Error reading from SSH", err.Error())
 				return
@@ -265,13 +243,6 @@ func (t *Terminal) Close() error {
 }
 
 func (t *Terminal) WriteMessage(message string) error {
-	// Check if terminal is already terminated
-	select {
-	case <-t.done:
-		return fmt.Errorf("terminal session already terminated")
-	default:
-	}
-
 	if t.stdin == nil {
 		return fmt.Errorf("terminal not started or already closed")
 	}
@@ -281,71 +252,9 @@ func (t *Terminal) WriteMessage(message string) error {
 }
 
 func (t *Terminal) ResizeTerminal(rows, cols uint16) error {
-	// Check if terminal is already terminated
-	select {
-	case <-t.done:
-		return fmt.Errorf("terminal session already terminated")
-	default:
-	}
-
 	if t.session == nil {
 		return fmt.Errorf("terminal not started or already closed")
 	}
 
 	return t.session.WindowChange(int(rows), int(cols))
-}
-
-// sendExitMessage sends an EXIT message to the frontend when the terminal session ends
-func (t *Terminal) sendExitMessage() {
-	msg := TerminalMessage{
-		TerminalId: t.TerminalId,
-		Type:       "exit",
-		Data:       "",
-	}
-	t.wsLock.Lock()
-	defer t.wsLock.Unlock()
-	
-	err := t.conn.WriteJSON(msg)
-	if err != nil {
-		t.log.Log(logger.Error, "Error sending exit message", err.Error())
-	}
-}
-
-// cleanup releases terminal resources without closing the websocket connection
-// The websocket connection is managed by the realtime handler
-func (t *Terminal) cleanup() {
-	// Signal that terminal is done - this will cause readOutput goroutines to exit
-	select {
-	case <-t.done:
-	default:
-		close(t.done)
-	}
-
-	// Stop buffer ticker
-	if t.bufferTick != nil {
-		t.bufferTick.Stop()
-	}
-
-	// Flush any remaining buffer
-	t.flushBuffer()
-
-	// Close stdin pipe
-	if t.stdin != nil {
-		t.stdin.Close()
-		t.stdin = nil
-	}
-
-	// Close SSH session (already closed by defer in Start(), but ensure cleanup)
-	if t.session != nil {
-		// Session is already closed by defer, just set to nil
-		t.session = nil
-	}
-
-	// Close SSH client to release connection resources
-	if t.client != nil {
-		t.client.Close()
-		t.client = nil
-	}
-
-	t.log.Log(logger.Info, "Terminal session cleaned up", t.TerminalId)
 }

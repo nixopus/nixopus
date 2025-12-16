@@ -23,8 +23,7 @@ export const useTerminal = (
   width: number,
   height: number,
   allowInput: boolean = true,
-  terminalId: string = 'terminal_id',
-  onTerminalExit?: () => void
+  terminalId: string = 'terminal_id'
 ) => {
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const fitAddonRef = useRef<any | null>(null);
@@ -99,39 +98,7 @@ export const useTerminal = (
       }
 
       if (parsedMessage?.type === OutputType.EXIT) {
-        // Show termination message before destroying terminal
-        const instance = terminalInstanceRef.current;
-        if (instance) {
-          // Write a clear termination message
-          instance.write('\r\n\r\n');
-          instance.write('\x1b[31m'); // Red color
-          instance.write('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\r\n');
-          instance.write('  Session terminated. Terminal closed.\r\n');
-          instance.write('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\r\n');
-          instance.write('\x1b[0m'); // Reset color
-          instance.write('\r\n');
-          
-          // Disable input to prevent further interaction
-          instance.options.disableStdin = true;
-          
-          // Scroll to bottom to ensure message is visible
-          instance.scrollToBottom();
-          
-          // Keep terminal visible briefly so user can see the message, then close
-          setTimeout(() => {
-            destroyTerminal();
-            // Notify parent to close the pane/session
-            if (onTerminalExit) {
-              onTerminalExit();
-            }
-          }, 1500);
-        } else {
-          // Terminal not initialized yet, destroy immediately and close
-          destroyTerminal();
-          if (onTerminalExit) {
-            onTerminalExit();
-          }
-        }
+        destroyTerminal();
         return;
       }
 
@@ -148,7 +115,7 @@ export const useTerminal = (
         instance.write(parsedMessage.data);
       }
     },
-    [destroyTerminal, terminalId, onTerminalExit]
+    [destroyTerminal, terminalId]
   );
 
   useEffect(() => {

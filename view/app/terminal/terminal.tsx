@@ -153,8 +153,8 @@ export const Terminal: React.FC<TerminalProps> = ({
                             closeLabel={t('terminal.close')}
                           />
                         )}
-                        <div 
-                          className="flex-1 relative" 
+                        <div
+                          className="flex-1 relative"
                           style={{ height: hasMultiplePanes ? 'calc(100% - 24px)' : '100%' }}
                         >
                           <TerminalPane
@@ -165,8 +165,6 @@ export const Terminal: React.FC<TerminalProps> = ({
                             canUpdate={canUpdate}
                             setFitAddonRef={setFitAddonRef}
                             terminalId={pane.terminalId}
-                            paneId={pane.id}
-                            splitPanesCount={session.splitPanes.length}
                             onFocus={() => {
                               if (!isActiveSession) {
                                 switchSession(session.id);
@@ -174,8 +172,6 @@ export const Terminal: React.FC<TerminalProps> = ({
                               focusPane(pane.id);
                             }}
                             onStatusChange={getStatusChangeHandler(pane.terminalId)}
-                            onClosePane={() => closeSplitPane(pane.id)}
-                            onCloseSession={() => closeSession(session.id)}
                           />
                         </div>
                       </ResizablePanel>
