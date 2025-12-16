@@ -23,7 +23,8 @@ export const useTerminal = (
   width: number,
   height: number,
   allowInput: boolean = true,
-  terminalId: string = 'terminal_id'
+  terminalId: string = 'terminal_id',
+  onTerminalExit?: () => void
 ) => {
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const fitAddonRef = useRef<any | null>(null);
@@ -116,13 +117,20 @@ export const useTerminal = (
           // Scroll to bottom to ensure message is visible
           instance.scrollToBottom();
           
-          // Keep terminal visible for a bit longer so user can see the message
+          // Keep terminal visible briefly so user can see the message, then close
           setTimeout(() => {
             destroyTerminal();
-          }, 2000);
+            // Notify parent to close the pane/session
+            if (onTerminalExit) {
+              onTerminalExit();
+            }
+          }, 1500);
         } else {
-          // Terminal not initialized yet, destroy immediately
+          // Terminal not initialized yet, destroy immediately and close
           destroyTerminal();
+          if (onTerminalExit) {
+            onTerminalExit();
+          }
         }
         return;
       }
@@ -140,7 +148,7 @@ export const useTerminal = (
         instance.write(parsedMessage.data);
       }
     },
-    [destroyTerminal, terminalId]
+    [destroyTerminal, terminalId, onTerminalExit]
   );
 
   useEffect(() => {

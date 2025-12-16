@@ -13,8 +13,12 @@ type TerminalPaneProps = {
   canUpdate: boolean;
   setFitAddonRef: React.Dispatch<React.SetStateAction<any | null>>;
   terminalId: string;
+  paneId: string;
+  splitPanesCount: number;
   onFocus: () => void;
   onStatusChange?: (status: SessionStatus) => void;
+  onClosePane?: () => void;
+  onCloseSession?: () => void;
 };
 
 export const TerminalPane: React.FC<TerminalPaneProps> = ({
@@ -24,8 +28,12 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
   canUpdate,
   setFitAddonRef,
   terminalId,
+  paneId,
+  splitPanesCount,
   onFocus,
-  onStatusChange
+  onStatusChange,
+  onClosePane,
+  onCloseSession
 }) => {
   const paneRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -96,12 +104,24 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
     };
   }, [isTerminalOpen, updateDimensions]);
 
+  // Handle terminal exit: close pane if multiple panes exist, otherwise close session
+  const handleTerminalExit = useCallback(() => {
+    if (splitPanesCount > 1 && onClosePane) {
+      // Multiple panes: close this pane
+      onClosePane();
+    } else if (splitPanesCount === 1 && onCloseSession) {
+      // Single pane: close the entire session
+      onCloseSession();
+    }
+  }, [splitPanesCount, onClosePane, onCloseSession]);
+
   const { terminalRef, fitAddonRef, initializeTerminal, destroyTerminal, isWebSocketReady } = useTerminal(
     isTerminalOpen,
     dimensions.width,
     dimensions.height,
     canCreate || canUpdate,
-    terminalId
+    terminalId,
+    handleTerminalExit
   );
 
   const isContainerReady = useContainerReady(

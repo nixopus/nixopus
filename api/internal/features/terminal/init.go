@@ -175,7 +175,9 @@ func (t *Terminal) readOutput(r io.Reader) {
 			n, err := r.Read(buf)
 			if err != nil {
 				if err == io.EOF {
-					continue
+					// EOF means the pipe is closed (session ended)
+					// Exit the goroutine as there's no more data to read
+					return
 				}
 				t.log.Log(logger.Error, "Error reading from SSH", err.Error())
 				return
@@ -263,6 +265,13 @@ func (t *Terminal) Close() error {
 }
 
 func (t *Terminal) WriteMessage(message string) error {
+	// Check if terminal is already terminated
+	select {
+	case <-t.done:
+		return fmt.Errorf("terminal session already terminated")
+	default:
+	}
+
 	if t.stdin == nil {
 		return fmt.Errorf("terminal not started or already closed")
 	}
@@ -272,6 +281,13 @@ func (t *Terminal) WriteMessage(message string) error {
 }
 
 func (t *Terminal) ResizeTerminal(rows, cols uint16) error {
+	// Check if terminal is already terminated
+	select {
+	case <-t.done:
+		return fmt.Errorf("terminal session already terminated")
+	default:
+	}
+
 	if t.session == nil {
 		return fmt.Errorf("terminal not started or already closed")
 	}
@@ -298,7 +314,7 @@ func (t *Terminal) sendExitMessage() {
 // cleanup releases terminal resources without closing the websocket connection
 // The websocket connection is managed by the realtime handler
 func (t *Terminal) cleanup() {
-	// Signal that terminal is done
+	// Signal that terminal is done - this will cause readOutput goroutines to exit
 	select {
 	case <-t.done:
 	default:
@@ -319,12 +335,17 @@ func (t *Terminal) cleanup() {
 		t.stdin = nil
 	}
 
-	// Close SSH session (already closed by defer, but ensure it's nil)
+	// Close SSH session (already closed by defer in Start(), but ensure cleanup)
 	if t.session != nil {
+		// Session is already closed by defer, just set to nil
 		t.session = nil
 	}
 
-	// Note: We don't close the SSH client or websocket connection here
-	// as they may be reused or managed by the realtime handler
+	// Close SSH client to release connection resources
+	if t.client != nil {
+		t.client.Close()
+		t.client = nil
+	}
+
 	t.log.Log(logger.Info, "Terminal session cleaned up", t.TerminalId)
 }
