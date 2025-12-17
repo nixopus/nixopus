@@ -2,6 +2,7 @@
   "name": "nixopus",
   "version": "0.1.0-alpha.96",
   "description": "A modern container management platform",
+  "license": "SEE LICENSE IN LICENSE.md",
   "private": false,
   "cli-version": "0.1.35",
   "cli-packages": [
@@ -10,5 +11,9 @@
     "nixopus_0.1.35_amd64.apk",
     "nixopus-0.1.35-1.x86_64.rpm",
     "nixopus_0.1.35_amd64.deb"
-  ]
+  ],
+  "devDependencies": {
+    "@commitlint/cli": "^20.2.0",
+    "@commitlint/config-conventional": "^20.2.0"
+  }
 }
