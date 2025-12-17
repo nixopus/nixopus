@@ -1,10 +1,13 @@
 package service
 
 import (
+	"archive/zip"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -20,6 +23,13 @@ type FileInfo struct {
 	IsDir    bool      `json:"is_dir"`
 	Path     string    `json:"path"`
 	IsHidden bool      `json:"is_hidden"`
+}
+
+type FileDownload struct {
+	Reader      io.ReadCloser
+	Name        string
+	Size        int64
+	ContentType string
 }
 
 type SSHClient interface {
@@ -203,20 +213,39 @@ func (f *FileManagerService) MoveDirectory(fromPath string, toPath string) error
 	return nil
 }
 
-// UploadFile handles file upload to the specified path
-func (f *FileManagerService) UploadFile(file io.Reader, path string, filename string) error {
-	f.logger.Log(logger.Info, "uploading file", filename)
+// UploadFile handles file upload to the specified path with support for relative paths in filename
+func (f *FileManagerService) UploadFile(file io.Reader, basePath string, relativePath string) error {
+	f.logger.Log(logger.Info, "uploading file", relativePath)
+
+	// Validate relative path to prevent path traversal attacks
+	if strings.Contains(relativePath, "..") {
+		return fmt.Errorf("invalid path: contains '..' which is not allowed")
+	}
 
 	err := f.withSFTPClient(func(client SFTPClient) error {
-		if err := client.MkdirAll(path); err != nil {
-			return fmt.Errorf("failed to create directory %s: %w", path, err)
+		// Clean the relative path and join with base path
+		cleanRelativePath := filepath.Clean(relativePath)
+		fullPath := filepath.Join(basePath, cleanRelativePath)
+
+		// Ensure the full path is still within the base path
+		rel, err := filepath.Rel(basePath, fullPath)
+		if err != nil || strings.HasPrefix(rel, "..") {
+			return fmt.Errorf("invalid path: attempts to access outside base directory")
 		}
-		targetPath := filepath.Join(path, filename)
-		out, err := client.Create(targetPath)
+
+		// Create all necessary directories
+		dirPath := filepath.Dir(fullPath)
+		if err := client.MkdirAll(dirPath); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", dirPath, err)
+		}
+
+		// Create and write the file
+		out, err := client.Create(fullPath)
 		if err != nil {
-			return fmt.Errorf("failed to create file %s: %w", targetPath, err)
+			return fmt.Errorf("failed to create file %s: %w", fullPath, err)
 		}
 		defer out.Close()
+
 		if _, err := io.Copy(out, file); err != nil {
 			return fmt.Errorf("failed to write file content: %w", err)
 		}
@@ -231,7 +260,155 @@ func (f *FileManagerService) UploadFile(file io.Reader, path string, filename st
 	return nil
 }
 
-func (f *FileManagerService) CopyDirectory(fromPath string, toPath string) error {
+// DownloadFile opens a file for download and returns a reader with metadata
+func (f *FileManagerService) DownloadFile(path string) (*FileDownload, error) {
+	var fileDownload *FileDownload
+
+	err := f.withSFTPClient(func(client SFTPClient) error {
+		info, err := client.Stat(path)
+		if err != nil {
+			return fmt.Errorf("failed to stat file %s: %w", path, err)
+		}
+
+		if info.IsDir() {
+			return fmt.Errorf("path %s is a directory, not a file", path)
+		}
+
+		file, err := client.Open(path)
+		if err != nil {
+			return fmt.Errorf("failed to open file %s: %w", path, err)
+		}
+
+		// Determine content type based on file extension
+		contentType := "application/octet-stream"
+		if ext := filepath.Ext(path); ext != "" {
+			switch ext {
+			case ".txt":
+				contentType = "text/plain"
+			case ".html", ".htm":
+				contentType = "text/html"
+			case ".css":
+				contentType = "text/css"
+			case ".js":
+				contentType = "application/javascript"
+			case ".json":
+				contentType = "application/json"
+			case ".xml":
+				contentType = "application/xml"
+			case ".pdf":
+				contentType = "application/pdf"
+			case ".jpg", ".jpeg":
+				contentType = "image/jpeg"
+			case ".png":
+				contentType = "image/png"
+			case ".gif":
+				contentType = "image/gif"
+			case ".svg":
+				contentType = "image/svg+xml"
+			case ".zip":
+				contentType = "application/zip"
+			case ".tar":
+				contentType = "application/x-tar"
+			case ".gz":
+				contentType = "application/gzip"
+			}
+		}
+
+		fileDownload = &FileDownload{
+			Reader:      file,
+			Name:        filepath.Base(path),
+			Size:        info.Size(),
+			ContentType: contentType,
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return fileDownload, nil
+}
+
+// DownloadFolder creates a ZIP archive of a directory and returns it for download
+func (f *FileManagerService) DownloadFolder(path string) (*FileDownload, error) {
+	var buf bytes.Buffer
+	zipWriter := zip.NewWriter(&buf)
+
+	err := f.withSFTPClient(func(client SFTPClient) error {
+		return f.addDirToZip(client, zipWriter, path, "")
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := zipWriter.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close zip writer: %w", err)
+	}
+
+	folderName := filepath.Base(path)
+	zipName := folderName + ".zip"
+
+	return &FileDownload{
+		Reader:      io.NopCloser(bytes.NewReader(buf.Bytes())),
+		Name:        zipName,
+		Size:        int64(buf.Len()),
+		ContentType: "application/zip",
+	}, nil
+}
+
+// addDirToZip recursively adds a directory and its contents to a ZIP archive
+func (f *FileManagerService) addDirToZip(client SFTPClient, zipWriter *zip.Writer, basePath, relativePath string) error {
+	fullPath := filepath.Join(basePath, relativePath)
+
+	files, err := client.ReadDir(fullPath)
+	if err != nil {
+		return fmt.Errorf("failed to read directory %s: %w", fullPath, err)
+	}
+
+	for _, file := range files {
+		fileRelativePath := filepath.Join(relativePath, file.Name())
+
+		if file.IsDir() {
+			// Add directory entry
+			zipFile, err := zipWriter.Create(fileRelativePath + "/")
+			if err != nil {
+				return fmt.Errorf("failed to create zip entry for directory %s: %w", fileRelativePath, err)
+			}
+			zipFile.Write([]byte{}) // Empty content for directories
+
+			// Recursively add subdirectory contents
+			if err := f.addDirToZip(client, zipWriter, basePath, fileRelativePath); err != nil {
+				return err
+			}
+		} else {
+			// Add file
+			filePath := filepath.Join(fullPath, file.Name())
+			sftpFile, err := client.Open(filePath)
+			if err != nil {
+				return fmt.Errorf("failed to open file %s: %w", filePath, err)
+			}
+
+			zipFile, err := zipWriter.Create(fileRelativePath)
+			if err != nil {
+				sftpFile.Close()
+				return fmt.Errorf("failed to create zip entry for file %s: %w", fileRelativePath, err)
+			}
+
+			if _, err := io.Copy(zipFile, sftpFile); err != nil {
+				sftpFile.Close()
+				return fmt.Errorf("failed to copy file content to zip %s: %w", fileRelativePath, err)
+			}
+
+			sftpFile.Close()
+		}
+	}
+
+	return nil
+}
+
 	f.logger.Log(logger.Info, "copying directory", fmt.Sprintf("from %s to %s", fromPath, toPath))
 
 	err := f.withSFTPClient(func(client SFTPClient) error {
