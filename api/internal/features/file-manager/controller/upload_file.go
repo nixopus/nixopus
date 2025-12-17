@@ -62,24 +62,33 @@ func (c *FileManagerController) UploadFile(f fuego.ContextNoBody) (*shared_types
 		}
 
 		for i, fileHeader := range files {
-			file, err := fileHeader.Open()
-			if err != nil {
-				c.logger.Log(logger.Error, "Failed to open uploaded file: "+err.Error(), "")
-				continue
-			}
-
-			relativePath := relativePaths[i]
-			if relativePath == "" {
-				relativePath = fileHeader.Filename
-			}
-
-			err = c.service.UploadFile(file, basePath, relativePath)
-			file.Close()
-
-			if err != nil {
-				c.logger.Log(logger.Error, "Failed to upload file "+relativePath+": "+err.Error(), "")
+			var loopErr error
+			func() {
+				file, err := fileHeader.Open()
+				if err != nil {
+					c.logger.Log(logger.Error, "Failed to open uploaded file: "+err.Error(), "")
+					loopErr = err
+					return
+				}
+				defer func() {
+					closeErr := file.Close()
+					if closeErr != nil {
+						c.logger.Log(logger.Error, "Failed to close uploaded file: "+closeErr.Error(), "")
+					}
+				}()
+				relativePath := relativePaths[i]
+				if relativePath == "" {
+					relativePath = fileHeader.Filename
+				}
+				err = c.service.UploadFile(file, basePath, relativePath)
+				if err != nil {
+					c.logger.Log(logger.Error, "Failed to upload file "+relativePath+": "+err.Error(), "")
+					loopErr = err
+				}
+			}()
+			if loopErr != nil {
 				return nil, fuego.HTTPError{
-					Err:    err,
+					Err:    loopErr,
 					Status: http.StatusInternalServerError,
 				}
 			}
