@@ -2,20 +2,8 @@ package tests
 
 import (
 	"context"
-import (
-	"context"
 	"strings"
 	"testing"
-	"github.com/pkg/sftp"
-	"api/internal/features/file-manager/controller"
-	"api/internal/features/file-manager/service"
-	"api/internal/pkg/logger"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-)
-	"testing"
-
-	"github.com/pkg/sftp"
 	"github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller"
 	"github.com/raghavyuva/nixopus-api/internal/features/file-manager/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"

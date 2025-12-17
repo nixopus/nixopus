@@ -333,11 +333,26 @@ func (f *FileManagerService) DownloadFile(path string) (*FileDownload, error) {
 
 // DownloadFolder creates a ZIP archive of a directory and returns it for download
 func (f *FileManagerService) DownloadFolder(path string) (*FileDownload, error) {
+	// Path validation to prevent directory traversal
+	if path == "" {
+		return nil, fmt.Errorf("path cannot be empty")
+	}
+	if filepath.IsAbs(path) {
+		return nil, fmt.Errorf("absolute paths are not allowed")
+	}
+
+	cleanedPath := filepath.Clean(path)
+	baseDir := "." // Base directory for relative path validation
+	rel, err := filepath.Rel(baseDir, filepath.Join(baseDir, cleanedPath))
+	if err != nil || strings.HasPrefix(rel, "..") {
+		return nil, fmt.Errorf("invalid path: directory traversal detected")
+	}
+
 	var buf bytes.Buffer
 	zipWriter := zip.NewWriter(&buf)
 
-	err := f.withSFTPClient(func(client SFTPClient) error {
-		return f.addDirToZip(client, zipWriter, path, "")
+	err = f.withSFTPClient(func(client SFTPClient) error {
+		return f.addDirToZip(client, zipWriter, cleanedPath, "")
 	})
 
 	if err != nil {

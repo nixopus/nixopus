@@ -24,6 +24,8 @@ func (c *FileManagerController) UploadFile(f fuego.ContextNoBody) (*shared_types
 		basePath = "."
 	}
 
+	uploadedCount := 0
+
 	// Handle multiple files
 	files := f.Request().MultipartForm.File["files"]
 	if len(files) == 0 {
@@ -51,6 +53,7 @@ func (c *FileManagerController) UploadFile(f fuego.ContextNoBody) (*shared_types
 				Status: http.StatusInternalServerError,
 			}
 		}
+		uploadedCount = 1
 	} else {
 		// Handle multiple files
 		relativePaths := f.Request().Form["relativePaths"]
@@ -93,10 +96,16 @@ func (c *FileManagerController) UploadFile(f fuego.ContextNoBody) (*shared_types
 				}
 			}
 		}
+		uploadedCount = len(files)
+	}
+
+	message := "Files uploaded successfully"
+	if uploadedCount == 1 {
+		message = "File uploaded successfully"
 	}
 
 	return &shared_types.Response{
 		Status:  "success",
-		Message: "Files uploaded successfully",
+		Message: message,
 	}, nil
 }
