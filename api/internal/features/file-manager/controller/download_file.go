@@ -84,7 +84,15 @@ func (c *FileManagerController) DownloadFile(f fuego.ContextNoBody) (*shared_typ
 		}
 	}
 	
-	cleanPath := filepath.Clean(path) // Ensure the cleaned path doesn't escape the intended directory
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"path/filepath"
+	"strings"
+	"unicode/utf8"
+)
 	if strings.HasPrefix(cleanPath, "..") || strings.HasPrefix(cleanPath, "/") {
 		return nil, fuego.HTTPError{
 			Err:    fuego.NewError(http.StatusBadRequest, "invalid path"),
