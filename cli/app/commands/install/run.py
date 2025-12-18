@@ -853,6 +853,18 @@ class Install:
         if self.external_db_url:
             db_config = parse_db_url(self.external_db_url)
             updated_env.update(db_config)
+        
+        # If REDIS_URL is not explicitly set, construct it with password from config
+        redis_url_value = updated_env.get("REDIS_URL", "")
+        if not redis_url_value or "${" in redis_url_value:
+            try:
+                redis_password = get_config_value(_config, "services.redis.env.REDIS_PASSWORD")
+            except (KeyError, ValueError):
+                redis_password = "changeme"  # Default fallback
+            
+            redis_host = "nixopus-redis"
+            redis_port = self.redis_port or 6379
+            updated_env["REDIS_URL"] = f"redis://:{redis_password}@{redis_host}:{redis_port}"
 
         host_ip = self._get_host_ip()
         secure = self.api_domain is not None and self.view_domain is not None
