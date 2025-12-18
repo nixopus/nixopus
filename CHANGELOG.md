@@ -1,3 +1,12 @@
+# [0.1.0-alpha.99](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.98...v0.1.0-alpha.99) (2025-12-18)
+
+
+### Bug Fixes
+
+* redis url construction ([#743](https://github.com/raghavyuva/nixopus/issues/743)) ([e29e4e9](https://github.com/raghavyuva/nixopus/commit/e29e4e9aa7eb8e674b6d66c2a2b9e3213601616f))
+
+
+
 # [0.1.0-alpha.98](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.97...v0.1.0-alpha.98) (2025-12-18)
 
 
