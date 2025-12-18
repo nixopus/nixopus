@@ -1,3 +1,21 @@
+# [0.1.0-alpha.98](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.97...v0.1.0-alpha.98) (2025-12-18)
+
+
+### Bug Fixes
+
+* add missing import time in main.go ([#741](https://github.com/raghavyuva/nixopus/issues/741)) ([20bef61](https://github.com/raghavyuva/nixopus/commit/20bef61d8f5252da9bca5c93cd14f828ead965f5))
+
+
+
+# [0.1.0-alpha.97](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.96...v0.1.0-alpha.97) (2025-12-18)
+
+
+### Bug Fixes
+
+* fatal error on redis conn failure in prod ([#730](https://github.com/raghavyuva/nixopus/issues/730)) ([03a2ce8](https://github.com/raghavyuva/nixopus/commit/03a2ce8f5df135177e21460a2ee8604d37487bb4))
+
+
+
 # [0.1.0-alpha.96](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.95...v0.1.0-alpha.96) (2025-12-15)
 
 
