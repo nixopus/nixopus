@@ -10,7 +10,6 @@ import { Application } from '@/redux/types/applications';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { setActiveConnectorId } from '@/redux/features/github-connector/githubConnectorSlice';
-import { useLabelFilter } from './use_label_filter';
 
 /**
  * Hook to get the deployed applications.
@@ -61,30 +60,27 @@ function useGetDeployedApplications() {
     ['name', 'domain', 'environment', 'updated_at', 'build_pack', 'port'],
     { key: 'name', direction: 'asc' }
   );
-
-  const labelFilter = useLabelFilter(filteredAndSortedApplications);
-
   const totalPages = applications?.total_count ? Math.ceil(applications.total_count / limit) : 1;
   const ITEMS_PER_PAGE = React.useMemo(() => 9, []);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
 
   const paginatedApplications = React.useMemo(
     () =>
-      labelFilter.filteredApplications.slice(
+      filteredAndSortedApplications.slice(
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
       ),
-    [currentPage, labelFilter.filteredApplications, ITEMS_PER_PAGE]
+    [currentPage, filteredAndSortedApplications]
   );
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
   };
 
-  // Reset the current page when filters change
+  // Reset the current page when the search term or sort config changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, sortConfig, labelFilter.selectedLabels]);
+  }, [searchTerm, sortConfig]);
 
   useEffect(() => {
     if (activeOrg) {
@@ -115,7 +111,9 @@ function useGetDeployedApplications() {
     useUpdateGithubConnectorMutation();
   const [inGitHubFlow, setInGitHubFlow] = useState(false);
   const [pendingConnectorId, setPendingConnectorId] = useState<string | null>(null);
-  const activeConnectorId = useAppSelector((state) => state.githubConnector.activeConnectorId);
+  const activeConnectorId = useAppSelector(
+    (state) => state.githubConnector.activeConnectorId
+  );
   const code = searchParams.get('code');
   const installationId = searchParams.get('installation_id');
   const githubSetup = searchParams.get('github_setup');
@@ -166,7 +164,7 @@ function useGetDeployedApplications() {
         try {
           // Determine which connector to update
           let connectorIdToUpdate = pendingConnectorId;
-
+          
           // If no pending connector ID, try to find one without installation_id
           if (!connectorIdToUpdate && connectors && connectors.length > 0) {
             const newConnector = connectors.find(
@@ -187,7 +185,7 @@ function useGetDeployedApplications() {
           const updatePayload: { installation_id: string; connector_id?: string } = {
             installation_id: installationId
           };
-
+          
           if (connectors && connectors.length > 1) {
             if (!connectorIdToUpdate) {
               throw new Error('connector_id is required when multiple connectors exist');
@@ -200,12 +198,12 @@ function useGetDeployedApplications() {
 
           await updateGithubConnector(updatePayload);
           await GetGithubConnectors();
-
+          
           // Set the updated connector as active
           if (connectorIdToUpdate) {
             dispatch(setActiveConnectorId(connectorIdToUpdate));
           }
-
+          
           setInGitHubFlow(false);
           setPendingConnectorId(null);
           // Clean up URL parameters
@@ -222,16 +220,7 @@ function useGetDeployedApplications() {
       };
       githubConnector();
     }
-  }, [
-    installationId,
-    pendingConnectorId,
-    router,
-    GetGithubConnectors,
-    updateGithubConnector,
-    connectors,
-    activeConnectorId,
-    dispatch
-  ]);
+  }, [installationId, pendingConnectorId, router, GetGithubConnectors, updateGithubConnector, connectors, activeConnectorId, dispatch]);
 
   return {
     connectors,
@@ -250,8 +239,7 @@ function useGetDeployedApplications() {
     totalPages,
     router,
     showApplications,
-    inGitHubFlow,
-    labelFilter
+    inGitHubFlow
   };
 }
 

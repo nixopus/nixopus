@@ -183,6 +183,7 @@ def update_environment_variables(
     supertokens_api_port: str,
     ssh_key_path: str,
     external_db_url: Optional[str] = None,
+    staging: bool = False,
 ) -> dict:
     updated_env = env_values.copy()
     
@@ -203,6 +204,32 @@ def update_environment_variables(
     for key, value in env_map.items():
         if key in updated_env:
             updated_env[key] = value
+    
+    # Apply staging overrides AFTER env_map to ensure they're final
+    # When staging mode is enabled, override container names to use staging-specific containers
+    if staging:
+        if external_db_url:
+            # External DB URL takes precedence - don't override HOST_NAME
+            pass
+        else:
+            # Override container names for staging mode
+            # Always set these for staging, even if they don't exist in config
+            updated_env["HOST_NAME"] = "nixopus-staging-db"
+        
+        # Always override Redis and Caddy endpoints for staging (they're always local)
+        # Extract password from existing REDIS_URL if present, otherwise use default
+        redis_password = "changeme"
+        redis_url = updated_env.get("REDIS_URL", "")
+        if redis_url and redis_url.startswith("redis://"):
+            try:
+                parsed = urlparse(redis_url)
+                if parsed.password:
+                    redis_password = parsed.password
+            except Exception:
+                pass
+        updated_env["REDIS_URL"] = f"redis://default:{redis_password}@nixopus-staging-redis:6379"
+        
+        updated_env["CADDY_ENDPOINT"] = "http://nixopus-staging-caddy:2019"
 
     return updated_env
 

@@ -1,10 +1,10 @@
 import typer
 
-from app.utils.logger import create_logger, log_error, log_success, log_warning
+from app.utils.logger import create_logger, log_error, log_success
 from app.utils.timeout import timeout_wrapper
 
 from .deps import install_all_deps
-from .run import Install
+from .run import InstallParams, run_installation
 from .ssh import SSHConfig, format_ssh_output, generate_ssh_key_with_config
 
 install_app = typer.Typer(help="Install Nixopus", invoke_without_command=True)
@@ -15,7 +15,7 @@ def install_callback(
     ctx: typer.Context,
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show more details while installing"),
     timeout: int = typer.Option(300, "--timeout", "-t", help="How long to wait for each step (in seconds)"),
-    force: bool = typer.Option(False, "--force", "-f", help="Replace files if they already exist"),
+    force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing installation directory (DELETES all existing data)"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="See what would happen, but don't make changes"),
     config_file: str = typer.Option(
         None, "--config-file", "-c", help="Path to custom config file (defaults to built-in config)"
@@ -54,7 +54,7 @@ def install_callback(
     """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
         logger = create_logger(verbose=verbose)
-        install = Install(
+        params = InstallParams(
             logger=logger,
             verbose=verbose,
             timeout=timeout,
@@ -77,21 +77,14 @@ def install_callback(
             external_db_url=external_db_url,
             staging=staging,
         )
-        install.run()
+        run_installation(params)
 
 
 def main_install_callback(value: bool):
     if value:
         logger = create_logger(verbose=False)
-        install = Install(
-            logger=logger,
-            verbose=False,
-            timeout=300,
-            force=False,
-            dry_run=False,
-            config_file=None,
-        )
-        install.run()
+        params = InstallParams(logger=logger)
+        run_installation(params)
         raise typer.Exit()
 
 

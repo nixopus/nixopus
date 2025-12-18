@@ -184,17 +184,6 @@ export const deployApi = createApi({
       }) => {
         return response.data;
       }
-    }),
-    updateApplicationLabels: builder.mutation<string[], { id: string; labels: string[] }>({
-      query: ({ id, labels }) => ({
-        url: `${DEPLOY.UPDATE_APPLICATION_LABELS}?id=${id}`,
-        method: 'PUT',
-        body: { labels }
-      }),
-      invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
-      transformResponse: (response: { data: string[] }) => {
-        return response.data;
-      }
     })
   })
 });
@@ -211,6 +200,5 @@ export const {
   useRestartApplicationMutation,
   useGetApplicationLogsQuery,
   useGetDeploymentLogsQuery,
-  useGetApplicationDeploymentsQuery,
-  useUpdateApplicationLabelsMutation
+  useGetApplicationDeploymentsQuery
 } = deployApi;

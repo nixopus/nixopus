@@ -9,12 +9,8 @@ import {
   ChevronRight,
   Rows3,
   Rows4,
-  Loader2,
-  Copy,
-  Download,
-  Check
+  Loader2
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,54 +42,16 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
   const [levelFilter, setLevelFilter] = useState<LogLevel | 'all'>('all');
   const [isDense, setIsDense] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
-  const [allExpanded, setAllExpanded] = useState(false);
 
   const parsedLogs = useMemo(() => {
     return parseContainerLogs(logs, searchTerm, levelFilter);
   }, [logs, searchTerm, levelFilter]);
-
-  const handleCopyLogs = useCallback(async () => {
-    const logText = parsedLogs.map((log) => log.raw).join('\n');
-    if (!logText) {
-      toast.error(t('containers.logs.copyEmpty'));
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(logText);
-      setIsCopied(true);
-      toast.success(t('containers.logs.copySuccess'));
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch {
-      toast.error(t('containers.logs.copyError'));
-    }
-  }, [parsedLogs, t]);
-
-  const handleDownloadLogs = useCallback(() => {
-    const logText = parsedLogs.map((log) => log.raw).join('\n');
-    if (!logText) {
-      toast.error(t('containers.logs.downloadEmpty'));
-      return;
-    }
-    const blob = new Blob([logText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${container.name || 'container'}-logs-${new Date().toISOString().split('T')[0]}.log`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success(t('containers.logs.downloadSuccess'));
-  }, [parsedLogs, container.name, t]);
 
   const toggleLogExpansion = useCallback((logId: string) => {
     setExpandedLogIds((prev) => {
       const next = new Set(prev);
       if (next.has(logId)) {
         next.delete(logId);
-        // If we're collapsing a log, reset allExpanded state
-        setAllExpanded(false);
       } else {
         next.add(logId);
       }
@@ -105,21 +63,11 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
 
   const expandAll = useCallback(() => {
     setExpandedLogIds(new Set(parsedLogs.map((log) => log.id)));
-    setAllExpanded(true);
   }, [parsedLogs]);
 
   const collapseAll = useCallback(() => {
     setExpandedLogIds(new Set());
-    setAllExpanded(false);
   }, []);
-
-  const handleExpandCollapseToggle = useCallback(() => {
-    if (allExpanded) {
-      collapseAll();
-    } else {
-      expandAll();
-    }
-  }, [allExpanded, expandAll, collapseAll]);
 
   const clearFilters = useCallback(() => {
     setSearchTerm('');
@@ -135,11 +83,11 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
   const hasActiveFilters = searchTerm || levelFilter !== 'all';
 
   return (
-    <div className="space-y-4 overflow-x-hidden">
+    <div className="space-y-4">
       {/* Toolbar */}
-      <div className="flex flex-col gap-3 min-w-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="relative flex-1 max-w-md min-w-0">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search logs..."
@@ -148,7 +96,7 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
               className="pl-10 bg-transparent"
             />
           </div>
-          <div className="flex items-center gap-2 ml-auto flex-shrink-0">
+          <div className="flex items-center gap-2 ml-auto">
             {hasActiveFilters && (
               <Button
                 variant="ghost"
@@ -177,14 +125,14 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between min-w-0 gap-2">
-          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
             {levelOptions.map((option) => (
               <button
                 key={option.value}
                 onClick={() => setLevelFilter(option.value)}
                 className={cn(
-                  'px-3 py-1 text-xs font-medium rounded-full transition-colors flex-shrink-0',
+                  'px-3 py-1 text-xs font-medium rounded-full transition-colors',
                   levelFilter === option.value
                     ? 'bg-foreground text-background'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -194,38 +142,12 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleCopyLogs}
+              onClick={expandAll}
               className="h-8 px-2 text-muted-foreground"
-              title={t('containers.logs.copy')}
-              disabled={parsedLogs.length === 0}
-            >
-              {isCopied ? (
-                <Check className="h-4 w-4 text-green-500" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDownloadLogs}
-              className="h-8 px-2 text-muted-foreground"
-              title={t('containers.logs.download')}
-              disabled={parsedLogs.length === 0}
-            >
-              <Download className="h-4 w-4" />
-            </Button>
-            <div className="w-px h-4 bg-border mx-1" />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleExpandCollapseToggle}
-              className="h-8 px-2 text-muted-foreground"
-              title={allExpanded ? 'Collapse all' : 'Expand all'}
             >
               <ChevronsUpDown className="h-4 w-4" />
             </Button>
@@ -243,12 +165,12 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
       </div>
 
       {/* Logs List */}
-      <div className="rounded-lg border overflow-hidden bg-zinc-950 min-w-0">
-        <div className="flex items-center gap-3 px-4 py-2 text-xs font-medium text-zinc-500 uppercase tracking-wider border-b border-zinc-800 min-w-0">
-          <div className="w-4 flex-shrink-0" />
-          <div className="w-14 flex-shrink-0">Level</div>
-          <div className="w-40 flex-shrink-0">Time</div>
-          <div className="flex-1 min-w-0">Message</div>
+      <div className="rounded-lg border overflow-hidden bg-zinc-950">
+        <div className="flex items-center gap-3 px-4 py-2 text-xs font-medium text-zinc-500 uppercase tracking-wider border-b border-zinc-800">
+          <div className="w-4" />
+          <div className="w-14">Level</div>
+          <div className="w-40">Time</div>
+          <div className="flex-1">Message</div>
         </div>
 
         {parsedLogs.length === 0 ? (
@@ -256,7 +178,7 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
             <p className="text-sm">{t('containers.no_logs')}</p>
           </div>
         ) : (
-          <div className="max-h-[600px] overflow-y-auto overflow-x-hidden">
+          <div className="max-h-[600px] overflow-y-auto">
             {parsedLogs.map((log) => (
               <LogEntry
                 key={log.id}
@@ -302,10 +224,10 @@ function LogEntry({
   const colors = levelColors[log.level];
 
   return (
-    <div className="border-b border-zinc-800/50 last:border-0 min-w-0">
+    <div className="border-b border-zinc-800/50 last:border-0">
       <div
         className={cn(
-          'flex items-start gap-3 px-4 cursor-pointer transition-colors min-w-0',
+          'flex items-center gap-3 px-4 cursor-pointer transition-colors',
           'hover:bg-zinc-900/50',
           isExpanded && 'bg-zinc-900/30',
           isDense ? 'py-1' : 'py-2.5'
@@ -314,13 +236,13 @@ function LogEntry({
       >
         <ChevronRight
           className={cn(
-            'h-3.5 w-3.5 text-zinc-500 transition-transform duration-150 flex-shrink-0 mt-0.5',
+            'h-3.5 w-3.5 text-zinc-500 transition-transform duration-150 flex-shrink-0',
             isExpanded && 'rotate-90'
           )}
         />
         <span
           className={cn(
-            'px-2 py-0.5 rounded text-[10px] font-semibold uppercase w-14 text-center flex-shrink-0',
+            'px-2 py-0.5 rounded text-[10px] font-semibold uppercase w-14 text-center',
             colors.bg,
             colors.text
           )}
@@ -335,21 +257,16 @@ function LogEntry({
         >
           {log.formattedTime}
         </span>
-        <span
-          className={cn(
-            'flex-1 text-zinc-300 break-words line-clamp-1 overflow-hidden min-w-0',
-            isDense ? 'text-xs' : 'text-sm'
-          )}
-        >
+        <span className={cn('flex-1 text-zinc-300 truncate', isDense ? 'text-xs' : 'text-sm')}>
           {log.message}
         </span>
       </div>
 
       {isExpanded && (
-        <div className="px-4 pb-3 pt-1 min-w-0 overflow-x-hidden">
+        <div className="px-4 pb-3 pt-1">
           <pre
             className={cn(
-              'ml-8 p-3 rounded bg-zinc-900 text-zinc-300 font-mono whitespace-pre-wrap break-words overflow-wrap-anywhere',
+              'ml-8 p-3 rounded bg-zinc-900 text-zinc-300 font-mono whitespace-pre-wrap break-all',
               isDense ? 'text-[11px]' : 'text-xs'
             )}
           >

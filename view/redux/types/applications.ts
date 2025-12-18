@@ -23,7 +23,6 @@ export type Application = {
   deployments?: ApplicationDeployment[];
   dockerfile_path?: string;
   base_path?: string;
-  labels?: string[];
 };
 
 export type ApplicationStatus = {

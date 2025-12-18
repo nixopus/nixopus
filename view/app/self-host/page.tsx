@@ -18,7 +18,6 @@ import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionG
 import PageLayout from '@/components/layout/page-layout';
 import { TypographyH2, TypographyMuted } from '@/components/ui/typography';
 import { Plus } from 'lucide-react';
-import { LabelFilter } from '@/components/ui/label-filter';
 
 function page() {
   const { t } = useTranslation();
@@ -38,8 +37,7 @@ function page() {
     totalPages,
     inGitHubFlow,
     showApplications,
-    router,
-    labelFilter
+    router
   } = useGetDeployedApplications();
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
 
@@ -141,17 +139,6 @@ function page() {
                 placeholder="Sort by"
               />
             </div>
-
-            {labelFilter.availableLabels.length > 0 && (
-              <div className="mb-6">
-                <LabelFilter
-                  availableLabels={labelFilter.availableLabels}
-                  selectedLabels={labelFilter.selectedLabels}
-                  onToggle={labelFilter.toggleLabel}
-                  onClear={labelFilter.clearFilters}
-                />
-              </div>
-            )}
 
             {isLoading || isLoadingApplications ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

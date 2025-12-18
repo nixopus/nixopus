@@ -17,7 +17,6 @@ import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
 import { Folder, Home, Package, Container, Puzzle } from 'lucide-react';
-import { useSettingsModal } from '@/hooks/use-settings-modal';
 
 const data = {
   navMain: [
@@ -65,7 +64,6 @@ export function useAppSidebar() {
   const { canAccessResource } = useRBAC();
   const router = useRouter();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-  const { closeSettings } = useSettingsModal();
 
   const hasAnyPermission = useMemo(() => {
     const allowedResources = ['dashboard', 'settings', 'extensions'];
@@ -195,7 +193,6 @@ Add any other context about the problem here.`;
 
   const handleLogoutConfirm = async () => {
     setShowLogoutDialog(false);
-    closeSettings();
 
     try {
       clearLocalStorage();
