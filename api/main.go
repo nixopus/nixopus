@@ -21,7 +21,10 @@ import (
 
 // testRedisConnection tests the Redis connection and fails early in production if connection fails
 func testRedisConnection(ctx context.Context, redisClient *redis.Client) {
-	if err := redisClient.Ping(ctx).Err(); err != nil {
+	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	if err := redisClient.Ping(pingCtx).Err(); err != nil {
 		env := strings.ToLower(config.AppConfig.App.Environment)
 		isProduction := env == "production" || env == "prod"
 		if isProduction {
