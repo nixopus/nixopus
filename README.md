@@ -14,7 +14,7 @@
   <a href="https://github.com/raghavyuva/nixopus/discussions/262"><b>Roadmap</b></a>
 </p>
 
-<img width="1210" height="764" alt="image" src="assets/nixopus_dashboard.png" />
+<img width="1210" height="764" alt="image" src="assets/nixopus_dashboard.jpeg" />
 
 > ⚠️ **Important Note**: Nixopus is currently in alpha/pre-release stage and is not yet ready for production use. While you're welcome to try it out, we recommend waiting for the beta or stable release before using it in production environments. The platform is still undergoing testing and development.
 
