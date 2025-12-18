@@ -1,6 +1,6 @@
 {
   "name": "nixopus",
-  "version": "0.1.0-alpha.96",
+  "version": "0.1.0-alpha.97",
   "description": "A modern container management platform",
   "private": false,
   "cli-version": "0.1.35",
