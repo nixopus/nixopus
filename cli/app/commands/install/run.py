@@ -124,12 +124,17 @@ def clone_repository_step(config_resolver: ConfigResolver, params: InstallParams
 
     try:
         with timeout_wrapper(params.timeout):
+            # Enable interactive mode if we're in a TTY environment
+            import sys
+            interactive = sys.stdin.isatty() and sys.stdout.isatty()
+            
             success, error = clone_repository(
                 repo=config_resolver.get(DEFAULT_REPO),
                 path=config_resolver.get("full_source_path"),
                 branch=config_resolver.get(DEFAULT_BRANCH),
                 force=params.force,
                 logger=params.logger,
+                interactive=interactive,
             )
     except TimeoutError:
         raise Exception(f"{clone_failed}: {operation_timed_out}")
