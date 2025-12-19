@@ -1,5 +1,4 @@
 import os
-from dataclasses import dataclass
 from typing import Callable, List, Optional, Tuple
 
 import typer
@@ -19,9 +18,10 @@ from app.utils.config import (
     get_active_config,
     get_config_value,
 )
-from app.utils.protocols import LoggerProtocol
 from app.utils.timeout import timeout_wrapper
 
+from .admin_registration import register_admin_user_step
+from .types import InstallParams
 from .config_utils import (
     get_access_url,
     get_host_ip_or_default,
@@ -49,34 +49,6 @@ from .services import (
 from .rollback import perform_installation_rollback
 from .ssh import SSHConfig, generate_ssh_key_with_config
 from .validate import validate_domains, validate_host_ip, validate_repo
-
-
-@dataclass
-class InstallParams:
-    logger: Optional[LoggerProtocol] = None
-    verbose: bool = False
-    timeout: int = 300
-    force: bool = False
-    dry_run: bool = False
-    config_file: Optional[str] = None
-    api_domain: Optional[str] = None
-    view_domain: Optional[str] = None
-    host_ip: Optional[str] = None
-    repo: Optional[str] = None
-    branch: Optional[str] = None
-    api_port: Optional[int] = None
-    view_port: Optional[int] = None
-    db_port: Optional[int] = None
-    redis_port: Optional[int] = None
-    caddy_admin_port: Optional[int] = None
-    caddy_http_port: Optional[int] = None
-    caddy_https_port: Optional[int] = None
-    supertokens_port: Optional[int] = None
-    external_db_url: Optional[str] = None
-    staging: bool = False
-    no_rollback: bool = False
-    verify_health: bool = True
-    health_check_timeout: int = 120
 
 
 def validate_install_params(params: InstallParams) -> None:
@@ -273,6 +245,9 @@ def build_installation_steps(
 
     if params.force:
         steps.insert(2, ("Cleaning up Docker resources", lambda: cleanup_docker_step(config_resolver, params)))
+
+    if (params.admin_email or params.admin_password) and params.verify_health:
+        steps.append(("Registering admin user", lambda: register_admin_user_step(config_resolver, params)))
 
     return steps
 

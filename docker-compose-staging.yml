@@ -23,7 +23,7 @@ services:
         condition: service_healthy
         required: false
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8443/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8443/api/v1/health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -77,6 +77,9 @@ services:
     ports:
       - "${NEXT_PUBLIC_PORT:-7443}:7443"
     restart: unless-stopped
+    environment:
+      - HOSTNAME=0.0.0.0
+      - PORT=7443
     env_file:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/view/.env
     volumes:
@@ -85,7 +88,7 @@ services:
     networks:
       - nixopus-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7443"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:7443"]
       interval: 10s
       timeout: 5s
       retries: 5

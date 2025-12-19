@@ -1,11 +1,14 @@
+from typing import Optional
+
 import typer
 
 from app.utils.logger import create_logger, log_error, log_success
 from app.utils.timeout import timeout_wrapper
 
 from .deps import install_all_deps
-from .run import InstallParams, run_installation
+from .run import run_installation
 from .ssh import SSHConfig, format_ssh_output, generate_ssh_key_with_config
+from .types import InstallParams
 
 install_app = typer.Typer(help="Install Nixopus", invoke_without_command=True)
 
@@ -53,6 +56,8 @@ def install_callback(
     no_rollback: bool = typer.Option(False, "--no-rollback", help="Disable automatic rollback on installation failure"),
     verify_health: bool = typer.Option(True, "--verify-health", help="Verify that all services are healthy after starting (recommended)"),
     health_check_timeout: int = typer.Option(120, "--health-check-timeout", help="Maximum time to wait for services to become healthy (in seconds)"),
+    admin_email: Optional[str] = typer.Option(None, "--admin-email", help="Email for admin user registration"),
+    admin_password: Optional[str] = typer.Option(None, "--admin-password", help="Password for admin user registration"),
 ):
     """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
@@ -82,6 +87,8 @@ def install_callback(
             no_rollback=no_rollback,
             verify_health=verify_health,
             health_check_timeout=health_check_timeout,
+            admin_email=admin_email,
+            admin_password=admin_password,
         )
         run_installation(params)
 

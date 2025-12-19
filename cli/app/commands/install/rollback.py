@@ -382,13 +382,13 @@ def build_rollback_functions(
     dry_run: bool,
     logger: Optional[LoggerProtocol] = None,
 ) -> Dict[str, Callable]:
+    docker_rollback = lambda: rollback_docker_services(compose_file, dry_run, logger)
     return {
         "Loading proxy configuration": lambda: rollback_proxy_config(
             full_source_path, config, dry_run, logger
         ),
-        "Starting services": lambda: rollback_docker_services(
-            compose_file, dry_run, logger
-        ),
+        "Starting services": docker_rollback,
+        "Starting and verifying services": docker_rollback,
         "Generating SSH keys": lambda: rollback_ssh_keys(
             ssh_key_path, dry_run, logger
         ),
