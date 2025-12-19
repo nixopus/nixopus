@@ -21,6 +21,12 @@ services:
       nixopus-db:
         condition: service_healthy
         required: false
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8443/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   nixopus-db:
     image: postgres:14-alpine
@@ -83,6 +89,12 @@ services:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/view/.env:/app/.env
     networks:
       - nixopus-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7443"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   nixopus-redis:
     image: redis:7-alpine
@@ -128,6 +140,12 @@ services:
       ]
     networks:
       - nixopus-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:2019/config/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   supertokens:
     image: registry.supertokens.io/supertokens/supertokens-postgresql:latest

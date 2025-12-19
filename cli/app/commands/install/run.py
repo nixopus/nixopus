@@ -75,6 +75,8 @@ class InstallParams:
     external_db_url: Optional[str] = None
     staging: bool = False
     no_rollback: bool = False
+    verify_health: bool = True
+    health_check_timeout: int = 120
 
 
 def validate_install_params(params: InstallParams) -> None:
@@ -124,12 +126,17 @@ def clone_repository_step(config_resolver: ConfigResolver, params: InstallParams
 
     try:
         with timeout_wrapper(params.timeout):
+            # Enable interactive mode if we're in a TTY environment
+            import sys
+            interactive = sys.stdin.isatty() and sys.stdout.isatty()
+            
             success, error = clone_repository(
                 repo=config_resolver.get(DEFAULT_REPO),
                 path=config_resolver.get("full_source_path"),
                 branch=config_resolver.get(DEFAULT_BRANCH),
                 force=params.force,
                 logger=params.logger,
+                interactive=interactive,
             )
     except TimeoutError:
         raise Exception(f"{clone_failed}: {operation_timed_out}")
@@ -218,6 +225,8 @@ def start_services_step(config_resolver: ConfigResolver, params: InstallParams) 
         params.dry_run,
         params.logger,
         profiles=profiles,
+        verify_health=params.verify_health,
+        health_check_timeout=params.health_check_timeout,
     )
     if not success:
         raise Exception(f"{services_start_failed}: {error}")
@@ -249,6 +258,8 @@ def build_installation_steps(
     config_resolver: ConfigResolver,
     params: InstallParams,
 ) -> List[Tuple[str, Callable[[], None]]]:
+    services_step_desc = "Starting services" if not params.verify_health else "Starting and verifying services"
+    
     steps = [
         ("Preflight checks", lambda: run_preflight_checks(config, params)),
         ("Installing dependencies", lambda: install_dependencies(params)),
@@ -256,7 +267,7 @@ def build_installation_steps(
         ("Setting up proxy config", lambda: setup_proxy_config_step(config, config_resolver, params)),
         ("Creating environment files", lambda: create_env_files_step(config, config_resolver, params)),
         ("Generating SSH keys", lambda: setup_ssh_step(config, config_resolver, params)),
-        ("Starting services", lambda: start_services_step(config_resolver, params)),
+        (services_step_desc, lambda: start_services_step(config_resolver, params)),
         ("Loading proxy configuration", lambda: load_proxy_step(config_resolver, params)),
     ]
 

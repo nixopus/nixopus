@@ -15,7 +15,7 @@ def install_callback(
     ctx: typer.Context,
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show more details while installing"),
     timeout: int = typer.Option(300, "--timeout", "-t", help="How long to wait for each step (in seconds)"),
-    force: bool = typer.Option(False, "--force", "-f", help="Replace files if they already exist"),
+    force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing installation directory (DELETES all existing data)"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="See what would happen, but don't make changes"),
     config_file: str = typer.Option(
         None, "--config-file", "-c", help="Path to custom config file (defaults to built-in config)"
@@ -51,6 +51,8 @@ def install_callback(
     external_db_url: str = typer.Option(None, "--external-db-url", help="External PostgreSQL database connection URL (e.g. postgresql://user:password@host:port/dbname?sslmode=require). If provided, local DB service will be excluded"),
     staging: bool = typer.Option(False, "--staging", "-s", help="Use staging docker-compose file (docker-compose-staging.yml)"),
     no_rollback: bool = typer.Option(False, "--no-rollback", help="Disable automatic rollback on installation failure"),
+    verify_health: bool = typer.Option(True, "--verify-health", help="Verify that all services are healthy after starting (recommended)"),
+    health_check_timeout: int = typer.Option(120, "--health-check-timeout", help="Maximum time to wait for services to become healthy (in seconds)"),
 ):
     """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
@@ -78,6 +80,8 @@ def install_callback(
             external_db_url=external_db_url,
             staging=staging,
             no_rollback=no_rollback,
+            verify_health=verify_health,
+            health_check_timeout=health_check_timeout,
         )
         run_installation(params)
 
