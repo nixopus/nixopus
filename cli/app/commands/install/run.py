@@ -73,6 +73,8 @@ class InstallParams:
     supertokens_port: Optional[int] = None
     external_db_url: Optional[str] = None
     staging: bool = False
+    verify_health: bool = True
+    health_check_timeout: int = 120
 
 
 def validate_install_params(params: InstallParams) -> None:
@@ -221,6 +223,8 @@ def start_services_step(config_resolver: ConfigResolver, params: InstallParams) 
         params.dry_run,
         params.logger,
         profiles=profiles,
+        verify_health=params.verify_health,
+        health_check_timeout=params.health_check_timeout,
     )
     if not success:
         raise Exception(f"{services_start_failed}: {error}")
@@ -252,6 +256,8 @@ def build_installation_steps(
     config_resolver: ConfigResolver,
     params: InstallParams,
 ) -> List[Tuple[str, Callable[[], None]]]:
+    services_step_desc = "Starting services" if not params.verify_health else "Starting and verifying services"
+    
     steps = [
         ("Preflight checks", lambda: run_preflight_checks(config, params)),
         ("Installing dependencies", lambda: install_dependencies(params)),
@@ -259,7 +265,7 @@ def build_installation_steps(
         ("Setting up proxy config", lambda: setup_proxy_config_step(config, config_resolver, params)),
         ("Creating environment files", lambda: create_env_files_step(config, config_resolver, params)),
         ("Generating SSH keys", lambda: setup_ssh_step(config, config_resolver, params)),
-        ("Starting services", lambda: start_services_step(config_resolver, params)),
+        (services_step_desc, lambda: start_services_step(config_resolver, params)),
         ("Loading proxy configuration", lambda: load_proxy_step(config_resolver, params)),
     ]
 
