@@ -46,6 +46,7 @@ from .services import (
     setup_proxy_configuration,
     start_docker_services,
 )
+from .rollback import perform_installation_rollback
 from .ssh import SSHConfig, generate_ssh_key_with_config
 from .validate import validate_domains, validate_host_ip, validate_repo
 
@@ -73,6 +74,7 @@ class InstallParams:
     supertokens_port: Optional[int] = None
     external_db_url: Optional[str] = None
     staging: bool = False
+    no_rollback: bool = False
     verify_health: bool = True
     health_check_timeout: int = 120
 
@@ -314,6 +316,8 @@ def run_installation(params: InstallParams) -> None:
     
     config_resolver = create_config_resolver(config, params)
     steps = build_installation_steps(config, config_resolver, params)
+    completed_steps = []
+    failed_step = None
 
     try:
         with Progress(
@@ -330,9 +334,11 @@ def run_installation(params: InstallParams) -> None:
                 progress.update(main_task, description=f"{installing_nixopus} - {step_name} ({i+1}/{len(steps)})")
                 try:
                     step_func()
+                    completed_steps.append(step_name)
                     progress.advance(main_task, 1)
                 except Exception as e:
                     progress.update(main_task, description=f"Failed at {step_name}")
+                    failed_step = step_name
                     raise
 
             progress.update(main_task, completed=True, description="Installation completed")
@@ -340,7 +346,17 @@ def run_installation(params: InstallParams) -> None:
         show_success_message(config_resolver, params)
 
     except Exception as e:
-        handle_installation_error(e, params)
+        handle_installation_error(e, params, failed_step or "")
+        
+        if not params.no_rollback and completed_steps:
+            perform_installation_rollback(
+                completed_steps,
+                config_resolver,
+                config,
+                params.dry_run,
+                params.logger,
+            )
+        
         if params.logger:
             params.logger.error(f"{installation_failed}: {str(e)}")
         raise typer.Exit(1)
