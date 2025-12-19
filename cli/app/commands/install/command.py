@@ -50,6 +50,7 @@ def install_callback(
     branch: str = typer.Option(None, "--branch", "-b", help="Git branch to clone (defaults to config value)"),
     external_db_url: str = typer.Option(None, "--external-db-url", help="External PostgreSQL database connection URL (e.g. postgresql://user:password@host:port/dbname?sslmode=require). If provided, local DB service will be excluded"),
     staging: bool = typer.Option(False, "--staging", "-s", help="Use staging docker-compose file (docker-compose-staging.yml)"),
+    no_rollback: bool = typer.Option(False, "--no-rollback", help="Disable automatic rollback on installation failure"),
 ):
     """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
@@ -76,6 +77,7 @@ def install_callback(
             supertokens_port=supertokens_port,
             external_db_url=external_db_url,
             staging=staging,
+            no_rollback=no_rollback,
         )
         run_installation(params)
 
