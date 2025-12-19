@@ -50,6 +50,8 @@ def install_callback(
     branch: str = typer.Option(None, "--branch", "-b", help="Git branch to clone (defaults to config value)"),
     external_db_url: str = typer.Option(None, "--external-db-url", help="External PostgreSQL database connection URL (e.g. postgresql://user:password@host:port/dbname?sslmode=require). If provided, local DB service will be excluded"),
     staging: bool = typer.Option(False, "--staging", "-s", help="Use staging docker-compose file (docker-compose-staging.yml)"),
+    verify_health: bool = typer.Option(True, "--verify-health", help="Verify that all services are healthy after starting (recommended)"),
+    health_check_timeout: int = typer.Option(120, "--health-check-timeout", help="Maximum time to wait for services to become healthy (in seconds)"),
 ):
     """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
@@ -76,6 +78,8 @@ def install_callback(
             supertokens_port=supertokens_port,
             external_db_url=external_db_url,
             staging=staging,
+            verify_health=verify_health,
+            health_check_timeout=health_check_timeout,
         )
         run_installation(params)
 
