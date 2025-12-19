@@ -53,6 +53,8 @@ def install_callback(
     no_rollback: bool = typer.Option(False, "--no-rollback", help="Disable automatic rollback on installation failure"),
     verify_health: bool = typer.Option(True, "--verify-health", help="Verify that all services are healthy after starting (recommended)"),
     health_check_timeout: int = typer.Option(120, "--health-check-timeout", help="Maximum time to wait for services to become healthy (in seconds)"),
+    admin_email: str = typer.Option(None, "--admin-email", help="Email for admin user registration"),
+    admin_password: str = typer.Option(None, "--admin-password", help="Password for admin user registration"),
 ):
     """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
@@ -82,6 +84,8 @@ def install_callback(
             no_rollback=no_rollback,
             verify_health=verify_health,
             health_check_timeout=health_check_timeout,
+            admin_email=admin_email,
+            admin_password=admin_password,
         )
         run_installation(params)
 

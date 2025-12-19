@@ -22,6 +22,7 @@ from app.utils.config import (
 from app.utils.protocols import LoggerProtocol
 from app.utils.timeout import timeout_wrapper
 
+from .admin_registration import register_admin_user_step
 from .config_utils import (
     get_access_url,
     get_host_ip_or_default,
@@ -77,6 +78,8 @@ class InstallParams:
     no_rollback: bool = False
     verify_health: bool = True
     health_check_timeout: int = 120
+    admin_email: Optional[str] = None
+    admin_password: Optional[str] = None
 
 
 def validate_install_params(params: InstallParams) -> None:
@@ -273,6 +276,9 @@ def build_installation_steps(
 
     if params.force:
         steps.insert(2, ("Cleaning up Docker resources", lambda: cleanup_docker_step(config_resolver, params)))
+
+    if (params.admin_email or params.admin_password) and params.verify_health:
+        steps.append(("Registering admin user", lambda: register_admin_user_step(config_resolver, params)))
 
     return steps
 
