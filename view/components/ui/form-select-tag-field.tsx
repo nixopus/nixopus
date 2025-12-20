@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState, KeyboardEvent } from 'react';
+import React, { useEffect, useState, KeyboardEvent, ClipboardEvent } from 'react';
 import {
   FormControl,
   FormDescription,
@@ -8,8 +8,9 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { X } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { X, Info } from 'lucide-react';
+import { parseEnvText, isMultiLineEnvPaste } from '@/lib/parse-env';
 
 interface FormSelectTagField {
   label: string;
@@ -53,24 +54,39 @@ export const FormSelectTagInputField = ({
     }
   }, [defaultValues]);
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
+  const processInput = (input: string) => {
+    const validation = validator(input);
+    if (validation.isValid && 'key' in validation && 'value' in validation) {
+      setSelectedValue((prev) => ({
+        ...prev,
+        [validation.key as string]: validation.value as string
+      }));
+      return true;
+    }
+    setError(validation.error ?? null);
+    return false;
+  };
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       if (!inputValue.trim()) return;
 
-      const validation = validator(inputValue);
-
-      if (validation.isValid && 'key' in validation && 'value' in validation) {
-        setSelectedValue((prev) => ({
-          ...prev,
-          [validation.key as string]: validation.value as string
-        }));
+      if (processInput(inputValue)) {
         setInputValue('');
         setError(null);
-      } else {
-        setError(validation.error ?? null);
       }
+    }
+  };
+
+  const handlePaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
+    const pastedText = e.clipboardData.getData('text');
+    if (isMultiLineEnvPaste(pastedText)) {
+      e.preventDefault();
+      const parsed = parseEnvText(pastedText);
+      setSelectedValue((prev) => ({ ...prev, ...parsed }));
+      setInputValue('');
+      setError(null);
     }
   };
 
@@ -96,7 +112,7 @@ export const FormSelectTagInputField = ({
           </div>
           <FormControl>
             <div className="space-y-2">
-              <Input
+              <Textarea
                 placeholder={placeholder}
                 value={inputValue}
                 onChange={(e) => {
@@ -104,8 +120,18 @@ export const FormSelectTagInputField = ({
                   if (error) setError(null);
                 }}
                 onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
                 className={error ? 'border-red-500' : ''}
+                rows={3}
               />
+
+              <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                <Info size={14} className="mt-0.5 flex-shrink-0" />
+                <span>
+                  Press <kbd className="px-1 py-0.5 bg-muted rounded text-[11px]">Enter</kbd> to add
+                  one variable, or paste multiple lines (e.g., from .env file) to add all at once
+                </span>
+              </div>
 
               {error && <p className="text-sm font-medium text-red-500">{error}</p>}
 
