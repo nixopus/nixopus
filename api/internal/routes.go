@@ -397,6 +397,8 @@ func (router *Router) FileManagerRoutes(f *fuego.Server, fileManagerController *
 	fuego.Post(f, "/move-directory", fileManagerController.MoveDirectory)
 	fuego.Post(f, "/copy-directory", fileManagerController.CopyDirectory)
 	fuego.Post(f, "/upload", fileManagerController.UploadFile)
+	fuego.Get(f, "/download", fileManagerController.DownloadFile)
+	fuego.Get(f, "/download-folder", fileManagerController.DownloadFolder)
 	fuego.Delete(f, "/delete-directory", fileManagerController.DeleteDirectory)
 }
 
