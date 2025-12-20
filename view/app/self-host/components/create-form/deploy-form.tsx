@@ -76,21 +76,25 @@ export const DeployForm = ({
   const [currentStepId, setCurrentStepId] = useState('basic-info');
   const stepperMethodsRef = useRef<any>(null);
 
-  const isStaticBuildPack = form.watch('build_pack') === BuildPack.Static;
+  // Static build pack option commented out for deployment
+  // const isStaticBuildPack = form.watch('build_pack') === BuildPack.Static;
+  const isStaticBuildPack = false;
 
   const stepperSteps = useMemo(
     () =>
-      isStaticBuildPack
-        ? [
-            { id: 'basic-info', title: 'Basic Information' },
-            { id: 'repository', title: 'Repository & Branch' }
-          ]
-        : [
-            { id: 'basic-info', title: 'Basic Information' },
-            { id: 'repository', title: 'Repository & Branch' },
-            { id: 'configuration', title: 'Configuration' },
-            { id: 'variables', title: 'Variables & Commands' }
-          ],
+      // Static build pack option commented out - always show full steps
+      // isStaticBuildPack
+      //   ? [
+      //       { id: 'basic-info', title: 'Basic Information' },
+      //       { id: 'repository', title: 'Repository & Branch' }
+      //     ]
+      //   :
+      [
+        { id: 'basic-info', title: 'Basic Information' },
+        { id: 'repository', title: 'Repository & Branch' },
+        { id: 'configuration', title: 'Configuration' },
+        { id: 'variables', title: 'Variables & Commands' }
+      ],
     [isStaticBuildPack]
   );
 
@@ -124,11 +128,12 @@ export const DeployForm = ({
     }
   }, [getGithubRepositoryBranches, form, repository_full_name]);
 
-  useEffect(() => {
-    if (isStaticBuildPack && (currentStepId === 'configuration' || currentStepId === 'variables')) {
-      setCurrentStepId('repository');
-    }
-  }, [isStaticBuildPack, currentStepId]);
+  // Static build pack option commented out for deployment
+  // useEffect(() => {
+  //   if (isStaticBuildPack && (currentStepId === 'configuration' || currentStepId === 'variables')) {
+  //     setCurrentStepId('repository');
+  //   }
+  // }, [isStaticBuildPack, currentStepId]);
 
   useEffect(() => {
     if (repository_full_name) {
@@ -249,11 +254,12 @@ export const DeployForm = ({
                   {
                     label: t('selfHost.deployForm.fields.buildPack.options.dockerfile'),
                     value: BuildPack.Dockerfile
-                  },
-                  {
-                    label: t('selfHost.deployForm.fields.buildPack.options.static'),
-                    value: BuildPack.Static
                   }
+                  // Static build pack option commented out for deployment
+                  // {
+                  //   label: t('selfHost.deployForm.fields.buildPack.options.static'),
+                  //   value: BuildPack.Static
+                  // }
                 ]}
               />
               {!isStaticBuildPack && (
