@@ -120,12 +120,6 @@ function AppItem({
               <p className="text-xs text-muted-foreground font-mono truncate mt-1">{domain}</p>
             )}
 
-            {labels && labels.length > 0 && (
-              <div className="mt-2">
-                <Labels applicationId={id} labels={labels} isEditable={false} />
-              </div>
-            )}
-
             <div className="flex flex-col space-y-3 pb-2 z-10 relative mt-3">
               <div className="flex items-center text-sm text-muted-foreground">
                 <Clock size={16} className="mr-2 text-muted-foreground/70" />

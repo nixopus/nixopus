@@ -1,8 +1,8 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, MoreVertical, RotateCcw, Trash2, Rocket, RefreshCw } from 'lucide-react';
+import { ExternalLink, MoreVertical, RotateCcw, Trash2, Rocket, RefreshCw, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,9 +14,10 @@ import { Application } from '@/redux/types/applications';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import {
   useRedeployApplicationMutation,
-  useRestartApplicationMutation
+  useRestartApplicationMutation,
+  useDeleteApplicationMutation,
+  useUpdateApplicationLabelsMutation
 } from '@/redux/services/deploy/applicationsApi';
-import { useDeleteApplicationMutation } from '@/redux/services/deploy/applicationsApi';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
@@ -27,6 +28,7 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
   const { t } = useTranslation();
   const [redeployApplication, { isLoading: isRedeploying }] = useRedeployApplicationMutation();
   const [deleteApplication, { isLoading: isDeleting }] = useDeleteApplicationMutation();
+  const [updateLabels] = useUpdateApplicationLabelsMutation();
   const router = useRouter();
   const [restartApplication, { isLoading: isRestarting }] = useRestartApplicationMutation();
 
@@ -85,6 +87,15 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
     }
   };
 
+  const handleRemoveLabel = async (labelToRemove: string) => {
+    if (!application?.id || !application?.labels) return;
+    const updated = application.labels.filter((l) => l !== labelToRemove);
+    await updateLabels({
+      id: application.id,
+      labels: updated
+    }).unwrap();
+  };
+
   return (
     <ResourceGuard resource="deploy" action="read" loadingFallback={null}>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -139,9 +150,11 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
             {application?.labels && application.labels.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-3">
                 {application.labels.map((label, index) => (
-                  <Badge key={index} variant="secondary" className="text-sm px-3 py-1">
-                    {label}
-                  </Badge>
+                  <HeaderLabelBadge
+                    key={index}
+                    label={label}
+                    onRemove={() => handleRemoveLabel(label)}
+                  />
                 ))}
               </div>
             )}
@@ -223,5 +236,41 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
     </ResourceGuard>
   );
 };
+
+interface HeaderLabelBadgeProps {
+  label: string;
+  onRemove: () => void;
+}
+
+function HeaderLabelBadge({ label, onRemove }: HeaderLabelBadgeProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <Badge
+      variant="secondary"
+      className={cn('text-sm px-3 py-1 gap-1 relative', 'transition-all duration-200', 'pr-2')}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <span className={cn('transition-opacity duration-200', isHovered && 'opacity-70')}>
+        {label}
+      </span>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className={cn(
+          'transition-all duration-200',
+          'hover:text-destructive',
+          'flex items-center justify-center',
+          isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-75 w-0'
+        )}
+      >
+        <X size={14} />
+      </button>
+    </Badge>
+  );
+}
 
 export default ApplicationDetailsHeader;
