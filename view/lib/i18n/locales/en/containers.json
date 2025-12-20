@@ -29,7 +29,16 @@
     "restart_error": "Failed to restart container",
     "fetch_error": "Failed to fetch containers",
     "overview": "Overview",
-    "logs": "Logs",
+    "logs": {
+      "title": "Logs",
+      "copy": "Copy logs",
+      "download": "Download logs",
+      "copySuccess": "Logs copied to clipboard",
+      "copyError": "Failed to copy logs",
+      "copyEmpty": "No logs to copy",
+      "downloadSuccess": "Logs downloaded",
+      "downloadEmpty": "No logs to download"
+    },
     "details": "Details",
     "basic_info": "Basic Info",
     "resources": "Resources",
