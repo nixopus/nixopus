@@ -36,16 +36,16 @@ function Page() {
     <ResourceGuard resource="deploy" action="read" loadingFallback={<Skeleton className="h-96" />}>
       <PageLayout maxWidth="full" padding="md" spacing="lg">
         <ApplicationDetailsHeader application={application} />
-            <Labels
-            applicationId={application?.id || ''}
-            labels={application?.labels || []}
-            onLabelsChange={(labels) => {
-              if (application) {
-                application.labels = labels;
-              }
-            }}
-            isEditable={true}
-          />
+        <Labels
+          applicationId={application?.id || ''}
+          labels={application?.labels || []}
+          onLabelsChange={(labels) => {
+            if (application) {
+              application.labels = labels;
+            }
+          }}
+          isEditable={true}
+        />
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="w-full justify-start rounded-none h-auto p-0 bg-transparent gap-2">
             <TabsTrigger
@@ -114,7 +114,7 @@ function Page() {
             <Monitor application={application} />
           </TabsContent>
         </Tabs>
-      </div>
+      </PageLayout>
     </ResourceGuard>
   );
 }

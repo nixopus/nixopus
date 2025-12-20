@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { ExternalLink, GitBranch } from 'lucide-react';
+import { Card, CardContent, CardDescription } from '@/components/ui/card';
+import { ExternalLink, GitBranch, Clock, Package } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Application } from '@/redux/types/applications';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -51,7 +51,7 @@ function AppItem({
         minute: '2-digit'
       })
     : 'N/A';
-  
+
   const formattedBuildPack = build_pack
     .replace(/([A-Z])/g, ' $1')
     .trim()
@@ -122,14 +122,9 @@ function AppItem({
 
             {labels && labels.length > 0 && (
               <div className="mt-2">
-                <Labels
-                  applicationId={id}
-                  labels={labels}
-                  isEditable={false}
-                />
+                <Labels applicationId={id} labels={labels} isEditable={false} />
               </div>
             )}
-
 
             <div className="flex flex-col space-y-3 pb-2 z-10 relative mt-3">
               <div className="flex items-center text-sm text-muted-foreground">
@@ -139,10 +134,11 @@ function AppItem({
 
               <div className="flex items-center text-sm text-muted-foreground">
                 <Package size={16} className="mr-2 text-muted-foreground/70" />
-                <CardDescription className="text-sm capitalize">{formattedBuildPack}</CardDescription>
+                <CardDescription className="text-sm capitalize">
+                  {formattedBuildPack}
+                </CardDescription>
               </div>
             </div>
-          </div>
 
             {/* Meta info */}
             <div className="flex items-center gap-3 mt-3">

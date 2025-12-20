@@ -21,7 +21,6 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 const ApplicationDetailsHeader = ({ application }: { application?: Application }) => {
@@ -140,11 +139,7 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
             {application?.labels && application.labels.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-3">
                 {application.labels.map((label, index) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className="text-sm px-3 py-1"
-                  >
+                  <Badge key={index} variant="secondary" className="text-sm px-3 py-1">
                     {label}
                   </Badge>
                 ))}
