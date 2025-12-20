@@ -100,20 +100,33 @@ def unflatten_config(flattened_config: dict) -> dict:
 
 
 def expand_env_placeholders(value: str) -> str:
-    """Expand environment placeholders in the form ${ENV_VAR:-default}"""
-    # Supports nested expansions like ${VAR1:-${VAR2:-default}}
-    pattern = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(:-([^}]*))?}")
+    """Expand environment placeholders in the form ${ENV_VAR:-default}
+    
+    Supports nested expansions like ${VAR1:-${VAR2:-default}} by processing
+    innermost placeholders first.
+    """
     max_iterations = 10  # Prevent infinite loops
     iteration = 0
 
-    def replacer(match):
+    def find_innermost_placeholder(s: str):
+        """Find the innermost ${VAR:-default} placeholder (one with no nested ${...} in default)"""
+        # Match ${VAR} or ${VAR:-default} where default has no nested ${}
+        pattern = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(:-([^${}]*))?}")
+        return pattern.search(s)
+
+    def replace_one(s: str) -> str:
+        """Replace one innermost placeholder"""
+        match = find_innermost_placeholder(s)
+        if not match:
+            return s
         var_name = match.group(1)
         default = match.group(3) if match.group(2) else ""
-        return os.environ.get(var_name, default)
+        replacement = os.environ.get(var_name, default)
+        return s[:match.start()] + replacement + s[match.end():]
 
     # Keep expanding until no more placeholders are found or max iterations reached
-    while pattern.search(value) and iteration < max_iterations:
-        value = pattern.sub(replacer, value)
+    while find_innermost_placeholder(value) and iteration < max_iterations:
+        value = replace_one(value)
         iteration += 1
 
     return value

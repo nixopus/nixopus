@@ -140,8 +140,8 @@ export const useTerminal = (
 
     try {
       const { Terminal } = await import('@xterm/xterm');
-      const { FitAddon } = await import('xterm-addon-fit');
-      const { WebLinksAddon } = await import('xterm-addon-web-links');
+      const { FitAddon } = await import('@xterm/addon-fit');
+      const { WebLinksAddon } = await import('@xterm/addon-web-links');
 
       const term = new Terminal({
         cursorBlink: true,
