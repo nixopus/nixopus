@@ -91,8 +91,8 @@ export function useDeploymentLogsViewer({
   const isLogExpanded = useCallback((logId: string) => expandedLogIds.has(logId), [expandedLogIds]);
 
   const expandAll = useCallback(() => {
-    setExpandedLogIds(new Set(allLogs.map((log) => log.id)));
-  }, [allLogs]);
+    setExpandedLogIds(new Set(formattedLogs.map((log) => log.id)));
+  }, [formattedLogs]);
 
   const collapseAll = useCallback(() => {
     setExpandedLogIds(new Set());

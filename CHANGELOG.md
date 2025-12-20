@@ -1,3 +1,12 @@
+# [0.1.0-alpha.101](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.100...v0.1.0-alpha.101) (2025-12-20)
+
+
+### Features
+
+* README with Trendshift badge ([#756](https://github.com/raghavyuva/nixopus/issues/756)) ([a16107e](https://github.com/raghavyuva/nixopus/commit/a16107e4f59272cffedf7028b5890c71212ddf15))
+
+
+
 # [0.1.0-alpha.100](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.99...v0.1.0-alpha.100) (2025-12-18)
 
 

@@ -1,7 +1,20 @@
 'use client';
 
-import React from 'react';
-import { Search, ChevronsUpDown, RefreshCw, X, Calendar, Rows3, Rows4 } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import {
+  Search,
+  ChevronsUpDown,
+  RefreshCw,
+  X,
+  Calendar,
+  Rows3,
+  Rows4,
+  Copy,
+  Download,
+  Check
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/use-translation';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,6 +35,7 @@ interface DeploymentLogsTableProps {
 }
 
 export function DeploymentLogsTable({ id, isDeployment = false, title }: DeploymentLogsTableProps) {
+  const { t } = useTranslation();
   const {
     logs,
     isLoading,
@@ -41,8 +55,48 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
     setIsDense
   } = useDeploymentLogsViewer({ id, isDeployment });
 
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopyLogs = useCallback(async () => {
+    const logText = logs
+      .map((log) => `[${log.formattedTime}] [${log.level.toUpperCase()}] ${log.message}`)
+      .join('\n');
+    if (!logText) {
+      toast.error(t('selfHost.logs.copyEmpty'));
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(logText);
+      setIsCopied(true);
+      toast.success(t('selfHost.logs.copySuccess'));
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      toast.error(t('selfHost.logs.copyError'));
+    }
+  }, [logs, t]);
+
+  const handleDownloadLogs = useCallback(() => {
+    const logText = logs
+      .map((log) => `[${log.formattedTime}] [${log.level.toUpperCase()}] ${log.message}`)
+      .join('\n');
+    if (!logText) {
+      toast.error(t('selfHost.logs.downloadEmpty'));
+      return;
+    }
+    const blob = new Blob([logText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${isDeployment ? 'deployment' : 'application'}-${id}-logs-${new Date().toISOString().split('T')[0]}.log`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success(t('selfHost.logs.downloadSuccess'));
+  }, [logs, id, isDeployment, t]);
+
   return (
-    <Card className="border-0 shadow-none">
+    <Card className="border-0 shadow-none overflow-x-hidden">
       <LogsHeader
         title={title}
         searchTerm={searchTerm}
@@ -57,8 +111,12 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
         onClearFilters={clearFilters}
         isDense={isDense}
         onDenseChange={setIsDense}
+        onCopyLogs={handleCopyLogs}
+        onDownloadLogs={handleDownloadLogs}
+        isCopied={isCopied}
+        hasLogs={logs.length > 0}
       />
-      <CardContent className="p-0 border rounded-md overflow-hidden">
+      <CardContent className="p-0 border rounded-md overflow-hidden min-w-0">
         <TableHeader />
         <LogsList
           logs={logs}
@@ -86,6 +144,10 @@ interface LogsHeaderProps {
   onClearFilters: () => void;
   isDense: boolean;
   onDenseChange: (isDense: boolean) => void;
+  onCopyLogs: () => void;
+  onDownloadLogs: () => void;
+  isCopied: boolean;
+  hasLogs: boolean;
 }
 
 function LogsHeader({
@@ -101,16 +163,20 @@ function LogsHeader({
   onFiltersChange,
   onClearFilters,
   isDense,
-  onDenseChange
+  onDenseChange,
+  onCopyLogs,
+  onDownloadLogs,
+  isCopied,
+  hasLogs
 }: LogsHeaderProps) {
   const hasActiveFilters =
     filters.startDate || filters.endDate || filters.level !== 'all' || searchTerm;
 
   return (
-    <CardHeader className="space-y-3 pb-4 px-0 border-none border-b-0">
+    <CardHeader className="space-y-3 pb-4 px-0 border-none border-b-0 min-w-0">
       {title && (
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">{title}</h3>
+        <div className="flex items-center justify-between min-w-0 gap-2">
+          <h3 className="text-lg font-semibold truncate min-w-0">{title}</h3>
           <LoadMoreButton
             currentPage={currentPage}
             totalPages={totalPages}
@@ -118,7 +184,7 @@ function LogsHeader({
           />
         </div>
       )}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 min-w-0 flex-wrap">
         <SearchInput value={searchTerm} onChange={onSearchChange} />
         <DateFiltersRow filters={filters} onFiltersChange={onFiltersChange} />
         {hasActiveFilters && <ClearFiltersButton onClick={onClearFilters} />}
@@ -130,12 +196,19 @@ function LogsHeader({
           />
         )}
       </div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between min-w-0 gap-2 flex-wrap">
         <LevelFilter
           value={filters.level}
           onChange={(v) => onFiltersChange({ ...filters, level: v })}
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <CopyDownloadButtons
+            onCopyLogs={onCopyLogs}
+            onDownloadLogs={onDownloadLogs}
+            isCopied={isCopied}
+            hasLogs={hasLogs}
+          />
+          <div className="w-px h-5 bg-border" />
           <ExpandCollapseButton onExpandAll={onExpandAll} onCollapseAll={onCollapseAll} />
           <DenseToggle isDense={isDense} onChange={onDenseChange} />
         </div>
@@ -146,7 +219,7 @@ function LogsHeader({
 
 function SearchInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="relative flex-shrink-0 w-96">
+    <div className="relative flex-shrink-0 min-w-0 max-w-full sm:w-96">
       <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
       <Input
         placeholder="Search logs..."
@@ -166,7 +239,7 @@ function DateFiltersRow({
   onFiltersChange: (filters: LogFilters) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 ml-auto">
+    <div className="flex flex-wrap items-center gap-3 ml-auto flex-shrink-0">
       <DateFilter
         label="From"
         value={filters.startDate}
@@ -220,12 +293,12 @@ function LevelFilter({
   onChange: (v: LogLevel | 'all') => void;
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap min-w-0">
       {levelOptions.map((option) => (
         <Badge
           key={option.value}
           variant={value === option.value ? 'default' : 'outline'}
-          className="cursor-pointer transition-colors"
+          className="cursor-pointer transition-colors flex-shrink-0"
           onClick={() => onChange(option.value)}
         >
           {option.label}
@@ -282,6 +355,41 @@ function DenseToggle({ isDense, onChange }: { isDense: boolean; onChange: (v: bo
   );
 }
 
+function CopyDownloadButtons({
+  onCopyLogs,
+  onDownloadLogs,
+  isCopied,
+  hasLogs
+}: {
+  onCopyLogs: () => void;
+  onDownloadLogs: () => void;
+  isCopied: boolean;
+  hasLogs: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={onCopyLogs}
+        disabled={!hasLogs}
+        title="Copy logs"
+      >
+        {isCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={onDownloadLogs}
+        disabled={!hasLogs}
+        title="Download logs"
+      >
+        <Download className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
 function LoadMoreButton({
   currentPage,
   totalPages,
@@ -303,11 +411,11 @@ function LoadMoreButton({
 
 function TableHeader() {
   return (
-    <div className="flex items-center gap-3 px-4 py-2 border-b bg-muted/30 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-      <div className="w-4" />
-      <div className="w-14">Level</div>
-      <div className="w-44">Timestamp</div>
-      <div className="flex-1">Message</div>
+    <div className="flex items-center gap-3 px-4 py-2 border-b bg-muted/30 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-0">
+      <div className="w-4 flex-shrink-0" />
+      <div className="w-14 flex-shrink-0">Level</div>
+      <div className="w-44 flex-shrink-0">Timestamp</div>
+      <div className="flex-1 min-w-0">Message</div>
     </div>
   );
 }
@@ -330,7 +438,7 @@ function LogsList({ logs, isLoading, isLogExpanded, onToggle, isDense }: LogsLis
   }
 
   return (
-    <div className="max-h-[600px] overflow-y-auto">
+    <div className="max-h-[600px] overflow-y-auto overflow-x-hidden">
       {logs.map((log) => (
         <LogItem
           key={log.id}

@@ -17,7 +17,7 @@ export function DeploymentLogRow({ log, isExpanded, onToggle, isDense }: Deploym
   return (
     <div
       className={cn(
-        'flex items-center gap-3 px-4 cursor-pointer transition-colors',
+        'flex items-start gap-3 px-4 cursor-pointer transition-colors min-w-0',
         'hover:bg-muted/50 border-b border-border/50',
         isExpanded && 'bg-muted/30',
         isDense ? 'py-1' : 'py-3'
@@ -34,7 +34,7 @@ export function DeploymentLogRow({ log, isExpanded, onToggle, isDense }: Deploym
 
 function ChevronIcon({ isExpanded, isDense }: { isExpanded: boolean; isDense?: boolean }) {
   return (
-    <div className="flex-shrink-0">
+    <div className="flex-shrink-0 mt-0.5">
       <ChevronRight
         className={cn(
           'text-muted-foreground transition-transform duration-200',
@@ -58,7 +58,7 @@ function LevelBadge({ level, isDense }: { level: LogLevel; isDense?: boolean }) 
     <Badge
       variant="outline"
       className={cn(
-        'justify-center',
+        'justify-center flex-shrink-0',
         levelStyles[level],
         isDense ? 'text-[10px] px-1 py-0 w-12' : 'text-xs px-2 py-0 w-14'
       )}
@@ -87,25 +87,20 @@ function MessageCell({
   isExpanded: boolean;
   isDense?: boolean;
 }) {
-  const displayMessage = isExpanded ? message : truncateMessage(message, 100);
-
   return (
     <div className="flex-1 min-w-0">
       <span
         className={cn(
           isDense ? 'text-xs' : 'text-sm',
-          isExpanded ? 'whitespace-pre-wrap' : 'truncate block'
+          isExpanded
+            ? 'whitespace-pre-wrap break-words'
+            : 'break-words line-clamp-1 overflow-hidden'
         )}
       >
-        {displayMessage}
+        {message}
       </span>
     </div>
   );
-}
-
-function truncateMessage(message: string, maxLength: number): string {
-  if (message.length <= maxLength) return message;
-  return message.slice(0, maxLength) + '...';
 }
 
 export default DeploymentLogRow;
