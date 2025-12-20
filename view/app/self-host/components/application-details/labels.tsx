@@ -40,7 +40,7 @@ export default function Labels({ applicationId, labels = [], onLabelsChange, isE
 			setNewLabel('');
 			return;
 		}
-		const updated = [...localLabels, value];
+		const updated = [...new Set([...localLabels, value])];
 		await saveLabels(updated);
 		setIsAdding(false);
 		setNewLabel('');
