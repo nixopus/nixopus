@@ -78,12 +78,11 @@ function useCreateDeployment({
         message: t('selfHost.deployForm.validation.repository.invalidFormat')
       }),
     build_pack: z
-      .enum([BuildPack.Dockerfile, BuildPack.DockerCompose, BuildPack.Static])
+      .enum([BuildPack.Dockerfile, BuildPack.DockerCompose /* BuildPack.Static */])
       .refine(
-        (value) =>
-          value === BuildPack.Dockerfile ||
-          value === BuildPack.DockerCompose ||
-          value === BuildPack.Static,
+        (value) => value === BuildPack.Dockerfile || value === BuildPack.DockerCompose,
+        // Static build pack option commented out for deployment
+        // value === BuildPack.Static,
         {
           message: t('selfHost.deployForm.validation.buildPack.invalidValue')
         }
@@ -96,6 +95,9 @@ function useCreateDeployment({
     base_path: z.string().optional().default(base_path)
   });
 
+  // Static build pack option commented out for deployment - default to Dockerfile if Static is provided
+  const validBuildPack = build_pack === BuildPack.Static ? BuildPack.Dockerfile : build_pack;
+
   const form = useForm<z.infer<typeof deploymentFormSchema>>({
     resolver: zodResolver(deploymentFormSchema),
     defaultValues: {
@@ -105,7 +107,7 @@ function useCreateDeployment({
       port,
       domain,
       repository,
-      build_pack,
+      build_pack: validBuildPack,
       env_variables,
       build_variables,
       pre_run_commands,
@@ -122,7 +124,12 @@ function useCreateDeployment({
     if (port) form.setValue('port', port);
     if (domain) form.setValue('domain', domain);
     if (repository) form.setValue('repository', repository);
-    if (build_pack) form.setValue('build_pack', build_pack);
+    // Static build pack option commented out for deployment - default to Dockerfile if Static is provided
+    if (build_pack)
+      form.setValue(
+        'build_pack',
+        build_pack === BuildPack.Static ? BuildPack.Dockerfile : build_pack
+      );
     if (env_variables && Object.keys(env_variables).length > 0)
       form.setValue('env_variables', env_variables);
     if (build_variables && Object.keys(build_variables).length > 0)
