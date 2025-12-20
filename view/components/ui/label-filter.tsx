@@ -2,7 +2,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X, Filter } from 'lucide-react';
+import { X, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface LabelFilterProps {
@@ -25,49 +25,27 @@ export function LabelFilter({
   const hasActiveFilters = selectedLabels.length > 0;
 
   return (
-    <div className={cn('flex items-center justify-between gap-4', className)}>
-      <LabelBadges labels={availableLabels} selected={selectedLabels} onToggle={onToggle} />
-      {hasActiveFilters && <ClearButton onClick={onClear} />}
-    </div>
-  );
-}
-
-interface ClearButtonProps {
-  onClick: () => void;
-}
-
-function ClearButton({ onClick }: ClearButtonProps) {
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={onClick}
-      className="h-8 gap-1.5 text-xs shrink-0 hover:bg-destructive/10 hover:text-destructive"
-    >
-      <X className="h-3.5 w-3.5" />
-      Clear filters
-    </Button>
-  );
-}
-
-interface LabelBadgesProps {
-  labels: string[];
-  selected: string[];
-  onToggle: (label: string) => void;
-}
-
-function LabelBadges({ labels, selected, onToggle }: LabelBadgesProps) {
-  return (
-    <div className="flex items-center gap-2 flex-wrap flex-1">
-      <div className="flex flex-wrap gap-2">
-        {labels.map((label) => (
+    <div className={cn('flex items-center gap-3', className)}>
+      <div className="flex flex-wrap items-center gap-2 flex-1">
+        {availableLabels.map((label) => (
           <LabelBadge
             key={label}
             label={label}
-            isSelected={selected.includes(label)}
+            isSelected={selectedLabels.includes(label)}
             onClick={() => onToggle(label)}
           />
         ))}
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClear}
+            className="h-6 px-2 gap-1 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          >
+            <X className="h-3 w-3" />
+            Clear
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -82,13 +60,11 @@ interface LabelBadgeProps {
 function LabelBadge({ label, isSelected, onClick }: LabelBadgeProps) {
   return (
     <Badge
-      variant={isSelected ? 'default' : 'secondary'}
+      variant="outline"
       className={cn(
-        'cursor-pointer transition-all select-none',
-        'hover:scale-105',
-        'active:scale-95',
-        'text-xs px-3 py-1',
-        isSelected ? 'bg-primary text-primary-foreground' : 'bg-secondary/50 hover:bg-secondary'
+        'cursor-pointer transition-all select-none text-xs px-2 py-0.5',
+        'hover:scale-105 active:scale-95',
+        isSelected ? 'border-violet-500 text-violet-500 bg-violet-500/20' : ''
       )}
       onClick={onClick}
     >

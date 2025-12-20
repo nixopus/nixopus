@@ -11,7 +11,6 @@ import ApplicationDetailsHeader from '../../components/application-details/heade
 import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
-import Labels from '../../components/application-details/labels';
 import PageLayout from '@/components/layout/page-layout';
 import { Activity, Settings, Layers, ScrollText } from 'lucide-react';
 
@@ -36,16 +35,6 @@ function Page() {
     <ResourceGuard resource="deploy" action="read" loadingFallback={<Skeleton className="h-96" />}>
       <PageLayout maxWidth="full" padding="md" spacing="lg">
         <ApplicationDetailsHeader application={application} />
-        <Labels
-          applicationId={application?.id || ''}
-          labels={application?.labels || []}
-          onLabelsChange={(labels) => {
-            if (application) {
-              application.labels = labels;
-            }
-          }}
-          isEditable={true}
-        />
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="w-full justify-start rounded-none h-auto p-0 bg-transparent gap-2">
             <TabsTrigger

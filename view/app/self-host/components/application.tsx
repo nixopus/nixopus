@@ -1,11 +1,10 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription } from '@/components/ui/card';
-import { ExternalLink, GitBranch, Clock, Package } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { ExternalLink, GitBranch, Package } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Application } from '@/redux/types/applications';
 import { Skeleton } from '@/components/ui/skeleton';
-import Labels from './application-details/labels';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -42,15 +41,6 @@ function AppItem({
   };
 
   const statusConfig = getStatusConfig(currentStatus);
-  const formattedDate = updated_at
-    ? new Date(updated_at).toLocaleString('en-US', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    : 'N/A';
 
   const formattedBuildPack = build_pack
     .replace(/([A-Z])/g, ' $1')
@@ -115,40 +105,55 @@ function AppItem({
               )}
             </div>
 
-            {/* Domain */}
-            {domain && (
-              <p className="text-xs text-muted-foreground font-mono truncate mt-1">{domain}</p>
-            )}
-
-            <div className="flex flex-col space-y-3 pb-2 z-10 relative mt-3">
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Clock size={16} className="mr-2 text-muted-foreground/70" />
-                <CardDescription className="text-sm">{formattedDate}</CardDescription>
-              </div>
-
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Package size={16} className="mr-2 text-muted-foreground/70" />
-                <CardDescription className="text-sm capitalize">
-                  {formattedBuildPack}
-                </CardDescription>
-              </div>
-            </div>
-
-            {/* Meta info */}
-            <div className="flex items-center gap-3 mt-3">
+            {/* Badges row - domain, environment, labels */}
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              {domain && (
+                <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded truncate max-w-[180px]">
+                  {domain}
+                </span>
+              )}
               <Badge variant="outline" className={cn('text-xs capitalize', getEnvironmentStyles())}>
                 {environment}
               </Badge>
+              {labels && labels.length > 0 && (
+                <>
+                  {labels.slice(0, 2).map((label, index) => (
+                    <Badge
+                      key={index}
+                      variant="outline"
+                      className="text-xs border-violet-500/30 text-violet-500 bg-violet-500/10"
+                    >
+                      {label}
+                    </Badge>
+                  ))}
+                  {labels.length > 2 && (
+                    <Badge
+                      variant="outline"
+                      className="text-xs border-muted-foreground/30 text-muted-foreground bg-muted"
+                    >
+                      +{labels.length - 2}
+                    </Badge>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Meta info */}
+            <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
               {branch && (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
                   <GitBranch className="h-3 w-3" />
                   {branch}
                 </span>
               )}
+              <span className="flex items-center gap-1">
+                <Package className="h-3 w-3" />
+                <span className="capitalize">{formattedBuildPack}</span>
+              </span>
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
               <span className="text-xs text-muted-foreground">{timeAgo}</span>
               <span
                 className={cn(
