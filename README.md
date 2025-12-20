@@ -14,6 +14,13 @@
   <a href="https://github.com/raghavyuva/nixopus/discussions/262"><b>Roadmap</b></a>
 </p>
 
+<br>
+<p align="center">
+ <a href="https://trendshift.io/repositories/15336" target="_blank"><img src="https://trendshift.io/api/badge/repositories/15336" alt="raghavyuva/nixopus | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+</p>
+<br>
+
+
 <img width="1210" height="764" alt="image" src="assets/nixopus_dashboard.jpeg" />
 
 > ⚠️ **Important Note**: Nixopus is currently in alpha/pre-release stage and is not yet ready for production use. While you're welcome to try it out, we recommend waiting for the beta or stable release before using it in production environments. The platform is still undergoing testing and development.
