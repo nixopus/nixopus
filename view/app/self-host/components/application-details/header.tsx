@@ -1,7 +1,18 @@
 'use client';
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, MoreVertical, RotateCcw, Trash2, Rocket, RefreshCw } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  ExternalLink,
+  MoreVertical,
+  RotateCcw,
+  Trash2,
+  Rocket,
+  RefreshCw,
+  X,
+  Plus
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,22 +24,33 @@ import { Application } from '@/redux/types/applications';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import {
   useRedeployApplicationMutation,
-  useRestartApplicationMutation
+  useRestartApplicationMutation,
+  useDeleteApplicationMutation,
+  useUpdateApplicationLabelsMutation
 } from '@/redux/services/deploy/applicationsApi';
-import { useDeleteApplicationMutation } from '@/redux/services/deploy/applicationsApi';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 const ApplicationDetailsHeader = ({ application }: { application?: Application }) => {
   const { t } = useTranslation();
   const [redeployApplication, { isLoading: isRedeploying }] = useRedeployApplicationMutation();
   const [deleteApplication, { isLoading: isDeleting }] = useDeleteApplicationMutation();
+  const [updateLabels, { isLoading: isUpdatingLabels }] = useUpdateApplicationLabelsMutation();
   const router = useRouter();
   const [restartApplication, { isLoading: isRestarting }] = useRestartApplicationMutation();
+
+  const [isAddingLabel, setIsAddingLabel] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
+  const labelInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isAddingLabel && labelInputRef.current) {
+      labelInputRef.current.focus();
+    }
+  }, [isAddingLabel]);
 
   const latestDeployment = application?.deployments?.[0];
   const currentStatus = latestDeployment?.status?.status;
@@ -85,6 +107,41 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
     }
   };
 
+  const handleRemoveLabel = async (labelToRemove: string) => {
+    if (!application?.id || !application?.labels) return;
+    const updated = application.labels.filter((l) => l !== labelToRemove);
+    await updateLabels({
+      id: application.id,
+      labels: updated
+    }).unwrap();
+  };
+
+  const handleAddLabel = async () => {
+    const value = newLabel.trim();
+    if (!value || !application?.id) {
+      setIsAddingLabel(false);
+      setNewLabel('');
+      return;
+    }
+    const currentLabels = application.labels || [];
+    const updated = [...new Set([...currentLabels, value])];
+    await updateLabels({
+      id: application.id,
+      labels: updated
+    }).unwrap();
+    setIsAddingLabel(false);
+    setNewLabel('');
+  };
+
+  const handleLabelKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      await handleAddLabel();
+    } else if (e.key === 'Escape') {
+      setIsAddingLabel(false);
+      setNewLabel('');
+    }
+  };
+
   return (
     <ResourceGuard resource="deploy" action="read" loadingFallback={null}>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -113,7 +170,7 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
                 <ExternalLink className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex flex-wrap items-center gap-2 mt-1">
               <a
                 href={'https://' + application?.domain}
                 target="_blank"
@@ -135,6 +192,40 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
               >
                 {application?.environment}
               </Badge>
+              {application?.labels && application.labels.length > 0 && (
+                <>
+                  {application.labels.map((label, index) => (
+                    <HeaderLabelBadge
+                      key={index}
+                      label={label}
+                      onRemove={() => handleRemoveLabel(label)}
+                    />
+                  ))}
+                </>
+              )}
+              <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+                {isAddingLabel ? (
+                  <Input
+                    ref={labelInputRef}
+                    value={newLabel}
+                    onChange={(e) => setNewLabel(e.target.value)}
+                    onKeyDown={handleLabelKeyDown}
+                    onBlur={handleAddLabel}
+                    className="h-5 w-24 text-xs px-2 py-0"
+                    placeholder="New label"
+                    disabled={isUpdatingLabels}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingLabel(true)}
+                    className="inline-flex items-center gap-1 h-5 px-2 rounded-md border border-dashed border-muted-foreground/40 text-xs text-muted-foreground hover:bg-muted hover:border-muted-foreground/60 transition-colors"
+                  >
+                    <Plus size={10} />
+                    Add
+                  </button>
+                )}
+              </AnyPermissionGuard>
             </div>
           </div>
         </div>
@@ -214,5 +305,46 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
     </ResourceGuard>
   );
 };
+
+interface HeaderLabelBadgeProps {
+  label: string;
+  onRemove: () => void;
+}
+
+function HeaderLabelBadge({ label, onRemove }: HeaderLabelBadgeProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        'text-xs px-2 py-0.5 gap-1 relative',
+        'transition-all duration-200',
+        'border-violet-500/30 text-violet-500 bg-violet-500/10',
+        'pr-1.5'
+      )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <span className={cn('transition-opacity duration-200', isHovered && 'opacity-70')}>
+        {label}
+      </span>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className={cn(
+          'transition-all duration-200',
+          'hover:text-destructive',
+          'flex items-center justify-center',
+          isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-75 w-0'
+        )}
+      >
+        <X size={12} />
+      </button>
+    </Badge>
+  );
+}
 
 export default ApplicationDetailsHeader;

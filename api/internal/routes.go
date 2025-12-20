@@ -389,6 +389,7 @@ func (router *Router) DeployApplicationRoutes(f *fuego.Server, deployController 
 	fuego.Get(f, "/logs/{application_id}", deployController.GetLogs)
 	fuego.Get(f, "/deployments/{deployment_id}/logs", deployController.GetDeploymentLogs)
 	fuego.Get(f, "/deployments", deployController.GetApplicationDeployments)
+	fuego.Put(f, "/labels", deployController.UpdateApplicationLabels)
 }
 
 func (router *Router) FileManagerRoutes(f *fuego.Server, fileManagerController *file_manager.FileManagerController) {
