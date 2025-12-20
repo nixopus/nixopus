@@ -63,6 +63,12 @@ export default function FeatureFlagsSettings() {
     if (!featureFlags) return [];
 
     return featureFlags.filter((feature) => {
+      // Exclude domain and notifications features for now
+      // TODO: Add them back later when we have them implemented
+      if (feature.feature_name === 'domain' || feature.feature_name === 'notifications') {
+        return false;
+      }
+
       const matchesSearch =
         feature.feature_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t(`settings.featureFlags.features.${feature.feature_name}.title` as any)
@@ -133,8 +139,8 @@ export default function FeatureFlagsSettings() {
 
   return (
     <RBACGuard resource="feature-flags" action="read">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col h-full">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <TypographyH3 className="text-lg font-semibold">
               {t('settings.featureFlags.title')}
@@ -154,7 +160,7 @@ export default function FeatureFlagsSettings() {
             </Badge>
           </div>
         </div>
-        <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto space-y-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -191,57 +197,59 @@ export default function FeatureFlagsSettings() {
               </AlertDescription>
             </Alert>
           ) : (
-            Array.from(groupedFeatures.entries()).map(([group, features], index) => {
-              const GroupIcon = getGroupIcon(group);
-              const enabledInGroup = features.filter((f) => f.is_enabled).length;
+            Array.from(groupedFeatures.entries())
+              .filter(([group]) => group !== 'notifications')
+              .map(([group, features], index) => {
+                const GroupIcon = getGroupIcon(group);
+                const enabledInGroup = features.filter((f) => f.is_enabled).length;
 
-              return (
-                <div key={group} className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <GroupIcon className="h-4 w-4 text-muted-foreground" />
-                      <TypographySmall className="font-semibold">
-                        {t(`settings.featureFlags.groups.${group}.title` as any)}
-                      </TypographySmall>
-                      <Badge variant="outline" className="text-xs">
-                        {enabledInGroup}/{features.length}
-                      </Badge>
+                return (
+                  <div key={group} className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <GroupIcon className="h-4 w-4 text-muted-foreground" />
+                        <TypographySmall className="font-semibold">
+                          {t(`settings.featureFlags.groups.${group}.title` as any)}
+                        </TypographySmall>
+                        <Badge variant="outline" className="text-xs">
+                          {enabledInGroup}/{features.length}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {features?.map((feature) => (
+                        <div
+                          key={feature.feature_name}
+                          className="flex items-center justify-between p-4 rounded-md bg-muted/30 transition-colors hover:bg-muted/50"
+                        >
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2">
+                              <TypographySmall className="font-medium">
+                                {t(
+                                  `settings.featureFlags.features.${feature.feature_name}.title` as any
+                                )}
+                              </TypographySmall>
+                            </div>
+                            <TypographyMuted className="text-sm">
+                              {t(
+                                `settings.featureFlags.features.${feature.feature_name}.description` as any
+                              )}
+                            </TypographyMuted>
+                          </div>
+                          <RBACGuard resource="feature-flags" action="update">
+                            <Switch
+                              checked={feature.is_enabled}
+                              onCheckedChange={(checked) =>
+                                handleToggleFeature(feature.feature_name, checked)
+                              }
+                            />
+                          </RBACGuard>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <div className="space-y-3">
-                    {features?.map((feature) => (
-                      <div
-                        key={feature.feature_name}
-                        className="flex items-center justify-between p-4 rounded-md bg-muted/30 transition-colors hover:bg-muted/50"
-                      >
-                        <div className="space-y-1 flex-1">
-                          <div className="flex items-center gap-2">
-                            <TypographySmall className="font-medium">
-                              {t(
-                                `settings.featureFlags.features.${feature.feature_name}.title` as any
-                              )}
-                            </TypographySmall>
-                          </div>
-                          <TypographyMuted className="text-sm">
-                            {t(
-                              `settings.featureFlags.features.${feature.feature_name}.description` as any
-                            )}
-                          </TypographyMuted>
-                        </div>
-                        <RBACGuard resource="feature-flags" action="update">
-                          <Switch
-                            checked={feature.is_enabled}
-                            onCheckedChange={(checked) =>
-                              handleToggleFeature(feature.feature_name, checked)
-                            }
-                          />
-                        </RBACGuard>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })
+                );
+              })
           )}
         </div>
       </div>
