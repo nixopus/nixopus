@@ -18,7 +18,7 @@ func TestUpdateGithubConnectorRequest_NoConnectorsFound(t *testing.T) {
 	storage.On("GetAllConnectors", "user-123").Return([]shared_types.GithubConnector{}, nil)
 
 	svc := service.NewGithubConnectorService(nil, context.Background(), logger.NewLogger(), storage)
-	err := svc.UpdateGithubConnectorRequest("installation-123", "user-123")
+	err := svc.UpdateGithubConnectorRequest("installation-123", "user-123", "")
 
 	assert.Nil(t, err)
 	storage.AssertExpectations(t)
@@ -41,7 +41,7 @@ func TestUpdateGithubConnectorRequest_UpdateConnectorError(t *testing.T) {
 	storage.On("UpdateConnector", connectorID.String(), "installation-123").Return(errors.New("failed to update connector"))
 
 	svc := service.NewGithubConnectorService(nil, context.Background(), logger.NewLogger(), storage)
-	err := svc.UpdateGithubConnectorRequest("installation-123", userID.String())
+	err := svc.UpdateGithubConnectorRequest("installation-123", userID.String(), "")
 
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "failed to")
@@ -53,7 +53,7 @@ func TestUpdateGithubConnectorRequest_GetAllConnectorsError(t *testing.T) {
 	storage.On("GetAllConnectors", "user-123").Return(nil, errors.New("failed to get all connectors"))
 
 	svc := service.NewGithubConnectorService(nil, context.Background(), logger.NewLogger(), storage)
-	err := svc.UpdateGithubConnectorRequest("installation-123", "user-123")
+	err := svc.UpdateGithubConnectorRequest("installation-123", "user-123", "")
 
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "failed to get all connectors")
@@ -77,7 +77,7 @@ func TestUpdateGithubConnectorRequest_SuccessfulUpdate(t *testing.T) {
 	customMock.ExpectUpdateConnector(connectorID.String(), "installation-123", nil)
 
 	svc := service.NewGithubConnectorService(nil, context.Background(), logger.NewLogger(), customMock)
-	err := svc.UpdateGithubConnectorRequest("installation-123", userID.String())
+	err := svc.UpdateGithubConnectorRequest("installation-123", userID.String(), "")
 
 	assert.Nil(t, err)
 	customMock.VerifyExpectations(t)
