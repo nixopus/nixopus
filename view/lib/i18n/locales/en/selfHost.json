@@ -1,5 +1,14 @@
 {
   "selfHost": {
+    "logs": {
+      "copy": "Copy logs",
+      "download": "Download logs",
+      "copySuccess": "Logs copied to clipboard",
+      "copyError": "Failed to copy logs",
+      "copyEmpty": "No logs to copy",
+      "downloadSuccess": "Logs downloaded",
+      "downloadEmpty": "No logs to download"
+    },
     "deployment": {
       "title": "Deployment Details",
       "logs": {
