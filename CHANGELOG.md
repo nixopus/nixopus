@@ -1,3 +1,12 @@
+# [0.1.0-alpha.100](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.99...v0.1.0-alpha.100) (2025-12-18)
+
+
+### Bug Fixes
+
+* **cli:** bump version from 0.1.36 to 0.1.37 ([#744](https://github.com/raghavyuva/nixopus/issues/744)) ([9957e43](https://github.com/raghavyuva/nixopus/commit/9957e4356bb9d3cf4b79e4914bff861812293d97))
+
+
+
 # [0.1.0-alpha.99](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.98...v0.1.0-alpha.99) (2025-12-18)
 
 
