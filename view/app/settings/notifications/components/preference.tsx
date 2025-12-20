@@ -1,6 +1,5 @@
 'use client';
 import React from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { PreferenceType } from '@/redux/types/notification';
@@ -20,19 +19,19 @@ const NotificationPreferenceCard: React.FC<NotificationPreferenceCardProps> = ({
   onUpdate
 }) => {
   return (
-    <Card>
-      <CardHeader>
-        <TypographySmall>{title}</TypographySmall>
-        <TypographyMuted>{description}</TypographyMuted>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-4">
+      <div>
+        <TypographySmall className="text-sm font-medium">{title}</TypographySmall>
+        <TypographyMuted className="text-xs mt-1">{description}</TypographyMuted>
+      </div>
+      <div className="space-y-4">
         {preferences?.map((pref) => (
           <div className="flex items-center justify-between" key={pref.id}>
             <div className="space-y-0.5">
               <Label htmlFor={pref.id} className="text-base">
                 {pref.label}
               </Label>
-              <TypographyMuted>{pref.description}</TypographyMuted>
+              <TypographyMuted className="text-xs">{pref.description}</TypographyMuted>
             </div>
             <Switch
               id={pref.id}
@@ -41,8 +40,8 @@ const NotificationPreferenceCard: React.FC<NotificationPreferenceCardProps> = ({
             />
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

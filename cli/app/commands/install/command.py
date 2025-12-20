@@ -1,12 +1,11 @@
 import typer
 
-from app.utils.config import Config
-from app.utils.logger import Logger
-from app.utils.timeout import TimeoutWrapper
+from app.utils.logger import create_logger, log_error, log_success, log_warning
+from app.utils.timeout import timeout_wrapper
 
 from .deps import install_all_deps
 from .run import Install
-from .ssh import SSH, SSHConfig
+from .ssh import SSHConfig, format_ssh_output, generate_ssh_key_with_config
 
 install_app = typer.Typer(help="Install Nixopus", invoke_without_command=True)
 
@@ -33,16 +32,28 @@ def install_callback(
         "-vd",
         help="The domain where the nixopus view will be accessible (e.g. nixopus.com), if not provided you can use the ip address of the server and the port (e.g. 192.168.1.100:80)",
     ),
-    repo: str = typer.Option(
-        None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"
+    host_ip: str = typer.Option(
+        None,
+        "--host-ip",
+        "-ip",
+        help="The IP address of the server to use when no domains are provided (e.g. 10.0.0.154 or 192.168.1.100). If not provided, the public IP will be automatically detected.",
     ),
-    branch: str = typer.Option(
-        None, "--branch", "-b", help="Git branch to clone (defaults to config value)"
-    ),
+    api_port: int = typer.Option(None, "--api-port", help="Port for the API service (default: 8443)"),
+    view_port: int = typer.Option(None, "--view-port", help="Port for the View/Frontend service (default: 7443)"),
+    db_port: int = typer.Option(None, "--db-port", help="Port for the PostgreSQL database (default: 5432)"),
+    redis_port: int = typer.Option(None, "--redis-port", help="Port for the Redis service (default: 6379)"),
+    caddy_admin_port: int = typer.Option(None, "--caddy-admin-port", help="Port for Caddy admin API (default: 2019)"),
+    caddy_http_port: int = typer.Option(None, "--caddy-http-port", help="Port for Caddy HTTP traffic (default: 80)"),
+    caddy_https_port: int = typer.Option(None, "--caddy-https-port", help="Port for Caddy HTTPS traffic (default: 443)"),
+    supertokens_port: int = typer.Option(None, "--supertokens-port", help="Port for SuperTokens service (default: 3567)"),
+    repo: str = typer.Option(None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"),
+    branch: str = typer.Option(None, "--branch", "-b", help="Git branch to clone (defaults to config value)"),
+    external_db_url: str = typer.Option(None, "--external-db-url", help="External PostgreSQL database connection URL (e.g. postgresql://user:password@host:port/dbname?sslmode=require). If provided, local DB service will be excluded"),
+    staging: bool = typer.Option(False, "--staging", "-s", help="Use staging docker-compose file (docker-compose-staging.yml)"),
 ):
-    """Install Nixopus"""
+    """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
-        logger = Logger(verbose=verbose)
+        logger = create_logger(verbose=verbose)
         install = Install(
             logger=logger,
             verbose=verbose,
@@ -52,16 +63,34 @@ def install_callback(
             config_file=config_file,
             api_domain=api_domain,
             view_domain=view_domain,
+            host_ip=host_ip,
             repo=repo,
             branch=branch,
+            api_port=api_port,
+            view_port=view_port,
+            db_port=db_port,
+            redis_port=redis_port,
+            caddy_admin_port=caddy_admin_port,
+            caddy_http_port=caddy_http_port,
+            caddy_https_port=caddy_https_port,
+            supertokens_port=supertokens_port,
+            external_db_url=external_db_url,
+            staging=staging,
         )
         install.run()
 
 
 def main_install_callback(value: bool):
     if value:
-        logger = Logger(verbose=False)
-        install = Install(logger=logger, verbose=False, timeout=300, force=False, dry_run=False, config_file=None)
+        logger = create_logger(verbose=False)
+        install = Install(
+            logger=logger,
+            verbose=False,
+            timeout=300,
+            force=False,
+            dry_run=False,
+            config_file=None,
+        )
         install.run()
         raise typer.Exit()
 
@@ -86,8 +115,8 @@ def ssh(
     timeout: int = typer.Option(10, "--timeout", "-T", help="Timeout in seconds"),
 ):
     """Generate an SSH key pair with proper permissions and optional authorized_keys integration"""
+    logger = create_logger(verbose=verbose)
     try:
-        logger = Logger(verbose=verbose)
         config = SSHConfig(
             path=path,
             key_type=key_type,
@@ -101,17 +130,16 @@ def ssh(
             add_to_authorized_keys=add_to_authorized_keys,
             create_ssh_directory=create_ssh_directory,
         )
-        ssh_operation = SSH(logger=logger)
+        with timeout_wrapper(timeout):
+            result = generate_ssh_key_with_config(config, logger=logger)
 
-        with TimeoutWrapper(timeout):
-            result = ssh_operation.generate(config)
-
-        logger.success(result.output)
+        output = format_ssh_output(result, result.output)
+        log_success(output, verbose=verbose)
     except TimeoutError as e:
-        logger.error(e)
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(e)
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
 
 
@@ -123,19 +151,19 @@ def deps(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Install dependencies"""
+    logger = create_logger(verbose=verbose)
     try:
-        logger = Logger(verbose=verbose)
 
-        with TimeoutWrapper(timeout):
+        with timeout_wrapper(timeout):
             result = install_all_deps(verbose=verbose, output=output, dry_run=dry_run)
 
         if output == "json":
             print(result)
         else:
-            logger.success("All dependencies installed successfully.")
+            log_success("All dependencies installed successfully.", verbose=verbose)
     except TimeoutError as e:
-        logger.error(e)
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(e)
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)

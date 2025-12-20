@@ -30,10 +30,10 @@ export function DomainActions({ domain }: DomainActionsProps) {
       <ResourceGuard resource="domain" action="update">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-primary hover:text-primary/80 hover:bg-primary/10" 
+              className="h-8 w-8 p-0 text-primary hover:text-primary/80 hover:bg-primary/10"
               onClick={handleEdit}
             >
               <Edit className="h-4 w-4" />
@@ -47,10 +47,10 @@ export function DomainActions({ domain }: DomainActionsProps) {
       <ResourceGuard resource="domain" action="delete">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50" 
+              className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
               onClick={handleDelete}
             >
               <Trash2 className="h-4 w-4" />

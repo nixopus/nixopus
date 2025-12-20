@@ -1,0 +1,24 @@
+{
+  "toasts": {
+    "success": {
+      "uploadFile": "File uploaded successfully",
+      "copyFile": "File copied successfully"
+    },
+    "errors": {
+      "realtimeMonitor": "Error connecting to realtime monitor service",
+      "setFileToCopy": "Error setting file to copy",
+      "moveFile": "Error moving file",
+      "copyFile": "Error copying file",
+      "renameFile": "Error renaming file",
+      "startRenaming": "Error starting renaming",
+      "navigateToFile": "Error navigating to file",
+      "createNewFolder": "Error creating new folder",
+      "createDirectory": "Error creating directory",
+      "uploadFile": "Failed to upload file",
+      "deleteFile": "Error deleting file",
+      "calculateSize": "Error calculating size",
+      "setEmail": "Error setting email",
+      "setPassword": "Error setting password"
+    }
+  }
+}

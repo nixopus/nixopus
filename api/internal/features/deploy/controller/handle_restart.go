@@ -60,14 +60,14 @@ func (c *DeployController) HandleRestart(f fuego.ContextWithBody[types.RestartDe
 			Status: http.StatusUnauthorized,
 		}
 	}
-    err = c.taskService.RestartDeployment(&data, user.ID, organizationID)
-    if err != nil {
-        c.logger.Log(logger.Error, "failed to restart application", "id: "+data.ID.String()+", error: "+err.Error())
-        return nil, fuego.HTTPError{
-            Err:    err,
-            Status: http.StatusInternalServerError,
-        }
-    }
+	err = c.taskService.RestartDeployment(&data, user.ID, organizationID)
+	if err != nil {
+		c.logger.Log(logger.Error, "failed to restart application", "id: "+data.ID.String()+", error: "+err.Error())
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
 
 	c.logger.Log(logger.Info, "application restarted successfully", "id: "+data.ID.String())
 	return &shared_types.Response{

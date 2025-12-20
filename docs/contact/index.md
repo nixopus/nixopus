@@ -1,2 +1,2 @@
 # Contact
-For any questions or concerns, please reach out to us at [raghavyuva@gmail.com](mailto:raghavyuva@gmail.com)
+For any questions or concerns, please reach out to us at [nixopus@gmail.com](mailto:nixopus@gmail.com)

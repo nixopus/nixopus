@@ -1,0 +1,107 @@
+metadata:
+  id: "deploy-luanti"
+  name: "Luanti"
+  description: "Luanti (formerly Minetest) is an open source voxel game-creation platform with easy modding and game creation. Uses luanti image from linuxserver.io. Client and server must be the same version - browse tags to pull the appropriate version."
+  author: "Nixopus Team"
+  icon: "🎮"
+  category: "Game"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Luanti"
+    default: "lscr.io/linuxserver/luanti"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag (must match client version)"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Luanti container"
+    default: "luanti"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host UDP port for Luanti server (default 30000, must match --port in CLI_ARGS if overridden)"
+    default: 30000
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container UDP port for Luanti server"
+    default: 30000
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Luanti data (world maps, mods folder, config files stored in /config/.minetest)"
+    default: "luanti-data"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  cli_args:
+    type: "string"
+    description: "Optional CLI arguments to launch the app (e.g., --gameid devtest, --port 40000 if overriding port)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing Luanti container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull Luanti image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Luanti container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}/udp"
+        volumes:
+          - "{{ config_volume_name }}:/config/.minetest"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          CLI_ARGS: "{{ cli_args }}"
+        restart: "unless-stopped"
+      timeout: 180
+

@@ -56,11 +56,49 @@ export interface DiskStats {
   allMounts: DiskMount[];
 }
 
+export interface CPUCore {
+  core_id: number;
+  usage: number;
+}
+
+export interface CPUStats {
+  overall: number;
+  per_core: CPUCore[];
+}
+
+export interface NetworkInterface {
+  name: string;
+  bytesSent: number;
+  bytesRecv: number;
+  packetsSent: number;
+  packetsRecv: number;
+  errorIn: number;
+  errorOut: number;
+  dropIn: number;
+  dropOut: number;
+}
+
+export interface NetworkStats {
+  totalBytesSent: number;
+  totalBytesRecv: number;
+  totalPacketsSent: number;
+  totalPacketsRecv: number;
+  interfaces: NetworkInterface[];
+  uploadSpeed: number;
+  downloadSpeed: number;
+}
+
 export interface SystemStatsType {
   os_type: string;
+  hostname: string;
   cpu_info: string;
+  cpu_cores: number;
+  cpu: CPUStats;
   memory: MemoryStats;
   load: LoadStats;
   disk: DiskStats;
+  network: NetworkStats;
+  kernel_version: string;
+  architecture: string;
   timestamp: number;
 }

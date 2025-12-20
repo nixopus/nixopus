@@ -1,0 +1,88 @@
+{
+  "dashboard": {
+    "title": "ഡാഷ്ബോർഡ്",
+    "description": "ആപ്ലിക്കേഷനുകളും സിസ്റ്റം ഉറവിടങ്ങളും നിരീക്ഷിക്കുക",
+    "containers": {
+      "title": "കണ്ടെയ്‌നറുകൾ",
+      "table": {
+        "headers": {
+          "id": "ഐഡി",
+          "name": "പേര്",
+          "image": "ഇമേജ്",
+          "status": "സ്ഥിതി",
+          "ports": "പോർട്ടുകൾ",
+          "created": "സൃഷ്ടിച്ചത്"
+        },
+        "noContainers": "കണ്ടെയ്‌നറുകൾ ഇല്ല",
+        "morePorts": "+{എണ്ണുക} കൂടുതൽ"
+      },
+      "viewAll": "എല്ലാം കാണുക"
+    },
+    "disk": {
+      "title": "ഡിസ്‌ക് ഉപയോഗം",
+      "used": "{മൂല്യം} GB ഉപയോഗിച്ചു",
+      "total": "{മൂല്യം} GB മൊത്തം",
+      "percentage": "{മൂല്യം}%",
+      "table": {
+        "headers": {
+          "mount": "മൗണ്ട്",
+          "size": "വലിപ്പം",
+          "used": "ഉപയോഗം",
+          "percentage": "%"
+        }
+      }
+    },
+    "load": {
+      "title": "ശരാശരി ലോഡ്",
+      "labels": {
+        "oneMin": "1 മിനിറ്റ്",
+        "fiveMin": "5 മിനിറ്റ്",
+        "fifteenMin": "15 മിനിറ്റ്"
+      }
+    },
+    "cpu": {
+      "title": "CPU ഉപയോഗം",
+      "overall": "മൊത്തത്തിൽ",
+      "usage": "ഉപയോഗം (%)",
+      "cores": "കോറുകൾ",
+      "perCore": "ഓരോ കോറിനും"
+    },
+    "memory": {
+      "title": "മെമ്മറി ഉപയോഗം",
+      "used": "{മൂല്യം} GB ഉപയോഗിച്ചു",
+      "total": "{മൂല്യം} GB മൊത്തം",
+      "percentage": "{മൂല്യം}%"
+    },
+    "errors": {
+      "parseMessage": "സന്ദേശം പാഴ്‌സ് ചെയ്യൽ പരാജയപ്പെട്ടു",
+      "unknownError": "അജ്ഞാത പിശക്",
+      "connectionLost": "കണക്ഷൻ നഷ്ടപ്പെട്ടു. വീണ്ടും ശ്രമിക്കുന്നു...",
+      "reconnectFailed": "വീണ്ടും കണക്റ്റ് പരാജയപ്പെട്ടു. ദയവായി പിന്നീട് ശ്രമിക്കുക."
+    },
+    "system": {
+      "title": "സിസ്റ്റം വിവരം",
+      "osType": "OS തരം",
+      "cpu": "CPU",
+      "uptime": "അപ്‌ടൈം",
+      "lastUpdated": "അവസാനം അപ്ഡേറ്റ് ചെയ്തത്",
+      "hostname": "ഹോസ്റ്റ്നേം",
+      "kernelVersion": "കേർണൽ പതിപ്പ്",
+      "architecture": "ആർക്കിടെക്ചർ",
+      "memory": "മെമ്മറി",
+      "labels": {
+        "operatingSystem": "ഓപ്പറേറ്റിംഗ് സിസ്റ്റം",
+        "hostname": "ഹോസ്റ്റ്നേം",
+        "cpu": "CPU",
+        "cpuCores": "CPU കോറുകൾ",
+        "memory": "മെമ്മറി",
+        "kernelVersion": "കേർണൽ പതിപ്പ്",
+        "uptime": "അപ്‌ടൈം",
+        "architecture": "ആർക്കിടെക്ചർ"
+      }
+    },
+    "smtpBanner": {
+      "message": "അറിയിപ്പുകൾക്കായി SMTP ക്രമീകരിക്കുക",
+      "configure": "ക്രമീകരിക്കുക"
+    }
+  }
+}

@@ -1,12 +1,12 @@
 import { DOMAIN_SETTINGS } from '@/redux/api-conf';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQueryWithReauth } from '@/redux/base-query';
-import { 
-  Domain, 
-  RandomSubdomainResponse, 
-  CreateDomainRequest, 
-  UpdateDomainRequest, 
-  DeleteDomainRequest 
+import {
+  Domain,
+  RandomSubdomainResponse,
+  CreateDomainRequest,
+  UpdateDomainRequest,
+  DeleteDomainRequest
 } from '@/redux/types/domain';
 
 export const domainsApi = createApi({

@@ -47,9 +47,9 @@ function useUpdateDeployment({
   const deploymentFormSchema = z.object({
     name: z
       .string()
-      .min(3, { message: t('selfHost.deployForm.fields.applicationName.minLength') })
+      .min(3, { message: t('selfHost.deployForm.validation.applicationName.minLength') })
       .regex(/^[a-zA-Z0-9_-]+$/, {
-        message: t('selfHost.deployForm.fields.applicationName.invalidFormat')
+        message: t('selfHost.deployForm.validation.applicationName.invalidFormat')
       })
       .optional(),
     pre_run_command: z.string().optional(),
@@ -138,7 +138,7 @@ function useUpdateDeployment({
     if (!input.trim())
       return {
         isValid: false,
-        error: t('selfHost.deployForm.fields.environmentVariables.emptyInput')
+        error: t('selfHost.deployForm.validation.envVariables.emptyInput')
       };
 
     const regex = /^([^=]+)=(.*)$/;
@@ -147,7 +147,7 @@ function useUpdateDeployment({
     if (!isValid) {
       return {
         isValid: false,
-        error: t('selfHost.deployForm.fields.environmentVariables.invalidFormat')
+        error: t('selfHost.deployForm.validation.envVariables.invalidFormat')
       };
     }
 
@@ -156,7 +156,7 @@ function useUpdateDeployment({
     if (!key.trim()) {
       return {
         isValid: false,
-        error: t('selfHost.deployForm.fields.environmentVariables.emptyKey')
+        error: t('selfHost.deployForm.validation.envVariables.emptyKey')
       };
     }
 

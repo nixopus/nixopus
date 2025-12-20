@@ -331,7 +331,8 @@ func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]str
 	for k, v := range envVars {
 		envVarsStr += fmt.Sprintf("export %s=%s && ", k, v)
 	}
-	command := fmt.Sprintf("%sdocker compose -f %s up -d", envVarsStr, composeFilePath)
+	// Use --force-recreate to handle existing containers and --remove-orphans to clean up old containers
+	command := fmt.Sprintf("%sdocker compose -f %s up -d --force-recreate --remove-orphans 2>&1", envVarsStr, composeFilePath)
 	output, err := client.RunCommand(command)
 	if err != nil {
 		return fmt.Errorf("failed to start docker compose services: %v, output: %s", err, output)

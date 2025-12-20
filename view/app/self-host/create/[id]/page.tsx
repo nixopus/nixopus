@@ -7,22 +7,28 @@ import { DeployForm } from '../../components/create-form/deploy-form';
 import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
+import PageLayout from '@/components/layout/page-layout';
 
 function page() {
   const { repository } = useFindRepository();
   const { t } = useTranslation();
 
   return (
-    <ResourceGuard 
-      resource="deploy" 
+    <ResourceGuard
+      resource="deploy"
       action="create"
       loadingFallback={<Skeleton className="h-96" />}
     >
-      <div className="container mx-auto py-6 space-y-8 max-w-4xl justify-center items-center h-screen flex-col flex">
+      <PageLayout
+        maxWidth="full"
+        padding="md"
+        spacing="lg"
+        className="justify-center items-center min-h-screen flex-col flex"
+      >
         <DashboardPageHeader
           label={repository?.name || t('selfHost.create.title')}
           description={t('selfHost.create.description')}
-          className='justify-center text-center mb-16'
+          className="justify-center text-center mb-16"
         />
         <DeployForm
           repository={repository?.id.toString() || ''}
@@ -38,7 +44,7 @@ function page() {
           pre_run_commands=""
           post_run_commands=""
         />
-      </div>
+      </PageLayout>
     </ResourceGuard>
   );
 }

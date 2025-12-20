@@ -6,26 +6,14 @@ import {
   Trash2,
   Info,
   Terminal,
-  HardDrive,
   RotateCw,
-  Layers
+  Layers,
+  ScrollText
 } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import {
-  useGetContainerQuery,
-  useStartContainerMutation,
-  useStopContainerMutation,
-  useRemoveContainerMutation,
-  useGetContainerLogsQuery
-} from '@/redux/services/container/containerApi';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { OverviewTab } from './components/OverviewTab';
 import { LogsTab } from './components/LogsTab';
-import { DetailsTab } from './components/DetailsTab';
 import { Terminal as TerminalComponent } from './components/Terminal';
 import ContainerDetailsLoading from './components/ContainerDetailsLoading';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
@@ -34,69 +22,23 @@ import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { isNixopusContainer } from '@/lib/utils';
 import PageLayout from '@/components/layout/page-layout';
+import useContainerDetails from '../hooks/use-container-details';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export default function ContainerDetailsPage() {
-  const { t } = useTranslation();
-  const router = useRouter();
-  const params = useParams();
-  const containerId = params.id as string;
-  const { data: container, isLoading, error } = useGetContainerQuery(containerId);
-  const [startContainer] = useStartContainerMutation();
-  const [stopContainer] = useStopContainerMutation();
-  const [removeContainer] = useRemoveContainerMutation();
-  const [logsTail, setLogsTail] = useState(100);
-  const [allLogs, setAllLogs] = useState<string>('');
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const { data: logs, refetch: refetchLogs } = useGetContainerLogsQuery(
-    { containerId, tail: logsTail },
-    {
-      skip: !containerId,
-      refetchOnMountOrArgChange: true
-    }
-  );
-
-  useEffect(() => {
-    if (logs) {
-      setAllLogs(logs);
-    }
-  }, [logs]);
-
-  const handleLoadMoreLogs = async () => {
-    const newTail = logsTail + 100;
-    setLogsTail(newTail);
-    await refetchLogs();
-  };
-
-  const handleContainerAction = async (action: 'start' | 'stop' | 'remove' | 'restart') => {
-    try {
-      switch (action) {
-        case 'start':
-          await startContainer(containerId).unwrap();
-          toast.success(t(`containers.${action}_success`));
-          break;
-        case 'stop':
-          await stopContainer(containerId).unwrap();
-          toast.success(t(`containers.${action}_success`));
-          break;
-        case 'remove':
-          setIsDeleteDialogOpen(true);
-          break;
-      }
-    } catch (error) {
-      toast.error(t(`containers.${action}_error`));
-    }
-  };
-
-  const handleDeleteConfirm = async () => {
-    try {
-      await removeContainer(containerId).unwrap();
-      toast.success(t('containers.remove_success'));
-      router.push('/containers');
-    } catch (error) {
-      toast.error(t('containers.remove_error'));
-    }
-  };
+  const {
+    container,
+    isLoading,
+    handleContainerAction,
+    containerId,
+    allLogs,
+    t,
+    handleLoadMoreLogs,
+    handleDeleteConfirm,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen
+  } = useContainerDetails();
 
   if (isLoading || !container) {
     return <ContainerDetailsLoading />;
@@ -104,128 +46,177 @@ export default function ContainerDetailsPage() {
 
   const isProtected = isNixopusContainer(container?.name);
 
+  const statusColor =
+    container.status === 'running'
+      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+      : container.status === 'exited'
+        ? 'bg-red-500/10 text-red-500 border-red-500/20'
+        : 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+
   return (
-    <ResourceGuard
-      resource="container"
-      action="read"
-      loadingFallback={<ContainerDetailsLoading />}
-    >
-      <PageLayout maxWidth="6xl" padding="md" spacing="lg">
-          <div className="flex items-center justify-between mb-6 pb-4 border-b">
-            <div>
-              <h1 className="text-2xl font-bold">{container.name}</h1>
-              <p className="text-muted-foreground">{container.id.slice(0, 12)}...</p>
+    <ResourceGuard resource="container" action="read" loadingFallback={<ContainerDetailsLoading />}>
+      <PageLayout maxWidth="full" padding="md" spacing="lg">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-4">
+            <div
+              className={cn(
+                'w-12 h-12 rounded-xl flex items-center justify-center',
+                container.status === 'running'
+                  ? 'bg-emerald-500/10'
+                  : container.status === 'exited'
+                    ? 'bg-red-500/10'
+                    : 'bg-amber-500/10'
+              )}
+            >
+              <div
+                className={cn(
+                  'w-3 h-3 rounded-full',
+                  container.status === 'running'
+                    ? 'bg-emerald-500 animate-pulse'
+                    : container.status === 'exited'
+                      ? 'bg-red-500'
+                      : 'bg-amber-500'
+                )}
+              />
             </div>
-            <div className="flex items-center gap-2">
-              <ResourceGuard
-                resource="container"
-                action="update"
-                loadingFallback={<Skeleton className="h-8 w-16" />}
-              >
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">{container.name}</h1>
+              <div className="flex items-center gap-2 mt-1">
+                <code className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
+                  {container.id.slice(0, 12)}
+                </code>
+                <Badge variant="outline" className={cn('text-xs', statusColor)}>
+                  {container.status}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <ResourceGuard
+              resource="container"
+              action="update"
+              loadingFallback={<Skeleton className="h-9 w-24" />}
+            >
+              {container.status !== 'running' ? (
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   onClick={() => handleContainerAction('start')}
                   disabled={isLoading || isProtected}
+                  className="bg-emerald-600 hover:bg-emerald-700"
                 >
                   <Play className="mr-2 h-4 w-4" />
                   {t('containers.start')}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleContainerAction('stop')}
-                  disabled={isLoading || isProtected}
-                >
-                  <StopCircle className="mr-2 h-4 w-4" />
-                  {t('containers.stop')}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleContainerAction('restart')}
-                  disabled={isLoading || isProtected}
-                >
-                  <RotateCw className="mr-2 h-4 w-4" />
-                  {t('containers.restart')}
-                </Button>
-              </ResourceGuard>
-              <ResourceGuard
-                resource="container"
-                action="delete"
-                loadingFallback={<Skeleton className="h-8 w-20" />}
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleContainerAction('stop')}
+                    disabled={isLoading || isProtected}
+                  >
+                    <StopCircle className="mr-2 h-4 w-4" />
+                    {t('containers.stop')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleContainerAction('restart')}
+                    disabled={isLoading || isProtected}
+                  >
+                    <RotateCw className="mr-2 h-4 w-4" />
+                    {t('containers.restart')}
+                  </Button>
+                </>
+              )}
+            </ResourceGuard>
+            <ResourceGuard
+              resource="container"
+              action="delete"
+              loadingFallback={<Skeleton className="h-9 w-20" />}
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleContainerAction('remove')}
+                disabled={isLoading || isProtected}
+                className="text-red-500 hover:text-red-600 hover:bg-red-500/10 border-red-500/20"
               >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleContainerAction('remove')}
-                  disabled={isLoading || isProtected}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  {t('containers.remove')}
-                </Button>
-              </ResourceGuard>
-            </div>
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t('containers.remove')}
+              </Button>
+            </ResourceGuard>
           </div>
-
-          <div className="space-y-4">
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="overview">
-                  <Info className="mr-2 h-4 w-4" />
-                  {t('containers.overview')}
-                </TabsTrigger>
-                <TabsTrigger value="images">
-                  <Layers className="mr-2 h-4 w-4" />
-                  {t('containers.images.title')}
-                </TabsTrigger>
-                <TabsTrigger value="terminal" disabled={container.status !== 'running'}>
-                  <Terminal className="mr-2 h-4 w-4" />
-                  {t('terminal.title')}
-                </TabsTrigger>
-                <TabsTrigger value="logs">
-                  <Terminal className="mr-2 h-4 w-4" />
-                  {t('containers.logs')}
-                </TabsTrigger>
-                <TabsTrigger value="details">
-                  <HardDrive className="mr-2 h-4 w-4" />
-                  {t('containers.details')}
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="overview" className="mt-4">
-                <OverviewTab container={container} />
-              </TabsContent>
-              <TabsContent value="logs" className="mt-4">
-                <LogsTab container={container} logs={allLogs} onLoadMore={handleLoadMoreLogs} />
-              </TabsContent>
-              <TabsContent value="details" className="mt-4">
-                <DetailsTab container={container} />
-              </TabsContent>
-              <TabsContent value="terminal" className="mt-4">
-                {container.status === 'running' ? (
-                  <TerminalComponent containerId={containerId} />
-                ) : (
-                  <div className="flex items-center justify-center h-48 text-muted-foreground">
-                    Start the container to use the terminal
-                  </div>
-                )}
-              </TabsContent>
-              <TabsContent value="images" className="mt-4">
-                {container.image ? (
-                  <Images containerId={containerId} imagePrefix={container.image + '*'} />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p>{t('containers.images.none')}</p>
-                  </div>
-                )}
-              </TabsContent>
-          </Tabs>
         </div>
-        <ResourceGuard
-          resource="container"
-          action="delete"
-          loadingFallback={null}
-        > 
+
+        {/* Tabs Section */}
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent gap-2">
+            <TabsTrigger
+              value="overview"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            >
+              <Info className="mr-2 h-4 w-4" />
+              {t('containers.overview')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="logs"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            >
+              <ScrollText className="mr-2 h-4 w-4" />
+              {t('containers.logs')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="terminal"
+              disabled={container.status !== 'running'}
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            >
+              <Terminal className="mr-2 h-4 w-4" />
+              {t('terminal.title')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="images"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            >
+              <Layers className="mr-2 h-4 w-4" />
+              {t('containers.images.title')}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="mt-6">
+            <OverviewTab container={container} />
+          </TabsContent>
+
+          <TabsContent value="logs" className="mt-6">
+            <LogsTab container={container} logs={allLogs} onLoadMore={handleLoadMoreLogs} />
+          </TabsContent>
+
+          <TabsContent value="terminal" className="mt-6">
+            {container.status === 'running' ? (
+              <div className="rounded-xl overflow-hidden">
+                <TerminalComponent containerId={containerId} />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                <Terminal className="h-12 w-12 mb-4 opacity-30" />
+                <p className="font-medium">Container not running</p>
+                <p className="text-sm text-muted-foreground/60 mt-1">
+                  Start the container to access the terminal
+                </p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="images" className="mt-6">
+            <Images containerId={containerId} imagePrefix={(container.image || '') + '*'} />
+          </TabsContent>
+        </Tabs>
+
+        <ResourceGuard resource="container" action="delete" loadingFallback={null}>
           <DeleteDialog
             title={t('containers.deleteDialog.title')}
             description={t('containers.deleteDialog.description')}

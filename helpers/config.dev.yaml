@@ -10,28 +10,33 @@ services:
       DB_PORT: ${DB_PORT:-5432}
       SSL_MODE: ${DB_SSL_MODE:-disable}
       MOUNT_PATH: ${MOUNT_PATH:-./configs}
-      SSH_HOST: ${SSH_HOST:-localhost}
+      SSH_HOST: ${SSH_HOST:-host.docker.internal}
       SSH_PORT: ${SSH_PORT:-22}
       SSH_USER: ${SSH_USER:-$USER}
-      SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:-~/.ssh/id_rsa_nixopus}
+      SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:-/root/.ssh/id_rsa_nixopus}
       SSH_PASSWORD: ${SSH_PASSWORD:-}
       DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
       REDIS_URL: ${REDIS_URL:-redis://localhost:6379}
-      CADDY_ENDPOINT: ${CADDY_ENDPOINT:-http://127.0.0.1:2019}
-      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:7443}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:3000}
       ENV: ${ENV:-development}
       LOGS_PATH: ${LOGS_PATH:-./logs}
+      API_ENV_FILE: ${API_ENV_FILE:-./api/.env}
       API_VOLUME: ${API_VOLUME:-./configs}
       DOCKER_PORT: ${DOCKER_PORT:-2376}
       APP_VERSION: ${APP_VERSION:-0.1.0-alpha.11}
+      SUPERTOKENS_API_KEY: ${SUPERTOKENS_API_KEY:-NixopusSuperTokensAPIKey}
+      SUPERTOKENS_API_DOMAIN: ${SUPERTOKENS_API_DOMAIN:-http://localhost:3567}
+      SUPERTOKENS_WEBSITE_DOMAIN: ${SUPERTOKENS_WEBSITE_DOMAIN:-http://localhost:3000}
+      SUPERTOKENS_CONNECTION_URI: ${SUPERTOKENS_CONNECTION_URI:-http://localhost:3567}
 
   view:
     env:
-      PORT: ${VIEW_PORT:-7443}
+      PORT: ${VIEW_PORT:-3000}
       WEBSOCKET_URL: ${WEBSOCKET_URL:-}
       API_URL: ${API_URL:-}
       WEBHOOK_URL: ${WEBHOOK_URL:-}
-      NEXT_PUBLIC_PORT: ${NEXT_PUBLIC_PORT:-7443}
+      VIEW_ENV_FILE: ${VIEW_ENV_FILE:-./view/.env.local}
+      NEXT_PUBLIC_PORT: ${NEXT_PUBLIC_PORT:-3000}
       LOGS_PATH: ${LOGS_PATH:-./logs}
 
   redis:
@@ -50,7 +55,34 @@ services:
       POSTGRES_USER: ${USERNAME:-postgres}
       POSTGRES_PASSWORD: ${PASSWORD:-changeme}
       POSTGRES_DB: ${DB_NAME:-postgres}
-      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+
+  caddy:
+    env:
+      CADDY_IMAGE: ${CADDY_IMAGE:-caddy:latest}
+      CADDY_CONTAINER_NAME: ${CADDY_CONTAINER_NAME:-nixopus-caddy}
+      CADDY_DATA_VOLUME: ${CADDY_DATA_VOLUME:-./caddy/data}
+      CADDY_CONFIG_VOLUME: ${CADDY_CONFIG_VOLUME:-./caddy/config}
+      CADDY_ADMIN_PORT: ${CADDY_ADMIN_PORT:-2019}
+      CADDY_HTTP_PORT: ${CADDY_HTTP_PORT:-80}
+      CADDY_HTTPS_PORT: ${CADDY_HTTPS_PORT:-443}
+      CADDY_PORTS: "${CADDY_ADMIN_PORT:-2019}:2019,${CADDY_HTTP_PORT:-80}:80,${CADDY_HTTPS_PORT:-443}:443"
+      API_DOMAIN: ${API_DOMAIN:-api.localhost}
+      VIEW_DOMAIN: ${VIEW_DOMAIN:-app.localhost}
+      BASE_URL: ${BASE_URL:-http://localhost:2019}
+      PROXY_PORT: ${PROXY_PORT:-2019}
+      CONFIG_ENDPOINT: ${CONFIG_ENDPOINT:-/config}
+      LOAD_ENDPOINT: ${LOAD_ENDPOINT:-/load}
+      STOP_ENDPOINT: ${STOP_ENDPOINT:-/stop}
+      CADDY_COMMAND:
+        [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile",
+        ]
 
 networks:
   default:
@@ -78,11 +110,6 @@ deps:
     command: "poetry"
     version: ">=1.2.0, <2.0.0"
     version-command: ["poetry", "--version"]
-  redis:
-    package: "redis-server"
-    command: "redis-server"
-    version: ">=7.0.0, <8.0.0"
-    version-command: ["redis-server", "--version"]
   git:
     package: "git"
     command: "git"
@@ -112,11 +139,6 @@ deps:
     command: "sshd"
     version: ">=8.0, <10.0"
     version-command: ["sshd", "-V"]
-  go:
-    package: "go"
-    command: "go"
-    version: ">=1.23.0, <2.0.0"
-    version-command: ["go", "version"]
   node:
     package: "node"
     command: "node"
@@ -129,29 +151,21 @@ deps:
   yarn:
     package: "yarn"
     command: "yarn"
+    version: ">=1.22.0, <2.0.0"
     version-command: ["yarn", "--version"]
   python:
     package: "python"
     command: "python"
     version-command: ["python", "--version"]
-  postgresql:
-    package: "postgresql"
-    command: "psql"
-    version-command: ["psql", "--version"]
-  air:
-    package: "air"
-    command: "air"
-    version: ">=1.40.0, <2.0.0"
-    version-command: ["air", "-v"]
 
 nixopus-config-dir: ./nixopus-dev
-compose-file-path: docker-compose.yml
+compose-file-path: docker-compose-dev.yml
 clone:
   repo: "https://github.com/raghavyuva/nixopus"
-  branch: "feat/dev_environment"
+  branch: "master"
   source-path: .
 
-ports: [8080, 7443, 6379, 5432, 22]
+ports: [8080, 3000, 6379, 5432, 2019, 80, 443, 3567]
 ssh_key_size: 4096
 ssh_key_type: rsa
 ssh_passphrase:

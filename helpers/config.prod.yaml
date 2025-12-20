@@ -16,7 +16,7 @@ services:
       SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:-/etc/nixopus/ssh/id_rsa}
       SSH_PASSWORD: ${SSH_PASSWORD:-}
       DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
-      REDIS_URL: ${REDIS_URL:-redis://nixopus-redis:6379}
+      REDIS_URL: ${REDIS_URL:-redis://default:changeme@nixopus-redis:6379}
       CADDY_ENDPOINT: ${CADDY_ENDPOINT:-http://nixopus-caddy:2019}
       ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:3000}
       ENV: ${ENV:-production}
@@ -27,11 +27,18 @@ services:
       API_CONTAINER_NAME: ${API_CONTAINER_NAME:-nixopus-api}
       DOCKER_PORT: ${DOCKER_PORT:-2376}
       APP_VERSION: ${APP_VERSION:-0.1.0-alpha.11}
+      SUPERTOKENS_API_KEY: ${SUPERTOKENS_API_KEY:-NixopusSuperTokensAPIKey}
+      SUPERTOKENS_API_DOMAIN: ${SUPERTOKENS_API_DOMAIN:-http://localhost:3567}
+      SUPERTOKENS_WEBSITE_DOMAIN: ${SUPERTOKENS_WEBSITE_DOMAIN:-http://localhost:3000}
+      SUPERTOKENS_CONNECTION_URI: ${SUPERTOKENS_CONNECTION_URI:-http://localhost:3567}
+      SUPERTOKENS_API_PORT: ${SUPERTOKENS_API_PORT:-3567}
+
   view:
     env:
       PORT: ${VIEW_PORT:-7443}
       WEBSOCKET_URL: ${WEBSOCKET_URL:-}
       API_URL: ${API_URL:-}
+      VIEW_DOMAIN: ${VIEW_DOMAIN:-}
       WEBHOOK_URL: ${WEBHOOK_URL:-}
       NEXT_PUBLIC_PORT: ${NEXT_PUBLIC_PORT:-7443}
       LOGS_PATH: ${LOGS_PATH:-./logs}
@@ -45,6 +52,7 @@ services:
       REDIS_VOLUME: ${REDIS_VOLUME:-/etc/nixopus/redis}
       REDIS_IMAGE: ${REDIS_IMAGE:-redis:7-alpine}
       REDIS_CONTAINER_NAME: ${REDIS_CONTAINER_NAME:-nixopus-redis}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
 
   db:
     env:
@@ -55,7 +63,7 @@ services:
       POSTGRES_USER: ${USERNAME:-postgres}
       POSTGRES_PASSWORD: ${PASSWORD:-changeme}
       POSTGRES_DB: ${DB_NAME:-postgres}
-      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
 
   caddy:
     env:
@@ -63,11 +71,14 @@ services:
       CADDY_CONTAINER_NAME: ${CADDY_CONTAINER_NAME:-nixopus-caddy}
       CADDY_DATA_VOLUME: ${CADDY_DATA_VOLUME:-/etc/nixopus/caddy}
       CADDY_CONFIG_VOLUME: ${CADDY_CONFIG_VOLUME:-/etc/nixopus/caddy}
-      CADDY_PORTS: "2019:2019,80:80,443:443"
+      CADDY_ADMIN_PORT: ${CADDY_ADMIN_PORT:-2019}
+      CADDY_HTTP_PORT: ${CADDY_HTTP_PORT:-80}
+      CADDY_HTTPS_PORT: ${CADDY_HTTPS_PORT:-443}
+      CADDY_PORTS: "${CADDY_ADMIN_PORT:-2019}:2019,${CADDY_HTTP_PORT:-80}:80,${CADDY_HTTPS_PORT:-443}:443"
       API_DOMAIN: ${API_DOMAIN:-}
       VIEW_DOMAIN: ${VIEW_DOMAIN:-}
-      BASE_URL: ${BASE_URL:-http://localhost:2019}
-      PROXY_PORT: ${PROXY_PORT:-2019}
+      BASE_URL: ${BASE_URL:-http://localhost:${CADDY_ADMIN_PORT:-2019}}
+      PROXY_PORT: ${PROXY_PORT:-${CADDY_ADMIN_PORT:-2019}}
       CONFIG_ENDPOINT: ${CONFIG_ENDPOINT:-/config}
       LOAD_ENDPOINT: ${LOAD_ENDPOINT:-/load}
       STOP_ENDPOINT: ${STOP_ENDPOINT:-/stop}
@@ -137,7 +148,7 @@ clone:
   branch: "master"
   source-path: source
 
-ports: [2019, 80, 443, 7443, 8443, 6379, 5432]
+ports: [2019, 80, 443, 7443, 8443, 6379, 5432, 3567]
 ssh_key_size: 4096
 ssh_key_type: rsa
 ssh_passphrase:

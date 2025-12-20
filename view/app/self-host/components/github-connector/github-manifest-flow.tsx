@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Github, RefreshCw, Loader2 } from 'lucide-react';
+import { Github, Loader2 } from 'lucide-react';
 import {
   GitHubAppCredentials,
   GitHubAppManifest,
@@ -51,10 +49,11 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
   appUrl = process.env.NEXT_PUBLIC_APP_URL,
   redirectUrl = process.env.NEXT_PUBLIC_REDIRECT_URL,
   onSuccess,
-  onError
+  onError,
+  onCreateClick
 }) => {
   const { t } = useTranslation();
-  const [appName, setAppName] = useState<string>(generateRandomName());
+  const appName = useMemo(() => generateRandomName(), []);
   const [status, setStatus] = useState<GitHubAppStatus>('initial');
   const [error, setError] = useState<string | null>(null);
   const [createGithubConnector, { isLoading, error: registerGithubAppError }] =
@@ -77,6 +76,12 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
       handleGitHubCallback(code, stateParam);
     }
   }, []);
+
+  useEffect(() => {
+    if (onCreateClick && status === 'initial') {
+      onCreateClick(createManifestForm);
+    }
+  }, [onCreateClick, status]);
 
   const generateState = (): string => {
     return crypto
@@ -162,70 +167,37 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
     }
   };
 
+  if (status === 'redirecting' || status === 'converting') {
+    return (
+      <div className="flex flex-col items-center gap-4 py-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p>
+          {status === 'redirecting'
+            ? t('selfHost.githubManifest.status.redirecting')
+            : t('selfHost.githubManifest.status.converting')}
+        </p>
+      </div>
+    );
+  }
+
+  if (status === 'success') {
+    return (
+      <Alert>
+        <AlertDescription className="text-green-600">
+          {t('selfHost.githubManifest.status.success')}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
-    <Card className="w-[400px]">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Github size={24} />
-          {t('selfHost.githubManifest.title')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {status === 'initial' && (
-          <>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t('selfHost.githubManifest.appName.label')}
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  value={appName}
-                  onChange={(e) => setAppName(e.target.value)}
-                  placeholder={t('selfHost.githubManifest.appName.placeholder')}
-                  className="flex-1"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setAppName(generateRandomName())}
-                  title={t('selfHost.githubManifest.appName.generate')}
-                >
-                  <RefreshCw size={16} />
-                </Button>
-              </div>
-            </div>
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <Button className="w-full" onClick={createManifestForm}>
-              {t('selfHost.githubManifest.createButton')}
-            </Button>
-          </>
-        )}
-
-        {(status === 'redirecting' || status === 'converting') && (
-          <div className="flex flex-col items-center gap-4 py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <p>
-              {status === 'redirecting'
-                ? t('selfHost.githubManifest.status.redirecting')
-                : t('selfHost.githubManifest.status.converting')}
-            </p>
-          </div>
-        )}
-
-        {status === 'success' && (
-          <Alert>
-            <AlertDescription className="text-green-600">
-              {t('selfHost.githubManifest.status.success')}
-            </AlertDescription>
-          </Alert>
-        )}
-      </CardContent>
-    </Card>
+    <div className="flex flex-col items-center gap-4 w-full">
+      {error && (
+        <Alert variant="destructive" className="w-full">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+    </div>
   );
 };
 

@@ -1,8 +1,9 @@
-# ⚙️ GitHub Workflows
+# GitHub Workflows
 
 This document provides an overview of all GitHub Actions workflows defined in this repository under [`.github/workflows/`](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows).
 
 The goal is to explain:
+
 - **What each workflow does** (raw descriptions from issue)
 - **Why it was created**
 - **How to use or troubleshoot it**
@@ -12,13 +13,15 @@ The goal is to explain:
 ---
 
 ## 📂 Location
+
 All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows) folder.
 
 ---
 
-## 🚀 Major Workflows
+## Major Workflows
 
 ### 1. `build_container.yml`
+
 - **Description:** Builds and pushes Docker images for the API and the web UI to GitHub’s container registry whenever a version tag is pushed or a release is published.  
 - **Why:** Provides reproducible, versioned container images for deployments.  
 - **Executed Flow:**  
@@ -28,7 +31,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   4. Push images to GHCR  
 - **Secrets/Dependencies:** `GITHUB_TOKEN` (ensure `permissions: packages: write`) or a PAT with `write:packages` if publishing from a fork or across orgs.
 - Example (in the workflow):
-    - permissions:
+  - permissions:
         contents: read
         packages: write
 - **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows/build_container.yml)  
@@ -36,6 +39,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
 ---
 
 ### 2. `coderabbit.yml`
+
 - **Description:** Uses the Coderabbit AI PR-reviewer to automatically review pull requests when they’re opened, synchronized or reopened.  
 - **Why:** Automates PR review to save time and enforce consistency.  
 - **Executed Flow:**  
@@ -48,6 +52,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
 ---
 
 ### 3. `docs.yml`
+
 - **Description:** Builds the documentation site with VitePress and deploys it to GitHub Pages on pushes affecting the `docs/**` folder or on manual dispatch.  
 - **Why:** Keeps the documentation site (GitHub Pages) up to date automatically.
 - **Executed Flow:**  
@@ -60,6 +65,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
 ---
 
 ### 4. `format.yaml`
+
 - **Description:** Runs code formatters (`gofmt` for the API, Prettier for the frontend and a formatting task for the CLI) on pushes to `master` or `feat/develop` and auto-commits any changes.  
 - **Why:** Enforces consistent code style across all components.  
 - **Executed Flow:**  
@@ -76,6 +82,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
 ---
 
 ### 5. `labeler.yml`
+
 - **Description:** Applies predefined labels to pull requests using `actions/labeler` when a PR is opened, synchronized or reopened.  
 - **Why:** Automates PR labeling to simplify triage.  
 - **Executed Flow:**  
@@ -89,6 +96,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
 ---
 
 ### 6. `release-cli.yml`
+
 - **Description:** Builds and packages the CLI component (using Poetry and fpm) into various package formats on pushes or pull requests touching the `cli` directory, and then creates a release artifact.  
 - **Why:** Produces distributable CLI packages for multiple environments.  
 - **Executed Flow:**  
@@ -103,6 +111,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
 ---
 
 ### 7. `release.yml`
+
 - **Description:** Uses changelog action to generate a prerelease tag and create a GitHub pre-release whenever code is pushed to `master` or triggered manually.  
 - **Why:** Provides prerelease builds for early testing.  
 - **Executed Flow:**  
@@ -116,6 +125,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
 ---
 
 ### 8. `security.yml`
+
 - **Description:** Performs security scans on a weekly schedule or on pushes to key branches; runs Trivy for dependency vulnerabilities and TruffleHog for secret detection.  
 - **Why:** Ensures proactive detection of vulnerabilities and secrets.  
 - **Executed Flow:**  
@@ -128,6 +138,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
 ---
 
 ### 9. `test.yaml`
+
 - **Description:** Executes Go unit tests on pushes to `master` or `feat/develop` branches.  
 - **Why:** Maintains code correctness and prevents regressions.  
 - **Executed Flow:**  
@@ -141,7 +152,9 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
 ---
 
 ## 🔑 Secrets & Environment Variables
+
 Workflows may rely on:
+
 - `GITHUB_TOKEN` → default GitHub token with repo access.
 - For actions that write (releases, labels, packages), set workflow/job `permissions:` explicitly (e.g., `contents: write`, `pull-requests: write`, `packages: write`).
 - Prefer `GITHUB_TOKEN` for registry pushes and labeling (set minimal `permissions`).
@@ -153,6 +166,7 @@ Notes:
 ---
 
 ## 🛠️ Troubleshooting Workflows
+
 - **Check Logs:** Review detailed logs under the GitHub Actions tab.  
 - **Rerun:** Use the “Re-run jobs” option if a transient error occurs.  
 - **Secrets:** Ensure required secrets are set in repository settings.  

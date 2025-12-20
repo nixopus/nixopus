@@ -73,11 +73,11 @@ type RemoveUserFromOrganizationData struct {
 	UserEmail        string
 }
 
-type UpdateUserRoleData struct {
-	OrganizationName string
-	UserName         string
-	NewRole          string
-}
+// type UpdateUserRoleData struct {
+// 	OrganizationName string
+// 	UserName         string
+// 	NewRole          string
+// }
 
 type NotificationManager struct {
 	sync.RWMutex
@@ -114,7 +114,7 @@ const (
 	NotificationPayloadTypeAddUserToOrganization      NotificationPayloadType = "add_user_to_organization"
 	NotificationPayloadTypeRemoveUserFromOrganization NotificationPayloadType = "remove_user_from_organization"
 	NotificationPayloadTypeVerificationEmail          NotificationPayloadType = "verification_email"
-	NotificationPayloadTypeUpdateUserRole             NotificationPayloadType = "update_user_role"
+	// NotificationPayloadTypeUpdateUserRole             NotificationPayloadType = "update_user_role"
 )
 
 const (

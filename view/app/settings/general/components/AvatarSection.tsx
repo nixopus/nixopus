@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import UploadAvatar from '@/components/ui/upload_avatar';
 import { User } from '@/redux/types/user';
 import { useTranslation } from '@/hooks/use-translation';
@@ -15,22 +14,22 @@ function AvatarSection({ onImageChange, user }: AvatarSectionProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="col-span-1">
-      <Card>
-        <CardHeader className="pb-2">
-          <TypographySmall>{t('settings.account.avatar.title')}</TypographySmall>
-          <TypographyMuted>{t('settings.account.avatar.description')}</TypographyMuted>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center pt-6">
-          <RBACGuard resource="user" action="update">
-            <UploadAvatar
-              onImageChange={onImageChange}
-              username={user?.username}
-              initialImage={user?.avatar}
-            />
-          </RBACGuard>
-        </CardContent>
-      </Card>
+    <div className="col-span-1 space-y-4 border border-border/50 rounded-lg p-6 h-fit">
+      <div>
+        <TypographySmall className="text-sm font-medium">
+          {t('settings.account.avatar.title')}
+        </TypographySmall>
+        <TypographyMuted className="text-xs mt-1">
+          {t('settings.account.avatar.description')}
+        </TypographyMuted>
+      </div>
+      <RBACGuard resource="user" action="update">
+        <UploadAvatar
+          onImageChange={onImageChange}
+          username={user?.username}
+          initialImage={user?.avatar}
+        />
+      </RBACGuard>
     </div>
   );
 }

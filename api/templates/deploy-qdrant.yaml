@@ -1,0 +1,124 @@
+metadata:
+  id: "deploy-qdrant"
+  name: "Qdrant"
+  description: "Qdrant is a vector similarity search engine and vector database"
+  author: "Nixopus Team"
+  icon: "🔍"
+  category: "Database"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Qdrant"
+    default: "qdrant/qdrant"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Qdrant container"
+    default: "qdrant"
+    is_required: true
+
+  rest_port:
+    type: "integer"
+    description: "Host port to expose Qdrant REST API"
+    default: 6333
+    is_required: true
+
+  grpc_port:
+    type: "integer"
+    description: "Host port to expose Qdrant gRPC API"
+    default: 6334
+    is_required: true
+
+  rest_container_port:
+    type: "integer"
+    description: "Container port for Qdrant REST API"
+    default: 6333
+    is_required: true
+
+  grpc_container_port:
+    type: "integer"
+    description: "Container port for Qdrant gRPC API"
+    default: 6334
+    is_required: true
+
+  storage_volume_name:
+    type: "string"
+    description: "Named Docker volume for Qdrant data persistence"
+    default: "qdrant-storage"
+    is_required: true
+
+  api_key:
+    type: "string"
+    description: "API key for Qdrant authentication (leave empty for no authentication)"
+    default: ""
+    is_required: false
+
+  log_level:
+    type: "string"
+    description: "Logging level (INFO, DEBUG, WARN, ERROR)"
+    default: "INFO"
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Qdrant (optional)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull Qdrant image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Qdrant container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ rest_port }}:{{ rest_container_port }},{{ grpc_port }}:{{ grpc_container_port }}"
+        restart: "unless-stopped"
+        env:
+          QDRANT__SERVICE__API_KEY: "{{ api_key }}"
+          QDRANT__LOG_LEVEL: "{{ log_level }}"
+        volumes:
+          - "{{ storage_volume_name }}:/qdrant/storage:z"
+      timeout: 180
+
+    - name: "Add proxy for Qdrant"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ rest_port }}"
+      timeout: 30
+
+  validate:
+    - name: "Check Qdrant health endpoint"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do curl -fsS --connect-timeout 2 -m 5 http://localhost:{{ rest_port }}/healthz >/dev/null && exit 0; sleep 2; done; exit 1'"
+      timeout: 60
+
+    - name: "Verify Qdrant collections endpoint"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do curl -fsS --connect-timeout 2 -m 5 http://localhost:{{ rest_port }}/collections >/dev/null && exit 0; sleep 2; done; exit 1'"
+      timeout: 60

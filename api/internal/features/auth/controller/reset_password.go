@@ -61,29 +61,3 @@ func (c *AuthController) ResetPassword(s fuego.ContextWithBody[types.ResetPasswo
 		Data:    nil,
 	}, nil
 }
-
-func (c *AuthController) GeneratePasswordResetLink(s fuego.ContextNoBody) (shared_types.Response, error) {
-	w, r := s.Response(), s.Request()
-	user := utils.GetUser(w, r)
-	if user == nil {
-		return shared_types.Response{}, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
-		}
-	}
-	user, token, err := c.service.GeneratePasswordResetLink(user)
-	if err != nil {
-		return shared_types.Response{}, fuego.HTTPError{
-			Err:    err,
-			Status: http.StatusInternalServerError,
-		}
-	}
-
-	c.NotifyPasswordReset(user, token, r)
-
-	return shared_types.Response{
-		Status:  "success",
-		Message: "Password reset link sent",
-		Data:    nil,
-	}, nil
-}

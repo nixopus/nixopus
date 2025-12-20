@@ -1,0 +1,189 @@
+metadata:
+  id: "deploy-monica"
+  name: "Monica"
+  description: "Monica is an open source personal relationship management system, that lets you document your life. Uses monica image from linuxserver.io. Requires an external MariaDB database."
+  author: "Nixopus Team"
+  icon: "📇"
+  category: "Productivity"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Monica"
+    default: "lscr.io/linuxserver/monica"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Monica container"
+    default: "monica"
+    is_required: true
+
+  http_host_port:
+    type: "integer"
+    description: "Host port for HTTP GUI"
+    default: 80
+    is_required: true
+
+  http_container_port:
+    type: "integer"
+    description: "Container port for HTTP GUI"
+    default: 80
+    is_required: true
+
+  https_host_port:
+    type: "integer"
+    description: "Host port for HTTPS GUI"
+    default: 443
+    is_required: true
+
+  https_container_port:
+    type: "integer"
+    description: "Container port for HTTPS GUI"
+    default: 443
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Monica persistent configuration files"
+    default: "monica-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  db_host:
+    type: "string"
+    description: "MariaDB database server hostname"
+    default: ""
+    is_required: true
+
+  db_port:
+    type: "string"
+    description: "MariaDB database server port"
+    default: ""
+    is_required: true
+
+  db_username:
+    type: "string"
+    description: "MariaDB database user"
+    default: ""
+    is_required: true
+
+  db_password:
+    type: "string"
+    description: "MariaDB database password"
+    default: ""
+    is_required: true
+
+  db_database:
+    type: "string"
+    description: "MariaDB database name"
+    default: ""
+    is_required: true
+
+  app_url:
+    type: "string"
+    description: "The URL you will use to access Monica including protocol, and port where appropriate (optional, default is http://localhost:80)"
+    default: "http://localhost:80"
+    is_required: false
+
+  trusted_proxies:
+    type: "string"
+    description: "Set to the IP or netmask covering your reverse proxy, if running behind one. Set to * to trust all IPs (do not use * if exposed to the internet) (optional)"
+    default: ""
+    is_required: false
+
+  app_env:
+    type: "string"
+    description: "Set to production when exposing the container to anyone else; this also makes https mandatory (optional, default is local)"
+    default: "local"
+    is_required: false
+
+  app_disable_signup:
+    type: "string"
+    description: "Set to false to enable new account sign-ups (optional, default is true)"
+    default: "true"
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Monica web GUI (optional, recommended for internet access)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing Monica container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull Monica image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Monica container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ http_host_port }}:{{ http_container_port }},{{ https_host_port }}:{{ https_container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          DB_HOST: "{{ db_host }}"
+          DB_PORT: "{{ db_port }}"
+          DB_USERNAME: "{{ db_username }}"
+          DB_PASSWORD: "{{ db_password }}"
+          DB_DATABASE: "{{ db_database }}"
+          APP_URL: "{{ app_url }}"
+          TRUSTED_PROXIES: "{{ trusted_proxies }}"
+          APP_ENV: "{{ app_env }}"
+          APP_DISABLE_SIGNUP: "{{ app_disable_signup }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+    - name: "Add proxy for Monica web GUI"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ http_host_port }}"
+      timeout: 30
+

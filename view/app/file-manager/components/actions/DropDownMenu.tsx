@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { DialogWrapper } from '@/components/ui/dialog-wrapper';
 import FileUpload from './Upload';
 import { FileData } from '@/redux/types/files';
 import { useCreateDirectoryMutation } from '@/redux/services/file-manager/fileManagersApi';
@@ -60,15 +60,19 @@ const FileManagerDropDownMenu: React.FC<DropDownMenuProps> = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <ResourceGuard resource="file-manager" action="create">
-            <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-              <DialogTrigger asChild>
+            <DialogWrapper
+              open={isUploadOpen}
+              onOpenChange={setIsUploadOpen}
+              trigger={
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                   <Upload className="mr-2 h-4 w-4" />
                   {t('fileManager.actions.upload')}
                 </DropdownMenuItem>
-              </DialogTrigger>
+              }
+              size="lg"
+            >
               <FileUpload setIsDialogOpen={setIsUploadOpen} currentPath={currentPath} />
-            </Dialog>
+            </DialogWrapper>
 
             <DropdownMenuItem onSelect={handleCreateDirectory}>
               <FolderPlus className="mr-2 h-4 w-4" />

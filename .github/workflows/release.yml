@@ -18,7 +18,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ssh-key: ${{ secrets.DEPLOY_KEY }}
@@ -63,3 +63,14 @@ jobs:
           name: ${{ steps.changelog.outputs.tag }}
           body: ${{ steps.changelog.outputs.clean_changelog }}
           prerelease: true
+
+      - name: Notify Discord about Pre-Release
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        uses: appleboy/discord-action@v1.2.0
+        with:
+          webhook_id: ${{ secrets.WEBHOOK_ID }}
+          webhook_token: ${{ secrets.WEBHOOK_TOKEN }}
+          username: "Release Bot"
+          message: |
+            - New pre-release published: **${{ steps.changelog.outputs.tag }}**
+            - https://github.com/${{ github.repository }}/releases/tag/${{ steps.changelog.outputs.tag }}

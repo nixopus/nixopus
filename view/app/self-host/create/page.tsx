@@ -4,19 +4,20 @@ import ListRepositories from '../components/github-repositories/list-repositorie
 import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
+import PageLayout from '@/components/layout/page-layout';
 
 function page() {
   const { t } = useTranslation();
 
   return (
-    <ResourceGuard 
-      resource="deploy" 
+    <ResourceGuard
+      resource="deploy"
       action="create"
       loadingFallback={<Skeleton className="h-96" />}
     >
-      <div className="container mx-auto py-6 space-y-8 max-w-4xl">
+      <PageLayout maxWidth="full" padding="md" spacing="lg">
         <ListRepositories />
-      </div>
+      </PageLayout>
     </ResourceGuard>
   );
 }

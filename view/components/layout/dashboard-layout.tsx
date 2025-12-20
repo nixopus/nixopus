@@ -11,7 +11,6 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useRouter } from 'next/navigation';
 import { CreateTeam } from '@/components/features/create-team';
-import { KeyboardShortcuts } from '@/components/features/keyboard-shortcuts';
 import useTeamSwitcher from '@/hooks/use-team-switcher';
 import useBreadCrumbs from '@/hooks/use-bread-crumbs';
 import React, { useEffect } from 'react';
@@ -21,10 +20,12 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { Tour } from '@/components/Tour';
 import { useTour } from '@/hooks/useTour';
 import { Button } from '@/components/ui/button';
-import { HelpCircle } from 'lucide-react';  
+import { HelpCircle } from 'lucide-react';
 import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { ModeToggler } from '@/components/ui/theme-toggler';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
+import { TopbarWidgets } from './topbar-widgets';
+import { useTranslation } from '@/hooks/use-translation';
 
 enum TERMINAL_POSITION {
   BOTTOM = 'bottom',
@@ -44,12 +45,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     handleTeamNameChange,
     handleTeamDescriptionChange
   } = useTeamSwitcher();
+
   const { getBreadcrumbs } = useBreadCrumbs();
   const breadcrumbs = React.useMemo(() => getBreadcrumbs(), [getBreadcrumbs]);
   const { isTerminalOpen, toggleTerminal } = useTerminalState();
   const [TerminalPosition, setTerminalPosition] = React.useState(TERMINAL_POSITION.BOTTOM);
   const [fitAddonRef, setFitAddonRef] = React.useState<any | null>(null);
   const { startTour } = useTour();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -67,12 +70,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, []);
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <AppSidebar toggleAddTeamModal={toggleAddTeamModal} />
+    <SidebarProvider defaultOpen={false}>
+      <AppSidebar toggleAddTeamModal={toggleAddTeamModal} addTeamModalOpen={addTeamModalOpen} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4 justify-between w-full">
-            <div className="flex items-center gap-2 px-4">
+            <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
               {breadcrumbs.length > 0 && (
@@ -81,7 +84,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {breadcrumbs.map((breadcrumb, idx) => (
                       <React.Fragment key={idx}>
                         <BreadcrumbItem className="hidden md:block">
-                          <BreadcrumbLink onClick={() => router.push(breadcrumb.href)}>
+                          <BreadcrumbLink
+                            onClick={() => router.push(breadcrumb.href)}
+                            className="cursor-pointer"
+                          >
                             {breadcrumb.label}
                           </BreadcrumbLink>
                         </BreadcrumbItem>
@@ -95,6 +101,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
             </div>
             <div className="flex items-center gap-4">
+              <TopbarWidgets />
               <Button
                 variant="outline"
                 size="icon"
@@ -104,28 +111,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               >
                 <HelpCircle className="h-5 w-5" />
               </Button>
-              <KeyboardShortcuts />
               <RBACGuard resource="user" action="update">
-              <ModeToggler />
-            </RBACGuard>
+                <ModeToggler />
+              </RBACGuard>
             </div>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <div className="flex flex-1 flex-col gap-4">
           <Tour>
             <div className="flex h-[calc(100vh-5rem)]">
-              {addTeamModalOpen && (
-                <CreateTeam
-                  open={addTeamModalOpen}
-                  setOpen={setAddTeamModalOpen}
-                  createTeam={createTeam}
-                  teamName={teamName}
-                  teamDescription={teamDescription}
-                  handleTeamNameChange={handleTeamNameChange}
-                  handleTeamDescriptionChange={handleTeamDescriptionChange}
-                  isLoading={isLoading}
-                />
-              )}
+              <CreateTeam
+                open={addTeamModalOpen}
+                setOpen={setAddTeamModalOpen}
+                createTeam={createTeam}
+                teamName={teamName}
+                teamDescription={teamDescription}
+                handleTeamNameChange={handleTeamNameChange}
+                handleTeamDescriptionChange={handleTeamDescriptionChange}
+                isLoading={isLoading}
+              />
               <ResizablePanelGroup
                 direction={
                   TERMINAL_POSITION.BOTTOM === TerminalPosition ? 'vertical' : 'horizontal'
@@ -133,7 +137,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="flex-grow"
               >
                 <ResizablePanel
-                  defaultSize={80}
+                  defaultSize={65}
                   minSize={30}
                   className="overflow-auto no-scrollbar"
                 >
@@ -141,9 +145,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </ResizablePanel>
                 {isTerminalOpen && <ResizableHandle draggable withHandle />}
                 <ResizablePanel
-                  defaultSize={20}
+                  defaultSize={35}
                   minSize={15}
-                  maxSize={50}
+                  maxSize={60}
                   hidden={!isTerminalOpen}
                   onResize={() => {
                     if (fitAddonRef?.current) {

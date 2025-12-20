@@ -8,10 +8,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
-// RefreshToken takes a refresh token as input and returns a new access token and refresh token. It
-// first verifies the refresh token, then finds the associated user, creates a new access token,
-// revokes the old refresh token and creates a new one, and finally returns the new access token,
-// refresh token, the user's expiration time, and the user information.
+// Deprecated: Use SupertokensRefreshToken instead
 func (c *AuthService) RefreshToken(refreshToken types.RefreshTokenRequest) (types.AuthResponse, error) {
 	if refreshToken.RefreshToken == "" {
 		return types.AuthResponse{}, types.ErrRefreshTokenIsRequired

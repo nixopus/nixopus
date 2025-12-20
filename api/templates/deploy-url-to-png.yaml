@@ -1,0 +1,89 @@
+metadata:
+  id: "deploy-url-to-png"
+  name: "URL to PNG"
+  description: "A URL to PNG generator over HTTP with a fairly simple API accessed via query params passed to the server. Convert any webpage to a PNG image with customizable parameters like width, height, and quality."
+  author: "Nixopus Team"
+  icon: "🖼️"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for URL to PNG"
+    default: "ghcr.io/jasonraimondi/url-to-png"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the URL to PNG container"
+    default: "url-to-png"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose URL to PNG service"
+    default: 3089
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for URL to PNG service"
+    default: 3089
+    is_required: true
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for URL to PNG (optional)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull URL to PNG image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run URL to PNG container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+    - name: "Add proxy for URL to PNG"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
+
+  validate:
+    - name: "Check URL to PNG HTTP response"
+      type: "command"
+      properties:
+        cmd: "sh -c 'for i in $(seq 1 30); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 2; done; exit 1'"
+      timeout: 60
+
+    - name: "Verify URL to PNG service is accessible"
+      type: "command"
+      properties:
+        cmd: "sh -c 'curl -fsS http://localhost:{{ host_port }} | grep -i \"url.*png\" >/dev/null && exit 0 || exit 1'"
+      timeout: 30

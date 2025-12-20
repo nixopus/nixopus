@@ -2,9 +2,8 @@
 <a href="https://nixopus.com"><img width="1800" height="520" alt="Heading(4)" src="https://github.com/user-attachments/assets/e103a9df-7abf-4f78-b75a-221331231247" /></a>
 </div>
 
-
 <p align="center">
- Open Source Server management platform with Terminal integration, and Self Hosting capabilities.
+ Open Source alternative to vercel, heroku, netlify with Terminal integration, and Self Hosting capabilities.
 </p>
 
 <p align="center">
@@ -15,8 +14,7 @@
   <a href="https://github.com/raghavyuva/nixopus/discussions/262"><b>Roadmap</b></a>
 </p>
 
-<img width="1210" height="764" alt="image" src="https://github.com/user-attachments/assets/3f1dc1e0-956d-4785-8745-ed59d0390afd" />
-
+<img width="1210" height="764" alt="image" src="assets/nixopus_dashboard.jpeg" />
 
 > ⚠️ **Important Note**: Nixopus is currently in alpha/pre-release stage and is not yet ready for production use. While you're welcome to try it out, we recommend waiting for the beta or stable release before using it in production environments. The platform is still undergoing testing and development.
 
@@ -35,11 +33,18 @@
 
 This section will help you set up Nixopus on your VPS quickly.
 
-### Install Nixopus:
+### Install Nixopus
 
 **To get started without domain names, and to try out over ip:port deployment:**
+
 ```bash
 curl -sSL https://install.nixopus.com | bash
+```
+
+**For custom ip setups:**
+
+```bash
+curl -sSL https://install.nixopus.com | bash -s -- --host-ip 10.0.0.154
 ```
 
 **To install only the CLI tool without running `nixopus install`:**
@@ -54,6 +59,7 @@ You can customize your installation by providing the following optional paramete
 
 - `--api-domain` or `-ad`: Specify the domain where the Nixopus API will be accessible (e.g., `nixopusapi.example.tld`)
 - `--view-domain` or `-vd`: Specify the domain where the Nixopus app will be accessible (e.g., `nixopus.example.tld`)
+- `--host-ip` or `-ip`: Specify the IP address of the server to use when no domains are provided (e.g., `10.0.0.154` or `192.168.1.100`). If not provided, the public IP will be automatically detected.
 - `--verbose` or `-v`: Show more details while installing
 - `--timeout` or `-t`: Set timeout for each step (default: 300 seconds)
 - `--force` or `-f`: Replace files if they already exist
@@ -63,12 +69,23 @@ You can customize your installation by providing the following optional paramete
 Example with optional parameters:
 
 ```bash
-nixopus install \
+sudo nixopus install \
   --api-domain nixopusapi.example.tld \
   --view-domain nixopus.example.tld \
   --verbose \
   --timeout 600
 ```
+
+Example for custom ip setup:
+
+```bash
+sudo nixopus install \
+  --host-ip 10.0.0.154 \
+  --verbose
+```
+
+> [!NOTE]  
+> Running `nixopus install` requires root privileges (sudo) to install system dependencies like Docker. If you encounter permission errors, make sure to run the command with `sudo`.
 
 You can also install the CLI and run `nixopus install` with options in a single command, refer [installation documentation](https://docs.nixopus.com/install/#installation-options) for more details on options
 
@@ -81,4 +98,3 @@ Nixopus is derived from the combination of "octopus" and the Linux penguin (Tux)
 <a href="https://github.com/raghavyuva/nixopus/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=raghavyuva/nixopus" alt="Nixopus project contributors" />
 </a>
-

@@ -12,6 +12,8 @@ import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
 import Labels from '../../components/application-details/labels';
+import PageLayout from '@/components/layout/page-layout';
+import { Activity, Settings, Layers, ScrollText } from 'lucide-react';
 
 function Page() {
   const { t } = useTranslation();
@@ -31,12 +33,8 @@ function Page() {
   const totalPages = Math.ceil(totalDeployments / deploymentsPerPage);
 
   return (
-    <ResourceGuard 
-      resource="deploy" 
-      action="read"
-      loadingFallback={<Skeleton className="h-96" />}
-    >
-      <div className="container mx-auto py-6 space-y-8 max-w-4xl 2xl:max-w-7xl">
+    <ResourceGuard resource="deploy" action="read" loadingFallback={<Skeleton className="h-96" />}>
+      <PageLayout maxWidth="full" padding="md" spacing="lg">
         <ApplicationDetailsHeader application={application} />
             <Labels
             applicationId={application?.id || ''}
@@ -49,15 +47,35 @@ function Page() {
             isEditable={true}
           />
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList>
-            <TabsTrigger value="monitoring">{t('selfHost.application.tabs.monitoring')}</TabsTrigger>
-            <TabsTrigger value="configuration">
+          <TabsList className="w-full justify-start rounded-none h-auto p-0 bg-transparent gap-2">
+            <TabsTrigger
+              value="monitoring"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            >
+              <Activity className="mr-2 h-4 w-4" />
+              {t('selfHost.application.tabs.monitoring')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="configuration"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            >
+              <Settings className="mr-2 h-4 w-4" />
               {t('selfHost.application.tabs.configuration')}
             </TabsTrigger>
-            <TabsTrigger value="deployments">
+            <TabsTrigger
+              value="deployments"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            >
+              <Layers className="mr-2 h-4 w-4" />
               {t('selfHost.application.tabs.deployments')}
             </TabsTrigger>
-            <TabsTrigger value="logs">{t('selfHost.application.tabs.logs')}</TabsTrigger>
+            <TabsTrigger
+              value="logs"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            >
+              <ScrollText className="mr-2 h-4 w-4" />
+              {t('selfHost.application.tabs.logs')}
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="deployments" className="mt-6">
             <DeploymentsList

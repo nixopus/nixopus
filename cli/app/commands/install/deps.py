@@ -2,9 +2,10 @@ import json
 import shutil
 import subprocess
 
-from app.utils.config import DEPS, Config
-from app.utils.lib import HostInformation, ParallelProcessor
-from app.utils.logger import Logger
+from app.utils.config import DEPS, get_active_config, get_yaml_value
+from app.utils.host_information import get_os_name, get_package_manager
+from app.utils.parallel_processor import process_parallel
+from app.utils.logger import create_logger
 
 from .messages import (
     dry_run_install_cmd,
@@ -17,8 +18,8 @@ from .messages import (
 
 
 def get_deps_from_config():
-    config = Config()
-    deps = config.get_yaml_value(DEPS)
+    config = get_active_config()
+    deps = get_yaml_value(config, DEPS)
     return [
         {
             "name": name,
@@ -31,7 +32,7 @@ def get_deps_from_config():
 
 
 def get_installed_deps(deps, os_name, package_manager, timeout=2, verbose=False):
-    checker = DependencyChecker(Logger(verbose=verbose))
+    checker = DependencyChecker(create_logger(verbose=verbose))
     return {dep["name"]: checker.check_dependency(dep, package_manager) for dep in deps}
 
 
@@ -64,7 +65,12 @@ def install_dep(dep, package_manager, logger, dry_run=False):
             if dry_run:
                 logger.info(f"[DRY RUN] Would run: {install_command}")
                 return True
-            subprocess.check_call(install_command, shell=True)
+            result = subprocess.run(install_command, shell=True, capture_output=True, text=True)
+            if result.returncode != 0:
+                error_output = result.stderr.strip() or result.stdout.strip()
+                if error_output:
+                    logger.error(f"Installation command output: {error_output}")
+                raise subprocess.CalledProcessError(result.returncode, install_command, result.stdout, result.stderr)
             return True
         if package_manager == "apt":
             cmd = ["sudo", "apt-get", "install", "-y", package]
@@ -86,6 +92,15 @@ def install_dep(dep, package_manager, logger, dry_run=False):
             return True
         subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
+    except subprocess.CalledProcessError as e:
+        error_msg = str(e)
+        if "docker" in package.lower() and (e.returncode == 100 or "permission" in error_msg.lower()):
+            logger.error(failed_to_install.format(dep=package, error=f"Exit code {e.returncode}"))
+            logger.error("Docker installation requires root privileges.")
+            logger.error("Please run: sudo nixopus install")
+        else:
+            logger.error(failed_to_install.format(dep=package, error=e))
+        return False
     except Exception as e:
         logger.error(failed_to_install.format(dep=package, error=e))
         return False
@@ -106,10 +121,10 @@ class DependencyChecker:
 
 
 def install_all_deps(verbose=False, output="text", dry_run=False):
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
     deps = get_deps_from_config()
-    os_name = HostInformation.get_os_name()
-    package_manager = HostInformation.get_package_manager()
+    os_name = get_os_name()
+    package_manager = get_package_manager()
     if not package_manager:
         raise Exception(no_supported_package_manager)
     installed = get_installed_deps(deps, os_name, package_manager, verbose=verbose)
@@ -124,7 +139,7 @@ def install_all_deps(verbose=False, output="text", dry_run=False):
         logger.error(f"Failed to install {dep['name']}: {exc}")
         return {"dependency": dep["name"], "installed": False}
 
-    results = ParallelProcessor.process_items(
+    results = process_parallel(
         to_install,
         install_wrapper,
         max_workers=min(len(to_install), 8),
