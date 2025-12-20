@@ -16,7 +16,7 @@ services:
       SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:-/etc/nixopus/ssh/id_rsa}
       SSH_PASSWORD: ${SSH_PASSWORD:-}
       DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
-      REDIS_URL: ${REDIS_URL:-redis://:${REDIS_PASSWORD:-changeme}@nixopus-redis:6379}
+      REDIS_URL: ${REDIS_URL:-redis://default:changeme@nixopus-redis:6379}
       CADDY_ENDPOINT: ${CADDY_ENDPOINT:-http://nixopus-caddy:2019}
       ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:3000}
       ENV: ${ENV:-production}
