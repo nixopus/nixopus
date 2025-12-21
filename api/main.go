@@ -10,11 +10,11 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
-	"github.com/raghavyuva/nixopus-api/internal"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	_ "github.com/raghavyuva/nixopus-api/internal/log"
 	"github.com/raghavyuva/nixopus-api/internal/queue"
 	"github.com/raghavyuva/nixopus-api/internal/redisclient"
+	"github.com/raghavyuva/nixopus-api/internal/routes"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/vmihailenco/taskq/v3"
@@ -58,8 +58,8 @@ func main() {
 
 	taskq.SetLogger(log.New(io.Discard, "", 0))
 	queue.Init(redisClient)
-	router := internal.NewRouter(app)
-	router.Routes()
+	router := routes.NewRouter(app)
+	router.SetupRoutes()
 	log.Printf("Server starting on port %s", config.AppConfig.Server.Port)
 	log.Fatal(http.ListenAndServe(":"+config.AppConfig.Server.Port, nil))
 }
