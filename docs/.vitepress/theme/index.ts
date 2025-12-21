@@ -7,6 +7,7 @@ import './style.css'
 
 import spec from '../../src/openapi.json' assert { type: 'json' }
 import SponsorsMarquee from '../components/SponsorsMarquee.vue'
+import InstallGenerator from '../components/InstallGenerator.vue'
 
 export default {
     extends: DefaultTheme,
@@ -16,6 +17,7 @@ export default {
 
         // Register custom components
         app.component('SponsorsMarquee', SponsorsMarquee)
+        app.component('InstallGenerator', InstallGenerator)
 
         theme.enhanceApp({ app })
     }
