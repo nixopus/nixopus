@@ -20,7 +20,6 @@
 </p>
 <br>
 
-
 <img width="1210" height="764" alt="image" src="assets/nixopus_dashboard.jpeg" />
 
 > ⚠️ **Important Note**: Nixopus is currently in alpha/pre-release stage and is not yet ready for production use. While you're welcome to try it out, we recommend waiting for the beta or stable release before using it in production environments. The platform is still undergoing testing and development.
@@ -39,6 +38,8 @@
 ## Installation & Quick Start
 
 This section will help you set up Nixopus on your VPS quickly.
+
+> 💡 **Quick Tip**: Use our [**Install Command Generator**](https://docs.nixopus.com/install/#generate-your-installation-command) to customize your installation command with a visual interface!
 
 ### Install Nixopus
 

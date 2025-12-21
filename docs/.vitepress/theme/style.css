@@ -305,3 +305,31 @@ OASidebarItem {
         font-size: 0.8em;
     }
 }
+
+/* Install Generator specific styles */
+.install-generator {
+  font-family: var(--vp-font-family-base);
+}
+
+.install-generator code {
+  background: var(--vp-c-bg-soft);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: var(--vp-c-text-1);
+}
+
+.install-generator pre {
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.install-generator pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.9em;
+}
