@@ -54,7 +54,7 @@ CLI Installation Options:
 nixopus install Options (passed through to 'nixopus install'):
   -v, --verbose             Show more details while installing
   -t, --timeout SECONDS     How long to wait for each step (default: 300)
-  -f, --force               Replace files if they already exist
+  -f, --force               Overwrite existing installation (DELETES existing data - will prompt if not set)
   -d, --dry-run             See what would happen, but don't make changes
   -c, --config-file PATH    Path to custom config file (defaults to built-in config)
   -ad, --api-domain DOMAIN  The domain where the nixopus api will be accessible

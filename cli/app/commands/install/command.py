@@ -1,11 +1,14 @@
+from typing import Optional
+
 import typer
 
-from app.utils.logger import create_logger, log_error, log_success, log_warning
+from app.utils.logger import create_logger, log_error, log_success
 from app.utils.timeout import timeout_wrapper
 
 from .deps import install_all_deps
-from .run import Install
+from .run import run_installation
 from .ssh import SSHConfig, format_ssh_output, generate_ssh_key_with_config
+from .types import InstallParams
 
 install_app = typer.Typer(help="Install Nixopus", invoke_without_command=True)
 
@@ -15,7 +18,7 @@ def install_callback(
     ctx: typer.Context,
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show more details while installing"),
     timeout: int = typer.Option(300, "--timeout", "-t", help="How long to wait for each step (in seconds)"),
-    force: bool = typer.Option(False, "--force", "-f", help="Replace files if they already exist"),
+    force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing installation directory (DELETES all existing data)"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="See what would happen, but don't make changes"),
     config_file: str = typer.Option(
         None, "--config-file", "-c", help="Path to custom config file (defaults to built-in config)"
@@ -50,11 +53,16 @@ def install_callback(
     branch: str = typer.Option(None, "--branch", "-b", help="Git branch to clone (defaults to config value)"),
     external_db_url: str = typer.Option(None, "--external-db-url", help="External PostgreSQL database connection URL (e.g. postgresql://user:password@host:port/dbname?sslmode=require). If provided, local DB service will be excluded"),
     staging: bool = typer.Option(False, "--staging", "-s", help="Use staging docker-compose file (docker-compose-staging.yml)"),
+    no_rollback: bool = typer.Option(False, "--no-rollback", help="Disable automatic rollback on installation failure"),
+    verify_health: bool = typer.Option(True, "--verify-health", help="Verify that all services are healthy after starting (recommended)"),
+    health_check_timeout: int = typer.Option(120, "--health-check-timeout", help="Maximum time to wait for services to become healthy (in seconds)"),
+    admin_email: Optional[str] = typer.Option(None, "--admin-email", help="Email for admin user registration"),
+    admin_password: Optional[str] = typer.Option(None, "--admin-password", help="Password for admin user registration"),
 ):
     """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
         logger = create_logger(verbose=verbose)
-        install = Install(
+        params = InstallParams(
             logger=logger,
             verbose=verbose,
             timeout=timeout,
@@ -76,22 +84,20 @@ def install_callback(
             supertokens_port=supertokens_port,
             external_db_url=external_db_url,
             staging=staging,
+            no_rollback=no_rollback,
+            verify_health=verify_health,
+            health_check_timeout=health_check_timeout,
+            admin_email=admin_email,
+            admin_password=admin_password,
         )
-        install.run()
+        run_installation(params)
 
 
 def main_install_callback(value: bool):
     if value:
         logger = create_logger(verbose=False)
-        install = Install(
-            logger=logger,
-            verbose=False,
-            timeout=300,
-            force=False,
-            dry_run=False,
-            config_file=None,
-        )
-        install.run()
+        params = InstallParams(logger=logger)
+        run_installation(params)
         raise typer.Exit()
 
 
