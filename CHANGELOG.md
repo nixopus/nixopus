@@ -1,3 +1,38 @@
+# [0.1.0-alpha.102](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.101...v0.1.0-alpha.102) (2025-12-21)
+
+
+### Bug Fixes
+
+* close settings modal on logout ([#758](https://github.com/raghavyuva/nixopus/issues/758)) ([9d7ce4a](https://github.com/raghavyuva/nixopus/commit/9d7ce4a528171161853b7fa11f3921286a1ea102))
+* close settings modal on logout ([#758](https://github.com/raghavyuva/nixopus/issues/758)) ([7a866a1](https://github.com/raghavyuva/nixopus/commit/7a866a14b07a984ebe6f60b1d793690290ae2040))
+* feature flags settings not scrollable ([#729](https://github.com/raghavyuva/nixopus/issues/729)) ([8b195bf](https://github.com/raghavyuva/nixopus/commit/8b195bfa1dd026d7d308ca5f8e8ab8cf4fa8ad29))
+* feature flags settings not scrollable ([#729](https://github.com/raghavyuva/nixopus/issues/729)) ([ed5b42d](https://github.com/raghavyuva/nixopus/commit/ed5b42d55c7e0205c9e29a00dce7dea3bf5090d5))
+* linters in github connector test files ([#732](https://github.com/raghavyuva/nixopus/issues/732)) ([b0f9529](https://github.com/raghavyuva/nixopus/commit/b0f9529016755931b957e759ca71cdf03fe317b2))
+* linters in github connector test files ([#732](https://github.com/raghavyuva/nixopus/issues/732)) ([c0903d6](https://github.com/raghavyuva/nixopus/commit/c0903d615e9adcc70f5392b0809fce8d96d57776))
+* resolve HIGH severity vulnerabilities in jws (CVE-2025-65945) and next (GHSA-mwv6-3258-q52c) ([25b6b6c](https://github.com/raghavyuva/nixopus/commit/25b6b6cdf63e3d4e11db837a6a94c40dce2ab4e6))
+* resolve HIGH severity vulnerabilities in jws (CVE-2025-65945) and next (GHSA-mwv6-3258-q52c) ([feb8b4b](https://github.com/raghavyuva/nixopus/commit/feb8b4b082a1d9a2720ad886d148b9538c2677b7))
+* security issues and dep warnings in view ([#737](https://github.com/raghavyuva/nixopus/issues/737)) ([dfb7e98](https://github.com/raghavyuva/nixopus/commit/dfb7e986b259209058523c114ddacfe5ad32be13))
+* security issues and dep warnings in view ([#737](https://github.com/raghavyuva/nixopus/issues/737)) ([f808dd6](https://github.com/raghavyuva/nixopus/commit/f808dd67a7407f1958d97e2348d98072130f5356))
+
+
+### Features
+
+* add labels to projects ([#366](https://github.com/raghavyuva/nixopus/issues/366)) ([6d6e1ac](https://github.com/raghavyuva/nixopus/commit/6d6e1acf4475ce7c0a24a04e49a83cda246dd06c))
+* add labels to projects ([#366](https://github.com/raghavyuva/nixopus/issues/366)) ([adf0bc9](https://github.com/raghavyuva/nixopus/commit/adf0bc9b13b3359a5f55505754a852e12ad0d775))
+* add support for admin registration during installation ([#754](https://github.com/raghavyuva/nixopus/issues/754)) ([466b807](https://github.com/raghavyuva/nixopus/commit/466b80758343edf25676d766ca02b82f8c9adcfb))
+* add support for copy and export of logs ([#755](https://github.com/raghavyuva/nixopus/issues/755)) ([0c13a48](https://github.com/raghavyuva/nixopus/commit/0c13a48d1d1eb2c9c083f5e48e374b976a1f4972))
+* add support for copy and export of logs ([#755](https://github.com/raghavyuva/nixopus/issues/755)) ([88867e0](https://github.com/raghavyuva/nixopus/commit/88867e01f6711ceb7d77de3c17e0008c6b066a2d))
+* add support for pasting multiple env vars during deployment and configurations ([#749](https://github.com/raghavyuva/nixopus/issues/749)) ([06f8eaf](https://github.com/raghavyuva/nixopus/commit/06f8eafff345a7086843974e008971748eafa642))
+* add support for pasting multiple env vars during deployment and configurations ([#749](https://github.com/raghavyuva/nixopus/issues/749)) ([6196515](https://github.com/raghavyuva/nixopus/commit/61965153202ea7eb56bd50afacaa179f98c215a5))
+* add support for rollback of installtion if something breaks midway ([#752](https://github.com/raghavyuva/nixopus/issues/752)) ([3edf9b4](https://github.com/raghavyuva/nixopus/commit/3edf9b40eae1dfb6ca58e9d24d34af7b0e779ce9))
+* add support for staging workflow value ([2a341b1](https://github.com/raghavyuva/nixopus/commit/2a341b1f26dfc31a77bf102712b509cc5de84743))
+* adds a healthcheck mechansim for services during install ([#751](https://github.com/raghavyuva/nixopus/issues/751)) ([01c2868](https://github.com/raghavyuva/nixopus/commit/01c28683eb8e4099952ce16a0440bde9f0b7036d))
+* command generator for  `nixopus install` ([#762](https://github.com/raghavyuva/nixopus/issues/762)) ([e63211a](https://github.com/raghavyuva/nixopus/commit/e63211a2465c1e32f9c5c8113dbdc70f3b1cf190))
+* interactively ask for force installation if nixopus-home dir exists ([1a152fd](https://github.com/raghavyuva/nixopus/commit/1a152fd633d4a3c217c2baffd8c7aa37435a3328))
+* README with Trendshift badge ([#756](https://github.com/raghavyuva/nixopus/issues/756)) ([e891479](https://github.com/raghavyuva/nixopus/commit/e891479d0707a4bca9ed7dd1061b79246f54f7a0))
+
+
+
 # [0.1.0-alpha.101](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.100...v0.1.0-alpha.101) (2025-12-20)
 
 
