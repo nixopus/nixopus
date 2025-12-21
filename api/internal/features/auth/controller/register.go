@@ -11,7 +11,7 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *AuthController) Register(f fuego.ContextWithBody[types.RegisterRequest]) (*shared_types.Response, error) {
+func (c *AuthController) Register(f fuego.ContextWithBody[types.RegisterRequest]) (*types.RegisterResponse, error) {
 	w, r := f.Response(), f.Request()
 	registration_request, err := f.Body()
 	if err != nil {
@@ -63,14 +63,14 @@ func (c *AuthController) Register(f fuego.ContextWithBody[types.RegisterRequest]
 		return nil, nil
 	}
 
-	return &shared_types.Response{
+	return &types.RegisterResponse{
 		Status:  "success",
 		Message: "User created successfully",
 		Data:    userResponse,
 	}, nil
 }
 
-func (c *AuthController) CreateUser(s fuego.ContextWithBody[types.RegisterRequest]) (*shared_types.Response, error) {
+func (c *AuthController) CreateUser(s fuego.ContextWithBody[types.RegisterRequest]) (*types.RegisterResponse, error) {
 	registration_request, err := s.Body()
 	if err != nil {
 		return nil, fuego.HTTPError{
@@ -95,7 +95,7 @@ func (c *AuthController) CreateUser(s fuego.ContextWithBody[types.RegisterReques
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.RegisterResponse{
 		Status:  "success",
 		Message: "User created successfully",
 		Data:    userResponse,

@@ -9,11 +9,9 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/utils"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (ar *AuthController) Login(c fuego.ContextWithBody[types.LoginRequest]) (*shared_types.Response, error) {
+func (ar *AuthController) Login(c fuego.ContextWithBody[types.LoginRequest]) (*types.LoginResponse, error) {
 	loginRequest, err := c.Body()
 
 	ar.logger.Log(logger.Info, "logging in user", loginRequest.Email)
@@ -48,11 +46,11 @@ func (ar *AuthController) Login(c fuego.ContextWithBody[types.LoginRequest]) (*s
 			}
 		}
 
-		return &shared_types.Response{
+		return &types.LoginResponse{
 			Status:  "2fa_required",
 			Message: "Two-factor authentication required",
-			Data: map[string]interface{}{
-				"temp_token": tempToken,
+			Data: types.AuthResponse{
+				AccessToken: tempToken,
 			},
 		}, nil
 	}
@@ -67,7 +65,7 @@ func (ar *AuthController) Login(c fuego.ContextWithBody[types.LoginRequest]) (*s
 
 	ar.Notify(notification.NotificationPayloadTypeLogin, &response.User, c.Request())
 
-	return &shared_types.Response{
+	return &types.LoginResponse{
 		Status:  "success",
 		Message: "User logged in successfully",
 		Data:    response,
