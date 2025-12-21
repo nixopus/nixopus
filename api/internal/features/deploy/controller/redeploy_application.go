@@ -8,11 +8,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReDeployApplicationRequest]) (*shared_types.Response, error) {
+func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReDeployApplicationRequest]) (*types.ApplicationResponse, error) {
 	c.logger.Log(logger.Info, "starting application redeployment process", "")
 
 	data, err := f.Body()
@@ -71,7 +70,7 @@ func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReD
 	}
 
 	c.logger.Log(logger.Info, "application redeployed successfully", "id: "+data.ID.String())
-	return &shared_types.Response{
+	return &types.ApplicationResponse{
 		Status:  "success",
 		Message: "Application redeployed successfully",
 		Data:    application,

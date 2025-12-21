@@ -7,12 +7,11 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification/controller/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *NotificationController) GetSmtp(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *NotificationController) GetSmtp(f fuego.ContextNoBody) (*types.SMTPConfigResponse, error) {
 	id := f.QueryParam("id")
 	if id == "" {
 		return nil, fuego.HTTPError{
@@ -62,15 +61,15 @@ func (c *NotificationController) GetSmtp(f fuego.ContextNoBody) (*shared_types.R
 		return smtpNotFoundResp(), nil
 	}
 
-	return &shared_types.Response{
+	return &types.SMTPConfigResponse{
 		Status:  "success",
 		Message: "SMTP configs fetched successfully",
 		Data:    SMTPConfigs,
 	}, nil
 }
 
-func smtpNotFoundResp() *shared_types.Response {
-	return &shared_types.Response{
+func smtpNotFoundResp() *types.SMTPConfigResponse {
+	return &types.SMTPConfigResponse{
 		Status:  "success",
 		Message: "No SMTP configs were found",
 		Data:    nil,

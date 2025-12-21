@@ -11,10 +11,9 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.ContainerLogsRequest]) (*shared_types.Response, error) {
+func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.ContainerLogsRequest]) (*types.ContainerLogsResponse, error) {
 	req, err := f.Body()
 	if err != nil {
 		return nil, fuego.HTTPError{
@@ -51,7 +50,7 @@ func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.Con
 
 	decodedLogs := decodeDockerLogs(buf.Bytes())
 
-	return &shared_types.Response{
+	return &types.ContainerLogsResponse{
 		Status:  "success",
 		Message: "Container logs fetched successfully",
 		Data:    decodedLogs,

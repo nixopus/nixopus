@@ -21,6 +21,1265 @@
 				},
 				"type": "object"
 			},
+			"Application": {
+				"nullable": true,
+				"properties": {
+					"base_path": {
+						"type": "string"
+					},
+					"branch": {
+						"type": "string"
+					},
+					"build_pack": {
+						"type": "string"
+					},
+					"build_variables": {
+						"type": "string"
+					},
+					"created_at": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"deployments": {
+						"items": {
+							"nullable": true,
+							"properties": {
+								"application": {
+									"$ref": "#/components/schemas/Application"
+								},
+								"application_id": {},
+								"commit_hash": {
+									"type": "string"
+								},
+								"container_id": {
+									"type": "string"
+								},
+								"container_image": {
+									"type": "string"
+								},
+								"container_name": {
+									"type": "string"
+								},
+								"container_status": {
+									"type": "string"
+								},
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"id": {},
+								"logs": {
+									"items": {
+										"nullable": true,
+										"properties": {
+											"application": {
+												"$ref": "#/components/schemas/Application"
+											},
+											"application_deployment": {
+												"$ref": "#/components/schemas/ApplicationDeployment"
+											},
+											"application_deployment_id": {},
+											"application_id": {},
+											"created_at": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"id": {},
+											"log": {
+												"type": "string"
+											},
+											"updated_at": {
+												"format": "date-time",
+												"type": "string"
+											}
+										},
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"status": {
+									"nullable": true,
+									"properties": {
+										"application_deployment": {
+											"$ref": "#/components/schemas/ApplicationDeployment"
+										},
+										"application_deployment_id": {},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"id": {},
+										"status": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"updated_at": {
+									"format": "date-time",
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"dockerfile_path": {
+						"type": "string"
+					},
+					"domain": {
+						"type": "string"
+					},
+					"environment": {
+						"type": "string"
+					},
+					"environment_variables": {
+						"type": "string"
+					},
+					"id": {},
+					"labels": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"logs": {
+						"items": {
+							"nullable": true,
+							"properties": {
+								"application": {
+									"$ref": "#/components/schemas/Application"
+								},
+								"application_deployment": {
+									"$ref": "#/components/schemas/ApplicationDeployment"
+								},
+								"application_deployment_id": {},
+								"application_id": {},
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"id": {},
+								"log": {
+									"type": "string"
+								},
+								"updated_at": {
+									"format": "date-time",
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"name": {
+						"type": "string"
+					},
+					"organization": {
+						"nullable": true,
+						"properties": {
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"deleted_at": {
+								"format": "date-time",
+								"nullable": true,
+								"type": "string"
+							},
+							"description": {
+								"type": "string"
+							},
+							"id": {},
+							"name": {
+								"type": "string"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"users": {
+								"items": {
+									"$ref": "#/components/schemas/User"
+								},
+								"type": "array"
+							}
+						},
+						"type": "object"
+					},
+					"organization_id": {},
+					"port": {
+						"type": "integer"
+					},
+					"post_run_command": {
+						"type": "string"
+					},
+					"pre_run_command": {
+						"type": "string"
+					},
+					"proxy_server": {
+						"type": "string"
+					},
+					"repository": {
+						"type": "string"
+					},
+					"status": {
+						"nullable": true,
+						"properties": {
+							"application": {
+								"$ref": "#/components/schemas/Application"
+							},
+							"application_id": {},
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"id": {},
+							"status": {
+								"type": "string"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"updated_at": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"user": {
+						"nullable": true,
+						"properties": {
+							"avatar": {
+								"type": "string"
+							},
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"deleted_at": {
+								"format": "date-time",
+								"nullable": true,
+								"type": "string"
+							},
+							"email": {
+								"type": "string"
+							},
+							"id": {},
+							"is_verified": {
+								"type": "boolean"
+							},
+							"organization_users": {
+								"items": {
+									"nullable": true,
+									"properties": {
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"id": {},
+										"organization": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deleted_at": {
+													"format": "date-time",
+													"nullable": true,
+													"type": "string"
+												},
+												"description": {
+													"type": "string"
+												},
+												"id": {},
+												"name": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"users": {
+													"items": {
+														"$ref": "#/components/schemas/User"
+													},
+													"type": "array"
+												}
+											},
+											"type": "object"
+										},
+										"organization_id": {},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"user": {
+											"$ref": "#/components/schemas/User"
+										},
+										"user_id": {}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"organizations": {
+								"items": {
+									"nullable": true,
+									"properties": {
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"description": {
+											"type": "string"
+										},
+										"id": {},
+										"name": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"users": {
+											"items": {
+												"$ref": "#/components/schemas/User"
+											},
+											"type": "array"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"supertokens_user_id": {
+								"type": "string"
+							},
+							"two_factor_enabled": {
+								"type": "boolean"
+							},
+							"two_factor_secret": {
+								"type": "string"
+							},
+							"type": {
+								"type": "string"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"username": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"user_id": {}
+				},
+				"type": "object"
+			},
+			"ApplicationDeployment": {
+				"properties": {
+					"application": {
+						"nullable": true,
+						"properties": {
+							"base_path": {
+								"type": "string"
+							},
+							"branch": {
+								"type": "string"
+							},
+							"build_pack": {
+								"type": "string"
+							},
+							"build_variables": {
+								"type": "string"
+							},
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"deployments": {
+								"items": {
+									"nullable": true,
+									"properties": {
+										"application": {
+											"$ref": "#/components/schemas/Application"
+										},
+										"application_id": {},
+										"commit_hash": {
+											"type": "string"
+										},
+										"container_id": {
+											"type": "string"
+										},
+										"container_image": {
+											"type": "string"
+										},
+										"container_name": {
+											"type": "string"
+										},
+										"container_status": {
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"id": {},
+										"logs": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_deployment": {
+														"$ref": "#/components/schemas/ApplicationDeployment"
+													},
+													"application_deployment_id": {},
+													"application_id": {},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"id": {},
+													"log": {
+														"type": "string"
+													},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"status": {
+											"nullable": true,
+											"properties": {
+												"application_deployment": {
+													"$ref": "#/components/schemas/ApplicationDeployment"
+												},
+												"application_deployment_id": {},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"id": {},
+												"status": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"dockerfile_path": {
+								"type": "string"
+							},
+							"domain": {
+								"type": "string"
+							},
+							"environment": {
+								"type": "string"
+							},
+							"environment_variables": {
+								"type": "string"
+							},
+							"id": {},
+							"labels": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							"logs": {
+								"items": {
+									"nullable": true,
+									"properties": {
+										"application": {
+											"$ref": "#/components/schemas/Application"
+										},
+										"application_deployment": {
+											"$ref": "#/components/schemas/ApplicationDeployment"
+										},
+										"application_deployment_id": {},
+										"application_id": {},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"id": {},
+										"log": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"name": {
+								"type": "string"
+							},
+							"organization": {
+								"nullable": true,
+								"properties": {
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"deleted_at": {
+										"format": "date-time",
+										"nullable": true,
+										"type": "string"
+									},
+									"description": {
+										"type": "string"
+									},
+									"id": {},
+									"name": {
+										"type": "string"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"users": {
+										"items": {
+											"$ref": "#/components/schemas/User"
+										},
+										"type": "array"
+									}
+								},
+								"type": "object"
+							},
+							"organization_id": {},
+							"port": {
+								"type": "integer"
+							},
+							"post_run_command": {
+								"type": "string"
+							},
+							"pre_run_command": {
+								"type": "string"
+							},
+							"proxy_server": {
+								"type": "string"
+							},
+							"repository": {
+								"type": "string"
+							},
+							"status": {
+								"nullable": true,
+								"properties": {
+									"application": {
+										"$ref": "#/components/schemas/Application"
+									},
+									"application_id": {},
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"id": {},
+									"status": {
+										"type": "string"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"user": {
+								"nullable": true,
+								"properties": {
+									"avatar": {
+										"type": "string"
+									},
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"deleted_at": {
+										"format": "date-time",
+										"nullable": true,
+										"type": "string"
+									},
+									"email": {
+										"type": "string"
+									},
+									"id": {},
+									"is_verified": {
+										"type": "boolean"
+									},
+									"organization_users": {
+										"items": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deleted_at": {
+													"format": "date-time",
+													"nullable": true,
+													"type": "string"
+												},
+												"id": {},
+												"organization": {
+													"nullable": true,
+													"properties": {
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"deleted_at": {
+															"format": "date-time",
+															"nullable": true,
+															"type": "string"
+														},
+														"description": {
+															"type": "string"
+														},
+														"id": {},
+														"name": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"users": {
+															"items": {
+																"$ref": "#/components/schemas/User"
+															},
+															"type": "array"
+														}
+													},
+													"type": "object"
+												},
+												"organization_id": {},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"user": {
+													"$ref": "#/components/schemas/User"
+												},
+												"user_id": {}
+											},
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"organizations": {
+										"items": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deleted_at": {
+													"format": "date-time",
+													"nullable": true,
+													"type": "string"
+												},
+												"description": {
+													"type": "string"
+												},
+												"id": {},
+												"name": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"users": {
+													"items": {
+														"$ref": "#/components/schemas/User"
+													},
+													"type": "array"
+												}
+											},
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"supertokens_user_id": {
+										"type": "string"
+									},
+									"two_factor_enabled": {
+										"type": "boolean"
+									},
+									"two_factor_secret": {
+										"type": "string"
+									},
+									"type": {
+										"type": "string"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"username": {
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"user_id": {}
+						},
+						"type": "object"
+					},
+					"application_id": {},
+					"commit_hash": {
+						"type": "string"
+					},
+					"container_id": {
+						"type": "string"
+					},
+					"container_image": {
+						"type": "string"
+					},
+					"container_name": {
+						"type": "string"
+					},
+					"container_status": {
+						"type": "string"
+					},
+					"created_at": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"id": {},
+					"logs": {
+						"items": {
+							"nullable": true,
+							"properties": {
+								"application": {
+									"$ref": "#/components/schemas/Application"
+								},
+								"application_deployment": {
+									"$ref": "#/components/schemas/ApplicationDeployment"
+								},
+								"application_deployment_id": {},
+								"application_id": {},
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"id": {},
+								"log": {
+									"type": "string"
+								},
+								"updated_at": {
+									"format": "date-time",
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"nullable": true,
+						"type": "array"
+					},
+					"status": {
+						"nullable": true,
+						"properties": {
+							"application_deployment": {
+								"$ref": "#/components/schemas/ApplicationDeployment"
+							},
+							"application_deployment_id": {},
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"id": {},
+							"status": {
+								"type": "string"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"updated_at": {
+						"format": "date-time",
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ApplicationResponse": {
+				"description": "ApplicationResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"base_path": {
+								"type": "string"
+							},
+							"branch": {
+								"type": "string"
+							},
+							"build_pack": {
+								"type": "string"
+							},
+							"build_variables": {
+								"type": "string"
+							},
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"deployments": {
+								"items": {
+									"nullable": true,
+									"properties": {
+										"application": {
+											"$ref": "#/components/schemas/Application"
+										},
+										"application_id": {},
+										"commit_hash": {
+											"type": "string"
+										},
+										"container_id": {
+											"type": "string"
+										},
+										"container_image": {
+											"type": "string"
+										},
+										"container_name": {
+											"type": "string"
+										},
+										"container_status": {
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"id": {},
+										"logs": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_deployment": {
+														"$ref": "#/components/schemas/ApplicationDeployment"
+													},
+													"application_deployment_id": {},
+													"application_id": {},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"id": {},
+													"log": {
+														"type": "string"
+													},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"status": {
+											"nullable": true,
+											"properties": {
+												"application_deployment": {
+													"$ref": "#/components/schemas/ApplicationDeployment"
+												},
+												"application_deployment_id": {},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"id": {},
+												"status": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"nullable": true,
+								"type": "array"
+							},
+							"dockerfile_path": {
+								"type": "string"
+							},
+							"domain": {
+								"type": "string"
+							},
+							"environment": {
+								"type": "string"
+							},
+							"environment_variables": {
+								"type": "string"
+							},
+							"id": {},
+							"labels": {
+								"items": {
+									"type": "string"
+								},
+								"nullable": true,
+								"type": "array"
+							},
+							"logs": {
+								"items": {
+									"nullable": true,
+									"properties": {
+										"application": {
+											"$ref": "#/components/schemas/Application"
+										},
+										"application_deployment": {
+											"$ref": "#/components/schemas/ApplicationDeployment"
+										},
+										"application_deployment_id": {},
+										"application_id": {},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"id": {},
+										"log": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"nullable": true,
+								"type": "array"
+							},
+							"name": {
+								"type": "string"
+							},
+							"organization": {
+								"nullable": true,
+								"properties": {
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"deleted_at": {
+										"format": "date-time",
+										"nullable": true,
+										"type": "string"
+									},
+									"description": {
+										"type": "string"
+									},
+									"id": {},
+									"name": {
+										"type": "string"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"users": {
+										"items": {
+											"$ref": "#/components/schemas/User"
+										},
+										"type": "array"
+									}
+								},
+								"type": "object"
+							},
+							"organization_id": {},
+							"port": {
+								"type": "integer"
+							},
+							"post_run_command": {
+								"type": "string"
+							},
+							"pre_run_command": {
+								"type": "string"
+							},
+							"proxy_server": {
+								"type": "string"
+							},
+							"repository": {
+								"type": "string"
+							},
+							"status": {
+								"nullable": true,
+								"properties": {
+									"application": {
+										"$ref": "#/components/schemas/Application"
+									},
+									"application_id": {},
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"id": {},
+									"status": {
+										"type": "string"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"user": {
+								"nullable": true,
+								"properties": {
+									"avatar": {
+										"type": "string"
+									},
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"deleted_at": {
+										"format": "date-time",
+										"nullable": true,
+										"type": "string"
+									},
+									"email": {
+										"type": "string"
+									},
+									"id": {},
+									"is_verified": {
+										"type": "boolean"
+									},
+									"organization_users": {
+										"items": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deleted_at": {
+													"format": "date-time",
+													"nullable": true,
+													"type": "string"
+												},
+												"id": {},
+												"organization": {
+													"nullable": true,
+													"properties": {
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"deleted_at": {
+															"format": "date-time",
+															"nullable": true,
+															"type": "string"
+														},
+														"description": {
+															"type": "string"
+														},
+														"id": {},
+														"name": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"users": {
+															"items": {
+																"$ref": "#/components/schemas/User"
+															},
+															"type": "array"
+														}
+													},
+													"type": "object"
+												},
+												"organization_id": {},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"user": {
+													"$ref": "#/components/schemas/User"
+												},
+												"user_id": {}
+											},
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"organizations": {
+										"items": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deleted_at": {
+													"format": "date-time",
+													"nullable": true,
+													"type": "string"
+												},
+												"description": {
+													"type": "string"
+												},
+												"id": {},
+												"name": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"users": {
+													"items": {
+														"$ref": "#/components/schemas/User"
+													},
+													"type": "array"
+												}
+											},
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"supertokens_user_id": {
+										"type": "string"
+									},
+									"two_factor_enabled": {
+										"type": "boolean"
+									},
+									"two_factor_secret": {
+										"type": "string"
+									},
+									"type": {
+										"type": "string"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"username": {
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"user_id": {}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"CategoriesResponse": {
+				"description": "CategoriesResponse schema",
+				"properties": {
+					"data": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ContainerActionResponse": {
+				"description": "ContainerActionResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"status": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"ContainerLogsRequest": {
 				"description": "ContainerLogsRequest schema",
 				"properties": {
@@ -43,6 +1302,21 @@
 						"type": "integer"
 					},
 					"until": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ContainerLogsResponse": {
+				"description": "ContainerLogsResponse schema",
+				"properties": {
+					"data": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
 						"type": "string"
 					}
 				},
@@ -129,6 +1403,26 @@
 						"type": "string"
 					},
 					"organization_id": {}
+				},
+				"type": "object"
+			},
+			"CreateDomainResponseWrapper": {
+				"description": "CreateDomainResponseWrapper schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"id": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
 				},
 				"type": "object"
 			},
@@ -273,6 +1567,709 @@
 				],
 				"type": "object"
 			},
+			"DeploymentResponse": {
+				"description": "DeploymentResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"application": {
+								"nullable": true,
+								"properties": {
+									"base_path": {
+										"type": "string"
+									},
+									"branch": {
+										"type": "string"
+									},
+									"build_pack": {
+										"type": "string"
+									},
+									"build_variables": {
+										"type": "string"
+									},
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"deployments": {
+										"items": {
+											"nullable": true,
+											"properties": {
+												"application": {
+													"$ref": "#/components/schemas/Application"
+												},
+												"application_id": {},
+												"commit_hash": {
+													"type": "string"
+												},
+												"container_id": {
+													"type": "string"
+												},
+												"container_image": {
+													"type": "string"
+												},
+												"container_name": {
+													"type": "string"
+												},
+												"container_status": {
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"id": {},
+												"logs": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_deployment": {
+																"$ref": "#/components/schemas/ApplicationDeployment"
+															},
+															"application_deployment_id": {},
+															"application_id": {},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"id": {},
+															"log": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"type": "array"
+												},
+												"status": {
+													"nullable": true,
+													"properties": {
+														"application_deployment": {
+															"$ref": "#/components/schemas/ApplicationDeployment"
+														},
+														"application_deployment_id": {},
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"id": {},
+														"status": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"dockerfile_path": {
+										"type": "string"
+									},
+									"domain": {
+										"type": "string"
+									},
+									"environment": {
+										"type": "string"
+									},
+									"environment_variables": {
+										"type": "string"
+									},
+									"id": {},
+									"labels": {
+										"items": {
+											"type": "string"
+										},
+										"type": "array"
+									},
+									"logs": {
+										"items": {
+											"nullable": true,
+											"properties": {
+												"application": {
+													"$ref": "#/components/schemas/Application"
+												},
+												"application_deployment": {
+													"$ref": "#/components/schemas/ApplicationDeployment"
+												},
+												"application_deployment_id": {},
+												"application_id": {},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"id": {},
+												"log": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"name": {
+										"type": "string"
+									},
+									"organization": {
+										"nullable": true,
+										"properties": {
+											"created_at": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"deleted_at": {
+												"format": "date-time",
+												"nullable": true,
+												"type": "string"
+											},
+											"description": {
+												"type": "string"
+											},
+											"id": {},
+											"name": {
+												"type": "string"
+											},
+											"updated_at": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"users": {
+												"items": {
+													"$ref": "#/components/schemas/User"
+												},
+												"type": "array"
+											}
+										},
+										"type": "object"
+									},
+									"organization_id": {},
+									"port": {
+										"type": "integer"
+									},
+									"post_run_command": {
+										"type": "string"
+									},
+									"pre_run_command": {
+										"type": "string"
+									},
+									"proxy_server": {
+										"type": "string"
+									},
+									"repository": {
+										"type": "string"
+									},
+									"status": {
+										"nullable": true,
+										"properties": {
+											"application": {
+												"$ref": "#/components/schemas/Application"
+											},
+											"application_id": {},
+											"created_at": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"id": {},
+											"status": {
+												"type": "string"
+											},
+											"updated_at": {
+												"format": "date-time",
+												"type": "string"
+											}
+										},
+										"type": "object"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"user": {
+										"nullable": true,
+										"properties": {
+											"avatar": {
+												"type": "string"
+											},
+											"created_at": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"deleted_at": {
+												"format": "date-time",
+												"nullable": true,
+												"type": "string"
+											},
+											"email": {
+												"type": "string"
+											},
+											"id": {},
+											"is_verified": {
+												"type": "boolean"
+											},
+											"organization_users": {
+												"items": {
+													"nullable": true,
+													"properties": {
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"deleted_at": {
+															"format": "date-time",
+															"nullable": true,
+															"type": "string"
+														},
+														"id": {},
+														"organization": {
+															"nullable": true,
+															"properties": {
+																"created_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"deleted_at": {
+																	"format": "date-time",
+																	"nullable": true,
+																	"type": "string"
+																},
+																"description": {
+																	"type": "string"
+																},
+																"id": {},
+																"name": {
+																	"type": "string"
+																},
+																"updated_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"users": {
+																	"items": {
+																		"$ref": "#/components/schemas/User"
+																	},
+																	"type": "array"
+																}
+															},
+															"type": "object"
+														},
+														"organization_id": {},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"user": {
+															"$ref": "#/components/schemas/User"
+														},
+														"user_id": {}
+													},
+													"type": "object"
+												},
+												"type": "array"
+											},
+											"organizations": {
+												"items": {
+													"nullable": true,
+													"properties": {
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"deleted_at": {
+															"format": "date-time",
+															"nullable": true,
+															"type": "string"
+														},
+														"description": {
+															"type": "string"
+														},
+														"id": {},
+														"name": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"users": {
+															"items": {
+																"$ref": "#/components/schemas/User"
+															},
+															"type": "array"
+														}
+													},
+													"type": "object"
+												},
+												"type": "array"
+											},
+											"supertokens_user_id": {
+												"type": "string"
+											},
+											"two_factor_enabled": {
+												"type": "boolean"
+											},
+											"two_factor_secret": {
+												"type": "string"
+											},
+											"type": {
+												"type": "string"
+											},
+											"updated_at": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"username": {
+												"type": "string"
+											}
+										},
+										"type": "object"
+									},
+									"user_id": {}
+								},
+								"type": "object"
+							},
+							"application_id": {},
+							"commit_hash": {
+								"type": "string"
+							},
+							"container_id": {
+								"type": "string"
+							},
+							"container_image": {
+								"type": "string"
+							},
+							"container_name": {
+								"type": "string"
+							},
+							"container_status": {
+								"type": "string"
+							},
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"id": {},
+							"logs": {
+								"items": {
+									"nullable": true,
+									"properties": {
+										"application": {
+											"$ref": "#/components/schemas/Application"
+										},
+										"application_deployment": {
+											"$ref": "#/components/schemas/ApplicationDeployment"
+										},
+										"application_deployment_id": {},
+										"application_id": {},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"id": {},
+										"log": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"nullable": true,
+								"type": "array"
+							},
+							"status": {
+								"nullable": true,
+								"properties": {
+									"application_deployment": {
+										"$ref": "#/components/schemas/ApplicationDeployment"
+									},
+									"application_deployment_id": {},
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"id": {},
+									"status": {
+										"type": "string"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"DomainResponse": {
+				"description": "DomainResponse schema",
+				"properties": {
+					"data": {
+						"nullable": true,
+						"properties": {
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"deleted_at": {
+								"format": "date-time",
+								"nullable": true,
+								"type": "string"
+							},
+							"id": {},
+							"name": {
+								"type": "string"
+							},
+							"organization_id": {},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"user_id": {}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ExecutionResponse": {
+				"description": "ExecutionResponse schema",
+				"properties": {
+					"data": {
+						"nullable": true,
+						"properties": {
+							"completed_at": {
+								"format": "date-time",
+								"nullable": true,
+								"type": "string"
+							},
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"error_message": {
+								"type": "string"
+							},
+							"execution_log": {
+								"type": "string"
+							},
+							"exit_code": {
+								"type": "integer"
+							},
+							"extension": {
+								"nullable": true,
+								"properties": {
+									"author": {
+										"type": "string"
+									},
+									"category": {
+										"type": "string"
+									},
+									"content_hash": {
+										"type": "string"
+									},
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"deleted_at": {
+										"format": "date-time",
+										"nullable": true,
+										"type": "string"
+									},
+									"description": {
+										"type": "string"
+									},
+									"extension_id": {
+										"type": "string"
+									},
+									"extension_type": {
+										"type": "string"
+									},
+									"icon": {
+										"type": "string"
+									},
+									"id": {},
+									"is_verified": {
+										"type": "boolean"
+									},
+									"name": {
+										"type": "string"
+									},
+									"parent_extension_id": {
+										"nullable": true
+									},
+									"parsed_content": {
+										"type": "string"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"validation_errors": {
+										"type": "string"
+									},
+									"validation_status": {
+										"type": "string"
+									},
+									"variables": {
+										"items": {
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"default_value": {},
+												"description": {
+													"type": "string"
+												},
+												"extension": {
+													"$ref": "#/components/schemas/Extension"
+												},
+												"extension_id": {},
+												"id": {},
+												"is_required": {
+													"type": "boolean"
+												},
+												"validation_pattern": {
+													"type": "string"
+												},
+												"variable_name": {
+													"type": "string"
+												},
+												"variable_type": {
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"version": {
+										"type": "string"
+									},
+									"yaml_content": {
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"extension_id": {},
+							"id": {},
+							"log_seq": {
+								"format": "int64",
+								"type": "integer"
+							},
+							"server_hostname": {
+								"type": "string"
+							},
+							"started_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"status": {
+								"type": "string"
+							},
+							"steps": {
+								"items": {
+									"properties": {
+										"completed_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"execution": {
+											"$ref": "#/components/schemas/ExtensionExecution"
+										},
+										"execution_id": {},
+										"exit_code": {
+											"type": "integer"
+										},
+										"id": {},
+										"output": {
+											"type": "string"
+										},
+										"phase": {
+											"type": "string"
+										},
+										"started_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"status": {
+											"type": "string"
+										},
+										"step_name": {
+											"type": "string"
+										},
+										"step_order": {
+											"type": "integer"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"variable_values": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"Extension": {
 				"nullable": true,
 				"properties": {
@@ -371,12 +2368,8 @@
 				},
 				"type": "object"
 			},
-			"ExtensionCategory": {
-				"description": "ExtensionCategory schema",
-				"type": "string"
-			},
 			"ExtensionExecution": {
-				"description": "ExtensionExecution schema",
+				"nullable": true,
 				"properties": {
 					"completed_at": {
 						"format": "date-time",
@@ -552,7 +2545,6 @@
 							},
 							"type": "object"
 						},
-						"nullable": true,
 						"type": "array"
 					},
 					"variable_values": {
@@ -561,120 +2553,112 @@
 				},
 				"type": "object"
 			},
-			"ExtensionListResponse": {
-				"description": "ExtensionListResponse schema",
+			"ExtensionResponse": {
+				"description": "ExtensionResponse schema",
 				"properties": {
-					"extensions": {
-						"items": {
-							"properties": {
-								"author": {
-									"type": "string"
-								},
-								"category": {
-									"type": "string"
-								},
-								"content_hash": {
-									"type": "string"
-								},
-								"created_at": {
-									"format": "date-time",
-									"type": "string"
-								},
-								"deleted_at": {
-									"format": "date-time",
-									"nullable": true,
-									"type": "string"
-								},
-								"description": {
-									"type": "string"
-								},
-								"extension_id": {
-									"type": "string"
-								},
-								"extension_type": {
-									"type": "string"
-								},
-								"icon": {
-									"type": "string"
-								},
-								"id": {},
-								"is_verified": {
-									"type": "boolean"
-								},
-								"name": {
-									"type": "string"
-								},
-								"parent_extension_id": {
-									"nullable": true
-								},
-								"parsed_content": {
-									"type": "string"
-								},
-								"updated_at": {
-									"format": "date-time",
-									"type": "string"
-								},
-								"validation_errors": {
-									"type": "string"
-								},
-								"validation_status": {
-									"type": "string"
-								},
-								"variables": {
-									"items": {
-										"properties": {
-											"created_at": {
-												"format": "date-time",
-												"type": "string"
-											},
-											"default_value": {},
-											"description": {
-												"type": "string"
-											},
-											"extension": {
-												"$ref": "#/components/schemas/Extension"
-											},
-											"extension_id": {},
-											"id": {},
-											"is_required": {
-												"type": "boolean"
-											},
-											"validation_pattern": {
-												"type": "string"
-											},
-											"variable_name": {
-												"type": "string"
-											},
-											"variable_type": {
-												"type": "string"
-											}
-										},
-										"type": "object"
-									},
-									"type": "array"
-								},
-								"version": {
-									"type": "string"
-								},
-								"yaml_content": {
-									"type": "string"
-								}
+					"data": {
+						"properties": {
+							"author": {
+								"type": "string"
 							},
-							"type": "object"
+							"category": {
+								"type": "string"
+							},
+							"content_hash": {
+								"type": "string"
+							},
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"deleted_at": {
+								"format": "date-time",
+								"nullable": true,
+								"type": "string"
+							},
+							"description": {
+								"type": "string"
+							},
+							"extension_id": {
+								"type": "string"
+							},
+							"extension_type": {
+								"type": "string"
+							},
+							"icon": {
+								"type": "string"
+							},
+							"id": {},
+							"is_verified": {
+								"type": "boolean"
+							},
+							"name": {
+								"type": "string"
+							},
+							"parent_extension_id": {
+								"nullable": true
+							},
+							"parsed_content": {
+								"type": "string"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"validation_errors": {
+								"type": "string"
+							},
+							"validation_status": {
+								"type": "string"
+							},
+							"variables": {
+								"items": {
+									"properties": {
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"default_value": {},
+										"description": {
+											"type": "string"
+										},
+										"extension": {
+											"$ref": "#/components/schemas/Extension"
+										},
+										"extension_id": {},
+										"id": {},
+										"is_required": {
+											"type": "boolean"
+										},
+										"validation_pattern": {
+											"type": "string"
+										},
+										"variable_name": {
+											"type": "string"
+										},
+										"variable_type": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"nullable": true,
+								"type": "array"
+							},
+							"version": {
+								"type": "string"
+							},
+							"yaml_content": {
+								"type": "string"
+							}
 						},
-						"type": "array"
+						"type": "object"
 					},
-					"page": {
-						"type": "integer"
+					"message": {
+						"type": "string"
 					},
-					"page_size": {
-						"type": "integer"
-					},
-					"total": {
-						"type": "integer"
-					},
-					"total_pages": {
-						"type": "integer"
+					"status": {
+						"type": "string"
 					}
 				},
 				"type": "object"
@@ -797,6 +2781,133 @@
 				},
 				"type": "object"
 			},
+			"GetContainerResponse": {
+				"description": "GetContainerResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"command": {
+								"type": "string"
+							},
+							"created": {
+								"type": "string"
+							},
+							"host_config": {
+								"properties": {
+									"cpu_shares": {
+										"format": "int64",
+										"type": "integer"
+									},
+									"memory": {
+										"format": "int64",
+										"type": "integer"
+									},
+									"memory_swap": {
+										"format": "int64",
+										"type": "integer"
+									}
+								},
+								"type": "object"
+							},
+							"id": {
+								"type": "string"
+							},
+							"image": {
+								"type": "string"
+							},
+							"ip_address": {
+								"type": "string"
+							},
+							"labels": {
+								"additionalProperties": {
+									"type": "string"
+								},
+								"type": "object"
+							},
+							"mounts": {
+								"items": {
+									"properties": {
+										"destination": {
+											"type": "string"
+										},
+										"mode": {
+											"type": "string"
+										},
+										"source": {
+											"type": "string"
+										},
+										"type": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"name": {
+								"type": "string"
+							},
+							"networks": {
+								"items": {
+									"properties": {
+										"aliases": {
+											"items": {
+												"type": "string"
+											},
+											"type": "array"
+										},
+										"gateway": {
+											"type": "string"
+										},
+										"ip_address": {
+											"type": "string"
+										},
+										"mac_address": {
+											"type": "string"
+										},
+										"name": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"ports": {
+								"items": {
+									"properties": {
+										"private_port": {
+											"type": "integer"
+										},
+										"public_port": {
+											"type": "integer"
+										},
+										"type": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"state": {
+								"type": "string"
+							},
+							"status": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"GetGithubRepositoryBranchesRequest": {
 				"description": "GetGithubRepositoryBranchesRequest schema",
 				"properties": {
@@ -868,6 +2979,18 @@
 				},
 				"type": "object"
 			},
+			"HealthCheckResponse": {
+				"description": "HealthCheckResponse schema",
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"InviteResendRequest": {
 				"description": "InviteResendRequest schema",
 				"properties": {
@@ -878,6 +3001,32 @@
 						"type": "string"
 					},
 					"role": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"InviteResponse": {
+				"description": "InviteResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"email": {
+								"type": "string"
+							},
+							"organization_id": {
+								"type": "string"
+							},
+							"role": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
 						"type": "string"
 					}
 				},
@@ -898,10 +3047,1694 @@
 				},
 				"type": "object"
 			},
+			"IsFeatureEnabledResponse": {
+				"description": "IsFeatureEnabledResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"is_enabled": {
+								"type": "boolean"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"LabelsResponse": {
+				"description": "LabelsResponse schema",
+				"properties": {
+					"data": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListApplicationsResponse": {
+				"description": "ListApplicationsResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"applications": {
+								"items": {
+									"properties": {
+										"base_path": {
+											"type": "string"
+										},
+										"branch": {
+											"type": "string"
+										},
+										"build_pack": {
+											"type": "string"
+										},
+										"build_variables": {
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deployments": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_id": {},
+													"commit_hash": {
+														"type": "string"
+													},
+													"container_id": {
+														"type": "string"
+													},
+													"container_image": {
+														"type": "string"
+													},
+													"container_name": {
+														"type": "string"
+													},
+													"container_status": {
+														"type": "string"
+													},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"id": {},
+													"logs": {
+														"items": {
+															"nullable": true,
+															"properties": {
+																"application": {
+																	"$ref": "#/components/schemas/Application"
+																},
+																"application_deployment": {
+																	"$ref": "#/components/schemas/ApplicationDeployment"
+																},
+																"application_deployment_id": {},
+																"application_id": {},
+																"created_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"id": {},
+																"log": {
+																	"type": "string"
+																},
+																"updated_at": {
+																	"format": "date-time",
+																	"type": "string"
+																}
+															},
+															"type": "object"
+														},
+														"type": "array"
+													},
+													"status": {
+														"nullable": true,
+														"properties": {
+															"application_deployment": {
+																"$ref": "#/components/schemas/ApplicationDeployment"
+															},
+															"application_deployment_id": {},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"id": {},
+															"status": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"dockerfile_path": {
+											"type": "string"
+										},
+										"domain": {
+											"type": "string"
+										},
+										"environment": {
+											"type": "string"
+										},
+										"environment_variables": {
+											"type": "string"
+										},
+										"id": {},
+										"labels": {
+											"items": {
+												"type": "string"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"logs": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_deployment": {
+														"$ref": "#/components/schemas/ApplicationDeployment"
+													},
+													"application_deployment_id": {},
+													"application_id": {},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"id": {},
+													"log": {
+														"type": "string"
+													},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"name": {
+											"type": "string"
+										},
+										"organization": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deleted_at": {
+													"format": "date-time",
+													"nullable": true,
+													"type": "string"
+												},
+												"description": {
+													"type": "string"
+												},
+												"id": {},
+												"name": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"users": {
+													"items": {
+														"$ref": "#/components/schemas/User"
+													},
+													"type": "array"
+												}
+											},
+											"type": "object"
+										},
+										"organization_id": {},
+										"port": {
+											"type": "integer"
+										},
+										"post_run_command": {
+											"type": "string"
+										},
+										"pre_run_command": {
+											"type": "string"
+										},
+										"proxy_server": {
+											"type": "string"
+										},
+										"repository": {
+											"type": "string"
+										},
+										"status": {
+											"nullable": true,
+											"properties": {
+												"application": {
+													"$ref": "#/components/schemas/Application"
+												},
+												"application_id": {},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"id": {},
+												"status": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"user": {
+											"nullable": true,
+											"properties": {
+												"avatar": {
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deleted_at": {
+													"format": "date-time",
+													"nullable": true,
+													"type": "string"
+												},
+												"email": {
+													"type": "string"
+												},
+												"id": {},
+												"is_verified": {
+													"type": "boolean"
+												},
+												"organization_users": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"deleted_at": {
+																"format": "date-time",
+																"nullable": true,
+																"type": "string"
+															},
+															"id": {},
+															"organization": {
+																"nullable": true,
+																"properties": {
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"deleted_at": {
+																		"format": "date-time",
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"description": {
+																		"type": "string"
+																	},
+																	"id": {},
+																	"name": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"users": {
+																		"items": {
+																			"$ref": "#/components/schemas/User"
+																		},
+																		"type": "array"
+																	}
+																},
+																"type": "object"
+															},
+															"organization_id": {},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"user": {
+																"$ref": "#/components/schemas/User"
+															},
+															"user_id": {}
+														},
+														"type": "object"
+													},
+													"type": "array"
+												},
+												"organizations": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"deleted_at": {
+																"format": "date-time",
+																"nullable": true,
+																"type": "string"
+															},
+															"description": {
+																"type": "string"
+															},
+															"id": {},
+															"name": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"users": {
+																"items": {
+																	"$ref": "#/components/schemas/User"
+																},
+																"type": "array"
+															}
+														},
+														"type": "object"
+													},
+													"type": "array"
+												},
+												"supertokens_user_id": {
+													"type": "string"
+												},
+												"two_factor_enabled": {
+													"type": "boolean"
+												},
+												"two_factor_secret": {
+													"type": "string"
+												},
+												"type": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"username": {
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"user_id": {}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"page": {
+								"type": "string"
+							},
+							"page_size": {
+								"type": "string"
+							},
+							"total_count": {
+								"type": "integer"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListBranchesResponse": {
+				"description": "ListBranchesResponse schema",
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"commit": {
+									"properties": {
+										"sha": {
+											"type": "string"
+										},
+										"url": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"name": {
+									"type": "string"
+								},
+								"protected": {
+									"type": "boolean"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListConnectorsResponse": {
+				"description": "ListConnectorsResponse schema",
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"app_id": {
+									"type": "string"
+								},
+								"client_id": {
+									"type": "string"
+								},
+								"client_secret": {
+									"type": "string"
+								},
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"deleted_at": {
+									"format": "date-time",
+									"nullable": true,
+									"type": "string"
+								},
+								"id": {},
+								"installation_id": {
+									"type": "string"
+								},
+								"pem": {
+									"type": "string"
+								},
+								"slug": {
+									"type": "string"
+								},
+								"updated_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"user_id": {},
+								"webhook_secret": {
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListContainersResponse": {
+				"description": "ListContainersResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"containers": {
+								"items": {
+									"properties": {
+										"command": {
+											"type": "string"
+										},
+										"created": {
+											"type": "string"
+										},
+										"host_config": {
+											"properties": {
+												"cpu_shares": {
+													"format": "int64",
+													"type": "integer"
+												},
+												"memory": {
+													"format": "int64",
+													"type": "integer"
+												},
+												"memory_swap": {
+													"format": "int64",
+													"type": "integer"
+												}
+											},
+											"type": "object"
+										},
+										"id": {
+											"type": "string"
+										},
+										"image": {
+											"type": "string"
+										},
+										"ip_address": {
+											"type": "string"
+										},
+										"labels": {
+											"additionalProperties": {
+												"type": "string"
+											},
+											"type": "object"
+										},
+										"mounts": {
+											"items": {
+												"properties": {
+													"destination": {
+														"type": "string"
+													},
+													"mode": {
+														"type": "string"
+													},
+													"source": {
+														"type": "string"
+													},
+													"type": {
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"name": {
+											"type": "string"
+										},
+										"networks": {
+											"items": {
+												"properties": {
+													"aliases": {
+														"items": {
+															"type": "string"
+														},
+														"type": "array"
+													},
+													"gateway": {
+														"type": "string"
+													},
+													"ip_address": {
+														"type": "string"
+													},
+													"mac_address": {
+														"type": "string"
+													},
+													"name": {
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"ports": {
+											"items": {
+												"properties": {
+													"private_port": {
+														"type": "integer"
+													},
+													"public_port": {
+														"type": "integer"
+													},
+													"type": {
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"state": {
+											"type": "string"
+										},
+										"status": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"image": {
+								"type": "string"
+							},
+							"name": {
+								"type": "string"
+							},
+							"page": {
+								"type": "integer"
+							},
+							"page_size": {
+								"type": "integer"
+							},
+							"search": {
+								"type": "string"
+							},
+							"sort_by": {
+								"type": "string"
+							},
+							"sort_order": {
+								"type": "string"
+							},
+							"status": {
+								"type": "string"
+							},
+							"total_count": {
+								"type": "integer"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListDeploymentsResponse": {
+				"description": "ListDeploymentsResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"deployments": {
+								"items": {
+									"properties": {
+										"application": {
+											"nullable": true,
+											"properties": {
+												"base_path": {
+													"type": "string"
+												},
+												"branch": {
+													"type": "string"
+												},
+												"build_pack": {
+													"type": "string"
+												},
+												"build_variables": {
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deployments": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_id": {},
+															"commit_hash": {
+																"type": "string"
+															},
+															"container_id": {
+																"type": "string"
+															},
+															"container_image": {
+																"type": "string"
+															},
+															"container_name": {
+																"type": "string"
+															},
+															"container_status": {
+																"type": "string"
+															},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"id": {},
+															"logs": {
+																"items": {
+																	"nullable": true,
+																	"properties": {
+																		"application": {
+																			"$ref": "#/components/schemas/Application"
+																		},
+																		"application_deployment": {
+																			"$ref": "#/components/schemas/ApplicationDeployment"
+																		},
+																		"application_deployment_id": {},
+																		"application_id": {},
+																		"created_at": {
+																			"format": "date-time",
+																			"type": "string"
+																		},
+																		"id": {},
+																		"log": {
+																			"type": "string"
+																		},
+																		"updated_at": {
+																			"format": "date-time",
+																			"type": "string"
+																		}
+																	},
+																	"type": "object"
+																},
+																"type": "array"
+															},
+															"status": {
+																"nullable": true,
+																"properties": {
+																	"application_deployment": {
+																		"$ref": "#/components/schemas/ApplicationDeployment"
+																	},
+																	"application_deployment_id": {},
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"id": {},
+																	"status": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"type": "array"
+												},
+												"dockerfile_path": {
+													"type": "string"
+												},
+												"domain": {
+													"type": "string"
+												},
+												"environment": {
+													"type": "string"
+												},
+												"environment_variables": {
+													"type": "string"
+												},
+												"id": {},
+												"labels": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"logs": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_deployment": {
+																"$ref": "#/components/schemas/ApplicationDeployment"
+															},
+															"application_deployment_id": {},
+															"application_id": {},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"id": {},
+															"log": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"type": "array"
+												},
+												"name": {
+													"type": "string"
+												},
+												"organization": {
+													"nullable": true,
+													"properties": {
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"deleted_at": {
+															"format": "date-time",
+															"nullable": true,
+															"type": "string"
+														},
+														"description": {
+															"type": "string"
+														},
+														"id": {},
+														"name": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"users": {
+															"items": {
+																"$ref": "#/components/schemas/User"
+															},
+															"type": "array"
+														}
+													},
+													"type": "object"
+												},
+												"organization_id": {},
+												"port": {
+													"type": "integer"
+												},
+												"post_run_command": {
+													"type": "string"
+												},
+												"pre_run_command": {
+													"type": "string"
+												},
+												"proxy_server": {
+													"type": "string"
+												},
+												"repository": {
+													"type": "string"
+												},
+												"status": {
+													"nullable": true,
+													"properties": {
+														"application": {
+															"$ref": "#/components/schemas/Application"
+														},
+														"application_id": {},
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"id": {},
+														"status": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"user": {
+													"nullable": true,
+													"properties": {
+														"avatar": {
+															"type": "string"
+														},
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"deleted_at": {
+															"format": "date-time",
+															"nullable": true,
+															"type": "string"
+														},
+														"email": {
+															"type": "string"
+														},
+														"id": {},
+														"is_verified": {
+															"type": "boolean"
+														},
+														"organization_users": {
+															"items": {
+																"nullable": true,
+																"properties": {
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"deleted_at": {
+																		"format": "date-time",
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"id": {},
+																	"organization": {
+																		"nullable": true,
+																		"properties": {
+																			"created_at": {
+																				"format": "date-time",
+																				"type": "string"
+																			},
+																			"deleted_at": {
+																				"format": "date-time",
+																				"nullable": true,
+																				"type": "string"
+																			},
+																			"description": {
+																				"type": "string"
+																			},
+																			"id": {},
+																			"name": {
+																				"type": "string"
+																			},
+																			"updated_at": {
+																				"format": "date-time",
+																				"type": "string"
+																			},
+																			"users": {
+																				"items": {
+																					"$ref": "#/components/schemas/User"
+																				},
+																				"type": "array"
+																			}
+																		},
+																		"type": "object"
+																	},
+																	"organization_id": {},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"user": {
+																		"$ref": "#/components/schemas/User"
+																	},
+																	"user_id": {}
+																},
+																"type": "object"
+															},
+															"type": "array"
+														},
+														"organizations": {
+															"items": {
+																"nullable": true,
+																"properties": {
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"deleted_at": {
+																		"format": "date-time",
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"description": {
+																		"type": "string"
+																	},
+																	"id": {},
+																	"name": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"users": {
+																		"items": {
+																			"$ref": "#/components/schemas/User"
+																		},
+																		"type": "array"
+																	}
+																},
+																"type": "object"
+															},
+															"type": "array"
+														},
+														"supertokens_user_id": {
+															"type": "string"
+														},
+														"two_factor_enabled": {
+															"type": "boolean"
+														},
+														"two_factor_secret": {
+															"type": "string"
+														},
+														"type": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"username": {
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"user_id": {}
+											},
+											"type": "object"
+										},
+										"application_id": {},
+										"commit_hash": {
+											"type": "string"
+										},
+										"container_id": {
+											"type": "string"
+										},
+										"container_image": {
+											"type": "string"
+										},
+										"container_name": {
+											"type": "string"
+										},
+										"container_status": {
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"id": {},
+										"logs": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_deployment": {
+														"$ref": "#/components/schemas/ApplicationDeployment"
+													},
+													"application_deployment_id": {},
+													"application_id": {},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"id": {},
+													"log": {
+														"type": "string"
+													},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"status": {
+											"nullable": true,
+											"properties": {
+												"application_deployment": {
+													"$ref": "#/components/schemas/ApplicationDeployment"
+												},
+												"application_deployment_id": {},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"id": {},
+												"status": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"page": {
+								"type": "string"
+							},
+							"page_size": {
+								"type": "string"
+							},
+							"total_count": {
+								"type": "integer"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListDomainsResponse": {
+				"description": "ListDomainsResponse schema",
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"deleted_at": {
+									"format": "date-time",
+									"nullable": true,
+									"type": "string"
+								},
+								"id": {},
+								"name": {
+									"type": "string"
+								},
+								"organization_id": {},
+								"updated_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"user_id": {}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListExecutionsResponse": {
+				"description": "ListExecutionsResponse schema",
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"completed_at": {
+									"format": "date-time",
+									"nullable": true,
+									"type": "string"
+								},
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"error_message": {
+									"type": "string"
+								},
+								"execution_log": {
+									"type": "string"
+								},
+								"exit_code": {
+									"type": "integer"
+								},
+								"extension": {
+									"nullable": true,
+									"properties": {
+										"author": {
+											"type": "string"
+										},
+										"category": {
+											"type": "string"
+										},
+										"content_hash": {
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"description": {
+											"type": "string"
+										},
+										"extension_id": {
+											"type": "string"
+										},
+										"extension_type": {
+											"type": "string"
+										},
+										"icon": {
+											"type": "string"
+										},
+										"id": {},
+										"is_verified": {
+											"type": "boolean"
+										},
+										"name": {
+											"type": "string"
+										},
+										"parent_extension_id": {
+											"nullable": true
+										},
+										"parsed_content": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"validation_errors": {
+											"type": "string"
+										},
+										"validation_status": {
+											"type": "string"
+										},
+										"variables": {
+											"items": {
+												"properties": {
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"default_value": {},
+													"description": {
+														"type": "string"
+													},
+													"extension": {
+														"$ref": "#/components/schemas/Extension"
+													},
+													"extension_id": {},
+													"id": {},
+													"is_required": {
+														"type": "boolean"
+													},
+													"validation_pattern": {
+														"type": "string"
+													},
+													"variable_name": {
+														"type": "string"
+													},
+													"variable_type": {
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"version": {
+											"type": "string"
+										},
+										"yaml_content": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"extension_id": {},
+								"id": {},
+								"log_seq": {
+									"format": "int64",
+									"type": "integer"
+								},
+								"server_hostname": {
+									"type": "string"
+								},
+								"started_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"status": {
+									"type": "string"
+								},
+								"steps": {
+									"items": {
+										"properties": {
+											"completed_at": {
+												"format": "date-time",
+												"nullable": true,
+												"type": "string"
+											},
+											"created_at": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"execution": {
+												"$ref": "#/components/schemas/ExtensionExecution"
+											},
+											"execution_id": {},
+											"exit_code": {
+												"type": "integer"
+											},
+											"id": {},
+											"output": {
+												"type": "string"
+											},
+											"phase": {
+												"type": "string"
+											},
+											"started_at": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"status": {
+												"type": "string"
+											},
+											"step_name": {
+												"type": "string"
+											},
+											"step_order": {
+												"type": "integer"
+											}
+										},
+										"type": "object"
+									},
+									"type": "array"
+								},
+								"variable_values": {
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListExtensionsResponse": {
+				"description": "ListExtensionsResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"extensions": {
+								"items": {
+									"properties": {
+										"author": {
+											"type": "string"
+										},
+										"category": {
+											"type": "string"
+										},
+										"content_hash": {
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"description": {
+											"type": "string"
+										},
+										"extension_id": {
+											"type": "string"
+										},
+										"extension_type": {
+											"type": "string"
+										},
+										"icon": {
+											"type": "string"
+										},
+										"id": {},
+										"is_verified": {
+											"type": "boolean"
+										},
+										"name": {
+											"type": "string"
+										},
+										"parent_extension_id": {
+											"nullable": true
+										},
+										"parsed_content": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"validation_errors": {
+											"type": "string"
+										},
+										"validation_status": {
+											"type": "string"
+										},
+										"variables": {
+											"items": {
+												"properties": {
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"default_value": {},
+													"description": {
+														"type": "string"
+													},
+													"extension": {
+														"$ref": "#/components/schemas/Extension"
+													},
+													"extension_id": {},
+													"id": {},
+													"is_required": {
+														"type": "boolean"
+													},
+													"validation_pattern": {
+														"type": "string"
+													},
+													"variable_name": {
+														"type": "string"
+													},
+													"variable_type": {
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"version": {
+											"type": "string"
+										},
+										"yaml_content": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"page": {
+								"type": "integer"
+							},
+							"page_size": {
+								"type": "integer"
+							},
+							"total": {
+								"type": "integer"
+							},
+							"total_pages": {
+								"type": "integer"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListFeatureFlagsResponse": {
+				"description": "ListFeatureFlagsResponse schema",
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"deleted_at": {
+									"format": "date-time",
+									"nullable": true,
+									"type": "string"
+								},
+								"feature_name": {
+									"type": "string"
+								},
+								"id": {},
+								"is_enabled": {
+									"type": "boolean"
+								},
+								"organization": {
+									"nullable": true,
+									"properties": {
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"description": {
+											"type": "string"
+										},
+										"id": {},
+										"name": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"users": {
+											"items": {
+												"$ref": "#/components/schemas/User"
+											},
+											"type": "array"
+										}
+									},
+									"type": "object"
+								},
+								"organization_id": {},
+								"updated_at": {
+									"format": "date-time",
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"ListFilesRequest": {
 				"description": "ListFilesRequest schema",
 				"properties": {
 					"path": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListFilesResponse": {
+				"description": "ListFilesResponse schema",
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"created_at": {
+									"type": "string"
+								},
+								"extension": {
+									"nullable": true,
+									"type": "string"
+								},
+								"file_type": {
+									"type": "string"
+								},
+								"group_id": {
+									"format": "int64",
+									"type": "integer"
+								},
+								"is_hidden": {
+									"type": "boolean"
+								},
+								"name": {
+									"type": "string"
+								},
+								"owner_id": {
+									"format": "int64",
+									"type": "integer"
+								},
+								"path": {
+									"type": "string"
+								},
+								"permissions": {
+									"format": "int64",
+									"type": "integer"
+								},
+								"size": {
+									"format": "int64",
+									"type": "integer"
+								},
+								"updated_at": {
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
 						"type": "string"
 					}
 				},
@@ -925,44 +4758,556 @@
 				},
 				"type": "object"
 			},
-			"ListLogsResponse": {
-				"description": "ListLogsResponse schema",
+			"ListImagesResponse": {
+				"description": "ListImagesResponse schema",
 				"properties": {
-					"execution_status": {
-						"nullable": true,
-						"type": "string"
-					},
-					"logs": {
+					"data": {
 						"items": {
 							"properties": {
-								"created_at": {
-									"format": "date-time",
-									"type": "string"
-								},
-								"data": {},
-								"execution_id": {},
-								"id": {},
-								"level": {
-									"type": "string"
-								},
-								"message": {
-									"type": "string"
-								},
-								"sequence": {
+								"created": {
 									"format": "int64",
 									"type": "integer"
 								},
-								"step_id": {
-									"nullable": true
+								"id": {
+									"type": "string"
+								},
+								"labels": {
+									"additionalProperties": {
+										"type": "string"
+									},
+									"type": "object"
+								},
+								"repo_digests": {
+									"items": {
+										"type": "string"
+									},
+									"type": "array"
+								},
+								"repo_tags": {
+									"items": {
+										"type": "string"
+									},
+									"type": "array"
+								},
+								"shared_size": {
+									"format": "int64",
+									"type": "integer"
+								},
+								"size": {
+									"format": "int64",
+									"type": "integer"
+								},
+								"virtual_size": {
+									"format": "int64",
+									"type": "integer"
 								}
 							},
 							"type": "object"
 						},
 						"type": "array"
 					},
-					"next_after": {
-						"format": "int64",
-						"type": "integer"
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListLogsResponse": {
+				"description": "ListLogsResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"execution_status": {
+								"nullable": true,
+								"type": "string"
+							},
+							"logs": {
+								"items": {
+									"properties": {
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"data": {},
+										"execution_id": {},
+										"id": {},
+										"level": {
+											"type": "string"
+										},
+										"message": {
+											"type": "string"
+										},
+										"sequence": {
+											"format": "int64",
+											"type": "integer"
+										},
+										"step_id": {
+											"nullable": true
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"next_after": {
+								"format": "int64",
+								"type": "integer"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListOrganizationsResponse": {
+				"description": "ListOrganizationsResponse schema",
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"deleted_at": {
+									"format": "date-time",
+									"nullable": true,
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								},
+								"id": {},
+								"name": {
+									"type": "string"
+								},
+								"updated_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"users": {
+									"items": {
+										"$ref": "#/components/schemas/User"
+									},
+									"nullable": true,
+									"type": "array"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListRepositoriesResponse": {
+				"description": "ListRepositoriesResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"page": {
+								"type": "integer"
+							},
+							"page_size": {
+								"type": "integer"
+							},
+							"repositories": {
+								"items": {
+									"properties": {
+										"allow_forking": {
+											"type": "boolean"
+										},
+										"archive_url": {
+											"type": "string"
+										},
+										"archived": {
+											"type": "boolean"
+										},
+										"assignees_url": {
+											"type": "string"
+										},
+										"blobs_url": {
+											"type": "string"
+										},
+										"branches_url": {
+											"type": "string"
+										},
+										"clone_url": {
+											"type": "string"
+										},
+										"collaborators_url": {
+											"type": "string"
+										},
+										"comments_url": {
+											"type": "string"
+										},
+										"commits_url": {
+											"type": "string"
+										},
+										"compare_url": {
+											"type": "string"
+										},
+										"contents_url": {
+											"type": "string"
+										},
+										"contributors_url": {
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"default_branch": {
+											"type": "string"
+										},
+										"deployments_url": {
+											"type": "string"
+										},
+										"description": {
+											"nullable": true,
+											"type": "string"
+										},
+										"disabled": {
+											"type": "boolean"
+										},
+										"downloads_url": {
+											"type": "string"
+										},
+										"events_url": {
+											"type": "string"
+										},
+										"fork": {
+											"type": "boolean"
+										},
+										"forks": {
+											"maximum": 18446744073709552000,
+											"minimum": 0,
+											"type": "integer"
+										},
+										"forks_count": {
+											"maximum": 18446744073709552000,
+											"minimum": 0,
+											"type": "integer"
+										},
+										"forks_url": {
+											"type": "string"
+										},
+										"full_name": {
+											"type": "string"
+										},
+										"git_commits_url": {
+											"type": "string"
+										},
+										"git_refs_url": {
+											"type": "string"
+										},
+										"git_tags_url": {
+											"type": "string"
+										},
+										"git_url": {
+											"type": "string"
+										},
+										"has_discussions": {
+											"type": "boolean"
+										},
+										"has_downloads": {
+											"type": "boolean"
+										},
+										"has_issues": {
+											"type": "boolean"
+										},
+										"has_pages": {
+											"type": "boolean"
+										},
+										"has_projects": {
+											"type": "boolean"
+										},
+										"has_wiki": {
+											"type": "boolean"
+										},
+										"homepage": {
+											"nullable": true,
+											"type": "string"
+										},
+										"hooks_url": {
+											"type": "string"
+										},
+										"html_url": {
+											"type": "string"
+										},
+										"id": {
+											"maximum": 18446744073709552000,
+											"minimum": 0,
+											"type": "integer"
+										},
+										"is_template": {
+											"type": "boolean"
+										},
+										"issue_comment_url": {
+											"type": "string"
+										},
+										"issue_events_url": {
+											"type": "string"
+										},
+										"issues_url": {
+											"type": "string"
+										},
+										"keys_url": {
+											"type": "string"
+										},
+										"labels_url": {
+											"type": "string"
+										},
+										"language": {
+											"nullable": true,
+											"type": "string"
+										},
+										"languages_url": {
+											"type": "string"
+										},
+										"license": {
+											"nullable": true,
+											"properties": {
+												"key": {
+													"type": "string"
+												},
+												"name": {
+													"type": "string"
+												},
+												"node_id": {
+													"type": "string"
+												},
+												"spdx_id": {
+													"type": "string"
+												},
+												"url": {
+													"nullable": true,
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"merges_url": {
+											"type": "string"
+										},
+										"milestones_url": {
+											"type": "string"
+										},
+										"mirror_url": {
+											"nullable": true,
+											"type": "string"
+										},
+										"name": {
+											"type": "string"
+										},
+										"node_id": {
+											"type": "string"
+										},
+										"notifications_url": {
+											"type": "string"
+										},
+										"open_issues": {
+											"maximum": 18446744073709552000,
+											"minimum": 0,
+											"type": "integer"
+										},
+										"open_issues_count": {
+											"maximum": 18446744073709552000,
+											"minimum": 0,
+											"type": "integer"
+										},
+										"owner": {
+											"properties": {
+												"avatar_url": {
+													"type": "string"
+												},
+												"events_url": {
+													"type": "string"
+												},
+												"followers_url": {
+													"type": "string"
+												},
+												"following_url": {
+													"type": "string"
+												},
+												"gists_url": {
+													"type": "string"
+												},
+												"gravatar_id": {
+													"type": "string"
+												},
+												"html_url": {
+													"type": "string"
+												},
+												"id": {
+													"maximum": 18446744073709552000,
+													"minimum": 0,
+													"type": "integer"
+												},
+												"login": {
+													"type": "string"
+												},
+												"node_id": {
+													"type": "string"
+												},
+												"organizations_url": {
+													"type": "string"
+												},
+												"received_events_url": {
+													"type": "string"
+												},
+												"repos_url": {
+													"type": "string"
+												},
+												"site_admin": {
+													"type": "boolean"
+												},
+												"starred_url": {
+													"type": "string"
+												},
+												"subscriptions_url": {
+													"type": "string"
+												},
+												"type": {
+													"type": "string"
+												},
+												"url": {
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"permissions": {
+											"nullable": true,
+											"properties": {
+												"admin": {
+													"type": "boolean"
+												},
+												"maintain": {
+													"type": "boolean"
+												},
+												"pull": {
+													"type": "boolean"
+												},
+												"push": {
+													"type": "boolean"
+												},
+												"triage": {
+													"type": "boolean"
+												}
+											},
+											"type": "object"
+										},
+										"private": {
+											"type": "boolean"
+										},
+										"pulls_url": {
+											"type": "string"
+										},
+										"pushed_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"releases_url": {
+											"type": "string"
+										},
+										"size": {
+											"maximum": 18446744073709552000,
+											"minimum": 0,
+											"type": "integer"
+										},
+										"ssh_url": {
+											"type": "string"
+										},
+										"stargazers_count": {
+											"maximum": 18446744073709552000,
+											"minimum": 0,
+											"type": "integer"
+										},
+										"stargazers_url": {
+											"type": "string"
+										},
+										"statuses_url": {
+											"type": "string"
+										},
+										"subscribers_url": {
+											"type": "string"
+										},
+										"subscription_url": {
+											"type": "string"
+										},
+										"svn_url": {
+											"type": "string"
+										},
+										"tags_url": {
+											"type": "string"
+										},
+										"teams_url": {
+											"type": "string"
+										},
+										"topics": {
+											"items": {
+												"type": "string"
+											},
+											"type": "array"
+										},
+										"trees_url": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"url": {
+											"type": "string"
+										},
+										"visibility": {
+											"type": "string"
+										},
+										"watchers": {
+											"maximum": 18446744073709552000,
+											"minimum": 0,
+											"type": "integer"
+										},
+										"watchers_count": {
+											"maximum": 18446744073709552000,
+											"minimum": 0,
+											"type": "integer"
+										},
+										"web_commit_signoff_required": {
+											"type": "boolean"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"total_count": {
+								"type": "integer"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
 					}
 				},
 				"type": "object"
@@ -1143,6 +5488,515 @@
 				},
 				"type": "object"
 			},
+			"LogsResponse": {
+				"description": "LogsResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"logs": {
+								"items": {
+									"properties": {
+										"application": {
+											"nullable": true,
+											"properties": {
+												"base_path": {
+													"type": "string"
+												},
+												"branch": {
+													"type": "string"
+												},
+												"build_pack": {
+													"type": "string"
+												},
+												"build_variables": {
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deployments": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_id": {},
+															"commit_hash": {
+																"type": "string"
+															},
+															"container_id": {
+																"type": "string"
+															},
+															"container_image": {
+																"type": "string"
+															},
+															"container_name": {
+																"type": "string"
+															},
+															"container_status": {
+																"type": "string"
+															},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"id": {},
+															"logs": {
+																"items": {
+																	"nullable": true,
+																	"properties": {
+																		"application": {
+																			"$ref": "#/components/schemas/Application"
+																		},
+																		"application_deployment": {
+																			"$ref": "#/components/schemas/ApplicationDeployment"
+																		},
+																		"application_deployment_id": {},
+																		"application_id": {},
+																		"created_at": {
+																			"format": "date-time",
+																			"type": "string"
+																		},
+																		"id": {},
+																		"log": {
+																			"type": "string"
+																		},
+																		"updated_at": {
+																			"format": "date-time",
+																			"type": "string"
+																		}
+																	},
+																	"type": "object"
+																},
+																"type": "array"
+															},
+															"status": {
+																"nullable": true,
+																"properties": {
+																	"application_deployment": {
+																		"$ref": "#/components/schemas/ApplicationDeployment"
+																	},
+																	"application_deployment_id": {},
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"id": {},
+																	"status": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"type": "array"
+												},
+												"dockerfile_path": {
+													"type": "string"
+												},
+												"domain": {
+													"type": "string"
+												},
+												"environment": {
+													"type": "string"
+												},
+												"environment_variables": {
+													"type": "string"
+												},
+												"id": {},
+												"labels": {
+													"items": {
+														"type": "string"
+													},
+													"type": "array"
+												},
+												"logs": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_deployment": {
+																"$ref": "#/components/schemas/ApplicationDeployment"
+															},
+															"application_deployment_id": {},
+															"application_id": {},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"id": {},
+															"log": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"type": "array"
+												},
+												"name": {
+													"type": "string"
+												},
+												"organization": {
+													"nullable": true,
+													"properties": {
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"deleted_at": {
+															"format": "date-time",
+															"nullable": true,
+															"type": "string"
+														},
+														"description": {
+															"type": "string"
+														},
+														"id": {},
+														"name": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"users": {
+															"items": {
+																"$ref": "#/components/schemas/User"
+															},
+															"type": "array"
+														}
+													},
+													"type": "object"
+												},
+												"organization_id": {},
+												"port": {
+													"type": "integer"
+												},
+												"post_run_command": {
+													"type": "string"
+												},
+												"pre_run_command": {
+													"type": "string"
+												},
+												"proxy_server": {
+													"type": "string"
+												},
+												"repository": {
+													"type": "string"
+												},
+												"status": {
+													"nullable": true,
+													"properties": {
+														"application": {
+															"$ref": "#/components/schemas/Application"
+														},
+														"application_id": {},
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"id": {},
+														"status": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"user": {
+													"nullable": true,
+													"properties": {
+														"avatar": {
+															"type": "string"
+														},
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"deleted_at": {
+															"format": "date-time",
+															"nullable": true,
+															"type": "string"
+														},
+														"email": {
+															"type": "string"
+														},
+														"id": {},
+														"is_verified": {
+															"type": "boolean"
+														},
+														"organization_users": {
+															"items": {
+																"nullable": true,
+																"properties": {
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"deleted_at": {
+																		"format": "date-time",
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"id": {},
+																	"organization": {
+																		"nullable": true,
+																		"properties": {
+																			"created_at": {
+																				"format": "date-time",
+																				"type": "string"
+																			},
+																			"deleted_at": {
+																				"format": "date-time",
+																				"nullable": true,
+																				"type": "string"
+																			},
+																			"description": {
+																				"type": "string"
+																			},
+																			"id": {},
+																			"name": {
+																				"type": "string"
+																			},
+																			"updated_at": {
+																				"format": "date-time",
+																				"type": "string"
+																			},
+																			"users": {
+																				"items": {
+																					"$ref": "#/components/schemas/User"
+																				},
+																				"type": "array"
+																			}
+																		},
+																		"type": "object"
+																	},
+																	"organization_id": {},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"user": {
+																		"$ref": "#/components/schemas/User"
+																	},
+																	"user_id": {}
+																},
+																"type": "object"
+															},
+															"type": "array"
+														},
+														"organizations": {
+															"items": {
+																"nullable": true,
+																"properties": {
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"deleted_at": {
+																		"format": "date-time",
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"description": {
+																		"type": "string"
+																	},
+																	"id": {},
+																	"name": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"users": {
+																		"items": {
+																			"$ref": "#/components/schemas/User"
+																		},
+																		"type": "array"
+																	}
+																},
+																"type": "object"
+															},
+															"type": "array"
+														},
+														"supertokens_user_id": {
+															"type": "string"
+														},
+														"two_factor_enabled": {
+															"type": "boolean"
+														},
+														"two_factor_secret": {
+															"type": "string"
+														},
+														"type": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"username": {
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"user_id": {}
+											},
+											"type": "object"
+										},
+										"application_deployment": {
+											"nullable": true,
+											"properties": {
+												"application": {
+													"$ref": "#/components/schemas/Application"
+												},
+												"application_id": {},
+												"commit_hash": {
+													"type": "string"
+												},
+												"container_id": {
+													"type": "string"
+												},
+												"container_image": {
+													"type": "string"
+												},
+												"container_name": {
+													"type": "string"
+												},
+												"container_status": {
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"id": {},
+												"logs": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_deployment": {
+																"$ref": "#/components/schemas/ApplicationDeployment"
+															},
+															"application_deployment_id": {},
+															"application_id": {},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"id": {},
+															"log": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"type": "array"
+												},
+												"status": {
+													"nullable": true,
+													"properties": {
+														"application_deployment": {
+															"$ref": "#/components/schemas/ApplicationDeployment"
+														},
+														"application_deployment_id": {},
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"id": {},
+														"status": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"application_deployment_id": {},
+										"application_id": {},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"id": {},
+										"log": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"page": {
+								"type": "integer"
+							},
+							"page_size": {
+								"type": "integer"
+							},
+							"total_count": {
+								"format": "int64",
+								"type": "integer"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"MessageResponse": {
 				"description": "MessageResponse schema",
 				"properties": {
@@ -1162,6 +6016,347 @@
 						"type": "string"
 					},
 					"to_path": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"OrganizationResponse": {
+				"description": "OrganizationResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"deleted_at": {
+								"format": "date-time",
+								"nullable": true,
+								"type": "string"
+							},
+							"description": {
+								"type": "string"
+							},
+							"id": {},
+							"name": {
+								"type": "string"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"users": {
+								"items": {
+									"$ref": "#/components/schemas/User"
+								},
+								"nullable": true,
+								"type": "array"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"OrganizationUsersResponse": {
+				"description": "OrganizationUsersResponse schema",
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"deleted_at": {
+									"format": "date-time",
+									"nullable": true,
+									"type": "string"
+								},
+								"id": {},
+								"organization": {
+									"nullable": true,
+									"properties": {
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"description": {
+											"type": "string"
+										},
+										"id": {},
+										"name": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"users": {
+											"items": {
+												"$ref": "#/components/schemas/User"
+											},
+											"type": "array"
+										}
+									},
+									"type": "object"
+								},
+								"organization_id": {},
+								"permissions": {
+									"items": {
+										"type": "string"
+									},
+									"type": "array"
+								},
+								"roles": {
+									"items": {
+										"type": "string"
+									},
+									"type": "array"
+								},
+								"updated_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"user": {
+									"nullable": true,
+									"properties": {
+										"avatar": {
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"email": {
+											"type": "string"
+										},
+										"id": {},
+										"is_verified": {
+											"type": "boolean"
+										},
+										"organization_users": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"deleted_at": {
+														"format": "date-time",
+														"nullable": true,
+														"type": "string"
+													},
+													"id": {},
+													"organization": {
+														"nullable": true,
+														"properties": {
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"deleted_at": {
+																"format": "date-time",
+																"nullable": true,
+																"type": "string"
+															},
+															"description": {
+																"type": "string"
+															},
+															"id": {},
+															"name": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"users": {
+																"items": {
+																	"$ref": "#/components/schemas/User"
+																},
+																"type": "array"
+															}
+														},
+														"type": "object"
+													},
+													"organization_id": {},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"user": {
+														"$ref": "#/components/schemas/User"
+													},
+													"user_id": {}
+												},
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"organizations": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"deleted_at": {
+														"format": "date-time",
+														"nullable": true,
+														"type": "string"
+													},
+													"description": {
+														"type": "string"
+													},
+													"id": {},
+													"name": {
+														"type": "string"
+													},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"users": {
+														"items": {
+															"$ref": "#/components/schemas/User"
+														},
+														"type": "array"
+													}
+												},
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"supertokens_user_id": {
+											"type": "string"
+										},
+										"two_factor_enabled": {
+											"type": "boolean"
+										},
+										"two_factor_secret": {
+											"type": "string"
+										},
+										"type": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"username": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"user_id": {}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"PreferencesResponse": {
+				"description": "PreferencesResponse schema",
+				"properties": {
+					"data": {
+						"nullable": true,
+						"properties": {
+							"activity": {
+								"items": {
+									"properties": {
+										"description": {
+											"type": "string"
+										},
+										"enabled": {
+											"type": "boolean"
+										},
+										"id": {
+											"type": "string"
+										},
+										"label": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"security": {
+								"items": {
+									"properties": {
+										"description": {
+											"type": "string"
+										},
+										"enabled": {
+											"type": "boolean"
+										},
+										"id": {
+											"type": "string"
+										},
+										"label": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"update": {
+								"items": {
+									"properties": {
+										"description": {
+											"type": "string"
+										},
+										"enabled": {
+											"type": "boolean"
+										},
+										"id": {
+											"type": "string"
+										},
+										"label": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
 						"type": "string"
 					}
 				},
@@ -1194,6 +6389,66 @@
 					},
 					"until": {
 						"nullable": true,
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"PruneImagesResponse": {
+				"description": "PruneImagesResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"images_deleted": {
+								"items": {
+									"properties": {
+										"deleted": {
+											"type": "string"
+										},
+										"untagged": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"nullable": true,
+								"type": "array"
+							},
+							"space_reclaimed": {
+								"maximum": 18446744073709552000,
+								"minimum": 0,
+								"type": "integer"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"RandomSubdomainResponseWrapper": {
+				"description": "RandomSubdomainResponseWrapper schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"domain": {
+								"type": "string"
+							},
+							"subdomain": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
 						"type": "string"
 					}
 				},
@@ -1412,26 +6667,6 @@
 				},
 				"type": "object"
 			},
-			"Response": {
-				"description": "Response schema",
-				"properties": {
-					"data": {
-						"nullable": true
-					},
-					"error": {
-						"nullable": true,
-						"type": "string"
-					},
-					"message": {
-						"nullable": true,
-						"type": "string"
-					},
-					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
 			"RestartDeploymentRequest": {
 				"description": "RestartDeploymentRequest schema",
 				"properties": {
@@ -1452,6 +6687,56 @@
 					"variables": {
 						"additionalProperties": {},
 						"type": "object"
+					}
+				},
+				"type": "object"
+			},
+			"SMTPConfigResponse": {
+				"description": "SMTPConfigResponse schema",
+				"properties": {
+					"data": {
+						"nullable": true,
+						"properties": {
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"from_email": {
+								"type": "string"
+							},
+							"from_name": {
+								"type": "string"
+							},
+							"host": {
+								"type": "string"
+							},
+							"id": {},
+							"is_active": {
+								"type": "boolean"
+							},
+							"organization_id": {},
+							"port": {
+								"type": "integer"
+							},
+							"security": {
+								"type": "string"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"user_id": {},
+							"username": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
 					}
 				},
 				"type": "object"
@@ -1790,6 +7075,26 @@
 				},
 				"type": "object"
 			},
+			"UpdateUsernameResponse": {
+				"description": "UpdateUsernameResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"name": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"UpdateWebhookConfigRequest": {
 				"description": "UpdateWebhookConfigRequest schema",
 				"properties": {
@@ -1811,6 +7116,7 @@
 				"type": "object"
 			},
 			"User": {
+				"nullable": true,
 				"properties": {
 					"avatar": {
 						"type": "string"
@@ -1889,7 +7195,6 @@
 							},
 							"type": "object"
 						},
-						"nullable": true,
 						"type": "array"
 					},
 					"organizations": {
@@ -1925,7 +7230,6 @@
 							},
 							"type": "object"
 						},
-						"nullable": true,
 						"type": "array"
 					},
 					"supertokens_user_id": {
@@ -1945,6 +7249,434 @@
 						"type": "string"
 					},
 					"username": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"UserOrganizationsListResponse": {
+				"description": "UserOrganizationsListResponse schema",
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"organization": {
+									"properties": {
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"description": {
+											"type": "string"
+										},
+										"id": {},
+										"name": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"users": {
+											"items": {
+												"$ref": "#/components/schemas/User"
+											},
+											"nullable": true,
+											"type": "array"
+										}
+									},
+									"type": "object"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"UserResponse": {
+				"description": "UserResponse schema",
+				"properties": {
+					"data": {
+						"nullable": true,
+						"properties": {
+							"avatar": {
+								"type": "string"
+							},
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"deleted_at": {
+								"format": "date-time",
+								"nullable": true,
+								"type": "string"
+							},
+							"email": {
+								"type": "string"
+							},
+							"id": {},
+							"is_verified": {
+								"type": "boolean"
+							},
+							"organization_users": {
+								"items": {
+									"nullable": true,
+									"properties": {
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"id": {},
+										"organization": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deleted_at": {
+													"format": "date-time",
+													"nullable": true,
+													"type": "string"
+												},
+												"description": {
+													"type": "string"
+												},
+												"id": {},
+												"name": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"users": {
+													"items": {
+														"$ref": "#/components/schemas/User"
+													},
+													"type": "array"
+												}
+											},
+											"type": "object"
+										},
+										"organization_id": {},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"user": {
+											"$ref": "#/components/schemas/User"
+										},
+										"user_id": {}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"organizations": {
+								"items": {
+									"nullable": true,
+									"properties": {
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"description": {
+											"type": "string"
+										},
+										"id": {},
+										"name": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"users": {
+											"items": {
+												"$ref": "#/components/schemas/User"
+											},
+											"type": "array"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"supertokens_user_id": {
+								"type": "string"
+							},
+							"two_factor_enabled": {
+								"type": "boolean"
+							},
+							"two_factor_secret": {
+								"type": "string"
+							},
+							"type": {
+								"type": "string"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"username": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"UserSettingsResponse": {
+				"description": "UserSettingsResponse schema",
+				"properties": {
+					"data": {
+						"nullable": true,
+						"properties": {
+							"auto_update": {
+								"type": "boolean"
+							},
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"deleted_at": {
+								"format": "date-time",
+								"nullable": true,
+								"type": "string"
+							},
+							"font_family": {
+								"type": "string"
+							},
+							"font_size": {
+								"type": "integer"
+							},
+							"id": {},
+							"language": {
+								"type": "string"
+							},
+							"theme": {
+								"type": "string"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"user": {
+								"nullable": true,
+								"properties": {
+									"avatar": {
+										"type": "string"
+									},
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"deleted_at": {
+										"format": "date-time",
+										"nullable": true,
+										"type": "string"
+									},
+									"email": {
+										"type": "string"
+									},
+									"id": {},
+									"is_verified": {
+										"type": "boolean"
+									},
+									"organization_users": {
+										"items": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deleted_at": {
+													"format": "date-time",
+													"nullable": true,
+													"type": "string"
+												},
+												"id": {},
+												"organization": {
+													"nullable": true,
+													"properties": {
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"deleted_at": {
+															"format": "date-time",
+															"nullable": true,
+															"type": "string"
+														},
+														"description": {
+															"type": "string"
+														},
+														"id": {},
+														"name": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"users": {
+															"items": {
+																"$ref": "#/components/schemas/User"
+															},
+															"type": "array"
+														}
+													},
+													"type": "object"
+												},
+												"organization_id": {},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"user": {
+													"$ref": "#/components/schemas/User"
+												},
+												"user_id": {}
+											},
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"organizations": {
+										"items": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deleted_at": {
+													"format": "date-time",
+													"nullable": true,
+													"type": "string"
+												},
+												"description": {
+													"type": "string"
+												},
+												"id": {},
+												"name": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"users": {
+													"items": {
+														"$ref": "#/components/schemas/User"
+													},
+													"type": "array"
+												}
+											},
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"supertokens_user_id": {
+										"type": "string"
+									},
+									"two_factor_enabled": {
+										"type": "boolean"
+									},
+									"two_factor_secret": {
+										"type": "string"
+									},
+									"type": {
+										"type": "string"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"username": {
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"user_id": {}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"WebhookConfigResponse": {
+				"description": "WebhookConfigResponse schema",
+				"properties": {
+					"data": {
+						"nullable": true,
+						"properties": {
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"id": {},
+							"is_active": {
+								"type": "boolean"
+							},
+							"organization_id": {},
+							"type": {
+								"type": "string"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"user_id": {},
+							"webhook_url": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
 						"type": "string"
 					}
 				},
@@ -2722,12 +8454,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListContainersResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListContainersResponse"
 								}
 							}
 						},
@@ -2802,12 +8534,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListImagesResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListImagesResponse"
 								}
 							}
 						},
@@ -2882,12 +8614,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -2962,12 +8694,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/PruneImagesResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/PruneImagesResponse"
 								}
 							}
 						},
@@ -3039,12 +8771,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ContainerActionResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ContainerActionResponse"
 								}
 							}
 						},
@@ -3114,12 +8846,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/GetContainerResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/GetContainerResponse"
 								}
 							}
 						},
@@ -3202,12 +8934,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ContainerLogsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ContainerLogsResponse"
 								}
 							}
 						},
@@ -3279,12 +9011,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ContainerActionResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ContainerActionResponse"
 								}
 							}
 						},
@@ -3356,12 +9088,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ContainerActionResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ContainerActionResponse"
 								}
 							}
 						},
@@ -3433,12 +9165,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ContainerActionResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ContainerActionResponse"
 								}
 							}
 						},
@@ -3513,12 +9245,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -3581,12 +9313,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ApplicationResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ApplicationResponse"
 								}
 							}
 						},
@@ -3660,12 +9392,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ApplicationResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ApplicationResponse"
 								}
 							}
 						},
@@ -3739,12 +9471,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ApplicationResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ApplicationResponse"
 								}
 							}
 						},
@@ -3820,12 +9552,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListDeploymentsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListDeploymentsResponse"
 								}
 							}
 						},
@@ -3898,12 +9630,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/DeploymentResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/DeploymentResponse"
 								}
 							}
 						},
@@ -3976,12 +9708,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/LogsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/LogsResponse"
 								}
 							}
 						},
@@ -4057,12 +9789,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/LabelsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/LabelsResponse"
 								}
 							}
 						},
@@ -4135,12 +9867,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/LogsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/LogsResponse"
 								}
 							}
 						},
@@ -4216,12 +9948,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ApplicationResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ApplicationResponse"
 								}
 							}
 						},
@@ -4297,12 +10029,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -4378,12 +10110,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -4459,12 +10191,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListApplicationsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListApplicationsResponse"
 								}
 							}
 						},
@@ -4539,12 +10271,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -4617,12 +10349,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/CreateDomainResponseWrapper"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/CreateDomainResponseWrapper"
 								}
 							}
 						},
@@ -4695,12 +10427,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/DomainResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/DomainResponse"
 								}
 							}
 						},
@@ -4764,12 +10496,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/RandomSubdomainResponseWrapper"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/RandomSubdomainResponseWrapper"
 								}
 							}
 						},
@@ -4833,12 +10565,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListDomainsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListDomainsResponse"
 								}
 							}
 						},
@@ -4902,12 +10634,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ExtensionListResponse"
+									"$ref": "#/components/schemas/ListExtensionsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/ExtensionListResponse"
+									"$ref": "#/components/schemas/ListExtensionsResponse"
 								}
 							}
 						},
@@ -4979,12 +10711,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Extension"
+									"$ref": "#/components/schemas/ExtensionResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Extension"
+									"$ref": "#/components/schemas/ExtensionResponse"
 								}
 							}
 						},
@@ -5056,18 +10788,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/ExtensionExecution"
-									},
-									"type": "array"
+									"$ref": "#/components/schemas/ListExecutionsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/ExtensionExecution"
-									},
-									"type": "array"
+									"$ref": "#/components/schemas/ListExecutionsResponse"
 								}
 							}
 						},
@@ -5131,18 +10857,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/ExtensionCategory"
-									},
-									"type": "array"
+									"$ref": "#/components/schemas/CategoriesResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/ExtensionCategory"
-									},
-									"type": "array"
+									"$ref": "#/components/schemas/CategoriesResponse"
 								}
 							}
 						},
@@ -5214,12 +10934,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ExtensionExecution"
+									"$ref": "#/components/schemas/ExecutionResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/ExtensionExecution"
+									"$ref": "#/components/schemas/ExecutionResponse"
 								}
 							}
 						},
@@ -5291,12 +11011,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -5456,12 +11176,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Extension"
+									"$ref": "#/components/schemas/ExtensionResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Extension"
+									"$ref": "#/components/schemas/ExtensionResponse"
 								}
 							}
 						},
@@ -5544,12 +11264,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ExtensionExecution"
+									"$ref": "#/components/schemas/ExecutionResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/ExtensionExecution"
+									"$ref": "#/components/schemas/ExecutionResponse"
 								}
 							}
 						},
@@ -5621,12 +11341,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -5696,12 +11416,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Extension"
+									"$ref": "#/components/schemas/ExtensionResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Extension"
+									"$ref": "#/components/schemas/ExtensionResponse"
 								}
 							}
 						},
@@ -5765,12 +11485,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListFeatureFlagsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListFeatureFlagsResponse"
 								}
 							}
 						},
@@ -5843,12 +11563,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -5912,12 +11632,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/IsFeatureEnabledResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/IsFeatureEnabledResponse"
 								}
 							}
 						},
@@ -5992,12 +11712,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListFilesResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListFilesResponse"
 								}
 							}
 						},
@@ -6072,12 +11792,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -6152,12 +11872,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -6232,12 +11952,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -6312,12 +12032,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -6381,12 +12101,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -6461,12 +12181,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -6539,12 +12259,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -6617,12 +12337,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -6686,12 +12406,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListConnectorsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListConnectorsResponse"
 								}
 							}
 						},
@@ -6755,12 +12475,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListRepositoriesResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListRepositoriesResponse"
 								}
 							}
 						},
@@ -6835,12 +12555,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListBranchesResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListBranchesResponse"
 								}
 							}
 						},
@@ -6904,12 +12624,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/HealthCheckResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/HealthCheckResponse"
 								}
 							}
 						},
@@ -7043,12 +12763,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/PreferencesResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/PreferencesResponse"
 								}
 							}
 						},
@@ -7122,12 +12842,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -7203,12 +12923,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -7271,12 +12991,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/SMTPConfigResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/SMTPConfigResponse"
 								}
 							}
 						},
@@ -7350,12 +13070,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -7429,12 +13149,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -7510,12 +13230,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -7589,12 +13309,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/WebhookConfigResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/WebhookConfigResponse"
 								}
 							}
 						},
@@ -7668,12 +13388,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/WebhookConfigResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/WebhookConfigResponse"
 								}
 							}
 						},
@@ -7746,12 +13466,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/WebhookConfigResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/WebhookConfigResponse"
 								}
 							}
 						},
@@ -7827,12 +13547,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -7894,12 +13614,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/OrganizationResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/OrganizationResponse"
 								}
 							}
 						},
@@ -7972,12 +13692,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/OrganizationResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/OrganizationResponse"
 								}
 							}
 						},
@@ -8050,12 +13770,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -8119,12 +13839,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListOrganizationsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/ListOrganizationsResponse"
 								}
 							}
 						},
@@ -8199,12 +13919,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/InviteResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/InviteResponse"
 								}
 							}
 						},
@@ -8279,12 +13999,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/InviteResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/InviteResponse"
 								}
 							}
 						},
@@ -8359,12 +14079,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -8439,12 +14159,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -8519,12 +14239,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/OrganizationUsersResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/OrganizationUsersResponse"
 								}
 							}
 						},
@@ -8737,12 +14457,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserResponse"
 								}
 							}
 						},
@@ -8817,12 +14537,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},
@@ -8897,12 +14617,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UpdateUsernameResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UpdateUsernameResponse"
 								}
 							}
 						},
@@ -8966,12 +14686,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserOrganizationsListResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserOrganizationsListResponse"
 								}
 							}
 						},
@@ -9035,12 +14755,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserSettingsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserSettingsResponse"
 								}
 							}
 						},
@@ -9115,12 +14835,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserSettingsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserSettingsResponse"
 								}
 							}
 						},
@@ -9195,12 +14915,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserSettingsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserSettingsResponse"
 								}
 							}
 						},
@@ -9275,12 +14995,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserSettingsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserSettingsResponse"
 								}
 							}
 						},
@@ -9355,12 +15075,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserSettingsResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/UserSettingsResponse"
 								}
 							}
 						},
@@ -9424,12 +15144,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/Response"
+									"$ref": "#/components/schemas/MessageResponse"
 								}
 							}
 						},

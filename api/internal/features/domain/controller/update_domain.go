@@ -7,11 +7,9 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *DomainsController) UpdateDomain(f fuego.ContextWithBody[types.UpdateDomainRequest]) (*shared_types.Response, error) {
+func (c *DomainsController) UpdateDomain(f fuego.ContextWithBody[types.UpdateDomainRequest]) (*types.DomainResponse, error) {
 	domainRequest, err := f.Body()
 
 	if err != nil {
@@ -62,7 +60,7 @@ func (c *DomainsController) UpdateDomain(f fuego.ContextWithBody[types.UpdateDom
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.DomainResponse{
 		Status:  "success",
 		Message: "Domain updated successfully",
 		Data:    updated,

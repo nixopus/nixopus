@@ -8,11 +8,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *DeployController) HandleRollback(f fuego.ContextWithBody[types.RollbackDeploymentRequest]) (*shared_types.Response, error) {
+func (c *DeployController) HandleRollback(f fuego.ContextWithBody[types.RollbackDeploymentRequest]) (*types.MessageResponse, error) {
 	c.logger.Log(logger.Info, "starting application rollback process", "")
 
 	data, err := f.Body()
@@ -71,9 +70,8 @@ func (c *DeployController) HandleRollback(f fuego.ContextWithBody[types.Rollback
 	}
 
 	c.logger.Log(logger.Info, "application rolled back successfully", "id: "+data.ID.String())
-	return &shared_types.Response{
+	return &types.MessageResponse{
 		Status:  "success",
 		Message: "Application rolled back successfully",
-		Data:    nil,
 	}, nil
 }

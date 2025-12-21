@@ -4,11 +4,11 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *DeployController) GetDeploymentById(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *DeployController) GetDeploymentById(f fuego.ContextNoBody) (*types.DeploymentResponse, error) {
 	deploymentID := f.PathParam("deployment_id")
 
 	deployment, err := c.service.GetDeploymentById(deploymentID)
@@ -20,7 +20,7 @@ func (c *DeployController) GetDeploymentById(f fuego.ContextNoBody) (*shared_typ
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.DeploymentResponse{
 		Status:  "success",
 		Message: "Deployment Retrieved successfully",
 		Data:    deployment,
