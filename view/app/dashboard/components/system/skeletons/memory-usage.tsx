@@ -10,23 +10,27 @@ import { DEFAULT_METRICS } from '../../utils/constants';
 export function MemoryUsageCardSkeletonContent() {
   return (
     <div className="space-y-4">
+      {/* Doughnut chart placeholder */}
       <div className="flex items-center justify-center h-[200px]">
-        <Skeleton className="mx-auto aspect-square max-h-[200px] w-[200px] rounded-full" />
+        <Skeleton className="mx-auto aspect-square max-h-[200px] w-[160px] rounded-full" />
       </div>
 
+      {/* Legend section */}
       <div className="space-y-2">
         <div className="flex justify-between text-xs">
+          {/* Used legend item */}
           <div className="flex items-center gap-2">
-            <Skeleton className="h-3 w-3 rounded-sm" />
-            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-3 w-3 rounded-sm" /> {/* colored square */}
+            <Skeleton className="h-4 w-24" /> {/* "Used: X.XX GB" */}
           </div>
+          {/* Free legend item */}
           <div className="flex items-center gap-2">
-            <Skeleton className="h-3 w-3 rounded-sm" />
-            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-3 w-3 rounded-sm" /> {/* colored square */}
+            <Skeleton className="h-4 w-24" /> {/* "Free: X.XX GB" */}
           </div>
         </div>
-
-        <Skeleton className="h-4 w-32 mx-auto" />
+        {/* Total centered */}
+        <Skeleton className="h-4 w-28 mx-auto" /> {/* "Total: X.XX GB" */}
       </div>
     </div>
   );
