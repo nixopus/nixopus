@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { TrashIcon, CheckIcon } from 'lucide-react';
+import { TrashIcon, CheckIcon, Folder } from 'lucide-react';
 import Skeleton from './components/skeleton/Skeleton';
 import Header from './components/layout/Header';
 import { SearchBar } from '@/components/ui/search-bar';
@@ -9,6 +9,7 @@ import SortMethods from './components/actions/SortMethods';
 import LayoutSwitcher from './components/layout/LayoutSwitcher';
 import Actions from './components/actions/Actions';
 import { FileItem } from './components/file-list/FileItem';
+import FileTable from './components/file-list/FileTable';
 import useFileManager from './hooks/ui/useFileManager';
 import { useTranslation } from '@/hooks/use-translation';
 import type { translationKey } from '@/hooks/use-translation';
@@ -144,12 +145,11 @@ const DesktopNavigation = ({
 );
 
 interface FileListProps {
-  layout: 'grid' | 'list' | 'mobile';
+  layout: 'grid' | 'list';
   isMobile: boolean;
   visibleFiles: FileData[];
   fileClicked: (path: string) => void;
   handleFileSelect: (path: string) => void;
-  refetch: () => void;
   setFileToCopy: React.Dispatch<React.SetStateAction<FileData | undefined>>;
   setFileToMove: React.Dispatch<React.SetStateAction<FileData | undefined>>;
   isEditing: boolean;
@@ -164,6 +164,9 @@ interface FileListProps {
   handleDelete: (path: string) => void;
   handleCopy: (fromPath: string, toPath: string) => void;
   startRenaming: (file: FileData) => void;
+  sortBy?: 'name' | 'size' | 'file_type' | 'created_at' | 'updated_at';
+  sortOrder?: 'asc' | 'desc';
+  onSort?: (field: 'name' | 'size' | 'file_type' | 'created_at' | 'updated_at') => void;
   t: (key: translationKey, params?: Record<string, string>) => string;
 }
 
@@ -173,7 +176,6 @@ const FileList = ({
   visibleFiles,
   fileClicked,
   handleFileSelect,
-  refetch,
   setFileToCopy,
   setFileToMove,
   isEditing,
@@ -188,50 +190,78 @@ const FileList = ({
   handleDelete,
   handleCopy,
   startRenaming,
+  sortBy = 'name',
+  sortOrder = 'asc',
+  onSort,
   t
-}: FileListProps) => (
-  <div
-    className={`grid w-full ${
-      layout === 'grid'
-        ? 'grid-cols-1 gap-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8'
-        : 'grid-cols-1 gap-2'
-    }`}
-  >
-    {visibleFiles.map((file, index) => (
-      <FileItem
-        key={file.path}
-        file={file}
-        onFolderClick={fileClicked}
-        type={file.file_type === 'Directory' ? 'folder' : 'file'}
-        layout={isMobile ? 'mobile' : layout}
+}: FileListProps) => {
+  if (layout === 'list' || isMobile) {
+    return (
+      <FileTable
+        files={visibleFiles}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSort={onSort}
         activePath={selectedPath}
-        onFolderClickActive={handleFileSelect}
-        refetch={refetch}
-        setFileToCopy={setFileToCopy}
-        setFileToMove={setFileToMove}
-        index={index}
-        isEditing={isEditing && selectedPath === file.path}
+        onFileSelect={handleFileSelect}
+        onFolderClick={fileClicked}
+        isEditing={isEditing}
         editedFileName={editedFileName}
         setEditedFileName={setEditedFileName}
-        isDialogOpen={isDialogOpen}
-        setIsDialogOpen={setIsDialogOpen}
-        isSizeLoading={false}
-        fileSize={0}
         handleRename={handleRename}
         handleKeyDown={handleKeyDown}
         handleTextDoubleClick={handleTextDoubleClick}
-        handleDelete={handleDelete}
-        handleCopy={handleCopy}
-        startRenaming={startRenaming}
+        onInfo={() => setIsDialogOpen(true)}
+        onRename={(file) => startRenaming(file)}
+        onCopy={(file) => {
+          setFileToCopy(file);
+          handleCopy(file.path, file.path);
+        }}
+        onMove={(file) => setFileToMove(file)}
+        onDelete={(file) => handleDelete(file.path)}
       />
-    ))}
-    {visibleFiles.length === 0 && (
-      <div className="col-span-full text-center text-5xl text-muted-foreground">
-        {t('fileManager.noFiles')}
+    );
+  }
+
+  if (visibleFiles.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+        <Folder className="h-16 w-16 mb-4 opacity-20" />
+        <p className="text-sm">{t('fileManager.noFiles')}</p>
       </div>
-    )}
-  </div>
-);
+    );
+  }
+
+  return (
+    <div className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+      {visibleFiles.map((file) => (
+        <FileItem
+          key={file.path}
+          file={file}
+          onFolderClick={fileClicked}
+          type={file.file_type === 'Directory' ? 'folder' : 'file'}
+          activePath={selectedPath}
+          onFolderClickActive={handleFileSelect}
+          setFileToCopy={setFileToCopy}
+          setFileToMove={setFileToMove}
+          isEditing={isEditing && selectedPath === file.path}
+          editedFileName={editedFileName}
+          setEditedFileName={setEditedFileName}
+          isDialogOpen={isDialogOpen}
+          setIsDialogOpen={setIsDialogOpen}
+          isSizeLoading={false}
+          fileSize={0}
+          handleRename={handleRename}
+          handleKeyDown={handleKeyDown}
+          handleTextDoubleClick={handleTextDoubleClick}
+          handleDelete={handleDelete}
+          handleCopy={handleCopy}
+          startRenaming={startRenaming}
+        />
+      ))}
+    </div>
+  );
+};
 
 interface FileDeleteDialogProps {
   fileToDelete: FileData | null;
@@ -293,6 +323,7 @@ function FileManager() {
     handleMove,
     handleSearchChange,
     handleSortChange,
+    sortConfig,
     visibleFiles,
     createNewFolder,
     fileClicked,
@@ -410,29 +441,33 @@ function FileManager() {
             </div>
           </div>
 
-          <FileList
-            layout={layout}
-            isMobile={isMobile}
-            visibleFiles={visibleFiles}
-            fileClicked={fileClicked}
-            handleFileSelect={handleFileSelect}
-            refetch={refetch}
-            setFileToCopy={setFileToCopy}
-            setFileToMove={setFileToMove}
-            isEditing={isEditing}
-            selectedPath={selectedPath}
-            editedFileName={editedFileName}
-            setEditedFileName={setEditedFileName}
-            isDialogOpen={isDialogOpen}
-            setIsDialogOpen={setIsDialogOpen}
-            handleRename={handleRename}
-            handleKeyDown={handleKeyDown}
-            handleTextDoubleClick={handleTextDoubleClick}
-            handleDelete={handleDelete}
-            handleCopy={handleCopy}
-            startRenaming={startRenaming}
-            t={t}
-          />
+          <div className="px-0 lg:px-6">
+            <FileList
+              layout={layout}
+              isMobile={isMobile}
+              visibleFiles={visibleFiles}
+              fileClicked={fileClicked}
+              handleFileSelect={handleFileSelect}
+              setFileToCopy={setFileToCopy}
+              setFileToMove={setFileToMove}
+              isEditing={isEditing}
+              selectedPath={selectedPath}
+              editedFileName={editedFileName}
+              setEditedFileName={setEditedFileName}
+              isDialogOpen={isDialogOpen}
+              setIsDialogOpen={setIsDialogOpen}
+              handleRename={handleRename}
+              handleKeyDown={handleKeyDown}
+              handleTextDoubleClick={handleTextDoubleClick}
+              handleDelete={handleDelete}
+              handleCopy={handleCopy}
+              startRenaming={startRenaming}
+              sortBy={sortConfig.key as 'name' | 'size' | 'file_type' | 'created_at' | 'updated_at'}
+              sortOrder={sortConfig.direction}
+              onSort={handleSortChange}
+              t={t}
+            />
+          </div>
           <FileDeleteDialog
             fileToDelete={fileToDelete}
             setFileToDelete={setFileToDelete}
