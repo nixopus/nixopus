@@ -5,51 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
-
-type AuthResponse struct {
-	AccessToken  string            `json:"access_token"`
-	RefreshToken string            `json:"refresh_token"`
-	ExpiresIn    int64             `json:"expires_in"`
-	User         shared_types.User `json:"user"`
-}
-
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type RegisterRequest struct {
-	Username     string `json:"username"`
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	Type         string `json:"type"`
-	Organization string `json:"organization"`
-}
-
-type UpdateUserRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Avatar   string `json:"avatar"`
-	Role     string `json:"role"`
-}
-
-type DeleteUserRequest struct {
-	Password string `json:"password"`
-}
-
-type ResetPasswordRequest struct {
-	Password string `json:"password"`
-}
-
-type LogoutRequest struct {
-	RefreshToken string `json:"refresh_token"`
-}
-
-type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token"`
-}
 
 type VerificationToken struct {
 	ID        uuid.UUID `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
@@ -66,12 +22,6 @@ type TwoFactorSetupResponse struct {
 
 type TwoFactorVerifyRequest struct {
 	Code string `json:"code"`
-}
-
-type TwoFactorLoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Code     string `json:"code"`
 }
 
 var (

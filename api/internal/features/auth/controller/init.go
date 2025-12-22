@@ -69,26 +69,3 @@ func (c *AuthController) Notify(payloadType notification.NotificationPayloadType
 
 	c.notification.SendNotification(payload)
 }
-
-func (c *AuthController) NotifyPasswordReset(user *shared_types.User, token string, r *http.Request) {
-	if r == nil {
-		return
-	}
-	notificationData := notification.NotificationPasswordResetData{
-		Email: user.Email,
-		Token: token,
-		NotificationBaseData: notification.NotificationBaseData{
-			IP:      r.RemoteAddr,
-			Browser: r.UserAgent(),
-		},
-	}
-
-	payload := notification.NewNotificationPayload(
-		notification.NotificationPayloadTypePasswordReset,
-		user.ID.String(),
-		notificationData,
-		notification.NotificationCategoryAuthentication,
-	)
-
-	c.notification.SendNotification(payload)
-}
