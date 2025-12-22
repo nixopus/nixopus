@@ -88,6 +88,14 @@ func (router *Router) applyMiddleware(group *fuego.Server, cfg MiddlewareConfig)
 // createServer initializes the Fuego server with global middleware and security settings
 func (router *Router) createServer(port string) *fuego.Server {
 	return fuego.NewServer(
+		fuego.WithEngineOptions(
+			fuego.WithOpenAPIConfig(fuego.OpenAPIConfig{
+				PrettyFormatJSON: true,
+				SwaggerURL:       "/swagger",
+				SpecURL:          "/swagger/openapi.json",
+				JSONFilePath:     "doc/openapi.json",
+			}),
+		),
 		fuego.WithGlobalMiddlewares(
 			middleware.SupertokensCorsMiddleware,
 			middleware.RecoveryMiddleware,

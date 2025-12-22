@@ -5,11 +5,11 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *ContainerController) StartContainer(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *ContainerController) StartContainer(f fuego.ContextNoBody) (*types.ContainerActionResponse, error) {
 	containerID := f.PathParam("container_id")
 
 	if resp, skipped := c.isProtectedContainer(containerID, "start"); skipped {
@@ -25,9 +25,9 @@ func (c *ContainerController) StartContainer(f fuego.ContextNoBody) (*shared_typ
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.ContainerActionResponse{
 		Status:  "success",
 		Message: "Container started successfully",
-		Data:    map[string]string{"status": "started"},
+		Data:    types.ContainerStatusData{Status: "started"},
 	}, nil
 }
