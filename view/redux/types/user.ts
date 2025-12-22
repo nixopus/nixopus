@@ -16,32 +16,9 @@ export interface User {
   organizations: Organization[];
 }
 
-export interface AuthResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  user: User;
-  temp_token?: string;
-}
-
-export interface RefreshTokenPayload {
-  refresh_token: string;
-}
-
-export interface LoginPayload {
-  email: string;
-  password: string;
-}
-
 export interface TwoFactorSetupResponse {
   secret: string;
   qr_code: string;
-}
-
-export interface TwoFactorLoginPayload {
-  email: string;
-  password: string;
-  code: string;
 }
 
 export interface UserSettings {
