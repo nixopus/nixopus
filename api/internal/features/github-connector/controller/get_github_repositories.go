@@ -25,6 +25,7 @@ func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody)
 	page := 1
 	pageSize := 10
 	connectorID := q.Get("connector_id")
+	search := q.Get("search")
 
 	if v := q.Get("page"); v != "" {
 		if p, err := strconv.Atoi(v); err == nil && p > 0 {
@@ -37,7 +38,7 @@ func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody)
 		}
 	}
 
-	repositories, totalCount, err := c.service.GetGithubRepositoriesPaginated(user.ID.String(), page, pageSize, connectorID)
+	repositories, totalCount, err := c.service.GetGithubRepositoriesPaginated(user.ID.String(), page, pageSize, connectorID, search)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
