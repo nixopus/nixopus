@@ -84,3 +84,5 @@ export interface UpdateUserRoleRequest {
   organization_id: string;
   role: string;
 }
+
+export type UserTypes = 'Owner' | 'Admin' | 'Member' | 'Viewer' | string;
