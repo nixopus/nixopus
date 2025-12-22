@@ -5,51 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
-
-type AuthResponse struct {
-	AccessToken  string            `json:"access_token"`
-	RefreshToken string            `json:"refresh_token"`
-	ExpiresIn    int64             `json:"expires_in"`
-	User         shared_types.User `json:"user"`
-}
-
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type RegisterRequest struct {
-	Username     string `json:"username"`
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	Type         string `json:"type"`
-	Organization string `json:"organization"`
-}
-
-type UpdateUserRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Avatar   string `json:"avatar"`
-	Role     string `json:"role"`
-}
-
-type DeleteUserRequest struct {
-	Password string `json:"password"`
-}
-
-type ResetPasswordRequest struct {
-	Password string `json:"password"`
-}
-
-type LogoutRequest struct {
-	RefreshToken string `json:"refresh_token"`
-}
-
-type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token"`
-}
 
 type VerificationToken struct {
 	ID        uuid.UUID `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
@@ -68,10 +24,54 @@ type TwoFactorVerifyRequest struct {
 	Code string `json:"code"`
 }
 
-type TwoFactorLoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Code     string `json:"code"`
+// TwoFactorRequiredData contains temp token when 2FA is required
+type TwoFactorRequiredData struct {
+	TempToken string `json:"temp_token"`
+}
+
+// TwoFactorRequiredResponse is returned when 2FA is required during login
+type TwoFactorRequiredResponse struct {
+	Status  string                `json:"status"`
+	Message string                `json:"message"`
+	Data    TwoFactorRequiredData `json:"data"`
+}
+
+// MessageResponse is a generic response with just status and message
+type MessageResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+// RefreshTokenResponseData contains the new access token
+type RefreshTokenResponseData struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int64  `json:"expires_in"`
+}
+
+// RefreshTokenResponse is the typed response for token refresh
+type RefreshTokenResponse struct {
+	Status  string                   `json:"status"`
+	Message string                   `json:"message"`
+	Data    RefreshTokenResponseData `json:"data"`
+}
+
+// TwoFactorSetupResponseWrapper wraps the 2FA setup response
+type TwoFactorSetupResponseWrapper struct {
+	Status  string                 `json:"status"`
+	Message string                 `json:"message"`
+	Data    TwoFactorSetupResponse `json:"data"`
+}
+
+// AdminRegisteredData contains admin registration status
+type AdminRegisteredData struct {
+	AdminRegistered bool `json:"admin_registered"`
+}
+
+// AdminRegisteredResponse is the typed response for admin registration check
+type AdminRegisteredResponse struct {
+	Status  string              `json:"status"`
+	Message string              `json:"message"`
+	Data    AdminRegisteredData `json:"data"`
 }
 
 var (

@@ -4,13 +4,12 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *GithubConnectorController) GetGithubConnectors(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *GithubConnectorController) GetGithubConnectors(f fuego.ContextNoBody) (*types.ListConnectorsResponse, error) {
 	w, r := f.Response(), f.Request()
 
 	user := utils.GetUser(w, r)
@@ -31,7 +30,7 @@ func (c *GithubConnectorController) GetGithubConnectors(f fuego.ContextNoBody) (
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.ListConnectorsResponse{
 		Status:  "success",
 		Message: "Connectors fetched successfully",
 		Data:    connectors,
