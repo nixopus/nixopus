@@ -3,6 +3,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import {
   AddUserToOrganizationRequest,
   CreateOrganizationRequest,
+  CreateUserRequest,
   Organization,
   OrganizationUsers,
   RemoveUserFromOrganizationRequest,
@@ -30,8 +31,7 @@ import {
   UpdateThemeRequest,
   UpdateLanguageRequest,
   UpdateAutoUpdateRequest,
-  UpdateAvatarRequest,
-  UpdateCheckResponse
+  UpdateAvatarRequest
 } from '@/redux/types/user';
 
 export const userApi = createApi({
@@ -119,6 +119,15 @@ export const userApi = createApi({
           url: `${USERURLS.CREATE_ORGANIZATION}?id=${payload.id}`,
           method: 'PUT',
           body: payload
+        };
+      }
+    }),
+    createUser: builder.mutation<void, CreateUserRequest>({
+      query(body) {
+        return {
+          url: USERURLS.CREATE_USER,
+          method: 'POST',
+          body
         };
       }
     }),
@@ -220,14 +229,11 @@ export const userApi = createApi({
         };
       }
     }),
-    checkForUpdates: builder.query<UpdateCheckResponse, void>({
+    checkForUpdates: builder.query<void, void>({
       query: () => ({
         url: USERURLS.CHECK_FOR_UPDATES,
         method: 'GET'
-      }),
-      transformResponse: (response: { data: UpdateCheckResponse }) => {
-        return response.data;
-      }
+      })
     }),
     performUpdate: builder.mutation<void, void>({
       query: () => ({
@@ -259,6 +265,7 @@ export const {
   useUpdateUserNameMutation,
   useGetOrganizationUsersQuery,
   useUpdateOrganizationDetailsMutation,
+  useCreateUserMutation,
   useUpdateUserRoleMutation,
   useGetResourcesQuery,
   useDeleteOrganizationMutation,

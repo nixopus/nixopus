@@ -7,9 +7,10 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *ContainerController) GetContainer(f fuego.ContextNoBody) (*types.GetContainerResponse, error) {
+func (c *ContainerController) GetContainer(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	containerID := f.PathParam("container_id")
 
 	containerInfo, err := c.dockerService.GetContainerById(containerID)
@@ -98,7 +99,7 @@ func (c *ContainerController) GetContainer(f fuego.ContextNoBody) (*types.GetCon
 		})
 	}
 
-	return &types.GetContainerResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Container fetched successfully",
 		Data:    containerData,

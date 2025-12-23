@@ -2,17 +2,14 @@ package controller
 
 import (
 	"github.com/go-fuego/fuego"
+
+	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// HealthCheckResponse is the typed response for health check
-type HealthCheckResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-}
-
-func HealthCheck(fuego.ContextNoBody) (*HealthCheckResponse, error) {
-	return &HealthCheckResponse{
+func HealthCheck(fuego.ContextNoBody) (types.Response, error) {
+	return types.Response{
 		Status:  "success",
 		Message: "Server is up and running",
+		Data:    nil,
 	}, nil
 }

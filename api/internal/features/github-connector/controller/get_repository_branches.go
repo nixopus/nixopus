@@ -6,16 +6,17 @@ import (
 	"strings"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type GetGithubRepositoryBranchesRequest struct {
 	RepositoryName string `json:"repository_name" validate:"required"`
 }
 
-func (c *GithubConnectorController) GetGithubRepositoryBranches(f fuego.ContextWithBody[GetGithubRepositoryBranchesRequest]) (*types.ListBranchesResponse, error) {
+func (c *GithubConnectorController) GetGithubRepositoryBranches(f fuego.ContextWithBody[GetGithubRepositoryBranchesRequest]) (*shared_types.Response, error) {
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 
@@ -50,7 +51,7 @@ func (c *GithubConnectorController) GetGithubRepositoryBranches(f fuego.ContextW
 		}
 	}
 
-	return &types.ListBranchesResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Branches fetched successfully",
 		Data:    branches,

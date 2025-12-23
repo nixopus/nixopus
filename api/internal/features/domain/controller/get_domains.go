@@ -11,9 +11,11 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *DomainsController) GetDomains(f fuego.ContextNoBody) (*types.ListDomainsResponse, error) {
+func (c *DomainsController) GetDomains(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	w, r := f.Response(), f.Request()
 
 	organization_id := utils.GetOrganizationID(r)
@@ -60,14 +62,14 @@ func (c *DomainsController) GetDomains(f fuego.ContextNoBody) (*types.ListDomain
 		}
 	}
 
-	return &types.ListDomainsResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Domains fetched successfully",
 		Data:    domains,
 	}, nil
 }
 
-func (c *DomainsController) GenerateRandomSubDomain(f fuego.ContextNoBody) (*types.RandomSubdomainResponseWrapper, error) {
+func (c *DomainsController) GenerateRandomSubDomain(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	w, r := f.Response(), f.Request()
 
 	organization_id := utils.GetOrganizationID(r)
@@ -142,7 +144,7 @@ func (c *DomainsController) GenerateRandomSubDomain(f fuego.ContextNoBody) (*typ
 
 	c.logger.Log(logger.Info, "Generated random subdomain", subdomain)
 
-	return &types.RandomSubdomainResponseWrapper{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Random subdomain generated successfully",
 		Data:    response,

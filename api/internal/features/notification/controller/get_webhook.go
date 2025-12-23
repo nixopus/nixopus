@@ -6,11 +6,12 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/controller/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *NotificationController) GetWebhookConfig(f fuego.ContextNoBody) (*types.WebhookConfigResponse, error) {
+func (c *NotificationController) GetWebhookConfig(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	orgID := utils.GetOrganizationID(f.Request())
 	if orgID == uuid.Nil {
 		return nil, fuego.HTTPError{
@@ -29,7 +30,7 @@ func (c *NotificationController) GetWebhookConfig(f fuego.ContextNoBody) (*types
 		}
 	}
 
-	return &types.WebhookConfigResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Webhook config retrieved successfully",
 		Data:    config,

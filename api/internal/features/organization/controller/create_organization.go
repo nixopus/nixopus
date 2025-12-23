@@ -9,10 +9,12 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/supertokens"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/supertokens/supertokens-golang/recipe/userroles"
 )
 
-func (c *OrganizationsController) CreateOrganization(f fuego.ContextWithBody[types.CreateOrganizationRequest]) (*types.OrganizationResponse, error) {
+func (c *OrganizationsController) CreateOrganization(f fuego.ContextWithBody[types.CreateOrganizationRequest]) (*shared_types.Response, error) {
 	organization, err := f.Body()
 	if err != nil {
 		return nil, fuego.HTTPError{
@@ -61,7 +63,7 @@ func (c *OrganizationsController) CreateOrganization(f fuego.ContextWithBody[typ
 
 	// c.Notify(notification.NortificationPayloadTypeCreateOrganization, loggedInUser, r, createdOrganization)
 
-	return &types.OrganizationResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Organization created successfully",
 		Data:    createdOrganization,

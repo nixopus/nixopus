@@ -5,8 +5,8 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/go-fuego/fuego"
-	container_types "github.com/raghavyuva/nixopus-api/internal/features/container/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type PruneBuildCacheRequest struct {
@@ -14,7 +14,7 @@ type PruneBuildCacheRequest struct {
 	Filters string `json:"filters,omitempty"`
 }
 
-func (c *ContainerController) PruneBuildCache(f fuego.ContextWithBody[PruneBuildCacheRequest]) (*container_types.MessageResponse, error) {
+func (c *ContainerController) PruneBuildCache(f fuego.ContextWithBody[PruneBuildCacheRequest]) (*shared_types.Response, error) {
 	req, err := f.Body()
 	if err != nil {
 		return nil, fuego.HTTPError{
@@ -33,8 +33,9 @@ func (c *ContainerController) PruneBuildCache(f fuego.ContextWithBody[PruneBuild
 		}
 	}
 
-	return &container_types.MessageResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Build cache pruned successfully",
+		Data:    nil,
 	}, nil
 }

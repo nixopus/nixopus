@@ -8,6 +8,7 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/go-fuego/fuego"
 	container_types "github.com/raghavyuva/nixopus-api/internal/features/container/types"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type ListImagesRequest struct {
@@ -16,7 +17,7 @@ type ListImagesRequest struct {
 	ImagePrefix string `json:"image_prefix,omitempty"`
 }
 
-func (c *ContainerController) ListImages(f fuego.ContextWithBody[ListImagesRequest]) (*container_types.ListImagesResponse, error) {
+func (c *ContainerController) ListImages(f fuego.ContextWithBody[ListImagesRequest]) (*shared_types.Response, error) {
 	req, err := f.Body()
 	if err != nil {
 		return nil, fuego.HTTPError{
@@ -50,7 +51,7 @@ func (c *ContainerController) ListImages(f fuego.ContextWithBody[ListImagesReque
 	})
 
 	if len(images) == 0 {
-		return &container_types.ListImagesResponse{
+		return &shared_types.Response{
 			Status:  "success",
 			Message: "No images found",
 			Data:    []container_types.Image{},
@@ -73,7 +74,7 @@ func (c *ContainerController) ListImages(f fuego.ContextWithBody[ListImagesReque
 		result = append(result, imageData)
 	}
 
-	return &container_types.ListImagesResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Images listed successfully",
 		Data:    result,

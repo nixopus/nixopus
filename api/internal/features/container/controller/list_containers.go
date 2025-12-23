@@ -11,9 +11,10 @@ import (
 	"github.com/go-fuego/fuego"
 	containertypes "github.com/raghavyuva/nixopus-api/internal/features/container/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *ContainerController) ListContainers(fuegoCtx fuego.ContextNoBody) (*containertypes.ListContainersResponse, error) {
+func (c *ContainerController) ListContainers(fuegoCtx fuego.ContextNoBody) (*shared_types.Response, error) {
 	// normalize query params
 	params := parseContainerListParams(fuegoCtx.Request())
 
@@ -35,20 +36,20 @@ func (c *ContainerController) ListContainers(fuegoCtx fuego.ContextNoBody) (*con
 
 	result := c.appendContainerInfo(pageRows, containers)
 
-	return &containertypes.ListContainersResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Containers fetched successfully",
-		Data: containertypes.ListContainersResponseData{
-			Containers: result,
-			TotalCount: totalCount,
-			Page:       params.Page,
-			PageSize:   params.PageSize,
-			SortBy:     params.SortBy,
-			SortOrder:  params.SortOrder,
-			Search:     params.Search,
-			Status:     params.Status,
-			Name:       params.Name,
-			Image:      params.Image,
+		Data: map[string]interface{}{
+			"containers":  result,
+			"total_count": totalCount,
+			"page":        params.Page,
+			"page_size":   params.PageSize,
+			"sort_by":     params.SortBy,
+			"sort_order":  params.SortOrder,
+			"search":      params.Search,
+			"status":      params.Status,
+			"name":        params.Name,
+			"image":       params.Image,
 		},
 	}, nil
 }

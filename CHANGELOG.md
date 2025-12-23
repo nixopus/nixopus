@@ -1,3 +1,13 @@
+# [0.1.0-alpha.103](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.102...v0.1.0-alpha.103) (2025-12-23)
+
+
+### Features
+
+* add server side search for GitHub repositories across all pages ([#768](https://github.com/raghavyuva/nixopus/issues/768)) ([d080296](https://github.com/raghavyuva/nixopus/commit/d0802969aa00c401bd8912c0ff723af6f8cbe5e6))
+* nixopus version display in footer and update on dashboard load ([#766](https://github.com/raghavyuva/nixopus/issues/766)) ([b752f8f](https://github.com/raghavyuva/nixopus/commit/b752f8ff54ff409b2d8ad7b5b26e6be77673436f))
+
+
+
 # [0.1.0-alpha.102](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.101...v0.1.0-alpha.102) (2025-12-21)
 
 

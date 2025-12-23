@@ -4,42 +4,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
-
-// MessageResponse is a generic response with just status and message
-type MessageResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-}
-
-// DomainResponse is the typed response for single domain operations
-type DomainResponse struct {
-	Status  string               `json:"status"`
-	Message string               `json:"message"`
-	Data    *shared_types.Domain `json:"data"`
-}
-
-// CreateDomainResponseWrapper wraps the create domain response
-type CreateDomainResponseWrapper struct {
-	Status  string               `json:"status"`
-	Message string               `json:"message"`
-	Data    CreateDomainResponse `json:"data"`
-}
-
-// ListDomainsResponse is the typed response for listing domains
-type ListDomainsResponse struct {
-	Status  string                `json:"status"`
-	Message string                `json:"message"`
-	Data    []shared_types.Domain `json:"data"`
-}
-
-// RandomSubdomainResponseWrapper wraps the random subdomain response
-type RandomSubdomainResponseWrapper struct {
-	Status  string                  `json:"status"`
-	Message string                  `json:"message"`
-	Data    RandomSubdomainResponse `json:"data"`
-}
 
 var (
 	ErrDomainNotFound                          = errors.New("domain not found")

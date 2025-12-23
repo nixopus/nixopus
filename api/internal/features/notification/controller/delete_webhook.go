@@ -6,11 +6,11 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/controller/types"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *NotificationController) DeleteWebhookConfig(f fuego.ContextWithBody[notification.DeleteWebhookConfigRequest]) (*types.MessageResponse, error) {
+func (c *NotificationController) DeleteWebhookConfig(f fuego.ContextWithBody[notification.DeleteWebhookConfigRequest]) (*shared_types.Response, error) {
 	req, err := f.Body()
 	if err != nil {
 		return nil, fuego.HTTPError{
@@ -35,8 +35,9 @@ func (c *NotificationController) DeleteWebhookConfig(f fuego.ContextWithBody[not
 		}
 	}
 
-	return &types.MessageResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Webhook config deleted successfully",
+		Data:    nil,
 	}, nil
 }

@@ -1,10 +1,17 @@
 export enum AUTHURLS {
+  USER_LOGIN = 'v1/auth/login',
+  USER_REGISTER = 'v1/auth/register',
   USER_DETAILS = 'v1/user',
+  REFRESH_TOKEN = 'v1/auth/refresh-token',
+  REQUEST_PASSWORD_RESET = 'v1/auth/request-password-reset',
+  RESET_PASSWORD = 'v1/auth/reset-password',
   SEND_VERIFICATION = 'v1/auth/send-verification-email',
   VERIFY_EMAIL = 'v1/auth/verify-email',
+  LOGOUT = 'v1/auth/logout',
   SETUP_TWO_FACTOR = 'v1/auth/setup-2fa',
   VERIFY_TWO_FACTOR = 'v1/auth/verify-2fa',
   DISABLE_TWO_FACTOR = 'v1/auth/disable-2fa',
+  TWO_FACTOR_LOGIN = 'v1/auth/2fa-login',
   IS_ADMIN_REGISTERED = 'v1/auth/is-admin-registered'
 }
 
@@ -16,6 +23,7 @@ export enum USERURLS {
   UPDATE_USER_ROLE = 'v1/organizations/update-user-role',
   UPDATE_USER_NAME = 'v1/user/name',
   ORGANIZATION_USERS = 'v1/organizations/users',
+  CREATE_USER = 'v1/auth/create-user',
   GET_RESOURCES = 'v1/organizations/resources',
   GET_SETTINGS = 'v1/user/settings',
   UPDATE_FONT = 'v1/user/settings/font',

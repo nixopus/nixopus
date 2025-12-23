@@ -5,11 +5,11 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *ContainerController) RemoveContainer(f fuego.ContextNoBody) (*types.ContainerActionResponse, error) {
+func (c *ContainerController) RemoveContainer(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	containerID := f.PathParam("container_id")
 
 	if resp, skipped := c.isProtectedContainer(containerID, "remove"); skipped {
@@ -25,9 +25,9 @@ func (c *ContainerController) RemoveContainer(f fuego.ContextNoBody) (*types.Con
 		}
 	}
 
-	return &types.ContainerActionResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Container removed successfully",
-		Data:    types.ContainerStatusData{Status: "removed"},
+		Data:    map[string]string{"status": "removed"},
 	}, nil
 }

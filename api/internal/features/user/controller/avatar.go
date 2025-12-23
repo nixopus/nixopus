@@ -7,9 +7,11 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (u *UserController) UpdateAvatar(s fuego.ContextWithBody[types.UpdateAvatarRequest]) (*types.MessageResponse, error) {
+func (u *UserController) UpdateAvatar(s fuego.ContextWithBody[types.UpdateAvatarRequest]) (*shared_types.Response, error) {
 	u.logger.Log(logger.Info, "updating user avatar", "")
 
 	req, err := s.Body()
@@ -48,7 +50,7 @@ func (u *UserController) UpdateAvatar(s fuego.ContextWithBody[types.UpdateAvatar
 
 	u.cache.InvalidateUser(u.ctx, user.ID.String())
 
-	return &types.MessageResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Avatar updated successfully",
 	}, nil

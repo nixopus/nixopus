@@ -5,12 +5,13 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *DeployController) GetApplicationById(f fuego.ContextNoBody) (*types.ApplicationResponse, error) {
+func (c *DeployController) GetApplicationById(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	id := f.QueryParam("id")
 
 	user := utils.GetUser(f.Response(), f.Request())
@@ -40,7 +41,7 @@ func (c *DeployController) GetApplicationById(f fuego.ContextNoBody) (*types.App
 		}
 	}
 
-	return &types.ApplicationResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Application Retrieved successfully",
 		Data:    application,

@@ -47,23 +47,14 @@ export const extensionsApi = createApi({
         };
       },
       providesTags: ['Extensions'],
-      transformResponse: (response: {
-        status: string;
-        message: string;
-        data: ExtensionListResponse;
-      }) => response.data
+      transformResponse: (response: ExtensionListResponse) => response
     }),
     getExtensionCategories: builder.query<ExtensionCategory[], void>({
       query: () => ({
         url: EXTENSIONURLS.GET_CATEGORIES,
         method: 'GET'
       }),
-      providesTags: ['Extensions'],
-      transformResponse: (response: {
-        status: string;
-        message: string;
-        data: ExtensionCategory[];
-      }) => response.data || []
+      providesTags: ['Extensions']
     }),
     getExtension: builder.query<Extension, { id: string }>({
       query: ({ id }) => ({
@@ -71,8 +62,7 @@ export const extensionsApi = createApi({
         method: 'GET'
       }),
       providesTags: (result, error, { id }) => [{ type: 'Extension', id }],
-      transformResponse: (response: { status: string; message: string; data: Extension }) =>
-        response.data
+      transformResponse: (response: Extension) => response
     }),
     getExtensionByExtensionId: builder.query<Extension, { extensionId: string }>({
       query: ({ extensionId }) => ({
@@ -80,8 +70,7 @@ export const extensionsApi = createApi({
         method: 'GET'
       }),
       providesTags: (result, error, { extensionId }) => [{ type: 'Extension', id: extensionId }],
-      transformResponse: (response: { status: string; message: string; data: Extension }) =>
-        response.data
+      transformResponse: (response: Extension) => response
     }),
     runExtension: builder.mutation<
       ExtensionExecution,
@@ -95,12 +84,7 @@ export const extensionsApi = createApi({
           body,
           headers: isFormData ? undefined : { 'Content-Type': 'application/json' }
         };
-      },
-      transformResponse: (response: {
-        status: string;
-        message: string;
-        data: ExtensionExecution;
-      }) => response.data
+      }
     }),
     forkExtension: builder.mutation<Extension, { extensionId: string; yaml_content?: string }>({
       query: ({ extensionId, ...body }) => ({
@@ -109,9 +93,7 @@ export const extensionsApi = createApi({
         body,
         headers: { 'Content-Type': 'application/json' }
       }),
-      invalidatesTags: ['Extensions'],
-      transformResponse: (response: { status: string; message: string; data: Extension }) =>
-        response.data
+      invalidatesTags: ['Extensions']
     }),
     deleteExtension: builder.mutation<{ status: string }, { id: string }>({
       query: ({ id }) => ({
@@ -134,11 +116,7 @@ export const extensionsApi = createApi({
         method: 'GET'
       }),
       providesTags: (result, error, { executionId }) => [{ type: 'Execution', id: executionId }],
-      transformResponse: (response: {
-        status: string;
-        message: string;
-        data: ExtensionExecution;
-      }) => response.data
+      transformResponse: (response: ExtensionExecution) => response
     }),
     listExecutions: builder.query<ExtensionExecution[], { extensionId: string }>({
       query: ({ extensionId }) => ({
@@ -146,11 +124,7 @@ export const extensionsApi = createApi({
         method: 'GET'
       }),
       providesTags: (result, error, { extensionId }) => [{ type: 'Extension', id: extensionId }],
-      transformResponse: (response: {
-        status: string;
-        message: string;
-        data: ExtensionExecution[];
-      }) => response.data || []
+      transformResponse: (response: ExtensionExecution[]) => response
     }),
     getExecutionLogs: builder.query<
       { logs: any[]; next_after: number; execution_status?: string },
@@ -162,10 +136,10 @@ export const extensionsApi = createApi({
       }),
       providesTags: (result, error, { executionId }) => [{ type: 'Execution', id: executionId }],
       transformResponse: (response: {
-        status: string;
-        message: string;
-        data: { logs: any[]; next_after: number; execution_status?: string };
-      }) => response.data
+        logs: any[];
+        next_after: number;
+        execution_status?: string;
+      }) => response
     })
   })
 });

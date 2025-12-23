@@ -8,10 +8,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *DeployController) UpdateApplication(f fuego.ContextWithBody[types.UpdateDeploymentRequest]) (*types.ApplicationResponse, error) {
+func (c *DeployController) UpdateApplication(f fuego.ContextWithBody[types.UpdateDeploymentRequest]) (*shared_types.Response, error) {
 	c.logger.Log(logger.Info, "starting application update process", "")
 
 	data, err := f.Body()
@@ -79,7 +80,7 @@ func (c *DeployController) UpdateApplication(f fuego.ContextWithBody[types.Updat
 	}
 
 	c.logger.Log(logger.Info, "application updated successfully", "id: "+data.ID.String())
-	return &types.ApplicationResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Application updated successfully",
 		Data:    application,

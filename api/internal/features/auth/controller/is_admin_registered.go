@@ -4,23 +4,22 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *AuthController) IsAdminRegistered(s fuego.ContextNoBody) (*types.AdminRegisteredResponse, error) {
+func (c *AuthController) IsAdminRegistered(s fuego.ContextNoBody) (shared_types.Response, error) {
 	isAdminRegistered, err := c.service.IsAdminRegistered()
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return shared_types.Response{}, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,
 		}
 	}
 
-	return &types.AdminRegisteredResponse{
+	return shared_types.Response{
 		Status:  "success",
 		Message: "Admin registration status",
-		Data: types.AdminRegisteredData{
-			AdminRegistered: isAdminRegistered,
-		},
+		Data:    map[string]bool{"admin_registered": isAdminRegistered},
 	}, nil
 }

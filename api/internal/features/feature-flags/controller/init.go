@@ -6,9 +6,8 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/cache"
 	"github.com/raghavyuva/nixopus-api/internal/features/feature-flags/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/feature-flags/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -28,7 +27,7 @@ func NewFeatureFlagController(service *service.FeatureFlagService, logger logger
 	}
 }
 
-func (c *FeatureFlagController) GetFeatureFlags(f fuego.ContextNoBody) (*types.ListFeatureFlagsResponse, error) {
+func (c *FeatureFlagController) GetFeatureFlags(f fuego.ContextNoBody) (*types.Response, error) {
 	organizationID := utils.GetOrganizationID(f.Request())
 	flags, err := c.service.GetFeatureFlags(organizationID)
 	if err != nil {
@@ -36,14 +35,14 @@ func (c *FeatureFlagController) GetFeatureFlags(f fuego.ContextNoBody) (*types.L
 		return nil, err
 	}
 
-	return &types.ListFeatureFlagsResponse{
+	return &types.Response{
 		Status:  "success",
 		Message: "Feature flags retrieved successfully",
 		Data:    flags,
 	}, nil
 }
 
-func (c *FeatureFlagController) UpdateFeatureFlag(f fuego.ContextWithBody[shared_types.UpdateFeatureFlagRequest]) (*types.MessageResponse, error) {
+func (c *FeatureFlagController) UpdateFeatureFlag(f fuego.ContextWithBody[types.UpdateFeatureFlagRequest]) (*types.Response, error) {
 	organizationID := utils.GetOrganizationID(f.Request())
 	req, err := f.Body()
 
@@ -59,13 +58,13 @@ func (c *FeatureFlagController) UpdateFeatureFlag(f fuego.ContextWithBody[shared
 	// Invalidate the feature flag cache
 	c.cache.InvalidateFeatureFlag(c.ctx, organizationID.String(), req.FeatureName)
 
-	return &types.MessageResponse{
+	return &types.Response{
 		Status:  "success",
 		Message: "Feature flag updated successfully",
 	}, nil
 }
 
-func (c *FeatureFlagController) IsFeatureEnabled(f fuego.ContextNoBody) (*types.IsFeatureEnabledResponse, error) {
+func (c *FeatureFlagController) IsFeatureEnabled(f fuego.ContextNoBody) (*types.Response, error) {
 	organizationID := utils.GetOrganizationID(f.Request())
 	featureName := f.Request().URL.Query().Get("feature_name")
 
@@ -75,9 +74,9 @@ func (c *FeatureFlagController) IsFeatureEnabled(f fuego.ContextNoBody) (*types.
 		return nil, err
 	}
 
-	return &types.IsFeatureEnabledResponse{
+	return &types.Response{
 		Status:  "success",
 		Message: "Feature flag status retrieved successfully",
-		Data:    types.IsFeatureEnabledData{IsEnabled: isEnabled},
+		Data:    map[string]bool{"is_enabled": isEnabled},
 	}, nil
 }

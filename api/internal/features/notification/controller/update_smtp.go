@@ -9,10 +9,11 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/controller/types"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *NotificationController) UpdateSmtp(f fuego.ContextWithBody[notification.UpdateSMTPConfigRequest]) (*types.MessageResponse, error) {
+func (c *NotificationController) UpdateSmtp(f fuego.ContextWithBody[notification.UpdateSMTPConfigRequest]) (*shared_types.Response, error) {
 	SMTPConfigs, err := f.Body()
 	if err != nil {
 		return nil, fuego.HTTPError{
@@ -49,7 +50,7 @@ func (c *NotificationController) UpdateSmtp(f fuego.ContextWithBody[notification
 		}
 	}
 
-	return &types.MessageResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "SMTP configs updated successfully",
 	}, nil

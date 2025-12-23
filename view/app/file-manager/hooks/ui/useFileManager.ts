@@ -57,11 +57,11 @@ function use_file_manager() {
     refetch();
   });
 
-  const { filteredAndSortedData, searchTerm, handleSearchChange, handleSortChange, sortConfig } =
-    useSearchable(files || [], ['name', 'created_at', 'updated_at', 'size', 'file_type'], {
-      key: 'name',
-      direction: 'asc'
-    });
+  const { filteredAndSortedData, searchTerm, handleSearchChange, handleSortChange } = useSearchable(
+    files || [],
+    ['name', 'created_at', 'updated_at', 'size', 'file_type'],
+    { key: 'name', direction: 'asc' }
+  );
 
   const visibleFiles = showHidden
     ? filteredAndSortedData
@@ -253,7 +253,6 @@ function use_file_manager() {
     handleMove,
     handleSearchChange,
     handleSortChange,
-    sortConfig,
     visibleFiles,
     createNewFolder,
     fileClicked,

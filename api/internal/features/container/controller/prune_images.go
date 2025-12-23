@@ -5,8 +5,8 @@ import (
 
 	"github.com/docker/docker/api/types/filters"
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type PruneImagesRequest struct {
@@ -15,7 +15,7 @@ type PruneImagesRequest struct {
 	Dangling bool   `json:"dangling,omitempty"`
 }
 
-func (c *ContainerController) PruneImages(f fuego.ContextWithBody[PruneImagesRequest]) (*types.PruneImagesResponse, error) {
+func (c *ContainerController) PruneImages(f fuego.ContextWithBody[PruneImagesRequest]) (*shared_types.Response, error) {
 	req, err := f.Body()
 	if err != nil {
 		return nil, fuego.HTTPError{
@@ -43,21 +43,9 @@ func (c *ContainerController) PruneImages(f fuego.ContextWithBody[PruneImagesReq
 		}
 	}
 
-	// Convert Docker's DeleteResponse to our typed response
-	imagesDeleted := make([]types.ImageDeleteResponse, len(pruneReport.ImagesDeleted))
-	for i, img := range pruneReport.ImagesDeleted {
-		imagesDeleted[i] = types.ImageDeleteResponse{
-			Untagged: img.Untagged,
-			Deleted:  img.Deleted,
-		}
-	}
-
-	return &types.PruneImagesResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Images pruned successfully",
-		Data: types.PruneImagesResponseData{
-			ImagesDeleted:  imagesDeleted,
-			SpaceReclaimed: pruneReport.SpaceReclaimed,
-		},
+		Data:    pruneReport,
 	}, nil
 }

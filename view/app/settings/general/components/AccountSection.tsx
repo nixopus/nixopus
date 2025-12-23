@@ -34,7 +34,7 @@ interface AccountSectionProps {
   isUpdatingAutoUpdate: boolean;
   handleThemeChange: (theme: string) => void;
   handleLanguageChange: (language: string) => void;
-  handleAutoUpdateChange: (autoUpdate: boolean) => void;
+  // handleAutoUpdateChange: (autoUpdate: boolean) => void;
   handleFontUpdate: (fontFamily: string, fontSize: number) => Promise<void>;
 }
 
@@ -56,7 +56,7 @@ function AccountSection({
   isUpdatingAutoUpdate,
   handleThemeChange,
   handleLanguageChange,
-  handleAutoUpdateChange,
+  // handleAutoUpdateChange,
   handleFontUpdate
 }: AccountSectionProps) {
   const { t } = useTranslation();
@@ -250,25 +250,26 @@ function AccountSection({
           </RBACGuard>
         </div>
       </div>
-      <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col gap-2">
-            <TypographySmall className="text-sm font-medium">
-              {t('settings.preferences.autoUpdate.title')}
-            </TypographySmall>
-            <TypographyMuted className="text-xs mt-1">
-              {t('settings.preferences.autoUpdate.description')}
-            </TypographyMuted>
-          </div>
-          <RBACGuard resource="user" action="update">
-            <Switch
-              checked={userSettings.auto_update}
-              onCheckedChange={handleAutoUpdateChange}
-              disabled={isUpdatingAutoUpdate}
-            />
-          </RBACGuard>
-        </div>
-      </div>
+      {/* <div className="mt-6">
+        <Card>
+          <CardHeader>
+            <TypographySmall>{t('settings.preferences.autoUpdate.title')}</TypographySmall>
+            <TypographyMuted>{t('settings.preferences.autoUpdate.description')}</TypographyMuted>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <TypographyMuted>{t('settings.preferences.autoUpdate.select')}</TypographyMuted>
+              <RBACGuard resource="user" action="update">
+                <Switch
+                  checked={userSettings.auto_update}
+                  onCheckedChange={handleAutoUpdateChange}
+                  disabled={isUpdatingAutoUpdate}
+                />
+              </RBACGuard>
+            </div>
+          </CardContent>
+        </Card>
+      </div> */}
     </div>
   );
 }

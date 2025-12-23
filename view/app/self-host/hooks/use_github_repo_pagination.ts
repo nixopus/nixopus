@@ -1,11 +1,14 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useGetAllGithubRepositoriesQuery } from '@/redux/services/connector/githubConnectorApi';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  useGetAllGithubRepositoriesQuery,
+  useUpdateGithubConnectorMutation
+} from '@/redux/services/connector/githubConnectorApi';
+import { useSearchable } from '@/hooks/use-searchable';
 import { GithubRepository } from '@/redux/types/github';
 import { SortOption } from '@/components/ui/sort-selector';
 import { useAppSelector } from '@/redux/hooks';
-import { useDebounce } from '@/hooks/use-debounce';
 
 /**
  * @function useGithubRepoPagination
@@ -30,52 +33,44 @@ import { useDebounce } from '@/hooks/use-debounce';
  * - paginatedApplications: An array of the paginated filtered and sorted repositories.
  */
 function useGithubRepoPagination() {
+  const searchParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
+  // We'll define searchTerm via useSearchable below, so temporarily initialize hook then call API with it
   const router = useRouter();
   const [selectedRepository, setSelectedRepository] = React.useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState<{
-    key: keyof GithubRepository;
-    direction: 'asc' | 'desc';
-  }>({
+  const {
+    filteredAndSortedData: _ignored,
+    searchTerm,
+    handleSearchChange,
+    handleSortChange,
+    sortConfig
+  } = useSearchable<GithubRepository>([], ['name', 'description', 'stargazers_count'], {
     key: 'name',
     direction: 'asc'
   });
-
-  // Debounce search term to avoid excessive API calls
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
-
   // Get active connector ID from Redux
-  const activeConnectorId = useAppSelector((state) => state.githubConnector.activeConnectorId);
+  const activeConnectorId = useAppSelector(
+    (state) => state.githubConnector.activeConnectorId
+  );
 
-  // Pass search term to API for server-side filtering
   const { data, isLoading } = useGetAllGithubRepositoriesQuery({
     page: currentPage,
     page_size: PAGE_SIZE,
-    connector_id: activeConnectorId || undefined,
-    search: debouncedSearchTerm || undefined
+    connector_id: activeConnectorId || undefined
   });
-
-  // Server side pagination and search, the API already returns filtered and paginated results
-  const paginatedApplications = data?.repositories || [];
-  const filteredAndSortedApplications = paginatedApplications;
-
+  // Re-wire the searchable array to API data
+  const { filteredAndSortedData: filteredAndSortedApplications } = useSearchable<GithubRepository>(
+    data?.repositories || [],
+    ['name', 'description', 'stargazers_count'],
+    { key: 'name', direction: 'asc' }
+  );
+  // Server-side pagination: the API already returns one page with page_size=10
+  const paginatedApplications = filteredAndSortedApplications;
   const totalPages = React.useMemo(
     () => Math.max(1, Math.ceil((data?.total_count || 0) / PAGE_SIZE)),
     [data?.total_count]
   );
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-  };
-
-  const handleSortChange = (key: keyof GithubRepository) => {
-    setSortConfig((prev) => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
-    }));
-  };
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -84,7 +79,7 @@ function useGithubRepoPagination() {
   // Reset the current page when the search term, sort config, or connector changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, sortConfig, activeConnectorId]);
+  }, [searchTerm, sortConfig, activeConnectorId]);
 
   const onSortChange = (newSort: SortOption<GithubRepository>) => {
     handleSortChange(newSort.value as keyof GithubRepository);

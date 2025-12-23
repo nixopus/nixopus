@@ -6,11 +6,12 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/controller/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *NotificationController) AddSmtp(f fuego.ContextWithBody[notification.CreateSMTPConfigRequest]) (*types.MessageResponse, error) {
+func (c *NotificationController) AddSmtp(f fuego.ContextWithBody[notification.CreateSMTPConfigRequest]) (*shared_types.Response, error) {
 	w, r := f.Response(), f.Request()
 
 	var SMTPConfigs notification.CreateSMTPConfigRequest
@@ -39,8 +40,9 @@ func (c *NotificationController) AddSmtp(f fuego.ContextWithBody[notification.Cr
 		}
 	}
 
-	return &types.MessageResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "SMTP Config added successfully",
+		Data:    nil,
 	}, nil
 }

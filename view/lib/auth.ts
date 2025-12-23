@@ -1,5 +1,7 @@
 import { parseCookies, setCookie, destroyCookie } from 'nookies';
 import { jwtDecode } from 'jwt-decode';
+import { getBaseUrl } from '@/redux/conf';
+import { AUTHURLS } from '@/redux/api-conf';
 
 interface DecodedToken {
   exp: number;
@@ -97,5 +99,38 @@ export function clearAuthTokens(ctx?: any): void {
     // Client-side context
     destroyCookie(ctx, 'token', { path: '/' });
     destroyCookie(ctx, 'refreshToken', { path: '/' });
+  }
+}
+
+export async function refreshAccessToken(refreshToken: string): Promise<AuthTokens> {
+  try {
+    const baseUrl = await getBaseUrl();
+    const response = await fetch(`${baseUrl}/${AUTHURLS.REFRESH_TOKEN}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Token refresh failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      });
+      throw new Error(`Failed to refresh token: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    if (!data.data?.access_token) {
+      throw new Error('Invalid response: missing access token');
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Error during token refresh:', error);
+    throw error;
   }
 }

@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	audit_storage "github.com/raghavyuva/nixopus-api/internal/features/audit/storage"
-	audit_types "github.com/raghavyuva/nixopus-api/internal/features/audit/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/uptrace/bun"
@@ -39,6 +38,19 @@ type AuditLogRequest struct {
 	IPAddress      string
 	UserAgent      string
 	RequestID      uuid.UUID
+}
+
+// ActivityMessage represents a human-readable activity
+type ActivityMessage struct {
+	ID          string                 `json:"id"`
+	Message     string                 `json:"message"`
+	Action      types.AuditAction      `json:"action"`
+	Actor       string                 `json:"actor"`
+	Resource    string                 `json:"resource"`
+	ResourceID  string                 `json:"resource_id"`
+	Timestamp   string                 `json:"timestamp"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	ActionColor string                 `json:"action_color"`
 }
 
 func (s *AuditService) LogAction(req *AuditLogRequest) error {
@@ -93,13 +105,13 @@ func (s *AuditService) GetAuditLogsByOrganization(orgID uuid.UUID, page, pageSiz
 }
 
 // GetActivities converts audit logs to human-readable activities with filters
-func (s *AuditService) GetActivities(filters map[string]interface{}, page, pageSize int) ([]*audit_types.ActivityMessage, int, error) {
+func (s *AuditService) GetActivities(filters map[string]interface{}, page, pageSize int) ([]*ActivityMessage, int, error) {
 	auditLogs, totalCount, err := s.storage.GetAuditLogs(filters, page, pageSize)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	activities := make([]*audit_types.ActivityMessage, 0, len(auditLogs))
+	activities := make([]*ActivityMessage, 0, len(auditLogs))
 	for _, log := range auditLogs {
 		activity := s.convertToActivity(log)
 		if activity != nil {
@@ -111,7 +123,7 @@ func (s *AuditService) GetActivities(filters map[string]interface{}, page, pageS
 }
 
 // GetActivitiesByOrganization gets activities for a specific organization
-func (s *AuditService) GetActivitiesByOrganization(orgID uuid.UUID, page, pageSize int, search string, resourceType string) ([]*audit_types.ActivityMessage, int, error) {
+func (s *AuditService) GetActivitiesByOrganization(orgID uuid.UUID, page, pageSize int, search string, resourceType string) ([]*ActivityMessage, int, error) {
 	filters := map[string]interface{}{
 		"organization_id": orgID,
 	}
@@ -128,7 +140,7 @@ func (s *AuditService) GetActivitiesByOrganization(orgID uuid.UUID, page, pageSi
 }
 
 // convertToActivity converts an audit log to a human-readable activity message
-func (s *AuditService) convertToActivity(log *types.AuditLog) *audit_types.ActivityMessage {
+func (s *AuditService) convertToActivity(log *types.AuditLog) *ActivityMessage {
 	if log == nil {
 		return nil
 	}
@@ -145,7 +157,7 @@ func (s *AuditService) convertToActivity(log *types.AuditLog) *audit_types.Activ
 
 	actionColor := getActionColor(log.Action)
 
-	return &audit_types.ActivityMessage{
+	return &ActivityMessage{
 		ID:          log.ID.String(),
 		Message:     message,
 		Action:      log.Action,

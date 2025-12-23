@@ -6,9 +6,10 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *DomainsController) DeleteDomain(f fuego.ContextWithBody[types.DeleteDomainRequest]) (*types.MessageResponse, error) {
+func (c *DomainsController) DeleteDomain(f fuego.ContextWithBody[types.DeleteDomainRequest]) (*shared_types.Response, error) {
 	domainRequest, err := f.Body()
 
 	if err != nil {
@@ -51,7 +52,7 @@ func (c *DomainsController) DeleteDomain(f fuego.ContextWithBody[types.DeleteDom
 		}
 	}
 
-	return &types.MessageResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Domain deleted successfully",
 	}, nil

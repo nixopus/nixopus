@@ -1,8 +1,7 @@
 import React from 'react';
-import { FileData, FileType } from '@/redux/types/files';
+import { FileData } from '@/redux/types/files';
+import { getFileIcons } from '@/app/self-host/utils/getFileIcons';
 import { cn } from '@/lib/utils';
-import { Folder, File, Link2 } from 'lucide-react';
-import { formatFileSize } from '@/app/self-host/utils/formatFileSize';
 
 interface GridLayoutProps {
   file: FileData;
@@ -29,20 +28,6 @@ export const GridLayout: React.FC<GridLayoutProps> = ({
   handleTextDoubleClick,
   onFolderClick
 }) => {
-  const isDirectory = file.file_type === FileType.Directory;
-  const isSymlink = file.file_type === FileType.Symlink;
-
-  const getIcon = () => {
-    const iconClass = 'h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20';
-    if (isDirectory) {
-      return <Folder className={cn(iconClass, ' fill-[#58b7e9] text-[#58b7e9]')} />;
-    }
-    if (isSymlink) {
-      return <Link2 className={cn(iconClass, 'text-muted-foreground')} />;
-    }
-    return <File className={cn(iconClass, 'text-muted-foreground')} />;
-  };
-
   const renderFileName = () =>
     isEditing ? (
       <input
@@ -52,12 +37,18 @@ export const GridLayout: React.FC<GridLayoutProps> = ({
         onBlur={() => handleRename(file)}
         onKeyDown={(e) => handleKeyDown(e, file)}
         autoFocus
-        className="w-full px-2 py-1 rounded-md border-0 bg-background focus:ring-2 focus:ring-primary text-center text-xs sm:text-sm"
+        className={cn(
+          'w-full px-2 py-1 rounded-md border-0 bg-transparent focus:ring-2 focus:ring-primary text-center',
+          activePath === file.path ? 'bg-secondary text-secondary-foreground' : 'bg-background'
+        )}
         onClick={(e) => e.stopPropagation()}
       />
     ) : (
       <span
-        className="line-clamp-2 text-center text-xs sm:text-sm leading-tight"
+        className={cn(
+          'px-2 py-1 rounded-md break-words leading-normal text-center',
+          activePath === file.path ? 'bg-secondary text-secondary-foreground' : 'text-foreground'
+        )}
         title={file.name}
         onDoubleClick={handleTextDoubleClick}
       >
@@ -66,19 +57,20 @@ export const GridLayout: React.FC<GridLayoutProps> = ({
     );
 
   return (
-    <div
-      className="flex flex-col items-center w-full p-4 sm:p-5 cursor-pointer"
-      onDoubleClick={() => {
-        if (type === 'folder') onFolderClick(file.path);
-      }}
-    >
-      <div className="mb-3 sm:mb-4 flex items-center justify-center">{getIcon()}</div>
-      <div className="w-full text-center min-h-[2.5rem]">{renderFileName()}</div>
-      {!isDirectory && (
-        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-          {formatFileSize(file.size)}
-        </p>
-      )}
+    <div className="flex flex-col items-center w-full min-h-[120px] sm:min-h-[130px] md:min-h-[140px] p-2 sm:p-3">
+      <div
+        className="mb-3 flex items-center justify-center flex-1 cursor-pointer"
+        onDoubleClick={() => {
+          if (type === 'folder') onFolderClick(file.path);
+        }}
+      >
+        <div className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 flex items-center justify-center">
+          {getFileIcons(type, file.name.split('.').pop() as string, 'grid')}
+        </div>
+      </div>
+      <div className="w-full px-1 sm:px-2 text-center text-xs sm:text-sm truncate">
+        {renderFileName()}
+      </div>
     </div>
   );
 };

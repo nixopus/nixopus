@@ -4,11 +4,11 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/extension/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *ExtensionsController) DeleteFork(ctx fuego.ContextNoBody) (*types.MessageResponse, error) {
+func (c *ExtensionsController) DeleteFork(ctx fuego.ContextNoBody) (*types.Response, error) {
 	id := ctx.PathParam("id")
 	if id == "" {
 		return nil, fuego.HTTPError{Err: nil, Status: http.StatusBadRequest}
@@ -17,5 +17,5 @@ func (c *ExtensionsController) DeleteFork(ctx fuego.ContextNoBody) (*types.Messa
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
 	}
-	return &types.MessageResponse{Status: "success", Message: "Fork deleted successfully"}, nil
+	return &types.Response{Status: "success", Message: "Fork deleted successfully"}, nil
 }

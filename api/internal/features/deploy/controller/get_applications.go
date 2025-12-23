@@ -5,9 +5,10 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type GetApplicationsRequest struct {
@@ -16,7 +17,7 @@ type GetApplicationsRequest struct {
 	Repository string `json:"repository"`
 }
 
-func (c *DeployController) GetApplications(f fuego.ContextWithBody[GetApplicationsRequest]) (*types.ListApplicationsResponse, error) {
+func (c *DeployController) GetApplications(f fuego.ContextWithBody[GetApplicationsRequest]) (*shared_types.Response, error) {
 	w, r := f.Response(), f.Request()
 	page := r.URL.Query().Get("page")
 	pageSize := r.URL.Query().Get("page_size")
@@ -55,14 +56,14 @@ func (c *DeployController) GetApplications(f fuego.ContextWithBody[GetApplicatio
 			Status: http.StatusInternalServerError,
 		}
 	}
-	return &types.ListApplicationsResponse{
+	return &shared_types.Response{
 		Status:  "success",
 		Message: "Applications",
-		Data: types.ListApplicationsResponseData{
-			Applications: applications,
-			TotalCount:   totalCount,
-			Page:         page,
-			PageSize:     pageSize,
+		Data: map[string]interface{}{
+			"applications": applications,
+			"total_count":  totalCount,
+			"page":         page,
+			"page_size":    pageSize,
 		},
 	}, nil
 }
