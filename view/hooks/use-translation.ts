@@ -20,6 +20,7 @@ import navigation from '@/lib/i18n/locales/en/navigation.json';
 import layout from '@/lib/i18n/locales/en/layout.json';
 import user from '@/lib/i18n/locales/en/user.json';
 import toasts from '@/lib/i18n/locales/en/toasts.json';
+import servers from '@/lib/i18n/locales/en/servers.json';
 
 // Merge all domain translations for type inference
 // Each domain file exports { domainName: { ... } }, so we merge them
@@ -43,7 +44,8 @@ type EnTranslations = Merge<
     typeof navigation &
     typeof layout &
     typeof user &
-    typeof toasts
+    typeof toasts &
+    typeof servers
 >;
 
 // Recursive way to infer types from nested json keys

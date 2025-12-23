@@ -1,0 +1,160 @@
+{
+  "servers": {
+    "title": "Servers",
+    "description": "Manage your server infrastructure and cluster topology",
+    "addServer": "Add Server",
+    "editServer": "Edit Server",
+    "deleteServer": "Delete Server",
+    "testConnection": "Test Connection",
+    "viewDetails": "View Details",
+    "empty": {
+      "title": "No Servers Found",
+      "description": "Add your first server to get started with multi-server management"
+    },
+    "status": {
+      "online": "Online",
+      "offline": "Offline",
+      "connecting": "Connecting",
+      "error": "Error"
+    },
+    "role": {
+      "manager": "Manager",
+      "worker": "Worker",
+      "standalone": "Standalone"
+    },
+    "health": {
+      "healthy": "Healthy",
+      "degraded": "Degraded",
+      "critical": "Critical",
+      "unknown": "Unknown"
+    },
+    "stats": {
+      "total": "Total Servers",
+      "online": "Online",
+      "offline": "Offline",
+      "managers": "Managers",
+      "workers": "Workers"
+    },
+    "form": {
+      "name": {
+        "label": "Server Name",
+        "placeholder": "e.g., production-server-01"
+      },
+      "host": {
+        "label": "Host",
+        "placeholder": "e.g., 192.168.1.100 or server.example.com"
+      },
+      "port": {
+        "label": "SSH Port",
+        "placeholder": "22"
+      },
+      "sshUser": {
+        "label": "SSH User",
+        "placeholder": "root"
+      },
+      "sshKey": {
+        "label": "SSH Private Key",
+        "placeholder": "Paste your private key here...",
+        "description": "Paste your private SSH key (id_rsa or similar)"
+      },
+      "sshPassword": {
+        "label": "SSH Password",
+        "placeholder": "Enter password (optional if using key)"
+      },
+      "dockerSocket": {
+        "label": "Docker Socket",
+        "placeholder": "/var/run/docker.sock"
+      },
+      "labels": {
+        "label": "Labels",
+        "placeholder": "web, database, worker",
+        "description": "Comma-separated labels for organizing servers"
+      },
+      "role": {
+        "label": "Cluster Role",
+        "placeholder": "Select role"
+      },
+      "authMethod": {
+        "label": "Authentication Method",
+        "sshKey": "SSH Key",
+        "password": "Password"
+      }
+    },
+    "dialog": {
+      "add": {
+        "title": "Add New Server",
+        "description": "Configure SSH credentials to connect to a new server"
+      },
+      "edit": {
+        "title": "Edit Server",
+        "description": "Update server configuration"
+      },
+      "delete": {
+        "title": "Delete Server",
+        "description": "Are you sure you want to remove this server? This action cannot be undone.",
+        "confirm": "Delete Server",
+        "cancel": "Cancel"
+      },
+      "testConnection": {
+        "title": "Testing Connection",
+        "success": "Connection successful",
+        "failed": "Connection failed"
+      }
+    },
+    "cluster": {
+      "title": "Cluster Topology",
+      "description": "Visualize and manage your server cluster",
+      "initSwarm": "Initialize Swarm",
+      "joinCluster": "Join Cluster",
+      "leaveCluster": "Leave Cluster",
+      "promote": "Promote to Manager",
+      "demote": "Demote to Worker",
+      "noCluster": {
+        "title": "No Cluster Configured",
+        "description": "Initialize a Docker Swarm cluster to enable multi-server orchestration"
+      }
+    },
+    "details": {
+      "overview": "Overview",
+      "metrics": "Metrics",
+      "containers": "Containers",
+      "applications": "Applications",
+      "cpu": "CPU Usage",
+      "memory": "Memory Usage",
+      "disk": "Disk Usage",
+      "containerCount": "Containers",
+      "lastChecked": "Last Checked"
+    },
+    "messages": {
+      "addSuccess": "Server added successfully",
+      "addError": "Failed to add server",
+      "updateSuccess": "Server updated successfully",
+      "updateError": "Failed to update server",
+      "deleteSuccess": "Server deleted successfully",
+      "deleteError": "Failed to delete server",
+      "connectionSuccess": "Connection test successful",
+      "connectionError": "Connection test failed",
+      "clusterInitSuccess": "Cluster initialized successfully",
+      "clusterInitError": "Failed to initialize cluster",
+      "joinSuccess": "Server joined cluster successfully",
+      "joinError": "Failed to join cluster",
+      "leaveSuccess": "Server left cluster successfully",
+      "leaveError": "Failed to leave cluster",
+      "loadError": "Failed to load servers"
+    },
+    "views": {
+      "list": "List View",
+      "topology": "Topology View"
+    },
+    "actions": {
+      "openTerminal": "Open Terminal",
+      "fileManager": "File Manager",
+      "clusterActions": "Cluster Actions",
+      "quickActions": "Quick Actions",
+      "files": "Files",
+      "terminal": "Terminal",
+      "asWorker": "as Worker",
+      "asManager": "as Manager"
+    }
+  }
+}

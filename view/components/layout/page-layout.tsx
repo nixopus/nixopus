@@ -46,6 +46,9 @@ function PageLayout({
   padding = 'md',
   spacing = 'lg'
 }: PageLayoutProps) {
+  const hasHeightConstraint = className?.includes('h-full') || className?.includes('h-[');
+  const isAlreadyFlex = className?.includes('flex');
+
   return (
     <div
       className={cn(
@@ -53,6 +56,7 @@ function PageLayout({
         paddingClasses[padding],
         spacingClasses[spacing],
         maxWidthClasses[maxWidth],
+        hasHeightConstraint && !isAlreadyFlex && 'flex flex-col',
         className
       )}
     >
