@@ -104,9 +104,13 @@ var (
 // GetDockerManager returns the global singleton DockerManager instance
 // This ensures we have a single DockerManager instance across the entire application
 // It's initialized lazily on first access with the default Docker client
+// Cluster initialization is performed automatically (same as NewDockerService)
 func GetDockerManager() *DockerManager {
 	globalDockerMu.Do(func() {
 		defaultClient := NewDockerClient()
+		defaultLogger := logger.NewLogger()
+		defaultCtx := context.Background()
+
 		globalDockerManager = &DockerManager{
 			clients:   make(map[string]*client.Client),
 			configs:   make(map[string]*DockerClientConfig),
@@ -115,8 +119,27 @@ func GetDockerManager() *DockerManager {
 		globalDockerManager.clients["default"] = defaultClient
 		globalDockerManager.configs["default"] = &DockerClientConfig{
 			Host:    "unix:///var/run/docker.sock", // Default socket
-			Context: context.Background(),
-			Logger:  logger.NewLogger(),
+			Context: defaultCtx,
+			Logger:  defaultLogger,
+		}
+
+		// Initialize cluster if not already initialized (same behavior as NewDockerService)
+		// This should be run on master node only
+		// TODO: Add a check to see if the node is the master node
+		// WARNING: This should be thought again during multi-server architecture feature
+		if !isClusterInitialized(defaultClient) {
+			tempService := &DockerService{
+				Cli:    defaultClient,
+				Ctx:    defaultCtx,
+				logger: defaultLogger,
+			}
+			if err := tempService.InitCluster(); err != nil {
+				defaultLogger.Log(logger.Warning, "Failed to initialize cluster", err.Error())
+			} else {
+				defaultLogger.Log(logger.Info, "Cluster initialized successfully", "")
+			}
+		} else {
+			defaultLogger.Log(logger.Info, "Cluster already initialized", "")
 		}
 	})
 	return globalDockerManager
