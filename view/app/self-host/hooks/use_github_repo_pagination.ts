@@ -50,12 +50,13 @@ function useGithubRepoPagination() {
   const activeConnectorId = useAppSelector((state) => state.githubConnector.activeConnectorId);
 
   // Pass search term to API for server-side filtering
-  const { data, isLoading } = useGetAllGithubRepositoriesQuery({
+  const { data, isLoading, isFetching } = useGetAllGithubRepositoriesQuery({
     page: currentPage,
     page_size: PAGE_SIZE,
     connector_id: activeConnectorId || undefined,
     search: debouncedSearchTerm || undefined
   });
+  const isSearching = isFetching;
 
   // Server side pagination and search, the API already returns filtered and paginated results
   const paginatedApplications = data?.repositories || [];
@@ -119,6 +120,8 @@ function useGithubRepoPagination() {
     totalPages,
     paginatedApplications,
     isLoading,
+    isFetching,
+    isSearching,
     onSelectRepository
   };
 }
