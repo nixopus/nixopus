@@ -42,3 +42,10 @@ type UpdateUsernameResponse struct {
 	Message string                     `json:"message"`
 	Data    UpdateUsernameResponseData `json:"data"`
 }
+
+// UserPreferencesResponse is the typed response for user preferences
+type UserPreferencesResponse struct {
+	Status  string                        `json:"status"`
+	Message string                        `json:"message"`
+	Data    *shared_types.UserPreferences `json:"data"`
+}
