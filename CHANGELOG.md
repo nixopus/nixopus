@@ -1,3 +1,12 @@
+# [0.1.0-alpha.105](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.104...v0.1.0-alpha.105) (2025-12-24)
+
+
+### Bug Fixes
+
+* downgrade cli runner distribution to ubuntu20.04  version ([#783](https://github.com/raghavyuva/nixopus/issues/783)) ([0469877](https://github.com/raghavyuva/nixopus/commit/0469877aadec172124bd284a13513784174da497))
+
+
+
 # [0.1.0-alpha.104](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.103...v0.1.0-alpha.104) (2025-12-23)
 
 
