@@ -101,7 +101,7 @@ function DiskMountsTable({ mounts }: { mounts: MountData[] }) {
   ];
 
   return (
-    <div className="max-h-[300px] overflow-y-auto overflow-x-hidden">
+    <div className="max-h-[300px] overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <DataTable
         data={mounts}
         columns={columns}
