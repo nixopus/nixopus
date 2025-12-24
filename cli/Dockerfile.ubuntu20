@@ -10,6 +10,7 @@ ENV POETRY_VERSION="1.8.3"
 ENV POETRY_NO_INTERACTION=1
 ENV POETRY_VENV_IN_PROJECT=1
 ENV POETRY_CACHE_DIR=/tmp/poetry_cache
+ENV PATH="/opt/poetry/bin:${PATH}"
 
 # Install system dependencies and add deadsnakes PPA for Python 3.9
 RUN apt-get update && apt-get install -y \
@@ -38,8 +39,10 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1 
 RUN gem install --no-document fpm
 
 # Install Poetry using the official installer
-RUN curl -sSL https://install.python-poetry.org | python3 - \
-    && ln -s /root/.local/bin/poetry /usr/local/bin/poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
+
+# Create symlink for Poetry in /usr/local/bin for easier access
+RUN ln -s /opt/poetry/bin/poetry /usr/local/bin/poetry
 
 # Verify Poetry installation
 RUN poetry --version
