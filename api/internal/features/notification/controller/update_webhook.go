@@ -6,12 +6,11 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification/controller/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *NotificationController) UpdateWebhookConfig(f fuego.ContextWithBody[notification.UpdateWebhookConfigRequest]) (*shared_types.Response, error) {
+func (c *NotificationController) UpdateWebhookConfig(f fuego.ContextWithBody[notification.UpdateWebhookConfigRequest]) (*types.WebhookConfigResponse, error) {
 	req, err := f.Body()
 	if err != nil {
 		return nil, fuego.HTTPError{
@@ -36,7 +35,7 @@ func (c *NotificationController) UpdateWebhookConfig(f fuego.ContextWithBody[not
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.WebhookConfigResponse{
 		Status:  "success",
 		Message: "Webhook config updated successfully",
 		Data:    config,

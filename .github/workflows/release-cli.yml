@@ -29,59 +29,42 @@ jobs:
           fetch-depth: 0
           ssh-key: ${{ secrets.DEPLOY_KEY }}
 
-      # dev builds run on host, prod uses PyInstaller on host
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: cli/.venv
-          key: venv-${{ runner.os }}-${{ hashFiles('cli/poetry.lock') }}
-
-      - name: Install dependencies
-        working-directory: cli
-        run: poetry install
+      - name: Build Ubuntu 20.04 Docker image
+        run: |
+          docker build -f cli/Dockerfile.ubuntu20 -t nixopus-ubuntu20:latest .
 
       - name: Extract version from pyproject.toml
         id: version
-        working-directory: cli
         run: |
-          VERSION=$(poetry version --short)
+          VERSION=$(docker run --rm -v "$PWD:/workspace" -w /workspace/cli nixopus-ubuntu20:latest poetry version --short)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
 
-      - name: Install Ruby and fpm
+      - name: Build CLI binary in Ubuntu 20.04 container (PRs use dev mode / pushes build production)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Running dev-mode build (no PyInstaller)"
+            docker run --rm \
+              -v "$PWD:/workspace" \
+              -w /workspace/cli \
+              -e NIXOPUS_DISABLE_DOCKER=1 \
+              nixopus-ubuntu20:latest \
+              bash -c "chmod +x build.sh && ./build.sh --dev --no-test --no-cleanup"
+          else
+            echo "Running production build (PyInstaller)"
+            docker run --rm \
+              -v "$PWD:/workspace" \
+              -w /workspace/cli \
+              -e NIXOPUS_DISABLE_DOCKER=1 \
+              nixopus-ubuntu20:latest \
+              bash -c "chmod +x build.sh && ./build.sh --no-test --no-cleanup --no-archive"
+          fi
+
+      - name: Install Ruby and fpm (for packaging)
         run: |
           sudo apt-get update
           sudo apt-get install -y ruby ruby-dev rubygems build-essential
           sudo gem install --no-document fpm
-
-      - name: Build CLI binary (PRs use dev mode / pushes build production)
-        working-directory: cli
-        env:
-          NIXOPUS_DISABLE_DOCKER: "1"
-        run: |
-          chmod +x build.sh
-          if [ ! -d "helpers" ]; then
-            ln -s ../helpers helpers
-          fi
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "Running dev-mode build (no PyInstaller)"
-            ./build.sh --dev --no-test --no-cleanup
-          else
-            echo "Running production build (PyInstaller)"
-          ./build.sh --no-test --no-cleanup --no-archive
-          fi
 
       - name: Prepare binary for packaging
         working-directory: cli

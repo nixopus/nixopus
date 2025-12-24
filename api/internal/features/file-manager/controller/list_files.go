@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/file-manager/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type ListFilesRequest struct {
 	Path string `json:"path"`
 }
 
-func (c *FileManagerController) ListFiles(f fuego.ContextWithBody[ListFilesRequest]) (*shared_types.Response, error) {
+func (c *FileManagerController) ListFiles(f fuego.ContextWithBody[ListFilesRequest]) (*types.ListFilesResponse, error) {
 	_, r := f.Response(), f.Request()
 	path := r.URL.Query().Get("path")
 
@@ -33,7 +33,7 @@ func (c *FileManagerController) ListFiles(f fuego.ContextWithBody[ListFilesReque
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.ListFilesResponse{
 		Status:  "success",
 		Message: "Files fetched successfully",
 		Data:    files,

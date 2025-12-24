@@ -8,11 +8,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *DeployController) DeleteApplication(f fuego.ContextWithBody[types.DeleteDeploymentRequest]) (*shared_types.Response, error) {
+func (c *DeployController) DeleteApplication(f fuego.ContextWithBody[types.DeleteDeploymentRequest]) (*types.MessageResponse, error) {
 	c.logger.Log(logger.Info, "starting application deletion process", "")
 
 	data, err := f.Body()
@@ -80,9 +79,8 @@ func (c *DeployController) DeleteApplication(f fuego.ContextWithBody[types.Delet
 	}
 
 	c.logger.Log(logger.Info, "application deleted successfully", "id: "+data.ID.String())
-	return &shared_types.Response{
+	return &types.MessageResponse{
 		Status:  "success",
 		Message: "Application deleted successfully",
-		Data:    nil,
 	}, nil
 }

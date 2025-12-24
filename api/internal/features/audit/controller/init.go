@@ -9,12 +9,11 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/audit/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/audit/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	org_types "github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 	"github.com/uptrace/bun"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 var (
@@ -36,7 +35,7 @@ func NewAuditController(db *bun.DB, ctx context.Context, l logger.Logger) *Audit
 }
 
 // GetRecentAuditLogs returns human-readable activities with pagination, search, and filtering
-func (c *AuditController) GetRecentAuditLogs(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *AuditController) GetRecentAuditLogs(f fuego.ContextNoBody) (*types.GetActivitiesResponse, error) {
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
 		return nil, fuego.HTTPError{
@@ -95,18 +94,18 @@ func (c *AuditController) GetRecentAuditLogs(f fuego.ContextNoBody) (*shared_typ
 	hasNext := pageInt < totalPages
 	hasPrev := pageInt > 1
 
-	return &shared_types.Response{
+	return &types.GetActivitiesResponse{
 		Status:  "success",
 		Message: "Activities retrieved successfully",
-		Data: map[string]interface{}{
-			"activities": activities,
-			"pagination": map[string]interface{}{
-				"current_page": pageInt,
-				"page_size":    pageSizeInt,
-				"total_count":  totalCount,
-				"total_pages":  totalPages,
-				"has_next":     hasNext,
-				"has_prev":     hasPrev,
+		Data: types.GetActivitiesResponseData{
+			Activities: activities,
+			Pagination: types.PaginationInfo{
+				CurrentPage: pageInt,
+				PageSize:    pageSizeInt,
+				TotalCount:  totalCount,
+				TotalPages:  totalPages,
+				HasNext:     hasNext,
+				HasPrev:     hasPrev,
 			},
 		},
 	}, nil

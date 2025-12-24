@@ -1,3 +1,29 @@
+# [0.1.0-alpha.104](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.103...v0.1.0-alpha.104) (2025-12-23)
+
+
+### Bug Fixes
+
+* container endpoints to support typed responses ([88f088e](https://github.com/raghavyuva/nixopus/commit/88f088ebc79384acbfe56380c6e8fe8061768a67))
+* response types for deploy endpoints ([4355616](https://github.com/raghavyuva/nixopus/commit/4355616e10d77307f283b557583e899312f8474b))
+* swagger rendering for audit routes ([135ff82](https://github.com/raghavyuva/nixopus/commit/135ff8244d1fae93a03d424f56d17849d4527824))
+* swagger response types for auth routes ([42028df](https://github.com/raghavyuva/nixopus/commit/42028dfff43d8f681f1ca818ff83d3bb34425f84))
+* update extensions API to handle typed responses ([cced47e](https://github.com/raghavyuva/nixopus/commit/cced47ec7499d6168550ff660d7bc4a4ef4ee47d))
+
+
+### Features
+
+* add typed responses for domain controllers ([3fad760](https://github.com/raghavyuva/nixopus/commit/3fad7601f6abb60c786475583184f8513f0edb96))
+* add typed responses for extension controllers ([99baefd](https://github.com/raghavyuva/nixopus/commit/99baefdebfeaf93fd893fab2694d22e79d4df722))
+* add typed responses for feature-flags controllers ([7ab83aa](https://github.com/raghavyuva/nixopus/commit/7ab83aa652c284da9821bf0273aeb39e2a00a06c))
+* add typed responses for file-manager controllers ([3215c5e](https://github.com/raghavyuva/nixopus/commit/3215c5e4f6cec37c4a749ff73f84bcee302b3f49))
+* add typed responses for github-connector controllers ([166af9f](https://github.com/raghavyuva/nixopus/commit/166af9f52b7b1d2c1455881f5fd0c4f0632006b7))
+* add typed responses for health controller ([de25636](https://github.com/raghavyuva/nixopus/commit/de256365ad1e976e30c4f2d634ac3ce3ef6f7df5))
+* add typed responses for notification controllers ([6a57c03](https://github.com/raghavyuva/nixopus/commit/6a57c0317965411e3f8c52dd241388aec437b6d9))
+* add typed responses for organization controllers ([3353966](https://github.com/raghavyuva/nixopus/commit/33539669fb49f466856c8d6293923a70d81de0be))
+* add typed responses for user controllers ([71fea11](https://github.com/raghavyuva/nixopus/commit/71fea1149a58d168756af65eadbd35d130fa6e3c))
+
+
+
 # [0.1.0-alpha.103](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.102...v0.1.0-alpha.103) (2025-12-23)
 
 

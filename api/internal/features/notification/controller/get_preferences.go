@@ -5,12 +5,11 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification/controller/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *NotificationController) GetPreferences(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *NotificationController) GetPreferences(f fuego.ContextNoBody) (*types.PreferencesResponse, error) {
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 
@@ -31,7 +30,7 @@ func (c *NotificationController) GetPreferences(f fuego.ContextNoBody) (*shared_
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.PreferencesResponse{
 		Status:  "success",
 		Message: "Preferences fetched successfully",
 		Data:    preferences,

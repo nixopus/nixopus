@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -14,7 +14,7 @@ type UpdateFontRequest struct {
 	FontSize   int    `json:"font_size"`
 }
 
-func (c *UserController) UpdateFont(s fuego.ContextWithBody[UpdateFontRequest]) (*types.Response, error) {
+func (c *UserController) UpdateFont(s fuego.ContextWithBody[UpdateFontRequest]) (*types.UserSettingsResponse, error) {
 	w, r := s.Response(), s.Request()
 	user := utils.GetUser(w, r)
 
@@ -42,7 +42,7 @@ func (c *UserController) UpdateFont(s fuego.ContextWithBody[UpdateFontRequest]) 
 		}
 	}
 
-	return &types.Response{
+	return &types.UserSettingsResponse{
 		Status:  "success",
 		Message: "Font settings updated successfully",
 		Data:    settings,
@@ -53,7 +53,7 @@ type UpdateThemeRequest struct {
 	Theme string `json:"theme"`
 }
 
-func (c *UserController) UpdateTheme(s fuego.ContextWithBody[UpdateThemeRequest]) (*types.Response, error) {
+func (c *UserController) UpdateTheme(s fuego.ContextWithBody[UpdateThemeRequest]) (*types.UserSettingsResponse, error) {
 	w, r := s.Response(), s.Request()
 	user := utils.GetUser(w, r)
 
@@ -81,7 +81,7 @@ func (c *UserController) UpdateTheme(s fuego.ContextWithBody[UpdateThemeRequest]
 		}
 	}
 
-	return &types.Response{
+	return &types.UserSettingsResponse{
 		Status:  "success",
 		Message: "Theme updated successfully",
 		Data:    settings,
@@ -92,7 +92,7 @@ type UpdateLanguageRequest struct {
 	Language string `json:"language"`
 }
 
-func (c *UserController) UpdateLanguage(s fuego.ContextWithBody[UpdateLanguageRequest]) (*types.Response, error) {
+func (c *UserController) UpdateLanguage(s fuego.ContextWithBody[UpdateLanguageRequest]) (*types.UserSettingsResponse, error) {
 	w, r := s.Response(), s.Request()
 	user := utils.GetUser(w, r)
 
@@ -120,7 +120,7 @@ func (c *UserController) UpdateLanguage(s fuego.ContextWithBody[UpdateLanguageRe
 		}
 	}
 
-	return &types.Response{
+	return &types.UserSettingsResponse{
 		Status:  "success",
 		Message: "Language updated successfully",
 		Data:    settings,
@@ -131,7 +131,7 @@ type UpdateAutoUpdateRequest struct {
 	AutoUpdate bool `json:"auto_update"`
 }
 
-func (c *UserController) UpdateAutoUpdate(s fuego.ContextWithBody[UpdateAutoUpdateRequest]) (*types.Response, error) {
+func (c *UserController) UpdateAutoUpdate(s fuego.ContextWithBody[UpdateAutoUpdateRequest]) (*types.UserSettingsResponse, error) {
 	w, r := s.Response(), s.Request()
 	user := utils.GetUser(w, r)
 
@@ -159,14 +159,14 @@ func (c *UserController) UpdateAutoUpdate(s fuego.ContextWithBody[UpdateAutoUpda
 		}
 	}
 
-	return &types.Response{
+	return &types.UserSettingsResponse{
 		Status:  "success",
 		Message: "Auto update setting updated successfully",
 		Data:    settings,
 	}, nil
 }
 
-func (c *UserController) GetSettings(s fuego.ContextNoBody) (*types.Response, error) {
+func (c *UserController) GetSettings(s fuego.ContextNoBody) (*types.UserSettingsResponse, error) {
 	w, r := s.Response(), s.Request()
 	user := utils.GetUser(w, r)
 
@@ -186,7 +186,7 @@ func (c *UserController) GetSettings(s fuego.ContextNoBody) (*types.Response, er
 		}
 	}
 
-	return &types.Response{
+	return &types.UserSettingsResponse{
 		Status:  "success",
 		Message: "User settings fetched successfully",
 		Data:    settings,

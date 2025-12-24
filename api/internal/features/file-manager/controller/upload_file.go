@@ -4,11 +4,11 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/file-manager/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *FileManagerController) UploadFile(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *FileManagerController) UploadFile(f fuego.ContextNoBody) (*types.MessageResponse, error) {
 	file, header, err := f.Request().FormFile("file")
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
@@ -33,7 +33,7 @@ func (c *FileManagerController) UploadFile(f fuego.ContextNoBody) (*shared_types
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.MessageResponse{
 		Status:  "success",
 		Message: "File uploaded successfully",
 	}, nil

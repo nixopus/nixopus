@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -21,7 +21,7 @@ type GetDeploymentLogsRequest struct {
 	SearchTerm string    `json:"search_term"`
 }
 
-func (c *DeployController) GetDeploymentLogs(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *DeployController) GetDeploymentLogs(f fuego.ContextNoBody) (*types.LogsResponse, error) {
 	deploymentID := f.PathParam("deployment_id")
 	page, _ := strconv.Atoi(f.QueryParam("page"))
 	pageSize, _ := strconv.Atoi(f.QueryParam("page_size"))
@@ -88,14 +88,14 @@ func (c *DeployController) GetDeploymentLogs(f fuego.ContextNoBody) (*shared_typ
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.LogsResponse{
 		Status:  "success",
 		Message: "Deployment logs retrieved successfully",
-		Data: map[string]interface{}{
-			"logs":        logs,
-			"total_count": totalCount,
-			"page":        page,
-			"page_size":   pageSize,
+		Data: types.LogsResponseData{
+			Logs:       logs,
+			TotalCount: totalCount,
+			Page:       page,
+			PageSize:   pageSize,
 		},
 	}, nil
 }
