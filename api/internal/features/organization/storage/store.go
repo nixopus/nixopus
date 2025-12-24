@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -211,4 +212,53 @@ func (s OrganizationStore) UpdateUserRole(userID string, organizationID string, 
 func (s OrganizationStore) GetOrganizationCount() (int, error) {
 	count, err := s.getDB().NewSelect().Model(&shared_types.Organization{}).Count(s.Ctx)
 	return count, err
+}
+
+// GetOrganizationSettings retrieves organization settings, creating defaults if none exist
+func (s *OrganizationStore) GetOrganizationSettings(organizationID string) (*shared_types.OrganizationSettings, error) {
+	var settings shared_types.OrganizationSettings
+	err := s.getDB().NewSelect().
+		Model(&settings).
+		Where("organization_id = ?", organizationID).
+		Scan(s.Ctx)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			defaultSettings := &shared_types.OrganizationSettings{
+				ID:             uuid.New(),
+				OrganizationID: uuid.MustParse(organizationID),
+				Settings:       shared_types.DefaultOrganizationSettingsData(),
+				CreatedAt:      time.Now(),
+				UpdatedAt:      time.Now(),
+			}
+
+			_, err := s.getDB().NewInsert().
+				Model(defaultSettings).
+				Exec(s.Ctx)
+			if err != nil {
+				return nil, err
+			}
+			return defaultSettings, nil
+		}
+		return nil, err
+	}
+	return &settings, nil
+}
+
+// UpdateOrganizationSettings updates organization settings with the provided data
+func (s *OrganizationStore) UpdateOrganizationSettings(organizationID string, settings shared_types.OrganizationSettingsData) (*shared_types.OrganizationSettings, error) {
+	var orgSettings shared_types.OrganizationSettings
+
+	_, err := s.getDB().NewUpdate().
+		Model(&orgSettings).
+		Set("settings = ?", settings).
+		Set("updated_at = ?", time.Now()).
+		Where("organization_id = ?", organizationID).
+		Returning("*").
+		Exec(s.Ctx)
+
+	if err != nil {
+		return nil, err
+	}
+	return &orgSettings, nil
 }

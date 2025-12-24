@@ -23,6 +23,8 @@ type UserRepository interface {
 	GetUserSettings(userID string) (*shared_types.UserSettings, error)
 	UpdateUserSettings(userID string, updates map[string]interface{}) (*shared_types.UserSettings, error)
 	UpdateUserAvatar(ctx context.Context, userID string, avatarData string) error
+	GetUserPreferences(userID string) (*shared_types.UserPreferences, error)
+	UpdateUserPreferences(userID string, preferences shared_types.UserPreferencesData) (*shared_types.UserPreferences, error)
 }
 
 func CreateNewUserStorage(db *bun.DB, ctx context.Context) *UserStorage {
@@ -177,4 +179,53 @@ func (s *UserStorage) UpdateUserAvatar(ctx context.Context, userID string, avata
 	}
 
 	return nil
+}
+
+// GetUserPreferences retrieves user preferences, creating defaults if none exist
+func (s *UserStorage) GetUserPreferences(userID string) (*shared_types.UserPreferences, error) {
+	var prefs shared_types.UserPreferences
+	err := s.DB.NewSelect().
+		Model(&prefs).
+		Where("user_id = ?", userID).
+		Scan(s.Ctx)
+
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			defaultPrefs := &shared_types.UserPreferences{
+				ID:          uuid.New(),
+				UserID:      uuid.MustParse(userID),
+				Preferences: shared_types.DefaultUserPreferencesData(),
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+			}
+
+			_, err := s.DB.NewInsert().
+				Model(defaultPrefs).
+				Exec(s.Ctx)
+			if err != nil {
+				return nil, err
+			}
+			return defaultPrefs, nil
+		}
+		return nil, err
+	}
+	return &prefs, nil
+}
+
+// UpdateUserPreferences updates user preferences with the provided data
+func (s *UserStorage) UpdateUserPreferences(userID string, preferences shared_types.UserPreferencesData) (*shared_types.UserPreferences, error) {
+	var prefs shared_types.UserPreferences
+
+	_, err := s.DB.NewUpdate().
+		Model(&prefs).
+		Set("preferences = ?", preferences).
+		Set("updated_at = ?", time.Now()).
+		Where("user_id = ?", userID).
+		Returning("*").
+		Exec(s.Ctx)
+
+	if err != nil {
+		return nil, err
+	}
+	return &prefs, nil
 }
