@@ -18,9 +18,9 @@ on:
 
 jobs:
   build-and-package:
-    runs-on: ubuntu-latest
-    container:
-      image: quay.io/pypa/manylinux2014_x86_64
+    # Use ubuntu-20.04 for maximum Linux compatibility (glibc 2.31)
+    # Binaries built here work on: Debian 10+, Ubuntu 20.04+, RHEL 8+
+    runs-on: ubuntu-20.04
     outputs:
       version: ${{ steps.version.outputs.VERSION }}
 
@@ -29,36 +29,43 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
 
-      # Use Python 3.11 from manylinux
-      - name: Set up Python environment
-        run: |
-          # Add Python 3.11 to PATH
-          echo "/opt/python/cp311-cp311/bin" >> $GITHUB_PATH
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
-      - name: Install build dependencies
-        run: |
-          /opt/python/cp311-cp311/bin/python -m pip install --upgrade pip
-          /opt/python/cp311-cp311/bin/pip install poetry pyinstaller
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
 
-      - name: Install project dependencies
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: cli/.venv
+          key: venv-${{ runner.os }}-${{ hashFiles('cli/poetry.lock') }}
+
+      - name: Install dependencies
         working-directory: cli
-        run: |
-          /opt/python/cp311-cp311/bin/poetry config virtualenvs.create false
-          /opt/python/cp311-cp311/bin/poetry install
+        run: poetry install
 
       - name: Extract version from pyproject.toml
         id: version
         working-directory: cli
         run: |
-          VERSION=$(/opt/python/cp311-cp311/bin/poetry version --short)
+          VERSION=$(poetry version --short)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
 
       - name: Install Ruby and fpm
         run: |
-          yum install -y ruby ruby-devel rubygems rpm-build
-          gem install --no-document fpm
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev rubygems build-essential
+          sudo gem install --no-document fpm
 
       - name: Build CLI binary (PRs use dev mode / pushes build production)
         working-directory: cli
