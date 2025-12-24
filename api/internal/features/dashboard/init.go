@@ -10,6 +10,11 @@ import (
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
 )
 
+func getDockerService() *docker.DockerService {
+	service, _ := docker.GetDockerManager().GetDefaultService()
+	return service
+}
+
 func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger) (*DashboardMonitor, error) {
 	ssh_client := sshpkg.NewSSH()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -22,7 +27,7 @@ func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger) (*DashboardMon
 		cancel:        cancel,
 		Interval:      time.Second * 10,
 		Operations:    AllOperations,
-		dockerService: docker.NewDockerService(),
+		dockerService: getDockerService(),
 	}
 
 	return monitor, nil

@@ -26,9 +26,10 @@ func NewContainerController(
 	l logger.Logger,
 	notificationManager *notification.NotificationManager,
 ) *ContainerController {
+	dockerService, _ := docker.GetDockerManager().GetDefaultService()
 	return &ContainerController{
 		store:         store,
-		dockerService: docker.NewDockerService(),
+		dockerService: dockerService,
 		ctx:           ctx,
 		logger:        l,
 		notification:  notificationManager,

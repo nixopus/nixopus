@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sync"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -75,6 +76,164 @@ type DockerRepository interface {
 
 type DockerClient struct {
 	Client *client.Client
+}
+
+// DockerClientConfig represents configuration for a Docker client connection
+type DockerClientConfig struct {
+	Host    string // Docker daemon host (e.g., "unix:///var/run/docker.sock", "tcp://host:2376")
+	Context context.Context
+	Logger  logger.Logger
+}
+
+// DockerManager manages multiple Docker client connections to different Docker daemons/sockets
+// For now, it defaults to single client mode for backward compatibility
+// In the future, it can be extended to support multiple Docker hosts/daemons
+type DockerManager struct {
+	clients   map[string]*client.Client      // Map of client ID to Docker client
+	configs   map[string]*DockerClientConfig // Map of client ID to config
+	defaultID string                         // ID of the default client
+	mu        sync.RWMutex                   // Mutex for thread safe access
+}
+
+var (
+	// globalDockerManager is the singleton instance of DockerManager
+	globalDockerManager *DockerManager
+	globalDockerMu      sync.Once
+)
+
+// GetDockerManager returns the global singleton DockerManager instance
+// This ensures we have a single DockerManager instance across the entire application
+// It's initialized lazily on first access with the default Docker client
+func GetDockerManager() *DockerManager {
+	globalDockerMu.Do(func() {
+		defaultClient := NewDockerClient()
+		globalDockerManager = &DockerManager{
+			clients:   make(map[string]*client.Client),
+			configs:   make(map[string]*DockerClientConfig),
+			defaultID: "default",
+		}
+		globalDockerManager.clients["default"] = defaultClient
+		globalDockerManager.configs["default"] = &DockerClientConfig{
+			Host:    "unix:///var/run/docker.sock", // Default socket
+			Context: context.Background(),
+			Logger:  logger.NewLogger(),
+		}
+	})
+	return globalDockerManager
+}
+
+// AddClient adds a new Docker client connection to the manager with a unique ID
+// The host can be a Unix socket (unix:///path/to/socket) or TCP (tcp://host:port)
+// Example: AddClient("server1", "tcp://192.168.1.100:2376")
+// Example: AddClient("server2", "unix:///var/run/docker.sock")
+func (m *DockerManager) AddClient(id string, host string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if id == "" {
+		return fmt.Errorf("client ID cannot be empty")
+	}
+	if host == "" {
+		return fmt.Errorf("Docker host cannot be empty")
+	}
+
+	cli, err := client.NewClientWithOpts(
+		client.WithHost(host),
+		client.WithAPIVersionNegotiation(),
+	)
+	if err != nil {
+		// Try with TLS if available
+		cli, err = client.NewClientWithOpts(
+			client.WithHost(host),
+			client.WithAPIVersionNegotiation(),
+			client.WithTLSClientConfigFromEnv(),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create Docker client for %s: %w", host, err)
+		}
+	}
+
+	m.clients[id] = cli
+	m.configs[id] = &DockerClientConfig{
+		Host:    host,
+		Context: context.Background(),
+		Logger:  logger.NewLogger(),
+	}
+	return nil
+}
+
+// GetClient retrieves a Docker client by ID, or returns the default client if ID is empty
+func (m *DockerManager) GetClient(id string) (*client.Client, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if id == "" {
+		id = m.defaultID
+	}
+
+	client, exists := m.clients[id]
+	if !exists {
+		return nil, fmt.Errorf("Docker client with ID '%s' not found", id)
+	}
+
+	return client, nil
+}
+
+// GetService retrieves a DockerService for a specific client ID
+// This wraps the client with the service interface for backward compatibility
+func (m *DockerManager) GetService(id string) (*DockerService, error) {
+	cli, err := m.GetClient(id)
+	if err != nil {
+		return nil, err
+	}
+
+	m.mu.RLock()
+	config, exists := m.configs[id]
+	m.mu.RUnlock()
+
+	if !exists {
+		config = &DockerClientConfig{
+			Host:    "unix:///var/run/docker.sock",
+			Context: context.Background(),
+			Logger:  logger.NewLogger(),
+		}
+	}
+
+	return &DockerService{
+		Cli:    cli,
+		Ctx:    config.Context,
+		logger: config.Logger,
+	}, nil
+}
+
+// SetDefault sets the default client ID
+func (m *DockerManager) SetDefault(id string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, exists := m.clients[id]; !exists {
+		return fmt.Errorf("Docker client with ID '%s' does not exist", id)
+	}
+
+	m.defaultID = id
+	return nil
+}
+
+// ListClients returns a list of all client IDs
+func (m *DockerManager) ListClients() []string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	ids := make([]string, 0, len(m.clients))
+	for id := range m.clients {
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+// GetDefaultService returns the default Docker service
+func (m *DockerManager) GetDefaultService() (*DockerService, error) {
+	return m.GetService("")
 }
 
 // NewDockerService creates a new instance of DockerService using the default docker client.

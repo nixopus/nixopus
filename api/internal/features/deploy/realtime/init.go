@@ -14,6 +14,11 @@ import (
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
 )
 
+func getDockerService() *docker.DockerService {
+	service, _ := docker.GetDockerManager().GetDefaultService()
+	return service
+}
+
 type ApplicationMonitor struct {
 	conn          *websocket.Conn
 	connMutex     sync.Mutex
@@ -49,7 +54,7 @@ func NewApplicationMonitor(conn *websocket.Conn, log logger.Logger) (*Applicatio
 		ctx:           ctx,
 		cancel:        cancel,
 		Interval:      time.Second * 10,
-		dockerService: docker.NewDockerService(),
+		dockerService: getDockerService(),
 		Operations:    []ApplicationMonitorOperation{ContainerStatistics},
 	}
 

@@ -41,11 +41,12 @@ type PathConfig struct {
 }
 
 func NewUpdateService(storage *storage.App, logger *logger.Logger, ctx context.Context) *UpdateService {
+	dockerService, _ := docker.GetDockerManager().GetDefaultService()
 	return &UpdateService{
 		storage: storage,
 		logger:  logger,
 		ctx:     ctx,
-		docker:  docker.NewDockerService(),
+		docker:  dockerService,
 		env:     getEnvironment(),
 	}
 }
