@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { StopExecution } from './stopExecution';
 import { useWebSocket } from '@/hooks/socket-provider';
+import { getAdvancedSettings } from '@/lib/advanced-settings';
 
 const CTRL_C = '\x03';
 
@@ -143,17 +144,40 @@ export const useTerminal = (
       const { FitAddon } = await import('@xterm/addon-fit');
       const { WebLinksAddon } = await import('@xterm/addon-web-links');
 
-      const term = new Terminal({
-        cursorBlink: true,
-        cursorStyle: 'bar',
-        cursorWidth: 2,
-        fontFamily:
+      // Get terminal settings from advanced settings
+      const terminalSettings = getAdvancedSettings();
+
+      // Build font family string with fallbacks
+      const fontFamilyMap: Record<string, string> = {
+        'JetBrains Mono':
           '"JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Menlo, Monaco, "Courier New", monospace',
-        fontSize: 13,
-        fontWeight: '400',
+        'Fira Code':
+          '"Fira Code", "JetBrains Mono", "Cascadia Code", "SF Mono", Menlo, Monaco, "Courier New", monospace',
+        'Cascadia Code':
+          '"Cascadia Code", "JetBrains Mono", "Fira Code", "SF Mono", Menlo, Monaco, "Courier New", monospace',
+        'SF Mono':
+          '"SF Mono", "JetBrains Mono", "Fira Code", "Cascadia Code", Menlo, Monaco, "Courier New", monospace',
+        Menlo: 'Menlo, "SF Mono", "JetBrains Mono", "Fira Code", Monaco, "Courier New", monospace',
+        Monaco: 'Monaco, "SF Mono", Menlo, "JetBrains Mono", "Courier New", monospace',
+        'Courier New': '"Courier New", Monaco, Menlo, "SF Mono", monospace'
+      };
+
+      const fontFamily =
+        fontFamilyMap[terminalSettings.terminalFontFamily] ||
+        `"${terminalSettings.terminalFontFamily}", "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Menlo, Monaco, "Courier New", monospace`;
+
+      const fontWeight = terminalSettings.terminalFontWeight === 'bold' ? '600' : '400';
+
+      const term = new Terminal({
+        cursorBlink: terminalSettings.terminalCursorBlink,
+        cursorStyle: terminalSettings.terminalCursorStyle,
+        cursorWidth: terminalSettings.terminalCursorWidth,
+        fontFamily,
+        fontSize: terminalSettings.terminalFontSize,
+        fontWeight,
         fontWeightBold: '600',
-        letterSpacing: 0,
-        lineHeight: 1.4,
+        letterSpacing: terminalSettings.terminalLetterSpacing,
+        lineHeight: terminalSettings.terminalLineHeight,
         theme: {
           // Warp-inspired dark theme with vibrant accents
           foreground: '#e4e4e7',
@@ -186,8 +210,8 @@ export const useTerminal = (
         rightClickSelectsWord: true,
         disableStdin: !allowInput,
         convertEol: true,
-        scrollback: 5000,
-        tabStopWidth: 4,
+        scrollback: terminalSettings.terminalScrollback,
+        tabStopWidth: terminalSettings.terminalTabStopWidth,
         macOptionIsMeta: true,
         macOptionClickForcesSelection: true,
         smoothScrollDuration: 100

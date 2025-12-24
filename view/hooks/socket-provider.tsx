@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { getAccessToken } from 'supertokens-auth-react/recipe/session';
 import { useAppSelector } from '@/redux/hooks';
+import { getAdvancedSettings } from '@/lib/advanced-settings';
 
 type WebSocketContextValue = {
   isReady: boolean;
@@ -38,9 +39,13 @@ interface WebSocketProviderProps {
 export const WebSocketProvider = ({
   children,
   url,
-  reconnectInterval = 3000,
-  maxReconnectAttempts = 5
+  reconnectInterval: reconnectIntervalProp,
+  maxReconnectAttempts: maxReconnectAttemptsProp
 }: WebSocketProviderProps) => {
+  const advancedSettings = getAdvancedSettings();
+  const reconnectInterval = reconnectIntervalProp ?? advancedSettings.websocketReconnectInterval;
+  const maxReconnectAttempts =
+    maxReconnectAttemptsProp ?? advancedSettings.websocketReconnectAttempts;
   const [isReady, setIsReady] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
