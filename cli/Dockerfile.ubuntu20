@@ -1,0 +1,52 @@
+# Dockerfile for building CLI on Ubuntu 20.04
+FROM ubuntu:20.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Set environment variables
+ENV POETRY_HOME="/opt/poetry"
+ENV POETRY_VERSION="1.8.3"
+ENV POETRY_NO_INTERACTION=1
+ENV POETRY_VENV_IN_PROJECT=1
+ENV POETRY_CACHE_DIR=/tmp/poetry_cache
+
+# Install system dependencies and add deadsnakes PPA for Python 3.11
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa -y \
+    && apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-dev \
+    python3.11-distutils \
+    git \
+    ruby \
+    ruby-dev \
+    rubygems \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pip for Python 3.11
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
+
+# Create symlinks for python3 and pip3
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
+    update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
+
+# Install fpm (needed for package creation)
+RUN gem install --no-document fpm
+
+# Install Poetry using the official installer
+RUN curl -sSL https://install.python-poetry.org | python3 - \
+    && ln -s /root/.local/bin/poetry /usr/local/bin/poetry
+
+# Verify Poetry installation
+RUN poetry --version
+
+# Set working directory (will be overridden by mount)
+WORKDIR /workspace
+
+# Default command (can be overridden)
+CMD ["/bin/bash"]
+
