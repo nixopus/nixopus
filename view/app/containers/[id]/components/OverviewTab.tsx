@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { formatDistanceToNow, format } from 'date-fns';
 import { Container } from '@/redux/services/container/containerApi';
 import { cn } from '@/lib/utils';
+import { ResourceLimitsForm } from './ResourceLimitsForm';
 
 interface OverviewTabProps {
   container: Container;
@@ -62,8 +63,11 @@ export function OverviewTab({ container }: OverviewTabProps) {
         />
       </div>
 
-      <section className="space-y-4">
-        <SectionLabel>Resource Allocation</SectionLabel>
+      <section className="space-y-8">
+        <div className="flex items-center gap-4">
+          <SectionLabel>Resource Allocation</SectionLabel>
+          <ResourceLimitsForm container={container} />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <ResourceGauge
             icon={MemoryStick}
@@ -103,7 +107,7 @@ export function OverviewTab({ container }: OverviewTabProps) {
         </section>
       )}
 
-      <section className="space-y-4">
+      <section className="space-y-8">
         <SectionLabel>Container Identity</SectionLabel>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
           <InfoLine
@@ -140,7 +144,7 @@ export function OverviewTab({ container }: OverviewTabProps) {
       </section>
 
       {container.command && (
-        <section className="space-y-4">
+        <section className="space-y-8">
           <SectionLabel>Entrypoint</SectionLabel>
           <div className="relative group">
             <div className="flex items-start gap-3 p-4 rounded-xl bg-zinc-950 text-zinc-300">

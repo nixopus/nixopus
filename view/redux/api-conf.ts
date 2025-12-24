@@ -119,7 +119,8 @@ export enum CONTAINERURLS {
   START_CONTAINER = 'v1/container/{container_id}/start',
   STOP_CONTAINER = 'v1/container/{container_id}/stop',
   REMOVE_CONTAINER = 'v1/container/{container_id}',
-  GET_CONTAINER_LOGS = 'v1/container/{container_id}/logs'
+  GET_CONTAINER_LOGS = 'v1/container/{container_id}/logs',
+  UPDATE_CONTAINER_RESOURCES = 'v1/container/{container_id}/resources'
 }
 
 export enum IMAGEURLS {
