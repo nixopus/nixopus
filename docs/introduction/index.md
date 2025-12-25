@@ -1,26 +1,135 @@
 # Introduction
 
-Nixopus is your all-in-one solution for managing the VPS. While "managing the VPS" is a broad term, we will elaborate on its specific applications for marketing purposes. In a nutshell, our aim with Nixopus is to create software that can help you provide tools to manage your vps.
+Nixopus is an open-source deployment platform that transforms your VPS into a complete application hosting environment. Deploy applications directly from GitHub, manage server files through a browser-based interface, and execute commands via an integrated terminal. All without leaving the dashboard.
 
-Nixopus draws inspiration from various existing solutions in the market, with [Coolify](https://coolify.io/) being one notable example. Our goal is to create a platform that meets the diverse and sophisticated needs of developers, who constantly push the boundaries of what's possible with their innovative thinking and technical expertise.
+Think of it as a self-hosted alternative to platforms like Vercel, Heroku, or Netlify, but running entirely on your own infrastructure.
+
+## Core Capabilities
+
+| Capability | Description |
+|------------|-------------|
+| **One-Click Deployments** | Deploy applications from GitHub repositories with automatic builds and zero configuration files |
+| **Built-in Terminal** | Execute server commands through a secure, web-based terminal with SSH integration |
+| **File Manager** | Browse, edit, upload, and organize files using drag-and-drop operations |
+| **Real-time Monitoring** | Track CPU, RAM, and disk usage with live system statistics |
+| **Automatic SSL** | Generate and manage HTTPS certificates for your domains automatically |
+| **CI/CD Integration** | Trigger deployments automatically when you push code to GitHub |
+| **Reverse Proxy** | Route traffic to your applications using the built-in Caddy reverse proxy |
+| **Multi-channel Notifications** | Receive deployment alerts via Slack, Discord, or email |
 
 ## Why Nixopus?
 
-In today's software landscape, feature bloat often leads to cluttered and confusing interfaces. We recognize that developers are users too, and they deserve a superior experience. Nixopus takes a different approach - instead of stacking features, we focus on creating elegant software that appears simple on the surface while hiding **powerful capabilities** beneath.
+### Full Infrastructure Control
 
-While many excellent software solutions exist, each with their own strengths, we choose not to directly compare Nixopus with other solutions. Instead, we believe that true value comes from user engagement and community feedback. Our philosophy is simple: we invite you to explore Nixopus, share your experiences, and help shape its future. We understand that no software is perfect - there's always room for improvement, and it's the user's perspective that truly matters in making something great.
+Unlike managed platforms, Nixopus runs on your own servers. You retain complete control over your infrastructure, data, and costs. No vendor lock-in, no usage-based pricing surprises.
 
-## Nixopus Stability
+### Developer-First Design
 
-Nixopus is currently in active development, and we're working towards our first stable release. During this phase, you may encounter occasional feature updates and improvements. We value your feedback and encourage you to report any issues you encounter as we work together to make Nixopus more robust and reliable.
+Nixopus prioritizes the tools developers use most. The integrated terminal eliminates context switching between your browser and SSH client. The file manager replaces SFTP clients. GitHub integration removes manual deployment steps.
 
-## Documentation Overview
+### Extensible Architecture
 
-This documentation provides a comprehensive guide to Nixopus's features and capabilities. You'll discover:
-- The philosophy and design principles behind each feature
-- Detailed usage instructions and best practices
-- Answers to frequently asked questions
-- Insights into our development roadmap and upcoming features
-- Our vision for continuous improvement and evolution
+Nixopus supports multiple build configurations:
 
-Ready to dive in? Whether you're a first-time user or looking to explore advanced features, our documentation is designed to help you get the most out of Nixopus. Let's begin your journey with [Installation](/install/index.md).
+- **Docker Compose**: Deploy multi-container applications
+- **Dockerfile**: Build and run containerized applications
+- **Static Sites**: Host HTML, CSS, and JavaScript files
+
+Configure environment variables, build commands, and custom domains for each deployment.
+
+## How Nixopus Works
+
+Nixopus runs as a set of containerized services on your VPS:
+
+```mermaid
+flowchart TB
+    subgraph External["External Services"]
+        GitHub["GitHub"]
+        Notifications["Slack / Discord / Email"]
+    end
+
+    subgraph Nixopus["Nixopus Platform"]
+        subgraph Frontend["Frontend Layer"]
+            View["nixopus-view<br/>(Next.js Dashboard)"]
+        end
+
+        subgraph Backend["Backend Layer"]
+            API["nixopus-api<br/>(Go Backend)"]
+            Realtime["Realtime Server<br/>(WebSocket)"]
+        end
+
+        subgraph Data["Data Layer"]
+            PostgreSQL["PostgreSQL<br/>(Database)"]
+            Redis["Redis<br/>(Cache & Queue)"]
+        end
+
+        subgraph Infrastructure["Infrastructure Layer"]
+            Caddy["Caddy<br/>(Reverse Proxy & SSL)"]
+            SuperTokens["SuperTokens<br/>(Authentication)"]
+            Docker["Docker Engine<br/>(Container Management)"]
+        end
+    end
+
+    subgraph Deployments["Your Applications"]
+        Containers["Deployed Containers"]
+    end
+
+    User((User)) --> Caddy
+    Caddy --> View
+    Caddy --> API
+    Caddy --> Containers
+    View <--> Realtime
+    View --> API
+    API --> PostgreSQL
+    API --> Redis
+    API --> SuperTokens
+    API --> Docker
+    API <--> Realtime
+    Docker --> Containers
+    GitHub -- Webhooks --> API
+    API --> Notifications
+```
+
+### Component Overview
+
+| Component | Purpose |
+|-----------|---------|
+| **nixopus-view** | Next.js web dashboard for managing deployments, files, and terminal sessions |
+| **nixopus-api** | Go backend that handles API requests, GitHub webhooks, and orchestrates all operations |
+| **PostgreSQL** | Stores application data, user accounts, deployment configurations, and audit logs |
+| **Redis** | Manages caching, job queues, and realtime communication channels |
+| **Caddy** | Reverse proxy that handles SSL certificates, routes traffic, and load balances requests |
+| **SuperTokens** | Manages user authentication, sessions, and access tokens |
+| **Docker Engine** | Builds images, runs containers, and manages your deployed applications |
+
+## Quick Start
+
+Install Nixopus on your VPS with a single command:
+
+```bash
+curl -sSL https://install.nixopus.com | bash
+```
+
+::: tip
+See the [Installation Guide](/install/) for detailed options, requirements, and troubleshooting.
+:::
+
+## Current Status
+
+::: warning Alpha Release
+Nixopus is in active development. The platform is functional for development and testing, but not yet recommended for production workloads. Expect frequent updates and occasional breaking changes.
+:::
+
+Report issues and request features on the [GitHub repository](https://github.com/raghavyuva/nixopus/issues).
+
+## Next Steps
+
+- [Installation Guide](/install/) for detailed setup options
+- [Hosting Projects](/self-host/) to deploy your first application
+- [Terminal](/terminal/) for server command execution
+- [File Manager](/file-manager/) to browse and edit files
+- [Notifications](/notifications/) to configure alerts
+
+## About the Name
+
+Nixopus combines "octopus" (representing flexibility and multi-tasking) with the Linux penguin mascot (Tux). The name has no connection to NixOS.
