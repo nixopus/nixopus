@@ -35,7 +35,7 @@ import (
 	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
 	"github.com/raghavyuva/nixopus-api/internal/middleware"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
-	api "github.com/raghavyuva/nixopus-api/internal/version-manager"
+	api "github.com/raghavyuva/nixopus-api/internal/version"
 )
 
 // Router holds the application dependencies for route handlers
@@ -139,10 +139,11 @@ func (router *Router) SetupRoutes() {
 	}
 
 	// Save version documentation
-	docs := api.NewVersionDocumentation()
-	if err := docs.Save("api/versions.json"); err != nil {
-		log.Printf("Warning: Failed to save version documentation: %v", err)
-	}
+	// Commented out - version manager creating version.json every time causing troubles
+	// docs := api.NewVersionDocumentation()
+	// if err := docs.Save("api/versions.json"); err != nil {
+	// 	log.Printf("Warning: Failed to save version documentation: %v", err)
+	// }
 
 	// Initialize notification manager
 	notificationManager := notification.NewNotificationManager(router.app.Store.DB)
@@ -174,7 +175,10 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 	router.RegisterHealthRoutes(healthGroup)
 
 	// Webhook routes
-	deployController := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	deployController, err := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	if err != nil {
+		log.Fatalf("Failed to create deploy controller: %v", err)
+	}
 	webhookGroup := fuego.Group(server, apiV1.Path+"/webhook")
 	fuego.Post(webhookGroup, "", deployController.HandleGithubWebhook)
 
@@ -249,7 +253,10 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterFileManagerRoutes(fileManagerGroup, fileManagerController)
 
 	// Deploy routes
-	deployController := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	deployController, err := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	if err != nil {
+		log.Fatalf("Failed to create deploy controller: %v", err)
+	}
 	deployGroup := fuego.Group(server, apiV1.Path+"/deploy")
 	router.applyMiddleware(deployGroup, MiddlewareConfig{
 		RBAC:         true,
@@ -279,7 +286,10 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterFeatureFlagRoutes(featureFlagReadGroup, featureFlagWriteGroup, featureFlagController)
 
 	// Container routes
-	containerController := container.NewContainerController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	containerController, err := container.NewContainerController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	if err != nil {
+		log.Fatalf("Failed to create container controller: %v", err)
+	}
 	containerGroup := fuego.Group(server, apiV1.Path+"/container")
 	router.applyMiddleware(containerGroup, MiddlewareConfig{
 		RBAC:         true,

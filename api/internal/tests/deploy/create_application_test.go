@@ -13,16 +13,17 @@ import (
 
 func TestCreateApplication(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	testCases := []struct {
 		name           string
-		token          string
+		cookies        string
 		organizationID string
 		request        types.CreateDeploymentRequest
 		expectedStatus int
@@ -30,7 +31,7 @@ func TestCreateApplication(t *testing.T) {
 	}{
 		{
 			name:           "Successfully create application with valid data",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
@@ -52,7 +53,7 @@ func TestCreateApplication(t *testing.T) {
 		},
 		{
 			name:           "Create application without authentication",
-			token:          "",
+			cookies:        "",
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
@@ -67,8 +68,8 @@ func TestCreateApplication(t *testing.T) {
 			description:    "Should return 401 when no authentication token is provided",
 		},
 		{
-			name:           "Create application with invalid token",
-			token:          "invalid-token",
+			name:           "Create application with invalid cookies",
+			cookies:        "invalid-cookies",
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
@@ -84,7 +85,7 @@ func TestCreateApplication(t *testing.T) {
 		},
 		{
 			name:           "Create application without organization header",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "",
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
@@ -100,7 +101,7 @@ func TestCreateApplication(t *testing.T) {
 		},
 		{
 			name:           "Create application with missing name",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Domain:      "test-app.example.com",
@@ -115,7 +116,7 @@ func TestCreateApplication(t *testing.T) {
 		},
 		{
 			name:           "Create application with missing domain",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
@@ -130,7 +131,7 @@ func TestCreateApplication(t *testing.T) {
 		},
 		{
 			name:           "Create application with missing repository",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
@@ -145,7 +146,7 @@ func TestCreateApplication(t *testing.T) {
 		},
 		{
 			name:           "Create application with missing port",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
@@ -160,7 +161,7 @@ func TestCreateApplication(t *testing.T) {
 		},
 		{
 			name:           "Create application with invalid environment",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
@@ -176,7 +177,7 @@ func TestCreateApplication(t *testing.T) {
 		},
 		{
 			name:           "Create application with invalid build pack",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
@@ -200,8 +201,8 @@ func TestCreateApplication(t *testing.T) {
 				Send().Body().JSON(tc.request),
 			}
 
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			if tc.organizationID != "" {

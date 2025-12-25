@@ -16,7 +16,8 @@ type FileManagerService struct {
 }
 
 func NewFileManagerService(ctx context.Context, logger logger.Logger) *FileManagerService {
-	client, err := ssh.NewSSH().Connect()
+	manager := ssh.GetSSHManager()
+	client, err := manager.Connect()
 	if err != nil {
 		fmt.Printf("Failed to create ssh client in file manager")
 		return &FileManagerService{}
