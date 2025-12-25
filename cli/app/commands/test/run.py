@@ -21,7 +21,7 @@ from .messages import (
     failed_to_copy_files,
     failed_to_copy_script,
     failed_to_list_images,
-    lxd_not_available,
+    lxd_command_not_available,
     port_unavailable,
     script_not_found,
     test_failed,
@@ -56,7 +56,7 @@ def copy_installation_script(params: TestParams, workspace_root: Path) -> Tuple[
 def _validate_prerequisites(params: TestParams) -> Tuple[bool, Optional[str]]:
     available, error = check_lxd_available()
     if not available:
-        return False, error or lxd_not_available
+        return False, error or lxd_command_not_available
 
     success, error, images = list_lxd_images(params)
     if not success:
@@ -160,9 +160,10 @@ def run_test(params: TestParams) -> None:
 
         if params.dry_run and params.logger:
             params.logger.info(end_dry_run)
-
-        log_success(test_success, verbose=params.verbose)
-        _log_success_info(params)
+            params.logger.info("Dry run completed - no actions taken")
+        else:
+            log_success(test_success, verbose=params.verbose)
+            _log_success_info(params)
 
     except TimeoutError:
         log_error(test_timed_out.format(timeout=params.timeout), verbose=params.verbose)

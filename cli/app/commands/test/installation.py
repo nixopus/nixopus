@@ -1,5 +1,6 @@
 import sys
 import subprocess
+import shlex
 import threading
 import time
 from pathlib import Path
@@ -19,12 +20,12 @@ from .messages import (
 from .types import TestParams
 
 
-def _build_cli_install_command(params: TestParams, workspace_root: Path) -> str:
+def _build_cli_install_command(params: TestParams) -> str:
     cmd = "/tmp/install.sh"
     if params.repo:
-        cmd += f" --repo {params.repo}"
+        cmd += f" --repo {shlex.quote(params.repo)}"
     if params.branch:
-        cmd += f" --branch {params.branch}"
+        cmd += f" --branch {shlex.quote(params.branch)}"
     cmd += " --skip-nixopus-install"
     return cmd
 
@@ -32,15 +33,15 @@ def _build_cli_install_command(params: TestParams, workspace_root: Path) -> str:
 def _build_nixopus_install_command(params: TestParams) -> str:
     cmd = "nixopus install --verbose"
     if params.repo:
-        cmd += f" --repo {params.repo}"
+        cmd += f" --repo {shlex.quote(params.repo)}"
     if params.branch:
-        cmd += f" --branch {params.branch}"
+        cmd += f" --branch {shlex.quote(params.branch)}"
     return cmd
 
 
 def _build_install_command(params: TestParams, workspace_root: Path) -> str:
     env_vars = "export PYTHONUNBUFFERED=1 TERM=xterm-256color NO_COLOR=1; "
-    cli_cmd = _build_cli_install_command(params, workspace_root)
+    cli_cmd = _build_cli_install_command(params)
     nixopus_cmd = _build_nixopus_install_command(params)
     return f"{env_vars}{cli_cmd} && {nixopus_cmd}"
 
@@ -118,6 +119,7 @@ def _run_non_verbose_installation(
         capture_output=True,
         text=True,
         timeout=params.timeout,
+        check=True,
     )
     return result.returncode, result.stdout + result.stderr
 
@@ -156,7 +158,7 @@ def run_installation_script(params: TestParams) -> Tuple[bool, Optional[str]]:
         install_cmd = _build_install_command(params, workspace_root)
 
         if params.logger:
-            cli_cmd = _build_cli_install_command(params, workspace_root)
+            cli_cmd = _build_cli_install_command(params)
             nixopus_cmd = _build_nixopus_install_command(params)
             params.logger.debug(f"CLI install command: {cli_cmd[:100]}...")
             params.logger.debug(f"Nixopus install command: {nixopus_cmd}")
@@ -178,5 +180,7 @@ def run_installation_script(params: TestParams) -> Tuple[bool, Optional[str]]:
         return False, installation_timed_out.format(timeout=params.timeout)
     except subprocess.CalledProcessError as e:
         error_msg = e.stderr if hasattr(e, 'stderr') and e.stderr else str(e)
-        return False, f"Failed to run installation: {error_msg}"
+        if not error_msg:
+            error_msg = _filter_error_output(e.stdout if hasattr(e, 'stdout') and e.stdout else "")
+        return False, installation_failed.format(exit_code=e.returncode, error=error_msg)
 

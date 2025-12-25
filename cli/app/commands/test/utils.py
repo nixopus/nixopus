@@ -1,8 +1,9 @@
+import shlex
 import subprocess
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
-from .messages import dry_run_would_execute, lxd_not_available, listing_images, port_in_use
+from .messages import dry_run_would_execute, lxd_command_not_available, listing_images, port_in_use
 from .types import TestParams   
 
 def check_lxd_available() -> Tuple[bool, Optional[str]]:
@@ -15,7 +16,7 @@ def check_lxd_available() -> Tuple[bool, Optional[str]]:
         )
         return True, None
     except (subprocess.CalledProcessError, FileNotFoundError):
-        return False, lxd_not_available
+        return False, lxd_command_not_available
 
 
 def list_lxd_images(params: TestParams) -> Tuple[bool, Optional[str], list]:
@@ -70,7 +71,7 @@ def run_subprocess(
     error_prefix: Optional[str] = None,
 ) -> Tuple[bool, Optional[str], Optional[str]]:
     if isinstance(cmd, str):
-        cmd = [cmd]
+        cmd = shlex.split(cmd)
 
     try:
         result = subprocess.run(

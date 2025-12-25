@@ -265,6 +265,7 @@ def preinstall_dependencies(params: TestParams) -> Tuple[bool, Optional[str]]:
     
     full_install_cmd = f"{install_cmd} && {docker_install_cmd}"
 
+    DEPENDENCY_INSTALL_TIMEOUT = 600
     try:
         if params.logger:
             params.logger.debug(f"Installing dependencies: {install_cmd}")
@@ -275,7 +276,7 @@ def preinstall_dependencies(params: TestParams) -> Tuple[bool, Optional[str]]:
             capture_output=True,
             text=True,
             check=False,
-            timeout=600,
+            timeout=DEPENDENCY_INSTALL_TIMEOUT,
         )
         
         if result.returncode != 0:
@@ -287,7 +288,7 @@ def preinstall_dependencies(params: TestParams) -> Tuple[bool, Optional[str]]:
         
         return True, None
     except subprocess.TimeoutExpired:
-        return False, "Timeout installing dependencies (exceeded 120s)"
+        return False, f"Timeout installing dependencies (exceeded {DEPENDENCY_INSTALL_TIMEOUT}s)"
     except Exception as e:
         return False, f"Error installing dependencies: {str(e)}"
 
