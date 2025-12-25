@@ -11,52 +11,53 @@ import (
 
 func TestGetContainer(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	// First, get a container ID from the list
 	var containerID string
 	Test(t,
 		Description("Get container ID for individual container tests"),
 		Get(tests.GetContainersURL()),
-		Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Expect().Status().Equal(http.StatusOK),
-		Store().Response().Body().JSON().JQ(".data[0].id").In(&containerID),
+		Store().Response().Body().JSON().JQ(".data.containers[0].id").In(&containerID),
 	)
 
 	testCases := []struct {
 		name           string
 		containerID    string
-		token          string
+		cookies        string
 		organizationID string
 		expectedStatus int
 		description    string
 	}{
 		{
-			name:           "Successfully fetch container with valid ID and token",
+			name:           "Successfully fetch container with valid ID and cookies",
 			containerID:    containerID,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "Should return container details",
 		},
 		{
-			name:           "Unauthorized request without token",
+			name:           "Unauthorized request without cookies",
 			containerID:    containerID,
-			token:          "",
+			cookies:        "",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when no authentication token is provided",
+			description:    "Should return 401 when no authentication cookies are provided",
 		},
 		{
 			name:           "Request with invalid container ID",
 			containerID:    "invalid-container-id",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusInternalServerError,
 			description:    "Should return 500 when container ID is invalid/doesnt exist",
@@ -64,7 +65,7 @@ func TestGetContainer(t *testing.T) {
 		{
 			name:           "Request with container ID doesnt exist",
 			containerID:    "1234567890123456789012345678901234567890123456789012345678901234",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusInternalServerError,
 			description:    "Should return 500 when container doesnt exist",
@@ -72,7 +73,7 @@ func TestGetContainer(t *testing.T) {
 		{
 			name:           "Request without organization header",
 			containerID:    containerID,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "",
 			expectedStatus: http.StatusBadRequest,
 			description:    "Should return 400 when organization header is missing",
@@ -91,9 +92,9 @@ func TestGetContainer(t *testing.T) {
 				Get(tests.GetContainerURL(tc.containerID)),
 			}
 
-			// Add authentication header if token is provided
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			// Add authentication cookies if provided
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			// Add organization header if provided
@@ -120,22 +121,23 @@ func TestGetContainer(t *testing.T) {
 
 func TestGetContainerDetailedValidation(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	// Get the test container ID specifically
 	var containerID string
 	Test(t,
 		Description("Get test container ID for detailed validation"),
 		Get(tests.GetContainersURL()),
-		Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Expect().Status().Equal(http.StatusOK),
-		Store().Response().Body().JSON().JQ(`.data[] | select(.name == "nixopus-test-db-container") | .id`).In(&containerID),
+		Store().Response().Body().JSON().JQ(`.data.containers[] | select(.name == "nixopus-test-db-container") | .id`).In(&containerID),
 	)
 
 	if containerID == "" {
@@ -146,7 +148,7 @@ func TestGetContainerDetailedValidation(t *testing.T) {
 		Test(t,
 			Description("Should return complete container structure with all expected fields"),
 			Get(tests.GetContainerURL(containerID)),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusOK),
 			Expect().Body().JSON().JQ(".status").Equal("success"),
@@ -176,18 +178,19 @@ func TestGetContainerDetailedValidation(t *testing.T) {
 
 func TestGetContainerErrorScenarios(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	t.Run("Container ID with special characters", func(t *testing.T) {
 		Test(t,
 			Description("Should handle container ID with special characters"),
 			Get(tests.GetContainerURL("container-special")),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusInternalServerError),
 		)
@@ -197,7 +200,7 @@ func TestGetContainerErrorScenarios(t *testing.T) {
 		Test(t,
 			Description("Should handle empty container ID"),
 			Get(tests.GetContainerURL("")),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusNotFound),
 		)
@@ -208,7 +211,7 @@ func TestGetContainerErrorScenarios(t *testing.T) {
 		Test(t,
 			Description("Should handle very long container ID"),
 			Get(tests.GetContainerURL(longID)),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusInternalServerError),
 		)

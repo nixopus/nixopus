@@ -13,17 +13,18 @@ import (
 
 func TestRollbackApplication(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 	testApplicationID := uuid.New()
 
 	testCases := []struct {
 		name           string
-		token          string
+		cookies        string
 		organizationID string
 		request        types.RollbackDeploymentRequest
 		expectedStatus int
@@ -31,27 +32,27 @@ func TestRollbackApplication(t *testing.T) {
 	}{
 		{
 			name:           "Rollback application without authentication",
-			token:          "",
+			cookies:        "",
 			organizationID: orgID,
 			request: types.RollbackDeploymentRequest{
 				ID: testApplicationID,
 			},
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when no authentication token is provided",
+			description:    "Should return 401 when no authentication cookies are provided",
 		},
 		{
-			name:           "Rollback application with invalid token",
-			token:          "invalid-token",
+			name:           "Rollback application with invalid cookies",
+			cookies:        "invalid-cookies",
 			organizationID: orgID,
 			request: types.RollbackDeploymentRequest{
 				ID: testApplicationID,
 			},
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when invalid authentication token is provided",
+			description:    "Should return 401 when invalid authentication cookies are provided",
 		},
 		{
 			name:           "Rollback application without organization header",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "",
 			request: types.RollbackDeploymentRequest{
 				ID: testApplicationID,
@@ -61,7 +62,7 @@ func TestRollbackApplication(t *testing.T) {
 		},
 		{
 			name:           "Rollback application with missing ID",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			request:        types.RollbackDeploymentRequest{},
 			expectedStatus: http.StatusBadRequest,
@@ -69,7 +70,7 @@ func TestRollbackApplication(t *testing.T) {
 		},
 		{
 			name:           "Rollback application that doesn't exist",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			request: types.RollbackDeploymentRequest{
 				ID: testApplicationID,
@@ -87,8 +88,8 @@ func TestRollbackApplication(t *testing.T) {
 				Send().Body().JSON(tc.request),
 			}
 
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			if tc.organizationID != "" {

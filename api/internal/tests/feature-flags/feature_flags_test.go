@@ -11,58 +11,59 @@ import (
 
 func TestGetFeatureFlags(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	testCases := []struct {
 		name           string
-		token          string
+		cookies        string
 		organizationID string
 		expectedStatus int
 		description    string
 	}{
 		{
-			name:           "successfully fetch feature flags with valid token",
-			token:          user.AccessToken,
+			name:           "successfully fetch feature flags with valid cookies",
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "given valid credentials, get all the feature flags for organization",
 		},
 		{
 			name:           "deny unauthorized access",
-			token:          "",
+			cookies:        "",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "return unauthorized error without token",
+			description:    "return unauthorized error without cookies",
 		},
 		{
-			name:           "unauthorized with invalid token",
-			token:          "invalid-token",
+			name:           "unauthorized with invalid cookies",
+			cookies:        "invalid-cookies",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "throw unauthorized error with invalid token or expired",
+			description:    "throw unauthorized error with invalid cookies or expired",
 		},
 		{
 			name:           "request without organization header",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "",
 			expectedStatus: http.StatusBadRequest,
 			description:    "throws error when organization header is missing from request",
 		},
 		{
 			name:           "request with invalid organization ID",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "invalid-org-id",
 			expectedStatus: http.StatusInternalServerError,
 			description:    "throws 500 error when organization ID is invalid format",
 		},
 		{
 			name:           "cross organization access denied",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "123e4567-e89b-12d3-a456-426614174000",
 			expectedStatus: http.StatusForbidden,
 			description:    "should deny access to feature flags from different organization that user is not part of",
@@ -76,8 +77,8 @@ func TestGetFeatureFlags(t *testing.T) {
 				Get(tests.GetFeatureFlagsURL()),
 			}
 
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			if tc.organizationID != "" {
@@ -104,18 +105,19 @@ func TestGetFeatureFlags(t *testing.T) {
 
 func TestUpdateFeatureFlag(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	// First, ensure feature flags exist by fetching them
 	Test(t,
 		Description("Initialize feature flags by fetching them"),
 		Get(tests.GetFeatureFlagsURL()),
-		Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Expect().Status().Equal(http.StatusOK),
 	)
@@ -124,7 +126,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 		name           string
 		featureName    string
 		isEnabled      bool
-		token          string
+		cookies        string
 		organizationID string
 		expectedStatus int
 		description    string
@@ -133,7 +135,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			name:           "sucessfully enable terminal feature flag",
 			featureName:    "terminal",
 			isEnabled:      true,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "should enable terminal feature flag successfully",
@@ -142,7 +144,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			name:           "Successfully disable terminal feature flag",
 			featureName:    "terminal",
 			isEnabled:      false,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "should disable terminal feature flag successfully",
@@ -151,7 +153,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			name:           "update container feature flag",
 			featureName:    "container",
 			isEnabled:      true,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "should update container feature flag successfully",
@@ -160,7 +162,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			name:           "update domain feature flag",
 			featureName:    "domain",
 			isEnabled:      false,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "should update domain feature flag successfully",
@@ -169,7 +171,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			name:           "update file_manager feature flag",
 			featureName:    "file_manager",
 			isEnabled:      true,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "should update file_manager feature flag successfully",
@@ -178,7 +180,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			name:           "update notifications feature flag",
 			featureName:    "notifications",
 			isEnabled:      false,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "should update notifications feature flag successfully",
@@ -187,7 +189,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			name:           "successfully update monitoring feature flag",
 			featureName:    "monitoring",
 			isEnabled:      true,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "updates monitoring feature flag successfully",
@@ -196,7 +198,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			name:           "update github_connector feature flag",
 			featureName:    "github_connector",
 			isEnabled:      false,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "update github_connector feature flag successfully",
@@ -205,7 +207,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			name:           "update audit feature flag",
 			featureName:    "audit",
 			isEnabled:      true,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "update audit feature flag successfully",
@@ -214,34 +216,34 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			name:           "update self_hosted feature flag",
 			featureName:    "self_hosted",
 			isEnabled:      false,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "update self_hosted feature flag successfully",
 		},
 		{
-			name:           "unauthorized request without token",
+			name:           "unauthorized request without cookies",
 			featureName:    "terminal",
 			isEnabled:      true,
-			token:          "",
+			cookies:        "",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "throw 401 when no authentication token is provided",
+			description:    "throw 401 when no authentication cookies are provided",
 		},
 		{
-			name:           "unauthorized request with invalid token",
+			name:           "unauthorized request with invalid cookies",
 			featureName:    "terminal",
 			isEnabled:      true,
-			token:          "invalid-token",
+			cookies:        "invalid-cookies",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "throw 401 when invalid authentication token is provided",
+			description:    "throw 401 when invalid authentication cookies are provided",
 		},
 		{
 			name:           "request without organization header",
 			featureName:    "terminal",
 			isEnabled:      true,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "",
 			expectedStatus: http.StatusBadRequest,
 			description:    "throw 400 when organization header is missing",
@@ -250,7 +252,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			name:           "on update of non-existent feature flag, create new one",
 			featureName:    "non_existent_feature",
 			isEnabled:      true,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "create new feature flag for non-existent feature name",
@@ -259,7 +261,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			name:           "update feature flag with empty name",
 			featureName:    "",
 			isEnabled:      true,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusBadRequest,
 			description:    "throws 400 when feature name is empty",
@@ -268,7 +270,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			name:           "cross-organization update attempt",
 			featureName:    "terminal",
 			isEnabled:      true,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "123e4567-e89b-12d3-a456-426614174000",
 			expectedStatus: http.StatusForbidden,
 			description:    "throw error for updating feature flags from different organization",
@@ -288,8 +290,8 @@ func TestUpdateFeatureFlag(t *testing.T) {
 				Send().Body().JSON(requestBody),
 			}
 
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			if tc.organizationID != "" {
@@ -312,18 +314,19 @@ func TestUpdateFeatureFlag(t *testing.T) {
 
 func TestIsFeatureEnabled(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	// First, ensure feature flags exist and set known states
 	Test(t,
 		Description("Initialize feature flags"),
 		Get(tests.GetFeatureFlagsURL()),
-		Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Expect().Status().Equal(http.StatusOK),
 	)
@@ -332,7 +335,7 @@ func TestIsFeatureEnabled(t *testing.T) {
 	Test(t,
 		Description("enable terminal feature for testing"),
 		Put(tests.GetFeatureFlagsURL()),
-		Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Send().Body().JSON(map[string]interface{}{
 			"feature_name": "terminal",
@@ -345,7 +348,7 @@ func TestIsFeatureEnabled(t *testing.T) {
 	Test(t,
 		Description("disable container feature for testing"),
 		Put(tests.GetFeatureFlagsURL()),
-		Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Send().Body().JSON(map[string]interface{}{
 			"feature_name": "container",
@@ -357,7 +360,7 @@ func TestIsFeatureEnabled(t *testing.T) {
 	testCases := []struct {
 		name           string
 		featureName    string
-		token          string
+		cookies        string
 		organizationID string
 		expectedStatus int
 		expectedResult bool
@@ -366,7 +369,7 @@ func TestIsFeatureEnabled(t *testing.T) {
 		{
 			name:           "Check enabled feature (terminal)",
 			featureName:    "terminal",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			expectedResult: true,
@@ -375,7 +378,7 @@ func TestIsFeatureEnabled(t *testing.T) {
 		{
 			name:           "Check disabled feature (container)",
 			featureName:    "container",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			expectedResult: false,
@@ -384,32 +387,32 @@ func TestIsFeatureEnabled(t *testing.T) {
 		{
 			name:           "Check non-existent feature",
 			featureName:    "non_existent_feature",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK, // API returns default enabled state instead of 404
 			expectedResult: true,          // Default state is enabled
 			description:    "return default enabled state for non-existent feature",
 		},
 		{
-			name:           "Unauthorized request without token",
+			name:           "Unauthorized request without cookies",
 			featureName:    "terminal",
-			token:          "",
+			cookies:        "",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "throw 401 when no authentication token is provided",
+			description:    "throw 401 when no authentication cookies are provided",
 		},
 		{
-			name:           "Unauthorized request with invalid token",
+			name:           "Unauthorized request with invalid cookies",
 			featureName:    "terminal",
-			token:          "invalid-token",
+			cookies:        "invalid-cookies",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "throw 401 when invalid authentication token is provided",
+			description:    "throw 401 when invalid authentication cookies are provided",
 		},
 		{
 			name:           "Request without organization header",
 			featureName:    "terminal",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "",
 			expectedStatus: http.StatusBadRequest,
 			description:    "throw 400 when organization header is missing",
@@ -417,7 +420,7 @@ func TestIsFeatureEnabled(t *testing.T) {
 		{
 			name:           "Check feature with empty name",
 			featureName:    "",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK, // API returns default state instead of 400
 			expectedResult: true,          // Default state when no feature name provided
@@ -426,7 +429,7 @@ func TestIsFeatureEnabled(t *testing.T) {
 		{
 			name:           "Cross-organization feature check",
 			featureName:    "terminal",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "123e4567-e89b-12d3-a456-426614174000",
 			expectedStatus: http.StatusForbidden,
 			description:    "deny checking feature flags from different organization",
@@ -445,8 +448,8 @@ func TestIsFeatureEnabled(t *testing.T) {
 				Get(url),
 			}
 
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			if tc.organizationID != "" {
@@ -469,19 +472,20 @@ func TestIsFeatureEnabled(t *testing.T) {
 
 func TestFeatureFlagsCRUDFlow(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	t.Run("Validate CRUD flow for feature flags", func(t *testing.T) {
 		// Step 1: Get initial feature flags (should create defaults)
 		Test(t,
 			Description("Step 1: Get initial feature flags - should create defaults"),
 			Get(tests.GetFeatureFlagsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusOK),
 			Expect().Body().JSON().JQ(".status").Equal("success"),
@@ -492,7 +496,7 @@ func TestFeatureFlagsCRUDFlow(t *testing.T) {
 		Test(t,
 			Description("Step 2: Check initial state of terminal feature"),
 			Get(tests.GetFeatureFlagCheckURL()+"?feature_name=terminal"),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusOK),
 			Expect().Body().JSON().JQ(".data.is_enabled").Equal(true),
@@ -502,7 +506,7 @@ func TestFeatureFlagsCRUDFlow(t *testing.T) {
 		Test(t,
 			Description("Step 3: Disable terminal feature"),
 			Put(tests.GetFeatureFlagsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(map[string]interface{}{
 				"feature_name": "terminal",
@@ -516,7 +520,7 @@ func TestFeatureFlagsCRUDFlow(t *testing.T) {
 		Test(t,
 			Description("Step 4: Verify terminal feature is now disabled"),
 			Get(tests.GetFeatureFlagCheckURL()+"?feature_name=terminal"),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusOK),
 			Expect().Body().JSON().JQ(".data.is_enabled").Equal(false),
@@ -526,7 +530,7 @@ func TestFeatureFlagsCRUDFlow(t *testing.T) {
 		Test(t,
 			Description("Step 5: Re-enable terminal feature"),
 			Put(tests.GetFeatureFlagsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(map[string]interface{}{
 				"feature_name": "terminal",
@@ -540,7 +544,7 @@ func TestFeatureFlagsCRUDFlow(t *testing.T) {
 		Test(t,
 			Description("Step 6: Verify terminal feature is enabled again"),
 			Get(tests.GetFeatureFlagCheckURL()+"?feature_name=terminal"),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusOK),
 			Expect().Body().JSON().JQ(".data.is_enabled").Equal(true),
@@ -550,7 +554,7 @@ func TestFeatureFlagsCRUDFlow(t *testing.T) {
 		Test(t,
 			Description("Step 7: Get all feature flags and verify terminal state"),
 			Get(tests.GetFeatureFlagsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusOK),
 			Expect().Body().JSON().JQ(".data | map(select(.feature_name == \"terminal\")) | .[0].is_enabled").Equal(true),
@@ -560,19 +564,20 @@ func TestFeatureFlagsCRUDFlow(t *testing.T) {
 
 func TestFeatureFlagPermissions(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	t.Run("Feature flag permissions and organization isolation", func(t *testing.T) {
 		// Initialize feature flags in user's organization
 		Test(t,
 			Description("Initialize feature flags in user's organization"),
 			Get(tests.GetFeatureFlagsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusOK),
 		)
@@ -581,7 +586,7 @@ func TestFeatureFlagPermissions(t *testing.T) {
 		Test(t,
 			Description("deny access to feature flags from different organization"),
 			Get(tests.GetFeatureFlagsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add("123e4567-e89b-12d3-a456-426614174000"),
 			Expect().Status().Equal(http.StatusForbidden),
 		)
@@ -590,7 +595,7 @@ func TestFeatureFlagPermissions(t *testing.T) {
 		Test(t,
 			Description("deny feature flag update from different organization"),
 			Put(tests.GetFeatureFlagsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add("123e4567-e89b-12d3-a456-426614174000"),
 			Send().Body().JSON(map[string]interface{}{
 				"feature_name": "terminal",
@@ -603,7 +608,7 @@ func TestFeatureFlagPermissions(t *testing.T) {
 		Test(t,
 			Description("deny feature flag check from different organization"),
 			Get(tests.GetFeatureFlagCheckURL()+"?feature_name=terminal"),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add("123e4567-e89b-12d3-a456-426614174000"),
 			Expect().Status().Equal(http.StatusForbidden),
 		)
@@ -612,28 +617,29 @@ func TestFeatureFlagPermissions(t *testing.T) {
 
 func TestFeatureFlagErrorHandling(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
-	t.Run("Malformed authorization header", func(t *testing.T) {
+	t.Run("Malformed cookie header", func(t *testing.T) {
 		Test(t,
-			Description("handle malformed authorization header gracefully"),
+			Description("handle malformed cookie header gracefully"),
 			Get(tests.GetFeatureFlagsURL()),
-			Send().Headers("Authorization").Add("InvalidFormat"),
+			Send().Headers("Cookie").Add("InvalidFormat"),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusUnauthorized),
 		)
 	})
 
-	t.Run("Empty authorization header", func(t *testing.T) {
+	t.Run("Empty cookie header", func(t *testing.T) {
 		Test(t,
-			Description("handle empty authorization header"),
+			Description("handle empty cookie header"),
 			Get(tests.GetFeatureFlagsURL()),
-			Send().Headers("Authorization").Add(""),
+			Send().Headers("Cookie").Add(""),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusUnauthorized),
 		)
@@ -643,7 +649,7 @@ func TestFeatureFlagErrorHandling(t *testing.T) {
 		Test(t,
 			Description("handle missing Content-Type header"),
 			Put(tests.GetFeatureFlagsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(map[string]interface{}{
 				"feature_name": "terminal",
@@ -657,7 +663,7 @@ func TestFeatureFlagErrorHandling(t *testing.T) {
 		Test(t,
 			Description("handle invalid JSON payload"),
 			Put(tests.GetFeatureFlagsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().String("{invalid-json}"),
 			Expect().Status().Equal(http.StatusBadRequest),
@@ -673,7 +679,7 @@ func TestFeatureFlagErrorHandling(t *testing.T) {
 		Test(t,
 			Description("handle very long feature names"),
 			Put(tests.GetFeatureFlagsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(map[string]interface{}{
 				"feature_name": longFeatureName,
@@ -687,7 +693,7 @@ func TestFeatureFlagErrorHandling(t *testing.T) {
 		Test(t,
 			Description("handle special characters in feature name"),
 			Put(tests.GetFeatureFlagsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(map[string]interface{}{
 				"feature_name": "feature@#$%^&*()",

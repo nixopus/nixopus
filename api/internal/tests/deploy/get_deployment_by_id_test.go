@@ -11,17 +11,18 @@ import (
 
 func TestGetDeploymentByID(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 	testDeploymentID := "123e4567-e89b-12d3-a456-426614174000"
 
 	testCases := []struct {
 		name           string
-		token          string
+		cookies        string
 		organizationID string
 		deploymentID   string
 		expectedStatus int
@@ -29,23 +30,23 @@ func TestGetDeploymentByID(t *testing.T) {
 	}{
 		{
 			name:           "Get deployment by ID without authentication",
-			token:          "",
+			cookies:        "",
 			organizationID: orgID,
 			deploymentID:   testDeploymentID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when no authentication token is provided",
+			description:    "Should return 401 when no authentication cookies are provided",
 		},
 		{
-			name:           "Get deployment by ID with invalid token",
-			token:          "invalid-token",
+			name:           "Get deployment by ID with invalid cookies",
+			cookies:        "invalid-cookies",
 			organizationID: orgID,
 			deploymentID:   testDeploymentID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when invalid authentication token is provided",
+			description:    "Should return 401 when invalid authentication cookies are provided",
 		},
 		{
 			name:           "Get deployment by ID without organization header",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "",
 			deploymentID:   testDeploymentID,
 			expectedStatus: http.StatusBadRequest,
@@ -53,7 +54,7 @@ func TestGetDeploymentByID(t *testing.T) {
 		},
 		{
 			name:           "Get deployment by ID with invalid deployment ID format",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			deploymentID:   "invalid-uuid",
 			expectedStatus: http.StatusInternalServerError,
@@ -61,7 +62,7 @@ func TestGetDeploymentByID(t *testing.T) {
 		},
 		{
 			name:           "Get deployment by ID that doesn't exist",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			deploymentID:   testDeploymentID,
 			expectedStatus: http.StatusInternalServerError,
@@ -69,7 +70,7 @@ func TestGetDeploymentByID(t *testing.T) {
 		},
 		{
 			name:           "Get deployment by ID with empty deployment ID",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			deploymentID:   "",
 			expectedStatus: http.StatusNotFound,
@@ -91,8 +92,8 @@ func TestGetDeploymentByID(t *testing.T) {
 				Get(url),
 			}
 
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			if tc.organizationID != "" {
@@ -108,19 +109,20 @@ func TestGetDeploymentByID(t *testing.T) {
 
 func TestGetDeploymentByIDSuccess(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 	testDeploymentID := "123e4567-e89b-12d3-a456-426614174000"
 
 	t.Run("Get deployment by valid ID format", func(t *testing.T) {
 		Test(t,
 			Description("Should attempt to fetch deployment with valid UUID format"),
 			Get(tests.GetDeployApplicationDeploymentByIDURL(testDeploymentID)),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-ID").Add(orgID),
 			Expect().Status().OneOf(http.StatusOK, http.StatusInternalServerError), // Either OK if exists or 500 if not
 		)
