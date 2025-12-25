@@ -101,13 +101,16 @@ function DiskMountsTable({ mounts }: { mounts: MountData[] }) {
   ];
 
   return (
-    <DataTable
-      data={mounts}
-      columns={columns}
-      tableClassName="min-w-full overflow-x-hidden"
-      showBorder={false}
-      hoverable={false}
-      striped={false}
-    />
+    <div className="max-h-[300px] overflow-y-auto overflow-x-hidden">
+      <DataTable
+        data={mounts}
+        columns={columns}
+        tableClassName="min-w-full"
+        containerClassName="overflow-x-hidden"
+        showBorder={false}
+        hoverable={false}
+        striped={false}
+      />
+    </div>
   );
 }

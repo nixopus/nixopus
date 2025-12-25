@@ -20,17 +20,22 @@ export interface FormattedLog {
 
 function extractDockerProgress(dataStr: string): FormattedLog['progressInfo'] | undefined {
   try {
-    const lines = dataStr.split(/[\r\n]+/).filter(l => l.trim());
+    const lines = dataStr.split(/[\r\n]+/).filter((l) => l.trim());
     let lastProgress: string | undefined;
     let lastStatus: string | undefined;
-    
+
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i].trim();
       if (!line) continue;
-      
+
       try {
         const parsed = JSON.parse(line);
-        if (parsed.status && (parsed.status.includes('Downloading') || parsed.status.includes('Extracting') || parsed.status.includes('Pulling'))) {
+        if (
+          parsed.status &&
+          (parsed.status.includes('Downloading') ||
+            parsed.status.includes('Extracting') ||
+            parsed.status.includes('Pulling'))
+        ) {
           if (parsed.progress) {
             lastProgress = parsed.progress;
           }
@@ -43,20 +48,23 @@ function extractDockerProgress(dataStr: string): FormattedLog['progressInfo'] | 
         continue;
       }
     }
-    
+
     if (lastProgress || lastStatus) {
-      return { 
-        progress: lastProgress || '', 
-        status: lastStatus || 'Processing' 
+      return {
+        progress: lastProgress || '',
+        status: lastStatus || 'Processing'
       };
     }
-  } catch {
-  }
-  
+  } catch {}
+
   return undefined;
 }
 
-export function formatLog(log: ExtensionLog, isStepCompleted?: boolean, isStepFailed?: boolean): FormattedLog {
+export function formatLog(
+  log: ExtensionLog,
+  isStepCompleted?: boolean,
+  isStepFailed?: boolean
+): FormattedLog {
   const timestamp = new Date(log.created_at).toLocaleTimeString();
   const level = log.level.toUpperCase();
 
@@ -96,15 +104,16 @@ export function formatLog(log: ExtensionLog, isStepCompleted?: boolean, isStepFa
   if (log.data) {
     const dataStr = typeof log.data === 'string' ? log.data : JSON.stringify(log.data);
     const isLargeData = dataStr.length > 5000;
-    const isDockerProgress = typeof log.data === 'string' && 
-      (log.data.includes('{"status":"Downloading"') || 
-       log.data.includes('"status":"Pulling') ||
-       log.data.includes('"status":"Extracting') ||
-       log.data.includes('"status":"Verifying'));
-    
+    const isDockerProgress =
+      typeof log.data === 'string' &&
+      (log.data.includes('{"status":"Downloading"') ||
+        log.data.includes('"status":"Pulling') ||
+        log.data.includes('"status":"Extracting') ||
+        log.data.includes('"status":"Verifying'));
+
     if (isLargeData || isDockerProgress) {
       isVerbose = true;
-      
+
       if (isDockerProgress) {
         progressInfo = extractDockerProgress(dataStr);
       }
@@ -130,31 +139,31 @@ export function formatLogMessage(message: string, data?: unknown): string {
     if (message === 'execution_completed') return 'Execution completed';
     return message;
   }
-  
+
   try {
     const parsed = typeof data === 'string' ? JSON.parse(data) : data;
-    
+
     if (message === 'step_started' && parsed.step_name) {
       const phase = parsed.phase ? ` (${parsed.phase})` : '';
       const order = parsed.order ? ` #${parsed.order}` : '';
       return `Starting: ${parsed.step_name}${phase}${order}`;
     }
-    
+
     if (message === 'step_completed' && parsed.step_name) {
       return `Completed: ${parsed.step_name}`;
     }
-    
+
     if (message === 'step_failed' && parsed.step_name) {
       return `Failed: ${parsed.step_name}`;
     }
-    
+
     if (message.includes('Check') && parsed.output) {
       const output = typeof parsed.output === 'string' ? parsed.output.trim() : '';
       if (output) {
         return `${message}: ${output.split('\n')[0].substring(0, 80)}`;
       }
     }
-    
+
     return message;
   } catch {
     return message;
@@ -163,21 +172,18 @@ export function formatLogMessage(message: string, data?: unknown): string {
 
 export function formatDataPreview(data: unknown): string {
   if (!data) return '';
-  
+
   const dataStr = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
-  
+
   if (dataStr.length > 200) {
     return dataStr.substring(0, 200) + '...';
   }
-  
+
   return dataStr;
 }
 
 export function formatVerboseData(data: unknown): string {
   if (!data) return '';
-  
-  return typeof data === 'string' 
-    ? data 
-    : JSON.stringify(data ?? null, null, 2);
-}
 
+  return typeof data === 'string' ? data : JSON.stringify(data ?? null, null, 2);
+}

@@ -1,0 +1,87 @@
+{
+  "fileManager": {
+    "header": {
+      "title": "ഫയൽ മാനേജർ",
+      "subtitle": "ഫയലുകൾ ഇവിടെ മാനേജ് ചെയ്യുക"
+    },
+    "actions": {
+      "upload": "ഫയൽ അപ്‌ലോഡ്",
+      "createDirectory": "ഡയറക്ടറി സൃഷ്ടിക്കുക",
+      "showHidden": "മറച്ച ഫയലുകൾ കാണിക്കുക",
+      "hideHidden": "മറച്ച ഫയലുകൾ മറയ്ക്കുക",
+      "newFolder": "പുതിയ ഫോൾഡർ {നമ്പർ}",
+      "errors": {
+        "createDirectory": "ഡയറക്ടറി സൃഷ്ടിക്കൽ പരാജയപ്പെട്ടു"
+      }
+    },
+    "sort": {
+      "title": "ക്രമം",
+      "methods": {
+        "name": "പേര്",
+        "updated_at": "അവസാനമായി പുതുക്കിയത്",
+        "created_at": "സൃഷ്ടിച്ചത്",
+        "size": "വലിപ്പം",
+        "file_type": "ടൈപ്പ്"
+      }
+    },
+    "upload": {
+      "title": "ഫയൽ അപ്‌ലോഡ്",
+      "dragDrop": "ഫയലുകൾ ഇവിടെ ഇടുക അല്ലെങ്കിൽ തിരഞ്ഞെടുക്കുക",
+      "errors": {
+        "uploadFailed": "അപ്‌ലോഡ് പരാജയപ്പെട്ടു",
+        "fileTooLarge": "ഫയൽ വലുതാണ്",
+        "invalidType": "ഫയൽ ടൈപ്പ് അസാധുവാണ്"
+      }
+    },
+    "info": {
+      "labels": {
+        "path": "പാത",
+        "size": "വലിപ്പം",
+        "created": "സൃഷ്ടിച്ചത്",
+        "updated": "പുതുക്കിയത്",
+        "type": "ടൈപ്പ്",
+        "hidden": "മറച്ച",
+        "permissions": "അനുമതികൾ"
+      },
+      "calculating": "കണക്കാക്കുന്നു...",
+      "yes": "അതെ",
+      "no": "ഇല്ല"
+    },
+    "item": {
+      "actions": {
+        "info": "വിവരം",
+        "rename": "പുനർനാമം",
+        "copy": "പകർപ്പ്",
+        "move": "മാറ്റുക",
+        "delete": "കഴിവ്",
+        "moveHere": "ഇവിടെ മാറ്റുക",
+        "pasteHere": "ഇവിടെ ഒട്ടിക്കുക"
+      }
+    },
+    "noFiles": "ഫയലുകൾ ഇല്ല",
+    "deleteDialog": {
+      "title": "ഇല്ലാതാക്കൽ സ്ഥിരീകരണം",
+      "descriptionFile": "'{പേര്}' ഇല്ലാതാക്കണോ? ഇത് തിരുത്താനാവില്ല.",
+      "descriptionDirectory": "'{പേര്}' ഡയറക്ടറിയും ഉള്ളടക്കവും ഇല്ലാതാക്കണോ? ഇത് തിരുത്താനാവില്ല.",
+      "confirm": "ഇല്ലാതാക്കുക",
+      "cancel": "റദ്ദാക്കുക"
+    },
+    "contextMenu": {
+      "info": "വിവരം",
+      "rename": "പുനർനാമം",
+      "copy": "പകർപ്പ്",
+      "move": "മാറ്റുക",
+      "share": "പങ്കിടുക",
+      "download": "ഡൗൺലോഡ്",
+      "delete": "ഇല്ലാതാക്കുക",
+      "cancel": "റദ്ദാക്കുക"
+    },
+    "noPermissionCreate": "ഫയലുകൾ സൃഷ്ടിക്കാൻ അനുമതിയില്ല",
+    "noPermissionUpdate": "ഫയലുകൾ പുതുക്കാൻ അനുമതിയില്ല",
+    "copiedToClipboard": "ക്ലിപ്ബോർഡിൽ പകർത്തി",
+    "copySuccess": "ഫയൽ പകർത്തി",
+    "errors": {
+      "fileExists": "ഫയൽ ഇതിനകം ഉണ്ട്"
+    }
+  }
+}

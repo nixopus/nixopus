@@ -1,0 +1,24 @@
+#!/bin/sh
+
+echo "Building API..."
+cd api
+if ! go build -o /tmp/nixopus-api-test .; then
+  echo "ERROR: API build failed"
+  exit 1
+fi
+rm -f /tmp/nixopus-api-test
+cd ..
+
+echo "Building view..."
+(
+  cd view || { echo "ERROR: Cannot enter view directory"; exit 1; }
+  if [ -f yarn.lock ]; then
+    yarn build || { echo "ERROR: View build failed"; exit 1; }
+  elif [ -f package-lock.json ]; then
+    npm run build || { echo "ERROR: View build failed"; exit 1; }
+  else
+    echo "WARNING: No package manager lockfile found in view directory"
+  fi
+) || exit 1
+
+echo "Build verification passed"

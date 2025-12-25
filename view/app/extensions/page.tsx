@@ -38,7 +38,7 @@ export default function ExtensionsPage() {
 
   return (
     <>
-      <PageLayout maxWidth="7xl" padding="md" spacing="lg">
+      <PageLayout maxWidth="full" padding="md" spacing="lg">
         <ExtensionsHero isLoading={isLoading} />
         <ExtensionsHeader
           searchTerm={searchTerm}

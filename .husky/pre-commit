@@ -1,0 +1,73 @@
+# Get list of staged files
+STAGED_GO_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.go$' || true)
+STAGED_VIEW_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(js|jsx|ts|tsx|css|md|json)$' | grep '^view/' || true)
+
+# Format Go files
+if [ -n "$STAGED_GO_FILES" ]; then
+  echo "Formatting Go files..."
+  cd api
+  for file in $STAGED_GO_FILES; do
+    # Remove 'api/' prefix since we're already in api directory
+    rel_file="${file#api/}"
+    if [ -f "$rel_file" ]; then
+      if ! go fmt "$rel_file"; then
+        echo "ERROR: Go formatting failed for $file"
+        exit 1
+      fi
+      if command -v goimports >/dev/null 2>&1; then
+        if ! goimports -w "$rel_file"; then
+          echo "ERROR: goimports failed for $file"
+          exit 1
+        fi
+      fi
+    fi
+  done
+  if ! command -v goimports >/dev/null 2>&1; then
+    echo "WARNING: goimports not found. Install with: go install golang.org/x/tools/cmd/goimports@latest"
+  fi
+  cd ..
+  # Re-stage formatted files (only non-ignored files)
+  echo "$STAGED_GO_FILES" | while read -r file; do
+    if git check-ignore -q "$file"; then
+      echo "WARNING: Skipping ignored file: $file"
+    else
+      git add "$file" 2>/dev/null || true
+    fi
+  done
+fi
+
+# Format view files (TypeScript/JavaScript/CSS/Markdown/JSON)
+if [ -n "$STAGED_VIEW_FILES" ]; then
+  echo "Formatting view files..."
+  cd view
+  if [ -f yarn.lock ] || [ -f package-lock.json ]; then
+    # Format only staged files to avoid formatting ignored files
+    FORMAT_FILES=""
+    for file in $STAGED_VIEW_FILES; do
+      # Remove 'view/' prefix since we're already in view directory
+      rel_file="${file#view/}"
+      if [ -f "$rel_file" ] && ! git -C .. check-ignore -q "$file" 2>/dev/null; then
+        FORMAT_FILES="$FORMAT_FILES $rel_file"
+      fi
+    done
+    if [ -n "$FORMAT_FILES" ]; then
+      if ! (yarn prettier --write --config .prettierrc $FORMAT_FILES 2>/dev/null || npx prettier --write --config .prettierrc $FORMAT_FILES 2>/dev/null); then
+        echo "ERROR: Prettier formatting failed"
+        exit 1
+      fi
+    fi
+  else
+    echo "WARNING: No package manager lockfile found in view directory"
+  fi
+  cd ..
+  # Re-stage formatted files (only non-ignored files)
+  echo "$STAGED_VIEW_FILES" | while read -r file; do
+    if git check-ignore -q "$file" 2>/dev/null; then
+      echo "WARNING: Skipping ignored file: $file"
+    else
+      git add "$file" 2>/dev/null || true
+    fi
+  done
+fi
+
+echo "Pre-commit checks passed"

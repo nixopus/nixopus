@@ -1,0 +1,135 @@
+metadata:
+  id: "deploy-jackett"
+  name: "Jackett"
+  description: "Jackett works as a proxy server: it translates queries from apps (Sonarr, SickRage, CouchPotato, Mylar, etc) into tracker-site-specific http queries, parses the html response, then sends results back to the requesting software. This allows for getting recent uploads (like RSS) and performing searches. Uses jackett image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "🔍"
+  category: "Media"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Jackett"
+    default: "lscr.io/linuxserver/jackett"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Jackett container"
+    default: "jackett"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port for Jackett web UI"
+    default: 9117
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Jackett web UI"
+    default: 9117
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Jackett configuration files"
+    default: "jackett-config"
+    is_required: true
+
+  downloads_volume_name:
+    type: "string"
+    description: "Named Docker volume for torrent blackhole downloads (optional)"
+    default: ""
+    is_required: false
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  auto_update:
+    type: "string"
+    description: "Allow Jackett to update inside of the container (true or false, default true)"
+    default: "true"
+    is_required: false
+
+  run_opts:
+    type: "string"
+    description: "Optionally specify additional arguments to be passed to Jackett"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Jackett web UI (optional, recommended for internet access)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing Jackett container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull Jackett image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Jackett container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+          - "{{ downloads_volume_name }}:/downloads"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          AUTO_UPDATE: "{{ auto_update }}"
+          RUN_OPTS: "{{ run_opts }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+    - name: "Add proxy for Jackett web UI"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
+

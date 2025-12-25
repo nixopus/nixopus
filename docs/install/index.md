@@ -4,51 +4,69 @@ Welcome to the Nixopus installation guide. This section will help you set up Nix
 
 ## Prerequisites
 
-- **VPS with sudo access**
-- **Nixopus CLI installed** (see [CLI Installation Guide](../cli/installation.md))
+Before you begin, ensure you have:
 
-## Quick Installation
+::: info Prerequisites Checklist
 
-### Step 1: Install the Nixopus CLI
+- **VPS with sudo access** - Required for system-level installation
+- **Internet connection** - For downloading dependencies and updates
+:::
 
-First, install the Nixopus CLI tool:
+## System Requirements
 
-```bash
-curl -sSL https://install.nixopus.com | bash -s -- --skip-nixopus-install
-```
+Make sure your system meets these requirements:
 
-### Step 2: Install Nixopus on your VPS
+| Requirement | Minimum | Recommended (Production) |
+|-------------|---------|--------------------------|
+| **Operating System** | Linux (Ubuntu 20.04+, Debian 11+), macOS (CLI only) | Same |
+| **CPU** | 2 cores | 4+ cores |
+| **RAM** | 2GB | 4GB+ |
+| **Storage** | 5GB free | 10GB+ free |
+| **Network** | Internet connection | Stable connection |
 
-Once the CLI is installed, you can install Nixopus on your VPS:
+::: info What the Script Does
+This single command will:
 
-```bash
-nixopus install
-```
+1. **Detect** your system architecture and operating system
+2. **Download and install** the appropriate Nixopus CLI package
+3. **Automatically run** `nixopus install` to set up Nixopus on your server
+:::
 
-## Installation Options
+## Generate your installation command
 
-You can customize your installation by providing the following optional parameters:
+Customize your installation with optional flags and configurations provided below and ensure there are not validation errors previewed before copying.
 
-- `--api-domain` or `-ad`: Specify the domain where the Nixopus API will be accessible (e.g., `nixopusapi.example.tld`)
-- `--view-domain` or `-vd`: Specify the domain where the Nixopus app will be accessible (e.g., `nixopus.example.tld`)
-- `--verbose` or `-v`: Show more details while installing
-- `--timeout` or `-t`: Set timeout for each step (default: 300 seconds)
-- `--force` or `-f`: Replace files if they already exist
-- `--dry-run` or `-d`: See what would happen without making changes
-- `--config-file` or `-c`: Path to custom config file (defaults to built-in [`config.prod.yaml`](https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/helpers/config.prod.yaml))
-
-Example with optional parameters:
-
-```bash
-nixopus install \
-  --api-domain nixopusapi.example.tld \
-  --view-domain nixopus.example.tld \
-  --verbose \
-  --timeout 600
-```
+<InstallGenerator />
 
 ## Accessing Nixopus
 
-After successful installation, you can access the Nixopus dashboard by visiting the URL you specified in the `--app-domain` parameter (e.g., `https://nixopus.example.tld`). Use the email and password you provided during installation to log in.
+After successful installation, access your Nixopus instance:
 
-> **Note**: The installation script has not been tested in all distributions and different operating systems. If you encounter any issues during installation, please create an issue on our [GitHub repository](https://github.com/raghavyuva/nixopus/issues) with details about your environment and the error message you received.
+::: info Access URLs
+**With Domain Configuration:**
+
+- Frontend: `https://your-view-domain.com` (e.g., `https://nixopus.example.com`)
+- API: `https://your-api-domain.com` (e.g., `https://api.example.com`)
+
+**With IP Configuration:**
+
+- Frontend: `http://YOUR_IP:PORT` (e.g., `http://192.168.1.100:80`)
+- API: `http://YOUR_IP:API_PORT` (e.g., `http://192.168.1.100:8443`)
+:::
+
+## Troubleshooting
+
+If you encounter issues during installation:
+
+::: warning Installation Issues
+The installation script has not been tested in all distributions and operating systems. If you encounter any issues:
+
+1. **Check the logs**: Use `--verbose` flag to see detailed error messages
+2. **Verify prerequisites**: Ensure your system meets all requirements
+3. **Check ports**: Make sure required ports are available
+4. **Report issues**: Create an issue on our [GitHub repository](https://github.com/raghavyuva/nixopus/issues) with:
+   - Your operating system and version
+   - Installation command used
+   - Full error message/output
+   - System requirements (CPU, RAM, storage)
+:::

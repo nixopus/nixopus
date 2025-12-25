@@ -1,9 +1,7 @@
 import { useAppSelector } from '@/redux/hooks';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/use-translation';
 import { toast } from 'sonner';
-import { TabsContent } from '@/components/ui/tabs';
 import {
   useGetAllFeatureFlagsQuery,
   useUpdateFeatureFlagMutation
@@ -65,6 +63,12 @@ export default function FeatureFlagsSettings() {
     if (!featureFlags) return [];
 
     return featureFlags.filter((feature) => {
+      // Exclude domain and notifications features for now
+      // TODO: Add them back later when we have them implemented
+      if (feature.feature_name === 'domain' || feature.feature_name === 'notifications') {
+        return false;
+      }
+
       const matchesSearch =
         feature.feature_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t(`settings.featureFlags.features.${feature.feature_name}.title` as any)
@@ -105,103 +109,97 @@ export default function FeatureFlagsSettings() {
 
   if (isLoading) {
     return (
-      <TabsContent value="feature-flags" className="space-y-6 mt-4">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              <TypographyH3>{t('settings.featureFlags.title')}</TypographyH3>
-            </div>
-            <TypographyMuted>{t('settings.featureFlags.description')}</TypographyMuted>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-4 bg-muted rounded w-1/4 mb-2"></div>
-                  <div className="space-y-2">
-                    {[1, 2].map((j) => (
-                      <div
-                        key={j}
-                        className="flex items-center justify-between p-4 border rounded-lg"
-                      >
-                        <div className="space-y-2">
-                          <div className="h-4 bg-muted rounded w-32"></div>
-                          <div className="h-3 bg-muted rounded w-48"></div>
-                        </div>
-                        <div className="h-6 w-11 bg-muted rounded-full"></div>
+      <div className="space-y-6">
+        <div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-4 bg-muted rounded w-1/4 mb-2"></div>
+                <div className="space-y-2">
+                  {[1, 2].map((j) => (
+                    <div
+                      key={j}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
+                      <div className="space-y-2">
+                        <div className="h-4 bg-muted rounded w-32"></div>
+                        <div className="h-3 bg-muted rounded w-48"></div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="h-6 w-11 bg-muted rounded-full"></div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
     <RBACGuard resource="feature-flags" action="read">
-      <TabsContent value="feature-flags" className="space-y-6 mt-4">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TypographyH3>{t('settings.featureFlags.title')}</TypographyH3>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3" />
-                  {enabledFeatures}
-                </Badge>
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <XCircle className="h-3 w-3" />
-                  {disabledFeatures}
-                </Badge>
+      <div className="flex flex-col h-full">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <TypographyH3 className="text-lg font-semibold">
+              {t('settings.featureFlags.title')}
+            </TypographyH3>
+            <TypographyMuted className="text-xs mt-1">
+              {t('settings.featureFlags.description')}
+            </TypographyMuted>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              {enabledFeatures}
+            </Badge>
+            <Badge variant="outline" className="flex items-center gap-1">
+              <XCircle className="h-3 w-3" />
+              {disabledFeatures}
+            </Badge>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t('settings.featureFlags.searchPlaceholder')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1">
+                {(['all', 'enabled', 'disabled'] as const).map((filter) => (
+                  <Button
+                    key={filter}
+                    variant={filterEnabled === filter ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilterEnabled(filter)}
+                  >
+                    {t(`settings.featureFlags.filters.${filter}`)}
+                  </Button>
+                ))}
               </div>
             </div>
-            <TypographyMuted>{t('settings.featureFlags.description')}</TypographyMuted>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t('settings.featureFlags.searchPlaceholder')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  {(['all', 'enabled', 'disabled'] as const).map((filter) => (
-                    <Button
-                      key={filter}
-                      variant={filterEnabled === filter ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setFilterEnabled(filter)}
-                    >
-                      {t(`settings.featureFlags.filters.${filter}`)}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </div>
+          </div>
 
-            {groupedFeatures.size === 0 ? (
-              <Alert>
-                <Search className="h-4 w-4" />
-                <AlertDescription>
-                  {searchTerm || filterEnabled !== 'all'
-                    ? t('settings.featureFlags.noResults')
-                    : t('settings.featureFlags.noFeatures')}
-                </AlertDescription>
-              </Alert>
-            ) : (
-              Array.from(groupedFeatures.entries()).map(([group, features], index) => {
+          {groupedFeatures.size === 0 ? (
+            <Alert>
+              <Search className="h-4 w-4" />
+              <AlertDescription>
+                {searchTerm || filterEnabled !== 'all'
+                  ? t('settings.featureFlags.noResults')
+                  : t('settings.featureFlags.noFeatures')}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            Array.from(groupedFeatures.entries())
+              .filter(([group]) => group !== 'notifications')
+              .map(([group, features], index) => {
                 const GroupIcon = getGroupIcon(group);
                 const enabledInGroup = features.filter((f) => f.is_enabled).length;
 
@@ -222,7 +220,7 @@ export default function FeatureFlagsSettings() {
                       {features?.map((feature) => (
                         <div
                           key={feature.feature_name}
-                          className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${'bg-muted/30 border-border'}`}
+                          className="flex items-center justify-between p-4 rounded-md bg-muted/30 transition-colors hover:bg-muted/50"
                         >
                           <div className="space-y-1 flex-1">
                             <div className="flex items-center gap-2">
@@ -249,14 +247,12 @@ export default function FeatureFlagsSettings() {
                         </div>
                       ))}
                     </div>
-                    {index !== groupedFeatures.size - 1 && <Separator />}
                   </div>
                 );
               })
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
+          )}
+        </div>
+      </div>
     </RBACGuard>
   );
 }

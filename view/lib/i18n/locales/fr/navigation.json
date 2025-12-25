@@ -1,0 +1,15 @@
+{
+  "navigation": {
+    "dashboard": "Tableau de Bord",
+    "selfHost": "Auto-hébergé",
+    "fileManager": "Gestionnaire de Fichiers",
+    "extensions": "Extensions",
+    "settings": "Paramètres",
+    "general": "Général",
+    "notifications": "Notifications",
+    "team": "Équipe",
+    "domains": "Domaines",
+    "update": "Mettre à jour",
+    "containers": "Conteneurs"
+  }
+}

@@ -8,11 +8,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *DeployController) HandleRestart(f fuego.ContextWithBody[types.RestartDeploymentRequest]) (*shared_types.Response, error) {
+func (c *DeployController) HandleRestart(f fuego.ContextWithBody[types.RestartDeploymentRequest]) (*types.MessageResponse, error) {
 	c.logger.Log(logger.Info, "starting application restart process", "")
 
 	data, err := f.Body()
@@ -70,9 +69,8 @@ func (c *DeployController) HandleRestart(f fuego.ContextWithBody[types.RestartDe
 	}
 
 	c.logger.Log(logger.Info, "application restarted successfully", "id: "+data.ID.String())
-	return &shared_types.Response{
+	return &types.MessageResponse{
 		Status:  "success",
 		Message: "Application restarted successfully",
-		Data:    nil,
 	}, nil
 }

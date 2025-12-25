@@ -1,3 +1,540 @@
+# [0.1.0-alpha.106](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.105...v0.1.0-alpha.106) (2025-12-24)
+
+
+### Bug Fixes
+
+* run deps installation in sequence to avoid package manager locks ([#785](https://github.com/raghavyuva/nixopus/issues/785)) ([2c7e027](https://github.com/raghavyuva/nixopus/commit/2c7e027fd3a1d9acbbfcd028e1e2b3fa9a178ea4))
+
+
+
+# [0.1.0-alpha.105](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.104...v0.1.0-alpha.105) (2025-12-24)
+
+
+### Bug Fixes
+
+* downgrade cli runner distribution to ubuntu20.04  version ([#783](https://github.com/raghavyuva/nixopus/issues/783)) ([0469877](https://github.com/raghavyuva/nixopus/commit/0469877aadec172124bd284a13513784174da497))
+
+
+
+# [0.1.0-alpha.104](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.103...v0.1.0-alpha.104) (2025-12-23)
+
+
+### Bug Fixes
+
+* container endpoints to support typed responses ([88f088e](https://github.com/raghavyuva/nixopus/commit/88f088ebc79384acbfe56380c6e8fe8061768a67))
+* response types for deploy endpoints ([4355616](https://github.com/raghavyuva/nixopus/commit/4355616e10d77307f283b557583e899312f8474b))
+* swagger rendering for audit routes ([135ff82](https://github.com/raghavyuva/nixopus/commit/135ff8244d1fae93a03d424f56d17849d4527824))
+* swagger response types for auth routes ([42028df](https://github.com/raghavyuva/nixopus/commit/42028dfff43d8f681f1ca818ff83d3bb34425f84))
+* update extensions API to handle typed responses ([cced47e](https://github.com/raghavyuva/nixopus/commit/cced47ec7499d6168550ff660d7bc4a4ef4ee47d))
+
+
+### Features
+
+* add typed responses for domain controllers ([3fad760](https://github.com/raghavyuva/nixopus/commit/3fad7601f6abb60c786475583184f8513f0edb96))
+* add typed responses for extension controllers ([99baefd](https://github.com/raghavyuva/nixopus/commit/99baefdebfeaf93fd893fab2694d22e79d4df722))
+* add typed responses for feature-flags controllers ([7ab83aa](https://github.com/raghavyuva/nixopus/commit/7ab83aa652c284da9821bf0273aeb39e2a00a06c))
+* add typed responses for file-manager controllers ([3215c5e](https://github.com/raghavyuva/nixopus/commit/3215c5e4f6cec37c4a749ff73f84bcee302b3f49))
+* add typed responses for github-connector controllers ([166af9f](https://github.com/raghavyuva/nixopus/commit/166af9f52b7b1d2c1455881f5fd0c4f0632006b7))
+* add typed responses for health controller ([de25636](https://github.com/raghavyuva/nixopus/commit/de256365ad1e976e30c4f2d634ac3ce3ef6f7df5))
+* add typed responses for notification controllers ([6a57c03](https://github.com/raghavyuva/nixopus/commit/6a57c0317965411e3f8c52dd241388aec437b6d9))
+* add typed responses for organization controllers ([3353966](https://github.com/raghavyuva/nixopus/commit/33539669fb49f466856c8d6293923a70d81de0be))
+* add typed responses for user controllers ([71fea11](https://github.com/raghavyuva/nixopus/commit/71fea1149a58d168756af65eadbd35d130fa6e3c))
+
+
+
+# [0.1.0-alpha.103](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.102...v0.1.0-alpha.103) (2025-12-23)
+
+
+### Features
+
+* add server side search for GitHub repositories across all pages ([#768](https://github.com/raghavyuva/nixopus/issues/768)) ([d080296](https://github.com/raghavyuva/nixopus/commit/d0802969aa00c401bd8912c0ff723af6f8cbe5e6))
+* nixopus version display in footer and update on dashboard load ([#766](https://github.com/raghavyuva/nixopus/issues/766)) ([b752f8f](https://github.com/raghavyuva/nixopus/commit/b752f8ff54ff409b2d8ad7b5b26e6be77673436f))
+
+
+
+# [0.1.0-alpha.102](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.101...v0.1.0-alpha.102) (2025-12-21)
+
+
+### Bug Fixes
+
+* close settings modal on logout ([#758](https://github.com/raghavyuva/nixopus/issues/758)) ([9d7ce4a](https://github.com/raghavyuva/nixopus/commit/9d7ce4a528171161853b7fa11f3921286a1ea102))
+* close settings modal on logout ([#758](https://github.com/raghavyuva/nixopus/issues/758)) ([7a866a1](https://github.com/raghavyuva/nixopus/commit/7a866a14b07a984ebe6f60b1d793690290ae2040))
+* feature flags settings not scrollable ([#729](https://github.com/raghavyuva/nixopus/issues/729)) ([8b195bf](https://github.com/raghavyuva/nixopus/commit/8b195bfa1dd026d7d308ca5f8e8ab8cf4fa8ad29))
+* feature flags settings not scrollable ([#729](https://github.com/raghavyuva/nixopus/issues/729)) ([ed5b42d](https://github.com/raghavyuva/nixopus/commit/ed5b42d55c7e0205c9e29a00dce7dea3bf5090d5))
+* linters in github connector test files ([#732](https://github.com/raghavyuva/nixopus/issues/732)) ([b0f9529](https://github.com/raghavyuva/nixopus/commit/b0f9529016755931b957e759ca71cdf03fe317b2))
+* linters in github connector test files ([#732](https://github.com/raghavyuva/nixopus/issues/732)) ([c0903d6](https://github.com/raghavyuva/nixopus/commit/c0903d615e9adcc70f5392b0809fce8d96d57776))
+* resolve HIGH severity vulnerabilities in jws (CVE-2025-65945) and next (GHSA-mwv6-3258-q52c) ([25b6b6c](https://github.com/raghavyuva/nixopus/commit/25b6b6cdf63e3d4e11db837a6a94c40dce2ab4e6))
+* resolve HIGH severity vulnerabilities in jws (CVE-2025-65945) and next (GHSA-mwv6-3258-q52c) ([feb8b4b](https://github.com/raghavyuva/nixopus/commit/feb8b4b082a1d9a2720ad886d148b9538c2677b7))
+* security issues and dep warnings in view ([#737](https://github.com/raghavyuva/nixopus/issues/737)) ([dfb7e98](https://github.com/raghavyuva/nixopus/commit/dfb7e986b259209058523c114ddacfe5ad32be13))
+* security issues and dep warnings in view ([#737](https://github.com/raghavyuva/nixopus/issues/737)) ([f808dd6](https://github.com/raghavyuva/nixopus/commit/f808dd67a7407f1958d97e2348d98072130f5356))
+
+
+### Features
+
+* add labels to projects ([#366](https://github.com/raghavyuva/nixopus/issues/366)) ([6d6e1ac](https://github.com/raghavyuva/nixopus/commit/6d6e1acf4475ce7c0a24a04e49a83cda246dd06c))
+* add labels to projects ([#366](https://github.com/raghavyuva/nixopus/issues/366)) ([adf0bc9](https://github.com/raghavyuva/nixopus/commit/adf0bc9b13b3359a5f55505754a852e12ad0d775))
+* add support for admin registration during installation ([#754](https://github.com/raghavyuva/nixopus/issues/754)) ([466b807](https://github.com/raghavyuva/nixopus/commit/466b80758343edf25676d766ca02b82f8c9adcfb))
+* add support for copy and export of logs ([#755](https://github.com/raghavyuva/nixopus/issues/755)) ([0c13a48](https://github.com/raghavyuva/nixopus/commit/0c13a48d1d1eb2c9c083f5e48e374b976a1f4972))
+* add support for copy and export of logs ([#755](https://github.com/raghavyuva/nixopus/issues/755)) ([88867e0](https://github.com/raghavyuva/nixopus/commit/88867e01f6711ceb7d77de3c17e0008c6b066a2d))
+* add support for pasting multiple env vars during deployment and configurations ([#749](https://github.com/raghavyuva/nixopus/issues/749)) ([06f8eaf](https://github.com/raghavyuva/nixopus/commit/06f8eafff345a7086843974e008971748eafa642))
+* add support for pasting multiple env vars during deployment and configurations ([#749](https://github.com/raghavyuva/nixopus/issues/749)) ([6196515](https://github.com/raghavyuva/nixopus/commit/61965153202ea7eb56bd50afacaa179f98c215a5))
+* add support for rollback of installtion if something breaks midway ([#752](https://github.com/raghavyuva/nixopus/issues/752)) ([3edf9b4](https://github.com/raghavyuva/nixopus/commit/3edf9b40eae1dfb6ca58e9d24d34af7b0e779ce9))
+* add support for staging workflow value ([2a341b1](https://github.com/raghavyuva/nixopus/commit/2a341b1f26dfc31a77bf102712b509cc5de84743))
+* adds a healthcheck mechansim for services during install ([#751](https://github.com/raghavyuva/nixopus/issues/751)) ([01c2868](https://github.com/raghavyuva/nixopus/commit/01c28683eb8e4099952ce16a0440bde9f0b7036d))
+* command generator for  `nixopus install` ([#762](https://github.com/raghavyuva/nixopus/issues/762)) ([e63211a](https://github.com/raghavyuva/nixopus/commit/e63211a2465c1e32f9c5c8113dbdc70f3b1cf190))
+* interactively ask for force installation if nixopus-home dir exists ([1a152fd](https://github.com/raghavyuva/nixopus/commit/1a152fd633d4a3c217c2baffd8c7aa37435a3328))
+* README with Trendshift badge ([#756](https://github.com/raghavyuva/nixopus/issues/756)) ([e891479](https://github.com/raghavyuva/nixopus/commit/e891479d0707a4bca9ed7dd1061b79246f54f7a0))
+
+
+
+# [0.1.0-alpha.101](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.100...v0.1.0-alpha.101) (2025-12-20)
+
+
+### Features
+
+* README with Trendshift badge ([#756](https://github.com/raghavyuva/nixopus/issues/756)) ([a16107e](https://github.com/raghavyuva/nixopus/commit/a16107e4f59272cffedf7028b5890c71212ddf15))
+
+
+
+# [0.1.0-alpha.100](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.99...v0.1.0-alpha.100) (2025-12-18)
+
+
+### Bug Fixes
+
+* **cli:** bump version from 0.1.36 to 0.1.37 ([#744](https://github.com/raghavyuva/nixopus/issues/744)) ([9957e43](https://github.com/raghavyuva/nixopus/commit/9957e4356bb9d3cf4b79e4914bff861812293d97))
+
+
+
+# [0.1.0-alpha.99](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.98...v0.1.0-alpha.99) (2025-12-18)
+
+
+### Bug Fixes
+
+* redis url construction ([#743](https://github.com/raghavyuva/nixopus/issues/743)) ([e29e4e9](https://github.com/raghavyuva/nixopus/commit/e29e4e9aa7eb8e674b6d66c2a2b9e3213601616f))
+
+
+
+# [0.1.0-alpha.98](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.97...v0.1.0-alpha.98) (2025-12-18)
+
+
+### Bug Fixes
+
+* add missing import time in main.go ([#741](https://github.com/raghavyuva/nixopus/issues/741)) ([20bef61](https://github.com/raghavyuva/nixopus/commit/20bef61d8f5252da9bca5c93cd14f828ead965f5))
+
+
+
+# [0.1.0-alpha.97](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.96...v0.1.0-alpha.97) (2025-12-18)
+
+
+### Bug Fixes
+
+* fatal error on redis conn failure in prod ([#730](https://github.com/raghavyuva/nixopus/issues/730)) ([03a2ce8](https://github.com/raghavyuva/nixopus/commit/03a2ce8f5df135177e21460a2ee8604d37487bb4))
+
+
+
+# [0.1.0-alpha.96](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.95...v0.1.0-alpha.96) (2025-12-15)
+
+
+### Bug Fixes
+
+* supertokens port bindings ([153f23d](https://github.com/raghavyuva/nixopus/commit/153f23de60d6dd12ef5d1e85d3aa0cfe7fc95897))
+
+
+
+# [0.1.0-alpha.95](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.94...v0.1.0-alpha.95) (2025-12-15)
+
+
+### Features
+
+* support for split terminal ui ([#652](https://github.com/raghavyuva/nixopus/issues/652)) ([a6042f5](https://github.com/raghavyuva/nixopus/commit/a6042f56d8788bd960d8f3ef50bf923bd5920514))
+
+
+
+# [0.1.0-alpha.94](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.93...v0.1.0-alpha.94) (2025-12-15)
+
+
+### Performance Improvements
+
+* security hardening for production compose files ([cb765ed](https://github.com/raghavyuva/nixopus/commit/cb765ed14ba7fee63ae641b15c3818e590ce2810))
+
+
+
+# [0.1.0-alpha.93](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.92...v0.1.0-alpha.93) (2025-12-13)
+
+
+### Bug Fixes
+
+* keyboard shortcuts to be in full width instead of grid ([9856a79](https://github.com/raghavyuva/nixopus/commit/9856a791ea2c35491c65803eb09173ead8a79e1f))
+
+
+
+# [0.1.0-alpha.92](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.91...v0.1.0-alpha.92) (2025-12-13)
+
+
+### Bug Fixes
+
+* build errors ([dbea6ba](https://github.com/raghavyuva/nixopus/commit/dbea6bab9ff2999939797b3204d79f6233696ce3))
+* remove settings icon from sidebar ([141ef3b](https://github.com/raghavyuva/nixopus/commit/141ef3b097b2a21e2ec5b1a4cc96f8feb7c23e28))
+
+
+
+# [0.1.0-alpha.91](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.90...v0.1.0-alpha.91) (2025-12-13)
+
+
+### Bug Fixes
+
+* resolve terminal unsync issues with frame processing & state preservation ([#680](https://github.com/raghavyuva/nixopus/issues/680)) ([0c7d68b](https://github.com/raghavyuva/nixopus/commit/0c7d68ba054abf231c55fef7545f52393e378f58))
+
+
+
+# [0.1.0-alpha.90](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.89...v0.1.0-alpha.90) (2025-12-12)
+
+
+### Features
+
+* add support for parallel execution of arm64 and amd architecture ([#704](https://github.com/raghavyuva/nixopus/issues/704)) ([bcc080d](https://github.com/raghavyuva/nixopus/commit/bcc080dbae2f6128ed4538cee4958b0f7b93b34e))
+
+
+
+# [0.1.0-alpha.89](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.88...v0.1.0-alpha.89) (2025-12-12)
+
+
+### Bug Fixes
+
+* apply security patches from nextjs to prevent recent malware attack ([2b0a90f](https://github.com/raghavyuva/nixopus/commit/2b0a90fa176f6990efde5751faa57dd9ac53d7f3))
+
+
+### Features
+
+* docker compose dev file to only include dependencies ([6a23edc](https://github.com/raghavyuva/nixopus/commit/6a23edc1ce83c88cfcb21e8bafdc9c4d3387bb97))
+
+
+
+# [0.1.0-alpha.88](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.87...v0.1.0-alpha.88) (2025-12-12)
+
+
+### Bug Fixes
+
+* split locales into multiple chunks based on domain ([#702](https://github.com/raghavyuva/nixopus/issues/702)) ([42ae8e4](https://github.com/raghavyuva/nixopus/commit/42ae8e4938582a2366dc49de8dbb80858c151e36))
+
+
+
+# [0.1.0-alpha.87](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.86...v0.1.0-alpha.87) (2025-12-11)
+
+
+### Performance Improvements
+
+* improve terminal ux and performance ([2797286](https://github.com/raghavyuva/nixopus/commit/2797286585803c3d2ff440dec31dcc136868cac9))
+
+
+
+# [0.1.0-alpha.86](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.85...v0.1.0-alpha.86) (2025-12-10)
+
+
+### Features
+
+* add support for deployment logs table with improved styling and performance ([508207d](https://github.com/raghavyuva/nixopus/commit/508207d7fd7a2972ab05b65c754c5a30d6749305))
+* improvise container listing and details page ([8c22094](https://github.com/raghavyuva/nixopus/commit/8c22094a1c22cb4405126db8590a1fb2f2060822))
+
+
+
+# [0.1.0-alpha.85](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.84...v0.1.0-alpha.85) (2025-12-10)
+
+
+### Bug Fixes
+
+* disable security tab from settings ([11da19b](https://github.com/raghavyuva/nixopus/commit/11da19bc009446232cf37eec320219d5700dd54c))
+
+
+
+# [0.1.0-alpha.84](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.83...v0.1.0-alpha.84) (2025-12-10)
+
+
+### Bug Fixes
+
+* websocket race condition in monitoring the dashboard ([#684](https://github.com/raghavyuva/nixopus/issues/684)) ([68dd11d](https://github.com/raghavyuva/nixopus/commit/68dd11da81564d7316de188920199efd41976643))
+
+
+
+# [0.1.0-alpha.83](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.82...v0.1.0-alpha.83) (2025-12-09)
+
+
+### Features
+
+* **ui:** pointer cursor when hover over breadcrumbs ([#608](https://github.com/raghavyuva/nixopus/issues/608)) ([c5697a3](https://github.com/raghavyuva/nixopus/commit/c5697a344c8e7aa8f635eb741a00f23ff6857dc3))
+
+
+
+# [0.1.0-alpha.82](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.81...v0.1.0-alpha.82) (2025-12-09)
+
+
+### Features
+
+* conveyable messages to register screen after admin registration ([#648](https://github.com/raghavyuva/nixopus/issues/648)) ([726765f](https://github.com/raghavyuva/nixopus/commit/726765f2f66eda04c4976efbc17d83aa925e0835))
+
+
+
+# [0.1.0-alpha.81](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.80...v0.1.0-alpha.81) (2025-12-09)
+
+
+### Features
+
+* **ui:** refactor page headers for UI consistency ([#673](https://github.com/raghavyuva/nixopus/issues/673)) ([79971f4](https://github.com/raghavyuva/nixopus/commit/79971f4531a0cee6e0dd92b0e7985b9d7c917aa9))
+
+
+
+# [0.1.0-alpha.80](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.79...v0.1.0-alpha.80) (2025-12-08)
+
+
+### Bug Fixes
+
+* load caddy rules on ip-based installation ([#670](https://github.com/raghavyuva/nixopus/issues/670)) ([6261e4e](https://github.com/raghavyuva/nixopus/commit/6261e4e4b5ab4425bb83695be1729836ffcdd2ad))
+
+
+
+# [0.1.0-alpha.79](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.78...v0.1.0-alpha.79) (2025-12-08)
+
+
+### Bug Fixes
+
+* enable gha caching on github action ([#669](https://github.com/raghavyuva/nixopus/issues/669)) ([1c35657](https://github.com/raghavyuva/nixopus/commit/1c356577d9989743b9ed106513c8cda85a56e745))
+
+
+
+# [0.1.0-alpha.78](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.77...v0.1.0-alpha.78) (2025-12-08)
+
+
+### Bug Fixes
+
+* unsynced line buffer on backspace or on keyboard type ([#645](https://github.com/raghavyuva/nixopus/issues/645)) ([934b853](https://github.com/raghavyuva/nixopus/commit/934b853f62963af0858d37b03e695d49a757ec4b))
+
+
+### Reverts
+
+* Revert "fix: unsynced line buffer on backspace or on keyboard type (#645)" (#666) ([24ff60a](https://github.com/raghavyuva/nixopus/commit/24ff60a785fe5392f29ce64db8918be89bbb56b7)), closes [#645](https://github.com/raghavyuva/nixopus/issues/645) [#666](https://github.com/raghavyuva/nixopus/issues/666)
+
+
+
+# [0.1.0-alpha.77](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.76...v0.1.0-alpha.77) (2025-12-08)
+
+
+### Features
+
+* optimize build parallelization using mooby/buildkit & cache mounts ([a424af7](https://github.com/raghavyuva/nixopus/commit/a424af7005fef15331ed0657b47d920f3e52a93e))
+
+
+
+# [0.1.0-alpha.76](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.75...v0.1.0-alpha.76) (2025-12-08)
+
+
+### Bug Fixes
+
+* external database URL parsing .env creation in install command ([#663](https://github.com/raghavyuva/nixopus/issues/663)) ([a2f6dd1](https://github.com/raghavyuva/nixopus/commit/a2f6dd1502ee716b62ee39cf8160813a29849cf0))
+
+
+
+# [0.1.0-alpha.75](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.74...v0.1.0-alpha.75) (2025-12-08)
+
+
+### Bug Fixes
+
+* docker compose file profiles not considered during install ([eebd07e](https://github.com/raghavyuva/nixopus/commit/eebd07ec055e38d97ceb71a522d35ab908b53593))
+
+
+
+# [0.1.0-alpha.74](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.73...v0.1.0-alpha.74) (2025-12-07)
+
+
+### Bug Fixes
+
+* add retry mechanism for service registration to caddy ([#656](https://github.com/raghavyuva/nixopus/issues/656)) ([4579278](https://github.com/raghavyuva/nixopus/commit/457927891d470173a67395be34ac8366a66f2eab))
+
+
+
+# [0.1.0-alpha.73](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.72...v0.1.0-alpha.73) (2025-12-07)
+
+
+### Bug Fixes
+
+* add --no-scripts in dockerfile to support multi platform builds ([6a5cd5c](https://github.com/raghavyuva/nixopus/commit/6a5cd5cc937f8b6fa5416bdb35d04f81e7a2f83f))
+
+
+### Features
+
+* add support for external database connectivity ([#651](https://github.com/raghavyuva/nixopus/issues/651)) ([5f85177](https://github.com/raghavyuva/nixopus/commit/5f85177adc564c7109f831a448ea71e706398ad1))
+* add support for staging compose file if --staging option used in cli ([0765460](https://github.com/raghavyuva/nixopus/commit/0765460ddee03048760ff4915c5f2f3ba0852b31))
+* convert config class to functional ([#641](https://github.com/raghavyuva/nixopus/issues/641)) ([37e99ef](https://github.com/raghavyuva/nixopus/commit/37e99efd3421edac74f8d1ce17bcb12889c4f464))
+* **timeout:** convert util/timeout to functional ([#639](https://github.com/raghavyuva/nixopus/issues/639)) ([77a31a5](https://github.com/raghavyuva/nixopus/commit/77a31a5d8830162e12e0753b2fc8b8af54029cb2))
+* update config usages across cli ([#653](https://github.com/raghavyuva/nixopus/issues/653)) ([4ff6dc0](https://github.com/raghavyuva/nixopus/commit/4ff6dc08a0bf0f125d8d99a401388db1529e05b2))
+
+
+
+# [0.1.0-alpha.72](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.71...v0.1.0-alpha.72) (2025-12-06)
+
+
+### Bug Fixes
+
+* ambiguity in multi github connector ([#618](https://github.com/raghavyuva/nixopus/issues/618)) ([231628e](https://github.com/raghavyuva/nixopus/commit/231628e2aa70a991ebf74f2261adebb718dabe4d))
+* authorization header type for fetch sponsors ([#610](https://github.com/raghavyuva/nixopus/issues/610)) ([96ba998](https://github.com/raghavyuva/nixopus/commit/96ba99896a625523f2fc21efb4907f89644a4730))
+* merge conflicts and compilation errors ([495d445](https://github.com/raghavyuva/nixopus/commit/495d4451fba70c1297217deed34ca05bf9f850d4))
+
+
+### Features
+
+* add support for github connector settings ([#615](https://github.com/raghavyuva/nixopus/issues/615)) ([6aee921](https://github.com/raghavyuva/nixopus/commit/6aee921c9fe2a5beb6b432cf3fc054b7552b3426))
+* add support for multiple github connectors ([#616](https://github.com/raghavyuva/nixopus/issues/616)) ([0f7fd83](https://github.com/raghavyuva/nixopus/commit/0f7fd83c6444e03bbb5fc530820655517f57c611))
+* improvise github connector flow ux ([#613](https://github.com/raghavyuva/nixopus/issues/613)) ([e7e54c0](https://github.com/raghavyuva/nixopus/commit/e7e54c082d8a31d8f354ace704ba709723f37335))
+
+
+
+# [0.1.0-alpha.71](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.70...v0.1.0-alpha.71) (2025-12-04)
+
+
+### Features
+
+* standardize page titles and headers across UI ([#588](https://github.com/raghavyuva/nixopus/issues/588)) ([f44759a](https://github.com/raghavyuva/nixopus/commit/f44759a34a0546ce497b7d2ea4a715c5ba6dd048))
+
+
+
+# [0.1.0-alpha.70](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.68...v0.1.0-alpha.70) (2025-12-01)
+
+
+### Features
+
+* bump to alpha-v69 to mark release ([#592](https://github.com/raghavyuva/nixopus/issues/592)) ([a521d60](https://github.com/raghavyuva/nixopus/commit/a521d602e1e756c071128c7731a4e8f65bcc2a13))
+* include version.txt to bundler ([a986b9a](https://github.com/raghavyuva/nixopus/commit/a986b9a72132c524d7e8d561845eb26989547371))
+* read version from installed pkg with fallback to bundler/src ([f79d808](https://github.com/raghavyuva/nixopus/commit/f79d808fff46db0cffb5a7260c433dad60298fb2))
+* sudo requirement non root user & improve installation error handling ([#589](https://github.com/raghavyuva/nixopus/issues/589)) ([d56f902](https://github.com/raghavyuva/nixopus/commit/d56f902bd532ab9c7c271ac3f2224f5d077a466a))
+
+
+
+# [0.1.0-alpha.68](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.67...v0.1.0-alpha.68) (2025-11-24)
+
+
+### Bug Fixes
+
+* feature disabled error on signup ([#587](https://github.com/raghavyuva/nixopus/issues/587)) ([8af20ab](https://github.com/raghavyuva/nixopus/commit/8af20abf6c02706e6e726e63da4df7a1399645a3))
+
+
+
+# [0.1.0-alpha.67](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.66...v0.1.0-alpha.67) (2025-11-21)
+
+
+### Features
+
+* compose as extensions ([#555](https://github.com/raghavyuva/nixopus/issues/555)) ([741aa6a](https://github.com/raghavyuva/nixopus/commit/741aa6ab30520f46cc796c6510ea9c2551c4fd8e))
+
+
+
+# [0.1.0-alpha.66](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.65...v0.1.0-alpha.66) (2025-11-21)
+
+
+### Bug Fixes
+
+* allow custom ports on install setup optionally ([#580](https://github.com/raghavyuva/nixopus/issues/580)) ([972c7ac](https://github.com/raghavyuva/nixopus/commit/972c7ac4ea2aedd7810954772c4d16d7226182d6))
+
+
+
+# [0.1.0-alpha.65](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.64...v0.1.0-alpha.65) (2025-11-09)
+
+
+### Bug Fixes
+
+* remove linux/arm/v7 support since no native support from postcss and Nextjs sharp ([#576](https://github.com/raghavyuva/nixopus/issues/576)) ([dc84f0e](https://github.com/raghavyuva/nixopus/commit/dc84f0ef1c1a2568885fdd02e144b91ebe19d8a1))
+
+
+
+# [0.1.0-alpha.64](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.63...v0.1.0-alpha.64) (2025-11-08)
+
+
+### Bug Fixes
+
+* update docker compose files to use internal ports for supertokens postgres connection ([9a23b2c](https://github.com/raghavyuva/nixopus/commit/9a23b2c4552b4f6905dd6d501ed0a40cddf362c0))
+
+
+
+# [0.1.0-alpha.63](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.62...v0.1.0-alpha.63) (2025-11-08)
+
+
+### Bug Fixes
+
+* malformed supertokens connection uri during ip based installations ([b6b1ad5](https://github.com/raghavyuva/nixopus/commit/b6b1ad5ec11b3eda9caac692c0cad3cba59adbc9))
+
+
+
+# [0.1.0-alpha.62](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.61...v0.1.0-alpha.62) (2025-11-08)
+
+
+### Bug Fixes
+
+* always binds predictable ports inside the container, and uses dynamic ports for the host ([#569](https://github.com/raghavyuva/nixopus/issues/569)) ([e5e637e](https://github.com/raghavyuva/nixopus/commit/e5e637eabddfa02ed03b32de338004ed5efcfaa8))
+
+
+### Features
+
+* add support for linux/amd64 linux/arm54 linux/arm/v7 ([#570](https://github.com/raghavyuva/nixopus/issues/570)) ([59938ad](https://github.com/raghavyuva/nixopus/commit/59938ad28932854c9b0d2388b37ceeb28a8a1ab9))
+
+
+
+# [0.1.0-alpha.61](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.60...v0.1.0-alpha.61) (2025-11-08)
+
+
+### Features
+
+* add support for custom ports during nixopus install ([#567](https://github.com/raghavyuva/nixopus/issues/567)) ([01c4b1d](https://github.com/raghavyuva/nixopus/commit/01c4b1d8a116fde1cf992cef4face3728e55e039))
+
+
+
+# [0.1.0-alpha.60](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.59...v0.1.0-alpha.60) (2025-11-05)
+
+
+### Bug Fixes
+
+* nixopus uninstall hangs or silently asks for confirmation from user which is not identical ([#560](https://github.com/raghavyuva/nixopus/issues/560)) ([5a9c7f8](https://github.com/raghavyuva/nixopus/commit/5a9c7f8cb7ec347a907ba51de4a9e6bc59f707ec))
+
+
+### Features
+
+* add support for custom config file during nixopus installation ([#561](https://github.com/raghavyuva/nixopus/issues/561)) ([0b34f84](https://github.com/raghavyuva/nixopus/commit/0b34f84e02345f2bb583be587c7f4676b72c6523))
+
+
+
+# [0.1.0-alpha.59](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.58...v0.1.0-alpha.59) (2025-11-04)
+
+
+### Features
+
+* add support for custom ip address deployments ([#554](https://github.com/raghavyuva/nixopus/issues/554)) ([d1fb0b4](https://github.com/raghavyuva/nixopus/commit/d1fb0b42fdfad3709180c0ffb1d4725d1e5c8e7b))
+
+
+
+# [0.1.0-alpha.58](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.57...v0.1.0-alpha.58) (2025-11-02)
+
+
+### Features
+
+* port linux server images to extension templates ([#556](https://github.com/raghavyuva/nixopus/issues/556)) ([c1bcb7e](https://github.com/raghavyuva/nixopus/commit/c1bcb7e79edb4819abe8ccef0704c2c841ca6671))
+
+
+
+# [0.1.0-alpha.57](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.56...v0.1.0-alpha.57) (2025-11-02)
+
+
+### Features
+
+* improve dashboard monitoring & reset cache feature flags ([#557](https://github.com/raghavyuva/nixopus/issues/557)) ([fdf26bb](https://github.com/raghavyuva/nixopus/commit/fdf26bb9d84d5499912a8ce5e88a07e9e95d8655))
+
+
+
+# [0.1.0-alpha.56](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.55...v0.1.0-alpha.56) (2025-10-30)
+
+
+### Features
+
+* add extension templates for gotify, n8n, netdata, qdrant, and more ([#545](https://github.com/raghavyuva/nixopus/issues/545)) ([ecb332c](https://github.com/raghavyuva/nixopus/commit/ecb332c51b0f99beff625856f2ff7a7ec4e9d33c))
+
+
+
 # [0.1.0-alpha.55](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.54...v0.1.0-alpha.55) (2025-10-29)
 
 

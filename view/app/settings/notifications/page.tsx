@@ -1,24 +1,19 @@
 'use client';
-import React from 'react';
-import DashboardPageHeader from '@/components/layout/dashboard-page-header';
-import NotificationPreferencesTab from './components/preferenceTab';
-import NotificationChannelsTab from './components/channelTab';
-import useNotificationSettings from '../hooks/use-notification-settings';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTranslation } from '@/hooks/use-translation';
-import { SMTPFormData } from '@/redux/types/notification';
-import { useFeatureFlags } from '@/hooks/features_provider';
-import Skeleton from '@/app/file-manager/components/skeleton/Skeleton';
-import DisabledFeature from '@/components/features/disabled-feature';
-import { FeatureNames } from '@/types/feature-flags';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
-import PageLayout from '@/components/layout/page-layout';
 
-export type NotificationChannelConfig = {
-  [key: string]: string;
-};
+import { useEffect } from 'react';
+import { useSettingsModal } from '@/hooks/use-settings-modal';
+import { useRouter } from 'next/navigation';
 
 const Page: React.FC = () => {
+  const { openSettings } = useSettingsModal();
+  const router = useRouter();
+  useEffect(() => {
+    openSettings('notifications');
+    router.replace('/dashboard');
+  }, [openSettings, router]);
+  return null;
+
+  /* COMMENTED OUT - Re-enable when notifications feature is working
   const { t } = useTranslation();
   const {
     smtpConfigs,
@@ -88,7 +83,7 @@ const Page: React.FC = () => {
 
   return (
     <ResourceGuard resource="notification" action="read">
-      <PageLayout maxWidth="6xl" padding="md" spacing="lg">
+      <PageLayout maxWidth="full" padding="md" spacing="lg">
         <DashboardPageHeader
           label={t('settings.notifications.page.title')}
           description={t('settings.notifications.page.description')}
@@ -128,6 +123,7 @@ const Page: React.FC = () => {
       </PageLayout>
     </ResourceGuard>
   );
+  */
 };
 
 export default Page;

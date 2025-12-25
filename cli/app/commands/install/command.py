@@ -1,13 +1,14 @@
+from typing import Optional
+
 import typer
 
-from app.utils.config import Config
-from app.utils.logger import Logger
-from app.utils.timeout import TimeoutWrapper
+from app.utils.logger import create_logger, log_error, log_success
+from app.utils.timeout import timeout_wrapper
 
 from .deps import install_all_deps
-from .run import Install
-from .development import DevelopmentInstall
-from .ssh import SSH, SSHConfig
+from .run import run_installation
+from .ssh import SSHConfig, format_ssh_output, generate_ssh_key_with_config
+from .types import InstallParams
 
 install_app = typer.Typer(help="Install Nixopus", invoke_without_command=True)
 
@@ -17,21 +18,10 @@ def install_callback(
     ctx: typer.Context,
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show more details while installing"),
     timeout: int = typer.Option(300, "--timeout", "-t", help="How long to wait for each step (in seconds)"),
-    force: bool = typer.Option(False, "--force", "-f", help="Replace files if they already exist"),
+    force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing installation directory (DELETES all existing data)"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="See what would happen, but don't make changes"),
     config_file: str = typer.Option(
         None, "--config-file", "-c", help="Path to custom config file (defaults to built-in config)"
-    ),
-    development: bool = typer.Option(
-        False,
-        "--development",
-        "-D",
-        help="Use development workflow (local setup, dev compose, dev env)",
-    ),
-    dev_path: str = typer.Option(
-        None,
-        "--dev-path",
-        help="Installation directory for development workflow (defaults to current directory)",
     ),
     api_domain: str = typer.Option(
         None,
@@ -45,86 +35,70 @@ def install_callback(
         "-vd",
         help="The domain where the nixopus view will be accessible (e.g. nixopus.com), if not provided you can use the ip address of the server and the port (e.g. 192.168.1.100:80)",
     ),
+    host_ip: str = typer.Option(
+        None,
+        "--host-ip",
+        "-ip",
+        help="The IP address of the server to use when no domains are provided (e.g. 10.0.0.154 or 192.168.1.100). If not provided, the public IP will be automatically detected.",
+    ),
+    api_port: int = typer.Option(None, "--api-port", help="Port for the API service (default: 8443)"),
+    view_port: int = typer.Option(None, "--view-port", help="Port for the View/Frontend service (default: 7443)"),
+    db_port: int = typer.Option(None, "--db-port", help="Port for the PostgreSQL database (default: 5432)"),
+    redis_port: int = typer.Option(None, "--redis-port", help="Port for the Redis service (default: 6379)"),
+    caddy_admin_port: int = typer.Option(None, "--caddy-admin-port", help="Port for Caddy admin API (default: 2019)"),
+    caddy_http_port: int = typer.Option(None, "--caddy-http-port", help="Port for Caddy HTTP traffic (default: 80)"),
+    caddy_https_port: int = typer.Option(None, "--caddy-https-port", help="Port for Caddy HTTPS traffic (default: 443)"),
+    supertokens_port: int = typer.Option(None, "--supertokens-port", help="Port for SuperTokens service (default: 3567)"),
     repo: str = typer.Option(None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"),
     branch: str = typer.Option(None, "--branch", "-b", help="Git branch to clone (defaults to config value)"),
+    external_db_url: str = typer.Option(None, "--external-db-url", help="External PostgreSQL database connection URL (e.g. postgresql://user:password@host:port/dbname?sslmode=require). If provided, local DB service will be excluded"),
+    staging: bool = typer.Option(False, "--staging", "-s", help="Use staging docker-compose file (docker-compose-staging.yml)"),
+    no_rollback: bool = typer.Option(False, "--no-rollback", help="Disable automatic rollback on installation failure"),
+    verify_health: bool = typer.Option(True, "--verify-health", help="Verify that all services are healthy after starting (recommended)"),
+    health_check_timeout: int = typer.Option(120, "--health-check-timeout", help="Maximum time to wait for services to become healthy (in seconds)"),
+    admin_email: Optional[str] = typer.Option(None, "--admin-email", help="Email for admin user registration"),
+    admin_password: Optional[str] = typer.Option(None, "--admin-password", help="Password for admin user registration"),
 ):
     """Install Nixopus for production"""
     if ctx.invoked_subcommand is None:
-        logger = Logger(verbose=verbose)
-        if development:
-            # Warn when incompatible production-only options are provided alongside --development
-            if api_domain or view_domain:
-                logger.warning("Ignoring --api-domain/--view-domain in development mode")
-            dev_install = DevelopmentInstall(
-                logger=logger,
-                verbose=verbose,
-                timeout=timeout,
-                force=force,
-                dry_run=dry_run,
-                config_file=config_file,
-                repo=repo,
-                branch=branch,
-                install_path=dev_path,
-            )
-            dev_install.run()
-        else:
-            install = Install(
-                logger=logger,
-                verbose=verbose,
-                timeout=timeout,
-                force=force,
-                dry_run=dry_run,
-                config_file=config_file,
-                api_domain=api_domain,
-                view_domain=view_domain,
-                repo=repo,
-                branch=branch,
-            )
-            install.run()
+        logger = create_logger(verbose=verbose)
+        params = InstallParams(
+            logger=logger,
+            verbose=verbose,
+            timeout=timeout,
+            force=force,
+            dry_run=dry_run,
+            config_file=config_file,
+            api_domain=api_domain,
+            view_domain=view_domain,
+            host_ip=host_ip,
+            repo=repo,
+            branch=branch,
+            api_port=api_port,
+            view_port=view_port,
+            db_port=db_port,
+            redis_port=redis_port,
+            caddy_admin_port=caddy_admin_port,
+            caddy_http_port=caddy_http_port,
+            caddy_https_port=caddy_https_port,
+            supertokens_port=supertokens_port,
+            external_db_url=external_db_url,
+            staging=staging,
+            no_rollback=no_rollback,
+            verify_health=verify_health,
+            health_check_timeout=health_check_timeout,
+            admin_email=admin_email,
+            admin_password=admin_password,
+        )
+        run_installation(params)
 
 
 def main_install_callback(value: bool):
     if value:
-        logger = Logger(verbose=False)
-        install = Install(
-            logger=logger,
-            verbose=False,
-            timeout=300,
-            force=False,
-            dry_run=False,
-            config_file=None,
-        )
-        install.run()
+        logger = create_logger(verbose=False)
+        params = InstallParams(logger=logger)
+        run_installation(params)
         raise typer.Exit()
-
-
-@install_app.command(name="development")
-def development(
-    path: str = typer.Option(None, "--path", "-p", help="Installation directory (defaults to current directory)"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show more details while installing"),
-    timeout: int = typer.Option(1800, "--timeout", "-t", help="How long to wait for each step (in seconds)"),
-    force: bool = typer.Option(False, "--force", "-f", help="Replace files if they already exist"),
-    dry_run: bool = typer.Option(False, "--dry-run", "-d", help="See what would happen, but don't make changes"),
-    config_file: str = typer.Option(
-        None, "--config-file", "-c", help="Path to custom config file (defaults to config.dev.yaml)"
-    ),
-    repo: str = typer.Option(None, "--repo", "-r", help="GitHub repository URL to clone (defaults to config value)"),
-    branch: str = typer.Option(None, "--branch", "-b", help="Git branch to clone (defaults to config value)"),
-):
-    """Install Nixopus for local development in specified or current directory"""
-    logger = Logger(verbose=verbose)
-    install = DevelopmentInstall(
-        logger=logger,
-        verbose=verbose,
-        timeout=timeout,
-        force=force,
-        dry_run=dry_run,
-        config_file=config_file,
-        repo=repo,
-        branch=branch,
-        install_path=path,
-    )
-    install.run()
 
 
 @install_app.command(name="ssh")
@@ -147,7 +121,7 @@ def ssh(
     timeout: int = typer.Option(10, "--timeout", "-T", help="Timeout in seconds"),
 ):
     """Generate an SSH key pair with proper permissions and optional authorized_keys integration"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
     try:
         config = SSHConfig(
             path=path,
@@ -162,17 +136,16 @@ def ssh(
             add_to_authorized_keys=add_to_authorized_keys,
             create_ssh_directory=create_ssh_directory,
         )
-        ssh_operation = SSH(logger=logger)
+        with timeout_wrapper(timeout):
+            result = generate_ssh_key_with_config(config, logger=logger)
 
-        with TimeoutWrapper(timeout):
-            result = ssh_operation.generate(config)
-
-        logger.success(result.output)
+        output = format_ssh_output(result, result.output)
+        log_success(output, verbose=verbose)
     except TimeoutError as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
 
 
@@ -184,19 +157,19 @@ def deps(
     timeout: int = typer.Option(10, "--timeout", "-t", help="Timeout in seconds"),
 ):
     """Install dependencies"""
-    logger = Logger(verbose=verbose)
+    logger = create_logger(verbose=verbose)
     try:
 
-        with TimeoutWrapper(timeout):
+        with timeout_wrapper(timeout):
             result = install_all_deps(verbose=verbose, output=output, dry_run=dry_run)
 
         if output == "json":
             print(result)
         else:
-            logger.success("All dependencies installed successfully.")
+            log_success("All dependencies installed successfully.", verbose=verbose)
     except TimeoutError as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)
     except Exception as e:
-        logger.error(str(e))
+        log_error(str(e), verbose=verbose)
         raise typer.Exit(1)

@@ -1,15 +1,19 @@
 {
   "name": "nixopus",
-  "version": "0.1.0-alpha.55",
+  "version": "0.1.0-alpha.106",
   "description": "A modern container management platform",
+  "license": "SEE LICENSE IN LICENSE.md",
   "private": false,
-  "cli-version": "0.1.20",
+  "cli-version": "0.1.41",
   "cli-packages": [
-    "nixopus-0.1.20-1.x86_64.rpm",
-    "nixopus_0.1.20_amd64.deb",
-    "nixopus_0.1.20_amd64.apk",
+    "nixopus-0.1.41-darwin-arm64.pkg",
+    "nixopus_0.1.41_amd64.apk",
+    "nixopus-0.1.41-1.x86_64.rpm",
     "nixopus.tar",
-    "nixopus-0.1.20-darwin-amd64.pkg",
-    "nixopus-0.1.20-darwin-arm64.pkg"
-  ]
+    "nixopus_0.1.41_amd64.deb"
+  ],
+  "devDependencies": {
+    "@commitlint/cli": "^20.2.0",
+    "@commitlint/config-conventional": "^20.2.0"
+  }
 }

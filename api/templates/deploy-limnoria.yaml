@@ -1,0 +1,114 @@
+metadata:
+  id: "deploy-limnoria"
+  name: "Limnoria"
+  description: "Limnoria is a robust, full-featured, and user/programmer-friendly Python IRC bot, with many existing plugins. Successor of the well-known Supybot. Uses limnoria image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "🤖"
+  category: "Network"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Limnoria"
+    default: "lscr.io/linuxserver/limnoria"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Limnoria container"
+    default: "limnoria"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port for Limnoria web interface"
+    default: 8080
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Limnoria web interface"
+    default: 8080
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Limnoria persistent configuration files"
+    default: "limnoria-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Limnoria web interface (optional, recommended for internet access)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing Limnoria container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull Limnoria image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Limnoria container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+    - name: "Add proxy for Limnoria web interface"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
+

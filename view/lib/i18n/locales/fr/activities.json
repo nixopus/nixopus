@@ -1,0 +1,10 @@
+{
+  "activities": {
+    "title": "Activités",
+    "description": "Voir toutes les activités et changements dans votre organisation",
+    "list": {
+      "title": "Activités d'Équipe",
+      "description": "Activités récentes dans votre organisation"
+    }
+  }
+}

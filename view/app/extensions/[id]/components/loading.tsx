@@ -7,7 +7,7 @@ import { Info, Terminal } from 'lucide-react';
 
 export default function Loading() {
   return (
-    <PageLayout maxWidth="6xl" padding="md" spacing="lg">
+    <PageLayout maxWidth="full" padding="md" spacing="lg">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Skeleton className="h-10 w-10 rounded" />

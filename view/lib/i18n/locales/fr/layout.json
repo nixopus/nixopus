@@ -1,0 +1,18 @@
+{
+  "layout": {
+    "breadcrumbs": {
+      "home": "Accueil",
+      "dashboard": "Tableau de Bord",
+      "selfHost": "Auto-hébergé",
+      "fileManager": "Gestionnaire de Fichiers",
+      "settings": "Paramètres",
+      "general": "Général",
+      "notifications": "Notifications",
+      "team": "Équipe",
+      "domains": "Domaines"
+    },
+    "terminal": {
+      "togglePosition": "Basculer la Position du Terminal (Ctrl+T)"
+    }
+  }
+}

@@ -5,14 +5,12 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *AuthController) RefreshToken(s fuego.ContextWithBody[types.RefreshTokenRequest]) (shared_types.Response, error) {
+func (c *AuthController) RefreshToken(s fuego.ContextWithBody[types.RefreshTokenRequest]) (*types.LoginResponse, error) {
 	refreshRequest, err := s.Body()
 	if err != nil {
-		return shared_types.Response{}, fuego.HTTPError{
+		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusBadRequest,
 		}
@@ -20,7 +18,7 @@ func (c *AuthController) RefreshToken(s fuego.ContextWithBody[types.RefreshToken
 
 	w, r := s.Response(), s.Request()
 	if err := c.parseAndValidate(w, r, &refreshRequest); err != nil {
-		return shared_types.Response{}, fuego.HTTPError{
+		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusBadRequest,
 		}
@@ -28,13 +26,13 @@ func (c *AuthController) RefreshToken(s fuego.ContextWithBody[types.RefreshToken
 
 	accessTokenResponse, err := c.service.RefreshToken(refreshRequest)
 	if err != nil {
-		return shared_types.Response{}, fuego.HTTPError{
+		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,
 		}
 	}
 
-	return shared_types.Response{
+	return &types.LoginResponse{
 		Status:  "success",
 		Message: "Access token refreshed",
 		Data:    accessTokenResponse,

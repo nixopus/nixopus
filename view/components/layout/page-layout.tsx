@@ -42,14 +42,14 @@ const spacingClasses = {
 function PageLayout({
   children,
   className,
-  maxWidth = '6xl',
+  maxWidth = 'full',
   padding = 'md',
   spacing = 'lg'
 }: PageLayoutProps) {
   return (
     <div
       className={cn(
-        'container mx-auto',
+        maxWidth === 'full' ? 'w-full px-4' : 'container mx-auto',
         paddingClasses[padding],
         spacingClasses[spacing],
         maxWidthClasses[maxWidth],

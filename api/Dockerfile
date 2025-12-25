@@ -1,21 +1,24 @@
 FROM golang:1.25-alpine AS builder
 ARG API_PORT
-RUN apk add --no-cache make git
+ARG TARGETOS
+ARG TARGETARCH
+RUN apk add --no-cache --no-scripts make git
 
 WORKDIR /app
 
+# Cache dependencies separately
 COPY go.mod go.sum ./
 RUN go mod download
 
+# Copy source code
 COPY . .
-COPY ./migrations /app/migrations
-COPY ./templates /app/templates
 
-RUN make build
+# Build with cross-compilation
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} make build
 
 FROM alpine:3.18
 ARG API_PORT
-RUN apk add --no-cache ca-certificates bash docker-cli
+RUN apk add --no-cache --no-scripts ca-certificates bash docker-cli
 
 WORKDIR /app
 

@@ -1,0 +1,535 @@
+{
+  "settings": {
+    "title": "Configuración",
+    "description": "Administra tu cuenta",
+    "tabs": {
+      "account": "Cuenta",
+      "security": "Seguridad",
+      "featureFlags": "Características"
+    },
+    "preferences": {
+      "language": {
+        "title": "Preferencias de Idioma",
+        "description": "Elige tu idioma preferido para la aplicación",
+        "select": "Seleccionar idioma"
+      },
+      "font": "Fuente",
+      "fontOptions": {
+        "geist": "Geist",
+        "inter": "Inter",
+        "roboto": "Roboto",
+        "poppins": "Poppins",
+        "montserrat": "Montserrat",
+        "spaceGrotesk": "Space Grotesk",
+        "outfit": "Outfit",
+        "jakarta": "Plus Jakarta Sans",
+        "system": "Sistema"
+      },
+      "autoUpdate": {
+        "title": "Actualización Automática",
+        "description": "Actualiza nixopus cuando una nueva versión esté disponible",
+        "select": "Seleccionar actualización automática"
+      }
+    },
+    "featureFlags": {
+      "title": "Características",
+      "description": "Habilita o deshabilita características específicas para tu organización",
+      "groups": {
+        "infrastructure": {
+          "title": "Infraestructura",
+          "description": "Habilita o deshabilita características específicas de infraestructura para tu organización"
+        },
+        "development": {
+          "title": "Desarrollo",
+          "description": "Habilita o deshabilita características específicas de desarrollo para tu organización"
+        },
+        "monitoring": {
+          "title": "Monitoreo",
+          "description": "Habilita o deshabilita características específicas de monitoreo para tu organización"
+        },
+        "notifications": {
+          "title": "Notificaciones",
+          "description": "Habilita o deshabilita características específicas de notificaciones para tu organización"
+        }
+      },
+      "features": {
+        "terminal": {
+          "title": "Terminal",
+          "description": "Acceso a la característica de terminal"
+        },
+        "file_manager": {
+          "title": "Gestor de Archivos",
+          "description": "Acceso a la característica de gestor de archivos"
+        },
+        "self_hosted": {
+          "title": "Self Hosted",
+          "description": "Acceso a la característica de self hosted"
+        },
+        "container": {
+          "title": "Contenedor",
+          "description": "Acceso a la característica de contenedor"
+        },
+        "domain": {
+          "title": "Dominio",
+          "description": "Acceso a la característica de dominio"
+        },
+        "monitoring": {
+          "title": "Monitoreo",
+          "description": "Acceso a la característica de monitoreo"
+        },
+        "proxy_config": {
+          "title": "Configuración de Proxy",
+          "description": "Acceso a la característica de configuración de proxy"
+        },
+        "github_connector": {
+          "title": "Conector de GitHub",
+          "description": "Acceso a la característica de conector de GitHub"
+        },
+        "audit": {
+          "title": "Registros de Auditoría",
+          "description": "Acceso a la característica de registros de auditoría"
+        },
+        "notifications": {
+          "title": "Notificaciones",
+          "description": "Acceso a la característica de notificaciones"
+        }
+      },
+      "messages": {
+        "updated": "Característica actualizada exitosamente",
+        "updateFailed": "Error al actualizar la característica"
+      },
+      "searchPlaceholder": "Buscar características...",
+      "filters": {
+        "all": "Todas",
+        "enabled": "Habilitadas",
+        "disabled": "Deshabilitadas"
+      },
+      "noResults": "No se encontraron características que coincidan con tu búsqueda",
+      "noFeatures": "No hay características disponibles"
+    },
+    "account": {
+      "title": "Información de la Cuenta",
+      "description": "Actualiza los detalles de tu cuenta",
+      "username": {
+        "label": "Nombre de usuario",
+        "placeholder": "Ingresa tu nombre de usuario",
+        "update": "Actualizar",
+        "success": "¡Tu nombre de usuario ha sido actualizado exitosamente!",
+        "error": "Error al actualizar el nombre de usuario"
+      },
+      "email": {
+        "label": "Correo electrónico",
+        "notVerified": {
+          "title": "Correo no verificado",
+          "description": "Tu correo electrónico no está verificado. Por favor verifica tu correo para acceder a todas las funciones.",
+          "sendButton": "Enviar correo de verificación",
+          "sending": "Enviando...",
+          "sent": "Correo de verificación enviado",
+          "error": "Error al enviar el correo de verificación. Por favor intenta de nuevo más tarde.",
+          "checkEmail": "Por favor revisa tu correo y haz clic en el enlace de verificación para verificar tu dirección de correo electrónico."
+        }
+      },
+      "preferences": {
+        "title": "Preferencias de la Cuenta",
+        "description": "Administra tus configuraciones de notificación y visualización",
+        "appearance": "Apariencia"
+      },
+      "avatar": {
+        "title": "Perfil",
+        "description": "Administra tu perfil público",
+        "upload": "Subir avatar",
+        "uploadSuccess": "Avatar subido exitosamente",
+        "uploadError": "Error al subir avatar"
+      },
+      "success": {
+        "avatarUpdated": "Avatar actualizado exitosamente",
+        "usernameUpdated": "Nombre de usuario actualizado exitosamente"
+      },
+      "errors": {
+        "emptyUsername": "El nombre de usuario no puede estar vacío",
+        "sameUsername": "Por favor ingresa un nombre de usuario diferente",
+        "updateFailed": "Error al actualizar el nombre de usuario. Por favor intenta de nuevo.",
+        "resetEmailFailed": "Error al enviar el correo de restablecimiento",
+        "imageNotImplemented": "Aún no implementado",
+        "noImageSelected": "No se seleccionó ninguna imagen",
+        "avatarUpdateFailed": "Error al actualizar el avatar",
+        "fontUpdateFailed": "Error al actualizar la configuración de fuente",
+        "themeUpdateFailed": "Error al actualizar el tema",
+        "languageUpdateFailed": "Error al actualizar el idioma",
+        "autoUpdateUpdateFailed": "Error al actualizar la configuración de actualización automática"
+      }
+    },
+    "security": {
+      "password": {
+        "title": "Contraseña",
+        "description": "Cambia tu contraseña",
+        "reset": {
+          "label": "Restablecer Contraseña",
+          "description": "Enviaremos un enlace para restablecer la contraseña a tu correo electrónico",
+          "button": "Enviar Enlace de Restablecimiento",
+          "emailSent": {
+            "title": "¡Correo Enviado!",
+            "description": "Revisa tu bandeja de entrada para encontrar el enlace de restablecimiento"
+          }
+        }
+      },
+      "2fa": {
+        "title": "Autenticación de dos factores",
+        "description": "Agregue una capa adicional de seguridad a su cuenta",
+        "setupButton": "Configurar 2FA",
+        "verifyButton": "Verificar",
+        "enterCode": "Ingrese el código de verificación",
+        "codePlaceholder": "Ingrese el código de 6 dígitos",
+        "setupSuccess": "Configuración 2FA exitosa",
+        "setupError": "Error al configurar 2FA",
+        "verifySuccess": "Verificación 2FA exitosa",
+        "verifyError": "Código de verificación inválido",
+        "enabledTitle": "2FA está habilitada",
+        "enabledDescription": "Su cuenta está protegida con autenticación de dos factores",
+        "disableButton": "Desactivar 2FA",
+        "disableSuccess": "2FA ha sido desactivada",
+        "disableError": "Error al desactivar 2FA"
+      }
+    },
+    "domains": {
+      "actions": {
+        "edit": "Editar",
+        "delete": "Eliminar"
+      },
+      "delete": {
+        "title": "Eliminar Dominio",
+        "description": "¿Estás seguro de que quieres eliminar este dominio?",
+        "cancel": "Cancelar",
+        "delete": "Eliminar",
+        "deleting": "Eliminando...",
+        "success": "Dominio eliminado exitosamente",
+        "error": "Error al eliminar el dominio"
+      },
+      "types": {
+        "wildcard": "Comodín",
+        "standard": "Estándar"
+      },
+      "table": {
+        "headers": {
+          "domain": "Dominio",
+          "type": "Tipo",
+          "actions": "Acciones"
+        }
+      },
+      "update": {
+        "addButton": "Agregar Dominio",
+        "addTitle": "Agregar Dominio",
+        "updateTitle": "Actualizar Dominio",
+        "description": "El dominio ayudará a desplegar tus aplicaciones",
+        "form": {
+          "placeholder": "ejemplo.com",
+          "validation": {
+            "minLength": "El nombre del dominio debe tener al menos 3 caracteres.",
+            "invalidFormat": "Por favor ingresa un nombre de dominio válido (ejemplo: ejemplo.com)."
+          }
+        },
+        "buttons": {
+          "cancel": "Cancelar",
+          "save": "Guardar",
+          "saving": "Guardando..."
+        },
+        "success": "Dominio agregado exitosamente",
+        "error": "Error al agregar el dominio"
+      },
+      "page": {
+        "title": "Servidor y Dominios",
+        "description": "Configura tus dominios",
+        "noOrganization": {
+          "title": "No hay Organización Seleccionada",
+          "description": "Por favor selecciona una organización para ver y gestionar dominios."
+        },
+        "accessDenied": {
+          "title": "Acceso Denegado",
+          "description": "No tienes permiso para ver los dominios de esta organización."
+        },
+        "loading": "Cargando dominios...",
+        "error": "Error al cargar los dominios. Por favor intenta de nuevo más tarde.",
+        "domainsList": {
+          "title": "Dominios",
+          "addButton": "Agregar Dominio"
+        },
+        "noDomains": {
+          "title": "No se Encontraron Dominios",
+          "noPermission": "No tienes permiso para agregar dominios."
+        }
+      }
+    },
+    "notifications": {
+      "page": {
+        "title": "Notificaciones",
+        "description": "Administre sus preferencias y canales de notificación",
+        "accessDenied": {
+          "title": "Acceso denegado",
+          "description": "No tiene permiso para ver la configuración de notificaciones"
+        },
+        "tabs": {
+          "channels": "Canales",
+          "preferences": "Preferencias"
+        },
+        "permissions": {
+          "update": "No tiene permiso para actualizar la configuración de notificaciones",
+          "create": "No tiene permiso para crear la configuración de notificaciones"
+        },
+        "messages": {
+          "emailConfigSaved": "Configuración de correo electrónico guardada correctamente",
+          "emailConfigFailed": "Error al guardar la configuración de correo electrónico",
+          "webhookConfigSaved": "Configuración de webhook guardada correctamente",
+          "webhookConfigUpdated": "Configuración de webhook actualizada correctamente",
+          "webhookConfigDeleted": "Configuración de webhook eliminada correctamente",
+          "webhookConfigFailed": "Error al guardar la configuración de webhook",
+          "preferencesUpdated": "Preferencias de notificación actualizadas correctamente",
+          "preferencesFailed": "Error al actualizar las preferencias de notificación"
+        }
+      },
+      "channels": {
+        "email": {
+          "title": "Correo electrónico",
+          "description": "Configure los ajustes SMTP para enviar notificaciones por correo electrónico",
+          "fields": {
+            "smtp_host": {
+              "label": "Servidor SMTP",
+              "placeholder": "smtp.ejemplo.com"
+            },
+            "smtp_port": {
+              "label": "Puerto",
+              "placeholder": "587"
+            },
+            "smtp_username": {
+              "label": "Nombre de usuario",
+              "placeholder": "usuario@ejemplo.com"
+            },
+            "smtp_password": {
+              "label": "Contraseña",
+              "placeholder": "••••••••"
+            },
+            "smtp_from_email": {
+              "label": "Correo electrónico de envío",
+              "placeholder": "notificaciones@ejemplo.com"
+            },
+            "smtp_from_name": {
+              "label": "Nombre de envío",
+              "placeholder": "Sistema de Notificaciones"
+            }
+          },
+          "buttons": {
+            "save": "Guardar configuración"
+          }
+        },
+        "slack": {
+          "title": "Slack",
+          "description": "Configure las notificaciones de Slack",
+          "fields": {
+            "webhook_url": {
+              "label": "URL del webhook",
+              "placeholder": "https://slack.com/api/webhooks/..."
+            },
+            "is_active": {
+              "label": "Activo"
+            }
+          },
+          "buttons": {
+            "save": "Guardar configuración"
+          }
+        },
+        "discord": {
+          "title": "Discord",
+          "description": "Configure el webhook de Discord para enviar notificaciones a su canal de Discord",
+          "fields": {
+            "webhook_url": {
+              "label": "URL del webhook",
+              "placeholder": "https://discord.com/api/webhooks/..."
+            },
+            "is_active": {
+              "label": "Activo"
+            }
+          },
+          "buttons": {
+            "save": "Guardar configuración"
+          }
+        }
+      },
+      "preferences": {
+        "activity": {
+          "title": "Notificaciones de actividad",
+          "description": "Notificaciones sobre la actividad en su equipo"
+        },
+        "security": {
+          "title": "Notificaciones de seguridad",
+          "description": "Alertas importantes sobre aplicaciones implementadas y errores"
+        },
+        "updates": {
+          "title": "Actualizaciones y marketing",
+          "description": "Manténgase informado sobre nuestros productos y servicios"
+        }
+      }
+    },
+    "teams": {
+      "addMember": {
+        "button": "Agregar Usuario",
+        "dialog": {
+          "title": "Agregar Nuevo Usuario",
+          "description": "Agregar un nuevo usuario a tu organización",
+          "fields": {
+            "name": {
+              "label": "Nombre",
+              "placeholder": "Ingresa el nombre del usuario"
+            },
+            "email": {
+              "label": "Correo Electrónico",
+              "placeholder": "Ingresa el correo del usuario"
+            },
+            "role": {
+              "label": "Rol",
+              "placeholder": "Selecciona un rol",
+              "options": {
+                "admin": "Administrador",
+                "member": "Miembro",
+                "viewer": "Espectador"
+              }
+            },
+            "password": {
+              "label": "Contraseña",
+              "placeholder": "Ingresa la contraseña del usuario"
+            }
+          },
+          "buttons": {
+            "cancel": "Cancelar",
+            "add": "Agregar Usuario"
+          }
+        }
+      },
+      "editTeam": {
+        "dialog": {
+          "title": "Editar Detalles del Equipo",
+          "description": "Los detalles del equipo te ayudan a identificarlo",
+          "fields": {
+            "name": {
+              "label": "Nombre",
+              "placeholder": "Ingresa el nombre del equipo"
+            },
+            "description": {
+              "label": "Descripción",
+              "placeholder": "Ingresa la descripción del equipo"
+            }
+          },
+          "buttons": {
+            "cancel": "Cancelar",
+            "update": "Actualizar",
+            "updating": "Actualizando..."
+          }
+        }
+      },
+      "editUser": {
+        "dialog": {
+          "title": "Editar Rol de Usuario",
+          "description": "Actualizar rol para {name}",
+          "fields": {
+            "role": {
+              "label": "Rol",
+              "placeholder": "Seleccionar un rol"
+            }
+          },
+          "buttons": {
+            "cancel": "Cancelar",
+            "save": "Guardar Cambios"
+          },
+          "errors": {
+            "noRole": "Por favor selecciona un rol"
+          }
+        }
+      },
+      "recentActivity": {
+        "title": "Actividades Recientes",
+        "description": "Cambios recientes en tu organización",
+        "loading": "Cargando actividades recientes...",
+        "error": "Error al cargar las actividades recientes",
+        "noActivities": "No se encontraron actividades recientes",
+        "viewAll": "Ver Todo",
+        "actions": {
+          "create": "{username} creó un nuevo {resource}",
+          "update": "{username} actualizó un {resource}",
+          "delete": "{username} eliminó un {resource}",
+          "default": "{username} accedió a un {resource}"
+        }
+      },
+      "members": {
+        "title": "Miembros del Equipo",
+        "description": "Administra usuarios y sus roles en tu equipo",
+        "table": {
+          "headers": {
+            "user": "Usuario",
+            "role": "Rol",
+            "permissions": "Permisos",
+            "actions": "Acciones"
+          }
+        },
+        "actions": {
+          "edit": "Editar Usuario",
+          "remove": "Eliminar Usuario",
+          "showMore": "Mostrar Más",
+          "showLess": "Mostrar Menos"
+        },
+        "deleteDialog": {
+          "title": "Eliminar {name}",
+          "description": "¿Estás seguro de que quieres eliminar a {name} del equipo? Esta acción no se puede deshacer.",
+          "confirm": "Eliminar Usuario"
+        }
+      },
+      "stats": {
+        "title": "Estadísticas del Equipo",
+        "description": "Vista general de tu equipo",
+        "totalMembers": "Total de Miembros",
+        "owners": "Propietarios",
+        "members": "Miembros",
+        "viewers": "Espectadores"
+      },
+      "noMembers": "No se encontraron miembros del equipo",
+      "messages": {
+        "userAdded": "Usuario agregado exitosamente",
+        "userAddFailed": "Error al agregar usuario",
+        "userRemoved": "Usuario eliminado exitosamente",
+        "userRemoveFailed": "Error al eliminar usuario",
+        "userUpdated": "Usuario actualizado exitosamente",
+        "userUpdateFailed": "Error al actualizar usuario",
+        "teamUpdated": "Detalles del equipo actualizados exitosamente",
+        "teamUpdateFailed": "Error al actualizar los detalles del equipo",
+        "requiredFields": "El nombre y la descripción del equipo son requeridos"
+      },
+      "createTeam": {
+        "title": "Crear Equipo",
+        "description": "Crea un nuevo equipo para colaborar con otros",
+        "fields": {
+          "name": {
+            "label": "Nombre",
+            "placeholder": "Ingresa el nombre del equipo"
+          },
+          "description": {
+            "label": "Descripción",
+            "placeholder": "Ingresa la descripción del equipo"
+          }
+        },
+        "buttons": {
+          "create": "Crear",
+          "creating": "Creando..."
+        }
+      }
+    },
+    "2fa": {
+      "title": "Autenticación de Dos Factores",
+      "description": "Agrega una capa adicional de seguridad a tu cuenta",
+      "setupButton": "Configurar 2FA",
+      "setupSuccess": "Configuración de 2FA iniciada exitosamente",
+      "setupError": "Error al configurar 2FA",
+      "enterCode": "Ingresa el código de verificación",
+      "codePlaceholder": "Ingresa el código de 6 dígitos",
+      "verifyButton": "Verificar",
+      "verifySuccess": "Verificación de 2FA exitosa",
+      "verifyError": "Código de verificación inválido"
+    }
+  }
+}
