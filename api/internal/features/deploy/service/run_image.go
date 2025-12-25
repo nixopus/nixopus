@@ -82,8 +82,8 @@ func (s *DeployService) prepareHostConfig(port nat.Port, availablePort string) c
 }
 
 func (s *DeployService) getAvailablePort() (string, error) {
-	ssh := ssh.NewSSH()
-	client, err := ssh.Connect()
+	manager := ssh.GetSSHManager()
+	client, err := manager.Connect()
 	if err != nil {
 		return "", err
 	}

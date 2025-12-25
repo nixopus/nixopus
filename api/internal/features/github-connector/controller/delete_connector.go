@@ -7,11 +7,9 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *GithubConnectorController) DeleteGithubConnector(f fuego.ContextWithBody[types.DeleteGithubConnectorRequest]) (*shared_types.Response, error) {
+func (c *GithubConnectorController) DeleteGithubConnector(f fuego.ContextWithBody[types.DeleteGithubConnectorRequest]) (*types.MessageResponse, error) {
 	deleteRequest, err := f.Body()
 
 	if err != nil {
@@ -58,7 +56,7 @@ func (c *GithubConnectorController) DeleteGithubConnector(f fuego.ContextWithBod
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.MessageResponse{
 		Status:  "success",
 		Message: "Github Connector deleted successfully",
 	}, nil

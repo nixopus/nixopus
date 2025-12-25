@@ -182,7 +182,7 @@ export function OverviewTab({ container }: OverviewTabProps) {
               )}
               {copied === 'raw' ? 'Copied' : 'Copy'}
             </Button>
-            <pre className="p-4 rounded-xl bg-zinc-950 text-zinc-400 text-xs font-mono overflow-auto max-h-[400px]">
+            <pre className="p-4 rounded-xl bg-zinc-950 text-zinc-400 text-xs font-mono overflow-auto max-h-[400px] no-scrollbar">
               {JSON.stringify(container, null, 2)}
             </pre>
           </div>

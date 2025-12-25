@@ -7,11 +7,10 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *AuthController) Logout(s fuego.ContextWithBody[types.LogoutRequest]) (*shared_types.Response, error) {
+func (c *AuthController) Logout(s fuego.ContextWithBody[types.LogoutRequest]) (*types.MessageResponse, error) {
 	c.logger.Log(logger.Info, "Logout request received", "")
 	logoutRequest, err := s.Body()
 	if err != nil {
@@ -56,9 +55,8 @@ func (c *AuthController) Logout(s fuego.ContextWithBody[types.LogoutRequest]) (*
 
 	c.logger.Log(logger.Info, "Logout notification sent", "")
 
-	return &shared_types.Response{
+	return &types.MessageResponse{
 		Status:  "success",
 		Message: "User logged out successfully",
-		Data:    nil,
 	}, nil
 }

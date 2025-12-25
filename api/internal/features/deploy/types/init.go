@@ -70,6 +70,78 @@ type RestartDeploymentRequest struct {
 	ID uuid.UUID `json:"id"`
 }
 
+// MessageResponse is a generic response with just status and message
+type MessageResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+// ApplicationResponse is the typed response for single application operations
+type ApplicationResponse struct {
+	Status  string                   `json:"status"`
+	Message string                   `json:"message"`
+	Data    shared_types.Application `json:"data"`
+}
+
+// ListApplicationsResponseData contains the data for list applications response
+type ListApplicationsResponseData struct {
+	Applications []shared_types.Application `json:"applications"`
+	TotalCount   int                        `json:"total_count"`
+	Page         string                     `json:"page"`
+	PageSize     string                     `json:"page_size"`
+}
+
+// ListApplicationsResponse is the typed response for listing applications
+type ListApplicationsResponse struct {
+	Status  string                       `json:"status"`
+	Message string                       `json:"message"`
+	Data    ListApplicationsResponseData `json:"data"`
+}
+
+// DeploymentResponse is the typed response for single deployment
+type DeploymentResponse struct {
+	Status  string                             `json:"status"`
+	Message string                             `json:"message"`
+	Data    shared_types.ApplicationDeployment `json:"data"`
+}
+
+// ListDeploymentsResponseData contains the data for list deployments response
+type ListDeploymentsResponseData struct {
+	Deployments []shared_types.ApplicationDeployment `json:"deployments"`
+	TotalCount  int                                  `json:"total_count"`
+	Page        string                               `json:"page"`
+	PageSize    string                               `json:"page_size"`
+}
+
+// ListDeploymentsResponse is the typed response for listing deployments
+type ListDeploymentsResponse struct {
+	Status  string                      `json:"status"`
+	Message string                      `json:"message"`
+	Data    ListDeploymentsResponseData `json:"data"`
+}
+
+// LogsResponseData contains the data for logs response
+type LogsResponseData struct {
+	Logs       []shared_types.ApplicationLogs `json:"logs"`
+	TotalCount int64                          `json:"total_count"`
+	Page       int                            `json:"page"`
+	PageSize   int                            `json:"page_size"`
+}
+
+// LogsResponse is the typed response for logs
+type LogsResponse struct {
+	Status  string           `json:"status"`
+	Message string           `json:"message"`
+	Data    LogsResponseData `json:"data"`
+}
+
+// LabelsResponse is the typed response for labels update
+type LabelsResponse struct {
+	Status  string   `json:"status"`
+	Message string   `json:"message"`
+	Data    []string `json:"data"`
+}
+
 var (
 	ErrMissingID                    = errors.New("id is required")
 	ErrInvalidRequestType           = errors.New("invalid request type")

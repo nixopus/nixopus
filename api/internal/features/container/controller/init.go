@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type ContainerController struct {
@@ -25,17 +25,24 @@ func NewContainerController(
 	ctx context.Context,
 	l logger.Logger,
 	notificationManager *notification.NotificationManager,
-) *ContainerController {
+) (*ContainerController, error) {
+	dockerService, err := docker.GetDockerManager().GetDefaultService()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get default docker service: %w", err)
+	}
+	if dockerService == nil {
+		return nil, fmt.Errorf("docker service is nil")
+	}
 	return &ContainerController{
 		store:         store,
-		dockerService: docker.NewDockerService(),
+		dockerService: dockerService,
 		ctx:           ctx,
 		logger:        l,
 		notification:  notificationManager,
-	}
+	}, nil
 }
 
-func (c *ContainerController) isProtectedContainer(containerID string, action string) (*shared_types.Response, bool) {
+func (c *ContainerController) isProtectedContainer(containerID string, action string) (*types.ContainerActionResponse, bool) {
 	details, err := c.dockerService.GetContainerById(containerID)
 	if err != nil {
 		return nil, false
@@ -43,10 +50,10 @@ func (c *ContainerController) isProtectedContainer(containerID string, action st
 	name := strings.ToLower(details.Name)
 	if strings.Contains(name, "nixopus") {
 		c.logger.Log(logger.Info, fmt.Sprintf("Skipping %s for protected container", action), details.Name)
-		return &shared_types.Response{
+		return &types.ContainerActionResponse{
 			Status:  "success",
 			Message: "Operation skipped for protected container",
-			Data:    map[string]string{"status": "skipped"},
+			Data:    types.ContainerStatusData{Status: "skipped"},
 		}, true
 	}
 	return nil, false
