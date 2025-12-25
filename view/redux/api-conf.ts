@@ -34,11 +34,7 @@ export enum USERURLS {
   PERFORM_UPDATE = 'v1/update',
   UPDATE_AVATAR = 'v1/user/avatar',
   SEND_INVITE = 'v1/organizations/invite/send',
-  RESEND_INVITE = 'v1/organizations/invite/resend',
-  GET_PREFERENCES = 'v1/user/preferences',
-  UPDATE_PREFERENCES = 'v1/user/preferences',
-  GET_ORGANIZATION_SETTINGS = 'v1/organizations/settings',
-  UPDATE_ORGANIZATION_SETTINGS = 'v1/organizations/settings'
+  RESEND_INVITE = 'v1/organizations/invite/resend'
 }
 
 export enum USER_NOTIFICATION_SETTINGS {

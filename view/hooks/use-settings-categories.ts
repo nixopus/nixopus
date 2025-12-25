@@ -1,71 +1,37 @@
 'use client';
 
-import {
-  Settings,
-  Bell,
-  Globe,
-  Users,
-  Flag,
-  Keyboard,
-  Wifi,
-  Bug,
-  Terminal,
-  Container
-} from 'lucide-react';
+import { Settings, Bell, Globe, Users, Flag, Keyboard } from 'lucide-react';
 import { useRBAC } from '@/lib/rbac';
 import { useFeatureFlags } from '@/hooks/features_provider';
 import { FeatureNames } from '@/types/feature-flags';
 import { useAppSelector } from '@/redux/hooks';
 
-export type SettingsScope = 'account' | 'organization';
-
-export interface SettingsCategory {
-  id: string;
-  label: string;
-  icon: typeof Settings;
-  visible?: boolean;
-  scope: SettingsScope;
-}
-
-export function useSettingsCategories(): SettingsCategory[] {
+export function useSettingsCategories() {
   const { canAccessResource } = useRBAC();
   const { isFeatureEnabled } = useFeatureFlags();
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
 
   return [
-    { id: 'general', label: 'General', icon: Settings, visible: true, scope: 'account' },
+    { id: 'general', label: 'General', icon: Settings, visible: true },
     {
       id: 'notifications',
       label: 'Notifications',
       icon: Bell,
-      visible: isFeatureEnabled(FeatureNames.FeatureNotifications),
-      scope: 'organization'
+      visible: isFeatureEnabled(FeatureNames.FeatureNotifications)
     },
     {
       id: 'domains',
       label: 'Domains',
       icon: Globe,
-      visible: isFeatureEnabled(FeatureNames.FeatureDomain) && !!activeOrg?.id,
-      scope: 'organization'
+      visible: isFeatureEnabled(FeatureNames.FeatureDomain) && !!activeOrg?.id
     },
-    { id: 'teams', label: 'Teams', icon: Users, visible: !!activeOrg?.id, scope: 'organization' },
+    { id: 'teams', label: 'Teams', icon: Users, visible: !!activeOrg?.id },
     {
       id: 'feature-flags',
       label: 'Feature Flags',
       icon: Flag,
-      visible: canAccessResource('feature-flags', 'read'),
-      scope: 'organization'
+      visible: canAccessResource('feature-flags', 'read')
     },
-    {
-      id: 'keyboard-shortcuts',
-      label: 'Keyboard Shortcuts',
-      icon: Keyboard,
-      visible: true,
-      scope: 'account'
-    },
-    { id: 'network', label: 'Network', icon: Wifi, visible: true, scope: 'organization' },
-    { id: 'terminal', label: 'Terminal', icon: Terminal, visible: true, scope: 'account' },
-    { id: 'container', label: 'Container', icon: Container, visible: true, scope: 'organization' },
-    { id: 'troubleshooting', label: 'Troubleshooting', icon: Bug, visible: true, scope: 'account' }
+    { id: 'keyboard-shortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, visible: true }
   ];
 }
