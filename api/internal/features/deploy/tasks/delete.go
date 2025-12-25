@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // DeleteDeployment deletes a deployment and its associated resources.
@@ -20,6 +21,34 @@ func (s *TaskService) DeleteDeployment(deployment *types.DeleteDeploymentRequest
 		return fmt.Errorf("failed to get application details: %w", err)
 	}
 
+	if IsComposeDeployment(application) {
+		return s.deleteComposeDeployment(deployment, userID, organizationID, application)
+	}
+
+	return s.deleteDockerfileDeployment(deployment, userID, organizationID, application)
+}
+
+// deleteComposeDeployment handles deletion for docker-compose deployments
+func (s *TaskService) deleteComposeDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID, application shared_types.Application) error {
+	s.Logger.Log(logger.Info, "Deleting Docker Compose deployment", application.ID.String())
+
+	// Create a payload for compose operations
+	payload := shared_types.TaskPayload{
+		Application: application,
+	}
+
+	// Delete compose resources - propagate errors to prevent orphaned resources
+	if err := s.ComposeDelete(payload); err != nil {
+		s.Logger.Log(logger.Error, "Failed to delete compose resources", err.Error())
+		return fmt.Errorf("failed to delete compose resources: %w", err)
+	}
+
+	// Only delete from storage if compose cleanup succeeded
+	return s.Storage.DeleteDeployment(deployment, userID)
+}
+
+// deleteDockerfileDeployment handles deletion for dockerfile deployments
+func (s *TaskService) deleteDockerfileDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID, application shared_types.Application) error {
 	domain := application.Domain
 
 	services, err := s.DockerRepo.GetClusterServices()

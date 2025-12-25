@@ -43,9 +43,37 @@ func (t *TaskService) RestartDeployment(request *types.RestartDeploymentRequest,
 func (s *TaskService) HandleRestart(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	taskCtx := s.NewTaskContext(TaskPayload)
 
+	if IsComposeDeployment(TaskPayload.Application) {
+		return s.handleComposeRestart(ctx, TaskPayload, taskCtx)
+	}
+
+	return s.handleDockerfileRestart(ctx, TaskPayload, taskCtx)
+}
+
+// handleComposeRestart restarts docker-compose services
+func (s *TaskService) handleComposeRestart(ctx context.Context, TaskPayload shared_types.TaskPayload, taskCtx *TaskContext) error {
+	taskCtx.LogAndUpdateStatus("Restarting Docker Compose services", shared_types.Deploying)
+
+	composePath := s.GetComposeFilePath(TaskPayload)
+	cfg := ComposeConfig{
+		TaskPayload: TaskPayload,
+		TaskContext: taskCtx,
+	}
+
+	err := s.ComposeRestart(cfg, composePath)
+	if err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to restart compose services: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
+	taskCtx.LogAndUpdateStatus("Docker Compose services restarted successfully", shared_types.Running)
+	return nil
+}
+
+// handleDockerfileRestart restarts swarm services
+func (s *TaskService) handleDockerfileRestart(ctx context.Context, TaskPayload shared_types.TaskPayload, taskCtx *TaskContext) error {
 	taskCtx.LogAndUpdateStatus("Restarting application service", shared_types.Deploying)
 
-	// Find the existing service
 	existingService, err := s.getExistingService(TaskPayload, taskCtx)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to find service: "+err.Error(), shared_types.Failed)
@@ -59,7 +87,6 @@ func (s *TaskService) HandleRestart(ctx context.Context, TaskPayload shared_type
 
 	taskCtx.AddLog("Restarting service " + existingService.ID)
 
-	// Get current service spec
 	services, err := s.DockerRepo.GetClusterServices()
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to get service details: "+err.Error(), shared_types.Failed)

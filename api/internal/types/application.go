@@ -34,6 +34,9 @@ type Application struct {
 	Deployments          []*ApplicationDeployment `json:"deployments,omitempty" bun:"rel:has-many,join:id=application_id"`
 	Organization         *Organization            `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	Labels               []string                 `json:"labels,omitempty" bun:"labels,array"`
+	ComposeFileURL       string                   `json:"compose_file_url,omitempty" bun:"compose_file_url"`
+	ComposeFileContent   string                   `json:"compose_file_content,omitempty" bun:"compose_file_content"`
+	ComposeFilePath      string                   `json:"compose_file_path,omitempty" bun:"compose_file_path"`
 }
 
 type ApplicationDeployment struct {

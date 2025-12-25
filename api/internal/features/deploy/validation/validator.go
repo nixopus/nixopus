@@ -2,12 +2,14 @@ package validation
 
 import (
 	"encoding/json"
-	"io"
-
 	"errors"
+	"io"
+	"net/url"
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"gopkg.in/yaml.v3"
 )
 
 type Validator struct {
@@ -53,6 +55,13 @@ func validateDeploymentRequest(req *types.CreateDeploymentRequest) error {
 	if req.BuildPack == "" {
 		return errors.New("build_pack is required")
 	}
+
+	// Docker Compose has different validation rules
+	if req.BuildPack == shared_types.DockerCompose {
+		return validateDockerComposeRequest(req)
+	}
+
+	// Standard Dockerfile validation
 	if req.Repository == "" {
 		return errors.New("repository is required")
 	}
@@ -67,6 +76,84 @@ func validateDeploymentRequest(req *types.CreateDeploymentRequest) error {
 	} else if req.BasePath[0] != '/' {
 		req.BasePath = "/" + req.BasePath
 	}
+	return nil
+}
+
+// validateDockerComposeRequest handles validation for docker compose deployments
+// Supports three source types: repository, URL, or raw content
+func validateDockerComposeRequest(req *types.CreateDeploymentRequest) error {
+	hasRepository := req.Repository != ""
+	hasURL := req.ComposeFileURL != ""
+	hasContent := req.ComposeFileContent != ""
+
+	sourceCount := 0
+	if hasRepository {
+		sourceCount++
+	}
+	if hasURL {
+		sourceCount++
+	}
+	if hasContent {
+		sourceCount++
+	}
+
+	if sourceCount == 0 {
+		return errors.New("docker-compose requires one of: repository, compose_file_url, or compose_file_content")
+	}
+	if sourceCount > 1 {
+		return errors.New("docker-compose accepts only one source: repository, compose_file_url, or compose_file_content")
+	}
+
+	if hasRepository {
+		if req.Branch == "" {
+			return errors.New("branch is required when using repository")
+		}
+	}
+
+	if hasURL {
+		parsedURL, err := url.ParseRequestURI(req.ComposeFileURL)
+		if err != nil {
+			return errors.New("compose_file_url must be a valid HTTP/HTTPS URL")
+		}
+		if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+			return errors.New("compose_file_url must be a valid HTTP/HTTPS URL")
+		}
+		if parsedURL.Host == "" {
+			return errors.New("compose_file_url must have a valid host")
+		}
+	}
+
+	if hasContent {
+		if len(req.ComposeFileContent) < 100 {
+			return errors.New("compose_file_content appears to be too short (minimum 100 bytes)")
+		}
+		// Perform lightweight YAML sanity check
+		var composeMap map[string]interface{}
+		if err := yaml.Unmarshal([]byte(req.ComposeFileContent), &composeMap); err != nil {
+			return errors.New("compose_file_content must be valid YAML: " + err.Error())
+		}
+		// Verify at least one of the top-level keys "version" or "services" exists
+		hasVersion := false
+		hasServices := false
+		for key := range composeMap {
+			if key == "version" {
+				hasVersion = true
+			}
+			if key == "services" {
+				hasServices = true
+			}
+		}
+		if !hasVersion && !hasServices {
+			return errors.New("compose_file_content must contain at least one of: 'version' or 'services' top-level keys")
+		}
+	}
+
+	if req.BasePath == "" {
+		req.BasePath = "/"
+	} else if req.BasePath[0] != '/' {
+		req.BasePath = "/" + req.BasePath
+	}
+
 	return nil
 }
 
