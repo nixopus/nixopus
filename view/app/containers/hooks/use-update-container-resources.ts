@@ -18,11 +18,13 @@ interface UseUpdateContainerResourcesProps {
 }
 
 export const bytesToMB = (bytes: number): number => {
+  if (bytes === -1) return -1;
   if (bytes <= 0) return 0;
   return Math.round(bytes / (1024 * 1024));
 };
 
 export const mbToBytes = (mb: number): number => {
+  if (mb === -1) return -1;
   if (mb <= 0) return 0;
   return mb * 1024 * 1024;
 };
@@ -60,31 +62,31 @@ export const fieldConfigs: FieldConfig[] = [
   {
     name: 'memoryMB',
     icon: MemoryStick,
-    labelKey: 'containers.resourceLimits.memory.label',
-    placeholderKey: 'containers.resourceLimits.memory.placeholder',
-    unitKey: 'containers.resourceLimits.memory.unit',
-    descriptionKey: 'containers.resourceLimits.memory.description',
-    unlimitedDescKey: 'containers.resourceLimits.memory.unlimited',
+    labelKey: 'containers.resourceLimits.memory.label' as translationKey,
+    placeholderKey: 'containers.resourceLimits.memory.placeholder' as translationKey,
+    unitKey: 'containers.resourceLimits.memory.unit' as translationKey,
+    descriptionKey: 'containers.resourceLimits.memory.description' as translationKey,
+    unlimitedDescKey: 'containers.resourceLimits.memory.unlimited' as translationKey,
     min: 0,
     isUnlimited: (value) => value === 0
   },
   {
     name: 'memorySwapMB',
     icon: HardDrive,
-    labelKey: 'containers.resourceLimits.memorySwap.label',
-    placeholderKey: 'containers.resourceLimits.memorySwap.placeholder',
-    unitKey: 'containers.resourceLimits.memorySwap.unit',
-    descriptionKey: 'containers.resourceLimits.memorySwap.description',
-    unlimitedDescKey: 'containers.resourceLimits.memorySwap.unlimited',
+    labelKey: 'containers.resourceLimits.memorySwap.label' as translationKey,
+    placeholderKey: 'containers.resourceLimits.memorySwap.placeholder' as translationKey,
+    unitKey: 'containers.resourceLimits.memorySwap.unit' as translationKey,
+    descriptionKey: 'containers.resourceLimits.memorySwap.description' as translationKey,
+    unlimitedDescKey: 'containers.resourceLimits.memorySwap.unlimited' as translationKey,
     min: -1,
     isUnlimited: (value) => value === 0 || value === -1
   },
   {
     name: 'cpuShares',
     icon: Cpu,
-    labelKey: 'containers.resourceLimits.cpuShares.label',
-    placeholderKey: 'containers.resourceLimits.cpuShares.placeholder',
-    descriptionKey: 'containers.resourceLimits.cpuShares.description',
+    labelKey: 'containers.resourceLimits.cpuShares.label' as translationKey,
+    placeholderKey: 'containers.resourceLimits.cpuShares.placeholder' as translationKey,
+    descriptionKey: 'containers.resourceLimits.cpuShares.description' as translationKey,
     min: 0,
     isUnlimited: () => false
   }
@@ -108,16 +110,16 @@ function useUpdateContainerResources({
   const resourceLimitsSchema = z.object({
     memoryMB: z
       .number()
-      .min(0, { message: t('containers.resourceLimits.validation.memoryMin') })
+      .min(0, { message: t('containers.resourceLimits.validation.memoryMin' as translationKey) })
       .refine((val) => val === 0 || val >= 6, {
-        message: t('containers.resourceLimits.validation.memoryMin')
+        message: t('containers.resourceLimits.validation.memoryMin' as translationKey)
       }),
     memorySwapMB: z.number().refine((val) => val === -1 || val === 0 || val >= 0, {
-      message: t('containers.resourceLimits.validation.swapMin')
+      message: t('containers.resourceLimits.validation.swapMin' as translationKey)
     }),
     cpuShares: z
       .number()
-      .min(0, { message: t('containers.resourceLimits.validation.cpuSharesMin') })
+      .min(0, { message: t('containers.resourceLimits.validation.cpuSharesMin' as translationKey) })
   });
 
   const form = useForm<ResourceLimitsFormValues>({
@@ -161,21 +163,21 @@ function useUpdateContainerResources({
         const result = await updateResources({
           containerId,
           memory: mbToBytes(values.memoryMB),
-          memory_swap: values.memorySwapMB === -1 ? -1 : mbToBytes(values.memorySwapMB),
+          memory_swap: mbToBytes(values.memorySwapMB),
           cpu_shares: values.cpuShares
         }).unwrap();
 
         if (result.warnings && result.warnings.length > 0) {
-          toast.warning(t('containers.resourceLimits.warnings'), {
+          toast.warning(t('containers.resourceLimits.warnings' as translationKey), {
             description: result.warnings.join(', ')
           });
         } else {
-          toast.success(t('containers.resourceLimits.success'));
+          toast.success(t('containers.resourceLimits.success' as translationKey));
         }
 
         onSuccess?.();
       } catch (error) {
-        toast.error(t('containers.resourceLimits.error'));
+        toast.error(t('containers.resourceLimits.error' as translationKey));
       }
     },
     [containerId, updateResources, t, onSuccess]
