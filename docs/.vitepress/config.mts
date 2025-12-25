@@ -12,7 +12,12 @@ export default withMermaid(
   defineConfig({
     title: "Nixopus Docs",
     description: "documentation",
-    head: [['link', { rel: 'icon', href: '/favicon.png' }]],
+    head: [
+      ['link', { rel: 'icon', href: '/favicon.png' }],
+      ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
+      ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
+      ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400&display=swap' }],
+    ],
     themeConfig: {
       search: {
         provider: 'local',
