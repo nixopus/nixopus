@@ -11,17 +11,18 @@ import (
 
 func TestGetApplicationLogs(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 	testApplicationID := "123e4567-e89b-12d3-a456-426614174000"
 
 	testCases := []struct {
 		name           string
-		token          string
+		cookies        string
 		organizationID string
 		applicationID  string
 		expectedStatus int
@@ -29,23 +30,23 @@ func TestGetApplicationLogs(t *testing.T) {
 	}{
 		{
 			name:           "Get application logs without authentication",
-			token:          "",
+			cookies:        "",
 			organizationID: orgID,
 			applicationID:  testApplicationID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when no authentication token is provided",
+			description:    "Should return 401 when no authentication cookies are provided",
 		},
 		{
-			name:           "Get application logs with invalid token",
-			token:          "invalid-token",
+			name:           "Get application logs with invalid cookies",
+			cookies:        "invalid-cookies",
 			organizationID: orgID,
 			applicationID:  testApplicationID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when invalid authentication token is provided",
+			description:    "Should return 401 when invalid authentication cookies are provided",
 		},
 		{
 			name:           "Get application logs without organization header",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "",
 			applicationID:  testApplicationID,
 			expectedStatus: http.StatusBadRequest,
@@ -53,7 +54,7 @@ func TestGetApplicationLogs(t *testing.T) {
 		},
 		{
 			name:           "Get application logs with invalid application ID format",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			applicationID:  "invalid-uuid",
 			expectedStatus: http.StatusInternalServerError,
@@ -61,7 +62,7 @@ func TestGetApplicationLogs(t *testing.T) {
 		},
 		{
 			name:           "Get application logs for non-existent application",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			applicationID:  testApplicationID,
 			expectedStatus: http.StatusOK,
@@ -69,7 +70,7 @@ func TestGetApplicationLogs(t *testing.T) {
 		},
 		{
 			name:           "Get application logs with empty application ID",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			applicationID:  "",
 			expectedStatus: http.StatusNotFound,
@@ -91,8 +92,8 @@ func TestGetApplicationLogs(t *testing.T) {
 				Get(url),
 			}
 
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			if tc.organizationID != "" {
@@ -108,19 +109,20 @@ func TestGetApplicationLogs(t *testing.T) {
 
 func TestGetApplicationLogsSuccess(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 	testApplicationID := "123e4567-e89b-12d3-a456-426614174000"
 
 	t.Run("Get application logs with valid format", func(t *testing.T) {
 		Test(t,
 			Description("Should attempt to fetch application logs with valid UUID format"),
 			Get(tests.GetDeployApplicationLogsURL(testApplicationID)),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-ID").Add(orgID),
 			Expect().Status().OneOf(http.StatusOK, http.StatusNotFound), // Either OK with logs or 404 if application doesn't exist
 		)
