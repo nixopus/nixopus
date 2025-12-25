@@ -44,3 +44,10 @@ type InviteResponse struct {
 	Message string             `json:"message"`
 	Data    InviteResponseData `json:"data"`
 }
+
+// OrganizationSettingsResponse is the typed response for organization settings
+type OrganizationSettingsResponse struct {
+	Status  string                             `json:"status"`
+	Message string                             `json:"message"`
+	Data    *shared_types.OrganizationSettings `json:"data"`
+}

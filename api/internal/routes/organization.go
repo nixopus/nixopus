@@ -17,4 +17,6 @@ func (router *Router) RegisterOrganizationRoutes(organizationGroup *fuego.Server
 	fuego.Get(organizationGroup, "/all", organizationController.GetOrganizations)
 	fuego.Post(organizationGroup, "/invite/send", organizationController.SendInvite)
 	fuego.Post(organizationGroup, "/invite/resend", organizationController.ResendInvite)
+	fuego.Get(organizationGroup, "/settings", organizationController.GetOrganizationSettings)
+	fuego.Put(organizationGroup, "/settings", organizationController.UpdateOrganizationSettings)
 }

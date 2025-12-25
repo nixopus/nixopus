@@ -6,8 +6,9 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
 	"github.com/stretchr/testify/mock"
 
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"time"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type MockUserStorage struct {
@@ -42,4 +43,20 @@ func (m *MockUserStorage) UpdateUserSettings(userID string, updates map[string]i
 func (m *MockUserStorage) UpdateUserAvatar(ctx context.Context, userID string, avatarData string) error {
 	args := m.Called(ctx, userID, avatarData)
 	return args.Error(0)
+}
+
+func (m *MockUserStorage) GetUserPreferences(userID string) (*shared_types.UserPreferences, error) {
+	args := m.Called(userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*shared_types.UserPreferences), args.Error(1)
+}
+
+func (m *MockUserStorage) UpdateUserPreferences(userID string, preferences shared_types.UserPreferencesData) (*shared_types.UserPreferences, error) {
+	args := m.Called(userID, preferences)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*shared_types.UserPreferences), args.Error(1)
 }
