@@ -9,9 +9,17 @@ import {
 } from '@reduxjs/toolkit/query/react';
 import { Mutex } from 'async-mutex';
 import { getAccessToken } from 'supertokens-auth-react/recipe/session';
+import { getAdvancedSettings } from '@/lib/advanced-settings';
 
 const mutex = new Mutex();
-const MAX_RETRIES = 1;
+
+function getMaxRetries(): number {
+  try {
+    return getAdvancedSettings().apiRetryAttempts;
+  } catch {
+    return 1;
+  }
+}
 
 let currentBaseUrl: string | undefined;
 
@@ -24,9 +32,11 @@ const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryEr
     currentBaseUrl = await getBaseUrl();
   }
 
+  const advancedSettings = getAdvancedSettings();
+
   const baseQuery = fetchBaseQuery({
     baseUrl: currentBaseUrl,
-    prepareHeaders: async (headers, { getState, endpoint }) => {
+    prepareHeaders: async (headers, { getState }) => {
       const token = await getAccessToken();
       const organizationId =
         (getState() as RootState).user.activeOrganization?.id ||
@@ -39,6 +49,12 @@ const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryEr
       if (organizationId) {
         headers.set('X-Organization-Id', organizationId);
       }
+
+      // Apply advanced settings for cache control
+      if (advancedSettings.disableApiCache) {
+        headers.set('X-Disable-Cache', 'true');
+      }
+
       return headers;
     },
     credentials: 'include'
@@ -48,7 +64,7 @@ const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryEr
 };
 
 const retryableBaseQuery = retry(customBaseQuery, {
-  maxRetries: MAX_RETRIES,
+  maxRetries: getMaxRetries(),
   backoff: async (attempt) => {
     const delay = Math.min(1000 * 2 ** attempt, 30000);
     await new Promise((resolve) => setTimeout(resolve, delay));

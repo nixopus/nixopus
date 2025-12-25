@@ -3,6 +3,9 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -211,4 +214,80 @@ func (s OrganizationStore) UpdateUserRole(userID string, organizationID string, 
 func (s OrganizationStore) GetOrganizationCount() (int, error) {
 	count, err := s.getDB().NewSelect().Model(&shared_types.Organization{}).Count(s.Ctx)
 	return count, err
+}
+
+// GetOrganizationSettings retrieves organization settings, creating defaults if none exist
+func (s *OrganizationStore) GetOrganizationSettings(organizationID string) (*shared_types.OrganizationSettings, error) {
+	var settings shared_types.OrganizationSettings
+	err := s.getDB().NewSelect().
+		Model(&settings).
+		Where("organization_id = ?", organizationID).
+		Scan(s.Ctx)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			parsedOrgID, parseErr := uuid.Parse(organizationID)
+			if parseErr != nil {
+				return nil, fmt.Errorf("invalid organization ID: %w", parseErr)
+			}
+
+			defaultSettings := &shared_types.OrganizationSettings{
+				ID:             uuid.New(),
+				OrganizationID: parsedOrgID,
+				Settings:       shared_types.DefaultOrganizationSettingsData(),
+				CreatedAt:      time.Now(),
+				UpdatedAt:      time.Now(),
+			}
+
+			_, err := s.getDB().NewInsert().
+				Model(defaultSettings).
+				Exec(s.Ctx)
+			if err != nil {
+				return nil, err
+			}
+			return defaultSettings, nil
+		}
+		return nil, err
+	}
+	return &settings, nil
+}
+
+// UpdateOrganizationSettings updates organization settings with the provided data
+func (s *OrganizationStore) UpdateOrganizationSettings(organizationID string, settings shared_types.OrganizationSettingsData) (*shared_types.OrganizationSettings, error) {
+	// Ensure settings exist before updating
+	existingSettings, err := s.GetOrganizationSettings(organizationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get organization settings: %w", err)
+	}
+	if existingSettings == nil {
+		return nil, fmt.Errorf("organization settings not found for organization ID: %s", organizationID)
+	}
+
+	var orgSettings shared_types.OrganizationSettings
+	result, err := s.getDB().NewUpdate().
+		Model(&orgSettings).
+		Set("settings = ?", settings).
+		Set("updated_at = ?", time.Now()).
+		Where("organization_id = ?", organizationID).
+		Returning("*").
+		Exec(s.Ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rowsAffected == 0 {
+		return nil, fmt.Errorf("no rows updated for organization ID: %s", organizationID)
+	}
+
+	// Re-fetch to ensure we have the updated data
+	updatedSettings, err := s.GetOrganizationSettings(organizationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to refetch organization settings after update: %w", err)
+	}
+	return updatedSettings, nil
 }

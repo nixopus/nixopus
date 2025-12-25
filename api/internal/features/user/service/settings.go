@@ -44,3 +44,15 @@ func (s *UserService) UpdateAutoUpdate(userID string, autoUpdate bool) (*types.U
 		"updated_at":  time.Now(),
 	})
 }
+
+// GetUserPreferences retrieves user preferences
+func (s *UserService) GetUserPreferences(userID string) (*types.UserPreferences, error) {
+	s.logger.Log(logger.Info, "getting user preferences", "")
+	return s.storage.GetUserPreferences(userID)
+}
+
+// UpdateUserPreferences updates user preferences with the provided data
+func (s *UserService) UpdateUserPreferences(userID string, preferences types.UserPreferencesData) (*types.UserPreferences, error) {
+	s.logger.Log(logger.Info, "updating user preferences", "")
+	return s.storage.UpdateUserPreferences(userID, preferences)
+}

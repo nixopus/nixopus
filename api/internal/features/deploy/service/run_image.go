@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
@@ -65,9 +66,9 @@ func (s *DeployService) prepareContainerConfig(
 	}
 }
 
-// prepareHostConfig creates Docker host configuration with port bindings
-func (s *DeployService) prepareHostConfig(port nat.Port, availablePort string) container.HostConfig {
-	return container.HostConfig{
+// prepareHostConfig creates Docker host configuration with port bindings and restart policy
+func (s *DeployService) prepareHostConfig(port nat.Port, availablePort string, restartPolicy string) (container.HostConfig, error) {
+	hostCfg := container.HostConfig{
 		NetworkMode: "bridge",
 		PortBindings: map[nat.Port][]nat.PortBinding{
 			port: {
@@ -79,6 +80,24 @@ func (s *DeployService) prepareHostConfig(port nat.Port, availablePort string) c
 		},
 		PublishAllPorts: true,
 	}
+
+	// Set restart policy if provided
+	if restartPolicy != "" {
+		validPolicies := map[string]bool{
+			"no":             true,
+			"always":         true,
+			"on-failure":     true,
+			"unless-stopped": true,
+		}
+		if !validPolicies[restartPolicy] {
+			return hostCfg, fmt.Errorf("invalid restart policy '%s': allowed values are 'no', 'always', 'on-failure', 'unless-stopped'", restartPolicy)
+		}
+		hostCfg.RestartPolicy = container.RestartPolicy{
+			Name: container.RestartPolicyMode(restartPolicy),
+		}
+	}
+
+	return hostCfg, nil
 }
 
 func (s *DeployService) getAvailablePort() (string, error) {
@@ -158,7 +177,19 @@ func (s *DeployService) createContainerConfigs(r DeployerConfig) (container.Conf
 		s.logger.Log(logger.Error, types.ErrFailedToGetAvailablePort.Error(), err.Error())
 		return container.Config{}, container.HostConfig{}, network.NetworkingConfig{}, ""
 	}
-	host_config := s.prepareHostConfig(port, availablePort)
+
+	// Get restart policy from organization settings
+	orgSettings := s.getOrganizationSettings(r.application.OrganizationID)
+	restartPolicy := "unless-stopped" // Default
+	if orgSettings.ContainerDefaultRestartPolicy != nil {
+		restartPolicy = *orgSettings.ContainerDefaultRestartPolicy
+	}
+
+	host_config, err := s.prepareHostConfig(port, availablePort, restartPolicy)
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return container.Config{}, container.HostConfig{}, network.NetworkingConfig{}, ""
+	}
 	network_config := s.prepareNetworkConfig()
 
 	return container_config, host_config, network_config, availablePort
@@ -189,9 +220,16 @@ func (s *DeployService) AtomicUpdateContainer(r DeployerConfig) (string, string,
 	}
 	s.formatLog(r.application.ID, r.deployment_config.ID, types.LogNewContainerCreated+"%s", resp.ID)
 
+	// Get stop timeout from organization settings
+	orgSettings := s.getOrganizationSettings(r.application.OrganizationID)
+	timeout := 10 // Default
+	if orgSettings.ContainerStopTimeout != nil {
+		timeout = *orgSettings.ContainerStopTimeout
+	}
+
 	for _, ctr := range currentContainers {
 		s.formatLog(r.application.ID, r.deployment_config.ID, types.LogStoppingOldContainer+"%s", ctr.ID)
-		err = s.dockerRepo.StopContainer(ctr.ID, container.StopOptions{Timeout: intPtr(10)})
+		err = s.dockerRepo.StopContainer(ctr.ID, container.StopOptions{Timeout: intPtr(timeout)})
 		if err != nil {
 			s.formatLog(r.application.ID, r.deployment_config.ID, types.LogFailedToStopOldContainer, err.Error())
 		}
@@ -249,6 +287,51 @@ func intPtr(i int) *int {
 	return &i
 }
 
+// getOrganizationSettings retrieves organization settings with defaults
+func (s *DeployService) getOrganizationSettings(organizationID uuid.UUID) shared_types.OrganizationSettingsData {
+	if organizationID == uuid.Nil {
+		return shared_types.DefaultOrganizationSettingsData()
+	}
+
+	orgStore := storage.OrganizationStore{DB: s.store.DB, Ctx: s.Ctx}
+	settings, err := orgStore.GetOrganizationSettings(organizationID.String())
+	if err != nil || settings == nil {
+		return shared_types.DefaultOrganizationSettingsData()
+	}
+
+	// Merge with defaults to ensure all fields are set
+	defaults := shared_types.DefaultOrganizationSettingsData()
+	result := shared_types.OrganizationSettingsData{
+		WebsocketReconnectAttempts:       settings.Settings.WebsocketReconnectAttempts,
+		WebsocketReconnectInterval:       settings.Settings.WebsocketReconnectInterval,
+		ApiRetryAttempts:                 settings.Settings.ApiRetryAttempts,
+		DisableApiCache:                  settings.Settings.DisableApiCache,
+		ContainerLogTailLines:            defaults.ContainerLogTailLines,
+		ContainerDefaultRestartPolicy:    defaults.ContainerDefaultRestartPolicy,
+		ContainerStopTimeout:             defaults.ContainerStopTimeout,
+		ContainerAutoPruneDanglingImages: defaults.ContainerAutoPruneDanglingImages,
+		ContainerAutoPruneBuildCache:     defaults.ContainerAutoPruneBuildCache,
+	}
+
+	if settings.Settings.ContainerLogTailLines != nil {
+		result.ContainerLogTailLines = settings.Settings.ContainerLogTailLines
+	}
+	if settings.Settings.ContainerDefaultRestartPolicy != nil {
+		result.ContainerDefaultRestartPolicy = settings.Settings.ContainerDefaultRestartPolicy
+	}
+	if settings.Settings.ContainerStopTimeout != nil {
+		result.ContainerStopTimeout = settings.Settings.ContainerStopTimeout
+	}
+	if settings.Settings.ContainerAutoPruneDanglingImages != nil {
+		result.ContainerAutoPruneDanglingImages = settings.Settings.ContainerAutoPruneDanglingImages
+	}
+	if settings.Settings.ContainerAutoPruneBuildCache != nil {
+		result.ContainerAutoPruneBuildCache = settings.Settings.ContainerAutoPruneBuildCache
+	}
+
+	return result
+}
+
 func (s *DeployService) RestartContainer(r DeployerConfig) error {
 	if r.application.Name == "" {
 		return types.ErrMissingImageName
@@ -265,7 +348,16 @@ func (s *DeployService) RestartContainer(r DeployerConfig) error {
 		return types.ErrContainerNotRunning
 	}
 
-	err = s.dockerRepo.RestartContainer(r.deployment_config.ContainerID, container.StopOptions{})
+	// Get stop timeout from organization settings
+	orgSettings := s.getOrganizationSettings(r.application.OrganizationID)
+	timeout := 10 // Default
+	if orgSettings.ContainerStopTimeout != nil {
+		timeout = *orgSettings.ContainerStopTimeout
+	}
+
+	err = s.dockerRepo.RestartContainer(r.deployment_config.ContainerID, container.StopOptions{
+		Timeout: intPtr(timeout),
+	})
 	if err != nil {
 		return err
 	}

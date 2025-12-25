@@ -22,9 +22,22 @@ func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.Con
 		}
 	}
 
+	_, r := f.Response(), f.Request()
+	orgSettings := c.getOrganizationSettings(r)
+
+	// Use default tail lines from settings if not provided
+	tail := req.Tail
+	if tail == 0 {
+		if orgSettings.ContainerLogTailLines != nil {
+			tail = *orgSettings.ContainerLogTailLines
+		} else {
+			tail = 100 // Fallback default
+		}
+	}
+
 	logsReader, err := c.dockerService.GetContainerLogs(req.ID, container.LogsOptions{
 		Follow:     req.Follow,
-		Tail:       strconv.Itoa(req.Tail),
+		Tail:       strconv.Itoa(tail),
 		Since:      req.Since,
 		Until:      req.Until,
 		ShowStdout: req.Stdout,

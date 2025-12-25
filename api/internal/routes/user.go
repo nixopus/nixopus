@@ -16,4 +16,6 @@ func (router *Router) RegisterUserRoutes(userGroup *fuego.Server, userController
 	fuego.Patch(userGroup, "/settings/language", userController.UpdateLanguage)
 	fuego.Patch(userGroup, "/settings/auto-update", userController.UpdateAutoUpdate)
 	fuego.Patch(userGroup, "/avatar", userController.UpdateAvatar)
+	fuego.Get(userGroup, "/preferences", userController.GetUserPreferences)
+	fuego.Put(userGroup, "/preferences", userController.UpdateUserPreferences)
 }

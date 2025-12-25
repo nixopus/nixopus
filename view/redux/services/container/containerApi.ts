@@ -113,7 +113,7 @@ export const containerApi = createApi({
       ]
     }),
     getContainerLogs: builder.query<string, { containerId: string; tail?: number }>({
-      query: ({ containerId, tail = 100 }) => ({
+      query: ({ containerId, tail }) => ({
         url: CONTAINERURLS.GET_CONTAINER_LOGS.replace('{container_id}', containerId),
         method: 'POST',
         body: {

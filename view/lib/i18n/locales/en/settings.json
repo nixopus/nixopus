@@ -2,6 +2,10 @@
   "settings": {
     "title": "Settings",
     "description": "Manage your account",
+    "sidebar": {
+      "account": "Account",
+      "organization": "Organization"
+    },
     "tabs": {
       "account": "Account",
       "security": "Security",
@@ -546,6 +550,161 @@
       "disableButton": "Disable 2FA",
       "disableSuccess": "2FA has been disabled",
       "disableError": "Failed to disable 2FA"
+    },
+    "advanced": {
+      "resetDefaults": "Reset to Defaults",
+      "messages": {
+        "settingUpdated": "Setting updated",
+        "resetSuccess": "Settings reset to defaults"
+      }
+    },
+    "network": {
+      "title": "Network",
+      "description": "Configure how nixopus should handle network issues and reconnections.",
+      "reconnectAttempts": {
+        "title": "Reconnect Attempts",
+        "description": "Maximum number of WebSocket reconnection attempts before giving up"
+      },
+      "reconnectInterval": {
+        "title": "Reconnect Interval",
+        "description": "Initial delay between reconnection attempts (uses exponential backoff)"
+      },
+      "apiRetryAttempts": {
+        "title": "API Retry Attempts",
+        "description": "Number of times to retry failed API requests"
+      },
+      "disableApiCache": {
+        "title": "Disable API Cache",
+        "description": "Always fetch fresh data instead of using cached responses"
+      },
+      "messages": {
+        "settingUpdated": "Network setting updated",
+        "settingUpdateFailed": "Failed to update network setting",
+        "resetSuccess": "Network settings reset to defaults",
+        "resetFailed": "Failed to reset network settings"
+      }
+    },
+    "terminal": {
+      "title": "Terminal",
+      "description": "Customize your terminal appearance and behavior.",
+      "scrollback": {
+        "title": "Scrollback Buffer",
+        "description": "Number of lines to retain in terminal history"
+      },
+      "fontSize": {
+        "title": "Font Size",
+        "description": "Terminal text size in pixels"
+      },
+      "cursorStyle": {
+        "title": "Cursor Style",
+        "description": "Visual appearance of the terminal cursor",
+        "options": {
+          "bar": "Bar",
+          "block": "Block",
+          "underline": "Underline"
+        }
+      },
+      "cursorBlink": {
+        "title": "Cursor Blink",
+        "description": "Enable blinking cursor animation"
+      },
+      "lineHeight": {
+        "title": "Line Height",
+        "description": "Spacing between terminal lines"
+      },
+      "cursorWidth": {
+        "title": "Cursor Width",
+        "description": "Width of the terminal cursor in pixels"
+      },
+      "tabStopWidth": {
+        "title": "Tab Stop Width",
+        "description": "Number of spaces a tab character represents"
+      },
+      "fontFamily": {
+        "title": "Font Family",
+        "description": "Monospace font used in the terminal",
+        "options": {
+          "jetbrainsMono": "JetBrains Mono",
+          "firaCode": "Fira Code",
+          "cascadiaCode": "Cascadia Code",
+          "sfMono": "SF Mono",
+          "menlo": "Menlo",
+          "monaco": "Monaco",
+          "courierNew": "Courier New"
+        }
+      },
+      "fontWeight": {
+        "title": "Font Weight",
+        "description": "Boldness of the terminal font",
+        "options": {
+          "normal": "Normal",
+          "bold": "Bold"
+        }
+      },
+      "letterSpacing": {
+        "title": "Letter Spacing",
+        "description": "Spacing between characters in pixels"
+      },
+      "messages": {
+        "settingUpdated": "Terminal setting updated",
+        "settingUpdateFailed": "Failed to update terminal setting",
+        "resetSuccess": "Terminal settings reset to defaults",
+        "resetFailed": "Failed to reset terminal settings"
+      }
+    },
+    "container": {
+      "title": "Container & Docker",
+      "description": "Configure default container behavior and Docker resource management.",
+      "logTailLines": {
+        "title": "Default Log Tail Lines",
+        "description": "Number of lines to fetch when viewing container logs"
+      },
+      "defaultRestartPolicy": {
+        "title": "Default Restart Policy",
+        "description": "Default restart policy for new containers",
+        "options": {
+          "no": "No (do not restart)",
+          "always": "Always (always restart)",
+          "onFailure": "On Failure (restart on failure)",
+          "unlessStopped": "Unless Stopped (restart unless manually stopped)"
+        }
+      },
+      "stopTimeout": {
+        "title": "Container Stop Timeout",
+        "description": "Grace period in seconds before force-killing a container"
+      },
+      "autoPruneDanglingImages": {
+        "title": "Auto-Prune Dangling Images",
+        "description": "Automatically remove unused (dangling) Docker images"
+      },
+      "autoPruneBuildCache": {
+        "title": "Auto-Prune Build Cache",
+        "description": "Automatically clean Docker build cache to free up disk space"
+      },
+      "messages": {
+        "settingUpdated": "Container setting updated",
+        "settingUpdateFailed": "Failed to update container setting",
+        "resetSuccess": "Container settings reset to defaults",
+        "resetFailed": "Failed to reset container settings"
+      }
+    },
+    "troubleshooting": {
+      "title": "Troubleshooting",
+      "description": "Tools to help diagnose issues with nixopus.",
+      "debugMode": {
+        "title": "Debug Mode",
+        "description": "Enable verbose logging in the browser console"
+      },
+      "showApiErrorDetails": {
+        "title": "Show API Error Details",
+        "description": "Display detailed error messages from API responses"
+      },
+      "messages": {
+        "settingUpdated": "Troubleshooting setting updated",
+        "settingUpdateFailed": "Failed to update troubleshooting setting",
+        "resetSuccess": "Troubleshooting settings reset to defaults",
+        "resetFailed": "Failed to reset troubleshooting settings"
+      }
     }
   }
 }

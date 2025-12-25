@@ -16,7 +16,18 @@ func (c *ContainerController) StopContainer(f fuego.ContextNoBody) (*types.Conta
 		return resp, nil
 	}
 
-	err := c.dockerService.StopContainer(containerID, container.StopOptions{})
+	_, r := f.Response(), f.Request()
+	orgSettings := c.getOrganizationSettings(r)
+
+	// Use timeout from settings, default to 10 seconds if not set
+	timeout := 10
+	if orgSettings.ContainerStopTimeout != nil {
+		timeout = *orgSettings.ContainerStopTimeout
+	}
+
+	err := c.dockerService.StopContainer(containerID, container.StopOptions{
+		Timeout: &timeout,
+	})
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

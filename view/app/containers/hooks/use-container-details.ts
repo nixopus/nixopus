@@ -11,6 +11,7 @@ import {
 } from '@/redux/services/container/containerApi';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { getAdvancedSettings } from '@/lib/advanced-settings';
 
 function useContainerDetails() {
   const { t } = useTranslation();
@@ -21,7 +22,8 @@ function useContainerDetails() {
   const [startContainer] = useStartContainerMutation();
   const [stopContainer] = useStopContainerMutation();
   const [removeContainer] = useRemoveContainerMutation();
-  const [logsTail, setLogsTail] = useState(100);
+  const containerSettings = getAdvancedSettings();
+  const [logsTail, setLogsTail] = useState(containerSettings.containerLogTailLines);
   const [allLogs, setAllLogs] = useState<string>('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -40,7 +42,7 @@ function useContainerDetails() {
   }, [logs]);
 
   const handleLoadMoreLogs = async () => {
-    const newTail = logsTail + 100;
+    const newTail = logsTail + containerSettings.containerLogTailLines;
     setLogsTail(newTail);
     await refetchLogs();
   };
