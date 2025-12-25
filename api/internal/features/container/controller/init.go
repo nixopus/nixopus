@@ -73,10 +73,10 @@ func (c *ContainerController) getOrganizationSettings(r *http.Request) shared_ty
 	// Merge with defaults to ensure all fields are set
 	defaults := shared_types.DefaultOrganizationSettingsData()
 	result := shared_types.OrganizationSettingsData{
-		WebsocketReconnectAttempts:       defaults.WebsocketReconnectAttempts,
-		WebsocketReconnectInterval:       defaults.WebsocketReconnectInterval,
-		ApiRetryAttempts:                 defaults.ApiRetryAttempts,
-		DisableApiCache:                  defaults.DisableApiCache,
+		WebsocketReconnectAttempts:       settings.Settings.WebsocketReconnectAttempts,
+		WebsocketReconnectInterval:       settings.Settings.WebsocketReconnectInterval,
+		ApiRetryAttempts:                 settings.Settings.ApiRetryAttempts,
+		DisableApiCache:                  settings.Settings.DisableApiCache,
 		ContainerLogTailLines:            defaults.ContainerLogTailLines,
 		ContainerDefaultRestartPolicy:    defaults.ContainerDefaultRestartPolicy,
 		ContainerStopTimeout:             defaults.ContainerStopTimeout,

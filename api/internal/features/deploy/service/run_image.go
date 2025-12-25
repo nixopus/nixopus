@@ -67,7 +67,7 @@ func (s *DeployService) prepareContainerConfig(
 }
 
 // prepareHostConfig creates Docker host configuration with port bindings and restart policy
-func (s *DeployService) prepareHostConfig(port nat.Port, availablePort string, restartPolicy string) container.HostConfig {
+func (s *DeployService) prepareHostConfig(port nat.Port, availablePort string, restartPolicy string) (container.HostConfig, error) {
 	hostCfg := container.HostConfig{
 		NetworkMode: "bridge",
 		PortBindings: map[nat.Port][]nat.PortBinding{
@@ -83,12 +83,21 @@ func (s *DeployService) prepareHostConfig(port nat.Port, availablePort string, r
 
 	// Set restart policy if provided
 	if restartPolicy != "" {
+		validPolicies := map[string]bool{
+			"no":             true,
+			"always":         true,
+			"on-failure":     true,
+			"unless-stopped": true,
+		}
+		if !validPolicies[restartPolicy] {
+			return hostCfg, fmt.Errorf("invalid restart policy '%s': allowed values are 'no', 'always', 'on-failure', 'unless-stopped'", restartPolicy)
+		}
 		hostCfg.RestartPolicy = container.RestartPolicy{
 			Name: container.RestartPolicyMode(restartPolicy),
 		}
 	}
 
-	return hostCfg
+	return hostCfg, nil
 }
 
 func (s *DeployService) getAvailablePort() (string, error) {
@@ -176,7 +185,11 @@ func (s *DeployService) createContainerConfigs(r DeployerConfig) (container.Conf
 		restartPolicy = *orgSettings.ContainerDefaultRestartPolicy
 	}
 
-	host_config := s.prepareHostConfig(port, availablePort, restartPolicy)
+	host_config, err := s.prepareHostConfig(port, availablePort, restartPolicy)
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), "")
+		return container.Config{}, container.HostConfig{}, network.NetworkingConfig{}, ""
+	}
 	network_config := s.prepareNetworkConfig()
 
 	return container_config, host_config, network_config, availablePort
@@ -289,10 +302,10 @@ func (s *DeployService) getOrganizationSettings(organizationID uuid.UUID) shared
 	// Merge with defaults to ensure all fields are set
 	defaults := shared_types.DefaultOrganizationSettingsData()
 	result := shared_types.OrganizationSettingsData{
-		WebsocketReconnectAttempts:       defaults.WebsocketReconnectAttempts,
-		WebsocketReconnectInterval:       defaults.WebsocketReconnectInterval,
-		ApiRetryAttempts:                 defaults.ApiRetryAttempts,
-		DisableApiCache:                  defaults.DisableApiCache,
+		WebsocketReconnectAttempts:       settings.Settings.WebsocketReconnectAttempts,
+		WebsocketReconnectInterval:       settings.Settings.WebsocketReconnectInterval,
+		ApiRetryAttempts:                 settings.Settings.ApiRetryAttempts,
+		DisableApiCache:                  settings.Settings.DisableApiCache,
 		ContainerLogTailLines:            defaults.ContainerLogTailLines,
 		ContainerDefaultRestartPolicy:    defaults.ContainerDefaultRestartPolicy,
 		ContainerStopTimeout:             defaults.ContainerStopTimeout,

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation, type translationKey } from '@/hooks/use-translation';
 import {
   useGetUserPreferencesQuery,
   useUpdateUserPreferencesMutation,
@@ -95,10 +95,13 @@ export function useAdvancedSettings() {
         DEFAULT_SETTINGS.containerAutoPruneBuildCache
     };
 
-    saveSettingsToStorage(merged);
-
     return merged;
   }, [userPreferences, orgSettings]);
+
+  // Persist settings to storage when they change
+  useEffect(() => {
+    saveSettingsToStorage(settings);
+  }, [settings]);
 
   const updateSetting = useCallback(
     async <K extends keyof AdvancedSettings>(key: K, value: AdvancedSettings[K]) => {
@@ -160,7 +163,7 @@ export function useAdvancedSettings() {
               key === 'terminalLetterSpacing' ? (value as number) : settings.terminalLetterSpacing
           };
           await updateUserPreferences(newPrefs).unwrap();
-          refetchUserPrefs();
+          await refetchUserPrefs();
         } else if (orgSettingKeys.includes(key)) {
           const newSettings: OrganizationSettingsData = {
             websocket_reconnect_attempts:
@@ -193,16 +196,14 @@ export function useAdvancedSettings() {
                 : settings.containerAutoPruneBuildCache
           };
           await updateOrgSettings(newSettings).unwrap();
-          refetchOrgSettings();
+          await refetchOrgSettings();
         }
 
-        const updatedSettings = { ...settings, [key]: value };
-        saveSettingsToStorage(updatedSettings);
-
-        toast.success(t('settings.network.messages.settingUpdated'));
+        // Storage will be updated by useEffect when refetch completes
+        toast.success(t('settings.network.messages.settingUpdated' as translationKey));
       } catch (error) {
         console.error('Failed to update setting:', error);
-        toast.error(t('settings.network.messages.settingUpdateFailed'));
+        toast.error(t('settings.network.messages.settingUpdateFailed' as translationKey));
       }
     },
     [settings, updateUserPreferences, updateOrgSettings, refetchUserPrefs, refetchOrgSettings, t]
@@ -237,15 +238,14 @@ export function useAdvancedSettings() {
         container_auto_prune_build_cache: DEFAULT_SETTINGS.containerAutoPruneBuildCache
       }).unwrap();
 
-      saveSettingsToStorage(DEFAULT_SETTINGS);
+      // Storage will be updated by useEffect when refetch completes
+      await refetchUserPrefs();
+      await refetchOrgSettings();
 
-      refetchUserPrefs();
-      refetchOrgSettings();
-
-      toast.success(t('settings.network.messages.resetSuccess'));
+      toast.success(t('settings.network.messages.resetSuccess' as translationKey));
     } catch (error) {
       console.error('Failed to reset settings:', error);
-      toast.error(t('settings.network.messages.resetFailed'));
+      toast.error(t('settings.network.messages.resetFailed' as translationKey));
     }
   }, [updateUserPreferences, updateOrgSettings, refetchUserPrefs, refetchOrgSettings, t]);
 

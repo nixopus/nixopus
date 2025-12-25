@@ -3,6 +3,8 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -223,10 +225,15 @@ func (s *OrganizationStore) GetOrganizationSettings(organizationID string) (*sha
 		Scan(s.Ctx)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
+			parsedOrgID, parseErr := uuid.Parse(organizationID)
+			if parseErr != nil {
+				return nil, fmt.Errorf("invalid organization ID: %w", parseErr)
+			}
+
 			defaultSettings := &shared_types.OrganizationSettings{
 				ID:             uuid.New(),
-				OrganizationID: uuid.MustParse(organizationID),
+				OrganizationID: parsedOrgID,
 				Settings:       shared_types.DefaultOrganizationSettingsData(),
 				CreatedAt:      time.Now(),
 				UpdatedAt:      time.Now(),
@@ -247,9 +254,17 @@ func (s *OrganizationStore) GetOrganizationSettings(organizationID string) (*sha
 
 // UpdateOrganizationSettings updates organization settings with the provided data
 func (s *OrganizationStore) UpdateOrganizationSettings(organizationID string, settings shared_types.OrganizationSettingsData) (*shared_types.OrganizationSettings, error) {
-	var orgSettings shared_types.OrganizationSettings
+	// Ensure settings exist before updating
+	existingSettings, err := s.GetOrganizationSettings(organizationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get organization settings: %w", err)
+	}
+	if existingSettings == nil {
+		return nil, fmt.Errorf("organization settings not found for organization ID: %s", organizationID)
+	}
 
-	_, err := s.getDB().NewUpdate().
+	var orgSettings shared_types.OrganizationSettings
+	result, err := s.getDB().NewUpdate().
 		Model(&orgSettings).
 		Set("settings = ?", settings).
 		Set("updated_at = ?", time.Now()).
@@ -260,5 +275,19 @@ func (s *OrganizationStore) UpdateOrganizationSettings(organizationID string, se
 	if err != nil {
 		return nil, err
 	}
-	return &orgSettings, nil
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rowsAffected == 0 {
+		return nil, fmt.Errorf("no rows updated for organization ID: %s", organizationID)
+	}
+
+	// Re-fetch to ensure we have the updated data
+	updatedSettings, err := s.GetOrganizationSettings(organizationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to refetch organization settings after update: %w", err)
+	}
+	return updatedSettings, nil
 }

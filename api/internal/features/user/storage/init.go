@@ -2,6 +2,8 @@ package storage
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -190,10 +192,15 @@ func (s *UserStorage) GetUserPreferences(userID string) (*shared_types.UserPrefe
 		Scan(s.Ctx)
 
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if errors.Is(err, sql.ErrNoRows) {
+			parsedUserID, parseErr := uuid.Parse(userID)
+			if parseErr != nil {
+				return nil, fmt.Errorf("invalid user ID: %w", parseErr)
+			}
+
 			defaultPrefs := &shared_types.UserPreferences{
 				ID:          uuid.New(),
-				UserID:      uuid.MustParse(userID),
+				UserID:      parsedUserID,
 				Preferences: shared_types.DefaultUserPreferencesData(),
 				CreatedAt:   time.Now(),
 				UpdatedAt:   time.Now(),
@@ -214,9 +221,17 @@ func (s *UserStorage) GetUserPreferences(userID string) (*shared_types.UserPrefe
 
 // UpdateUserPreferences updates user preferences with the provided data
 func (s *UserStorage) UpdateUserPreferences(userID string, preferences shared_types.UserPreferencesData) (*shared_types.UserPreferences, error) {
-	var prefs shared_types.UserPreferences
+	// Ensure preferences exist before updating
+	existingPrefs, err := s.GetUserPreferences(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user preferences: %w", err)
+	}
+	if existingPrefs == nil {
+		return nil, fmt.Errorf("user preferences not found for user ID: %s", userID)
+	}
 
-	_, err := s.DB.NewUpdate().
+	var prefs shared_types.UserPreferences
+	result, err := s.DB.NewUpdate().
 		Model(&prefs).
 		Set("preferences = ?", preferences).
 		Set("updated_at = ?", time.Now()).
@@ -227,5 +242,19 @@ func (s *UserStorage) UpdateUserPreferences(userID string, preferences shared_ty
 	if err != nil {
 		return nil, err
 	}
-	return &prefs, nil
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rowsAffected == 0 {
+		return nil, fmt.Errorf("no rows updated for user ID: %s", userID)
+	}
+
+	// Re-fetch to ensure we have the updated data
+	updatedPrefs, err := s.GetUserPreferences(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to refetch user preferences after update: %w", err)
+	}
+	return updatedPrefs, nil
 }
