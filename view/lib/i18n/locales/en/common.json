@@ -21,6 +21,14 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "readMore": "Read more",
-    "readLess": "Read less"
+    "readLess": "Read less",
+    "actions": {
+      "previous": "Previous",
+      "next": "Next",
+      "submit": "Submit",
+      "save": "Save",
+      "create": "Create",
+      "update": "Update"
+    }
   }
 }

@@ -289,7 +289,16 @@
       },
       "errors": {
         "createFailed": "Failed to create deployment",
-        "updateFailed": "Failed to update deployment"
+        "updateFailed": "Failed to update deployment",
+        "branchFetchFailed": "Failed to fetch repository branches"
+      },
+      "deploying": "Deploying...",
+      "steps": {
+        "basicInfo": "Basic Information",
+        "repository": "Repository & Branch",
+        "configuration": "Configuration",
+        "variables": "Variables & Commands",
+        "composeSource": "Compose Source"
       },
       "fields": {
         "applicationName": {
@@ -338,9 +347,34 @@
           "placeholder": "Build Pack",
           "options": {
             "dockerfile": "Dockerfile",
-            "dockerCompose": "DockerCompose",
+            "dockerCompose": "Docker Compose",
             "static": "Static"
           }
+        },
+        "composeSource": {
+          "label": "Compose Source",
+          "description": "How do you want to provide your docker-compose file?",
+          "placeholder": "Select source type",
+          "options": {
+            "repository": "From Repository",
+            "url": "From URL",
+            "raw": "Paste Content"
+          }
+        },
+        "composeFileUrl": {
+          "label": "Compose File URL",
+          "description": "URL to your docker-compose.yml file",
+          "placeholder": "https://raw.githubusercontent.com/user/repo/main/docker-compose.yml"
+        },
+        "composeFileContent": {
+          "label": "Compose File Content",
+          "description": "Paste your docker-compose.yml content here",
+          "placeholder": "version: '3.8'\nservices:\n  web:\n    image: nginx:alpine\n    ports:\n      - '80:80'"
+        },
+        "composeFilePath": {
+          "label": "Compose File Path",
+          "description": "Path to docker-compose file in repository",
+          "placeholder": "docker-compose.yml"
         },
         "envVariables": {
           "label": "Environment Variables",
@@ -389,13 +423,25 @@
           "invalidFormat": "Repository name must be a valid name."
         },
         "buildPack": {
-          "invalidValue": "Build pack must be Dockerfile, DockerCompose, or Static."
+          "invalidValue": "Build pack must be Dockerfile or Docker Compose."
+        },
+        "composeSource": {
+          "required": "Please select a compose source type."
+        },
+        "composeFileUrl": {
+          "invalidFormat": "Please enter a valid HTTP/HTTPS URL.",
+          "required": "Compose file URL is required when using URL source."
+        },
+        "composeFileContent": {
+          "tooShort": "Compose file content is too short.",
+          "required": "Compose file content is required when using raw source."
         },
         "envVariables": {
           "emptyInput": "Input cannot be empty",
           "invalidFormat": "Must be in format KEY=VALUE",
           "emptyKey": "Key cannot be empty"
-        }
+        },
+        "fixErrors": "Please fix the errors before proceeding"
       }
     },
     "githubInstaller": {

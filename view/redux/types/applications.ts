@@ -81,15 +81,17 @@ export type Status = 'failed' | 'cloning' | 'building' | 'deploying' | 'deployed
 
 export type Environment = 'development' | 'staging' | 'production';
 
-export type BuildPack = 'dockerfile' | 'dockerCompose' | 'static';
+export type BuildPack = 'dockerfile' | 'docker-compose' | 'static';
+
+export type ComposeSourceType = 'repository' | 'url' | 'raw';
 
 export interface CreateApplicationRequest {
   name: string;
   environment: Environment;
-  branch: string;
+  branch?: string;
   port: number;
   domain: string;
-  repository: string;
+  repository?: string;
   build_pack: BuildPack;
   environment_variables: Record<string, string>;
   build_variables: Record<string, string>;
@@ -97,6 +99,8 @@ export interface CreateApplicationRequest {
   post_run_command: string;
   dockerfile_path: string;
   base_path: string;
+  compose_file_url?: string;
+  compose_file_content?: string;
 }
 
 export interface UpdateDeploymentRequest {
