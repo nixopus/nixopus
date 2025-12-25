@@ -27,7 +27,7 @@ type TerminalMessage struct {
 }
 
 type Terminal struct {
-	ssh        *sshpkg.SSH
+	sshManager *sshpkg.SSHManager
 	conn       *websocket.Conn
 	done       chan struct{}
 	outputBuf  []byte
@@ -44,9 +44,13 @@ type Terminal struct {
 }
 
 func NewTerminal(conn *websocket.Conn, log *logger.Logger, terminalId string) (*Terminal, error) {
-	ssh_client := sshpkg.NewSSH()
+	sshManager := sshpkg.GetSSHManager()
+	sshClient, err := sshManager.GetDefaultSSH()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get SSH client: %w", err)
+	}
 	terminal := &Terminal{
-		ssh:        ssh_client,
+		sshManager: sshManager,
 		conn:       conn,
 		done:       make(chan struct{}),
 		outputBuf:  make([]byte, 0, 4096),
@@ -56,7 +60,7 @@ func NewTerminal(conn *websocket.Conn, log *logger.Logger, terminalId string) (*
 	}
 
 	terminal.bufferTick = time.NewTicker(terminal.bufferTime)
-	terminal.log.Log(logger.Info, "Terminal created", ssh_client.Host)
+	terminal.log.Log(logger.Info, "Terminal created", sshClient.Host)
 	return terminal, nil
 }
 
@@ -64,7 +68,7 @@ func (t *Terminal) Start() {
 	go t.bufferFlusher()
 
 	go func() {
-		client, err := t.ssh.Connect()
+		client, err := t.sshManager.Connect()
 		if err != nil {
 			t.log.Log(logger.Error, "Failed to connect to SSH", err.Error())
 			close(t.done)
