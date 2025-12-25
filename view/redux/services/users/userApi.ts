@@ -31,7 +31,11 @@ import {
   UpdateThemeRequest,
   UpdateLanguageRequest,
   UpdateAutoUpdateRequest,
-  UpdateAvatarRequest
+  UpdateAvatarRequest,
+  UserPreferences,
+  UserPreferencesData,
+  OrganizationSettings,
+  OrganizationSettingsData
 } from '@/redux/types/user';
 
 export const userApi = createApi({
@@ -253,6 +257,49 @@ export const userApi = createApi({
       transformResponse: (response: { data: string }) => {
         return response.data;
       }
+    }),
+
+    getUserPreferences: builder.query<UserPreferences, void>({
+      query: () => ({
+        url: USERURLS.GET_PREFERENCES,
+        method: 'GET'
+      }),
+      transformResponse: (response: { data: UserPreferences }) => {
+        return response.data;
+      }
+    }),
+    updateUserPreferences: builder.mutation<UserPreferences, UserPreferencesData>({
+      query(payload) {
+        return {
+          url: USERURLS.UPDATE_PREFERENCES,
+          method: 'PUT',
+          body: payload
+        };
+      },
+      transformResponse: (response: { data: UserPreferences }) => {
+        return response.data;
+      }
+    }),
+    getOrganizationSettings: builder.query<OrganizationSettings, void>({
+      query: () => ({
+        url: USERURLS.GET_ORGANIZATION_SETTINGS,
+        method: 'GET'
+      }),
+      transformResponse: (response: { data: OrganizationSettings }) => {
+        return response.data;
+      }
+    }),
+    updateOrganizationSettings: builder.mutation<OrganizationSettings, OrganizationSettingsData>({
+      query(payload) {
+        return {
+          url: USERURLS.UPDATE_ORGANIZATION_SETTINGS,
+          method: 'PUT',
+          body: payload
+        };
+      },
+      transformResponse: (response: { data: OrganizationSettings }) => {
+        return response.data;
+      }
     })
   })
 });
@@ -278,5 +325,9 @@ export const {
   usePerformUpdateMutation,
   useUpdateAvatarMutation,
   useSendInviteMutation,
-  useResendInviteMutation
+  useResendInviteMutation,
+  useGetUserPreferencesQuery,
+  useUpdateUserPreferencesMutation,
+  useGetOrganizationSettingsQuery,
+  useUpdateOrganizationSettingsMutation
 } = userApi;
