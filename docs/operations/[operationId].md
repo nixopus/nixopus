@@ -14,7 +14,7 @@ const { isDark } = useData()
 
 const openapi = useOpenapi()
 
-const operationId = route.data.params.operationId
+const operationId = route.data.params.originalOperationId || route.data.params.operationId
 </script>
 
 <OAOperation :operationId="operationId" :isDark="isDark" />

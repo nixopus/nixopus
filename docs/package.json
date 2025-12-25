@@ -13,6 +13,6 @@
   "dependencies": {
     "cross-spawn": "7.0.5",
     "mermaid": "^11.6.0",
-    "vitepress-openapi": "^0.0.3-alpha.43"
+    "vitepress-openapi": "^0.1.13"
   }
 }
