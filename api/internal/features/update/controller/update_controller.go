@@ -36,7 +36,12 @@ func (c *UpdateController) CheckForUpdates(s fuego.ContextNoBody) (*types.Update
 
 	// If the environment is development, return current version but skip remote check
 	if config.AppConfig.App.Environment == "development" {
-		currentVersion, _ := c.service.GetCurrentVersion()
+		currentVersion, err := c.service.GetCurrentVersion()
+		if err != nil {
+			// In development, log the error but don't fail the request
+			c.logger.Log(logger.Warning, "Failed to get current version in development", err.Error())
+			currentVersion = "unknown"
+		}
 		return &types.UpdateCheckResponse{
 			CurrentVersion:  currentVersion,
 			LatestVersion:   currentVersion,

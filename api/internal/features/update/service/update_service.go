@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -77,29 +78,135 @@ func (s *UpdateService) CheckForUpdates() (*types.UpdateCheckResponse, error) {
 	}, nil
 }
 
-// GetCurrentVersion gets the current version from the version.txt file
-// The file is mounted into the container at /etc/nixopus/source/version.txt
+// GetCurrentVersion gets the current version from config, or falls back to reading version.txt
+// Returns an error if all sources fail instead of silently returning "unknown"
 func (s *UpdateService) GetCurrentVersion() (string, error) {
-	// First try to read from the mounted version.txt file (production)
-	if versionBytes, err := os.ReadFile(VersionFilePath); err == nil {
-		if version := strings.TrimSpace(string(versionBytes)); version != "" {
-			return version, nil
-		}
-	}
-
-	// Try local development path
-	if versionBytes, err := os.ReadFile("../version.txt"); err == nil {
-		if version := strings.TrimSpace(string(versionBytes)); version != "" {
-			return version, nil
-		}
-	}
-
-	// Fallback to environment variable if file read fails
+	// First, try to get version from config
 	if version := config.AppConfig.App.Version; version != "" {
 		return version, nil
 	}
 
-	return "unknown", nil
+	// Fallback: try to read from version.txt in the repository root
+	version, err := s.readVersionFromFile()
+	if err == nil {
+		return version, nil
+	}
+
+	// If all sources fail, return an error instead of silently returning "unknown"
+	return "", fmt.Errorf("failed to get version: APP_VERSION not set in config and version.txt not found in any expected location")
+}
+
+// readVersionFromFile attempts to read version.txt from various possible locations
+func (s *UpdateService) readVersionFromFile() (string, error) {
+	paths := s.getVersionFilePaths()
+
+	for _, path := range paths {
+		version, err := s.tryReadVersionFile(path)
+		if err == nil {
+			return version, nil
+		}
+	}
+
+	return "", fmt.Errorf("version.txt not found in any expected location")
+}
+
+// tryReadVersionFile attempts to read and parse version.txt from the given path
+func (s *UpdateService) tryReadVersionFile(path string) (string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+
+	version := strings.TrimSpace(string(data))
+	version = strings.TrimPrefix(version, "v") // Remove 'v' prefix if present
+
+	if version == "" {
+		return "", fmt.Errorf("version.txt is empty")
+	}
+
+	s.logger.Log(logger.Info, "Read version from file", fmt.Sprintf("path: %s, version: %s", path, version))
+	return version, nil
+}
+
+// getVersionFilePaths returns a list of potential paths to version.txt, ordered by priority
+func (s *UpdateService) getVersionFilePaths() []string {
+	var paths []string
+
+	// 1. Check deployment source directories (highest priority for deployed instances)
+	paths = append(paths, VersionFilePath)
+	if s.env == Staging {
+		paths = append(paths, "/etc/nixopus-staging/source/version.txt")
+	}
+
+	// 2. Try to find repository root by walking up from current working directory
+	paths = append(paths, s.findVersionPathsFromCWD()...)
+
+	// 3. Check paths relative to executable location
+	paths = append(paths, s.findVersionPathsFromExecutable()...)
+
+	return paths
+}
+
+// findVersionPathsFromCWD walks up from the current working directory to find version.txt
+func (s *UpdateService) findVersionPathsFromCWD() []string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil
+	}
+
+	var paths []string
+	dir := cwd
+	const maxDepth = 10
+
+	for i := 0; i < maxDepth; i++ {
+		paths = append(paths, filepath.Join(dir, "version.txt"))
+
+		// Stop if we've reached the repository root
+		if s.isRepositoryRoot(dir) {
+			break
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break // Reached filesystem root
+		}
+		dir = parent
+	}
+
+	return paths
+}
+
+// findVersionPathsFromExecutable returns version.txt paths relative to the executable location
+func (s *UpdateService) findVersionPathsFromExecutable() []string {
+	execPath, err := os.Executable()
+	if err != nil {
+		return nil
+	}
+
+	execDir := filepath.Dir(execPath)
+	var paths []string
+
+	// Check executable directory and parent directory
+	paths = append(paths, filepath.Join(execDir, "version.txt"))
+
+	parent := filepath.Dir(execDir)
+	if parent != execDir {
+		paths = append(paths, filepath.Join(parent, "version.txt"))
+	}
+
+	return paths
+}
+
+// isRepositoryRoot checks if the given directory is likely the repository root
+func (s *UpdateService) isRepositoryRoot(dir string) bool {
+	// Check for common repository root markers
+	markers := []string{".git", "api"}
+	for _, marker := range markers {
+		if _, err := os.Stat(filepath.Join(dir, marker)); err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 // fetchLatestVersion fetches the latest version from the appropriate branch from our repo
