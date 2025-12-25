@@ -20,7 +20,8 @@ func TestUpdateGithubConnectorRequest_NoConnectorsFound(t *testing.T) {
 	svc := service.NewGithubConnectorService(nil, context.Background(), logger.NewLogger(), storage)
 	err := svc.UpdateGithubConnectorRequest("installation-123", "user-123", "")
 
-	assert.Nil(t, err)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "no connectors found for user")
 	storage.AssertExpectations(t)
 }
 

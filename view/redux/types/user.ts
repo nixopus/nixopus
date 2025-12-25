@@ -118,4 +118,10 @@ export interface OrganizationSettings {
   settings: OrganizationSettingsData;
   created_at: string;
   updated_at: string;
+export interface UpdateCheckResponse {
+  current_version: string;
+  latest_version: string;
+  update_available: boolean;
+  last_checked: string;
+  environment: string;
 }
