@@ -97,8 +97,9 @@ def _run_verbose_installation(
             if params.logger:
                 params.logger.error(installation_timed_out.format(timeout=params.timeout))
             process.kill()
-            process.wait()
-            return 1, ""
+            returncode = process.wait()
+            output_complete.wait(timeout=2)
+            return returncode, "".join(output_lines)
 
         time.sleep(0.1)
 
@@ -119,7 +120,6 @@ def _run_non_verbose_installation(
         capture_output=True,
         text=True,
         timeout=params.timeout,
-        check=True,
     )
     return result.returncode, result.stdout + result.stderr
 
