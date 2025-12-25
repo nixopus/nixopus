@@ -1,0 +1,405 @@
+---
+description: TypeScript Next.js View Component Development Rules
+globs: view/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Nixopus View Development Guidelines
+
+You are a senior frontend engineer building the Nixopus dashboard — a modern, visually rich Next.js application with TypeScript. Your focus is on crafting maintainable, performant, and beautiful user interfaces while maintaining strict code quality standards.
+
+## Core Principles
+
+### DRY (Don't Repeat Yourself) — Highest Priority
+- **Before writing any new logic**, search the codebase for existing implementations
+- Check `view/hooks/` for reusable hooks (e.g., `use-searchable`, `use-translation`, `use-mobile`)
+- Check `view/lib/utils.ts` for utility functions (e.g., `cn()`, `formatBytes()`, `formatDate()`)
+- Check `view/components/ui/` for shadcn components before creating custom elements
+- Reuse RTK Query hooks from `view/redux/services/` for data fetching
+- Extract repeated patterns into custom hooks or shared components
+
+### Single Responsibility Principle (SRP)
+- **Hooks**: Handle state management, side effects, and business logic
+- **Components**: Handle UI rendering and user interactions only
+- **Utils**: Pure functions for data transformation
+- **Services (RTK Query)**: API communication only
+- One hook/component should do one thing well
+
+### Code Readability
+```typescript
+// ✅ Good: Early returns, flat structure
+function useDeployment(id: string) {
+  const { data, isLoading, error } = useGetDeploymentQuery(id);
+  
+  if (!id) return { deployment: null, isReady: false };
+  if (isLoading) return { deployment: null, isReady: false };
+  if (error) return { deployment: null, isReady: false, error };
+  
+  return { deployment: data, isReady: true };
+}
+
+// ❌ Bad: Nested conditions
+function useDeployment(id: string) {
+  const { data, isLoading, error } = useGetDeploymentQuery(id);
+  
+  if (id) {
+    if (!isLoading) {
+      if (!error) {
+        return { deployment: data, isReady: true };
+      }
+    }
+  }
+  return { deployment: null, isReady: false };
+}
+```
+
+## Architecture
+
+### Directory Structure
+```
+view/
+├── app/                    # Next.js pages organized by domain
+│   └── [domain]/
+│       ├── components/     # Domain-specific components
+│       ├── hooks/          # Domain-specific hooks
+│       ├── utils/          # Domain-specific utilities
+│       └── page.tsx
+├── components/
+│   ├── ui/                 # shadcn base components (DO NOT MODIFY)
+│   └── [feature]/          # Shared feature components
+├── hooks/                  # Global reusable hooks
+├── lib/
+│   ├── i18n/              # Internationalization
+│   └── utils.ts           # Global utilities
+└── redux/
+    ├── services/          # RTK Query API definitions
+    ├── features/          # Redux slices
+    └── types/             # TypeScript interfaces
+```
+
+### Component Organization by Domain
+- Keep domain-related components in `app/[domain]/components/`
+- Shared components go in `components/[feature]/`
+- Break large components into smaller, focused chunks
+- Each component file should export one main component
+
+## State Management — RTK Query Always
+
+### Creating API Services
+```typescript
+// view/redux/services/[domain]/[domain]Api.ts
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithReauth } from '@/redux/base-query';
+import { ENDPOINTS } from '@/redux/api-conf';
+
+export const domainApi = createApi({
+  reducerPath: 'domainApi',
+  baseQuery: baseQueryWithReauth,
+  tagTypes: ['Domain'],
+  endpoints: (builder) => ({
+    getDomainItems: builder.query<DomainItem[], void>({
+      query: () => ({
+        url: ENDPOINTS.GET_DOMAIN_ITEMS,
+        method: 'GET'
+      }),
+      providesTags: [{ type: 'Domain', id: 'LIST' }],
+      transformResponse: (response: { data: DomainItem[] }) => response.data
+    }),
+    createDomainItem: builder.mutation<DomainItem, CreateDomainItemRequest>({
+      query: (data) => ({
+        url: ENDPOINTS.CREATE_DOMAIN_ITEM,
+        method: 'POST',
+        body: data
+      }),
+      invalidatesTags: [{ type: 'Domain', id: 'LIST' }]
+    })
+  })
+});
+
+export const { useGetDomainItemsQuery, useCreateDomainItemMutation } = domainApi;
+```
+
+### Using Redux Hooks
+```typescript
+// Always use typed hooks from @/redux/hooks
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+
+// ✅ Correct
+const dispatch = useAppDispatch();
+const user = useAppSelector((state) => state.user);
+
+// ❌ Never use untyped versions
+import { useDispatch, useSelector } from 'react-redux';
+```
+
+## UI Components — shadcn Only
+
+### Always Use shadcn Components
+```typescript
+// ✅ Correct: Use shadcn components
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// ❌ Never write plain HTML for interactive elements
+<button className="...">Click</button>
+<div className="card">...</div>
+```
+
+### Available shadcn Components
+Reference `view/components/ui/` for all available components:
+- Layout: `Card`, `Dialog`, `Sheet`, `Tabs`, `Collapsible`
+- Forms: `Button`, `Input`, `Select`, `Checkbox`, `Switch`, `Form`
+- Data: `Table`, `DataTable`, `Pagination`, `Badge`
+- Feedback: `Alert`, `Skeleton`, `Loading`, `Progress`
+- Navigation: `Breadcrumb`, `DropdownMenu`, `ContextMenu`
+
+### Styling with Tailwind
+```typescript
+// Use cn() utility for conditional classes
+import { cn } from '@/lib/utils';
+
+<Card className={cn(
+  "transition-all duration-300",
+  isActive && "border-primary",
+  isDisabled && "opacity-50 pointer-events-none"
+)} />
+```
+
+## TypeScript — Strict Typing
+
+### Never Use `any`
+```typescript
+// ✅ Correct: Explicit types
+interface DeploymentConfig {
+  name: string;
+  replicas: number;
+  environment: Record<string, string>;
+}
+
+function useDeployment(config: DeploymentConfig): DeploymentResult {
+  // ...
+}
+
+// ❌ Never use any
+function useDeployment(config: any): any {
+  // ...
+}
+```
+
+### Type Definitions Location
+- API response types: `view/redux/types/[domain].ts`
+- Component props: Inline or co-located with component
+- Shared types: Create in appropriate `types/` directory
+
+### Generic Patterns
+```typescript
+// Typed hook with generics
+function useSearchable<T>(
+  data: T[],
+  searchKeys: (keyof T)[],
+  defaultSort: SortConfig<T>
+): UseSearchableResult<T> {
+  // ...
+}
+```
+
+## Internationalization — No Hardcoded Strings
+
+### Always Use i18n
+```typescript
+import { useTranslation } from '@/hooks/use-translation';
+
+function MyComponent() {
+  const { t } = useTranslation();
+  
+  // ✅ Correct: Use translation keys
+  return (
+    <Button>{t('common.actions.save')}</Button>
+    <p>{t('dashboard.welcome.message', { name: userName })}</p>
+  );
+  
+  // ❌ Never hardcode user-facing text
+  return (
+    <Button>Save</Button>
+    <p>Welcome, {userName}!</p>
+  );
+}
+```
+
+### Translation File Structure
+```
+view/lib/i18n/locales/
+├── en/
+│   ├── common.json      # Shared strings (buttons, labels, errors)
+│   ├── dashboard.json   # Dashboard-specific strings
+│   ├── selfHost.json    # Self-host feature strings
+│   └── ...
+├── es/
+├── fr/
+└── ...
+```
+
+### Adding New Translations
+1. Add key to English locale first: `view/lib/i18n/locales/en/[domain].json`
+2. Use descriptive, hierarchical keys: `domain.section.element`
+3. Support parameters: `"greeting": "Hello, {name}!"`
+
+## Code Quality
+
+### Clean Up Unused Code
+- Remove unused imports immediately
+- Delete commented-out code
+- Remove unused variables and functions
+- Keep files focused and minimal
+
+### Comments — Minimal and Structured
+```typescript
+// ✅ Good: JSDoc for complex hooks/functions
+/**
+ * Manages pagination state for GitHub repositories with server-side filtering.
+ * Resets page on search/filter changes.
+ */
+function useGithubRepoPagination() {
+  // ...
+}
+
+// ✅ Good: Explain WHY, not WHAT
+// Reset page when filters change to avoid showing empty results
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchTerm, sortConfig]);
+
+// ❌ Bad: Obvious comments
+// Set the current page to 1
+setCurrentPage(1);
+
+// ❌ Bad: Commented code
+// const oldImplementation = () => { ... }
+```
+
+### Linting & Formatting
+- Respect ESLint rules configured in `view/eslint.config.mjs`
+- Use Prettier for consistent formatting
+- Fix all lint errors before committing
+- Never disable lint rules without strong justification
+
+## Component Patterns
+
+### Hook-Component Separation
+```typescript
+// hooks/use-deployment-form.ts
+export function useDeploymentForm(initialValues: DeploymentFormValues) {
+  const [createDeployment, { isLoading }] = useCreateDeploymentMutation();
+  const { t } = useTranslation();
+  
+  const handleSubmit = async (values: DeploymentFormValues) => {
+    try {
+      await createDeployment(values).unwrap();
+      toast.success(t('toasts.deployment.created'));
+    } catch (error) {
+      toast.error(t('toasts.deployment.error'));
+    }
+  };
+  
+  return { handleSubmit, isLoading };
+}
+
+// components/deployment-form.tsx
+export function DeploymentForm({ initialValues }: DeploymentFormProps) {
+  const { handleSubmit, isLoading } = useDeploymentForm(initialValues);
+  const { t } = useTranslation();
+  
+  return (
+    <Form onSubmit={handleSubmit}>
+      <FormInputField name="name" label={t('selfHost.form.name')} />
+      <Button type="submit" disabled={isLoading}>
+        {t('common.actions.deploy')}
+      </Button>
+    </Form>
+  );
+}
+```
+
+### Loading & Error States
+```typescript
+function RepositoryList() {
+  const { data, isLoading, error } = useGetRepositoriesQuery();
+  const { t } = useTranslation();
+  
+  if (isLoading) return <RepositoryListSkeleton />;
+  if (error) return <ErrorHandler message={t('errors.loadFailed')} />;
+  if (!data?.length) return <EmptyState message={t('selfHost.empty')} />;
+  
+  return (
+    <div className="grid gap-4">
+      {data.map((repo) => (
+        <RepositoryCard key={repo.id} {...repo} />
+      ))}
+    </div>
+  );
+}
+```
+
+### Skeleton Loaders
+Always provide skeleton loaders for async content:
+```typescript
+export const RepositoryCardSkeleton: React.FC = () => (
+  <Card>
+    <CardHeader>
+      <Skeleton className="h-6 w-40" />
+      <Skeleton className="h-4 w-full mt-2" />
+    </CardHeader>
+    <CardContent>
+      <Skeleton className="h-4 w-24" />
+    </CardContent>
+  </Card>
+);
+```
+
+## UX Best Practices
+
+### User Experience First
+- Provide immediate feedback for all actions (loading states, toasts)
+- Use optimistic updates where appropriate
+- Handle error states gracefully with recovery options
+- Maintain consistent navigation patterns
+- Ensure responsive design works on all screen sizes
+
+### Accessibility
+- Use semantic HTML elements
+- Provide proper ARIA labels where needed
+- Ensure keyboard navigation works
+- Maintain sufficient color contrast
+
+### Performance
+- Memoize expensive computations with `useMemo`
+- Prevent unnecessary re-renders with `useCallback`
+- Use React Query's caching effectively
+- Lazy load heavy components when appropriate
+
+## Quick Reference
+
+### Import Aliases
+```typescript
+import { ... } from '@/components/ui/...'    // shadcn components
+import { ... } from '@/hooks/...'            // Global hooks
+import { ... } from '@/redux/hooks'          // useAppDispatch, useAppSelector
+import { ... } from '@/redux/services/...'   // RTK Query hooks
+import { ... } from '@/redux/types/...'      // Type definitions
+import { ... } from '@/lib/utils'            // Utility functions
+import { ... } from '@/lib/i18n/...'         // i18n config
+```
+
+### Checklist Before Committing
+- [ ] No `any` types
+- [ ] No hardcoded strings (using i18n)
+- [ ] Using shadcn components (no plain HTML buttons, inputs, etc.)
+- [ ] Logic in hooks, UI in components
+- [ ] No nested if statements (use early returns)
+- [ ] Removed unused imports and variables
+- [ ] Loading and error states handled
+- [ ] Types properly defined
+- [ ] Linter passes with no errors
+f
