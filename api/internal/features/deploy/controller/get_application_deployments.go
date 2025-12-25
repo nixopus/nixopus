@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type GetApplicationDeploymentsRequest struct {
@@ -16,7 +16,7 @@ type GetApplicationDeploymentsRequest struct {
 	PageSize string `json:"limit"`
 }
 
-func (c *DeployController) GetApplicationDeployments(f fuego.ContextWithBody[GetApplicationDeploymentsRequest]) (*shared_types.Response, error) {
+func (c *DeployController) GetApplicationDeployments(f fuego.ContextWithBody[GetApplicationDeploymentsRequest]) (*types.ListDeploymentsResponse, error) {
 	r := f.Request()
 	id := r.URL.Query().Get("id")
 	page := r.URL.Query().Get("page")
@@ -66,14 +66,14 @@ func (c *DeployController) GetApplicationDeployments(f fuego.ContextWithBody[Get
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.ListDeploymentsResponse{
 		Status:  "success",
 		Message: "Application deployments retrieved successfully",
-		Data: map[string]interface{}{
-			"deployments": deployments,
-			"total_count": totalCount,
-			"page":        page,
-			"page_size":   pageSize,
+		Data: types.ListDeploymentsResponseData{
+			Deployments: deployments,
+			TotalCount:  totalCount,
+			Page:        page,
+			PageSize:    pageSize,
 		},
 	}, nil
 }

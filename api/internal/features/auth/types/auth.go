@@ -74,6 +74,70 @@ type TwoFactorLoginRequest struct {
 	Code     string `json:"code"`
 }
 
+// LoginResponse is the typed response for successful login
+type LoginResponse struct {
+	Status  string       `json:"status"`
+	Message string       `json:"message"`
+	Data    AuthResponse `json:"data"`
+}
+
+// TwoFactorRequiredData contains temp token when 2FA is required
+type TwoFactorRequiredData struct {
+	TempToken string `json:"temp_token"`
+}
+
+// TwoFactorRequiredResponse is returned when 2FA is required during login
+type TwoFactorRequiredResponse struct {
+	Status  string                `json:"status"`
+	Message string                `json:"message"`
+	Data    TwoFactorRequiredData `json:"data"`
+}
+
+// RegisterResponse is the typed response for user registration
+type RegisterResponse struct {
+	Status  string       `json:"status"`
+	Message string       `json:"message"`
+	Data    AuthResponse `json:"data"`
+}
+
+// MessageResponse is a generic response with just status and message
+type MessageResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+// RefreshTokenResponseData contains the new access token
+type RefreshTokenResponseData struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int64  `json:"expires_in"`
+}
+
+// RefreshTokenResponse is the typed response for token refresh
+type RefreshTokenResponse struct {
+	Status  string                   `json:"status"`
+	Message string                   `json:"message"`
+	Data    RefreshTokenResponseData `json:"data"`
+}
+
+// TwoFactorSetupResponseWrapper wraps the 2FA setup response
+type TwoFactorSetupResponseWrapper struct {
+	Status  string                 `json:"status"`
+	Message string                 `json:"message"`
+	Data    TwoFactorSetupResponse `json:"data"`
+}
+
+// AdminRegisteredData contains admin registration status
+type AdminRegisteredData struct {
+	AdminRegistered bool `json:"admin_registered"`
+}
+
+// AdminRegisteredResponse is the typed response for admin registration check
+type AdminRegisteredResponse struct {
+	Status  string              `json:"status"`
+	Message string              `json:"message"`
+	Data    AdminRegisteredData `json:"data"`
+}
+
 var (
 	ErrInvalidUser                             = errors.New("invalid user")
 	ErrEmptyPassword                           = errors.New("password cannot be empty")
