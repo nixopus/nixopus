@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
@@ -17,12 +18,14 @@ import (
 func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrganizationRequest, tx ...bun.Tx) error {
 	o.logger.Log(logger.Info, "adding user to organization", request.UserID)
 
-	var storage storage.OrganizationRepository = o.storage
+	var orgStorage storage.OrganizationRepository = o.storage
+	var userStorage user_storage.AuthRepository = &o.user_storage
 	if len(tx) > 0 {
-		storage = o.storage.WithTx(tx[0])
+		orgStorage = o.storage.WithTx(tx[0])
+		userStorage = o.user_storage.WithTx(tx[0])
 	}
 
-	existingOrganization, err := storage.GetOrganization(request.OrganizationID)
+	existingOrganization, err := orgStorage.GetOrganization(request.OrganizationID)
 	if err != nil {
 		o.logger.Log(logger.Error, types.ErrOrganizationDoesNotExist.Error(), err.Error())
 		return types.ErrOrganizationDoesNotExist
@@ -33,7 +36,7 @@ func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrgan
 		return types.ErrOrganizationDoesNotExist
 	}
 
-	existingUser, err := o.user_storage.FindUserByID(request.UserID)
+	existingUser, err := userStorage.FindUserByID(request.UserID)
 	if err != nil {
 		o.logger.Log(logger.Error, types.ErrUserDoesNotExist.Error(), err.Error())
 		return types.ErrUserDoesNotExist
@@ -44,7 +47,7 @@ func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrgan
 		return types.ErrUserDoesNotExist
 	}
 
-	existingUserInOrganization, err := storage.FindUserInOrganization(request.UserID, request.OrganizationID)
+	existingUserInOrganization, err := orgStorage.FindUserInOrganization(request.UserID, request.OrganizationID)
 	if err != nil {
 		o.logger.Log(logger.Error, "failed to check user organization membership", err.Error())
 		return types.ErrInternalServer
@@ -64,7 +67,7 @@ func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrgan
 		ID:             uuid.New(),
 	}
 
-	if err := storage.AddUserToOrganization(organizationUser); err != nil {
+	if err := orgStorage.AddUserToOrganization(organizationUser); err != nil {
 		o.logger.Log(logger.Error, types.ErrFailedToAddUserToOrganization.Error(), err.Error())
 		return types.ErrFailedToAddUserToOrganization
 	}

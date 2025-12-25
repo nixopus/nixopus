@@ -114,7 +114,9 @@ func (v *Validator) ValidateDeleteDomainRequest(req types.DeleteDomainRequest) e
 
 // ValidateDomainBelongsToServer checks if the domain belongs to the current server by resolving its IP
 func (v *Validator) ValidateDomainBelongsToServer(domainName string) error {
-	development := config.AppConfig.App.Environment == "development"
+	// Check both config and env var directly (for tests that set ENV dynamically)
+	env := strings.ToLower(os.Getenv("ENV"))
+	development := config.AppConfig.App.Environment == "development" || env == "development" || env == "dev"
 	if development {
 		return nil
 	}
