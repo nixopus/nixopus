@@ -6,6 +6,12 @@ export enum Environment {
 
 export enum BuildPack {
   Dockerfile = 'dockerfile',
-  DockerCompose = 'dockerCompose',
+  DockerCompose = 'docker-compose',
   Static = 'static'
+}
+
+export enum ComposeSourceType {
+  Repository = 'repository',
+  URL = 'url',
+  Raw = 'raw'
 }
