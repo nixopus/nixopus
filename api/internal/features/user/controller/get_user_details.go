@@ -5,11 +5,11 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (u *UserController) GetUserDetails(s fuego.ContextNoBody) (*shared_types.Response, error) {
+func (u *UserController) GetUserDetails(s fuego.ContextNoBody) (*types.UserResponse, error) {
 	w, r := s.Response(), s.Request()
 
 	user := utils.GetUser(w, r)
@@ -23,7 +23,7 @@ func (u *UserController) GetUserDetails(s fuego.ContextNoBody) (*shared_types.Re
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.UserResponse{
 		Status:  "success",
 		Message: "User details fetched successfully",
 		Data:    user,

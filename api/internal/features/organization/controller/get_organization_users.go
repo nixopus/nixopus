@@ -6,14 +6,13 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type GetOrganizationUsersRequest struct {
 	ID string `json:"id"`
 }
 
-func (c *OrganizationsController) GetOrganizationUsers(f fuego.ContextWithBody[GetOrganizationUsersRequest]) (*shared_types.Response, error) {
+func (c *OrganizationsController) GetOrganizationUsers(f fuego.ContextWithBody[GetOrganizationUsersRequest]) (*types.OrganizationUsersResponse, error) {
 	_, r := f.Response(), f.Request()
 	id := r.URL.Query().Get("id")
 	if err := c.validator.ValidateID(id, types.ErrMissingOrganizationID); err != nil {
@@ -31,7 +30,7 @@ func (c *OrganizationsController) GetOrganizationUsers(f fuego.ContextWithBody[G
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.OrganizationUsersResponse{
 		Status:  "success",
 		Message: "Users fetched successfully",
 		Data:    users,
