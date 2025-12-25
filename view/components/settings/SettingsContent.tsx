@@ -6,6 +6,10 @@ import { TeamsSettingsContent } from './TeamsSettingsContent';
 import { DomainsSettingsContent } from './DomainsSettingsContent';
 import { FeatureFlagsSettingsContent } from './FeatureFlagsSettingsContent';
 import { KeyboardShortcutsSettingsContent } from './KeyboardShortcutsSettingsContent';
+import { NetworkSettingsContent } from './NetworkSettingsContent';
+import { TerminalSettingsContent } from './TerminalSettingsContent';
+import { ContainerSettingsContent } from './ContainerSettingsContent';
+import { TroubleshootingSettingsContent } from './TroubleshootingSettingsContent';
 
 interface SettingsContentProps {
   activeCategory: string;
@@ -20,6 +24,10 @@ export function SettingsContent({ activeCategory }: SettingsContentProps) {
       {activeCategory === 'domains' && <DomainsSettingsContent />}
       {activeCategory === 'feature-flags' && <FeatureFlagsSettingsContent />}
       {activeCategory === 'keyboard-shortcuts' && <KeyboardShortcutsSettingsContent />}
+      {activeCategory === 'network' && <NetworkSettingsContent />}
+      {activeCategory === 'terminal' && <TerminalSettingsContent />}
+      {activeCategory === 'container' && <ContainerSettingsContent />}
+      {activeCategory === 'troubleshooting' && <TroubleshootingSettingsContent />}
     </div>
   );
 }
