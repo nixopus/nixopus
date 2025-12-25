@@ -3,6 +3,7 @@ package controller
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -36,9 +37,17 @@ func NewDeployController(
 	ctx context.Context,
 	l logger.Logger,
 	notificationManager *notification.NotificationManager,
-) *DeployController {
+) (*DeployController, error) {
 	storage := storage.DeployStorage{DB: store.DB, Ctx: ctx}
-	docker_repo := docker.NewDockerService()
+	docker_repo, err := docker.GetDockerManager().GetDefaultService()
+	if err != nil {
+		l.Log(logger.Error, "Failed to get default docker service", err.Error())
+		return nil, fmt.Errorf("failed to get default docker service: %w", err)
+	}
+	if docker_repo == nil {
+		l.Log(logger.Error, "Docker service is nil", "")
+		return nil, fmt.Errorf("docker service is nil")
+	}
 	github_service := github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx})
 	taskService := tasks.NewTaskService(&storage, l, docker_repo, github_service, store)
 	taskService.SetupCreateDeploymentQueue()
@@ -52,7 +61,7 @@ func NewDeployController(
 		logger:       l,
 		notification: notificationManager,
 		taskService:  taskService,
-	}
+	}, nil
 }
 
 // parseAndValidate parses and validates the request body.

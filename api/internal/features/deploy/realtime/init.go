@@ -3,6 +3,7 @@ package realtime
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -13,6 +14,17 @@ import (
 
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
 )
+
+func getDockerService() (*docker.DockerService, error) {
+	service, err := docker.GetDockerManager().GetDefaultService()
+	if err != nil {
+		return nil, err
+	}
+	if service == nil {
+		return nil, fmt.Errorf("docker service is nil")
+	}
+	return service, nil
+}
 
 type ApplicationMonitor struct {
 	conn          *websocket.Conn
@@ -42,6 +54,12 @@ func NewApplicationMonitor(conn *websocket.Conn, log logger.Logger) (*Applicatio
 	ssh_client := sshpkg.NewSSH()
 	ctx, cancel := context.WithCancel(context.Background())
 
+	dockerService, err := getDockerService()
+	if err != nil {
+		cancel()
+		return nil, fmt.Errorf("failed to get docker service: %w", err)
+	}
+
 	monitor := &ApplicationMonitor{
 		conn:          conn,
 		sshpkg:        ssh_client,
@@ -49,7 +67,7 @@ func NewApplicationMonitor(conn *websocket.Conn, log logger.Logger) (*Applicatio
 		ctx:           ctx,
 		cancel:        cancel,
 		Interval:      time.Second * 10,
-		dockerService: docker.NewDockerService(),
+		dockerService: dockerService,
 		Operations:    []ApplicationMonitorOperation{ContainerStatistics},
 	}
 
