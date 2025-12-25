@@ -15,8 +15,8 @@ func (s *DeployService) runCommands(applicationID uuid.UUID, deploymentConfigID 
 		return nil
 	}
 
-	client := ssh.NewSSH()
-	output, err := client.RunCommand(command)
+	manager := ssh.GetSSHManager()
+	output, err := manager.RunCommand(command)
 	if err != nil {
 		s.addLog(applicationID, fmt.Sprintf("Error while running %s command %v", commandType, output), deploymentConfigID)
 		return err

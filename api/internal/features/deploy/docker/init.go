@@ -326,14 +326,14 @@ func (s *DockerService) ContainerLogs(Ctx context.Context, containerID string, o
 
 // ComposeUp starts the Docker Compose services defined in the specified compose file
 func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]string) error {
-	client := ssh.NewSSH()
+	manager := ssh.GetSSHManager()
 	envVarsStr := ""
 	for k, v := range envVars {
 		envVarsStr += fmt.Sprintf("export %s=%s && ", k, v)
 	}
 	// Use --force-recreate to handle existing containers and --remove-orphans to clean up old containers
 	command := fmt.Sprintf("%sdocker compose -f %s up -d --force-recreate --remove-orphans 2>&1", envVarsStr, composeFilePath)
-	output, err := client.RunCommand(command)
+	output, err := manager.RunCommand(command)
 	if err != nil {
 		return fmt.Errorf("failed to start docker compose services: %v, output: %s", err, output)
 	}
@@ -342,9 +342,9 @@ func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]str
 
 // ComposeDown stops and removes the Docker Compose services
 func (s *DockerService) ComposeDown(composeFilePath string) error {
-	client := ssh.NewSSH()
+	manager := ssh.GetSSHManager()
 	command := fmt.Sprintf("docker compose -f %s down", composeFilePath)
-	output, err := client.RunCommand(command)
+	output, err := manager.RunCommand(command)
 	if err != nil {
 		return fmt.Errorf("failed to stop docker compose services: %v, output: %s", err, output)
 	}
@@ -353,13 +353,13 @@ func (s *DockerService) ComposeDown(composeFilePath string) error {
 
 // ComposeBuild builds the Docker Compose services
 func (s *DockerService) ComposeBuild(composeFilePath string, envVars map[string]string) error {
-	client := ssh.NewSSH()
+	manager := ssh.GetSSHManager()
 	envVarsStr := ""
 	for k, v := range envVars {
 		envVarsStr += fmt.Sprintf("export %s=%s && ", k, v)
 	}
 	command := fmt.Sprintf("%sdocker compose -f %s build", envVarsStr, composeFilePath)
-	output, err := client.RunCommand(command)
+	output, err := manager.RunCommand(command)
 	if err != nil {
 		return fmt.Errorf("failed to build docker compose services: %v, output: %s", err, output)
 	}

@@ -69,7 +69,9 @@ func (s *ExtensionService) StartRun(extensionID string, variableValues map[strin
 		return nil, err
 	}
 
-	ctx := NewRunContext(exec, spec, variableValues, ssh.NewSSH(), steps)
+	sshManager := ssh.GetSSHManager()
+	sshClient, _ := sshManager.GetDefaultSSH() // Get default SSH client for extension engine
+	ctx := NewRunContext(exec, spec, variableValues, sshClient, steps)
 	go s.executeRun(ctx)
 	return exec, nil
 }

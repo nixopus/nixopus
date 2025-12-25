@@ -15,18 +15,19 @@ type GithubConnectorService struct {
 	logger    logger.Logger
 	storage   storage.GithubConnectorRepository
 	gitClient GitClient
-	ssh       *ssh.SSH
+	ssh       *ssh.SSHManager
 }
 
 func NewGithubConnectorService(store *shared_storage.Store, ctx context.Context, l logger.Logger, GithubConnectorRepository storage.GithubConnectorRepository) *GithubConnectorService {
-	sshService := ssh.NewSSH()
+	sshManager := ssh.GetSSHManager()
+	sshClient, _ := sshManager.GetDefaultSSH() // Get default SSH client for GitClient
 	return &GithubConnectorService{
 		store:     store,
 		ctx:       ctx,
 		logger:    l,
 		storage:   GithubConnectorRepository,
-		gitClient: NewDefaultGitClient(l, sshService),
-		ssh:       sshService,
+		gitClient: NewDefaultGitClient(l, sshClient),
+		ssh:       sshManager,
 	}
 }
 

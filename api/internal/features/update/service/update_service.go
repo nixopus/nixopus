@@ -145,8 +145,8 @@ func (s *UpdateService) getBranch() string {
 
 // PerformUpdate performs an update for the current environment
 func (s *UpdateService) PerformUpdate() error {
-	ssh := ssh.NewSSH()
-	client, err := ssh.Connect()
+	sshManager := ssh.GetSSHManager()
+	client, err := sshManager.Connect()
 	if err != nil {
 		return fmt.Errorf("failed to connect via SSH: %w", err)
 	}
@@ -157,29 +157,29 @@ func (s *UpdateService) PerformUpdate() error {
 
 	defer func() {
 		if !updateSuccess {
-			s.handleRollback(ssh, paths)
+			s.handleRollback(sshManager, paths)
 		} else {
-			s.cleanupBackup(ssh, paths)
+			s.cleanupBackup(sshManager, paths)
 		}
 	}()
 
-	if err := s.sourceCodeDirectoryCheck(ssh, paths.SourceDir); err != nil {
+	if err := s.sourceCodeDirectoryCheck(sshManager, paths.SourceDir); err != nil {
 		return err
 	}
 
-	if err := s.createBackup(ssh, paths); err != nil {
+	if err := s.createBackup(sshManager, paths); err != nil {
 		return err
 	}
 
-	if err := s.updateRepository(ssh, paths); err != nil {
+	if err := s.updateRepository(sshManager, paths); err != nil {
 		return err
 	}
 
-	if err := s.startContainers(ssh, paths); err != nil {
+	if err := s.startContainers(sshManager, paths); err != nil {
 		return err
 	}
 
-	if err := s.verifyServices(ssh, paths); err != nil {
+	if err := s.verifyServices(sshManager, paths); err != nil {
 		return err
 	}
 
@@ -196,59 +196,59 @@ func (s *UpdateService) PerformUpdate() error {
 	return nil
 }
 
-func (s *UpdateService) sourceCodeDirectoryCheck(ssh *ssh.SSH, sourceDir string) error {
+func (s *UpdateService) sourceCodeDirectoryCheck(sshManager *ssh.SSHManager, sourceDir string) error {
 	dirCheckCmd := fmt.Sprintf("test -d %s && echo 'exists' || echo 'missing'", sourceDir)
-	dirCheckOutput, err := ssh.RunCommand(dirCheckCmd)
+	dirCheckOutput, err := sshManager.RunCommand(dirCheckCmd)
 	if err != nil {
 		return fmt.Errorf("failed to check source directory: %w", err)
 	}
 
 	if strings.TrimSpace(dirCheckOutput) == "missing" {
-		if _, err := ssh.RunCommand(fmt.Sprintf("mkdir -p %s", sourceDir)); err != nil {
+		if _, err := sshManager.RunCommand(fmt.Sprintf("mkdir -p %s", sourceDir)); err != nil {
 			return fmt.Errorf("failed to create source directory: %w", err)
 		}
 	}
 	return nil
 }
 
-func (s *UpdateService) createBackup(ssh *ssh.SSH, paths PathConfig) error {
+func (s *UpdateService) createBackup(sshManager *ssh.SSHManager, paths PathConfig) error {
 	checkContainersCmd := fmt.Sprintf("cd %s && docker compose -f %s ps -q 2>/dev/null | wc -l", paths.SourceDir, paths.ComposeFile)
-	containersOutput, err := ssh.RunCommand(checkContainersCmd)
+	containersOutput, err := sshManager.RunCommand(checkContainersCmd)
 	if err == nil && strings.TrimSpace(containersOutput) != "0" {
 		s.logger.Log(logger.Info, "Creating backup of current deployment", paths.BackupDir)
 
 		backupDirCmd := fmt.Sprintf("mkdir -p %s", paths.BackupDir)
-		if _, err := ssh.RunCommand(backupDirCmd); err != nil {
+		if _, err := sshManager.RunCommand(backupDirCmd); err != nil {
 			return fmt.Errorf("failed to create backup directory: %w", err)
 		}
 
 		backupCmd := fmt.Sprintf("cp -a %s %s", paths.SourceDir, paths.BackupDir)
-		if _, err := ssh.RunCommand(backupCmd); err != nil {
+		if _, err := sshManager.RunCommand(backupCmd); err != nil {
 			return fmt.Errorf("failed to create backup: %w", err)
 		}
 	}
 	return nil
 }
 
-func (s *UpdateService) updateRepository(ssh *ssh.SSH, paths PathConfig) error {
+func (s *UpdateService) updateRepository(sshManager *ssh.SSHManager, paths PathConfig) error {
 	gitDirCheckCmd := fmt.Sprintf("test -d %s/.git && echo 'exists' || echo 'missing'", paths.SourceDir)
-	gitDirOutput, err := ssh.RunCommand(gitDirCheckCmd)
+	gitDirOutput, err := sshManager.RunCommand(gitDirCheckCmd)
 	if err != nil {
 		return fmt.Errorf("failed to check git directory: %w", err)
 	}
 
 	if strings.TrimSpace(gitDirOutput) == "exists" {
-		return s.updateExistingRepository(ssh, paths)
+		return s.updateExistingRepository(sshManager, paths)
 	}
-	return s.cloneRepository(ssh, paths)
+	return s.cloneRepository(sshManager, paths)
 }
 
-func (s *UpdateService) updateExistingRepository(ssh *ssh.SSH, paths PathConfig) error {
+func (s *UpdateService) updateExistingRepository(sshManager *ssh.SSHManager, paths PathConfig) error {
 	s.logger.Log(logger.Info, "Updating existing repository", paths.SourceDir)
 	branch := s.getBranch()
 	fetchCmd := fmt.Sprintf("cd %s && git fetch --all && git reset --hard origin/%s && git checkout %s && git pull 2>&1",
 		paths.SourceDir, branch, branch)
-	fetchOutput, err := ssh.RunCommand(fetchCmd)
+	fetchOutput, err := sshManager.RunCommand(fetchCmd)
 	if err != nil {
 		s.logger.Log(logger.Error, "Git update failed", fmt.Sprintf("output: %s, error: %v", fetchOutput, err))
 		return fmt.Errorf("failed to update repository: %w (output: %s)", err, fetchOutput)
@@ -256,14 +256,14 @@ func (s *UpdateService) updateExistingRepository(ssh *ssh.SSH, paths PathConfig)
 	return nil
 }
 
-func (s *UpdateService) cloneRepository(ssh *ssh.SSH, paths PathConfig) error {
+func (s *UpdateService) cloneRepository(sshManager *ssh.SSHManager, paths PathConfig) error {
 	s.logger.Log(logger.Info, "Cloning repository", paths.SourceDir)
-	if _, err := ssh.RunCommand(fmt.Sprintf("rm -rf %s/* %s/.[!.]*", paths.SourceDir, paths.SourceDir)); err != nil {
+	if _, err := sshManager.RunCommand(fmt.Sprintf("rm -rf %s/* %s/.[!.]*", paths.SourceDir, paths.SourceDir)); err != nil {
 		return fmt.Errorf("failed to clean source directory: %w", err)
 	}
 	repoURL := "https://github.com/raghavyuva/nixopus.git"
 	cloneCmd := fmt.Sprintf("cd %s && git clone %s . 2>&1", paths.SourceDir, repoURL)
-	cloneOutput, err := ssh.RunCommand(cloneCmd)
+	cloneOutput, err := sshManager.RunCommand(cloneCmd)
 	if err != nil {
 		s.logger.Log(logger.Error, "Git clone failed", fmt.Sprintf("output: %s, error: %v", cloneOutput, err))
 		return fmt.Errorf("failed to clone repository: %w (output: %s)", err, cloneOutput)
@@ -271,7 +271,7 @@ func (s *UpdateService) cloneRepository(ssh *ssh.SSH, paths PathConfig) error {
 
 	branch := s.getBranch()
 	checkoutCmd := fmt.Sprintf("cd %s && git checkout %s 2>&1", paths.SourceDir, branch)
-	checkoutOutput, err := ssh.RunCommand(checkoutCmd)
+	checkoutOutput, err := sshManager.RunCommand(checkoutCmd)
 	if err != nil {
 		s.logger.Log(logger.Error, "Git checkout failed", fmt.Sprintf("output: %s, error: %v", checkoutOutput, err))
 		return fmt.Errorf("failed to checkout %s branch: %w (output: %s)", branch, err, checkoutOutput)
@@ -279,7 +279,7 @@ func (s *UpdateService) cloneRepository(ssh *ssh.SSH, paths PathConfig) error {
 	return nil
 }
 
-func (s *UpdateService) startContainers(ssh *ssh.SSH, paths PathConfig) error {
+func (s *UpdateService) startContainers(sshManager *ssh.SSHManager, paths PathConfig) error {
 	var startCmd string
 	if s.env == Staging {
 		startCmd = fmt.Sprintf("cd %s && DOCKER_HOST=unix:///var/run/docker.sock DOCKER_CONTEXT=nixopus-staging docker compose -f %s up -d --build 2>&1", paths.SourceDir, paths.ComposeFile)
@@ -287,7 +287,7 @@ func (s *UpdateService) startContainers(ssh *ssh.SSH, paths PathConfig) error {
 		startCmd = fmt.Sprintf("cd %s && DOCKER_HOST=unix:///var/run/docker.sock DOCKER_CONTEXT=default docker compose -f %s up -d 2>&1", paths.SourceDir, paths.ComposeFile)
 	}
 
-	startOutput, err := ssh.RunCommand(startCmd)
+	startOutput, err := sshManager.RunCommand(startCmd)
 	if err != nil {
 		s.logger.Log(logger.Error, "Container start failed", fmt.Sprintf("output: %s, error: %v", startOutput, err))
 		return fmt.Errorf("failed to start containers: %w (output: %s)", err, startOutput)
@@ -295,10 +295,10 @@ func (s *UpdateService) startContainers(ssh *ssh.SSH, paths PathConfig) error {
 	return nil
 }
 
-func (s *UpdateService) verifyServices(ssh *ssh.SSH, paths PathConfig) error {
+func (s *UpdateService) verifyServices(sshManager *ssh.SSHManager, paths PathConfig) error {
 	time.Sleep(10 * time.Second)
 	checkCmd := fmt.Sprintf("cd %s && docker compose -f %s ps --format json 2>&1", paths.SourceDir, paths.ComposeFile)
-	checkOutput, err := ssh.RunCommand(checkCmd)
+	checkOutput, err := sshManager.RunCommand(checkCmd)
 	if err != nil {
 		s.logger.Log(logger.Error, "Service verification failed", checkOutput)
 		return fmt.Errorf("failed to verify services: %w", err)
@@ -306,20 +306,20 @@ func (s *UpdateService) verifyServices(ssh *ssh.SSH, paths PathConfig) error {
 	return nil
 }
 
-func (s *UpdateService) handleRollback(ssh *ssh.SSH, paths PathConfig) {
+func (s *UpdateService) handleRollback(sshManager *ssh.SSHManager, paths PathConfig) {
 	backupExistsCmd := fmt.Sprintf("test -d %s && echo 'exists' || echo 'missing'", paths.BackupDir)
-	backupExists, _ := ssh.RunCommand(backupExistsCmd)
+	backupExists, _ := sshManager.RunCommand(backupExistsCmd)
 
 	if strings.TrimSpace(backupExists) == "exists" {
 		s.logger.Log(logger.Warning, "Update failed, rolling back to previous version", "")
 
 		restoreCmd := fmt.Sprintf("rm -rf %s && mv %s %s", paths.SourceDir, paths.BackupDir, paths.SourceDir)
-		if _, err := ssh.RunCommand(restoreCmd); err != nil {
+		if _, err := sshManager.RunCommand(restoreCmd); err != nil {
 			s.logger.Log(logger.Error, "Failed to restore from backup", err.Error())
 			return
 		}
 
-		if err := s.startContainers(ssh, paths); err != nil {
+		if err := s.startContainers(sshManager, paths); err != nil {
 			s.logger.Log(logger.Error, "Failed to restart previous version", err.Error())
 		} else {
 			s.logger.Log(logger.Info, "Successfully rolled back to previous version", "")
@@ -327,11 +327,11 @@ func (s *UpdateService) handleRollback(ssh *ssh.SSH, paths PathConfig) {
 	}
 }
 
-func (s *UpdateService) cleanupBackup(ssh *ssh.SSH, paths PathConfig) {
+func (s *UpdateService) cleanupBackup(sshManager *ssh.SSHManager, paths PathConfig) {
 	backupExistsCmd := fmt.Sprintf("test -d %s && echo 'exists' || echo 'missing'", paths.BackupDir)
-	backupExists, _ := ssh.RunCommand(backupExistsCmd)
+	backupExists, _ := sshManager.RunCommand(backupExistsCmd)
 	if strings.TrimSpace(backupExists) == "exists" {
-		if _, err := ssh.RunCommand(fmt.Sprintf("rm -rf %s", paths.BackupDir)); err != nil {
+		if _, err := sshManager.RunCommand(fmt.Sprintf("rm -rf %s", paths.BackupDir)); err != nil {
 			s.logger.Log(logger.Warning, "Failed to remove backup directory", err.Error())
 		}
 	}

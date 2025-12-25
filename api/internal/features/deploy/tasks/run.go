@@ -53,8 +53,8 @@ func (s *TaskService) sanitizeEnvVars(envVars map[string]string) []string {
 }
 
 func (s *TaskService) getAvailablePort() (string, error) {
-	ssh := ssh.NewSSH()
-	client, err := ssh.Connect()
+	manager := ssh.GetSSHManager()
+	client, err := manager.Connect()
 	if err != nil {
 		return "", err
 	}

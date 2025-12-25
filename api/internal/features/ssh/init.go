@@ -4,13 +4,16 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"sync"
 
 	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/types"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+// SSH represents a single SSH connection configuration
 type SSH struct {
 	PrivateKey          string `json:"private_key"`
 	PublicKey           string `json:"public_key"`
@@ -21,6 +24,144 @@ type SSH struct {
 	PrivateKeyProtected string `json:"private_key_protected"`
 }
 
+// SSHManager manages multiple SSH clients and provides a unified interface
+// For now, it defaults to single client mode for backward compatibility
+// In the future, it can be extended to support multiple clients/discoveries
+type SSHManager struct {
+	clients   map[string]*SSH // Map of client ID to SSH config
+	defaultID string          // ID of the default client
+	mu        sync.RWMutex    // Mutex for thread safe access
+}
+
+var (
+	// globalSSHManager is the singleton instance of SSHManager
+	globalSSHManager *SSHManager
+	globalSSHMu      sync.Once
+)
+
+// GetSSHManager returns the global singleton SSHManager instance
+// This ensures we have a single SSHManager instance across the entire application
+// It's initialized lazily on first access with the default SSH config
+func GetSSHManager() *SSHManager {
+	globalSSHMu.Do(func() {
+		defaultClient := NewSSH()
+		globalSSHManager = &SSHManager{
+			clients:   make(map[string]*SSH),
+			defaultID: "default",
+		}
+		globalSSHManager.clients["default"] = defaultClient
+	})
+	return globalSSHManager
+}
+
+// NewSSHManager creates a new SSH manager with a single default client from config
+// This maintains backward compatibility while enabling future multi-client support
+// For most use cases, prefer GetSSHManager() to use the singleton instance
+func NewSSHManager() *SSHManager {
+	defaultClient := NewSSH()
+	manager := &SSHManager{
+		clients:   make(map[string]*SSH),
+		defaultID: "default",
+	}
+	manager.clients["default"] = defaultClient
+	return manager
+}
+
+// AddClient adds a new SSH client to the manager with a unique ID
+func (m *SSHManager) AddClient(id string, sshClient *SSH) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if id == "" {
+		return fmt.Errorf("client ID cannot be empty")
+	}
+	if sshClient == nil {
+		return fmt.Errorf("SSH client cannot be nil")
+	}
+
+	m.clients[id] = sshClient
+	return nil
+}
+
+// GetClient retrieves an SSH client by ID, or returns the default client if ID is empty
+func (m *SSHManager) GetClient(id string) (*SSH, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if id == "" {
+		id = m.defaultID
+	}
+
+	client, exists := m.clients[id]
+	if !exists {
+		return nil, fmt.Errorf("SSH client with ID '%s' not found", id)
+	}
+
+	return client, nil
+}
+
+// SetDefault sets the default client ID
+func (m *SSHManager) SetDefault(id string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, exists := m.clients[id]; !exists {
+		return fmt.Errorf("SSH client with ID '%s' does not exist", id)
+	}
+
+	m.defaultID = id
+	return nil
+}
+
+// Connect connects to the default SSH client
+// This maintains backward compatibility with the single-client approach
+func (m *SSHManager) Connect() (*goph.Client, error) {
+	return m.ConnectWithID("")
+}
+
+// ConnectWithID connects to a specific SSH client by ID
+func (m *SSHManager) ConnectWithID(id string) (*goph.Client, error) {
+	client, err := m.GetClient(id)
+	if err != nil {
+		return nil, err
+	}
+	return client.Connect()
+}
+
+// RunCommand runs a command on the default SSH client
+func (m *SSHManager) RunCommand(cmd string) (string, error) {
+	return m.RunCommandWithID("", cmd)
+}
+
+// RunCommandWithID runs a command on a specific SSH client by ID
+func (m *SSHManager) RunCommandWithID(id string, cmd string) (string, error) {
+	client, err := m.GetClient(id)
+	if err != nil {
+		return "", err
+	}
+	return client.RunCommand(cmd)
+}
+
+// ListClients returns a list of all client IDs
+func (m *SSHManager) ListClients() []string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	ids := make([]string, 0, len(m.clients))
+	for id := range m.clients {
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+// GetDefaultSSH returns the default SSH client struct
+// This is useful when you need direct access to the SSH struct (e.g., for accessing Host field)
+func (m *SSHManager) GetDefaultSSH() (*SSH, error) {
+	return m.GetClient("")
+}
+
+// NewSSH creates a new SSH client from the global config
+// This is the default way to create a single SSH client
 func NewSSH() *SSH {
 	return &SSH{
 		PrivateKey:          config.AppConfig.SSH.PrivateKey,
@@ -29,6 +170,29 @@ func NewSSH() *SSH {
 		Port:                config.AppConfig.SSH.Port,
 		Password:            config.AppConfig.SSH.Password,
 		PrivateKeyProtected: config.AppConfig.SSH.PrivateKeyProtected,
+	}
+}
+
+// NewSSHFromConfig creates a new SSH client from a custom SSHConfig
+// This is useful when you need to create SSH clients with different configurations
+// Example usage for multi-client scenarios:
+//
+//	client1 := NewSSHFromConfig(&types.SSHConfig{Host: "server1", User: "user1", ...})
+//	client2 := NewSSHFromConfig(&types.SSHConfig{Host: "server2", User: "user2", ...})
+//	manager := NewSSHManager()
+//	manager.AddClient("server1", client1)
+//	manager.AddClient("server2", client2)
+func NewSSHFromConfig(sshConfig *types.SSHConfig) *SSH {
+	if sshConfig == nil {
+		return NewSSH() // Fallback to default config
+	}
+	return &SSH{
+		PrivateKey:          sshConfig.PrivateKey,
+		Host:                sshConfig.Host,
+		User:                sshConfig.User,
+		Port:                sshConfig.Port,
+		Password:            sshConfig.Password,
+		PrivateKeyProtected: sshConfig.PrivateKeyProtected,
 	}
 }
 
