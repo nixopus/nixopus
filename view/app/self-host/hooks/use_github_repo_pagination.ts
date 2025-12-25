@@ -82,10 +82,11 @@ function useGithubRepoPagination() {
     setCurrentPage(pageNumber);
   };
 
-  // Reset the current page when the search term, sort config, or connector changes
+  // Reset the current page when the search term or connector changes
+  // Note: sortConfig is excluded since sorting is not yet implemented
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, sortConfig, activeConnectorId]);
+  }, [debouncedSearchTerm, activeConnectorId]);
 
   const onSortChange = (newSort: SortOption<GithubRepository>) => {
     handleSortChange(newSort.value as keyof GithubRepository);
