@@ -8,11 +8,9 @@ import (
 
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.ContextWithBody[types.UpdateGithubConnectorRequest]) (*shared_types.Response, error) {
+func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.ContextWithBody[types.UpdateGithubConnectorRequest]) (*types.MessageResponse, error) {
 
 	UpdateConnectorRequest, err := f.Body()
 
@@ -50,7 +48,7 @@ func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.Context
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.MessageResponse{
 		Status:  "success",
 		Message: "Github Connector Request Updated",
 	}, nil

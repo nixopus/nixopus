@@ -101,7 +101,13 @@ function DiskMountsTable({ mounts }: { mounts: MountData[] }) {
   ];
 
   return (
-    <div className="max-h-[300px] overflow-y-auto overflow-x-hidden">
+    <div
+      className="max-h-[300px] overflow-y-auto overflow-x-hidden scrollbar-accessible"
+      role="region"
+      aria-label={`${t('dashboard.disk.table.headers.mount')} table with ${mounts.length} ${mounts.length === 1 ? 'mount point' : 'mount points'}`}
+      aria-live="polite"
+      tabIndex={0}
+    >
       <DataTable
         data={mounts}
         columns={columns}

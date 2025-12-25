@@ -7,11 +7,12 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*types.MessageResponse, error) {
 	c.logger.Log(logger.Info, "handling github webhook", "")
 
 	payload, err := io.ReadAll(f.Request().Body)
@@ -35,10 +36,9 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*shared_t
 	eventType := f.Request().Header.Get("X-GitHub-Event")
 	if eventType != "push" {
 		c.logger.Log(logger.Info, "ignoring non-push event", eventType)
-		return &shared_types.Response{
+		return &types.MessageResponse{
 			Status:  "success",
 			Message: "Ignored non-push event",
-			Data:    nil,
 		}, nil
 	}
 
@@ -72,9 +72,8 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*shared_t
 	}
 
 	c.logger.Log(logger.Info, "github webhook handled successfully", webhookPayload.Repository.FullName)
-	return &shared_types.Response{
+	return &types.MessageResponse{
 		Status:  "success",
 		Message: "Github webhook handled successfully",
-		Data:    nil,
 	}, nil
 }
