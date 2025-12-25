@@ -15,6 +15,7 @@ import (
 // GitClient defines the interface for git operations
 type GitClient interface {
 	Clone(repoURL, destinationPath string) error
+	CloneWithBranch(repoURL, destinationPath, branch string) error
 	Pull(repoURL, destinationPath string) error
 	GetLatestCommitHash(repoURL string, accessToken string) (string, error)
 	SetHeadToCommitHash(repoURL, destinationPath, commitHash string) error
@@ -55,6 +56,26 @@ func (g *DefaultGitClient) Clone(repoURL, destinationPath string) error {
 	}
 
 	g.logger.Log(logger.Info, fmt.Sprintf("Successfully cloned repository to %s", destinationPath), "")
+	return nil
+}
+
+// CloneWithBranch clones a git repository with a shallow clone (depth=1) of only the specified branch
+func (g *DefaultGitClient) CloneWithBranch(repoURL, destinationPath, branch string) error {
+	client, err := g.ssh.Connect()
+	if err != nil {
+		return fmt.Errorf("failed to connect via SSH: %w", err)
+	}
+	defer client.Close()
+
+	// Use shallow clone (--depth=1) and clone only the specific branch (--branch)
+	// This is more efficient as it only downloads the necessary branch
+	cmd := fmt.Sprintf("git clone --depth=1 --branch=%s %s %s", branch, repoURL, destinationPath)
+	output, err := client.Run(cmd)
+	if err != nil {
+		return fmt.Errorf("git clone with branch failed: %s, output: %s", err.Error(), output)
+	}
+
+	g.logger.Log(logger.Info, fmt.Sprintf("Successfully cloned branch %s of repository to %s", branch, destinationPath), "")
 	return nil
 }
 

@@ -61,11 +61,16 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 	})
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to build image: "+err.Error(), shared_types.Failed)
+		// Cleanup repository even on build failure
+		t.CleanupRepository(repoPath)
 		return err
 	}
 
 	taskCtx.AddLog("Image built successfully: " + buildImageResult + " for application " + TaskPayload.Application.Name)
 	taskCtx.UpdateStatus(shared_types.Deploying)
+
+	// Cleanup repository after build completes successfully
+	t.CleanupRepository(repoPath)
 
 	containerResult, err := t.AtomicUpdateContainer(TaskPayload, taskCtx)
 	if err != nil {

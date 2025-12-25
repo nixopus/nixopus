@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	github_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -34,4 +35,17 @@ func (t *TaskService) Clone(cloneConfig CloneConfig) (string, error) {
 		return "", fmt.Errorf("failed to clone repository: %w", err)
 	}
 	return repoPath, nil
+}
+
+// CleanupRepository removes the cloned repository after build is complete
+func (t *TaskService) CleanupRepository(repoPath string) {
+	if repoPath == "" {
+		return
+	}
+
+	if err := t.Github_service.RemoveRepository(repoPath); err != nil {
+		t.Logger.Log(logger.Warning, fmt.Sprintf("Failed to cleanup repository at %s: %s", repoPath, err.Error()), "")
+	} else {
+		t.Logger.Log(logger.Info, fmt.Sprintf("Successfully cleaned up repository at %s", repoPath), "")
+	}
 }

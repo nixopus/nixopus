@@ -36,45 +36,39 @@ func (s *GithubConnectorService) CreateAuthenticatedRepoURL(repoURL, accessToken
 }
 
 // GetClonePath generates a path to clone a repository to.
+// Always creates a fresh directory for cloning (repositories are cleaned up after use).
 //
 // Parameters:
 //
 //	userID - the ID of the user whose repository to clone.
 //	environment - the environment name to clone the repository to.
+//	applicationID - the ID of the application to clone the repository for.
 //
 // Returns:
 //
 //	string - the path to which to clone the repository.
-//	bool - whether to pull the repository instead of cloning.
 //	error - any error that occurred.
-func (s *GithubConnectorService) GetClonePath(userID, environment, applicationID string) (string, bool, error) {
+func (s *GithubConnectorService) GetClonePath(userID, environment, applicationID string) (string, error) {
 	repoBaseURL := config.AppConfig.Deployment.MountPath
 	clonePath := filepath.Join(repoBaseURL, userID, environment, applicationID)
-	var shouldPull bool
 
 	client, err := s.ssh.Connect()
 	if err != nil {
-		return "", false, fmt.Errorf("failed to connect via SSH: %w", err)
+		return "", fmt.Errorf("failed to connect via SSH: %w", err)
 	}
 	defer client.Close()
 
 	sftp, err := client.NewSftp()
 	if err != nil {
-		return "", false, fmt.Errorf("failed to create SFTP client: %w", err)
+		return "", fmt.Errorf("failed to create SFTP client: %w", err)
 	}
 	defer sftp.Close()
 
-	info, err := sftp.Stat(clonePath)
-	if err == nil && info.IsDir() {
-		shouldPull = true
+	// Always ensure the directory exists (will be cleaned up after build)
+	err = sftp.MkdirAll(clonePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to create directory via SFTP: %w", err)
 	}
 
-	if !shouldPull {
-		err = sftp.MkdirAll(clonePath)
-		if err != nil {
-			return "", false, fmt.Errorf("failed to create directory via SFTP: %w", err)
-		}
-	}
-
-	return clonePath, shouldPull, nil
+	return clonePath, nil
 }

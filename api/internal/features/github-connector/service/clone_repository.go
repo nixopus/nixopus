@@ -80,7 +80,7 @@ func (s *GithubConnectorService) CloneRepository(c CloneRepositoryConfig, commit
 		return "", err
 	}
 
-	clonePath, should_pull, err := s.GetClonePath(c.UserID, c.Environment, c.ApplicationID)
+	clonePath, err := s.GetClonePath(c.UserID, c.Environment, c.ApplicationID)
 
 	s.logger.Log(logger.Info, fmt.Sprintf("Clone path: %s", clonePath), "")
 
@@ -89,32 +89,55 @@ func (s *GithubConnectorService) CloneRepository(c CloneRepositoryConfig, commit
 		return "", err
 	}
 
+	// Always remove existing repository to ensure fresh clone
+	if err := s.gitClient.RemoveRepository(clonePath); err != nil {
+		s.logger.Log(logger.Warning, fmt.Sprintf("Failed to remove existing repository (may not exist): %s", err.Error()), c.UserID)
+		// Continue anyway as the directory might not exist
+	}
+
 	if c.DeploymentType == shared_types.DeploymentTypeRollback {
-		s.logger.Log(logger.Info, "Rolling back repository", c.UserID)
+		// For rollback, we need to clone with full history to checkout any commit
+		// Shallow clone won't work because the commit hash might not be the latest commit
+		branch := c.Branch
+		if branch == "" {
+			branch = "main" // Default branch if not specified
+		}
+		s.logger.Log(logger.Info, fmt.Sprintf("Cloning repository for rollback (branch: %s, full clone required)", branch), c.UserID)
+		// Use full clone for rollback to ensure we can checkout any commit
+		err = s.gitClient.Clone(authenticatedURL, clonePath)
+		if err != nil {
+			s.logger.Log(logger.Error, fmt.Sprintf("Failed to clone repository for rollback: %s", err.Error()), "")
+			return "", err
+		}
+
+		// Checkout the specific branch first, then the commit
+		if branch != "" {
+			err = s.gitClient.SwitchBranch(clonePath, branch)
+			if err != nil {
+				s.logger.Log(logger.Warning, fmt.Sprintf("Failed to switch to branch %s, continuing with checkout: %s", branch, err.Error()), c.UserID)
+			}
+		}
+
+		s.logger.Log(logger.Info, fmt.Sprintf("Rolling back repository to commit %s", latestCommitHash), c.UserID)
 		err = s.gitClient.SetHeadToCommitHash(authenticatedURL, clonePath, latestCommitHash)
 		if err != nil {
 			s.logger.Log(logger.Error, fmt.Sprintf("Failed to rollback repository: %s", err.Error()), "")
 			return "", err
 		}
 	} else {
-		if !should_pull {
-			s.logger.Log(logger.Info, "Cloning repository", c.UserID)
-			err = s.gitClient.Clone(authenticatedURL, clonePath)
+		// Always clone fresh with the specific branch if provided
+		if c.Branch != "" {
+			s.logger.Log(logger.Info, fmt.Sprintf("Cloning repository (branch: %s)", c.Branch), c.UserID)
+			err = s.gitClient.CloneWithBranch(authenticatedURL, clonePath, c.Branch)
 			if err != nil {
-				s.logger.Log(logger.Error, fmt.Sprintf("Failed to clone repository: %s", err.Error()), "")
+				s.logger.Log(logger.Error, fmt.Sprintf("Failed to clone repository with branch: %s", err.Error()), "")
 				return "", err
 			}
 		} else {
-			if err := s.handleGitPull(authenticatedURL, clonePath, c.UserID); err != nil {
-				return "", err
-			}
-		}
-
-		if c.Branch != "" {
-			s.logger.Log(logger.Info, fmt.Sprintf("Switching to branch %s", c.Branch), c.UserID)
-			err = s.gitClient.SwitchBranch(clonePath, c.Branch)
+			s.logger.Log(logger.Info, "Cloning repository (default branch)", c.UserID)
+			err = s.gitClient.Clone(authenticatedURL, clonePath)
 			if err != nil {
-				s.logger.Log(logger.Error, fmt.Sprintf("Failed to switch to branch %s: %s", c.Branch, err.Error()), "")
+				s.logger.Log(logger.Error, fmt.Sprintf("Failed to clone repository: %s", err.Error()), "")
 				return "", err
 			}
 		}
