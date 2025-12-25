@@ -5,11 +5,11 @@ import (
 	"strconv"
 
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/extension/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *ExtensionsController) RunExtension(ctx fuego.ContextWithBody[RunExtensionRequest]) (*types.ExtensionExecution, error) {
+func (c *ExtensionsController) RunExtension(ctx fuego.ContextWithBody[RunExtensionRequest]) (*types.ExecutionResponse, error) {
 	extensionID := ctx.PathParam("extension_id")
 	if extensionID == "" {
 		return nil, fuego.HTTPError{Err: nil, Status: http.StatusBadRequest}
@@ -25,7 +25,11 @@ func (c *ExtensionsController) RunExtension(ctx fuego.ContextWithBody[RunExtensi
 			c.logger.Log(logger.Error, err.Error(), "")
 			return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
 		}
-		return exec, nil
+		return &types.ExecutionResponse{
+			Status:  "success",
+			Message: "Extension execution started",
+			Data:    exec,
+		}, nil
 	}
 
 	req, err := ctx.Body()
@@ -37,10 +41,14 @@ func (c *ExtensionsController) RunExtension(ctx fuego.ContextWithBody[RunExtensi
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
 	}
-	return exec, nil
+	return &types.ExecutionResponse{
+		Status:  "success",
+		Message: "Extension execution started",
+		Data:    exec,
+	}, nil
 }
 
-func (c *ExtensionsController) CancelExecution(ctx fuego.ContextNoBody) (*types.Response, error) {
+func (c *ExtensionsController) CancelExecution(ctx fuego.ContextNoBody) (*types.MessageResponse, error) {
 	execID := ctx.PathParam("execution_id")
 	if execID == "" {
 		return nil, fuego.HTTPError{Err: nil, Status: http.StatusBadRequest}
@@ -48,16 +56,10 @@ func (c *ExtensionsController) CancelExecution(ctx fuego.ContextNoBody) (*types.
 	if err := c.service.CancelExecution(execID); err != nil {
 		return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
 	}
-	return &types.Response{Status: "success", Message: "Execution cancelled"}, nil
+	return &types.MessageResponse{Status: "success", Message: "Execution cancelled"}, nil
 }
 
-type ListLogsResponse struct {
-	Logs            []types.ExtensionLog   `json:"logs"`
-	NextAfter       int64                  `json:"next_after"`
-	ExecutionStatus *types.ExecutionStatus `json:"execution_status,omitempty"`
-}
-
-func (c *ExtensionsController) ListExecutionLogs(ctx fuego.ContextNoBody) (*ListLogsResponse, error) {
+func (c *ExtensionsController) ListExecutionLogs(ctx fuego.ContextNoBody) (*types.ListLogsResponse, error) {
 	execID := ctx.PathParam("execution_id")
 	if execID == "" {
 		return nil, fuego.HTTPError{Err: nil, Status: http.StatusBadRequest}
@@ -83,9 +85,13 @@ func (c *ExtensionsController) ListExecutionLogs(ctx fuego.ContextNoBody) (*List
 	if len(logs) > 0 {
 		next = logs[len(logs)-1].Sequence
 	}
-	return &ListLogsResponse{
-		Logs:            logs,
-		NextAfter:       next,
-		ExecutionStatus: execStatus,
+	return &types.ListLogsResponse{
+		Status:  "success",
+		Message: "Logs retrieved successfully",
+		Data: types.ListLogsResponseData{
+			Logs:            logs,
+			NextAfter:       next,
+			ExecutionStatus: execStatus,
+		},
 	}, nil
 }
