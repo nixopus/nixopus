@@ -79,10 +79,18 @@ export interface UpdateOrganizationDetailsRequest {
   description: string;
 }
 
+export type UserTypes = 'admin' | 'member' | 'viewer';
+
+export interface CreateUserRequest {
+  email: string;
+  password: string;
+  username: string;
+  type: UserTypes;
+  organization: string;
+}
+
 export interface UpdateUserRoleRequest {
   user_id: string;
   organization_id: string;
   role: string;
 }
-
-export type UserTypes = 'Owner' | 'Admin' | 'Member' | 'Viewer' | string;

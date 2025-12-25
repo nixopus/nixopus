@@ -177,6 +177,85 @@ export const authSlice = createSlice({
         state.isInitialized = true;
         state.isLoading = false;
       })
+      .addMatcher(authApi.endpoints.loginUser.matchPending, (state) => {
+        state.isLoading = true;
+      })
+      .addMatcher(authApi.endpoints.loginUser.matchFulfilled, (state, { payload }) => {
+        if (payload?.temp_token) {
+          state.twoFactor.isRequired = true;
+          state.twoFactor.tempToken = payload.temp_token;
+          state.token = payload.temp_token;
+          state.isAuthenticated = false;
+
+          setAuthTokens({
+            access_token: payload.temp_token,
+            refresh_token: undefined,
+            expires_in: payload.expires_in
+          });
+        } else if (payload?.access_token) {
+          state.user = payload.user;
+          state.token = payload.access_token;
+          state.refreshToken = payload.refresh_token || undefined;
+          state.isAuthenticated = true;
+          state.isInitialized = true;
+          state.twoFactor.isRequired = false;
+          state.twoFactor.tempToken = undefined;
+
+          setAuthTokens({
+            access_token: payload.access_token,
+            refresh_token: payload.refresh_token || undefined,
+            expires_in: payload.expires_in
+          });
+        }
+        state.isLoading = false;
+      })
+      .addMatcher(authApi.endpoints.loginUser.matchRejected, (state) => {
+        state.isLoading = false;
+      })
+      .addMatcher(authApi.endpoints.twoFactorLogin.matchPending, (state) => {
+        state.isLoading = true;
+      })
+      .addMatcher(authApi.endpoints.twoFactorLogin.matchFulfilled, (state, { payload }) => {
+        if (payload?.access_token) {
+          state.user = payload.user;
+          state.token = payload.access_token;
+          state.refreshToken = payload.refresh_token || undefined;
+          state.isAuthenticated = true;
+          state.isInitialized = true;
+          state.twoFactor.isRequired = false;
+          state.twoFactor.tempToken = undefined;
+
+          setAuthTokens({
+            access_token: payload.access_token,
+            refresh_token: payload.refresh_token || undefined,
+            expires_in: payload.expires_in
+          });
+        }
+        state.isLoading = false;
+      })
+      .addMatcher(authApi.endpoints.twoFactorLogin.matchRejected, (state) => {
+        state.isLoading = false;
+      })
+      .addMatcher(authApi.endpoints.refreshToken.matchPending, (state) => {
+        state.isLoading = true;
+      })
+      .addMatcher(authApi.endpoints.refreshToken.matchFulfilled, (state, { payload }) => {
+        if (payload?.access_token) {
+          state.token = payload.access_token;
+          state.refreshToken = payload.refresh_token || undefined;
+          state.isAuthenticated = true;
+
+          setAuthTokens({
+            access_token: payload.access_token,
+            refresh_token: payload.refresh_token || undefined,
+            expires_in: payload.expires_in
+          });
+        }
+        state.isLoading = false;
+      })
+      .addMatcher(authApi.endpoints.refreshToken.matchRejected, (state) => {
+        state.isLoading = false;
+      })
       .addMatcher(authApi.endpoints.getUserDetails.matchPending, (state) => {
         state.isLoading = true;
       })
