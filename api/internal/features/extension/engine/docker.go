@@ -51,7 +51,13 @@ func (dockerModule) Execute(_ *ssh.SSH, step types.SpecStep, vars map[string]int
 		return "", nil, fmt.Errorf("docker: action is required (name=%q image=%q tag=%q)", name, image, tag)
 	}
 
-	svc := deploydocker.NewDockerService()
+	svc, err := deploydocker.GetDockerManager().GetDefaultService()
+	if err != nil {
+		return "", nil, fmt.Errorf("docker: failed to get default docker service: %w", err)
+	}
+	if svc == nil {
+		return "", nil, fmt.Errorf("docker: docker service is nil")
+	}
 
 	type handler func() (string, func(), error)
 	handlers := map[string]handler{

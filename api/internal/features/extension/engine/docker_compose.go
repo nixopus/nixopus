@@ -27,7 +27,7 @@ func (dockerComposeModule) Execute(_ *ssh.SSH, step types.SpecStep, vars map[str
 		return "", nil, fmt.Errorf("docker_compose action is required")
 	}
 
-	svc := deploydocker.NewDockerService()
+	svc, _ := deploydocker.GetDockerManager().GetDefaultService()
 
 	type handler func() (string, func(), error)
 	handlers := map[string]handler{

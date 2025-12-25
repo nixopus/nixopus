@@ -25,14 +25,21 @@ func NewContainerController(
 	ctx context.Context,
 	l logger.Logger,
 	notificationManager *notification.NotificationManager,
-) *ContainerController {
+) (*ContainerController, error) {
+	dockerService, err := docker.GetDockerManager().GetDefaultService()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get default docker service: %w", err)
+	}
+	if dockerService == nil {
+		return nil, fmt.Errorf("docker service is nil")
+	}
 	return &ContainerController{
 		store:         store,
-		dockerService: docker.NewDockerService(),
+		dockerService: dockerService,
 		ctx:           ctx,
 		logger:        l,
 		notification:  notificationManager,
-	}
+	}, nil
 }
 
 func (c *ContainerController) isProtectedContainer(containerID string, action string) (*types.ContainerActionResponse, bool) {

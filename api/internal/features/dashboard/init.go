@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -10,9 +11,26 @@ import (
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
 )
 
+func getDockerService() (*docker.DockerService, error) {
+	service, err := docker.GetDockerManager().GetDefaultService()
+	if err != nil {
+		return nil, err
+	}
+	if service == nil {
+		return nil, fmt.Errorf("docker service is nil")
+	}
+	return service, nil
+}
+
 func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger) (*DashboardMonitor, error) {
 	ssh_client := sshpkg.NewSSH()
 	ctx, cancel := context.WithCancel(context.Background())
+
+	dockerService, err := getDockerService()
+	if err != nil {
+		cancel()
+		return nil, fmt.Errorf("failed to get docker service: %w", err)
+	}
 
 	monitor := &DashboardMonitor{
 		conn:          conn,
@@ -22,7 +40,7 @@ func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger) (*DashboardMon
 		cancel:        cancel,
 		Interval:      time.Second * 10,
 		Operations:    AllOperations,
-		dockerService: docker.NewDockerService(),
+		dockerService: dockerService,
 	}
 
 	return monitor, nil

@@ -174,7 +174,10 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 	router.RegisterHealthRoutes(healthGroup)
 
 	// Webhook routes
-	deployController := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	deployController, err := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	if err != nil {
+		log.Fatalf("Failed to create deploy controller: %v", err)
+	}
 	webhookGroup := fuego.Group(server, apiV1.Path+"/webhook")
 	fuego.Post(webhookGroup, "", deployController.HandleGithubWebhook)
 
@@ -249,7 +252,10 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterFileManagerRoutes(fileManagerGroup, fileManagerController)
 
 	// Deploy routes
-	deployController := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	deployController, err := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	if err != nil {
+		log.Fatalf("Failed to create deploy controller: %v", err)
+	}
 	deployGroup := fuego.Group(server, apiV1.Path+"/deploy")
 	router.applyMiddleware(deployGroup, MiddlewareConfig{
 		RBAC:         true,
@@ -266,7 +272,10 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterAuditRoutes(auditGroup, auditController)
 
 	// Update routes
-	updateService := update_service.NewUpdateService(router.app, &router.logger, router.app.Ctx)
+	updateService, err := update_service.NewUpdateService(router.app, &router.logger, router.app.Ctx)
+	if err != nil {
+		log.Fatalf("Failed to create update service: %v", err)
+	}
 	updateController := update.NewUpdateController(updateService, &router.logger)
 	updateGroup := fuego.Group(server, apiV1.Path+"/update")
 	router.RegisterUpdateRoutes(updateGroup, updateController)
@@ -279,7 +288,10 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterFeatureFlagRoutes(featureFlagReadGroup, featureFlagWriteGroup, featureFlagController)
 
 	// Container routes
-	containerController := container.NewContainerController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	containerController, err := container.NewContainerController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	if err != nil {
+		log.Fatalf("Failed to create container controller: %v", err)
+	}
 	containerGroup := fuego.Group(server, apiV1.Path+"/container")
 	router.applyMiddleware(containerGroup, MiddlewareConfig{
 		RBAC:         true,
