@@ -324,10 +324,14 @@ func (s *DockerService) ContainerLogs(Ctx context.Context, containerID string, o
 	return s.Cli.ContainerLogs(Ctx, containerID, opts)
 }
 
+// dockerPathPrefix returns a shell command prefix that ensures docker is in PATH
+// This is needed because SSH non-interactive sessions don't source shell profiles
+const dockerPathPrefix = "export PATH=$PATH:/usr/local/bin:/usr/bin:/snap/bin:/opt/homebrew/bin && "
+
 // ComposeUp starts the Docker Compose services defined in the specified compose file
 func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]string) error {
 	client := ssh.NewSSH()
-	envVarsStr := ""
+	envVarsStr := dockerPathPrefix
 	for k, v := range envVars {
 		envVarsStr += fmt.Sprintf("export %s=%s && ", k, v)
 	}
@@ -343,7 +347,7 @@ func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]str
 // ComposeDown stops and removes the Docker Compose services
 func (s *DockerService) ComposeDown(composeFilePath string) error {
 	client := ssh.NewSSH()
-	command := fmt.Sprintf("docker compose -f %s down", composeFilePath)
+	command := fmt.Sprintf("%sdocker compose -f %s down", dockerPathPrefix, composeFilePath)
 	output, err := client.RunCommand(command)
 	if err != nil {
 		return fmt.Errorf("failed to stop docker compose services: %v, output: %s", err, output)
@@ -354,7 +358,7 @@ func (s *DockerService) ComposeDown(composeFilePath string) error {
 // ComposeBuild builds the Docker Compose services
 func (s *DockerService) ComposeBuild(composeFilePath string, envVars map[string]string) error {
 	client := ssh.NewSSH()
-	envVarsStr := ""
+	envVarsStr := dockerPathPrefix
 	for k, v := range envVars {
 		envVarsStr += fmt.Sprintf("export %s=%s && ", k, v)
 	}
