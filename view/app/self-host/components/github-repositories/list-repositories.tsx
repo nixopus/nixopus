@@ -17,6 +17,7 @@ function ListRepositories() {
   const router = useRouter();
   const {
     isLoading,
+    isSearching,
     setSelectedRepository,
     searchTerm,
     handleSearchChange,
@@ -37,7 +38,7 @@ function ListRepositories() {
   };
 
   const renderGithubRepositories = () => {
-    if (isLoading) {
+    if (isSearching || isLoading) {
       return <GithubRepositoriesSkeletonLoader />;
     }
 
@@ -77,6 +78,7 @@ function ListRepositories() {
             searchTerm={searchTerm}
             handleSearchChange={handleSearchChange}
             label={t('selfHost.repositories.search.placeholder')}
+            isLoading={isSearching}
           />
         </div>
         <div className="flex items-center gap-2">
