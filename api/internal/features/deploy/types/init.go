@@ -39,6 +39,7 @@ type CreateDeploymentRequest struct {
 	BasePath             string                   `json:"base_path,omitempty"`
 	ComposeFileURL       string                   `json:"compose_file_url,omitempty"`
 	ComposeFileContent   string                   `json:"compose_file_content,omitempty"`
+	ComposeFilePath      string                   `json:"compose_file_path,omitempty"`
 }
 
 type UpdateDeploymentRequest struct {

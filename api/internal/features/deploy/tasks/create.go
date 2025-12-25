@@ -105,7 +105,7 @@ func (t *TaskService) HandleCreateDockerComposeDeployment(ctx context.Context, T
 		TaskPayload:     TaskPayload,
 		TaskContext:     taskCtx,
 		SourceType:      sourceType,
-		ComposeFilePath: TaskPayload.Application.DockerfilePath, // Reuse dockerfilePath for compose path
+		ComposeFilePath: TaskPayload.Application.ComposeFilePath,
 		ComposeURL:      TaskPayload.Application.ComposeFileURL,
 		ComposeRaw:      TaskPayload.Application.ComposeFileContent,
 	}

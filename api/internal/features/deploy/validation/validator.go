@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"strings"
+	"net/url"
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"gopkg.in/yaml.v3"
 )
 
 type Validator struct {
@@ -110,14 +111,40 @@ func validateDockerComposeRequest(req *types.CreateDeploymentRequest) error {
 	}
 
 	if hasURL {
-		if !strings.HasPrefix(req.ComposeFileURL, "http://") && !strings.HasPrefix(req.ComposeFileURL, "https://") {
+		parsedURL, err := url.ParseRequestURI(req.ComposeFileURL)
+		if err != nil {
 			return errors.New("compose_file_url must be a valid HTTP/HTTPS URL")
+		}
+		if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+			return errors.New("compose_file_url must be a valid HTTP/HTTPS URL")
+		}
+		if parsedURL.Host == "" {
+			return errors.New("compose_file_url must have a valid host")
 		}
 	}
 
 	if hasContent {
-		if len(req.ComposeFileContent) < 10 {
-			return errors.New("compose_file_content appears to be too short")
+		if len(req.ComposeFileContent) < 100 {
+			return errors.New("compose_file_content appears to be too short (minimum 100 bytes)")
+		}
+		// Perform lightweight YAML sanity check
+		var composeMap map[string]interface{}
+		if err := yaml.Unmarshal([]byte(req.ComposeFileContent), &composeMap); err != nil {
+			return errors.New("compose_file_content must be valid YAML: " + err.Error())
+		}
+		// Verify at least one of the top-level keys "version" or "services" exists
+		hasVersion := false
+		hasServices := false
+		for key := range composeMap {
+			if key == "version" {
+				hasVersion = true
+			}
+			if key == "services" {
+				hasServices = true
+			}
+		}
+		if !hasVersion && !hasServices {
+			return errors.New("compose_file_content must contain at least one of: 'version' or 'services' top-level keys")
 		}
 	}
 

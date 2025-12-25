@@ -37,11 +37,13 @@ func (s *TaskService) deleteComposeDeployment(deployment *types.DeleteDeployment
 		Application: application,
 	}
 
-	// Delete compose resources
+	// Delete compose resources - propagate errors to prevent orphaned resources
 	if err := s.ComposeDelete(payload); err != nil {
 		s.Logger.Log(logger.Error, "Failed to delete compose resources", err.Error())
+		return fmt.Errorf("failed to delete compose resources: %w", err)
 	}
 
+	// Only delete from storage if compose cleanup succeeded
 	return s.Storage.DeleteDeployment(deployment, userID)
 }
 
