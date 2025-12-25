@@ -36,6 +36,12 @@
 					"build_variables": {
 						"type": "string"
 					},
+					"compose_file_content": {
+						"type": "string"
+					},
+					"compose_file_url": {
+						"type": "string"
+					},
 					"created_at": {
 						"format": "date-time",
 						"type": "string"
@@ -411,6 +417,12 @@
 								"type": "string"
 							},
 							"build_variables": {
+								"type": "string"
+							},
+							"compose_file_content": {
+								"type": "string"
+							},
+							"compose_file_url": {
 								"type": "string"
 							},
 							"created_at": {
@@ -868,6 +880,14 @@
 								"type": "string"
 							},
 							"build_variables": {
+								"type": "string"
+							},
+							"compose_file_content": {
+								"nullable": true,
+								"type": "string"
+							},
+							"compose_file_url": {
+								"nullable": true,
 								"type": "string"
 							},
 							"created_at": {
@@ -1353,6 +1373,14 @@
 						},
 						"type": "object"
 					},
+					"compose_file_content": {
+						"nullable": true,
+						"type": "string"
+					},
+					"compose_file_url": {
+						"nullable": true,
+						"type": "string"
+					},
 					"dockerfile_path": {
 						"nullable": true,
 						"type": "string"
@@ -1585,6 +1613,12 @@
 										"type": "string"
 									},
 									"build_variables": {
+										"type": "string"
+									},
+									"compose_file_content": {
+										"type": "string"
+									},
+									"compose_file_url": {
 										"type": "string"
 									},
 									"created_at": {
@@ -3105,6 +3139,14 @@
 										"build_variables": {
 											"type": "string"
 										},
+										"compose_file_content": {
+											"nullable": true,
+											"type": "string"
+										},
+										"compose_file_url": {
+											"nullable": true,
+											"type": "string"
+										},
 										"created_at": {
 											"format": "date-time",
 											"type": "string"
@@ -3767,6 +3809,12 @@
 													"type": "string"
 												},
 												"build_variables": {
+													"type": "string"
+												},
+												"compose_file_content": {
+													"type": "string"
+												},
+												"compose_file_url": {
 													"type": "string"
 												},
 												"created_at": {
@@ -5509,6 +5557,12 @@
 													"type": "string"
 												},
 												"build_variables": {
+													"type": "string"
+												},
+												"compose_file_content": {
+													"type": "string"
+												},
+												"compose_file_url": {
 													"type": "string"
 												},
 												"created_at": {

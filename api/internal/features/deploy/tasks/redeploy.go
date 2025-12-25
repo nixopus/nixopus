@@ -14,6 +14,61 @@ import (
 func (s *TaskService) HandleReDeploy(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	taskCtx := s.NewTaskContext(TaskPayload)
 
+	if IsComposeDeployment(TaskPayload.Application) {
+		return s.handleComposeReDeploy(ctx, TaskPayload, taskCtx)
+	}
+
+	return s.handleDockerfileReDeploy(ctx, TaskPayload, taskCtx)
+}
+
+// handleComposeReDeploy handles redeployment of docker-compose applications
+func (s *TaskService) handleComposeReDeploy(ctx context.Context, TaskPayload shared_types.TaskPayload, taskCtx *TaskContext) error {
+	taskCtx.LogAndUpdateStatus("Starting Docker Compose redeploy", shared_types.Cloning)
+
+	sourceType := GetComposeSourceType(TaskPayload.Application)
+	cfg := ComposeConfig{
+		TaskPayload:     TaskPayload,
+		TaskContext:     taskCtx,
+		SourceType:      sourceType,
+		ComposeFilePath: TaskPayload.Application.DockerfilePath,
+		ComposeURL:      TaskPayload.Application.ComposeFileURL,
+		ComposeRaw:      TaskPayload.Application.ComposeFileContent,
+	}
+
+	composePath, err := s.PrepareComposeFile(cfg)
+	if err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to prepare compose file: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
+	taskCtx.LogAndUpdateStatus("Compose file ready, rebuilding services", shared_types.Building)
+
+	err = s.ComposeBuild(cfg, composePath)
+	if err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to build compose services: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
+	taskCtx.LogAndUpdateStatus("Build complete, restarting services", shared_types.Deploying)
+
+	err = s.ComposeRestart(cfg, composePath)
+	if err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to restart compose services: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
+	err = s.AddComposeReverseProxy(cfg, composePath)
+	if err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to configure reverse proxy: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
+	taskCtx.LogAndUpdateStatus("Docker Compose redeploy completed successfully", shared_types.Deployed)
+	return nil
+}
+
+// handleDockerfileReDeploy handles redeployment of dockerfile applications
+func (s *TaskService) handleDockerfileReDeploy(ctx context.Context, TaskPayload shared_types.TaskPayload, taskCtx *TaskContext) error {
 	taskCtx.LogAndUpdateStatus("Starting redeploy process", shared_types.Cloning)
 
 	repoPath, err := s.Clone(CloneConfig{

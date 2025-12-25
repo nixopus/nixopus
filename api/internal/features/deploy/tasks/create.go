@@ -94,8 +94,55 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 	return nil
 }
 
-// TODO : Implement the docker compose deployment
+// HandleCreateDockerComposeDeployment handles deployment using docker-compose
 func (t *TaskService) HandleCreateDockerComposeDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	taskCtx := t.NewTaskContext(TaskPayload)
+
+	taskCtx.LogAndUpdateStatus("Starting Docker Compose deployment", shared_types.Cloning)
+
+	sourceType := GetComposeSourceType(TaskPayload.Application)
+	cfg := ComposeConfig{
+		TaskPayload:     TaskPayload,
+		TaskContext:     taskCtx,
+		SourceType:      sourceType,
+		ComposeFilePath: TaskPayload.Application.DockerfilePath, // Reuse dockerfilePath for compose path
+		ComposeURL:      TaskPayload.Application.ComposeFileURL,
+		ComposeRaw:      TaskPayload.Application.ComposeFileContent,
+	}
+
+	// Prepare compose file based on source type
+	composePath, err := t.PrepareComposeFile(cfg)
+	if err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to prepare compose file: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
+	taskCtx.LogAndUpdateStatus("Compose file ready, building services", shared_types.Building)
+
+	// Build compose services
+	err = t.ComposeBuild(cfg, composePath)
+	if err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to build compose services: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
+	taskCtx.LogAndUpdateStatus("Build complete, starting services", shared_types.Deploying)
+
+	// Start compose services
+	err = t.ComposeUp(cfg, composePath)
+	if err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to start compose services: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
+	// Configure reverse proxy if domain is set
+	err = t.AddComposeReverseProxy(cfg, composePath)
+	if err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to configure reverse proxy: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
+	taskCtx.LogAndUpdateStatus("Docker Compose deployment completed successfully", shared_types.Deployed)
 	return nil
 }
 
@@ -104,7 +151,6 @@ func (t *TaskService) HandleCreateStaticDeployment(ctx context.Context, TaskPayl
 	return nil
 }
 
-// TODOD: Shravan implement types and get back
 func (t *TaskService) ReDeployApplication(request *types.ReDeployApplicationRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
 	application, err := t.Storage.GetApplicationById(request.ID.String(), organizationID)
 	if err != nil {

@@ -61,6 +61,8 @@ func (c *ContextTask) GetApplicationData(
 		DockerfilePath:       deployment.DockerfilePath,
 		BasePath:             deployment.BasePath,
 		OrganizationID:       c.OrganizationId,
+		ComposeFileURL:       deployment.ComposeFileURL,
+		ComposeFileContent:   deployment.ComposeFileContent,
 	}
 
 	return application
