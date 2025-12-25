@@ -40,15 +40,21 @@ type PathConfig struct {
 	ComposeFile string
 }
 
-func NewUpdateService(storage *storage.App, logger *logger.Logger, ctx context.Context) *UpdateService {
-	dockerService, _ := docker.GetDockerManager().GetDefaultService()
+func NewUpdateService(storage *storage.App, logger *logger.Logger, ctx context.Context) (*UpdateService, error) {
+	dockerService, err := docker.GetDockerManager().GetDefaultService()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get default docker service: %w", err)
+	}
+	if dockerService == nil {
+		return nil, fmt.Errorf("docker service is nil")
+	}
 	return &UpdateService{
 		storage: storage,
 		logger:  logger,
 		ctx:     ctx,
 		docker:  dockerService,
 		env:     getEnvironment(),
-	}
+	}, nil
 }
 
 func getEnvironment() Environment {

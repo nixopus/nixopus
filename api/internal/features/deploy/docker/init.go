@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"sync"
 
 	"github.com/docker/docker/api/types"
@@ -104,10 +105,21 @@ var (
 // GetDockerManager returns the global singleton DockerManager instance
 // This ensures we have a single DockerManager instance across the entire application
 // It's initialized lazily on first access with the default Docker client
+//
+// IMPORTANT: Cluster initialization is performed automatically during the first call
+// to GetDockerManager(). This lazy initialization may introduce unpredictable latency
+// if the first access happens during a request-handling path. The cluster initialization
+// logic (lines 130-143) executes synchronously and may take several seconds to complete.
+//
+// For production deployments, consider:
+//   - Performing cluster initialization explicitly during application startup
+//   - Pre-warming the DockerManager by calling GetDockerManager() during initialization
+//   - Monitoring the first request latency to identify any initialization delays
+//
 // Cluster initialization is performed automatically (same as NewDockerService)
 func GetDockerManager() *DockerManager {
 	globalDockerMu.Do(func() {
-		defaultClient := NewDockerClient()
+		defaultClient, actualHost := NewDockerClient()
 		defaultLogger := logger.NewLogger()
 		defaultCtx := context.Background()
 
@@ -118,7 +130,7 @@ func GetDockerManager() *DockerManager {
 		}
 		globalDockerManager.clients["default"] = defaultClient
 		globalDockerManager.configs["default"] = &DockerClientConfig{
-			Host:    "unix:///var/run/docker.sock", // Default socket
+			Host:    actualHost, // Use the actual host that was connected to
 			Context: defaultCtx,
 			Logger:  defaultLogger,
 		}
@@ -158,6 +170,20 @@ func (m *DockerManager) AddClient(id string, host string) error {
 	}
 	if host == "" {
 		return fmt.Errorf("Docker host cannot be empty")
+	}
+
+	// Check if an existing client exists and close it before overwriting
+	if existingClient, exists := m.clients[id]; exists {
+		if err := existingClient.Close(); err != nil {
+			// Log the error but don't fail - we'll still replace the client
+			if config, ok := m.configs[id]; ok {
+				config.Logger.Log(logger.Warning, fmt.Sprintf("Failed to close existing Docker client %s", id), err.Error())
+			} else {
+				// Fallback to default logger if config doesn't exist
+				defaultLogger := logger.NewLogger()
+				defaultLogger.Log(logger.Warning, fmt.Sprintf("Failed to close existing Docker client %s", id), err.Error())
+			}
+		}
 	}
 
 	cli, err := client.NewClientWithOpts(
@@ -261,7 +287,7 @@ func (m *DockerManager) GetDefaultService() (*DockerService, error) {
 
 // NewDockerService creates a new instance of DockerService using the default docker client.
 func NewDockerService() *DockerService {
-	client := NewDockerClient()
+	client, _ := NewDockerClient()
 	service := &DockerService{
 		Cli:    client,
 		Ctx:    context.Background(),
@@ -302,29 +328,49 @@ func NewDockerServiceWithClient(cli *client.Client, ctx context.Context, logger 
 
 // NewDockerClient creates a new docker client with the environment variables and
 // the correct API version negotiation.
-func NewDockerClient() *client.Client {
+// Returns the client and the actual host string that was used for the connection.
+func NewDockerClient() (*client.Client, string) {
+	defaultHost := "unix:///var/run/docker.sock"
 	cli, err := client.NewClientWithOpts(
-		client.WithHost("unix:///var/run/docker.sock"),
+		client.WithHost(defaultHost),
 		client.WithAPIVersionNegotiation(),
 	)
-	if err != nil {
-		cli, err = client.NewClientWithOpts(
-			client.FromEnv,
-			client.WithAPIVersionNegotiation(),
-			client.WithTLSClientConfigFromEnv(),
-		)
-		if err != nil {
-			cli, err = client.NewClientWithOpts(
-				client.FromEnv,
-				client.WithAPIVersionNegotiation(),
-			)
-			if err != nil {
-				panic(err)
-			}
-		}
+	if err == nil {
+		return cli, defaultHost
 	}
 
-	return cli
+	// Try with FromEnv and TLS
+	cli, err = client.NewClientWithOpts(
+		client.FromEnv,
+		client.WithAPIVersionNegotiation(),
+		client.WithTLSClientConfigFromEnv(),
+	)
+	if err == nil {
+		// Extract host from environment or use default
+		host := getHostFromEnv()
+		return cli, host
+	}
+
+	// Try with FromEnv without TLS
+	cli, err = client.NewClientWithOpts(
+		client.FromEnv,
+		client.WithAPIVersionNegotiation(),
+	)
+	if err == nil {
+		host := getHostFromEnv()
+		return cli, host
+	}
+
+	panic(err)
+}
+
+// getHostFromEnv extracts the Docker host from environment variables
+// Returns the host from DOCKER_HOST env var, or default socket if not set
+func getHostFromEnv() string {
+	if host := os.Getenv("DOCKER_HOST"); host != "" {
+		return host
+	}
+	return "unix:///var/run/docker.sock"
 }
 
 // ListAllContainers returns a list of all containers running on the host, along with their
