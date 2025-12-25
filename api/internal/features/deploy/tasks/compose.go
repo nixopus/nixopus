@@ -3,11 +3,14 @@ package tasks
 import (
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/raghavyuva/caddygo"
 	"github.com/raghavyuva/nixopus-api/internal/config"
@@ -117,7 +120,52 @@ func (s *TaskService) prepareComposeFromRepository(cfg ComposeConfig) (string, e
 func (s *TaskService) prepareComposeFromURL(cfg ComposeConfig) (string, error) {
 	cfg.TaskContext.AddLog("Downloading Docker Compose file from URL: " + cfg.ComposeURL)
 
-	resp, err := http.Get(cfg.ComposeURL)
+	// Parse and validate URL to prevent SSRF
+	parsedURL, err := url.Parse(cfg.ComposeURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid compose file URL: %w", err)
+	}
+
+	// Validate scheme (only http/https allowed)
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		return "", fmt.Errorf("compose file URL must use http or https scheme")
+	}
+
+	// Validate host is present
+	if parsedURL.Host == "" {
+		return "", fmt.Errorf("compose file URL must have a valid host")
+	}
+
+	// Extract hostname (remove port if present)
+	hostname := parsedURL.Host
+	if strings.Contains(hostname, ":") {
+		hostname, _, err = net.SplitHostPort(parsedURL.Host)
+		if err != nil {
+			return "", fmt.Errorf("invalid host in compose file URL: %w", err)
+		}
+	}
+
+	// Resolve hostname to IP addresses to check for SSRF
+	ips, err := net.LookupIP(hostname)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve hostname: %w", err)
+	}
+
+	// Check for SSRF: block private/internal IP addresses
+	for _, ip := range ips {
+		if isPrivateIP(ip) {
+			s.Logger.Log(logger.Warning, "Blocked SSRF attempt to internal IP", ip.String())
+			return "", fmt.Errorf("access to internal/private IP addresses is not allowed")
+		}
+	}
+
+	// Create HTTP client with timeout
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	// Make HTTP request
+	resp, err := client.Get(cfg.ComposeURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to download compose file: %w", err)
 	}
@@ -127,9 +175,28 @@ func (s *TaskService) prepareComposeFromURL(cfg ComposeConfig) (string, error) {
 		return "", fmt.Errorf("failed to download compose file: status %d", resp.StatusCode)
 	}
 
-	content, err := io.ReadAll(resp.Body)
+	// Limit response size to prevent DoS (10MB max)
+	const maxSize = 10 * 1024 * 1024 // 10MB
+	limitedReader := io.LimitReader(resp.Body, maxSize+1)
+
+	content, err := io.ReadAll(limitedReader)
 	if err != nil {
 		return "", fmt.Errorf("failed to read compose file content: %w", err)
+	}
+
+	// Check if content exceeded size limit
+	if len(content) > maxSize {
+		return "", fmt.Errorf("compose file exceeds maximum size limit of %d bytes", maxSize)
+	}
+
+	// Validate downloaded content (similar to prepareComposeFromRaw)
+	var compose ComposeFile
+	if err := yaml.Unmarshal(content, &compose); err != nil {
+		return "", fmt.Errorf("invalid compose file content: %w", err)
+	}
+
+	if len(compose.Services) == 0 {
+		return "", fmt.Errorf("compose file has no services defined")
 	}
 
 	composeDir := s.getComposeDir(cfg.TaskPayload)
@@ -146,15 +213,102 @@ func (s *TaskService) prepareComposeFromURL(cfg ComposeConfig) (string, error) {
 	return composePath, nil
 }
 
+// isPrivateIP checks if an IP address is private/internal (SSRF protection)
+func isPrivateIP(ip net.IP) bool {
+	if ip == nil {
+		return false
+	}
+
+	// Check for IPv4 private ranges
+	if ip4 := ip.To4(); ip4 != nil {
+		return ip4.IsLoopback() ||
+			ip4.IsLinkLocalUnicast() ||
+			ip4.IsLinkLocalMulticast() ||
+			ip4.IsMulticast() ||
+			// 10.0.0.0/8
+			ip4[0] == 10 ||
+			// 172.16.0.0/12
+			(ip4[0] == 172 && ip4[1] >= 16 && ip4[1] <= 31) ||
+			// 192.168.0.0/16
+			(ip4[0] == 192 && ip4[1] == 168) ||
+			// 169.254.0.0/16 (link-local)
+			(ip4[0] == 169 && ip4[1] == 254) ||
+			// 127.0.0.0/8 (loopback)
+			ip4[0] == 127
+	}
+
+	// Check for IPv6 private ranges
+	if ip6 := ip.To16(); ip6 != nil {
+		return ip.IsLoopback() ||
+			ip.IsLinkLocalUnicast() ||
+			ip.IsLinkLocalMulticast() ||
+			ip.IsMulticast() ||
+			// fc00::/7 (unique local)
+			(ip6[0] == 0xfc || ip6[0] == 0xfd) ||
+			// fe80::/10 (link-local)
+			(ip6[0] == 0xfe && (ip6[1]&0xc0) == 0x80)
+	}
+
+	return false
+}
+
 // prepareComposeFromPath validates and returns the provided path
 func (s *TaskService) prepareComposeFromPath(cfg ComposeConfig) (string, error) {
 	cfg.TaskContext.AddLog("Using compose file from path: " + cfg.ComposeFilePath)
 
-	if _, err := os.Stat(cfg.ComposeFilePath); os.IsNotExist(err) {
+	// Reject absolute paths
+	if filepath.IsAbs(cfg.ComposeFilePath) {
+		s.Logger.Log(logger.Warning, "Rejected absolute path for compose file", cfg.ComposeFilePath)
 		return "", types.ErrDockerComposeFileNotFound
 	}
 
-	return cfg.ComposeFilePath, nil
+	// Clean the input path
+	cleanedPath := filepath.Clean(cfg.ComposeFilePath)
+
+	// Get the base directory (compose directory)
+	baseDir := s.getComposeDir(cfg.TaskPayload)
+
+	// Resolve the path by joining with base directory
+	resolvedPath := filepath.Join(baseDir, cleanedPath)
+
+	// Evaluate symlinks to get the actual path
+	evalPath, err := filepath.EvalSymlinks(resolvedPath)
+	if err != nil {
+		// If symlink evaluation fails, use the resolved path
+		evalPath = resolvedPath
+	}
+
+	// Compute relative path from base directory
+	relPath, err := filepath.Rel(baseDir, evalPath)
+	if err != nil {
+		s.Logger.Log(logger.Warning, "Failed to compute relative path", err.Error())
+		return "", types.ErrDockerComposeFileNotFound
+	}
+
+	// Reject paths that escape the base directory
+	if strings.HasPrefix(relPath, "..") {
+		s.Logger.Log(logger.Warning, "Rejected path traversal attempt", cfg.ComposeFilePath)
+		return "", types.ErrDockerComposeFileNotFound
+	}
+
+	// Verify the file exists and is within the base directory
+	info, err := os.Stat(evalPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", types.ErrDockerComposeFileNotFound
+		}
+		s.Logger.Log(logger.Warning, "Failed to stat compose file", err.Error())
+		return "", types.ErrDockerComposeFileNotFound
+	}
+
+	// Ensure it's a file, not a directory
+	if info.IsDir() {
+		s.Logger.Log(logger.Warning, "Compose file path is a directory", cfg.ComposeFilePath)
+		return "", types.ErrDockerComposeFileNotFound
+	}
+
+	cfg.TaskContext.AddLog("Validated compose file at: " + evalPath)
+	return evalPath, nil
 }
 
 // prepareComposeFromRaw saves raw compose content to a file
@@ -310,7 +464,11 @@ func (s *TaskService) AddComposeReverseProxy(cfg ComposeConfig, composePath stri
 		return fmt.Errorf("failed to add domain: %w", err)
 	}
 
-	client.Reload()
+	err = client.Reload()
+	if err != nil {
+		return fmt.Errorf("failed to reload caddy: %w", err)
+	}
+
 	cfg.TaskContext.AddLog("Reverse proxy configured successfully for " + cfg.Application.Domain)
 
 	return nil
@@ -356,7 +514,12 @@ func (s *TaskService) RemoveComposeReverseProxy(domain string) error {
 		return err
 	}
 
-	client.Reload()
+	err = client.Reload()
+	if err != nil {
+		s.Logger.Log(logger.Warning, "Failed to reload reverse proxy after removing domain", err.Error())
+		return fmt.Errorf("failed to reload reverse proxy: %w", err)
+	}
+
 	return nil
 }
 
@@ -400,23 +563,32 @@ func (s *TaskService) ComposeRestart(cfg ComposeConfig, composePath string) erro
 func (s *TaskService) ComposeDelete(payload shared_types.TaskPayload) error {
 	s.Logger.Log(logger.Info, "Deleting Docker Compose deployment", payload.Application.ID.String())
 
+	var errors []error
 	composeDir := s.getComposeDir(payload)
 	composePath := filepath.Join(composeDir, "docker-compose.yml")
 
 	if _, err := os.Stat(composePath); err == nil {
 		if err := s.DockerRepo.ComposeDown(composePath); err != nil {
 			s.Logger.Log(logger.Warning, "Failed to stop compose services", err.Error())
+			errors = append(errors, fmt.Errorf("failed to stop compose services: %w", err))
 		}
 	}
 
 	if payload.Application.Domain != "" {
 		if err := s.RemoveComposeReverseProxy(payload.Application.Domain); err != nil {
 			s.Logger.Log(logger.Warning, "Failed to remove reverse proxy", err.Error())
+			errors = append(errors, fmt.Errorf("failed to remove reverse proxy: %w", err))
 		}
 	}
 
 	if err := os.RemoveAll(composeDir); err != nil {
 		s.Logger.Log(logger.Warning, "Failed to remove compose directory", err.Error())
+		errors = append(errors, fmt.Errorf("failed to remove compose directory: %w", err))
+	}
+
+	if len(errors) > 0 {
+		s.Logger.Log(logger.Info, "Docker Compose deployment deletion completed with errors", payload.Application.ID.String())
+		return fmt.Errorf("compose delete completed with %d error(s): %v", len(errors), errors)
 	}
 
 	s.Logger.Log(logger.Info, "Docker Compose deployment deleted", payload.Application.ID.String())

@@ -30,7 +30,7 @@ func (s *TaskService) handleComposeReDeploy(ctx context.Context, TaskPayload sha
 		TaskPayload:     TaskPayload,
 		TaskContext:     taskCtx,
 		SourceType:      sourceType,
-		ComposeFilePath: TaskPayload.Application.DockerfilePath,
+		ComposeFilePath: TaskPayload.Application.ComposeFilePath,
 		ComposeURL:      TaskPayload.Application.ComposeFileURL,
 		ComposeRaw:      TaskPayload.Application.ComposeFileContent,
 	}

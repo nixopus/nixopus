@@ -63,6 +63,7 @@ func (c *ContextTask) GetApplicationData(
 		OrganizationID:       c.OrganizationId,
 		ComposeFileURL:       deployment.ComposeFileURL,
 		ComposeFileContent:   deployment.ComposeFileContent,
+		ComposeFilePath:      deployment.ComposeFilePath,
 	}
 
 	return application
