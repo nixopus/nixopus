@@ -524,4 +524,33 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Accessible scrollbar - visible on hover and focus */
+  .scrollbar-accessible {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+  }
+
+  .scrollbar-accessible::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-accessible::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-accessible::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.3);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  .scrollbar-accessible:hover::-webkit-scrollbar-thumb,
+  .scrollbar-accessible:focus-within::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.6);
+  }
+
+  .scrollbar-accessible::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.8);
+  }
 }
