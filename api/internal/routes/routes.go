@@ -35,7 +35,7 @@ import (
 	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
 	"github.com/raghavyuva/nixopus-api/internal/middleware"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
-	api "github.com/raghavyuva/nixopus-api/internal/version-manager"
+	api "github.com/raghavyuva/nixopus-api/internal/version"
 )
 
 // Router holds the application dependencies for route handlers
@@ -139,10 +139,11 @@ func (router *Router) SetupRoutes() {
 	}
 
 	// Save version documentation
-	docs := api.NewVersionDocumentation()
-	if err := docs.Save("api/versions.json"); err != nil {
-		log.Printf("Warning: Failed to save version documentation: %v", err)
-	}
+	// Commented out - version manager creating version.json every time causing troubles
+	// docs := api.NewVersionDocumentation()
+	// if err := docs.Save("api/versions.json"); err != nil {
+	// 	log.Printf("Warning: Failed to save version documentation: %v", err)
+	// }
 
 	// Initialize notification manager
 	notificationManager := notification.NewNotificationManager(router.app.Store.DB)
