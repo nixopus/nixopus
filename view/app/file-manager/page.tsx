@@ -23,6 +23,8 @@ import { FeatureNames } from '@/types/feature-flags';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import PageLayout from '@/components/layout/page-layout';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { DialogWrapper } from '@/components/ui/dialog-wrapper';
+import FileInfo from './components/file-list/FileInfo';
 
 const CopyFeedback = ({ show, message }: { show: boolean; message: string }) => {
   if (!show) return null;
@@ -164,6 +166,7 @@ interface FileListProps {
   handleDelete: (path: string) => void;
   handleCopy: (fromPath: string, toPath: string) => void;
   startRenaming: (file: FileData) => void;
+  onInfo: (file: FileData) => void;
   sortBy?: 'name' | 'size' | 'file_type' | 'created_at' | 'updated_at';
   sortOrder?: 'asc' | 'desc';
   onSort?: (field: 'name' | 'size' | 'file_type' | 'created_at' | 'updated_at') => void;
@@ -190,6 +193,7 @@ const FileList = ({
   handleDelete,
   handleCopy,
   startRenaming,
+  onInfo,
   sortBy = 'name',
   sortOrder = 'asc',
   onSort,
@@ -211,7 +215,7 @@ const FileList = ({
         handleRename={handleRename}
         handleKeyDown={handleKeyDown}
         handleTextDoubleClick={handleTextDoubleClick}
-        onInfo={() => setIsDialogOpen(true)}
+        onInfo={onInfo}
         onRename={(file) => startRenaming(file)}
         onCopy={(file) => {
           setFileToCopy(file);
@@ -313,6 +317,7 @@ function FileManager() {
     layout,
     showHidden,
     selectedPath,
+    selectedFile,
     fileToCopy,
     fileToMove,
     isCopyFileOrDirectoryLoading,
@@ -335,6 +340,7 @@ function FileManager() {
     setFileToCopy,
     setFileToMove,
     setSelectedPath,
+    setSelectedFile,
     files,
     handleFileUpload,
     handleDelete,
@@ -462,6 +468,10 @@ function FileManager() {
               handleDelete={handleDelete}
               handleCopy={handleCopy}
               startRenaming={startRenaming}
+              onInfo={(file) => {
+                setSelectedFile(file);
+                setIsDialogOpen(true);
+              }}
               sortBy={sortConfig.key as 'name' | 'size' | 'file_type' | 'created_at' | 'updated_at'}
               sortOrder={sortConfig.direction}
               onSort={handleSortChange}
@@ -474,6 +484,20 @@ function FileManager() {
             handleDelete={handleDelete}
             t={t}
           />
+          {selectedFile && (
+            <DialogWrapper
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) {
+                  setSelectedFile(undefined);
+                }
+              }}
+              size="lg"
+            >
+              <FileInfo file={selectedFile} isLoading={false} fileSize={selectedFile.size} />
+            </DialogWrapper>
+          )}
         </PageLayout>
       </FileContextMenu>
     </ResourceGuard>
