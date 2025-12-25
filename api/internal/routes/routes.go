@@ -139,10 +139,11 @@ func (router *Router) SetupRoutes() {
 	}
 
 	// Save version documentation
-	docs := api.NewVersionDocumentation()
-	if err := docs.Save("api/versions.json"); err != nil {
-		log.Printf("Warning: Failed to save version documentation: %v", err)
-	}
+	// Commented out - version manager creating version.json every time causing troubles
+	// docs := api.NewVersionDocumentation()
+	// if err := docs.Save("api/versions.json"); err != nil {
+	// 	log.Printf("Warning: Failed to save version documentation: %v", err)
+	// }
 
 	// Initialize notification manager
 	notificationManager := notification.NewNotificationManager(router.app.Store.DB)
