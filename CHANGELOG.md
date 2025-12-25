@@ -1,3 +1,12 @@
+# [0.1.0-alpha.106](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.105...v0.1.0-alpha.106) (2025-12-24)
+
+
+### Bug Fixes
+
+* run deps installation in sequence to avoid package manager locks ([#785](https://github.com/raghavyuva/nixopus/issues/785)) ([2c7e027](https://github.com/raghavyuva/nixopus/commit/2c7e027fd3a1d9acbbfcd028e1e2b3fa9a178ea4))
+
+
+
 # [0.1.0-alpha.105](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.104...v0.1.0-alpha.105) (2025-12-24)
 
 

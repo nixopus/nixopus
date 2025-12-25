@@ -40,6 +40,7 @@ export const BOOLEAN_FLAGS: Record<string, string> = {
   dryRun: "--dry-run",
   force: "--force",
   noRollback: "--no-rollback",
+  noVerifyHealth: "--no-verify-health",
   staging: "--staging",
   skipNixopusInstall: "--skip-nixopus-install"
 };
@@ -209,6 +210,17 @@ export const DEFAULT_FEATURES: FeatureOption[] = [
       inputType: "toggle",
       tooltip:
         "Disable automatic rollback on installation failure. Not recommended for production."
+    }
+  ),
+  createFeature(
+    "noVerifyHealth",
+    "Skip Health Checks",
+    "Skip service health verification",
+    "options",
+    {
+      inputType: "toggle",
+      tooltip:
+        "Skip health checks after starting services. Not recommended - health checks ensure services are running correctly."
     }
   ),
   createFeature(

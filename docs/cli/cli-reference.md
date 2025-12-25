@@ -52,6 +52,13 @@ $ nixopus install [OPTIONS] COMMAND [ARGS]...
 * `--supertokens-port INTEGER`: Port for SuperTokens service (default: 3567)
 * `-r, --repo TEXT`: GitHub repository URL to clone (defaults to config value)
 * `-b, --branch TEXT`: Git branch to clone (defaults to config value)
+* `--external-db-url TEXT`: External PostgreSQL database connection URL (e.g. postgresql://user:password@host:port/dbname?sslmode=require). If provided, local DB service will be excluded
+* `-s, --staging`: Use staging docker-compose file (docker-compose-staging.yml)
+* `--no-rollback`: Disable automatic rollback on installation failure
+* `--no-verify-health`: Skip health checks after starting services (not recommended)
+* `--health-check-timeout INTEGER`: Maximum time to wait for services to become healthy (in seconds)  [default: 120]
+* `--admin-email TEXT`: Email for admin user registration
+* `--admin-password TEXT`: Password for admin user registration
 * `--help`: Show this message and exit.
 
 **Commands**:
