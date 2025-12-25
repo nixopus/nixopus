@@ -35,7 +35,7 @@ import (
 	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
 	"github.com/raghavyuva/nixopus-api/internal/middleware"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
-	api "github.com/raghavyuva/nixopus-api/internal/version-manager"
+	api "github.com/raghavyuva/nixopus-api/internal/version"
 )
 
 // Router holds the application dependencies for route handlers
