@@ -78,6 +78,52 @@
       "size": "Size",
       "containers": "Containers",
       "none": "<none>"
+    },
+    "resourceLimits": {
+      "title": "Resource Limits",
+      "description": "Configure memory, swap, and CPU limits for this container",
+      "editButton": "Edit Limits",
+      "memory": {
+        "label": "Memory Limit",
+        "description": "Maximum memory the container can use. Set to 0 for unlimited.",
+        "placeholder": "e.g., 512",
+        "unit": "MB",
+        "unlimited": "Unlimited"
+      },
+      "memorySwap": {
+        "label": "Memory + Swap Limit",
+        "description": "Total memory including swap. Set to 0 for unlimited, or -1 for unlimited swap.",
+        "placeholder": "e.g., 1024",
+        "unit": "MB",
+        "unlimited": "Unlimited"
+      },
+      "cpuShares": {
+        "label": "CPU Shares",
+        "description": "Relative CPU weight. Default is 1024. Higher values get more CPU time.",
+        "placeholder": "e.g., 1024"
+      },
+      "presets": {
+        "label": "Quick Presets",
+        "small": "Small (256 MB)",
+        "medium": "Medium (512 MB)",
+        "large": "Large (1 GB)",
+        "xlarge": "X-Large (2 GB)",
+        "unlimited": "Unlimited"
+      },
+      "buttons": {
+        "save": "Save Changes",
+        "saving": "Saving...",
+        "cancel": "Cancel",
+        "reset": "Reset to Current"
+      },
+      "success": "Resource limits updated successfully",
+      "error": "Failed to update resource limits",
+      "warnings": "Updated with warnings",
+      "validation": {
+        "memoryMin": "Memory must be 0 (unlimited) or at least 6 MB",
+        "swapMin": "Swap must be -1, 0, or greater than memory limit",
+        "cpuSharesMin": "CPU shares must be at least 2"
+      }
     }
   }
 }

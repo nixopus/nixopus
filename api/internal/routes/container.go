@@ -14,6 +14,7 @@ func (router *Router) RegisterContainerRoutes(containerGroup *fuego.Server, cont
 	fuego.Post(containerGroup, "/{container_id}/stop", containerController.StopContainer)
 	fuego.Post(containerGroup, "/{container_id}/restart", containerController.RestartContainer)
 	fuego.Post(containerGroup, "/{container_id}/logs", containerController.GetContainerLogs)
+	fuego.Put(containerGroup, "/{container_id}/resources", containerController.UpdateContainerResources)
 	fuego.Post(containerGroup, "/prune/build-cache", containerController.PruneBuildCache)
 	fuego.Post(containerGroup, "/prune/images", containerController.PruneImages)
 	fuego.Post(containerGroup, "/images", containerController.ListImages)

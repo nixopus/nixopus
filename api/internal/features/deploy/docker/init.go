@@ -636,3 +636,22 @@ func (s *DockerService) PruneImages(opts filters.Args) (image.PruneReport, error
 
 	return pruneReport, nil
 }
+
+// UpdateContainerResources updates the resource limits of a running container.
+//
+// This function updates the memory, memory swap, and CPU shares limits of a container.
+// It uses the Docker API's ContainerUpdate method which allows changing resource
+// constraints on a running container without restarting it.
+//
+// Parameters:
+//
+//	containerID - the unique identifier of the container to update.
+//	resources - the UpdateConfig containing the new resource limits.
+//
+// Returns:
+//
+//	container.ContainerUpdateOKBody - the response containing any warnings from the update.
+//	error - an error if the update fails.
+func (s *DockerService) UpdateContainerResources(containerID string, resources container.UpdateConfig) (container.ContainerUpdateOKBody, error) {
+	return s.Cli.ContainerUpdate(s.Ctx, containerID, resources)
+}

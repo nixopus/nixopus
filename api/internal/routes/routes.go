@@ -272,10 +272,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterAuditRoutes(auditGroup, auditController)
 
 	// Update routes
-	updateService, err := update_service.NewUpdateService(router.app, &router.logger, router.app.Ctx)
-	if err != nil {
-		log.Fatalf("Failed to create update service: %v", err)
-	}
+	updateService := update_service.NewUpdateService(router.app, &router.logger, router.app.Ctx)
 	updateController := update.NewUpdateController(updateService, &router.logger)
 	updateGroup := fuego.Group(server, apiV1.Path+"/update")
 	router.RegisterUpdateRoutes(updateGroup, updateController)

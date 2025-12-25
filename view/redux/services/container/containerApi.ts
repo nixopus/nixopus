@@ -23,6 +23,21 @@ export interface Container {
   };
 }
 
+export interface UpdateContainerResourcesRequest {
+  containerId: string;
+  memory: number; // Memory limit in bytes (0 = unlimited)
+  memory_swap: number; // Total memory limit (memory + swap) in bytes (0 = unlimited, -1 = unlimited swap)
+  cpu_shares: number; // CPU shares (relative weight)
+}
+
+export interface UpdateContainerResourcesResponse {
+  container_id: string;
+  memory: number;
+  memory_swap: number;
+  cpu_shares: number;
+  warnings?: string[];
+}
+
 export type ContainerListParams = {
   page: number;
   page_size: number;
@@ -111,6 +126,27 @@ export const containerApi = createApi({
       transformResponse: (response: { data: string }) => {
         return response.data;
       }
+    }),
+    updateContainerResources: builder.mutation<
+      UpdateContainerResourcesResponse,
+      UpdateContainerResourcesRequest
+    >({
+      query: ({ containerId, memory, memory_swap, cpu_shares }) => ({
+        url: CONTAINERURLS.UPDATE_CONTAINER_RESOURCES.replace('{container_id}', containerId),
+        method: 'PUT',
+        body: {
+          memory,
+          memory_swap,
+          cpu_shares
+        }
+      }),
+      invalidatesTags: (result, error, { containerId }) => [
+        { type: 'Container', id: containerId },
+        { type: 'Container', id: 'LIST' }
+      ],
+      transformResponse: (response: { data: UpdateContainerResourcesResponse }) => {
+        return response.data;
+      }
     })
   })
 });
@@ -121,5 +157,6 @@ export const {
   useStartContainerMutation,
   useStopContainerMutation,
   useRemoveContainerMutation,
-  useGetContainerLogsQuery
+  useGetContainerLogsQuery,
+  useUpdateContainerResourcesMutation
 } = containerApi;

@@ -208,3 +208,26 @@ type PruneImagesResponse struct {
 	Message string                  `json:"message"`
 	Data    PruneImagesResponseData `json:"data"`
 }
+
+// UpdateContainerResourcesRequest is the request body for updating container resource limits
+type UpdateContainerResourcesRequest struct {
+	Memory     int64 `json:"memory"`      // Memory limit in bytes (0 = unlimited)
+	MemorySwap int64 `json:"memory_swap"` // Total memory limit (memory + swap) in bytes (0 = unlimited, -1 = unlimited swap)
+	CPUShares  int64 `json:"cpu_shares"`  // CPU shares (relative weight)
+}
+
+// UpdateContainerResourcesResponseData contains the updated resource limits
+type UpdateContainerResourcesResponseData struct {
+	ContainerID string   `json:"container_id"`
+	Memory      int64    `json:"memory"`
+	MemorySwap  int64    `json:"memory_swap"`
+	CPUShares   int64    `json:"cpu_shares"`
+	Warnings    []string `json:"warnings,omitempty"`
+}
+
+// UpdateContainerResourcesResponse is the typed response for updating container resources
+type UpdateContainerResourcesResponse struct {
+	Status  string                               `json:"status"`
+	Message string                               `json:"message"`
+	Data    UpdateContainerResourcesResponseData `json:"data"`
+}
