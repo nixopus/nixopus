@@ -31,7 +31,8 @@ import {
   UpdateThemeRequest,
   UpdateLanguageRequest,
   UpdateAutoUpdateRequest,
-  UpdateAvatarRequest
+  UpdateAvatarRequest,
+  UpdateCheckResponse
 } from '@/redux/types/user';
 
 export const userApi = createApi({
@@ -229,11 +230,14 @@ export const userApi = createApi({
         };
       }
     }),
-    checkForUpdates: builder.query<void, void>({
+    checkForUpdates: builder.query<UpdateCheckResponse, void>({
       query: () => ({
         url: USERURLS.CHECK_FOR_UPDATES,
         method: 'GET'
-      })
+      }),
+      transformResponse: (response: { data: UpdateCheckResponse }) => {
+        return response.data;
+      }
     }),
     performUpdate: builder.mutation<void, void>({
       query: () => ({

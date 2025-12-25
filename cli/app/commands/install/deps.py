@@ -35,7 +35,6 @@ def get_installed_deps(deps, os_name, package_manager, timeout=2, verbose=False)
     checker = DependencyChecker(create_logger(verbose=verbose))
     return {dep["name"]: checker.check_dependency(dep, package_manager) for dep in deps}
 
-
 def update_system_packages(package_manager, logger, dry_run=False):
     if package_manager == "apt":
         cmd = ["sudo", "apt-get", "update"]
@@ -139,10 +138,15 @@ def install_all_deps(verbose=False, output="text", dry_run=False):
         logger.error(f"Failed to install {dep['name']}: {exc}")
         return {"dependency": dep["name"], "installed": False}
 
+    # For package managers that use locks (apt, yum, dnf, pacman), install sequentially
+    # to avoid lock conflicts. This is especially important in containers.
+    # Brew and apk can run in parallel.
+    max_workers = 1 if package_manager in ["apt", "yum", "dnf", "pacman"] else min(len(to_install), 8)
+    
     results = process_parallel(
         to_install,
         install_wrapper,
-        max_workers=min(len(to_install), 8),
+        max_workers=max_workers,
         error_handler=error_handler,
     )
 

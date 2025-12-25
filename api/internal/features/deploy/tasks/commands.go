@@ -23,8 +23,8 @@ func (s *TaskService) runCommands(applicationID uuid.UUID, deploymentConfigID uu
 		return nil
 	}
 
-	client := ssh.NewSSH()
-	output, err := client.RunCommand(command)
+	manager := ssh.GetSSHManager()
+	output, err := manager.RunCommand(command)
 	if err != nil {
 		taskCtx.AddLog(fmt.Sprintf("Error while running %s command %v", commandType, output))
 		return err

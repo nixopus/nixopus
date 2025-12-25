@@ -7,11 +7,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *DeployController) HandleDeploy(f fuego.ContextWithBody[types.CreateDeploymentRequest]) (*shared_types.Response, error) {
+func (c *DeployController) HandleDeploy(f fuego.ContextWithBody[types.CreateDeploymentRequest]) (*types.ApplicationResponse, error) {
 	c.logger.Log(logger.Info, "starting deployment process", "")
 
 	data, err := f.Body()
@@ -72,7 +71,7 @@ func (c *DeployController) HandleDeploy(f fuego.ContextWithBody[types.CreateDepl
 	// }
 
 	c.logger.Log(logger.Info, "deployment created successfully", "name: "+data.Name)
-	return &shared_types.Response{
+	return &types.ApplicationResponse{
 		Status:  "success",
 		Message: "Deployment created successfully",
 		Data:    application,

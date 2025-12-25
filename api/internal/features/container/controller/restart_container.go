@@ -5,11 +5,11 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *ContainerController) RestartContainer(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *ContainerController) RestartContainer(f fuego.ContextNoBody) (*types.ContainerActionResponse, error) {
 	containerID := f.PathParam("container_id")
 
 	err := c.dockerService.RestartContainer(containerID, container.StopOptions{})
@@ -21,9 +21,9 @@ func (c *ContainerController) RestartContainer(f fuego.ContextNoBody) (*shared_t
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.ContainerActionResponse{
 		Status:  "success",
 		Message: "Container restarted successfully",
-		Data:    map[string]string{"status": "restarted"},
+		Data:    types.ContainerStatusData{Status: "restarted"},
 	}, nil
 }
