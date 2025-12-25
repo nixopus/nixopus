@@ -7,11 +7,9 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *DomainsController) CreateDomain(f fuego.ContextWithBody[types.CreateDomainRequest]) (*shared_types.Response, error) {
+func (c *DomainsController) CreateDomain(f fuego.ContextWithBody[types.CreateDomainRequest]) (*types.CreateDomainResponseWrapper, error) {
 	domainRequest, err := f.Body()
 
 	if err != nil {
@@ -63,7 +61,7 @@ func (c *DomainsController) CreateDomain(f fuego.ContextWithBody[types.CreateDom
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.CreateDomainResponseWrapper{
 		Status:  "success",
 		Message: "Domain created successfully",
 		Data:    created,

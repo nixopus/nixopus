@@ -35,7 +35,7 @@ export function useInstallGenerator() {
   )
 
   const isHealthCheckTimeoutDisabled = computed(() =>
-    false
+    isFeatureEnabled('noVerifyHealth')
   )
 
   const isAdminEmailDisabled = computed(() =>
@@ -98,6 +98,11 @@ export function useInstallGenerator() {
         const dryRun = findFeature('dryRun')
         if (dryRun?.enabled) return
       }
+
+      if (feature.id === 'healthCheckTimeout') {
+        const noVerifyHealth = findFeature('noVerifyHealth')
+        if (noVerifyHealth?.enabled) return
+      }
     }
 
     feature.enabled = !feature.enabled
@@ -108,6 +113,14 @@ export function useInstallGenerator() {
         const force = findFeature('force')
         if (force?.enabled) {
           force.enabled = false
+        }
+      }
+
+      if (feature.id === 'noVerifyHealth') {
+        const healthCheckTimeout = findFeature('healthCheckTimeout')
+        if (healthCheckTimeout?.enabled) {
+          healthCheckTimeout.enabled = false
+          healthCheckTimeout.value = ''
         }
       }
     }
