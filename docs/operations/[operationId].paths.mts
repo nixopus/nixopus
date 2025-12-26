@@ -1,23 +1,25 @@
-import { useOpenapi, httpVerbs } from 'vitepress-openapi'
 import spec from '../src/openapi.json' with { type: 'json' }
+
+const httpVerbs = ['get', 'post', 'put', 'delete', 'patch', 'head', 'options']
+
+function encodeOperationId(operationId: string): string {
+    return operationId.replace(/\//g, '_').replace(/:/g, '-')
+}
 
 export default {
     paths() {
-        const openapi = useOpenapi({ spec })
+        const paths = (spec as any).paths || {}
 
-        if (!openapi?.json?.paths) {
-            return []
-        }
-
-        return Object.keys(openapi.json.paths)
-            .flatMap((path) => {
+        return Object.keys(paths)
+            .flatMap((path: string) => {
                 return httpVerbs
-                    .filter((verb) => openapi.json.paths[path][verb])
-                    .map((verb) => {
-                        const { operationId, summary } = openapi.json.paths[path][verb]
+                    .filter((verb: string) => paths[path][verb])
+                    .map((verb: string) => {
+                        const { operationId, summary } = paths[path][verb]
                         return {
                             params: {
-                                operationId,
+                                operationId: encodeOperationId(operationId),
+                                originalOperationId: operationId,
                                 pageTitle: `${summary} - ${operationId}`,
                             },
                         }

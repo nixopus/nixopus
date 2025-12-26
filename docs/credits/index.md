@@ -2,10 +2,6 @@
 
 This file lists the contributors and acknowledgments for the Nixopus project. We appreciate the time and effort of everyone who has helped make this project possible.
 
-## Core Developers
-
-[nixopus@gmail.com](mailto:nixopus@gmail.com)
-
 ## Community Support
 
 Special thanks to our community members who have provided valuable feedback, reported issues, and helped other users:

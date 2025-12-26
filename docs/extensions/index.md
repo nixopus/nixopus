@@ -1,210 +1,135 @@
-# Nixopus Extensions Specification
+# Extensions
 
-Nixopus Extensions provide a powerful way to automate server operations through YAML based configuration files. Extensions support various step types for file operations, service management, Docker containers, user management, and more.
+Extensions automate server tasks through a library of pre-built configurations. Deploy databases, web servers, monitoring tools, and more with a few clicks instead of manual setup.
 
-## Extension Structure
+## Browsing Extensions
 
-Extensions are defined in YAML files with three main sections:
+Navigate to the **Extensions** page to explore available extensions. Use the search bar to find specific tools or filter by category:
+
+- **Database**: PostgreSQL, MariaDB, Redis, Qdrant
+- **Web Server**: Nginx, Caddy configurations
+- **Monitoring**: Netdata, Uptime Kuma, Dashdot
+- **Development**: Code Server, n8n, Gitea
+- **Media**: Jellyfin, Plex, Calibre
+- **And more**: 130+ extensions across all categories
+
+## Running an Extension
+
+1. Click on any extension card to view its details
+2. Review the description and required variables
+3. Fill in the configuration form (domain, ports, passwords, etc.)
+4. Click **Run** to execute
+
+The extension runs each step in sequence and displays live logs. If any step fails, the extension attempts to roll back changes automatically.
+
+## Extension Types
+
+Extensions come in two types:
+
+- **Install**: Sets up a service for the first time (creates directories, pulls images, configures proxies)
+- **Run**: Performs an action on an existing setup (backups, updates, maintenance tasks)
+
+## Creating Extensions
+
+Extensions are YAML files with three sections: metadata, variables, and execution steps.
+
+### Basic Structure
 
 ```yaml
 metadata:
-  # Extension metadata and identification
-variables:
-  # Input variables for the extension
-execution:
-  # Steps to execute
-```
-
-## Metadata
-
-The `metadata` section defines the extension's identity and properties:
-
-### Required Fields
-
-- **id**: Extension identifier (3-50 characters, lowercase letters, numbers, hyphens only)
-- **name**: Human-readable name
-- **description**: Brief description of the extension's purpose
-- **author**: Extension author
-- **icon**: Icon identifier or URL
-- **category**: One of: `Security`, `Containers`, `Database`, `Web Server`, `Maintenance`, `Monitoring`, `Storage`, `Network`, `Development`, `Other`
-- **type**: Either `install` or `run`
-
-### Optional Fields
-
-- **version**: Semantic version (format: `x.y.z` where x, y, z are numbers)
-- **isVerified**: Boolean indicating if the extension is verified
-
-### Example
-
-```yaml
-metadata:
-  id: "nginx-setup"
-  name: "Nginx Web Server Setup"
-  description: "Installs and configures Nginx web server"
-  author: "Nixopus Team"
-  icon: "nginx"
-  category: "Web Server"
+  id: "my-extension"
+  name: "My Extension"
+  description: "What this extension does"
+  author: "Your Name"
+  icon: "server"
+  category: "Development"
   type: "install"
   version: "1.0.0"
-  isVerified: true
+
+variables:
+  domain:
+    type: "string"
+    description: "Domain for the service"
+    is_required: true
+
+execution:
+  run:
+    - name: "Step name"
+      type: "command"
+      properties:
+        cmd: "echo Hello"
 ```
 
-## Variables
+### Variable Types
 
-Variables allow users to customize extension behavior. They are referenced in step properties using `{{ variable_name }}` syntax.
+Variables let users customize the extension. Reference them with `{{ variable_name }}` syntax.
 
-### Variable Properties
-
-- **type**: Variable type (`string`, `integer`, `boolean`, `array`)
-- **description**: Human-readable description
-- **default**: Default value (optional)
-- **is_required**: Whether the variable is mandatory
-- **validation_pattern**: Regex pattern for validation (optional)
-
-### Example
+- **string**: Text input
+- **integer**: Numeric input
+- **boolean**: True/false toggle
+- **array**: List of values
 
 ```yaml
 variables:
-  domain_name:
+  domain:
     type: "string"
-    description: "Domain name for the website"
+    description: "Domain name"
     is_required: true
     validation_pattern: "^[a-zA-Z0-9.-]+$"
   
   port:
     type: "integer"
-    description: "Port number for the service"
-    default: 80
-    is_required: false
-  
-  enable_ssl:
-    type: "boolean"
-    description: "Enable SSL/TLS"
-    default: true
+    description: "Port number"
+    default: 8080
     is_required: false
 ```
 
-## Execution Phases
+### Step Types
 
-Extensions support two execution phases:
+#### Command
 
-- **run**: Main execution steps
-- **validate**: Post-execution validation steps
+Executes shell commands via SSH.
 
-Both phases support rollback through compensation functions that are automatically executed if a step fails.
-
-## Step Types
-
-### Command
-
-Executes shell commands over SSH.
-
-**Properties:**
-- `cmd` (required): Shell command to execute
-
-**Example:**
 ```yaml
-- name: "Update package list"
+- name: "Update packages"
   type: "command"
   properties:
-    cmd: "apt update"
+    cmd: "apt update && apt upgrade -y"
 ```
 
-### File
+#### File
 
 Performs file operations via SFTP.
 
-**Properties:**
-- `action` (required): Operation type (`move`, `copy`, `upload`, `delete`, `mkdir`)
-- `src`: Source path (required for move/copy/upload)
-- `dest`: Destination path (required for move/copy/upload; target for delete/mkdir)
-
-**Actions:**
-- `move`: SFTP rename operation
-- `copy`: Remote `cp -r` command
-- `upload`: SFTP upload from local API host to remote destination
-- `delete`: SFTP remove operation
-- `mkdir`: SFTP mkdir -p operation
-
-**Example:**
 ```yaml
-- name: "Create application directory"
+- name: "Create directory"
   type: "file"
   properties:
-    action: "mkdir"
+    action: "mkdir"  # mkdir, copy, move, delete, upload
     dest: "/var/www/myapp"
 ```
 
-### Service
+#### Service
 
-Manages system services using systemctl (with service fallback).
+Manages systemd services.
 
-**Properties:**
-- `name` (required): Service name
-- `action` (required): Action (`start`, `stop`, `restart`, `enable`, `disable`)
-
-**Example:**
 ```yaml
-- name: "Start Nginx service"
+- name: "Start nginx"
   type: "service"
   properties:
     name: "nginx"
-    action: "start"
+    action: "start"  # start, stop, restart, enable, disable
 ```
 
-### User
+#### Docker
 
-Manages system users and groups.
+Manages containers and images.
 
-**Properties:**
-- `username` (required): Username
-- `action` (required): Action (`ensure`, `modify`, `delete`, `check`, `add_groups`, `remove_groups`)
-- `shell`: Shell path (e.g., `/bin/bash`)
-- `home`: Home directory path (e.g., `/home/deploy`)
-- `groups`: Comma-separated groups (e.g., `sudo,docker`)
-
-**Actions:**
-- `ensure`: Creates user if missing, then applies shell/home/groups
-- `modify`: Applies provided shell/home/groups to existing user
-- `delete`: Removes user and home directory (`userdel -r`)
-- `check`: Prints `exists` or `missing` to step output
-- `add_groups`: Adds user to each group listed in `groups`
-- `remove_groups`: Removes user from each group listed in `groups`
-
-**Example:**
 ```yaml
-- name: "Create deploy user"
-  type: "user"
-  properties:
-    username: "deploy"
-    action: "ensure"
-    shell: "/bin/bash"
-    home: "/home/deploy"
-    groups: "sudo,docker"
-```
-
-### Docker
-
-Manages Docker containers and images.
-
-**Properties:**
-- `action` (required): Action (`pull`, `run`, `stop`, `start`, `rm`)
-- `name`: Container name (required for run/stop/start/rm)
-- `image`: Image name (required for pull/run)
-- `tag`: Image tag (optional)
-- `ports`: Port mappings in format "host:container,host:container"
-- `restart`: Restart policy (`no`, `on-failure`, `always`, `unless-stopped`)
-- `cmd`: Command to run in container
-- `env`: Environment variables (object, array, or comma-separated string)
-- `volumes`: Volume mounts (array or comma-separated string)
-- `networks`: Network names (array or comma-separated string)
-
-**Example:**
-```yaml
-- name: "Run Redis container"
+- name: "Run Redis"
   type: "docker"
   properties:
-    action: "run"
+    action: "run"  # pull, run, stop, start, rm
     name: "redis"
     image: "redis"
     tag: "alpine"
@@ -212,112 +137,74 @@ Manages Docker containers and images.
     restart: "always"
 ```
 
-### Docker Compose
+#### Docker Compose
 
-Manages Docker Compose stacks.
+Manages compose stacks.
 
-**Properties:**
-- `action` (required): Action (`up`, `down`, `build`)
-- `file` (required): Path to docker-compose.yml file
-
-**Example:**
 ```yaml
-- name: "Deploy application stack"
+- name: "Deploy stack"
   type: "docker_compose"
   properties:
-    action: "up"
-    file: "/opt/myapp/docker-compose.yml"
+    action: "up"  # up, down, build
+    file: "/opt/app/docker-compose.yml"
 ```
 
-### Proxy
+#### Proxy
 
-Manages reverse proxy configurations using Caddy.
+Configures Caddy reverse proxy.
 
-**Properties:**
-- `action` (required): Action (`add`, `update`, `remove`)
-- `domain` (required): Domain name
-- `port` (required for add/update): Backend port
-
-**Example:**
 ```yaml
-- name: "Add domain to proxy"
+- name: "Add domain"
   type: "proxy"
   properties:
-    action: "add"
-    domain: "{{ domain_name }}"
+    action: "add"  # add, update, remove
+    domain: "{{ domain }}"
     port: "{{ port }}"
 ```
 
-## Common Step Options
+#### User
 
-- **ignore_errors**: Boolean (optional) — Continue to next step on failure
-- **timeout**: Number (optional, seconds) — Step execution timeout
-- **conditions**: Array of strings (optional) — Conditional execution
-
-## Special Variables
-
-- `{{ uploaded_file_path }}`: Path to file uploaded via multipart form to the run endpoint
-
-## Complete Example
+Manages system users.
 
 ```yaml
-metadata:
-  id: "web-app-deploy"
-  name: "Web Application Deployment"
-  description: "Deploys a web application with Nginx and Docker"
-  author: "Nixopus Team"
-  icon: "web"
-  category: "Web Server"
-  type: "install"
-  version: "1.0.0"
+- name: "Create deploy user"
+  type: "user"
+  properties:
+    action: "ensure"  # ensure, modify, delete, check
+    username: "deploy"
+    shell: "/bin/bash"
+    groups: "sudo,docker"
+```
 
-variables:
-  domain_name:
-    type: "string"
-    description: "Domain name for the application"
-    is_required: true
-    validation_pattern: "^[a-zA-Z0-9.-]+$"
-  
-  app_port:
-    type: "integer"
-    description: "Application port"
-    default: 3000
-    is_required: false
+### Step Options
 
+All steps support these optional properties:
+
+- **ignore_errors**: Continue if step fails
+- **timeout**: Maximum seconds to wait
+- **conditions**: Array of conditions for execution
+
+### Validation Phase
+
+Add a `validate` section to verify the deployment succeeded:
+
+```yaml
 execution:
   run:
-    - name: "Create application directory"
-      type: "file"
-      properties:
-        action: "mkdir"
-        dest: "/var/www/{{ domain_name }}"
-
-    - name: "Deploy application container"
+    - name: "Deploy container"
       type: "docker"
       properties:
         action: "run"
-        name: "webapp"
-        image: "myapp"
-        ports: "{{ app_port }}:3000"
-        restart: "always"
-
-    - name: "Add domain to proxy"
-      type: "proxy"
-      properties:
-        action: "add"
-        domain: "{{ domain_name }}"
-        port: "{{ app_port }}"
+        name: "myapp"
+        image: "myapp:latest"
 
   validate:
-    - name: "Check container is running"
+    - name: "Check container running"
       type: "command"
       properties:
-        cmd: "docker ps | grep webapp"
-      ignore_errors: false
-
-    - name: "Test application response"
-      type: "command"
-      properties:
-        cmd: "curl -f http://localhost:{{ app_port }}"
-      timeout: 30
+        cmd: "docker ps | grep myapp"
 ```
+
+## Contributing Extensions
+
+To add an extension to the Nixopus library, create a YAML file following the specification above and submit a pull request to the [nixopus repository](https://github.com/raghavyuva/nixopus) in the `api/templates/` directory.
