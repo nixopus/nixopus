@@ -7,11 +7,9 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (u *UserController) UpdateUserName(s fuego.ContextWithBody[types.UpdateUserNameRequest]) (*shared_types.Response, error) {
+func (u *UserController) UpdateUserName(s fuego.ContextWithBody[types.UpdateUserNameRequest]) (*types.UpdateUsernameResponse, error) {
 	u.logger.Log(logger.Info, "updating user name", "")
 
 	req, err := s.Body()
@@ -51,9 +49,9 @@ func (u *UserController) UpdateUserName(s fuego.ContextWithBody[types.UpdateUser
 
 	u.cache.InvalidateUser(u.ctx, user.ID.String())
 
-	return &shared_types.Response{
+	return &types.UpdateUsernameResponse{
 		Status:  "success",
 		Message: "Username updated successfully",
-		Data:    req.Name,
+		Data:    types.UpdateUsernameResponseData{Name: req.Name},
 	}, nil
 }

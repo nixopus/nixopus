@@ -7,14 +7,12 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *AuthController) ResetPassword(s fuego.ContextWithBody[types.ResetPasswordRequest]) (shared_types.Response, error) {
+func (c *AuthController) ResetPassword(s fuego.ContextWithBody[types.ResetPasswordRequest]) (*types.MessageResponse, error) {
 	reset_password_request, err := s.Body()
 	if err != nil {
-		return shared_types.Response{}, fuego.HTTPError{
+		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusBadRequest,
 		}
@@ -22,7 +20,7 @@ func (c *AuthController) ResetPassword(s fuego.ContextWithBody[types.ResetPasswo
 
 	w, r := s.Response(), s.Request()
 	if err := c.parseAndValidate(w, r, &reset_password_request); err != nil {
-		return shared_types.Response{}, fuego.HTTPError{
+		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusBadRequest,
 		}
@@ -30,7 +28,7 @@ func (c *AuthController) ResetPassword(s fuego.ContextWithBody[types.ResetPasswo
 
 	token := r.URL.Query().Get("token")
 	if token == "" {
-		return shared_types.Response{}, fuego.HTTPError{
+		return nil, fuego.HTTPError{
 			Err:    types.ErrInvalidResetToken,
 			Status: http.StatusBadRequest,
 		}
@@ -38,7 +36,7 @@ func (c *AuthController) ResetPassword(s fuego.ContextWithBody[types.ResetPasswo
 
 	user, err := c.service.GetUserByResetToken(token)
 	if err != nil {
-		return shared_types.Response{}, fuego.HTTPError{
+		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusBadRequest,
 		}
@@ -47,7 +45,7 @@ func (c *AuthController) ResetPassword(s fuego.ContextWithBody[types.ResetPasswo
 	err = c.service.ResetPassword(user, reset_password_request)
 	if err != nil {
 		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
-		return shared_types.Response{}, fuego.HTTPError{
+		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,
 		}
@@ -55,9 +53,8 @@ func (c *AuthController) ResetPassword(s fuego.ContextWithBody[types.ResetPasswo
 
 	c.Notify(notification.NotificationPayloadTypePasswordReset, user, r)
 
-	return shared_types.Response{
+	return &types.MessageResponse{
 		Status:  "success",
 		Message: "Password reset successfully",
-		Data:    nil,
 	}, nil
 }

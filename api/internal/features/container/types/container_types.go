@@ -129,3 +129,105 @@ type ContainerListRow struct {
 	Created int64             `json:"created"`
 	Labels  map[string]string `json:"labels"`
 }
+
+// ListContainersResponseData contains the data for list containers response
+type ListContainersResponseData struct {
+	Containers []Container `json:"containers"`
+	TotalCount int         `json:"total_count"`
+	Page       int         `json:"page"`
+	PageSize   int         `json:"page_size"`
+	SortBy     string      `json:"sort_by"`
+	SortOrder  string      `json:"sort_order"`
+	Search     string      `json:"search"`
+	Status     string      `json:"status"`
+	Name       string      `json:"name"`
+	Image      string      `json:"image"`
+}
+
+// ListContainersResponse is the typed response for listing containers
+type ListContainersResponse struct {
+	Status  string                     `json:"status"`
+	Message string                     `json:"message"`
+	Data    ListContainersResponseData `json:"data"`
+}
+
+// GetContainerResponse is the typed response for getting a single container
+type GetContainerResponse struct {
+	Status  string    `json:"status"`
+	Message string    `json:"message"`
+	Data    Container `json:"data"`
+}
+
+// ContainerLogsResponse is the typed response for container logs
+type ContainerLogsResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Data    string `json:"data"`
+}
+
+// ContainerStatusData contains the status of a container operation
+type ContainerStatusData struct {
+	Status string `json:"status"`
+}
+
+// ContainerActionResponse is the typed response for container actions (start/stop/restart/remove)
+type ContainerActionResponse struct {
+	Status  string              `json:"status"`
+	Message string              `json:"message"`
+	Data    ContainerStatusData `json:"data"`
+}
+
+// MessageResponse is a generic response with just status and message
+type MessageResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+// ListImagesResponse is the typed response for listing images
+type ListImagesResponse struct {
+	Status  string  `json:"status"`
+	Message string  `json:"message"`
+	Data    []Image `json:"data"`
+}
+
+// ImageDeleteResponse represents a deleted image
+type ImageDeleteResponse struct {
+	Untagged string `json:"untagged,omitempty"`
+	Deleted  string `json:"deleted,omitempty"`
+}
+
+// PruneImagesResponseData contains prune operation results
+type PruneImagesResponseData struct {
+	ImagesDeleted  []ImageDeleteResponse `json:"images_deleted,omitempty"`
+	SpaceReclaimed uint64                `json:"space_reclaimed"`
+}
+
+// PruneImagesResponse is the typed response for pruning images
+type PruneImagesResponse struct {
+	Status  string                  `json:"status"`
+	Message string                  `json:"message"`
+	Data    PruneImagesResponseData `json:"data"`
+}
+
+// UpdateContainerResourcesRequest is the request body for updating container resource limits
+type UpdateContainerResourcesRequest struct {
+	Memory     int64 `json:"memory"`      // Memory limit in bytes (0 = unlimited)
+	MemorySwap int64 `json:"memory_swap"` // Total memory limit (memory + swap) in bytes (0 = unlimited, -1 = unlimited swap)
+	CPUShares  int64 `json:"cpu_shares"`  // CPU shares (relative weight)
+}
+
+// UpdateContainerResourcesResponseData contains the updated resource limits
+type UpdateContainerResourcesResponseData struct {
+	ContainerID string   `json:"container_id"`
+	Memory      int64    `json:"memory"`
+	MemorySwap  int64    `json:"memory_swap"`
+	CPUShares   int64    `json:"cpu_shares"`
+	Warnings    []string `json:"warnings,omitempty"`
+}
+
+// UpdateContainerResourcesResponse is the typed response for updating container resources
+type UpdateContainerResourcesResponse struct {
+	Status  string                               `json:"status"`
+	Message string                               `json:"message"`
+	Data    UpdateContainerResourcesResponseData `json:"data"`
+}

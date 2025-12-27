@@ -5,13 +5,12 @@ import (
 	"strconv"
 
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody) (*types.ListRepositoriesResponse, error) {
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 
@@ -26,6 +25,7 @@ func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody)
 	page := 1
 	pageSize := 10
 	connectorID := q.Get("connector_id")
+	search := q.Get("search")
 
 	if v := q.Get("page"); v != "" {
 		if p, err := strconv.Atoi(v); err == nil && p > 0 {
@@ -38,7 +38,7 @@ func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody)
 		}
 	}
 
-	repositories, totalCount, err := c.service.GetGithubRepositoriesPaginated(user.ID.String(), page, pageSize, connectorID)
+	repositories, totalCount, err := c.service.GetGithubRepositoriesPaginated(user.ID.String(), page, pageSize, connectorID, search)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
@@ -47,14 +47,14 @@ func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody)
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.ListRepositoriesResponse{
 		Status:  "success",
 		Message: "Repositories fetched successfully",
-		Data: map[string]interface{}{
-			"total_count":  totalCount,
-			"repositories": repositories,
-			"page":         page,
-			"page_size":    pageSize,
+		Data: types.ListRepositoriesResponseData{
+			Repositories: repositories,
+			TotalCount:   totalCount,
+			Page:         page,
+			PageSize:     pageSize,
 		},
 	}, nil
 }

@@ -33,6 +33,7 @@ type Application struct {
 	Logs                 []*ApplicationLogs       `json:"logs,omitempty" bun:"rel:has-many,join:id=application_id"`
 	Deployments          []*ApplicationDeployment `json:"deployments,omitempty" bun:"rel:has-many,join:id=application_id"`
 	Organization         *Organization            `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	Labels               []string                 `json:"labels,omitempty" bun:"labels,array"`
 }
 
 type ApplicationDeployment struct {

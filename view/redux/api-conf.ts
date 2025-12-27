@@ -34,7 +34,11 @@ export enum USERURLS {
   PERFORM_UPDATE = 'v1/update',
   UPDATE_AVATAR = 'v1/user/avatar',
   SEND_INVITE = 'v1/organizations/invite/send',
-  RESEND_INVITE = 'v1/organizations/invite/resend'
+  RESEND_INVITE = 'v1/organizations/invite/resend',
+  GET_PREFERENCES = 'v1/user/preferences',
+  UPDATE_PREFERENCES = 'v1/user/preferences',
+  GET_ORGANIZATION_SETTINGS = 'v1/organizations/settings',
+  UPDATE_ORGANIZATION_SETTINGS = 'v1/organizations/settings'
 }
 
 export enum USER_NOTIFICATION_SETTINGS {
@@ -81,7 +85,8 @@ export enum DEPLOY {
   RESTART_APPLICATION = 'v1/deploy/application/restart',
   GET_APPLICATION_LOGS = 'v1/deploy/application/logs/{application_id}',
   GET_DEPLOYMENT_LOGS = 'v1/deploy/application/deployments/{deployment_id}/logs',
-  GET_APPLICATION_DEPLOYMENTS = 'v1/deploy/application/deployments'
+  GET_APPLICATION_DEPLOYMENTS = 'v1/deploy/application/deployments',
+  UPDATE_APPLICATION_LABELS = 'v1/deploy/application/labels'
 }
 
 export enum SOCKET_EVENTS {
@@ -118,7 +123,8 @@ export enum CONTAINERURLS {
   START_CONTAINER = 'v1/container/{container_id}/start',
   STOP_CONTAINER = 'v1/container/{container_id}/stop',
   REMOVE_CONTAINER = 'v1/container/{container_id}',
-  GET_CONTAINER_LOGS = 'v1/container/{container_id}/logs'
+  GET_CONTAINER_LOGS = 'v1/container/{container_id}/logs',
+  UPDATE_CONTAINER_RESOURCES = 'v1/container/{container_id}/resources'
 }
 
 export enum IMAGEURLS {

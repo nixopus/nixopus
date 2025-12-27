@@ -76,3 +76,54 @@ export interface UpdateAutoUpdateRequest {
 export interface UpdateAvatarRequest {
   avatarData: string;
 }
+
+export interface UserPreferencesData {
+  debug_mode: boolean;
+  show_api_error_details: boolean;
+  terminal_scrollback?: number;
+  terminal_font_size?: number;
+  terminal_cursor_style?: 'bar' | 'block' | 'underline';
+  terminal_cursor_blink?: boolean;
+  terminal_line_height?: number;
+  terminal_cursor_width?: number;
+  terminal_tab_stop_width?: number;
+  terminal_font_family?: string;
+  terminal_font_weight?: 'normal' | 'bold';
+  terminal_letter_spacing?: number;
+}
+
+export interface UserPreferences {
+  id: string;
+  user_id: string;
+  preferences: UserPreferencesData;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrganizationSettingsData {
+  websocket_reconnect_attempts: number;
+  websocket_reconnect_interval: number;
+  api_retry_attempts: number;
+  disable_api_cache: boolean;
+  container_log_tail_lines?: number;
+  container_default_restart_policy?: 'no' | 'always' | 'on-failure' | 'unless-stopped';
+  container_stop_timeout?: number;
+  container_auto_prune_dangling_images?: boolean;
+  container_auto_prune_build_cache?: boolean;
+}
+
+export interface OrganizationSettings {
+  id: string;
+  organization_id: string;
+  settings: OrganizationSettingsData;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdateCheckResponse {
+  current_version: string;
+  latest_version: string;
+  update_available: boolean;
+  last_checked: string;
+  environment: string;
+}
