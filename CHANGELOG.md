@@ -1,3 +1,26 @@
+# [0.1.0-alpha.107](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.106...v0.1.0-alpha.107) (2025-12-27)
+
+
+### Bug Fixes
+
+* do not show scrollbar for raw inspection data in container overview tab ([#789](https://github.com/raghavyuva/nixopus/issues/789)) ([22ed599](https://github.com/raghavyuva/nixopus/commit/22ed5990eb2280df3cb2755b67a233b02127da1e))
+* docs build errors ([37a9788](https://github.com/raghavyuva/nixopus/commit/37a9788bb041a820fb51d150eba33aacbaf15a46))
+* failing unit tests due to supertokens auth integrationss ([#777](https://github.com/raghavyuva/nixopus/issues/777)) ([a141a18](https://github.com/raghavyuva/nixopus/commit/a141a18b2690cb0d6cf496f7885e53297a3bee84))
+* migrate integration test setup to make use of supertokens based authentication ([#779](https://github.com/raghavyuva/nixopus/issues/779)) ([79ccee6](https://github.com/raghavyuva/nixopus/commit/79ccee6f602a9a1df9ef821c83e3a267bfb76c9c)), closes [#781](https://github.com/raghavyuva/nixopus/issues/781) [#780](https://github.com/raghavyuva/nixopus/issues/780)
+
+
+### Features
+
+* add  nixopus installation test framework ([#793](https://github.com/raghavyuva/nixopus/issues/793)) ([ce0dfa7](https://github.com/raghavyuva/nixopus/commit/ce0dfa767b6e942e22da3454d23b1192406cc7b5))
+* add server side search for GitHub repositories across all pages ([#774](https://github.com/raghavyuva/nixopus/issues/774)) ([c953e5f](https://github.com/raghavyuva/nixopus/commit/c953e5fee7a471dba9c6dba51a39a338ce2dd4d6))
+* add support for container resource update ([#788](https://github.com/raghavyuva/nixopus/issues/788)) ([91b695b](https://github.com/raghavyuva/nixopus/commit/91b695bbdf15a9354e51a1e3b2600b4f2052aa59))
+* add support for docker manager ([#795](https://github.com/raghavyuva/nixopus/issues/795)) ([5b617df](https://github.com/raghavyuva/nixopus/commit/5b617df0f95d3715a6f258822453d0ecdf8a0c57))
+* add support for ssh manager ([#794](https://github.com/raghavyuva/nixopus/issues/794)) ([4846d9f](https://github.com/raghavyuva/nixopus/commit/4846d9fc6aad85fcad47aede61be8391986a3543))
+* add terminal and container user preferences to settings ([#790](https://github.com/raghavyuva/nixopus/issues/790)) ([a97f128](https://github.com/raghavyuva/nixopus/commit/a97f128fd5881b53152e8f5a133dba165f636c3a))
+* nixopus update and version display in footer ([#775](https://github.com/raghavyuva/nixopus/issues/775)) ([0f36bd9](https://github.com/raghavyuva/nixopus/commit/0f36bd9407bc08e94ecd8ba655c04d630d2231f2))
+
+
+
 # [0.1.0-alpha.106](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.105...v0.1.0-alpha.106) (2025-12-24)
 
 
