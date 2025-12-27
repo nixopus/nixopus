@@ -5,12 +5,11 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (u *UserController) GetUserOrganizations(s fuego.ContextNoBody) (*shared_types.Response, error) {
+func (u *UserController) GetUserOrganizations(s fuego.ContextNoBody) (*types.UserOrganizationsListResponse, error) {
 	w, r := s.Response(), s.Request()
 	u.logger.Log(logger.Info, "getting user organizations", "")
 
@@ -32,7 +31,7 @@ func (u *UserController) GetUserOrganizations(s fuego.ContextNoBody) (*shared_ty
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.UserOrganizationsListResponse{
 		Status:  "success",
 		Message: "User organizations fetched successfully",
 		Data:    organizations,

@@ -1,0 +1,6 @@
+export { default as IconCheck } from './IconCheck.vue'
+export { default as IconCopy } from './IconCopy.vue'
+export { default as IconInfo } from './IconInfo.vue'
+export { default as IconError } from './IconError.vue'
+export { default as IconWarning } from './IconWarning.vue'
+export { default as IconClose } from './IconClose.vue'

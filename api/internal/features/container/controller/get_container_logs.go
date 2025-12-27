@@ -11,10 +11,9 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.ContainerLogsRequest]) (*shared_types.Response, error) {
+func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.ContainerLogsRequest]) (*types.ContainerLogsResponse, error) {
 	req, err := f.Body()
 	if err != nil {
 		return nil, fuego.HTTPError{
@@ -23,9 +22,22 @@ func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.Con
 		}
 	}
 
+	_, r := f.Response(), f.Request()
+	orgSettings := c.getOrganizationSettings(r)
+
+	// Use default tail lines from settings if not provided
+	tail := req.Tail
+	if tail == 0 {
+		if orgSettings.ContainerLogTailLines != nil {
+			tail = *orgSettings.ContainerLogTailLines
+		} else {
+			tail = 100 // Fallback default
+		}
+	}
+
 	logsReader, err := c.dockerService.GetContainerLogs(req.ID, container.LogsOptions{
 		Follow:     req.Follow,
-		Tail:       strconv.Itoa(req.Tail),
+		Tail:       strconv.Itoa(tail),
 		Since:      req.Since,
 		Until:      req.Until,
 		ShowStdout: req.Stdout,
@@ -51,7 +63,7 @@ func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.Con
 
 	decodedLogs := decodeDockerLogs(buf.Bytes())
 
-	return &shared_types.Response{
+	return &types.ContainerLogsResponse{
 		Status:  "success",
 		Message: "Container logs fetched successfully",
 		Data:    decodedLogs,

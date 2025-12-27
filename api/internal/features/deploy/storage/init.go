@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -41,6 +42,7 @@ type DeployRepository interface {
 	GetDeploymentLogs(deploymentID string, page, pageSize int, level string, startTime, endTime time.Time, searchTerm string) ([]shared_types.ApplicationLogs, int, error)
 	GetApplicationByRepositoryID(repositoryID uint64) (shared_types.Application, error)
 	GetApplicationByRepositoryIDAndBranch(repositoryID uint64, branch string) ([]shared_types.Application, error)
+	UpdateApplicationLabels(applicationID uuid.UUID, labels []string, organizationID uuid.UUID) error
 }
 
 func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
@@ -421,4 +423,14 @@ func (s *DeployStorage) GetApplicationByRepositoryIDAndBranch(repositoryID uint6
 	}
 
 	return applications, nil
+}
+
+func (s *DeployStorage) UpdateApplicationLabels(applicationID uuid.UUID, labels []string, organizationID uuid.UUID) error {
+	_, err := s.DB.NewUpdate().
+		Model((*shared_types.Application)(nil)).
+		Set("labels = ?", pgdialect.Array(labels)).
+		Set("updated_at = CURRENT_TIMESTAMP").
+		Where("id = ? AND organization_id = ?", applicationID, organizationID).
+		Exec(s.Ctx)
+	return err
 }

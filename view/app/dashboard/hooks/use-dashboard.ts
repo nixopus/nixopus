@@ -4,6 +4,7 @@ import React from 'react';
 import { useFeatureFlags } from '@/hooks/features_provider';
 import { useAppSelector } from '@/redux/hooks';
 import { useGetSMTPConfigurationsQuery } from '@/redux/services/settings/notificationApi';
+import { useCheckForUpdatesQuery } from '@/redux/services/users/userApi';
 import { FeatureNames } from '@/types/feature-flags';
 import useMonitor from './use-monitor';
 import { useGetContainersQuery, Container } from '@/redux/services/container/containerApi';
@@ -37,6 +38,7 @@ export function useDashboard() {
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
   const { containersData: wsContainersData, systemStats } = useMonitor();
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
   const { data: containersApiData } = useGetContainersQuery(
     { page: 1, page_size: 4, search: '', sort_by: 'name', sort_order: 'asc' },
@@ -56,6 +58,9 @@ export function useDashboard() {
   const { data: smtpConfig } = useGetSMTPConfigurationsQuery(activeOrganization?.id, {
     skip: !activeOrganization
   });
+
+  // Check for updates on dashboard load and auto update if user has auto_update enabled
+  useCheckForUpdatesQuery(undefined, { skip: !isAuthenticated });
 
   const [showDragHint, setShowDragHint] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);

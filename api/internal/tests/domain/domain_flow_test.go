@@ -11,18 +11,19 @@ import (
 
 func TestCreateDomain(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	testCases := []struct {
 		name           string
 		domainName     string
 		organizationID string
-		token          string
+		cookies        string
 		expectedStatus int
 		description    string
 	}{
@@ -30,7 +31,7 @@ func TestCreateDomain(t *testing.T) {
 			name:           "Successfully create domain with valid data",
 			domainName:     "test-domain.nixopus.dev",
 			organizationID: orgID,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			expectedStatus: http.StatusOK,
 			description:    "Should create domain successfully with valid data",
 		},
@@ -38,31 +39,31 @@ func TestCreateDomain(t *testing.T) {
 			name:           "Create domain with subdomain",
 			domainName:     "api.test-domain.nixopus.dev",
 			organizationID: orgID,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			expectedStatus: http.StatusOK,
 			description:    "Should create subdomain successfully",
 		},
 		{
-			name:           "Unauthorized request without token",
+			name:           "Unauthorized request without cookies",
 			domainName:     "unauthorized.nixopus.dev",
 			organizationID: orgID,
-			token:          "",
+			cookies:        "",
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when no authentication token is provided",
+			description:    "Should return 401 when no authentication cookies are provided",
 		},
 		{
-			name:           "Unauthorized request with invalid token",
-			domainName:     "invalid-token.nixopus.dev",
+			name:           "Unauthorized request with invalid cookies",
+			domainName:     "invalid-cookies.nixopus.dev",
 			organizationID: orgID,
-			token:          "invalid-token",
+			cookies:        "invalid-cookies",
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when invalid authentication token is provided",
+			description:    "Should return 401 when invalid authentication cookies are provided",
 		},
 		{
 			name:           "Request without organization header",
 			domainName:     "no-org.nixopus.dev",
 			organizationID: "",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			expectedStatus: http.StatusBadRequest,
 			description:    "Should return 400 when organization header is missing",
 		},
@@ -70,7 +71,7 @@ func TestCreateDomain(t *testing.T) {
 			name:           "Create domain with empty name",
 			domainName:     "",
 			organizationID: orgID,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			expectedStatus: http.StatusBadRequest,
 			description:    "Should return 400 when domain name is empty",
 		},
@@ -78,7 +79,7 @@ func TestCreateDomain(t *testing.T) {
 			name:           "Create domain with invalid name format",
 			domainName:     "invalid..domain",
 			organizationID: orgID,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			expectedStatus: http.StatusBadRequest,
 			description:    "Should return 400 when domain name format is invalid",
 		},
@@ -86,7 +87,7 @@ func TestCreateDomain(t *testing.T) {
 			name:           "Create duplicate domain",
 			domainName:     "test-domain.nixopus.dev", // Same as first test case
 			organizationID: orgID,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			expectedStatus: http.StatusConflict,
 			description:    "Should return 409 when domain already exists",
 		},
@@ -105,8 +106,8 @@ func TestCreateDomain(t *testing.T) {
 				Send().Body().JSON(requestBody),
 			}
 
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			if tc.organizationID != "" {
@@ -130,12 +131,13 @@ func TestCreateDomain(t *testing.T) {
 
 func TestGetDomains(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	// First, create a test domain
 	createDomainRequest := map[string]interface{}{
@@ -146,7 +148,7 @@ func TestGetDomains(t *testing.T) {
 	Test(t,
 		Description("Create a test domain for listing"),
 		Post(tests.GetDomainURL()),
-		Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Send().Body().JSON(createDomainRequest),
 		Expect().Status().Equal(http.StatusOK),
@@ -154,42 +156,42 @@ func TestGetDomains(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		token          string
+		cookies        string
 		organizationID string
 		expectedStatus int
 		description    string
 	}{
 		{
-			name:           "Successfully fetch domains with valid token",
-			token:          user.AccessToken,
+			name:           "Successfully fetch domains with valid cookies",
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "Should return domains list with valid authentication",
 		},
 		{
-			name:           "Unauthorized request without token",
-			token:          "",
+			name:           "Unauthorized request without cookies",
+			cookies:        "",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when no authentication token is provided",
+			description:    "Should return 401 when no authentication cookies are provided",
 		},
 		{
-			name:           "Unauthorized request with invalid token",
-			token:          "invalid-token",
+			name:           "Unauthorized request with invalid cookies",
+			cookies:        "invalid-cookies",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when invalid authentication token is provided",
+			description:    "Should return 401 when invalid authentication cookies are provided",
 		},
 		{
 			name:           "Request without organization header",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "",
 			expectedStatus: http.StatusBadRequest,
 			description:    "Should return 400 when organization header is missing",
 		},
 		{
 			name:           "Cross-organization access attempt",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "123e4567-e89b-12d3-a456-426614174000",
 			expectedStatus: http.StatusForbidden,
 			description:    "Should deny access to domains from different organization",
@@ -203,8 +205,8 @@ func TestGetDomains(t *testing.T) {
 				Get(tests.GetDomainsURL()),
 			}
 
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			if tc.organizationID != "" {
@@ -228,12 +230,13 @@ func TestGetDomains(t *testing.T) {
 
 func TestUpdateDomain(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	// First, create a test domain to update
 	var domainID string
@@ -245,7 +248,7 @@ func TestUpdateDomain(t *testing.T) {
 	Test(t,
 		Description("Create a test domain for updating"),
 		Post(tests.GetDomainURL()),
-		Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Send().Body().JSON(createDomainRequest),
 		Expect().Status().Equal(http.StatusOK),
@@ -256,7 +259,7 @@ func TestUpdateDomain(t *testing.T) {
 		name           string
 		domainID       string
 		newName        string
-		token          string
+		cookies        string
 		organizationID string
 		expectedStatus int
 		description    string
@@ -265,7 +268,7 @@ func TestUpdateDomain(t *testing.T) {
 			name:           "Successfully update domain with valid data",
 			domainID:       domainID,
 			newName:        "updated-domain.nixopus.dev",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "Should update domain successfully with valid data",
@@ -274,34 +277,34 @@ func TestUpdateDomain(t *testing.T) {
 			name:           "Update domain with subdomain",
 			domainID:       domainID,
 			newName:        "api.updated-domain.nixopus.dev",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "Should update domain to subdomain successfully",
 		},
 		{
-			name:           "Unauthorized request without token",
+			name:           "Unauthorized request without cookies",
 			domainID:       domainID,
 			newName:        "unauthorized-update.nixopus.dev",
-			token:          "",
+			cookies:        "",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when no authentication token is provided",
+			description:    "Should return 401 when no authentication cookies are provided",
 		},
 		{
-			name:           "Unauthorized request with invalid token",
+			name:           "Unauthorized request with invalid cookies",
 			domainID:       domainID,
-			newName:        "invalid-token-update.nixopus.dev",
-			token:          "invalid-token",
+			newName:        "invalid-cookies-update.nixopus.dev",
+			cookies:        "invalid-cookies",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when invalid authentication token is provided",
+			description:    "Should return 401 when invalid authentication cookies are provided",
 		},
 		{
 			name:           "Request without organization header",
 			domainID:       domainID,
 			newName:        "no-org-update.nixopus.dev",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "",
 			expectedStatus: http.StatusBadRequest,
 			description:    "Should return 400 when organization header is missing",
@@ -310,7 +313,7 @@ func TestUpdateDomain(t *testing.T) {
 			name:           "Update domain with empty name",
 			domainID:       domainID,
 			newName:        "",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusBadRequest,
 			description:    "Should return 400 when domain name is empty",
@@ -319,7 +322,7 @@ func TestUpdateDomain(t *testing.T) {
 			name:           "Update domain with invalid name format",
 			domainID:       domainID,
 			newName:        "invalid..domain",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusBadRequest,
 			description:    "Should return 400 when domain name format is invalid",
@@ -328,7 +331,7 @@ func TestUpdateDomain(t *testing.T) {
 			name:           "Update non-existent domain",
 			domainID:       "123e4567-e89b-12d3-a456-426614174000",
 			newName:        "non-existent-update.nixopus.dev",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusNotFound,
 			description:    "Should return 404 when domain doesn't exist",
@@ -337,7 +340,7 @@ func TestUpdateDomain(t *testing.T) {
 			name:           "Update domain with invalid ID format",
 			domainID:       "invalid-id",
 			newName:        "invalid-id-update.nixopus.dev",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusBadRequest,
 			description:    "Should return 400 when domain ID format is invalid",
@@ -357,8 +360,8 @@ func TestUpdateDomain(t *testing.T) {
 				Send().Body().JSON(requestBody),
 			}
 
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			if tc.organizationID != "" {
@@ -381,12 +384,13 @@ func TestUpdateDomain(t *testing.T) {
 
 func TestDeleteDomain(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	// Create test domains for deletion
 	var domainID1, domainID2 string
@@ -399,7 +403,7 @@ func TestDeleteDomain(t *testing.T) {
 	Test(t,
 		Description("Create first test domain for deletion"),
 		Post(tests.GetDomainURL()),
-		Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Send().Body().JSON(createDomainRequest1),
 		Expect().Status().Equal(http.StatusOK),
@@ -414,7 +418,7 @@ func TestDeleteDomain(t *testing.T) {
 	Test(t,
 		Description("Create second test domain for deletion"),
 		Post(tests.GetDomainURL()),
-		Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Send().Body().JSON(createDomainRequest2),
 		Expect().Status().Equal(http.StatusOK),
@@ -424,7 +428,7 @@ func TestDeleteDomain(t *testing.T) {
 	testCases := []struct {
 		name           string
 		domainID       string
-		token          string
+		cookies        string
 		organizationID string
 		expectedStatus int
 		description    string
@@ -432,31 +436,31 @@ func TestDeleteDomain(t *testing.T) {
 		{
 			name:           "Successfully delete domain with valid ID",
 			domainID:       domainID1,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "Should delete domain successfully with valid ID",
 		},
 		{
-			name:           "Unauthorized request without token",
+			name:           "Unauthorized request without cookies",
 			domainID:       domainID2,
-			token:          "",
+			cookies:        "",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when no authentication token is provided",
+			description:    "Should return 401 when no authentication cookies are provided",
 		},
 		{
-			name:           "Unauthorized request with invalid token",
+			name:           "Unauthorized request with invalid cookies",
 			domainID:       domainID2,
-			token:          "invalid-token",
+			cookies:        "invalid-cookies",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when invalid authentication token is provided",
+			description:    "Should return 401 when invalid authentication cookies are provided",
 		},
 		{
 			name:           "Request without organization header",
 			domainID:       domainID2,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "",
 			expectedStatus: http.StatusBadRequest,
 			description:    "Should return 400 when organization header is missing",
@@ -464,7 +468,7 @@ func TestDeleteDomain(t *testing.T) {
 		{
 			name:           "Delete non-existent domain",
 			domainID:       "123e4567-e89b-12d3-a456-426614174000",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusNotFound,
 			description:    "Should return 404 when domain doesn't exist",
@@ -472,7 +476,7 @@ func TestDeleteDomain(t *testing.T) {
 		{
 			name:           "Delete domain with invalid ID format",
 			domainID:       "invalid-id",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusBadRequest,
 			description:    "Should return 400 when domain ID format is invalid",
@@ -480,7 +484,7 @@ func TestDeleteDomain(t *testing.T) {
 		{
 			name:           "Delete already deleted domain",
 			domainID:       domainID1, // Already deleted in first test case so expcected to throw 404
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusNotFound,
 			description:    "Should return 404 when trying to delete already deleted domain",
@@ -488,7 +492,7 @@ func TestDeleteDomain(t *testing.T) {
 		{
 			name:           "Successfully delete second domain",
 			domainID:       domainID2,
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "Should delete second domain successfully",
@@ -507,8 +511,8 @@ func TestDeleteDomain(t *testing.T) {
 				Send().Body().JSON(requestBody),
 			}
 
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			if tc.organizationID != "" {
@@ -531,12 +535,13 @@ func TestDeleteDomain(t *testing.T) {
 
 func TestGenerateRandomSubDomain(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	// first create a domain then generating subdomains
 	createRequest := map[string]interface{}{
@@ -547,7 +552,7 @@ func TestGenerateRandomSubDomain(t *testing.T) {
 	Test(t,
 		Description("Create a base domain for subdomain generation"),
 		Post(tests.GetDomainURL()),
-		Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Send().Body().JSON(createRequest),
 		Expect().Status().Equal(http.StatusOK),
@@ -555,35 +560,35 @@ func TestGenerateRandomSubDomain(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		token          string
+		cookies        string
 		organizationID string
 		expectedStatus int
 		description    string
 	}{
 		{
 			name:           "Successfully generate random subdomain",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			expectedStatus: http.StatusOK,
 			description:    "Should generate random subdomain successfully",
 		},
 		{
-			name:           "Unauthorized request without token",
-			token:          "",
+			name:           "Unauthorized request without cookies",
+			cookies:        "",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when no authentication token is provided",
+			description:    "Should return 401 when no authentication cookies are provided",
 		},
 		{
-			name:           "Unauthorized request with invalid token",
-			token:          "invalid-token",
+			name:           "Unauthorized request with invalid cookies",
+			cookies:        "invalid-cookies",
 			organizationID: orgID,
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when invalid authentication token is provided",
+			description:    "Should return 401 when invalid authentication cookies are provided",
 		},
 		{
 			name:           "Request without organization header",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "",
 			expectedStatus: http.StatusBadRequest,
 			description:    "Should return 400 when organization header is missing",
@@ -597,8 +602,8 @@ func TestGenerateRandomSubDomain(t *testing.T) {
 				Get(tests.GetDomainGenerateURL()),
 			}
 
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			if tc.organizationID != "" {
@@ -623,12 +628,13 @@ func TestGenerateRandomSubDomain(t *testing.T) {
 
 func TestDomainsCRUDFlow(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	t.Run("Validate CRUD flow for domains", func(t *testing.T) {
 		var domainID string
@@ -642,7 +648,7 @@ func TestDomainsCRUDFlow(t *testing.T) {
 		Test(t,
 			Description("Create a new domain"),
 			Post(tests.GetDomainURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(createRequest),
 			Expect().Status().Equal(http.StatusOK),
@@ -655,7 +661,7 @@ func TestDomainsCRUDFlow(t *testing.T) {
 		Test(t,
 			Description("Verify domain appears in domains listing"),
 			Get(tests.GetDomainsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusOK),
 			Expect().Body().JSON().JQ(".status").Equal("success"),
@@ -671,7 +677,7 @@ func TestDomainsCRUDFlow(t *testing.T) {
 		Test(t,
 			Description("Update the domain"),
 			Put(tests.GetDomainURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(updateRequest),
 			Expect().Status().Equal(http.StatusOK),
@@ -683,7 +689,7 @@ func TestDomainsCRUDFlow(t *testing.T) {
 		Test(t,
 			Description("Verify domain update appears in domains listing"),
 			Get(tests.GetDomainsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusOK),
 			Expect().Body().JSON().JQ(".status").Equal("success"),
@@ -700,7 +706,7 @@ func TestDomainsCRUDFlow(t *testing.T) {
 		Test(t,
 			Description("Step 5: Delete the domain"),
 			Delete(tests.GetDomainURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(deleteRequest),
 			Expect().Status().Equal(http.StatusOK),
@@ -712,7 +718,7 @@ func TestDomainsCRUDFlow(t *testing.T) {
 		Test(t,
 			Description("Step 6: Verify domain is removed from domains listing"),
 			Get(tests.GetDomainsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusOK),
 			Expect().Body().JSON().JQ(".status").Equal("success"),
@@ -724,12 +730,13 @@ func TestDomainsCRUDFlow(t *testing.T) {
 
 func TestDomainPermissions(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
 	t.Run("Domain permissions and organization isolation", func(t *testing.T) {
 		var domainID string
@@ -743,7 +750,7 @@ func TestDomainPermissions(t *testing.T) {
 		Test(t,
 			Description("Create domain in user's organization"),
 			Post(tests.GetDomainURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(createRequest),
 			Expect().Status().Equal(http.StatusOK),
@@ -754,7 +761,7 @@ func TestDomainPermissions(t *testing.T) {
 		Test(t,
 			Description("Should deny access to domains from different organization"),
 			Get(tests.GetDomainsURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add("123e4567-e89b-12d3-a456-426614174000"),
 			Expect().Status().Equal(http.StatusForbidden),
 		)
@@ -768,7 +775,7 @@ func TestDomainPermissions(t *testing.T) {
 		Test(t,
 			Description("Should deny domain update from different organization"),
 			Put(tests.GetDomainURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add("123e4567-e89b-12d3-a456-426614174000"),
 			Send().Body().JSON(updateRequest),
 			Expect().Status().Equal(http.StatusForbidden),
@@ -782,7 +789,7 @@ func TestDomainPermissions(t *testing.T) {
 		Test(t,
 			Description("Should deny domain deletion from different organization"),
 			Delete(tests.GetDomainURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add("123e4567-e89b-12d3-a456-426614174000"),
 			Send().Body().JSON(deleteRequest),
 			Expect().Status().Equal(http.StatusForbidden),
@@ -792,7 +799,7 @@ func TestDomainPermissions(t *testing.T) {
 		Test(t,
 			Description("Clean up: Delete domain with correct organization"),
 			Delete(tests.GetDomainURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(deleteRequest),
 			Expect().Status().Equal(http.StatusOK),
@@ -802,28 +809,29 @@ func TestDomainPermissions(t *testing.T) {
 
 func TestDomainErrorHandling(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 
-	t.Run("Malformed authorization header", func(t *testing.T) {
+	t.Run("Malformed cookie header", func(t *testing.T) {
 		Test(t,
-			Description("Should handle malformed authorization header gracefully"),
+			Description("Should handle malformed cookie header gracefully"),
 			Get(tests.GetDomainsURL()),
-			Send().Headers("Authorization").Add("InvalidFormat"),
+			Send().Headers("Cookie").Add("InvalidFormat"),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusUnauthorized),
 		)
 	})
 
-	t.Run("Empty authorization header", func(t *testing.T) {
+	t.Run("Empty cookie header", func(t *testing.T) {
 		Test(t,
-			Description("Should handle empty authorization header"),
+			Description("Should handle empty cookie header"),
 			Get(tests.GetDomainsURL()),
-			Send().Headers("Authorization").Add(""),
+			Send().Headers("Cookie").Add(""),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Expect().Status().Equal(http.StatusUnauthorized),
 		)
@@ -838,7 +846,7 @@ func TestDomainErrorHandling(t *testing.T) {
 		Test(t,
 			Description("Should handle missing Content-Type header"),
 			Post(tests.GetDomainURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(createRequest),
 			Expect().Status().Equal(http.StatusOK),
@@ -849,7 +857,7 @@ func TestDomainErrorHandling(t *testing.T) {
 		Test(t,
 			Description("Should handle invalid JSON payload"),
 			Post(tests.GetDomainURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().String("{invalid-json}"),
 			Expect().Status().Equal(http.StatusBadRequest),
@@ -871,7 +879,7 @@ func TestDomainErrorHandling(t *testing.T) {
 		Test(t,
 			Description("Should throw an error for very long domain names"),
 			Post(tests.GetDomainURL()),
-			Send().Headers("Authorization").Add("Bearer "+user.AccessToken),
+			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(createRequest),
 			Expect().Status().Equal(http.StatusBadRequest),
