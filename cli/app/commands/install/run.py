@@ -74,9 +74,35 @@ def create_config_resolver(config: dict, params: InstallParams) -> ConfigResolve
     )
 
 
+def build_ports_to_check(config: dict, params: InstallParams) -> List[int]:
+    """Build list of ports to validate, preferring user provided ports over config defaults."""
+    config_ports = get_config_value(config, PORTS)
+    config_ports = [int(port) for port in config_ports] if isinstance(config_ports, list) else [int(config_ports)]
+    
+    # Map of default config ports to user provided ports
+    # Config defaults: [2019, 80, 443, 7443, 8443, 6379, 5432, 3567]
+    port_overrides = {
+        2019: params.caddy_admin_port,  # Caddy admin
+        80: params.caddy_http_port,     # Caddy HTTP
+        443: params.caddy_https_port,   # Caddy HTTPS
+        7443: params.view_port,         # View/Frontend
+        8443: params.api_port,          # API
+        6379: params.redis_port,        # Redis
+        5432: params.db_port,           # PostgreSQL
+        3567: params.supertokens_port,  # SuperTokens
+    }
+    
+    # Build final port list: use user provided port if set, otherwise use config default
+    ports = []
+    for config_port in config_ports:
+        user_port = port_overrides.get(config_port)
+        ports.append(user_port if user_port is not None else config_port)
+    
+    return ports
+
+
 def run_preflight_checks(config: dict, params: InstallParams) -> None:
-    ports = get_config_value(config, PORTS)
-    ports = [int(port) for port in ports] if isinstance(ports, list) else [int(ports)]
+    ports = build_ports_to_check(config, params)
     check_required_ports(ports, logger=params.logger)
 
 
