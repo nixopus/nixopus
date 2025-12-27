@@ -12,7 +12,12 @@ import { useRBAC } from '@/lib/rbac';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 import { TerminalHeader, TerminalPane, SplitPaneHeader } from './components';
-import { useTerminalSessions, useTerminalDimensions, useTerminalStyles } from './hooks';
+import {
+  useTerminalSessions,
+  useTerminalDimensions,
+  useTerminalStyles,
+  useTerminalKeyboardShortcuts
+} from './hooks';
 
 type TerminalProps = {
   isOpen: boolean;
@@ -55,6 +60,16 @@ export const Terminal: React.FC<TerminalProps> = ({
   const dimensions = useTerminalDimensions(containerRef, isTerminalOpen);
 
   useTerminalStyles();
+
+  useTerminalKeyboardShortcuts({
+    isTerminalOpen,
+    activeSessionId,
+    activePaneId,
+    splitPanesCount: splitPanes.length,
+    sessionsCount: sessions.length,
+    onCloseSplitPane: closeSplitPane,
+    onCloseSession: closeSession
+  });
 
   if (isFeatureFlagsLoading) {
     return <Skeleton />;
