@@ -52,6 +52,7 @@ export function GeneralSettingsContent() {
               isUpdatingAutoUpdate={settings.isUpdatingAutoUpdate}
               handleThemeChange={settings.handleThemeChange}
               handleLanguageChange={settings.handleLanguageChange}
+              handleAutoUpdateChange={settings.handleAutoUpdateChange}
               handleFontUpdate={settings.handleFontUpdate}
             />
           </div>

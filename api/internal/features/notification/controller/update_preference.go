@@ -9,12 +9,11 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification/controller/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *NotificationController) UpdatePreference(f fuego.ContextWithBody[notification.UpdatePreferenceRequest]) (*shared_types.Response, error) {
+func (c *NotificationController) UpdatePreference(f fuego.ContextWithBody[notification.UpdatePreferenceRequest]) (*types.MessageResponse, error) {
 	prefRequest, err := f.Body()
 
 	if err != nil {
@@ -61,9 +60,8 @@ func (c *NotificationController) UpdatePreference(f fuego.ContextWithBody[notifi
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.MessageResponse{
 		Status:  "success",
 		Message: "Preference updated successfully",
-		Data:    nil,
 	}, nil
 }

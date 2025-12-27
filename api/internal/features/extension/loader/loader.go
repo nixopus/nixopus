@@ -36,12 +36,8 @@ func (l *ExtensionLoader) LoadExtensionsFromDirectory(ctx context.Context, dirPa
 		variables := allVariables[i]
 
 		if err := l.upsertExtension(ctx, extension, variables); err != nil {
-			log.Printf("Failed to upsert extension %s: %v", extension.ExtensionID, err)
+			log.Printf("Failed to load extension %s: %v", extension.ExtensionID, err)
 			continue
-		}
-
-		if (i+1)%10 == 0 || i == len(extensions)-1 {
-			log.Printf("Processed %d/%d extensions", i+1, len(extensions))
 		}
 	}
 

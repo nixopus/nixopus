@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/file-manager/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type CreateDirectoryRequest struct {
 	Path string `json:"path"`
 }
 
-func (c *FileManagerController) CreateDirectory(f fuego.ContextWithBody[CreateDirectoryRequest]) (*shared_types.Response, error) {
+func (c *FileManagerController) CreateDirectory(f fuego.ContextWithBody[CreateDirectoryRequest]) (*types.MessageResponse, error) {
 	request, err := f.Body()
 
 	if err != nil {
@@ -31,7 +31,7 @@ func (c *FileManagerController) CreateDirectory(f fuego.ContextWithBody[CreateDi
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.MessageResponse{
 		Status:  "success",
 		Message: "Directory created successfully",
 	}, nil

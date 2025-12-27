@@ -10,8 +10,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/validation"
 	"github.com/supertokens/supertokens-golang/recipe/passwordless"
-
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 func (c *OrganizationsController) customizeInviteLink(inviteLink string, orgID string, email string, role string) string {
@@ -32,7 +30,7 @@ func (c *OrganizationsController) customizeInviteLink(inviteLink string, orgID s
 	return inviteLink
 }
 
-func (c *OrganizationsController) SendInvite(f fuego.ContextWithBody[types.InviteSendRequest]) (*shared_types.Response, error) {
+func (c *OrganizationsController) SendInvite(f fuego.ContextWithBody[types.InviteSendRequest]) (*types.InviteResponse, error) {
 	request, err := f.Body()
 	if err != nil {
 		return nil, fuego.HTTPError{
@@ -64,18 +62,18 @@ func (c *OrganizationsController) SendInvite(f fuego.ContextWithBody[types.Invit
 
 	inviteLink = c.customizeInviteLink(inviteLink, request.OrganizationID, request.Email, request.Role)
 
-	return &shared_types.Response{
+	return &types.InviteResponse{
 		Status:  "success",
 		Message: "Invite sent successfully",
-		Data: map[string]interface{}{
-			"email":           request.Email,
-			"organization_id": request.OrganizationID,
-			"role":            request.Role,
+		Data: types.InviteResponseData{
+			Email:          request.Email,
+			OrganizationID: request.OrganizationID,
+			Role:           request.Role,
 		},
 	}, nil
 }
 
-func (c *OrganizationsController) ResendInvite(f fuego.ContextWithBody[types.InviteResendRequest]) (*shared_types.Response, error) {
+func (c *OrganizationsController) ResendInvite(f fuego.ContextWithBody[types.InviteResendRequest]) (*types.InviteResponse, error) {
 	request, err := f.Body()
 	if err != nil {
 		return nil, fuego.HTTPError{
@@ -108,13 +106,13 @@ func (c *OrganizationsController) ResendInvite(f fuego.ContextWithBody[types.Inv
 
 	inviteLink = c.customizeInviteLink(inviteLink, request.OrganizationID, request.Email, request.Role)
 
-	return &shared_types.Response{
+	return &types.InviteResponse{
 		Status:  "success",
 		Message: "Invite resent successfully",
-		Data: map[string]interface{}{
-			"email":           request.Email,
-			"organization_id": request.OrganizationID,
-			"role":            request.Role,
+		Data: types.InviteResponseData{
+			Email:          request.Email,
+			OrganizationID: request.OrganizationID,
+			Role:           request.Role,
 		},
 	}, nil
 }
