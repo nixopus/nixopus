@@ -19,10 +19,18 @@ const (
 	OrgMembershipCacheTTL       = 30 * time.Minute
 	FeatureFlagCacheKeyPrefix   = "feature_flag:"
 	FeatureFlagCacheTTL         = 10 * time.Minute
+	RBACCacheKeyPrefix          = "rbac:"
+	RBACCacheTTL                = 5 * time.Minute
 )
 
 type Cache struct {
 	client *redis.Client
+}
+
+// CachedRBACPermissions stores user permissions for an organization
+type CachedRBACPermissions struct {
+	Roles       []string `json:"roles"`
+	Permissions []string `json:"permissions"`
 }
 
 type CacheRepository interface {
@@ -33,6 +41,9 @@ type CacheRepository interface {
 	GetFeatureFlag(ctx context.Context, orgID, featureName string) (bool, error)
 	SetFeatureFlag(ctx context.Context, orgID, featureName string, enabled bool) error
 	InvalidateFeatureFlag(ctx context.Context, orgID, featureName string) error
+	GetRBACPermissions(ctx context.Context, userID, orgID string) (*CachedRBACPermissions, error)
+	SetRBACPermissions(ctx context.Context, userID, orgID string, perms *CachedRBACPermissions) error
+	InvalidateRBACPermissions(ctx context.Context, userID, orgID string) error
 }
 
 func NewCache(redisURL string) (*Cache, error) {
@@ -138,5 +149,47 @@ func (c *Cache) SetFeatureFlag(ctx context.Context, orgID, featureName string, e
 
 func (c *Cache) InvalidateFeatureFlag(ctx context.Context, orgID, featureName string) error {
 	key := fmt.Sprintf("%s:%s:%s", FeatureFlagCacheKeyPrefix, orgID, featureName)
+	return c.client.Del(ctx, key).Err()
+}
+
+// GetRBACPermissions retrieves cached RBAC permissions for a user in an organization.
+// Returns nil if not found in cache (cache miss).
+func (c *Cache) GetRBACPermissions(ctx context.Context, userID, orgID string) (*CachedRBACPermissions, error) {
+	key := fmt.Sprintf("%s%s:%s", RBACCacheKeyPrefix, userID, orgID)
+	data, err := c.client.Get(ctx, key).Bytes()
+	if err == redis.Nil {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var perms CachedRBACPermissions
+	if err := json.Unmarshal(data, &perms); err != nil {
+		_ = c.InvalidateRBACPermissions(ctx, userID, orgID)
+		return nil, err
+	}
+
+	return &perms, nil
+}
+
+// SetRBACPermissions caches RBAC permissions for a user in an organization.
+func (c *Cache) SetRBACPermissions(ctx context.Context, userID, orgID string, perms *CachedRBACPermissions) error {
+	if perms == nil {
+		return nil
+	}
+
+	key := fmt.Sprintf("%s%s:%s", RBACCacheKeyPrefix, userID, orgID)
+	data, err := json.Marshal(perms)
+	if err != nil {
+		return err
+	}
+
+	return c.client.Set(ctx, key, data, RBACCacheTTL).Err()
+}
+
+// InvalidateRBACPermissions removes cached RBAC permissions for a user in an organization.
+func (c *Cache) InvalidateRBACPermissions(ctx context.Context, userID, orgID string) error {
+	key := fmt.Sprintf("%s%s:%s", RBACCacheKeyPrefix, userID, orgID)
 	return c.client.Del(ctx, key).Err()
 }
