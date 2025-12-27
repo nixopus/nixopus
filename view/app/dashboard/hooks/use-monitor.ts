@@ -80,6 +80,12 @@ function use_monitor() {
       isInitializedRef.current = false;
       setIsMonitoring(false);
     }
+
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
   }, [isReady, startMonitoring]);
 
   // Retry monitoring on error

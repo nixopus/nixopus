@@ -7,53 +7,12 @@ import { useGetSMTPConfigurationsQuery } from '@/redux/services/settings/notific
 import { useCheckForUpdatesQuery } from '@/redux/services/users/userApi';
 import { FeatureNames } from '@/types/feature-flags';
 import useMonitor from './use-monitor';
-import { useGetContainersQuery, Container } from '@/redux/services/container/containerApi';
-import { ContainerData } from '@/redux/types/monitor';
-
-function transformContainerToContainerData(container: Container): ContainerData {
-  return {
-    Id: container.id,
-    Names: [container.name],
-    Image: container.image,
-    ImageID: '',
-    Command: container.command || '',
-    Created: container.created ? Math.floor(new Date(container.created).getTime() / 1000) : 0,
-    Ports: container.ports.map((p) => ({
-      IP: '',
-      PrivatePort: p.private_port,
-      PublicPort: p.public_port,
-      Type: p.type
-    })),
-    Labels: {},
-    State: container.state,
-    Status: container.status,
-    HostConfig: {
-      NetworkMode: container.host_config?.memory ? 'default' : undefined,
-      Annotations: {}
-    }
-  };
-}
 
 export function useDashboard() {
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
-  const { containersData: wsContainersData, systemStats } = useMonitor();
+  const { containersData, systemStats } = useMonitor();
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
-
-  const { data: containersApiData } = useGetContainersQuery(
-    { page: 1, page_size: 4, search: '', sort_by: 'name', sort_order: 'asc' },
-    { refetchOnMountOrArgChange: true }
-  );
-
-  const containersData = React.useMemo(() => {
-    if (wsContainersData && wsContainersData.length > 0) {
-      return wsContainersData;
-    }
-    if (containersApiData?.containers) {
-      return containersApiData.containers.slice(0, 4).map(transformContainerToContainerData);
-    }
-    return [];
-  }, [wsContainersData, containersApiData]);
 
   const { data: smtpConfig } = useGetSMTPConfigurationsQuery(activeOrganization?.id, {
     skip: !activeOrganization
