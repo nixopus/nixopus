@@ -43,6 +43,7 @@ function DashboardPage() {
     isDashboardEnabled,
     containersData,
     systemStats,
+    isLoadingInitialData,
     // TODO: Re-enable when SMTP banner is working
     // smtpConfig,
     showDragHint,
@@ -123,6 +124,7 @@ function DashboardPage() {
         <MonitoringSection
           systemStats={systemStats}
           containersData={containersData}
+          isLoadingInitialData={isLoadingInitialData}
           t={t}
           layoutResetKey={layoutResetKey}
           onLayoutChange={handleLayoutChange}
@@ -209,6 +211,7 @@ const DragHintBanner = ({
 const MonitoringSection = ({
   systemStats,
   containersData,
+  isLoadingInitialData,
   t,
   layoutResetKey,
   onLayoutChange,
@@ -217,6 +220,7 @@ const MonitoringSection = ({
 }: {
   systemStats: any;
   containersData: any;
+  isLoadingInitialData: boolean;
   t: any;
   layoutResetKey: number;
   onLayoutChange: () => void;
@@ -224,6 +228,23 @@ const MonitoringSection = ({
   hiddenWidgets: string[];
 }) => {
   const router = useRouter();
+
+  if (!systemStats && isLoadingInitialData) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="md:col-span-2">
+          <SystemInfoCardSkeleton />
+        </div>
+        <LoadAverageCardSkeleton />
+        <CPUUsageCardSkeleton />
+        <MemoryUsageCardSkeleton />
+        <DiskUsageCardSkeleton />
+        <div className="md:col-span-2">
+          <ContainersWidgetSkeleton />
+        </div>
+      </div>
+    );
+  }
 
   if (!systemStats) {
     return (

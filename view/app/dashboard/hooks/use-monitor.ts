@@ -9,13 +9,15 @@ function use_monitor() {
   const [systemStats, setSystemStats] = useState<SystemStatsType | null>(null);
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const isInitializedRef = useRef(false);
+  const hasReceivedContainersRef = useRef(false);
+  const hasReceivedSystemStatsRef = useRef(false);
 
   const startMonitoring = useCallback(() => {
     if (!isReady) return;
 
-    console.log('Starting dashboard monitoring');
     sendJsonMessage({
       action: 'dashboard_monitor',
       data: {
@@ -28,7 +30,6 @@ function use_monitor() {
   }, [isReady, sendJsonMessage]);
 
   const stopMonitoring = useCallback(() => {
-    console.log('Stopping dashboard monitoring');
     sendJsonMessage({
       action: 'stop_dashboard_monitor'
     });
@@ -46,15 +47,23 @@ function use_monitor() {
           return;
         }
 
-        if (parsedMessage.action === 'get_containers' && parsedMessage.data) {
-          setContainersData(parsedMessage.data);
+        if (parsedMessage.action === 'get_containers' && parsedMessage.data !== undefined) {
+          const containers = Array.isArray(parsedMessage.data) ? parsedMessage.data : [];
+          setContainersData(containers);
           setLastError(null);
+          hasReceivedContainersRef.current = true;
+          setIsLoadingInitialData(false);
         } else if (parsedMessage.action === 'get_system_stats' && parsedMessage.data) {
           setSystemStats(parsedMessage.data);
           setLastError(null);
+          hasReceivedSystemStatsRef.current = true;
+          setIsLoadingInitialData(false);
         } else if (parsedMessage.action === 'error') {
           setLastError(parsedMessage.error || 'Unknown error occurred');
-          // Retry after error
+          if (!hasReceivedContainersRef.current && !hasReceivedSystemStatsRef.current) {
+            setIsLoadingInitialData(false);
+          }
+
           setTimeout(() => {
             if (isReady) {
               startMonitoring();
@@ -71,22 +80,46 @@ function use_monitor() {
   // Initialize monitoring when WebSocket is ready
   useEffect(() => {
     if (isReady && !isInitializedRef.current) {
-      console.log('WebSocket ready, initializing monitoring');
       startMonitoring();
       isInitializedRef.current = true;
+
+      const loadingTimeoutId = setTimeout(() => {
+        setIsLoadingInitialData(false);
+      }, 3000);
+
+      const containerCheckTimeoutId = setTimeout(() => {
+        if (!hasReceivedContainersRef.current) {
+          startMonitoring();
+        }
+      }, 2000);
+
+      return () => {
+        clearTimeout(loadingTimeoutId);
+        clearTimeout(containerCheckTimeoutId);
+      };
     }
 
     if (!isReady && isInitializedRef.current) {
       isInitializedRef.current = false;
       setIsMonitoring(false);
+      hasReceivedContainersRef.current = false;
+      hasReceivedSystemStatsRef.current = false;
+      setIsLoadingInitialData(true);
     }
 
+    // Cleanup: stop monitoring when component unmounts
     return () => {
+      if (isInitializedRef.current) {
+        stopMonitoring();
+        isInitializedRef.current = false;
+        hasReceivedContainersRef.current = false;
+        hasReceivedSystemStatsRef.current = false;
+      }
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [isReady, startMonitoring]);
+  }, [isReady, startMonitoring, stopMonitoring]);
 
   // Retry monitoring on error
   useEffect(() => {
@@ -109,6 +142,7 @@ function use_monitor() {
     systemStats,
     isMonitoring,
     lastError,
+    isLoadingInitialData,
     startMonitoring,
     stopMonitoring
   };

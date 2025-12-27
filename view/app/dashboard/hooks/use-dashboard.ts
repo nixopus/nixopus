@@ -10,7 +10,7 @@ import useMonitor from './use-monitor';
 
 export function useDashboard() {
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
-  const { containersData, systemStats } = useMonitor();
+  const { containersData, systemStats, isLoadingInitialData } = useMonitor();
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
@@ -68,6 +68,7 @@ export function useDashboard() {
     containersData,
     systemStats,
     smtpConfig,
+    isLoadingInitialData,
 
     // UI state
     showDragHint,
