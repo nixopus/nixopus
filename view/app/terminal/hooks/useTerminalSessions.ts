@@ -64,7 +64,6 @@ export const useTerminalSessions = () => {
     return statuses;
   }, [sessions, paneStatuses]);
 
-  // Ensure at least one session always exists
   useEffect(() => {
     if (sessions.length === 0) {
       const newSessionId = uuidv4();
@@ -108,7 +107,6 @@ export const useTerminalSessions = () => {
   const closeSession = useCallback(
     (id: string) => {
       setSessions((prev) => {
-        // dont close if it's the last session 
         if (prev.length <= 1) {
           return prev;
         }

@@ -28,7 +28,6 @@ export const useTerminalKeyboardShortcuts = ({
       const key = e.key?.toLowerCase();
       const isDPressed = key === 'd';
 
-      // Only handle CMD+D/CTRL+D when terminal is open and we have sessions
       if (isModifierKey && isDPressed && activeSessionId && sessionsCount > 0) {
         // dont trigger if user is typing in an input field or textarea
         const target = e.target as HTMLElement;
@@ -36,7 +35,6 @@ export const useTerminalKeyboardShortcuts = ({
           return;
         }
 
-        // prevent browser bookmark dialog (CMD+D)
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
