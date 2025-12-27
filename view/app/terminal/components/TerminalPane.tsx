@@ -96,13 +96,14 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
     };
   }, [isTerminalOpen, updateDimensions]);
 
-  const { terminalRef, fitAddonRef, initializeTerminal, destroyTerminal, isWebSocketReady } = useTerminal(
-    isTerminalOpen,
-    dimensions.width,
-    dimensions.height,
-    canCreate || canUpdate,
-    terminalId
-  );
+  const { terminalRef, fitAddonRef, initializeTerminal, destroyTerminal, isWebSocketReady } =
+    useTerminal(
+      isTerminalOpen,
+      dimensions.width,
+      dimensions.height,
+      canCreate || canUpdate,
+      terminalId
+    );
 
   const isContainerReady = useContainerReady(
     isTerminalOpen,
@@ -189,7 +190,15 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
     return () => {
       timeouts.forEach((timeout) => clearTimeout(timeout));
     };
-  }, [isTerminalOpen, isContainerReady, initializeTerminal, dimensions.width, dimensions.height, isWebSocketReady, terminalRef]);
+  }, [
+    isTerminalOpen,
+    isContainerReady,
+    initializeTerminal,
+    dimensions.width,
+    dimensions.height,
+    isWebSocketReady,
+    terminalRef
+  ]);
 
   // Cleanup: destroy terminal when component unmounts
   useEffect(() => {
@@ -253,4 +262,3 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
     </div>
   );
 };
-
