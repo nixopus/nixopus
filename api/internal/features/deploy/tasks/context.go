@@ -359,3 +359,32 @@ func (c *ContextTask) PrepareRestartContext() (shared_types.TaskPayload, error) 
 		},
 	}, nil
 }
+
+// PrepareDeployProjectContext prepares the context for deploying an existing project (draft application).
+// This is similar to PrepareReDeploymentContext but for first-time deployment of a draft.
+func (c *ContextTask) PrepareDeployProjectContext() (shared_types.TaskPayload, error) {
+	app := *c.Application
+	app.UpdatedAt = time.Now()
+
+	applicationDeployment := c.GetDeploymentConfig(app.ID)
+
+	// For a draft deployment, we add the deployment record (not update the application)
+	if err := c.TaskService.Storage.AddApplicationDeployment(&applicationDeployment); err != nil {
+		return shared_types.TaskPayload{}, err
+	}
+
+	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
+	if err != nil {
+		return shared_types.TaskPayload{}, err
+	}
+
+	return shared_types.TaskPayload{
+		Application:           app,
+		ApplicationDeployment: applicationDeployment,
+		Status:                initialStatus,
+		UpdateOptions: shared_types.UpdateOptions{
+			Force:             false,
+			ForceWithoutCache: false,
+		},
+	}, nil
+}
