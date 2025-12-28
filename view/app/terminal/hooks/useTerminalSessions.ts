@@ -24,7 +24,7 @@ export const useTerminalSessions = () => {
   const [sessions, setSessions] = useState<Session[]>([
     {
       id: initialSessionId,
-      label: 'Terminal 1',
+      label: 'Terminal ' + initialSessionId.slice(0, 3),
       splitPanes: [{ id: initialPaneId, label: 'Pane 1', terminalId: uuidv4() }]
     }
   ]);
@@ -71,7 +71,7 @@ export const useTerminalSessions = () => {
       const newTerminalId = uuidv4();
       const newSession: Session = {
         id: newSessionId,
-        label: 'Terminal 1',
+        label: 'Terminal ' + newSessionId.slice(0, 3),
         splitPanes: [{ id: newPaneId, label: 'Pane 1', terminalId: newTerminalId }]
       };
       setSessions([newSession]);
@@ -91,7 +91,7 @@ export const useTerminalSessions = () => {
     const newTerminalId = uuidv4();
     const newSession: Session = {
       id: newSessionId,
-      label: `Terminal ${sessions.length + 1}`,
+      label: 'Terminal ' + newSessionId.slice(0, 3),
       splitPanes: [{ id: newPaneId, label: 'Pane 1', terminalId: newTerminalId }]
     };
     setSessions((prev) => [...prev, newSession]);
