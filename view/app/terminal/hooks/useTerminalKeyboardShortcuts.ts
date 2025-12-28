@@ -41,13 +41,12 @@ export const useTerminalKeyboardShortcuts = ({
         e.stopPropagation();
         e.stopImmediatePropagation();
 
-        // close split pane, session, or terminal panel
+        // close split pane, session, or session + terminal panel for last session
         if (splitPanesCount > 1 && activePaneId) {
           onCloseSplitPane(activePaneId);
-        } else if (sessionsCount > 1) {
+        } else if (activeSessionId) {
           onCloseSession(activeSessionId);
         } else {
-          // Close terminal panel when there's only one session
           onToggleTerminal();
         }
       }

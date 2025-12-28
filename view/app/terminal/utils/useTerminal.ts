@@ -320,21 +320,19 @@ export const useTerminal = (
               onToggleTerminal
             } = exitHandler;
 
-            // close split pane > close session > close terminal panel
+            // close split pane > close session > close session + terminal panel (for last session)
             const canCloseSplitPane = splitPanesCount > 1 && activePaneId && onCloseSplitPane;
             if (canCloseSplitPane) {
               onCloseSplitPane(activePaneId);
               return true;
             }
 
-            const canCloseSession = sessionsCount > 1 && activeSessionId && onCloseSession;
-            if (canCloseSession) {
+            if (activeSessionId && onCloseSession) {
               onCloseSession(activeSessionId);
               return true;
             }
 
             if (onToggleTerminal) {
-              // Close terminal panel when there's only one session
               onToggleTerminal();
               return true;
             }

@@ -64,7 +64,7 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
               status={sessionStatuses[session.id] || 'idle'}
               onSelect={() => onSwitchSession(session.id)}
               onClose={() => onCloseSession(session.id)}
-              canClose={sessions.length > 1}
+              canClose={true}
               index={index}
             />
           ))}

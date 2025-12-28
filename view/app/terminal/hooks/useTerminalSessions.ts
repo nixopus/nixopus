@@ -105,9 +105,10 @@ export const useTerminalSessions = () => {
   }, [sessions.length]);
 
   const closeSession = useCallback(
-    (id: string) => {
+    (id: string, force: boolean = false) => {
       setSessions((prev) => {
-        if (prev.length <= 1) {
+        // Prevent closing last session unless forced
+        if (!force && prev.length <= 1) {
           return prev;
         }
 
@@ -127,12 +128,18 @@ export const useTerminalSessions = () => {
           });
         }
 
-        if (id === activeSessionId && newSessions.length > 0) {
-          const newActiveSession = newSessions[Math.max(0, idx - 1)];
-          const newActivePaneId =
-            activePaneBySession[newActiveSession.id] || newActiveSession.splitPanes[0]?.id || '';
-          setActiveSessionId(newActiveSession.id);
-          setActivePaneId(newActivePaneId);
+
+        if (id === activeSessionId) {
+          if (newSessions.length > 0) {
+            const newActiveSession = newSessions[Math.max(0, idx - 1)];
+            const newActivePaneId =
+              activePaneBySession[newActiveSession.id] || newActiveSession.splitPanes[0]?.id || '';
+            setActiveSessionId(newActiveSession.id);
+            setActivePaneId(newActivePaneId);
+          } else {
+            setActiveSessionId('');
+            setActivePaneId('');
+          }
         }
         return newSessions;
       });
