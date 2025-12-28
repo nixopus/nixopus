@@ -299,10 +299,10 @@ export const useTerminal = (
               // Enter pressed - check if command is "exit"
               const command = currentLineRef.current.trim().toLowerCase();
               if (command === 'exit' && exitHandler) {
-                // Don't send the exit command to backend, handle closing like CTRL+D/CMD+D
+                // dont send the exit command to backend, handle closing like CTRL+D/CMD+D
                 currentLineRef.current = '';
                 
-                // Use same logic as CTRL+D/CMD+D: close split pane, session, or terminal panel
+                // CTRL+D/CMD+D: close split pane, session, or terminal panel
                 if (
                   exitHandler.splitPanesCount > 1 &&
                   exitHandler.activePaneId &&
