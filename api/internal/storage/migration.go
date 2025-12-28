@@ -199,8 +199,6 @@ func (m *Migrator) MigrateUp() error {
 			continue
 		}
 
-		log.Printf("Applying migration: %s (ID: %d)", migration.Name, migration.ID)
-
 		_, err = tx.ExecContext(m.ctx, migration.Up)
 		if err != nil {
 			return fmt.Errorf("failed to apply migration %s: %w", migration.Name, err)
@@ -316,7 +314,6 @@ func (m *Migrator) MigrateTo(targetVersion string) error {
 		for _, migration := range m.migrations {
 			if migration.Name == targetVersion {
 				if !appliedMap[migration.Name] {
-					log.Printf("Applying migration: %s", migration.Name)
 					_, err = tx.ExecContext(m.ctx, migration.Up)
 					if err != nil {
 						return fmt.Errorf("failed to apply migration %s: %w", migration.Name, err)
@@ -337,7 +334,6 @@ func (m *Migrator) MigrateTo(targetVersion string) error {
 			}
 
 			if !appliedMap[migration.Name] {
-				log.Printf("Applying migration: %s", migration.Name)
 				_, err = tx.ExecContext(m.ctx, migration.Up)
 				if err != nil {
 					return fmt.Errorf("failed to apply migration %s: %w", migration.Name, err)

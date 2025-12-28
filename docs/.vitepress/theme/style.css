@@ -1,19 +1,134 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400&display=swap');
+
+:root {
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'DM Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
+  
+  --vp-font-family-base: var(--font-primary);
+  --vp-font-family-mono: var(--font-mono);
+  
+  --vp-c-brand: #5CB85C;
+  --vp-c-brand-1: #5CB85C;
+  --vp-c-brand-2: #4a9a4a;
+  --vp-c-brand-3: #3d7d3d;
+  --vp-c-brand-soft: rgba(92, 184, 92, 0.14);
+  
+  --color-gray-100: #f9f9f9;
+  --color-gray-200: #f5f5f5;
+  --color-gray-300: #eaedf1;
+  --color-gray-400: #d7d7d7;
+  --color-gray-500: #c0c0c0;
+  --color-gray-600: #8b8b8b;
+  
+  --color-gray-dark-100: #1a1a1a;
+  --color-gray-dark-200: #222222;
+  --color-gray-dark-300: #2a2a2a;
+  --color-gray-dark-400: #3a3a3a;
+  --color-gray-dark-500: #4a4a4a;
+  --color-gray-dark-600: #6a6a6a;
+  
+  --divide: var(--color-gray-300);
+  --footer-link: #676767;
+  
+  --vp-c-bg: var(--color-gray-100);
+  --vp-c-bg-soft: var(--color-gray-100);
+  --vp-c-bg-mute: var(--color-gray-200);
+  --vp-c-bg-alt: var(--color-gray-100);
+  
+  --vp-c-text-1: var(--color-gray-dark-100);
+  --vp-c-text-2: var(--color-gray-600);
+  --vp-c-text-3: var(--color-gray-500);
+  
+  --vp-c-divider: var(--color-gray-300);
+  --vp-c-divider-light: var(--color-gray-200);
+  
+  --vp-sidebar-bg-color: var(--vp-c-bg-soft);
+  
+  --shadow-aceternity: 0px 2px 3px -1px rgba(0, 0, 0, 0.1), 0px 1px 0px 0px rgba(25, 28, 33, 0.02), 0px 0px 0px 1px rgba(25, 28, 33, 0.08);
+}
+
+.dark {
+  --divide: var(--color-gray-dark-400);
+  --footer-link: var(--color-gray-500);
+  
+  --vp-c-bg: var(--color-gray-dark-100);
+  --vp-c-bg-soft: var(--color-gray-dark-200);
+  --vp-c-bg-mute: var(--color-gray-dark-300);
+  --vp-c-bg-alt: var(--color-gray-dark-200);
+  
+  --vp-c-text-1: var(--color-gray-300);
+  --vp-c-text-2: var(--color-gray-500);
+  --vp-c-text-3: var(--color-gray-dark-600);
+  
+  --vp-c-divider: var(--color-gray-dark-400);
+  --vp-c-divider-light: var(--color-gray-dark-300);
+  
+  --vp-sidebar-bg-color: var(--vp-c-bg-soft);
+}
+
+body {
+  font-family: var(--font-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code, pre, kbd, samp {
+  font-family: var(--font-mono);
+}
 
 .VPHome::after,
 .VPDoc::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(to right, rgba(79, 79, 79, 0.1) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(79, 79, 79, 0.1) 1px, transparent 1px);
-  background-size: 14px 24px;
-  mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 110%);
-  pointer-events: none;
+  display: none;
 }
 
-/* Center align hero section */
+.VPApp .VPNav {
+  background: var(--vp-c-bg-soft) !important;
+  backdrop-filter: blur(8px);
+  border-bottom: none;
+  width: 100% !important;
+  max-width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+}
+
+.dark .VPApp .VPNav {
+  background: var(--vp-c-bg-soft) !important;
+}
+
+.VPApp {
+  background: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, var(--color-gray-200), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, var(--color-gray-100), transparent),
+    radial-gradient(ellipse 50% 30% at 0% 80%, var(--color-gray-200), transparent),
+    var(--vp-c-bg) !important;
+}
+
+.dark .VPApp {
+  background: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, var(--color-gray-dark-300), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, var(--color-gray-dark-200), transparent),
+    radial-gradient(ellipse 50% 30% at 0% 80%, var(--color-gray-dark-300), transparent),
+    var(--vp-c-bg) !important;
+}
+
+.VPNavBar,
+.VPNavBarMenu,
+.VPNavBarTitle,
+.VPNavBarTitle .title,
+.VPNavBarMenuLink {
+  background: transparent !important;
+}
+
+.VPNavBarMenuLink:hover {
+  background: transparent !important;
+}
+
+.VPSidebar {
+  background: var(--vp-sidebar-bg-color) !important;
+  border-right: 1px solid var(--vp-c-divider);
+}
+
 .VPHero .container {
   text-align: center;
 }
@@ -27,41 +142,84 @@
   text-align: center;
   margin-left: auto;
   margin-right: auto;
-  font-family: 'Cinzel Decorative', serif;
+  font-family: var(--font-primary);
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 .VPHero .name {
-  font-size: 2.45rem;
+  font-size: 2.5rem;
   line-height: 1.1;
+  color: var(--vp-c-text-1);
 }
 
 .VPHero .text {
-  font-size: 2.25rem;
+  font-size: 2rem;
   line-height: 1.2;
+  color: var(--vp-c-text-1);
 }
 
 .VPHero .tagline {
   text-align: center;
   margin-left: auto;
   margin-right: auto;
-  /* max-width: 600px; */
-  display: block;
   font-size: 1rem;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  font-weight: 500;
+  color: var(--color-gray-600);
+  max-width: 32rem;
+  margin-bottom: 1.5rem;
+}
+
+.dark .VPHero .tagline {
+  color: var(--color-gray-400);
 }
 
 .VPHero .actions {
   display: flex;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
-/* Ensure the hero content is centered */
+.VPHero .actions .VPButton {
+  border-radius: 0.75rem;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 150ms;
+}
+
+.VPHero .actions .VPButton.brand {
+  background: var(--color-gray-dark-100);
+  color: var(--color-gray-100);
+  border: none;
+}
+
+.dark .VPHero .actions .VPButton.brand {
+  background: var(--color-gray-200);
+  color: var(--color-gray-dark-100);
+}
+
+.VPHero .actions .VPButton.alt {
+  background: var(--color-gray-100);
+  color: var(--color-gray-dark-100);
+  border: 1px solid var(--vp-c-divider);
+}
+
+.dark .VPHero .actions .VPButton.alt {
+  background: transparent;
+  color: var(--color-gray-300);
+  border: 1px solid var(--color-gray-dark-400);
+}
+
+.VPHero .actions .VPButton:hover {
+  transform: scale(0.98);
+}
+
 .VPHome .VPHero {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-bottom: 0 !important;
 }
 
 .VPHome .VPHero .container {
@@ -72,7 +230,44 @@
   text-align: center;
 }
 
-OASidebarItem {
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.vp-doc h4 {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--vp-c-text-1);
+}
+
+.vp-doc p {
+  color: var(--vp-c-text-2);
+  line-height: 1.7;
+}
+
+.vp-doc a {
+  color: var(--vp-c-brand);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.vp-doc a:hover {
+  text-decoration: underline;
+}
+
+.vp-doc :not(pre) > code {
+  background: var(--vp-c-bg-soft);
+  border-radius: 0.375rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.875em;
+  color: var(--vp-c-text-1);
+}
+
+.vp-doc div[class*='language-'] {
+  border-radius: 0.75rem;
+  border: 1px solid var(--vp-c-divider);
+}
+
+.OASidebarItem {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -116,47 +311,37 @@ OASidebarItem {
 }
 
 .OASidebarItem-text {
-  font-family: var(--vp-font-family-mono);
+  font-family: var(--font-mono);
   font-size: 13px;
 }
 
-:root {
-  --vp-c-brand: #9be935;
-  --vp-c-brand-1: #9be935;
-  --vp-c-brand-2: #00a85a;
-  --vp-c-brand-3: #008f4d;
-  --vp-c-brand-soft: rgba(0, 191, 99, 0.14);
-}
-
-/* Command block styles */
 .command-block-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 1.5em 0;
+  margin: 0 0 1.5em 0;
 }
 
-/* Light mode styles (default) */
 .command-block {
   position: relative;
   display: inline-flex;
   align-items: center;
-  background: #f8f8f8;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  background: var(--vp-c-bg-soft);
+  border-radius: 0.75rem;
+  border: 1px solid var(--vp-c-divider);
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+  box-shadow: var(--shadow-aceternity);
   min-width: 400px;
   max-width: 90vw;
 }
 
 .command-text {
   flex: 1;
-  padding: 1.2em 1.5em;
-  font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
-  font-size: 1.05em;
-  color: #333;
-  background: #f8f8f8;
+  padding: 1rem 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  color: var(--vp-c-text-1);
+  background: transparent;
   overflow-x: auto;
   white-space: nowrap;
   max-width: 600px;
@@ -165,107 +350,102 @@ OASidebarItem {
 }
 
 .command-text .prompt {
-  color: #22c55e;
+  color: var(--vp-c-brand);
   font-weight: bold;
   margin-right: 0.5em;
   user-select: none;
 }
 
 .copy-button {
-  color: #666;
+  color: var(--color-gray-600);
   background: transparent;
   border: none;
-  padding: 1.2em 1.5em;
-  font-weight: 600;
-  font-size: 0.9em;
+  padding: 1rem 1.25rem;
+  font-weight: 500;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 150ms;
   outline: none;
-  border-left: 1px solid #e0e0e0;
+  border-left: 1px solid var(--vp-c-divider);
   width: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5em;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Dark mode styles */
-.dark .command-block {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
-}
-
-.dark .command-text {
-  color: #e0e0e0;
-  background: #1a1a1a;
-}
-
-.dark .command-text .prompt {
-  color: #9be935;
-}
-
-.dark .copy-button {
-  color: #888;
-  border-left: 1px solid #333;
 }
 
 .copy-button:hover {
-  cursor: pointer;
+  background: var(--vp-c-bg-mute);
 }
 
 .copy-button:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  transform: scale(0.98);
 }
 
 .copy-button.copied {
-  color: #22c55e;
-  transform: scale(1.02);
-}
-
-.copy-button.copied:hover {
-  cursor: pointer;
-}
-
-/* Dark mode copy button states */
-.dark .copy-button.copied {
-  color: #9be935;
+  color: var(--vp-c-brand);
 }
 
 .copy-icon {
   font-size: 1em;
-  transition: all 0.3s ease;
+  transition: all 200ms;
   display: inline-block;
 }
 
 .copy-text {
-  font-size: 0.85em;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  transition: all 0.3s ease;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
 }
-
 
 .copy-button.copied .copy-icon {
-  transform: scale(1.2) rotate(360deg);
+  transform: scale(1.1);
 }
 
-/* Responsive styles for mobile */
+.dashboard-image-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem 4rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-image {
+  width: 100%;
+  max-width: 1100px;
+  height: auto;
+  border-radius: 0.75rem;
+  border: 1px solid var(--vp-c-divider);
+  box-shadow: var(--shadow-aceternity);
+}
+
+@media (max-width: 768px) {
+  .dashboard-image-container {
+    padding: 1.5rem 1rem 3rem;
+  }
+  
+  .dashboard-image {
+    border-radius: 0.5rem;
+  }
+}
+
+.VPFooter {
+  border-top: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg) !important;
+}
+
 @media (max-width: 420px) {
   .VPHero .name {
-    font-size: 2rem;
-  }
-
-  .VPHero .text {
     font-size: 1.75rem;
   }
 
+  .VPHero .text {
+    font-size: 1.5rem;
+  }
+
   .VPHero .tagline {
-    white-space: normal;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
   }
 
   .command-block {
@@ -274,55 +454,44 @@ OASidebarItem {
   }
 
   .command-text {
-    font-size: 0.9em;
-    padding: 1em;
-    text-align: left;
+    font-size: 0.875rem;
+    padding: 0.875rem 1rem;
   }
 
   .copy-button {
-    padding: 1em;
+    padding: 0.875rem 1rem;
     width: 80px;
-    gap: 0.3em;
-  }
-  
-  .copy-text {
-    font-size: 0.8em;
-  }
-  
-  .copy-icon {
-    font-size: 0.9em;
   }
 }
 
 @media (max-width: 320px) {
-    .VPHero .name {
-        font-size: 1.8rem;
-    }
-    .VPHero .text {
-        font-size: 1.6rem;
-    }
-    .command-text {
-        font-size: 0.8em;
-    }
+  .VPHero .name {
+    font-size: 1.5rem;
+  }
+  .VPHero .text {
+    font-size: 1.375rem;
+  }
+  .command-text {
+    font-size: 0.8125rem;
+  }
 }
 
-/* Install Generator specific styles */
 .install-generator {
-  font-family: var(--vp-font-family-base);
+  font-family: var(--font-primary);
 }
 
 .install-generator code {
   background: var(--vp-c-bg-soft);
-  padding: 0.2rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.9em;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
+  font-size: 0.875em;
   color: var(--vp-c-text-1);
 }
 
 .install-generator pre {
   background: var(--vp-c-bg-soft);
   border: 1px solid var(--vp-c-divider);
-  border-radius: 8px;
+  border-radius: 0.75rem;
   padding: 1rem;
   overflow-x: auto;
 }
@@ -331,5 +500,37 @@ OASidebarItem {
   background: transparent;
   padding: 0;
   border-radius: 0;
-  font-size: 0.9em;
+  font-size: 0.875em;
+}
+
+.VPFeature {
+  border: 1px solid var(--vp-c-divider) !important;
+  border-radius: 0.75rem !important;
+  background: var(--vp-c-bg) !important;
+  transition: all 150ms;
+}
+
+.VPFeature:hover {
+  border-color: var(--vp-c-brand) !important;
+}
+
+.VPLocalSearchBox {
+  --vp-local-search-bg: var(--vp-c-bg);
+}
+
+.VPContent {
+  transition: opacity 150ms;
+}
+
+.VPNavBarTitle .title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.VPSidebarItem .text {
+  font-weight: 500;
+}
+
+.VPSidebarItem.is-active > .item > .link > .text {
+  color: var(--vp-c-brand);
 }

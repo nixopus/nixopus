@@ -34,7 +34,11 @@ export enum USERURLS {
   PERFORM_UPDATE = 'v1/update',
   UPDATE_AVATAR = 'v1/user/avatar',
   SEND_INVITE = 'v1/organizations/invite/send',
-  RESEND_INVITE = 'v1/organizations/invite/resend'
+  RESEND_INVITE = 'v1/organizations/invite/resend',
+  GET_PREFERENCES = 'v1/user/preferences',
+  UPDATE_PREFERENCES = 'v1/user/preferences',
+  GET_ORGANIZATION_SETTINGS = 'v1/organizations/settings',
+  UPDATE_ORGANIZATION_SETTINGS = 'v1/organizations/settings'
 }
 
 export enum USER_NOTIFICATION_SETTINGS {
@@ -119,7 +123,8 @@ export enum CONTAINERURLS {
   START_CONTAINER = 'v1/container/{container_id}/start',
   STOP_CONTAINER = 'v1/container/{container_id}/stop',
   REMOVE_CONTAINER = 'v1/container/{container_id}',
-  GET_CONTAINER_LOGS = 'v1/container/{container_id}/logs'
+  GET_CONTAINER_LOGS = 'v1/container/{container_id}/logs',
+  UPDATE_CONTAINER_RESOURCES = 'v1/container/{container_id}/resources'
 }
 
 export enum IMAGEURLS {

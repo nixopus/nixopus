@@ -1,10 +1,17 @@
 package testutils
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/cookiejar"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -24,9 +31,30 @@ import (
 )
 
 var (
-	testDB *bun.DB
-	ctx    context.Context
+	testDB  *bun.DB
+	ctx     context.Context
+	baseURL = "http://localhost:8080"
+	// SuperTokens endpoints are at /auth/* (not /api/v1/auth/*)
+	// The SuperTokens middleware handles these endpoints directly
+	supertokensBaseURL = "http://localhost:8080"
 )
+
+// SuperTokensAuthResponse holds the authentication response from SuperTokens
+type SuperTokensAuthResponse struct {
+	Cookies        []*http.Cookie
+	AccessToken    string
+	User           *types.User
+	OrganizationID string
+}
+
+// GetAuthCookiesHeader returns a formatted cookie header string for use in HTTP requests
+func (s *SuperTokensAuthResponse) GetAuthCookiesHeader() string {
+	var cookieStrs []string
+	for _, cookie := range s.Cookies {
+		cookieStrs = append(cookieStrs, cookie.Name+"="+cookie.Value)
+	}
+	return strings.Join(cookieStrs, "; ")
+}
 
 // TestSetup holds all the common test dependencies
 type TestSetup struct {
@@ -250,4 +278,213 @@ func (s *TestSetup) RegistrationHelper(email, password, username, orgName, orgDe
 	}
 
 	return &authResponse, org, nil
+}
+
+// SignupViaSupertokens creates a user through SuperTokens HTTP API and returns session cookies.
+// This is the preferred method for integration tests that need to authenticate with protected endpoints.
+func (s *TestSetup) SignupViaSupertokens(email, password string) (*SuperTokensAuthResponse, error) {
+	// SuperTokens endpoints are handled by the middleware at /auth/* path
+	signupURL := supertokensBaseURL + "/auth/signup"
+
+	// Prepare the signup request body (SuperTokens email-password format)
+	requestBody := map[string]interface{}{
+		"formFields": []map[string]string{
+			{"id": "email", "value": email},
+			{"id": "password", "value": password},
+		},
+	}
+
+	bodyBytes, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal signup request: %w", err)
+	}
+
+	// Create the HTTP request
+	req, err := http.NewRequest("POST", signupURL, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create signup request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	// Add SuperTokens required headers for emailpassword recipe
+	req.Header.Set("rid", "emailpassword")
+	req.Header.Set("st-auth-mode", "cookie")
+
+	// Create HTTP client with cookie jar to automatically capture cookies (like Postman)
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cookie jar: %w", err)
+	}
+	client := &http.Client{
+		Jar: jar,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute signup request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	respBody, _ := io.ReadAll(resp.Body)
+
+	// Parse response to check for SuperTokens errors
+	var respData map[string]interface{}
+	if err := json.Unmarshal(respBody, &respData); err == nil {
+		// Check if SuperTokens returned an error status
+		if status, ok := respData["status"].(string); ok && status != "OK" {
+			return nil, fmt.Errorf("signup failed: status=%s, response=%s", status, string(respBody))
+		}
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("signup failed with status %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	// Extract session cookies from the cookie jar (automatically captures cookies from Set-Cookie headers)
+	cookieURL := resp.Request.URL
+	if cookieURL == nil {
+		cookieURL = req.URL
+	}
+	cookies := jar.Cookies(cookieURL)
+
+	if len(cookies) == 0 {
+		return nil, fmt.Errorf("no session cookies returned from signup")
+	}
+
+	// Extract access token from cookies
+	var accessToken string
+	for _, cookie := range cookies {
+		if cookie.Name == "sAccessToken" {
+			accessToken = cookie.Value
+			break
+		}
+	}
+
+	// Find user in our database by email (this also loads OrganizationUsers)
+	user, err := s.UserStorage.FindUserByEmail(email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find user after signup: %w", err)
+	}
+
+	// Get user's organization from the loaded OrganizationUsers relation
+	var orgID string
+	if len(user.OrganizationUsers) > 0 && user.OrganizationUsers[0].Organization != nil {
+		orgID = user.OrganizationUsers[0].Organization.ID.String()
+	}
+
+	return &SuperTokensAuthResponse{
+		Cookies:        cookies,
+		AccessToken:    accessToken,
+		User:           user,
+		OrganizationID: orgID,
+	}, nil
+}
+
+// SigninViaSupertokens logs in a user through SuperTokens HTTP API and returns session cookies.
+func (s *TestSetup) SigninViaSupertokens(email, password string) (*SuperTokensAuthResponse, error) {
+	// SuperTokens endpoints are handled by the middleware at /auth/* path
+	signinURL := supertokensBaseURL + "/auth/signin"
+
+	// Prepare the signin request body (SuperTokens email-password format)
+	requestBody := map[string]interface{}{
+		"formFields": []map[string]string{
+			{"id": "email", "value": email},
+			{"id": "password", "value": password},
+		},
+	}
+
+	bodyBytes, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal signin request: %w", err)
+	}
+
+	// Create the HTTP request
+	req, err := http.NewRequest("POST", signinURL, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create signin request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	// Add SuperTokens required headers for emailpassword recipe
+	req.Header.Set("rid", "emailpassword")
+	req.Header.Set("st-auth-mode", "cookie")
+
+	// Create HTTP client with cookie jar to automatically capture cookies (like Postman)
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cookie jar: %w", err)
+	}
+	client := &http.Client{
+		Jar: jar,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute signin request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response body for error checking
+	respBody, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("signin failed with status %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	// Check for SuperTokens error status in response
+	var respData map[string]interface{}
+	if err := json.Unmarshal(respBody, &respData); err == nil {
+		if status, ok := respData["status"].(string); ok && status != "OK" {
+			return nil, fmt.Errorf("signin failed: status=%s, response=%s", status, string(respBody))
+		}
+	}
+
+	// Extract session cookies from the cookie jar (automatically captures cookies from Set-Cookie headers)
+	cookieURL := resp.Request.URL
+	if cookieURL == nil {
+		cookieURL = req.URL
+	}
+	cookies := jar.Cookies(cookieURL)
+
+	if len(cookies) == 0 {
+		return nil, fmt.Errorf("no session cookies returned from signin")
+	}
+
+	// Extract access token from cookies if available
+	var accessToken string
+	for _, cookie := range cookies {
+		if cookie.Name == "sAccessToken" {
+			accessToken = cookie.Value
+			break
+		}
+	}
+
+	// Find user in our database by email (this also loads OrganizationUsers)
+	user, err := s.UserStorage.FindUserByEmail(email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find user after signin: %w", err)
+	}
+
+	// Get user's organization from the loaded OrganizationUsers relation
+	var orgID string
+	if len(user.OrganizationUsers) > 0 && user.OrganizationUsers[0].Organization != nil {
+		orgID = user.OrganizationUsers[0].Organization.ID.String()
+	}
+
+	return &SuperTokensAuthResponse{
+		Cookies:        cookies,
+		AccessToken:    accessToken,
+		User:           user,
+		OrganizationID: orgID,
+	}, nil
+}
+
+// GetSupertokensAuthResponse creates a user via SuperTokens and returns authentication info.
+// This should be used for integration tests that need to call protected API endpoints.
+// It creates a new user with a unique email to avoid conflicts with existing SuperTokens users.
+func (s *TestSetup) GetSupertokensAuthResponse() (*SuperTokensAuthResponse, error) {
+	// Generate unique email to avoid conflicts with existing SuperTokens users
+	uniqueEmail := fmt.Sprintf("test-%d@example.com", time.Now().UnixNano())
+	password := "Password123@"
+
+	return s.SignupViaSupertokens(uniqueEmail, password)
 }

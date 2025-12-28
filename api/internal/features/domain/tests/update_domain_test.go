@@ -14,9 +14,6 @@ import (
 )
 
 func TestUpdateDomain(t *testing.T) {
-	// Initialize config for tests
-	config.Init()
-
 	t.Run("should update domain successfully", func(t *testing.T) {
 		setup := testutils.NewTestSetup()
 		// Set development mode for domain validation

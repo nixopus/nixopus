@@ -1,6 +1,7 @@
 .install-generator {
   max-width: 800px;
   margin: 0 auto;
+  font-family: var(--font-primary);
 }
 
 /* Header */
@@ -11,8 +12,9 @@
 .generator-header h2 {
   margin: 0 0 0.5rem 0;
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .generator-header p {
@@ -30,7 +32,7 @@
   padding: 1rem;
   background: var(--vp-c-bg-soft);
   border: 1px solid var(--vp-c-divider);
-  border-radius: 6px;
+  border-radius: 0.75rem;
   margin-bottom: 1.5rem;
 }
 
@@ -92,9 +94,9 @@
 .config-category {
   background: var(--vp-c-bg-soft);
   border: 1px solid var(--vp-c-divider);
-  border-radius: 6px;
+  border-radius: 0.75rem;
   padding: 1.25rem;
-  transition: border-color 0.2s ease;
+  transition: border-color 150ms;
 }
 
 .config-category:hover {
@@ -431,13 +433,14 @@
   padding: 0.75rem;
   background: var(--vp-c-bg-soft);
   border: 1px solid var(--vp-c-divider);
-  border-radius: 6px;
+  border-radius: 0.75rem;
   color: var(--vp-c-text-2);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   margin-bottom: 1rem;
   line-height: 1.4;
+  transition: all 150ms;
 }
 
 .advanced-toggle:hover {
@@ -468,10 +471,9 @@
 .command-section {
   background: var(--vp-c-bg-soft);
   border: 1px solid var(--vp-c-divider);
-  border-radius: 6px;
+  border-radius: 0.75rem;
   padding: 1.25rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .copy-mini {
@@ -554,7 +556,7 @@
   padding: 1rem;
   background: var(--vp-c-bg);
   border: 1px solid var(--vp-c-divider);
-  border-radius: 6px;
+  border-radius: 0.75rem;
   margin-bottom: 1rem;
 }
 
@@ -680,7 +682,7 @@
   padding: 1rem;
   background: var(--vp-c-bg-soft);
   border: 1px solid var(--vp-c-divider);
-  border-radius: 6px;
+  border-radius: 0.75rem;
 }
 
 .help-section summary {

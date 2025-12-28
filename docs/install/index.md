@@ -1,72 +1,152 @@
-# Installation Guide
+# Installation
 
-Welcome to the Nixopus installation guide. This section will help you set up Nixopus on your VPS quickly.
+This guide walks you through installing Nixopus on your VPS. The installation process downloads the Nixopus CLI and uses it to set up all required services including Docker, PostgreSQL, Redis, and Caddy.
 
-## Prerequisites
+## Requirements
 
-Before you begin, ensure you have:
+Before installing, ensure your server meets these requirements:
 
-::: info Prerequisites Checklist
-
-- **VPS with sudo access** - Required for system-level installation
-- **Internet connection** - For downloading dependencies and updates
-:::
-
-## System Requirements
-
-Make sure your system meets these requirements:
-
-| Requirement | Minimum | Recommended (Production) |
-|-------------|---------|--------------------------|
-| **Operating System** | Linux (Ubuntu 20.04+, Debian 11+), macOS (CLI only) | Same |
+| Requirement | Minimum | Recommended |
+|-------------|---------|-------------|
+| **Operating System** | Ubuntu 20.04+, Debian 11+ | Ubuntu 22.04+ |
 | **CPU** | 2 cores | 4+ cores |
-| **RAM** | 2GB | 4GB+ |
-| **Storage** | 5GB free | 10GB+ free |
+| **RAM** | 2 GB | 4+ GB |
+| **Storage** | 5 GB free | 10+ GB free |
+| **Access** | Root or sudo privileges | |
+| **Ports** | 80, 443, 8443, 7443 available | |
 | **Network** | Internet connection | Stable connection |
 
-::: info What the Script Does
-This single command will:
+## Quick Installation
 
-1. **Detect** your system architecture and operating system
-2. **Download and install** the appropriate Nixopus CLI package
-3. **Automatically run** `nixopus install` to set up Nixopus on your server
-:::
+Run this single command to install Nixopus:
 
-## Generate your installation command
+```bash
+curl -sSL https://install.nixopus.com | bash
+```
 
-Customize your installation with optional flags and configurations provided below and ensure there are not validation errors previewed before copying.
+This command performs the following steps:
+
+1. Detects your system architecture (amd64, arm64) and operating system
+2. Downloads the appropriate Nixopus CLI binary
+3. Installs the CLI to `/usr/local/bin/nixopus`
+4. Runs `nixopus install` to set up all services
+
+## Generate Installation Command
+
+Use the interactive generator below to customize your installation with domains, IP addresses, and other options.
 
 <InstallGenerator />
 
+## Installation Examples
+
+::: code-group
+
+```bash [Default (IP based)]
+curl -sSL https://install.nixopus.com | bash
+```
+
+```bash [Custom IP]
+curl -sSL https://install.nixopus.com | bash -s -- --host-ip 10.0.0.154
+```
+
+```bash [With Domains]
+sudo nixopus install \
+  --api-domain api.example.com \
+  --view-domain app.example.com \
+  --verbose
+```
+
+```bash [CLI Only]
+curl -sSL https://install.nixopus.com | bash -s -- --skip-nixopus-install
+```
+
+:::
+
+::: tip Domain Installation
+When using domains, ensure your DNS records point to your server before running the install command. Caddy will automatically obtain SSL certificates.
+:::
+
 ## Accessing Nixopus
 
-After successful installation, access your Nixopus instance:
+After installation completes, open your browser and navigate to:
 
-::: info Access URLs
-**With Domain Configuration:**
+::: code-group
 
-- Frontend: `https://your-view-domain.com` (e.g., `https://nixopus.example.com`)
-- API: `https://your-api-domain.com` (e.g., `https://api.example.com`)
+```txt [IP Configuration]
+Dashboard: http://YOUR_IP:80
+API:       http://YOUR_IP:8443
+```
 
-**With IP Configuration:**
+```txt [Domain Configuration]
+Dashboard: https://your-view-domain.com
+API:       https://your-api-domain.com
+```
 
-- Frontend: `http://YOUR_IP:PORT` (e.g., `http://192.168.1.100:80`)
-- API: `http://YOUR_IP:API_PORT` (e.g., `http://192.168.1.100:8443`)
 :::
+
+On first access, you will be prompted to create an admin account.
 
 ## Troubleshooting
 
-If you encounter issues during installation:
+::: details Installation Fails
+Run with verbose mode to see detailed errors:
 
-::: warning Installation Issues
-The installation script has not been tested in all distributions and operating systems. If you encounter any issues:
+```bash
+sudo nixopus install --verbose
+```
 
-1. **Check the logs**: Use `--verbose` flag to see detailed error messages
-2. **Verify prerequisites**: Ensure your system meets all requirements
-3. **Check ports**: Make sure required ports are available
-4. **Report issues**: Create an issue on our [GitHub repository](https://github.com/raghavyuva/nixopus/issues) with:
-   - Your operating system and version
-   - Installation command used
-   - Full error message/output
-   - System requirements (CPU, RAM, storage)
+Check that required ports are not in use:
+
+```bash
+sudo lsof -i :80 -i :443 -i :8443 -i :7443
+```
+
+Verify Docker is installed and running:
+
+```bash
+docker --version
+docker ps
+```
 :::
+
+::: details Permission Errors
+Ensure you're using sudo:
+
+```bash
+sudo nixopus install
+```
+
+Or run as root:
+
+```bash
+su -
+nixopus install
+```
+:::
+
+::: details Port Conflicts
+If ports are already in use, stop the conflicting services or configure Nixopus to use different ports by editing the configuration file at `/etc/nixopus/source/helpers/config.prod.yaml`.
+:::
+
+::: details DNS Issues
+For domain based installations, verify your DNS records resolve correctly:
+
+```bash
+dig +short api.example.com
+dig +short app.example.com
+```
+
+Both should return your server's IP address.
+:::
+
+::: warning Getting Help
+If you continue to experience issues, create an issue on [GitHub](https://github.com/raghavyuva/nixopus/issues) with your operating system version, installation command, and complete error output.
+:::
+
+## Next Steps
+
+After installation, you can:
+
+- [Deploy your first application](/self-host/)
+- [Configure notifications](/notifications/)
+- [Learn CLI commands](/cli/cli-reference)
