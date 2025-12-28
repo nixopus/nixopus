@@ -2,6 +2,8 @@ package cleanup
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -54,7 +56,16 @@ func (j *DeploymentLogsCleanupJob) Run(ctx context.Context, orgID uuid.UUID) err
 		Where("organization_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get organization settings: %w", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			// No settings found, use default retention period
+			j.logger.Log(
+				logger.Info,
+				fmt.Sprintf("No settings found for org %s, using default retention", orgID),
+				"",
+			)
+		} else {
+			return fmt.Errorf("failed to get organization settings: %w", err)
+		}
 	}
 
 	retentionDays := j.GetRetentionDays(&settings.Settings)
