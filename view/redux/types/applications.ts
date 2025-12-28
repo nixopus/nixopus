@@ -101,6 +101,7 @@ export interface CreateApplicationRequest {
 
 export interface UpdateDeploymentRequest {
   name?: string;
+  environment?: Environment;
   pre_run_command?: string;
   post_run_command?: string;
   build_variables?: Record<string, string>;
