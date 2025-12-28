@@ -68,7 +68,8 @@ export const Terminal: React.FC<TerminalProps> = ({
     splitPanesCount: splitPanes.length,
     sessionsCount: sessions.length,
     onCloseSplitPane: closeSplitPane,
-    onCloseSession: closeSession
+    onCloseSession: closeSession,
+    onToggleTerminal: toggleTerminal
   });
 
   if (isFeatureFlagsLoading) {
@@ -187,6 +188,15 @@ export const Terminal: React.FC<TerminalProps> = ({
                               focusPane(pane.id);
                             }}
                             onStatusChange={getStatusChangeHandler(pane.terminalId)}
+                            exitHandler={{
+                              splitPanesCount: splitPanes.length,
+                              sessionsCount: sessions.length,
+                              activePaneId,
+                              activeSessionId,
+                              onCloseSplitPane: closeSplitPane,
+                              onCloseSession: closeSession,
+                              onToggleTerminal: toggleTerminal
+                            }}
                           />
                         </div>
                       </ResizablePanel>

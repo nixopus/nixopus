@@ -15,6 +15,15 @@ type TerminalPaneProps = {
   terminalId: string;
   onFocus: () => void;
   onStatusChange?: (status: SessionStatus) => void;
+  exitHandler?: {
+    splitPanesCount: number;
+    sessionsCount: number;
+    activePaneId: string | null;
+    activeSessionId: string | null;
+    onCloseSplitPane?: (paneId: string) => void;
+    onCloseSession?: (sessionId: string) => void;
+    onToggleTerminal?: () => void;
+  };
 };
 
 export const TerminalPane: React.FC<TerminalPaneProps> = ({
@@ -25,7 +34,8 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
   setFitAddonRef,
   terminalId,
   onFocus,
-  onStatusChange
+  onStatusChange,
+  exitHandler
 }) => {
   const paneRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -102,7 +112,8 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
       dimensions.width,
       dimensions.height,
       canCreate || canUpdate,
-      terminalId
+      terminalId,
+      exitHandler
     );
 
   const isContainerReady = useContainerReady(

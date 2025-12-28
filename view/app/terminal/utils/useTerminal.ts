@@ -19,12 +19,23 @@ type TerminalOutput = {
   topic: string;
 };
 
+type ExitHandler = {
+  splitPanesCount: number;
+  sessionsCount: number;
+  activePaneId: string | null;
+  activeSessionId: string | null;
+  onCloseSplitPane?: (paneId: string) => void;
+  onCloseSession?: (sessionId: string) => void;
+  onToggleTerminal?: () => void;
+};
+
 export const useTerminal = (
   isTerminalOpen: boolean,
   width: number,
   height: number,
   allowInput: boolean = true,
-  terminalId: string = 'terminal_id'
+  terminalId: string = 'terminal_id',
+  exitHandler?: ExitHandler
 ) => {
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const fitAddonRef = useRef<any | null>(null);
@@ -34,6 +45,7 @@ export const useTerminal = (
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const terminalInstanceRef = useRef<any | null>(null);
   const pendingOutputRef = useRef<string[]>([]);
+  const currentLineRef = useRef<string>('');
 
   // Keep refs for WebSocket to ensure we always use the latest values
   const isReadyRef = useRef(isReady);
@@ -282,6 +294,53 @@ export const useTerminal = (
           // onData is called when xterm processes input
           // Send all input to backend - backend echo will handle display
           term.onData((data) => {
+            // Track current line for "exit" command detection
+            if (data === '\r' || data === '\n' || data === '\r\n') {
+              // Enter pressed - check if command is "exit"
+              const command = currentLineRef.current.trim().toLowerCase();
+              if (command === 'exit' && exitHandler) {
+                // Don't send the exit command to backend, handle closing like CTRL+D/CMD+D
+                currentLineRef.current = '';
+                
+                // Use same logic as CTRL+D/CMD+D: close split pane, session, or terminal panel
+                if (
+                  exitHandler.splitPanesCount > 1 &&
+                  exitHandler.activePaneId &&
+                  exitHandler.onCloseSplitPane
+                ) {
+                  exitHandler.onCloseSplitPane(exitHandler.activePaneId);
+                } else if (
+                  exitHandler.sessionsCount > 1 &&
+                  exitHandler.activeSessionId &&
+                  exitHandler.onCloseSession
+                ) {
+                  exitHandler.onCloseSession(exitHandler.activeSessionId);
+                } else if (exitHandler.onToggleTerminal) {
+                  // Close terminal panel when there's only one session
+                  exitHandler.onToggleTerminal();
+                }
+                return;
+              }
+              // Reset line buffer after Enter
+              currentLineRef.current = '';
+            } else if (data === '\x7f' || data === '\b') {
+              // Backspace - remove last character
+              if (currentLineRef.current.length > 0) {
+                currentLineRef.current = currentLineRef.current.slice(0, -1);
+              }
+            } else if (data.startsWith('\x1b')) {
+              // Escape sequence (arrow keys, function keys, etc.) - reset line buffer
+              currentLineRef.current = '';
+            } else if (data.length === 1 && data >= ' ' && data.charCodeAt(0) < 127) {
+              // Printable ASCII character - add to current line
+              // Limit line length to prevent memory issues
+              if (currentLineRef.current.length < 1000) {
+                currentLineRef.current += data;
+              }
+            }
+            // Note: Multi-byte UTF-8 characters are handled by xterm.js and typically
+            // come as single characters, so we don't need special handling here
+
             safeSendMessage({
               action: 'terminal',
               data: { value: data, terminalId }

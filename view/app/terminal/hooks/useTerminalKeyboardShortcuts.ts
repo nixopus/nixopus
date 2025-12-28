@@ -8,6 +8,7 @@ type UseTerminalKeyboardShortcutsProps = {
   sessionsCount: number;
   onCloseSplitPane: (paneId: string) => void;
   onCloseSession: (sessionId: string) => void;
+  onToggleTerminal: () => void;
 };
 
 export const useTerminalKeyboardShortcuts = ({
@@ -17,7 +18,8 @@ export const useTerminalKeyboardShortcuts = ({
   splitPanesCount,
   sessionsCount,
   onCloseSplitPane,
-  onCloseSession
+  onCloseSession,
+  onToggleTerminal
 }: UseTerminalKeyboardShortcutsProps) => {
   useEffect(() => {
     if (!isTerminalOpen) return;
@@ -39,11 +41,14 @@ export const useTerminalKeyboardShortcuts = ({
         e.stopPropagation();
         e.stopImmediatePropagation();
 
-        // close split pane or session
+        // close split pane, session, or terminal panel
         if (splitPanesCount > 1 && activePaneId) {
           onCloseSplitPane(activePaneId);
         } else if (sessionsCount > 1) {
           onCloseSession(activeSessionId);
+        } else {
+          // Close terminal panel when there's only one session
+          onToggleTerminal();
         }
       }
     };
@@ -57,6 +62,7 @@ export const useTerminalKeyboardShortcuts = ({
     splitPanesCount,
     sessionsCount,
     onCloseSplitPane,
-    onCloseSession
+    onCloseSession,
+    onToggleTerminal
   ]);
 };

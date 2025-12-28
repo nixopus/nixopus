@@ -16,6 +16,15 @@ type TerminalSessionProps = {
   setFitAddonRef: React.Dispatch<React.SetStateAction<any | null>>;
   terminalId: string;
   onStatusChange?: (status: SessionStatus) => void;
+  exitHandler?: {
+    splitPanesCount: number;
+    sessionsCount: number;
+    activePaneId: string | null;
+    activeSessionId: string | null;
+    onCloseSplitPane?: (paneId: string) => void;
+    onCloseSession?: (sessionId: string) => void;
+    onToggleTerminal?: () => void;
+  };
 };
 
 export const TerminalSession: React.FC<TerminalSessionProps> = ({
@@ -26,14 +35,16 @@ export const TerminalSession: React.FC<TerminalSessionProps> = ({
   canUpdate,
   setFitAddonRef,
   terminalId,
-  onStatusChange
+  onStatusChange,
+  exitHandler
 }) => {
   const { terminalRef, fitAddonRef, initializeTerminal, destroyTerminal } = useTerminal(
     isTerminalOpen,
     dimensions.width,
     dimensions.height,
     canCreate || canUpdate,
-    terminalId
+    terminalId,
+    exitHandler
   );
 
   const isContainerReady = useContainerReady(
