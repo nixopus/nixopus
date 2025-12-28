@@ -5,7 +5,10 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -15,6 +18,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/queue"
 	"github.com/raghavyuva/nixopus-api/internal/redisclient"
 	"github.com/raghavyuva/nixopus-api/internal/routes"
+	"github.com/raghavyuva/nixopus-api/internal/scheduler"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/vmihailenco/taskq/v3"
@@ -58,6 +62,25 @@ func main() {
 
 	taskq.SetLogger(log.New(io.Discard, "", 0))
 	queue.Init(redisClient)
+
+	// Initialize and start scheduler for cleanup jobs
+	sched := scheduler.InitScheduler(store.DB, ctx)
+	if err := sched.Start(); err != nil {
+		log.Printf("Warning: failed to start scheduler: %v", err)
+	} else {
+		log.Println("Scheduler started successfully")
+	}
+
+	// Setup graceful shutdown
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		<-sigChan
+		log.Println("Shutting down...")
+		sched.Stop()
+		os.Exit(0)
+	}()
+
 	router := routes.NewRouter(app)
 	router.SetupRoutes()
 	log.Printf("Server starting on port %s", config.AppConfig.Server.Port)
