@@ -291,56 +291,92 @@ export const useTerminal = (
             return true;
           });
 
-          // onData is called when xterm processes input
-          // Send all input to backend - backend echo will handle display
-          term.onData((data) => {
-            // Track current line for "exit" command detection
-            if (data === '\r' || data === '\n' || data === '\r\n') {
-              // Enter pressed - check if command is "exit"
-              const command = currentLineRef.current.trim().toLowerCase();
-              if (command === 'exit' && exitHandler) {
-                // dont send the exit command to backend, handle closing like CTRL+D/CMD+D
-                currentLineRef.current = '';
-                
-                // CTRL+D/CMD+D: close split pane, session, or terminal panel
-                if (
-                  exitHandler.splitPanesCount > 1 &&
-                  exitHandler.activePaneId &&
-                  exitHandler.onCloseSplitPane
-                ) {
-                  exitHandler.onCloseSplitPane(exitHandler.activePaneId);
-                } else if (
-                  exitHandler.sessionsCount > 1 &&
-                  exitHandler.activeSessionId &&
-                  exitHandler.onCloseSession
-                ) {
-                  exitHandler.onCloseSession(exitHandler.activeSessionId);
-                } else if (exitHandler.onToggleTerminal) {
-                  // Close terminal panel when there's only one session
-                  exitHandler.onToggleTerminal();
-                }
-                return;
-              }
-              // Reset line buffer after Enter
+          const isEnterKey = (data: string): boolean => {
+            return data === '\r' || data === '\n' || data === '\r\n';
+          };
+
+          const isBackspace = (data: string): boolean => {
+            return data === '\x7f' || data === '\b';
+          };
+
+          const isEscapeSequence = (data: string): boolean => {
+            return data.startsWith('\x1b');
+          };
+
+          const isPrintableAscii = (data: string): boolean => {
+            return data.length === 1 && data >= ' ' && data.charCodeAt(0) < 127;
+          };
+
+          const handleExitCommand = (): boolean => {
+            if (!exitHandler) return false;
+
+            const {
+              splitPanesCount,
+              sessionsCount,
+              activePaneId,
+              activeSessionId,
+              onCloseSplitPane,
+              onCloseSession,
+              onToggleTerminal
+            } = exitHandler;
+
+            // close split pane > close session > close terminal panel
+            const canCloseSplitPane = splitPanesCount > 1 && activePaneId && onCloseSplitPane;
+            if (canCloseSplitPane) {
+              onCloseSplitPane(activePaneId);
+              return true;
+            }
+
+            const canCloseSession = sessionsCount > 1 && activeSessionId && onCloseSession;
+            if (canCloseSession) {
+              onCloseSession(activeSessionId);
+              return true;
+            }
+
+            if (onToggleTerminal) {
+              // Close terminal panel when there's only one session
+              onToggleTerminal();
+              return true;
+            }
+
+            return false;
+          };
+
+          const updateLineBuffer = (data: string): void => {
+            if (isEnterKey(data)) {
               currentLineRef.current = '';
-            } else if (data === '\x7f' || data === '\b') {
-              // Backspace - remove last character
+            } else if (isBackspace(data)) {
               if (currentLineRef.current.length > 0) {
                 currentLineRef.current = currentLineRef.current.slice(0, -1);
               }
-            } else if (data.startsWith('\x1b')) {
-              // Escape sequence (arrow keys, function keys, etc.) - reset line buffer
+            } else if (isEscapeSequence(data)) {
+              // Reset line buffer for escape sequences (arrow keys, function keys, etc.)
               currentLineRef.current = '';
-            } else if (data.length === 1 && data >= ' ' && data.charCodeAt(0) < 127) {
-              // Printable ASCII character - add to current line
-              // Limit line length to prevent memory issues
+            } else if (isPrintableAscii(data)) {
+              // Add printable character, limit length to prevent memory issues
               if (currentLineRef.current.length < 1000) {
                 currentLineRef.current += data;
               }
             }
-            // Note: Multi-byte UTF-8 characters are handled by xterm.js and typically
-            // come as single characters, so we don't need special handling here
+          };
 
+          // onData is called when xterm processes input
+          term.onData((data) => {
+            // "exit" command when Enter is pressed
+            if (isEnterKey(data)) {
+              const command = currentLineRef.current.trim().toLowerCase();
+              if (command === 'exit') {
+                // handle closing like CTRL+D/CMD+D
+                currentLineRef.current = '';
+                if (handleExitCommand()) {
+                  return;
+                }
+              }
+            }
+
+            updateLineBuffer(data);
+
+            // Send all input to backend
             safeSendMessage({
               action: 'terminal',
               data: { value: data, terminalId }
