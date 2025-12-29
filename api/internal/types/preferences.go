@@ -46,6 +46,14 @@ type OrganizationSettingsData struct {
 	ContainerStopTimeout             *int    `json:"container_stop_timeout,omitempty"`
 	ContainerAutoPruneDanglingImages *bool   `json:"container_auto_prune_dangling_images,omitempty"`
 	ContainerAutoPruneBuildCache     *bool   `json:"container_auto_prune_build_cache,omitempty"`
+
+	// Log cleanup settings
+	DeploymentLogsCleanupEnabled *bool `json:"deployment_logs_cleanup_enabled,omitempty"`
+	DeploymentLogsRetentionDays  *int  `json:"deployment_logs_retention_days,omitempty"`
+	AuditLogsCleanupEnabled      *bool `json:"audit_logs_cleanup_enabled,omitempty"`
+	AuditLogsRetentionDays       *int  `json:"audit_logs_retention_days,omitempty"`
+	ExtensionLogsCleanupEnabled  *bool `json:"extension_logs_cleanup_enabled,omitempty"`
+	ExtensionLogsRetentionDays   *int  `json:"extension_logs_retention_days,omitempty"`
 }
 
 // OrganizationSettings represents organization-level settings stored in the database
@@ -97,6 +105,14 @@ func DefaultOrganizationSettingsData() OrganizationSettingsData {
 	autoPruneImages := false
 	autoPruneCache := false
 
+	// Log cleanup defaults (enabled by default, 30 days retention)
+	deploymentLogsCleanupEnabled := true
+	deploymentLogsRetentionDays := 30
+	auditLogsCleanupEnabled := true
+	auditLogsRetentionDays := 30
+	extensionLogsCleanupEnabled := true
+	extensionLogsRetentionDays := 30
+
 	return OrganizationSettingsData{
 		WebsocketReconnectAttempts:       5,
 		WebsocketReconnectInterval:       3000,
@@ -107,5 +123,11 @@ func DefaultOrganizationSettingsData() OrganizationSettingsData {
 		ContainerStopTimeout:             &stopTimeout,
 		ContainerAutoPruneDanglingImages: &autoPruneImages,
 		ContainerAutoPruneBuildCache:     &autoPruneCache,
+		DeploymentLogsCleanupEnabled:     &deploymentLogsCleanupEnabled,
+		DeploymentLogsRetentionDays:      &deploymentLogsRetentionDays,
+		AuditLogsCleanupEnabled:          &auditLogsCleanupEnabled,
+		AuditLogsRetentionDays:           &auditLogsRetentionDays,
+		ExtensionLogsCleanupEnabled:      &extensionLogsCleanupEnabled,
+		ExtensionLogsRetentionDays:       &extensionLogsRetentionDays,
 	}
 }
