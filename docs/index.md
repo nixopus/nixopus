@@ -17,4 +17,7 @@ hero:
     </button>
   </div>
 </div>
-<SponsorsMarquee />
+
+<div class="dashboard-image-container">
+  <img src="/nixopus_dashboard.jpeg" alt="Nixopus Dashboard" class="dashboard-image" />
+</div>

@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/extension/engine"
@@ -26,10 +27,12 @@ func (s *ExtensionService) executeRun(ctx *RunContext) {
 	steps := ctx.Steps
 
 	if stop := s.processPhase(ctx, &steps, "run", ctx.Spec.Execution.Run, 0); stop {
+		log.Printf("Extension execution failed: %s (run phase)", ctx.Exec.ID.String())
 		s.logger.Log(logger.Error, fmt.Sprintf("Extension execution failed during run phase: %s", ctx.Exec.ID.String()), "")
 		return
 	}
 	if stop := s.processPhase(ctx, &steps, "validate", ctx.Spec.Execution.Validate, len(ctx.Spec.Execution.Run)); stop {
+		log.Printf("Extension execution failed: %s (validate phase)", ctx.Exec.ID.String())
 		s.logger.Log(logger.Error, fmt.Sprintf("Extension execution failed during validate phase: %s", ctx.Exec.ID.String()), "")
 		return
 	}
@@ -39,6 +42,7 @@ func (s *ExtensionService) executeRun(ctx *RunContext) {
 	ctx.Exec.CompletedAt = &finished
 	_ = s.storage.UpdateExecution(ctx.Exec)
 
+	log.Printf("Extension execution completed successfully: %s", ctx.Exec.ID.String())
 	s.logger.Log(logger.Info, fmt.Sprintf("Extension execution completed successfully: %s", ctx.Exec.ID.String()), "")
 	s.appendLog(ctx.Exec.ID, nil, "info", "execution_completed", map[string]interface{}{"status": ctx.Exec.Status})
 }
@@ -87,6 +91,7 @@ func (s *ExtensionService) markCancelled(ctx *RunContext) {
 	finished := time.Now()
 	ctx.Exec.CompletedAt = &finished
 	_ = s.storage.UpdateExecution(ctx.Exec)
+	log.Printf("Extension execution cancelled: %s", ctx.Exec.ID.String())
 }
 
 func (s *ExtensionService) beginStep(step *types.ExecutionStep) {

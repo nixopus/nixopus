@@ -11,45 +11,65 @@ import (
 
 func TestGetUserDetails(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, _, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("Failed to create user and organization: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
+
+	userID := auth.User.ID.String()
+	cookies := auth.GetAuthCookiesHeader()
 
 	testCases := []struct {
 		name           string
 		userID         string
 		expectedStatus int
-		token          string
+		cookies        string
+		description    string
 	}{
 		{
 			name:           "Get user details",
-			userID:         user.User.ID.String(),
+			userID:         userID,
 			expectedStatus: http.StatusOK,
-			token:          user.AccessToken,
+			cookies:        cookies,
+			description:    "should return user details with valid cookies",
 		},
 		{
-			name:           "Get user details with invalid token format",
-			userID:         user.User.ID.String(),
+			name:           "Get user details with invalid cookies",
+			userID:         userID,
 			expectedStatus: http.StatusUnauthorized,
-			token:          "invalid-token",
+			cookies:        "invalid-cookies",
+			description:    "should return 401 when invalid cookies are provided",
 		},
 		{
-			name:           "Get user details with expired token",
-			userID:         user.User.ID.String(),
+			name:           "Get user details without cookies",
+			userID:         userID,
 			expectedStatus: http.StatusUnauthorized,
-			token:          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+			cookies:        "",
+			description:    "should return 401 when no cookies are provided",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			Test(t,
-				Description(tc.name),
+			testSteps := []IStep{
+				Description(tc.description),
 				Get(tests.GetUserDetailsURL()),
-				Send().Headers("Authorization").Add("Bearer "+tc.token),
-				Expect().Status().Equal(int64(tc.expectedStatus)),
-			)
+			}
+
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
+			}
+
+			testSteps = append(testSteps, Expect().Status().Equal(int64(tc.expectedStatus)))
+
+			if tc.expectedStatus == http.StatusOK {
+				testSteps = append(testSteps,
+					Expect().Body().JSON().JQ(".status").Equal("success"),
+					Expect().Body().JSON().JQ(".data").NotEqual(nil),
+				)
+			}
+
+			Test(t, testSteps...)
 		})
 	}
 }

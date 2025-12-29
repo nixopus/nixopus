@@ -5,6 +5,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 @plugin "tailwindcss-animate";
@@ -521,5 +523,34 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Accessible scrollbar - visible on hover and focus */
+  .scrollbar-accessible {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+  }
+
+  .scrollbar-accessible::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-accessible::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-accessible::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.3);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  .scrollbar-accessible:hover::-webkit-scrollbar-thumb,
+  .scrollbar-accessible:focus-within::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.6);
+  }
+
+  .scrollbar-accessible::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.8);
   }
 }

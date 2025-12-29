@@ -1,0 +1,18 @@
+{
+  "layout": {
+    "breadcrumbs": {
+      "home": "ಮುಖಪುಟ",
+      "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+      "selfHost": "ಸ್ವಯಂ ಹೋಸ್ಟ್",
+      "fileManager": "ಫೈಲ್ ಮ್ಯಾನೇಜರ್",
+      "settings": "ಸೆಟ್ಟಿಂಗ್ಸ್",
+      "general": "ಸಾಮಾನ್ಯ",
+      "notifications": "ಅಧಿಸೂಚನೆಗಳು",
+      "team": "ತಂಡ",
+      "domains": "ಡೊಮೇನ್‌ಗಳು"
+    },
+    "terminal": {
+      "togglePosition": "ಟರ್ಮಿನಲ್ ಸ್ಥಾನವನ್ನು ಟಾಗಲ್ ಮಾಡಿ (Ctrl+T)"
+    }
+  }
+}

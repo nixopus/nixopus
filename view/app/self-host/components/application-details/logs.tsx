@@ -1,19 +1,16 @@
 'use client';
 
 import React from 'react';
-import './logViewer.css';
-import LogViewer from './log-viewer';
+import { DeploymentLogsTable } from '../deployment-logs';
 
-const ApplicationLogs = ({
-  id,
-  currentPage,
-  setCurrentPage
-}: {
+interface ApplicationLogsProps {
   id: string;
-  currentPage: number;
-  setCurrentPage: (page: number) => void;
-}) => {
-  return <LogViewer id={id} currentPage={currentPage} setCurrentPage={setCurrentPage} />;
+  currentPage?: number;
+  setCurrentPage?: (page: number) => void;
+}
+
+const ApplicationLogs = ({ id }: ApplicationLogsProps) => {
+  return <DeploymentLogsTable id={id} isDeployment={false} />;
 };
 
 export default ApplicationLogs;

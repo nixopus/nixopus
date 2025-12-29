@@ -13,17 +13,18 @@ import (
 
 func TestUpdateApplication(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	user, org, err := setup.GetTestAuthResponse()
+	auth, err := setup.GetSupertokensAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get test auth response: %v", err)
+		t.Fatalf("failed to get supertokens auth response: %v", err)
 	}
 
-	orgID := org.ID.String()
+	orgID := auth.OrganizationID
+	cookies := auth.GetAuthCookiesHeader()
 	testApplicationID := uuid.New()
 
 	testCases := []struct {
 		name           string
-		token          string
+		cookies        string
 		organizationID string
 		request        types.UpdateDeploymentRequest
 		expectedStatus int
@@ -31,7 +32,7 @@ func TestUpdateApplication(t *testing.T) {
 	}{
 		{
 			name:           "Update application without authentication",
-			token:          "",
+			cookies:        "",
 			organizationID: orgID,
 			request: types.UpdateDeploymentRequest{
 				ID:   testApplicationID,
@@ -39,11 +40,11 @@ func TestUpdateApplication(t *testing.T) {
 				Port: 3001,
 			},
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when no authentication token is provided",
+			description:    "Should return 401 when no authentication cookies are provided",
 		},
 		{
-			name:           "Update application with invalid token",
-			token:          "invalid-token",
+			name:           "Update application with invalid cookies",
+			cookies:        "invalid-cookies",
 			organizationID: orgID,
 			request: types.UpdateDeploymentRequest{
 				ID:   testApplicationID,
@@ -51,11 +52,11 @@ func TestUpdateApplication(t *testing.T) {
 				Port: 3001,
 			},
 			expectedStatus: http.StatusUnauthorized,
-			description:    "Should return 401 when invalid authentication token is provided",
+			description:    "Should return 401 when invalid authentication cookies are provided",
 		},
 		{
 			name:           "Update application without organization header",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: "",
 			request: types.UpdateDeploymentRequest{
 				ID:   testApplicationID,
@@ -67,7 +68,7 @@ func TestUpdateApplication(t *testing.T) {
 		},
 		{
 			name:           "Update application with missing ID",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			request: types.UpdateDeploymentRequest{
 				Name: "updated-app",
@@ -78,7 +79,7 @@ func TestUpdateApplication(t *testing.T) {
 		},
 		{
 			name:           "Update application that doesn't exist",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			request: types.UpdateDeploymentRequest{
 				ID:   testApplicationID,
@@ -90,7 +91,7 @@ func TestUpdateApplication(t *testing.T) {
 		},
 		{
 			name:           "Update application with valid data",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			request: types.UpdateDeploymentRequest{
 				ID:   testApplicationID,
@@ -105,7 +106,7 @@ func TestUpdateApplication(t *testing.T) {
 		},
 		{
 			name:           "Update application with invalid port",
-			token:          user.AccessToken,
+			cookies:        cookies,
 			organizationID: orgID,
 			request: types.UpdateDeploymentRequest{
 				ID:   testApplicationID,
@@ -125,8 +126,8 @@ func TestUpdateApplication(t *testing.T) {
 				Send().Body().JSON(tc.request),
 			}
 
-			if tc.token != "" {
-				testSteps = append(testSteps, Send().Headers("Authorization").Add("Bearer "+tc.token))
+			if tc.cookies != "" {
+				testSteps = append(testSteps, Send().Headers("Cookie").Add(tc.cookies))
 			}
 
 			if tc.organizationID != "" {

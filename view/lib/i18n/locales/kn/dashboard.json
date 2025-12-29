@@ -1,0 +1,88 @@
+{
+  "dashboard": {
+    "title": "ಡ್ಯಾಶ್ಬೋರ್ಡ್",
+    "description": "ನಿಮ್ಮ ಅಪ್ಲಿಕೇಶನ್ಗಳು ಮತ್ತು ಸಿಸ್ಟಮ್ ಸಂಪನ್ಮೂಲಗಳನ್ನು ಮೇಲ್ವಿಚಾರಣೆ ಮಾಡಿ",
+    "containers": {
+      "title": "ಕಂಟೇನರ್ಗಳು",
+      "table": {
+        "headers": {
+          "id": "ID",
+          "name": "ಹೆಸರು",
+          "image": "ಚಿತ್ರ",
+          "status": "ಸ್ಥಿತಿ",
+          "ports": "ಪೋರ್ಟ್ಗಳು",
+          "created": "ಸೃಷ್ಟಿಸಲಾಗಿದೆ"
+        },
+        "noContainers": "ಯಾವುದೇ ಕಂಟೇನರ್ಗಳು ಕಂಡುಬಂದಿಲ್ಲ",
+        "morePorts": "+{count} ಹೆಚ್ಚು"
+      },
+      "viewAll": "ಎಲ್ಲಾ ವೀಕ್ಷಿಸಿ"
+    },
+    "disk": {
+      "title": "ಡಿಸ್ಕ್ ಬಳಕೆ",
+      "used": "{value} GB ಬಳಸಲಾಗಿದೆ",
+      "total": "{value} GB ಒಟ್ಟು",
+      "percentage": "{value}%",
+      "table": {
+        "headers": {
+          "mount": "ಮೌಂಟ್",
+          "size": "ಗಾತ್ರ",
+          "used": "ಬಳಸಲಾಗಿದೆ",
+          "percentage": "%"
+        }
+      }
+    },
+    "load": {
+      "title": "ಸರಾಸರಿ ಲೋಡ್",
+      "labels": {
+        "oneMin": "1 ನಿಮಿಷ",
+        "fiveMin": "5 ನಿಮಿಷಗಳು",
+        "fifteenMin": "15 ನಿಮಿಷಗಳು"
+      }
+    },
+    "cpu": {
+      "title": "CPU ಬಳಕೆ",
+      "overall": "ಒಟ್ಟಾರೆ",
+      "usage": "ಬಳಕೆ (%)",
+      "cores": "ಕೋರ್‌ಗಳು",
+      "perCore": "ಪ್ರತಿ ಕೋರ್"
+    },
+    "memory": {
+      "title": "ಮೆಮೊರಿ ಬಳಕೆ",
+      "used": "{value} GB ಬಳಸಲಾಗಿದೆ",
+      "total": "{value} GB ಒಟ್ಟು",
+      "percentage": "{value}%"
+    },
+    "errors": {
+      "parseMessage": "ಸಂದೇಶವನ್ನು ಪಾರ್ಸ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ",
+      "unknownError": "ಅಜ್ಞಾತ ದೋಷ ಸಂಭವಿಸಿದೆ",
+      "connectionLost": "ಸಂಪರ್ಕ ಕಳೆದುಹೋಗಿದೆ. ಮರುಸಂಪರ್ಕಿಸಲು ಪ್ರಯತ್ನಿಸುತ್ತಿದೆ...",
+      "reconnectFailed": "ಮರುಸಂಪರ್ಕಿಸಲು ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+    },
+    "system": {
+      "title": "ಸಿಸ್ಟಮ್ ಮಾಹಿತಿ",
+      "osType": "OS ಪ್ರಕಾರ",
+      "cpu": "CPU",
+      "uptime": "ಅಪ್ಟೈಮ್",
+      "lastUpdated": "ಕೊನೆಯ ನವೀಕರಣ",
+      "hostname": "ಹೋಸ್ಟ್ನೇಮ್",
+      "kernelVersion": "ಕರ್ನಲ್ ಆವೃತ್ತಿ",
+      "architecture": "ಆರ್ಕಿಟೆಕ್ಚರ್",
+      "memory": "ಮೆಮೊರಿ",
+      "labels": {
+        "operatingSystem": "ಆಪರೇಟಿಂಗ್ ಸಿಸ್ಟಮ್",
+        "hostname": "ಹೋಸ್ಟ್ನೇಮ್",
+        "cpu": "CPU",
+        "cpuCores": "CPU ಕೋರ್‌ಗಳು",
+        "memory": "ಮೆಮೊರಿ",
+        "kernelVersion": "ಕರ್ನಲ್ ಆವೃತ್ತಿ",
+        "uptime": "ಅಪ್ಟೈಮ್",
+        "architecture": "ಆರ್ಕಿಟೆಕ್ಚರ್"
+      }
+    },
+    "smtpBanner": {
+      "message": "ಅಧಿಸೂಚನೆಗಳನ್ನು ಸ್ವೀಕರಿಸಲು SMTP ಸೆಟ್ಟಿಂಗ್ಗಳನ್ನು ಕಾನ್ಫಿಗರ್ ಮಾಡಿ",
+      "configure": "ಕಾನ್ಫಿಗರ್ ಮಾಡಿ"
+    }
+  }
+}

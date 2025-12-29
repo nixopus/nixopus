@@ -55,7 +55,7 @@ services:
       POSTGRES_USER: ${USERNAME:-postgres}
       POSTGRES_PASSWORD: ${PASSWORD:-changeme}
       POSTGRES_DB: ${DB_NAME:-postgres}
-      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
 
   caddy:
     env:

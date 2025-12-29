@@ -1,6 +1,7 @@
 # Workflow: Build and Push Docker Containers
 # Description: Builds and pushes Docker images for the API and Web UI whenever a version tag is pushed or a release is published.
 # Why: Provides reproducible, versioned container images for deployments.
+# Note: AMD64 and ARM64 builds run in parallel for faster builds, then merged into multi-platform manifests.
 
 name: Package Manager
 
@@ -24,13 +25,27 @@ env:
   NEXT_PUBLIC_PORT: 7443
 
 jobs:
-  build-and-push-api:
+  # Build API images for each architecture in parallel
+  build-api:
     runs-on: ubuntu-latest
+    # Allow ARM64 builds to fail without failing the workflow
+    continue-on-error: ${{ matrix.platform == 'linux/arm64' }}
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
 
     steps:
+      - name: Prepare platform pair
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
@@ -40,10 +55,12 @@ jobs:
       - name: Create .env file
         run: cp .env.sample api/.env
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          platforms: linux/amd64,linux/arm64
           driver-opts: |
             image=moby/buildkit:latest
             network=host
@@ -60,33 +77,56 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.API_IMAGE }}
-          tags: |
-            type=raw,value=latest
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
 
-      - name: Build and push API image
+      - name: Build and push API image by digest
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: ./api
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta-api.outputs.tags }}
+          platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta-api.outputs.labels }}
           build-args: |
             API_PORT=${{ env.API_PORT }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=api-${{ env.PLATFORM_PAIR }}
+          cache-to: type=gha,mode=max,scope=api-${{ env.PLATFORM_PAIR }}
           provenance: false
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.API_IMAGE }},push-by-digest=true,name-canonical=true,push=true
 
-  build-and-push-view:
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests/api
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/api/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-api-${{ env.PLATFORM_PAIR }}
+          path: /tmp/digests/api/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # Build View images for each architecture in parallel
+  build-view:
     runs-on: ubuntu-latest
+    # Allow ARM64 builds to fail without failing the workflow
+    continue-on-error: ${{ matrix.platform == 'linux/arm64' }}
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
 
     steps:
+      - name: Prepare platform pair
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
@@ -96,10 +136,12 @@ jobs:
       - name: Create .env file
         run: cp .env.sample view/.env
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          platforms: linux/amd64,linux/arm64
           driver-opts: |
             image=moby/buildkit:latest
             network=host
@@ -116,22 +158,163 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}
+
+      - name: Build and push View image by digest
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./view
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta-view.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_PORT=${{ env.NEXT_PUBLIC_PORT }}
+          cache-from: type=gha,scope=view-${{ env.PLATFORM_PAIR }}
+          cache-to: type=gha,mode=max,scope=view-${{ env.PLATFORM_PAIR }}
+          provenance: false
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests/view
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/view/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-view-${{ env.PLATFORM_PAIR }}
+          path: /tmp/digests/view/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # Merge API digests into multi-platform manifest
+  merge-api:
+    runs-on: ubuntu-latest
+    needs: build-api
+    # Run even if ARM64 build failed (as long as not cancelled)
+    if: always() && !cancelled()
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests/api
+          pattern: digests-api-*
+          merge-multiple: true
+
+      - name: Check for digests
+        id: check
+        run: |
+          if [ -d "/tmp/digests/api" ] && [ "$(ls -A /tmp/digests/api 2>/dev/null)" ]; then
+            echo "has_digests=true" >> $GITHUB_OUTPUT
+            echo "Found digests:"
+            ls -la /tmp/digests/api
+          else
+            echo "has_digests=false" >> $GITHUB_OUTPUT
+            echo "No digests found, skipping manifest creation"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.check.outputs.has_digests == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        if: steps.check.outputs.has_digests == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for API
+        if: steps.check.outputs.has_digests == 'true'
+        id: meta-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.API_IMAGE }}
           tags: |
             type=raw,value=latest
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
 
-      - name: Build and push View image
-        uses: docker/build-push-action@v5
+      - name: Create manifest list and push
+        if: steps.check.outputs.has_digests == 'true'
+        working-directory: /tmp/digests/api
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY }}/${{ env.API_IMAGE }}@sha256:%s ' *)
+
+      - name: Inspect image
+        if: steps.check.outputs.has_digests == 'true'
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.API_IMAGE }}:${{ steps.meta-api.outputs.version }}
+
+  # Merge View digests into multi-platform manifest
+  merge-view:
+    runs-on: ubuntu-latest
+    needs: build-view
+    # Run even if ARM64 build failed (as long as not cancelled)
+    if: always() && !cancelled()
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
         with:
-          context: ./view
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta-view.outputs.tags }}
-          labels: ${{ steps.meta-view.outputs.labels }}
-          build-args: |
-            NEXT_PUBLIC_PORT=${{ env.NEXT_PUBLIC_PORT }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
+          path: /tmp/digests/view
+          pattern: digests-view-*
+          merge-multiple: true
+
+      - name: Check for digests
+        id: check
+        run: |
+          if [ -d "/tmp/digests/view" ] && [ "$(ls -A /tmp/digests/view 2>/dev/null)" ]; then
+            echo "has_digests=true" >> $GITHUB_OUTPUT
+            echo "Found digests:"
+            ls -la /tmp/digests/view
+          else
+            echo "has_digests=false" >> $GITHUB_OUTPUT
+            echo "No digests found, skipping manifest creation"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.check.outputs.has_digests == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        if: steps.check.outputs.has_digests == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for View
+        if: steps.check.outputs.has_digests == 'true'
+        id: meta-view
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}
+          tags: |
+            type=raw,value=latest
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+      - name: Create manifest list and push
+        if: steps.check.outputs.has_digests == 'true'
+        working-directory: /tmp/digests/view
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}@sha256:%s ' *)
+
+      - name: Inspect image
+        if: steps.check.outputs.has_digests == 'true'
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}:${{ steps.meta-view.outputs.version }}

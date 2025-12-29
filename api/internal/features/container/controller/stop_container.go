@@ -5,18 +5,29 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *ContainerController) StopContainer(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *ContainerController) StopContainer(f fuego.ContextNoBody) (*types.ContainerActionResponse, error) {
 	containerID := f.PathParam("container_id")
 
 	if resp, skipped := c.isProtectedContainer(containerID, "stop"); skipped {
 		return resp, nil
 	}
 
-	err := c.dockerService.StopContainer(containerID, container.StopOptions{})
+	_, r := f.Response(), f.Request()
+	orgSettings := c.getOrganizationSettings(r)
+
+	// Use timeout from settings, default to 10 seconds if not set
+	timeout := 10
+	if orgSettings.ContainerStopTimeout != nil {
+		timeout = *orgSettings.ContainerStopTimeout
+	}
+
+	err := c.dockerService.StopContainer(containerID, container.StopOptions{
+		Timeout: &timeout,
+	})
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
@@ -25,9 +36,9 @@ func (c *ContainerController) StopContainer(f fuego.ContextNoBody) (*shared_type
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.ContainerActionResponse{
 		Status:  "success",
 		Message: "Container stopped successfully",
-		Data:    map[string]string{"status": "stopped"},
+		Data:    types.ContainerStatusData{Status: "stopped"},
 	}, nil
 }

@@ -5,9 +5,6 @@ import { Mail, User, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { TabsContent } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { UserSettings, User as UserType } from '@/redux/types/user';
 // import { ModeToggler } from '@/components/ui/theme-toggler';
@@ -37,7 +34,7 @@ interface AccountSectionProps {
   isUpdatingAutoUpdate: boolean;
   handleThemeChange: (theme: string) => void;
   handleLanguageChange: (language: string) => void;
-  // handleAutoUpdateChange: (autoUpdate: boolean) => void;
+  handleAutoUpdateChange: (autoUpdate: boolean) => void;
   handleFontUpdate: (fontFamily: string, fontSize: number) => Promise<void>;
 }
 
@@ -59,7 +56,7 @@ function AccountSection({
   isUpdatingAutoUpdate,
   handleThemeChange,
   handleLanguageChange,
-  // handleAutoUpdateChange,
+  handleAutoUpdateChange,
   handleFontUpdate
 }: AccountSectionProps) {
   const { t } = useTranslation();
@@ -92,13 +89,17 @@ function AccountSection({
   };
 
   return (
-    <TabsContent value="account" className="space-y-4 mt-4">
-      <Card>
-        <CardHeader>
-          <TypographySmall>{t('settings.account.title')}</TypographySmall>
-          <TypographyMuted>{t('settings.account.description')}</TypographyMuted>
-        </CardHeader>
-        <CardContent className="space-y-6">
+    <div className="space-y-8">
+      <div className="space-y-6">
+        <div>
+          <TypographySmall className="text-sm font-medium">
+            {t('settings.account.title')}
+          </TypographySmall>
+          <TypographyMuted className="text-xs mt-1">
+            {t('settings.account.description')}
+          </TypographyMuted>
+        </div>
+        <div className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="username" className="flex items-center gap-2">
               <User size={16} />
@@ -125,7 +126,7 @@ function AccountSection({
             </div>
 
             {usernameError && (
-              <TypographySmall className="text-red-500">{usernameError}</TypographySmall>
+              <TypographySmall className="text-red-500 text-xs">{usernameError}</TypographySmall>
             )}
 
             {usernameSuccess && (
@@ -136,8 +137,6 @@ function AccountSection({
               </Alert>
             )}
           </div>
-
-          <Separator />
 
           <div className="space-y-2">
             <Label htmlFor="email" className="flex items-center gap-2">
@@ -170,7 +169,9 @@ function AccountSection({
                     </Button>
                   </RBACGuard>
                   {verificationError && (
-                    <TypographySmall className="text-red-500">{verificationError}</TypographySmall>
+                    <TypographySmall className="text-red-500 text-xs">
+                      {verificationError}
+                    </TypographySmall>
                   )}
                   {verificationSent && (
                     <Alert variant="default">
@@ -185,17 +186,21 @@ function AccountSection({
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <TypographySmall>{t('settings.account.preferences.title')}</TypographySmall>
-          <TypographyMuted>{t('settings.account.preferences.description')}</TypographyMuted>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="space-y-6">
+        <div>
+          <TypographySmall className="text-sm font-medium">
+            {t('settings.account.preferences.title')}
+          </TypographySmall>
+          <TypographyMuted className="text-xs mt-1">
+            {t('settings.account.preferences.description')}
+          </TypographyMuted>
+        </div>
+        <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <TypographyMuted>{t('settings.preferences.font')}</TypographyMuted>
+            <TypographyMuted className="text-sm">{t('settings.preferences.font')}</TypographyMuted>
             <RBACGuard resource="user" action="update">
               <SelectWrapper
                 value={userSettings.font_family || 'outfit'}
@@ -220,50 +225,51 @@ function AccountSection({
               />
             </RBACGuard>
           </div>
-        </CardContent>
-      </Card>
-
-      <div className="mt-6">
-        <Card>
-          <CardHeader>
-            <TypographySmall>{t('settings.preferences.language.title')}</TypographySmall>
-            <TypographyMuted>{t('settings.preferences.language.description')}</TypographyMuted>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <TypographyMuted>{t('settings.preferences.language.select')}</TypographyMuted>
-              <RBACGuard resource="user" action="update">
-                <LanguageSwitcher
-                  handleLanguageChange={handleLanguageChange}
-                  isUpdatingLanguage={isUpdatingLanguage}
-                  userSettings={userSettings}
-                />
-              </RBACGuard>
-            </div>
-          </CardContent>
-        </Card>
+        </div>
       </div>
-      {/* <div className="mt-6">
-        <Card>
-          <CardHeader>
-            <TypographySmall>{t('settings.preferences.autoUpdate.title')}</TypographySmall>
-            <TypographyMuted>{t('settings.preferences.autoUpdate.description')}</TypographyMuted>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <TypographyMuted>{t('settings.preferences.autoUpdate.select')}</TypographyMuted>
-              <RBACGuard resource="user" action="update">
-                <Switch
-                  checked={userSettings.auto_update}
-                  onCheckedChange={handleAutoUpdateChange}
-                  disabled={isUpdatingAutoUpdate}
-                />
-              </RBACGuard>
-            </div>
-          </CardContent>
-        </Card>
-      </div> */}
-    </TabsContent>
+
+      <div className="space-y-6">
+        <div>
+          <TypographySmall className="text-sm font-medium">
+            {t('settings.preferences.language.title')}
+          </TypographySmall>
+          <TypographyMuted className="text-xs mt-1">
+            {t('settings.preferences.language.description')}
+          </TypographyMuted>
+        </div>
+        <div className="flex items-center justify-between">
+          <TypographyMuted className="text-sm">
+            {t('settings.preferences.language.select')}
+          </TypographyMuted>
+          <RBACGuard resource="user" action="update">
+            <LanguageSwitcher
+              handleLanguageChange={handleLanguageChange}
+              isUpdatingLanguage={isUpdatingLanguage}
+              userSettings={userSettings}
+            />
+          </RBACGuard>
+        </div>
+      </div>
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2">
+            <TypographySmall className="text-sm font-medium">
+              {t('settings.preferences.autoUpdate.title')}
+            </TypographySmall>
+            <TypographyMuted className="text-xs mt-1">
+              {t('settings.preferences.autoUpdate.description')}
+            </TypographyMuted>
+          </div>
+          <RBACGuard resource="user" action="update">
+            <Switch
+              checked={userSettings.auto_update}
+              onCheckedChange={handleAutoUpdateChange}
+              disabled={isUpdatingAutoUpdate}
+            />
+          </RBACGuard>
+        </div>
+      </div>
+    </div>
   );
 }
 

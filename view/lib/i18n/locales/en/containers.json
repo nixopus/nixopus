@@ -1,0 +1,129 @@
+{
+  "containers": {
+    "title": "Containers",
+    "description": "Manage and monitor your containers",
+    "list": "Container List",
+    "name": "Name",
+    "image": "Image",
+    "status": "Status",
+    "ports": "Ports",
+    "actions": "Actions",
+    "refresh": "Refresh",
+    "start": "Start",
+    "stop": "Stop",
+    "remove": "Remove",
+    "restart": "Restart",
+    "start_success": "Container started successfully",
+    "stop_success": "Container stopped successfully",
+    "prune_images": "Prune Images",
+    "prune_build_cache": "Prune Build Cache",
+    "prune_images_success": "Images pruned successfully",
+    "prune_build_cache_success": "Build cache pruned successfully",
+    "prune_images_error": "Failed to prune images",
+    "prune_build_cache_error": "Failed to prune build cache",
+    "remove_success": "Container removed successfully",
+    "start_error": "Failed to start container",
+    "stop_error": "Failed to stop container",
+    "remove_error": "Failed to remove container",
+    "restart_success": "Container restarted successfully",
+    "restart_error": "Failed to restart container",
+    "fetch_error": "Failed to fetch containers",
+    "overview": "Overview",
+    "logs": {
+      "title": "Logs",
+      "copy": "Copy logs",
+      "download": "Download logs",
+      "copySuccess": "Logs copied to clipboard",
+      "copyError": "Failed to copy logs",
+      "copyEmpty": "No logs to copy",
+      "downloadSuccess": "Logs downloaded",
+      "downloadEmpty": "No logs to download"
+    },
+    "details": "Details",
+    "basic_info": "Basic Info",
+    "resources": "Resources",
+    "cpu_shares": "CPU Shares",
+    "memory": "Memory",
+    "command": "Command",
+    "created": "Created",
+    "ip_address": "IP Address",
+    "load_more_logs": "Load More Logs",
+    "no_logs": "No logs found",
+    "no_containers": "No containers found",
+    "more_ports": "+{count} more",
+    "no_ports_exposed": "No ports exposed",
+    "deleteDialog": {
+      "title": "Delete Container",
+      "description": "Are you sure you want to delete this container?",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "pruneImagesDialog": {
+      "title": "Prune Images",
+      "description": "Are you sure you want to prune all images?",
+      "confirm": "Prune",
+      "cancel": "Cancel"
+    },
+    "pruneBuildCacheDialog": {
+      "title": "Prune Build Cache",
+      "description": "Are you sure you want to prune all build cache?",
+      "confirm": "Prune",
+      "cancel": "Cancel"
+    },
+    "images": {
+      "title": "Images",
+      "id": "ID",
+      "tags": "Tags",
+      "created": "Created",
+      "size": "Size",
+      "containers": "Containers",
+      "none": "<none>"
+    },
+    "resourceLimits": {
+      "title": "Resource Limits",
+      "description": "Configure memory, swap, and CPU limits for this container",
+      "editButton": "Edit Limits",
+      "memory": {
+        "label": "Memory Limit",
+        "description": "Maximum memory the container can use. Set to 0 for unlimited.",
+        "placeholder": "e.g., 512",
+        "unit": "MB",
+        "unlimited": "Unlimited"
+      },
+      "memorySwap": {
+        "label": "Memory + Swap Limit",
+        "description": "Total memory including swap. Set to 0 for unlimited, or -1 for unlimited swap.",
+        "placeholder": "e.g., 1024",
+        "unit": "MB",
+        "unlimited": "Unlimited"
+      },
+      "cpuShares": {
+        "label": "CPU Shares",
+        "description": "Relative CPU weight. Default is 1024. Higher values get more CPU time.",
+        "placeholder": "e.g., 1024"
+      },
+      "presets": {
+        "label": "Quick Presets",
+        "small": "Small (256 MB)",
+        "medium": "Medium (512 MB)",
+        "large": "Large (1 GB)",
+        "xlarge": "X-Large (2 GB)",
+        "unlimited": "Unlimited"
+      },
+      "buttons": {
+        "save": "Save Changes",
+        "saving": "Saving...",
+        "cancel": "Cancel",
+        "reset": "Reset to Current"
+      },
+      "success": "Resource limits updated successfully",
+      "error": "Failed to update resource limits",
+      "warnings": "Updated with warnings",
+      "validation": {
+        "memoryMin": "Memory must be 0 (unlimited) or at least 6 MB",
+        "swapMin": "Swap must be -1, 0, or greater than memory limit",
+        "cpuSharesMin": "CPU shares must be at least 2"
+      }
+    }
+  }
+}

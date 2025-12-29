@@ -1,32 +1,76 @@
 'use client';
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, MoreVertical, RotateCcw, TrashIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  ExternalLink,
+  MoreVertical,
+  RotateCcw,
+  Trash2,
+  Rocket,
+  RefreshCw,
+  X,
+  Plus
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Application } from '@/redux/types/applications';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import {
   useRedeployApplicationMutation,
-  useRestartApplicationMutation
+  useRestartApplicationMutation,
+  useDeleteApplicationMutation,
+  useUpdateApplicationLabelsMutation
 } from '@/redux/services/deploy/applicationsApi';
-import { useDeleteApplicationMutation } from '@/redux/services/deploy/applicationsApi';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
+import { cn } from '@/lib/utils';
 
 const ApplicationDetailsHeader = ({ application }: { application?: Application }) => {
   const { t } = useTranslation();
   const [redeployApplication, { isLoading: isRedeploying }] = useRedeployApplicationMutation();
   const [deleteApplication, { isLoading: isDeleting }] = useDeleteApplicationMutation();
+  const [updateLabels, { isLoading: isUpdatingLabels }] = useUpdateApplicationLabelsMutation();
   const router = useRouter();
   const [restartApplication, { isLoading: isRestarting }] = useRestartApplicationMutation();
+
+  const [isAddingLabel, setIsAddingLabel] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
+  const labelInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isAddingLabel && labelInputRef.current) {
+      labelInputRef.current.focus();
+    }
+  }, [isAddingLabel]);
+
+  const latestDeployment = application?.deployments?.[0];
+  const currentStatus = latestDeployment?.status?.status;
+
+  const getStatusConfig = (status?: string) => {
+    switch (status) {
+      case 'deployed':
+        return { bg: 'bg-emerald-500/10', dot: 'bg-emerald-500', pulse: true };
+      case 'failed':
+        return { bg: 'bg-red-500/10', dot: 'bg-red-500', pulse: false };
+      case 'building':
+      case 'deploying':
+      case 'cloning':
+        return { bg: 'bg-amber-500/10', dot: 'bg-amber-500', pulse: true };
+      default:
+        return { bg: 'bg-zinc-500/10', dot: 'bg-zinc-500', pulse: false };
+    }
+  };
+
+  const statusConfig = getStatusConfig(currentStatus);
 
   const handleDelete = async () => {
     try {
@@ -42,7 +86,7 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
 
   const handleRestart = async () => {
     try {
-      await restartApplication({ id: application?.deployments?.[0]?.id || '' }).unwrap();
+      await restartApplication({ id: latestDeployment?.id || '' }).unwrap();
       toast.success(t('selfHost.applicationDetails.header.actions.restart.success'));
     } catch (error) {
       toast.error(t('selfHost.applicationDetails.header.actions.restart.error'));
@@ -63,85 +107,244 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
     }
   };
 
+  const handleRemoveLabel = async (labelToRemove: string) => {
+    if (!application?.id || !application?.labels) return;
+    const updated = application.labels.filter((l) => l !== labelToRemove);
+    await updateLabels({
+      id: application.id,
+      labels: updated
+    }).unwrap();
+  };
+
+  const handleAddLabel = async () => {
+    const value = newLabel.trim();
+    if (!value || !application?.id) {
+      setIsAddingLabel(false);
+      setNewLabel('');
+      return;
+    }
+    const currentLabels = application.labels || [];
+    const updated = [...new Set([...currentLabels, value])];
+    await updateLabels({
+      id: application.id,
+      labels: updated
+    }).unwrap();
+    setIsAddingLabel(false);
+    setNewLabel('');
+  };
+
+  const handleLabelKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      await handleAddLabel();
+    } else if (e.key === 'Escape') {
+      setIsAddingLabel(false);
+      setNewLabel('');
+    }
+  };
+
   return (
     <ResourceGuard resource="deploy" action="read" loadingFallback={null}>
-      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex items-start">
-          <div className="mr-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <div
+            className={cn('w-12 h-12 rounded-xl flex items-center justify-center', statusConfig.bg)}
+          >
+            <div
+              className={cn(
+                'w-3 h-3 rounded-full',
+                statusConfig.dot,
+                statusConfig.pulse && 'animate-pulse'
+              )}
+            />
+          </div>
+          <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold capitalize sm:text-3xl">{application?.name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight capitalize">{application?.name}</h1>
               <Button
                 variant="ghost"
                 size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
                 onClick={() => window.open('https://' + application?.domain, '_blank')}
                 aria-label={t('selfHost.applicationDetails.header.actions.open')}
               >
-                <ExternalLink className="h-5 w-5" />
+                <ExternalLink className="h-4 w-4" />
               </Button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <a
+                href={'https://' + application?.domain}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-muted-foreground hover:text-foreground font-mono bg-muted px-2 py-0.5 rounded transition-colors"
+              >
+                {application?.domain}
+              </a>
+              <Badge
+                variant="outline"
+                className={cn(
+                  'text-xs capitalize',
+                  application?.environment === 'production'
+                    ? 'border-emerald-500/30 text-emerald-500 bg-emerald-500/10'
+                    : application?.environment === 'staging'
+                      ? 'border-amber-500/30 text-amber-500 bg-amber-500/10'
+                      : 'border-blue-500/30 text-blue-500 bg-blue-500/10'
+                )}
+              >
+                {application?.environment}
+              </Badge>
+              {application?.labels && application.labels.length > 0 && (
+                <>
+                  {application.labels.map((label, index) => (
+                    <HeaderLabelBadge
+                      key={index}
+                      label={label}
+                      onRemove={() => handleRemoveLabel(label)}
+                    />
+                  ))}
+                </>
+              )}
+              <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+                {isAddingLabel ? (
+                  <Input
+                    ref={labelInputRef}
+                    value={newLabel}
+                    onChange={(e) => setNewLabel(e.target.value)}
+                    onKeyDown={handleLabelKeyDown}
+                    onBlur={handleAddLabel}
+                    className="h-5 w-24 text-xs px-2 py-0"
+                    placeholder="New label"
+                    disabled={isUpdatingLabels}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingLabel(true)}
+                    className="inline-flex items-center gap-1 h-5 px-2 rounded-md border border-dashed border-muted-foreground/40 text-xs text-muted-foreground hover:bg-muted hover:border-muted-foreground/60 transition-colors"
+                  >
+                    <Plus size={10} />
+                    Add
+                  </button>
+                )}
+              </AnyPermissionGuard>
             </div>
           </div>
         </div>
+
         <div className="flex items-center gap-2">
           <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    disabled={isRestarting}
-                    onClick={handleRestart}
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t('selfHost.applicationDetails.header.actions.restart.button')}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isRestarting}
+              onClick={handleRestart}
+              className="gap-2"
+            >
+              <RotateCcw className={cn('h-4 w-4', isRestarting && 'animate-spin')} />
+              {t('selfHost.applicationDetails.header.actions.restart.button')}
+            </Button>
           </AnyPermissionGuard>
-          <AnyPermissionGuard permissions={['deploy:delete']} loadingFallback={null}>
-            <DeleteDialog
-              title={t('selfHost.applicationDetails.header.actions.delete.dialog.title').replace(
-                '{name}',
-                application?.name || ''
-              )}
-              description={t(
-                'selfHost.applicationDetails.header.actions.delete.dialog.description'
-              ).replace('{name}', application?.name || '')}
-              onConfirm={handleDelete}
-              trigger={
-                <Button variant="outline" size="icon">
-                  <TrashIcon className="h-4 w-4" />
-                </Button>
-              }
-              isDeleting={isDeleting}
-              variant="destructive"
-              icon={TrashIcon}
-            />
-          </AnyPermissionGuard>
+
           <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleRedeploy(true)} disabled={isRedeploying}>
-                  {t('selfHost.applicationDetails.header.actions.redeploy.button')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleRedeploy(false)} disabled={isRedeploying}>
+            <Button
+              variant="default"
+              size="sm"
+              disabled={isRedeploying}
+              onClick={() => handleRedeploy(true)}
+              className="gap-2"
+            >
+              <Rocket className="h-4 w-4" />
+              {t('selfHost.applicationDetails.header.actions.redeploy.button')}
+            </Button>
+          </AnyPermissionGuard>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-9 w-9">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+                <DropdownMenuItem
+                  onClick={() => handleRedeploy(false)}
+                  disabled={isRedeploying}
+                  className="gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
                   {t('selfHost.applicationDetails.header.actions.redeploy.forceButton')}
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </AnyPermissionGuard>
+              </AnyPermissionGuard>
+              <AnyPermissionGuard permissions={['deploy:delete']} loadingFallback={null}>
+                <DropdownMenuSeparator />
+                <DeleteDialog
+                  title={t(
+                    'selfHost.applicationDetails.header.actions.delete.dialog.title'
+                  ).replace('{name}', application?.name || '')}
+                  description={t(
+                    'selfHost.applicationDetails.header.actions.delete.dialog.description'
+                  ).replace('{name}', application?.name || '')}
+                  onConfirm={handleDelete}
+                  trigger={
+                    <DropdownMenuItem
+                      onSelect={(e) => e.preventDefault()}
+                      className="gap-2 text-red-500 focus:text-red-500"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {t('selfHost.applicationDetails.header.actions.delete.button')}
+                    </DropdownMenuItem>
+                  }
+                  isDeleting={isDeleting}
+                  variant="destructive"
+                  icon={Trash2}
+                />
+              </AnyPermissionGuard>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </ResourceGuard>
   );
 };
+
+interface HeaderLabelBadgeProps {
+  label: string;
+  onRemove: () => void;
+}
+
+function HeaderLabelBadge({ label, onRemove }: HeaderLabelBadgeProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        'text-xs px-2 py-0.5 gap-1 relative',
+        'transition-all duration-200',
+        'border-violet-500/30 text-violet-500 bg-violet-500/10',
+        'pr-1.5'
+      )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <span className={cn('transition-opacity duration-200', isHovered && 'opacity-70')}>
+        {label}
+      </span>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className={cn(
+          'transition-all duration-200',
+          'hover:text-destructive',
+          'flex items-center justify-center',
+          isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-75 w-0'
+        )}
+      >
+        <X size={12} />
+      </button>
+    </Badge>
+  );
+}
 
 export default ApplicationDetailsHeader;
