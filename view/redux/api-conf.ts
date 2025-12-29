@@ -78,6 +78,8 @@ export enum DEPLOY {
   CREATE_APPLICATION = 'v1/deploy/application',
   CREATE_PROJECT = 'v1/deploy/application/project',
   DEPLOY_PROJECT = 'v1/deploy/application/project/deploy',
+  DUPLICATE_PROJECT = 'v1/deploy/application/project/duplicate',
+  GET_PROJECT_FAMILY = 'v1/deploy/application/project/family',
   GET_APPLICATION = 'v1/deploy/application',
   UPDATE_APPLICATION = 'v1/deploy/application',
   REDEPLOY_APPLICATION = 'v1/deploy/application/redeploy',

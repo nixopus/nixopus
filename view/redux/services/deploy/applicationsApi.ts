@@ -7,6 +7,8 @@ import {
   CreateApplicationRequest,
   CreateProjectRequest,
   DeployProjectRequest,
+  DuplicateProjectRequest,
+  ProjectFamilyResponse,
   ReDeployApplicationRequest,
   UpdateDeploymentRequest,
   ApplicationDeployment
@@ -63,6 +65,27 @@ export const deployApi = createApi({
       invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
       transformResponse: (response: { data: Application }) => {
         return response.data;
+      }
+    }),
+    duplicateProject: builder.mutation<Application, DuplicateProjectRequest>({
+      query: (data) => ({
+        url: DEPLOY.DUPLICATE_PROJECT,
+        method: 'POST',
+        body: data
+      }),
+      invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: Application }) => {
+        return response.data;
+      }
+    }),
+    getProjectFamily: builder.query<Application[], { familyId: string }>({
+      query: ({ familyId }) => ({
+        url: `${DEPLOY.GET_PROJECT_FAMILY}?family_id=${familyId}`,
+        method: 'GET'
+      }),
+      providesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: ProjectFamilyResponse }) => {
+        return response.data.projects;
       }
     }),
     updateDeployment: builder.mutation<Application, UpdateDeploymentRequest>({
@@ -228,6 +251,8 @@ export const {
   useCreateDeploymentMutation,
   useCreateProjectMutation,
   useDeployProjectMutation,
+  useDuplicateProjectMutation,
+  useGetProjectFamilyQuery,
   useGetApplicationByIdQuery,
   useUpdateDeploymentMutation,
   useRedeployApplicationMutation,
