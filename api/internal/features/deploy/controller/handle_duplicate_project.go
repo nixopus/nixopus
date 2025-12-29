@@ -143,3 +143,61 @@ func (c *DeployController) HandleGetProjectFamily(f fuego.ContextNoBody) (*types
 		},
 	}, nil
 }
+
+// HandleGetEnvironmentsInFamily retrieves all environments that exist in a project family.
+func (c *DeployController) HandleGetEnvironmentsInFamily(f fuego.ContextNoBody) (*types.EnvironmentsInFamilyResponse, error) {
+	familyIDStr := f.QueryParam("family_id")
+	if familyIDStr == "" {
+		c.logger.Log(logger.Error, "family_id is required", "")
+		return nil, fuego.HTTPError{
+			Err:    types.ErrMissingID,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	familyID, err := uuid.Parse(familyIDStr)
+	if err != nil {
+		c.logger.Log(logger.Error, "invalid family_id", err.Error())
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	user := utils.GetUser(f.Response(), f.Request())
+	if user == nil {
+		c.logger.Log(logger.Error, "user authentication failed", "")
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
+	}
+
+	organizationID := utils.GetOrganizationID(f.Request())
+	if organizationID == uuid.Nil {
+		c.logger.Log(logger.Error, "organization not found", "")
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
+	}
+
+	c.logger.Log(logger.Info, "getting environments in family", "family_id: "+familyID.String())
+
+	environments, err := c.service.GetEnvironmentsInFamily(familyID, organizationID)
+	if err != nil {
+		c.logger.Log(logger.Error, "failed to get environments in family", err.Error())
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	return &types.EnvironmentsInFamilyResponse{
+		Status:  "success",
+		Message: "Environments retrieved successfully",
+		Data: types.EnvironmentsInFamilyResponseData{
+			Environments: environments,
+		},
+	}, nil
+}

@@ -46,6 +46,7 @@ type DeployRepository interface {
 	GetProjectsByFamilyID(familyID uuid.UUID, organizationID uuid.UUID) ([]shared_types.Application, error)
 	UpdateApplicationFamilyID(applicationID uuid.UUID, familyID *uuid.UUID) error
 	IsEnvironmentInFamily(familyID uuid.UUID, environment shared_types.Environment) (bool, error)
+	GetEnvironmentsInFamily(familyID uuid.UUID, organizationID uuid.UUID) ([]shared_types.Environment, error)
 	CountFamilyMembers(familyID uuid.UUID) (int, error)
 	ClearFamilyIDIfSingleMember(familyID uuid.UUID) error
 }
@@ -481,6 +482,24 @@ func (s *DeployStorage) IsEnvironmentInFamily(familyID uuid.UUID, environment sh
 		Count(s.Ctx)
 
 	return count > 0, err
+}
+
+// GetEnvironmentsInFamily retrieves all environments that exist in a family.
+func (s *DeployStorage) GetEnvironmentsInFamily(familyID uuid.UUID, organizationID uuid.UUID) ([]shared_types.Environment, error) {
+	var environments []shared_types.Environment
+
+	err := s.DB.NewSelect().
+		Model((*shared_types.Application)(nil)).
+		Column("environment").
+		Where("family_id = ? AND organization_id = ?", familyID, organizationID).
+		Distinct().
+		Scan(s.Ctx, &environments)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return environments, nil
 }
 
 // CountFamilyMembers counts the number of applications in a family.

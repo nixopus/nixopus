@@ -59,6 +59,12 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 	// Generate auto name based on source name and new environment
 	newName := generateDuplicateName(sourceProject.Name, string(req.Environment))
 
+	// Use provided branch if available, otherwise use source branch
+	branch := sourceProject.Branch
+	if strings.TrimSpace(req.Branch) != "" {
+		branch = strings.TrimSpace(req.Branch)
+	}
+
 	now := time.Now()
 	newProject := shared_types.Application{
 		ID:                   uuid.New(),
@@ -68,7 +74,7 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 		Environment:          req.Environment,
 		BuildPack:            sourceProject.BuildPack,
 		Repository:           sourceProject.Repository,
-		Branch:               sourceProject.Branch,
+		Branch:               branch,
 		PreRunCommand:        sourceProject.PreRunCommand,
 		PostRunCommand:       sourceProject.PostRunCommand,
 		Port:                 sourceProject.Port,
@@ -125,6 +131,19 @@ func (s *DeployService) GetProjectFamily(familyID uuid.UUID, organizationID uuid
 	}
 
 	return projects, nil
+}
+
+// GetEnvironmentsInFamily retrieves all environments that exist in a project family.
+func (s *DeployService) GetEnvironmentsInFamily(familyID uuid.UUID, organizationID uuid.UUID) ([]shared_types.Environment, error) {
+	s.logger.Log(logger.Info, "getting environments in family", "family_id: "+familyID.String())
+
+	environments, err := s.storage.GetEnvironmentsInFamily(familyID, organizationID)
+	if err != nil {
+		s.logger.Log(logger.Error, "failed to get environments in family", err.Error())
+		return nil, err
+	}
+
+	return environments, nil
 }
 
 // generateDuplicateName creates a name for the duplicate project.

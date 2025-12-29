@@ -98,6 +98,7 @@ type DuplicateProjectRequest struct {
 	SourceProjectID uuid.UUID                `json:"source_project_id"`
 	Domain          string                   `json:"domain"`
 	Environment     shared_types.Environment `json:"environment"`
+	Branch          string                   `json:"branch,omitempty"`
 }
 
 // GetProjectFamilyRequest is used to get all projects in a family.
@@ -115,6 +116,18 @@ type ProjectFamilyResponse struct {
 	Status  string                    `json:"status"`
 	Message string                    `json:"message"`
 	Data    ProjectFamilyResponseData `json:"data"`
+}
+
+// EnvironmentsInFamilyResponseData contains the environments in a family.
+type EnvironmentsInFamilyResponseData struct {
+	Environments []shared_types.Environment `json:"environments"`
+}
+
+// EnvironmentsInFamilyResponse is the typed response for environments in family.
+type EnvironmentsInFamilyResponse struct {
+	Status  string                           `json:"status"`
+	Message string                           `json:"message"`
+	Data    EnvironmentsInFamilyResponseData `json:"data"`
 }
 
 // MessageResponse is a generic response with just status and message
