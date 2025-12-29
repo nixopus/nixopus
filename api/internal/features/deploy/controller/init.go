@@ -56,7 +56,7 @@ func NewDeployController(
 	return &DeployController{
 		store:        store,
 		validator:    validation.NewValidator(),
-		service:      service.NewDeployService(store, ctx, l, &storage, docker_repo, github_service),
+		service:      service.NewDeployService(store, ctx, l, &storage),
 		ctx:          ctx,
 		logger:       l,
 		notification: notificationManager,

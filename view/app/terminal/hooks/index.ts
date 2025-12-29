@@ -2,3 +2,4 @@ export { useTerminalSessions, type Session, type SplitPane } from './useTerminal
 export { useTerminalDimensions } from './useTerminalDimensions';
 export { useTerminalStyles } from './useTerminalStyles';
 export { useSplitPaneHeader } from './useSplitPaneHeader';
+export { useTerminalKeyboardShortcuts } from './useTerminalKeyboardShortcuts';
