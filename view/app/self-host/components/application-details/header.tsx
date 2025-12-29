@@ -34,6 +34,8 @@ import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { cn } from '@/lib/utils';
+import { ProjectFamilySwitcher } from './project-family-switcher';
+import { DuplicateProjectDialog } from './duplicate-project-dialog';
 
 const ApplicationDetailsHeader = ({ application }: { application?: Application }) => {
   const { t } = useTranslation();
@@ -176,6 +178,7 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight capitalize">{application?.name}</h1>
+              {application && <ProjectFamilySwitcher application={application} />}
               <Button
                 variant="ghost"
                 size="icon"
@@ -306,6 +309,9 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
                   <RefreshCw className="h-4 w-4" />
                   {t('selfHost.applicationDetails.header.actions.redeploy.forceButton')}
                 </DropdownMenuItem>
+              </AnyPermissionGuard>
+              <AnyPermissionGuard permissions={['deploy:create']} loadingFallback={null}>
+                {application && <DuplicateProjectDialog application={application} />}
               </AnyPermissionGuard>
               <AnyPermissionGuard permissions={['deploy:delete']} loadingFallback={null}>
                 <DropdownMenuSeparator />

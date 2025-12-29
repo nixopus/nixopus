@@ -219,6 +219,28 @@
     },
     "applicationDetails": {
       "header": {
+        "familySwitcher": {
+          "label": "Switch between project environments",
+          "title": "Project Environments"
+        },
+        "duplicate": {
+          "button": "Duplicate Project",
+          "validation": "Please fill in all required fields",
+          "success": "Project duplicated successfully",
+          "error": "Failed to duplicate project",
+          "dialog": {
+            "title": "Duplicate Project",
+            "description": "Create a copy of this project with a different environment. All configurations will be copied.",
+            "sourceProject": "Source Project",
+            "environment": "Environment",
+            "selectEnvironment": "Select environment",
+            "environmentHint": "Only environments not already used in this project family are available",
+            "domain": "Domain",
+            "domainHint": "Enter the domain for the new project",
+            "duplicating": "Duplicating...",
+            "duplicateButton": "Duplicate"
+          }
+        },
         "actions": {
           "restart": {
             "button": "Restart",

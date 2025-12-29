@@ -24,6 +24,7 @@ export type Application = {
   dockerfile_path?: string;
   base_path?: string;
   labels?: string[];
+  family_id?: string;
 };
 
 export type ApplicationStatus = {
@@ -140,4 +141,16 @@ export interface CreateProjectRequest {
 // DeployProjectRequest is used to trigger deployment of an existing project.
 export interface DeployProjectRequest {
   id: string;
+}
+
+// DuplicateProjectRequest is used to create a duplicate of an existing project with a different environment.
+export interface DuplicateProjectRequest {
+  source_project_id: string;
+  domain: string;
+  environment: Environment;
+}
+
+// ProjectFamilyResponse contains the projects in a family.
+export interface ProjectFamilyResponse {
+  projects: Application[];
 }
