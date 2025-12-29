@@ -93,6 +93,30 @@ type RestartDeploymentRequest struct {
 	ID uuid.UUID `json:"id"`
 }
 
+// DuplicateProjectRequest is used to create a duplicate of an existing project with a different environment.
+type DuplicateProjectRequest struct {
+	SourceProjectID uuid.UUID                `json:"source_project_id"`
+	Domain          string                   `json:"domain"`
+	Environment     shared_types.Environment `json:"environment"`
+}
+
+// GetProjectFamilyRequest is used to get all projects in a family.
+type GetProjectFamilyRequest struct {
+	FamilyID uuid.UUID `json:"family_id"`
+}
+
+// ProjectFamilyResponseData contains the data for project family response.
+type ProjectFamilyResponseData struct {
+	Projects []shared_types.Application `json:"projects"`
+}
+
+// ProjectFamilyResponse is the typed response for project family.
+type ProjectFamilyResponse struct {
+	Status  string                    `json:"status"`
+	Message string                    `json:"message"`
+	Data    ProjectFamilyResponseData `json:"data"`
+}
+
 // MessageResponse is a generic response with just status and message
 type MessageResponse struct {
 	Status  string `json:"status"`
@@ -166,33 +190,37 @@ type LabelsResponse struct {
 }
 
 var (
-	ErrMissingID                    = errors.New("id is required")
-	ErrInvalidRequestType           = errors.New("invalid request type")
-	ErrMissingName                  = errors.New("name is required")
-	ErrMissingDomain                = errors.New("domain is required")
-	ErrMissingRepository            = errors.New("repository is required")
-	ErrMissingBranch                = errors.New("branch is required")
-	ErrMissingPort                  = errors.New("port is required")
-	ErrInvalidEnvironment           = errors.New("invalid environment")
-	ErrInvalidBuildPack             = errors.New("invalid build pack")
-	ErrFailedToCreateTarFromContext = errors.New("failed to create tar from context")
-	ErrProcessingBuildOutput        = errors.New("failed to process build output")
-	ErrBuildDockerImage             = errors.New("failed to build Docker image")
-	ErrRunDockerImage               = errors.New("failed to run Docker image")
-	ErrDockerComposeNotImplemented  = errors.New("docker compose deployment not implemented yet")
-	ErrMissingImageName             = errors.New("image name is required")
-	ErrFailedToListContainers       = errors.New("failed to list containers")
-	ErrFailedToCreateContainer      = errors.New("failed to create container")
-	ErrFailedToStartNewContainer    = errors.New("failed to start new container")
-	ErrFailedToUpdateContainer      = errors.New("failed to update container")
-	ErrContainerNotRunning          = errors.New("container is not running")
-	ErrDockerComposeFileNotFound    = errors.New("docker-compose file not found")
-	ErrDockerComposeCommandFailed   = errors.New("docker-compose command failed")
-	ErrDockerComposeInvalidConfig   = errors.New("invalid docker-compose configuration")
-	ErrFailedToGetAvailablePort     = errors.New("failed to get available port")
-	ErrApplicationNotFound          = errors.New("application not found")
-	ErrApplicationNotDraft          = errors.New("application is not in draft status, cannot deploy")
-	ErrApplicationAlreadyDeployed   = errors.New("application has already been deployed")
+	ErrMissingID                        = errors.New("id is required")
+	ErrInvalidRequestType               = errors.New("invalid request type")
+	ErrMissingName                      = errors.New("name is required")
+	ErrMissingDomain                    = errors.New("domain is required")
+	ErrMissingRepository                = errors.New("repository is required")
+	ErrMissingBranch                    = errors.New("branch is required")
+	ErrMissingPort                      = errors.New("port is required")
+	ErrInvalidEnvironment               = errors.New("invalid environment")
+	ErrInvalidBuildPack                 = errors.New("invalid build pack")
+	ErrFailedToCreateTarFromContext     = errors.New("failed to create tar from context")
+	ErrProcessingBuildOutput            = errors.New("failed to process build output")
+	ErrBuildDockerImage                 = errors.New("failed to build Docker image")
+	ErrRunDockerImage                   = errors.New("failed to run Docker image")
+	ErrDockerComposeNotImplemented      = errors.New("docker compose deployment not implemented yet")
+	ErrMissingImageName                 = errors.New("image name is required")
+	ErrFailedToListContainers           = errors.New("failed to list containers")
+	ErrFailedToCreateContainer          = errors.New("failed to create container")
+	ErrFailedToStartNewContainer        = errors.New("failed to start new container")
+	ErrFailedToUpdateContainer          = errors.New("failed to update container")
+	ErrContainerNotRunning              = errors.New("container is not running")
+	ErrDockerComposeFileNotFound        = errors.New("docker-compose file not found")
+	ErrDockerComposeCommandFailed       = errors.New("docker-compose command failed")
+	ErrDockerComposeInvalidConfig       = errors.New("invalid docker-compose configuration")
+	ErrFailedToGetAvailablePort         = errors.New("failed to get available port")
+	ErrApplicationNotFound              = errors.New("application not found")
+	ErrApplicationNotDraft              = errors.New("application is not in draft status, cannot deploy")
+	ErrApplicationAlreadyDeployed       = errors.New("application has already been deployed")
+	ErrMissingSourceProjectID           = errors.New("source project id is required")
+	ErrEnvironmentAlreadyExistsInFamily = errors.New("a project with this environment already exists in the family")
+	ErrSameEnvironmentAsDuplicate       = errors.New("cannot duplicate project with the same environment")
+	ErrProjectFamilyNotFound            = errors.New("project family not found")
 )
 
 const (

@@ -39,6 +39,10 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return validateRollbackDeploymentRequest(*r)
 	case *types.RestartDeploymentRequest:
 		return validateRestartDeploymentRequest(*r)
+	case *types.DuplicateProjectRequest:
+		return validateDuplicateProjectRequest(*r)
+	case *types.GetProjectFamilyRequest:
+		return validateGetProjectFamilyRequest(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}
@@ -161,6 +165,35 @@ func validateCreateProjectRequest(req *types.CreateProjectRequest) error {
 // validateDeployProjectRequest validates a request to deploy an existing project.
 func validateDeployProjectRequest(req types.DeployProjectRequest) error {
 	if req.ID == uuid.Nil {
+		return types.ErrMissingID
+	}
+	return nil
+}
+
+// validateDuplicateProjectRequest validates a request to duplicate a project.
+func validateDuplicateProjectRequest(req types.DuplicateProjectRequest) error {
+	if req.SourceProjectID == uuid.Nil {
+		return types.ErrMissingSourceProjectID
+	}
+	if req.Domain == "" {
+		return types.ErrMissingDomain
+	}
+	if req.Environment == "" {
+		return types.ErrInvalidEnvironment
+	}
+	// Validate environment value
+	switch req.Environment {
+	case "development", "staging", "production":
+		// Valid environment
+	default:
+		return types.ErrInvalidEnvironment
+	}
+	return nil
+}
+
+// validateGetProjectFamilyRequest validates a request to get project family.
+func validateGetProjectFamilyRequest(req types.GetProjectFamilyRequest) error {
+	if req.FamilyID == uuid.Nil {
 		return types.ErrMissingID
 	}
 	return nil
