@@ -68,5 +68,14 @@ func (s *TaskService) DeleteDeployment(deployment *types.DeleteDeploymentRequest
 	}
 	client.Reload()
 
+	// Handle family cleanup: if this project belongs to a family,
+	// check if only one member remains and clear its family_id
+	if application.FamilyID != nil {
+		s.Logger.Log(logger.Info, "Checking family cleanup", application.FamilyID.String())
+		if err := s.Storage.ClearFamilyIDIfSingleMember(*application.FamilyID); err != nil {
+			s.Logger.Log(logger.Error, "Failed to cleanup family", err.Error())
+		}
+	}
+
 	return s.Storage.DeleteDeployment(deployment, userID)
 }

@@ -43,6 +43,11 @@ type DeployRepository interface {
 	GetApplicationByRepositoryID(repositoryID uint64) (shared_types.Application, error)
 	GetApplicationByRepositoryIDAndBranch(repositoryID uint64, branch string) ([]shared_types.Application, error)
 	UpdateApplicationLabels(applicationID uuid.UUID, labels []string, organizationID uuid.UUID) error
+	GetProjectsByFamilyID(familyID uuid.UUID, organizationID uuid.UUID) ([]shared_types.Application, error)
+	UpdateApplicationFamilyID(applicationID uuid.UUID, familyID *uuid.UUID) error
+	IsEnvironmentInFamily(familyID uuid.UUID, environment shared_types.Environment) (bool, error)
+	CountFamilyMembers(familyID uuid.UUID) (int, error)
+	ClearFamilyIDIfSingleMember(familyID uuid.UUID) error
 }
 
 func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
@@ -433,4 +438,77 @@ func (s *DeployStorage) UpdateApplicationLabels(applicationID uuid.UUID, labels 
 		Where("id = ? AND organization_id = ?", applicationID, organizationID).
 		Exec(s.Ctx)
 	return err
+}
+
+// GetProjectsByFamilyID retrieves all projects that belong to a family.
+func (s *DeployStorage) GetProjectsByFamilyID(familyID uuid.UUID, organizationID uuid.UUID) ([]shared_types.Application, error) {
+	var applications []shared_types.Application
+
+	err := s.DB.NewSelect().
+		Model(&applications).
+		Relation("Status").
+		Relation("Deployments", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Order("created_at DESC").Limit(1)
+		}).
+		Relation("Deployments.Status").
+		Where("family_id = ? AND organization_id = ?", familyID, organizationID).
+		Order("created_at ASC").
+		Scan(s.Ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return applications, nil
+}
+
+// UpdateApplicationFamilyID updates the family_id of an application.
+func (s *DeployStorage) UpdateApplicationFamilyID(applicationID uuid.UUID, familyID *uuid.UUID) error {
+	_, err := s.DB.NewUpdate().
+		Model((*shared_types.Application)(nil)).
+		Set("family_id = ?", familyID).
+		Set("updated_at = CURRENT_TIMESTAMP").
+		Where("id = ?", applicationID).
+		Exec(s.Ctx)
+	return err
+}
+
+// IsEnvironmentInFamily checks if a given environment already exists in a family.
+func (s *DeployStorage) IsEnvironmentInFamily(familyID uuid.UUID, environment shared_types.Environment) (bool, error) {
+	count, err := s.DB.NewSelect().
+		Model((*shared_types.Application)(nil)).
+		Where("family_id = ? AND environment = ?", familyID, environment).
+		Count(s.Ctx)
+
+	return count > 0, err
+}
+
+// CountFamilyMembers counts the number of applications in a family.
+func (s *DeployStorage) CountFamilyMembers(familyID uuid.UUID) (int, error) {
+	count, err := s.DB.NewSelect().
+		Model((*shared_types.Application)(nil)).
+		Where("family_id = ?", familyID).
+		Count(s.Ctx)
+
+	return count, err
+}
+
+// ClearFamilyIDIfSingleMember clears the family_id if only one member remains in the family.
+func (s *DeployStorage) ClearFamilyIDIfSingleMember(familyID uuid.UUID) error {
+	count, err := s.CountFamilyMembers(familyID)
+	if err != nil {
+		return err
+	}
+
+	if count == 1 {
+		_, err = s.DB.NewUpdate().
+			Model((*shared_types.Application)(nil)).
+			Set("family_id = NULL").
+			Set("updated_at = CURRENT_TIMESTAMP").
+			Where("family_id = ?", familyID).
+			Exec(s.Ctx)
+		return err
+	}
+
+	return nil
 }

@@ -35,6 +35,8 @@ function AppItem({
       case 'deploying':
       case 'cloning':
         return { bg: 'bg-amber-500/10', dot: 'bg-amber-500', pulse: true, label: 'Building' };
+      case 'draft':
+        return { bg: 'bg-blue-500/10', dot: 'bg-blue-500', pulse: false, label: 'Draft' };
       default:
         return { bg: 'bg-zinc-500/10', dot: 'bg-zinc-500', pulse: false, label: 'Inactive' };
     }
@@ -69,7 +71,6 @@ function AppItem({
     >
       <CardContent className="p-5">
         <div className="flex items-start gap-4">
-          {/* Status Indicator */}
           <div
             className={cn(
               'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors',
@@ -85,7 +86,6 @@ function AppItem({
             />
           </div>
 
-          {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <h3 className="font-semibold text-base tracking-tight truncate group-hover:text-primary transition-colors">
@@ -105,7 +105,6 @@ function AppItem({
               )}
             </div>
 
-            {/* Badges row - domain, environment, labels */}
             <div className="flex flex-wrap items-center gap-2 mt-2">
               {domain && (
                 <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded truncate max-w-[180px]">
@@ -138,7 +137,6 @@ function AppItem({
               )}
             </div>
 
-            {/* Meta info */}
             <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
               {branch && (
                 <span className="flex items-center gap-1">
@@ -152,7 +150,6 @@ function AppItem({
               </span>
             </div>
 
-            {/* Footer */}
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
               <span className="text-xs text-muted-foreground">{timeAgo}</span>
               <span
@@ -162,7 +159,9 @@ function AppItem({
                     ? 'text-emerald-500'
                     : currentStatus === 'failed'
                       ? 'text-red-500'
-                      : 'text-muted-foreground'
+                      : currentStatus === 'draft'
+                        ? 'text-blue-500'
+                        : 'text-muted-foreground'
                 )}
               >
                 {statusConfig.label}

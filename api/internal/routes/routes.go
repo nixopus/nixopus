@@ -59,6 +59,10 @@ func NewRouter(app *storage.App) *Router {
 	if err != nil {
 		log.Fatal("Error creating redis client", err)
 	}
+
+	// Initialize RBAC cache for middleware
+	middleware.InitRBACCache(cache)
+
 	return &Router{
 		app:    app,
 		cache:  cache,
