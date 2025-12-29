@@ -5,6 +5,8 @@ import {
   Application,
   ApplicationLogsResponse,
   CreateApplicationRequest,
+  CreateProjectRequest,
+  DeployProjectRequest,
   ReDeployApplicationRequest,
   UpdateDeploymentRequest,
   ApplicationDeployment
@@ -33,6 +35,28 @@ export const deployApi = createApi({
     createDeployment: builder.mutation<Application, CreateApplicationRequest>({
       query: (data) => ({
         url: DEPLOY.CREATE_APPLICATION,
+        method: 'POST',
+        body: data
+      }),
+      invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: Application }) => {
+        return response.data;
+      }
+    }),
+    createProject: builder.mutation<Application, CreateProjectRequest>({
+      query: (data) => ({
+        url: DEPLOY.CREATE_PROJECT,
+        method: 'POST',
+        body: data
+      }),
+      invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: Application }) => {
+        return response.data;
+      }
+    }),
+    deployProject: builder.mutation<Application, DeployProjectRequest>({
+      query: (data) => ({
+        url: DEPLOY.DEPLOY_PROJECT,
         method: 'POST',
         body: data
       }),
@@ -202,6 +226,8 @@ export const deployApi = createApi({
 export const {
   useGetApplicationsQuery,
   useCreateDeploymentMutation,
+  useCreateProjectMutation,
+  useDeployProjectMutation,
   useGetApplicationByIdQuery,
   useUpdateDeploymentMutation,
   useRedeployApplicationMutation,

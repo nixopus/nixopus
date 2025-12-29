@@ -104,6 +104,41 @@ func (t *TaskService) HandleCreateStaticDeployment(ctx context.Context, TaskPayl
 	return nil
 }
 
+// DeployProject triggers deployment of an existing project (application) that was saved as a draft.
+func (t *TaskService) DeployProject(request *types.DeployProjectRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
+	application, err := t.Storage.GetApplicationById(request.ID.String(), organizationID)
+	if err != nil {
+		return shared_types.Application{}, types.ErrApplicationNotFound
+	}
+
+	// Check if the application is in draft status (no deployments yet)
+	if application.Status != nil && application.Status.Status != shared_types.Draft {
+		return shared_types.Application{}, types.ErrApplicationNotDraft
+	}
+
+	contextTask := ContextTask{
+		TaskService:    t,
+		ContextConfig:  request,
+		UserId:         userID,
+		OrganizationId: organizationID,
+		Application:    &application,
+	}
+
+	TaskPayload, err := contextTask.PrepareDeployProjectContext()
+	if err != nil {
+		return shared_types.Application{}, err
+	}
+
+	TaskPayload.CorrelationID = uuid.NewString()
+
+	err = CreateDeploymentQueue.Add(TaskCreateDeployment.WithArgs(context.Background(), TaskPayload))
+	if err != nil {
+		fmt.Printf("error enqueuing deploy project: %v\n", err)
+	}
+
+	return application, nil
+}
+
 // TODOD: Shravan implement types and get back
 func (t *TaskService) ReDeployApplication(request *types.ReDeployApplicationRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
 	application, err := t.Storage.GetApplicationById(request.ID.String(), organizationID)

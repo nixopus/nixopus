@@ -535,6 +535,67 @@
         "description": "You don't have permission to create self-host applications"
       }
     },
+    "quickDeploy": {
+      "title": "",
+      "subtitle": "from",
+      "description": "Set up your project",
+      "fields": {
+        "appName": {
+          "label": "App Name",
+          "placeholder": "my-awesome-app"
+        },
+        "domain": {
+          "label": "Domain",
+          "placeholder": "app.yourdomain.com",
+          "helper": "The URL where your app will be accessible"
+        },
+        "branch": {
+          "label": "Branch",
+          "placeholder": "Select a branch"
+        },
+        "buildPack": {
+          "label": "Build Pack",
+          "placeholder": "Select build pack"
+        }
+      },
+      "advancedSettings": {
+        "toggle": "Advanced Settings",
+        "sections": {
+          "deployment": "Deployment Options",
+          "docker": "Docker Configuration",
+          "variables": "Environment Variables",
+          "commands": "Run Commands"
+        }
+      },
+      "actions": {
+        "create": "Create Project",
+        "creating": "Creating...",
+        "saveAsDraft": "Save as Draft",
+        "deployNow": "Deploy Now",
+        "saving": "Saving...",
+        "deploying": "Deploying..."
+      },
+      "toast": {
+        "draftSaved": "Project saved as draft. You can deploy it later.",
+        "deploymentStarted": "Deployment started successfully",
+        "saveFailed": "Failed to save project",
+        "deployFailed": "Failed to start deployment"
+      }
+    },
+    "applicationCard": {
+      "status": {
+        "draft": "Draft",
+        "deployed": "Deployed",
+        "deploying": "Deploying",
+        "building": "Building",
+        "cloning": "Cloning",
+        "failed": "Failed"
+      },
+      "actions": {
+        "deploy": "Deploy",
+        "view": "View"
+      }
+    },
     "githubCallback": {
       "processing": "Processing GitHub installation...",
       "success": "Successfully connected to GitHub!",

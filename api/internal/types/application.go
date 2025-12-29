@@ -90,6 +90,7 @@ type ApplicationLogs struct {
 type Status string
 
 const (
+	Draft     Status = "draft"
 	Started   Status = "started"
 	Running   Status = "running"
 	Stopped   Status = "stopped"

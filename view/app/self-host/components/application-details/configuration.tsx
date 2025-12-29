@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import FormInputField from '@/components/ui/form-input-field';
+import FormSelectField from '@/components/ui/form-select-field';
 import { FormSelectTagInputField } from '@/components/ui/form-select-tag-field';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { BuildPack, Environment } from '@/redux/types/deploy-form';
@@ -114,6 +115,7 @@ export const DeployConfigureForm = ({
 
   const { validateEnvVar, form, onSubmit, isLoading, domains } = useUpdateDeployment({
     name: application_name,
+    environment: environment,
     pre_run_command: pre_run_commands,
     post_run_command: post_run_commands,
     build_variables,
@@ -167,6 +169,27 @@ export const DeployConfigureForm = ({
                   label={t('selfHost.configuration.fields.applicationName.label')}
                   name="name"
                   placeholder={t('selfHost.configuration.fields.applicationName.label')}
+                />
+                <FormSelectField
+                  form={form}
+                  label={t('selfHost.configuration.fields.environment.label')}
+                  name="environment"
+                  placeholder={t('selfHost.deployForm.fields.environment.placeholder')}
+                  selectOptions={[
+                    {
+                      label: t('selfHost.deployForm.fields.environment.options.staging'),
+                      value: 'staging'
+                    },
+                    {
+                      label: t('selfHost.deployForm.fields.environment.options.production'),
+                      value: 'production'
+                    },
+                    {
+                      label: t('selfHost.deployForm.fields.environment.options.development'),
+                      value: 'development'
+                    }
+                  ]}
+                  required={false}
                 />
                 {build_pack !== BuildPack.Static && (
                   <FormInputField
@@ -274,22 +297,17 @@ export const DeployConfigureForm = ({
             >
               <div className="grid sm:grid-cols-2 gap-4">
                 {renderReadOnlyField(
-                  t('selfHost.configuration.fields.environment.label'),
-                  environment,
-                  t('selfHost.configuration.fields.environment.description')
-                )}
-                {renderReadOnlyField(
                   t('selfHost.configuration.fields.branch.label'),
                   branch,
                   t('selfHost.configuration.fields.branch.description')
                 )}
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
                 {renderReadOnlyField(
                   t('selfHost.configuration.fields.domain.label'),
                   domain,
                   t('selfHost.configuration.fields.domain.description')
                 )}
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
                 {renderReadOnlyField(
                   t('selfHost.configuration.fields.buildPack.label'),
                   build_pack,

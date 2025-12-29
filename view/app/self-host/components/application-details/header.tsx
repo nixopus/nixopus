@@ -26,7 +26,8 @@ import {
   useRedeployApplicationMutation,
   useRestartApplicationMutation,
   useDeleteApplicationMutation,
-  useUpdateApplicationLabelsMutation
+  useUpdateApplicationLabelsMutation,
+  useDeployProjectMutation
 } from '@/redux/services/deploy/applicationsApi';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -39,6 +40,7 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
   const [redeployApplication, { isLoading: isRedeploying }] = useRedeployApplicationMutation();
   const [deleteApplication, { isLoading: isDeleting }] = useDeleteApplicationMutation();
   const [updateLabels, { isLoading: isUpdatingLabels }] = useUpdateApplicationLabelsMutation();
+  const [deployProject, { isLoading: isDeployingProject }] = useDeployProjectMutation();
   const router = useRouter();
   const [restartApplication, { isLoading: isRestarting }] = useRestartApplicationMutation();
 
@@ -53,7 +55,8 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
   }, [isAddingLabel]);
 
   const latestDeployment = application?.deployments?.[0];
-  const currentStatus = latestDeployment?.status?.status;
+  const currentStatus = latestDeployment?.status?.status || application?.status?.status;
+  const isDraft = currentStatus === 'draft';
 
   const getStatusConfig = (status?: string) => {
     switch (status) {
@@ -65,8 +68,21 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
       case 'deploying':
       case 'cloning':
         return { bg: 'bg-amber-500/10', dot: 'bg-amber-500', pulse: true };
+      case 'draft':
+        return { bg: 'bg-blue-500/10', dot: 'bg-blue-500', pulse: false };
       default:
         return { bg: 'bg-zinc-500/10', dot: 'bg-zinc-500', pulse: false };
+    }
+  };
+
+  const handleDeployProject = async () => {
+    if (!application?.id) return;
+    try {
+      await deployProject({ id: application.id }).unwrap();
+      toast.success(t('selfHost.applicationDetails.header.actions.redeploy.success'));
+      router.push('/self-host/application/' + application.id + '?logs=true');
+    } catch {
+      toast.error(t('selfHost.applicationDetails.header.actions.redeploy.error'));
     }
   };
 
@@ -231,31 +247,48 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
         </div>
 
         <div className="flex items-center gap-2">
-          <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={isRestarting}
-              onClick={handleRestart}
-              className="gap-2"
-            >
-              <RotateCcw className={cn('h-4 w-4', isRestarting && 'animate-spin')} />
-              {t('selfHost.applicationDetails.header.actions.restart.button')}
-            </Button>
-          </AnyPermissionGuard>
+          {isDraft ? (
+            <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+              <Button
+                variant="default"
+                size="sm"
+                disabled={isDeployingProject}
+                onClick={handleDeployProject}
+                className="gap-2"
+              >
+                <Rocket className="h-4 w-4" />
+                {isDeployingProject ? 'Deploying...' : 'Deploy Now'}
+              </Button>
+            </AnyPermissionGuard>
+          ) : (
+            <>
+              <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isRestarting}
+                  onClick={handleRestart}
+                  className="gap-2"
+                >
+                  <RotateCcw className={cn('h-4 w-4', isRestarting && 'animate-spin')} />
+                  {t('selfHost.applicationDetails.header.actions.restart.button')}
+                </Button>
+              </AnyPermissionGuard>
 
-          <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
-            <Button
-              variant="default"
-              size="sm"
-              disabled={isRedeploying}
-              onClick={() => handleRedeploy(true)}
-              className="gap-2"
-            >
-              <Rocket className="h-4 w-4" />
-              {t('selfHost.applicationDetails.header.actions.redeploy.button')}
-            </Button>
-          </AnyPermissionGuard>
+              <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+                <Button
+                  variant="default"
+                  size="sm"
+                  disabled={isRedeploying}
+                  onClick={() => handleRedeploy(true)}
+                  className="gap-2"
+                >
+                  <Rocket className="h-4 w-4" />
+                  {t('selfHost.applicationDetails.header.actions.redeploy.button')}
+                </Button>
+              </AnyPermissionGuard>
+            </>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

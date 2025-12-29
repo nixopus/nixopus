@@ -1462,6 +1462,67 @@
 				},
 				"type": "object"
 			},
+			"CreateProjectRequest": {
+				"description": "CreateProjectRequest schema",
+				"properties": {
+					"base_path": {
+						"nullable": true,
+						"type": "string"
+					},
+					"branch": {
+						"nullable": true,
+						"type": "string"
+					},
+					"build_pack": {
+						"nullable": true,
+						"type": "string"
+					},
+					"build_variables": {
+						"additionalProperties": {
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "object"
+					},
+					"dockerfile_path": {
+						"nullable": true,
+						"type": "string"
+					},
+					"domain": {
+						"type": "string"
+					},
+					"environment": {
+						"nullable": true,
+						"type": "string"
+					},
+					"environment_variables": {
+						"additionalProperties": {
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "object"
+					},
+					"name": {
+						"type": "string"
+					},
+					"port": {
+						"nullable": true,
+						"type": "integer"
+					},
+					"post_run_command": {
+						"nullable": true,
+						"type": "string"
+					},
+					"pre_run_command": {
+						"nullable": true,
+						"type": "string"
+					},
+					"repository": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"CreateSMTPConfigRequest": {
 				"description": "CreateSMTPConfigRequest schema",
 				"properties": {
@@ -1565,6 +1626,13 @@
 				"required": [
 					"type"
 				],
+				"type": "object"
+			},
+			"DeployProjectRequest": {
+				"description": "DeployProjectRequest schema",
+				"properties": {
+					"id": {}
+				},
 				"type": "object"
 			},
 			"DeploymentResponse": {
@@ -7086,6 +7154,10 @@
 						"nullable": true,
 						"type": "string"
 					},
+					"environment": {
+						"nullable": true,
+						"type": "string"
+					},
 					"environment_variables": {
 						"additionalProperties": {
 							"type": "string"
@@ -10515,6 +10587,168 @@
 					}
 				},
 				"summary": "get logs",
+				"tags": [
+					"api/v1/deploy",
+					"application"
+				]
+			}
+		},
+		"/api/v1/deploy/application/project": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleCreateProject`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "POST_/api/v1/deploy/application/project",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateProjectRequest"
+							}
+						}
+					},
+					"description": "Request body for types.CreateProjectRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApplicationResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/ApplicationResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "handle create project",
+				"tags": [
+					"api/v1/deploy",
+					"application"
+				]
+			}
+		},
+		"/api/v1/deploy/application/project/deploy": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleDeployProject`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "POST_/api/v1/deploy/application/project/deploy",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/DeployProjectRequest"
+							}
+						}
+					},
+					"description": "Request body for types.DeployProjectRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApplicationResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/ApplicationResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "handle deploy project",
 				"tags": [
 					"api/v1/deploy",
 					"application"
