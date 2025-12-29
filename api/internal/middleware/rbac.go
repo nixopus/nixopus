@@ -145,7 +145,7 @@ func validateAndCachePermissions(sessionContainer sessmodels.SessionContainer, u
 	}
 
 	// Validate permission
-	if !checkOrganizationPermission(permissionsClaim, requiredPermission, organizationID) {
+	if !checkOrganizationPermission(permissionsClaim, requiredPermission) {
 		return claims.ClaimValidationResult{
 			IsValid: false,
 			Reason:  fmt.Sprintf("user lacks permission %s for organization %s", requiredPermission, organizationID),
@@ -215,23 +215,59 @@ func extractStringSlice(claim interface{}) []string {
 		return []string{}
 	}
 
-	wrappedClaim := claim.(*struct{ Value interface{} })
-	actualValue := wrappedClaim.Value
-
-	switch v := actualValue.(type) {
-	case []interface{}:
-		var result []string
-		for _, item := range v {
-			if str, ok := item.(string); ok {
-				result = append(result, str)
-			}
-		}
-		return result
+	switch v := claim.(type) {
 	case []string:
 		return v
+	case []interface{}:
+		return convertInterfaceSliceToStringSlice(v)
+	}
+
+	actualValue := extractValueFromWrapper(claim)
+	if actualValue == nil {
+		return []string{}
+	}
+
+	switch v := actualValue.(type) {
+	case []string:
+		return v
+	case []interface{}:
+		return convertInterfaceSliceToStringSlice(v)
 	default:
 		return []string{}
 	}
+}
+
+// extractValueFromWrapper safely extracts the Value field from various wrapper types
+func extractValueFromWrapper(claim interface{}) interface{} {
+	if wrappedClaim, ok := claim.(*struct{ Value interface{} }); ok {
+		return wrappedClaim.Value
+	}
+
+	if wrappedClaim, ok := claim.(struct{ Value interface{} }); ok {
+		return wrappedClaim.Value
+	}
+
+	if m, ok := claim.(map[string]interface{}); ok {
+		if val, exists := m["Value"]; exists {
+			return val
+		}
+		if val, exists := m["value"]; exists {
+			return val
+		}
+	}
+
+	return nil
+}
+
+// convertInterfaceSliceToStringSlice converts []interface{} to []string
+func convertInterfaceSliceToStringSlice(v []interface{}) []string {
+	var result []string
+	for _, item := range v {
+		if str, ok := item.(string); ok {
+			result = append(result, str)
+		}
+	}
+	return result
 }
 
 // filterOrganizationRolesFromStrings filters roles to only include organization-specific roles
@@ -265,7 +301,7 @@ func filterOrganizationRoles(userRolesClaim interface{}, organizationID string) 
 }
 
 // checkOrganizationPermission checks if the user has the required permission for the organization
-func checkOrganizationPermission(permissionsClaim interface{}, requiredPermission, organizationID string) bool {
+func checkOrganizationPermission(permissionsClaim interface{}, requiredPermission string) bool {
 	permissions := extractPermissionsAsStrings(permissionsClaim)
 	return hasPermission(permissions, requiredPermission)
 }
