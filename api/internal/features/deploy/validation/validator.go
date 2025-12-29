@@ -25,6 +25,10 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 	switch r := req.(type) {
 	case *types.CreateDeploymentRequest:
 		return validateDeploymentRequest(r)
+	case *types.CreateProjectRequest:
+		return validateCreateProjectRequest(r)
+	case *types.DeployProjectRequest:
+		return validateDeployProjectRequest(*r)
 	case *types.UpdateDeploymentRequest:
 		return validateUpdateDeploymentRequest(r)
 	case *types.DeleteDeploymentRequest:
@@ -35,6 +39,10 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return validateRollbackDeploymentRequest(*r)
 	case *types.RestartDeploymentRequest:
 		return validateRestartDeploymentRequest(*r)
+	case *types.DuplicateProjectRequest:
+		return validateDuplicateProjectRequest(*r)
+	case *types.GetProjectFamilyRequest:
+		return validateGetProjectFamilyRequest(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}
@@ -113,6 +121,79 @@ func validateRollbackDeploymentRequest(req types.RollbackDeploymentRequest) erro
 
 func validateRestartDeploymentRequest(req types.RestartDeploymentRequest) error {
 	if req.ID == uuid.Nil {
+		return types.ErrMissingID
+	}
+	return nil
+}
+
+// validateCreateProjectRequest validates a request to create a project without deploying.
+// Only name, domain, and repository are required. Other fields have defaults.
+func validateCreateProjectRequest(req *types.CreateProjectRequest) error {
+	if req.Name == "" {
+		return types.ErrMissingName
+	}
+	if req.Domain == "" {
+		return types.ErrMissingDomain
+	}
+	if req.Repository == "" {
+		return types.ErrMissingRepository
+	}
+	// Set defaults for optional fields
+	if req.Environment == "" {
+		req.Environment = "production"
+	}
+	if req.BuildPack == "" {
+		req.BuildPack = "dockerfile"
+	}
+	if req.Branch == "" {
+		req.Branch = "main"
+	}
+	if req.Port == 0 {
+		req.Port = 3000
+	}
+	if req.BasePath == "" {
+		req.BasePath = "/"
+	} else if req.BasePath[0] != '/' {
+		req.BasePath = "/" + req.BasePath
+	}
+	if req.DockerfilePath == "" {
+		req.DockerfilePath = "Dockerfile"
+	}
+	return nil
+}
+
+// validateDeployProjectRequest validates a request to deploy an existing project.
+func validateDeployProjectRequest(req types.DeployProjectRequest) error {
+	if req.ID == uuid.Nil {
+		return types.ErrMissingID
+	}
+	return nil
+}
+
+// validateDuplicateProjectRequest validates a request to duplicate a project.
+func validateDuplicateProjectRequest(req types.DuplicateProjectRequest) error {
+	if req.SourceProjectID == uuid.Nil {
+		return types.ErrMissingSourceProjectID
+	}
+	if req.Domain == "" {
+		return types.ErrMissingDomain
+	}
+	if req.Environment == "" {
+		return types.ErrInvalidEnvironment
+	}
+	// Validate environment value
+	switch req.Environment {
+	case "development", "staging", "production":
+		// Valid environment
+	default:
+		return types.ErrInvalidEnvironment
+	}
+	return nil
+}
+
+// validateGetProjectFamilyRequest validates a request to get project family.
+func validateGetProjectFamilyRequest(req types.GetProjectFamilyRequest) error {
+	if req.FamilyID == uuid.Nil {
 		return types.ErrMissingID
 	}
 	return nil

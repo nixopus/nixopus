@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useWebSocket } from '@/hooks/socket-provider';
 import { useUpdateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';
-import { UpdateDeploymentRequest } from '@/redux/types/applications';
+import { UpdateDeploymentRequest, Environment } from '@/redux/types/applications';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
 import { parsePort } from '../utils/parsePort';
 import { useAppSelector } from '@/redux/hooks';
@@ -14,6 +14,7 @@ import { useTranslation } from '@/hooks/use-translation';
 
 interface UseUpdateDeploymentProps {
   name?: string;
+  environment?: string;
   pre_run_command?: string;
   post_run_command?: string;
   build_variables?: Record<string, string>;
@@ -27,6 +28,7 @@ interface UseUpdateDeploymentProps {
 
 function useUpdateDeployment({
   name = '',
+  environment = '',
   pre_run_command = '',
   post_run_command = '',
   build_variables = {},
@@ -52,6 +54,7 @@ function useUpdateDeployment({
         message: t('selfHost.deployForm.validation.applicationName.invalidFormat')
       })
       .optional(),
+    environment: z.string().optional(),
     pre_run_command: z.string().optional(),
     post_run_command: z.string().optional(),
     build_variables: z.record(z.string(), z.string()).optional().default({}),
@@ -67,6 +70,7 @@ function useUpdateDeployment({
     resolver: zodResolver(deploymentFormSchema),
     defaultValues: {
       name,
+      environment,
       pre_run_command,
       post_run_command,
       build_variables,
@@ -81,6 +85,7 @@ function useUpdateDeployment({
 
   useEffect(() => {
     if (name) form.setValue('name', name);
+    if (environment) form.setValue('environment', environment);
     if (pre_run_command) form.setValue('pre_run_command', pre_run_command);
     if (post_run_command) form.setValue('post_run_command', post_run_command);
     if (build_variables && Object.keys(build_variables).length > 0)
@@ -95,6 +100,7 @@ function useUpdateDeployment({
   }, [
     form,
     name,
+    environment,
     pre_run_command,
     post_run_command,
     build_variables,
@@ -110,6 +116,7 @@ function useUpdateDeployment({
     try {
       const updateData: UpdateDeploymentRequest = {
         name: values.name,
+        environment: values.environment as Environment | undefined,
         pre_run_command: values.pre_run_command,
         post_run_command: values.post_run_command,
         build_variables: values.build_variables,
