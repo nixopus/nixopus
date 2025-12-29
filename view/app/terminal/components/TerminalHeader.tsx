@@ -5,12 +5,7 @@ import { Plus, X, Zap, SplitSquareVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { SessionTab } from './SessionTab';
-import type { SessionStatus } from './TerminalSession';
-
-type Session = {
-  id: string;
-  label: string;
-};
+import type { SessionStatus, Session } from '../types';
 
 type TerminalHeaderProps = {
   sessions: Session[];
@@ -64,7 +59,7 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
               status={sessionStatuses[session.id] || 'idle'}
               onSelect={() => onSwitchSession(session.id)}
               onClose={() => onCloseSession(session.id)}
-              canClose={sessions.length > 1}
+              canClose={true}
               index={index}
             />
           ))}
