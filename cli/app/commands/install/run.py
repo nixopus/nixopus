@@ -1,5 +1,6 @@
 import os
-from typing import Callable, List, Optional, Tuple
+import re
+from typing import Any, Callable, List, Optional, Tuple
 
 import typer
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
@@ -8,12 +9,16 @@ from app.commands.clone.clone import clone_repository
 from app.commands.preflight.preflight import check_required_ports
 from app.utils.config import (
     API_PORT,
+    CADDY_ADMIN_PORT,
+    CADDY_HTTP_PORT,
+    CADDY_HTTPS_PORT,
     DEFAULT_BRANCH,
     DEFAULT_REPO,
     PORTS,
     PROXY_PORT,
     SSH_KEY_SIZE,
     SSH_KEY_TYPE,
+    SUPERTOKENS_API_PORT,
     VIEW_PORT,
     get_active_config,
     get_config_value,
@@ -74,9 +79,85 @@ def create_config_resolver(config: dict, params: InstallParams) -> ConfigResolve
     )
 
 
+def _extract_default_port_from_env_var(env_var_value: Any) -> Optional[int]:
+    if not isinstance(env_var_value, str):
+        return None
+    
+    match = re.search(r':-(\d+)', env_var_value)
+    if match:
+        try:
+            return int(match.group(1))
+        except ValueError:
+            pass
+    
+    cleaned = re.sub(r'\$\{[^}]+\}', '', env_var_value).strip()
+    if cleaned and cleaned.isdigit():
+        try:
+            return int(cleaned)
+        except ValueError:
+            pass
+    
+    return None
+
+
+def _get_config_port_value(config: dict, port_path: str) -> Optional[int]:
+    try:
+        keys = port_path.split(".")
+        value = config
+        for key in keys:
+            if isinstance(value, dict) and key in value:
+                value = value[key]
+            else:
+                return None
+        
+        if not isinstance(value, str):
+            return None
+        
+        return _extract_default_port_from_env_var(value)
+    except (KeyError, ValueError, TypeError, AttributeError):
+        return None
+
+
+def build_ports_to_check(config: dict, params: InstallParams) -> List[int]:
+    config_ports = get_config_value(config, PORTS)
+    config_ports = [int(port) for port in config_ports] if isinstance(config_ports, list) else [int(config_ports)]
+    config_api_port = _get_config_port_value(config, API_PORT)
+    config_view_port = _get_config_port_value(config, VIEW_PORT)
+    config_db_port = _get_config_port_value(config, "services.db.env.DB_PORT")
+    config_redis_port = _get_config_port_value(config, "services.redis.env.REDIS_PORT")
+    config_caddy_admin_port = _get_config_port_value(config, CADDY_ADMIN_PORT)
+    config_caddy_http_port = _get_config_port_value(config, CADDY_HTTP_PORT)
+    config_caddy_https_port = _get_config_port_value(config, CADDY_HTTPS_PORT)
+    config_supertokens_port = _get_config_port_value(config, SUPERTOKENS_API_PORT)
+    
+    port_overrides = {}
+    if config_api_port is not None and params.api_port is not None:
+        port_overrides[config_api_port] = params.api_port
+    if config_view_port is not None and params.view_port is not None:
+        port_overrides[config_view_port] = params.view_port
+    if config_db_port is not None and params.db_port is not None:
+        port_overrides[config_db_port] = params.db_port
+    if config_redis_port is not None and params.redis_port is not None:
+        port_overrides[config_redis_port] = params.redis_port
+    if config_caddy_admin_port is not None and params.caddy_admin_port is not None:
+        port_overrides[config_caddy_admin_port] = params.caddy_admin_port
+    if config_caddy_http_port is not None and params.caddy_http_port is not None:
+        port_overrides[config_caddy_http_port] = params.caddy_http_port
+    if config_caddy_https_port is not None and params.caddy_https_port is not None:
+        port_overrides[config_caddy_https_port] = params.caddy_https_port
+    if config_supertokens_port is not None and params.supertokens_port is not None:
+        port_overrides[config_supertokens_port] = params.supertokens_port
+    
+    ports = []
+    for config_port in config_ports:
+        user_port = port_overrides.get(config_port)
+        ports.append(user_port if user_port is not None else config_port)
+    
+    return ports
+
+
 def run_preflight_checks(config: dict, params: InstallParams) -> None:
-    ports = get_config_value(config, PORTS)
-    ports = [int(port) for port in ports] if isinstance(ports, list) else [int(ports)]
+    ports = build_ports_to_check(config, params)
     check_required_ports(ports, logger=params.logger)
 
 
