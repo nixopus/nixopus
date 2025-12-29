@@ -2,7 +2,10 @@ package cleanup
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,10 +21,14 @@ const (
 
 // ExtensionLogsCleanupJob handles cleanup of old extension logs
 // Note: Extension logs are system-wide (not org-scoped), so this job
-// cleans all extension logs older than the retention period when enabled
+// uses the maximum retention period across all organizations to ensure
+// logs are only deleted when ALL organizations agree they should be deleted.
+// A mutex ensures the cleanup runs only once per scheduler cycle.
 type ExtensionLogsCleanupJob struct {
-	db     *bun.DB
-	logger logger.Logger
+	db            *bun.DB
+	logger        logger.Logger
+	mu            sync.Mutex
+	lastCleanupAt time.Time
 }
 
 // NewExtensionLogsCleanupJob creates a new extension logs cleanup job
@@ -48,26 +55,55 @@ func (j *ExtensionLogsCleanupJob) GetRetentionDays(settings *types.OrganizationS
 }
 
 // Run executes the cleanup job
-// Since extension logs are system-wide (not org-scoped), this job cleans
-// all extension logs older than the retention period specified in the org settings
+// Since extension logs are system-wide (not org-scoped), this job:
+// 1. Ensures cleanup runs only once per scheduler cycle using a mutex
+// 2. Queries the maximum retention period across all organizations
+// 3. Uses that maximum to ensure logs are only deleted when ALL orgs agree
 func (j *ExtensionLogsCleanupJob) Run(ctx context.Context, orgID uuid.UUID) error {
-	// Get organization settings to determine retention period
-	var settings types.OrganizationSettings
+	// Use mutex to ensure only one cleanup runs per scheduler cycle
+	// Check if we've already run cleanup within the last minute (scheduler cycle protection)
+	j.mu.Lock()
+	if time.Since(j.lastCleanupAt) < time.Minute {
+		j.mu.Unlock()
+		j.logger.Log(
+			logger.Info,
+			fmt.Sprintf("Extension logs cleanup already ran recently, skipping for org %s", orgID),
+			"",
+		)
+		return nil
+	}
+	j.lastCleanupAt = time.Now()
+	j.mu.Unlock()
+
+	// Query the maximum retention period across all organizations
+	// This ensures we only delete logs that ALL orgs agree should be deleted
+	var maxRetentionResult struct {
+		MaxRetention int `bun:"max_retention"`
+	}
 	err := j.db.NewSelect().
-		Model(&settings).
-		Where("organization_id = ?", orgID).
-		Scan(ctx)
+		TableExpr("organization_settings").
+		ColumnExpr("COALESCE(MAX((settings->>'extension_logs_retention_days')::int), ?) AS max_retention", DefaultExtensionLogsRetention).
+		Scan(ctx, &maxRetentionResult)
 	if err != nil {
-		return fmt.Errorf("failed to get organization settings: %w", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			// No settings found, use default
+			maxRetentionResult.MaxRetention = DefaultExtensionLogsRetention
+		} else {
+			return fmt.Errorf("failed to get max retention period: %w", err)
+		}
 	}
 
-	retentionDays := j.GetRetentionDays(&settings.Settings)
+	retentionDays := maxRetentionResult.MaxRetention
+	if retentionDays <= 0 {
+		retentionDays = DefaultExtensionLogsRetention
+	}
+
 	cutoffDate := time.Now().AddDate(0, 0, -retentionDays)
 
 	j.logger.Log(
 		logger.Info,
-		fmt.Sprintf("Running extension logs cleanup (triggered by org %s, retention: %d days, cutoff: %s)",
-			orgID, retentionDays, cutoffDate.Format(time.RFC3339)),
+		fmt.Sprintf("Running extension logs cleanup (max retention across all orgs: %d days, cutoff: %s)",
+			retentionDays, cutoffDate.Format(time.RFC3339)),
 		"",
 	)
 
@@ -83,7 +119,7 @@ func (j *ExtensionLogsCleanupJob) Run(ctx context.Context, orgID uuid.UUID) erro
 	rowsAffected, _ := result.RowsAffected()
 	j.logger.Log(
 		logger.Info,
-		fmt.Sprintf("Deleted %d extension logs (system-wide cleanup triggered by org %s)", rowsAffected, orgID),
+		fmt.Sprintf("Deleted %d extension logs (system-wide cleanup with max retention %d days)", rowsAffected, retentionDays),
 		"",
 	)
 
