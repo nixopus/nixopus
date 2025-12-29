@@ -3,35 +3,26 @@ package service
 import (
 	"context"
 
-	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
-	github_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// DeployService handles read operations and validation for deployments.
+// Deployment creation, update, rollback, restart, and delete operations
+// are handled by TaskService in the tasks package.
 type DeployService struct {
-	storage        storage.DeployRepository
-	Ctx            context.Context
-	store          *shared_storage.Store
-	logger         logger.Logger
-	dockerRepo     docker.DockerRepository
-	github_service *github_service.GithubConnectorService
+	storage storage.DeployRepository
+	Ctx     context.Context
+	store   *shared_storage.Store
+	logger  logger.Logger
 }
 
-func NewDeployService(store *shared_storage.Store, ctx context.Context, logger logger.Logger, deploy_repo storage.DeployRepository, dockerRepo docker.DockerRepository, github_service *github_service.GithubConnectorService) *DeployService {
+func NewDeployService(store *shared_storage.Store, ctx context.Context, logger logger.Logger, deploy_repo storage.DeployRepository) *DeployService {
 	return &DeployService{
-		storage:        deploy_repo,
-		store:          store,
-		Ctx:            ctx,
-		logger:         logger,
-		dockerRepo:     dockerRepo,
-		github_service: github_service,
+		storage: deploy_repo,
+		store:   store,
+		Ctx:     ctx,
+		logger:  logger,
 	}
-}
-
-func (s *DeployService) GetApplicationDeployments(applicationID uuid.UUID, page, pageSize int) ([]shared_types.ApplicationDeployment, int, error) {
-	return s.storage.GetPaginatedApplicationDeployments(applicationID, page, pageSize)
 }

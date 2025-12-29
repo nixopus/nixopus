@@ -253,6 +253,11 @@ export const useTerminal = (
               return false;
             }
 
+            // Handle Ctrl+D or Cmd+D (close terminal session shortcut)
+            if (key === 'd' && (event.ctrlKey || event.metaKey)) {
+              return false;
+            }
+
             // Handle Ctrl+C or Cmd+C for copy (when there's a selection)
             if (key === 'c' && (event.ctrlKey || event.metaKey) && !event.shiftKey) {
               if (event.type === 'keydown') {
