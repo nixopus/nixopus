@@ -13,6 +13,12 @@ const statusConfig: Record<
   Status,
   { color: string; bgColor: string; label: string; pulse?: boolean }
 > = {
+  draft: {
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500',
+    label: 'Draft',
+    pulse: false
+  },
   deployed: {
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500',
