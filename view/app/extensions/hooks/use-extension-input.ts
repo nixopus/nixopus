@@ -3,13 +3,6 @@ import { Extension, ExtensionVariable } from '@/redux/types/extension';
 
 type SubmitFn = (values: Record<string, unknown>) => void;
 
-const formatVariableName = (name: string): string => {
-  return name
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
 const normalizeDefault = (value: unknown, type: string): unknown => {
   if (value === undefined || value === null) {
     if (type === 'boolean') return false;
@@ -62,6 +55,24 @@ const buildInitialValues = (variables: ExtensionVariable[]) => {
   return acc;
 };
 
+// Check if a variable has an empty/missing default value
+const hasEmptyDefault = (v: ExtensionVariable): boolean => {
+  const defaultVal = v.default_value;
+  if (defaultVal === undefined || defaultVal === null) return true;
+  if (v.variable_type === 'string') {
+    return typeof defaultVal === 'string' && defaultVal.trim() === '';
+  }
+  if (v.variable_type === 'array') {
+    if (Array.isArray(defaultVal)) return defaultVal.length === 0;
+    if (typeof defaultVal === 'string') return defaultVal.trim() === '';
+    return true;
+  }
+  if (v.variable_type === 'integer') {
+    return defaultVal === '' || defaultVal === undefined;
+  }
+  return false;
+};
+
 export function useExtensionInput(args: {
   extension?: Extension | null;
   open: boolean;
@@ -75,39 +86,28 @@ export function useExtensionInput(args: {
 
   const [values, setValues] = useState<Record<string, unknown>>(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showOptional, setShowOptional] = useState(false);
 
   useEffect(() => {
     setValues(initialValues);
     setErrors({});
-    setSearchQuery('');
-    setShowOptional(false);
   }, [initialValues, open]);
 
-  const filteredVariables = useMemo(() => {
-    if (!searchQuery.trim()) return variables;
-    const query = searchQuery.toLowerCase();
-    return variables.filter(
-      (v) =>
-        v.variable_name.toLowerCase().includes(query) ||
-        v.description?.toLowerCase().includes(query) ||
-        formatVariableName(v.variable_name).toLowerCase().includes(query)
-    );
-  }, [variables, searchQuery]);
-
+  // Only show fields that actually need user input:
+  // - Required fields without defaults
+  // - proxy_domain/domain (commonly customized)
   const requiredFields = useMemo(
-    () => filteredVariables.filter((v) => v.is_required),
-    [filteredVariables]
+    () =>
+      variables.filter((v) => {
+        const isProxyDomain =
+          v.variable_name.toLowerCase() === 'proxy_domain' ||
+          v.variable_name.toLowerCase() === 'domain';
+        // Always show proxy_domain/domain
+        if (isProxyDomain) return true;
+        // Show required fields only if they don't have a default
+        return v.is_required && hasEmptyDefault(v);
+      }),
+    [variables]
   );
-
-  const optionalFields = useMemo(
-    () => filteredVariables.filter((v) => !v.is_required),
-    [filteredVariables]
-  );
-
-  const hasManyVariables = variables.length > 6;
-  const showSearch = hasManyVariables && open;
 
   const handleChange = (name: string, value: unknown) => {
     setValues((prev) => ({ ...prev, [name]: value }));
@@ -139,19 +139,10 @@ export function useExtensionInput(args: {
   };
 
   return {
-    variables,
     values,
     errors,
     handleChange,
     handleSubmit,
-    searchQuery,
-    setSearchQuery,
-    showOptional,
-    setShowOptional,
-    requiredFields,
-    optionalFields,
-    showSearch,
-    hasVariables: variables.length > 0,
-    hasSearchResults: filteredVariables.length > 0
+    requiredFields
   };
 }
