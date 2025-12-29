@@ -117,9 +117,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4">
+        <div className="flex flex-1 flex-col">
           <Tour>
-            <div className="flex h-[calc(100vh-5rem)]">
+            <div className="flex h-full flex-1">
               <CreateTeam
                 open={addTeamModalOpen}
                 setOpen={setAddTeamModalOpen}
@@ -136,11 +136,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 }
                 className="flex-grow"
               >
-                <ResizablePanel
-                  defaultSize={65}
-                  minSize={30}
-                  className="overflow-auto no-scrollbar"
-                >
+                <ResizablePanel defaultSize={65} minSize={30}>
                   <div className="h-full overflow-y-auto no-scrollbar">{children}</div>
                 </ResizablePanel>
                 {isTerminalOpen && <ResizableHandle draggable withHandle />}
