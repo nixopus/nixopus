@@ -6139,6 +6139,14 @@
 					"api_retry_attempts": {
 						"type": "integer"
 					},
+					"audit_logs_cleanup_enabled": {
+						"nullable": true,
+						"type": "boolean"
+					},
+					"audit_logs_retention_days": {
+						"nullable": true,
+						"type": "integer"
+					},
 					"container_auto_prune_build_cache": {
 						"nullable": true,
 						"type": "boolean"
@@ -6159,8 +6167,24 @@
 						"nullable": true,
 						"type": "integer"
 					},
+					"deployment_logs_cleanup_enabled": {
+						"nullable": true,
+						"type": "boolean"
+					},
+					"deployment_logs_retention_days": {
+						"nullable": true,
+						"type": "integer"
+					},
 					"disable_api_cache": {
 						"type": "boolean"
+					},
+					"extension_logs_cleanup_enabled": {
+						"nullable": true,
+						"type": "boolean"
+					},
+					"extension_logs_retention_days": {
+						"nullable": true,
+						"type": "integer"
 					},
 					"websocket_reconnect_attempts": {
 						"type": "integer"
@@ -6220,6 +6244,14 @@
 									"api_retry_attempts": {
 										"type": "integer"
 									},
+									"audit_logs_cleanup_enabled": {
+										"nullable": true,
+										"type": "boolean"
+									},
+									"audit_logs_retention_days": {
+										"nullable": true,
+										"type": "integer"
+									},
 									"container_auto_prune_build_cache": {
 										"nullable": true,
 										"type": "boolean"
@@ -6240,8 +6272,24 @@
 										"nullable": true,
 										"type": "integer"
 									},
+									"deployment_logs_cleanup_enabled": {
+										"nullable": true,
+										"type": "boolean"
+									},
+									"deployment_logs_retention_days": {
+										"nullable": true,
+										"type": "integer"
+									},
 									"disable_api_cache": {
 										"type": "boolean"
+									},
+									"extension_logs_cleanup_enabled": {
+										"nullable": true,
+										"type": "boolean"
+									},
+									"extension_logs_retention_days": {
+										"nullable": true,
+										"type": "integer"
 									},
 									"websocket_reconnect_attempts": {
 										"type": "integer"
