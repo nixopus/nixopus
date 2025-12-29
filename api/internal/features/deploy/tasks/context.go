@@ -236,6 +236,10 @@ func (c *ContextTask) mergeDeploymentUpdates() shared_types.Application {
 		application.Name = deployment.Name
 	}
 
+	if deployment.Environment != "" {
+		application.Environment = deployment.Environment
+	}
+
 	if deployment.BuildVariables != nil {
 		application.BuildVariables = GetStringFromMap(deployment.BuildVariables)
 	}

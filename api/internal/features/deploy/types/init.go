@@ -62,16 +62,17 @@ type DeployProjectRequest struct {
 }
 
 type UpdateDeploymentRequest struct {
-	Name                 string            `json:"name,omitempty"`
-	PreRunCommand        string            `json:"pre_run_command,omitempty"`
-	PostRunCommand       string            `json:"post_run_command,omitempty"`
-	BuildVariables       map[string]string `json:"build_variables,omitempty"`
-	EnvironmentVariables map[string]string `json:"environment_variables,omitempty"`
-	Port                 int               `json:"port,omitempty"`
-	ID                   uuid.UUID         `json:"id,omitempty"`
-	Force                bool              `json:"force,omitempty"`
-	DockerfilePath       string            `json:"dockerfile_path,omitempty"`
-	BasePath             string            `json:"base_path,omitempty"`
+	Name                 string                   `json:"name,omitempty"`
+	Environment          shared_types.Environment `json:"environment,omitempty"`
+	PreRunCommand        string                   `json:"pre_run_command,omitempty"`
+	PostRunCommand       string                   `json:"post_run_command,omitempty"`
+	BuildVariables       map[string]string        `json:"build_variables,omitempty"`
+	EnvironmentVariables map[string]string        `json:"environment_variables,omitempty"`
+	Port                 int                      `json:"port,omitempty"`
+	ID                   uuid.UUID                `json:"id,omitempty"`
+	Force                bool                     `json:"force,omitempty"`
+	DockerfilePath       string                   `json:"dockerfile_path,omitempty"`
+	BasePath             string                   `json:"base_path,omitempty"`
 }
 
 type DeleteDeploymentRequest struct {

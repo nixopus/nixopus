@@ -7106,6 +7106,10 @@
 						"nullable": true,
 						"type": "string"
 					},
+					"environment": {
+						"nullable": true,
+						"type": "string"
+					},
 					"environment_variables": {
 						"additionalProperties": {
 							"type": "string"
