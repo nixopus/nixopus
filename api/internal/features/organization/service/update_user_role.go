@@ -71,8 +71,14 @@ func (o *OrganizationService) UpdateUserRole(request *types.UpdateUserRoleReques
 		}
 	}
 
+	// Invalidate organization membership cache
 	if err := o.cache.InvalidateOrgMembership(o.Ctx, request.UserID, request.OrganizationID); err != nil {
 		o.logger.Log(logger.Error, "failed to invalidate organization membership cache", err.Error())
+	}
+
+	// Invalidate RBAC permissions cache since role changed
+	if err := o.cache.InvalidateRBACPermissions(o.Ctx, request.UserID, request.OrganizationID); err != nil {
+		o.logger.Log(logger.Error, "failed to invalidate RBAC permissions cache", err.Error())
 	}
 
 	o.logger.Log(logger.Info, "user role updated successfully", request.UserID)

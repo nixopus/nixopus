@@ -16043,7 +16043,7 @@
 	"servers": [
 		{
 			"description": "local server",
-			"url": "http://localhost:8080"
+			"url": "http://:8080"
 		}
 	],
 	"tags": [
