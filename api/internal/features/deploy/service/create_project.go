@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -18,8 +19,8 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 	application := shared_types.Application{
 		ID:                   uuid.New(),
 		Name:                 req.Name,
-		BuildVariables:       GetStringFromMap(req.BuildVariables),
-		EnvironmentVariables: GetStringFromMap(req.EnvironmentVariables),
+		BuildVariables:       tasks.GetStringFromMap(req.BuildVariables),
+		EnvironmentVariables: tasks.GetStringFromMap(req.EnvironmentVariables),
 		Environment:          req.Environment,
 		BuildPack:            req.BuildPack,
 		Repository:           req.Repository,
