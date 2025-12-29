@@ -1,0 +1,312 @@
+{
+  "directives": {
+    "syntax": "docker/dockerfile:1",
+    "escape": "\\",
+    "check": {
+      "skip": ["JSONArgsRecommended"],
+      "error": false
+    }
+  },
+  "global_args": [
+    {
+      "name": "VERSION",
+      "default_value": "latest"
+    },
+    {
+      "name": "BUILDPLATFORM",
+      "default_value": "linux/amd64"
+    }
+  ],
+  "stages": [
+    {
+      "from": {
+        "image": "golang",
+        "tag": "1.21-alpine",
+        "as": "builder"
+      },
+      "instructions": [
+        {
+          "type": "workdir",
+          "path": "/app"
+        },
+        {
+          "type": "arg",
+          "name": "GO_VERSION",
+          "default_value": "1.21"
+        },
+        {
+          "type": "env",
+          "variables": {
+            "CGO_ENABLED": "0",
+            "GOOS": "linux",
+            "GOARCH": "amd64"
+          }
+        },
+        {
+          "type": "copy",
+          "sources": ["go.mod", "go.sum"],
+          "destination": "./"
+        },
+        {
+          "type": "run",
+          "command": "go mod download",
+          "mount": [
+            {
+              "type": "cache",
+              "target": "/go/pkg/mod",
+              "id": "gomod",
+              "sharing": "shared"
+            }
+          ]
+        },
+        {
+          "type": "copy",
+          "sources": ["."],
+          "destination": "./",
+          "exclude": [".git", "node_modules"]
+        },
+        {
+          "type": "run",
+          "command": ["go", "build", "-o", "/app/main", "."],
+          "mount": [
+            {
+              "type": "cache",
+              "target": "/root/.cache/go-build",
+              "id": "gobuild",
+              "sharing": "shared"
+            }
+          ],
+          "network": "default"
+        }
+      ]
+    },
+    {
+      "from": {
+        "image": "alpine",
+        "tag": "3.19",
+        "platform": "linux/amd64"
+      },
+      "instructions": [
+        {
+          "type": "workdir",
+          "path": "/app"
+        },
+        {
+          "type": "run",
+          "command": "apk add --no-cache ca-certificates tzdata",
+          "network": "default"
+        },
+        {
+          "type": "copy",
+          "from": "builder",
+          "sources": ["/app/main"],
+          "destination": "./",
+          "chmod": "0755"
+        },
+        {
+          "type": "user",
+          "user": "1000",
+          "group": "1000"
+        },
+        {
+          "type": "expose",
+          "ports": [
+            {
+              "port": 8080,
+              "protocol": "tcp"
+            },
+            {
+              "port": 9090,
+              "protocol": "tcp"
+            }
+          ]
+        },
+        {
+          "type": "volume",
+          "paths": ["/app/data", "/app/logs"]
+        },
+        {
+          "type": "label",
+          "labels": {
+            "maintainer": "octopack@example.com",
+            "version": "1.0.0",
+            "description": "Example application"
+          }
+        },
+        {
+          "type": "healthcheck",
+          "command": ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"],
+          "interval": "30s",
+          "timeout": "10s",
+          "start_period": "40s",
+          "retries": 3
+        },
+        {
+          "type": "stopsignal",
+          "signal": "SIGTERM"
+        },
+        {
+          "type": "entrypoint",
+          "command": ["./main"]
+        },
+        {
+          "type": "cmd",
+          "command": ["--config", "/app/config.yaml"],
+          "is_default_args": true
+        }
+      ]
+    },
+    {
+      "from": {
+        "image": "node",
+        "tag": "20-alpine",
+        "as": "frontend-builder"
+      },
+      "instructions": [
+        {
+          "type": "workdir",
+          "path": "/app"
+        },
+        {
+          "type": "copy",
+          "sources": ["package.json", "package-lock.json"],
+          "destination": "./"
+        },
+        {
+          "type": "run",
+          "command": "npm ci",
+          "mount": [
+            {
+              "type": "cache",
+              "target": "/root/.npm",
+              "id": "npm",
+              "sharing": "shared"
+            }
+          ]
+        },
+        {
+          "type": "copy",
+          "sources": ["src", "public"],
+          "destination": "./"
+        },
+        {
+          "type": "run",
+          "command": ["npm", "run", "build"]
+        },
+        {
+          "type": "copy",
+          "sources": ["dist"],
+          "destination": "/app/dist"
+        }
+      ]
+    },
+    {
+      "from": {
+        "image": "nginx",
+        "tag": "alpine",
+        "digest": "sha256:abc123def456..."
+      },
+      "instructions": [
+        {
+          "type": "copy",
+          "from": "frontend-builder",
+          "sources": ["/app/dist"],
+          "destination": "/usr/share/nginx/html",
+          "chown": "nginx:nginx"
+        },
+        {
+          "type": "copy",
+          "sources": ["nginx.conf"],
+          "destination": "/etc/nginx/nginx.conf",
+          "chmod": "0644"
+        },
+        {
+          "type": "expose",
+          "ports": [
+            {
+              "port": 80,
+              "protocol": "tcp"
+            },
+            {
+              "port": 443,
+              "protocol": "tcp"
+            }
+          ]
+        },
+        {
+          "type": "run",
+          "command": "nginx -t",
+          "network": "none"
+        },
+        {
+          "type": "onbuild",
+          "instruction": {
+            "type": "copy",
+            "sources": ["custom-config.conf"],
+            "destination": "/etc/nginx/conf.d/"
+          }
+        },
+        {
+          "type": "cmd",
+          "command": ["nginx", "-g", "daemon off;"]
+        }
+      ]
+    },
+    {
+      "from": {
+        "image": "ubuntu",
+        "tag": "22.04"
+      },
+      "instructions": [
+        {
+          "type": "shell",
+          "shell": ["/bin/bash", "-c"]
+        },
+        {
+          "type": "run",
+          "command": "apt-get update && apt-get install -y curl",
+          "security": "sandbox"
+        },
+        {
+          "type": "run",
+          "command": ["sh", "-c", "echo 'Using exec form with shell'"],
+          "mount": [
+            {
+              "type": "bind",
+              "target": "/mnt/data",
+              "source": "/host/data",
+              "from": "builder"
+            },
+            {
+              "type": "secret",
+              "target": "/run/secrets/api-key",
+              "id": "api-key",
+              "mode": "0600",
+              "required": true
+            },
+            {
+              "type": "ssh",
+              "target": "/root/.ssh",
+              "id": "default",
+              "mode": "0600",
+              "required": false
+            }
+          ]
+        },
+        {
+          "type": "add",
+          "sources": ["https://example.com/file.tar.gz"],
+          "destination": "/tmp/",
+          "checksum": "sha256:abc123...",
+          "unpack": true,
+          "chown": "root:root"
+        },
+        {
+          "type": "maintainer",
+          "name": "Example Maintainer <maintainer@example.com>"
+        }
+      ]
+    }
+  ]
+}
+
