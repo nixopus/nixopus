@@ -1,18 +1,6 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import type { SessionStatus } from '../components/TerminalSession';
-
-export type SplitPane = {
-  id: string;
-  label: string;
-  terminalId: string;
-};
-
-export type Session = {
-  id: string;
-  label: string;
-  splitPanes: SplitPane[];
-};
+import type { SessionStatus, SplitPane, Session } from '../types';
 
 const SESSION_LIMIT = 5;
 const MAX_SPLITS = 4;
@@ -127,7 +115,6 @@ export const useTerminalSessions = () => {
             return updated;
           });
         }
-
 
         if (id === activeSessionId) {
           if (newSessions.length > 0) {

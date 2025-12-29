@@ -5,12 +5,7 @@ import { Plus, X, Zap, SplitSquareVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { SessionTab } from './SessionTab';
-import type { SessionStatus } from './TerminalSession';
-
-type Session = {
-  id: string;
-  label: string;
-};
+import type { SessionStatus, Session } from '../types';
 
 type TerminalHeaderProps = {
   sessions: Session[];

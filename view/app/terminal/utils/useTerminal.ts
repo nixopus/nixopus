@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { StopExecution } from './stopExecution';
 import { useWebSocket } from '@/hooks/socket-provider';
 import { getAdvancedSettings } from '@/lib/advanced-settings';
+import type { ExitHandler, TerminalOutput } from '../types';
 
 const CTRL_C = '\x03';
 
@@ -10,24 +11,6 @@ enum OutputType {
   STDERR = 'stderr',
   EXIT = 'exit'
 }
-
-type TerminalOutput = {
-  data: {
-    output_type: string;
-    content: string;
-  };
-  topic: string;
-};
-
-type ExitHandler = {
-  splitPanesCount: number;
-  sessionsCount: number;
-  activePaneId: string | null;
-  activeSessionId: string | null;
-  onCloseSplitPane?: (paneId: string) => void;
-  onCloseSession?: (sessionId: string) => void;
-  onToggleTerminal?: () => void;
-};
 
 export const useTerminal = (
   isTerminalOpen: boolean,

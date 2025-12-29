@@ -4,8 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { useTerminal } from '../utils/useTerminal';
 import { useContainerReady } from '../utils/isContainerReady';
 import { cn } from '@/lib/utils';
-
-export type SessionStatus = 'active' | 'idle' | 'loading';
+import type { ExitHandler, SessionStatus } from '../types';
 
 type TerminalSessionProps = {
   isActive: boolean;
@@ -16,15 +15,7 @@ type TerminalSessionProps = {
   setFitAddonRef: React.Dispatch<React.SetStateAction<any | null>>;
   terminalId: string;
   onStatusChange?: (status: SessionStatus) => void;
-  exitHandler?: {
-    splitPanesCount: number;
-    sessionsCount: number;
-    activePaneId: string | null;
-    activeSessionId: string | null;
-    onCloseSplitPane?: (paneId: string) => void;
-    onCloseSession?: (sessionId: string) => void;
-    onToggleTerminal?: () => void;
-  };
+  exitHandler?: ExitHandler;
 };
 
 export const TerminalSession: React.FC<TerminalSessionProps> = ({

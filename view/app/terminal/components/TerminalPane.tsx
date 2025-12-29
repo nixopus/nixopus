@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useTerminal } from '../utils/useTerminal';
 import { useContainerReady } from '../utils/isContainerReady';
 import { cn } from '@/lib/utils';
-import type { SessionStatus } from './TerminalSession';
+import type { SessionStatus, ExitHandler } from '../types';
 
 type TerminalPaneProps = {
   isActive: boolean;
@@ -15,15 +15,7 @@ type TerminalPaneProps = {
   terminalId: string;
   onFocus: () => void;
   onStatusChange?: (status: SessionStatus) => void;
-  exitHandler?: {
-    splitPanesCount: number;
-    sessionsCount: number;
-    activePaneId: string | null;
-    activeSessionId: string | null;
-    onCloseSplitPane?: (paneId: string) => void;
-    onCloseSession?: (sessionId: string) => void;
-    onToggleTerminal?: () => void;
-  };
+  exitHandler?: ExitHandler;
 };
 
 export const TerminalPane: React.FC<TerminalPaneProps> = ({
