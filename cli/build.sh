@@ -87,6 +87,7 @@ a = Analysis(
         'app.commands.install.command',
         'app.commands.uninstall.uninstall',
         'app.commands.version.command',
+        'posthog',
     ],
     hookspath=[],
     hooksconfig={},
