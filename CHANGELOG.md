@@ -1,3 +1,30 @@
+# [0.1.0-alpha.108](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.107...v0.1.0-alpha.108) (2025-12-30)
+
+
+### Bug Fixes
+
+* preflight check to consider custom ports over default ([#810](https://github.com/raghavyuva/nixopus/issues/810)) ([a907721](https://github.com/raghavyuva/nixopus/commit/a9077212bf52dcedb635fad09f509584aae2d3a5))
+* pressing (CMD / CNTRL + D, or any Kill operations like typing exit) in a terminal shows logout but the terminal session is not killed ([#728](https://github.com/raghavyuva/nixopus/issues/728)) ([3ddc1b8](https://github.com/raghavyuva/nixopus/commit/3ddc1b86e578245645518b536835f75b90373f4a))
+
+
+### Features
+
+* add duplicate project API with family support ([add6799](https://github.com/raghavyuva/nixopus/commit/add6799b064a1db2f4ecf83a52c2c350b552224b))
+* add family_id field to applications for project grouping ([6edbb79](https://github.com/raghavyuva/nixopus/commit/6edbb791fb4f9bdf75873216bb0848a47846fe6a))
+* add project family switcher and duplicate dialog UI ([#825](https://github.com/raghavyuva/nixopus/issues/825)) ([c32b1cf](https://github.com/raghavyuva/nixopus/commit/c32b1cf9fe1dc181f30dc82720470d625f6957a4))
+* add storage methods for project family operations ([6c0104f](https://github.com/raghavyuva/nixopus/commit/6c0104f29d64d778c84d122a866205ddd3475559))
+* add support for branch selection during duplicating ([#827](https://github.com/raghavyuva/nixopus/issues/827)) ([4e34e2a](https://github.com/raghavyuva/nixopus/commit/4e34e2a901d4284e1155d4966e4af9dcbd9b319c))
+* add support for create project deploy later ([#818](https://github.com/raghavyuva/nixopus/issues/818)) ([cfd5aab](https://github.com/raghavyuva/nixopus/commit/cfd5aab5126a8f9d2b530afa348fc6b63ff48dac)), closes [#819](https://github.com/raghavyuva/nixopus/issues/819) [#820](https://github.com/raghavyuva/nixopus/issues/820)
+* add support for rbac fetch claims caching for faster responses ([#813](https://github.com/raghavyuva/nixopus/issues/813)) ([ea9bb7d](https://github.com/raghavyuva/nixopus/commit/ea9bb7d8690fd273be4cd44a437f9953817ed27b))
+* cleanup scheduler for various log types ([#815](https://github.com/raghavyuva/nixopus/issues/815)) ([aa52da4](https://github.com/raghavyuva/nixopus/commit/aa52da48fb4e596bb322d413c20078f9fb9aa591))
+
+
+### Performance Improvements
+
+* update extension input dialog to render required input fields only ([#817](https://github.com/raghavyuva/nixopus/issues/817)) ([977a74e](https://github.com/raghavyuva/nixopus/commit/977a74ebef1358db9461be68be938587e3a6636c))
+
+
+
 # [0.1.0-alpha.107](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.106...v0.1.0-alpha.107) (2025-12-27)
 
 
