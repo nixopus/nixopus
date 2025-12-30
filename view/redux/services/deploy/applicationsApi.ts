@@ -8,6 +8,7 @@ import {
   CreateProjectRequest,
   DeployProjectRequest,
   DuplicateProjectRequest,
+  Environment,
   ProjectFamilyResponse,
   ReDeployApplicationRequest,
   UpdateDeploymentRequest,
@@ -86,6 +87,16 @@ export const deployApi = createApi({
       providesTags: [{ type: 'Deploy', id: 'LIST' }],
       transformResponse: (response: { data: ProjectFamilyResponse }) => {
         return response.data.projects;
+      }
+    }),
+    getFamilyEnvironments: builder.query<Environment[], { familyId: string }>({
+      query: ({ familyId }) => ({
+        url: `${DEPLOY.GET_FAMILY_ENVIRONMENTS}?family_id=${familyId}`,
+        method: 'GET'
+      }),
+      providesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: { environments: Environment[] } }) => {
+        return response.data.environments;
       }
     }),
     updateDeployment: builder.mutation<Application, UpdateDeploymentRequest>({
@@ -253,6 +264,7 @@ export const {
   useDeployProjectMutation,
   useDuplicateProjectMutation,
   useGetProjectFamilyQuery,
+  useGetFamilyEnvironmentsQuery,
   useGetApplicationByIdQuery,
   useUpdateDeploymentMutation,
   useRedeployApplicationMutation,

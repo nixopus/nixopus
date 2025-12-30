@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -42,8 +43,23 @@ func (c *GithubConnectorService) GetGithubRepositoryBranches(user_id string, rep
 		return nil, err
 	}
 
+	// Check if repository_name is numeric (repository ID)
+	var repoFullName string
+	if repoID, err := strconv.ParseUint(repository_name, 10, 64); err == nil {
+		// It's a repository ID, fetch the repository details to get full_name
+		repo, err := c.GetGithubRepositoryByID(user_id, repoID)
+		if err != nil {
+			c.logger.Log(logger.Error, fmt.Sprintf("Failed to get repository by ID: %s", err.Error()), "")
+			return nil, fmt.Errorf("failed to get repository details: %s", err.Error())
+		}
+		repoFullName = repo.FullName
+	} else {
+		// It's already a full_name (owner/repo format)
+		repoFullName = repository_name
+	}
+
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/branches", githubAPIBaseURL, repository_name), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/branches", githubAPIBaseURL, repoFullName), nil)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, err

@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { StopExecution } from './stopExecution';
 import { useWebSocket } from '@/hooks/socket-provider';
 import { getAdvancedSettings } from '@/lib/advanced-settings';
+import type { ExitHandler, TerminalOutput } from '../types';
 
 const CTRL_C = '\x03';
 
@@ -11,20 +12,13 @@ enum OutputType {
   EXIT = 'exit'
 }
 
-type TerminalOutput = {
-  data: {
-    output_type: string;
-    content: string;
-  };
-  topic: string;
-};
-
 export const useTerminal = (
   isTerminalOpen: boolean,
   width: number,
   height: number,
   allowInput: boolean = true,
-  terminalId: string = 'terminal_id'
+  terminalId: string = 'terminal_id',
+  exitHandler?: ExitHandler
 ) => {
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const fitAddonRef = useRef<any | null>(null);
@@ -34,6 +28,7 @@ export const useTerminal = (
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const terminalInstanceRef = useRef<any | null>(null);
   const pendingOutputRef = useRef<string[]>([]);
+  const currentLineRef = useRef<string>('');
 
   // Keep refs for WebSocket to ensure we always use the latest values
   const isReadyRef = useRef(isReady);
@@ -279,9 +274,90 @@ export const useTerminal = (
             return true;
           });
 
+          const isEnterKey = (data: string): boolean => {
+            return data === '\r' || data === '\n' || data === '\r\n';
+          };
+
+          const isBackspace = (data: string): boolean => {
+            return data === '\x7f' || data === '\b';
+          };
+
+          const isEscapeSequence = (data: string): boolean => {
+            return data.startsWith('\x1b');
+          };
+
+          const isPrintableAscii = (data: string): boolean => {
+            return data.length === 1 && data >= ' ' && data.charCodeAt(0) < 127;
+          };
+
+          const handleExitCommand = (): boolean => {
+            if (!exitHandler) return false;
+
+            const {
+              splitPanesCount,
+              sessionsCount,
+              activePaneId,
+              activeSessionId,
+              onCloseSplitPane,
+              onCloseSession,
+              onToggleTerminal
+            } = exitHandler;
+
+            // close split pane > close session > close session + terminal panel (for last session)
+            const canCloseSplitPane = splitPanesCount > 1 && activePaneId && onCloseSplitPane;
+            if (canCloseSplitPane) {
+              onCloseSplitPane(activePaneId);
+              return true;
+            }
+
+            if (activeSessionId && onCloseSession) {
+              onCloseSession(activeSessionId);
+              return true;
+            }
+
+            if (onToggleTerminal) {
+              onToggleTerminal();
+              return true;
+            }
+
+            return false;
+          };
+
+          const updateLineBuffer = (data: string): void => {
+            if (isEnterKey(data)) {
+              currentLineRef.current = '';
+            } else if (isBackspace(data)) {
+              if (currentLineRef.current.length > 0) {
+                currentLineRef.current = currentLineRef.current.slice(0, -1);
+              }
+            } else if (isEscapeSequence(data)) {
+              // Reset line buffer for escape sequences (arrow keys, function keys, etc.)
+              currentLineRef.current = '';
+            } else if (isPrintableAscii(data)) {
+              // Add printable character, limit length to prevent memory issues
+              if (currentLineRef.current.length < 1000) {
+                currentLineRef.current += data;
+              }
+            }
+          };
+
           // onData is called when xterm processes input
-          // Send all input to backend - backend echo will handle display
           term.onData((data) => {
+            // "exit" command when Enter is pressed
+            if (isEnterKey(data)) {
+              const command = currentLineRef.current.trim().toLowerCase();
+              if (command === 'exit') {
+                // handle closing like CTRL+D/CMD+D
+                currentLineRef.current = '';
+                if (handleExitCommand()) {
+                  return;
+                }
+              }
+            }
+
+            updateLineBuffer(data);
+
+            // Send all input to backend
             safeSendMessage({
               action: 'terminal',
               data: { value: data, terminalId }

@@ -80,6 +80,7 @@ export enum DEPLOY {
   DEPLOY_PROJECT = 'v1/deploy/application/project/deploy',
   DUPLICATE_PROJECT = 'v1/deploy/application/project/duplicate',
   GET_PROJECT_FAMILY = 'v1/deploy/application/project/family',
+  GET_FAMILY_ENVIRONMENTS = 'v1/deploy/application/project/family/environments',
   GET_APPLICATION = 'v1/deploy/application',
   UPDATE_APPLICATION = 'v1/deploy/application',
   REDEPLOY_APPLICATION = 'v1/deploy/application/redeploy',

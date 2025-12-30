@@ -3,7 +3,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { SessionStatus } from './TerminalSession';
+import type { SessionStatus } from '../types';
 
 type SessionTabProps = {
   session: { id: string; label: string };
@@ -40,9 +40,7 @@ export const SessionTab: React.FC<SessionTabProps> = ({
         {status === 'loading' ? (
           <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
         ) : status === 'active' ? (
-          <div
-            className="w-2 h-2 rounded-full bg-emerald-400 terminal-ready-indicator"
-          />
+          <div className="w-2 h-2 rounded-full bg-emerald-400 terminal-ready-indicator" />
         ) : (
           <div className="w-2 h-2 rounded-full bg-zinc-500" />
         )}

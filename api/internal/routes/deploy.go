@@ -19,6 +19,7 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 	fuego.Post(applicationGroup, "/project/deploy", deployController.HandleDeployProject)
 	fuego.Post(applicationGroup, "/project/duplicate", deployController.HandleDuplicateProject)
 	fuego.Get(applicationGroup, "/project/family", deployController.HandleGetProjectFamily)
+	fuego.Get(applicationGroup, "/project/family/environments", deployController.HandleGetEnvironmentsInFamily)
 	fuego.Get(applicationGroup, "", deployController.GetApplicationById)
 	fuego.Delete(applicationGroup, "", deployController.DeleteApplication)
 	fuego.Put(applicationGroup, "", deployController.UpdateApplication)
