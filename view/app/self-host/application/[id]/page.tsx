@@ -90,6 +90,7 @@ function Page() {
               application_id={application?.id}
               dockerFilePath={application?.dockerfile_path}
               base_path={application?.base_path}
+              application={application}
             />
           </TabsContent>
           <TabsContent value="logs" className="mt-6">
