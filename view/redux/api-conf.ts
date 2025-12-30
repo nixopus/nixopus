@@ -95,7 +95,8 @@ export enum DEPLOY {
 }
 
 export enum SOCKET_EVENTS {
-  MONITOR_APPLICATION_DEPLOYMENT = 'monitor_application_deployment'
+  MONITOR_APPLICATION_DEPLOYMENT = 'monitor_application_deployment',
+  MONITOR_HEALTH_CHECK = 'monitor_health_check'
 }
 
 export enum SOCKET_ACTIONS {
