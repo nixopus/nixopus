@@ -151,3 +151,13 @@ export enum EXTENSIONURLS {
   LIST_EXECUTIONS = 'v1/extensions/by-extension-id/{extension_id}/executions',
   GET_EXECUTION_LOGS = 'v1/extensions/execution/{execution_id}/logs'
 }
+
+export enum HEALTHCHECKURLS {
+  GET_HEALTH_CHECK = 'v1/healthcheck',
+  CREATE_HEALTH_CHECK = 'v1/healthcheck',
+  UPDATE_HEALTH_CHECK = 'v1/healthcheck',
+  DELETE_HEALTH_CHECK = 'v1/healthcheck',
+  TOGGLE_HEALTH_CHECK = 'v1/healthcheck/toggle',
+  GET_HEALTH_CHECK_RESULTS = 'v1/healthcheck/results',
+  GET_HEALTH_CHECK_STATS = 'v1/healthcheck/stats'
+}
