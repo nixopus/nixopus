@@ -203,8 +203,7 @@
     {
       "from": {
         "image": "nginx",
-        "tag": "alpine",
-        "digest": "sha256:abc123def456..."
+        "tag": "alpine"
       },
       "instructions": [
         {

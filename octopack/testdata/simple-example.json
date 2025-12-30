@@ -1,0 +1,42 @@
+{
+    "directives": {
+      "syntax": "docker/dockerfile:1"
+    },
+    "stages": [
+      {
+        "from": {
+          "image": "alpine",
+          "tag": "latest"
+        },
+        "instructions": [
+          {
+            "type": "workdir",
+            "path": "/app"
+          },
+          {
+            "type": "run",
+            "command": ["sh", "-c", "echo 'print(\"Hello World\")' > /app/app.py"]
+          },
+          {
+            "type": "env",
+            "variables": {
+              "PYTHONUNBUFFERED": "1",
+              "PORT": "8080"
+            }
+          },
+          {
+            "type": "expose",
+            "ports": [
+              {
+                "port": 8080
+              }
+            ]
+          },
+          {
+            "type": "cmd",
+            "command": ["python3", "app.py"]
+          }
+        ]
+      }
+    ]
+  }
