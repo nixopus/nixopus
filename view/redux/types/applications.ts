@@ -148,6 +148,7 @@ export interface DuplicateProjectRequest {
   source_project_id: string;
   domain: string;
   environment: Environment;
+  branch?: string;
 }
 
 // ProjectFamilyResponse contains the projects in a family.
