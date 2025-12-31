@@ -14,10 +14,11 @@ type Config struct {
 }
 
 type SupertokensConfig struct {
-	APIKey        string `mapstructure:"api_key" validate:"required"`
-	APIDomain     string `mapstructure:"api_domain" validate:"required"`
-	WebsiteDomain string `mapstructure:"website_domain" validate:"required"`
-	ConnectionURI string `mapstructure:"connection_uri" validate:"required"`
+	APIKey          string `mapstructure:"api_key" validate:"required"`
+	APIDomain       string `mapstructure:"api_domain" validate:"required"`
+	WebsiteDomain   string `mapstructure:"website_domain" validate:"required"`
+	ConnectionURI   string `mapstructure:"connection_uri" validate:"required"`
+	EnableDebugLogs bool   `mapstructure:"enable_debug_logs"`
 }
 
 type ServerConfig struct {
