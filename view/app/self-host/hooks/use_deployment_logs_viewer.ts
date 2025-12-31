@@ -7,6 +7,8 @@ import {
 import { useApplicationWebSocket } from './use_application_websocket';
 import { SOCKET_EVENTS } from '@/redux/api-conf';
 
+const LOGS_DENSE_MODE_KEY = 'nixopus_logs_dense_mode';
+
 export interface DeploymentLogsViewerProps {
   id: string;
   isDeployment?: boolean;
@@ -39,12 +41,22 @@ export function useDeploymentLogsViewer({
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [allLogs, setAllLogs] = useState<ApplicationLogs[]>([]);
-  const [isDense, setIsDense] = useState(false);
+  const [isDense, setIsDense] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(LOGS_DENSE_MODE_KEY);
+      return stored !== null ? stored === 'true' : true; // Default to true (condensed mode)
+    }
+    return true;
+  });
   const [filters, setFilters] = useState<LogFilters>({
     startDate: '',
     endDate: '',
     level: 'all'
   });
+
+  useEffect(() => {
+    localStorage.setItem(LOGS_DENSE_MODE_KEY, isDense.toString());
+  }, [isDense]);
 
   const { message } = useApplicationWebSocket(id);
 
