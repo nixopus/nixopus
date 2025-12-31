@@ -30,14 +30,40 @@ export const Terminal: React.FC<TerminalProps> = ({ containerId }) => {
   }, [isMounted, initializeTerminal]);
 
   const hasSentInitRef = useRef(false);
+
   useEffect(() => {
     if (!hasSentInitRef.current && terminalInstance && isReady) {
       hasSentInitRef.current = true;
-      // TODO: optimize this such that backend handles this instead of client.
-      const cmd = `if docker ps >/dev/null 2>&1; then D=docker; else D='sudo -n docker'; fi; $D exec -it ${containerId} /bin/bash || $D exec -it ${containerId} /bin/sh\r`;
-      setTimeout(() => {
-        sendJsonMessage({ action: 'terminal', data: { value: cmd, terminalId: sessionId } });
-      }, 150);
+
+      const dockerCmd = `if docker ps >/dev/null 2>&1; then D=docker; else D='sudo -n docker'; fi; $D exec -it ${containerId} /bin/bash || $D exec -it ${containerId} /bin/sh`;
+      const maxRetries = 3;
+      const retryDelay = 500;
+      const initialDelay = 150;
+      const clearDelay = 1800;
+
+      // Send docker exec command with retries
+      for (let i = 0; i < maxRetries; i++) {
+        setTimeout(
+          () => {
+            sendJsonMessage({
+              action: 'terminal',
+              data: { value: `${dockerCmd}\r`, terminalId: sessionId }
+            });
+          },
+          initialDelay + i * retryDelay
+        );
+      }
+
+      // Clear terminal after connection is established
+      setTimeout(
+        () => {
+          sendJsonMessage({
+            action: 'terminal',
+            data: { value: 'clear\r', terminalId: sessionId }
+          });
+        },
+        initialDelay + (maxRetries - 1) * retryDelay + clearDelay
+      );
     }
   }, [terminalInstance, isReady, sendJsonMessage, containerId, sessionId]);
 
