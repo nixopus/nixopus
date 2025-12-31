@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useRollbackApplicationMutation } from '@/redux/services/deploy/applicationsApi';
 import { ApplicationDeployment } from '@/redux/types/applications';
-import { Undo, Eye, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Undo, Eye, CheckCircle2, AlertCircle, Loader2, Ban } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
@@ -54,6 +54,12 @@ function DeploymentsList({
         return <CheckCircle2 className="h-4 w-4 text-green-600" />;
       case 'failed':
         return <AlertCircle className="h-4 w-4 text-red-600" />;
+      case 'cancelled':
+        return <Ban className="h-4 w-4 text-orange-600" />;
+      case 'cloning':
+      case 'building':
+      case 'deploying':
+      case 'started':
       case 'in_progress':
         return <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />;
       default:
@@ -78,7 +84,9 @@ function DeploymentsList({
                 ? 'default'
                 : deployment.status?.status?.toLowerCase() === 'failed'
                   ? 'destructive'
-                  : 'secondary'
+                  : deployment.status?.status?.toLowerCase() === 'cancelled'
+                    ? 'secondary'
+                    : 'outline'
             }
           >
             {deployment.status?.status || t('selfHost.deployment.list.table.unknown')}

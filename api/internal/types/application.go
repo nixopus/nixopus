@@ -100,6 +100,7 @@ const (
 	Building  Status = "building"
 	Deploying Status = "deploying"
 	Deployed  Status = "deployed"
+	Cancelled Status = "cancelled"
 )
 
 type Environment string

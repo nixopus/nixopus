@@ -68,8 +68,20 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			RetryLimit: 5,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Printf("[%s] start: correlation_id=%s\n", TASK_CREATE_DEPLOYMENT, data.CorrelationID)
-				err := t.BuildPack(ctx, data)
+
+				// Create cancellable context for this deployment
+				registry := GetCancellationRegistry()
+				cancellableCtx, cleanup := registry.CreateCancellableContext(ctx, data.ApplicationDeployment.ID)
+				defer cleanup()
+
+				err := t.BuildPack(cancellableCtx, data)
 				if err != nil {
+					if err == ErrDeploymentCancelled {
+						fmt.Printf("[%s] cancelled: correlation_id=%s\n", TASK_CREATE_DEPLOYMENT, data.CorrelationID)
+						taskCtx := t.NewTaskContext(data)
+						taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
+						return nil // Don't retry cancelled tasks
+					}
 					fmt.Print("error handling create deployment: ", err)
 					return err
 				}
@@ -94,8 +106,20 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			RetryLimit: 5,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Updating deployment")
-				err := t.HandleUpdateDeployment(ctx, data)
+
+				// Create cancellable context for this deployment
+				registry := GetCancellationRegistry()
+				cancellableCtx, cleanup := registry.CreateCancellableContext(ctx, data.ApplicationDeployment.ID)
+				defer cleanup()
+
+				err := t.HandleUpdateDeployment(cancellableCtx, data)
 				if err != nil {
+					if err == ErrDeploymentCancelled {
+						fmt.Println("Update deployment cancelled")
+						taskCtx := t.NewTaskContext(data)
+						taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
+						return nil
+					}
 					return err
 				}
 				return nil
@@ -119,8 +143,20 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			RetryLimit: 5,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Redeploying application")
-				err := t.HandleReDeploy(ctx, data)
+
+				// Create cancellable context for this deployment
+				registry := GetCancellationRegistry()
+				cancellableCtx, cleanup := registry.CreateCancellableContext(ctx, data.ApplicationDeployment.ID)
+				defer cleanup()
+
+				err := t.HandleReDeploy(cancellableCtx, data)
 				if err != nil {
+					if err == ErrDeploymentCancelled {
+						fmt.Println("Redeploy cancelled")
+						taskCtx := t.NewTaskContext(data)
+						taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
+						return nil
+					}
 					return err
 				}
 				return nil
@@ -144,8 +180,20 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			RetryLimit: 10,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Rolling back deployment")
-				err := t.HandleRollback(ctx, data)
+
+				// Create cancellable context for this deployment
+				registry := GetCancellationRegistry()
+				cancellableCtx, cleanup := registry.CreateCancellableContext(ctx, data.ApplicationDeployment.ID)
+				defer cleanup()
+
+				err := t.HandleRollback(cancellableCtx, data)
 				if err != nil {
+					if err == ErrDeploymentCancelled {
+						fmt.Println("Rollback cancelled")
+						taskCtx := t.NewTaskContext(data)
+						taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
+						return nil
+					}
 					return err
 				}
 				return nil
@@ -169,8 +217,20 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			RetryLimit: 5,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Restarting deployment")
-				err := t.HandleRestart(ctx, data)
+
+				// Create cancellable context for this deployment
+				registry := GetCancellationRegistry()
+				cancellableCtx, cleanup := registry.CreateCancellableContext(ctx, data.ApplicationDeployment.ID)
+				defer cleanup()
+
+				err := t.HandleRestart(cancellableCtx, data)
 				if err != nil {
+					if err == ErrDeploymentCancelled {
+						fmt.Println("Restart cancelled")
+						taskCtx := t.NewTaskContext(data)
+						taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
+						return nil
+					}
 					return err
 				}
 				return nil

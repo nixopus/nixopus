@@ -78,7 +78,17 @@ export type ApplicationLogsResponse = {
   total_pages: number;
 };
 
-export type Status = 'draft' | 'failed' | 'cloning' | 'building' | 'deploying' | 'deployed';
+export type Status =
+  | 'draft'
+  | 'started'
+  | 'running'
+  | 'stopped'
+  | 'failed'
+  | 'cloning'
+  | 'building'
+  | 'deploying'
+  | 'deployed'
+  | 'cancelled';
 
 export type Environment = 'development' | 'staging' | 'production';
 

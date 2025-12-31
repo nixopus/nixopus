@@ -46,6 +46,11 @@ func (s *TaskService) UpdateDeployment(deployment *types.UpdateDeploymentRequest
 func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	taskCtx := s.NewTaskContext(TaskPayload)
 
+	// Check for cancellation before starting
+	if err := CheckCancellation(ctx); err != nil {
+		return err
+	}
+
 	taskCtx.LogAndUpdateStatus("Starting deployment process", shared_types.Cloning)
 
 	repoPath, err := s.Clone(CloneConfig{
@@ -55,6 +60,12 @@ func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload sh
 	})
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to clone repository: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
+	// Check for cancellation after cloning
+	if err := CheckCancellation(ctx); err != nil {
+		taskCtx.AddLog("Deployment cancelled after cloning")
 		return err
 	}
 
@@ -72,12 +83,24 @@ func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload sh
 		return err
 	}
 
+	// Check for cancellation after building
+	if err := CheckCancellation(ctx); err != nil {
+		taskCtx.AddLog("Deployment cancelled after building")
+		return err
+	}
+
 	taskCtx.AddLog("Image built successfully: " + buildImageResult + " for application " + TaskPayload.Application.Name)
 	taskCtx.UpdateStatus(shared_types.Deploying)
 
 	containerResult, err := s.AtomicUpdateContainer(TaskPayload, taskCtx)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to update container: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
+	// Check for cancellation after container update
+	if err := CheckCancellation(ctx); err != nil {
+		taskCtx.AddLog("Deployment cancelled after container update")
 		return err
 	}
 

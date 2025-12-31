@@ -174,6 +174,17 @@ export const deployApi = createApi({
         return response.data;
       }
     }),
+    cancelDeployment: builder.mutation<null, { id: string }>({
+      query: ({ id }) => ({
+        url: `${DEPLOY.CANCEL_DEPLOYMENT}`,
+        body: { id },
+        method: 'POST'
+      }),
+      invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: null }) => {
+        return response.data;
+      }
+    }),
     getApplicationLogs: builder.query<
       ApplicationLogsResponse,
       {
@@ -272,6 +283,7 @@ export const {
   useDeleteApplicationMutation,
   useRollbackApplicationMutation,
   useRestartApplicationMutation,
+  useCancelDeploymentMutation,
   useGetApplicationLogsQuery,
   useGetDeploymentLogsQuery,
   useGetApplicationDeploymentsQuery,

@@ -49,6 +49,8 @@ type DeployRepository interface {
 	GetEnvironmentsInFamily(familyID uuid.UUID, organizationID uuid.UUID) ([]shared_types.Environment, error)
 	CountFamilyMembers(familyID uuid.UUID) (int, error)
 	ClearFamilyIDIfSingleMember(familyID uuid.UUID) error
+	GetDeploymentStatusByDeploymentID(deploymentID uuid.UUID) (*shared_types.ApplicationDeploymentStatus, error)
+	CancelDeployment(deploymentID uuid.UUID) error
 }
 
 func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
@@ -530,4 +532,31 @@ func (s *DeployStorage) ClearFamilyIDIfSingleMember(familyID uuid.UUID) error {
 	}
 
 	return nil
+}
+
+// GetDeploymentStatusByDeploymentID retrieves the deployment status for a given deployment ID.
+func (s *DeployStorage) GetDeploymentStatusByDeploymentID(deploymentID uuid.UUID) (*shared_types.ApplicationDeploymentStatus, error) {
+	var status shared_types.ApplicationDeploymentStatus
+	err := s.DB.NewSelect().
+		Model(&status).
+		Where("application_deployment_id = ?", deploymentID).
+		Scan(s.Ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &status, nil
+}
+
+// CancelDeployment updates the deployment status to cancelled.
+func (s *DeployStorage) CancelDeployment(deploymentID uuid.UUID) error {
+	_, err := s.DB.NewUpdate().
+		Model((*shared_types.ApplicationDeploymentStatus)(nil)).
+		Set("status = ?", shared_types.Cancelled).
+		Set("updated_at = CURRENT_TIMESTAMP").
+		Where("application_deployment_id = ?", deploymentID).
+		Exec(s.Ctx)
+
+	return err
 }

@@ -27,6 +27,7 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 	fuego.Get(applicationGroup, "/deployments/{deployment_id}", deployController.GetDeploymentById)
 	fuego.Post(applicationGroup, "/rollback", deployController.HandleRollback)
 	fuego.Post(applicationGroup, "/restart", deployController.HandleRestart)
+	fuego.Post(applicationGroup, "/cancel", deployController.HandleCancel)
 	fuego.Get(applicationGroup, "/logs/{application_id}", deployController.GetLogs)
 	fuego.Get(applicationGroup, "/deployments/{deployment_id}/logs", deployController.GetDeploymentLogs)
 	fuego.Get(applicationGroup, "/deployments", deployController.GetApplicationDeployments)

@@ -39,6 +39,8 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return validateRollbackDeploymentRequest(*r)
 	case *types.RestartDeploymentRequest:
 		return validateRestartDeploymentRequest(*r)
+	case *types.CancelDeploymentRequest:
+		return validateCancelDeploymentRequest(*r)
 	case *types.DuplicateProjectRequest:
 		return validateDuplicateProjectRequest(*r)
 	case *types.GetProjectFamilyRequest:
@@ -120,6 +122,13 @@ func validateRollbackDeploymentRequest(req types.RollbackDeploymentRequest) erro
 }
 
 func validateRestartDeploymentRequest(req types.RestartDeploymentRequest) error {
+	if req.ID == uuid.Nil {
+		return types.ErrMissingID
+	}
+	return nil
+}
+
+func validateCancelDeploymentRequest(req types.CancelDeploymentRequest) error {
 	if req.ID == uuid.Nil {
 		return types.ErrMissingID
 	}

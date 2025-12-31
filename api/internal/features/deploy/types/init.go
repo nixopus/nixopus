@@ -93,6 +93,10 @@ type RestartDeploymentRequest struct {
 	ID uuid.UUID `json:"id"`
 }
 
+type CancelDeploymentRequest struct {
+	ID uuid.UUID `json:"id"`
+}
+
 // DuplicateProjectRequest is used to create a duplicate of an existing project with a different environment.
 type DuplicateProjectRequest struct {
 	SourceProjectID uuid.UUID                `json:"source_project_id"`
@@ -234,6 +238,8 @@ var (
 	ErrEnvironmentAlreadyExistsInFamily = errors.New("a project with this environment already exists in the family")
 	ErrSameEnvironmentAsDuplicate       = errors.New("cannot duplicate project with the same environment")
 	ErrProjectFamilyNotFound            = errors.New("project family not found")
+	ErrDeploymentNotInProgress          = errors.New("deployment is not in progress")
+	ErrDeploymentAlreadyCancelled       = errors.New("deployment has already been cancelled")
 )
 
 const (

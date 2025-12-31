@@ -19,6 +19,24 @@ const statusConfig: Record<
     label: 'Draft',
     pulse: false
   },
+  started: {
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500',
+    label: 'Started',
+    pulse: true
+  },
+  running: {
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500',
+    label: 'Running',
+    pulse: true
+  },
+  stopped: {
+    color: 'text-zinc-500',
+    bgColor: 'bg-zinc-500',
+    label: 'Stopped',
+    pulse: false
+  },
   deployed: {
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500',
@@ -47,6 +65,12 @@ const statusConfig: Record<
     color: 'text-red-500',
     bgColor: 'bg-red-500',
     label: 'Failed',
+    pulse: false
+  },
+  cancelled: {
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-500',
+    label: 'Cancelled',
     pulse: false
   }
 };

@@ -11,6 +11,21 @@
     },
     "deployment": {
       "title": "Deployment Details",
+      "logsTitle": "Deployment Logs",
+      "cancel": "Cancel Deployment",
+      "cancelling": "Cancelling...",
+      "cancelSuccess": "Deployment cancelled successfully",
+      "cancelError": "Failed to cancel deployment",
+      "status": {
+        "draft": "Draft",
+        "started": "Started",
+        "cloning": "Cloning",
+        "building": "Building",
+        "deploying": "Deploying",
+        "deployed": "Deployed",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
       "logs": {
         "title": "Deployment Logs",
         "refresh": "Refresh Logs",
@@ -212,7 +227,8 @@
           "building": "Building",
           "deployed": "Deployed",
           "deploying": "Deploying",
-          "failed": "Failed"
+          "failed": "Failed",
+          "cancelled": "Cancelled"
         },
         "total": "Total deployments: {count}"
       }
@@ -611,7 +627,8 @@
         "deploying": "Deploying",
         "building": "Building",
         "cloning": "Cloning",
-        "failed": "Failed"
+        "failed": "Failed",
+        "cancelled": "Cancelled"
       },
       "actions": {
         "deploy": "Deploy",
