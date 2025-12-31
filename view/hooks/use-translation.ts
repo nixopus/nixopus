@@ -57,9 +57,29 @@ type DeepKeyOf<T> = {
 // and enable autocompletion in editors
 export type translationKey = DeepKeyOf<EnTranslations>;
 
+// Pre merge English translations synchronously for immediate fallback
+const defaultTranslations: Record<string, any> = {
+  ...common,
+  ...containers,
+  ...auth,
+  ...settings,
+  ...activities,
+  ...languages,
+  ...dashboard,
+  ...fileManager,
+  ...selfHost,
+  ...terminal,
+  ...extensions,
+  ...navigation,
+  ...layout,
+  ...user,
+  ...toasts
+};
+
 export function useTranslation() {
-  const [translations, setTranslations] = useState<Record<string, any>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialize with English translations immediately to avoid showing keys
+  const [translations, setTranslations] = useState<Record<string, any>>(defaultTranslations);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const getLocale = () => {
@@ -69,17 +89,21 @@ export function useTranslation() {
     };
 
     const load = async () => {
+      const locale = getLocale();
+
+      // If locale is English, we already have translations loaded, skip async loading
+      if (locale === defaultLocale) {
+        return;
+      }
+
       try {
-        setIsLoading(true);
-        const locale = getLocale();
+        // Load translations for non-English locale
+        // English is already loaded as fallback, so we can show it immediately
         const data = await loadTranslations(locale);
         setTranslations(data);
       } catch (error) {
-        // Fallback to default locale
-        const data = await loadTranslations(defaultLocale);
-        setTranslations(data);
-      } finally {
-        setIsLoading(false);
+        // If loading fails, keep English translations (already loaded)
+        console.warn(`Failed to load translations for locale ${locale}, using default:`, error);
       }
     };
 
@@ -87,8 +111,6 @@ export function useTranslation() {
   }, []);
 
   const t = (key: translationKey, params?: Record<string, string>): string => {
-    if (isLoading) return key;
-
     const keys = key.split('.');
     let value: any = translations;
 
@@ -96,6 +118,7 @@ export function useTranslation() {
       if (value && typeof value === 'object') {
         value = value[k];
       } else {
+        // Fallback to key if translation not found
         return key;
       }
     }

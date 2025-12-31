@@ -92,15 +92,26 @@ export async function loadTranslations(locale: string) {
   const loaders = domainLoaders[locale] || domainLoaders.en;
   const translations: Record<string, any> = {};
 
-  // Load all domain files and merge them
+  // Load all domain files in parallel for faster loading
   // Each domain file exports { domainName: { ... } }, so we merge the objects
-  for (const [domain, loader] of Object.entries(loaders)) {
+  const loadPromises = Object.entries(loaders).map(async ([domain, loader]) => {
     try {
       const module = await loader();
       // Each module.default is { domainName: { ... } }, so we merge it into translations
-      Object.assign(translations, module.default);
+      return { domain, data: module.default };
     } catch (error) {
       console.warn(`Failed to load translation domain ${domain} for locale ${locale}:`, error);
+      return { domain, data: null };
+    }
+  });
+
+  // Wait for all translations to load in parallel
+  const results = await Promise.all(loadPromises);
+
+  // Merge all loaded translations
+  for (const { data } of results) {
+    if (data) {
+      Object.assign(translations, data);
     }
   }
 
