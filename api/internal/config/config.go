@@ -191,6 +191,8 @@ func setupEnvVarMappings() {
 	viper.BindEnv("supertokens.api_domain", "SUPERTOKENS_API_DOMAIN")
 	viper.BindEnv("supertokens.website_domain", "SUPERTOKENS_WEBSITE_DOMAIN")
 	viper.BindEnv("supertokens.connection_uri", "SUPERTOKENS_CONNECTION_URI")
+	viper.BindEnv("supertokens.enable_debug_logs", "SUPERTOKENS_ENABLE_DEBUG_LOGS")
+	viper.SetDefault("supertokens.enable_debug_logs", false)
 }
 
 func validateConfig(config types.Config) error {
