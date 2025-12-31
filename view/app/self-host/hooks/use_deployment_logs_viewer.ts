@@ -75,8 +75,8 @@ export function useDeploymentLogsViewer({
 
   useEffect(() => {
     if (!message) return;
-    handleWebSocketMessage(message, setAllLogs);
-  }, [message]);
+    handleWebSocketMessage(message, setAllLogs, isDeployment ? id : undefined);
+  }, [message, isDeployment, id]);
 
   useEffect(() => {
     if (logsResponse?.logs) {
@@ -139,7 +139,8 @@ export function useDeploymentLogsViewer({
 
 function handleWebSocketMessage(
   message: string,
-  setAllLogs: React.Dispatch<React.SetStateAction<ApplicationLogs[]>>
+  setAllLogs: React.Dispatch<React.SetStateAction<ApplicationLogs[]>>,
+  deploymentIdFilter?: string
 ) {
   try {
     const parsed = JSON.parse(message);
@@ -148,6 +149,10 @@ function handleWebSocketMessage(
     if (parsed.topic.includes(SOCKET_EVENTS.MONITOR_APPLICATION_DEPLOYMENT)) {
       const { action, table, data } = parsed.data;
       if ((action === 'INSERT' || action === 'UPDATE') && table === 'application_logs') {
+        // When viewing a specific deployment, only include logs for that deployment
+        if (deploymentIdFilter && data.application_deployment_id !== deploymentIdFilter) {
+          return;
+        }
         setAllLogs((prev) => [...prev, data]);
       }
     }
