@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://nixopus.com"><b>Website</b></a> •
   <a href="https://docs.nixopus.com"><b>Documentation</b></a> •
-  <a href="https://docs.nixopus.com/blog/"><b>Blog</b></a> •
+  <a href="https://nixopus.com/blog"><b>Blog</b></a> •
   <a href="https://discord.gg/skdcq39Wpv"><b>Discord</b></a> •
   <a href="https://github.com/raghavyuva/nixopus/discussions/262"><b>Roadmap</b></a>
 </p>
