@@ -125,23 +125,11 @@ func (s *TaskService) AtomicUpdateContainer(r shared_types.TaskPayload, taskCont
 		s.formatLog(taskContext, "Service created successfully")
 	}
 
-	// Wait for service to be ready
-	time.Sleep(time.Second * 10)
-
-	// Get updated service info
-	serviceInfo, err := s.getServiceInfo(r, taskContext)
+	// Wait for service to be ready with retries
+	serviceInfo, err := s.waitForServiceHealthy(r, taskContext, 120*time.Second, 5*time.Second)
 	if err != nil {
-		taskContext.LogAndUpdateStatus("Failed to get service info: "+err.Error(), shared_types.Failed)
-		return AtomicUpdateContainerResult{}, err
-	}
-
-	// Check service health
-	if serviceInfo.Spec.Mode.Replicated != nil && serviceInfo.Spec.Mode.Replicated.Replicas != nil {
-		running, _, err := s.DockerRepo.GetServiceHealth(serviceInfo)
-		if err != nil || running < int(*serviceInfo.Spec.Mode.Replicated.Replicas) {
-			taskContext.LogAndUpdateStatus("Service health check failed", shared_types.Failed)
-			return AtomicUpdateContainerResult{}, types.ErrFailedToUpdateContainer
-		}
+		taskContext.LogAndUpdateStatus("Service health check failed: "+err.Error(), shared_types.Failed)
+		return AtomicUpdateContainerResult{}, types.ErrFailedToUpdateContainer
 	}
 
 	taskContext.LogAndUpdateStatus("Service update completed successfully", shared_types.Deployed)
@@ -246,6 +234,96 @@ func (s *TaskService) getServiceInfo(r shared_types.TaskPayload, taskContext *Ta
 		}
 	}
 	return swarm.Service{}, fmt.Errorf("service not found: %s", r.Application.Name)
+}
+
+// waitForServiceHealthy polls the service health until all replicas are running or timeout
+func (s *TaskService) waitForServiceHealthy(r shared_types.TaskPayload, taskContext *TaskContext, timeout, pollInterval time.Duration) (swarm.Service, error) {
+	deadline := time.Now().Add(timeout)
+
+	s.formatLog(taskContext, "Waiting for service to become healthy (timeout: %s)", timeout)
+
+	for time.Now().Before(deadline) {
+		serviceInfo, err := s.getServiceInfo(r, taskContext)
+		if err != nil {
+			s.formatLog(taskContext, "Failed to get service info, retrying: %s", err.Error())
+			time.Sleep(pollInterval)
+			continue
+		}
+
+		// Check if service has replicated mode configured
+		if serviceInfo.Spec.Mode.Replicated == nil || serviceInfo.Spec.Mode.Replicated.Replicas == nil {
+			s.formatLog(taskContext, "Service is not in replicated mode, skipping health check")
+			return serviceInfo, nil
+		}
+
+		desiredReplicas := int(*serviceInfo.Spec.Mode.Replicated.Replicas)
+		running, _, err := s.DockerRepo.GetServiceHealth(serviceInfo)
+		if err != nil {
+			s.formatLog(taskContext, "Failed to get service health, retrying: %s", err.Error())
+			time.Sleep(pollInterval)
+			continue
+		}
+
+		// Get detailed task states for debugging
+		taskStates := s.getTaskStatesForService(serviceInfo)
+		s.formatLog(taskContext, "Service health: %d/%d running, task states: %s", running, desiredReplicas, taskStates)
+
+		if running >= desiredReplicas {
+			s.formatLog(taskContext, "Service is healthy: %d/%d replicas running", running, desiredReplicas)
+			return serviceInfo, nil
+		}
+
+		time.Sleep(pollInterval)
+	}
+
+	// Final attempt to get detailed error info
+	serviceInfo, _ := s.getServiceInfo(r, taskContext)
+	taskStates := s.getTaskStatesForService(serviceInfo)
+	return swarm.Service{}, fmt.Errorf("timeout waiting for service to become healthy, task states: %s", taskStates)
+}
+
+// getTaskStatesForService returns a summary of task states for debugging
+func (s *TaskService) getTaskStatesForService(service swarm.Service) string {
+	tasks, err := s.DockerRepo.GetClusterTasks()
+	if err != nil {
+		return fmt.Sprintf("failed to get tasks: %s", err.Error())
+	}
+
+	stateCounts := make(map[string]int)
+	var latestError string
+
+	for _, task := range tasks {
+		if task.ServiceID != service.ID {
+			continue
+		}
+		state := string(task.Status.State)
+		stateCounts[state]++
+
+		// Capture the latest error message from failed tasks
+		if task.Status.State == swarm.TaskStateFailed ||
+			task.Status.State == swarm.TaskStateRejected ||
+			task.Status.State == swarm.TaskStateShutdown {
+			if task.Status.Err != "" {
+				latestError = task.Status.Err
+			}
+		}
+	}
+
+	if len(stateCounts) == 0 {
+		return "no tasks found"
+	}
+
+	var states []string
+	for state, count := range stateCounts {
+		states = append(states, fmt.Sprintf("%s=%d", state, count))
+	}
+
+	result := strings.Join(states, ", ")
+	if latestError != "" {
+		result += fmt.Sprintf(" (latest error: %s)", latestError)
+	}
+
+	return result
 }
 
 // containsSensitiveKeyword checks if a key likely contains sensitive information

@@ -1,3 +1,26 @@
+# [0.1.0-alpha.109](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.108...v0.1.0-alpha.109) (2025-12-31)
+
+
+### Bug Fixes
+
+* broken blog link in readme ([#845](https://github.com/raghavyuva/nixopus/issues/845)) ([4ff5017](https://github.com/raghavyuva/nixopus/commit/4ff5017a72e76769b13c0d0287bac3b3bf11e865))
+* container terminal exec with retry mechanism ([#848](https://github.com/raghavyuva/nixopus/issues/848)) ([7aa2b22](https://github.com/raghavyuva/nixopus/commit/7aa2b22675bb93882fbc0ba0515501919d9615e9))
+* prevent configuration form values from resetting on blur ([#843](https://github.com/raghavyuva/nixopus/issues/843)) ([ec6d6d1](https://github.com/raghavyuva/nixopus/commit/ec6d6d1c27071e968b6da90e2fe210af5c5f7d83))
+* set retry limit to 0 for deployments ([#842](https://github.com/raghavyuva/nixopus/issues/842)) ([c6afbc9](https://github.com/raghavyuva/nixopus/commit/c6afbc99bc5ede68edf67d91571f947fb0f1c8ec))
+* when viewing specific deployment include logs from that deployment, and remove collision ([#849](https://github.com/raghavyuva/nixopus/issues/849)) ([733a713](https://github.com/raghavyuva/nixopus/commit/733a71305e3730cd7bd8c62761d456197ac4abe3))
+
+
+### Features
+
+* add supertokens debug logs configurable through environment variable ([#844](https://github.com/raghavyuva/nixopus/issues/844)) ([e78396f](https://github.com/raghavyuva/nixopus/commit/e78396f4d8f453008bd9f232660ac073a948a9fe))
+
+
+### Performance Improvements
+
+* optimize translation keys to load parallely and use pre merged english keys as fallback ([#847](https://github.com/raghavyuva/nixopus/issues/847)) ([b802324](https://github.com/raghavyuva/nixopus/commit/b80232448c14362e8fec305edf6174e50074b07c))
+
+
+
 # [0.1.0-alpha.108](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.107...v0.1.0-alpha.108) (2025-12-30)
 
 
