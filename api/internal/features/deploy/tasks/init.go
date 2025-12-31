@@ -65,7 +65,7 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 
 		TaskCreateDeployment = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_CREATE_DEPLOYMENT,
-			RetryLimit: 5,
+			RetryLimit: 0,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Printf("[%s] start: correlation_id=%s\n", TASK_CREATE_DEPLOYMENT, data.CorrelationID)
 
@@ -103,7 +103,7 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 
 		TaskUpdateDeployment = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_UPDATE_DEPLOYMENT,
-			RetryLimit: 5,
+			RetryLimit: 0,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Updating deployment")
 
@@ -140,7 +140,7 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 
 		TaskReDeploy = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_REDEPLOYMENT,
-			RetryLimit: 5,
+			RetryLimit: 0,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Redeploying application")
 
@@ -177,7 +177,7 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 
 		TaskRollback = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_ROLLBACK,
-			RetryLimit: 10,
+			RetryLimit: 0,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Rolling back deployment")
 
@@ -214,7 +214,7 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 
 		TaskRestart = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_RESTART,
-			RetryLimit: 5,
+			RetryLimit: 0,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Restarting deployment")
 
