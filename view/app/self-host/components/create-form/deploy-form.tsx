@@ -324,6 +324,19 @@ export const DeployForm = ({
                 name="base_path"
                 placeholder={t('selfHost.deployForm.fields.basePath.placeholder')}
                 required={false}
+                description={
+                  <span>
+                    {t('selfHost.deployForm.fields.basePath.description')}{' '}
+                    <a
+                      href="https://docs.nixopus.com/self-host/#docker-configuration"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      Learn more
+                    </a>
+                  </span>
+                }
               />
               <FormInputField
                 form={form}
@@ -331,6 +344,19 @@ export const DeployForm = ({
                 name="DockerfilePath"
                 placeholder={t('selfHost.deployForm.fields.dockerfilePath.placeholder')}
                 required={false}
+                description={
+                  <span>
+                    {t('selfHost.deployForm.fields.dockerfilePath.description')}{' '}
+                    <a
+                      href="https://docs.nixopus.com/self-host/#docker-configuration"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      Learn more
+                    </a>
+                  </span>
+                }
               />
             </div>
           </div>

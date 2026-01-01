@@ -219,6 +219,19 @@ export const DeployConfigureForm = ({
                       name="base_path"
                       placeholder="/"
                       required={false}
+                      description={
+                        <span>
+                          {t('selfHost.configuration.fields.basePath.description')}{' '}
+                          <a
+                            href="https://docs.nixopus.com/self-host/#docker-configuration"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            Learn more
+                          </a>
+                        </span>
+                      }
                     />
                     <FormInputField
                       form={form}
@@ -226,6 +239,19 @@ export const DeployConfigureForm = ({
                       name="DockerfilePath"
                       placeholder="Dockerfile"
                       required={false}
+                      description={
+                        <span>
+                          {t('selfHost.configuration.fields.dockerfilePath.description')}{' '}
+                          <a
+                            href="https://docs.nixopus.com/self-host/#docker-configuration"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            Learn more
+                          </a>
+                        </span>
+                      }
                     />
                   </div>
                 </CollapsibleSection>
