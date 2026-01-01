@@ -1,3 +1,17 @@
+# [0.1.0-alpha.110](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.109...v0.1.0-alpha.110) (2025-12-31)
+
+
+### Bug Fixes
+
+* service health check fails without retry mechanism ([87af141](https://github.com/raghavyuva/nixopus/commit/87af14104856c3326dbc32a54e619590f83ee1b5))
+
+
+### Features
+
+* supertokens healthcheck uses container port instead of host port ([c4273ee](https://github.com/raghavyuva/nixopus/commit/c4273eee6d82a4db03a0e380befdeae17c78bdeb))
+
+
+
 # [0.1.0-alpha.109](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.108...v0.1.0-alpha.109) (2025-12-31)
 
 
