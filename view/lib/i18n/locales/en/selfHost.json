@@ -625,6 +625,25 @@
         "invalidParams": "Invalid installation parameters",
         "installationFailed": "Installation failed"
       }
+    },
+    "envEditor": {
+      "keyPlaceholder": "KEY",
+      "valuePlaceholder": "value",
+      "pasteHint": "Paste multiple lines from .env file to bulk import",
+      "clickToReveal": "Click eye icon to reveal",
+      "reveal": "Show value",
+      "hide": "Hide value",
+      "markSecret": "Mark as secret",
+      "unmarkSecret": "Unmark as secret",
+      "errors": {
+        "invalidFormat": "Must be in format KEY=VALUE"
+      },
+      "pastePreview": {
+        "title": "Import Variables",
+        "description": "Review and select which variables to import. You can mark sensitive values as secrets.",
+        "willOverwrite": "overwrites",
+        "import": "Import {count} variables"
+      }
     }
   }
 }

@@ -60,12 +60,20 @@ export function useDeploymentLogsViewer({
 
   const { message } = useApplicationWebSocket(id);
 
-  const { data: deploymentLogs, isLoading: isLoadingDeployment } = useGetDeploymentLogsQuery(
+  const {
+    data: deploymentLogs,
+    isLoading: isLoadingDeployment,
+    refetch: refetchDeploymentLogs
+  } = useGetDeploymentLogsQuery(
     { id, page: currentPage, page_size: pageSize, search_term: searchTerm },
     { skip: !isDeployment || !id }
   );
 
-  const { data: applicationLogs, isLoading: isLoadingApplication } = useGetApplicationLogsQuery(
+  const {
+    data: applicationLogs,
+    isLoading: isLoadingApplication,
+    refetch: refetchApplicationLogs
+  } = useGetApplicationLogsQuery(
     { id, page: currentPage, page_size: pageSize, search_term: searchTerm },
     { skip: isDeployment || !id }
   );
@@ -115,6 +123,16 @@ export function useDeploymentLogsViewer({
     setSearchTerm('');
   }, []);
 
+  const refreshLogs = useCallback(async () => {
+    setAllLogs([]);
+    setCurrentPage(1);
+    if (isDeployment) {
+      await refetchDeploymentLogs();
+    } else {
+      await refetchApplicationLogs();
+    }
+  }, [isDeployment, refetchDeploymentLogs, refetchApplicationLogs]);
+
   return {
     logs: formattedLogs,
     isLoading,
@@ -133,7 +151,8 @@ export function useDeploymentLogsViewer({
     setFilters,
     clearFilters,
     isDense,
-    setIsDense
+    setIsDense,
+    refreshLogs
   };
 }
 
