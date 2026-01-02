@@ -72,8 +72,14 @@ func (o *OrganizationService) AddUserToOrganization(request types.AddUserToOrgan
 		return types.ErrFailedToAddUserToOrganization
 	}
 
+	// Invalidate organization membership cache
 	if err := o.cache.InvalidateOrgMembership(o.Ctx, request.UserID, request.OrganizationID); err != nil {
 		o.logger.Log(logger.Error, "failed to invalidate organization membership cache", err.Error())
+	}
+
+	// Invalidate RBAC permissions cache since user was added to organization
+	if err := o.cache.InvalidateRBACPermissions(o.Ctx, request.UserID, request.OrganizationID); err != nil {
+		o.logger.Log(logger.Error, "failed to invalidate RBAC permissions cache", err.Error())
 	}
 
 	o.logger.Log(logger.Info, "user added to organization successfully", request.UserID)

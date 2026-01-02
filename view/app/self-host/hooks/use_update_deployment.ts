@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useWebSocket } from '@/hooks/socket-provider';
 import { useUpdateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';
-import { UpdateDeploymentRequest } from '@/redux/types/applications';
+import { UpdateDeploymentRequest, Environment } from '@/redux/types/applications';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
 import { parsePort } from '../utils/parsePort';
 import { useAppSelector } from '@/redux/hooks';
@@ -14,6 +14,7 @@ import { useTranslation } from '@/hooks/use-translation';
 
 interface UseUpdateDeploymentProps {
   name?: string;
+  environment?: string;
   pre_run_command?: string;
   post_run_command?: string;
   build_variables?: Record<string, string>;
@@ -27,6 +28,7 @@ interface UseUpdateDeploymentProps {
 
 function useUpdateDeployment({
   name = '',
+  environment = '',
   pre_run_command = '',
   post_run_command = '',
   build_variables = {},
@@ -52,6 +54,7 @@ function useUpdateDeployment({
         message: t('selfHost.deployForm.validation.applicationName.invalidFormat')
       })
       .optional(),
+    environment: z.string().optional(),
     pre_run_command: z.string().optional(),
     post_run_command: z.string().optional(),
     build_variables: z.record(z.string(), z.string()).optional().default({}),
@@ -67,6 +70,7 @@ function useUpdateDeployment({
     resolver: zodResolver(deploymentFormSchema),
     defaultValues: {
       name,
+      environment,
       pre_run_command,
       post_run_command,
       build_variables,
@@ -79,8 +83,25 @@ function useUpdateDeployment({
     }
   });
 
+  // Track which application id the form has been initialized for
+  // This prevents resetting user changes on re renders while allowing
+  // initialization when switching to a different application
+  const initializedForIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (name) form.setValue('name', name);
+    // Wait for actual application data to load (name indicates data is ready)
+    if (!id || !name) {
+      return;
+    }
+
+    // If already initialized for this specific application, don't reset values
+    if (initializedForIdRef.current === id) {
+      return;
+    }
+
+    // Initialize form with server values
+    form.setValue('name', name);
+    if (environment) form.setValue('environment', environment);
     if (pre_run_command) form.setValue('pre_run_command', pre_run_command);
     if (post_run_command) form.setValue('post_run_command', post_run_command);
     if (build_variables && Object.keys(build_variables).length > 0)
@@ -88,28 +109,19 @@ function useUpdateDeployment({
     if (environment_variables && Object.keys(environment_variables).length > 0)
       form.setValue('environment_variables', environment_variables);
     if (port) form.setValue('port', port.toString());
-    if (id) form.setValue('id', id);
+    form.setValue('id', id);
     if (DockerfilePath) form.setValue('DockerfilePath', DockerfilePath);
     if (base_path) form.setValue('base_path', base_path);
     form.setValue('force', force);
-  }, [
-    form,
-    name,
-    pre_run_command,
-    post_run_command,
-    build_variables,
-    environment_variables,
-    port,
-    id,
-    force,
-    DockerfilePath,
-    base_path
-  ]);
+
+    initializedForIdRef.current = id;
+  }, [id, name]);
 
   async function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
     try {
       const updateData: UpdateDeploymentRequest = {
         name: values.name,
+        environment: values.environment as Environment | undefined,
         pre_run_command: values.pre_run_command,
         post_run_command: values.post_run_command,
         build_variables: values.build_variables,

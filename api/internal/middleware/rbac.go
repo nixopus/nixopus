@@ -1,10 +1,12 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 
+	"github.com/raghavyuva/nixopus-api/internal/cache"
 	appStorage "github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 
@@ -15,175 +17,298 @@ import (
 	"github.com/supertokens/supertokens-golang/supertokens"
 )
 
+// rbacCache is a package-level cache instance for RBAC permissions
+var rbacCache *cache.Cache
+
+// InitRBACCache initializes the RBAC cache with a cache instance
+func InitRBACCache(c *cache.Cache) {
+	rbacCache = c
+}
+
 // RBACMiddleware validates SuperTokens permission claims for the given resource based on HTTP method.
 // It extracts organization ID from header and validates permissions only for organization-specific roles.
+// Uses Redis cache to reduce SuperTokens API calls.
 func RBACMiddleware(next http.Handler, _ *appStorage.App, resource string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requiredAction := getActionFromMethod(r.Method)
-		requiredPermission := resource + ":" + requiredAction
-
-		// Extract organization ID from header
-		organizationID := r.Header.Get("X-Organization-Id")
+		requiredPermission := buildRequiredPermission(resource, r.Method)
+		organizationID := extractOrganizationID(w, r)
 		if organizationID == "" {
-			utils.SendErrorResponse(w, "Organization ID is required", http.StatusBadRequest)
 			return
 		}
 
+		validator := createPermissionValidator(organizationID, requiredPermission)
 		handler := session.VerifySession(&sessmodels.VerifySessionOptions{
-			OverrideGlobalClaimValidators: func(globalClaimValidators []claims.SessionClaimValidator, sessionContainer sessmodels.SessionContainer, userContext supertokens.UserContext) ([]claims.SessionClaimValidator, error) {
-				//custom validator that checks organization specific permissions
-				orgPermissionValidator := claims.SessionClaimValidator{
-					ID: "org-permission-validator",
-					Validate: func(payload map[string]interface{}, userContext supertokens.UserContext) claims.ClaimValidationResult {
-						// Ensure claims are fetched and set in the session
-						if err := sessionContainer.FetchAndSetClaim(userrolesclaims.UserRoleClaim); err != nil {
-							return claims.ClaimValidationResult{
-								IsValid: false,
-								Reason:  fmt.Sprintf("failed to fetch user roles: %v", err),
-							}
-						}
-
-						if err := sessionContainer.FetchAndSetClaim(userrolesclaims.PermissionClaim); err != nil {
-							return claims.ClaimValidationResult{
-								IsValid: false,
-								Reason:  fmt.Sprintf("failed to fetch permissions: %v", err),
-							}
-						}
-
-						// Get user roles from session
-						userRolesResult, err := session.GetClaimValue(sessionContainer.GetHandle(), userrolesclaims.UserRoleClaim)
-						if err != nil {
-							return claims.ClaimValidationResult{
-								IsValid: false,
-								Reason:  fmt.Sprintf("failed to get user roles: %v", err),
-							}
-						}
-
-						// Get permissions claim
-						permissionsResult, err := session.GetClaimValue(sessionContainer.GetHandle(), userrolesclaims.PermissionClaim)
-						if err != nil {
-							return claims.ClaimValidationResult{
-								IsValid: false,
-								Reason:  fmt.Sprintf("failed to get permissions: %v", err),
-							}
-						}
-
-						// Extract actual claim values from the result
-						var userRolesClaim interface{}
-						var permissionsClaim interface{}
-
-						if userRolesResult.OK != nil {
-							userRolesClaim = userRolesResult.OK
-						} else {
-							return claims.ClaimValidationResult{
-								IsValid: false,
-								Reason:  "user roles claim not found in session",
-							}
-						}
-
-						if permissionsResult.OK != nil {
-							permissionsClaim = permissionsResult.OK
-						} else {
-							return claims.ClaimValidationResult{
-								IsValid: false,
-								Reason:  "permissions claim not found in session",
-							}
-						}
-
-						// Filter roles to only include organization-specific roles
-						orgSpecificRoles := filterOrganizationRoles(userRolesClaim, organizationID)
-
-						if len(orgSpecificRoles) == 0 {
-							return claims.ClaimValidationResult{
-								IsValid: false,
-								Reason:  fmt.Sprintf("user has no roles for organization %s", organizationID),
-							}
-						}
-
-						// Check if user has the required permission for this organization
-						hasPermission := checkOrganizationPermission(permissionsClaim, requiredPermission, organizationID)
-						if !hasPermission {
-							return claims.ClaimValidationResult{
-								IsValid: false,
-								Reason:  fmt.Sprintf("user lacks permission %s for organization %s", requiredPermission, organizationID),
-							}
-						}
-
-						return claims.ClaimValidationResult{
-							IsValid: true,
-						}
-					},
-				}
-
-				globalClaimValidators = append(globalClaimValidators, orgPermissionValidator)
-				return globalClaimValidators, nil
-			},
-		}, func(w http.ResponseWriter, r *http.Request) { next.ServeHTTP(w, r) })
+			OverrideGlobalClaimValidators: validator,
+		}, func(w http.ResponseWriter, r *http.Request) {
+			next.ServeHTTP(w, r)
+		})
 
 		handler.ServeHTTP(w, r)
 	})
 }
 
-// filterOrganizationRoles filters user roles to only include organization-specific roles
-func filterOrganizationRoles(userRolesClaim interface{}, organizationID string) []string {
-	var orgSpecificRoles []string
+// buildRequiredPermission constructs the required permission string from resource and HTTP method
+func buildRequiredPermission(resource, method string) string {
+	action := getActionFromMethod(method)
+	return resource + ":" + action
+}
 
-	if userRolesClaim == nil {
-		return orgSpecificRoles
+// extractOrganizationID extracts and validates organization ID from request header
+func extractOrganizationID(w http.ResponseWriter, r *http.Request) string {
+	organizationID := r.Header.Get("X-Organization-Id")
+	if organizationID == "" {
+		utils.SendErrorResponse(w, "Organization ID is required", http.StatusBadRequest)
+		return ""
+	}
+	return organizationID
+}
+
+// createPermissionValidator creates a claim validator for organization permissions
+func createPermissionValidator(organizationID, requiredPermission string) func([]claims.SessionClaimValidator, sessmodels.SessionContainer, supertokens.UserContext) ([]claims.SessionClaimValidator, error) {
+	return func(globalClaimValidators []claims.SessionClaimValidator, sessionContainer sessmodels.SessionContainer, userContext supertokens.UserContext) ([]claims.SessionClaimValidator, error) {
+		validator := claims.SessionClaimValidator{
+			ID: "org-permission-validator",
+			Validate: func(payload map[string]interface{}, userContext supertokens.UserContext) claims.ClaimValidationResult {
+				return validateUserPermission(sessionContainer, organizationID, requiredPermission)
+			},
+		}
+
+		globalClaimValidators = append(globalClaimValidators, validator)
+		return globalClaimValidators, nil
+	}
+}
+
+// validateUserPermission validates user permissions, checking cache first, then SuperTokens
+func validateUserPermission(sessionContainer sessmodels.SessionContainer, organizationID, requiredPermission string) claims.ClaimValidationResult {
+	userID := sessionContainer.GetUserID()
+
+	// Try cache first
+	if result := validateCachedPermissions(userID, organizationID, requiredPermission); result != nil {
+		return *result
 	}
 
-	wrappedClaim := userRolesClaim.(*struct{ Value interface{} })
-	actualRoles := wrappedClaim.Value
+	// Cache miss: fetch from SuperTokens
+	return validateAndCachePermissions(sessionContainer, userID, organizationID, requiredPermission)
+}
 
-	switch roles := actualRoles.(type) {
-	case []interface{}:
-		for _, role := range roles {
-			if roleStr, ok := role.(string); ok {
-				if strings.HasPrefix(roleStr, "orgid_"+organizationID+"_") {
-					orgSpecificRoles = append(orgSpecificRoles, roleStr)
-				}
-			}
+// validateCachedPermissions validates permissions using cached data
+func validateCachedPermissions(userID, organizationID, requiredPermission string) *claims.ClaimValidationResult {
+	if rbacCache == nil {
+		return nil
+	}
+
+	cachedPerms, err := rbacCache.GetRBACPermissions(context.Background(), userID, organizationID)
+	if err != nil || cachedPerms == nil {
+		return nil
+	}
+
+	orgSpecificRoles := filterOrganizationRolesFromStrings(cachedPerms.Roles, organizationID)
+	if len(orgSpecificRoles) == 0 {
+		return &claims.ClaimValidationResult{
+			IsValid: false,
+			Reason:  fmt.Sprintf("user has no roles for organization %s", organizationID),
 		}
+	}
+
+	if !hasPermission(cachedPerms.Permissions, requiredPermission) {
+		return &claims.ClaimValidationResult{
+			IsValid: false,
+			Reason:  fmt.Sprintf("user lacks permission %s for organization %s", requiredPermission, organizationID),
+		}
+	}
+
+	return &claims.ClaimValidationResult{IsValid: true}
+}
+
+// validateAndCachePermissions fetches permissions from SuperTokens, caches them, and validates
+func validateAndCachePermissions(sessionContainer sessmodels.SessionContainer, userID, organizationID, requiredPermission string) claims.ClaimValidationResult {
+	userRolesClaim, permissionsClaim, err := fetchClaims(sessionContainer)
+	if err != nil {
+		return claims.ClaimValidationResult{
+			IsValid: false,
+			Reason:  err.Error(),
+		}
+	}
+
+	// Extract and cache permissions
+	roles := extractRolesAsStrings(userRolesClaim)
+	permissions := extractPermissionsAsStrings(permissionsClaim)
+	cachePermissions(userID, organizationID, roles, permissions)
+
+	// Validate organization roles
+	orgSpecificRoles := filterOrganizationRoles(userRolesClaim, organizationID)
+	if len(orgSpecificRoles) == 0 {
+		return claims.ClaimValidationResult{
+			IsValid: false,
+			Reason:  fmt.Sprintf("user has no roles for organization %s", organizationID),
+		}
+	}
+
+	// Validate permission
+	if !checkOrganizationPermission(permissionsClaim, requiredPermission) {
+		return claims.ClaimValidationResult{
+			IsValid: false,
+			Reason:  fmt.Sprintf("user lacks permission %s for organization %s", requiredPermission, organizationID),
+		}
+	}
+
+	return claims.ClaimValidationResult{IsValid: true}
+}
+
+// fetchClaims fetches and validates user roles and permissions claims from SuperTokens
+func fetchClaims(sessionContainer sessmodels.SessionContainer) (interface{}, interface{}, error) {
+	if err := sessionContainer.FetchAndSetClaim(userrolesclaims.UserRoleClaim); err != nil {
+		return nil, nil, fmt.Errorf("failed to fetch user roles: %v", err)
+	}
+
+	if err := sessionContainer.FetchAndSetClaim(userrolesclaims.PermissionClaim); err != nil {
+		return nil, nil, fmt.Errorf("failed to fetch permissions: %v", err)
+	}
+
+	userRolesResult, err := session.GetClaimValue(sessionContainer.GetHandle(), userrolesclaims.UserRoleClaim)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get user roles: %v", err)
+	}
+
+	permissionsResult, err := session.GetClaimValue(sessionContainer.GetHandle(), userrolesclaims.PermissionClaim)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get permissions: %v", err)
+	}
+
+	if userRolesResult.OK == nil {
+		return nil, nil, fmt.Errorf("user roles claim not found in session")
+	}
+
+	if permissionsResult.OK == nil {
+		return nil, nil, fmt.Errorf("permissions claim not found in session")
+	}
+
+	return userRolesResult.OK, permissionsResult.OK, nil
+}
+
+// cachePermissions caches user permissions for future requests
+func cachePermissions(userID, organizationID string, roles, permissions []string) {
+	if rbacCache == nil {
+		return
+	}
+
+	cachedPerms := &cache.CachedRBACPermissions{
+		Roles:       roles,
+		Permissions: permissions,
+	}
+	_ = rbacCache.SetRBACPermissions(context.Background(), userID, organizationID, cachedPerms)
+}
+
+// extractRolesAsStrings extracts roles from the claim as a string slice
+func extractRolesAsStrings(userRolesClaim interface{}) []string {
+	return extractStringSlice(userRolesClaim)
+}
+
+// extractPermissionsAsStrings extracts permissions from the claim as a string slice
+func extractPermissionsAsStrings(permissionsClaim interface{}) []string {
+	return extractStringSlice(permissionsClaim)
+}
+
+// extractStringSlice extracts a string slice from a wrapped claim value
+func extractStringSlice(claim interface{}) []string {
+	if claim == nil {
+		return []string{}
+	}
+
+	switch v := claim.(type) {
 	case []string:
-		for _, role := range roles {
-			if strings.HasPrefix(role, "orgid_"+organizationID+"_") {
-				orgSpecificRoles = append(orgSpecificRoles, role)
-			}
+		return v
+	case []interface{}:
+		return convertInterfaceSliceToStringSlice(v)
+	}
+
+	actualValue := extractValueFromWrapper(claim)
+	if actualValue == nil {
+		return []string{}
+	}
+
+	switch v := actualValue.(type) {
+	case []string:
+		return v
+	case []interface{}:
+		return convertInterfaceSliceToStringSlice(v)
+	default:
+		return []string{}
+	}
+}
+
+// extractValueFromWrapper safely extracts the Value field from various wrapper types
+func extractValueFromWrapper(claim interface{}) interface{} {
+	if wrappedClaim, ok := claim.(*struct{ Value interface{} }); ok {
+		return wrappedClaim.Value
+	}
+
+	if wrappedClaim, ok := claim.(struct{ Value interface{} }); ok {
+		return wrappedClaim.Value
+	}
+
+	if m, ok := claim.(map[string]interface{}); ok {
+		if val, exists := m["Value"]; exists {
+			return val
+		}
+		if val, exists := m["value"]; exists {
+			return val
+		}
+	}
+
+	return nil
+}
+
+// convertInterfaceSliceToStringSlice converts []interface{} to []string
+func convertInterfaceSliceToStringSlice(v []interface{}) []string {
+	var result []string
+	for _, item := range v {
+		if str, ok := item.(string); ok {
+			result = append(result, str)
+		}
+	}
+	return result
+}
+
+// filterOrganizationRolesFromStrings filters roles to only include organization-specific roles
+func filterOrganizationRolesFromStrings(roles []string, organizationID string) []string {
+	prefix := buildOrgRolePrefix(organizationID)
+	var orgSpecificRoles []string
+
+	for _, role := range roles {
+		if strings.HasPrefix(role, prefix) {
+			orgSpecificRoles = append(orgSpecificRoles, role)
 		}
 	}
 
 	return orgSpecificRoles
 }
 
-// checkOrganizationPermission checks if the user has the required permission for the organization
-func checkOrganizationPermission(permissionsClaim interface{}, requiredPermission, organizationID string) bool {
-	if permissionsClaim == nil {
-		return false
-	}
-
-	// Extract permissions from the wrapped claim structure
-	wrappedClaim := permissionsClaim.(*struct{ Value interface{} })
-	actualPermissions := wrappedClaim.Value
-
-	// Handle different possible claim structures
-	switch permissions := actualPermissions.(type) {
-	case []interface{}:
-		for _, perm := range permissions {
-			if permStr, ok := perm.(string); ok {
-				if permStr == requiredPermission {
-					return true
-				}
-			}
-		}
-	case []string:
-		for _, perm := range permissions {
-			if perm == requiredPermission {
-				return true
-			}
+// hasPermission checks if the required permission exists in the permissions list
+func hasPermission(permissions []string, requiredPermission string) bool {
+	for _, perm := range permissions {
+		if perm == requiredPermission {
+			return true
 		}
 	}
-
 	return false
+}
+
+// filterOrganizationRoles filters user roles to only include organization-specific roles
+func filterOrganizationRoles(userRolesClaim interface{}, organizationID string) []string {
+	roles := extractRolesAsStrings(userRolesClaim)
+	return filterOrganizationRolesFromStrings(roles, organizationID)
+}
+
+// checkOrganizationPermission checks if the user has the required permission for the organization
+func checkOrganizationPermission(permissionsClaim interface{}, requiredPermission string) bool {
+	permissions := extractPermissionsAsStrings(permissionsClaim)
+	return hasPermission(permissions, requiredPermission)
+}
+
+// buildOrgRolePrefix builds the organization role prefix
+func buildOrgRolePrefix(organizationID string) string {
+	return "orgid_" + organizationID + "_"
 }
 
 // getActionFromMethod maps HTTP methods to permission actions

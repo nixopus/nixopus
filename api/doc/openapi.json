@@ -140,6 +140,9 @@
 					"environment_variables": {
 						"type": "string"
 					},
+					"family_id": {
+						"nullable": true
+					},
 					"id": {},
 					"labels": {
 						"items": {
@@ -516,6 +519,9 @@
 							},
 							"environment_variables": {
 								"type": "string"
+							},
+							"family_id": {
+								"nullable": true
 							},
 							"id": {},
 							"labels": {
@@ -974,6 +980,9 @@
 							},
 							"environment_variables": {
 								"type": "string"
+							},
+							"family_id": {
+								"nullable": true
 							},
 							"id": {},
 							"labels": {
@@ -1462,6 +1471,67 @@
 				},
 				"type": "object"
 			},
+			"CreateProjectRequest": {
+				"description": "CreateProjectRequest schema",
+				"properties": {
+					"base_path": {
+						"nullable": true,
+						"type": "string"
+					},
+					"branch": {
+						"nullable": true,
+						"type": "string"
+					},
+					"build_pack": {
+						"nullable": true,
+						"type": "string"
+					},
+					"build_variables": {
+						"additionalProperties": {
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "object"
+					},
+					"dockerfile_path": {
+						"nullable": true,
+						"type": "string"
+					},
+					"domain": {
+						"type": "string"
+					},
+					"environment": {
+						"nullable": true,
+						"type": "string"
+					},
+					"environment_variables": {
+						"additionalProperties": {
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "object"
+					},
+					"name": {
+						"type": "string"
+					},
+					"port": {
+						"nullable": true,
+						"type": "integer"
+					},
+					"post_run_command": {
+						"nullable": true,
+						"type": "string"
+					},
+					"pre_run_command": {
+						"nullable": true,
+						"type": "string"
+					},
+					"repository": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"CreateSMTPConfigRequest": {
 				"description": "CreateSMTPConfigRequest schema",
 				"properties": {
@@ -1565,6 +1635,13 @@
 				"required": [
 					"type"
 				],
+				"type": "object"
+			},
+			"DeployProjectRequest": {
+				"description": "DeployProjectRequest schema",
+				"properties": {
+					"id": {}
+				},
 				"type": "object"
 			},
 			"DeploymentResponse": {
@@ -1690,6 +1767,9 @@
 									},
 									"environment_variables": {
 										"type": "string"
+									},
+									"family_id": {
+										"nullable": true
 									},
 									"id": {},
 									"labels": {
@@ -2061,6 +2141,46 @@
 								"type": "string"
 							},
 							"user_id": {}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"DuplicateProjectRequest": {
+				"description": "DuplicateProjectRequest schema",
+				"properties": {
+					"branch": {
+						"nullable": true,
+						"type": "string"
+					},
+					"domain": {
+						"type": "string"
+					},
+					"environment": {
+						"type": "string"
+					},
+					"source_project_id": {}
+				},
+				"type": "object"
+			},
+			"EnvironmentsInFamilyResponse": {
+				"description": "EnvironmentsInFamilyResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"environments": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							}
 						},
 						"type": "object"
 					},
@@ -3210,6 +3330,9 @@
 										"environment_variables": {
 											"type": "string"
 										},
+										"family_id": {
+											"nullable": true
+										},
 										"id": {},
 										"labels": {
 											"items": {
@@ -3872,6 +3995,9 @@
 												},
 												"environment_variables": {
 													"type": "string"
+												},
+												"family_id": {
+													"nullable": true
 												},
 												"id": {},
 												"labels": {
@@ -5615,6 +5741,9 @@
 												"environment_variables": {
 													"type": "string"
 												},
+												"family_id": {
+													"nullable": true
+												},
 												"id": {},
 												"labels": {
 													"items": {
@@ -6071,6 +6200,14 @@
 					"api_retry_attempts": {
 						"type": "integer"
 					},
+					"audit_logs_cleanup_enabled": {
+						"nullable": true,
+						"type": "boolean"
+					},
+					"audit_logs_retention_days": {
+						"nullable": true,
+						"type": "integer"
+					},
 					"container_auto_prune_build_cache": {
 						"nullable": true,
 						"type": "boolean"
@@ -6091,8 +6228,24 @@
 						"nullable": true,
 						"type": "integer"
 					},
+					"deployment_logs_cleanup_enabled": {
+						"nullable": true,
+						"type": "boolean"
+					},
+					"deployment_logs_retention_days": {
+						"nullable": true,
+						"type": "integer"
+					},
 					"disable_api_cache": {
 						"type": "boolean"
+					},
+					"extension_logs_cleanup_enabled": {
+						"nullable": true,
+						"type": "boolean"
+					},
+					"extension_logs_retention_days": {
+						"nullable": true,
+						"type": "integer"
 					},
 					"websocket_reconnect_attempts": {
 						"type": "integer"
@@ -6152,6 +6305,14 @@
 									"api_retry_attempts": {
 										"type": "integer"
 									},
+									"audit_logs_cleanup_enabled": {
+										"nullable": true,
+										"type": "boolean"
+									},
+									"audit_logs_retention_days": {
+										"nullable": true,
+										"type": "integer"
+									},
 									"container_auto_prune_build_cache": {
 										"nullable": true,
 										"type": "boolean"
@@ -6172,8 +6333,24 @@
 										"nullable": true,
 										"type": "integer"
 									},
+									"deployment_logs_cleanup_enabled": {
+										"nullable": true,
+										"type": "boolean"
+									},
+									"deployment_logs_retention_days": {
+										"nullable": true,
+										"type": "integer"
+									},
 									"disable_api_cache": {
 										"type": "boolean"
+									},
+									"extension_logs_cleanup_enabled": {
+										"nullable": true,
+										"type": "boolean"
+									},
+									"extension_logs_retention_days": {
+										"nullable": true,
+										"type": "integer"
 									},
 									"websocket_reconnect_attempts": {
 										"type": "integer"
@@ -6480,6 +6657,406 @@
 										"label": {
 											"type": "string"
 										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ProjectFamilyResponse": {
+				"description": "ProjectFamilyResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"projects": {
+								"items": {
+									"properties": {
+										"base_path": {
+											"type": "string"
+										},
+										"branch": {
+											"type": "string"
+										},
+										"build_pack": {
+											"type": "string"
+										},
+										"build_variables": {
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deployments": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_id": {},
+													"commit_hash": {
+														"type": "string"
+													},
+													"container_id": {
+														"type": "string"
+													},
+													"container_image": {
+														"type": "string"
+													},
+													"container_name": {
+														"type": "string"
+													},
+													"container_status": {
+														"type": "string"
+													},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"id": {},
+													"logs": {
+														"items": {
+															"nullable": true,
+															"properties": {
+																"application": {
+																	"$ref": "#/components/schemas/Application"
+																},
+																"application_deployment": {
+																	"$ref": "#/components/schemas/ApplicationDeployment"
+																},
+																"application_deployment_id": {},
+																"application_id": {},
+																"created_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"id": {},
+																"log": {
+																	"type": "string"
+																},
+																"updated_at": {
+																	"format": "date-time",
+																	"type": "string"
+																}
+															},
+															"type": "object"
+														},
+														"type": "array"
+													},
+													"status": {
+														"nullable": true,
+														"properties": {
+															"application_deployment": {
+																"$ref": "#/components/schemas/ApplicationDeployment"
+															},
+															"application_deployment_id": {},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"id": {},
+															"status": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"dockerfile_path": {
+											"type": "string"
+										},
+										"domain": {
+											"type": "string"
+										},
+										"environment": {
+											"type": "string"
+										},
+										"environment_variables": {
+											"type": "string"
+										},
+										"family_id": {
+											"nullable": true
+										},
+										"id": {},
+										"labels": {
+											"items": {
+												"type": "string"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"logs": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_deployment": {
+														"$ref": "#/components/schemas/ApplicationDeployment"
+													},
+													"application_deployment_id": {},
+													"application_id": {},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"id": {},
+													"log": {
+														"type": "string"
+													},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"name": {
+											"type": "string"
+										},
+										"organization": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deleted_at": {
+													"format": "date-time",
+													"nullable": true,
+													"type": "string"
+												},
+												"description": {
+													"type": "string"
+												},
+												"id": {},
+												"name": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"users": {
+													"items": {
+														"$ref": "#/components/schemas/User"
+													},
+													"type": "array"
+												}
+											},
+											"type": "object"
+										},
+										"organization_id": {},
+										"port": {
+											"type": "integer"
+										},
+										"post_run_command": {
+											"type": "string"
+										},
+										"pre_run_command": {
+											"type": "string"
+										},
+										"proxy_server": {
+											"type": "string"
+										},
+										"repository": {
+											"type": "string"
+										},
+										"status": {
+											"nullable": true,
+											"properties": {
+												"application": {
+													"$ref": "#/components/schemas/Application"
+												},
+												"application_id": {},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"id": {},
+												"status": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"user": {
+											"nullable": true,
+											"properties": {
+												"avatar": {
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deleted_at": {
+													"format": "date-time",
+													"nullable": true,
+													"type": "string"
+												},
+												"email": {
+													"type": "string"
+												},
+												"id": {},
+												"is_verified": {
+													"type": "boolean"
+												},
+												"organization_users": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"deleted_at": {
+																"format": "date-time",
+																"nullable": true,
+																"type": "string"
+															},
+															"id": {},
+															"organization": {
+																"nullable": true,
+																"properties": {
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"deleted_at": {
+																		"format": "date-time",
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"description": {
+																		"type": "string"
+																	},
+																	"id": {},
+																	"name": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"users": {
+																		"items": {
+																			"$ref": "#/components/schemas/User"
+																		},
+																		"type": "array"
+																	}
+																},
+																"type": "object"
+															},
+															"organization_id": {},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"user": {
+																"$ref": "#/components/schemas/User"
+															},
+															"user_id": {}
+														},
+														"type": "object"
+													},
+													"type": "array"
+												},
+												"organizations": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"deleted_at": {
+																"format": "date-time",
+																"nullable": true,
+																"type": "string"
+															},
+															"description": {
+																"type": "string"
+															},
+															"id": {},
+															"name": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"users": {
+																"items": {
+																	"$ref": "#/components/schemas/User"
+																},
+																"type": "array"
+															}
+														},
+														"type": "object"
+													},
+													"type": "array"
+												},
+												"supertokens_user_id": {
+													"type": "string"
+												},
+												"two_factor_enabled": {
+													"type": "boolean"
+												},
+												"two_factor_secret": {
+													"type": "string"
+												},
+												"type": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"username": {
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"user_id": {}
 									},
 									"type": "object"
 								},
@@ -7035,6 +7612,10 @@
 						"type": "object"
 					},
 					"dockerfile_path": {
+						"nullable": true,
+						"type": "string"
+					},
+					"environment": {
 						"nullable": true,
 						"type": "string"
 					},
@@ -10467,6 +11048,389 @@
 					}
 				},
 				"summary": "get logs",
+				"tags": [
+					"api/v1/deploy",
+					"application"
+				]
+			}
+		},
+		"/api/v1/deploy/application/project": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleCreateProject`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "POST_/api/v1/deploy/application/project",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateProjectRequest"
+							}
+						}
+					},
+					"description": "Request body for types.CreateProjectRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApplicationResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/ApplicationResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "handle create project",
+				"tags": [
+					"api/v1/deploy",
+					"application"
+				]
+			}
+		},
+		"/api/v1/deploy/application/project/deploy": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleDeployProject`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "POST_/api/v1/deploy/application/project/deploy",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/DeployProjectRequest"
+							}
+						}
+					},
+					"description": "Request body for types.DeployProjectRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApplicationResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/ApplicationResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "handle deploy project",
+				"tags": [
+					"api/v1/deploy",
+					"application"
+				]
+			}
+		},
+		"/api/v1/deploy/application/project/duplicate": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleDuplicateProject`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "POST_/api/v1/deploy/application/project/duplicate",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/DuplicateProjectRequest"
+							}
+						}
+					},
+					"description": "Request body for types.DuplicateProjectRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApplicationResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/ApplicationResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "handle duplicate project",
+				"tags": [
+					"api/v1/deploy",
+					"application"
+				]
+			}
+		},
+		"/api/v1/deploy/application/project/family": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleGetProjectFamily`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "GET_/api/v1/deploy/application/project/family",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProjectFamilyResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/ProjectFamilyResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "handle get project family",
+				"tags": [
+					"api/v1/deploy",
+					"application"
+				]
+			}
+		},
+		"/api/v1/deploy/application/project/family/environments": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleGetEnvironmentsInFamily`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "GET_/api/v1/deploy/application/project/family/environments",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/EnvironmentsInFamilyResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/EnvironmentsInFamilyResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "handle get environments in family",
 				"tags": [
 					"api/v1/deploy",
 					"application"
@@ -16043,7 +17007,7 @@
 	"servers": [
 		{
 			"description": "local server",
-			"url": "http://localhost:8080"
+			"url": "http://:8080"
 		}
 	],
 	"tags": [

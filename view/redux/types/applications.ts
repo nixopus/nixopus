@@ -24,6 +24,7 @@ export type Application = {
   dockerfile_path?: string;
   base_path?: string;
   labels?: string[];
+  family_id?: string;
 };
 
 export type ApplicationStatus = {
@@ -77,7 +78,7 @@ export type ApplicationLogsResponse = {
   total_pages: number;
 };
 
-export type Status = 'failed' | 'cloning' | 'building' | 'deploying' | 'deployed';
+export type Status = 'draft' | 'failed' | 'cloning' | 'building' | 'deploying' | 'deployed';
 
 export type Environment = 'development' | 'staging' | 'production';
 
@@ -101,6 +102,7 @@ export interface CreateApplicationRequest {
 
 export interface UpdateDeploymentRequest {
   name?: string;
+  environment?: Environment;
   pre_run_command?: string;
   post_run_command?: string;
   build_variables?: Record<string, string>;
@@ -116,4 +118,40 @@ export interface ReDeployApplicationRequest {
   id: string;
   force: boolean;
   force_without_cache: boolean;
+}
+
+// CreateProjectRequest is used to create a project without triggering deployment.
+// Only name, domain, and repository are required. Other fields have defaults.
+export interface CreateProjectRequest {
+  name: string;
+  domain: string;
+  repository: string;
+  environment?: Environment;
+  build_pack?: BuildPack;
+  branch?: string;
+  pre_run_command?: string;
+  post_run_command?: string;
+  build_variables?: Record<string, string>;
+  environment_variables?: Record<string, string>;
+  port?: number;
+  dockerfile_path?: string;
+  base_path?: string;
+}
+
+// DeployProjectRequest is used to trigger deployment of an existing project.
+export interface DeployProjectRequest {
+  id: string;
+}
+
+// DuplicateProjectRequest is used to create a duplicate of an existing project with a different environment.
+export interface DuplicateProjectRequest {
+  source_project_id: string;
+  domain: string;
+  environment: Environment;
+  branch?: string;
+}
+
+// ProjectFamilyResponse contains the projects in a family.
+export interface ProjectFamilyResponse {
+  projects: Application[];
 }

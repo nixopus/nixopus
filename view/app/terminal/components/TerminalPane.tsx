@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useTerminal } from '../utils/useTerminal';
 import { useContainerReady } from '../utils/isContainerReady';
 import { cn } from '@/lib/utils';
-import type { SessionStatus } from './TerminalSession';
+import type { SessionStatus, ExitHandler } from '../types';
 
 type TerminalPaneProps = {
   isActive: boolean;
@@ -15,6 +15,7 @@ type TerminalPaneProps = {
   terminalId: string;
   onFocus: () => void;
   onStatusChange?: (status: SessionStatus) => void;
+  exitHandler?: ExitHandler;
 };
 
 export const TerminalPane: React.FC<TerminalPaneProps> = ({
@@ -25,7 +26,8 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
   setFitAddonRef,
   terminalId,
   onFocus,
-  onStatusChange
+  onStatusChange,
+  exitHandler
 }) => {
   const paneRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -102,7 +104,8 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
       dimensions.width,
       dimensions.height,
       canCreate || canUpdate,
-      terminalId
+      terminalId,
+      exitHandler
     );
 
   const isContainerReady = useContainerReady(

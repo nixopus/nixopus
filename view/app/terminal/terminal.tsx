@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useCallback } from 'react';
 import '@xterm/xterm/css/xterm.css';
 import { useTranslation } from '@/hooks/use-translation';
 import { useFeatureFlags } from '@/hooks/features_provider';
@@ -61,6 +61,20 @@ export const Terminal: React.FC<TerminalProps> = ({
 
   useTerminalStyles();
 
+  // handle closing last session: close session + terminal panel
+  const handleCloseSession = useCallback(
+    (sessionId: string) => {
+      const isLastSession = sessions.length === 1;
+      closeSession(sessionId, isLastSession);
+
+      // close last session + close the terminal panel
+      if (isLastSession) {
+        toggleTerminal();
+      }
+    },
+    [sessions.length, closeSession, toggleTerminal]
+  );
+
   useTerminalKeyboardShortcuts({
     isTerminalOpen,
     activeSessionId,
@@ -68,7 +82,8 @@ export const Terminal: React.FC<TerminalProps> = ({
     splitPanesCount: splitPanes.length,
     sessionsCount: sessions.length,
     onCloseSplitPane: closeSplitPane,
-    onCloseSession: closeSession
+    onCloseSession: handleCloseSession,
+    onToggleTerminal: toggleTerminal
   });
 
   if (isFeatureFlagsLoading) {
@@ -103,7 +118,7 @@ export const Terminal: React.FC<TerminalProps> = ({
           maxSplits={maxSplits}
           splitPanesCount={splitPanes.length}
           onAddSession={addSession}
-          onCloseSession={closeSession}
+          onCloseSession={handleCloseSession}
           onSwitchSession={switchSession}
           onToggleTerminal={toggleTerminal}
           onAddSplitPane={addSplitPane}
@@ -187,6 +202,15 @@ export const Terminal: React.FC<TerminalProps> = ({
                               focusPane(pane.id);
                             }}
                             onStatusChange={getStatusChangeHandler(pane.terminalId)}
+                            exitHandler={{
+                              splitPanesCount: splitPanes.length,
+                              sessionsCount: sessions.length,
+                              activePaneId,
+                              activeSessionId,
+                              onCloseSplitPane: closeSplitPane,
+                              onCloseSession: handleCloseSession,
+                              onToggleTerminal: toggleTerminal
+                            }}
                           />
                         </div>
                       </ResizablePanel>

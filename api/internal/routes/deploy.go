@@ -15,6 +15,11 @@ func (router *Router) RegisterDeployRoutes(deployGroup *fuego.Server, deployCont
 // RegisterDeployApplicationRoutes registers application-specific deployment routes
 func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Server, deployController *deploy.DeployController) {
 	fuego.Post(applicationGroup, "", deployController.HandleDeploy)
+	fuego.Post(applicationGroup, "/project", deployController.HandleCreateProject)
+	fuego.Post(applicationGroup, "/project/deploy", deployController.HandleDeployProject)
+	fuego.Post(applicationGroup, "/project/duplicate", deployController.HandleDuplicateProject)
+	fuego.Get(applicationGroup, "/project/family", deployController.HandleGetProjectFamily)
+	fuego.Get(applicationGroup, "/project/family/environments", deployController.HandleGetEnvironmentsInFamily)
 	fuego.Get(applicationGroup, "", deployController.GetApplicationById)
 	fuego.Delete(applicationGroup, "", deployController.DeleteApplication)
 	fuego.Put(applicationGroup, "", deployController.UpdateApplication)
