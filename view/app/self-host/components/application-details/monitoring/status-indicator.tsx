@@ -25,6 +25,12 @@ const statusConfig: Record<
     label: 'Deployed',
     pulse: true
   },
+  running: {
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500',
+    label: 'Running',
+    pulse: true
+  },
   deploying: {
     color: 'text-blue-500',
     bgColor: 'bg-blue-500',
@@ -42,6 +48,18 @@ const statusConfig: Record<
     bgColor: 'bg-purple-500',
     label: 'Cloning',
     pulse: true
+  },
+  started: {
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-500',
+    label: 'Started',
+    pulse: true
+  },
+  stopped: {
+    color: 'text-zinc-500',
+    bgColor: 'bg-zinc-500',
+    label: 'Stopped',
+    pulse: false
   },
   failed: {
     color: 'text-red-500',

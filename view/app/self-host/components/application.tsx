@@ -29,14 +29,19 @@ function AppItem({
     switch (statusValue) {
       case 'deployed':
         return { bg: 'bg-emerald-500/10', dot: 'bg-emerald-500', pulse: true, label: 'Live' };
+      case 'running':
+        return { bg: 'bg-emerald-500/10', dot: 'bg-emerald-500', pulse: true, label: 'Running' };
       case 'failed':
         return { bg: 'bg-red-500/10', dot: 'bg-red-500', pulse: false, label: 'Failed' };
       case 'building':
       case 'deploying':
       case 'cloning':
+      case 'started':
         return { bg: 'bg-amber-500/10', dot: 'bg-amber-500', pulse: true, label: 'Building' };
       case 'draft':
         return { bg: 'bg-blue-500/10', dot: 'bg-blue-500', pulse: false, label: 'Draft' };
+      case 'stopped':
+        return { bg: 'bg-zinc-500/10', dot: 'bg-zinc-500', pulse: false, label: 'Stopped' };
       default:
         return { bg: 'bg-zinc-500/10', dot: 'bg-zinc-500', pulse: false, label: 'Inactive' };
     }
@@ -155,13 +160,20 @@ function AppItem({
               <span
                 className={cn(
                   'text-xs font-medium',
-                  currentStatus === 'deployed'
+                  currentStatus === 'deployed' || currentStatus === 'running'
                     ? 'text-emerald-500'
                     : currentStatus === 'failed'
                       ? 'text-red-500'
                       : currentStatus === 'draft'
                         ? 'text-blue-500'
-                        : 'text-muted-foreground'
+                        : currentStatus === 'building' ||
+                            currentStatus === 'deploying' ||
+                            currentStatus === 'cloning' ||
+                            currentStatus === 'started'
+                          ? 'text-amber-500'
+                          : currentStatus === 'stopped'
+                            ? 'text-zinc-500'
+                            : 'text-muted-foreground'
                 )}
               >
                 {statusConfig.label}

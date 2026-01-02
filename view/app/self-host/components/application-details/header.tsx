@@ -64,14 +64,19 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
     switch (status) {
       case 'deployed':
         return { bg: 'bg-emerald-500/10', dot: 'bg-emerald-500', pulse: true };
+      case 'running':
+        return { bg: 'bg-emerald-500/10', dot: 'bg-emerald-500', pulse: true };
       case 'failed':
         return { bg: 'bg-red-500/10', dot: 'bg-red-500', pulse: false };
       case 'building':
       case 'deploying':
       case 'cloning':
+      case 'started':
         return { bg: 'bg-amber-500/10', dot: 'bg-amber-500', pulse: true };
       case 'draft':
         return { bg: 'bg-blue-500/10', dot: 'bg-blue-500', pulse: false };
+      case 'stopped':
+        return { bg: 'bg-zinc-500/10', dot: 'bg-zinc-500', pulse: false };
       default:
         return { bg: 'bg-zinc-500/10', dot: 'bg-zinc-500', pulse: false };
     }
