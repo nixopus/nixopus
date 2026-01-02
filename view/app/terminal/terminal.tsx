@@ -24,13 +24,17 @@ type TerminalProps = {
   toggleTerminal: () => void;
   isTerminalOpen: boolean;
   setFitAddonRef: React.Dispatch<React.SetStateAction<any | null>>;
+  terminalPosition: 'bottom' | 'right';
+  onTogglePosition: () => void;
 };
 
 export const Terminal: React.FC<TerminalProps> = ({
   isOpen,
   toggleTerminal,
   isTerminalOpen,
-  setFitAddonRef
+  setFitAddonRef,
+  terminalPosition,
+  onTogglePosition
 }) => {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -122,6 +126,8 @@ export const Terminal: React.FC<TerminalProps> = ({
           onSwitchSession={switchSession}
           onToggleTerminal={toggleTerminal}
           onAddSplitPane={addSplitPane}
+          terminalPosition={terminalPosition}
+          onTogglePosition={onTogglePosition}
           closeLabel={t('terminal.close')}
           newTabLabel={t('terminal.newTab')}
         />
