@@ -11,7 +11,8 @@ import {
   Rows4,
   Copy,
   Download,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
@@ -52,10 +53,12 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
     setFilters,
     clearFilters,
     isDense,
-    setIsDense
+    setIsDense,
+    refreshLogs
   } = useDeploymentLogsViewer({ id, isDeployment });
 
   const [isCopied, setIsCopied] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleCopyLogs = useCallback(async () => {
     const logText = logs
@@ -95,6 +98,15 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
     toast.success(t('selfHost.logs.downloadSuccess'));
   }, [logs, id, isDeployment, t]);
 
+  const handleRefreshLogs = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshLogs();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshLogs]);
+
   return (
     <Card className="border-0 shadow-none overflow-x-hidden">
       <LogsHeader
@@ -115,6 +127,8 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
         onDownloadLogs={handleDownloadLogs}
         isCopied={isCopied}
         hasLogs={logs.length > 0}
+        onRefresh={handleRefreshLogs}
+        isRefreshing={isRefreshing}
       />
       <CardContent className="p-0 border rounded-md overflow-hidden min-w-0">
         <TableHeader />
@@ -148,6 +162,8 @@ interface LogsHeaderProps {
   onDownloadLogs: () => void;
   isCopied: boolean;
   hasLogs: boolean;
+  onRefresh: () => void;
+  isRefreshing: boolean;
 }
 
 function LogsHeader({
@@ -167,7 +183,9 @@ function LogsHeader({
   onCopyLogs,
   onDownloadLogs,
   isCopied,
-  hasLogs
+  hasLogs,
+  onRefresh,
+  isRefreshing
 }: LogsHeaderProps) {
   const hasActiveFilters =
     filters.startDate || filters.endDate || filters.level !== 'all' || searchTerm;
@@ -202,6 +220,7 @@ function LogsHeader({
           onChange={(v) => onFiltersChange({ ...filters, level: v })}
         />
         <div className="flex items-center gap-2 flex-shrink-0">
+          <RefreshButton onRefresh={onRefresh} isRefreshing={isRefreshing} />
           <CopyDownloadButtons
             onCopyLogs={onCopyLogs}
             onDownloadLogs={onDownloadLogs}
@@ -338,6 +357,30 @@ function ExpandCollapseButton({
   return (
     <Button variant="outline" size="icon" onClick={handleClick} title="Expand/Collapse all">
       <ChevronsUpDown className="h-4 w-4" />
+    </Button>
+  );
+}
+
+function RefreshButton({
+  onRefresh,
+  isRefreshing
+}: {
+  onRefresh: () => void;
+  isRefreshing: boolean;
+}) {
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={onRefresh}
+      disabled={isRefreshing}
+      title="Refresh logs"
+    >
+      {isRefreshing ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <RefreshCw className="h-4 w-4" />
+      )}
     </Button>
   );
 }

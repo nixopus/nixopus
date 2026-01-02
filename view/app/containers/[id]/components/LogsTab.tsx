@@ -28,6 +28,7 @@ interface LogsTabProps {
   container: Container;
   logs: string;
   onLoadMore: () => void;
+  onRefresh?: () => void;
 }
 
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';
@@ -41,7 +42,7 @@ interface ParsedLogEntry {
   raw: string;
 }
 
-export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
+export function LogsTab({ container, logs, onLoadMore, onRefresh }: LogsTabProps) {
   const { t } = useTranslation();
   const [expandedLogIds, setExpandedLogIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,6 +55,7 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
     return true;
   });
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [allExpanded, setAllExpanded] = useState(false);
 
@@ -144,6 +146,16 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
     setIsLoadingMore(false);
   };
 
+  const handleRefresh = async () => {
+    if (!onRefresh) return;
+    setIsRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const hasActiveFilters = searchTerm || levelFilter !== 'all';
 
   return (
@@ -170,6 +182,23 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
               >
                 <X className="h-4 w-4 mr-1" />
                 Clear
+              </Button>
+            )}
+            {onRefresh && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="h-9"
+                title="Refresh logs"
+              >
+                {isRefreshing ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Refresh
               </Button>
             )}
             <Button

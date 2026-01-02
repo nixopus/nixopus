@@ -35,6 +35,7 @@ export default function ContainerDetailsPage() {
     allLogs,
     t,
     handleLoadMoreLogs,
+    handleRefreshLogs,
     handleDeleteConfirm,
     isDeleteDialogOpen,
     setIsDeleteDialogOpen
@@ -192,7 +193,12 @@ export default function ContainerDetailsPage() {
           </TabsContent>
 
           <TabsContent value="logs" className="mt-6">
-            <LogsTab container={container} logs={allLogs} onLoadMore={handleLoadMoreLogs} />
+            <LogsTab
+              container={container}
+              logs={allLogs}
+              onLoadMore={handleLoadMoreLogs}
+              onRefresh={handleRefreshLogs}
+            />
           </TabsContent>
 
           <TabsContent value="terminal" className="mt-6">
