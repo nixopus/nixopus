@@ -8,9 +8,11 @@ import './style.css'
 import spec from '../../src/openapi.json' assert { type: 'json' }
 
 import InstallGenerator from '../components/InstallGenerator.vue'
+import Layout from './Layout.vue'
 
 export default {
     extends: DefaultTheme,
+    Layout,
     async enhanceApp(ctx) {
         ctx.app.component('InstallGenerator', InstallGenerator)
         
