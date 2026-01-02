@@ -31,8 +31,25 @@ The deployment wizard guides you through four steps. Here's what each field does
 :::
 
 ::: details Step 3: Docker Configuration
-- **Base Path**: Root directory for monorepo setups (default: `/`)
-- **Dockerfile Path**: Path to Dockerfile relative to base path (default: `/Dockerfile`)
+- **Build Base Path**: Subdirectory path within your repository where the application code is located. This sets the Docker build context directory. For single-app repositories, use `/` (repository root). For monorepos, specify the subdirectory (e.g., `apps/frontend`). All Docker commands in your Dockerfile will execute relative to this path.
+
+  **Example**: If your repository structure is:
+  ```
+  my-repo/
+    ├── apps/
+    │   └── frontend/
+    │       ├── src/
+    │       └── package.json
+    └── README.md
+  ```
+  Set Build Base Path to `apps/frontend` to use that directory as the build context.
+
+- **Dockerfile Path**: Path to your Dockerfile relative to the build base path. Default is `Dockerfile`. If your Dockerfile is in a subdirectory or has a different name, specify the relative path.
+
+  **Example**: 
+  - If Build Base Path is `apps/frontend` and Dockerfile is at `apps/frontend/Dockerfile`, use `Dockerfile`
+  - If Build Base Path is `apps/frontend` and Dockerfile is at `apps/frontend/docker/Dockerfile.prod`, use `docker/Dockerfile.prod`
+  - If Build Base Path is `/` and Dockerfile is at the root, use `Dockerfile`
 :::
 
 ::: details Step 4: Variables & Commands
@@ -44,7 +61,47 @@ The deployment wizard guides you through four steps. Here's what each field does
 
 ## Monorepo Support
 
-Deploy individual applications from repositories containing multiple projects by setting the **Base Path** to your application's directory.
+Deploy individual applications from repositories containing multiple projects by setting the **Build Base Path** to your application's directory.
+
+### Understanding Build Base Path and Dockerfile Path
+
+- **Build Base Path**: This is the subdirectory within your repository where your application code lives. Nixopus uses this path as the Docker build context, meaning all Docker commands (like `COPY`, `RUN`, etc.) will execute relative to this directory. For single-app repositories, use `/` (the repository root). For monorepos, specify the subdirectory (e.g., `apps/frontend`).
+
+- **Dockerfile Path**: This is the path to your Dockerfile relative to the build base path. If your Dockerfile is named `Dockerfile` and located in the base path root, use `Dockerfile`. If it's in a subdirectory or has a different name, specify the relative path (e.g., `docker/Dockerfile.prod`).
+
+::: tip How It Works Together
+The build process works like this:
+1. Nixopus clones your repository
+2. Sets the build context to: `repository_root + build_base_path`
+3. Looks for the Dockerfile at: `build_context + dockerfile_path`
+4. Runs `docker build` with that context and Dockerfile
+
+**Complete Example**:
+If your repository structure is:
+```
+my-monorepo/
+  ├── apps/
+  │   ├── frontend/
+  │   │   ├── docker/
+  │   │   │   └── Dockerfile.prod
+  │   │   ├── src/
+  │   │   └── package.json
+  │   └── backend/
+  │       ├── Dockerfile
+  │       └── src/
+  └── README.md
+```
+
+For the frontend app:
+- **Build Base Path**: `apps/frontend` (this becomes the build context)
+- **Dockerfile Path**: `docker/Dockerfile.prod` (relative to the build context)
+- **Result**: Docker will build using `apps/frontend` as the context and look for the Dockerfile at `apps/frontend/docker/Dockerfile.prod`
+
+For the backend app:
+- **Build Base Path**: `apps/backend`
+- **Dockerfile Path**: `Dockerfile` (default, relative to build context)
+- **Result**: Docker will build using `apps/backend` as the context and look for the Dockerfile at `apps/backend/Dockerfile`
+:::
 
 ### Example Structure
 
@@ -65,13 +122,19 @@ monorepo/
 ::: code-group
 
 ```txt [Frontend App]
-Base Path: apps/frontend
+Build Base Path: apps/frontend
 Dockerfile Path: docker/Dockerfile.prod
+
+Build context: monorepo/apps/frontend
+Dockerfile location: monorepo/apps/frontend/docker/Dockerfile.prod
 ```
 
 ```txt [Backend App]
-Base Path: apps/backend
+Build Base Path: apps/backend
 Dockerfile Path: Dockerfile
+
+Build context: monorepo/apps/backend
+Dockerfile location: monorepo/apps/backend/Dockerfile
 ```
 
 :::
@@ -113,7 +176,7 @@ View live **Container Logs** to see your application's output in real time. Swit
 Update your application settings without redeploying:
 
 - Application name and port
-- Base path and Dockerfile path
+- Build base path and Dockerfile path (see Monorepo Support section for examples)
 - Environment and build variables
 - Pre and post run commands
 
