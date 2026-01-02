@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -179,6 +180,7 @@ func (s *DeployStorage) GetApplications(page, pageSize int, organizationID uuid.
 		Model(&applications).
 		Relation("Status").
 		Relation("Logs").
+		Relation("Deployments.Status").
 		Order("created_at DESC").
 		Limit(pageSize).
 		Offset(offset).
@@ -187,6 +189,14 @@ func (s *DeployStorage) GetApplications(page, pageSize int, organizationID uuid.
 
 	if err != nil {
 		return nil, 0, err
+	}
+
+	for i := range applications {
+		if len(applications[i].Deployments) > 0 {
+			sort.Slice(applications[i].Deployments, func(j, k int) bool {
+				return applications[i].Deployments[j].CreatedAt.After(applications[i].Deployments[k].CreatedAt)
+			})
+		}
 	}
 
 	return applications, totalCount, nil

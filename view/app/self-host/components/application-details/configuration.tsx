@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import FormInputField from '@/components/ui/form-input-field';
 import FormSelectField from '@/components/ui/form-select-field';
-import { FormSelectTagInputField } from '@/components/ui/form-select-tag-field';
+import { EnvVariablesEditor } from '@/components/ui/env-variables-editor';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { BuildPack, Environment } from '@/redux/types/deploy-form';
 import useUpdateDeployment from '../../hooks/use_update_deployment';
@@ -237,23 +237,19 @@ export const DeployConfigureForm = ({
                   description="Runtime and build-time variables"
                   defaultOpen={false}
                 >
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <FormSelectTagInputField
+                  <div className="space-y-6">
+                    <EnvVariablesEditor
                       form={form}
                       label={t('selfHost.configuration.fields.environmentVariables.label')}
                       name="environment_variables"
-                      placeholder={t(
-                        'selfHost.configuration.fields.environmentVariables.placeholder'
-                      )}
                       required={false}
                       validator={validateEnvVar}
                       defaultValues={env_variables}
                     />
-                    <FormSelectTagInputField
+                    <EnvVariablesEditor
                       form={form}
                       label={t('selfHost.configuration.fields.buildVariables.label')}
                       name="build_variables"
-                      placeholder={t('selfHost.configuration.fields.buildVariables.placeholder')}
                       required={false}
                       validator={validateEnvVar}
                       defaultValues={build_variables}
