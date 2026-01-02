@@ -2,10 +2,11 @@ package tasks
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"strings"
 )
 
 func (t *TaskService) EnqueueWebhookTask(payload shared_types.WebhookPayload) error {
@@ -43,7 +44,7 @@ func (t *TaskService) EnqueueWebhookTask(payload shared_types.WebhookPayload) er
 			BasePath:             application.BasePath,
 		}
 
-		_, err := t.UpdateDeployment(deployment, application.UserID, application.OrganizationID)
+		_, err := t.UpdateDeploymentWithTrigger(deployment, application.UserID, application.OrganizationID)
 		if err != nil {
 			t.Logger.Log(logger.Error, "failed to update deployment for webhook", err.Error())
 			continue
