@@ -1,3 +1,19 @@
+# [0.1.0-alpha.111](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.110...v0.1.0-alpha.111) (2026-01-02)
+
+
+### Bug Fixes
+
+* disable update configuration controller not to trigger deployment ([430dfb4](https://github.com/raghavyuva/nixopus/commit/430dfb41fbb829a520391ae1336f8b9df39a83d3))
+* wrong display of deployment status in project card ([#856](https://github.com/raghavyuva/nixopus/issues/856)) ([daa1855](https://github.com/raghavyuva/nixopus/commit/daa185596cb7b8352aa459d63609d15bb5dea95f))
+
+
+### Features
+
+* add posthog analytics for docs site ([#861](https://github.com/raghavyuva/nixopus/issues/861)) ([49a0b6a](https://github.com/raghavyuva/nixopus/commit/49a0b6adf53cf19a7503d76be06a474cff4e518c))
+* add support for env masking, editing, bulk imports ([f482549](https://github.com/raghavyuva/nixopus/commit/f4825493de6fc38daf522b696b63df4381bdf619))
+
+
+
 # [0.1.0-alpha.110](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.109...v0.1.0-alpha.110) (2025-12-31)
 
 

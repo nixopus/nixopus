@@ -3,10 +3,9 @@ package controller
 import (
 	"net/http"
 
-	"github.com/docker/docker/api/types/container"
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/container/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
 func (c *ContainerController) StopContainer(f fuego.ContextNoBody) (*types.ContainerActionResponse, error) {
@@ -25,20 +24,18 @@ func (c *ContainerController) StopContainer(f fuego.ContextNoBody) (*types.Conta
 		timeout = *orgSettings.ContainerStopTimeout
 	}
 
-	err := c.dockerService.StopContainer(containerID, container.StopOptions{
-		Timeout: &timeout,
-	})
+	opts := service.StopContainerOptions{
+		ContainerID: containerID,
+		Timeout:     &timeout,
+	}
+
+	response, err := service.StopContainer(c.dockerService, c.logger, opts)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,
 		}
 	}
 
-	return &types.ContainerActionResponse{
-		Status:  "success",
-		Message: "Container stopped successfully",
-		Data:    types.ContainerStatusData{Status: "stopped"},
-	}, nil
+	return &response, nil
 }
