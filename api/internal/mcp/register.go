@@ -6,6 +6,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	container_tools "github.com/raghavyuva/nixopus-api/internal/features/container/tools"
+	dashboard_tools "github.com/raghavyuva/nixopus-api/internal/features/dashboard/tools"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	file_manager_tools "github.com/raghavyuva/nixopus-api/internal/features/file-manager/tools"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -140,4 +141,11 @@ func RegisterTools(
 		Name:        "copy_directory",
 		Description: "Copy a file or directory from one path to another. Requires from_path, to_path, and organization ID.",
 	}, copyDirectoryHandler)
+
+	// Dashboard Tools
+	getSystemStatsHandler := dashboard_tools.GetSystemStatsHandler(store, ctx, l)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "get_system_stats",
+		Description: "Get system statistics including CPU, memory, disk, network, and load information. Requires organization ID.",
+	}, getSystemStatsHandler)
 }
