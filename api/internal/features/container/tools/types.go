@@ -114,3 +114,37 @@ func (i PruneBuildCacheInput) GetOrganizationID() string {
 type PruneBuildCacheOutput struct {
 	Response container_types.MessageResponse `json:"response"`
 }
+
+// RemoveContainerInput is the input structure for the MCP tool
+type RemoveContainerInput struct {
+	ID             string `json:"id" jsonschema:"required"`
+	OrganizationID string `json:"organization_id" jsonschema:"required"`
+	Force          *bool  `json:"force,omitempty"`
+}
+
+// GetOrganizationID implements OrganizationIDExtractor interface
+func (i RemoveContainerInput) GetOrganizationID() string {
+	return i.OrganizationID
+}
+
+// RemoveContainerOutput is the output structure for the MCP tool
+type RemoveContainerOutput struct {
+	Response container_types.ContainerActionResponse `json:"response"`
+}
+
+// RestartContainerInput is the input structure for the MCP tool
+type RestartContainerInput struct {
+	ID             string `json:"id" jsonschema:"required"`
+	OrganizationID string `json:"organization_id" jsonschema:"required"`
+	Timeout        *int   `json:"timeout,omitempty"`
+}
+
+// GetOrganizationID implements OrganizationIDExtractor interface
+func (i RestartContainerInput) GetOrganizationID() string {
+	return i.OrganizationID
+}
+
+// RestartContainerOutput is the output structure for the MCP tool
+type RestartContainerOutput struct {
+	Response container_types.ContainerActionResponse `json:"response"`
+}

@@ -93,6 +93,24 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 				"all":             true,
 			},
 		}
+	case "remove_container":
+		params = &mcp.CallToolParams{
+			Name: "remove_container",
+			Arguments: map[string]any{
+				"id":              containerID,
+				"organization_id": organizationID,
+				"force":           true,
+			},
+		}
+	case "restart_container":
+		params = &mcp.CallToolParams{
+			Name: "restart_container",
+			Arguments: map[string]any{
+				"id":              containerID,
+				"organization_id": organizationID,
+				"timeout":         10,
+			},
+		}
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", toolName)
 	}
@@ -139,6 +157,8 @@ func (h *ToolHandler) GetAvailableTools() []string {
 		"list_images",
 		"prune_images",
 		"prune_build_cache",
+		"remove_container",
+		"restart_container",
 	}
 }
 
@@ -151,6 +171,8 @@ func (h *ToolHandler) GetToolDescription(toolName string) string {
 		"list_images":        "List Docker images with optional filtering",
 		"prune_images":       "Prune Docker images with optional filtering by until time, label, or dangling status",
 		"prune_build_cache":  "Prune Docker build cache, optionally prune all cache entries",
+		"remove_container":   "Remove a Docker container, optionally force removal",
+		"restart_container":  "Restart a Docker container, optionally specify timeout in seconds",
 	}
 	return descriptions[toolName]
 }
