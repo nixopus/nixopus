@@ -6,6 +6,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	container_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/container"
+	dashboard_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/dashboard"
 	file_manager_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/file-manager"
 	client_types "github.com/raghavyuva/nixopus-api/cmd/mcp-client/types"
 )
@@ -65,6 +66,7 @@ func (r *Registry) GetToolFeature(toolName string) (string, error) {
 		"delete_file":                "file-manager",
 		"move_file":                  "file-manager",
 		"copy_directory":             "file-manager",
+		"get_system_stats":           "dashboard",
 	}
 
 	feature, ok := toolFeatureMap[toolName]
@@ -116,6 +118,10 @@ func InitializeRegistry() *Registry {
 	// Register file-manager feature
 	fileManagerHandler := file_manager_feature.NewToolHandler()
 	registry.RegisterFeature("file-manager", fileManagerHandler)
+
+	// Register dashboard feature
+	dashboardHandler := dashboard_feature.NewToolHandler()
+	registry.RegisterFeature("dashboard", dashboardHandler)
 
 	return registry
 }
