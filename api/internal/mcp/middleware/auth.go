@@ -4,24 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
+	"os"
+	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	api_key_service "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
+	api_key_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/supertokens/supertokens-golang/recipe/session"
 )
-
-// responseRecorder is a minimal http.ResponseWriter for token verification
-type responseRecorder struct {
-	statusCode int
-}
-
-func (r *responseRecorder) Header() http.Header        { return make(http.Header) }
-func (r *responseRecorder) Write([]byte) (int, error)  { return 0, nil }
-func (r *responseRecorder) WriteHeader(statusCode int) { r.statusCode = statusCode }
 
 // OrganizationIDExtractor is an interface for types that have an organization ID field
 type OrganizationIDExtractor interface {
@@ -39,50 +32,44 @@ const (
 	AuthTokenMetaKey = "auth_token"
 )
 
-// VerifyToken verifies a SuperTokens session token and returns the user if valid.
-// This function creates a mock HTTP request to leverage SuperTokens session verification.
-func VerifyToken(tokenString string, store *shared_storage.Store, ctx context.Context, l logger.Logger) (*shared_types.User, error) {
-	if tokenString == "" {
+// VerifyAPIKey verifies an API key and returns the user if valid.
+// The API key format is: nixopus_<prefix>_<rest>
+// It can be provided as:
+//   - "nixopus_<prefix>_<rest>" (direct)
+//   - "Bearer nixopus_<prefix>_<rest>" (with Bearer prefix)
+func VerifyAPIKey(apiKeyString string, store *shared_storage.Store, ctx context.Context, l logger.Logger) (*shared_types.User, error) {
+	if apiKeyString == "" {
 		return nil, ErrAuthTokenNotProvided
 	}
 
-	// Create a mock HTTP request with the token to verify the session
-	req, _ := http.NewRequest("GET", "/", nil)
-	req.Header.Set("Authorization", "Bearer "+tokenString)
+	// Remove "Bearer " prefix if present
+	apiKeyString = strings.TrimPrefix(apiKeyString, "Bearer ")
+	apiKeyString = strings.TrimSpace(apiKeyString)
 
-	var user *shared_types.User
-	var err error
+	// Initialize API key service
+	apiKeyStorage := api_key_storage.APIKeyStorage{
+		DB:  store.DB,
+		Ctx: ctx,
+	}
+	apiKeyService := api_key_service.NewAPIKeyService(apiKeyStorage, l)
 
-	// Use a response recorder to capture any errors
-	var responseWriter http.ResponseWriter = &responseRecorder{}
-
-	session.VerifySession(nil, func(w http.ResponseWriter, r *http.Request) {
-		sessionContainer := session.GetSessionFromRequestContext(r.Context())
-		if sessionContainer == nil {
-			err = ErrInvalidAuthToken
-			return
-		}
-
-		userID := sessionContainer.GetUserID()
-		if userID == "" {
-			err = ErrInvalidAuthToken
-			return
-		}
-
-		userStorage := user_storage.UserStorage{
-			DB:  store.DB,
-			Ctx: ctx,
-		}
-
-		user, err = userStorage.FindUserBySupertokensID(userID)
-		if err != nil {
-			l.Log(logger.Error, fmt.Sprintf("failed to find user by SuperTokens ID: %v", err), "")
-			err = fmt.Errorf("user not found: %w", err)
-		}
-	}).ServeHTTP(responseWriter, req)
-
+	// Verify the API key
+	apiKey, err := apiKeyService.VerifyAPIKey(apiKeyString)
 	if err != nil {
-		return nil, err
+		l.Log(logger.Error, fmt.Sprintf("failed to verify API key: %v", err), "")
+		return nil, ErrInvalidAuthToken
+	}
+
+	// Get user from API key's user ID
+	userStorage := user_storage.UserStorage{
+		DB:  store.DB,
+		Ctx: ctx,
+	}
+
+	user, err := userStorage.FindUserByID(apiKey.UserID.String())
+	if err != nil {
+		l.Log(logger.Error, fmt.Sprintf("failed to find user by ID: %v", err), "")
+		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
 	if user == nil {
@@ -136,7 +123,11 @@ func AuthorizeOrganizationAccess(store *shared_storage.Store, ctx context.Contex
 // WithAuth wraps an MCP tool handler with authentication and authorization middleware.
 // The input type must implement OrganizationIDExtractor interface.
 // This wrapper ensures all tool calls are authenticated and authorized before execution.
-// Authentication tokens should be passed in the request metadata with key "auth_token".
+// API keys should be passed in the request metadata with key "auth_token" or in the context.
+// The API key format is: nixopus_<prefix>_<rest>
+// It can be provided as:
+//   - "nixopus_<prefix>_<rest>" (direct)
+//   - "Bearer nixopus_<prefix>_<rest>" (with Bearer prefix)
 func WithAuth[Input OrganizationIDExtractor, Output any](
 	store *shared_storage.Store,
 	l logger.Logger,
@@ -147,18 +138,32 @@ func WithAuth[Input OrganizationIDExtractor, Output any](
 		req *mcp.CallToolRequest,
 		input Input,
 	) (*mcp.CallToolResult, Output, error) {
-		// Extract auth token from request metadata
-		var authToken string
+		// Extract API key from request metadata first
+		var apiKey string
 		if req.Params != nil && req.Params.Meta != nil {
 			if tokenAny, ok := req.Params.Meta[AuthTokenMetaKey]; ok {
 				if tokenStr, ok := tokenAny.(string); ok {
-					authToken = tokenStr
+					apiKey = tokenStr
 				}
 			}
 		}
 
-		// Verify token and get user
-		user, err := VerifyToken(authToken, store, ctx, l)
+		// If not found in metadata, try to get from context (set by HTTP middleware)
+		if apiKey == "" {
+			if tokenAny := ctx.Value(AuthTokenMetaKey); tokenAny != nil {
+				if tokenStr, ok := tokenAny.(string); ok {
+					apiKey = tokenStr
+				}
+			}
+		}
+
+		// If still not found, try environment variable (for stdio MCP clients like Cursor)
+		if apiKey == "" {
+			apiKey = os.Getenv("AUTH_TOKEN")
+		}
+
+		// Verify API key and get user
+		user, err := VerifyAPIKey(apiKey, store, ctx, l)
 		if err != nil {
 			l.Log(logger.Error, fmt.Sprintf("authentication failed: %v", err), "")
 			var zero Output
@@ -174,26 +179,18 @@ func WithAuth[Input OrganizationIDExtractor, Output any](
 		ctx = context.WithValue(ctx, shared_types.UserContextKey, user)
 
 		orgID := input.GetOrganizationID()
-		if orgID == "" {
-			l.Log(logger.Error, "organization ID not provided", "")
-			var zero Output
-			return &mcp.CallToolResult{
-				IsError: true,
-				Content: []mcp.Content{
-					&mcp.TextContent{Text: "Organization ID not provided"},
-				},
-			}, zero, nil
-		}
-
-		if err := AuthorizeOrganizationAccess(store, ctx, user.ID.String(), orgID, l); err != nil {
-			l.Log(logger.Error, fmt.Sprintf("authorization failed: %v", err), "")
-			var zero Output
-			return &mcp.CallToolResult{
-				IsError: true,
-				Content: []mcp.Content{
-					&mcp.TextContent{Text: fmt.Sprintf("Authorization failed: %v", err)},
-				},
-			}, zero, nil
+		// Only perform organization authorization if organization ID is provided
+		if orgID != "" {
+			if err := AuthorizeOrganizationAccess(store, ctx, user.ID.String(), orgID, l); err != nil {
+				l.Log(logger.Error, fmt.Sprintf("authorization failed: %v", err), "")
+				var zero Output
+				return &mcp.CallToolResult{
+					IsError: true,
+					Content: []mcp.Content{
+						&mcp.TextContent{Text: fmt.Sprintf("Authorization failed: %v", err)},
+					},
+				}, zero, nil
+			}
 		}
 
 		return handler(ctx, req, input)
