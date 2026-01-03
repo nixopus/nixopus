@@ -90,4 +90,16 @@ func RegisterTools(
 		Name:        "restart_container",
 		Description: "Restart a Docker container. Requires container ID and organization ID. Optionally specify timeout in seconds.",
 	}, restartContainerHandler)
+
+	startContainerHandler := container_tools.StartContainerHandler(store, ctx, l, dockerService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "start_container",
+		Description: "Start a Docker container. Requires container ID and organization ID.",
+	}, startContainerHandler)
+
+	stopContainerHandler := container_tools.StopContainerHandler(store, ctx, l, dockerService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "stop_container",
+		Description: "Stop a Docker container. Requires container ID and organization ID. Optionally specify timeout in seconds.",
+	}, stopContainerHandler)
 }

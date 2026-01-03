@@ -56,6 +56,8 @@ func (r *Registry) GetToolFeature(toolName string) (string, error) {
 		"prune_build_cache":  "container",
 		"remove_container":   "container",
 		"restart_container":  "container",
+		"start_container":    "container",
+		"stop_container":     "container",
 	}
 
 	feature, ok := toolFeatureMap[toolName]
