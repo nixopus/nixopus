@@ -6,6 +6,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	container_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/container"
+	file_manager_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/file-manager"
 	client_types "github.com/raghavyuva/nixopus-api/cmd/mcp-client/types"
 )
 
@@ -59,6 +60,11 @@ func (r *Registry) GetToolFeature(toolName string) (string, error) {
 		"start_container":            "container",
 		"stop_container":             "container",
 		"update_container_resources": "container",
+		"list_files":                 "file-manager",
+		"create_directory":           "file-manager",
+		"delete_file":                "file-manager",
+		"move_file":                  "file-manager",
+		"copy_directory":             "file-manager",
 	}
 
 	feature, ok := toolFeatureMap[toolName]
@@ -106,6 +112,10 @@ func InitializeRegistry() *Registry {
 	// Register container feature
 	containerHandler := container_feature.NewToolHandler()
 	registry.RegisterFeature("container", containerHandler)
+
+	// Register file-manager feature
+	fileManagerHandler := file_manager_feature.NewToolHandler()
+	registry.RegisterFeature("file-manager", fileManagerHandler)
 
 	return registry
 }
