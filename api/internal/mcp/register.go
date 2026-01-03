@@ -8,6 +8,7 @@ import (
 	container_tools "github.com/raghavyuva/nixopus-api/internal/features/container/tools"
 	dashboard_tools "github.com/raghavyuva/nixopus-api/internal/features/dashboard/tools"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
+	extension_tools "github.com/raghavyuva/nixopus-api/internal/features/extension/tools"
 	file_manager_tools "github.com/raghavyuva/nixopus-api/internal/features/file-manager/tools"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	ssh_tools "github.com/raghavyuva/nixopus-api/internal/features/ssh/tools"
@@ -156,4 +157,41 @@ func RegisterTools(
 		Name:        "run_command",
 		Description: "Run a command on a remote server via SSH. Requires command and organization ID. Optionally specify client_id for multi-client support.",
 	}, runCommandHandler)
+
+	// Extension Tools
+	listExtensionsHandler := extension_tools.ListExtensionsHandler(store, ctx, l)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "list_extensions",
+		Description: "List extensions with pagination, filtering, and sorting. Requires organization ID. Optionally specify category, type, search, sort_by, sort_dir, page, and page_size.",
+	}, listExtensionsHandler)
+
+	getExtensionHandler := extension_tools.GetExtensionHandler(store, ctx, l)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "get_extension",
+		Description: "Get detailed information about an extension. Requires extension ID and organization ID.",
+	}, getExtensionHandler)
+
+	runExtensionHandler := extension_tools.RunExtensionHandler(store, ctx, l)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "run_extension",
+		Description: "Run an extension with variable values. Requires extension_id, organization_id, and optionally variables map.",
+	}, runExtensionHandler)
+
+	getExecutionHandler := extension_tools.GetExecutionHandler(store, ctx, l)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "get_execution",
+		Description: "Get execution status and details. Requires execution_id and organization ID.",
+	}, getExecutionHandler)
+
+	listExecutionLogsHandler := extension_tools.ListExecutionLogsHandler(store, ctx, l)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "list_execution_logs",
+		Description: "List execution logs with pagination. Requires execution_id and organization ID. Optionally specify after_seq and limit.",
+	}, listExecutionLogsHandler)
+
+	cancelExecutionHandler := extension_tools.CancelExecutionHandler(store, ctx, l)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "cancel_execution",
+		Description: "Cancel a running extension execution. Requires execution_id and organization ID.",
+	}, cancelExecutionHandler)
 }
