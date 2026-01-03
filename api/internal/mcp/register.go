@@ -66,4 +66,16 @@ func RegisterTools(
 		Name:        "list_images",
 		Description: "List Docker images with optional filtering by container ID or image prefix. Requires organization ID.",
 	}, listImagesHandler)
+
+	pruneImagesHandler := container_tools.PruneImagesHandler(store, ctx, l, dockerService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "prune_images",
+		Description: "Prune Docker images with optional filtering by until time, label, or dangling status. Requires organization ID.",
+	}, pruneImagesHandler)
+
+	pruneBuildCacheHandler := container_tools.PruneBuildCacheHandler(store, ctx, l, dockerService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "prune_build_cache",
+		Description: "Prune Docker build cache. Optionally prune all cache entries. Requires organization ID.",
+	}, pruneBuildCacheHandler)
 }
