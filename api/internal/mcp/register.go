@@ -10,6 +10,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	file_manager_tools "github.com/raghavyuva/nixopus-api/internal/features/file-manager/tools"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	ssh_tools "github.com/raghavyuva/nixopus-api/internal/features/ssh/tools"
 	mcp_middleware "github.com/raghavyuva/nixopus-api/internal/mcp/middleware"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 )
@@ -148,4 +149,11 @@ func RegisterTools(
 		Name:        "get_system_stats",
 		Description: "Get system statistics including CPU, memory, disk, network, and load information. Requires organization ID.",
 	}, getSystemStatsHandler)
+
+	// SSH Tools
+	runCommandHandler := ssh_tools.RunCommandHandler(store, ctx, l)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "run_command",
+		Description: "Run a command on a remote server via SSH. Requires command and organization ID. Optionally specify client_id for multi-client support.",
+	}, runCommandHandler)
 }
