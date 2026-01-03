@@ -42,7 +42,7 @@ type GetContainerOutput struct {
 
 // ListContainersInput is the input structure for the MCP tool
 type ListContainersInput struct {
-	OrganizationID string `json:"organization_id" jsonschema:"required"`
+	OrganizationID string `json:"organization_id,omitempty"`
 	Page           *int   `json:"page,omitempty"`
 	PageSize       *int   `json:"page_size,omitempty"`
 	Search         string `json:"search,omitempty"`
