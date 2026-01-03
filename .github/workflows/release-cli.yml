@@ -41,9 +41,6 @@ jobs:
           echo "Extracted version: $VERSION"
 
       - name: Build CLI binary in Ubuntu 20.04 container (PRs use dev mode / pushes build production)
-        env:
-          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
-          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "Running dev-mode build (no PyInstaller)"
@@ -51,8 +48,6 @@ jobs:
               -v "$PWD:/workspace" \
               -w /workspace/cli \
               -e NIXOPUS_DISABLE_DOCKER=1 \
-              -e POSTHOG_API_KEY="$POSTHOG_API_KEY" \
-              -e POSTHOG_HOST="$POSTHOG_HOST" \
               nixopus-ubuntu20:latest \
               bash -c "chmod +x build.sh && ./build.sh --dev --no-test --no-cleanup"
           else
@@ -61,8 +56,6 @@ jobs:
               -v "$PWD:/workspace" \
               -w /workspace/cli \
               -e NIXOPUS_DISABLE_DOCKER=1 \
-              -e POSTHOG_API_KEY="$POSTHOG_API_KEY" \
-              -e POSTHOG_HOST="$POSTHOG_HOST" \
               nixopus-ubuntu20:latest \
               bash -c "chmod +x build.sh && ./build.sh --no-test --no-cleanup --no-archive"
           fi
@@ -223,8 +216,6 @@ jobs:
         working-directory: cli
         env:
           NIXOPUS_DISABLE_DOCKER: "1"
-          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
-          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
         run: |
           chmod +x build.sh
           if [ ! -d "helpers" ]; then
