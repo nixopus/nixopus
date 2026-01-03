@@ -47,6 +47,10 @@ function useContainerDetails() {
     await refetchLogs();
   };
 
+  const handleRefreshLogs = async () => {
+    await refetchLogs();
+  };
+
   const handleContainerAction = async (action: 'start' | 'stop' | 'remove' | 'restart') => {
     try {
       switch (action) {
@@ -90,6 +94,7 @@ function useContainerDetails() {
     handleDeleteConfirm,
     handleContainerAction,
     handleLoadMoreLogs,
+    handleRefreshLogs,
     isDeleteDialogOpen,
     container,
     isLoading,
