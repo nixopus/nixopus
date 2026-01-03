@@ -8,6 +8,7 @@ import (
 	container_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/container"
 	dashboard_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/dashboard"
 	file_manager_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/file-manager"
+	ssh_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/ssh"
 	client_types "github.com/raghavyuva/nixopus-api/cmd/mcp-client/types"
 )
 
@@ -67,6 +68,7 @@ func (r *Registry) GetToolFeature(toolName string) (string, error) {
 		"move_file":                  "file-manager",
 		"copy_directory":             "file-manager",
 		"get_system_stats":           "dashboard",
+		"run_command":                "ssh",
 	}
 
 	feature, ok := toolFeatureMap[toolName]
@@ -122,6 +124,10 @@ func InitializeRegistry() *Registry {
 	// Register dashboard feature
 	dashboardHandler := dashboard_feature.NewToolHandler()
 	registry.RegisterFeature("dashboard", dashboardHandler)
+
+	// Register SSH feature
+	sshHandler := ssh_feature.NewToolHandler()
+	registry.RegisterFeature("ssh", sshHandler)
 
 	return registry
 }
