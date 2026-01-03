@@ -80,3 +80,37 @@ func (i ListImagesInput) GetOrganizationID() string {
 type ListImagesOutput struct {
 	Response container_types.ListImagesResponse `json:"response"`
 }
+
+// PruneImagesInput is the input structure for the MCP tool
+type PruneImagesInput struct {
+	OrganizationID string `json:"organization_id" jsonschema:"required"`
+	Until          string `json:"until,omitempty"`
+	Label          string `json:"label,omitempty"`
+	Dangling       *bool  `json:"dangling,omitempty"`
+}
+
+// GetOrganizationID implements OrganizationIDExtractor interface
+func (i PruneImagesInput) GetOrganizationID() string {
+	return i.OrganizationID
+}
+
+// PruneImagesOutput is the output structure for the MCP tool
+type PruneImagesOutput struct {
+	Response container_types.PruneImagesResponse `json:"response"`
+}
+
+// PruneBuildCacheInput is the input structure for the MCP tool
+type PruneBuildCacheInput struct {
+	OrganizationID string `json:"organization_id" jsonschema:"required"`
+	All            *bool  `json:"all,omitempty"`
+}
+
+// GetOrganizationID implements OrganizationIDExtractor interface
+func (i PruneBuildCacheInput) GetOrganizationID() string {
+	return i.OrganizationID
+}
+
+// PruneBuildCacheOutput is the output structure for the MCP tool
+type PruneBuildCacheOutput struct {
+	Response container_types.MessageResponse `json:"response"`
+}
