@@ -78,4 +78,16 @@ func RegisterTools(
 		Name:        "prune_build_cache",
 		Description: "Prune Docker build cache. Optionally prune all cache entries. Requires organization ID.",
 	}, pruneBuildCacheHandler)
+
+	removeContainerHandler := container_tools.RemoveContainerHandler(store, ctx, l, dockerService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "remove_container",
+		Description: "Remove a Docker container. Requires container ID and organization ID. Optionally force removal.",
+	}, removeContainerHandler)
+
+	restartContainerHandler := container_tools.RestartContainerHandler(store, ctx, l, dockerService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "restart_container",
+		Description: "Restart a Docker container. Requires container ID and organization ID. Optionally specify timeout in seconds.",
+	}, restartContainerHandler)
 }
