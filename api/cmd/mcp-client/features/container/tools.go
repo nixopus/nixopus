@@ -128,6 +128,17 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 				"timeout":         10,
 			},
 		}
+	case "update_container_resources":
+		params = &mcp.CallToolParams{
+			Name: "update_container_resources",
+			Arguments: map[string]any{
+				"id":              containerID,
+				"organization_id": organizationID,
+				"memory":          1073741824, // 1GB in bytes
+				"memory_swap":     2147483648, // 2GB in bytes
+				"cpu_shares":      1024,
+			},
+		}
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", toolName)
 	}
@@ -178,22 +189,24 @@ func (h *ToolHandler) GetAvailableTools() []string {
 		"restart_container",
 		"start_container",
 		"stop_container",
+		"update_container_resources",
 	}
 }
 
 // GetToolDescription returns the description for a tool
 func (h *ToolHandler) GetToolDescription(toolName string) string {
 	descriptions := map[string]string{
-		"get_container":      "Get detailed information about a Docker container",
-		"get_container_logs": "Get logs from a Docker container",
-		"list_containers":    "List Docker containers with pagination, filtering, and sorting",
-		"list_images":        "List Docker images with optional filtering",
-		"prune_images":       "Prune Docker images with optional filtering by until time, label, or dangling status",
-		"prune_build_cache":  "Prune Docker build cache, optionally prune all cache entries",
-		"remove_container":   "Remove a Docker container, optionally force removal",
-		"restart_container":  "Restart a Docker container, optionally specify timeout in seconds",
-		"start_container":    "Start a Docker container",
-		"stop_container":     "Stop a Docker container, optionally specify timeout in seconds",
+		"get_container":              "Get detailed information about a Docker container",
+		"get_container_logs":         "Get logs from a Docker container",
+		"list_containers":            "List Docker containers with pagination, filtering, and sorting",
+		"list_images":                "List Docker images with optional filtering",
+		"prune_images":               "Prune Docker images with optional filtering by until time, label, or dangling status",
+		"prune_build_cache":          "Prune Docker build cache, optionally prune all cache entries",
+		"remove_container":           "Remove a Docker container, optionally force removal",
+		"restart_container":          "Restart a Docker container, optionally specify timeout in seconds",
+		"start_container":            "Start a Docker container",
+		"stop_container":             "Stop a Docker container, optionally specify timeout in seconds",
+		"update_container_resources": "Update resource limits (memory, memory swap, CPU shares) of a running Docker container",
 	}
 	return descriptions[toolName]
 }
