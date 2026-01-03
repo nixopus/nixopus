@@ -31,8 +31,11 @@ func GetExecutionHandler(
 			return nil, GetExecutionOutput{}, err
 		}
 
+		// Convert shared types to MCP types to avoid circular references
+		mcpExecution := convertToMCPExtensionExecution(*execution)
+
 		return nil, GetExecutionOutput{
-			Execution: *execution,
+			Execution: mcpExecution,
 		}, nil
 	}
 }
