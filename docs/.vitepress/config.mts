@@ -12,6 +12,9 @@ const sidebar = useSidebar({
   linkPrefix: '/operations/'
 })
 
+const posthogApiKey = process.env.POSTHOG_API_KEY || ''
+const posthogHost = process.env.POSTHOG_HOST || 'https://eu.i.posthog.com'
+
 export default withMermaid(
   defineConfig({
     title: "Nixopus Docs",
@@ -21,6 +24,7 @@ export default withMermaid(
       ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
       ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
       ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400&display=swap' }],
+      ['script', {}, `window.__POSTHOG_CONFIG__ = { apiKey: '${posthogApiKey}', host: '${posthogHost}' }`],
     ],
     themeConfig: {
       search: {
