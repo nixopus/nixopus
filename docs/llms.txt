@@ -1,0 +1,40 @@
+# Nixopus
+
+> Open Source alternative to Vercel, Heroku, Netlify with Terminal integration, and Self Hosting capabilities.
+
+## Table of Contents
+
+### Getting Started
+
+- [Home](/llms.txt/docs/index.md): Nixopus documentation home page.
+- [Introduction](/llms.txt/docs/introduction/index.md): Introduction to Nixopus deployment platform.
+- [Installation](/llms.txt/docs/install/index.md): Learn how to install Nixopus on your VPS.
+
+### Core Features
+
+- [Hosting Projects](/llms.txt/docs/self-host/index.md): Deploy applications from GitHub repositories with automatic builds and container management.
+- [Terminal](/llms.txt/docs/terminal/index.md): Access your VPS directly from the dashboard with a secure, browser-based terminal.
+- [File Manager](/llms.txt/docs/file-manager/index.md): Browse and manage files on your VPS through a visual interface.
+- [Extensions](/llms.txt/docs/extensions/index.md): Automate server tasks through a library of pre-built configurations.
+- [Notifications](/llms.txt/docs/notifications/index.md): Configure deployment alerts via Slack, Discord, or email.
+- [Workflows](/llms.txt/docs/workflows/index.md): Overview of GitHub Actions workflows in the repository.
+- [Preferences](/llms.txt/docs/preferences/index.md): Configure Nixopus settings and preferences.
+
+### CLI
+
+- [CLI Overview](/llms.txt/docs/cli/index.md): Command line interface for installing and managing Nixopus on your server.
+- [CLI Reference](/llms.txt/docs/cli/cli-reference.md): Complete command documentation with all options and flags.
+
+### API
+
+- [Operations](/llms.txt/docs/operations/[operationId].md): API operation documentation and reference.
+
+### Legal & Community
+
+- [Contributing](/llms.txt/docs/contributing/index.md): Guidelines for contributing to Nixopus.
+- [Code of Conduct](/llms.txt/docs/code-of-conduct/index.md): Community standards and code of conduct.
+- [Privacy Policy](/llms.txt/docs/privacy-policy/index.md): Privacy policy and data handling information.
+- [License](/llms.txt/docs/license/index.md): License information for Nixopus.
+- [Credits](/llms.txt/docs/credits/index.md): Credits and acknowledgments.
+- [Sponsor](/llms.txt/docs/sponsor/index.md): Sponsorship information and options.
+
