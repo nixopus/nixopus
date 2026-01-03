@@ -7,6 +7,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	container_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/container"
 	dashboard_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/dashboard"
+	extension_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/extension"
 	file_manager_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/file-manager"
 	ssh_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/ssh"
 	client_types "github.com/raghavyuva/nixopus-api/cmd/mcp-client/types"
@@ -69,6 +70,12 @@ func (r *Registry) GetToolFeature(toolName string) (string, error) {
 		"copy_directory":             "file-manager",
 		"get_system_stats":           "dashboard",
 		"run_command":                "ssh",
+		"list_extensions":            "extension",
+		"get_extension":              "extension",
+		"run_extension":              "extension",
+		"get_execution":              "extension",
+		"list_execution_logs":        "extension",
+		"cancel_execution":           "extension",
 	}
 
 	feature, ok := toolFeatureMap[toolName]
@@ -128,6 +135,10 @@ func InitializeRegistry() *Registry {
 	// Register SSH feature
 	sshHandler := ssh_feature.NewToolHandler()
 	registry.RegisterFeature("ssh", sshHandler)
+
+	// Register extension feature
+	extensionHandler := extension_feature.NewToolHandler()
+	registry.RegisterFeature("extension", extensionHandler)
 
 	return registry
 }
