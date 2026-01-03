@@ -50,6 +50,7 @@ func (r *Registry) GetToolFeature(toolName string) (string, error) {
 	toolFeatureMap := map[string]string{
 		"get_container":      "container",
 		"get_container_logs": "container",
+		"list_containers":    "container",
 	}
 
 	feature, ok := toolFeatureMap[toolName]

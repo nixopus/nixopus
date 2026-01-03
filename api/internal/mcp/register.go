@@ -54,4 +54,10 @@ func RegisterTools(
 		Name:        "get_container",
 		Description: "Get detailed information about a Docker container. Requires container ID and organization ID.",
 	}, containerHandler)
+
+	listContainersHandler := container_tools.ListContainersHandler(store, ctx, l, dockerService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "list_containers",
+		Description: "List Docker containers with pagination, filtering, and sorting. Requires organization ID.",
+	}, listContainersHandler)
 }

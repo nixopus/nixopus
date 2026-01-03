@@ -39,3 +39,26 @@ func (i GetContainerInput) GetOrganizationID() string {
 type GetContainerOutput struct {
 	Container container_types.Container `json:"container"`
 }
+
+// ListContainersInput is the input structure for the MCP tool
+type ListContainersInput struct {
+	OrganizationID string `json:"organization_id" jsonschema:"required"`
+	Page           *int   `json:"page,omitempty"`
+	PageSize       *int   `json:"page_size,omitempty"`
+	Search         string `json:"search,omitempty"`
+	SortBy         string `json:"sort_by,omitempty"`
+	SortOrder      string `json:"sort_order,omitempty"`
+	Status         string `json:"status,omitempty"`
+	Name           string `json:"name,omitempty"`
+	Image          string `json:"image,omitempty"`
+}
+
+// GetOrganizationID implements OrganizationIDExtractor interface
+func (i ListContainersInput) GetOrganizationID() string {
+	return i.OrganizationID
+}
+
+// ListContainersOutput is the output structure for the MCP tool
+type ListContainersOutput struct {
+	Response container_types.ListContainersResponse `json:"response"`
+}
