@@ -62,3 +62,21 @@ func (i ListContainersInput) GetOrganizationID() string {
 type ListContainersOutput struct {
 	Response container_types.ListContainersResponse `json:"response"`
 }
+
+// ListImagesInput is the input structure for the MCP tool
+type ListImagesInput struct {
+	OrganizationID string `json:"organization_id" jsonschema:"required"`
+	All            *bool  `json:"all,omitempty"`
+	ContainerID    string `json:"container_id,omitempty"`
+	ImagePrefix    string `json:"image_prefix,omitempty"`
+}
+
+// GetOrganizationID implements OrganizationIDExtractor interface
+func (i ListImagesInput) GetOrganizationID() string {
+	return i.OrganizationID
+}
+
+// ListImagesOutput is the output structure for the MCP tool
+type ListImagesOutput struct {
+	Response container_types.ListImagesResponse `json:"response"`
+}
