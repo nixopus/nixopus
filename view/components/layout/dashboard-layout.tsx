@@ -20,13 +20,14 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { Tour } from '@/components/Tour';
 import { useTour } from '@/hooks/useTour';
 import { Button } from '@/components/ui/button';
-import { HelpCircle, Terminal as TerminalIcon } from 'lucide-react';
+import { HelpCircle, Terminal as TerminalIcon, Sparkles } from 'lucide-react';
 import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { ModeToggler } from '@/components/ui/theme-toggler';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
 import { TopbarWidgets } from './topbar-widgets';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/lib/utils';
+import { AISheet } from '@/components/ai';
 
 enum TERMINAL_POSITION {
   BOTTOM = 'bottom',
@@ -60,6 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [fitAddonRef, setFitAddonRef] = React.useState<any | null>(null);
   const { startTour } = useTour();
   const { t } = useTranslation();
+  const [isAISheetOpen, setIsAISheetOpen] = React.useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -112,6 +114,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <div className="flex items-center gap-4">
               <TopbarWidgets />
+              <Button
+                variant={isAISheetOpen ? 'secondary' : 'outline'}
+                size="icon"
+                onClick={() => setIsAISheetOpen(true)}
+                title="Terminal for AI"
+                className={cn(
+                  'shrink-0 transition-all duration-200',
+                  isAISheetOpen && 'bg-primary/10 text-primary hover:bg-primary/20'
+                )}
+              >
+                <Sparkles className="h-5 w-5" />
+              </Button>
               <AnyPermissionGuard
                 permissions={['terminal:create', 'terminal:read', 'terminal:update']}
                 loadingFallback={null}
@@ -208,6 +222,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </Tour>
         </div>
+        <AISheet open={isAISheetOpen} onOpenChange={setIsAISheetOpen} />
       </SidebarInset>
     </SidebarProvider>
   );
