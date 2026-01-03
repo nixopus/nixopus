@@ -77,6 +77,22 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 				"all":             false,
 			},
 		}
+	case "prune_images":
+		params = &mcp.CallToolParams{
+			Name: "prune_images",
+			Arguments: map[string]any{
+				"organization_id": organizationID,
+				"dangling":        true,
+			},
+		}
+	case "prune_build_cache":
+		params = &mcp.CallToolParams{
+			Name: "prune_build_cache",
+			Arguments: map[string]any{
+				"organization_id": organizationID,
+				"all":             true,
+			},
+		}
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", toolName)
 	}
@@ -121,6 +137,8 @@ func (h *ToolHandler) GetAvailableTools() []string {
 		"get_container_logs",
 		"list_containers",
 		"list_images",
+		"prune_images",
+		"prune_build_cache",
 	}
 }
 
@@ -131,6 +149,8 @@ func (h *ToolHandler) GetToolDescription(toolName string) string {
 		"get_container_logs": "Get logs from a Docker container",
 		"list_containers":    "List Docker containers with pagination, filtering, and sorting",
 		"list_images":        "List Docker images with optional filtering",
+		"prune_images":       "Prune Docker images with optional filtering by until time, label, or dangling status",
+		"prune_build_cache":  "Prune Docker build cache, optionally prune all cache entries",
 	}
 	return descriptions[toolName]
 }
