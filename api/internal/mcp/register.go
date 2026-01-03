@@ -60,4 +60,10 @@ func RegisterTools(
 		Name:        "list_containers",
 		Description: "List Docker containers with pagination, filtering, and sorting. Requires organization ID.",
 	}, listContainersHandler)
+
+	listImagesHandler := container_tools.ListImagesHandler(store, ctx, l, dockerService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "list_images",
+		Description: "List Docker images with optional filtering by container ID or image prefix. Requires organization ID.",
+	}, listImagesHandler)
 }

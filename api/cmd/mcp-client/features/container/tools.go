@@ -69,6 +69,14 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 				"sort_order":      "asc",
 			},
 		}
+	case "list_images":
+		params = &mcp.CallToolParams{
+			Name: "list_images",
+			Arguments: map[string]any{
+				"organization_id": organizationID,
+				"all":             false,
+			},
+		}
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", toolName)
 	}
@@ -112,6 +120,7 @@ func (h *ToolHandler) GetAvailableTools() []string {
 		"get_container",
 		"get_container_logs",
 		"list_containers",
+		"list_images",
 	}
 }
 
@@ -121,6 +130,7 @@ func (h *ToolHandler) GetToolDescription(toolName string) string {
 		"get_container":      "Get detailed information about a Docker container",
 		"get_container_logs": "Get logs from a Docker container",
 		"list_containers":    "List Docker containers with pagination, filtering, and sorting",
+		"list_images":        "List Docker images with optional filtering",
 	}
 	return descriptions[toolName]
 }
