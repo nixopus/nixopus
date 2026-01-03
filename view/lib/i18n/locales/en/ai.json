@@ -1,0 +1,18 @@
+{
+  "ai": {
+    "title": "AI Assistant",
+    "emptyState": {
+      "title": "How can I help you?",
+      "description": "Ask me anything about your deployments, configurations, or get help with troubleshooting."
+    },
+    "suggestions": {
+      "deploy": "How do I deploy a new application?",
+      "logs": "Show me recent activity logs",
+      "envVars": "Help me configure environment variables"
+    },
+    "input": {
+      "placeholder": "Ask anything...",
+      "hint": "Press Enter to send, Shift + Enter for new line"
+    }
+  }
+}
