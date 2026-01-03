@@ -31,8 +31,11 @@ func GetExtensionHandler(
 			return nil, GetExtensionOutput{}, err
 		}
 
+		// Convert shared types to MCP types to avoid circular references
+		mcpExtension := convertToMCPExtension(*extension)
+
 		return nil, GetExtensionOutput{
-			Extension: *extension,
+			Extension: mcpExtension,
 		}, nil
 	}
 }
