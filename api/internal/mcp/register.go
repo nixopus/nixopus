@@ -102,4 +102,10 @@ func RegisterTools(
 		Name:        "stop_container",
 		Description: "Stop a Docker container. Requires container ID and organization ID. Optionally specify timeout in seconds.",
 	}, stopContainerHandler)
+
+	updateContainerResourcesHandler := container_tools.UpdateContainerResourcesHandler(store, ctx, l, dockerService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "update_container_resources",
+		Description: "Update resource limits (memory, memory swap, CPU shares) of a running Docker container. Requires container ID and organization ID. Optionally specify memory (bytes), memory_swap (bytes), and cpu_shares.",
+	}, updateContainerResourcesHandler)
 }
