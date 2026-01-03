@@ -148,3 +148,36 @@ func (i RestartContainerInput) GetOrganizationID() string {
 type RestartContainerOutput struct {
 	Response container_types.ContainerActionResponse `json:"response"`
 }
+
+// StartContainerInput is the input structure for the MCP tool
+type StartContainerInput struct {
+	ID             string `json:"id" jsonschema:"required"`
+	OrganizationID string `json:"organization_id" jsonschema:"required"`
+}
+
+// GetOrganizationID implements OrganizationIDExtractor interface
+func (i StartContainerInput) GetOrganizationID() string {
+	return i.OrganizationID
+}
+
+// StartContainerOutput is the output structure for the MCP tool
+type StartContainerOutput struct {
+	Response container_types.ContainerActionResponse `json:"response"`
+}
+
+// StopContainerInput is the input structure for the MCP tool
+type StopContainerInput struct {
+	ID             string `json:"id" jsonschema:"required"`
+	OrganizationID string `json:"organization_id" jsonschema:"required"`
+	Timeout        *int   `json:"timeout,omitempty"`
+}
+
+// GetOrganizationID implements OrganizationIDExtractor interface
+func (i StopContainerInput) GetOrganizationID() string {
+	return i.OrganizationID
+}
+
+// StopContainerOutput is the output structure for the MCP tool
+type StopContainerOutput struct {
+	Response container_types.ContainerActionResponse `json:"response"`
+}
