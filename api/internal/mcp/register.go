@@ -7,6 +7,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	container_tools "github.com/raghavyuva/nixopus-api/internal/features/container/tools"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
+	file_manager_tools "github.com/raghavyuva/nixopus-api/internal/features/file-manager/tools"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	mcp_middleware "github.com/raghavyuva/nixopus-api/internal/mcp/middleware"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
@@ -108,4 +109,35 @@ func RegisterTools(
 		Name:        "update_container_resources",
 		Description: "Update resource limits (memory, memory swap, CPU shares) of a running Docker container. Requires container ID and organization ID. Optionally specify memory (bytes), memory_swap (bytes), and cpu_shares.",
 	}, updateContainerResourcesHandler)
+
+	// File Manager Tools
+	listFilesHandler := file_manager_tools.ListFilesHandler(store, ctx, l)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "list_files",
+		Description: "List files and directories in a given path. Requires path and organization ID.",
+	}, listFilesHandler)
+
+	createDirectoryHandler := file_manager_tools.CreateDirectoryHandler(store, ctx, l)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "create_directory",
+		Description: "Create a new directory at the given path. Requires path and organization ID.",
+	}, createDirectoryHandler)
+
+	deleteFileHandler := file_manager_tools.DeleteFileHandler(store, ctx, l)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "delete_file",
+		Description: "Delete a file or directory at the given path. Requires path and organization ID.",
+	}, deleteFileHandler)
+
+	moveFileHandler := file_manager_tools.MoveFileHandler(store, ctx, l)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "move_file",
+		Description: "Move or rename a file or directory from one path to another. Requires from_path, to_path, and organization ID.",
+	}, moveFileHandler)
+
+	copyDirectoryHandler := file_manager_tools.CopyDirectoryHandler(store, ctx, l)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "copy_directory",
+		Description: "Copy a file or directory from one path to another. Requires from_path, to_path, and organization ID.",
+	}, copyDirectoryHandler)
 }
