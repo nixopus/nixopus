@@ -47,6 +47,9 @@ jobs:
           yarn install --frozen-lockfile
 
       - name: Build with VitePress
+        env:
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
         run: |
           cd docs
           yarn docs:build

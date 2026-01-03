@@ -13,7 +13,7 @@ interface FormInputFieldProps {
   form: any;
   label: string;
   name: string;
-  description?: string;
+  description?: string | React.ReactNode;
   placeholder?: string;
   required?: boolean;
   validator?: (value: string) => boolean;
