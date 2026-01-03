@@ -60,15 +60,28 @@ func ListImages(
 	// Transform Docker image summaries to our Image type
 	var result []container_types.Image
 	for _, img := range images {
+		labels := img.Labels
+		if labels == nil {
+			labels = make(map[string]string)
+		}
+		repoTags := img.RepoTags
+		if repoTags == nil {
+			repoTags = []string{}
+		}
+		repoDigests := img.RepoDigests
+		if repoDigests == nil {
+			repoDigests = []string{}
+		}
+
 		imageData := container_types.Image{
 			ID:          img.ID,
-			RepoTags:    img.RepoTags,
-			RepoDigests: img.RepoDigests,
+			RepoTags:    repoTags,
+			RepoDigests: repoDigests,
 			Created:     img.Created,
 			Size:        img.Size,
 			SharedSize:  img.SharedSize,
 			VirtualSize: img.VirtualSize,
-			Labels:      img.Labels,
+			Labels:      labels,
 		}
 
 		result = append(result, imageData)

@@ -159,6 +159,9 @@ func appendContainerInfo(dockerService *docker.DockerService, l logger.Logger, p
 			State:     r.State,
 			Created:   info.Created,
 			Labels:    r.Labels,
+			Ports:     []container_types.Port{},
+			Mounts:    []container_types.Mount{},
+			Networks:  []container_types.Network{},
 			Command:   "",
 			IPAddress: info.NetworkSettings.IPAddress,
 			HostConfig: container_types.HostConfig{
