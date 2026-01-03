@@ -48,16 +48,17 @@ func (r *Registry) GetHandler(featureName string) (FeatureHandler, error) {
 func (r *Registry) GetToolFeature(toolName string) (string, error) {
 	// Map tool names to features
 	toolFeatureMap := map[string]string{
-		"get_container":      "container",
-		"get_container_logs": "container",
-		"list_containers":    "container",
-		"list_images":        "container",
-		"prune_images":       "container",
-		"prune_build_cache":  "container",
-		"remove_container":   "container",
-		"restart_container":  "container",
-		"start_container":    "container",
-		"stop_container":     "container",
+		"get_container":              "container",
+		"get_container_logs":         "container",
+		"list_containers":            "container",
+		"list_images":                "container",
+		"prune_images":               "container",
+		"prune_build_cache":          "container",
+		"remove_container":           "container",
+		"restart_container":          "container",
+		"start_container":            "container",
+		"stop_container":             "container",
+		"update_container_resources": "container",
 	}
 
 	feature, ok := toolFeatureMap[toolName]

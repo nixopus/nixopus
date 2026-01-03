@@ -181,3 +181,22 @@ func (i StopContainerInput) GetOrganizationID() string {
 type StopContainerOutput struct {
 	Response container_types.ContainerActionResponse `json:"response"`
 }
+
+// UpdateContainerResourcesInput is the input structure for the MCP tool
+type UpdateContainerResourcesInput struct {
+	ID             string `json:"id" jsonschema:"required"`
+	OrganizationID string `json:"organization_id" jsonschema:"required"`
+	Memory         *int64 `json:"memory,omitempty"`      // Memory limit in bytes (0 = unlimited)
+	MemorySwap     *int64 `json:"memory_swap,omitempty"` // Total memory limit in bytes (0 = unlimited, -1 = unlimited swap)
+	CPUShares      *int64 `json:"cpu_shares,omitempty"`  // CPU shares (relative weight)
+}
+
+// GetOrganizationID implements OrganizationIDExtractor interface
+func (i UpdateContainerResourcesInput) GetOrganizationID() string {
+	return i.OrganizationID
+}
+
+// UpdateContainerResourcesOutput is the output structure for the MCP tool
+type UpdateContainerResourcesOutput struct {
+	Response container_types.UpdateContainerResourcesResponse `json:"response"`
+}
