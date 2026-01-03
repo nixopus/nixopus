@@ -8,6 +8,7 @@ import (
 	extension_storage "github.com/raghavyuva/nixopus-api/internal/features/extension/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // RunExtensionHandler returns the handler function for running an extension
@@ -36,8 +37,48 @@ func RunExtensionHandler(
 			return nil, RunExtensionOutput{}, err
 		}
 
+		// Convert shared types to MCP types to avoid circular references
+		mcpExecution := convertToMCPExtensionExecution(*execution)
+
 		return nil, RunExtensionOutput{
-			Execution: *execution,
+			Execution: mcpExecution,
 		}, nil
+	}
+}
+
+// convertToMCPExtensionExecution converts shared_types.ExtensionExecution to MCPExtensionExecution
+// removing circular references
+func convertToMCPExtensionExecution(exec shared_types.ExtensionExecution) MCPExtensionExecution {
+	mcpSteps := make([]MCPExecutionStep, len(exec.Steps))
+	for i, step := range exec.Steps {
+		mcpSteps[i] = MCPExecutionStep{
+			ID:          step.ID,
+			ExecutionID: step.ExecutionID,
+			StepName:    step.StepName,
+			Phase:       step.Phase,
+			StepOrder:   step.StepOrder,
+			StartedAt:   step.StartedAt,
+			CompletedAt: step.CompletedAt,
+			Status:      step.Status,
+			ExitCode:    step.ExitCode,
+			Output:      step.Output,
+			CreatedAt:   step.CreatedAt,
+		}
+	}
+
+	return MCPExtensionExecution{
+		ID:             exec.ID,
+		ExtensionID:    exec.ExtensionID,
+		ServerHostname: exec.ServerHostname,
+		VariableValues: exec.VariableValues,
+		Status:         exec.Status,
+		StartedAt:      exec.StartedAt,
+		CompletedAt:    exec.CompletedAt,
+		ExitCode:       exec.ExitCode,
+		ErrorMessage:   exec.ErrorMessage,
+		ExecutionLog:   exec.ExecutionLog,
+		LogSeq:         exec.LogSeq,
+		CreatedAt:      exec.CreatedAt,
+		Steps:          mcpSteps,
 	}
 }
