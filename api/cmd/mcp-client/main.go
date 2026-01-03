@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/raghavyuva/nixopus-api/cmd/mcp-client/features"
 )
 
 func main() {
@@ -51,100 +51,47 @@ func main() {
 		fmt.Printf("  - %s: %s\n", tool.Name, tool.Description)
 	}
 
-	// Example: Call get_container_logs tool
+	// Initialize feature registry
+	registry := features.InitializeRegistry()
+
+	// Test tools if test argument is provided
 	if len(os.Args) > 1 && os.Args[1] == "test" {
-		fmt.Println("\nTesting get_container_logs tool...")
-
-		// Get container ID and organization ID from environment or use defaults
-		containerID := os.Getenv("CONTAINER_ID")
-		organizationID := os.Getenv("ORGANIZATION_ID")
-		authToken := os.Getenv("AUTH_TOKEN")
-
-		if containerID == "" {
-			containerID = "test-container-id"
-		}
-		if organizationID == "" {
-			organizationID = "test-org-id"
-		}
-		if authToken == "" {
-			fmt.Println("Warning: AUTH_TOKEN not set. Authentication will fail.")
-			fmt.Println("   Set AUTH_TOKEN environment variable with a valid SuperTokens session token.")
+		toolName := os.Getenv("TOOL_NAME")
+		if toolName == "" {
+			toolName = "get_container_logs" // Default tool
 		}
 
-		params := &mcp.CallToolParams{
-			Name: "get_container_logs",
-			Arguments: map[string]any{
-				"id":              containerID,
-				"organization_id": organizationID,
-				"follow":          false,
-				"tail":            100,
-				"stdout":          true,
-				"stderr":          true,
-			},
-		}
-
-		// Add auth token to metadata if provided
-		if authToken != "" {
-			params.Meta = mcp.Meta{
-				"auth_token": authToken,
-			}
-		}
-
-		res, err := session.CallTool(ctx, params)
-		if err != nil {
-			log.Fatalf("CallTool failed: %v", err)
-		}
-
-		if res.IsError {
-			fmt.Printf("Tool returned an error:\n")
-			if len(res.Content) > 0 {
-				for _, c := range res.Content {
-					if textContent, ok := c.(*mcp.TextContent); ok {
-						fmt.Printf("  Error: %s\n", textContent.Text)
-					}
-				}
-			}
-			os.Exit(1)
-		}
-
-		fmt.Println("Tool call successful:")
-		for _, c := range res.Content {
-			switch content := c.(type) {
-			case *mcp.TextContent:
-				fmt.Printf("  Text: %s\n", content.Text)
-			case *mcp.ImageContent:
-				fmt.Printf("  Image: %d bytes (mime: %s)\n", len(content.Data), content.MIMEType)
-			case *mcp.AudioContent:
-				fmt.Printf("  Audio: %d bytes (mime: %s)\n", len(content.Data), content.MIMEType)
-			default:
-				// Try to marshal unknown content types
-				jsonBytes, err := json.MarshalIndent(content, "  ", "  ")
-				if err == nil {
-					fmt.Printf("  Content: %s\n", string(jsonBytes))
-				} else {
-					fmt.Printf("  Content: %+v\n", content)
-				}
-			}
-		}
-
-		// Also check structured content if available
-		if res.StructuredContent != nil {
-			fmt.Println("\nStructured Content:")
-			jsonBytes, err := json.MarshalIndent(res.StructuredContent, "  ", "  ")
-			if err == nil {
-				fmt.Printf("%s\n", string(jsonBytes))
-			} else {
-				fmt.Printf("%+v\n", res.StructuredContent)
-			}
+		if err := registry.TestTool(ctx, session, toolName); err != nil {
+			log.Fatalf("Test failed: %v", err)
 		}
 	} else {
-		fmt.Println("\nUsage:")
-		fmt.Println("  Set MCP_SERVER_PATH environment variable:")
-		fmt.Println("    export MCP_SERVER_PATH=./nixopus-mcp-server")
-		fmt.Println("")
-		fmt.Println("  To test a tool call, run:")
-		fmt.Println("    CONTAINER_ID=<id> ORGANIZATION_ID=<org-id> AUTH_TOKEN=<token> go run ./cmd/mcp-client test")
-		fmt.Println("")
-		fmt.Println("  Note: AUTH_TOKEN is required for authentication.")
+		printUsage(registry)
 	}
+}
+
+func printUsage(registry *features.Registry) {
+	fmt.Println("\nUsage:")
+	fmt.Println("  Set MCP_SERVER_PATH environment variable:")
+	fmt.Println("    export MCP_SERVER_PATH=./nixopus-mcp-server")
+	fmt.Println("")
+	fmt.Println("  To test a tool call, run:")
+	fmt.Println("    CONTAINER_ID=<id> ORGANIZATION_ID=<org-id> AUTH_TOKEN=<token> go run ./cmd/mcp-client test")
+	fmt.Println("")
+	fmt.Println("  To test a specific tool, set TOOL_NAME:")
+	fmt.Println("    TOOL_NAME=get_container CONTAINER_ID=<id> ORGANIZATION_ID=<org-id> AUTH_TOKEN=<token> go run ./cmd/mcp-client test")
+	fmt.Println("    TOOL_NAME=get_container_logs CONTAINER_ID=<id> ORGANIZATION_ID=<org-id> AUTH_TOKEN=<token> go run ./cmd/mcp-client test")
+	fmt.Println("")
+	fmt.Println("  Available tools:")
+
+	// Get all available tools from registry
+	containerHandler, _ := registry.GetHandler("container")
+	if containerHandler != nil {
+		for _, toolName := range containerHandler.GetAvailableTools() {
+			description := containerHandler.GetToolDescription(toolName)
+			fmt.Printf("    - %s: %s\n", toolName, description)
+		}
+	}
+
+	fmt.Println("")
+	fmt.Println("  Note: AUTH_TOKEN is required for authentication.")
 }

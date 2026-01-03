@@ -1,5 +1,7 @@
 package tools
 
+import container_types "github.com/raghavyuva/nixopus-api/internal/features/container/types"
+
 // GetContainerLogsInput is the input structure for the MCP tool
 type GetContainerLogsInput struct {
 	ID             string  `json:"id" jsonschema:"required"`
@@ -20,4 +22,20 @@ func (i GetContainerLogsInput) GetOrganizationID() string {
 // GetContainerLogsOutput is the output structure for the MCP tool
 type GetContainerLogsOutput struct {
 	Logs string `json:"logs"`
+}
+
+// GetContainerInput is the input structure for the MCP tool
+type GetContainerInput struct {
+	ID             string `json:"id" jsonschema:"required"`
+	OrganizationID string `json:"organization_id" jsonschema:"required"`
+}
+
+// GetOrganizationID implements OrganizationIDExtractor interface
+func (i GetContainerInput) GetOrganizationID() string {
+	return i.OrganizationID
+}
+
+// GetContainerOutput is the output structure for the MCP tool
+type GetContainerOutput struct {
+	Container container_types.Container `json:"container"`
 }

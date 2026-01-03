@@ -2,7 +2,6 @@ package tools
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/raghavyuva/nixopus-api/internal/features/container/service"
@@ -18,22 +17,13 @@ func GetContainerLogsHandler(
 	store *shared_storage.Store,
 	ctx context.Context,
 	l logger.Logger,
+	dockerService *docker.DockerService,
 ) func(context.Context, *mcp.CallToolRequest, GetContainerLogsInput) (*mcp.CallToolResult, GetContainerLogsOutput, error) {
 	return func(
 		toolCtx context.Context,
 		req *mcp.CallToolRequest,
 		input GetContainerLogsInput,
 	) (*mcp.CallToolResult, GetContainerLogsOutput, error) {
-		dockerService, err := docker.GetDockerManager().GetDefaultService()
-		if err != nil {
-			l.Log(logger.Error, fmt.Sprintf("failed to get docker service: %v", err), "")
-			return nil, GetContainerLogsOutput{}, fmt.Errorf("failed to get docker service: %w", err)
-		}
-		if dockerService == nil {
-			l.Log(logger.Error, "docker service is nil", "")
-			return nil, GetContainerLogsOutput{}, fmt.Errorf("docker service is nil")
-		}
-
 		// Handle optional pointer fields
 		tail := 0
 		if input.Tail != nil {

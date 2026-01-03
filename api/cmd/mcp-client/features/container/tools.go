@@ -1,0 +1,113 @@
+package container
+
+import (
+	"context"
+	"fmt"
+	"os"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+	client_types "github.com/raghavyuva/nixopus-api/cmd/mcp-client/types"
+	"github.com/raghavyuva/nixopus-api/cmd/mcp-client/utils"
+)
+
+// ToolHandler handles container feature tool calls
+type ToolHandler struct{}
+
+// NewToolHandler creates a new container tool handler
+func NewToolHandler() *ToolHandler {
+	return &ToolHandler{}
+}
+
+// GetToolParams returns the tool parameters for a given tool name
+func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error) {
+	containerID := os.Getenv("CONTAINER_ID")
+	organizationID := os.Getenv("ORGANIZATION_ID")
+	authToken := os.Getenv("AUTH_TOKEN")
+
+	if containerID == "" {
+		containerID = "test-container-id"
+	}
+	if organizationID == "" {
+		organizationID = "test-org-id"
+	}
+	if authToken == "" {
+		fmt.Println("Warning: AUTH_TOKEN not set. Authentication will fail.")
+		fmt.Println("   Set AUTH_TOKEN environment variable with a valid SuperTokens session token.")
+	}
+
+	var params *mcp.CallToolParams
+
+	switch toolName {
+	case "get_container":
+		params = &mcp.CallToolParams{
+			Name: "get_container",
+			Arguments: map[string]any{
+				"id":              containerID,
+				"organization_id": organizationID,
+			},
+		}
+	case "get_container_logs":
+		params = &mcp.CallToolParams{
+			Name: "get_container_logs",
+			Arguments: map[string]any{
+				"id":              containerID,
+				"organization_id": organizationID,
+				"follow":          false,
+				"tail":            100,
+				"stdout":          true,
+				"stderr":          true,
+			},
+		}
+	default:
+		return nil, fmt.Errorf("unknown tool: %s", toolName)
+	}
+
+	// Add auth token to metadata if provided
+	if authToken != "" {
+		params.Meta = mcp.Meta{
+			"auth_token": authToken,
+		}
+	}
+
+	return params, nil
+}
+
+// TestTool tests a container tool
+func (h *ToolHandler) TestTool(ctx context.Context, session client_types.Session, toolName string) error {
+	fmt.Printf("\nTesting %s tool...\n", toolName)
+
+	params, err := h.GetToolParams(toolName)
+	if err != nil {
+		return err
+	}
+
+	res, err := session.CallTool(ctx, params)
+	if err != nil {
+		return fmt.Errorf("CallTool failed: %w", err)
+	}
+
+	utils.PrintToolResponse(res)
+
+	if res.IsError {
+		return fmt.Errorf("tool returned an error")
+	}
+
+	return nil
+}
+
+// GetAvailableTools returns the list of available container tools
+func (h *ToolHandler) GetAvailableTools() []string {
+	return []string{
+		"get_container",
+		"get_container_logs",
+	}
+}
+
+// GetToolDescription returns the description for a tool
+func (h *ToolHandler) GetToolDescription(toolName string) string {
+	descriptions := map[string]string{
+		"get_container":      "Get detailed information about a Docker container",
+		"get_container_logs": "Get logs from a Docker container",
+	}
+	return descriptions[toolName]
+}

@@ -2,9 +2,11 @@ package mcp
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	container_tools "github.com/raghavyuva/nixopus-api/internal/features/container/tools"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	mcp_middleware "github.com/raghavyuva/nixopus-api/internal/mcp/middleware"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
@@ -31,9 +33,25 @@ func RegisterTools(
 	ctx context.Context,
 	l logger.Logger,
 ) {
-	containerLogsHandler := container_tools.GetContainerLogsHandler(store, ctx, l)
+	dockerService, err := docker.GetDockerManager().GetDefaultService()
+	if err != nil {
+		l.Log(logger.Error, fmt.Sprintf("failed to get docker service: %v", err), "")
+		return
+	}
+	if dockerService == nil {
+		l.Log(logger.Error, "docker service is nil", "")
+		return
+	}
+
+	containerLogsHandler := container_tools.GetContainerLogsHandler(store, ctx, l, dockerService)
 	RegisterTool(server, store, ctx, l, &mcp.Tool{
 		Name:        "get_container_logs",
 		Description: "Get logs from a Docker container. Requires container ID and organization ID.",
 	}, containerLogsHandler)
+
+	containerHandler := container_tools.GetContainerHandler(store, ctx, l, dockerService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "get_container",
+		Description: "Get detailed information about a Docker container. Requires container ID and organization ID.",
+	}, containerHandler)
 }
