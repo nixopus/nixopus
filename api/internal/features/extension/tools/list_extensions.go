@@ -64,8 +64,70 @@ func ListExtensionsHandler(
 			return nil, ListExtensionsOutput{}, err
 		}
 
+		// Convert shared types to MCP types to avoid circular references
+		mcpResponse := convertToMCPExtensionListResponse(response)
+
 		return nil, ListExtensionsOutput{
-			Response: *response,
+			Response: mcpResponse,
 		}, nil
+	}
+}
+
+// convertToMCPExtensionListResponse converts shared_types.ExtensionListResponse to MCPExtensionListResponse
+// to avoid circular references in the MCP schema
+func convertToMCPExtensionListResponse(resp *shared_types.ExtensionListResponse) MCPExtensionListResponse {
+	mcpExtensions := make([]MCPExtension, len(resp.Extensions))
+	for i, ext := range resp.Extensions {
+		mcpExtensions[i] = convertToMCPExtension(ext)
+	}
+
+	return MCPExtensionListResponse{
+		Extensions: mcpExtensions,
+		Total:      resp.Total,
+		Page:       resp.Page,
+		PageSize:   resp.PageSize,
+		TotalPages: resp.TotalPages,
+	}
+}
+
+// convertToMCPExtension converts shared_types.Extension to MCPExtension
+// removing the circular Extension reference from Variables
+func convertToMCPExtension(ext shared_types.Extension) MCPExtension {
+	mcpVars := make([]MCPExtensionVariable, len(ext.Variables))
+	for i, v := range ext.Variables {
+		mcpVars[i] = MCPExtensionVariable{
+			ID:                v.ID,
+			ExtensionID:       v.ExtensionID,
+			VariableName:      v.VariableName,
+			VariableType:      v.VariableType,
+			Description:       v.Description,
+			DefaultValue:      v.DefaultValue,
+			IsRequired:        v.IsRequired,
+			ValidationPattern: v.ValidationPattern,
+			CreatedAt:         v.CreatedAt,
+		}
+	}
+
+	return MCPExtension{
+		ID:                ext.ID,
+		ExtensionID:       ext.ExtensionID,
+		ParentExtensionID: ext.ParentExtensionID,
+		Name:              ext.Name,
+		Description:       ext.Description,
+		Author:            ext.Author,
+		Icon:              ext.Icon,
+		Category:          ext.Category,
+		ExtensionType:     ext.ExtensionType,
+		Version:           ext.Version,
+		IsVerified:        ext.IsVerified,
+		YAMLContent:       ext.YAMLContent,
+		ParsedContent:     ext.ParsedContent,
+		ContentHash:       ext.ContentHash,
+		ValidationStatus:  ext.ValidationStatus,
+		ValidationErrors:  ext.ValidationErrors,
+		CreatedAt:         ext.CreatedAt,
+		UpdatedAt:         ext.UpdatedAt,
+		DeletedAt:         ext.DeletedAt,
+		Variables:         mcpVars,
 	}
 }
