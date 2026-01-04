@@ -8,8 +8,14 @@ import (
 	container_tools "github.com/raghavyuva/nixopus-api/internal/features/container/tools"
 	dashboard_tools "github.com/raghavyuva/nixopus-api/internal/features/dashboard/tools"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
+	deploy_service "github.com/raghavyuva/nixopus-api/internal/features/deploy/service"
+	deploy_storage "github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
+	deploy_tasks "github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
+	deploy_tools "github.com/raghavyuva/nixopus-api/internal/features/deploy/tools"
 	extension_tools "github.com/raghavyuva/nixopus-api/internal/features/extension/tools"
 	file_manager_tools "github.com/raghavyuva/nixopus-api/internal/features/file-manager/tools"
+	github_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
+	github_storage "github.com/raghavyuva/nixopus-api/internal/features/github-connector/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	ssh_tools "github.com/raghavyuva/nixopus-api/internal/features/ssh/tools"
 	mcp_middleware "github.com/raghavyuva/nixopus-api/internal/mcp/middleware"
@@ -47,6 +53,17 @@ func RegisterTools(
 		l.Log(logger.Error, "docker service is nil", "")
 		return
 	}
+
+	// Create deploy services for TaskService
+	deployStorage := deploy_storage.DeployStorage{DB: store.DB, Ctx: ctx}
+	githubConnectorStorage := github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx}
+	githubConnectorService := github_service.NewGithubConnectorService(store, ctx, l, &githubConnectorStorage)
+	taskService := deploy_tasks.NewTaskService(&deployStorage, l, dockerService, githubConnectorService, store)
+	taskService.SetupCreateDeploymentQueue()
+	taskService.StartConsumers(ctx)
+
+	// Create deploy service for read operations
+	deployService := deploy_service.NewDeployService(store, ctx, l, &deployStorage)
 
 	containerLogsHandler := container_tools.GetContainerLogsHandler(store, ctx, l, dockerService)
 	RegisterTool(server, store, ctx, l, &mcp.Tool{
@@ -195,4 +212,29 @@ func RegisterTools(
 		Name:        "cancel_execution",
 		Description: "Cancel a running extension execution. Requires execution_id.",
 	}, cancelExecutionHandler)
+
+	// Deploy Tools
+	deleteApplicationHandler := deploy_tools.DeleteApplicationHandler(store, ctx, l, taskService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "delete_application",
+		Description: "Delete a deployed application. Requires application ID.",
+	}, deleteApplicationHandler)
+
+	getApplicationDeploymentsHandler := deploy_tools.GetApplicationDeploymentsHandler(store, ctx, l, deployService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "get_application_deployments",
+		Description: "Get deployments for an application with pagination. Requires application ID. Optionally specify page and page_size.",
+	}, getApplicationDeploymentsHandler)
+
+	getApplicationHandler := deploy_tools.GetApplicationHandler(store, ctx, l, deployService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "get_application",
+		Description: "Get a single application by ID. Requires application ID.",
+	}, getApplicationHandler)
+
+	getApplicationsHandler := deploy_tools.GetApplicationsHandler(store, ctx, l, deployService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "get_applications",
+		Description: "Get all applications with pagination. Optionally specify page and page_size.",
+	}, getApplicationsHandler)
 }
