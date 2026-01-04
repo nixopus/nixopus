@@ -44,3 +44,74 @@ type GetApplicationsInput struct {
 type GetApplicationsOutput struct {
 	Response deploy_types.ListApplicationsResponse `json:"response"`
 }
+
+// GetDeploymentByIdInput is the input structure for the MCP tool
+type GetDeploymentByIdInput struct {
+	ID string `json:"id" jsonschema:"required"`
+}
+
+// GetDeploymentByIdOutput is the output structure for the MCP tool
+type GetDeploymentByIdOutput struct {
+	Response deploy_types.DeploymentResponse `json:"response"`
+}
+
+// GetDeploymentLogsInput is the input structure for the MCP tool
+type GetDeploymentLogsInput struct {
+	ID         string `json:"id" jsonschema:"required"`
+	Page       string `json:"page,omitempty"`
+	PageSize   string `json:"page_size,omitempty"`
+	Level      string `json:"level,omitempty"`
+	StartTime  string `json:"start_time,omitempty"`
+	EndTime    string `json:"end_time,omitempty"`
+	SearchTerm string `json:"search_term,omitempty"`
+}
+
+// GetDeploymentLogsOutput is the output structure for the MCP tool
+type GetDeploymentLogsOutput struct {
+	Response deploy_types.LogsResponse `json:"response"`
+}
+
+// CreateProjectInput is the input structure for the MCP tool
+type CreateProjectInput struct {
+	Name                 string            `json:"name" jsonschema:"required"`
+	Domain               string            `json:"domain" jsonschema:"required"`
+	Repository           string            `json:"repository" jsonschema:"required"`
+	Environment          string            `json:"environment,omitempty"`
+	BuildPack            string            `json:"build_pack,omitempty"`
+	Branch               string            `json:"branch,omitempty"`
+	PreRunCommand        string            `json:"pre_run_command,omitempty"`
+	PostRunCommand       string            `json:"post_run_command,omitempty"`
+	BuildVariables       map[string]string `json:"build_variables,omitempty"`
+	EnvironmentVariables map[string]string `json:"environment_variables,omitempty"`
+	Port                 int               `json:"port,omitempty"`
+	DockerfilePath       string            `json:"dockerfile_path,omitempty"`
+	BasePath             string            `json:"base_path,omitempty"`
+}
+
+// CreateProjectOutput is the output structure for the MCP tool
+type CreateProjectOutput struct {
+	Response deploy_types.ApplicationResponse `json:"response"`
+}
+
+// DeployProjectInput is the input structure for the MCP tool
+type DeployProjectInput struct {
+	ID string `json:"id" jsonschema:"required"`
+}
+
+// DeployProjectOutput is the output structure for the MCP tool
+type DeployProjectOutput struct {
+	Response deploy_types.ApplicationResponse `json:"response"`
+}
+
+// DuplicateProjectInput is the input structure for the MCP tool
+type DuplicateProjectInput struct {
+	SourceProjectID string `json:"source_project_id" jsonschema:"required"`
+	Domain          string `json:"domain" jsonschema:"required"`
+	Environment     string `json:"environment" jsonschema:"required"`
+	Branch          string `json:"branch,omitempty"`
+}
+
+// DuplicateProjectOutput is the output structure for the MCP tool
+type DuplicateProjectOutput struct {
+	Response deploy_types.ApplicationResponse `json:"response"`
+}
