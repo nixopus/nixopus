@@ -81,6 +81,11 @@ func (r *Registry) GetToolFeature(toolName string) (string, error) {
 		"get_application_deployments": "deploy",
 		"get_application":             "deploy",
 		"get_applications":            "deploy",
+		"get_deployment_by_id":        "deploy",
+		"get_deployment_logs":         "deploy",
+		"create_project":              "deploy",
+		"deploy_project":              "deploy",
+		"duplicate_project":           "deploy",
 	}
 
 	feature, ok := toolFeatureMap[toolName]
