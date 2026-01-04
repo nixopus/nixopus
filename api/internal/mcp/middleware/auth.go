@@ -16,15 +16,9 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// OrganizationIDExtractor is an interface for types that have an organization ID field
-type OrganizationIDExtractor interface {
-	GetOrganizationID() string
-}
-
 var (
-	ErrOrganizationNotProvided = errors.New("organization ID not provided")
-	ErrAuthTokenNotProvided    = errors.New("authentication token not provided")
-	ErrInvalidAuthToken        = errors.New("invalid authentication token")
+	ErrAuthTokenNotProvided = errors.New("authentication token not provided")
+	ErrInvalidAuthToken     = errors.New("invalid authentication token")
 )
 
 const (
@@ -32,14 +26,14 @@ const (
 	AuthTokenMetaKey = "auth_token"
 )
 
-// VerifyAPIKey verifies an API key and returns the user if valid.
+// VerifyAPIKey verifies an API key and returns the user and API key if valid.
 // The API key format is: nixopus_<prefix>_<rest>
 // It can be provided as:
 //   - "nixopus_<prefix>_<rest>" (direct)
 //   - "Bearer nixopus_<prefix>_<rest>" (with Bearer prefix)
-func VerifyAPIKey(apiKeyString string, store *shared_storage.Store, ctx context.Context, l logger.Logger) (*shared_types.User, error) {
+func VerifyAPIKey(apiKeyString string, store *shared_storage.Store, ctx context.Context, l logger.Logger) (*shared_types.User, *shared_types.APIKey, error) {
 	if apiKeyString == "" {
-		return nil, ErrAuthTokenNotProvided
+		return nil, nil, ErrAuthTokenNotProvided
 	}
 
 	// Remove "Bearer " prefix if present
@@ -57,7 +51,7 @@ func VerifyAPIKey(apiKeyString string, store *shared_storage.Store, ctx context.
 	apiKey, err := apiKeyService.VerifyAPIKey(apiKeyString)
 	if err != nil {
 		l.Log(logger.Error, fmt.Sprintf("failed to verify API key: %v", err), "")
-		return nil, ErrInvalidAuthToken
+		return nil, nil, ErrInvalidAuthToken
 	}
 
 	// Get user from API key's user ID
@@ -69,14 +63,14 @@ func VerifyAPIKey(apiKeyString string, store *shared_storage.Store, ctx context.
 	user, err := userStorage.FindUserByID(apiKey.UserID.String())
 	if err != nil {
 		l.Log(logger.Error, fmt.Sprintf("failed to find user by ID: %v", err), "")
-		return nil, fmt.Errorf("user not found: %w", err)
+		return nil, nil, fmt.Errorf("user not found: %w", err)
 	}
 
 	if user == nil {
-		return nil, ErrInvalidAuthToken
+		return nil, nil, ErrInvalidAuthToken
 	}
 
-	return user, nil
+	return user, apiKey, nil
 }
 
 // AuthenticateUser extracts and validates the user from the context.
@@ -120,15 +114,14 @@ func AuthorizeOrganizationAccess(store *shared_storage.Store, ctx context.Contex
 	return nil
 }
 
-// WithAuth wraps an MCP tool handler with authentication and authorization middleware.
-// The input type must implement OrganizationIDExtractor interface.
-// This wrapper ensures all tool calls are authenticated and authorized before execution.
+// WithAuth wraps an MCP tool handler with authentication middleware.
+// This wrapper ensures all tool calls are authenticated before execution.
 // API keys should be passed in the request metadata with key "auth_token" or in the context.
 // The API key format is: nixopus_<prefix>_<rest>
 // It can be provided as:
 //   - "nixopus_<prefix>_<rest>" (direct)
 //   - "Bearer nixopus_<prefix>_<rest>" (with Bearer prefix)
-func WithAuth[Input OrganizationIDExtractor, Output any](
+func WithAuth[Input any, Output any](
 	store *shared_storage.Store,
 	l logger.Logger,
 	handler func(context.Context, *mcp.CallToolRequest, Input) (*mcp.CallToolResult, Output, error),
@@ -162,8 +155,8 @@ func WithAuth[Input OrganizationIDExtractor, Output any](
 			apiKey = os.Getenv("AUTH_TOKEN")
 		}
 
-		// Verify API key and get user
-		user, err := VerifyAPIKey(apiKey, store, ctx, l)
+		// Verify API key and get user and API key
+		user, verifiedAPIKey, err := VerifyAPIKey(apiKey, store, ctx, l)
 		if err != nil {
 			l.Log(logger.Error, fmt.Sprintf("authentication failed: %v", err), "")
 			var zero Output
@@ -178,21 +171,30 @@ func WithAuth[Input OrganizationIDExtractor, Output any](
 		// Set user in context for downstream handlers
 		ctx = context.WithValue(ctx, shared_types.UserContextKey, user)
 
-		orgID := input.GetOrganizationID()
-		// Only perform organization authorization if organization ID is provided
-		if orgID != "" {
-			if err := AuthorizeOrganizationAccess(store, ctx, user.ID.String(), orgID, l); err != nil {
-				l.Log(logger.Error, fmt.Sprintf("authorization failed: %v", err), "")
-				var zero Output
-				return &mcp.CallToolResult{
-					IsError: true,
-					Content: []mcp.Content{
-						&mcp.TextContent{Text: fmt.Sprintf("Authorization failed: %v", err)},
-					},
-				}, zero, nil
-			}
-		}
+		// Set organization ID from API key in context for downstream handlers
+		ctx = context.WithValue(ctx, shared_types.OrganizationIDKey, verifiedAPIKey.OrganizationID.String())
 
 		return handler(ctx, req, input)
 	}
+}
+
+// GetOrganizationIDFromContext extracts the organization ID from the context.
+// The organization ID is set by the auth middleware from the API key.
+// Returns an error if the organization ID is not found or has an invalid type.
+func GetOrganizationIDFromContext(ctx context.Context) (string, error) {
+	orgIDAny := ctx.Value(shared_types.OrganizationIDKey)
+	if orgIDAny == nil {
+		return "", fmt.Errorf("organization ID not found in context")
+	}
+
+	orgID, ok := orgIDAny.(string)
+	if !ok {
+		return "", fmt.Errorf("invalid organization ID type in context: %T", orgIDAny)
+	}
+
+	if orgID == "" {
+		return "", fmt.Errorf("organization ID is empty")
+	}
+
+	return orgID, nil
 }

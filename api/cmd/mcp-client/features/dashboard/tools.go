@@ -20,15 +20,11 @@ func NewToolHandler() *ToolHandler {
 
 // GetToolParams returns the tool parameters for a given tool name
 func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error) {
-	organizationID := os.Getenv("ORGANIZATION_ID")
 	authToken := os.Getenv("AUTH_TOKEN")
 
-	if organizationID == "" {
-		organizationID = "test-org-id"
-	}
 	if authToken == "" {
 		fmt.Println("Warning: AUTH_TOKEN not set. Authentication will fail.")
-		fmt.Println("   Set AUTH_TOKEN environment variable with a valid SuperTokens session token.")
+		fmt.Println("   Set AUTH_TOKEN environment variable with a valid API key.")
 	}
 
 	var params *mcp.CallToolParams
@@ -36,10 +32,8 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 	switch toolName {
 	case "get_system_stats":
 		params = &mcp.CallToolParams{
-			Name: "get_system_stats",
-			Arguments: map[string]any{
-				"organization_id": organizationID,
-			},
+			Name:      "get_system_stats",
+			Arguments: map[string]any{},
 		}
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", toolName)
