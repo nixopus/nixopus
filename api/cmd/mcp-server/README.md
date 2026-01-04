@@ -40,14 +40,8 @@ Use the MCP client to test the server:
 make mcp-client
 
 # Test a tool call
-CONTAINER_ID=<id> ORGANIZATION_ID=<org-id> AUTH_TOKEN=<token> make mcp-client-test
+CONTAINER_ID=<id> AUTH_TOKEN=<token> make mcp-client-test
 ```
-
-## Features
-
-- **Authentication**: SuperTokens JWT token verification
-- **Authorization**: Organization-level access control
-- **Tools**: Currently supports `get_container_logs`
 
 ## Configuration
 
