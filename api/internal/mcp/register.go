@@ -267,4 +267,28 @@ func RegisterTools(
 		Name:        "duplicate_project",
 		Description: "Duplicate an existing project with a different environment. Requires source_project_id, domain, and environment. Optionally specify branch.",
 	}, duplicateProjectHandler)
+
+	restartDeploymentHandler := deploy_tools.RestartDeploymentHandler(store, ctx, l, taskService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "restart_deployment",
+		Description: "Restart a deployment. Requires deployment ID.",
+	}, restartDeploymentHandler)
+
+	rollbackDeploymentHandler := deploy_tools.RollbackDeploymentHandler(store, ctx, l, taskService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "rollback_deployment",
+		Description: "Rollback a deployment to a previous version. Requires deployment ID.",
+	}, rollbackDeploymentHandler)
+
+	redeployApplicationHandler := deploy_tools.RedeployApplicationHandler(store, ctx, l, taskService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "redeploy_application",
+		Description: "Redeploy an application. Requires application ID. Optionally specify force and force_without_cache.",
+	}, redeployApplicationHandler)
+
+	updateProjectHandler := deploy_tools.UpdateProjectHandler(store, ctx, l, taskService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "update_project",
+		Description: "Update a project configuration without triggering deployment. Requires application ID. Optionally specify name, environment, pre_run_command, post_run_command, build_variables, environment_variables, port, force, dockerfile_path, and base_path.",
+	}, updateProjectHandler)
 }
