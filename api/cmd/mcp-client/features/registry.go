@@ -7,6 +7,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	container_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/container"
 	dashboard_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/dashboard"
+	deploy_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/deploy"
 	extension_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/extension"
 	file_manager_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/file-manager"
 	ssh_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/ssh"
@@ -52,30 +53,34 @@ func (r *Registry) GetHandler(featureName string) (FeatureHandler, error) {
 func (r *Registry) GetToolFeature(toolName string) (string, error) {
 	// Map tool names to features
 	toolFeatureMap := map[string]string{
-		"get_container":              "container",
-		"get_container_logs":         "container",
-		"list_containers":            "container",
-		"list_images":                "container",
-		"prune_images":               "container",
-		"prune_build_cache":          "container",
-		"remove_container":           "container",
-		"restart_container":          "container",
-		"start_container":            "container",
-		"stop_container":             "container",
-		"update_container_resources": "container",
-		"list_files":                 "file-manager",
-		"create_directory":           "file-manager",
-		"delete_file":                "file-manager",
-		"move_file":                  "file-manager",
-		"copy_directory":             "file-manager",
-		"get_system_stats":           "dashboard",
-		"run_command":                "ssh",
-		"list_extensions":            "extension",
-		"get_extension":              "extension",
-		"run_extension":              "extension",
-		"get_execution":              "extension",
-		"list_execution_logs":        "extension",
-		"cancel_execution":           "extension",
+		"get_container":               "container",
+		"get_container_logs":          "container",
+		"list_containers":             "container",
+		"list_images":                 "container",
+		"prune_images":                "container",
+		"prune_build_cache":           "container",
+		"remove_container":            "container",
+		"restart_container":           "container",
+		"start_container":             "container",
+		"stop_container":              "container",
+		"update_container_resources":  "container",
+		"list_files":                  "file-manager",
+		"create_directory":            "file-manager",
+		"delete_file":                 "file-manager",
+		"move_file":                   "file-manager",
+		"copy_directory":              "file-manager",
+		"get_system_stats":            "dashboard",
+		"run_command":                 "ssh",
+		"list_extensions":             "extension",
+		"get_extension":               "extension",
+		"run_extension":               "extension",
+		"get_execution":               "extension",
+		"list_execution_logs":         "extension",
+		"cancel_execution":            "extension",
+		"delete_application":          "deploy",
+		"get_application_deployments": "deploy",
+		"get_application":             "deploy",
+		"get_applications":            "deploy",
 	}
 
 	feature, ok := toolFeatureMap[toolName]
@@ -139,6 +144,10 @@ func InitializeRegistry() *Registry {
 	// Register extension feature
 	extensionHandler := extension_feature.NewToolHandler()
 	registry.RegisterFeature("extension", extensionHandler)
+
+	// Register deploy feature
+	deployHandler := deploy_feature.NewToolHandler()
+	registry.RegisterFeature("deploy", deployHandler)
 
 	return registry
 }
