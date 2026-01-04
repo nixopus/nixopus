@@ -76,6 +76,110 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 			Name:      "get_applications",
 			Arguments: arguments,
 		}
+	case "get_deployment_by_id":
+		deploymentID := os.Getenv("DEPLOYMENT_ID")
+		if deploymentID == "" {
+			deploymentID = "test-deployment-id"
+		}
+		params = &mcp.CallToolParams{
+			Name: "get_deployment_by_id",
+			Arguments: map[string]any{
+				"id": deploymentID,
+			},
+		}
+	case "get_deployment_logs":
+		deploymentID := os.Getenv("DEPLOYMENT_ID")
+		if deploymentID == "" {
+			deploymentID = "test-deployment-id"
+		}
+		arguments := map[string]any{
+			"id": deploymentID,
+		}
+		// Add optional parameters if set
+		if page := os.Getenv("PAGE"); page != "" {
+			arguments["page"] = page
+		}
+		if pageSize := os.Getenv("PAGE_SIZE"); pageSize != "" {
+			arguments["page_size"] = pageSize
+		}
+		if level := os.Getenv("LOG_LEVEL"); level != "" {
+			arguments["level"] = level
+		}
+		if startTime := os.Getenv("START_TIME"); startTime != "" {
+			arguments["start_time"] = startTime
+		}
+		if endTime := os.Getenv("END_TIME"); endTime != "" {
+			arguments["end_time"] = endTime
+		}
+		if searchTerm := os.Getenv("SEARCH_TERM"); searchTerm != "" {
+			arguments["search_term"] = searchTerm
+		}
+		params = &mcp.CallToolParams{
+			Name:      "get_deployment_logs",
+			Arguments: arguments,
+		}
+	case "create_project":
+		arguments := map[string]any{
+			"name":       os.Getenv("PROJECT_NAME"),
+			"domain":     os.Getenv("PROJECT_DOMAIN"),
+			"repository": os.Getenv("PROJECT_REPOSITORY"),
+		}
+		if env := os.Getenv("PROJECT_ENVIRONMENT"); env != "" {
+			arguments["environment"] = env
+		}
+		if buildPack := os.Getenv("PROJECT_BUILD_PACK"); buildPack != "" {
+			arguments["build_pack"] = buildPack
+		}
+		if branch := os.Getenv("PROJECT_BRANCH"); branch != "" {
+			arguments["branch"] = branch
+		}
+		if port := os.Getenv("PROJECT_PORT"); port != "" {
+			arguments["port"] = port
+		}
+		if dockerfilePath := os.Getenv("PROJECT_DOCKERFILE_PATH"); dockerfilePath != "" {
+			arguments["dockerfile_path"] = dockerfilePath
+		}
+		if basePath := os.Getenv("PROJECT_BASE_PATH"); basePath != "" {
+			arguments["base_path"] = basePath
+		}
+		if preRunCommand := os.Getenv("PROJECT_PRE_RUN_COMMAND"); preRunCommand != "" {
+			arguments["pre_run_command"] = preRunCommand
+		}
+		if postRunCommand := os.Getenv("PROJECT_POST_RUN_COMMAND"); postRunCommand != "" {
+			arguments["post_run_command"] = postRunCommand
+		}
+		params = &mcp.CallToolParams{
+			Name:      "create_project",
+			Arguments: arguments,
+		}
+	case "deploy_project":
+		projectID := os.Getenv("PROJECT_ID")
+		if projectID == "" {
+			projectID = applicationID
+		}
+		params = &mcp.CallToolParams{
+			Name: "deploy_project",
+			Arguments: map[string]any{
+				"id": projectID,
+			},
+		}
+	case "duplicate_project":
+		sourceProjectID := os.Getenv("SOURCE_PROJECT_ID")
+		if sourceProjectID == "" {
+			sourceProjectID = applicationID
+		}
+		arguments := map[string]any{
+			"source_project_id": sourceProjectID,
+			"domain":            os.Getenv("PROJECT_DOMAIN"),
+			"environment":       os.Getenv("PROJECT_ENVIRONMENT"),
+		}
+		if branch := os.Getenv("PROJECT_BRANCH"); branch != "" {
+			arguments["branch"] = branch
+		}
+		params = &mcp.CallToolParams{
+			Name:      "duplicate_project",
+			Arguments: arguments,
+		}
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", toolName)
 	}
@@ -120,6 +224,11 @@ func (h *ToolHandler) GetAvailableTools() []string {
 		"get_application_deployments",
 		"get_application",
 		"get_applications",
+		"get_deployment_by_id",
+		"get_deployment_logs",
+		"create_project",
+		"deploy_project",
+		"duplicate_project",
 	}
 }
 
@@ -130,6 +239,11 @@ func (h *ToolHandler) GetToolDescription(toolName string) string {
 		"get_application_deployments": "Get deployments for an application with pagination. Requires application ID. Optionally specify page and page_size.",
 		"get_application":             "Get a single application by ID. Requires application ID.",
 		"get_applications":            "Get all applications with pagination. Optionally specify page and page_size.",
+		"get_deployment_by_id":        "Get a single deployment by ID. Requires deployment ID.",
+		"get_deployment_logs":         "Get logs for a deployment with pagination and filtering. Requires deployment ID. Optionally specify page, page_size, level, start_time (RFC3339), end_time (RFC3339), and search_term.",
+		"create_project":              "Create a new project (application) without triggering deployment. Requires name, domain, and repository. Optionally specify environment, build_pack, branch, port, dockerfile_path, base_path, pre_run_command, post_run_command, build_variables, and environment_variables.",
+		"deploy_project":              "Deploy an existing project (application) that was saved as a draft. Requires project ID.",
+		"duplicate_project":           "Duplicate an existing project with a different environment. Requires source_project_id, domain, and environment. Optionally specify branch.",
 	}
 	return descriptions[toolName]
 }
