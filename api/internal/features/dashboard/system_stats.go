@@ -3,7 +3,6 @@ package dashboard
 import (
 	"bytes"
 	"fmt"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -22,34 +21,31 @@ const (
 	bytesInGB = 1024 * 1024 * 1024
 )
 
-// CommandExecutor is a function type for executing shell commands
-type CommandExecutor func(cmd string) (string, error)
-
-// GetSystemStatsOptions contains options for getting system stats
-type GetSystemStatsOptions struct {
-	CommandExecutor CommandExecutor // Optional: if nil, uses local exec.Command
+func formatBytes(bytes uint64, unit string) string {
+	switch unit {
+	case "MB":
+		return fmt.Sprintf("%.2f MB", float64(bytes)/bytesInMB)
+	case "GB":
+		return fmt.Sprintf("%.2f GB", float64(bytes)/bytesInGB)
+	default:
+		return fmt.Sprintf("%d bytes", bytes)
+	}
 }
 
-// CollectSystemStats retrieves system statistics. Can be used by DashboardMonitor or MCP tools.
-func CollectSystemStats(
-	l logger.Logger,
-	opts GetSystemStatsOptions,
-) (SystemStats, error) {
-	cmdExecutor := opts.CommandExecutor
-	if cmdExecutor == nil {
-		cmdExecutor = func(cmd string) (string, error) {
-			output, err := exec.Command("sh", "-c", cmd).Output()
-			if err != nil {
-				return "", fmt.Errorf("command failed: %w", err)
-			}
-			return strings.TrimSpace(string(output)), nil
-		}
+// TODO: Add support for multi server management
+// solution: create a bridge between the gopsutil and the ssh client
+func (m *DashboardMonitor) GetSystemStats() {
+	// Check if context is cancelled before proceeding
+	select {
+	case <-m.ctx.Done():
+		return
+	default:
 	}
 
-	osType, err := cmdExecutor("uname -s")
+	osType, err := m.getCommandOutput("uname -s")
 	if err != nil {
-		l.Log(logger.Error, err.Error(), "")
-		return SystemStats{}, err
+		m.BroadcastError(err.Error(), GetSystemStats)
+		return
 	}
 	osType = strings.TrimSpace(osType)
 
@@ -63,15 +59,15 @@ func CollectSystemStats(
 		Network:   NetworkStats{Interfaces: []NetworkInterface{}},
 	}
 
-	if hostname, err := cmdExecutor("hostname"); err == nil {
+	if hostname, err := m.getCommandOutput("hostname"); err == nil {
 		stats.Hostname = strings.TrimSpace(hostname)
 	}
 
-	if kernelVersion, err := cmdExecutor("uname -r"); err == nil {
+	if kernelVersion, err := m.getCommandOutput("uname -r"); err == nil {
 		stats.KernelVersion = strings.TrimSpace(kernelVersion)
 	}
 
-	if architecture, err := cmdExecutor("uname -m"); err == nil {
+	if architecture, err := m.getCommandOutput("uname -m"); err == nil {
 		stats.Architecture = strings.TrimSpace(architecture)
 	}
 
@@ -80,7 +76,7 @@ func CollectSystemStats(
 		uptime = time.Duration(hostInfo.Uptime * uint64(time.Second)).String()
 	}
 
-	if loadAvg, err := cmdExecutor("uptime"); err == nil {
+	if loadAvg, err := m.getCommandOutput("uptime"); err == nil {
 		loadAvgStr := strings.TrimSpace(loadAvg)
 		stats.Load = parseLoadAverage(loadAvgStr)
 	}
@@ -97,7 +93,7 @@ func CollectSystemStats(
 		}
 	}
 
-	stats.CPU = getCPUStats()
+	stats.CPU = m.getCPUStats()
 
 	if memInfo, err := mem.VirtualMemory(); err == nil {
 		stats.Memory = MemoryStats{
@@ -111,12 +107,10 @@ func CollectSystemStats(
 		}
 	}
 
-	diskStats := DiskStats{
-		AllMounts: []DiskMount{},
-	}
-
-	if diskInfo, err := disk.Partitions(false); err == nil && len(diskInfo) > 0 {
-		diskStats.AllMounts = make([]DiskMount, 0, len(diskInfo))
+	if diskInfo, err := disk.Partitions(false); err == nil {
+		diskStats := DiskStats{
+			AllMounts: make([]DiskMount, 0, len(diskInfo)),
+		}
 
 		for _, partition := range diskInfo {
 			if usage, err := disk.Usage(partition.Mountpoint); err == nil {
@@ -140,28 +134,13 @@ func CollectSystemStats(
 				}
 			}
 		}
-	}
-	// Ensure AllMounts is never nil (keep empty array if no partitions found)
-	if diskStats.AllMounts == nil {
-		diskStats.AllMounts = []DiskMount{}
+
+		stats.Disk = diskStats
 	}
 
-	stats.Disk = diskStats
+	stats.Network = m.getNetworkStats()
 
-	stats.Network = getNetworkStats()
-
-	return stats, nil
-}
-
-func formatBytes(bytes uint64, unit string) string {
-	switch unit {
-	case "MB":
-		return fmt.Sprintf("%.2f MB", float64(bytes)/bytesInMB)
-	case "GB":
-		return fmt.Sprintf("%.2f GB", float64(bytes)/bytesInGB)
-	default:
-		return fmt.Sprintf("%d bytes", bytes)
-	}
+	m.Broadcast(string(GetSystemStats), stats)
 }
 
 func parseLoadAverage(loadStr string) LoadStats {
@@ -184,7 +163,7 @@ func parseLoadAverage(loadStr string) LoadStats {
 	return loadStats
 }
 
-func getCPUStats() CPUStats {
+func (m *DashboardMonitor) getCPUStats() CPUStats {
 	cpuStats := CPUStats{
 		Overall: 0.0,
 		PerCore: []CPUCore{},
@@ -205,6 +184,7 @@ func getCPUStats() CPUStats {
 
 		cpuStats.Overall = totalUsage / float64(len(perCorePercent))
 	} else {
+
 		if overallPercent, err := cpu.Percent(time.Second, false); err == nil && len(overallPercent) > 0 {
 			cpuStats.Overall = overallPercent[0]
 		}
@@ -213,7 +193,7 @@ func getCPUStats() CPUStats {
 	return cpuStats
 }
 
-func getNetworkStats() NetworkStats {
+func (m *DashboardMonitor) getNetworkStats() NetworkStats {
 	networkStats := NetworkStats{
 		Interfaces: []NetworkInterface{},
 	}
@@ -249,31 +229,6 @@ func getNetworkStats() NetworkStats {
 	}
 
 	return networkStats
-}
-
-// GetSystemStats retrieves system statistics using the service function with SSH command executor
-func (m *DashboardMonitor) GetSystemStats() {
-	// Check if context is cancelled before proceeding
-	select {
-	case <-m.ctx.Done():
-		return
-	default:
-	}
-
-	// Use SSH-based command executor
-	cmdExecutor := func(cmd string) (string, error) {
-		return m.getCommandOutput(cmd)
-	}
-
-	stats, err := CollectSystemStats(m.log, GetSystemStatsOptions{
-		CommandExecutor: cmdExecutor,
-	})
-	if err != nil {
-		m.BroadcastError(err.Error(), GetSystemStats)
-		return
-	}
-
-	m.Broadcast(string(GetSystemStats), stats)
 }
 
 func (m *DashboardMonitor) getCommandOutput(cmd string) (string, error) {
