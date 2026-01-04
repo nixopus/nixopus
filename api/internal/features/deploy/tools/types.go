@@ -115,3 +115,55 @@ type DuplicateProjectInput struct {
 type DuplicateProjectOutput struct {
 	Response deploy_types.ApplicationResponse `json:"response"`
 }
+
+// RestartDeploymentInput is the input structure for the MCP tool
+type RestartDeploymentInput struct {
+	ID string `json:"id" jsonschema:"required"`
+}
+
+// RestartDeploymentOutput is the output structure for the MCP tool
+type RestartDeploymentOutput struct {
+	Response deploy_types.MessageResponse `json:"response"`
+}
+
+// RollbackDeploymentInput is the input structure for the MCP tool
+type RollbackDeploymentInput struct {
+	ID string `json:"id" jsonschema:"required"`
+}
+
+// RollbackDeploymentOutput is the output structure for the MCP tool
+type RollbackDeploymentOutput struct {
+	Response deploy_types.MessageResponse `json:"response"`
+}
+
+// RedeployApplicationInput is the input structure for the MCP tool
+type RedeployApplicationInput struct {
+	ID                string `json:"id" jsonschema:"required"`
+	Force             bool   `json:"force,omitempty"`
+	ForceWithoutCache bool   `json:"force_without_cache,omitempty"`
+}
+
+// RedeployApplicationOutput is the output structure for the MCP tool
+type RedeployApplicationOutput struct {
+	Response deploy_types.ApplicationResponse `json:"response"`
+}
+
+// UpdateProjectInput is the input structure for the MCP tool
+type UpdateProjectInput struct {
+	ID                   string            `json:"id" jsonschema:"required"`
+	Name                 string            `json:"name,omitempty"`
+	Environment          string            `json:"environment,omitempty"`
+	PreRunCommand        string            `json:"pre_run_command,omitempty"`
+	PostRunCommand       string            `json:"post_run_command,omitempty"`
+	BuildVariables       map[string]string `json:"build_variables,omitempty"`
+	EnvironmentVariables map[string]string `json:"environment_variables,omitempty"`
+	Port                 int               `json:"port,omitempty"`
+	Force                bool              `json:"force,omitempty"`
+	DockerfilePath       string            `json:"dockerfile_path,omitempty"`
+	BasePath             string            `json:"base_path,omitempty"`
+}
+
+// UpdateProjectOutput is the output structure for the MCP tool
+type UpdateProjectOutput struct {
+	Response deploy_types.ApplicationResponse `json:"response"`
+}
