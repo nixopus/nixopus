@@ -23,7 +23,6 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 	path := os.Getenv("PATH")
 	fromPath := os.Getenv("FROM_PATH")
 	toPath := os.Getenv("TO_PATH")
-	organizationID := os.Getenv("ORGANIZATION_ID")
 	authToken := os.Getenv("AUTH_TOKEN")
 
 	if path == "" {
@@ -35,12 +34,9 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 	if toPath == "" {
 		toPath = "/test/destination"
 	}
-	if organizationID == "" {
-		organizationID = "test-org-id"
-	}
 	if authToken == "" {
 		fmt.Println("Warning: AUTH_TOKEN not set. Authentication will fail.")
-		fmt.Println("   Set AUTH_TOKEN environment variable with a valid SuperTokens session token.")
+		fmt.Println("   Set AUTH_TOKEN environment variable with a valid API key.")
 	}
 
 	var params *mcp.CallToolParams
@@ -50,42 +46,37 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 		params = &mcp.CallToolParams{
 			Name: "list_files",
 			Arguments: map[string]any{
-				"path":            path,
-				"organization_id": organizationID,
+				"path": path,
 			},
 		}
 	case "create_directory":
 		params = &mcp.CallToolParams{
 			Name: "create_directory",
 			Arguments: map[string]any{
-				"path":            path,
-				"organization_id": organizationID,
+				"path": path,
 			},
 		}
 	case "delete_file":
 		params = &mcp.CallToolParams{
 			Name: "delete_file",
 			Arguments: map[string]any{
-				"path":            path,
-				"organization_id": organizationID,
+				"path": path,
 			},
 		}
 	case "move_file":
 		params = &mcp.CallToolParams{
 			Name: "move_file",
 			Arguments: map[string]any{
-				"from_path":       fromPath,
-				"to_path":         toPath,
-				"organization_id": organizationID,
+				"from_path": fromPath,
+				"to_path":   toPath,
 			},
 		}
 	case "copy_directory":
 		params = &mcp.CallToolParams{
 			Name: "copy_directory",
 			Arguments: map[string]any{
-				"from_path":       fromPath,
-				"to_path":         toPath,
-				"organization_id": organizationID,
+				"from_path": fromPath,
+				"to_path":   toPath,
 			},
 		}
 	default:
