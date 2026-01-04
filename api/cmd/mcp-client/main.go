@@ -75,11 +75,11 @@ func printUsage(registry *features.Registry) {
 	fmt.Println("    export MCP_SERVER_PATH=./nixopus-mcp-server")
 	fmt.Println("")
 	fmt.Println("  To test a tool call, run:")
-	fmt.Println("    CONTAINER_ID=<id> ORGANIZATION_ID=<org-id> AUTH_TOKEN=<token> go run ./cmd/mcp-client test")
+	fmt.Println("    CONTAINER_ID=<id> AUTH_TOKEN=<token> go run ./cmd/mcp-client test")
 	fmt.Println("")
 	fmt.Println("  To test a specific tool, set TOOL_NAME:")
-	fmt.Println("    TOOL_NAME=get_container CONTAINER_ID=<id> ORGANIZATION_ID=<org-id> AUTH_TOKEN=<token> go run ./cmd/mcp-client test")
-	fmt.Println("    TOOL_NAME=get_container_logs CONTAINER_ID=<id> ORGANIZATION_ID=<org-id> AUTH_TOKEN=<token> go run ./cmd/mcp-client test")
+	fmt.Println("    TOOL_NAME=get_container CONTAINER_ID=<id> AUTH_TOKEN=<token> go run ./cmd/mcp-client test")
+	fmt.Println("    TOOL_NAME=get_container_logs CONTAINER_ID=<id> AUTH_TOKEN=<token> go run ./cmd/mcp-client test")
 	fmt.Println("")
 	fmt.Println("  Available tools:")
 
@@ -93,5 +93,5 @@ func printUsage(registry *features.Registry) {
 	}
 
 	fmt.Println("")
-	fmt.Println("  Note: AUTH_TOKEN is required for authentication.")
+	fmt.Println("  Note: AUTH_TOKEN is required for authentication")
 }
