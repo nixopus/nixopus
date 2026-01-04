@@ -180,6 +180,74 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 			Name:      "duplicate_project",
 			Arguments: arguments,
 		}
+	case "restart_deployment":
+		deploymentID := os.Getenv("DEPLOYMENT_ID")
+		if deploymentID == "" {
+			deploymentID = "test-deployment-id"
+		}
+		params = &mcp.CallToolParams{
+			Name: "restart_deployment",
+			Arguments: map[string]any{
+				"id": deploymentID,
+			},
+		}
+	case "rollback_deployment":
+		deploymentID := os.Getenv("DEPLOYMENT_ID")
+		if deploymentID == "" {
+			deploymentID = "test-deployment-id"
+		}
+		params = &mcp.CallToolParams{
+			Name: "rollback_deployment",
+			Arguments: map[string]any{
+				"id": deploymentID,
+			},
+		}
+	case "redeploy_application":
+		arguments := map[string]any{
+			"id": applicationID,
+		}
+		if force := os.Getenv("FORCE"); force == "true" {
+			arguments["force"] = true
+		}
+		if forceWithoutCache := os.Getenv("FORCE_WITHOUT_CACHE"); forceWithoutCache == "true" {
+			arguments["force_without_cache"] = true
+		}
+		params = &mcp.CallToolParams{
+			Name:      "redeploy_application",
+			Arguments: arguments,
+		}
+	case "update_project":
+		arguments := map[string]any{
+			"id": applicationID,
+		}
+		if name := os.Getenv("PROJECT_NAME"); name != "" {
+			arguments["name"] = name
+		}
+		if env := os.Getenv("PROJECT_ENVIRONMENT"); env != "" {
+			arguments["environment"] = env
+		}
+		if preRunCommand := os.Getenv("PROJECT_PRE_RUN_COMMAND"); preRunCommand != "" {
+			arguments["pre_run_command"] = preRunCommand
+		}
+		if postRunCommand := os.Getenv("PROJECT_POST_RUN_COMMAND"); postRunCommand != "" {
+			arguments["post_run_command"] = postRunCommand
+		}
+		if port := os.Getenv("PROJECT_PORT"); port != "" {
+			arguments["port"] = port
+		}
+		if dockerfilePath := os.Getenv("PROJECT_DOCKERFILE_PATH"); dockerfilePath != "" {
+			arguments["dockerfile_path"] = dockerfilePath
+		}
+		if basePath := os.Getenv("PROJECT_BASE_PATH"); basePath != "" {
+			arguments["base_path"] = basePath
+		}
+		if force := os.Getenv("FORCE"); force == "true" {
+			arguments["force"] = true
+		}
+		params = &mcp.CallToolParams{
+			Name:      "update_project",
+			Arguments: arguments,
+		}
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", toolName)
 	}
@@ -229,6 +297,10 @@ func (h *ToolHandler) GetAvailableTools() []string {
 		"create_project",
 		"deploy_project",
 		"duplicate_project",
+		"restart_deployment",
+		"rollback_deployment",
+		"redeploy_application",
+		"update_project",
 	}
 }
 
@@ -244,6 +316,10 @@ func (h *ToolHandler) GetToolDescription(toolName string) string {
 		"create_project":              "Create a new project (application) without triggering deployment. Requires name, domain, and repository. Optionally specify environment, build_pack, branch, port, dockerfile_path, base_path, pre_run_command, post_run_command, build_variables, and environment_variables.",
 		"deploy_project":              "Deploy an existing project (application) that was saved as a draft. Requires project ID.",
 		"duplicate_project":           "Duplicate an existing project with a different environment. Requires source_project_id, domain, and environment. Optionally specify branch.",
+		"restart_deployment":          "Restart a deployment. Requires deployment ID.",
+		"rollback_deployment":         "Rollback a deployment to a previous version. Requires deployment ID.",
+		"redeploy_application":        "Redeploy an application. Requires application ID. Optionally specify force and force_without_cache.",
+		"update_project":              "Update a project configuration without triggering deployment. Requires application ID. Optionally specify name, environment, pre_run_command, post_run_command, build_variables, environment_variables, port, force, dockerfile_path, and base_path.",
 	}
 	return descriptions[toolName]
 }
