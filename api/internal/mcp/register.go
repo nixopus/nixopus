@@ -237,4 +237,34 @@ func RegisterTools(
 		Name:        "get_applications",
 		Description: "Get all applications with pagination. Optionally specify page and page_size.",
 	}, getApplicationsHandler)
+
+	getDeploymentByIdHandler := deploy_tools.GetDeploymentByIdHandler(store, ctx, l, deployService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "get_deployment_by_id",
+		Description: "Get a single deployment by ID. Requires deployment ID.",
+	}, getDeploymentByIdHandler)
+
+	getDeploymentLogsHandler := deploy_tools.GetDeploymentLogsHandler(store, ctx, l, deployService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "get_deployment_logs",
+		Description: "Get logs for a deployment with pagination and filtering. Requires deployment ID. Optionally specify page, page_size, level, start_time (RFC3339), end_time (RFC3339), and search_term.",
+	}, getDeploymentLogsHandler)
+
+	createProjectHandler := deploy_tools.CreateProjectHandler(store, ctx, l, deployService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "create_project",
+		Description: "Create a new project (application) without triggering deployment. Requires name, domain, and repository. Optionally specify environment, build_pack, branch, port, dockerfile_path, base_path, pre_run_command, post_run_command, build_variables, and environment_variables.",
+	}, createProjectHandler)
+
+	deployProjectHandler := deploy_tools.DeployProjectHandler(store, ctx, l, taskService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "deploy_project",
+		Description: "Deploy an existing project (application) that was saved as a draft. Requires project ID.",
+	}, deployProjectHandler)
+
+	duplicateProjectHandler := deploy_tools.DuplicateProjectHandler(store, ctx, l, deployService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "duplicate_project",
+		Description: "Duplicate an existing project with a different environment. Requires source_project_id, domain, and environment. Optionally specify branch.",
+	}, duplicateProjectHandler)
 }
