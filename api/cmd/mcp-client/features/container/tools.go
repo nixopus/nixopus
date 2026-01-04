@@ -21,18 +21,14 @@ func NewToolHandler() *ToolHandler {
 // GetToolParams returns the tool parameters for a given tool name
 func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error) {
 	containerID := os.Getenv("CONTAINER_ID")
-	organizationID := os.Getenv("ORGANIZATION_ID")
 	authToken := os.Getenv("AUTH_TOKEN")
 
 	if containerID == "" {
 		containerID = "test-container-id"
 	}
-	if organizationID == "" {
-		organizationID = "test-org-id"
-	}
 	if authToken == "" {
 		fmt.Println("Warning: AUTH_TOKEN not set. Authentication will fail.")
-		fmt.Println("   Set AUTH_TOKEN environment variable with a valid SuperTokens session token.")
+		fmt.Println("   Set AUTH_TOKEN environment variable with a valid API key.")
 	}
 
 	var params *mcp.CallToolParams
@@ -42,101 +38,90 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 		params = &mcp.CallToolParams{
 			Name: "get_container",
 			Arguments: map[string]any{
-				"id":              containerID,
-				"organization_id": organizationID,
+				"id": containerID,
 			},
 		}
 	case "get_container_logs":
 		params = &mcp.CallToolParams{
 			Name: "get_container_logs",
 			Arguments: map[string]any{
-				"id":              containerID,
-				"organization_id": organizationID,
-				"follow":          false,
-				"tail":            100,
-				"stdout":          true,
-				"stderr":          true,
+				"id":     containerID,
+				"follow": false,
+				"tail":   100,
+				"stdout": true,
+				"stderr": true,
 			},
 		}
 	case "list_containers":
 		params = &mcp.CallToolParams{
 			Name: "list_containers",
 			Arguments: map[string]any{
-				"organization_id": organizationID,
-				"page":            1,
-				"page_size":       10,
-				"sort_by":         "name",
-				"sort_order":      "asc",
+				"page":       1,
+				"page_size":  10,
+				"sort_by":    "name",
+				"sort_order": "asc",
 			},
 		}
 	case "list_images":
 		params = &mcp.CallToolParams{
 			Name: "list_images",
 			Arguments: map[string]any{
-				"organization_id": organizationID,
-				"all":             false,
+				"all": false,
 			},
 		}
 	case "prune_images":
 		params = &mcp.CallToolParams{
 			Name: "prune_images",
 			Arguments: map[string]any{
-				"organization_id": organizationID,
-				"dangling":        true,
+				"dangling": true,
 			},
 		}
 	case "prune_build_cache":
 		params = &mcp.CallToolParams{
 			Name: "prune_build_cache",
 			Arguments: map[string]any{
-				"organization_id": organizationID,
-				"all":             true,
+				"all": true,
 			},
 		}
 	case "remove_container":
 		params = &mcp.CallToolParams{
 			Name: "remove_container",
 			Arguments: map[string]any{
-				"id":              containerID,
-				"organization_id": organizationID,
-				"force":           true,
+				"id":    containerID,
+				"force": true,
 			},
 		}
 	case "restart_container":
 		params = &mcp.CallToolParams{
 			Name: "restart_container",
 			Arguments: map[string]any{
-				"id":              containerID,
-				"organization_id": organizationID,
-				"timeout":         10,
+				"id":      containerID,
+				"timeout": 10,
 			},
 		}
 	case "start_container":
 		params = &mcp.CallToolParams{
 			Name: "start_container",
 			Arguments: map[string]any{
-				"id":              containerID,
-				"organization_id": organizationID,
+				"id": containerID,
 			},
 		}
 	case "stop_container":
 		params = &mcp.CallToolParams{
 			Name: "stop_container",
 			Arguments: map[string]any{
-				"id":              containerID,
-				"organization_id": organizationID,
-				"timeout":         10,
+				"id":      containerID,
+				"timeout": 10,
 			},
 		}
 	case "update_container_resources":
 		params = &mcp.CallToolParams{
 			Name: "update_container_resources",
 			Arguments: map[string]any{
-				"id":              containerID,
-				"organization_id": organizationID,
-				"memory":          1073741824, // 1GB in bytes
-				"memory_swap":     2147483648, // 2GB in bytes
-				"cpu_shares":      1024,
+				"id":          containerID,
+				"memory":      1073741824, // 1GB in bytes
+				"memory_swap": 2147483648, // 2GB in bytes
+				"cpu_shares":  1024,
 			},
 		}
 	default:
