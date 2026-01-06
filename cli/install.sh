@@ -61,13 +61,22 @@ detect_binary() {
     
     BINARY_PATH="$BUILD_DIR/$BINARY_NAME"
     
+    # Check for full binary first
     if [[ ! -f "$BINARY_PATH" ]]; then
-        log_error "Binary not found: $BINARY_PATH"
-        log_info "Please run './build.sh' first to build the binary"
-        exit 1
+        # Fallback to wrapper script if full binary not found
+        WRAPPER_PATH="$BUILD_DIR/$APP_NAME"
+        if [[ -f "$WRAPPER_PATH" ]]; then
+            log_info "Full binary not found, using wrapper script: $WRAPPER_PATH"
+            BINARY_PATH="$WRAPPER_PATH"
+        else
+            log_error "Binary not found: $BINARY_PATH"
+            log_error "Wrapper script not found: $WRAPPER_PATH"
+            log_info "Please run './build.sh' first to build the binary"
+            exit 1
+        fi
+    else
+        log_info "Found binary: $BINARY_PATH"
     fi
-    
-    log_info "Found binary: $BINARY_PATH"
 }
 
 install_binary() {

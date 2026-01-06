@@ -184,45 +184,81 @@ build_binary() {
     fi
 
     # Always (re)create the wrapper launcher
-    cat > "$BUILD_DIR/$APP_NAME" << 'EOF'
+    # Embed the CLI directory path for when installed to system locations
+    CLI_DIR_ABS="$(cd "$SCRIPT_DIR" && pwd)"
+    cat > "$BUILD_DIR/$APP_NAME" << EOF
 #!/bin/bash
 
 # Nixopus CLI wrapper
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 
 # Detect OS/ARCH for bundled binary name
-OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
-ARCH="$(uname -m)"
-case "$ARCH" in
+OS="\$(uname -s | tr '[:upper:]' '[:lower:]')"
+ARCH="\$(uname -m)"
+case "\$ARCH" in
     x86_64) ARCH="amd64" ;;
     aarch64|arm64) ARCH="arm64" ;;
 esac
 
 APP_NAME="nixopus"
-BINARY_DIR_NAME="${APP_NAME}_${OS}_${ARCH}"
-BUNDLED_BIN="${SCRIPT_DIR}/${BINARY_DIR_NAME}/${APP_NAME}"
+BINARY_DIR_NAME="\${APP_NAME}_\${OS}_\${ARCH}"
+BUNDLED_BIN="\${SCRIPT_DIR}/\${BINARY_DIR_NAME}/\${APP_NAME}"
 
 # If PyInstaller bundled binary exists, prefer it
-if [[ -x "$BUNDLED_BIN" ]]; then
-    exec "$BUNDLED_BIN" "$@"
+if [[ -x "\$BUNDLED_BIN" ]]; then
+    exec "\$BUNDLED_BIN" "\$@"
 fi
 
-# Dev-mode fallback: use an isolated venv next to this wrapper
-PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-VENV_DIR="${SCRIPT_DIR}/.venv"
-PYTHON_BIN="${PYTHON_BIN:-python3}"
+# Find CLI directory
+# First, try the embedded path (for development builds)
+CLI_DIR="${CLI_DIR_ABS}"
 
-if [[ ! -d "$VENV_DIR" ]]; then
-    echo "[INFO] Creating local virtualenv at $VENV_DIR"
-    "$PYTHON_BIN" -m venv "$VENV_DIR"
-    "$VENV_DIR/bin/python" -m pip install -U pip wheel
+# If embedded path doesn't exist or doesn't have pyproject.toml, try to find it
+if [[ ! -f "\$CLI_DIR/pyproject.toml" ]]; then
+    # Try relative to script location (for dev builds in dist/)
+    if [[ -f "\${SCRIPT_DIR}/../pyproject.toml" ]]; then
+        CLI_DIR="\$(cd "\${SCRIPT_DIR}/.." && pwd)"
+    else
+        # Try to find CLI directory by looking for common markers
+        SEARCH_DIR="\${SCRIPT_DIR}"
+        FOUND=false
+        for i in {1..5}; do
+            if [[ -f "\${SEARCH_DIR}/pyproject.toml" ]] && [[ -d "\${SEARCH_DIR}/app" ]]; then
+                CLI_DIR="\$(cd "\${SEARCH_DIR}" && pwd)"
+                FOUND=true
+                break
+            fi
+            # Also check for cli/ subdirectory
+            if [[ -f "\${SEARCH_DIR}/cli/pyproject.toml" ]] && [[ -d "\${SEARCH_DIR}/cli/app" ]]; then
+                CLI_DIR="\$(cd "\${SEARCH_DIR}/cli" && pwd)"
+                FOUND=true
+                break
+            fi
+            SEARCH_DIR="\${SEARCH_DIR}/.."
+        done
+        
+        if [[ "\$FOUND" == false ]]; then
+            echo "Error: Could not find Nixopus CLI directory." >&2
+            echo "Please ensure you're running from a Nixopus installation or use Poetry:" >&2
+            echo "  cd /path/to/nixopus/cli && poetry run nixopus" >&2
+            exit 1
+        fi
+    fi
+fi
+VENV_DIR="\${CLI_DIR}/.venv"
+PYTHON_BIN="\${PYTHON_BIN:-python3}"
+
+if [[ ! -d "\$VENV_DIR" ]]; then
+    echo "[INFO] Creating local virtualenv at \$VENV_DIR"
+    "\$PYTHON_BIN" -m venv "\$VENV_DIR"
+    "\$VENV_DIR/bin/python" -m pip install -U pip wheel
     # Install the CLI project in editable mode to use local sources
-    "$VENV_DIR/bin/python" -m pip install -e "$PROJECT_DIR"
+    "\$VENV_DIR/bin/python" -m pip install -e "\$CLI_DIR"
 fi
 
-exec "$VENV_DIR/bin/python" -m app.main "$@"
+exec "\$VENV_DIR/bin/python" -m app.main "\$@"
 EOF
     chmod +x "$BUILD_DIR/$APP_NAME"
 

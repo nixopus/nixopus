@@ -71,12 +71,21 @@ def install_dep(dep, package_manager, logger, dry_run=False):
                     logger.error(f"Installation command output: {error_output}")
                 raise subprocess.CalledProcessError(result.returncode, install_command, result.stdout, result.stderr)
             return True
+        
+        # Check if package is already installed before attempting installation
+        if package:
+            checker = DependencyChecker(logger)
+            if checker._check_package_installed(package, package_manager):
+                if logger:
+                    logger.info(f"Package {package} is already installed, skipping installation")
+                return True
+        
         if package_manager == "apt":
             cmd = ["sudo", "apt-get", "install", "-y", package]
         elif package_manager == "brew":
             cmd = ["brew", "install", package]
         elif package_manager == "apk":
-            cmd = ["sudo", "apk", "add", package]
+            cmd = ["sudo", "apk", "add", "--no-cache", package]
         elif package_manager == "yum":
             cmd = ["sudo", "yum", "install", "-y", package]
         elif package_manager == "dnf":
@@ -89,7 +98,17 @@ def install_dep(dep, package_manager, logger, dry_run=False):
         if dry_run:
             logger.info(dry_run_install_cmd.format(cmd=" ".join(cmd)))
             return True
-        subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # Allow non-zero exit codes for already-installed packages
+        result = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+        if result.returncode != 0:
+            # Check if the error is due to package already being installed
+            error_msg = result.stderr.lower()
+            if any(phrase in error_msg for phrase in ["already installed", "is already the newest", "nothing to do"]):
+                if logger:
+                    logger.info(f"Package {package} is already installed")
+                return True
+            # For other errors, raise the exception
+            raise subprocess.CalledProcessError(result.returncode, cmd, "", result.stderr)
         return True
     except subprocess.CalledProcessError as e:
         error_msg = str(e)
@@ -109,12 +128,75 @@ class DependencyChecker:
     def __init__(self, logger=None):
         self.logger = logger
 
-    def check_dependency(self, dep, package_manager):
+    def _check_package_installed(self, package, package_manager):
+        """Check if a package is installed via the package manager."""
         try:
-            if dep["command"]:
+            if package_manager == "apt":
+                # Use dpkg-query for more reliable checking
+                result = subprocess.run(
+                    ["dpkg-query", "-W", "-f=${Status}", package],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                # Check if package is installed (status contains "install ok installed")
+                return result.returncode == 0 and "install ok installed" in result.stdout
+            elif package_manager == "yum" or package_manager == "dnf":
+                result = subprocess.run(
+                    ["rpm", "-q", package],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                return result.returncode == 0
+            elif package_manager == "apk":
+                result = subprocess.run(
+                    ["apk", "info", "-e", package],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                return result.returncode == 0
+            elif package_manager == "pacman":
+                result = subprocess.run(
+                    ["pacman", "-Q", package],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                return result.returncode == 0
+            elif package_manager == "brew":
+                result = subprocess.run(
+                    ["brew", "list", package],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                return result.returncode == 0
+            return False
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+            return False
+
+    def check_dependency(self, dep, package_manager):
+        """Check if a dependency is installed by checking both command and package."""
+        try:
+            # First check if command exists (if specified)
+            if dep.get("command"):
                 is_available = shutil.which(dep["command"]) is not None
-                return is_available
-            return True
+                if is_available:
+                    return True
+            
+            # If command check failed or no command specified, check package installation
+            if dep.get("package"):
+                package_installed = self._check_package_installed(dep["package"], package_manager)
+                if package_installed:
+                    return True
+            
+            # If no command or package specified, assume it's available
+            if not dep.get("command") and not dep.get("package"):
+                return True
+            
+            return False
         except Exception:
             return False
 
