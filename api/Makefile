@@ -57,3 +57,24 @@ fixtures-recreate:
 
 fixtures-clean:
 	go run cmd/fixtures/main.go -fixture=fixtures/development/complete.yml -truncate
+
+# MCP Server commands
+mcp-build:
+	@go build -o bin/nixopus-mcp-server ./cmd/mcp-server
+
+mcp-run: mcp-build
+	@./bin/nixopus-mcp-server
+
+mcp-dev:
+	@if command -v air >/dev/null 2>&1; then \
+		air -c .air.mcp.toml; \
+	else \
+		echo "Air not found. Install with: go install github.com/air-verse/air@latest"; \
+		echo "Or run manually: go run ./cmd/mcp-server"; \
+	fi
+
+mcp-client:
+	@go run ./cmd/mcp-client
+
+mcp-client-test:
+	@go run ./cmd/mcp-client test
