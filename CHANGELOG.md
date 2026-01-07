@@ -1,3 +1,23 @@
+# [0.1.0-alpha.112](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.111...v0.1.0-alpha.112) (2026-01-07)
+
+
+### Bug Fixes
+
+* consider pem strings and multi line secrets ([#880](https://github.com/raghavyuva/nixopus/issues/880)) ([14c1c5a](https://github.com/raghavyuva/nixopus/commit/14c1c5a15357e3fe35bd3c8fae48a13ebd15a30a))
+* remove extensions which are unsync in templates dir to database rows ([b5c5eec](https://github.com/raghavyuva/nixopus/commit/b5c5eecffcaaa81c987008095a02372baea3b514))
+* remove logo from cli output ([d8f3dfd](https://github.com/raghavyuva/nixopus/commit/d8f3dfd662650fd5de63a873229c878708a00fc5))
+* resolve supertoken port on nixopus update or supertoken container restarts ([#862](https://github.com/raghavyuva/nixopus/issues/862)) ([12fa602](https://github.com/raghavyuva/nixopus/commit/12fa602c360398959724725c99e3824c391948e9))
+
+
+### Features
+
+* active option on navbar menu ([#863](https://github.com/raghavyuva/nixopus/issues/863)) ([8f3a1c8](https://github.com/raghavyuva/nixopus/commit/8f3a1c86191e4f4c029924d3a628502c2381fe72))
+* increase ReservationSize enabling parallel execution ([9350491](https://github.com/raghavyuva/nixopus/commit/935049133abb1a5b2c569a544001752974d789de))
+* mcp tools ([#865](https://github.com/raghavyuva/nixopus/issues/865)) ([8f64b74](https://github.com/raghavyuva/nixopus/commit/8f64b74bbf461136abbf852c63e299ddfc9df82b)), closes [#863](https://github.com/raghavyuva/nixopus/issues/863) [#891](https://github.com/raghavyuva/nixopus/issues/891)
+* posthog metrics for installation CLI  ([#841](https://github.com/raghavyuva/nixopus/issues/841)) ([09ea8bd](https://github.com/raghavyuva/nixopus/commit/09ea8bdbb82d7543120a0835d846147a07dd313e))
+
+
+
 # [0.1.0-alpha.111](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.110...v0.1.0-alpha.111) (2026-01-02)
 
 
