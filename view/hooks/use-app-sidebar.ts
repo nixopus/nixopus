@@ -40,12 +40,6 @@ const data = {
       resource: 'container'
     },
     {
-      title: 'navigation.fileManager',
-      url: '/file-manager',
-      icon: Folder,
-      resource: 'file-manager'
-    },
-    {
       title: 'navigation.extensions',
       url: '/extensions',
       icon: Puzzle,

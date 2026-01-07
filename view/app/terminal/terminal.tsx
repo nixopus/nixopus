@@ -5,7 +5,6 @@ import '@xterm/xterm/css/xterm.css';
 import { useTranslation } from '@/hooks/use-translation';
 import { useFeatureFlags } from '@/hooks/features_provider';
 import DisabledFeature from '@/components/features/disabled-feature';
-import Skeleton from '@/app/file-manager/components/skeleton/Skeleton';
 import { FeatureNames } from '@/types/feature-flags';
 import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { useRBAC } from '@/lib/rbac';
@@ -91,7 +90,7 @@ export const Terminal: React.FC<TerminalProps> = ({
   });
 
   if (isFeatureFlagsLoading) {
-    return <Skeleton />;
+    return <div className="flex-1 relative overflow-hidden animate-pulse" />;
   }
 
   if (!isFeatureEnabled(FeatureNames.FeatureTerminal)) {
@@ -101,7 +100,7 @@ export const Terminal: React.FC<TerminalProps> = ({
   return (
     <AnyPermissionGuard
       permissions={['terminal:create', 'terminal:read', 'terminal:update']}
-      loadingFallback={<Skeleton />}
+      loadingFallback={<div className="flex-1 relative overflow-hidden animate-pulse" />}
     >
       <div
         className="terminal-container flex h-full w-full flex-col overflow-hidden border-t border-[var(--terminal-border)]"
