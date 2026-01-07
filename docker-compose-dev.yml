@@ -59,7 +59,6 @@ services:
     environment:
       - POSTGRESQL_CONNECTION_URI=postgresql://${USERNAME:-postgres}:${PASSWORD:-changeme}@nixopus-db:5432/${DB_NAME:-postgres}
       - POSTGRESQL_TABLE_NAMES_PREFIX=supertokens_
-      - PORT=${SUPERTOKENS_API_PORT:-3567}
     networks:
       - nixopus-network
     restart: unless-stopped
