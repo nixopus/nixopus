@@ -4,13 +4,13 @@
   "description": "A modern container management platform",
   "license": "SEE LICENSE IN LICENSE.md",
   "private": false,
-  "cli-version": "0.1.43",
+  "cli-version": "0.1.45",
   "cli-packages": [
-    "nixopus-0.1.43-darwin-arm64.pkg",
-    "nixopus-0.1.43-1.x86_64.rpm",
-    "nixopus_0.1.43_amd64.apk",
-    "nixopus_0.1.43_amd64.deb",
-    "nixopus.tar"
+    "nixopus-0.1.45-darwin-arm64.pkg",
+    "nixopus_0.1.45_amd64.deb",
+    "nixopus.tar",
+    "nixopus_0.1.45_amd64.apk",
+    "nixopus-0.1.45-1.x86_64.rpm"
   ],
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
