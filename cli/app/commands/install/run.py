@@ -24,6 +24,7 @@ from app.utils.config import (
     get_config_value,
 )
 from app.utils.timeout import timeout_wrapper
+from app.utils.installation_tracker import track_installation_failure, track_installation_success, track_staging_installation
 
 from .admin_registration import register_admin_user_step
 from .types import InstallParams
@@ -347,6 +348,11 @@ def show_success_message(config_resolver: ConfigResolver, params: InstallParams)
         params.logger.info("Please visit the documentation at https://docs.nixopus.com for more information.")
         params.logger.info("If you have any questions, please visit the community forum at https://discord.gg/skdcq39Wpv")
         params.logger.highlight("See you in the community!")
+    
+    try:
+        track_installation_success(staging=params.staging, logger=params.logger)
+    except Exception:
+        pass
 
 
 def handle_installation_error(error: Exception, params: InstallParams, context: str = "") -> None:  
@@ -358,6 +364,16 @@ def handle_installation_error(error: Exception, params: InstallParams, context: 
         params.logger.error(f"{installation_failed}{context_msg}: {str(error)}")
     else:
         params.logger.error(f"{installation_failed}{context_msg}")
+    
+    try:
+        track_installation_failure(
+            failed_step=context,
+            staging=params.staging,
+            error_message=str(error) if params.verbose else None,
+            logger=params.logger,
+        )
+    except Exception:
+        pass
 
 
 def run_installation(params: InstallParams) -> None:
@@ -369,6 +385,12 @@ def run_installation(params: InstallParams) -> None:
         if params.logger:
             compose_file = "docker-compose-staging.yml" if params.staging else "docker-compose.yml"
             params.logger.info(f"Custom repository/branch detected - will use {compose_file}")
+    
+    if params.staging:
+        try:
+            track_staging_installation(logger=params.logger)
+        except Exception:
+            pass
     
     config_resolver = create_config_resolver(config, params)
     steps = build_installation_steps(config, config_resolver, params)
