@@ -20,4 +20,7 @@ func (router *Router) RegisterAuthenticatedAuthRoutes(authGroup *fuego.Server, a
 	fuego.Post(authGroup, "/verify-2fa", authController.VerifyTwoFactor)
 	fuego.Post(authGroup, "/disable-2fa", authController.DisableTwoFactor)
 	fuego.Post(authGroup, "/2fa-login", authController.TwoFactorLogin)
+	fuego.Post(authGroup, "/api-keys", authController.CreateAPIKey)
+	fuego.Get(authGroup, "/api-keys", authController.ListAPIKeys)
+	fuego.Delete(authGroup, "/api-keys/{id}", authController.RevokeAPIKey)
 }
