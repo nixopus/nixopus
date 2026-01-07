@@ -22,8 +22,7 @@ type SupertokensConfig struct {
 }
 
 type ServerConfig struct {
-	Port    string `mapstructure:"port" validate:"required"`
-	MCPPort string `mapstructure:"mcp_port"`
+	Port string `mapstructure:"port" validate:"required"`
 }
 
 type DatabaseConfig struct {

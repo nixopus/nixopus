@@ -12,8 +12,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	audit "github.com/raghavyuva/nixopus-api/internal/features/audit/controller"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
-	auth_service "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
-	auth_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
+	authService "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	container "github.com/raghavyuva/nixopus-api/internal/features/container/controller"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
@@ -316,13 +315,8 @@ func (router *Router) createAuthController(notificationManager *notification.Not
 	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	orgStorage := &organization_storage.OrganizationStore{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	orgService := organization_service.NewOrganizationService(router.app.Store, router.app.Ctx, router.logger, orgStorage, router.cache)
-	authService := auth_service.NewAuthService(userStorage, router.logger, orgService, router.app.Ctx)
-
-	// Create API key service
-	apiKeyStorage := auth_storage.APIKeyStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
-	apiKeyService := auth_service.NewAPIKeyService(apiKeyStorage, router.logger)
-
-	return auth.NewAuthController(router.app.Ctx, router.logger, notificationManager, *authService, apiKeyService)
+	authService := authService.NewAuthService(userStorage, router.logger, orgService, router.app.Ctx)
+	return auth.NewAuthController(router.app.Ctx, router.logger, notificationManager, *authService)
 }
 
 // createFeatureFlagController creates and returns a feature flag controller
