@@ -21,15 +21,19 @@ func NewToolHandler() *ToolHandler {
 // GetToolParams returns the tool parameters for a given tool name
 func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error) {
 	command := os.Getenv("COMMAND")
+	organizationID := os.Getenv("ORGANIZATION_ID")
 	authToken := os.Getenv("AUTH_TOKEN")
 	clientID := os.Getenv("SSH_CLIENT_ID")
 
 	if command == "" {
 		command = "echo 'Hello from SSH'"
 	}
+	if organizationID == "" {
+		organizationID = "test-org-id"
+	}
 	if authToken == "" {
 		fmt.Println("Warning: AUTH_TOKEN not set. Authentication will fail.")
-		fmt.Println("   Set AUTH_TOKEN environment variable with a valid API key.")
+		fmt.Println("   Set AUTH_TOKEN environment variable with a valid SuperTokens session token.")
 	}
 
 	var params *mcp.CallToolParams
@@ -37,7 +41,8 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 	switch toolName {
 	case "run_command":
 		args := map[string]any{
-			"command": command,
+			"command":         command,
+			"organization_id": organizationID,
 		}
 		if clientID != "" {
 			args["client_id"] = clientID

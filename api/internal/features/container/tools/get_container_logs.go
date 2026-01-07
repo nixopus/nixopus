@@ -7,7 +7,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/container/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	mcp_middleware "github.com/raghavyuva/nixopus-api/internal/mcp/middleware"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 )
 
@@ -25,17 +24,6 @@ func GetContainerLogsHandler(
 		req *mcp.CallToolRequest,
 		input GetContainerLogsInput,
 	) (*mcp.CallToolResult, GetContainerLogsOutput, error) {
-		orgID, err := mcp_middleware.GetOrganizationIDFromContext(toolCtx)
-		if err != nil {
-			var zero GetContainerLogsOutput
-			return &mcp.CallToolResult{
-				IsError: true,
-				Content: []mcp.Content{
-					&mcp.TextContent{Text: err.Error()},
-				},
-			}, zero, nil
-		}
-
 		// Handle optional pointer fields
 		tail := 0
 		if input.Tail != nil {
@@ -56,7 +44,7 @@ func GetContainerLogsHandler(
 			l,
 			service.ContainerLogsOptions{
 				ContainerID:    input.ID,
-				OrganizationID: orgID,
+				OrganizationID: input.OrganizationID,
 				Follow:         input.Follow,
 				Tail:           tail,
 				Since:          since,

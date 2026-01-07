@@ -23,6 +23,7 @@ func NewToolHandler() *ToolHandler {
 func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error) {
 	extensionID := os.Getenv("EXTENSION_ID")
 	executionID := os.Getenv("EXECUTION_ID")
+	organizationID := os.Getenv("ORGANIZATION_ID")
 	authToken := os.Getenv("AUTH_TOKEN")
 	variablesJSON := os.Getenv("VARIABLES")
 
@@ -32,9 +33,12 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 	if executionID == "" {
 		executionID = "test-execution-id"
 	}
+	if organizationID == "" {
+		organizationID = "test-org-id"
+	}
 	if authToken == "" {
 		fmt.Println("Warning: AUTH_TOKEN not set. Authentication will fail.")
-		fmt.Println("   Set AUTH_TOKEN environment variable with a valid API key.")
+		fmt.Println("   Set AUTH_TOKEN environment variable with a valid SuperTokens session token.")
 	}
 
 	var params *mcp.CallToolParams
@@ -42,8 +46,9 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 	switch toolName {
 	case "list_extensions":
 		args := map[string]any{
-			"page":      1,
-			"page_size": 10,
+			"organization_id": organizationID,
+			"page":            1,
+			"page_size":       10,
 		}
 		if category := os.Getenv("CATEGORY"); category != "" {
 			args["category"] = category
@@ -62,12 +67,14 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 		params = &mcp.CallToolParams{
 			Name: "get_extension",
 			Arguments: map[string]any{
-				"id": extensionID,
+				"id":              extensionID,
+				"organization_id": organizationID,
 			},
 		}
 	case "run_extension":
 		args := map[string]any{
-			"extension_id": extensionID,
+			"extension_id":    extensionID,
+			"organization_id": organizationID,
 		}
 		if variablesJSON != "" {
 			var variables map[string]interface{}
@@ -83,13 +90,15 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 		params = &mcp.CallToolParams{
 			Name: "get_execution",
 			Arguments: map[string]any{
-				"execution_id": executionID,
+				"execution_id":    executionID,
+				"organization_id": organizationID,
 			},
 		}
 	case "list_execution_logs":
 		args := map[string]any{
-			"execution_id": executionID,
-			"limit":        200,
+			"execution_id":    executionID,
+			"organization_id": organizationID,
+			"limit":           200,
 		}
 		if afterSeq := os.Getenv("AFTER_SEQ"); afterSeq != "" {
 			var seq int64
@@ -105,7 +114,8 @@ func (h *ToolHandler) GetToolParams(toolName string) (*mcp.CallToolParams, error
 		params = &mcp.CallToolParams{
 			Name: "cancel_execution",
 			Arguments: map[string]any{
-				"execution_id": executionID,
+				"execution_id":    executionID,
+				"organization_id": organizationID,
 			},
 		}
 	default:
