@@ -3,10 +3,9 @@ package controller
 import (
 	"net/http"
 
-	"github.com/docker/docker/api/types"
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/container/service"
 	container_types "github.com/raghavyuva/nixopus-api/internal/features/container/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
 type PruneBuildCacheRequest struct {
@@ -22,19 +21,18 @@ func (c *ContainerController) PruneBuildCache(f fuego.ContextWithBody[PruneBuild
 			Status: http.StatusBadRequest,
 		}
 	}
-	err = c.dockerService.PruneBuildCache(types.BuildCachePruneOptions{
+
+	opts := service.PruneBuildCacheOptions{
 		All: req.All,
-	})
+	}
+
+	response, err := service.PruneBuildCache(c.dockerService, c.logger, opts)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,
 		}
 	}
 
-	return &container_types.MessageResponse{
-		Status:  "success",
-		Message: "Build cache pruned successfully",
-	}, nil
+	return &response, nil
 }

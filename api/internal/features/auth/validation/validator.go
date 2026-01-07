@@ -95,6 +95,8 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return v.validateResetPasswordRequest(*r)
 	case *types.RegisterRequest:
 		return v.validateCreateUserRequest(*r)
+	case *types.CreateAPIKeyRequest:
+		return v.validateCreateAPIKeyRequest(*r)
 	default:
 		fmt.Printf("invalid request type: %T\n", req)
 		return types.ErrInvalidRequestType
@@ -161,5 +163,20 @@ func (v *Validator) validateCreateUserRequest(createUserRequest types.RegisterRe
 		return types.ErrInvalidUserType
 	}
 
+	return nil
+}
+
+func (v *Validator) validateCreateAPIKeyRequest(req types.CreateAPIKeyRequest) error {
+	if req.Name == "" {
+		return types.ErrMissingRequiredFields
+	}
+	if utf8.RuneCountInString(req.Name) > 255 {
+		return fmt.Errorf("name must be at most 255 characters")
+	}
+	if req.ExpiresInDays != nil {
+		if *req.ExpiresInDays < 1 || *req.ExpiresInDays > 365 {
+			return fmt.Errorf("expires_in_days must be between 1 and 365")
+		}
+	}
 	return nil
 }
