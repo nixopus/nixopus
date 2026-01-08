@@ -33,6 +33,7 @@ interface NavMainProps {
 
 export function NavMain({ items, onItemClick }: NavMainProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isItemCollapsed, toggleItem } = useCollapsibleState();
   const { state } = useSidebar();
 
@@ -41,12 +42,22 @@ export function NavMain({ items, onItemClick }: NavMainProps) {
     router.push(url);
   };
 
+  const isItemActive = (url: string) => {
+    if (pathname === url) return true;
+    if (pathname.startsWith(url + '/')) return true;
+    return false;
+  };
+
   return (
     <SidebarGroup>
       <SidebarMenu>
         {items.map((item) => {
           const hasNestedItems = (item.items?.length || 0) > 0;
           const isCollapsed = state === 'collapsed';
+          const itemIsActive = item.isActive || isItemActive(item.url);
+
+          const hasActiveSubItem =
+            hasNestedItems && item.items?.some((subItem) => isItemActive(subItem.url));
 
           if (hasNestedItems && isCollapsed) {
             return (
@@ -55,6 +66,7 @@ export function NavMain({ items, onItemClick }: NavMainProps) {
                   <SidebarMenuButton
                     className="cursor-pointer"
                     tooltip={item.title}
+                    isActive={itemIsActive || hasActiveSubItem}
                     onClick={() => handleClick(item.url)}
                   >
                     {item.icon && <item.icon />}
@@ -78,6 +90,7 @@ export function NavMain({ items, onItemClick }: NavMainProps) {
                   <SidebarMenuButton
                     className="cursor-pointer"
                     tooltip={item.title}
+                    isActive={itemIsActive || hasActiveSubItem}
                     onClick={() => handleClick(item.url)}
                   >
                     {item.icon && <item.icon />}
@@ -90,15 +103,18 @@ export function NavMain({ items, onItemClick }: NavMainProps) {
                 {hasNestedItems && (
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      {item.items?.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild>
-                            <Link href={subItem.url}>
-                              <span>{subItem.title}</span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
+                      {item.items?.map((subItem) => {
+                        const subItemIsActive = isItemActive(subItem.url);
+                        return (
+                          <SidebarMenuSubItem key={subItem.title}>
+                            <SidebarMenuSubButton asChild isActive={subItemIsActive}>
+                              <Link href={subItem.url}>
+                                <span>{subItem.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 )}
