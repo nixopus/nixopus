@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, X, Zap, SplitSquareVertical } from 'lucide-react';
+import { Plus, X, SplitSquareVertical, PanelRight, PanelBottom } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { SessionTab } from './SessionTab';
@@ -19,6 +19,8 @@ type TerminalHeaderProps = {
   onSwitchSession: (id: string) => void;
   onToggleTerminal: () => void;
   onAddSplitPane: () => void;
+  terminalPosition: 'bottom' | 'right';
+  onTogglePosition: () => void;
   closeLabel: string;
   newTabLabel: string;
 };
@@ -35,6 +37,8 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
   onSwitchSession,
   onToggleTerminal,
   onAddSplitPane,
+  terminalPosition,
+  onTogglePosition,
   closeLabel,
   newTabLabel
 }) => {
@@ -95,12 +99,23 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
           </button>
         )}
 
-        <div className="hidden sm:flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/5">
-          <Zap className="h-2.5 w-2.5 text-amber-400" />
-          <span className="text-[9px] font-medium text-[var(--terminal-text-muted)]">
-            {sessions.length}/{sessionLimit}
-          </span>
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onTogglePosition}
+          title={terminalPosition === 'bottom' ? 'Move to Right' : 'Move to Bottom'}
+          className={cn(
+            'h-6 w-6 rounded-md transition-all duration-200',
+            'hover:bg-[var(--terminal-tab-hover)] text-[var(--terminal-text-muted)]',
+            'hover:text-[var(--terminal-accent)]'
+          )}
+        >
+          {terminalPosition === 'bottom' ? (
+            <PanelRight className="h-3.5 w-3.5" />
+          ) : (
+            <PanelBottom className="h-3.5 w-3.5" />
+          )}
+        </Button>
 
         <Button
           variant="ghost"

@@ -7,6 +7,8 @@ import {
 import { useApplicationWebSocket } from './use_application_websocket';
 import { SOCKET_EVENTS } from '@/redux/api-conf';
 
+const LOGS_DENSE_MODE_KEY = 'nixopus_logs_dense_mode';
+
 export interface DeploymentLogsViewerProps {
   id: string;
   isDeployment?: boolean;
@@ -39,21 +41,39 @@ export function useDeploymentLogsViewer({
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [allLogs, setAllLogs] = useState<ApplicationLogs[]>([]);
-  const [isDense, setIsDense] = useState(false);
+  const [isDense, setIsDense] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(LOGS_DENSE_MODE_KEY);
+      return stored !== null ? stored === 'true' : true; // Default to true (condensed mode)
+    }
+    return true;
+  });
   const [filters, setFilters] = useState<LogFilters>({
     startDate: '',
     endDate: '',
     level: 'all'
   });
 
+  useEffect(() => {
+    localStorage.setItem(LOGS_DENSE_MODE_KEY, isDense.toString());
+  }, [isDense]);
+
   const { message } = useApplicationWebSocket(id);
 
-  const { data: deploymentLogs, isLoading: isLoadingDeployment } = useGetDeploymentLogsQuery(
+  const {
+    data: deploymentLogs,
+    isLoading: isLoadingDeployment,
+    refetch: refetchDeploymentLogs
+  } = useGetDeploymentLogsQuery(
     { id, page: currentPage, page_size: pageSize, search_term: searchTerm },
     { skip: !isDeployment || !id }
   );
 
-  const { data: applicationLogs, isLoading: isLoadingApplication } = useGetApplicationLogsQuery(
+  const {
+    data: applicationLogs,
+    isLoading: isLoadingApplication,
+    refetch: refetchApplicationLogs
+  } = useGetApplicationLogsQuery(
     { id, page: currentPage, page_size: pageSize, search_term: searchTerm },
     { skip: isDeployment || !id }
   );
@@ -63,8 +83,8 @@ export function useDeploymentLogsViewer({
 
   useEffect(() => {
     if (!message) return;
-    handleWebSocketMessage(message, setAllLogs);
-  }, [message]);
+    handleWebSocketMessage(message, setAllLogs, isDeployment ? id : undefined);
+  }, [message, isDeployment, id]);
 
   useEffect(() => {
     if (logsResponse?.logs) {
@@ -103,6 +123,16 @@ export function useDeploymentLogsViewer({
     setSearchTerm('');
   }, []);
 
+  const refreshLogs = useCallback(async () => {
+    setAllLogs([]);
+    setCurrentPage(1);
+    if (isDeployment) {
+      await refetchDeploymentLogs();
+    } else {
+      await refetchApplicationLogs();
+    }
+  }, [isDeployment, refetchDeploymentLogs, refetchApplicationLogs]);
+
   return {
     logs: formattedLogs,
     isLoading,
@@ -121,13 +151,15 @@ export function useDeploymentLogsViewer({
     setFilters,
     clearFilters,
     isDense,
-    setIsDense
+    setIsDense,
+    refreshLogs
   };
 }
 
 function handleWebSocketMessage(
   message: string,
-  setAllLogs: React.Dispatch<React.SetStateAction<ApplicationLogs[]>>
+  setAllLogs: React.Dispatch<React.SetStateAction<ApplicationLogs[]>>,
+  deploymentIdFilter?: string
 ) {
   try {
     const parsed = JSON.parse(message);
@@ -136,6 +168,10 @@ function handleWebSocketMessage(
     if (parsed.topic.includes(SOCKET_EVENTS.MONITOR_APPLICATION_DEPLOYMENT)) {
       const { action, table, data } = parsed.data;
       if ((action === 'INSERT' || action === 'UPDATE') && table === 'application_logs') {
+        // When viewing a specific deployment, only include logs for that deployment
+        if (deploymentIdFilter && data.application_deployment_id !== deploymentIdFilter) {
+          return;
+        }
         setAllLogs((prev) => [...prev, data]);
       }
     }
