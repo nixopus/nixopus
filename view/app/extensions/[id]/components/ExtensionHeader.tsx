@@ -1,8 +1,8 @@
 'use client';
 
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import type { Extension } from '@/redux/types/extension';
-import { Star } from 'lucide-react';
 
 interface ExtensionHeaderProps {
   extension?: Extension;
@@ -22,7 +22,14 @@ export function ExtensionHeader({ extension, isLoading }: ExtensionHeaderProps) 
       <div>
         <div className="flex items-center gap-2">
           <div className="text-xl font-semibold">{extension?.name}</div>
-          {extension?.featured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
+          {extension?.featured && (
+            <Badge
+              variant="outline"
+              className="text-xs bg-yellow-500/10 border-yellow-500/50 text-yellow-600 dark:text-yellow-500 font-semibold"
+            >
+              Featured
+            </Badge>
+          )}
         </div>
         <div className="text-sm text-muted-foreground">{extension?.author}</div>
       </div>

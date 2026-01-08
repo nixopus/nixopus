@@ -5,7 +5,8 @@ import { useTranslation } from '@/hooks/use-translation';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
-import { ExternalLink, Check, GitFork, Trash2, Star } from 'lucide-react';
+import { ExternalLink, Check, GitFork, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 import { Extension } from '@/redux/types/extension';
 import ExtensionForkDialog from './extension-fork-dialog';
@@ -48,7 +49,14 @@ export function ExtensionCard({ extension, onInstall, onViewDetails }: Extension
               <CardTitle className="text-lg font-bold text-card-foreground">
                 {extension.name}
               </CardTitle>
-              {extension.featured && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
+              {extension.featured && (
+                <Badge
+                  variant="outline"
+                  className="text-xs bg-yellow-500/10 border-yellow-500/50 text-yellow-600 dark:text-yellow-500 font-semibold"
+                >
+                  Featured
+                </Badge>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
