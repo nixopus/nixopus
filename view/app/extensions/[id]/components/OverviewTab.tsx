@@ -6,7 +6,7 @@ import { Extension } from '@/redux/types/extension';
 import { useTranslation } from '@/hooks/use-translation';
 import { useMemo, useState } from 'react';
 import YAML from 'yaml';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Star } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface OverviewTabProps {
@@ -66,6 +66,12 @@ function MetadataSection({ extension }: { extension?: Extension }) {
         {extension?.extension_type && <Badge variant="outline">{extension.extension_type}</Badge>}
         {extension?.version && <Badge>v{extension.version}</Badge>}
         {extension?.is_verified && <Badge>Verified</Badge>}
+        {extension?.featured && (
+          <Badge variant="outline" className="gap-1">
+            <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+            Featured
+          </Badge>
+        )}
       </div>
     </div>
   );
