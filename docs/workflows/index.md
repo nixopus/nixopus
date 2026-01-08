@@ -58,8 +58,11 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
 - **Executed Flow:**  
   1. Checkout repository  
   2. Install Node.js + dependencies  
-  3. Run VitePress build  
+  3. Run VitePress build (with PostHog analytics if configured)  
   4. Deploy static site to GitHub Pages  
+- **Secrets/Dependencies:** 
+  - `POSTHOG_API_KEY`: PostHog project API key for analytics (optional)
+  - `POSTHOG_HOST`: PostHog API host URL (optional, defaults to `https://eu.i.posthog.com`)
 - **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/blob/master/.github/workflows/docs.yml)  
 
 ---

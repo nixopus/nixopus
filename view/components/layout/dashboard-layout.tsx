@@ -20,12 +20,13 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { Tour } from '@/components/Tour';
 import { useTour } from '@/hooks/useTour';
 import { Button } from '@/components/ui/button';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Terminal as TerminalIcon } from 'lucide-react';
 import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { ModeToggler } from '@/components/ui/theme-toggler';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
 import { TopbarWidgets } from './topbar-widgets';
 import { useTranslation } from '@/hooks/use-translation';
+import { cn } from '@/lib/utils';
 
 enum TERMINAL_POSITION {
   BOTTOM = 'bottom',
@@ -49,20 +50,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { getBreadcrumbs } = useBreadCrumbs();
   const breadcrumbs = React.useMemo(() => getBreadcrumbs(), [getBreadcrumbs]);
   const { isTerminalOpen, toggleTerminal } = useTerminalState();
-  const [TerminalPosition, setTerminalPosition] = React.useState(TERMINAL_POSITION.BOTTOM);
+  const [TerminalPosition, setTerminalPosition] = React.useState<TERMINAL_POSITION>(() => {
+    if (typeof window !== 'undefined') {
+      const savedPosition = localStorage.getItem('terminalPosition');
+      return (savedPosition as TERMINAL_POSITION) || TERMINAL_POSITION.BOTTOM;
+    }
+    return TERMINAL_POSITION.BOTTOM;
+  });
   const [fitAddonRef, setFitAddonRef] = React.useState<any | null>(null);
   const { startTour } = useTour();
   const { t } = useTranslation();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 't' && e.ctrlKey) {
+      if (e.key === 't' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        setTerminalPosition((prevPosition) =>
-          prevPosition === TERMINAL_POSITION.BOTTOM
-            ? TERMINAL_POSITION.RIGHT
-            : TERMINAL_POSITION.BOTTOM
-        );
+        setTerminalPosition((prevPosition) => {
+          const newPosition =
+            prevPosition === TERMINAL_POSITION.BOTTOM
+              ? TERMINAL_POSITION.RIGHT
+              : TERMINAL_POSITION.BOTTOM;
+          localStorage.setItem('terminalPosition', newPosition);
+          return newPosition;
+        });
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -102,6 +112,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <div className="flex items-center gap-4">
               <TopbarWidgets />
+              <AnyPermissionGuard
+                permissions={['terminal:create', 'terminal:read', 'terminal:update']}
+                loadingFallback={null}
+              >
+                <Button
+                  variant={isTerminalOpen ? 'secondary' : 'outline'}
+                  size="icon"
+                  onClick={toggleTerminal}
+                  title={`${isTerminalOpen ? t('terminal.close') : t('terminal.title')} (${t('terminal.shortcut')})`}
+                  className={cn(
+                    'transition-all duration-200',
+                    isTerminalOpen && 'bg-primary/10 text-primary hover:bg-primary/20'
+                  )}
+                >
+                  <TerminalIcon className="h-5 w-5" />
+                </Button>
+              </AnyPermissionGuard>
               <Button
                 variant="outline"
                 size="icon"
@@ -163,6 +190,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       toggleTerminal={toggleTerminal}
                       isTerminalOpen={isTerminalOpen}
                       setFitAddonRef={setFitAddonRef}
+                      terminalPosition={TerminalPosition}
+                      onTogglePosition={() => {
+                        setTerminalPosition((prevPosition) => {
+                          const newPosition =
+                            prevPosition === TERMINAL_POSITION.BOTTOM
+                              ? TERMINAL_POSITION.RIGHT
+                              : TERMINAL_POSITION.BOTTOM;
+                          localStorage.setItem('terminalPosition', newPosition);
+                          return newPosition;
+                        });
+                      }}
                     />
                   </AnyPermissionGuard>
                 </ResizablePanel>
