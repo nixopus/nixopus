@@ -120,6 +120,7 @@ func convertToMCPExtension(ext shared_types.Extension) MCPExtension {
 		ExtensionType:     ext.ExtensionType,
 		Version:           ext.Version,
 		IsVerified:        ext.IsVerified,
+		Featured:          ext.Featured,
 		YAMLContent:       ext.YAMLContent,
 		ParsedContent:     ext.ParsedContent,
 		ContentHash:       ext.ContentHash,
