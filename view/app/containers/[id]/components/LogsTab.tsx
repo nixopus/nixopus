@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Search,
   ChevronsUpDown,
@@ -22,10 +22,13 @@ import { Container } from '@/redux/services/container/containerApi';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/lib/utils';
 
+const LOGS_DENSE_MODE_KEY = 'nixopus_logs_dense_mode';
+
 interface LogsTabProps {
   container: Container;
   logs: string;
   onLoadMore: () => void;
+  onRefresh?: () => void;
 }
 
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';
@@ -39,15 +42,26 @@ interface ParsedLogEntry {
   raw: string;
 }
 
-export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
+export function LogsTab({ container, logs, onLoadMore, onRefresh }: LogsTabProps) {
   const { t } = useTranslation();
   const [expandedLogIds, setExpandedLogIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [levelFilter, setLevelFilter] = useState<LogLevel | 'all'>('all');
-  const [isDense, setIsDense] = useState(false);
+  const [isDense, setIsDense] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(LOGS_DENSE_MODE_KEY);
+      return stored !== null ? stored === 'true' : true; // Default to true (condensed mode)
+    }
+    return true;
+  });
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [allExpanded, setAllExpanded] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem(LOGS_DENSE_MODE_KEY, isDense.toString());
+  }, [isDense]);
 
   const parsedLogs = useMemo(() => {
     return parseContainerLogs(logs, searchTerm, levelFilter);
@@ -132,6 +146,16 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
     setIsLoadingMore(false);
   };
 
+  const handleRefresh = async () => {
+    if (!onRefresh) return;
+    setIsRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const hasActiveFilters = searchTerm || levelFilter !== 'all';
 
   return (
@@ -158,6 +182,23 @@ export function LogsTab({ container, logs, onLoadMore }: LogsTabProps) {
               >
                 <X className="h-4 w-4 mr-1" />
                 Clear
+              </Button>
+            )}
+            {onRefresh && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="h-9"
+                title="Refresh logs"
+              >
+                {isRefreshing ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Refresh
               </Button>
             )}
             <Button

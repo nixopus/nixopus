@@ -74,6 +74,11 @@ type TwoFactorLoginRequest struct {
 	Code     string `json:"code"`
 }
 
+type CreateAPIKeyRequest struct {
+	Name          string `json:"name"`
+	ExpiresInDays *int   `json:"expires_in_days,omitempty"`
+}
+
 // LoginResponse is the typed response for successful login
 type LoginResponse struct {
 	Status  string       `json:"status"`
