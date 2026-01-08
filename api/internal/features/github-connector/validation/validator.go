@@ -30,6 +30,9 @@ func NewValidator(storage GithubConnectorRepository) *Validator {
 // - types.CreateGithubConnectorRequest
 // - types.UpdateGithubConnectorRequest
 // - types.DeleteGithubConnectorRequest
+// - types.CreateIssueRequest
+// - types.UpdateIssueRequest
+// - types.CommentOnIssueRequest
 //
 // If the request object is not of one of the above types, it returns
 // types.ErrInvalidRequestType.
@@ -41,6 +44,12 @@ func (v *Validator) ValidateRequest(req any) error {
 		return v.validateUpdateGithubConnectorRequest(*r)
 	case *types.DeleteGithubConnectorRequest:
 		return v.validateDeleteGithubConnectorRequest(*r)
+	case *types.CreateIssueRequest:
+		return v.validateCreateIssueRequest(*r)
+	case *types.UpdateIssueRequest:
+		return v.validateUpdateIssueRequest(*r)
+	case *types.CommentOnIssueRequest:
+		return v.validateCommentOnIssueRequest(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}
@@ -90,5 +99,47 @@ func (v *Validator) validateDeleteGithubConnectorRequest(req types.DeleteGithubC
 		return types.ErrMissingID
 	}
 
+	return nil
+}
+
+func (v *Validator) validateCreateIssueRequest(req types.CreateIssueRequest) error {
+	if req.RepositoryOwner == "" {
+		return types.ErrMissingRepositoryOwner
+	}
+	if req.RepositoryName == "" {
+		return types.ErrMissingRepositoryName
+	}
+	if req.Title == "" {
+		return types.ErrMissingTitle
+	}
+	return nil
+}
+
+func (v *Validator) validateUpdateIssueRequest(req types.UpdateIssueRequest) error {
+	if req.RepositoryOwner == "" {
+		return types.ErrMissingRepositoryOwner
+	}
+	if req.RepositoryName == "" {
+		return types.ErrMissingRepositoryName
+	}
+	if req.IssueNumber == 0 {
+		return types.ErrMissingIssueNumber
+	}
+	return nil
+}
+
+func (v *Validator) validateCommentOnIssueRequest(req types.CommentOnIssueRequest) error {
+	if req.RepositoryOwner == "" {
+		return types.ErrMissingRepositoryOwner
+	}
+	if req.RepositoryName == "" {
+		return types.ErrMissingRepositoryName
+	}
+	if req.IssueNumber == 0 {
+		return types.ErrMissingIssueNumber
+	}
+	if req.Body == "" {
+		return types.ErrMissingBody
+	}
 	return nil
 }
