@@ -10,6 +10,7 @@ import (
 	deploy_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/deploy"
 	extension_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/extension"
 	file_manager_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/file-manager"
+	github_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/github"
 	ssh_feature "github.com/raghavyuva/nixopus-api/cmd/mcp-client/features/ssh"
 	client_types "github.com/raghavyuva/nixopus-api/cmd/mcp-client/types"
 )
@@ -90,6 +91,10 @@ func (r *Registry) GetToolFeature(toolName string) (string, error) {
 		"rollback_deployment":         "deploy",
 		"redeploy_application":        "deploy",
 		"update_project":              "deploy",
+		"create_issue":                "github",
+		"update_issue":                "github",
+		"comment_on_issue":            "github",
+		"list_issues":                 "github",
 	}
 
 	feature, ok := toolFeatureMap[toolName]
@@ -157,6 +162,10 @@ func InitializeRegistry() *Registry {
 	// Register deploy feature
 	deployHandler := deploy_feature.NewToolHandler()
 	registry.RegisterFeature("deploy", deployHandler)
+
+	// Register GitHub feature
+	githubHandler := github_feature.NewToolHandler()
+	registry.RegisterFeature("github", githubHandler)
 
 	return registry
 }

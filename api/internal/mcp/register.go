@@ -16,6 +16,7 @@ import (
 	file_manager_tools "github.com/raghavyuva/nixopus-api/internal/features/file-manager/tools"
 	github_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
 	github_storage "github.com/raghavyuva/nixopus-api/internal/features/github-connector/storage"
+	github_tools "github.com/raghavyuva/nixopus-api/internal/features/github-connector/tools"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	ssh_tools "github.com/raghavyuva/nixopus-api/internal/features/ssh/tools"
 	mcp_middleware "github.com/raghavyuva/nixopus-api/internal/mcp/middleware"
@@ -291,4 +292,29 @@ func RegisterTools(
 		Name:        "update_project",
 		Description: "Update a project configuration without triggering deployment. Requires application ID. Optionally specify name, environment, pre_run_command, post_run_command, build_variables, environment_variables, port, force, dockerfile_path, and base_path.",
 	}, updateProjectHandler)
+
+	// GitHub Issue Tools
+	createIssueHandler := github_tools.CreateIssueHandler(store, ctx, l, githubConnectorService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "create_issue",
+		Description: "Create a new GitHub issue in a repository. Requires repository_owner, repository_name, title, and body. Optionally specify labels, assignees, and connector_id.",
+	}, createIssueHandler)
+
+	updateIssueHandler := github_tools.UpdateIssueHandler(store, ctx, l, githubConnectorService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "update_issue",
+		Description: "Update an existing GitHub issue. Requires repository_owner, repository_name, and issue_number. Optionally specify title, body, state (open/closed), labels, assignees, and connector_id.",
+	}, updateIssueHandler)
+
+	commentOnIssueHandler := github_tools.CommentOnIssueHandler(store, ctx, l, githubConnectorService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "comment_on_issue",
+		Description: "Add a comment to a GitHub issue. Requires repository_owner, repository_name, issue_number, and body. Optionally specify connector_id.",
+	}, commentOnIssueHandler)
+
+	listIssuesHandler := github_tools.ListIssuesHandler(store, ctx, l, githubConnectorService)
+	RegisterTool(server, store, ctx, l, &mcp.Tool{
+		Name:        "list_issues",
+		Description: "List GitHub issues for a repository. Requires repository_owner and repository_name. Optionally specify state (open/closed/all), labels, assignee, creator, page, per_page, and connector_id.",
+	}, listIssuesHandler)
 }
