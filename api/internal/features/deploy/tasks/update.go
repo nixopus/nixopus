@@ -12,9 +12,39 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// UpdateDeployment updates an existing application deployment
-// in the database and starts the deployment process with the queue
+// UpdateDeployment updates an existing application configuration
+// in the database without triggering deployment
 func (s *TaskService) UpdateDeployment(deployment *types.UpdateDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
+	application, err := s.Storage.GetApplicationById(deployment.ID.String(), organizationID)
+	if err != nil {
+		return shared_types.Application{}, err
+	}
+
+	contextTask := ContextTask{
+		TaskService:    s,
+		ContextConfig:  deployment,
+		UserId:         userID,
+		OrganizationId: organizationID,
+		Application:    &application,
+	}
+
+	// Merge the updates into the application
+	updatedApplication := contextTask.mergeDeploymentUpdates()
+
+	// Update the application in the database
+	err = s.Storage.UpdateApplication(&updatedApplication)
+	if err != nil {
+		return shared_types.Application{}, err
+	}
+
+	// Return the updated application
+	return updatedApplication, nil
+}
+
+// UpdateDeploymentWithTrigger updates an existing application configuration
+// in the database and triggers the deployment process
+// This is used for webhooks and other cases where deployment should be triggered
+func (s *TaskService) UpdateDeploymentWithTrigger(deployment *types.UpdateDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
 	application, err := s.Storage.GetApplicationById(deployment.ID.String(), organizationID)
 	if err != nil {
 		return shared_types.Application{}, err
@@ -38,6 +68,7 @@ func (s *TaskService) UpdateDeployment(deployment *types.UpdateDeploymentRequest
 	err = UpdateDeploymentQueue.Add(TaskUpdateDeployment.WithArgs(context.Background(), TaskPayload))
 	if err != nil {
 		fmt.Printf("error enqueuing update deployment: %v\n", err)
+		return shared_types.Application{}, err
 	}
 
 	return application, nil
