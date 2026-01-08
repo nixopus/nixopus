@@ -34,8 +34,10 @@ export type HealthCheckStats = {
   total_checks: number;
   successful_checks: number;
   failed_checks: number;
-  average_response_time_ms: number;
+  avg_response_time_ms: number;
   uptime_percentage: number;
+  period?: string;
+  last_status?: string;
   last_checked_at?: string;
 };
 

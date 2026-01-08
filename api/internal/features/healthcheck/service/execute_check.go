@@ -26,14 +26,19 @@ func (s *HealthCheckService) ExecuteHealthCheck(healthCheck *shared_types.Health
 		return nil, fmt.Errorf("failed to get application: %w", err)
 	}
 
-	protocol := "http"
-	if strings.Contains(application.Domain, "localhost") || strings.Contains(application.Domain, "127.0.0.1") {
-		protocol = "http"
+	var url string
+	// If endpoint is a full URL, use it directly; otherwise construct from application domain
+	if strings.HasPrefix(healthCheck.Endpoint, "http://") || strings.HasPrefix(healthCheck.Endpoint, "https://") {
+		url = healthCheck.Endpoint
 	} else {
-		protocol = "https"
+		protocol := "http"
+		if strings.Contains(application.Domain, "localhost") || strings.Contains(application.Domain, "127.0.0.1") {
+			protocol = "http"
+		} else {
+			protocol = "https"
+		}
+		url = fmt.Sprintf("%s://%s%s", protocol, application.Domain, healthCheck.Endpoint)
 	}
-
-	url := fmt.Sprintf("%s://%s%s", protocol, application.Domain, healthCheck.Endpoint)
 
 	var req *http.Request
 	var reqErr error

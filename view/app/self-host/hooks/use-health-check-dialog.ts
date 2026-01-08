@@ -26,8 +26,8 @@ export function useHealthCheckDialog({
   const { t } = useTranslation();
   const [endpoint, setEndpoint] = useState('/');
   const [method, setMethod] = useState<'GET' | 'POST' | 'HEAD'>('GET');
-  const [intervalSeconds, setIntervalSeconds] = useState(60);
-  const [timeoutSeconds, setTimeoutSeconds] = useState(30);
+  const [intervalSeconds, setIntervalSeconds] = useState<string>('60');
+  const [timeoutSeconds, setTimeoutSeconds] = useState<string>('30');
   const [enabled, setEnabled] = useState(true);
 
   const [createHealthCheck, { isLoading: isCreating }] = useCreateHealthCheckMutation();
@@ -39,27 +39,30 @@ export function useHealthCheckDialog({
     if (healthCheck) {
       setEndpoint(healthCheck.endpoint);
       setMethod(healthCheck.method);
-      setIntervalSeconds(healthCheck.interval_seconds);
-      setTimeoutSeconds(healthCheck.timeout_seconds);
+      setIntervalSeconds(healthCheck.interval_seconds.toString());
+      setTimeoutSeconds(healthCheck.timeout_seconds.toString());
       setEnabled(healthCheck.enabled);
     } else {
       setEndpoint('/');
       setMethod('GET');
-      setIntervalSeconds(60);
-      setTimeoutSeconds(30);
+      setIntervalSeconds('60');
+      setTimeoutSeconds('30');
       setEnabled(true);
     }
   }, [healthCheck]);
 
   const handleSubmit = async () => {
     try {
+      const intervalSecondsNum = parseInt(intervalSeconds, 10) || 60;
+      const timeoutSecondsNum = parseInt(timeoutSeconds, 10) || 30;
+
       if (healthCheck) {
         await updateHealthCheck({
           application_id: application.id,
           endpoint,
           method,
-          interval_seconds: intervalSeconds,
-          timeout_seconds: timeoutSeconds
+          interval_seconds: intervalSecondsNum,
+          timeout_seconds: timeoutSecondsNum
         }).unwrap();
         toast.success(t('selfHost.monitoring.healthCheck.updated' as any));
       } else {
@@ -67,8 +70,8 @@ export function useHealthCheckDialog({
           application_id: application.id,
           endpoint,
           method,
-          interval_seconds: intervalSeconds,
-          timeout_seconds: timeoutSeconds
+          interval_seconds: intervalSecondsNum,
+          timeout_seconds: timeoutSecondsNum
         }).unwrap();
         toast.success(t('selfHost.monitoring.healthCheck.created' as any));
       }
