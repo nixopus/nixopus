@@ -16,6 +16,7 @@ import ContainersTable from './components/table';
 import PaginationWrapper from '@/components/ui/pagination';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { ContainerCard } from './components/card';
+import { GroupedContainerView } from './components/grouped-container-view';
 import { cn } from '@/lib/utils';
 
 export default function ContainersPage() {
@@ -29,6 +30,8 @@ export default function ContainersPage() {
 
   const {
     containers,
+    groups,
+    ungrouped,
     isLoading,
     isFetching,
     initialized,
@@ -190,25 +193,17 @@ export default function ContainersPage() {
             <p className="text-lg font-medium">{t('containers.no_containers')}</p>
             <p className="text-sm mt-1">No containers match your search criteria</p>
           </div>
-        ) : viewMode === 'card' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {containers.map((container) => (
-              <ContainerCard
-                key={container.id}
-                container={container}
-                onClick={() => router.push(`/containers/${container.id}`)}
-                getGradientFromName={getGradientFromName}
-                onAction={handleContainerAction}
-              />
-            ))}
-          </div>
         ) : (
-          <ContainersTable
-            containersData={containers}
+          <GroupedContainerView
+            groups={groups}
+            ungrouped={ungrouped}
+            viewMode={viewMode}
+            onContainerClick={(container) => router.push(`/containers/${container.id}`)}
+            onContainerAction={handleContainerAction}
+            getGradientFromName={getGradientFromName}
             sortBy={sortBy}
             sortOrder={sortOrder}
             onSort={handleSort}
-            onAction={handleContainerAction}
           />
         )}
 
