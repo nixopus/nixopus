@@ -55,4 +55,3 @@ export const StepperControls: React.FC<StepperControlsProps> = ({
     </Stepper.Controls>
   );
 };
-

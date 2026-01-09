@@ -56,10 +56,5 @@ const renderStepContent = ({
 export const StepPanel: React.FC<StepPanelProps> = (props) => {
   const { Stepper, ...rest } = props;
 
-  return (
-    <Stepper.Panel>
-      {renderStepContent(rest)}
-    </Stepper.Panel>
-  );
+  return <Stepper.Panel>{renderStepContent(rest)}</Stepper.Panel>;
 };
-

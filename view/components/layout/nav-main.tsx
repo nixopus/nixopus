@@ -1,11 +1,10 @@
 'use client';
 
-import { ChevronRight, type LucideIcon } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -17,21 +16,9 @@ import {
 import { SidebarHoverMenu } from '@/components/ui/sidebar-hover-menu';
 import Link from 'next/link';
 import { useCollapsibleState } from '@/hooks/use-collapsible-state';
+import { TopNavMainProps } from '@/packages/types/layout';
 
-interface NavItem {
-  title: string;
-  url: string;
-  icon?: LucideIcon;
-  isActive?: boolean;
-  items?: { title: string; url: string }[];
-}
-
-interface NavMainProps {
-  items: NavItem[];
-  onItemClick?: (url: string) => void;
-}
-
-export function NavMain({ items, onItemClick }: NavMainProps) {
+export function NavMain({ items, onItemClick }: TopNavMainProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { isItemCollapsed, toggleItem } = useCollapsibleState();

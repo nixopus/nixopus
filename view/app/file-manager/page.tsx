@@ -19,7 +19,7 @@ import { FileContextMenu } from './components/context-menu/FileContextMenu';
 import { toast } from 'sonner';
 import { useFeatureFlags } from '@/hooks/features_provider';
 import DisabledFeature from '@/components/features/disabled-feature';
-import { FeatureNames } from '@/types/feature-flags';
+import { FeatureNames } from '@/packages/types/feature-flags';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import PageLayout from '@/components/layout/page-layout';
 import { useIsMobile } from '@/hooks/use-mobile';

@@ -17,15 +17,13 @@ const ContainersTable = ({
   sortBy = 'name',
   sortOrder = 'asc',
   onSort,
-  onAction,
-  className
+  onAction
 }: {
   containersData: Container[];
   sortBy?: SortField;
   sortOrder?: 'asc' | 'desc';
   onSort?: (field: SortField) => void;
   onAction?: (id: string, action: Action) => void;
-  className?: string;
 }) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -44,7 +42,8 @@ const ContainersTable = ({
   }
 
   return (
-    <div className={cn('overflow-hidden', className)}>
+    <div className="rounded-xl border overflow-hidden">
+      {/* Header */}
       <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-4 px-4 py-3 bg-muted/30 text-xs font-medium text-muted-foreground uppercase tracking-wider">
         <SortableHeader
           label={t('dashboard.containers.table.headers.name')}
@@ -65,6 +64,7 @@ const ContainersTable = ({
         <div className="w-24"></div>
       </div>
 
+      {/* Rows */}
       <div className="divide-y divide-border/50">
         {containersData.map((container) => (
           <ContainerRow
@@ -135,6 +135,7 @@ function ContainerRow({
       onClick={onClick}
       className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-4 px-4 py-3 items-center cursor-pointer hover:bg-muted/30 transition-colors group"
     >
+      {/* Name & ID */}
       <div className="flex items-center gap-3 min-w-0">
         <div
           className={cn(
@@ -150,6 +151,7 @@ function ContainerRow({
         </div>
       </div>
 
+      {/* Image */}
       <div className="min-w-0">
         <p className="text-sm truncate text-muted-foreground" title={container.image}>
           {container.image}
@@ -160,6 +162,7 @@ function ContainerRow({
         </p>
       </div>
 
+      {/* Status */}
       <div className="w-24">
         <span
           className={cn(
@@ -179,6 +182,7 @@ function ContainerRow({
         </span>
       </div>
 
+      {/* Ports */}
       <div className="w-32">
         {hasPorts ? (
           <div className="flex flex-col gap-1">
@@ -214,6 +218,7 @@ function ContainerRow({
         )}
       </div>
 
+      {/* Actions */}
       <div
         className="w-24 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={(e) => e.stopPropagation()}

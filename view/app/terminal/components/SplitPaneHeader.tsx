@@ -43,7 +43,7 @@ export const SplitPaneHeader: React.FC<SplitPaneHeaderProps> = ({
           className="absolute top-0 left-0 w-0 h-0 z-10"
           style={{
             borderTop: `8px solid ${triangleColor}`,
-            borderRight: '8px solid transparent',
+            borderRight: '8px solid transparent'
           }}
         />
       )}
@@ -68,4 +68,3 @@ export const SplitPaneHeader: React.FC<SplitPaneHeaderProps> = ({
     </div>
   );
 };
-

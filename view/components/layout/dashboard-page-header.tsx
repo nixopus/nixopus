@@ -1,9 +1,9 @@
-import { cn } from '@/lib/utils';
 import React from 'react';
 import { SortOption, SortSelect } from '@/components/ui/sort-selector';
 import { SearchBar } from '@/components/ui/search-bar';
 import { SortConfig } from '@/hooks/use-searchable';
-import { TypographyH1, TypographyH2, TypographyMuted } from '@/components/ui/typography';
+import { TypographyH2 } from '@/components/ui/typography';
+import MainPageHeader from '../ui/main-page-header';
 
 interface DashboardPageHeaderProps {
   className?: string;
@@ -11,15 +11,8 @@ interface DashboardPageHeaderProps {
   description: string;
 }
 
-function DashboardPageHeader({ className, label, description }: DashboardPageHeaderProps) {
-  return (
-    <div className={cn('flex items-center justify-between space-y-2', className)}>
-      <span className="">
-        <TypographyH1 className="text-primary">{label}</TypographyH1>
-        <TypographyMuted>{description}</TypographyMuted>
-      </span>
-    </div>
-  );
+export function DashboardPageHeader({ className, label, description }: DashboardPageHeaderProps) {
+  return <MainPageHeader className={className} label={label} description={description} />;
 }
 
 export default DashboardPageHeader;

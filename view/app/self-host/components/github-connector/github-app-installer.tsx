@@ -11,7 +11,13 @@ interface GithubInstallProps {
   onError?: (error: Error) => void;
 }
 
-const GithubInstaller = ({ appSlug, organization, callbackUrl, onSuccess, onError }: GithubInstallProps) => {
+const GithubInstaller = ({
+  appSlug,
+  organization,
+  callbackUrl,
+  onSuccess,
+  onError
+}: GithubInstallProps) => {
   const { t } = useTranslation();
 
   const handleConnectGithub = () => {
@@ -34,9 +40,7 @@ const GithubInstaller = ({ appSlug, organization, callbackUrl, onSuccess, onErro
           <Github size={24} />
           <h3 className="text-lg font-semibold">{t('selfHost.githubInstaller.title')}</h3>
         </div>
-        <p className="text-sm text-muted-foreground">
-          {t('selfHost.githubInstaller.description')}
-        </p>
+        <p className="text-sm text-muted-foreground">{t('selfHost.githubInstaller.description')}</p>
       </div>
       <Button className="w-full" onClick={handleConnectGithub} size="lg">
         {t('selfHost.githubInstaller.connectButton')}

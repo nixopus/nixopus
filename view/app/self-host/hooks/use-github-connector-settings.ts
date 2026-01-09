@@ -19,9 +19,7 @@ function useGithubConnectorSettings() {
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
   const [isUpdating, setIsUpdating] = React.useState<string | null>(null);
 
-  const activeConnectorId = useAppSelector(
-    (state) => state.githubConnector.activeConnectorId
-  );
+  const activeConnectorId = useAppSelector((state) => state.githubConnector.activeConnectorId);
 
   const {
     data: connectors,
@@ -91,9 +89,9 @@ function useGithubConnectorSettings() {
     async (connectorId: string, installationId: string) => {
       setIsUpdating(connectorId);
       try {
-        await updateConnector({ 
+        await updateConnector({
           installation_id: installationId,
-          connector_id: connectorId 
+          connector_id: connectorId
         }).unwrap();
         toast.success(t('selfHost.connectorSettings.actions.update.success' as any));
         await refetchConnectors();
@@ -157,4 +155,3 @@ function useGithubConnectorSettings() {
 }
 
 export default useGithubConnectorSettings;
-

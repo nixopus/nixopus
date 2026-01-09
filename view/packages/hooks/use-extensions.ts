@@ -15,6 +15,8 @@ import {
   useCancelExecutionMutation,
   useGetExtensionCategoriesQuery
 } from '@/redux/services/extensions/extensionsApi';
+import { SelectOption } from '@/components/ui/select-wrapper';
+import { useTranslation } from '@/hooks/use-translation';
 
 export function useExtensions() {
   const router = useRouter();
@@ -31,7 +33,8 @@ export function useExtensions() {
   const [runModalOpen, setRunModalOpen] = useState(false);
   const [selectedExtension, setSelectedExtension] = useState<Extension | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ExtensionCategory | null>(null);
-
+  const { t } = useTranslation();
+  
   const queryParams: ExtensionListParams = {
     search: searchTerm || undefined,
     category: selectedCategory || undefined,
@@ -96,6 +99,11 @@ export function useExtensions() {
     await cancelExecutionMutation({ executionId });
   };
 
+  const sortOptions: SelectOption[] = [
+    { value: 'name_asc', label: t('extensions.sortOptions.name') + ' (A-Z)' },
+    { value: 'name_desc', label: t('extensions.sortOptions.name') + ' (Z-A)' }
+  ];
+
   return {
     extensions,
     isLoading,
@@ -117,6 +125,7 @@ export function useExtensions() {
     handleCancel,
     runModalOpen,
     setRunModalOpen,
-    selectedExtension
+    selectedExtension,
+    sortOptions
   };
 }

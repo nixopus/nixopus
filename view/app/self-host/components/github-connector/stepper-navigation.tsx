@@ -58,4 +58,3 @@ export const StepperNavigation: React.FC<StepperNavigationProps> = ({ Stepper })
     </div>
   );
 };
-

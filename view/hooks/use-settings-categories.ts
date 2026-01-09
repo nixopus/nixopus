@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useRBAC } from '@/lib/rbac';
 import { useFeatureFlags } from '@/hooks/features_provider';
-import { FeatureNames } from '@/types/feature-flags';
+import { FeatureNames } from '@/packages/types/feature-flags';
 import { useAppSelector } from '@/redux/hooks';
 
 export type SettingsScope = 'account' | 'organization';

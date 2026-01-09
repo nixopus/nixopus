@@ -3,7 +3,7 @@ const PANE_COLORS = [
   { name: 'blue', active: '#60a5fa', inactive: '#3b82f6' },
   { name: 'emerald', active: '#34d399', inactive: '#10b981' },
   { name: 'amber', active: '#fbbf24', inactive: '#f59e0b' },
-  { name: 'purple', active: '#a78bfa', inactive: '#8b5cf6' },
+  { name: 'purple', active: '#a78bfa', inactive: '#8b5cf6' }
 ];
 
 type UseSplitPaneHeaderProps = {
@@ -26,4 +26,3 @@ export const useSplitPaneHeader = ({
     showTriangle
   };
 };
-

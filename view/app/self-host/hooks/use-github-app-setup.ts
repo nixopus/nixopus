@@ -41,10 +41,10 @@ export const useGitHubAppSetup = (onInstallationSuccess: () => Promise<void>) =>
 
   const handleNext = useCallback(() => {
     if (!stepperMethodsRef.current) return;
-    
+
     const { current } = stepperMethodsRef.current;
     const nextStep = utils.getNext(current.id);
-    
+
     if (nextStep) {
       stepperMethodsRef.current.goTo(nextStep.id);
       setError(null);
@@ -53,19 +53,22 @@ export const useGitHubAppSetup = (onInstallationSuccess: () => Promise<void>) =>
 
   const handleBack = useCallback(() => {
     if (!stepperMethodsRef.current) return;
-    
+
     const { current } = stepperMethodsRef.current;
     const prevStep = utils.getPrev(current.id);
-    
+
     if (prevStep) {
       stepperMethodsRef.current.goTo(prevStep.id);
       setError(null);
     }
   }, [utils]);
 
-  const getCanGoNext = useCallback((currentStepId: string) => {
-    return currentStepId === 'create-app' && credentials;
-  }, [credentials]);
+  const getCanGoNext = useCallback(
+    (currentStepId: string) => {
+      return currentStepId === 'create-app' && credentials;
+    },
+    [credentials]
+  );
 
   return {
     Stepper,
@@ -82,4 +85,3 @@ export const useGitHubAppSetup = (onInstallationSuccess: () => Promise<void>) =>
     getCanGoNext
   };
 };
-

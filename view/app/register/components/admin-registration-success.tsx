@@ -67,7 +67,9 @@ export const AdminRegistrationSuccess = () => {
             </div>
             {countdown > 0 && (
               <p className="text-sm text-muted-foreground">
-                {t('auth.register.successAdmin.redirecting' as any, { count: countdown.toString() })}
+                {t('auth.register.successAdmin.redirecting' as any, {
+                  count: countdown.toString()
+                })}
               </p>
             )}
           </div>
@@ -82,4 +84,3 @@ export const AdminRegistrationSuccess = () => {
     </div>
   );
 };
-

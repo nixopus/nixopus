@@ -1,14 +1,12 @@
-'use client';
-import React from 'react';
-import { DataTable, TableColumn } from '@/components/ui/data-table';
-import { Badge } from '@/components/ui/badge';
+import { TableColumn } from '@/components/ui/data-table';
 import { ContainerData } from '@/redux/types/monitor';
-import getStatusColor from '../utils/get-status-color';
-import truncateId from '../utils/truncate-id';
 import { useTranslation } from '@/hooks/use-translation';
-import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
+import { TypographyMuted, TypographySmall } from '@/components/ui/typography';
+import { Badge } from '@/components/ui/badge';
+import truncateId from '@/app/dashboard/components/utils/truncate-id';
+import getStatusColor from '@/app/dashboard/components/utils/get-status-color';
 
-const ContainersTable = ({ containersData }: { containersData: ContainerData[] }) => {
+export function useContainer() {
   const { t } = useTranslation();
 
   const columns: TableColumn<ContainerData>[] = [
@@ -37,7 +35,7 @@ const ContainersTable = ({ containersData }: { containersData: ContainerData[] }
       className: 'max-w-[200px] overflow-hidden',
       render: (image) => (
         <TypographySmall className="truncate whitespace-nowrap max-w-full block">
-          {image}
+          {image}{' '}
         </TypographySmall>
       )
     },
@@ -63,17 +61,18 @@ const ContainersTable = ({ containersData }: { containersData: ContainerData[] }
             {container.Ports.slice(0, 2).map((port, index) => (
               <TypographySmall key={index}>
                 {port.PrivatePort}
-                {port.PublicPort ? `:${port.PublicPort}` : ''}
+                {port.PublicPort ? `:${port.PublicPort}` : ''}{' '}
               </TypographySmall>
             ))}
             {container.Ports.length > 2 && (
               <TypographyMuted>
+                {' '}
                 {t('dashboard.containers.table.morePorts').replace(
                   '{count}',
                   String(container.Ports.length - 2)
-                )}
+                )}{' '}
               </TypographyMuted>
-            )}
+            )}{' '}
           </div>
         );
       }
@@ -84,24 +83,14 @@ const ContainersTable = ({ containersData }: { containersData: ContainerData[] }
       dataIndex: 'Created',
       render: (created) => {
         const formattedDate = created
-          ? new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'long' }).format(
-              new Date(created * 1000)
-            )
+          ? new Intl.DateTimeFormat(undefined, {
+              day: 'numeric',
+              month: 'long'
+            }).format(new Date(created * 1000))
           : '-';
         return <TypographySmall>{formattedDate}</TypographySmall>;
       }
     }
   ];
-
-  return (
-    <DataTable
-      data={containersData}
-      columns={columns}
-      emptyMessage={t('dashboard.containers.table.noContainers')}
-      showBorder={false}
-      hoverable={false}
-    />
-  );
-};
-
-export default ContainersTable;
+  return columns;
+}

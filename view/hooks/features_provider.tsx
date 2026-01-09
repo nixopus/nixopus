@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo, useEffect } from 'react';
 import { useGetAllFeatureFlagsQuery } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useAppSelector } from '@/redux/hooks';
-import type { FeatureFlag } from '@/types/feature-flags';
+import type { FeatureFlag } from '@/packages/types/feature-flags';
 
 interface FeatureFlagsContextType {
   features: FeatureFlag[];

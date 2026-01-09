@@ -5,7 +5,7 @@ import '@xterm/xterm/css/xterm.css';
 import { useTranslation } from '@/hooks/use-translation';
 import { useFeatureFlags } from '@/hooks/features_provider';
 import DisabledFeature from '@/components/features/disabled-feature';
-import { FeatureNames } from '@/types/feature-flags';
+import { FeatureNames } from '@/packages/types/feature-flags';
 import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { useRBAC } from '@/lib/rbac';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';

@@ -5,7 +5,7 @@ import { useFeatureFlags } from '@/hooks/features_provider';
 import { useAppSelector } from '@/redux/hooks';
 import { useGetSMTPConfigurationsQuery } from '@/redux/services/settings/notificationApi';
 import { useCheckForUpdatesQuery } from '@/redux/services/users/userApi';
-import { FeatureNames } from '@/types/feature-flags';
+import { FeatureNames } from '@/packages/types/feature-flags';
 import useMonitor from './use-monitor';
 
 export function useDashboard() {

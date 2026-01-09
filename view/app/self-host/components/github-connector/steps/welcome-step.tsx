@@ -59,9 +59,7 @@ const WelcomeHeader: React.FC = () => {
         <Github size={48} className="text-primary" />
       </div>
       <div className="space-y-2">
-        <h3 className="text-2xl font-semibold">
-          {t('selfHost.githubSetup.welcome.title' as any)}
-        </h3>
+        <h3 className="text-2xl font-semibold">{t('selfHost.githubSetup.welcome.title' as any)}</h3>
         <p className="text-muted-foreground">
           {t('selfHost.githubSetup.welcome.description' as any)}
         </p>
@@ -103,4 +101,3 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
     </div>
   );
 };
-

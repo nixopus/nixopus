@@ -24,17 +24,17 @@ export const useContainerReady = (
       // Check both the ref element and its parent for dimensions
       const element = terminalRef.current;
       const parent = element.parentElement;
-      
+
       // Try multiple methods to get dimensions
       const elementHeight = element.offsetHeight || element.clientHeight;
       const elementWidth = element.offsetWidth || element.clientWidth;
       const parentHeight = parent?.offsetHeight || parent?.clientHeight || 0;
       const parentWidth = parent?.offsetWidth || parent?.clientWidth || 0;
-      
+
       // Use parent dimensions if element dimensions are 0
       let height = elementHeight > 0 ? elementHeight : parentHeight;
       let width = elementWidth > 0 ? elementWidth : parentWidth;
-      
+
       // Also check getBoundingClientRect as a fallback
       if (height === 0 || width === 0) {
         const rect = element.getBoundingClientRect();
@@ -50,7 +50,7 @@ export const useContainerReady = (
           width = width > 0 ? width : parentRect.width;
         }
       }
-      
+
       if (height > 0 && width > 0) {
         setIsContainerReady(true);
       } else {

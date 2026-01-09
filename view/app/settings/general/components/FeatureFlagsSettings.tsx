@@ -7,7 +7,7 @@ import {
   useUpdateFeatureFlagMutation
 } from '@/redux/services/feature-flags/featureFlagsApi';
 import { Separator } from '@/components/ui/separator';
-import { FeatureFlag, FeatureName, featureGroups } from '@/types/feature-flags';
+import { FeatureFlag, FeatureName, featureGroups } from '@/packages/types/feature-flags';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
 import { TypographySmall, TypographyMuted, TypographyH3 } from '@/components/ui/typography';
 import { Badge } from '@/components/ui/badge';

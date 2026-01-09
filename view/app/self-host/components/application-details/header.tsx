@@ -36,6 +36,7 @@ import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionG
 import { cn } from '@/lib/utils';
 import { ProjectFamilySwitcher } from './project-family-switcher';
 import { DuplicateProjectDialog } from './duplicate-project-dialog';
+import SubPageHeader from '@/components/ui/sub-page-header';
 
 const ApplicationDetailsHeader = ({ application }: { application?: Application }) => {
   const { t } = useTranslation();
@@ -165,187 +166,188 @@ const ApplicationDetailsHeader = ({ application }: { application?: Application }
     }
   };
 
+  const icon = (
+    <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center', statusConfig.bg)}>
+      <div
+        className={cn(
+          'w-3 h-3 rounded-full',
+          statusConfig.dot,
+          statusConfig.pulse && 'animate-pulse'
+        )}
+      />
+    </div>
+  );
+
+  const title = (
+    <div className="flex items-center gap-2">
+      <span className="capitalize">{application?.name}</span>
+      {application && <ProjectFamilySwitcher application={application} />}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+        onClick={() => window.open('https://' + application?.domain, '_blank')}
+        aria-label={t('selfHost.applicationDetails.header.actions.open')}
+      >
+        <ExternalLink className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
+  const metadata = (
+    <div className="flex flex-wrap items-center gap-2">
+      <a
+        href={'https://' + application?.domain}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs text-muted-foreground hover:text-foreground font-mono bg-muted px-2 py-0.5 rounded transition-colors"
+      >
+        {application?.domain}
+      </a>
+      <Badge
+        variant="outline"
+        className={cn(
+          'text-xs capitalize',
+          application?.environment === 'production'
+            ? 'border-emerald-500/30 text-emerald-500 bg-emerald-500/10'
+            : application?.environment === 'staging'
+              ? 'border-amber-500/30 text-amber-500 bg-amber-500/10'
+              : 'border-blue-500/30 text-blue-500 bg-blue-500/10'
+        )}
+      >
+        {application?.environment}
+      </Badge>
+      {application?.labels && application.labels.length > 0 && (
+        <>
+          {application.labels.map((label, index) => (
+            <HeaderLabelBadge key={index} label={label} onRemove={() => handleRemoveLabel(label)} />
+          ))}
+        </>
+      )}
+      <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+        {isAddingLabel ? (
+          <Input
+            ref={labelInputRef}
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            onKeyDown={handleLabelKeyDown}
+            onBlur={handleAddLabel}
+            className="h-5 w-24 text-xs px-2 py-0"
+            placeholder="New label"
+            disabled={isUpdatingLabels}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsAddingLabel(true)}
+            className="inline-flex items-center gap-1 h-5 px-2 rounded-md border border-dashed border-muted-foreground/40 text-xs text-muted-foreground hover:bg-muted hover:border-muted-foreground/60 transition-colors"
+          >
+            <Plus size={10} />
+            Add
+          </button>
+        )}
+      </AnyPermissionGuard>
+    </div>
+  );
+
+  const actions = (
+    <div className="flex items-center gap-2">
+      {isDraft ? (
+        <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+          <Button
+            variant="default"
+            size="sm"
+            disabled={isDeployingProject}
+            onClick={handleDeployProject}
+            className="gap-2"
+          >
+            <Rocket className="h-4 w-4" />
+            {isDeployingProject ? 'Deploying...' : 'Deploy Now'}
+          </Button>
+        </AnyPermissionGuard>
+      ) : (
+        <>
+          <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isRestarting}
+              onClick={handleRestart}
+              className="gap-2"
+            >
+              <RotateCcw className={cn('h-4 w-4', isRestarting && 'animate-spin')} />
+              {t('selfHost.applicationDetails.header.actions.restart.button')}
+            </Button>
+          </AnyPermissionGuard>
+
+          <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+            <Button
+              variant="default"
+              size="sm"
+              disabled={isRedeploying}
+              onClick={() => handleRedeploy(true)}
+              className="gap-2"
+            >
+              <Rocket className="h-4 w-4" />
+              {t('selfHost.applicationDetails.header.actions.redeploy.button')}
+            </Button>
+          </AnyPermissionGuard>
+        </>
+      )}
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon" className="h-9 w-9">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+            <DropdownMenuItem
+              onClick={() => handleRedeploy(false)}
+              disabled={isRedeploying}
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              {t('selfHost.applicationDetails.header.actions.redeploy.forceButton')}
+            </DropdownMenuItem>
+          </AnyPermissionGuard>
+          <AnyPermissionGuard permissions={['deploy:create']} loadingFallback={null}>
+            {application && <DuplicateProjectDialog application={application} />}
+          </AnyPermissionGuard>
+          <AnyPermissionGuard permissions={['deploy:delete']} loadingFallback={null}>
+            <DropdownMenuSeparator />
+            <DeleteDialog
+              title={t('selfHost.applicationDetails.header.actions.delete.dialog.title').replace(
+                '{name}',
+                application?.name || ''
+              )}
+              description={t(
+                'selfHost.applicationDetails.header.actions.delete.dialog.description'
+              ).replace('{name}', application?.name || '')}
+              onConfirm={handleDelete}
+              trigger={
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  className="gap-2 text-red-500 focus:text-red-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t('selfHost.applicationDetails.header.actions.delete.button')}
+                </DropdownMenuItem>
+              }
+              isDeleting={isDeleting}
+              variant="destructive"
+              icon={Trash2}
+            />
+          </AnyPermissionGuard>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+
   return (
     <ResourceGuard resource="deploy" action="read" loadingFallback={null}>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-4">
-          <div
-            className={cn('w-12 h-12 rounded-xl flex items-center justify-center', statusConfig.bg)}
-          >
-            <div
-              className={cn(
-                'w-3 h-3 rounded-full',
-                statusConfig.dot,
-                statusConfig.pulse && 'animate-pulse'
-              )}
-            />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight capitalize">{application?.name}</h1>
-              {application && <ProjectFamilySwitcher application={application} />}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={() => window.open('https://' + application?.domain, '_blank')}
-                aria-label={t('selfHost.applicationDetails.header.actions.open')}
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              <a
-                href={'https://' + application?.domain}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-muted-foreground hover:text-foreground font-mono bg-muted px-2 py-0.5 rounded transition-colors"
-              >
-                {application?.domain}
-              </a>
-              <Badge
-                variant="outline"
-                className={cn(
-                  'text-xs capitalize',
-                  application?.environment === 'production'
-                    ? 'border-emerald-500/30 text-emerald-500 bg-emerald-500/10'
-                    : application?.environment === 'staging'
-                      ? 'border-amber-500/30 text-amber-500 bg-amber-500/10'
-                      : 'border-blue-500/30 text-blue-500 bg-blue-500/10'
-                )}
-              >
-                {application?.environment}
-              </Badge>
-              {application?.labels && application.labels.length > 0 && (
-                <>
-                  {application.labels.map((label, index) => (
-                    <HeaderLabelBadge
-                      key={index}
-                      label={label}
-                      onRemove={() => handleRemoveLabel(label)}
-                    />
-                  ))}
-                </>
-              )}
-              <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
-                {isAddingLabel ? (
-                  <Input
-                    ref={labelInputRef}
-                    value={newLabel}
-                    onChange={(e) => setNewLabel(e.target.value)}
-                    onKeyDown={handleLabelKeyDown}
-                    onBlur={handleAddLabel}
-                    className="h-5 w-24 text-xs px-2 py-0"
-                    placeholder="New label"
-                    disabled={isUpdatingLabels}
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setIsAddingLabel(true)}
-                    className="inline-flex items-center gap-1 h-5 px-2 rounded-md border border-dashed border-muted-foreground/40 text-xs text-muted-foreground hover:bg-muted hover:border-muted-foreground/60 transition-colors"
-                  >
-                    <Plus size={10} />
-                    Add
-                  </button>
-                )}
-              </AnyPermissionGuard>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {isDraft ? (
-            <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
-              <Button
-                variant="default"
-                size="sm"
-                disabled={isDeployingProject}
-                onClick={handleDeployProject}
-                className="gap-2"
-              >
-                <Rocket className="h-4 w-4" />
-                {isDeployingProject ? 'Deploying...' : 'Deploy Now'}
-              </Button>
-            </AnyPermissionGuard>
-          ) : (
-            <>
-              <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={isRestarting}
-                  onClick={handleRestart}
-                  className="gap-2"
-                >
-                  <RotateCcw className={cn('h-4 w-4', isRestarting && 'animate-spin')} />
-                  {t('selfHost.applicationDetails.header.actions.restart.button')}
-                </Button>
-              </AnyPermissionGuard>
-
-              <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
-                <Button
-                  variant="default"
-                  size="sm"
-                  disabled={isRedeploying}
-                  onClick={() => handleRedeploy(true)}
-                  className="gap-2"
-                >
-                  <Rocket className="h-4 w-4" />
-                  {t('selfHost.applicationDetails.header.actions.redeploy.button')}
-                </Button>
-              </AnyPermissionGuard>
-            </>
-          )}
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="h-9 w-9">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
-                <DropdownMenuItem
-                  onClick={() => handleRedeploy(false)}
-                  disabled={isRedeploying}
-                  className="gap-2"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  {t('selfHost.applicationDetails.header.actions.redeploy.forceButton')}
-                </DropdownMenuItem>
-              </AnyPermissionGuard>
-              <AnyPermissionGuard permissions={['deploy:create']} loadingFallback={null}>
-                {application && <DuplicateProjectDialog application={application} />}
-              </AnyPermissionGuard>
-              <AnyPermissionGuard permissions={['deploy:delete']} loadingFallback={null}>
-                <DropdownMenuSeparator />
-                <DeleteDialog
-                  title={t(
-                    'selfHost.applicationDetails.header.actions.delete.dialog.title'
-                  ).replace('{name}', application?.name || '')}
-                  description={t(
-                    'selfHost.applicationDetails.header.actions.delete.dialog.description'
-                  ).replace('{name}', application?.name || '')}
-                  onConfirm={handleDelete}
-                  trigger={
-                    <DropdownMenuItem
-                      onSelect={(e) => e.preventDefault()}
-                      className="gap-2 text-red-500 focus:text-red-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      {t('selfHost.applicationDetails.header.actions.delete.button')}
-                    </DropdownMenuItem>
-                  }
-                  isDeleting={isDeleting}
-                  variant="destructive"
-                  icon={Trash2}
-                />
-              </AnyPermissionGuard>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+      <SubPageHeader icon={icon} title={title} metadata={metadata} actions={actions} />
     </ResourceGuard>
   );
 };
