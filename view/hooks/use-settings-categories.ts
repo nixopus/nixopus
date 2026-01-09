@@ -38,7 +38,7 @@ export function useSettingsCategories(): SettingsCategory[] {
       id: 'notifications',
       label: 'Notifications',
       icon: Bell,
-      visible: isFeatureEnabled(FeatureNames.FeatureNotifications),
+      visible: !!activeOrg?.id,
       scope: 'organization'
     },
     {

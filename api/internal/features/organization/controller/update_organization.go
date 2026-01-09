@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
@@ -33,7 +34,11 @@ func (c *OrganizationsController) UpdateOrganization(f fuego.ContextWithBody[typ
 		}
 	}
 
-	// c.Notify(notification.NotificationPayloadTypeUpdateOrganization, loggedInUser, r)
+	// Get updated organization for notification
+	updatedOrg, err := c.service.GetOrganization(organization.ID)
+	if err == nil {
+		c.Notify(notification.NotificationPayloadTypeUpdateOrganization, loggedInUser, r, updatedOrg)
+	}
 
 	return &types.MessageResponse{
 		Status:  "success",

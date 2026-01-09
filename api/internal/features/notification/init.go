@@ -181,6 +181,32 @@ func (m *NotificationManager) SendOrganizationNotification(payload NotificationP
 			}
 			m.sendWebhookNotification(payload.UserID, fmt.Sprintf("User %s (%s) removed from organization %s", data.UserName, data.UserEmail, data.OrganizationName))
 		}
+	case NortificationPayloadTypeCreateOrganization:
+		if org, ok := payload.Data.(shared_types.Organization); ok {
+			message := fmt.Sprintf("Organization '%s' has been created successfully", org.Name)
+			m.sendWebhookNotification(payload.UserID, message)
+			log.Printf("Organization created notification sent for organization: %s", org.Name)
+		}
+	case NotificationPayloadTypeUpdateOrganization:
+		if org, ok := payload.Data.(shared_types.Organization); ok {
+			message := fmt.Sprintf("Organization '%s' has been updated", org.Name)
+			m.sendWebhookNotification(payload.UserID, message)
+			log.Printf("Organization updated notification sent for organization: %s", org.Name)
+		} else if orgReq, ok := payload.Data.(*NotificationOrganizationData); ok {
+			message := fmt.Sprintf("Organization (ID: %s) has been updated", orgReq.OrganizationID)
+			m.sendWebhookNotification(payload.UserID, message)
+			log.Printf("Organization updated notification sent for organization ID: %s", orgReq.OrganizationID)
+		}
+	case NotificationPayloadTypeDeleteOrganization:
+		if orgReq, ok := payload.Data.(shared_types.Organization); ok {
+			message := fmt.Sprintf("Organization '%s' has been deleted", orgReq.Name)
+			m.sendWebhookNotification(payload.UserID, message)
+			log.Printf("Organization deleted notification sent for organization: %s", orgReq.Name)
+		} else if orgReq, ok := payload.Data.(NotificationOrganizationData); ok {
+			message := fmt.Sprintf("Organization (ID: %s) has been deleted", orgReq.OrganizationID)
+			m.sendWebhookNotification(payload.UserID, message)
+			log.Printf("Organization deleted notification sent for organization ID: %s", orgReq.OrganizationID)
+		}
 	}
 }
 

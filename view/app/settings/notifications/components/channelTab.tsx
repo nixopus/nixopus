@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Mail, Slack, MessageSquare } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-translation';
 import { SMTPConfig, WebhookConfig, SMTPFormData } from '@/redux/types/notification';
@@ -17,7 +17,6 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
-import { toast } from 'sonner';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 import { PasswordInputField } from '@/components/ui/password-input-field';
 
@@ -61,90 +60,96 @@ const ChannelTab: React.FC<ChannelTabProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const emailForm = useForm<z.infer<typeof emailFormSchema>>({
-    resolver: zodResolver(emailFormSchema),
-    defaultValues: {
+  const emailDefaultValues = useMemo(
+    () => ({
       smtp_host: smtpConfigs?.host || '',
       smtp_port: smtpConfigs?.port?.toString() || '',
       smtp_username: smtpConfigs?.username || '',
       smtp_password: smtpConfigs?.password || '',
       smtp_from_email: smtpConfigs?.from_email || '',
       smtp_from_name: smtpConfigs?.from_name || ''
-    }
+    }),
+    [smtpConfigs]
+  );
+
+  const slackDefaultValues = useMemo(
+    () => ({
+      webhook_url: slackConfig?.webhook_url || '',
+      is_active: slackConfig?.is_active ?? true
+    }),
+    [slackConfig]
+  );
+
+  const discordDefaultValues = useMemo(
+    () => ({
+      webhook_url: discordConfig?.webhook_url || '',
+      is_active: discordConfig?.is_active ?? true
+    }),
+    [discordConfig]
+  );
+
+  const emailForm = useForm<z.infer<typeof emailFormSchema>>({
+    resolver: zodResolver(emailFormSchema),
+    defaultValues: emailDefaultValues
   });
 
   const slackForm = useForm<z.infer<typeof slackFormSchema>>({
     resolver: zodResolver(slackFormSchema),
-    defaultValues: {
-      webhook_url: slackConfig?.webhook_url || '',
-      is_active: slackConfig?.is_active ?? true
-    }
+    defaultValues: slackDefaultValues
   });
 
   const discordForm = useForm<z.infer<typeof discordFormSchema>>({
     resolver: zodResolver(discordFormSchema),
-    defaultValues: {
-      webhook_url: discordConfig?.webhook_url || '',
-      is_active: discordConfig?.is_active ?? true
-    }
+    defaultValues: discordDefaultValues
   });
 
   useEffect(() => {
     if (slackConfig) {
-      slackForm.setValue('webhook_url', slackConfig.webhook_url || '');
-      slackForm.setValue('is_active', slackConfig.is_active);
+      slackForm.reset({
+        webhook_url: slackConfig.webhook_url || '',
+        is_active: slackConfig.is_active ?? true
+      });
     }
-  }, [slackConfig]);
+  }, [slackConfig, slackForm]);
 
   useEffect(() => {
     if (discordConfig) {
-      discordForm.setValue('webhook_url', discordConfig.webhook_url || '');
-      discordForm.setValue('is_active', discordConfig.is_active);
+      discordForm.reset({
+        webhook_url: discordConfig.webhook_url || '',
+        is_active: discordConfig.is_active ?? true
+      });
     }
-  }, [discordConfig]);
+  }, [discordConfig, discordForm]);
 
   useEffect(() => {
     if (smtpConfigs) {
-      emailForm.setValue('smtp_host', smtpConfigs.host || '');
-      emailForm.setValue('smtp_port', smtpConfigs.port?.toString() || '');
-      emailForm.setValue('smtp_username', smtpConfigs.username || '');
-      emailForm.setValue('smtp_password', smtpConfigs.password || '');
-      emailForm.setValue('smtp_from_email', smtpConfigs.from_email || '');
-      emailForm.setValue('smtp_from_name', smtpConfigs.from_name || '');
+      emailForm.reset({
+        smtp_host: smtpConfigs.host || '',
+        smtp_port: smtpConfigs.port?.toString() || '',
+        smtp_username: smtpConfigs.username || '',
+        smtp_password: smtpConfigs.password || '',
+        smtp_from_email: smtpConfigs.from_email || '',
+        smtp_from_name: smtpConfigs.from_name || ''
+      });
     }
-  }, [smtpConfigs]);
+  }, [smtpConfigs, emailForm]);
 
   const onSubmitEmail = async (data: SMTPFormData) => {
-    try {
-      await handleOnSave(data);
-      toast.success(t('settings.notifications.messages.email.success'));
-    } catch (error) {
-      toast.error(t('settings.notifications.messages.email.error'));
-    }
+    await handleOnSave(data);
   };
 
   const onSubmitSlack = async (data: z.infer<typeof slackFormSchema>) => {
-    try {
-      await handleOnSaveSlack({
-        webhook_url: data.webhook_url,
-        is_active: data.is_active.toString()
-      });
-      toast.success(t('settings.notifications.messages.slack.success'));
-    } catch (error) {
-      toast.error(t('settings.notifications.messages.slack.error'));
-    }
+    await handleOnSaveSlack({
+      webhook_url: data.webhook_url,
+      is_active: data.is_active.toString()
+    });
   };
 
   const onSubmitDiscord = async (data: z.infer<typeof discordFormSchema>) => {
-    try {
-      await handleOnSaveDiscord({
-        webhook_url: data.webhook_url,
-        is_active: data.is_active.toString()
-      });
-      toast.success(t('settings.notifications.messages.discord.success'));
-    } catch (error) {
-      toast.error(t('settings.notifications.messages.discord.error'));
-    }
+    await handleOnSaveDiscord({
+      webhook_url: data.webhook_url,
+      is_active: data.is_active.toString()
+    });
   };
 
   return (

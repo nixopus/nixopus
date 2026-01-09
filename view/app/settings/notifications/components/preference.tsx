@@ -35,7 +35,7 @@ const NotificationPreferenceCard: React.FC<NotificationPreferenceCardProps> = ({
             </div>
             <Switch
               id={pref.id}
-              defaultChecked={pref.enabled}
+              checked={pref.enabled}
               onCheckedChange={(enabled) => onUpdate?.(pref.id, enabled)}
             />
           </div>

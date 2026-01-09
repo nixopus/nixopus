@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/supertokens"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
@@ -59,7 +60,7 @@ func (c *OrganizationsController) CreateOrganization(f fuego.ContextWithBody[typ
 		// Don't fail the entire operation for role creation failure
 	}
 
-	// c.Notify(notification.NortificationPayloadTypeCreateOrganization, loggedInUser, r, createdOrganization)
+	c.Notify(notification.NortificationPayloadTypeCreateOrganization, loggedInUser, r, createdOrganization)
 
 	return &types.OrganizationResponse{
 		Status:  "success",

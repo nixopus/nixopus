@@ -6,6 +6,7 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
@@ -63,6 +64,15 @@ func (c *OrganizationsController) DeleteOrganization(f fuego.ContextWithBody[typ
 		}
 	}
 
+	// Get organization details before deletion for notification
+	orgToDelete, err := c.service.GetOrganization(organization.ID)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
 	if err := c.service.DeleteOrganization(organizationID); err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
@@ -70,7 +80,7 @@ func (c *OrganizationsController) DeleteOrganization(f fuego.ContextWithBody[typ
 		}
 	}
 
-	// c.Notify(notification.NotificationPayloadTypeDeleteOrganization, loggedInUser, r)
+	c.Notify(notification.NotificationPayloadTypeDeleteOrganization, loggedInUser, r, orgToDelete)
 
 	return &types.MessageResponse{
 		Status:  "success",

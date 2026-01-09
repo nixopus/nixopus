@@ -103,36 +103,32 @@ function useNotificationSettings() {
     useUpdateNotificationPreferencesMutation();
 
   const handleOnSave = async (data: SMTPFormData) => {
-    try {
-      const smtpConfig = {
-        host: data.smtp_host,
-        port: parseInt(data.smtp_port),
-        username: data.smtp_username,
-        password: data.smtp_password,
-        from_email: data.smtp_from_email,
-        from_name: data.smtp_from_name
-      };
-      if (smtpConfigs?.id) {
-        await handleUpdateSMTPConfiguration({
-          ...smtpConfig,
-          id: smtpConfigs.id,
-          organization_id: activeOrganization?.id || ''
-        });
-      } else {
-        await handleCreateSMTPConfiguration({
-          ...smtpConfig,
-          organization_id: activeOrganization?.id || ''
-        });
-      }
-    } catch (error) {
-      toast.error(t('settings.notifications.messages.email.error'));
+    const smtpConfig = {
+      host: data.smtp_host,
+      port: parseInt(data.smtp_port),
+      username: data.smtp_username,
+      password: data.smtp_password,
+      from_email: data.smtp_from_email,
+      from_name: data.smtp_from_name
+    };
+    if (smtpConfigs?.id) {
+      await handleUpdateSMTPConfiguration({
+        ...smtpConfig,
+        id: smtpConfigs.id,
+        organization_id: activeOrganization?.id || ''
+      });
+    } else {
+      await handleCreateSMTPConfiguration({
+        ...smtpConfig,
+        organization_id: activeOrganization?.id || ''
+      });
     }
   };
 
   const handleUpdatePreference = async (id: string, enabled: boolean) => {
+    const category = getPreferenceCategoryFromId(id);
+    const type = getPreferenceTypeFromId(id);
     try {
-      const category = getPreferenceCategoryFromId(id);
-      const type = getPreferenceTypeFromId(id);
       await updateNotificationPreferences({
         category,
         type,
@@ -187,6 +183,17 @@ function useNotificationSettings() {
     }
   };
 
+  const isLoading =
+    isLoadingSMTP ||
+    isLoadingSlack ||
+    isLoadingDiscord ||
+    isLoadingPreferences ||
+    isCreatingSMTP ||
+    isUpdatingSMTP ||
+    isCreatingWebhook ||
+    isUpdatingWebhook ||
+    isUpdatingPreferences;
+
   return {
     smtpConfigs,
     slackConfig,
@@ -196,16 +203,11 @@ function useNotificationSettings() {
     handleUpdateWebhookConfig,
     handleDeleteWebhookConfig,
     preferences,
-    isLoading:
-      isLoadingSMTP ||
-      isLoadingSlack ||
-      isLoadingDiscord ||
-      isLoadingPreferences ||
-      isCreatingSMTP ||
-      isUpdatingSMTP ||
-      isCreatingWebhook ||
-      isUpdatingWebhook ||
-      isUpdatingPreferences,
+    isLoading,
+    isLoadingPreferences,
+    isLoadingSMTP,
+    isLoadingSlack,
+    isLoadingDiscord,
     error: smtpError || slackError || discordError,
     handleUpdatePreference
   };
