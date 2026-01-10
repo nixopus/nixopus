@@ -90,11 +90,14 @@ func CreateProjectHandler(
 			return nil, CreateProjectOutput{}, err
 		}
 
+		// Convert to MCP type to avoid circular references
+		mcpApplication := convertToMCPApplication(application)
+
 		return nil, CreateProjectOutput{
-			Response: types.ApplicationResponse{
+			Response: MCPApplicationResponse{
 				Status:  "success",
 				Message: "Project created successfully. You can deploy it when ready.",
-				Data:    application,
+				Data:    mcpApplication,
 			},
 		}, nil
 	}

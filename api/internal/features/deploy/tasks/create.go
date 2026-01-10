@@ -94,9 +94,9 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 	return nil
 }
 
-// HandleCreateDockerComposeDeployment handles the deployment of a Docker Compose application
+// TODO : Implement the docker compose deployment
 func (t *TaskService) HandleCreateDockerComposeDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
-	return t.deployDockerCompose(ctx, TaskPayload, string(shared_types.DeploymentTypeCreate))
+	return nil
 }
 
 // TODO : Implement the static deployment

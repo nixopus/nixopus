@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	mcp_middleware "github.com/raghavyuva/nixopus-api/internal/mcp/middleware"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
@@ -89,12 +88,18 @@ func GetApplicationDeploymentsHandler(
 			return nil, GetApplicationDeploymentsOutput{}, err
 		}
 
+		// Convert to MCP types to avoid circular references
+		mcpDeployments := make([]MCPApplicationDeployment, len(deployments))
+		for i, dep := range deployments {
+			mcpDeployments[i] = convertToMCPApplicationDeployment(dep)
+		}
+
 		return nil, GetApplicationDeploymentsOutput{
-			Response: types.ListDeploymentsResponse{
+			Response: MCPListDeploymentsResponse{
 				Status:  "success",
 				Message: "Application deployments retrieved successfully",
-				Data: types.ListDeploymentsResponseData{
-					Deployments: deployments,
+				Data: MCPListDeploymentsResponseData{
+					Deployments: mcpDeployments,
 					TotalCount:  totalCount,
 					Page:        strconv.Itoa(page),
 					PageSize:    strconv.Itoa(pageSize),

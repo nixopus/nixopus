@@ -95,8 +95,7 @@ export enum DEPLOY {
 }
 
 export enum SOCKET_EVENTS {
-  MONITOR_APPLICATION_DEPLOYMENT = 'monitor_application_deployment',
-  MONITOR_HEALTH_CHECK = 'monitor_health_check'
+  MONITOR_APPLICATION_DEPLOYMENT = 'monitor_application_deployment'
 }
 
 export enum SOCKET_ACTIONS {
@@ -153,12 +152,6 @@ export enum EXTENSIONURLS {
   GET_EXECUTION_LOGS = 'v1/extensions/execution/{execution_id}/logs'
 }
 
-export enum HEALTHCHECKURLS {
-  GET_HEALTH_CHECK = 'v1/healthcheck',
-  CREATE_HEALTH_CHECK = 'v1/healthcheck',
-  UPDATE_HEALTH_CHECK = 'v1/healthcheck',
-  DELETE_HEALTH_CHECK = 'v1/healthcheck',
-  TOGGLE_HEALTH_CHECK = 'v1/healthcheck/toggle',
-  GET_HEALTH_CHECK_RESULTS = 'v1/healthcheck/results',
-  GET_HEALTH_CHECK_STATS = 'v1/healthcheck/stats'
+export enum AGENTSURLS {
+  CHAT = 'v1/agents/chat'
 }

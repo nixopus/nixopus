@@ -2,6 +2,7 @@ package tools
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	extension_service "github.com/raghavyuva/nixopus-api/internal/features/extension/service"
@@ -24,6 +25,7 @@ func ListExtensionsHandler(
 		req *mcp.CallToolRequest,
 		input ListExtensionsInput,
 	) (*mcp.CallToolResult, ListExtensionsOutput, error) {
+		l.Log(logger.Info, "[DEBUG] ListExtensionsHandler called", "")
 		storage := extension_storage.ExtensionStorage{DB: store.DB, Ctx: ctx}
 		service := extension_service.NewExtensionService(store, ctx, l, &storage)
 
@@ -32,15 +34,18 @@ func ListExtensionsHandler(
 		if input.Category != "" {
 			cat := shared_types.ExtensionCategory(input.Category)
 			params.Category = &cat
+			l.Log(logger.Info, fmt.Sprintf("[DEBUG] ListExtensions: Category filter: %s", input.Category), "")
 		}
 
 		if input.Type != "" {
 			et := shared_types.ExtensionType(input.Type)
 			params.Type = &et
+			l.Log(logger.Info, fmt.Sprintf("[DEBUG] ListExtensions: Type filter: %s", input.Type), "")
 		}
 
 		if input.Search != "" {
 			params.Search = input.Search
+			l.Log(logger.Info, fmt.Sprintf("[DEBUG] ListExtensions: Search term: %s", input.Search), "")
 		}
 
 		if input.SortBy != "" {
@@ -59,10 +64,15 @@ func ListExtensionsHandler(
 			params.PageSize = *input.PageSize
 		}
 
+		l.Log(logger.Info, fmt.Sprintf("[DEBUG] ListExtensions: Query params - Page: %d, PageSize: %d", params.Page, params.PageSize), "")
+
 		response, err := service.ListExtensions(params)
 		if err != nil {
+			l.Log(logger.Error, fmt.Sprintf("[DEBUG] ListExtensions: Service error: %v", err), "")
 			return nil, ListExtensionsOutput{}, err
 		}
+
+		l.Log(logger.Info, fmt.Sprintf("[DEBUG] ListExtensions: Found %d extensions (total: %d)", len(response.Extensions), response.Total), "")
 
 		// Convert shared types to MCP types to avoid circular references
 		mcpResponse := convertToMCPExtensionListResponse(response)

@@ -1,0 +1,18 @@
+{
+  "ai": {
+    "title": "Asistente de IA",
+    "emptyState": {
+      "title": "¿Cómo puedo ayudarte?",
+      "description": "Pregúntame cualquier cosa sobre tus despliegues, configuraciones u obtén ayuda con la resolución de problemas."
+    },
+    "suggestions": {
+      "deploy": "¿Cómo despliego una nueva aplicación?",
+      "logs": "Muéstrame los registros de actividad recientes",
+      "envVars": "Ayúdame a configurar las variables de entorno"
+    },
+    "input": {
+      "placeholder": "Pregunta lo que quieras...",
+      "hint": "Presiona Enter para enviar, Shift + Enter para nueva línea"
+    }
+  }
+}

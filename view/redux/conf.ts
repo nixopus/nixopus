@@ -27,3 +27,8 @@ export async function getWebsiteDomain() {
   const { websiteDomain } = await fetchConfig();
   return websiteDomain;
 }
+
+export async function getOctoagentUrl() {
+  const { octoagentUrl } = await fetchConfig();
+  return octoagentUrl;
+}

@@ -74,11 +74,14 @@ func DuplicateProjectHandler(
 			return nil, DuplicateProjectOutput{}, err
 		}
 
+		// Convert to MCP type to avoid circular references
+		mcpApplication := convertToMCPApplication(application)
+
 		return nil, DuplicateProjectOutput{
-			Response: types.ApplicationResponse{
+			Response: MCPApplicationResponse{
 				Status:  "success",
 				Message: "Project duplicated successfully",
-				Data:    application,
+				Data:    mcpApplication,
 			},
 		}, nil
 	}

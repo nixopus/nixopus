@@ -25,11 +25,10 @@ const (
 	pingTimeout    = 60 * time.Second
 )
 
-type Topics string
+type topics string
 
 const (
-	MonitorApplicationDeployment Topics = "monitor_application_deployment"
-	MonitorHealthCheck           Topics = "monitor_health_check"
+	MonitorApplicationDeployment topics = "monitor_application_deployment"
 )
 
 var upgrader = websocket.Upgrader{

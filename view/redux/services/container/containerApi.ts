@@ -11,7 +11,6 @@ export interface Container {
   created: string;
   command: string;
   ip_address: string;
-  labels?: { [key: string]: string };
   ports: {
     private_port: number;
     public_port: number;
@@ -22,12 +21,6 @@ export interface Container {
     memory_swap: number;
     cpu_shares: number;
   };
-}
-
-export interface ContainerGroup {
-  application_id: string;
-  application_name: string;
-  containers: Container[];
 }
 
 export interface UpdateContainerResourcesRequest {
@@ -59,15 +52,7 @@ export const containerApi = createApi({
   tagTypes: ['Container'],
   endpoints: (builder) => ({
     getContainers: builder.query<
-      {
-        containers: Container[];
-        groups?: ContainerGroup[];
-        ungrouped?: Container[];
-        total_count: number;
-        group_count?: number;
-        page: number;
-        page_size: number;
-      },
+      { containers: Container[]; total_count: number; page: number; page_size: number },
       ContainerListParams
     >({
       query: ({ page, page_size, search, sort_by, sort_order }) => ({
@@ -78,24 +63,13 @@ export const containerApi = createApi({
       providesTags: [{ type: 'Container', id: 'LIST' }],
       transformResponse: (response: {
         data: {
-          containers?: Container[];
-          groups?: ContainerGroup[];
-          ungrouped?: Container[];
+          containers: Container[];
           total_count: number;
-          group_count?: number;
           page: number;
           page_size: number;
         };
       }) => {
-        return {
-          containers: response.data.containers ?? [],
-          groups: response.data.groups,
-          ungrouped: response.data.ungrouped,
-          total_count: response.data.total_count,
-          group_count: response.data.group_count,
-          page: response.data.page,
-          page_size: response.data.page_size
-        };
+        return response.data;
       }
     }),
     getContainer: builder.query<Container, string>({

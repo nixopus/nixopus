@@ -2,7 +2,6 @@ package tasks
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/google/uuid"
@@ -40,22 +39,8 @@ func (t *TaskService) RestartDeployment(request *types.RestartDeploymentRequest,
 	return RestartQueue.Add(TaskRestart.WithArgs(context.Background(), payload))
 }
 
-// HandleRestart routes restart based on the application's BuildPack type
+// HandleRestart restarts currently running swarm service for the application and updates status/logs
 func (s *TaskService) HandleRestart(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
-	switch TaskPayload.Application.BuildPack {
-	case shared_types.DockerFile:
-		return s.HandleRestartDockerfileDeployment(ctx, TaskPayload)
-	case shared_types.DockerCompose:
-		return s.HandleRestartDockerComposeDeployment(ctx, TaskPayload)
-	case shared_types.Static:
-		return s.HandleRestartStaticDeployment(ctx, TaskPayload)
-	default:
-		return types.ErrInvalidBuildPack
-	}
-}
-
-// HandleRestartDockerfileDeployment restarts currently running swarm service for the application
-func (s *TaskService) HandleRestartDockerfileDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	taskCtx := s.NewTaskContext(TaskPayload)
 
 	taskCtx.LogAndUpdateStatus("Restarting application service", shared_types.Deploying)
@@ -103,15 +88,4 @@ func (s *TaskService) HandleRestartDockerfileDeployment(ctx context.Context, Tas
 
 	taskCtx.LogAndUpdateStatus("Application service restarted", shared_types.Running)
 	return nil
-}
-
-// HandleRestartDockerComposeDeployment handles restart of a Docker Compose application
-func (s *TaskService) HandleRestartDockerComposeDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
-	return s.deployDockerCompose(ctx, TaskPayload, string(shared_types.DeploymentTypeRestart))
-}
-
-// HandleRestartStaticDeployment handles restart of a static application
-func (s *TaskService) HandleRestartStaticDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
-	// TODO: Implement static restart
-	return fmt.Errorf("static restart not yet implemented")
 }

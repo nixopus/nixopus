@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -17,6 +18,29 @@ import (
 var (
 	AppConfig types.Config
 )
+
+// getMigrationsPath returns the migrations path from environment variable or defaults to path relative to executable
+func getMigrationsPath() string {
+	// Use MIGRATIONS_PATH environment variable if set
+	if migrationsPath := os.Getenv("MIGRATIONS_PATH"); migrationsPath != "" {
+		return migrationsPath
+	}
+
+	// Default: use migrations directory relative to executable location
+	// If executable is at api/nixopus-mcp-server or api/nixopus-api, migrations are at api/migrations
+	if execPath, err := os.Executable(); err == nil {
+		execDir := filepath.Dir(execPath)
+		migrationsPath := filepath.Join(execDir, "migrations")
+		if absPath, err := filepath.Abs(migrationsPath); err == nil {
+			if _, err := os.Stat(absPath); err == nil {
+				return absPath
+			}
+		}
+	}
+
+	// Final fallback: relative to current working directory
+	return "./migrations"
+}
 
 // Init initializes the app configuration using Viper to load values from config files,
 // environment variables, and defaults. It then creates a new PostgreSQL client using
@@ -45,6 +69,8 @@ func Init() *storage.Store {
 	log.Printf("Database host: %s:%s", AppConfig.Database.Host, AppConfig.Database.Port)
 	log.Printf("Redis URL configured: %t", AppConfig.Redis.URL != "")
 
+	migrationsPath := getMigrationsPath()
+
 	storage_config := storage.Config{
 		Host:           AppConfig.Database.Host,
 		Port:           AppConfig.Database.Port,
@@ -55,7 +81,7 @@ func Init() *storage.Store {
 		MaxOpenConn:    AppConfig.Database.MaxOpenConn,
 		Debug:          AppConfig.Database.Debug,
 		MaxIdleConn:    AppConfig.Database.MaxIdleConn,
-		MigrationsPath: "./migrations",
+		MigrationsPath: migrationsPath,
 	}
 
 	store, err := storage.NewDB(&storage_config)

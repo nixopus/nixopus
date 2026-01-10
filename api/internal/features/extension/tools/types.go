@@ -88,19 +88,13 @@ type MCPExtensionExecution struct {
 
 // ListExtensionsInput is the input structure for the MCP tool
 type ListExtensionsInput struct {
-	OrganizationID string `json:"organization_id" jsonschema:"required"`
-	Category       string `json:"category,omitempty"`
-	Type           string `json:"type,omitempty"`
-	Search         string `json:"search,omitempty"`
-	SortBy         string `json:"sort_by,omitempty"`
-	SortDir        string `json:"sort_dir,omitempty"`
-	Page           *int   `json:"page,omitempty"`
-	PageSize       *int   `json:"page_size,omitempty"`
-}
-
-// GetOrganizationID implements OrganizationIDExtractor interface
-func (i ListExtensionsInput) GetOrganizationID() string {
-	return i.OrganizationID
+	Category string `json:"category,omitempty"`
+	Type     string `json:"type,omitempty"`
+	Search   string `json:"search,omitempty"`
+	SortBy   string `json:"sort_by,omitempty"`
+	SortDir  string `json:"sort_dir,omitempty"`
+	Page     *int   `json:"page,omitempty"`
+	PageSize *int   `json:"page_size,omitempty"`
 }
 
 // ListExtensionsOutput is the output structure for the MCP tool
@@ -110,13 +104,7 @@ type ListExtensionsOutput struct {
 
 // GetExtensionInput is the input structure for the MCP tool
 type GetExtensionInput struct {
-	ID             string `json:"id" jsonschema:"required"`
-	OrganizationID string `json:"organization_id" jsonschema:"required"`
-}
-
-// GetOrganizationID implements OrganizationIDExtractor interface
-func (i GetExtensionInput) GetOrganizationID() string {
-	return i.OrganizationID
+	ID string `json:"id" jsonschema:"required"`
 }
 
 // GetExtensionOutput is the output structure for the MCP tool
@@ -126,14 +114,8 @@ type GetExtensionOutput struct {
 
 // RunExtensionInput is the input structure for the MCP tool
 type RunExtensionInput struct {
-	ExtensionID    string                 `json:"extension_id" jsonschema:"required"`
-	OrganizationID string                 `json:"organization_id" jsonschema:"required"`
-	Variables      map[string]interface{} `json:"variables,omitempty"`
-}
-
-// GetOrganizationID implements OrganizationIDExtractor interface
-func (i RunExtensionInput) GetOrganizationID() string {
-	return i.OrganizationID
+	ExtensionID string                 `json:"extension_id" jsonschema:"required"`
+	Variables   map[string]interface{} `json:"variables,omitempty"`
 }
 
 // RunExtensionOutput is the output structure for the MCP tool
@@ -143,13 +125,7 @@ type RunExtensionOutput struct {
 
 // GetExecutionInput is the input structure for the MCP tool
 type GetExecutionInput struct {
-	ExecutionID    string `json:"execution_id" jsonschema:"required"`
-	OrganizationID string `json:"organization_id" jsonschema:"required"`
-}
-
-// GetOrganizationID implements OrganizationIDExtractor interface
-func (i GetExecutionInput) GetOrganizationID() string {
-	return i.OrganizationID
+	ExecutionID string `json:"execution_id" jsonschema:"required"`
 }
 
 // GetExecutionOutput is the output structure for the MCP tool
@@ -159,15 +135,9 @@ type GetExecutionOutput struct {
 
 // ListExecutionLogsInput is the input structure for the MCP tool
 type ListExecutionLogsInput struct {
-	ExecutionID    string `json:"execution_id" jsonschema:"required"`
-	OrganizationID string `json:"organization_id" jsonschema:"required"`
-	AfterSeq       *int64 `json:"after_seq,omitempty"`
-	Limit          *int   `json:"limit,omitempty"`
-}
-
-// GetOrganizationID implements OrganizationIDExtractor interface
-func (i ListExecutionLogsInput) GetOrganizationID() string {
-	return i.OrganizationID
+	ExecutionID string `json:"execution_id" jsonschema:"required"`
+	AfterSeq    *int64 `json:"after_seq,omitempty"`
+	Limit       *int   `json:"limit,omitempty"`
 }
 
 // ListExecutionLogsOutput is the output structure for the MCP tool
@@ -179,13 +149,7 @@ type ListExecutionLogsOutput struct {
 
 // CancelExecutionInput is the input structure for the MCP tool
 type CancelExecutionInput struct {
-	ExecutionID    string `json:"execution_id" jsonschema:"required"`
-	OrganizationID string `json:"organization_id" jsonschema:"required"`
-}
-
-// GetOrganizationID implements OrganizationIDExtractor interface
-func (i CancelExecutionInput) GetOrganizationID() string {
-	return i.OrganizationID
+	ExecutionID string `json:"execution_id" jsonschema:"required"`
 }
 
 // CancelExecutionOutput is the output structure for the MCP tool

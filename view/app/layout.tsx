@@ -10,15 +10,15 @@ import { useAppDispatch } from '@/redux/hooks';
 import { useEffect } from 'react';
 import { initializeAuth } from '@/redux/features/users/authSlice';
 import { usePathname, useRouter } from 'next/navigation';
-import { WebSocketProvider } from '@/packages/hooks/shared/socket-provider';
-import { FeatureFlagsProvider } from '@/packages/hooks/shared/features_provider';
-import { SystemStatsProvider } from '@/packages/hooks/shared/system-stats-provider';
-import { palette } from '@/packages/utils/colors';
-import { SuperTokensProvider } from '@/packages/layouts/supertokensProvider';
+import { WebSocketProvider } from '@/hooks/socket-provider';
+import DashboardLayout from '@/components/layout/dashboard-layout';
+import { FeatureFlagsProvider } from '@/hooks/features_provider';
+import { SystemStatsProvider } from '@/hooks/system-stats-provider';
+import { palette } from '@/components/colors';
+import { SuperTokensProvider } from '@/components/supertokensProvider';
 import { useSessionContext } from 'supertokens-auth-react/recipe/session';
-import { SettingsModalProvider } from '@/packages/hooks/shared/use-settings-modal';
-import AppLayout from '@/packages/layouts/layout';
-import { SettingsModal } from '@/packages/components/settings';
+import { SettingsModalProvider } from '@/hooks/use-settings-modal';
+import { SettingsModal } from '@/components/settings/SettingsModal';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -41,6 +41,19 @@ export default function RootLayout({
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Store native fetch before SuperTokens wraps it
+              // This allows us to bypass SuperTokens interception for octoagent requests
+              if (typeof window !== 'undefined' && !window.__NATIVE_FETCH__) {
+                window.__NATIVE_FETCH__ = window.fetch.bind(window);
+              }
+            `
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
@@ -122,7 +135,7 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
                 <>{children}</>
               ) : (
                 <SystemStatsProvider>
-                  <AppLayout>{children}</AppLayout>
+                  <DashboardLayout>{children}</DashboardLayout>
                 </SystemStatsProvider>
               )}
             </FeatureFlagsProvider>
