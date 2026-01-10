@@ -78,6 +78,7 @@ func main() {
 		<-sigChan
 		log.Println("Shutting down...")
 		sched.Stop()
+		queue.Close()
 		os.Exit(0)
 	}()
 
