@@ -29,12 +29,12 @@ export function SettingsSidebar({
         key={cat.id}
         onClick={() => onCategoryChange(cat.id)}
         className={cn(
-          'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+          'w-full flex items-start gap-3 px-3 py-2 rounded-md text-sm transition-colors text-left',
           activeCategory === cat.id ? 'bg-muted font-medium' : 'hover:bg-muted/50'
         )}
       >
-        <Icon className="h-4 w-4" />
-        <span>{cat.label}</span>
+        <Icon className="h-4 w-4 flex-shrink-0 mt-0.5" />
+        <span className="flex-1 leading-tight">{cat.label}</span>
       </button>
     );
   };
