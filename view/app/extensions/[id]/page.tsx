@@ -1,7 +1,7 @@
 'use client';
 
 import PageLayout from '@/components/layout/page-layout';
-import useExtensionDetails from '../hooks/use-extension-detail';
+import useExtensionDetails from '../../../packages/hooks/extensions/use-extension-detail';
 import { ExtensionHeader } from './components/ExtensionHeader';
 import { RunButton } from './components/RunButton';
 import { ExtensionTabs } from './components/ExtensionTabs';

@@ -3,16 +3,15 @@
 import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
 import PageLayout from '@/components/layout/page-layout';
-import ExtensionsGrid from '@/app/extensions/components/extensions-grid';
-import CategoryBadges from '@/app/extensions/components/category-badges';
-import { useExtensions } from '../../packages/hooks/use-extensions';
+import { useExtensions } from '../../packages/hooks/extensions/use-extensions';
 import PaginationWrapper from '@/components/ui/pagination';
-import ExtensionInput from '@/app/extensions/components/extension-input';
 import MainPageHeader from '@/components/ui/main-page-header';
 import { SearchBar } from '@/components/ui/search-bar';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ExtensionSortField, SortDirection } from '@/redux/types/extension';
+import { ExtensionGrid, ExtensionInput } from '@/packages/components/extension';
+import CategoryBadges from '@/packages/components/extension';
 
 export default function ExtensionsPage() {
   const { t } = useTranslation();
@@ -37,7 +36,26 @@ export default function ExtensionsPage() {
     runModalOpen,
     setRunModalOpen,
     selectedExtension,
-    sortOptions
+    sortOptions,
+    forkOpen,
+    setForkOpen,
+    confirmOpen,
+    setConfirmOpen,
+    expanded,
+    setExpanded,
+    forkYaml,
+    setForkYaml,
+    preview,
+    variableColumns,
+    doFork,
+    actions,
+    isOnlyProxyDomain,
+    noFieldsToShow,
+    values,
+    errors,
+    handleChange,
+    handleSubmit,
+    requiredFields
   } = useExtensions();
 
   if (isLoading) {
@@ -49,7 +67,7 @@ export default function ExtensionsPage() {
       <MainPageHeader
         label={t('extensions.title')}
         actions={
-          <>
+          <div className="flex items-center gap-12">
             <SearchBar
               searchTerm={searchTerm}
               handleSearchChange={(e) => handleSearchChange(e.target.value)}
@@ -66,7 +84,7 @@ export default function ExtensionsPage() {
               placeholder={t('extensions.sortBy')}
               className="w-full sm:w-[180px]"
             />
-          </>
+          </div>
         }
       />
       <div className="space-y-6">
@@ -83,12 +101,23 @@ export default function ExtensionsPage() {
           )}
         </div>
 
-        <ExtensionsGrid
+        <ExtensionGrid
           extensions={extensions}
           isLoading={isLoading}
           error={error || undefined}
           onInstall={handleInstall}
           onViewDetails={handleViewDetails}
+          setForkOpen={setForkOpen}
+          setConfirmOpen={setConfirmOpen}
+          expanded={expanded}
+          setExpanded={setExpanded}
+          forkOpen={forkOpen}
+          confirmOpen={confirmOpen}
+          forkYaml={forkYaml}
+          setForkYaml={setForkYaml}
+          preview={preview}
+          variableColumns={variableColumns}
+          doFork={doFork}
         />
 
         {totalPages > 1 && (
@@ -106,6 +135,15 @@ export default function ExtensionsPage() {
         onOpenChange={setRunModalOpen}
         extension={selectedExtension}
         onSubmit={handleRun}
+        t={t}
+        isOnlyProxyDomain={isOnlyProxyDomain}
+        noFieldsToShow={noFieldsToShow}
+        values={values}
+        errors={errors}
+        handleChange={handleChange}
+        handleSubmit={handleSubmit}
+        requiredFields={requiredFields}
+        actions={actions}
       />
     </PageLayout>
   );

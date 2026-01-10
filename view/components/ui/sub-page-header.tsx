@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import React from 'react';
 
-export interface SubPageHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface SubPageHeaderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   icon?: React.ReactNode;
   title: React.ReactNode;
   metadata?: React.ReactNode;
