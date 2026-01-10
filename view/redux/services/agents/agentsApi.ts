@@ -133,18 +133,60 @@ function isDoneSignal(dataContent: string): boolean {
 }
 
 function parseTextDelta(data: unknown, callbacks: StreamCallbacks): void {
-  if (
-    typeof data === 'object' &&
-    data !== null &&
-    'type' in data &&
-    data.type === 'text-delta' &&
-    'payload' in data &&
-    typeof data.payload === 'object' &&
-    data.payload !== null &&
-    'text' in data.payload &&
-    typeof data.payload.text === 'string'
-  ) {
-    callbacks.onContent(data.payload.text);
+  if (typeof data !== 'object' || data === null) {
+    return;
+  }
+
+  const obj = data as Record<string, unknown>;
+  const eventType = obj.type as string;
+
+  if (eventType === 'text-delta' && 'payload' in obj) {
+    const payload = obj.payload;
+    if (
+      typeof payload === 'object' &&
+      payload !== null &&
+      'text' in payload &&
+      typeof (payload as Record<string, unknown>).text === 'string'
+    ) {
+      callbacks.onContent((payload as Record<string, unknown>).text as string);
+      return;
+    }
+  }
+
+  if (eventType === 'message' || eventType === 'message-delta') {
+    const payload = obj.payload;
+    if (typeof payload === 'object' && payload !== null) {
+      const payloadObj = payload as Record<string, unknown>;
+
+      if (typeof payloadObj.text === 'string' && payloadObj.text) {
+        callbacks.onContent(payloadObj.text);
+        return;
+      }
+
+      if (typeof payloadObj.content === 'string' && payloadObj.content) {
+        callbacks.onContent(payloadObj.content);
+        return;
+      }
+
+      if (Array.isArray(payloadObj.content)) {
+        const textParts = payloadObj.content
+          .filter(
+            (item: unknown) =>
+              typeof item === 'object' &&
+              item !== null &&
+              'type' in item &&
+              (item as Record<string, unknown>).type === 'text' &&
+              'text' in item &&
+              typeof (item as Record<string, unknown>).text === 'string'
+          )
+          .map((item: unknown) => (item as Record<string, unknown>).text as string);
+
+        if (textParts.length > 0) {
+          callbacks.onContent(textParts.join(''));
+          return;
+        }
+      }
+    }
   }
 }
 
@@ -234,11 +276,50 @@ function parseToolResult(data: unknown, callbacks: StreamCallbacks): void {
   }
 }
 
-function parseFinishEvent(data: unknown, callbacks: StreamCallbacks): boolean {
-  if (typeof data === 'object' && data !== null && 'type' in data && data.type === 'finish') {
-    callbacks.onDone();
-    return true;
+function parseErrorEvent(data: unknown, callbacks: StreamCallbacks): void {
+  if (typeof data !== 'object' || data === null) {
+    return;
   }
+
+  const obj = data as Record<string, unknown>;
+  if (obj.type === 'error' && 'payload' in obj) {
+    const payload = obj.payload;
+    if (typeof payload === 'object' && payload !== null) {
+      const payloadObj = payload as Record<string, unknown>;
+
+      let errorMessage = 'An error occurred while processing your request.';
+
+      if (payloadObj.error && typeof payloadObj.error === 'object') {
+        const errorObj = payloadObj.error as Record<string, unknown>;
+        if (typeof errorObj.message === 'string') {
+          errorMessage = errorObj.message;
+        }
+      } else if (typeof payloadObj.message === 'string') {
+        errorMessage = payloadObj.message;
+      }
+
+      callbacks.onContent(`\n\n**Error:** ${errorMessage}\n\n`);
+
+      callbacks.onError(new Error(errorMessage));
+    }
+  }
+}
+
+function parseFinishEvent(data: unknown, callbacks: StreamCallbacks): boolean {
+  if (typeof data === 'object' && data === null) {
+    return false;
+  }
+
+  const obj = data as Record<string, unknown>;
+  const eventType = obj.type as string;
+
+  if (eventType === 'finish' || eventType === 'step-finish') {
+    if (eventType === 'finish') {
+      callbacks.onDone();
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -260,6 +341,7 @@ function parseStreamData(dataContent: string, callbacks: StreamCallbacks): boole
 
   try {
     const data = JSON.parse(dataContent);
+    parseErrorEvent(data, callbacks);
     parseTextDelta(data, callbacks);
     parseToolCall(data, callbacks);
     parseToolResult(data, callbacks);
@@ -282,28 +364,47 @@ async function processStreamChunk(
   buffer: string,
   callbacks: StreamCallbacks
 ): Promise<{ done: boolean; buffer: string }> {
-  const { done, value } = await reader.read();
+  try {
+    const { done, value } = await reader.read();
 
-  if (done) {
-    callbacks.onDone();
-    return { done: true, buffer };
-  }
-
-  buffer += decoder.decode(value, { stream: true });
-  const lines = buffer.split('\n');
-  buffer = lines.pop() || '';
-
-  for (const line of lines) {
-    const dataContent = extractDataContent(line);
-    if (!dataContent) continue;
-
-    const shouldStop = parseStreamData(dataContent, callbacks);
-    if (shouldStop) {
-      return { done: true, buffer };
+    if (done) {
+      if (buffer.trim()) {
+        const lines = buffer.split('\n');
+        for (const line of lines) {
+          const dataContent = extractDataContent(line);
+          if (dataContent) {
+            parseStreamData(dataContent, callbacks);
+          }
+        }
+      }
+      callbacks.onDone();
+      return { done: true, buffer: '' };
     }
-  }
 
-  return { done: false, buffer };
+    if (!value || value.length === 0) {
+      return { done: false, buffer };
+    }
+
+    const decoded = decoder.decode(value, { stream: true });
+    buffer += decoded;
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      const dataContent = extractDataContent(line);
+      if (!dataContent) continue;
+
+      const shouldStop = parseStreamData(dataContent, callbacks);
+      if (shouldStop) {
+        return { done: true, buffer };
+      }
+    }
+
+    return { done: false, buffer };
+  } catch (error) {
+    callbacks.onError(error instanceof Error ? error : new Error(String(error)));
+    return { done: true, buffer: '' };
+  }
 }
 
 async function processStream(response: Response, callbacks: StreamCallbacks): Promise<void> {
@@ -315,19 +416,26 @@ async function processStream(response: Response, callbacks: StreamCallbacks): Pr
   const decoder = new TextDecoder();
   let buffer = '';
 
-  while (true) {
-    const { done, buffer: newBuffer } = await processStreamChunk(
-      reader,
-      decoder,
-      buffer,
-      callbacks
-    );
+  try {
+    while (true) {
+      const { done, buffer: newBuffer } = await processStreamChunk(
+        reader,
+        decoder,
+        buffer,
+        callbacks
+      );
 
-    if (done) {
-      break;
+      if (done) {
+        break;
+      }
+
+      buffer = newBuffer;
     }
-
-    buffer = newBuffer;
+  } catch (error) {
+    callbacks.onError(error instanceof Error ? error : new Error(String(error)));
+    throw error;
+  } finally {
+    reader.releaseLock();
   }
 }
 
@@ -423,7 +531,12 @@ export async function streamAIChat(
     const options = createRequestOptions('POST', token, JSON.stringify(payload), signal);
 
     const response = await nativeFetch(url, options);
-    await handleApiResponse(response);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Request failed: ${response.status} - ${errorText}`);
+    }
+
     await processStream(response, callbacks);
   } catch (error) {
     if (isAbortError(error)) {
