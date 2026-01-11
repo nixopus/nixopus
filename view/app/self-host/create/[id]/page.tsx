@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
-import useFindRepository from '../../../../packages/hooks/applications/use_find_repository';
-import { QuickDeployForm } from '../../components/create-form/quick-deploy-form';
+import useFindRepository from '@/packages/hooks/applications/use_find_repository';
+import { QuickDeployForm } from '@/packages/components/application-form';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
 import PageLayout from '@/components/layout/page-layout';
@@ -19,7 +19,7 @@ function page() {
         maxWidth="full"
         padding="md"
         spacing="lg"
-        className="justify-center items-center min-h-[80vh] flex-col flex"
+        className="justify-center items-center min-h-[80vh] flex-col flex w-full"
       >
         <QuickDeployForm
           repository={repository?.id.toString() || ''}

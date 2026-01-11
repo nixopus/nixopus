@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import ListRepositories from '../components/github-repositories/list-repositories';
+import { ListRepositories } from '@/packages/components/github-repositories';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
 import PageLayout from '@/components/layout/page-layout';
