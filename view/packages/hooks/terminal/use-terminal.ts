@@ -1,8 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { StopExecution } from './stopExecution';
 import { useWebSocket } from '@/hooks/socket-provider';
 import { getAdvancedSettings } from '@/lib/advanced-settings';
-import type { ExitHandler, TerminalOutput } from '../types';
+import type { ExitHandler, TerminalOutput } from '../../types/terminal';
 
 const CTRL_C = '\x03';
 
@@ -67,7 +66,13 @@ export const useTerminal = (
 
   useEffect(() => {
     if (isStopped && terminalInstance) {
-      safeSendMessage({ action: 'terminal', data: { value: CTRL_C, terminalId } });
+      safeSendMessage({
+        action: 'terminal',
+        data: {
+          value: CTRL_C,
+          terminalId
+        }
+      });
       setIsStopped(false);
     }
   }, [isStopped, safeSendMessage, setIsStopped, terminalInstance, terminalId]);
@@ -132,6 +137,7 @@ export const useTerminal = (
 
   const initializeTerminal = useCallback(async () => {
     if (!terminalRef.current || !isReadyRef.current) return;
+
     if (terminalInstance) return;
 
     try {
@@ -159,7 +165,9 @@ export const useTerminal = (
 
       const fontFamily =
         fontFamilyMap[terminalSettings.terminalFontFamily] ||
-        `"${terminalSettings.terminalFontFamily}", "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Menlo, Monaco, "Courier New", monospace`;
+        `"${
+          terminalSettings.terminalFontFamily
+        }", "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Menlo, Monaco, "Courier New", monospace`;
 
       const fontWeight = terminalSettings.terminalFontWeight === 'bold' ? '600' : '400';
 
@@ -360,7 +368,10 @@ export const useTerminal = (
             // Send all input to backend
             safeSendMessage({
               action: 'terminal',
-              data: { value: data, terminalId }
+              data: {
+                value: data,
+                terminalId
+              }
             });
           });
         }
@@ -392,7 +403,10 @@ export const useTerminal = (
         setTimeout(() => {
           safeSendMessage({
             action: 'terminal',
-            data: { value: '\n', terminalId }
+            data: {
+              value: '\n',
+              terminalId
+            }
           });
         }, 100);
       }
@@ -409,4 +423,22 @@ export const useTerminal = (
     terminalInstance,
     isWebSocketReady: isReady
   };
+};
+
+const StopExecution = () => {
+  const [isStopped, setIsStopped] = useState(false);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'c' && (e.metaKey || e.ctrlKey) && e.shiftKey) {
+        e.preventDefault();
+        console.log('Stopped execution');
+        setIsStopped(true);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  return { isStopped, setIsStopped };
 };

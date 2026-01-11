@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { terminalStyles } from '../styles/terminal.styles';
+import { terminalStyles } from '../../styles/terminal.styles';
 
 export const useTerminalStyles = () => {
   useEffect(() => {

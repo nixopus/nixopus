@@ -30,7 +30,7 @@ import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { CreateTeam } from '@/components/features/create-team';
 import { NavMain } from '@/components/layout/nav-main';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
-import { Terminal } from '@/app/terminal/terminal';
+import { Terminal } from '@/packages/components/terminal';
 import { TopbarWidgets } from '@/components/layout/topbar-widgets';
 import { Tour } from '@/components/Tour';
 import { useSettingsModal } from '@/hooks/use-settings-modal';

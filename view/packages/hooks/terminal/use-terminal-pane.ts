@@ -1,24 +1,9 @@
-'use client';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
+import { TerminalPaneProps } from '../../types/terminal';
+import { useTerminal } from '@/packages/hooks/terminal/use-terminal';
+import { useContainerReady } from '@/packages/hooks/terminal/use-container-ready';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { useTerminal } from '../utils/useTerminal';
-import { useContainerReady } from '../utils/isContainerReady';
-import { cn } from '@/lib/utils';
-import type { SessionStatus, ExitHandler } from '../types';
-
-type TerminalPaneProps = {
-  isActive: boolean;
-  isTerminalOpen: boolean;
-  canCreate: boolean;
-  canUpdate: boolean;
-  setFitAddonRef: React.Dispatch<React.SetStateAction<any | null>>;
-  terminalId: string;
-  onFocus: () => void;
-  onStatusChange?: (status: SessionStatus) => void;
-  exitHandler?: ExitHandler;
-};
-
-export const TerminalPane: React.FC<TerminalPaneProps> = ({
+export const useTerminalPane = ({
   isActive,
   isTerminalOpen,
   canCreate,
@@ -28,7 +13,7 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
   onFocus,
   onStatusChange,
   exitHandler
-}) => {
+}: TerminalPaneProps) => {
   const paneRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -42,10 +27,7 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
 
     resizeTimeoutRef.current = setTimeout(() => {
       if (paneRef.current) {
-        setDimensions({
-          width: paneRef.current.offsetWidth,
-          height: paneRef.current.offsetHeight
-        });
+        setDimensions({ width: paneRef.current.offsetWidth, height: paneRef.current.offsetHeight });
       }
     }, 100);
   }, []);
@@ -58,10 +40,7 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
       if (paneRef.current) {
         const rect = paneRef.current.getBoundingClientRect();
         if (rect.width > 0 && rect.height > 0) {
-          setDimensions({
-            width: rect.width,
-            height: rect.height
-          });
+          setDimensions({ width: rect.width, height: rect.height });
         }
       }
     };
@@ -140,10 +119,7 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
             finalWidth = rect.width;
             finalHeight = rect.height;
             // Update dimensions state immediately
-            setDimensions({
-              width: finalWidth,
-              height: finalHeight
-            });
+            setDimensions({ width: finalWidth, height: finalHeight });
           }
         }
       }
@@ -230,38 +206,17 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
     }
   }, [fitAddonRef, setFitAddonRef, isActive]);
 
-  return (
-    <div
-      ref={paneRef}
-      className="flex-1 relative"
-      style={{
-        minHeight: '200px',
-        minWidth: '200px',
-        padding: '4px',
-        overflow: 'hidden',
-        backgroundColor: '#0c0c0f',
-        scrollbarWidth: 'none',
-        msOverflowStyle: 'none',
-        height: '100%',
-        width: '100%',
-        position: 'relative'
-      }}
-      onClick={onFocus}
-      onFocus={onFocus}
-      tabIndex={0}
-    >
-      <div
-        ref={terminalRef}
-        className={cn(
-          'absolute inset-0 transition-opacity duration-200',
-          isActive ? 'opacity-100' : 'opacity-70'
-        )}
-        style={{
-          padding: '4px',
-          height: '100%',
-          width: '100%'
-        }}
-      />
-    </div>
-  );
+  return {
+    paneRef,
+    dimensions,
+    resizeTimeoutRef,
+    updateDimensions,
+    terminalRef,
+    fitAddonRef,
+    initializeTerminal,
+    destroyTerminal,
+    isWebSocketReady
+  };
 };
+
+export default useTerminalPane;

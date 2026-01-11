@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import type { SessionStatus, SplitPane, Session } from '../types';
+import type { SessionStatus, SplitPane, Session } from '../../types/terminal';
 
 const SESSION_LIMIT = 5;
 const MAX_SPLITS = 4;
