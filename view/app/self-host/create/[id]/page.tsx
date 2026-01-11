@@ -2,9 +2,9 @@
 import React from 'react';
 import useFindRepository from '@/packages/hooks/applications/use_find_repository';
 import { QuickDeployForm } from '@/packages/components/application-form';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { ResourceGuard } from '@/packages/components/rbac';
 import { Skeleton } from '@/components/ui/skeleton';
-import PageLayout from '@/components/layout/page-layout';
+import PageLayout from '@/packages/layouts/page-layout';
 
 function page() {
   const { repository } = useFindRepository();

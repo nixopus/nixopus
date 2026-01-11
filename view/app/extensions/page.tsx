@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
-import PageLayout from '@/components/layout/page-layout';
+import PageLayout from '@/packages/layouts/page-layout';
 import { useExtensions } from '../../packages/hooks/extensions/use-extensions';
 import PaginationWrapper from '@/components/ui/pagination';
 import MainPageHeader from '@/components/ui/main-page-header';

@@ -13,7 +13,7 @@ import { FileData } from '@/redux/types/files';
 import { useCreateDirectoryMutation } from '@/redux/services/file-manager/fileManagersApi';
 import { useTranslation } from '@/hooks/use-translation';
 import { toast } from 'sonner';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { ResourceGuard } from '@/packages/components/rbac';
 
 interface DropDownMenuProps {
   refetch: () => void;

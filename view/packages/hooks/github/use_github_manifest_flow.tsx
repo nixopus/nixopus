@@ -1,10 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from '@/hooks/use-translation';
-import {
-  GitHubAppCredentials,
-  GitHubAppManifest,
-  GitHubAppStatus
-} from '@/redux/types/github';
+import { GitHubAppCredentials, GitHubAppManifest, GitHubAppStatus } from '@/redux/types/github';
 import { useCreateGithubConnectorMutation } from '@/redux/services/connector/githubConnectorApi';
 import { getWebhookUrl } from '@/redux/conf';
 import { Loader2 } from 'lucide-react';
@@ -220,4 +216,3 @@ export function useGithubManifestFlow({
     createManifestForm
   };
 }
-

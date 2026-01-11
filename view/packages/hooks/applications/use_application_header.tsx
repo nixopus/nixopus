@@ -28,7 +28,7 @@ import {
   ProjectFamilySwitcher,
   DuplicateProjectDialog
 } from '@/packages/components/application-details';
-import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
+import { AnyPermissionGuard } from '@/packages/components/rbac';
 
 interface UseApplicationHeaderProps {
   application?: Application;

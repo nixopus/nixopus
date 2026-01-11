@@ -11,7 +11,7 @@ import useUpdateDeployment from '@/packages/hooks/applications/use_update_deploy
 import { useDeploymentConfiguration } from '@/packages/hooks/applications/use_deployment_configuration';
 import { parsePort } from '@/packages/utils/util';
 import { useTranslation } from '@/hooks/use-translation';
-import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
+import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   ChevronDownIcon,
