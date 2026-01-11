@@ -19,7 +19,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AceEditor from '@/components/ui/ace-editor';
-import { StepsSection } from '@/app/extensions/[id]/components/OverviewTab';
 import { CardWrapper } from '@/components/ui/card-wrapper';
 import { TypographyMuted, TypographySmall } from '@/components/ui/typography';
 import { DataTable } from '@/components/ui/data-table';
@@ -33,12 +32,154 @@ import {
   ExtensionCardProps,
   ExtensionInputProps
 } from '@/packages/types/extension';
-import { useExtensionInput } from '@/packages/hooks/extensions/use-extension-input';
-import { DialogAction } from '@/components/ui/dialog-wrapper';
 import { Sparkles, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ExtensionVariable } from '@/redux/types/extension';
 import { DialogWrapper } from '@/components/ui/dialog-wrapper';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useMemo } from 'react';
+import { TableColumn } from '@/components/ui/data-table';
+import { Badge } from '@/components/ui/badge';
+
+interface StepsSectionProps {
+  tRunLabel: string;
+  tValidateLabel: string;
+  title: string;
+  runSteps: any[];
+  validateSteps: any[];
+  openRunIndex: number | null;
+  setOpenRunIndex: (index: number | null) => void;
+  openValidateIndex: number | null;
+  setOpenValidateIndex: (index: number | null) => void;
+}
+
+function StepsSection({
+  tRunLabel,
+  tValidateLabel,
+  title,
+  runSteps,
+  validateSteps,
+  openRunIndex,
+  setOpenRunIndex,
+  openValidateIndex,
+  setOpenValidateIndex
+}: StepsSectionProps) {
+  const entryColumns: TableColumn<[string, any]>[] = useMemo(
+    () => [
+      {
+        key: 'key',
+        title: 'Key',
+        render: ([k]) => k,
+        width: '25%',
+        className: 'text-muted-foreground'
+      },
+      {
+        key: 'value',
+        title: 'Value',
+        render: ([, v]) => {
+          if (typeof v === 'object' && v !== null) {
+            return <pre className="text-xs">{JSON.stringify(v, null, 2)}</pre>;
+          }
+          return String(v ?? '');
+        }
+      }
+    ],
+    []
+  );
+
+  const createStepColumns = (
+    label: string,
+    openIndex: number | null,
+    onToggle: (index: number | null) => void
+  ): TableColumn<any>[] =>
+    useMemo(
+      () => [
+        {
+          key: 'step',
+          title: label,
+          render: (step, _, index) => {
+            const entries = Object.entries(step || {}).filter(
+              ([k]) => k !== 'name' && k !== 'type'
+            );
+            const isOpen = openIndex === index;
+            return (
+              <Collapsible open={isOpen} onOpenChange={(open) => onToggle(open ? index : null)}>
+                <CollapsibleTrigger className="w-full text-left flex items-start gap-2 group">
+                  <TypographyMuted className="mt-0.5 shrink-0">{index + 1}.</TypographyMuted>
+                  <div className="flex-1 min-w-0">
+                    <TypographySmall className="font-medium">
+                      {step?.name || step?.type || 'Step'}
+                    </TypographySmall>
+                    {step?.type && (
+                      <Badge variant="outline" className="ml-2">
+                        {step.type}
+                      </Badge>
+                    )}
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                      isOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </CollapsibleTrigger>
+                {entries.length > 0 && entryColumns && (
+                  <CollapsibleContent className="mt-3">
+                    <DataTable
+                      data={entries}
+                      columns={entryColumns}
+                      showBorder={true}
+                      striped={false}
+                      containerClassName="rounded-md"
+                    />
+                  </CollapsibleContent>
+                )}
+              </Collapsible>
+            );
+          }
+        }
+      ],
+      [label, openIndex, onToggle, entryColumns]
+    );
+
+  const runStepColumns = createStepColumns(tRunLabel, openRunIndex ?? null, setOpenRunIndex);
+  const validateStepColumns = createStepColumns(
+    tValidateLabel,
+    openValidateIndex ?? null,
+    setOpenValidateIndex
+  );
+
+  const hasRun = runSteps.length > 0;
+  const hasValidate = validateSteps.length > 0;
+
+  if (!hasRun && !hasValidate) {
+    return null;
+  }
+
+  return (
+    <CardWrapper title={title}>
+      <div className="flex flex-col gap-4">
+        {hasRun && (
+          <DataTable
+            data={runSteps}
+            columns={runStepColumns}
+            showBorder={true}
+            striped={false}
+            rowClassName="border-0"
+          />
+        )}
+        {hasValidate && (
+          <DataTable
+            data={validateSteps}
+            columns={validateStepColumns}
+            showBorder={true}
+            striped={false}
+            rowClassName="border-0"
+          />
+        )}
+      </div>
+    </CardWrapper>
+  );
+}
 
 export default function CategoryBadges({
   categories,

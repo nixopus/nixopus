@@ -1,4 +1,4 @@
-import { Extension, ExtensionVariable } from '@/redux/types/extension';
+import { Extension, ExtensionExecution, ExtensionVariable } from '@/redux/types/extension';
 import { TableColumn } from '@/components/ui/data-table';
 import { translationKey } from '@/hooks/use-translation';
 import { DialogAction } from '@/components/ui/dialog-wrapper';
@@ -86,4 +86,46 @@ export interface ExtensionInputProps {
   handleChange: (name: string, value: unknown) => void;
   handleSubmit: () => void;
   requiredFields: ExtensionVariable[];
+}
+
+export interface FormattedLog {
+  id: string;
+  timestamp: string;
+  level: string;
+  message: string;
+  icon?: React.ReactNode;
+  color: string;
+  data?: unknown;
+  isVerbose?: boolean;
+  progressInfo?: {
+    progress?: string;
+    status?: string;
+    id?: string;
+  };
+}
+
+export interface LogsTabProps {
+  executions: ExtensionExecution[];
+  executionColumns: TableColumn<ExtensionExecution>[];
+  isLoading: boolean;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  selectedExecId: string;
+  onOpenLogs: (execId: string) => void;
+  formattedLogs: FormattedLog[];
+  collapsedLogs: Set<string>;
+  toggleCollapse: (logId: string) => void;
+  logsEndRef: React.RefObject<HTMLDivElement>;
+}
+
+export interface OverviewTabProps {
+  extension?: Extension;
+  isLoading?: boolean;
+  parsed?: any;
+  variableColumns?: TableColumn<NonNullable<Extension['variables']>[0]>[];
+  entryColumns?: TableColumn<[string, any]>[];
+  openRunIndex?: number | null;
+  openValidateIndex?: number | null;
+  onToggleRun?: (index: number | null) => void;
+  onToggleValidate?: (index: number | null) => void;
 }
