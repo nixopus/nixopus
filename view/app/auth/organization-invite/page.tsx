@@ -4,7 +4,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-import useOrganizationInvite from '../hooks/use-org-invite';
+import useOrganizationInvite from '../../../packages/hooks/auth/use-org-invite';
 
 export default function OrganizationInvitePage() {
   const { message, router, orgId, handleIntermediateLogin, isLoading, status } =
