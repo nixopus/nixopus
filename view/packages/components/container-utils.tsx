@@ -2,11 +2,42 @@
 
 import { Skeleton } from '@/components/ui/skeleton';
 import PageLayout from '@/packages/layouts/page-layout';
+import { cn } from '@/lib/utils';
 
-export default function ContainersLoading() {
+// ============================================================================
+// Stat Pill
+// ============================================================================
+
+interface StatPillProps {
+  value: number;
+  label: string;
+  color?: 'emerald' | 'zinc';
+}
+
+export function StatPill({ value, label, color }: StatPillProps) {
+  return (
+    <div className="flex items-center gap-2">
+      {color && (
+        <span
+          className={cn(
+            'w-2 h-2 rounded-full',
+            color === 'emerald' ? 'bg-emerald-500' : 'bg-zinc-500'
+          )}
+        />
+      )}
+      <span className="text-xl font-bold">{value}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+// ============================================================================
+// Container Skeleton (Loading)
+// ============================================================================
+
+export function ContainersLoading() {
   return (
     <PageLayout maxWidth="full" padding="md" spacing="lg">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div className="space-y-2">
           <Skeleton className="h-8 w-48" />
@@ -19,7 +50,6 @@ export default function ContainersLoading() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="flex items-center gap-6 mb-6">
         <div className="flex items-center gap-2">
           <Skeleton className="h-7 w-8" />
@@ -37,7 +67,6 @@ export default function ContainersLoading() {
         </div>
       </div>
 
-      {/* Toolbar */}
       <div className="flex items-center gap-3 mb-6">
         <Skeleton className="h-10 w-80" />
         <div className="ml-auto flex items-center gap-2">
@@ -46,9 +75,7 @@ export default function ContainersLoading() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="rounded-xl border overflow-hidden">
-        {/* Header */}
         <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-4 px-4 py-3 bg-muted/30">
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-4 w-12" />
@@ -57,7 +84,6 @@ export default function ContainersLoading() {
           <div className="w-24" />
         </div>
 
-        {/* Rows */}
         <div className="divide-y divide-border/50">
           {[1, 2, 3, 4, 5].map((i) => (
             <div

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React from 'react';
 import {
   Search,
   ChevronsUpDown,
@@ -14,131 +14,43 @@ import {
   Download,
   Check
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Container } from '@/redux/services/container/containerApi';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { cn } from '@/lib/utils';
-
-const LOGS_DENSE_MODE_KEY = 'nixopus_logs_dense_mode';
-
-interface LogsTabProps {
-  container: Container;
-  logs: string;
-  onLoadMore: () => void;
-  onRefresh?: () => void;
-}
-
-type LogLevel = 'error' | 'warn' | 'info' | 'debug';
-
-interface ParsedLogEntry {
-  id: string;
-  timestamp: string;
-  formattedTime: string;
-  message: string;
-  level: LogLevel;
-  raw: string;
-}
+import {
+  useContainerLogs,
+  levelOptions,
+  levelColors,
+  ParsedLogEntry
+} from '@/packages/hooks/containers/use-container-logs';
+import { LogsTabProps, LogEntryProps } from '@/packages/types/containers';
 
 export function LogsTab({ container, logs, onLoadMore, onRefresh }: LogsTabProps) {
   const { t } = useTranslation();
-  const [expandedLogIds, setExpandedLogIds] = useState<Set<string>>(new Set());
-  const [searchTerm, setSearchTerm] = useState('');
-  const [levelFilter, setLevelFilter] = useState<LogLevel | 'all'>('all');
-  const [isDense, setIsDense] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(LOGS_DENSE_MODE_KEY);
-      return stored !== null ? stored === 'true' : true; // Default to true (condensed mode)
-    }
-    return true;
-  });
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
-  const [allExpanded, setAllExpanded] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem(LOGS_DENSE_MODE_KEY, isDense.toString());
-  }, [isDense]);
-
-  const parsedLogs = useMemo(() => {
-    return parseContainerLogs(logs, searchTerm, levelFilter);
-  }, [logs, searchTerm, levelFilter]);
-
-  const handleCopyLogs = useCallback(async () => {
-    const logText = parsedLogs.map((log) => log.raw).join('\n');
-    if (!logText) {
-      toast.error(t('containers.logs.copyEmpty'));
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(logText);
-      setIsCopied(true);
-      toast.success(t('containers.logs.copySuccess'));
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch {
-      toast.error(t('containers.logs.copyError'));
-    }
-  }, [parsedLogs, t]);
-
-  const handleDownloadLogs = useCallback(() => {
-    const logText = parsedLogs.map((log) => log.raw).join('\n');
-    if (!logText) {
-      toast.error(t('containers.logs.downloadEmpty'));
-      return;
-    }
-    const blob = new Blob([logText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${container.name || 'container'}-logs-${new Date().toISOString().split('T')[0]}.log`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success(t('containers.logs.downloadSuccess'));
-  }, [parsedLogs, container.name, t]);
-
-  const toggleLogExpansion = useCallback((logId: string) => {
-    setExpandedLogIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(logId)) {
-        next.delete(logId);
-        // If we're collapsing a log, reset allExpanded state
-        setAllExpanded(false);
-      } else {
-        next.add(logId);
-      }
-      return next;
-    });
-  }, []);
-
-  const isLogExpanded = useCallback((logId: string) => expandedLogIds.has(logId), [expandedLogIds]);
-
-  const expandAll = useCallback(() => {
-    setExpandedLogIds(new Set(parsedLogs.map((log) => log.id)));
-    setAllExpanded(true);
-  }, [parsedLogs]);
-
-  const collapseAll = useCallback(() => {
-    setExpandedLogIds(new Set());
-    setAllExpanded(false);
-  }, []);
-
-  const handleExpandCollapseToggle = useCallback(() => {
-    if (allExpanded) {
-      collapseAll();
-    } else {
-      expandAll();
-    }
-  }, [allExpanded, expandAll, collapseAll]);
-
-  const clearFilters = useCallback(() => {
-    setSearchTerm('');
-    setLevelFilter('all');
-  }, []);
+  const {
+    parsedLogs,
+    searchTerm,
+    setSearchTerm,
+    levelFilter,
+    setLevelFilter,
+    isDense,
+    setIsDense,
+    isLoadingMore,
+    setIsLoadingMore,
+    isRefreshing,
+    setIsRefreshing,
+    isCopied,
+    allExpanded,
+    handleCopyLogs,
+    handleDownloadLogs,
+    toggleLogExpansion,
+    isLogExpanded,
+    handleExpandCollapseToggle,
+    clearFilters,
+    hasActiveFilters
+  } = useContainerLogs(logs, container.name);
 
   const handleLoadMore = async () => {
     setIsLoadingMore(true);
@@ -156,11 +68,8 @@ export function LogsTab({ container, logs, onLoadMore, onRefresh }: LogsTabProps
     }
   };
 
-  const hasActiveFilters = searchTerm || levelFilter !== 'all';
-
   return (
     <div className="space-y-4 overflow-x-hidden">
-      {/* Toolbar */}
       <div className="flex flex-col gap-3 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative flex-1 max-w-md min-w-0">
@@ -283,7 +192,6 @@ export function LogsTab({ container, logs, onLoadMore, onRefresh }: LogsTabProps
         </div>
       </div>
 
-      {/* Logs List */}
       <div className="rounded-lg border overflow-hidden bg-zinc-950 min-w-0">
         <div className="flex items-center gap-3 px-4 py-2 text-xs font-medium text-zinc-500 uppercase tracking-wider border-b border-zinc-800 min-w-0">
           <div className="w-4 flex-shrink-0" />
@@ -314,32 +222,7 @@ export function LogsTab({ container, logs, onLoadMore, onRefresh }: LogsTabProps
   );
 }
 
-const levelOptions: { value: LogLevel | 'all'; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'error', label: 'Error' },
-  { value: 'warn', label: 'Warn' },
-  { value: 'info', label: 'Info' },
-  { value: 'debug', label: 'Debug' }
-];
-
-const levelColors: Record<LogLevel, { bg: string; text: string }> = {
-  error: { bg: 'bg-red-500/20', text: 'text-red-400' },
-  warn: { bg: 'bg-amber-500/20', text: 'text-amber-400' },
-  info: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
-  debug: { bg: 'bg-zinc-500/20', text: 'text-zinc-400' }
-};
-
-function LogEntry({
-  log,
-  isExpanded,
-  onToggle,
-  isDense
-}: {
-  log: ParsedLogEntry;
-  isExpanded: boolean;
-  onToggle: () => void;
-  isDense: boolean;
-}) {
+function LogEntry({ log, isExpanded, onToggle, isDense }: LogEntryProps) {
   const colors = levelColors[log.level];
 
   return (
@@ -400,89 +283,4 @@ function LogEntry({
       )}
     </div>
   );
-}
-
-function parseContainerLogs(
-  logsString: string,
-  searchTerm: string,
-  levelFilter: LogLevel | 'all'
-): ParsedLogEntry[] {
-  if (!logsString) return [];
-
-  const lines = logsString.split('\n').filter((line) => line.trim());
-
-  return lines
-    .map((line, index) => {
-      const timestamp = extractTimestamp(line);
-      const level = detectLogLevel(line);
-      const message = cleanLogMessage(line);
-
-      return {
-        id: `log-${index}`,
-        timestamp: timestamp || new Date().toISOString(),
-        formattedTime: formatTimestamp(timestamp),
-        message,
-        level,
-        raw: line
-      };
-    })
-    .filter((log) => {
-      const matchesSearch =
-        !searchTerm || log.message.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesLevel = levelFilter === 'all' || log.level === levelFilter;
-      return matchesSearch && matchesLevel;
-    });
-}
-
-function extractTimestamp(line: string): string {
-  const isoMatch = line.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
-  if (isoMatch) return isoMatch[0];
-
-  const commonMatch = line.match(/^\[?(\d{4}[-/]\d{2}[-/]\d{2}\s+\d{2}:\d{2}:\d{2})/);
-  if (commonMatch) return commonMatch[1];
-
-  return '';
-}
-
-function cleanLogMessage(line: string): string {
-  return line
-    .replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z?\s*/, '')
-    .replace(/^\[?\d{4}[-/]\d{2}[-/]\d{2}\s+\d{2}:\d{2}:\d{2}\]?\s*/, '')
-    .trim();
-}
-
-function detectLogLevel(message: string): LogLevel {
-  const lower = message.toLowerCase();
-  if (
-    lower.includes('error') ||
-    lower.includes('failed') ||
-    lower.includes('exception') ||
-    lower.includes('fatal')
-  ) {
-    return 'error';
-  }
-  if (lower.includes('warn') || lower.includes('warning')) {
-    return 'warn';
-  }
-  if (lower.includes('debug') || lower.includes('trace')) {
-    return 'debug';
-  }
-  return 'info';
-}
-
-function formatTimestamp(timestamp: string): string {
-  if (!timestamp) return '—';
-  try {
-    const date = new Date(timestamp);
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    });
-  } catch {
-    return timestamp;
-  }
 }

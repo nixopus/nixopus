@@ -18,19 +18,17 @@ import { formatBytes } from '@/lib/utils';
 import { useGetImagesQuery } from '@/redux/services/container/imagesApi';
 import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useContainerImages } from '@/packages/hooks/containers/use-container-images';
+import {
+  ContainerImage,
+  ImagesProps,
+  StatItemProps,
+  ImageCardProps,
+  DetailRowProps
+} from '@/packages/types/containers';
+import { CopyButton, EmptyState } from '@/packages/components/container-shared';
 
-interface Image {
-  id: string;
-  repo_tags: string[];
-  repo_digests: string[];
-  created: number;
-  size: number;
-  shared_size: number;
-  virtual_size: number;
-  labels: Record<string, string>;
-}
-
-export function Images({ containerId, imagePrefix }: { containerId: string; imagePrefix: string }) {
+export function Images({ containerId, imagePrefix }: ImagesProps) {
   const { data: images = [], isLoading } = useGetImagesQuery({ containerId, imagePrefix });
   const { t } = useTranslation();
 
@@ -39,12 +37,7 @@ export function Images({ containerId, imagePrefix }: { containerId: string; imag
   }
 
   if (images.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <Layers className="h-12 w-12 mb-4 opacity-30" />
-        <p className="text-sm">{t('containers.images.none')}</p>
-      </div>
-    );
+    return <EmptyState icon={Layers} message={t('containers.images.none')} />;
   }
 
   const totalSize = images.reduce((acc, img) => acc + img.size, 0);
@@ -66,15 +59,7 @@ export function Images({ containerId, imagePrefix }: { containerId: string; imag
   );
 }
 
-function StatItem({
-  icon: Icon,
-  value,
-  label
-}: {
-  icon: React.ElementType;
-  value: string | number;
-  label: string;
-}) {
+function StatItem({ icon: Icon, value, label }: StatItemProps) {
   return (
     <div className="flex items-center gap-3">
       <div className="p-2 rounded-lg bg-muted/50">
@@ -88,15 +73,9 @@ function StatItem({
   );
 }
 
-function ImageCard({ image, isFirst }: { image: Image; isFirst: boolean }) {
+function ImageCard({ image, isFirst }: ImageCardProps) {
   const [expanded, setExpanded] = useState(isFirst);
-  const [copied, setCopied] = useState<string | null>(null);
-
-  const copyToClipboard = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(key);
-    setTimeout(() => setCopied(null), 2000);
-  };
+  const { copied, copyToClipboard } = useContainerImages();
 
   const createdDate = new Date(image.created * 1000);
   const primaryTag = image.repo_tags?.[0] || '<none>';
@@ -194,19 +173,16 @@ function ImageCard({ image, isFirst }: { image: Image; isFirst: boolean }) {
                   >
                     <Tag className="h-3 w-3 text-muted-foreground" />
                     <span className="font-mono">{tag}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        copyToClipboard(tag, `tag-${idx}`);
-                      }}
-                      className="opacity-0 group-hover/tag:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                    <div
+                      className="opacity-0 group-hover/tag:opacity-100 transition-opacity"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {copied === `tag-${idx}` ? (
-                        <Check className="h-3 w-3 text-emerald-500" />
-                      ) : (
-                        <Copy className="h-3 w-3" />
-                      )}
-                    </button>
+                      <CopyButton
+                        copied={copied === `tag-${idx}`}
+                        onCopy={() => copyToClipboard(tag, `tag-${idx}`)}
+                        size="sm"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -225,19 +201,17 @@ function ImageCard({ image, isFirst }: { image: Image; isFirst: boolean }) {
                     className="group/digest flex items-center gap-2 p-2 rounded-lg bg-zinc-950 text-zinc-400"
                   >
                     <code className="text-xs font-mono truncate flex-1">{digest}</code>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        copyToClipboard(digest, `digest-${idx}`);
-                      }}
-                      className="opacity-0 group-hover/digest:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-300 flex-shrink-0"
+                    <div
+                      className="opacity-0 group-hover/digest:opacity-100 transition-opacity flex-shrink-0"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {copied === `digest-${idx}` ? (
-                        <Check className="h-3 w-3 text-emerald-500" />
-                      ) : (
-                        <Copy className="h-3 w-3" />
-                      )}
-                    </button>
+                      <CopyButton
+                        copied={copied === `digest-${idx}`}
+                        onCopy={() => copyToClipboard(digest, `digest-${idx}`)}
+                        size="sm"
+                        className="text-zinc-500 hover:text-zinc-300"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -275,17 +249,7 @@ function DetailRow({
   copyable,
   onCopy,
   copied
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  displayValue?: string;
-  sublabel?: string;
-  mono?: boolean;
-  copyable?: boolean;
-  onCopy?: () => void;
-  copied?: boolean;
-}) {
+}: DetailRowProps) {
   return (
     <div className="flex items-start gap-2">
       <Icon className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
@@ -296,19 +260,9 @@ function DetailRow({
             {displayValue || value}
           </span>
           {copyable && onCopy && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onCopy();
-              }}
-              className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-            >
-              {copied ? (
-                <Check className="h-3 w-3 text-emerald-500" />
-              ) : (
-                <Copy className="h-3 w-3" />
-              )}
-            </button>
+            <div onClick={(e) => e.stopPropagation()}>
+              <CopyButton copied={!!copied} onCopy={onCopy} size="sm" />
+            </div>
           )}
         </div>
         {sublabel && <p className="text-xs text-muted-foreground/60">{sublabel}</p>}
