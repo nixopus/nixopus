@@ -3,8 +3,8 @@ import { ContainerData } from '@/redux/types/monitor';
 import { useTranslation } from '@/hooks/use-translation';
 import { TypographyMuted, TypographySmall } from '@/components/ui/typography';
 import { Badge } from '@/components/ui/badge';
-import truncateId from '@/app/dashboard/components/utils/truncate-id';
-import getStatusColor from '@/app/dashboard/components/utils/get-status-color';
+import truncateId from '@/packages/components/dashboard/utils/truncate-id';
+import getStatusColor from '@/packages/components/dashboard/utils/get-status-color';
 
 export function useContainer() {
   const { t } = useTranslation();
