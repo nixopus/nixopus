@@ -6,7 +6,7 @@ import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { FileContextMenu } from '../context-menu/FileContextMenu';
 import { useTranslation } from '@/hooks/use-translation';
 import { TrashIcon } from 'lucide-react';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { ResourceGuard } from '@/packages/components/rbac';
 import { GridLayout } from './GridLayout';
 
 interface FileItemProps {

@@ -1,16 +1,19 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Github, Loader2 } from 'lucide-react';
-import {
-  GitHubAppCredentials,
-  GitHubAppManifest,
-  GitHubAppProps,
-  GitHubAppStatus
-} from '@/redux/types/github';
-import { useCreateGithubConnectorMutation } from '@/redux/services/connector/githubConnectorApi';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from '@/hooks/use-translation';
+import { GitHubAppCredentials, GitHubAppManifest, GitHubAppStatus } from '@/redux/types/github';
+import { useCreateGithubConnectorMutation } from '@/redux/services/connector/githubConnectorApi';
 import { getWebhookUrl } from '@/redux/conf';
+import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+interface UseGithubManifestFlowProps {
+  organization?: string;
+  appUrl?: string;
+  redirectUrl?: string;
+  onSuccess?: (credentials: GitHubAppCredentials) => void;
+  onError?: (error: Error) => void;
+  onCreateClick?: (createFn: () => void) => void;
+}
 
 const adjectives = [
   'cosmic',
@@ -44,20 +47,25 @@ const generateRandomName = (): string => {
   return `${adjective}-${noun}`;
 };
 
-const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
+const generateState = (): string => {
+  return crypto
+    .getRandomValues(new Uint8Array(16))
+    .reduce((acc, val) => acc + val.toString(16).padStart(2, '0'), '');
+};
+
+export function useGithubManifestFlow({
   organization,
   appUrl = process.env.NEXT_PUBLIC_APP_URL,
   redirectUrl = process.env.NEXT_PUBLIC_REDIRECT_URL,
   onSuccess,
   onError,
   onCreateClick
-}) => {
+}: UseGithubManifestFlowProps) {
   const { t } = useTranslation();
   const appName = useMemo(() => generateRandomName(), []);
   const [status, setStatus] = useState<GitHubAppStatus>('initial');
   const [error, setError] = useState<string | null>(null);
-  const [createGithubConnector, { isLoading, error: registerGithubAppError }] =
-    useCreateGithubConnectorMutation();
+  const [createGithubConnector, { isLoading }] = useCreateGithubConnectorMutation();
   const [webhookUrl, setWebhookUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -68,28 +76,7 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
     fetchWebHookUrl();
   }, []);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const stateParam = params.get('state');
-    if (code) {
-      handleGitHubCallback(code, stateParam);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (onCreateClick && status === 'initial') {
-      onCreateClick(createManifestForm);
-    }
-  }, [onCreateClick, status]);
-
-  const generateState = (): string => {
-    return crypto
-      .getRandomValues(new Uint8Array(16))
-      .reduce((acc, val) => acc + val.toString(16).padStart(2, '0'), '');
-  };
-
-  const createManifestForm = (): void => {
+  const createManifestForm = useCallback((): void => {
     const state = generateState();
     const manifest: GitHubAppManifest = {
       name: appName,
@@ -129,46 +116,63 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
     document.body.removeChild(form);
 
     setStatus('redirecting');
-  };
+  }, [appName, appUrl, redirectUrl, webhookUrl, organization]);
 
-  const handleGitHubCallback = async (code: string, stateParam: string | null): Promise<void> => {
-    setStatus('converting');
-    try {
-      const response = await fetch(`https://api.github.com/app-manifests/${code}/conversions`, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/vnd.github.v3+json'
+  const handleGitHubCallback = useCallback(
+    async (code: string, stateParam: string | null): Promise<void> => {
+      setStatus('converting');
+      try {
+        const response = await fetch(`https://api.github.com/app-manifests/${code}/conversions`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to convert manifest');
         }
-      });
 
-      if (!response.ok) {
-        console.log('response', response);
-        throw new Error('Failed to convert manifest');
+        const credentials: GitHubAppCredentials = await response.json();
+
+        await createGithubConnector({
+          app_id: credentials.id.toString(),
+          slug: credentials.slug,
+          pem: credentials.pem,
+          client_id: credentials.client_id,
+          client_secret: credentials.client_secret,
+          webhook_secret: credentials.webhook_secret
+        });
+
+        setStatus('success');
+        onSuccess?.(credentials);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+        setError(errorMessage);
+        setStatus('error');
+        onError?.(err instanceof Error ? err : new Error(errorMessage));
       }
+    },
+    [createGithubConnector, onSuccess, onError]
+  );
 
-      const credentials: GitHubAppCredentials = await response.json();
-
-      await createGithubConnector({
-        app_id: credentials.id.toString(),
-        slug: credentials.slug,
-        pem: credentials.pem,
-        client_id: credentials.client_id,
-        client_secret: credentials.client_secret,
-        webhook_secret: credentials.webhook_secret
-      });
-
-      setStatus('success');
-      onSuccess?.(credentials);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(errorMessage);
-      setStatus('error');
-      onError?.(err instanceof Error ? err : new Error(errorMessage));
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const stateParam = params.get('state');
+    if (code) {
+      handleGitHubCallback(code, stateParam);
     }
-  };
+  }, [handleGitHubCallback]);
 
-  if (status === 'redirecting' || status === 'converting') {
-    return (
+  useEffect(() => {
+    if (onCreateClick && status === 'initial') {
+      onCreateClick(createManifestForm);
+    }
+  }, [onCreateClick, status, createManifestForm]);
+
+  const loadingContent = useMemo(
+    () => (
       <div className="flex flex-col items-center gap-4 py-8">
         <Loader2 className="h-8 w-8 animate-spin" />
         <p>
@@ -177,28 +181,38 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
             : t('selfHost.githubManifest.status.converting')}
         </p>
       </div>
-    );
-  }
+    ),
+    [status, t]
+  );
 
-  if (status === 'success') {
-    return (
+  const successContent = useMemo(
+    () => (
       <Alert>
         <AlertDescription className="text-green-600">
           {t('selfHost.githubManifest.status.success')}
         </AlertDescription>
       </Alert>
-    );
-  }
+    ),
+    [t]
+  );
 
-  return (
-    <div className="flex flex-col items-center gap-4 w-full">
-      {error && (
+  const errorContent = useMemo(
+    () =>
+      error ? (
         <Alert variant="destructive" className="w-full">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-      )}
-    </div>
+      ) : null,
+    [error]
   );
-};
 
-export default GitHubAppManifestComponent;
+  return {
+    status,
+    error,
+    isLoading,
+    loadingContent,
+    successContent,
+    errorContent,
+    createManifestForm
+  };
+}
