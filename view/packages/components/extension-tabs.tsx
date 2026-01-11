@@ -34,31 +34,88 @@ export function OverviewTab({
 }: OverviewTabProps) {
   const { t } = useTranslation();
 
+  const runSteps = useMemo(() => parsed?.execution?.run || [], [parsed?.execution?.run]);
+  const validateSteps = useMemo(
+    () => parsed?.execution?.validate || [],
+    [parsed?.execution?.validate]
+  );
+  const hasRun = runSteps.length > 0;
+  const hasValidate = validateSteps.length > 0;
+
   if (isLoading) {
     return <Skeleton className="h-40 w-full" />;
   }
 
-  const runSteps = parsed?.execution?.run || [];
-  const validateSteps = parsed?.execution?.validate || [];
-  const hasRun = runSteps.length > 0;
-  const hasValidate = validateSteps.length > 0;
+  return (
+    <div className="space-y-6">
+      <BadgeGroup>
+        {extension?.category && (
+          <BadgeGroupItem variant="secondary">{extension.category}</BadgeGroupItem>
+        )}
+        {extension?.extension_type && (
+          <BadgeGroupItem variant="outline">{extension.extension_type}</BadgeGroupItem>
+        )}
+        {extension?.version && <BadgeGroupItem>v{extension.version}</BadgeGroupItem>}
+        {extension?.is_verified && <BadgeGroupItem>Verified</BadgeGroupItem>}
+      </BadgeGroup>
 
-  const createStepColumns = (
-    label: string,
-    openIndex: number | null,
-    onToggle: (index: number | null) => void
-  ): TableColumn<any>[] =>
-    useMemo(
-      () => [
-        {
-          key: 'step',
-          title: label,
-          render: (step, _, index) => {
-            const entries = Object.entries(step || {}).filter(
-              ([k]) => k !== 'name' && k !== 'type'
-            );
-            const isOpen = openIndex === index;
-            return (
+      {extension?.variables && extension.variables.length > 0 && variableColumns && (
+        <DataTable
+          data={extension.variables}
+          columns={variableColumns}
+          showBorder={true}
+          striped={false}
+        />
+      )}
+
+      {(hasRun || hasValidate) && (
+        <div className="flex flex-col gap-4">
+          {hasRun && (
+            <StepList
+              label={t('extensions.runSteps') || 'Run steps'}
+              steps={runSteps}
+              openIndex={openRunIndex ?? null}
+              onToggle={(i) => (onToggleRun || (() => {}))(i)}
+              entryColumns={entryColumns}
+            />
+          )}
+          {hasValidate && (
+            <StepList
+              label={t('extensions.validateSteps') || 'Validate steps'}
+              steps={validateSteps}
+              openIndex={openValidateIndex ?? null}
+              onToggle={(i) => (onToggleValidate || (() => {}))(i)}
+              entryColumns={entryColumns}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StepList({
+  label,
+  steps,
+  openIndex,
+  onToggle,
+  entryColumns
+}: {
+  label: string;
+  steps: any[];
+  openIndex: number | null;
+  onToggle: (i: number | null) => void;
+  entryColumns?: TableColumn<[string, any]>[];
+}) {
+  return (
+    <div className="rounded-md border overflow-hidden">
+      <div className="bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">{label}</div>
+      <ol className="divide-y">
+        {steps.map((step: any, index: number) => {
+          const entries = Object.entries(step || {}).filter(([k]) => k !== 'name' && k !== 'type');
+          const isOpen = openIndex === index;
+          return (
+            <li key={index} className="px-3 py-3 text-sm">
               <Collapsible open={isOpen} onOpenChange={(open) => onToggle(open ? index : null)}>
                 <CollapsibleTrigger className="w-full text-left flex items-start gap-2 group">
                   <TypographyMuted className="mt-0.5 shrink-0">{index + 1}.</TypographyMuted>
@@ -73,9 +130,7 @@ export function OverviewTab({
                     )}
                   </div>
                   <ChevronDown
-                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-                      isOpen ? 'rotate-180' : ''
-                    }`}
+                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                   />
                 </CollapsibleTrigger>
                 {entries.length > 0 && entryColumns && (
@@ -90,75 +145,10 @@ export function OverviewTab({
                   </CollapsibleContent>
                 )}
               </Collapsible>
-            );
-          }
-        }
-      ],
-      [label, openIndex, onToggle, entryColumns]
-    );
-
-  const runStepColumns = createStepColumns(
-    t('extensions.runSteps') || 'Run steps',
-    openRunIndex ?? null,
-    onToggleRun || (() => {})
-  );
-
-  const validateStepColumns = createStepColumns(
-    t('extensions.validateSteps') || 'Validate steps',
-    openValidateIndex ?? null,
-    onToggleValidate || (() => {})
-  );
-
-  return (
-    <div className="space-y-6">
-      <CardWrapper description={extension?.description}>
-        <BadgeGroup>
-          {extension?.category && (
-            <BadgeGroupItem variant="secondary">{extension.category}</BadgeGroupItem>
-          )}
-          {extension?.extension_type && (
-            <BadgeGroupItem variant="outline">{extension.extension_type}</BadgeGroupItem>
-          )}
-          {extension?.version && <BadgeGroupItem>v{extension.version}</BadgeGroupItem>}
-          {extension?.is_verified && <BadgeGroupItem>Verified</BadgeGroupItem>}
-        </BadgeGroup>
-      </CardWrapper>
-
-      {extension?.variables && extension.variables.length > 0 && variableColumns && (
-        <CardWrapper title="Variables">
-          <DataTable
-            data={extension.variables}
-            columns={variableColumns}
-            showBorder={true}
-            striped={false}
-          />
-        </CardWrapper>
-      )}
-
-      {(hasRun || hasValidate) && (
-        <CardWrapper title={t('extensions.execution') || 'Execution'}>
-          <div className="flex flex-col gap-4">
-            {hasRun && (
-              <DataTable
-                data={runSteps}
-                columns={runStepColumns}
-                showBorder={true}
-                striped={false}
-                rowClassName="border-0"
-              />
-            )}
-            {hasValidate && (
-              <DataTable
-                data={validateSteps}
-                columns={validateStepColumns}
-                showBorder={true}
-                striped={false}
-                rowClassName="border-0"
-              />
-            )}
-          </div>
-        </CardWrapper>
-      )}
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
@@ -184,17 +174,15 @@ export function LogsTab({
 
   return (
     <>
-      <CardWrapper title={t('extensions.executions') || 'Executions'}>
-        <DataTable
-          data={executions || []}
-          columns={executionColumns}
-          loading={isLoading}
-          emptyMessage={t('extensions.noExecutions') || 'No executions yet.'}
-          onRowClick={(record) => onOpenLogs(record.id)}
-          showBorder={true}
-          striped={false}
-        />
-      </CardWrapper>
+      <DataTable
+        data={executions || []}
+        columns={executionColumns}
+        loading={isLoading}
+        emptyMessage={t('extensions.noExecutions') || 'No executions yet.'}
+        onRowClick={(record) => onOpenLogs(record.id)}
+        showBorder={true}
+        striped={false}
+      />
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="sm:max-w-3xl flex flex-col h-full">

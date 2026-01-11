@@ -4,7 +4,8 @@ import { useTranslation } from '@/hooks/use-translation';
 import {
   useGetExecutionLogsQuery,
   useGetExtensionQuery,
-  useRunExtensionMutation
+  useRunExtensionMutation,
+  useForkExtensionMutation
 } from '@/redux/services/extensions/extensionsApi';
 import { useListExecutionsQuery } from '@/redux/services/extensions/extensionsApi';
 import { useRef } from 'react';
@@ -22,6 +23,8 @@ import { TableColumn } from '@/components/ui/data-table';
 import { Extension, ExtensionExecution } from '@/redux/types/extension';
 import { TypographyMuted, TypographySmall } from '@/components/ui/typography';
 import { LogsTab, OverviewTab } from '@/packages/components/extension-tabs';
+import { toast } from 'sonner';
+import { VariableData } from '@/packages/types/extension';
 
 type LogState = 'info' | 'success' | 'error' | 'muted';
 
@@ -106,6 +109,9 @@ function useExtensionDetails() {
   const [tab, setTab] = useState<string>('overview');
   const [runModalOpen, setRunModalOpen] = useState(false);
   const [runExtension, { isLoading: isRunning }] = useRunExtensionMutation();
+  const [forkOpen, setForkOpen] = useState(false);
+  const [forkYaml, setForkYaml] = useState<string>('');
+  const [forkExtension, { isLoading: isForking }] = useForkExtensionMutation();
 
   const handleRunExtension = async (values: Record<string, unknown>) => {
     if (!extension) return;
@@ -214,25 +220,86 @@ function useExtensionDetails() {
       {
         key: 'key',
         title: 'Key',
-        render: ([k]) => k,
+        render: (_: any, record: [string, any]) => record[0],
         width: '25%',
         className: 'text-muted-foreground'
       },
       {
         key: 'value',
         title: 'Value',
-        render: ([, v]) =>
-          typeof v === 'object' ? (
+        render: (_: any, record: [string, any]) => {
+          const v = record[1];
+          return typeof v === 'object' ? (
             <pre className="whitespace-pre-wrap text-xs">{JSON.stringify(v, null, 2)}</pre>
           ) : (
             String(v)
-          ),
+          );
+        },
         width: '75%',
         className: 'break-words'
       }
     ],
     []
   );
+
+  const forkPreview = useMemo(() => {
+    try {
+      const y = YAML.parse(forkYaml || '');
+      const variables = y?.variables || {};
+      const variablesArray: VariableData[] = Object.entries(variables).map(
+        ([key, val]: [string, any]) => ({
+          name: key,
+          type: val?.variable_type || val?.type || '',
+          required: val?.is_required ? 'Yes' : 'No',
+          default: String(val?.default_value ?? ''),
+          description: val?.description || ''
+        })
+      );
+      return {
+        variables: variablesArray,
+        execution: y?.execution || {},
+        metadata: y?.metadata || {}
+      } as any;
+    } catch {
+      return undefined;
+    }
+  }, [forkYaml]);
+
+  const forkVariableColumns: TableColumn<VariableData>[] = useMemo(
+    () => [
+      { key: 'name', title: 'Name', dataIndex: 'name' },
+      { key: 'type', title: 'Type', dataIndex: 'type' },
+      { key: 'required', title: 'Required', dataIndex: 'required' },
+      {
+        key: 'default',
+        title: 'Default',
+        dataIndex: 'default',
+        className: 'truncate max-w-[120px]'
+      },
+      { key: 'description', title: 'Description', dataIndex: 'description' }
+    ],
+    []
+  );
+
+  useEffect(() => {
+    if (forkOpen) {
+      setForkYaml(extension?.yaml_content || '');
+    }
+  }, [forkOpen, extension]);
+
+  const doFork = async () => {
+    try {
+      await forkExtension({
+        extensionId: extension?.extension_id || '',
+        yaml_content: forkYaml || undefined
+      }).unwrap();
+      toast.success(t('extensions.forkSuccess') || 'Extension forked successfully');
+      setForkOpen(false);
+      router.push('/extensions');
+    } catch (e) {
+      toast.error(t('extensions.forkFailed') || 'Failed to fork extension');
+    }
+  };
 
   useEffect(() => {
     if (prevExtensionIdRef.current !== id) {
@@ -588,7 +655,15 @@ function useExtensionDetails() {
     noFieldsToShow,
     setOpenRunIndex,
     setOpenValidateIndex,
-    actions
+    actions,
+    forkOpen,
+    setForkOpen,
+    forkYaml,
+    setForkYaml,
+    forkPreview,
+    forkVariableColumns,
+    doFork,
+    isForking
   };
 }
 
