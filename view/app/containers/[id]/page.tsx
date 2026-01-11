@@ -6,13 +6,13 @@ import { isNixopusContainer } from '@/lib/utils';
 import { useContainerDetail } from '../../../packages/hooks/containers/use-container-detail';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ContainerDetailsLoading from '../../../packages/components/container-skeletons';
+import { ContainerDetailsHeader } from '../../../packages/components/container';
 import {
-  ContainerDetailsHeader,
   OverviewTab,
   LogsTab,
   Terminal as TerminalComponent,
   Images
-} from '../../../packages/components/container';
+} from '../../../packages/components/container-sections';
 import { ResourceGuard } from '@/packages/components/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
 

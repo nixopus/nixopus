@@ -13,7 +13,7 @@ import LoadAverageCard from '@/packages/components/dashboard/system/load-average
 import CPUUsageCard from '@/packages/components/dashboard/system/cpu-usage';
 import MemoryUsageCard from '@/packages/components/dashboard/system/memory-usage';
 import DiskUsageCard from '@/packages/components/dashboard/system/disk-usage';
-import { ContainersWidget } from '@/packages/components/container';
+import { ContainersWidget } from '@/packages/components/dashboard/container-listing';
 import { DashboardItem } from '@/packages/types/layout';
 import { useContainer } from '@/packages/hooks/dashboard/container/use-container';
 

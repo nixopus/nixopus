@@ -14,7 +14,6 @@ import {
   Scissors,
   ChevronUp,
   ChevronDown,
-  Package,
   StopCircle,
   RotateCw,
   Copy,
@@ -28,7 +27,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CardWrapper } from '@/components/ui/card-wrapper';
 import { DataTable, TableColumn } from '@/components/ui/data-table';
 import {
   Dialog,
@@ -47,7 +45,6 @@ import { cn } from '@/lib/utils';
 import { useContainerActions } from '@/packages/hooks/containers/use-container-actions';
 import { translationKey } from '@/packages/hooks/shared/use-translation';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { Container } from '@/redux/services/container/containerApi';
 import { ContainerData } from '@/redux/types/monitor';
@@ -77,7 +74,6 @@ import {
   ContainersTableProps,
   SortableHeaderProps,
   ContainerRowProps,
-  ContainersWidgetProps,
   StatPillProps,
   ContainerDetailsHeaderProps,
   ResourceLimitsFormProps,
@@ -603,35 +599,6 @@ function ContainerRow({ container, onClick, onAction }: ContainerRowProps) {
 }
 
 export default ContainersTable;
-
-const ContainersWidget: React.FC<ContainersWidgetProps> = ({ containersData, columns }) => {
-  const { t } = useTranslation();
-  const router = useRouter();
-
-  return (
-    <CardWrapper
-      title={t('dashboard.containers.title')}
-      icon={Package}
-      compact
-      actions={
-        <Button variant="outline" size="sm" onClick={() => router.push('/containers')}>
-          <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-          {t('dashboard.containers.viewAll')}
-        </Button>
-      }
-    >
-      <DataTable
-        data={containersData}
-        columns={columns}
-        emptyMessage={t('dashboard.containers.table.noContainers')}
-        showBorder={false}
-        hoverable={false}
-      />
-    </CardWrapper>
-  );
-};
-
-export { ContainersWidget };
 
 export function StatPill({ value, label, color }: StatPillProps) {
   return (
