@@ -26,7 +26,7 @@ import useUpdateContainerResources, {
   ResourceLimitsFormValues
 } from '../../hooks/use-update-container-resources';
 import { cn } from '@/lib/utils';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { ResourceGuard } from '@/packages/components/rbac';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ResourceLimitsFormProps {
