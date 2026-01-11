@@ -1,5 +1,5 @@
 import { useRouter } from 'next/navigation';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -9,7 +9,7 @@ import {
   useGetContainersQuery,
   Container
 } from '@/redux/services/container/containerApi';
-import { useFeatureFlags } from '@/hooks/features_provider';
+import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
 import { usePruneBuildCacheMutation } from '@/redux/services/container/imagesApi';
 import { usePruneImagesMutation } from '@/redux/services/container/imagesApi';
 

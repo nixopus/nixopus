@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useAppSelector } from '@/redux/hooks';
 import {
   useGetAllFeatureFlagsQuery,

@@ -9,7 +9,7 @@ import React, {
   ReactNode,
   useCallback
 } from 'react';
-import { useWebSocket } from '@/hooks/socket-provider';
+import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { SystemStatsType } from '@/redux/types/monitor';
 
 interface SystemStatsContextType {

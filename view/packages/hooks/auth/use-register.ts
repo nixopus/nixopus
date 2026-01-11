@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslation, type translationKey } from '@/hooks/use-translation';
+import { useTranslation, type translationKey } from '@/packages/hooks/shared/use-translation';
 import { useRouter } from 'next/navigation';
 import { signUp } from 'supertokens-auth-react/recipe/emailpassword';
 import { toast } from 'sonner';

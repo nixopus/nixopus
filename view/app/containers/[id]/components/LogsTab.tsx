@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Container } from '@/redux/services/container/containerApi';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { cn } from '@/lib/utils';
 
 const LOGS_DENSE_MODE_KEY = 'nixopus_logs_dense_mode';

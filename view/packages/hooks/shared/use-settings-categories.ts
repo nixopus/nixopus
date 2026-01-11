@@ -13,7 +13,7 @@ import {
   Container
 } from 'lucide-react';
 import { useRBAC } from '@/lib/rbac';
-import { useFeatureFlags } from '@/hooks/features_provider';
+import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
 import { FeatureNames } from '@/packages/types/feature-flags';
 import { useAppSelector } from '@/redux/hooks';
 

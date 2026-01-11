@@ -6,7 +6,7 @@ import { PasswordInputField } from '@/components/ui/password-input-field';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import nixopusLogo from '@/public/nixopus_logo_transparent.png';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import Link from 'next/link';
 import { useState } from 'react';
 import { z } from 'zod';

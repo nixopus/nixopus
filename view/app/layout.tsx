@@ -10,13 +10,13 @@ import { useAppDispatch } from '@/redux/hooks';
 import { useEffect } from 'react';
 import { initializeAuth } from '@/redux/features/users/authSlice';
 import { usePathname, useRouter } from 'next/navigation';
-import { WebSocketProvider } from '@/hooks/socket-provider';
-import { FeatureFlagsProvider } from '@/hooks/features_provider';
-import { SystemStatsProvider } from '@/hooks/system-stats-provider';
+import { WebSocketProvider } from '@/packages/hooks/shared/socket-provider';
+import { FeatureFlagsProvider } from '@/packages/hooks/shared/features_provider';
+import { SystemStatsProvider } from '@/packages/hooks/shared/system-stats-provider';
 import { palette } from '@/packages/utils/colors';
 import { SuperTokensProvider } from '@/packages/layouts/supertokensProvider';
 import { useSessionContext } from 'supertokens-auth-react/recipe/session';
-import { SettingsModalProvider } from '@/hooks/use-settings-modal';
+import { SettingsModalProvider } from '@/packages/hooks/shared/use-settings-modal';
 import AppLayout from '@/packages/layouts/layout';
 import { SettingsModal } from '@/packages/components/settings';
 

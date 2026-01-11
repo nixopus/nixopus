@@ -13,7 +13,7 @@ import {
   Clock
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { formatBytes } from '@/lib/utils';
 import { useGetImagesQuery } from '@/redux/services/container/imagesApi';
 import { formatDistanceToNow, format } from 'date-fns';

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { LogoutDialog } from '@/components/ui/logout-dialog';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
@@ -43,8 +43,11 @@ import {
   type SettingConfig
 } from '@/packages/hooks/settings/use-settings-content';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { useSettingsModal } from '@/hooks/use-settings-modal';
-import { SettingsCategory, useSettingsCategories } from '@/hooks/use-settings-categories';
+import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
+import {
+  SettingsCategory,
+  useSettingsCategories
+} from '@/packages/hooks/shared/use-settings-categories';
 import { Heart, HelpCircle, AlertCircle, ArrowUpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSettingsFooter } from '@/packages/hooks/settings/use-settings-footer';

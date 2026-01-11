@@ -2,7 +2,7 @@ import React from 'react';
 import { DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { FileData } from '@/redux/types/files';
 import { formatFileSize } from '@/packages/utils/util';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 interface FileInfoProps {
   file: FileData;

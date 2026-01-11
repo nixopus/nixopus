@@ -2,7 +2,7 @@ import { DialogWrapper, DialogAction } from '@/components/ui/dialog-wrapper';
 import React from 'react';
 import { useDeleteDomainMutation } from '@/redux/services/settings/domainsApi';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Domain } from '@/redux/types/domain';
 import { ResourceGuard } from '@/packages/components/rbac';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';

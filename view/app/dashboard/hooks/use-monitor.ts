@@ -1,5 +1,5 @@
 'use client';
-import { useWebSocket } from '@/hooks/socket-provider';
+import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { ContainerData, SystemStatsType } from '@/redux/types/monitor';
 import { useEffect, useState, useRef, useCallback } from 'react';
 

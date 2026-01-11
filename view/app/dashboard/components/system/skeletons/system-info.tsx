@@ -4,7 +4,7 @@ import React from 'react';
 import { Server } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { TypographySmall } from '@/components/ui/typography';
 
 export function SystemInfoCardSkeleton() {

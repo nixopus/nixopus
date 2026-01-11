@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { LanguageSwitcher } from '@/packages/components/language-switcher';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { Switch } from '@/components/ui/switch';

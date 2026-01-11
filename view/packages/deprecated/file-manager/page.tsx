@@ -11,20 +11,19 @@ import Actions from './components/actions/Actions';
 import { FileItem } from './components/file-list/FileItem';
 import FileTable from './components/file-list/FileTable';
 import useFileManager from './hooks/ui/useFileManager';
-import { useTranslation } from '@/hooks/use-translation';
-import type { translationKey } from '@/hooks/use-translation';
+import { translationKey, useTranslation } from '@/packages/hooks/shared/use-translation';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { FileData } from '@/redux/types/files';
 import { FileContextMenu } from './components/context-menu/FileContextMenu';
 import { toast } from 'sonner';
-import { useFeatureFlags } from '@/hooks/features_provider';
 import DisabledFeature from '@/packages/components/rbac';
 import { FeatureNames } from '@/packages/types/feature-flags';
 import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/packages/hooks/shared/use-mobile';
 import { DialogWrapper } from '@/components/ui/dialog-wrapper';
 import FileInfo from './components/file-list/FileInfo';
+import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
 
 const CopyFeedback = ({ show, message }: { show: boolean; message: string }) => {
   if (!show) return null;

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import { SidebarHoverMenu } from '@/components/ui/sidebar-hover-menu';
 import Link from 'next/link';
-import { useCollapsibleState } from '@/hooks/use-collapsible-state';
+import { useCollapsibleState } from '@/packages/hooks/shared/use-collapsible-state';
 import { TopNavMainProps } from '@/packages/types/layout';
 
 export function NavMain({ items, onItemClick }: TopNavMainProps) {

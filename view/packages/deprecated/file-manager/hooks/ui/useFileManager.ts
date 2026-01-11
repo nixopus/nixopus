@@ -2,11 +2,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FileData } from '@/redux/types/files';
-import { useSearchable } from '@/hooks/use-searchable';
+import { useSearchable } from '@/packages/hooks/shared/use-searchable';
 import { useGetFilesInPathQuery } from '@/redux/services/file-manager/fileManagersApi';
 import { useFileOperations } from '../file-operations/useOperations';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 function use_file_manager() {
   const { t } = useTranslation();

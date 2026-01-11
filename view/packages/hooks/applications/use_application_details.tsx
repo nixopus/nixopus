@@ -12,7 +12,6 @@ import {
   ApplicationDeployment,
   ApplicationDeploymentStatus
 } from '@/redux/types/applications';
-import { useTranslation } from '@/hooks/use-translation';
 import { BuildPack, Environment } from '@/redux/types/deploy-form';
 import type { TabItem } from '@/components/ui/tabs-wrapper';
 import { Activity, Settings, Layers, ScrollText } from 'lucide-react';
@@ -21,6 +20,7 @@ import DeploymentsList, {
   Monitor
 } from '@/packages/components/application-details';
 import { DeployConfigureForm } from '@/packages/components/application-form';
+import { useTranslation } from '../shared/use-translation';
 
 interface WebSocketMessage {
   action: string;

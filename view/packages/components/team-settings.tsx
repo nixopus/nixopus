@@ -6,7 +6,7 @@ import { DialogWrapper, DialogAction } from '@/components/ui/dialog-wrapper';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { Label } from '@/components/ui/label';
 import { PlusIcon, PencilIcon, ArrowRight, Loader2 } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { UserTypes } from '@/redux/types/orgs';
 import { DataTable } from '@/components/ui/data-table';
 import { TrashIcon } from 'lucide-react';

@@ -18,7 +18,7 @@ import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { ContainerCard } from './components/card';
 import { cn } from '@/lib/utils';
 import MainPageHeader from '@/components/ui/main-page-header';
-import { translationKey } from '@/hooks/use-translation';
+import { translationKey } from '@/packages/hooks/shared/use-translation';
 import DisabledFeature from '@/packages/components/rbac';
 
 export default function ContainersPage() {

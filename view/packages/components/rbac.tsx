@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { AlertTriangle } from 'lucide-react';
 import { Action, Permission, Resource } from '@/lib/rbac';
 import { useRBAC } from '@/lib/rbac';

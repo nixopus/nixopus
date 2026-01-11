@@ -3,12 +3,12 @@ import { z } from 'zod';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useWebSocket } from '@/hooks/socket-provider';
+import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { useRouter } from 'next/navigation';
 import { useCreateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';
 import { toast } from 'sonner';
 import { useAppSelector } from '@/redux/hooks';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 interface DeploymentFormValues {
   application_name: string;

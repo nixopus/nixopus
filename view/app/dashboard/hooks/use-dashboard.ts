@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useFeatureFlags } from '@/hooks/features_provider';
+import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
 import { useAppSelector } from '@/redux/hooks';
 import { useGetSMTPConfigurationsQuery } from '@/redux/services/settings/notificationApi';
 import { useCheckForUpdatesQuery } from '@/redux/services/users/userApi';

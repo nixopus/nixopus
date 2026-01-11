@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSessionContext } from 'supertokens-auth-react/recipe/session';
 import { signIn } from 'supertokens-auth-react/recipe/emailpassword';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/redux/hooks';
 import { initializeAuth } from '@/redux/features/users/authSlice';

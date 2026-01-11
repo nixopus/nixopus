@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { useUpdateContainerResourcesMutation } from '@/redux/services/container/containerApi';
-import { useTranslation, translationKey } from '@/hooks/use-translation';
+import { useTranslation, translationKey } from '@/packages/hooks/shared/use-translation';
 import { Cpu, MemoryStick, HardDrive, LucideIcon } from 'lucide-react';
 
 interface UseUpdateContainerResourcesProps {

@@ -18,7 +18,7 @@ import {
   UpdateWebhookConfigRequest
 } from '@/redux/types/notification';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 function useNotificationSettings() {
   const { t } = useTranslation();

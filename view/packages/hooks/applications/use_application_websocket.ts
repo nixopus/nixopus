@@ -1,4 +1,4 @@
-import { useWebSocket } from '@/hooks/socket-provider';
+import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { SOCKET_EVENTS } from '@/redux/api-conf';
 import { SubscribeToTopic } from '@/redux/sockets/socket';
 import { useEffect } from 'react';

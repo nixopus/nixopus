@@ -4,7 +4,7 @@ import '@xterm/xterm/css/xterm.css';
 import { v4 as uuidv4 } from 'uuid';
 import { useTerminal } from '@/packages/hooks/terminal/use-terminal';
 import { useContainerReady } from '@/packages/hooks/terminal/use-container-ready';
-import { useWebSocket } from '@/hooks/socket-provider';
+import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 
 type TerminalProps = {
   containerId: string;

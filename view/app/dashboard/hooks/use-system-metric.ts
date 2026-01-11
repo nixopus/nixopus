@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { SystemStatsType } from '@/redux/types/monitor';
-import { useTranslation, translationKey } from '@/hooks/use-translation';
+import { useTranslation, translationKey } from '@/packages/hooks/shared/use-translation';
 
 interface UseSystemMetricOptions<T> {
   systemStats: SystemStatsType | null;

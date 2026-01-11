@@ -32,7 +32,7 @@ import { NavMain } from '@/packages/components/nav-main';
 import { RBACGuard } from '@/packages/components/rbac';
 import { Terminal } from '@/packages/components/terminal';
 import { TopbarWidgets } from '@/packages/components/topbar-widgets';
-import { useSettingsModal } from '@/hooks/use-settings-modal';
+import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
 import {
   AppSidebarProps,
   AppTopBarProps,

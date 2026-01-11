@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Upload, Trash } from 'lucide-react';
 import { DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useFileOperations } from '../../hooks/file-operations/useOperations';
-import { useTranslation } from '@/hooks/use-translation';
 import { ResourceGuard } from '@/packages/components/rbac';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 interface FileUploadProps {
   setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;

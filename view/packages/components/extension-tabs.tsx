@@ -6,7 +6,7 @@ import { BadgeGroup, BadgeGroupItem } from '@/components/ui/badge-group';
 import { CardWrapper } from '@/components/ui/card-wrapper';
 import { DataTable, type TableColumn } from '@/components/ui/data-table';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';

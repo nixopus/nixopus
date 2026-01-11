@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useWebSocket } from '@/hooks/socket-provider';
+import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { getAdvancedSettings } from '@/lib/advanced-settings';
 import type { ExitHandler, TerminalOutput } from '../../types/terminal';
 

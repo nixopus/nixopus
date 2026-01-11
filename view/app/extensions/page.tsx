@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import PageLayout from '@/packages/layouts/page-layout';
 import { useExtensions } from '../../packages/hooks/extensions/use-extensions';
 import PaginationWrapper from '@/components/ui/pagination';

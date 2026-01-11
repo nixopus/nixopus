@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useSendVerificationEmailMutation } from '@/redux/services/users/authApi';
 import { UserSettings } from '@/redux/types/user';
 

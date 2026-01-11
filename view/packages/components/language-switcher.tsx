@@ -2,7 +2,7 @@
 
 import { locales } from '@/lib/i18n/config';
 import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useEffect, useState } from 'react';
 import { useUpdateLanguageMutation } from '@/redux/services/users/userApi';
 import { UserSettings } from '@/redux/types/user';
