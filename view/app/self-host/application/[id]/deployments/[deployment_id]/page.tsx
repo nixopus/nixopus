@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { useParams } from 'next/navigation';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { ResourceGuard } from '@/packages/components/rbac';
 import { Skeleton } from '@/components/ui/skeleton';
-import PageLayout from '@/components/layout/page-layout';
+import PageLayout from '@/packages/layouts/page-layout';
 import DeploymentLogsTable from '@/packages/components/deployment-logs';
 
 function page() {

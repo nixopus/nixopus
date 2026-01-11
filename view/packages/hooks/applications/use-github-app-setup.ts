@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo, useCallback } from 'react';
 import { GitHubAppCredentials } from '@/redux/types/github';
-import { defineStepper } from '@/components/stepper';
+import { defineStepper } from '@/components/ui/stepper';
 
 const STEPPER_STEPS = [
   { id: 'create-app', title: 'Create App' },

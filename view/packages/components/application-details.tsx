@@ -15,7 +15,7 @@ import { DialogWrapper } from '@/components/ui/dialog-wrapper';
 import { Label } from '@/components/ui/label';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { Input } from '@/components/ui/input';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { ResourceGuard } from '@/packages/components/rbac';
 import SubPageHeader from '@/components/ui/sub-page-header';
 import { useApplicationHeader } from '@/packages/hooks/applications/use_application_header';
 import DeploymentLogsTable from '@/packages/components/deployment-logs';

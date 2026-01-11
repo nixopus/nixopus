@@ -1,7 +1,7 @@
 'use client';
 import { TourProvider, StepType, useTour as useReactourTour } from '@reactour/tour';
-import { useTour as useCustomTour } from '../hooks/useTour';
 import React from 'react';
+import { useTour as useCustomTour } from '@/hooks/useTour';
 
 const steps: StepType[] = [
   {

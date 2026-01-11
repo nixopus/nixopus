@@ -81,9 +81,13 @@ const sizeClasses = {
   lg: 'h-3 w-3'
 };
 
-export function useStatusIndicator({ status, size = 'md', showLabel = true }: UseStatusIndicatorProps) {
+export function useStatusIndicator({
+  status,
+  size = 'md',
+  showLabel = true
+}: UseStatusIndicatorProps) {
   const config = useMemo(() => {
-    return status ? (statusConfig[status] || defaultConfig) : defaultConfig;
+    return status ? statusConfig[status] || defaultConfig : defaultConfig;
   }, [status]);
 
   const sizeClass = useMemo(() => sizeClasses[size], [size]);
@@ -137,4 +141,3 @@ export function useStatusIndicator({ status, size = 'md', showLabel = true }: Us
     hasStatus: !!status
   };
 }
-

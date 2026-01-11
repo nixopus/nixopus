@@ -100,7 +100,9 @@ function AppItem(application: Application) {
                 return (
                   <span key={item.key} className="flex items-center gap-1">
                     <Icon className="h-3 w-3" />
-                    <span className={item.key === 'buildPack' ? 'capitalize' : ''}>{item.label}</span>
+                    <span className={item.key === 'buildPack' ? 'capitalize' : ''}>
+                      {item.label}
+                    </span>
                   </span>
                 );
               })}
@@ -108,7 +110,9 @@ function AppItem(application: Application) {
 
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
               <span className="text-xs text-muted-foreground">{timeAgo}</span>
-              <span className={cn('text-xs font-medium', statusTextColor)}>{statusConfig.label}</span>
+              <span className={cn('text-xs font-medium', statusTextColor)}>
+                {statusConfig.label}
+              </span>
             </div>
           </div>
         </div>
