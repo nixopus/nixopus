@@ -7,9 +7,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronsUpDown, Check } from 'lucide-react';
-import {
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 interface UseProjectFamilySwitcherProps {
   application: Application;
@@ -104,4 +102,3 @@ export function useProjectFamilySwitcher({ application }: UseProjectFamilySwitch
     dropdownContent
   };
 }
-
