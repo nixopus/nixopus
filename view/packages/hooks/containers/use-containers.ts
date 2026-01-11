@@ -172,19 +172,6 @@ export function useContainers() {
     }
   };
 
-  const getGradientFromName = (name: string) => {
-    const colors = [
-      'from-blue-500/20 to-purple-500/20',
-      'from-green-500/20 to-teal-500/20',
-      'from-yellow-500/20 to-orange-500/20',
-      'from-red-500/20 to-pink-500/20',
-      'from-indigo-500/20 to-violet-500/20',
-      'from-emerald-500/20 to-cyan-500/20'
-    ];
-    const index = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
-    return colors[index];
-  };
-
   return {
     containers,
     isLoading,
@@ -207,7 +194,6 @@ export function useContainers() {
     router,
     containerToDelete,
     setContainerToDelete,
-    getGradientFromName,
     page,
     setPage,
     pageSize,
