@@ -19,6 +19,7 @@ import PageLayout from '@/components/layout/page-layout';
 import { TypographyH2, TypographyMuted } from '@/components/ui/typography';
 import { Plus } from 'lucide-react';
 import { LabelFilter } from '@/components/ui/label-filter';
+import MainPageHeader from '@/components/ui/main-page-header';
 
 function page() {
   const { t } = useTranslation();
@@ -90,28 +91,26 @@ function page() {
     >
       <PageLayout maxWidth="full" padding="md" spacing="lg">
         {!isShowingGitHubSetup && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">
-                {isShowingRepositories
-                  ? t('selfHost.repositories.title')
-                  : t('selfHost.page.title')}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                {isShowingRepositories
-                  ? t('selfHost.repositories.search.placeholder')
-                  : t('selfHost.page.description')}
-              </p>
-            </div>
-            {showApplications && (
-              <AnyPermissionGuard permissions={['deploy:create']} loadingFallback={null}>
-                <Button onClick={() => router.push('/self-host/create')} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  {t('selfHost.page.createButton')}
-                </Button>
-              </AnyPermissionGuard>
-            )}
-          </div>
+          <MainPageHeader
+            label={
+              isShowingRepositories ? t('selfHost.repositories.title') : t('selfHost.page.title')
+            }
+            description={
+              isShowingRepositories
+                ? t('selfHost.repositories.search.placeholder')
+                : t('selfHost.page.description')
+            }
+            actions={
+              showApplications ? (
+                <AnyPermissionGuard permissions={['deploy:create']} loadingFallback={null}>
+                  <Button onClick={() => router.push('/self-host/create')} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    {t('selfHost.page.createButton')}
+                  </Button>
+                </AnyPermissionGuard>
+              ) : undefined
+            }
+          />
         )}
 
         {renderContent()}

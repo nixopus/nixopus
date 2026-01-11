@@ -21,7 +21,7 @@ import { DraggableGrid } from '@/components/ui/draggable-grid';
 import { WidgetSelector } from './components/widget-selector';
 import { DashboardItem } from '@/packages/types/layout';
 import { ContainerData, SystemStatsType } from '@/redux/types/monitor';
-import PageHeader from '@/components/ui/page-header';
+import MainPageHeader from '@/components/ui/main-page-header';
 
 // for dashboard page, we need to check if the user has the dashboard:read permission
 function DashboardPage() {
@@ -55,7 +55,7 @@ function DashboardPage() {
   return (
     <ResourceGuard resource="dashboard" action="read">
       <PageLayout maxWidth="full" padding="md" spacing="lg">
-        <PageHeader
+        <MainPageHeader
           label={t('dashboard.title')}
           description={t('dashboard.description')}
           actions={

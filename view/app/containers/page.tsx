@@ -11,21 +11,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import DisabledFeature from '@/components/features/disabled-feature';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import useContainerList from './hooks/use-container-list';
+import { useViewMode } from './hooks/use-view-mode';
 import PageLayout from '@/components/layout/page-layout';
 import ContainersTable from './components/table';
 import PaginationWrapper from '@/components/ui/pagination';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { ContainerCard } from './components/card';
 import { cn } from '@/lib/utils';
+import MainPageHeader from '@/components/ui/main-page-header';
+import { translationKey } from '@/hooks/use-translation';
 
 export default function ContainersPage() {
-  const [viewMode, setViewMode] = React.useState<'table' | 'card'>(() => {
-    if (typeof window !== 'undefined') {
-      const existing = window.localStorage.getItem('containers_view');
-      return (existing as 'table' | 'card') || 'table';
-    }
-    return 'table';
-  });
+  const { viewMode, setViewMode } = useViewMode();
 
   const {
     containers,
@@ -80,44 +77,18 @@ export default function ContainersPage() {
   return (
     <ResourceGuard resource="container" action="read" loadingFallback={<ContainersLoading />}>
       <PageLayout maxWidth="full" padding="md" spacing="lg" className="relative z-10">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">{t('containers.title')}</h1>
-            <p className="text-muted-foreground mt-1">{t('containers.description')}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={handleRefresh}
-              variant="outline"
-              size="sm"
-              disabled={isRefreshing || isFetching}
-            >
-              {isRefreshing || isFetching ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="mr-2 h-4 w-4" />
-              )}
-              {t('containers.refresh')}
-            </Button>
-            <AnyPermissionGuard
-              permissions={['container:delete']}
-              loadingFallback={<Skeleton className="h-9 w-20" />}
-            >
-              <Button variant="outline" size="sm" onClick={() => setShowPruneImagesConfirm(true)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t('containers.prune_images')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPruneBuildCacheConfirm(true)}
-              >
-                <Scissors className="mr-2 h-4 w-4" />
-                {t('containers.prune_build_cache')}
-              </Button>
-            </AnyPermissionGuard>
-          </div>
-        </div>
+        <MainPageHeader
+          label={t('containers.title')}
+          description={t('containers.description')}
+          actions={getActionHeader(
+            handleRefresh,
+            isRefreshing,
+            isFetching,
+            t,
+            setShowPruneImagesConfirm,
+            setShowPruneBuildCacheConfirm
+          )}
+        />
 
         {totalCount > 0 && (
           <div className="flex items-center gap-6 mb-6">
@@ -155,11 +126,7 @@ export default function ContainersPage() {
             />
             <div className="hidden sm:flex items-center border rounded-lg p-0.5">
               <button
-                onClick={() => {
-                  setViewMode('table');
-                  if (typeof window !== 'undefined')
-                    window.localStorage.setItem('containers_view', 'table');
-                }}
+                onClick={() => setViewMode('table')}
                 className={cn(
                   'p-2 rounded-md transition-colors',
                   viewMode === 'table' ? 'bg-muted' : 'hover:bg-muted/50'
@@ -168,11 +135,7 @@ export default function ContainersPage() {
                 <List className="h-4 w-4" />
               </button>
               <button
-                onClick={() => {
-                  setViewMode('card');
-                  if (typeof window !== 'undefined')
-                    window.localStorage.setItem('containers_view', 'card');
-                }}
+                onClick={() => setViewMode('card')}
                 className={cn(
                   'p-2 rounded-md transition-colors',
                   viewMode === 'card' ? 'bg-muted' : 'hover:bg-muted/50'
@@ -255,6 +218,46 @@ export default function ContainersPage() {
         </AnyPermissionGuard>
       </PageLayout>
     </ResourceGuard>
+  );
+}
+
+function getActionHeader(
+  handleRefresh: () => Promise<void>,
+  isRefreshing: boolean,
+  isFetching: boolean,
+  t: (key: translationKey, params?: Record<string, string>) => string,
+  setShowPruneImagesConfirm: React.Dispatch<React.SetStateAction<boolean>>,
+  setShowPruneBuildCacheConfirm: React.Dispatch<React.SetStateAction<boolean>>
+): React.ReactNode {
+  return (
+    <>
+      <Button
+        onClick={handleRefresh}
+        variant="outline"
+        size="sm"
+        disabled={isRefreshing || isFetching}
+      >
+        {isRefreshing || isFetching ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <RefreshCw className="mr-2 h-4 w-4" />
+        )}
+        {t('containers.refresh')}
+      </Button>
+      <AnyPermissionGuard
+        permissions={['container:delete']}
+        loadingFallback={<Skeleton className="h-9 w-20" />}
+      >
+        <Button variant="outline" size="sm" onClick={() => setShowPruneImagesConfirm(true)}>
+          <Trash2 className="mr-2 h-4 w-4" />
+          {t('containers.prune_images')}
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setShowPruneBuildCacheConfirm(true)}>
+          <Scissors className="mr-2 h-4 w-4" />
+          {t('containers.prune_build_cache')}
+        </Button>
+      </AnyPermissionGuard>
+    </>
   );
 }
 
