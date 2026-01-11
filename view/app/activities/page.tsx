@@ -14,8 +14,8 @@ import useActivities, {
   ActivityListProps,
   getActionColor,
   resourceTypeOptions
-} from './hooks/use-activities';
-import PageLayout from '@/components/layout/page-layout';
+} from '../../packages/hooks/activities/use-activities';
+import PageLayout from '@/packages/layouts/page-layout';
 
 export default function ActivitiesPage() {
   const { t } = useTranslation();
