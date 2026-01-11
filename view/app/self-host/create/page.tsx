@@ -1,12 +1,15 @@
 'use client';
 import React from 'react';
-import { ListRepositories } from '@/packages/components/github-repositories';
-import { ResourceGuard } from '@/packages/components/rbac';
+import ListRepositories from '../components/github-repositories/list-repositories';
+import { useTranslation } from '@/hooks/use-translation';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
-import PageLayout from '@/packages/layouts/page-layout';
+import PageLayout from '@/components/layout/page-layout';
 import MainPageHeader from '@/components/ui/main-page-header';
 
 function page() {
+  const { t } = useTranslation();
+
   return (
     <ResourceGuard
       resource="deploy"

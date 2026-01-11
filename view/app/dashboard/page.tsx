@@ -3,10 +3,10 @@
 import React from 'react';
 import { useDashboard } from '@/packages/hooks/dashboard/use-dashboard';
 import { RefreshCw } from 'lucide-react';
-import DisabledFeature from '@/packages/components/rbac';
+import DisabledFeature from '@/components/features/disabled-feature';
 import { Button } from '@/components/ui/button';
 import { Banner } from '@/components/ui/banner';
-import { ResourceGuard } from '@/packages/components/rbac';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   SystemInfoCardSkeleton,
@@ -16,7 +16,7 @@ import {
   DiskUsageCardSkeleton
 } from './components/system/skeletons';
 import { ContainersWidgetSkeleton } from '@/packages/components/container';
-import PageLayout from '@/packages/layouts/page-layout';
+import PageLayout from '@/components/layout/page-layout';
 import { DraggableGrid } from '@/components/ui/draggable-grid';
 import { WidgetSelector } from './components/widget-selector';
 import { DashboardItem } from '@/packages/types/layout';

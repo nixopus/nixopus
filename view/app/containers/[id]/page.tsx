@@ -8,9 +8,9 @@ import { Terminal as TerminalComponent } from './components/Terminal';
 import ContainerDetailsLoading from './components/ContainerDetailsLoading';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { Images } from './components/images';
-import { ResourceGuard } from '@/packages/components/rbac';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { isNixopusContainer } from '@/lib/utils';
-import PageLayout from '@/packages/layouts/page-layout';
+import PageLayout from '@/components/layout/page-layout';
 import useContainerDetails from '../hooks/use-container-details';
 import { ContainerDetailsHeader } from './components/ContainerDetailsHeader';
 

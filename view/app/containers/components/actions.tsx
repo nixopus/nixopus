@@ -4,7 +4,7 @@ import { Play, Square, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { isNixopusContainer } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ResourceGuard } from '@/packages/components/rbac';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Action } from './card';
 import { cn } from '@/lib/utils';
 

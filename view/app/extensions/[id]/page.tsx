@@ -1,13 +1,13 @@
 'use client';
 
-import PageLayout from '@/packages/layouts/page-layout';
+import PageLayout from '@/components/layout/page-layout';
+import PageHeader from '@/components/ui/page-header';
 import TabsWrapper, { TabsWrapperList } from '@/components/ui/tabs-wrapper';
 import useExtensionDetails from '../../../packages/hooks/extensions/use-extension-detail';
 import { ExtensionInput, ExtensionForkDialog } from '@/packages/components/extension';
 import { Button } from '@/components/ui/button';
 import { OverviewTab } from '@/packages/components/extension-tabs';
 import { GitFork } from 'lucide-react';
-import SubPageHeader from '@/components/ui/sub-page-header';
 
 export default function ExtensionDetailsPage() {
   const {
@@ -71,9 +71,16 @@ export default function ExtensionDetailsPage() {
           />
         }
       >
-        <SubPageHeader
-          title={extension?.name || ''}
-          metadata={extension?.author}
+        <PageHeader
+          label={extension?.name || ''}
+          description={extension?.author}
+          badge={
+            extension?.icon ? (
+              <div className="flex items-center justify-center text-lg size-10 self-center">
+                {extension.icon}
+              </div>
+            ) : undefined
+          }
           actions={
             <div className="flex items-center gap-2">
               <Button
@@ -95,7 +102,7 @@ export default function ExtensionDetailsPage() {
           }
         >
           <TabsWrapperList className="mt-4" />
-        </SubPageHeader>
+        </PageHeader>
       </TabsWrapper>
 
       <ExtensionInput
