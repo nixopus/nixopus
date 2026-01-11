@@ -5,7 +5,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import PageLayout from '@/components/layout/page-layout';
 import { useExtensions } from '../../packages/hooks/extensions/use-extensions';
 import PaginationWrapper from '@/components/ui/pagination';
-import PageHeader from '@/components/ui/page-header';
+import MainPageHeader from '@/components/ui/main-page-header';
 import { SearchBar } from '@/components/ui/search-bar';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -61,10 +61,10 @@ export default function ExtensionsPage() {
 
   return (
     <PageLayout maxWidth="full" padding="md" spacing="lg">
-      <PageHeader
+      <MainPageHeader
         label={t('extensions.title')}
         actions={
-          <>
+          <div className="flex items-center gap-12">
             <SearchBar
               searchTerm={searchTerm}
               handleSearchChange={(e) => handleSearchChange(e.target.value)}
@@ -81,7 +81,7 @@ export default function ExtensionsPage() {
               placeholder={t('extensions.sortBy')}
               className="w-full sm:w-[180px]"
             />
-          </>
+          </div>
         }
       />
       <div className="space-y-6">

@@ -15,7 +15,7 @@ import MemoryUsageCard from '@/app/dashboard/components/system/memory-usage';
 import DiskUsageCard from '@/app/dashboard/components/system/disk-usage';
 import ContainersWidget from '@/packages/components/container';
 import { DashboardItem } from '@/packages/types/layout';
-import { useContainer } from '@/packages/hooks/container/use-container';
+import { useContainer } from '@/packages/hooks/dashboard/container/use-container';
 
 export const useDashboard = () => {
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();

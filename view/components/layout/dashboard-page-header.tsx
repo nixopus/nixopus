@@ -3,7 +3,7 @@ import { SortOption, SortSelect } from '@/components/ui/sort-selector';
 import { SearchBar } from '@/components/ui/search-bar';
 import { SortConfig } from '@/hooks/use-searchable';
 import { TypographyH2 } from '@/components/ui/typography';
-import PageHeader from '../ui/page-header';
+import MainPageHeader from '../ui/main-page-header';
 
 interface DashboardPageHeaderProps {
   className?: string;
@@ -12,7 +12,7 @@ interface DashboardPageHeaderProps {
 }
 
 export function DashboardPageHeader({ className, label, description }: DashboardPageHeaderProps) {
-  return <PageHeader className={className} label={label} description={description} />;
+  return <MainPageHeader className={className} label={label} description={description} />;
 }
 
 export default DashboardPageHeader;
