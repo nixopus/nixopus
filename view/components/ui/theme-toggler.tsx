@@ -10,7 +10,7 @@ import {
   CommandList
 } from './command';
 import { Button } from './button';
-import { palette, themeColors } from '@/components/colors';
+import { palette, themeColors } from '@/packages/utils/colors';
 
 export function ModeToggler() {
   const [open, setOpen] = React.useState(false);

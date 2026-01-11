@@ -1,6 +1,6 @@
 'use client';
 
-import PageLayout from '@/components/layout/page-layout';
+import PageLayout from '@/packages/layouts/page-layout';
 import TabsWrapper, { TabsWrapperList } from '@/components/ui/tabs-wrapper';
 import useExtensionDetails from '../../../packages/hooks/extensions/use-extension-detail';
 import { ExtensionInput, ExtensionForkDialog } from '@/packages/components/extension';
