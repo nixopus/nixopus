@@ -135,4 +135,3 @@ export function useDeploymentsList({ deployments }: UseDeploymentsListProps) {
     getStatusIcon
   };
 }
-

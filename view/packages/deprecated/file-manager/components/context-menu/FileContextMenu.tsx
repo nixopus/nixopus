@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 import { DialogWrapper } from '@/components/ui/dialog-wrapper';
 import FileUpload from '../actions/Upload';
 import { useCreateDirectoryMutation } from '@/redux/services/file-manager/fileManagersApi';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { ResourceGuard } from '@/packages/components/rbac';
 
 interface FileContextMenuProps {
   children: React.ReactNode;

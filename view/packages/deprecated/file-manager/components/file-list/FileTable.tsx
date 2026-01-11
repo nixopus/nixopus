@@ -8,7 +8,7 @@ import { Folder, File, ChevronUp, ChevronDown, Link2 } from 'lucide-react';
 import { formatFileSize } from '@/packages/utils/util';
 import { formatDistanceToNow, isValid } from 'date-fns';
 import { FileContextMenu } from '../context-menu/FileContextMenu';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { ResourceGuard } from '@/packages/components/rbac';
 
 type SortField = 'name' | 'size' | 'file_type' | 'created_at' | 'updated_at';
 

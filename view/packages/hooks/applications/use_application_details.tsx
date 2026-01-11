@@ -16,10 +16,11 @@ import { useTranslation } from '@/hooks/use-translation';
 import { BuildPack, Environment } from '@/redux/types/deploy-form';
 import type { TabItem } from '@/components/ui/tabs-wrapper';
 import { Activity, Settings, Layers, ScrollText } from 'lucide-react';
-import ApplicationLogs from '../../../app/self-host/components/application-details/logs';
-import Monitor from '../../../app/self-host/components/application-details/monitor';
-import DeploymentsList from '../../../app/self-host/components/application-details/deploymentsList';
-import { DeployConfigureForm } from '../../../app/self-host/components/application-details/configuration';
+import DeploymentsList, {
+  ApplicationLogs,
+  Monitor
+} from '@/packages/components/application-details';
+import { DeployConfigureForm } from '@/packages/components/application-form';
 
 interface WebSocketMessage {
   action: string;
