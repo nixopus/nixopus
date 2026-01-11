@@ -4,9 +4,10 @@ import PageLayout from '@/components/layout/page-layout';
 import PageHeader from '@/components/ui/page-header';
 import TabsWrapper, { TabsWrapperList } from '@/components/ui/tabs-wrapper';
 import useExtensionDetails from '../../../packages/hooks/extensions/use-extension-detail';
-import { ExtensionInput } from '@/packages/components/extension';
+import { ExtensionInput, ExtensionForkDialog } from '@/packages/components/extension';
 import { Button } from '@/components/ui/button';
 import { OverviewTab } from '@/packages/components/extension-tabs';
+import { GitFork } from 'lucide-react';
 
 export default function ExtensionDetailsPage() {
   const {
@@ -37,7 +38,15 @@ export default function ExtensionDetailsPage() {
     noFieldsToShow,
     setOpenRunIndex,
     setOpenValidateIndex,
-    actions
+    actions,
+    forkOpen,
+    setForkOpen,
+    forkYaml,
+    setForkYaml,
+    forkPreview,
+    forkVariableColumns,
+    doFork,
+    isForking
   } = useExtensionDetails();
 
   return (
@@ -47,6 +56,7 @@ export default function ExtensionDetailsPage() {
         onValueChange={setTab}
         tabs={tabs}
         showTabsCondition={!isExecsLoading && hasExecutions}
+        className="min-w-fit w-auto"
         defaultContent={
           <OverviewTab
             extension={extension}
@@ -66,19 +76,29 @@ export default function ExtensionDetailsPage() {
           description={extension?.author}
           badge={
             extension?.icon ? (
-              <div className="h-10 w-10 rounded bg-accent flex items-center justify-center text-lg">
+              <div className="flex items-center justify-center text-lg size-10 self-center">
                 {extension.icon}
               </div>
             ) : undefined
           }
           actions={
-            <Button
-              className="min-w-[112px]"
-              onClick={() => setRunModalOpen(true)}
-              disabled={!extension || isRunning}
-            >
-              {buttonText}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setForkOpen(true)}
+                disabled={!extension || extension.parent_extension_id != null}
+              >
+                <GitFork className="mr-2 h-4 w-4" />
+                {t('extensions.fork') || 'Fork'}
+              </Button>
+              <Button
+                className="min-w-[112px]"
+                onClick={() => setRunModalOpen(true)}
+                disabled={!extension || isRunning}
+              >
+                {buttonText}
+              </Button>
+            </div>
           }
         >
           <TabsWrapperList className="mt-4" />
@@ -100,6 +120,21 @@ export default function ExtensionDetailsPage() {
         handleSubmit={handleSubmit}
         requiredFields={requiredFields}
       />
+
+      {extension && (
+        <ExtensionForkDialog
+          open={forkOpen}
+          onOpenChange={setForkOpen}
+          extension={extension}
+          t={t}
+          forkYaml={forkYaml}
+          setForkYaml={setForkYaml}
+          preview={forkPreview}
+          variableColumns={forkVariableColumns}
+          doFork={doFork}
+          isLoading={isForking}
+        />
+      )}
     </PageLayout>
   );
 }

@@ -17,17 +17,19 @@ export interface ExtensionsGridProps {
   error?: string;
   onInstall?: (extension: Extension) => void;
   onViewDetails?: (extension: Extension) => void;
-  setForkOpen: (open: boolean) => void;
+  onForkClick?: (extension: Extension) => void;
   setConfirmOpen: (open: boolean) => void;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
   forkOpen: boolean;
+  setForkOpen: (open: boolean) => void;
   confirmOpen: boolean;
   forkYaml: string;
   setForkYaml: (yaml: string) => void;
   preview: any;
   variableColumns: TableColumn<VariableData>[];
   doFork: () => void;
+  selectedExtension?: Extension | null;
 }
 
 export interface ExtensionForkDialogProps {
@@ -56,20 +58,13 @@ export interface ExtensionCardProps {
   onInstall?: (extension: Extension) => void;
   onViewDetails?: (extension: Extension) => void;
   onFork?: (extension: Extension) => void;
+  onForkClick?: (extension: Extension) => void;
   onRemove?: (extension: Extension) => void;
-  setForkOpen: (open: boolean) => void;
   setConfirmOpen: (open: boolean) => void;
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
   t: (key: translationKey) => string;
-  forkOpen: boolean;
   confirmOpen: boolean;
-  forkYaml: string;
-  setForkYaml: (yaml: string) => void;
-  preview: any;
-  variableColumns: TableColumn<VariableData>[];
-  doFork: () => void;
-  isLoading: boolean;
 }
 
 export interface ExtensionInputProps {

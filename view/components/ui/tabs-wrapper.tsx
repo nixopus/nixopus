@@ -108,7 +108,7 @@ export function TabsWrapperList({ className }: TabsWrapperListProps) {
   if (!showTabsCondition) return null;
 
   return (
-    <TabsList className={cn('w-full justify-start', tabsListClassName, className)}>
+    <TabsList className={cn('w-fit justify-start', tabsListClassName, className)}>
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (

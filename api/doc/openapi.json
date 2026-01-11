@@ -1343,6 +1343,248 @@
 				},
 				"type": "object"
 			},
+			"CreateAPIKeyRequest": {
+				"description": "CreateAPIKeyRequest schema",
+				"properties": {
+					"expires_in_days": {
+						"nullable": true,
+						"type": "integer"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"CreateAPIKeyResponse": {
+				"description": "CreateAPIKeyResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"api_key": {
+								"nullable": true,
+								"properties": {
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"expires_at": {
+										"format": "date-time",
+										"nullable": true,
+										"type": "string"
+									},
+									"id": {},
+									"last_used_at": {
+										"format": "date-time",
+										"nullable": true,
+										"type": "string"
+									},
+									"name": {
+										"type": "string"
+									},
+									"organization": {
+										"nullable": true,
+										"properties": {
+											"created_at": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"deleted_at": {
+												"format": "date-time",
+												"nullable": true,
+												"type": "string"
+											},
+											"description": {
+												"type": "string"
+											},
+											"id": {},
+											"name": {
+												"type": "string"
+											},
+											"updated_at": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"users": {
+												"items": {
+													"$ref": "#/components/schemas/User"
+												},
+												"type": "array"
+											}
+										},
+										"type": "object"
+									},
+									"organization_id": {},
+									"prefix": {
+										"type": "string"
+									},
+									"revoked_at": {
+										"format": "date-time",
+										"nullable": true,
+										"type": "string"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"user": {
+										"nullable": true,
+										"properties": {
+											"avatar": {
+												"type": "string"
+											},
+											"created_at": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"deleted_at": {
+												"format": "date-time",
+												"nullable": true,
+												"type": "string"
+											},
+											"email": {
+												"type": "string"
+											},
+											"id": {},
+											"is_verified": {
+												"type": "boolean"
+											},
+											"organization_users": {
+												"items": {
+													"nullable": true,
+													"properties": {
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"deleted_at": {
+															"format": "date-time",
+															"nullable": true,
+															"type": "string"
+														},
+														"id": {},
+														"organization": {
+															"nullable": true,
+															"properties": {
+																"created_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"deleted_at": {
+																	"format": "date-time",
+																	"nullable": true,
+																	"type": "string"
+																},
+																"description": {
+																	"type": "string"
+																},
+																"id": {},
+																"name": {
+																	"type": "string"
+																},
+																"updated_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"users": {
+																	"items": {
+																		"$ref": "#/components/schemas/User"
+																	},
+																	"type": "array"
+																}
+															},
+															"type": "object"
+														},
+														"organization_id": {},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"user": {
+															"$ref": "#/components/schemas/User"
+														},
+														"user_id": {}
+													},
+													"type": "object"
+												},
+												"type": "array"
+											},
+											"organizations": {
+												"items": {
+													"nullable": true,
+													"properties": {
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"deleted_at": {
+															"format": "date-time",
+															"nullable": true,
+															"type": "string"
+														},
+														"description": {
+															"type": "string"
+														},
+														"id": {},
+														"name": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"users": {
+															"items": {
+																"$ref": "#/components/schemas/User"
+															},
+															"type": "array"
+														}
+													},
+													"type": "object"
+												},
+												"type": "array"
+											},
+											"supertokens_user_id": {
+												"type": "string"
+											},
+											"two_factor_enabled": {
+												"type": "boolean"
+											},
+											"two_factor_secret": {
+												"type": "string"
+											},
+											"type": {
+												"type": "string"
+											},
+											"updated_at": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"username": {
+												"type": "string"
+											}
+										},
+										"type": "object"
+									},
+									"user_id": {}
+								},
+								"type": "object"
+							},
+							"key": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"CreateDeploymentRequest": {
 				"description": "CreateDeploymentRequest schema",
 				"properties": {
@@ -3193,6 +3435,230 @@
 					"data": {
 						"items": {
 							"type": "string"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ListAPIKeysResponse": {
+				"description": "ListAPIKeysResponse schema",
+				"properties": {
+					"data": {
+						"items": {
+							"nullable": true,
+							"properties": {
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"expires_at": {
+									"format": "date-time",
+									"nullable": true,
+									"type": "string"
+								},
+								"id": {},
+								"last_used_at": {
+									"format": "date-time",
+									"nullable": true,
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								},
+								"organization": {
+									"nullable": true,
+									"properties": {
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"description": {
+											"type": "string"
+										},
+										"id": {},
+										"name": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"users": {
+											"items": {
+												"$ref": "#/components/schemas/User"
+											},
+											"type": "array"
+										}
+									},
+									"type": "object"
+								},
+								"organization_id": {},
+								"prefix": {
+									"type": "string"
+								},
+								"revoked_at": {
+									"format": "date-time",
+									"nullable": true,
+									"type": "string"
+								},
+								"updated_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"user": {
+									"nullable": true,
+									"properties": {
+										"avatar": {
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"email": {
+											"type": "string"
+										},
+										"id": {},
+										"is_verified": {
+											"type": "boolean"
+										},
+										"organization_users": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"deleted_at": {
+														"format": "date-time",
+														"nullable": true,
+														"type": "string"
+													},
+													"id": {},
+													"organization": {
+														"nullable": true,
+														"properties": {
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"deleted_at": {
+																"format": "date-time",
+																"nullable": true,
+																"type": "string"
+															},
+															"description": {
+																"type": "string"
+															},
+															"id": {},
+															"name": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"users": {
+																"items": {
+																	"$ref": "#/components/schemas/User"
+																},
+																"type": "array"
+															}
+														},
+														"type": "object"
+													},
+													"organization_id": {},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"user": {
+														"$ref": "#/components/schemas/User"
+													},
+													"user_id": {}
+												},
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"organizations": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"deleted_at": {
+														"format": "date-time",
+														"nullable": true,
+														"type": "string"
+													},
+													"description": {
+														"type": "string"
+													},
+													"id": {},
+													"name": {
+														"type": "string"
+													},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"users": {
+														"items": {
+															"$ref": "#/components/schemas/User"
+														},
+														"type": "array"
+													}
+												},
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"supertokens_user_id": {
+											"type": "string"
+										},
+										"two_factor_enabled": {
+											"type": "boolean"
+										},
+										"two_factor_secret": {
+											"type": "string"
+										},
+										"type": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"username": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"user_id": {}
+							},
+							"type": "object"
 						},
 						"type": "array"
 					},
@@ -8893,6 +9359,230 @@
 					}
 				},
 				"summary": "two factor login",
+				"tags": [
+					"api/v1/auth"
+				]
+			}
+		},
+		"/api/v1/auth/api-keys": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).ListAPIKeys`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n\n---\n\n",
+				"operationId": "GET_/api/v1/auth/api-keys",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ListAPIKeysResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/ListAPIKeysResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "list a p i keys",
+				"tags": [
+					"api/v1/auth"
+				]
+			},
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).CreateAPIKey`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n\n---\n\n",
+				"operationId": "POST_/api/v1/auth/api-keys",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateAPIKeyRequest"
+							}
+						}
+					},
+					"description": "Request body for types.CreateAPIKeyRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CreateAPIKeyResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/CreateAPIKeyResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "create a p i key",
+				"tags": [
+					"api/v1/auth"
+				]
+			}
+		},
+		"/api/v1/auth/api-keys/{id}": {
+			"delete": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).RevokeAPIKey`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n\n---\n\n",
+				"operationId": "DELETE_/api/v1/auth/api-keys/:id",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MessageResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/MessageResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "revoke a p i key",
 				"tags": [
 					"api/v1/auth"
 				]
