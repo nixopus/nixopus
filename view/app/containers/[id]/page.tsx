@@ -1,18 +1,18 @@
 'use client';
 
 import { Trash2, Info, Terminal, Layers, ScrollText } from 'lucide-react';
-import ContainerDetailsLoading from './components/ContainerDetailsLoading';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { isNixopusContainer } from '@/lib/utils';
 import PageLayout from '@/components/layout/page-layout';
 import { useContainerDetail } from '../../../packages/hooks/containers/use-container-detail';
-import { ContainerDetailsHeader } from './components/ContainerDetailsHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { OverviewTab } from './components/OverviewTab';
-import { LogsTab } from './components/LogsTab';
-import { Terminal as TerminalComponent } from './components/Terminal';
-import { Images } from './components/images';
+import ContainerDetailsLoading from '../../../packages/components/container-details-loading';
+import { ContainerDetailsHeader } from '../../../packages/components/container-details-header';
+import { OverviewTab } from '../../../packages/components/container-overview-tab';
+import { LogsTab } from '../../../packages/components/container-logs-tab';
+import { Terminal as TerminalComponent } from '../../../packages/components/container-terminal';
+import { Images } from '../../../packages/components/container-images';
 
 export default function ContainerDetailsPage() {
   const {
