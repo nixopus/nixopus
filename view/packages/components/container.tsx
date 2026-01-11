@@ -14,13 +14,35 @@ import {
   Scissors,
   ChevronUp,
   ChevronDown,
-  Package
+  Package,
+  StopCircle,
+  RotateCw,
+  Copy,
+  Check,
+  Globe,
+  Lock,
+  Settings2,
+  Zap,
+  Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CardWrapper } from '@/components/ui/card-wrapper';
 import { DataTable, TableColumn } from '@/components/ui/data-table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
+import SubPageHeader from '@/components/ui/sub-page-header';
 import { cn } from '@/lib/utils';
 import { useContainerActions } from '@/packages/hooks/containers/use-container-actions';
 import { translationKey } from '@/packages/hooks/shared/use-translation';
@@ -30,12 +52,21 @@ import { formatDistanceToNow } from 'date-fns';
 import { Container } from '@/redux/services/container/containerApi';
 import { ContainerData } from '@/redux/types/monitor';
 import {
-  StatusIndicator,
-  PortDisplay,
-  EmptyState,
-  StatusBadge
-} from '@/packages/components/container-shared';
-import { getStatusIconClasses } from '@/packages/utils/container-styles';
+  getStatusIconClasses,
+  getPortColors,
+  getStatusColors
+} from '@/packages/utils/container-styles';
+import { useState } from 'react';
+import { UseFormReturn, ControllerRenderProps } from 'react-hook-form';
+import {
+  useUpdateContainerResources,
+  presetConfig,
+  fieldConfigs,
+  formatPresetValue,
+  PresetType,
+  FieldConfig,
+  ResourceLimitsFormValues
+} from '@/packages/hooks/containers/use-update-container-resources';
 import {
   Action,
   SortField,
@@ -46,11 +77,205 @@ import {
   ContainersTableProps,
   SortableHeaderProps,
   ContainerRowProps,
-  ContainersWidgetProps
+  ContainersWidgetProps,
+  StatPillProps,
+  ContainerDetailsHeaderProps,
+  ResourceLimitsFormProps,
+  PresetButtonProps,
+  PresetGridProps,
+  ResourceFieldProps,
+  FormActionsProps,
+  ResourceFieldsProps,
+  StatusIndicatorProps,
+  CopyButtonProps,
+  PortDisplayProps,
+  StatusBadgeProps,
+  EmptyStateProps
 } from '@/packages/types/containers';
 
 // Re-export Action enum for backward compatibility
 export { Action };
+
+// ============================================================================
+// Shared Components
+// ============================================================================
+
+export function StatusIndicator({
+  isRunning,
+  size = 'md',
+  showPulse = true
+}: StatusIndicatorProps) {
+  const sizes = {
+    sm: 'h-1.5 w-1.5',
+    md: 'h-2 w-2',
+    lg: 'h-3 w-3'
+  };
+
+  const sizeClass = sizes[size];
+  const colors = getStatusColors(isRunning ? 'running' : 'stopped');
+
+  return (
+    <span className={cn('relative flex', sizeClass, 'flex-shrink-0')}>
+      {showPulse && isRunning && (
+        <span
+          className={cn(
+            'animate-ping absolute inline-flex h-full w-full rounded-full opacity-75',
+            colors.dotPulse
+          )}
+        />
+      )}
+      <span className={cn('relative inline-flex rounded-full', sizeClass, colors.dot)} />
+    </span>
+  );
+}
+
+export function CopyButton({
+  copied,
+  onCopy,
+  size = 'sm',
+  className,
+  showText = false
+}: CopyButtonProps) {
+  const iconSizes = {
+    sm: 'h-3 w-3',
+    md: 'h-4 w-4'
+  };
+
+  return (
+    <button
+      onClick={onCopy}
+      className={cn(
+        'text-muted-foreground hover:text-foreground transition-colors flex-shrink-0',
+        className
+      )}
+    >
+      {copied ? (
+        <>
+          <Check className={cn(iconSizes[size], 'text-emerald-500')} />
+          {showText && <span className="ml-1 text-xs">Copied</span>}
+        </>
+      ) : (
+        <>
+          <Copy className={iconSizes[size]} />
+          {showText && <span className="ml-1 text-xs">Copy</span>}
+        </>
+      )}
+    </button>
+  );
+}
+
+export function PortDisplay({ port, variant = 'pill', showType = true }: PortDisplayProps) {
+  const hasPublic = port.public_port > 0;
+  const colors = getPortColors(hasPublic);
+
+  if (variant === 'pill') {
+    return (
+      <span
+        className={cn(
+          'inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono',
+          colors.pill
+        )}
+      >
+        {hasPublic ? (
+          <>
+            <span>{port.public_port}</span>
+            <ArrowRight className="h-2.5 w-2.5" />
+            <span>{port.private_port}</span>
+          </>
+        ) : (
+          <span>{port.private_port}</span>
+        )}
+      </span>
+    );
+  }
+
+  if (variant === 'flow') {
+    return (
+      <div
+        className={cn(
+          'flex items-center gap-3 px-4 py-3 rounded-xl transition-colors',
+          colors.flow
+        )}
+      >
+        {hasPublic ? (
+          <>
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-emerald-500" />
+              <span className="font-mono text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+                {port.public_port}
+              </span>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4 text-muted-foreground" />
+              <span className="font-mono text-lg">{port.private_port}</span>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Lock className="h-4 w-4 text-muted-foreground" />
+            <span className="font-mono text-lg">{port.private_port}</span>
+          </div>
+        )}
+        {showType && (
+          <span className="text-xs text-muted-foreground uppercase ml-1">/{port.type}</span>
+        )}
+      </div>
+    );
+  }
+
+  // inline variant
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 text-xs font-mono',
+        hasPublic ? colors.text : 'text-muted-foreground'
+      )}
+    >
+      {hasPublic ? (
+        <>
+          {port.public_port}
+          <ArrowRight className="h-2.5 w-2.5" />
+          {port.private_port}
+        </>
+      ) : (
+        port.private_port
+      )}
+    </span>
+  );
+}
+
+export function EmptyState({ icon: Icon, message, className }: EmptyStateProps) {
+  return (
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center py-16 text-muted-foreground',
+        className
+      )}
+    >
+      <Icon className="h-12 w-12 mb-4 opacity-30" />
+      <p className="text-sm">{message}</p>
+    </div>
+  );
+}
+
+export function StatusBadge({ status, showDot = false, className }: StatusBadgeProps) {
+  const colors = getStatusColors(status);
+  const isRunning = (status || '').toLowerCase() === 'running';
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
+        colors.badge,
+        className
+      )}
+    >
+      {showDot && isRunning && <StatusIndicator isRunning={true} size="sm" />}
+      {status}
+    </span>
+  );
+}
 
 // ============================================================================
 // Container Actions
@@ -430,41 +655,311 @@ const ContainersWidget: React.FC<ContainersWidgetProps> = ({ containersData, col
 
 export { ContainersWidget };
 
-export const ContainersWidgetSkeleton: React.FC = () => {
+// ============================================================================
+// Stat Pill
+// ============================================================================
+
+export function StatPill({ value, label, color }: StatPillProps) {
+  return (
+    <div className="flex items-center gap-2">
+      {color && (
+        <span
+          className={cn(
+            'w-2 h-2 rounded-full',
+            color === 'emerald' ? 'bg-emerald-500' : 'bg-zinc-500'
+          )}
+        />
+      )}
+      <span className="text-xl font-bold">{value}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+// ============================================================================
+// Container Details Header
+// ============================================================================
+
+export function ContainerDetailsHeader({
+  container,
+  isLoading,
+  isProtected,
+  handleContainerAction,
+  t
+}: ContainerDetailsHeaderProps) {
+  const statusColors = getStatusColors(container.status);
+
+  const icon = (
+    <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center', statusColors.bg)}>
+      <div className={cn('w-3 h-3 rounded-full', statusColors.dot)} />
+    </div>
+  );
+
+  const metadata = (
+    <div className="flex items-center gap-2">
+      <code className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
+        {container.id.slice(0, 12)}
+      </code>
+      <Badge variant="outline" className={cn('text-xs', statusColors.border)}>
+        {container.status}
+      </Badge>
+    </div>
+  );
+
+  const actions = (
+    <>
+      <ResourceGuard
+        resource="container"
+        action="update"
+        loadingFallback={<Skeleton className="h-9 w-24" />}
+      >
+        {container.status !== 'running' ? (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => handleContainerAction('start')}
+            disabled={isLoading || isProtected}
+            className="bg-emerald-600 hover:bg-emerald-700"
+          >
+            <Play className="mr-2 h-4 w-4" />
+            {t('containers.start')}
+          </Button>
+        ) : (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleContainerAction('stop')}
+              disabled={isLoading || isProtected}
+            >
+              <StopCircle className="mr-2 h-4 w-4" />
+              {t('containers.stop')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleContainerAction('restart')}
+              disabled={isLoading || isProtected}
+            >
+              <RotateCw className="mr-2 h-4 w-4" />
+              {t('containers.restart')}
+            </Button>
+          </>
+        )}
+      </ResourceGuard>
+      <ResourceGuard
+        resource="container"
+        action="delete"
+        loadingFallback={<Skeleton className="h-9 w-20" />}
+      >
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleContainerAction('remove')}
+          disabled={isLoading || isProtected}
+          className="text-red-500 hover:text-red-600 hover:bg-red-500/10 border-red-500/20"
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          {t('containers.remove')}
+        </Button>
+      </ResourceGuard>
+    </>
+  );
+
+  return <SubPageHeader icon={icon} title={container.name} metadata={metadata} actions={actions} />;
+}
+
+// ============================================================================
+// Resource Limits Form
+// ============================================================================
+
+function PresetButton({ presetKey, memory, isActive, onSelect }: PresetButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(presetKey)}
+      className={cn(
+        'flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all text-xs',
+        isActive
+          ? 'border-primary bg-primary/5 text-primary'
+          : 'border-muted hover:border-muted-foreground/20 hover:bg-muted/50'
+      )}
+    >
+      <span className="font-medium">{formatPresetValue(presetKey, memory)}</span>
+      <span className={cn('capitalize', isActive ? 'text-primary/70' : 'text-muted-foreground')}>
+        {presetKey}
+      </span>
+    </button>
+  );
+}
+
+function PresetGrid({ currentMemory, onPresetSelect }: PresetGridProps) {
   const { t } = useTranslation();
 
   return (
-    <CardWrapper
-      title={t('dashboard.containers.title')}
-      icon={Package}
-      compact
-      actions={<Skeleton className="h-8 w-24" />}
-    >
-      <div className="border-b pb-2 mb-2">
-        <div className="grid grid-cols-6 gap-4">
-          {['h-4 w-8', 'h-4 w-12', 'h-4 w-12', 'h-4 w-12', 'h-4 w-10', 'h-4 w-14'].map(
-            (className, idx) => (
-              <Skeleton key={idx} className={className} />
-            )
-          )}
-        </div>
-      </div>
-      <div className="space-y-3">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="grid grid-cols-6 gap-4 items-center">
-            {[
-              'h-4 w-16 font-mono',
-              'h-4 w-24',
-              'h-4 w-32',
-              'h-5 w-16 rounded-full',
-              'h-4 w-12',
-              'h-4 w-16'
-            ].map((className, idx) => (
-              <Skeleton key={idx} className={className} />
-            ))}
-          </div>
+    <div className="space-y-3">
+      <label className="text-sm font-medium">{t('containers.resourceLimits.presets.label')}</label>
+      <div className="grid grid-cols-5 gap-2">
+        {presetConfig.map(({ key, memory }) => (
+          <PresetButton
+            key={key}
+            presetKey={key}
+            memory={memory}
+            isActive={currentMemory === memory}
+            onSelect={onPresetSelect}
+          />
         ))}
       </div>
-    </CardWrapper>
+    </div>
   );
-};
+}
+
+function ResourceField({ config, field }: ResourceFieldProps) {
+  const { t } = useTranslation();
+  const {
+    icon: Icon,
+    labelKey,
+    placeholderKey,
+    unitKey,
+    descriptionKey,
+    unlimitedDescKey,
+    min,
+    isUnlimited
+  } = config;
+  const description =
+    isUnlimited(field.value) && unlimitedDescKey ? t(unlimitedDescKey) : t(descriptionKey);
+
+  return (
+    <FormItem>
+      <FormLabel className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        {t(labelKey)}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs bg-popover text-popover-foreground border">
+            {description}
+          </TooltipContent>
+        </Tooltip>
+      </FormLabel>
+      <div className={cn(unitKey && 'flex gap-2')}>
+        <FormControl>
+          <Input
+            type="number"
+            min={min}
+            placeholder={t(placeholderKey)}
+            {...field}
+            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+            className={cn(unitKey && 'flex-1')}
+          />
+        </FormControl>
+        {unitKey && (
+          <span className="flex items-center px-3 bg-muted rounded-md text-sm text-muted-foreground">
+            {t(unitKey)}
+          </span>
+        )}
+      </div>
+    </FormItem>
+  );
+}
+
+function FormActions({ isLoading, isDirty, onReset, onCancel }: FormActionsProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex justify-between pt-4">
+      {isDirty ? (
+        <Button type="button" variant="ghost" onClick={onReset} disabled={isLoading}>
+          {t('containers.resourceLimits.buttons.reset')}
+        </Button>
+      ) : (
+        <div />
+      )}
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+          {t('containers.resourceLimits.buttons.cancel')}
+        </Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading
+            ? t('containers.resourceLimits.buttons.saving')
+            : t('containers.resourceLimits.buttons.save')}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function ResourceFields({ form }: ResourceFieldsProps) {
+  return (
+    <>
+      {fieldConfigs.map((config) => (
+        <FormField
+          key={config.name}
+          control={form.control}
+          name={config.name}
+          render={({ field }) => <ResourceField config={config} field={field} />}
+        />
+      ))}
+    </>
+  );
+}
+
+export function ResourceLimitsForm({ container }: ResourceLimitsFormProps) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+
+  const { form, onSubmit, isLoading, resetToCurrentValues, applyPreset } =
+    useUpdateContainerResources({
+      containerId: container.id,
+      currentMemory: container.host_config.memory,
+      currentMemorySwap: container.host_config.memory_swap,
+      currentCpuShares: container.host_config.cpu_shares,
+      onSuccess: () => setOpen(false)
+    });
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (newOpen) resetToCurrentValues();
+  };
+
+  return (
+    <ResourceGuard
+      resource="container"
+      action="update"
+      loadingFallback={<Skeleton className="h-9 w-28" />}
+    >
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2">
+            <Settings2 className="h-4 w-4" />
+            {t('containers.resourceLimits.editButton')}
+          </Button>
+        </DialogTrigger>
+
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              {t('containers.resourceLimits.title')}
+            </DialogTitle>
+            <DialogDescription>{t('containers.resourceLimits.description')}</DialogDescription>
+          </DialogHeader>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <PresetGrid currentMemory={form.watch('memoryMB')} onPresetSelect={applyPreset} />
+              <ResourceFields form={form} />
+              <FormActions
+                isLoading={isLoading}
+                isDirty={form.formState.isDirty}
+                onReset={resetToCurrentValues}
+                onCancel={() => setOpen(false)}
+              />
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </ResourceGuard>
+  );
+}
