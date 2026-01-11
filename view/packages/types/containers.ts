@@ -11,17 +11,9 @@ import {
 } from '@/packages/hooks/containers/use-update-container-resources';
 import { ParsedLogEntry } from '@/packages/hooks/containers/use-container-logs';
 
-// ============================================================================
-// View Mode
-// ============================================================================
-
 export type ViewMode = 'table' | 'card';
 
 export const CONTAINERS_VIEW_STORAGE_KEY = 'containers_view';
-
-// ============================================================================
-// Container Actions
-// ============================================================================
 
 export enum Action {
   START = 'start',
@@ -55,19 +47,11 @@ export interface ActionHeaderProps {
   setShowPruneBuildCacheConfirm: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-// ============================================================================
-// Container Card
-// ============================================================================
-
 export interface ContainerCardProps {
   container: Container;
   onClick: () => void;
   onAction: (id: string, action: Action) => void;
 }
-
-// ============================================================================
-// Container Table
-// ============================================================================
 
 export interface ContainersTableProps {
   containersData: Container[];
@@ -91,18 +75,10 @@ export interface ContainerRowProps {
   onAction?: (id: string, action: Action) => void;
 }
 
-// ============================================================================
-// Container Widget
-// ============================================================================
-
 export interface ContainersWidgetProps {
   containersData: ContainerData[];
   columns: TableColumn<ContainerData>[];
 }
-
-// ============================================================================
-// Container Details
-// ============================================================================
 
 export interface ContainerDetailsHeaderProps {
   container: Container;
@@ -111,10 +87,6 @@ export interface ContainerDetailsHeaderProps {
   handleContainerAction: (action: ContainerAction) => void;
   t: (key: translationKey, params?: Record<string, string>) => string;
 }
-
-// ============================================================================
-// Container Overview Tab
-// ============================================================================
 
 export interface OverviewTabProps {
   container: Container;
@@ -158,10 +130,6 @@ export interface InfoLineProps {
   copied?: boolean;
 }
 
-// ============================================================================
-// Container Logs Tab
-// ============================================================================
-
 export interface LogsTabProps {
   container: Container;
   logs: string;
@@ -175,10 +143,6 @@ export interface LogEntryProps {
   onToggle: () => void;
   isDense: boolean;
 }
-
-// ============================================================================
-// Container Images
-// ============================================================================
 
 export interface ContainerImage {
   id: string;
@@ -219,10 +183,6 @@ export interface DetailRowProps {
   copied?: boolean;
 }
 
-// ============================================================================
-// Container Forms
-// ============================================================================
-
 export interface ResourceLimitsFormProps {
   container: Container;
 }
@@ -255,27 +215,15 @@ export interface ResourceFieldsProps {
   form: UseFormReturn<ResourceLimitsFormValues>;
 }
 
-// ============================================================================
-// Container Utils
-// ============================================================================
-
 export interface StatPillProps {
   value: number;
   label: string;
   color?: 'emerald' | 'zinc';
 }
 
-// ============================================================================
-// Container Terminal
-// ============================================================================
-
 export interface TerminalProps {
   containerId: string;
 }
-
-// ============================================================================
-// Container Shared Components
-// ============================================================================
 
 export interface StatusIndicatorProps {
   isRunning: boolean;

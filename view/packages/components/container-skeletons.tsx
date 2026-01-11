@@ -7,10 +7,6 @@ import PageLayout from '@/packages/layouts/page-layout';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Package } from 'lucide-react';
 
-// ============================================================================
-// Containers Widget Skeleton
-// ============================================================================
-
 export const ContainersWidgetSkeleton: React.FC = () => {
   const { t } = useTranslation();
 
@@ -49,10 +45,6 @@ export const ContainersWidgetSkeleton: React.FC = () => {
     </CardWrapper>
   );
 };
-
-// ============================================================================
-// Container Details Loading
-// ============================================================================
 
 export default function ContainerDetailsLoading() {
   return (
@@ -143,10 +135,6 @@ export default function ContainerDetailsLoading() {
   );
 }
 
-// ============================================================================
-// Images Section Skeleton
-// ============================================================================
-
 export function ImagesSectionSkeleton() {
   return (
     <div className="space-y-8">
@@ -178,10 +166,6 @@ export function ImagesSectionSkeleton() {
     </div>
   );
 }
-
-// ============================================================================
-// Containers Loading
-// ============================================================================
 
 export function ContainersLoading() {
   return (

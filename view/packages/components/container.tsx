@@ -93,12 +93,7 @@ import {
   EmptyStateProps
 } from '@/packages/types/containers';
 
-// Re-export Action enum for backward compatibility
 export { Action };
-
-// ============================================================================
-// Shared Components
-// ============================================================================
 
 export function StatusIndicator({
   isRunning,
@@ -224,7 +219,6 @@ export function PortDisplay({ port, variant = 'pill', showType = true }: PortDis
     );
   }
 
-  // inline variant
   return (
     <span
       className={cn(
@@ -276,10 +270,6 @@ export function StatusBadge({ status, showDot = false, className }: StatusBadgeP
     </span>
   );
 }
-
-// ============================================================================
-// Container Actions
-// ============================================================================
 
 export const ContainerActions = ({ container, onAction }: ContainerActionsProps) => {
   const { containerId, isProtected, isRunning } = useContainerActions(container);
@@ -396,10 +386,6 @@ export function ActionHeader({
   );
 }
 
-// ============================================================================
-// Container Card
-// ============================================================================
-
 export const ContainerCard = ({ container, onClick, onAction }: ContainerCardProps) => {
   const isRunning = container.status === 'running';
   const hasPorts = container.ports && container.ports.length > 0;
@@ -473,10 +459,6 @@ export const ContainerCard = ({ container, onClick, onAction }: ContainerCardPro
     </div>
   );
 };
-
-// ============================================================================
-// Container Table
-// ============================================================================
 
 const ContainersTable = ({
   containersData,
@@ -622,10 +604,6 @@ function ContainerRow({ container, onClick, onAction }: ContainerRowProps) {
 
 export default ContainersTable;
 
-// ============================================================================
-// Container Widget
-// ============================================================================
-
 const ContainersWidget: React.FC<ContainersWidgetProps> = ({ containersData, columns }) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -655,10 +633,6 @@ const ContainersWidget: React.FC<ContainersWidgetProps> = ({ containersData, col
 
 export { ContainersWidget };
 
-// ============================================================================
-// Stat Pill
-// ============================================================================
-
 export function StatPill({ value, label, color }: StatPillProps) {
   return (
     <div className="flex items-center gap-2">
@@ -675,10 +649,6 @@ export function StatPill({ value, label, color }: StatPillProps) {
     </div>
   );
 }
-
-// ============================================================================
-// Container Details Header
-// ============================================================================
 
 export function ContainerDetailsHeader({
   container,
@@ -768,10 +738,6 @@ export function ContainerDetailsHeader({
 
   return <SubPageHeader icon={icon} title={container.name} metadata={metadata} actions={actions} />;
 }
-
-// ============================================================================
-// Resource Limits Form
-// ============================================================================
 
 function PresetButton({ presetKey, memory, isActive, onSelect }: PresetButtonProps) {
   return (
