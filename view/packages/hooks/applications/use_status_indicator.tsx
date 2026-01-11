@@ -1,9 +1,8 @@
-'use client';
-
-import { cn } from '@/lib/utils';
+import { useMemo } from 'react';
 import { Status } from '@/redux/types/applications';
+import { cn } from '@/lib/utils';
 
-interface StatusIndicatorProps {
+interface UseStatusIndicatorProps {
   status?: Status;
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
@@ -76,31 +75,22 @@ const defaultConfig = {
   pulse: false
 };
 
-export function StatusIndicator({ status, size = 'md', showLabel = true }: StatusIndicatorProps) {
-  const sizeClasses = {
-    sm: 'h-1.5 w-1.5',
-    md: 'h-2 w-2',
-    lg: 'h-3 w-3'
-  };
+const sizeClasses = {
+  sm: 'h-1.5 w-1.5',
+  md: 'h-2 w-2',
+  lg: 'h-3 w-3'
+};
 
-  if (!status) {
-    return (
-      <div className="flex items-center gap-2">
-        <span className={cn('relative flex', sizeClasses[size])}>
-          <span
-            className={cn('relative inline-flex rounded-full bg-zinc-400', sizeClasses[size])}
-          />
-        </span>
-        {showLabel && <span className="text-sm text-muted-foreground">No deployment</span>}
-      </div>
-    );
-  }
+export function useStatusIndicator({ status, size = 'md', showLabel = true }: UseStatusIndicatorProps) {
+  const config = useMemo(() => {
+    return status ? (statusConfig[status] || defaultConfig) : defaultConfig;
+  }, [status]);
 
-  const config = statusConfig[status] || defaultConfig;
+  const sizeClass = useMemo(() => sizeClasses[size], [size]);
 
-  return (
-    <div className="flex items-center gap-2">
-      <span className={cn('relative flex', sizeClasses[size])}>
+  const indicatorDot = useMemo(
+    () => (
+      <span className={cn('relative flex', sizeClass)}>
         {config.pulse && (
           <span
             className={cn(
@@ -109,13 +99,42 @@ export function StatusIndicator({ status, size = 'md', showLabel = true }: Statu
             )}
           />
         )}
-        <span
-          className={cn('relative inline-flex rounded-full', sizeClasses[size], config.bgColor)}
-        />
+        <span className={cn('relative inline-flex rounded-full', sizeClass, config.bgColor)} />
       </span>
-      {showLabel && (
-        <span className={cn('text-sm font-medium capitalize', config.color)}>{config.label}</span>
-      )}
-    </div>
+    ),
+    [config, sizeClass]
   );
+
+  const label = useMemo(
+    () =>
+      showLabel ? (
+        <span className={cn('text-sm font-medium capitalize', config.color)}>{config.label}</span>
+      ) : null,
+    [showLabel, config]
+  );
+
+  const noStatusLabel = useMemo(
+    () => (showLabel ? <span className="text-sm text-muted-foreground">No deployment</span> : null),
+    [showLabel]
+  );
+
+  const noStatusIndicatorDot = useMemo(
+    () => (
+      <span className={cn('relative flex', sizeClass)}>
+        <span className={cn('relative inline-flex rounded-full bg-zinc-400', sizeClass)} />
+      </span>
+    ),
+    [sizeClass]
+  );
+
+  return {
+    config,
+    sizeClass,
+    indicatorDot,
+    label,
+    noStatusLabel,
+    noStatusIndicatorDot,
+    hasStatus: !!status
+  };
 }
+
