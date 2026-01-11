@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useAppSidebar } from '@/hooks/use-app-sidebar';
 import { useSettingsModal } from '@/hooks/use-settings-modal';
+import { useGetAppVersionQuery } from '@/redux/services/users/userApi';
 
 export function AppSidebar({
   toggleAddTeamModal,
@@ -36,6 +37,7 @@ export function AppSidebar({
     filteredNavItems
   } = useAppSidebar();
   const { openSettings } = useSettingsModal();
+  const { data: versionData } = useGetAppVersionQuery();
 
   if (!user || !activeOrg) {
     return null;
@@ -74,6 +76,11 @@ export function AppSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        {versionData?.version && (
+          <div className="px-2 pb-2 text-xs text-muted-foreground text-center group-data-[collapsible=icon]:hidden">
+            v{versionData.version}
+          </div>
+        )}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

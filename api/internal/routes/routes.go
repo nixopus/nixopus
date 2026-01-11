@@ -194,7 +194,13 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 	authController := router.createAuthController(notificationManager)
 	authGroup := fuego.Group(server, apiV1.Path+"/auth")
 	router.RegisterAuthRoutes(authGroup, authController)
+
+	updateService := update_service.NewUpdateService(router.app, &router.logger, router.app.Ctx)
+	updateController := update.NewUpdateController(updateService, &router.logger)
+	publicUpdateGroup := fuego.Group(server, apiV1.Path+"/update")
+	router.RegisterPublicUpdateRoutes(publicUpdateGroup, updateController)
 }
+
 
 // registerProtectedRoutes registers routes that require authentication
 func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Version, notificationManager *notification.NotificationManager) {

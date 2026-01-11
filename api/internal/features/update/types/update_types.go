@@ -18,3 +18,7 @@ type UpdateResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 }
+
+type VersionResponse struct {
+	Version string `json:"version"`
+}

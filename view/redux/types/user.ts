@@ -127,3 +127,7 @@ export interface UpdateCheckResponse {
   last_checked: string;
   environment: string;
 }
+
+export interface AppVersionResponse {
+  version: string;
+}

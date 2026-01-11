@@ -135,3 +135,23 @@ func (c *UpdateController) PerformUpdate(s fuego.ContextWithBody[types.UpdateReq
 		Message: "Update completed successfully",
 	}, nil
 }
+
+func (c *UpdateController) GetVersion(s fuego.ContextNoBody) (*types.VersionResponse, error) {
+	currentVersion, err := c.service.GetCurrentVersion()
+	if err != nil {
+		c.logger.Log(logger.Error, "failed to get current version", err.Error())
+		if config.AppConfig.App.Environment == "development" {
+			return &types.VersionResponse{
+				Version: "development",
+			}, nil
+		}
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	return &types.VersionResponse{
+		Version: currentVersion,
+	}, nil
+}

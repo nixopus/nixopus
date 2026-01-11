@@ -38,7 +38,8 @@ export enum USERURLS {
   GET_PREFERENCES = 'v1/user/preferences',
   UPDATE_PREFERENCES = 'v1/user/preferences',
   GET_ORGANIZATION_SETTINGS = 'v1/organizations/settings',
-  UPDATE_ORGANIZATION_SETTINGS = 'v1/organizations/settings'
+  UPDATE_ORGANIZATION_SETTINGS = 'v1/organizations/settings',
+  GET_APP_VERSION = 'v1/update/version'
 }
 
 export enum USER_NOTIFICATION_SETTINGS {

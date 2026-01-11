@@ -36,7 +36,8 @@ import {
   UserPreferencesData,
   OrganizationSettings,
   OrganizationSettingsData,
-  UpdateCheckResponse
+  UpdateCheckResponse,
+  AppVersionResponse
 } from '@/redux/types/user';
 
 export const userApi = createApi({
@@ -284,6 +285,12 @@ export const userApi = createApi({
         return response.data;
       }
     }),
+    getAppVersion: builder.query<AppVersionResponse, void>({
+      query: () => ({
+        url: USERURLS.GET_APP_VERSION,
+        method: 'GET'
+      })
+    }),
     getOrganizationSettings: builder.query<OrganizationSettings, void>({
       query: () => ({
         url: USERURLS.GET_ORGANIZATION_SETTINGS,
@@ -333,5 +340,6 @@ export const {
   useGetUserPreferencesQuery,
   useUpdateUserPreferencesMutation,
   useGetOrganizationSettingsQuery,
-  useUpdateOrganizationSettingsMutation
+  useUpdateOrganizationSettingsMutation,
+  useGetAppVersionQuery
 } = userApi;

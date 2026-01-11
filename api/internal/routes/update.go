@@ -10,3 +10,12 @@ func (router *Router) RegisterUpdateRoutes(updateGroup *fuego.Server, updateCont
 	fuego.Get(updateGroup, "/check", updateController.CheckForUpdates)
 	fuego.Post(updateGroup, "", updateController.PerformUpdate)
 }
+
+func (router *Router) RegisterPublicUpdateRoutes(publicGroup *fuego.Server, updateController *update.UpdateController) {
+	fuego.Get(publicGroup, "/version", updateController.GetVersion)
+}
+
+// RegisterPublicUpdateRoutes registers public update routes
+func (router *Router) RegisterPublicUpdateRoutes(publicGroup *fuego.Server, updateController *update.UpdateController) {
+	fuego.Get(publicGroup, "/version", updateController.GetVersion)
+}
