@@ -1,27 +1,18 @@
-import { Button } from '@/components/ui/button';
+import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useRollbackApplicationMutation } from '@/redux/services/deploy/applicationsApi';
 import { ApplicationDeployment } from '@/redux/types/applications';
-import { Undo, Eye, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
-import PaginationWrapper from '@/components/ui/pagination';
+import { TableColumn } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
-import { DataTable, TableColumn } from '@/components/ui/data-table';
+import { Button } from '@/components/ui/button';
+import { CheckCircle2, AlertCircle, Loader2, Undo } from 'lucide-react';
 
-interface DeploymentsListProps {
+interface UseDeploymentsListProps {
   deployments?: ApplicationDeployment[];
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
 }
 
-function DeploymentsList({
-  deployments,
-  currentPage,
-  totalPages,
-  onPageChange
-}: DeploymentsListProps) {
+export function useDeploymentsList({ deployments }: UseDeploymentsListProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const [rollBackApplication, { isLoading }] = useRollbackApplicationMutation();
@@ -63,6 +54,11 @@ function DeploymentsList({
 
   const handleRowClick = (deployment: ApplicationDeployment) => {
     router.push(`/self-host/application/${deployment.application_id}/deployments/${deployment.id}`);
+  };
+
+  const handleRollback = (deploymentId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    rollBackApplication({ id: deploymentId });
   };
 
   const columns: TableColumn<ApplicationDeployment>[] = [
@@ -119,10 +115,7 @@ function DeploymentsList({
         <Button
           size="sm"
           variant="outline"
-          onClick={(e) => {
-            e.stopPropagation();
-            rollBackApplication({ id: deployment.id });
-          }}
+          onClick={(e) => handleRollback(deployment.id, e)}
           disabled={isLoading}
           className="text-destructive hover:text-destructive hover:bg-destructive/10"
         >
@@ -133,34 +126,13 @@ function DeploymentsList({
     }
   ];
 
-  return (
-    <div className="space-y-6">
-      {deployments && deployments.length > 0 ? (
-        <>
-          <DataTable
-            data={deployments}
-            columns={columns}
-            onRowClick={handleRowClick}
-            showBorder={true}
-            hoverable={true}
-          />
-          {totalPages > 1 && (
-            <div className="mt-8 flex justify-center">
-              <PaginationWrapper
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={onPageChange}
-              />
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="text-center py-12 rounded-lg border">
-          <p className="text-muted-foreground">{t('selfHost.deployment.list.noDeployments')}</p>
-        </div>
-      )}
-    </div>
-  );
+  return {
+    columns,
+    handleRowClick,
+    isLoading,
+    formatDate,
+    calculateRunTime,
+    getStatusIcon
+  };
 }
 
-export default DeploymentsList;

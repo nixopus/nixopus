@@ -1,78 +1,30 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { ExternalLink, GitBranch, Package } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { ExternalLink } from 'lucide-react';
 import { Application } from '@/redux/types/applications';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
+import { useApplicationItem } from '@/packages/hooks/applications/use_application_item';
 
-function AppItem({
-  name,
-  domain,
-  environment,
-  updated_at,
-  build_pack,
-  branch,
-  id,
-  status,
-  deployments,
-  labels
-}: Application) {
-  const router = useRouter();
-
-  const latestDeployment = deployments?.[0];
-  const currentStatus = latestDeployment?.status?.status || status?.status;
-
-  const getStatusConfig = (statusValue?: string) => {
-    switch (statusValue) {
-      case 'deployed':
-        return { bg: 'bg-emerald-500/10', dot: 'bg-emerald-500', pulse: true, label: 'Live' };
-      case 'running':
-        return { bg: 'bg-emerald-500/10', dot: 'bg-emerald-500', pulse: true, label: 'Running' };
-      case 'failed':
-        return { bg: 'bg-red-500/10', dot: 'bg-red-500', pulse: false, label: 'Failed' };
-      case 'building':
-      case 'deploying':
-      case 'cloning':
-      case 'started':
-        return { bg: 'bg-amber-500/10', dot: 'bg-amber-500', pulse: true, label: 'Building' };
-      case 'draft':
-        return { bg: 'bg-blue-500/10', dot: 'bg-blue-500', pulse: false, label: 'Draft' };
-      case 'stopped':
-        return { bg: 'bg-zinc-500/10', dot: 'bg-zinc-500', pulse: false, label: 'Stopped' };
-      default:
-        return { bg: 'bg-zinc-500/10', dot: 'bg-zinc-500', pulse: false, label: 'Inactive' };
-    }
-  };
-
-  const statusConfig = getStatusConfig(currentStatus);
-
-  const formattedBuildPack = build_pack
-    .replace(/([A-Z])/g, ' $1')
-    .trim()
-    .toLowerCase();
-
-  const getEnvironmentStyles = () => {
-    switch (environment) {
-      case 'development':
-        return 'border-blue-500/30 text-blue-500 bg-blue-500/10';
-      case 'staging':
-        return 'border-amber-500/30 text-amber-500 bg-amber-500/10';
-      case 'production':
-        return 'border-emerald-500/30 text-emerald-500 bg-emerald-500/10';
-      default:
-        return 'border-zinc-500/30 text-zinc-500 bg-zinc-500/10';
-    }
-  };
-
-  const timeAgo = updated_at ? formatDistanceToNow(new Date(updated_at), { addSuffix: true }) : '';
+function AppItem(application: Application) {
+  const {
+    name,
+    domain,
+    currentStatus,
+    statusConfig,
+    environmentStyles,
+    statusTextColor,
+    timeAgo,
+    metadataItems,
+    displayLabels,
+    handleClick
+  } = useApplicationItem(application);
 
   return (
     <Card
       className="relative w-full cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary/30 group"
-      onClick={() => router.push(`/self-host/application/${id}`)}
+      onClick={handleClick}
     >
       <CardContent className="p-5">
         <div className="flex items-start gap-4">
@@ -116,12 +68,12 @@ function AppItem({
                   {domain}
                 </span>
               )}
-              <Badge variant="outline" className={cn('text-xs capitalize', getEnvironmentStyles())}>
-                {environment}
+              <Badge variant="outline" className={cn('text-xs capitalize', environmentStyles)}>
+                {application.environment}
               </Badge>
-              {labels && labels.length > 0 && (
+              {displayLabels && (
                 <>
-                  {labels.slice(0, 2).map((label, index) => (
+                  {displayLabels.visible.map((label, index) => (
                     <Badge
                       key={index}
                       variant="outline"
@@ -130,12 +82,12 @@ function AppItem({
                       {label}
                     </Badge>
                   ))}
-                  {labels.length > 2 && (
+                  {displayLabels.remainingCount > 0 && (
                     <Badge
                       variant="outline"
                       className="text-xs border-muted-foreground/30 text-muted-foreground bg-muted"
                     >
-                      +{labels.length - 2}
+                      +{displayLabels.remainingCount}
                     </Badge>
                   )}
                 </>
@@ -143,41 +95,20 @@ function AppItem({
             </div>
 
             <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
-              {branch && (
-                <span className="flex items-center gap-1">
-                  <GitBranch className="h-3 w-3" />
-                  {branch}
-                </span>
-              )}
-              <span className="flex items-center gap-1">
-                <Package className="h-3 w-3" />
-                <span className="capitalize">{formattedBuildPack}</span>
-              </span>
+              {metadataItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <span key={item.key} className="flex items-center gap-1">
+                    <Icon className="h-3 w-3" />
+                    <span className={item.key === 'buildPack' ? 'capitalize' : ''}>{item.label}</span>
+                  </span>
+                );
+              })}
             </div>
 
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
               <span className="text-xs text-muted-foreground">{timeAgo}</span>
-              <span
-                className={cn(
-                  'text-xs font-medium',
-                  currentStatus === 'deployed' || currentStatus === 'running'
-                    ? 'text-emerald-500'
-                    : currentStatus === 'failed'
-                      ? 'text-red-500'
-                      : currentStatus === 'draft'
-                        ? 'text-blue-500'
-                        : currentStatus === 'building' ||
-                            currentStatus === 'deploying' ||
-                            currentStatus === 'cloning' ||
-                            currentStatus === 'started'
-                          ? 'text-amber-500'
-                          : currentStatus === 'stopped'
-                            ? 'text-zinc-500'
-                            : 'text-muted-foreground'
-                )}
-              >
-                {statusConfig.label}
-              </span>
+              <span className={cn('text-xs font-medium', statusTextColor)}>{statusConfig.label}</span>
             </div>
           </div>
         </div>
