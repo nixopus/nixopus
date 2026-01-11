@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { TypographyMuted } from '@/components/ui/typography';
-import useSmtpBanner from '../hooks/use-smtp-banner';
+import useSmtpBanner from '@/packages/hooks/dashboard/use-smtp-banner';
 
 export function SMTPBanner() {
   const { handleDismiss, handleConfigure, t, isVisible } = useSmtpBanner();
