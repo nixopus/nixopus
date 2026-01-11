@@ -10,7 +10,7 @@ import { BuildPack, Environment } from '@/redux/types/deploy-form';
 import useUpdateDeployment from '@/packages/hooks/applications/use_update_deployment';
 import { useDeploymentConfiguration } from '@/packages/hooks/applications/use_deployment_configuration';
 import { parsePort } from '@/packages/utils/util';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
 import { Skeleton } from '@/components/ui/skeleton';
 import {

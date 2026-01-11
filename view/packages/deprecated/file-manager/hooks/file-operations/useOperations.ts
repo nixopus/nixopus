@@ -9,7 +9,7 @@ import {
   useCopyFileOrDirectoryMutation
 } from '@/redux/services/file-manager/fileManagersApi';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 export function useFileOperations(refetch: () => void) {
   const { t } = useTranslation();

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { ApplicationDeployment } from '@/redux/types/applications';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { ChartConfig } from '@/components/ui/chart';
 
 interface UseDeploymentStatusChartProps {

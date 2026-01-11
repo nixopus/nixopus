@@ -5,7 +5,7 @@ import { useGetAllGithubRepositoriesQuery } from '@/redux/services/connector/git
 import { GithubRepository } from '@/redux/types/github';
 import { SortOption } from '@/components/ui/sort-selector';
 import { useAppSelector } from '@/redux/hooks';
-import { useDebounce } from '@/hooks/use-debounce';
+import { useDebounce } from '@/packages/hooks/shared/use-debounce';
 
 /**
  * @function useGithubRepoPagination

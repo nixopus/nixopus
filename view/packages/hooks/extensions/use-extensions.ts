@@ -18,7 +18,7 @@ import {
   useForkExtensionMutation
 } from '@/redux/services/extensions/extensionsApi';
 import { SelectOption } from '@/components/ui/select-wrapper';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { toast } from 'sonner';
 import YAML from 'yaml';
 import { TableColumn } from '@/components/ui/data-table';

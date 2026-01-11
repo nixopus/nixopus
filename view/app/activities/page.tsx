@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';

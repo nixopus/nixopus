@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Application } from '@/redux/types/applications';
 import { useGetProjectFamilyQuery } from '@/redux/services/deploy/applicationsApi';
 import { cn } from '@/lib/utils';

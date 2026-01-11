@@ -5,7 +5,7 @@ import { CardWrapper } from '@/components/ui/card-wrapper';
 import { Button } from '@/components/ui/button';
 import { Package, ArrowRight } from 'lucide-react';
 import { ContainerData } from '@/redux/types/monitor';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTable, TableColumn } from '@/components/ui/data-table';

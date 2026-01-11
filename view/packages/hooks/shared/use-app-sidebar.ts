@@ -1,9 +1,9 @@
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import { useGetUserOrganizationsQuery } from '@/redux/services/users/userApi';
-import { useNavigationState } from '@/hooks/use_navigation_state';
+import { useNavigationState } from '@/packages/hooks/shared/use_navigation_state';
 import { setActiveOrganization } from '@/redux/features/users/userSlice';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useRBAC } from '@/lib/rbac';
 import { logout, logoutUser } from '@/redux/features/users/authSlice';
 import { authApi } from '@/redux/services/users/authApi';
@@ -17,7 +17,7 @@ import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
 import { Folder, Home, Package, Container, Puzzle } from 'lucide-react';
-import { useSettingsModal } from '@/hooks/use-settings-modal';
+import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
 
 const data = {
   navMain: [

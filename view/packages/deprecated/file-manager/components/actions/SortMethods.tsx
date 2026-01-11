@@ -9,7 +9,7 @@ import {
   DropdownMenuRadioGroup
 } from '@/components/ui/dropdown-menu';
 import { FileData } from '@/redux/types/files';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 interface FileSortMethodsProps {
   files: FileData[] | [];

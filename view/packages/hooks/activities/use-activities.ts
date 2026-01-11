@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useTranslation } from '@/hooks/use-translation';
-import { useSearchable } from '@/hooks/use-searchable';
 import { SortOption } from '@/components/ui/sort-selector';
 import { useGetActivitiesQuery } from '@/redux/services/audit';
 import { ActivityMessage } from '@/redux/types/audit';
+import { useTranslation } from '../shared/use-translation';
+import { useSearchable } from '../shared/use-searchable';
 
 export const getActionColor = (actionColor: string) => {
   switch (actionColor) {

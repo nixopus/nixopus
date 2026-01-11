@@ -10,7 +10,7 @@ import {
 } from '@/redux/services/users/userApi';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 function useGeneralSettings() {
   const { t } = useTranslation();

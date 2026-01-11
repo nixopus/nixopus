@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import SubPageHeader from '@/components/ui/sub-page-header';
 import { Container } from '@/redux/services/container/containerApi';
-import { translationKey } from '@/hooks/use-translation';
+import { translationKey } from '@/packages/hooks/shared/use-translation';
 
 interface ContainerDetailsHeaderProps {
   container: Container;

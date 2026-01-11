@@ -3,7 +3,7 @@
 import React from 'react';
 import { SystemStatsType } from '@/redux/types/monitor';
 import { HardDrive } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { DataTable, TableColumn } from '@/components/ui/data-table';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 import { SystemMetricCard } from './system-metric-card';

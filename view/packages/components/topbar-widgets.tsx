@@ -3,7 +3,7 @@
 import React from 'react';
 import { Clock, Network, ArrowDown, ArrowUp } from 'lucide-react';
 import useClock from '@/packages/hooks/dashboard/use-clock';
-import { useSystemStats } from '@/hooks/system-stats-provider';
+import { useSystemStats } from '@/packages/hooks/shared/system-stats-provider';
 import { useNetworkSpeeds } from '@/packages/hooks/dashboard/use-network-speeds';
 
 interface NetworkWidgetProps {

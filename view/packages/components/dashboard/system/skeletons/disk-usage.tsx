@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TypographySmall } from '@/components/ui/typography';
 import { SystemMetricCard } from '../system-metric-card';
 import { useSystemMetric } from '@/packages/hooks/dashboard/use-system-metric';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { DEFAULT_METRICS } from '../../utils/constants';
 
 export function DiskUsageCardSkeletonContent() {

@@ -1,5 +1,5 @@
 import { SortOption } from '@/components/ui/sort-selector';
-import { useSearchable } from '@/hooks/use-searchable';
+import { useSearchable } from '@/packages/hooks/shared/use-searchable';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import {
   useGetAllGithubConnectorQuery,

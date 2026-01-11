@@ -16,7 +16,7 @@ import {
   TrashIcon,
   UploadCloudIcon
 } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { FileData } from '@/redux/types/files';
 import { toast } from 'sonner';
 import { DialogWrapper } from '@/components/ui/dialog-wrapper';

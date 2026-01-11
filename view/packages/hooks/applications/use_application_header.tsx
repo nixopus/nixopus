@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
 import { Application } from '@/redux/types/applications';
 import {
   useRedeployApplicationMutation,
@@ -29,6 +28,7 @@ import {
   DuplicateProjectDialog
 } from '@/packages/components/application-details';
 import { AnyPermissionGuard } from '@/packages/components/rbac';
+import { useTranslation } from '../shared/use-translation';
 
 interface UseApplicationHeaderProps {
   application?: Application;

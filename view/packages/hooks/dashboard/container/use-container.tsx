@@ -1,6 +1,6 @@
 import { TableColumn } from '@/components/ui/data-table';
 import { ContainerData } from '@/redux/types/monitor';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { TypographyMuted, TypographySmall } from '@/components/ui/typography';
 import { Badge } from '@/components/ui/badge';
 import truncateId from '@/packages/components/dashboard/utils/truncate-id';

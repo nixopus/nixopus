@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import DashboardPageHeader from '@/components/layout/dashboard-page-header';
 
 function FileManagerHeader() {

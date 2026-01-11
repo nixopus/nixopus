@@ -1,5 +1,5 @@
 import { SelectOption } from '@/components/ui/select-wrapper';
-import { SettingsCategory } from '@/hooks/use-settings-categories';
+import { SettingsCategory } from '@/packages/hooks/shared/use-settings-categories';
 import { UserTypes } from '@/redux/types/orgs';
 import { UserSettings, User as UserType } from '@/redux/types/user';
 import {

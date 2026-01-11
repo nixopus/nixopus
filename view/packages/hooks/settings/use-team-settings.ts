@@ -9,7 +9,7 @@ import {
 import { UserTypes } from '@/redux/types/orgs';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 function useTeamSettings() {
   const { t } = useTranslation();

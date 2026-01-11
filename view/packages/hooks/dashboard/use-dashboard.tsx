@@ -1,11 +1,11 @@
 import { useAppSelector } from '@/redux/hooks';
 import React from 'react';
-import { useFeatureFlags } from '@/hooks/features_provider';
+import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
 import useMonitor from '@/packages/hooks/dashboard/use-monitor';
 import { useGetSMTPConfigurationsQuery } from '@/redux/services/settings/notificationApi';
 import { useCheckForUpdatesQuery } from '@/redux/services/users/userApi';
 import { FeatureNames } from '@/packages/types/feature-flags';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import SystemInfoCard from '@/packages/components/dashboard/system/system-info';
 import ClockWidget from '@/packages/components/dashboard/system/clock';
 import NetworkWidget from '@/packages/components/dashboard/system/network';

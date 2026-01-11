@@ -1,6 +1,6 @@
 import { Extension, ExtensionExecution, ExtensionVariable } from '@/redux/types/extension';
 import { TableColumn } from '@/components/ui/data-table';
-import { translationKey } from '@/hooks/use-translation';
+import { translationKey } from '@/packages/hooks/shared/use-translation';
 import { DialogAction } from '@/components/ui/dialog-wrapper';
 
 export type CategoryBadgesProps = {

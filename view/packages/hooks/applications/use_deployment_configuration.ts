@@ -1,5 +1,5 @@
 import { BuildPack } from '@/redux/types/deploy-form';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 interface UseDeploymentConfigurationProps {
   branch?: string;

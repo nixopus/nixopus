@@ -11,9 +11,9 @@ import { DialogWrapper } from '@/components/ui/dialog-wrapper';
 import FileUpload from './Upload';
 import { FileData } from '@/redux/types/files';
 import { useCreateDirectoryMutation } from '@/redux/services/file-manager/fileManagersApi';
-import { useTranslation } from '@/hooks/use-translation';
 import { toast } from 'sonner';
 import { ResourceGuard } from '@/packages/components/rbac';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 interface DropDownMenuProps {
   refetch: () => void;

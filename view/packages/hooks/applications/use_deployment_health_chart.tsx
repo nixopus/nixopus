@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { CircleCheck, CircleAlert, CircleX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

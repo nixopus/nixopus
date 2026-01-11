@@ -1,7 +1,7 @@
 import React from 'react';
 import { SortOption, SortSelect } from '@/components/ui/sort-selector';
 import { SearchBar } from '@/components/ui/search-bar';
-import { SortConfig } from '@/hooks/use-searchable';
+import { SortConfig } from '@/packages/hooks/shared/use-searchable';
 import { TypographyH2 } from '@/components/ui/typography';
 import MainPageHeader from '../ui/main-page-header';
 

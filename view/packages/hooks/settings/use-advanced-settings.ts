@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
-import { useTranslation, type translationKey } from '@/hooks/use-translation';
+import { useTranslation, type translationKey } from '@/packages/hooks/shared/use-translation';
 import {
   useGetUserPreferencesQuery,
   useUpdateUserPreferencesMutation,

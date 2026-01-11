@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { GithubRepository } from '@/redux/types/github';
 import { Lock, Unlock, Star, GitFork, AlertCircle } from 'lucide-react';
 

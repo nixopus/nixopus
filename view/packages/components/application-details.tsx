@@ -1,6 +1,6 @@
 import { ApplicationDeployment, Status } from '@/redux/types/applications';
 import React, { useState } from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import PaginationWrapper from '@/components/ui/pagination';
 import { DataTable } from '@/components/ui/data-table';
 import { useDeploymentsList } from '@/packages/hooks/applications/use_deployments_list';

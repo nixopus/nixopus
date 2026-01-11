@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useRouter } from 'next/navigation';
 
 const SMTP_BANNER_KEY = 'smtp_banner_dismissed';

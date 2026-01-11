@@ -5,7 +5,7 @@ import { RefreshCw, Trash2, Loader2, Scissors } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnyPermissionGuard } from '@/packages/components/rbac';
-import { translationKey } from '@/hooks/use-translation';
+import { translationKey } from '@/packages/hooks/shared/use-translation';
 
 interface ActionHeaderProps {
   handleRefresh: () => Promise<void>;

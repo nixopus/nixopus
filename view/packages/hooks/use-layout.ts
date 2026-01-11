@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { TERMINAL_POSITION } from '../types/layout';
-import { useTour } from '@/hooks/useTour';
-import { useAppSidebar } from '@/hooks/use-app-sidebar';
+import { useTour } from '@/packages/hooks/shared/useTour';
+import { useAppSidebar } from '@/packages/hooks/shared/use-app-sidebar';
 import { useTerminalState } from '@/packages/hooks/terminal/use-terminal-state';
-import useTeamSwitcher from '@/hooks/use-team-switcher';
-import useBreadCrumbs from '@/hooks/use-bread-crumbs';
+import useTeamSwitcher from '@/packages/hooks/shared/use-team-switcher';
+import useBreadCrumbs from '@/packages/hooks/shared/use-bread-crumbs';
 
 export const useLayout = () => {
   const {

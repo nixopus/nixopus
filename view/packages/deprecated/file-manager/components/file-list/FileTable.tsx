@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { FileData, FileType } from '@/redux/types/files';
 import { cn } from '@/lib/utils';
 import { Folder, File, ChevronUp, ChevronDown, Link2 } from 'lucide-react';

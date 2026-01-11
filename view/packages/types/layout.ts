@@ -3,7 +3,7 @@ import { Sidebar } from '@/components/ui/sidebar';
 import { User } from '@/redux/types/user';
 import { Organization } from '@/redux/types/orgs';
 import { LucideIcon } from 'lucide-react';
-import { translationKey } from '@/hooks/use-translation';
+import { translationKey } from '@/packages/hooks/shared/use-translation';
 
 export interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   toggleAddTeamModal?: () => void;

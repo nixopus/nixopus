@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useTranslation } from '@/hooks/use-translation';
 import { useRBAC } from '@/lib/rbac';
 import { useAppSelector } from '@/redux/hooks';
 import { User } from '@/redux/types/user';
@@ -22,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ResourceGuard } from '@/packages/components/rbac';
 import { TypographyMuted } from '@/components/ui/typography';
 import { EditUser, MAX_VISIBLE_PERMISSIONS } from '../../types/settings';
+import { useTranslation } from '../shared/use-translation';
 
 interface UseTeamMembersProps {
   users: EditUser[];

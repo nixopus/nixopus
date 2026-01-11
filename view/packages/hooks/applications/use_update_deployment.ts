@@ -4,13 +4,13 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useWebSocket } from '@/hooks/socket-provider';
+import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { useUpdateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';
 import { UpdateDeploymentRequest, Environment } from '@/redux/types/applications';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
 import { parsePort } from '@/packages/utils/util';
 import { useAppSelector } from '@/redux/hooks';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 interface UseUpdateDeploymentProps {
   name?: string;

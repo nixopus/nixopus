@@ -4,7 +4,7 @@ import useGithubRepoPagination from '../hooks/applications/use_github_repo_pagin
 import PaginationWrapper from '@/components/ui/pagination';
 import { SearchBar } from '@/components/ui/search-bar';
 import { SortSelect } from '@/components/ui/sort-selector';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
 import useGithubConnectorSettings from '../hooks/applications/use-github-connector-settings';

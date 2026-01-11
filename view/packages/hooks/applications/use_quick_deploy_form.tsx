@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { BuildPack } from '@/redux/types/deploy-form';
 import { useGetGithubRepositoryBranchesMutation } from '@/redux/services/connector/githubConnectorApi';
 import { useCreateProjectMutation } from '@/redux/services/deploy/applicationsApi';

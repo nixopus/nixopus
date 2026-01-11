@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { LogLevel, FormattedLogEntry, LogFilters } from './use_deployment_logs_viewer';
 import {
   Search,

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Container } from '@/redux/services/container/containerApi';
 import { useRouter } from 'next/navigation';
 import { ContainerActions } from './container-actions';

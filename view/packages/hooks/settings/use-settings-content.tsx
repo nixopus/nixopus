@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslation } from '@/hooks/use-translation';
-import { useAppSidebar } from '@/hooks/use-app-sidebar';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
+import { useAppSidebar } from '@/packages/hooks/shared/use-app-sidebar';
 import { useAppSelector } from '@/redux/hooks';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
 import useGeneralSettings from '@/packages/hooks/settings/use-general-settings';
