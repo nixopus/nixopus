@@ -1,5 +1,12 @@
+'use client';
+
 import React, { useState } from 'react';
-import { DataTable, TableColumn } from '@/components/ui/data-table';
+import { useTranslation } from '@/hooks/use-translation';
+import { useRBAC } from '@/lib/rbac';
+import { useAppSelector } from '@/redux/hooks';
+import { User } from '@/redux/types/user';
+import { UserTypes } from '@/redux/types/orgs';
+import { TableColumn } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,44 +19,37 @@ import {
 import { TrashIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from 'lucide-react';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAppSelector } from '@/redux/hooks';
-import EditUserDialog from './EditUserDialog';
-import { UserTypes } from '@/redux/types/orgs';
-import { DeleteDialog } from '@/components/ui/delete-dialog';
-import { useTranslation } from '@/hooks/use-translation';
-import { User } from '@/redux/types/user';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
-import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
-import { useRBAC } from '@/lib/rbac';
+import { TypographyMuted } from '@/components/ui/typography';
+import { EditUser, MAX_VISIBLE_PERMISSIONS } from '../../types/settings';
 
-type EditUser = {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  role: 'Owner' | 'Admin' | 'Member' | 'Viewer';
-  permissions: string[];
-};
-
-type RoleType = 'owner' | 'admin' | 'member' | 'viewer';
-
-interface TeamMembersProps {
+interface UseTeamMembersProps {
   users: EditUser[];
   handleRemoveUser: (userId: string) => void;
   getRoleBadgeVariant: (role: string) => 'default' | 'secondary' | 'destructive' | 'outline';
   onUpdateUser: (userId: string, role: UserTypes) => Promise<void>;
 }
 
-const MAX_VISIBLE_PERMISSIONS = 3;
+interface UseTeamMembersReturn {
+  columns: TableColumn<EditUser>[];
+  editingUser: EditUser | null;
+  userToRemove: EditUser | null;
+  isDeleteDialogOpen: boolean;
+  handleDeleteConfirm: () => void;
+  handleDeleteDialogClose: () => void;
+  handleEditDialogClose: () => void;
+  handleDeleteDialogOpenChange: (open: boolean) => void;
+  canModifyUser: (targetUser: EditUser) => boolean;
+}
 
-function TeamMembers({
+export function useTeamMembers({
   users,
   handleRemoveUser,
   getRoleBadgeVariant,
   onUpdateUser
-}: TeamMembersProps) {
+}: UseTeamMembersProps): UseTeamMembersReturn {
   const { t } = useTranslation();
-  const { canAccessResource, isAdmin, isLoading: rbacLoading } = useRBAC();
+  const { isAdmin, isLoading: rbacLoading } = useRBAC();
   const loggedInUser = useAppSelector((state) => state.auth.user) as User;
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
@@ -93,15 +93,6 @@ function TeamMembers({
       ...user,
       permissions: user.permissions
     });
-  };
-
-  const handleSaveUser = (userId: string, role: UserTypes) => {
-    const user = users.find((u) => u.id === userId);
-    if (!user || !canModifyUser(user)) {
-      return;
-    }
-    onUpdateUser(userId, role);
-    setEditingUser(null);
   };
 
   const renderPermissions = (permissions: string[], userId: string) => {
@@ -237,53 +228,65 @@ function TeamMembers({
     });
   }
 
-  return (
-    <>
-      <div className="space-y-4">
-        <div>
-          <TypographySmall className="text-sm font-medium">
-            {t('settings.teams.members.title')}
-          </TypographySmall>
-          <TypographyMuted className="text-xs mt-1">
-            {t('settings.teams.members.description')}
-          </TypographyMuted>
-        </div>
-        <DataTable data={users} columns={columns} showBorder={false} hoverable={false} />
-      </div>
+  const handleDeleteConfirm = () => {
+    if (userToRemove) {
+      handleRemoveUser(userToRemove.id);
+      setUserToRemove(null);
+      setIsDeleteDialogOpen(false);
+    }
+  };
 
-      {editingUser && (
-        <EditUserDialog
-          isOpen={!!editingUser}
-          onClose={() => setEditingUser(null)}
-          user={editingUser}
-          onSave={handleSaveUser}
-        />
-      )}
+  const handleDeleteDialogClose = () => {
+    setIsDeleteDialogOpen(false);
+  };
 
-      {userToRemove && (
-        <DeleteDialog
-          title={t('settings.teams.members.deleteDialog.title').replace(
-            '{name}',
-            userToRemove.name
-          )}
-          description={t('settings.teams.members.deleteDialog.description').replace(
-            '{name}',
-            userToRemove.name
-          )}
-          onConfirm={() => {
-            handleRemoveUser(userToRemove.id);
-            setUserToRemove(null);
-            setIsDeleteDialogOpen(false);
-          }}
-          confirmText={t('settings.teams.members.deleteDialog.confirm')}
-          variant="destructive"
-          icon={TrashIcon}
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-        />
-      )}
-    </>
-  );
+  const handleEditDialogClose = () => {
+    setEditingUser(null);
+  };
+
+  const handleDeleteDialogOpenChange = (open: boolean) => {
+    setIsDeleteDialogOpen(open);
+    if (!open) {
+      setUserToRemove(null);
+    }
+  };
+
+  return {
+    columns,
+    editingUser,
+    userToRemove,
+    isDeleteDialogOpen,
+    handleDeleteConfirm,
+    handleDeleteDialogClose,
+    handleEditDialogClose,
+    handleDeleteDialogOpenChange,
+    canModifyUser
+  };
 }
 
-export default TeamMembers;
+interface TeamStats {
+  label: string;
+  value: number;
+}
+
+export const useTeamStats = (users: { id: string; name: string; role: string }[]): TeamStats[] => {
+  const { t } = useTranslation();
+  return [
+    {
+      label: t('settings.teams.stats.totalMembers'),
+      value: users.length
+    },
+    {
+      label: t('settings.teams.stats.owners'),
+      value: users.filter((u) => u.role === 'Admin').length
+    },
+    {
+      label: t('settings.teams.stats.members'),
+      value: users.filter((u) => u.role === 'Member').length
+    },
+    {
+      label: t('settings.teams.stats.viewers'),
+      value: users.filter((u) => u.role === 'Viewer').length
+    }
+  ];
+};
