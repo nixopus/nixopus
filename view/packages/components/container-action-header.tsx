@@ -4,7 +4,7 @@ import React from 'react';
 import { RefreshCw, Trash2, Loader2, Scissors } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
+import { AnyPermissionGuard } from '@/packages/components/rbac';
 import { translationKey } from '@/hooks/use-translation';
 
 interface ActionHeaderProps {
