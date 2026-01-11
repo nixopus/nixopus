@@ -9,6 +9,14 @@
     "ports": "Puertos",
     "actions": "Acciones",
     "refresh": "Actualizar",
+    "searchPlaceholder": "Buscar contenedores...",
+    "sortBy": "Ordenar por",
+    "sortOptions": {
+      "name": "Nombre",
+      "nameDesc": "Nombre (Z-A)",
+      "status": "Estado",
+      "statusDesc": "Estado (Z-A)"
+    },
     "start": "Iniciar",
     "stop": "Parar",
     "remove": "Eliminar",

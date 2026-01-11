@@ -33,13 +33,13 @@ import {
   FileText,
   AlertCircle
 } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import {
   useEnvVariablesEditor,
   type ValidationType,
   type PastePreviewItem,
   type EnvVariable
-} from '@/hooks/use-env-variables-editor';
+} from '@/packages/hooks/shared/use-env-variables-editor';
 import { cn } from '@/lib/utils';
 
 interface EnvVariablesEditorProps {

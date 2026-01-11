@@ -9,6 +9,14 @@
     "ports": "Ports",
     "actions": "Actions",
     "refresh": "Refresh",
+    "searchPlaceholder": "Search containers...",
+    "sortBy": "Sort by",
+    "sortOptions": {
+      "name": "Name",
+      "nameDesc": "Name (Z-A)",
+      "status": "Status",
+      "statusDesc": "Status (Z-A)"
+    },
     "start": "Start",
     "stop": "Stop",
     "remove": "Remove",

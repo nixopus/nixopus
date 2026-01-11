@@ -63,22 +63,13 @@ func main() {
 	taskq.SetLogger(log.New(io.Discard, "", 0))
 	queue.Init(redisClient)
 
-	router := routes.NewRouter(app)
-
-	// Initialize schedulers
-	schedulers := scheduler.InitSchedulers(store, ctx)
-	router.SetSchedulers(schedulers)
-
-	// Start schedulers
-	if err := schedulers.Main.Start(); err != nil {
+	// Initialize and start scheduler for cleanup jobs
+	sched := scheduler.InitScheduler(store.DB, ctx)
+	if err := sched.Start(); err != nil {
 		log.Printf("Warning: failed to start scheduler: %v", err)
 	} else {
 		log.Println("Scheduler started successfully")
 	}
-	schedulers.HealthCheck.Start()
-	log.Println("Health check scheduler started successfully")
-
-	router.SetupRoutes()
 
 	// Setup graceful shutdown
 	go func() {
@@ -86,10 +77,12 @@ func main() {
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		<-sigChan
 		log.Println("Shutting down...")
-		schedulers.Main.Stop()
-		schedulers.HealthCheck.Stop()
+		sched.Stop()
 		os.Exit(0)
 	}()
+
+	router := routes.NewRouter(app)
+	router.SetupRoutes()
 	log.Printf("Server starting on port %s", config.AppConfig.Server.Port)
 	log.Fatal(http.ListenAndServe(":"+config.AppConfig.Server.Port, nil))
 }

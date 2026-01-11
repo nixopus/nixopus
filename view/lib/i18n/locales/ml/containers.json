@@ -9,6 +9,14 @@
     "ports": "പോർട്ടുകൾ",
     "actions": "പ്രവർത്തനങ്ങൾ",
     "refresh": "പുതുക്കുക",
+    "searchPlaceholder": "കണ്ടെയ്‌നറുകൾ തിരയുക...",
+    "sortBy": "ക്രമീകരണം",
+    "sortOptions": {
+      "name": "പേര്",
+      "nameDesc": "പേര് (Z-A)",
+      "status": "സ്റ്റാറ്റസ്",
+      "statusDesc": "സ്റ്റാറ്റസ് (Z-A)"
+    },
     "start": "ആരംഭിക്കുക",
     "stop": "നിർത്തുക",
     "remove": "നീക്കം ചെയ്യുക",
