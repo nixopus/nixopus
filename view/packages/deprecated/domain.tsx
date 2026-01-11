@@ -4,7 +4,7 @@ import { useDeleteDomainMutation } from '@/redux/services/settings/domainsApi';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/use-translation';
 import { Domain } from '@/redux/types/domain';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { ResourceGuard } from '@/packages/components/rbac';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';

@@ -19,7 +19,7 @@ import {
 import { TrashIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from 'lucide-react';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { ResourceGuard } from '@/packages/components/rbac';
 import { TypographyMuted } from '@/components/ui/typography';
 import { EditUser, MAX_VISIBLE_PERMISSIONS } from '../../types/settings';
 

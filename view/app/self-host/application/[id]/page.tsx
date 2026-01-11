@@ -2,10 +2,10 @@
 import React from 'react';
 import TabsWrapper, { TabsWrapperList } from '@/components/ui/tabs-wrapper';
 import useApplicationDetails from '../../../../packages/hooks/applications/use_application_details';
-import ApplicationDetailsHeader from '../../components/application-details/header';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { ApplicationDetailsHeader } from '@/packages/components/application-details';
+import { ResourceGuard } from '@/packages/components/rbac';
 import { Skeleton } from '@/components/ui/skeleton';
-import PageLayout from '@/components/layout/page-layout';
+import PageLayout from '@/packages/layouts/page-layout';
 
 function Page() {
   const { application, activeTab, setActiveTab, tabs, sharedTabTriggerClassName } =
