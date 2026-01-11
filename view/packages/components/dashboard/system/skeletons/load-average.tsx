@@ -5,7 +5,7 @@ import { Activity } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TypographyMuted } from '@/components/ui/typography';
 import { SystemMetricCard } from '../system-metric-card';
-import { useSystemMetric } from '../../../hooks/use-system-metric';
+import { useSystemMetric } from '@/packages/hooks/dashboard/use-system-metric';
 import { DEFAULT_METRICS } from '../../utils/constants';
 
 export function LoadAverageCardSkeletonContent() {

@@ -4,7 +4,7 @@ import React from 'react';
 import { Clock } from 'lucide-react';
 import { SystemMetricCard } from './system-metric-card';
 import { ClockCardSkeletonContent } from './skeletons/clock';
-import useClock from '../../hooks/use-clock';
+import useClock from '@/packages/hooks/dashboard/use-clock';
 
 const ClockWidget: React.FC = () => {
   const { formattedTime, formattedDate } = useClock();

@@ -7,7 +7,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import { DataTable, TableColumn } from '@/components/ui/data-table';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 import { SystemMetricCard } from './system-metric-card';
-import { useSystemMetric } from '../../hooks/use-system-metric';
+import { useSystemMetric } from '@/packages/hooks/dashboard/use-system-metric';
 import { formatPercentage } from '../utils/utils';
 import { DEFAULT_METRICS } from '../utils/constants';
 import { DiskUsageCardSkeletonContent } from './skeletons/disk-usage';

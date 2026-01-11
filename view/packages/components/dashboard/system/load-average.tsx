@@ -6,7 +6,7 @@ import { SystemStatsType } from '@/redux/types/monitor';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
 import { BarChartComponent } from '@/components/ui/bar-chart-component';
 import { SystemMetricCard } from './system-metric-card';
-import { useSystemMetric } from '../../hooks/use-system-metric';
+import { useSystemMetric } from '@/packages/hooks/dashboard/use-system-metric';
 import { createLoadAverageChartData, createLoadAverageChartConfig } from '../utils/utils';
 import { DEFAULT_METRICS, CHART_COLORS } from '../utils/constants';
 import { LoadAverageCardSkeletonContent } from './skeletons/load-average';

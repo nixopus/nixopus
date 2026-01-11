@@ -97,7 +97,7 @@ export const formatPresetValue = (key: PresetType, memory: number): string => {
   return memory >= 1024 ? `${memory / 1024}G` : `${memory}M`;
 };
 
-function useUpdateContainerResources({
+export function useUpdateContainerResources({
   containerId,
   currentMemory,
   currentMemorySwap,
@@ -191,5 +191,3 @@ function useUpdateContainerResources({
     applyPreset
   };
 }
-
-export default useUpdateContainerResources;

@@ -4,10 +4,10 @@ import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
 import { Container } from '@/redux/services/container/containerApi';
 import { useRouter } from 'next/navigation';
-import { ContainerActions } from './actions';
-import { Action } from './card';
+import { ContainerActions } from './container-actions';
+import { Action } from './container-card';
 import { cn } from '@/lib/utils';
-import { Box, ChevronUp, ChevronDown, ArrowRight, Clock, Network } from 'lucide-react';
+import { Box, ChevronUp, ChevronDown, ArrowRight, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 type SortField = 'name' | 'status';

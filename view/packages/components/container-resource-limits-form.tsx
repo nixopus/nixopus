@@ -17,14 +17,15 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Container } from '@/redux/services/container/containerApi';
 import { useTranslation } from '@/hooks/use-translation';
-import useUpdateContainerResources, {
+import {
+  useUpdateContainerResources,
   presetConfig,
   fieldConfigs,
   formatPresetValue,
   PresetType,
   FieldConfig,
   ResourceLimitsFormValues
-} from '../../hooks/use-update-container-resources';
+} from '../hooks/containers/use-update-container-resources';
 import { cn } from '@/lib/utils';
 import { ResourceGuard } from '@/packages/components/rbac';
 import { Skeleton } from '@/components/ui/skeleton';

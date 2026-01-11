@@ -1,18 +1,18 @@
 'use client';
 
 import { Trash2, Info, Terminal, Layers, ScrollText } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { OverviewTab } from './components/OverviewTab';
-import { LogsTab } from './components/LogsTab';
-import { Terminal as TerminalComponent } from './components/Terminal';
-import ContainerDetailsLoading from './components/ContainerDetailsLoading';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
-import { Images } from './components/images';
-import { ResourceGuard } from '@/packages/components/rbac';
 import { isNixopusContainer } from '@/lib/utils';
+import { useContainerDetail } from '../../../packages/hooks/containers/use-container-detail';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ContainerDetailsLoading from '../../../packages/components/container-details-loading';
+import { ContainerDetailsHeader } from '../../../packages/components/container-details-header';
+import { OverviewTab } from '../../../packages/components/container-overview-tab';
+import { LogsTab } from '../../../packages/components/container-logs-tab';
+import { Terminal as TerminalComponent } from '../../../packages/components/container-terminal';
+import { Images } from '../../../packages/components/container-images';
+import { ResourceGuard } from '@/packages/components/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
-import useContainerDetails from '../hooks/use-container-details';
-import { ContainerDetailsHeader } from './components/ContainerDetailsHeader';
 
 export default function ContainerDetailsPage() {
   const {
@@ -27,7 +27,7 @@ export default function ContainerDetailsPage() {
     handleDeleteConfirm,
     isDeleteDialogOpen,
     setIsDeleteDialogOpen
-  } = useContainerDetails();
+  } = useContainerDetail();
 
   if (isLoading || !container) {
     return <ContainerDetailsLoading />;

@@ -1,6 +1,8 @@
+'use client';
+
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/use-translation';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   useRemoveContainerMutation,
@@ -12,8 +14,9 @@ import {
 import { useFeatureFlags } from '@/hooks/features_provider';
 import { usePruneBuildCacheMutation } from '@/redux/services/container/imagesApi';
 import { usePruneImagesMutation } from '@/redux/services/container/imagesApi';
+import { SelectOption } from '@/components/ui/select-wrapper';
 
-function useContainerList() {
+export function useContainers() {
   const { t } = useTranslation();
   const router = useRouter();
   // Params state for pagination, sorting, and search
@@ -21,11 +24,22 @@ function useContainerList() {
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [sortBy, setSortBy] = useState<'name' | 'status'>('name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortConfig, setSortConfig] = useState<{
+    key: 'name' | 'status';
+    direction: 'asc' | 'desc';
+  }>({
+    key: 'name',
+    direction: 'asc'
+  });
 
   const { data, isLoading, refetch, isFetching } = useGetContainersQuery(
-    { page, page_size: pageSize, search, sort_by: sortBy, sort_order: sortOrder },
+    {
+      page,
+      page_size: pageSize,
+      search,
+      sort_by: sortConfig.key,
+      sort_order: sortConfig.direction
+    },
     { refetchOnMountOrArgChange: true }
   );
   const [startContainer] = useStartContainerMutation();
@@ -58,6 +72,23 @@ function useContainerList() {
     return () => clearTimeout(handle);
   }, [searchInput]);
 
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    setPage(1);
+  };
+
+  const handleSortChange = (key: 'name' | 'status', direction: 'asc' | 'desc') => {
+    setSortConfig({ key, direction });
+    setPage(1);
+  };
+
+  const sortOptions: SelectOption[] = [
+    { value: 'name_asc', label: t('containers.sortOptions.name') + ' (A-Z)' },
+    { value: 'name_desc', label: t('containers.sortOptions.nameDesc') },
+    { value: 'status_asc', label: t('containers.sortOptions.status') + ' (A-Z)' },
+    { value: 'status_desc', label: t('containers.sortOptions.statusDesc') }
+  ];
+
   // Keep previous data to avoid page flash on param changes
   const [lastData, setLastData] = useState<
     { containers: Container[]; total_count: number; page: number; page_size: number } | undefined
@@ -76,14 +107,14 @@ function useContainerList() {
   const totalCount = effectiveData?.total_count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-  const handleSort = (field: 'name' | 'status') => {
-    if (sortBy === field) {
-      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortBy(field);
-      setSortOrder('asc');
-    }
-  };
+  const runningCount = useMemo(
+    () => containers.filter((c) => c.status === 'running').length,
+    [containers]
+  );
+  const stoppedCount = useMemo(
+    () => containers.filter((c) => c.status !== 'running').length,
+    [containers]
+  );
 
   const handleContainerAction = async (
     containerId: string,
@@ -141,19 +172,6 @@ function useContainerList() {
     }
   };
 
-  const getGradientFromName = (name: string) => {
-    const colors = [
-      'from-blue-500/20 to-purple-500/20',
-      'from-green-500/20 to-teal-500/20',
-      'from-yellow-500/20 to-orange-500/20',
-      'from-red-500/20 to-pink-500/20',
-      'from-indigo-500/20 to-violet-500/20',
-      'from-emerald-500/20 to-cyan-500/20'
-    ];
-    const index = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
-    return colors[index];
-  };
-
   return {
     containers,
     isLoading,
@@ -176,21 +194,18 @@ function useContainerList() {
     router,
     containerToDelete,
     setContainerToDelete,
-    getGradientFromName,
-    // order for ref: pagination/sort/search
     page,
     setPage,
     pageSize,
     setPageSize,
     totalPages,
     totalCount,
-    search,
+    runningCount,
+    stoppedCount,
     searchInput,
-    setSearchInput,
-    sortBy,
-    sortOrder,
-    handleSort
+    handleSearchChange,
+    sortConfig,
+    handleSortChange,
+    sortOptions
   };
 }
-
-export default useContainerList;

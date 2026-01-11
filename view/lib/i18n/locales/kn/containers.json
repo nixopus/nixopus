@@ -9,6 +9,14 @@
     "ports": "ಪೋರ್ಟ್ಗಳು",
     "actions": "ಕ್ರಿಯೆಗಳು",
     "refresh": "ಪುನರಾವರ್ತನಿಸಿ",
+    "searchPlaceholder": "ಕನ್ಟೇನರ್ಗಳನ್ನು ಹುಡುಕಿ...",
+    "sortBy": "ವಿಂಗಡಿಸಿ",
+    "sortOptions": {
+      "name": "ಹೆಸರು",
+      "nameDesc": "ಹೆಸರು (Z-A)",
+      "status": "ಸ್ಥಿತಿ",
+      "statusDesc": "ಸ್ಥಿತಿ (Z-A)"
+    },
     "start": "ಆರಂಭಿಸಿ",
     "stop": "ನಿಲ್ಲಿಸಿ",
     "remove": "ಅಳಿಸಿ",

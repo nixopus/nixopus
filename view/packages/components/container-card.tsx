@@ -1,22 +1,21 @@
 'use client';
 
-import { Box, Clock, Network, Globe, Lock, ArrowRight } from 'lucide-react';
+import { Box, Clock, Network, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ContainerActions } from './actions';
+import { ContainerActions } from './container-actions';
 import { formatDistanceToNow } from 'date-fns';
 import { Container } from '@/redux/services/container/containerApi';
-
-interface ContainerCardProps {
-  container: Container;
-  onClick: () => void;
-  getGradientFromName: (name: string) => string;
-  onAction: (id: string, action: Action) => void;
-}
 
 export enum Action {
   START = 'start',
   STOP = 'stop',
   REMOVE = 'remove'
+}
+
+interface ContainerCardProps {
+  container: Container;
+  onClick: () => void;
+  onAction: (id: string, action: Action) => void;
 }
 
 export const ContainerCard = ({ container, onClick, onAction }: ContainerCardProps) => {

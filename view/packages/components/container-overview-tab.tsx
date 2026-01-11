@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { formatDistanceToNow, format } from 'date-fns';
 import { Container } from '@/redux/services/container/containerApi';
 import { cn } from '@/lib/utils';
-import { ResourceLimitsForm } from './ResourceLimitsForm';
+import { ResourceLimitsForm } from './container-resource-limits-form';
 
 interface OverviewTabProps {
   container: Container;

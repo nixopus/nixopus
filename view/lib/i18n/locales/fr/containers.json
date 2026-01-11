@@ -9,6 +9,14 @@
     "ports": "Ports",
     "actions": "Actions",
     "refresh": "Actualiser",
+    "searchPlaceholder": "Rechercher des conteneurs...",
+    "sortBy": "Trier par",
+    "sortOptions": {
+      "name": "Nom",
+      "nameDesc": "Nom (Z-A)",
+      "status": "Statut",
+      "statusDesc": "Statut (Z-A)"
+    },
     "start": "Démarrer",
     "stop": "Arrêter",
     "prune_images": "Nettoyer les images",
