@@ -17,8 +17,8 @@ import { palette } from '@/components/colors';
 import { SuperTokensProvider } from '@/components/supertokensProvider';
 import { useSessionContext } from 'supertokens-auth-react/recipe/session';
 import { SettingsModalProvider } from '@/hooks/use-settings-modal';
-import { SettingsModal } from '@/components/settings/SettingsModal';
 import AppLayout from '@/packages/layouts/layout';
+import { SettingsModal } from '@/packages/components/settings';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
