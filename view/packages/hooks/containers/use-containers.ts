@@ -1,6 +1,8 @@
+'use client';
+
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/use-translation';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   useRemoveContainerMutation,
@@ -14,7 +16,7 @@ import { usePruneBuildCacheMutation } from '@/redux/services/container/imagesApi
 import { usePruneImagesMutation } from '@/redux/services/container/imagesApi';
 import { SelectOption } from '@/components/ui/select-wrapper';
 
-function useContainerList() {
+export function useContainers() {
   const { t } = useTranslation();
   const router = useRouter();
   // Params state for pagination, sorting, and search
@@ -104,6 +106,15 @@ function useContainerList() {
   const containers = useMemo(() => effectiveData?.containers ?? [], [effectiveData]);
   const totalCount = effectiveData?.total_count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
+  const runningCount = useMemo(
+    () => containers.filter((c) => c.status === 'running').length,
+    [containers]
+  );
+  const stoppedCount = useMemo(
+    () => containers.filter((c) => c.status !== 'running').length,
+    [containers]
+  );
 
   const handleContainerAction = async (
     containerId: string,
@@ -197,13 +208,14 @@ function useContainerList() {
     containerToDelete,
     setContainerToDelete,
     getGradientFromName,
-    // order for ref: pagination/sort/search
     page,
     setPage,
     pageSize,
     setPageSize,
     totalPages,
     totalCount,
+    runningCount,
+    stoppedCount,
     searchInput,
     handleSearchChange,
     sortConfig,
@@ -211,5 +223,3 @@ function useContainerList() {
     sortOptions
   };
 }
-
-export default useContainerList;

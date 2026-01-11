@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
 import { toast } from 'sonner';
 import {
@@ -10,10 +11,10 @@ import {
   useGetContainerLogsQuery
 } from '@/redux/services/container/containerApi';
 import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getAdvancedSettings } from '@/lib/advanced-settings';
 
-function useContainerDetails() {
+export function useContainerDetail() {
   const { t } = useTranslation();
   const router = useRouter();
   const params = useParams();
@@ -41,15 +42,15 @@ function useContainerDetails() {
     }
   }, [logs]);
 
-  const handleLoadMoreLogs = async () => {
+  const handleLoadMoreLogs = useCallback(async () => {
     const newTail = logsTail + containerSettings.containerLogTailLines;
     setLogsTail(newTail);
     await refetchLogs();
-  };
+  }, [logsTail, containerSettings.containerLogTailLines, refetchLogs]);
 
-  const handleRefreshLogs = async () => {
+  const handleRefreshLogs = useCallback(async () => {
     await refetchLogs();
-  };
+  }, [refetchLogs]);
 
   const handleContainerAction = async (action: 'start' | 'stop' | 'remove' | 'restart') => {
     try {
@@ -104,5 +105,3 @@ function useContainerDetails() {
     setIsDeleteDialogOpen
   };
 }
-
-export default useContainerDetails;
