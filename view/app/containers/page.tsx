@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Trash2, Scissors, LayoutGrid, List, Box } from 'lucide-react';
-import ContainersLoading from './components/skeleton';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { FeatureNames } from '@/packages/types/feature-flags';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,15 +10,16 @@ import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionG
 import { useContainers } from '../../packages/hooks/containers/use-containers';
 import { useViewMode } from '../../packages/hooks/containers/use-view-mode';
 import PageLayout from '@/components/layout/page-layout';
-import ContainersTable from './components/table';
 import PaginationWrapper from '@/components/ui/pagination';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
-import { ContainerCard } from './components/card';
 import { cn } from '@/lib/utils';
 import MainPageHeader from '@/components/ui/main-page-header';
 import { SearchBar } from '@/components/ui/search-bar';
-import { StatPill } from './components/StatPill';
-import { ActionHeader } from './components/ActionHeader';
+import ContainersLoading from '../../packages/components/container-skeleton';
+import ContainersTable from '../../packages/components/container-table';
+import { ContainerCard, Action } from '../../packages/components/container-card';
+import { StatPill } from '../../packages/components/container-stat-pill';
+import { ActionHeader } from '../../packages/components/container-action-header';
 
 export default function ContainersPage() {
   const { viewMode, setViewMode } = useViewMode();
@@ -43,7 +43,6 @@ export default function ContainersPage() {
     router,
     containerToDelete,
     setContainerToDelete,
-    getGradientFromName,
     setShowPruneImagesConfirm,
     setShowPruneBuildCacheConfirm,
     page,
@@ -170,7 +169,6 @@ export default function ContainersPage() {
                   key={container.id}
                   container={container}
                   onClick={() => router.push(`/containers/${container.id}`)}
-                  getGradientFromName={getGradientFromName}
                   onAction={handleContainerAction}
                 />
               ))}
