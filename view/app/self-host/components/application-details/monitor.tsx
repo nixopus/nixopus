@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useMonitoringData } from '../../hooks/use_monitoring_data';
 import { DeploymentOverview, LatestDeployment } from './monitoring';
 import { DeploymentHealthChart } from './monitoring/deployment-health-chart';
+import { HealthCheckCard } from './monitoring/health-check-card';
 
 interface MonitorProps {
   application?: Application;
@@ -36,6 +37,8 @@ function Monitor({ application }: MonitorProps) {
           failedDeployments={failedDeployments}
           currentStatus={currentStatus}
         />
+
+        <HealthCheckCard application={application} />
 
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
           <div className="lg:col-span-7">
