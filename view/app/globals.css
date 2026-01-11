@@ -122,7 +122,7 @@
 .dark {
   --background: oklch(14.67% 0.0041 49.31);
   --foreground: oklch(0.985 0.002 247.839);
-  --card: oklch(14.67% 0.0041 49.31);
+  --card: oklch(18% 0.0055 286.03);
   --card-foreground: oklch(0.985 0.002 247.839);
   --popover: oklch(14.67% 0.0041 49.31);
   --popover-foreground: oklch(0.985 0.002 247.839);
@@ -157,7 +157,7 @@
 .aurora {
   --background: oklch(0.147 0.012 276.87);
   --foreground: oklch(0.985 0.003 276.87);
-  --card: oklch(0.147 0.012 276.87);
+  --card: oklch(0.18 0.006 276.87);
   --card-foreground: oklch(0.985 0.003 276.87);
   --popover: oklch(0.147 0.012 276.87);
   --popover-foreground: oklch(0.985 0.003 276.87);
@@ -192,7 +192,7 @@
 .emerald {
   --background: oklch(0.147 0.012 170);
   --foreground: oklch(0.985 0.003 170);
-  --card: oklch(0.147 0.012 170);
+  --card: oklch(0.18 0.006 170);
   --card-foreground: oklch(0.985 0.003 170);
   --popover: oklch(0.147 0.012 170);
   --popover-foreground: oklch(0.985 0.003 170);
@@ -227,7 +227,7 @@
 .citrus {
   --background: oklch(0.147 0.012 80);
   --foreground: oklch(0.985 0.003 80);
-  --card: oklch(0.147 0.012 80);
+  --card: oklch(0.18 0.006 80);
   --card-foreground: oklch(0.985 0.003 80);
   --popover: oklch(0.147 0.012 80);
   --popover-foreground: oklch(0.985 0.003 80);
@@ -297,7 +297,7 @@
 .sunset {
   --background: oklch(0.147 0.012 25);
   --foreground: oklch(0.985 0.003 25);
-  --card: oklch(0.147 0.012 25);
+  --card: oklch(0.18 0.006 25);
   --card-foreground: oklch(0.985 0.003 25);
   --popover: oklch(0.147 0.012 25);
   --popover-foreground: oklch(0.985 0.003 25);
@@ -332,7 +332,7 @@
 .obsidian {
   --background: oklch(0.147 0.012 290);
   --foreground: oklch(0.985 0.003 290);
-  --card: oklch(0.147 0.012 290);
+  --card: oklch(0.18 0.006 290);
   --card-foreground: oklch(0.985 0.003 290);
   --popover: oklch(0.147 0.012 290);
   --popover-foreground: oklch(0.985 0.003 290);
@@ -367,7 +367,7 @@
 .arctic-chill {
   --background: oklch(0.147 0.012 200);
   --foreground: oklch(0.985 0.003 200);
-  --card: oklch(0.147 0.012 200);
+  --card: oklch(0.18 0.006 200);
   --card-foreground: oklch(0.985 0.003 200);
   --popover: oklch(0.147 0.012 200);
   --popover-foreground: oklch(0.985 0.003 200);
@@ -402,7 +402,7 @@
 .celestial-night {
   --background: oklch(0.147 0.012 265);
   --foreground: oklch(0.985 0.003 265);
-  --card: oklch(0.147 0.012 265);
+  --card: oklch(0.18 0.006 265);
   --card-foreground: oklch(0.985 0.003 265);
   --popover: oklch(0.147 0.012 265);
   --popover-foreground: oklch(0.985 0.003 265);
