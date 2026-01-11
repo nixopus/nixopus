@@ -5,4 +5,4 @@ export type {
   LogLevel,
   LogFilters,
   FormattedLogEntry
-} from '../../hooks/use_deployment_logs_viewer';
+} from '../../../../packages/hooks/applications/use_deployment_logs_viewer';

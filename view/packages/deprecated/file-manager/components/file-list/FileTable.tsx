@@ -5,7 +5,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import { FileData, FileType } from '@/redux/types/files';
 import { cn } from '@/lib/utils';
 import { Folder, File, ChevronUp, ChevronDown, Link2 } from 'lucide-react';
-import { formatFileSize } from '@/app/self-host/utils/formatFileSize';
+import { formatFileSize } from '@/packages/utils/util';
 import { formatDistanceToNow, isValid } from 'date-fns';
 import { FileContextMenu } from '../context-menu/FileContextMenu';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';

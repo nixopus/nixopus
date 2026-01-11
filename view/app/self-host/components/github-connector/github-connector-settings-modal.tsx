@@ -17,7 +17,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { GithubConnector } from '@/redux/types/github';
-import useGithubConnectorSettings from '../../hooks/use-github-connector-settings';
+import useGithubConnectorSettings from '../../../../packages/hooks/applications/use-github-connector-settings';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 

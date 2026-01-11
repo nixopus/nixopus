@@ -3,7 +3,7 @@ import React from 'react';
 import GitHubAppSetup from './components/github-connector/github-app-setup';
 import ListRepositories from './components/github-repositories/list-repositories';
 import AppItem, { AppItemSkeleton } from './components/application';
-import useGetDeployedApplications from './hooks/use_get_deployed_applications';
+import useGetDeployedApplications from '../../packages/hooks/applications/use_get_deployed_applications';
 import PaginationWrapper from '@/components/ui/pagination';
 import { SearchBar } from '@/components/ui/search-bar';
 import { SortSelect } from '@/components/ui/sort-selector';

@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import useFindRepository from '../../hooks/use_find_repository';
+import useFindRepository from '../../../../packages/hooks/applications/use_find_repository';
 import { QuickDeployForm } from '../../components/create-form/quick-deploy-form';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';

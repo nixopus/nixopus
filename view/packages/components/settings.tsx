@@ -47,7 +47,7 @@ import { useSettingsModal } from '@/hooks/use-settings-modal';
 import { SettingsCategory, useSettingsCategories } from '@/hooks/use-settings-categories';
 import { Heart, HelpCircle, AlertCircle, ArrowUpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useSettingsFooter } from '@/packages/hooks/use-settings-footer';
+import { useSettingsFooter } from '@/packages/hooks/settings/use-settings-footer';
 import { SettingsSidebarProps } from '../types/settings';
 
 interface SettingsContentProps {

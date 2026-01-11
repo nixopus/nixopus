@@ -1,15 +1,25 @@
+'use client';
+
 import {
   useGetApplicationByIdQuery,
   useGetApplicationDeploymentsQuery
 } from '@/redux/services/deploy/applicationsApi';
 import { useParams, useSearchParams } from 'next/navigation';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useApplicationWebSocket } from './use_application_websocket';
 import {
   Application,
   ApplicationDeployment,
   ApplicationDeploymentStatus
 } from '@/redux/types/applications';
+import { useTranslation } from '@/hooks/use-translation';
+import { BuildPack, Environment } from '@/redux/types/deploy-form';
+import type { TabItem } from '@/components/ui/tabs-wrapper';
+import { Activity, Settings, Layers, ScrollText } from 'lucide-react';
+import ApplicationLogs from '../../../app/self-host/components/application-details/logs';
+import Monitor from '../../../app/self-host/components/application-details/monitor';
+import DeploymentsList from '../../../app/self-host/components/application-details/deploymentsList';
+import { DeployConfigureForm } from '../../../app/self-host/components/application-details/configuration';
 
 interface WebSocketMessage {
   action: string;
@@ -25,6 +35,7 @@ interface WebSocketMessage {
 function useApplicationDetails() {
   const { id } = useParams();
   const applicationId = id as string;
+  const { t } = useTranslation();
   const [deploymentsPage, setDeploymentsPage] = useState(1);
   const [deploymentsPerPage] = useState(9);
 
@@ -47,6 +58,7 @@ function useApplicationDetails() {
   const [currentPage, setCurrentPage] = useState(1);
   const searchParams = useSearchParams();
   const defaultTab = searchParams.get('logs') === 'true' ? 'logs' : 'monitoring';
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const { message } = useApplicationWebSocket(applicationId);
 
   useEffect(() => {
@@ -83,6 +95,82 @@ function useApplicationDetails() {
   const buildVariables = application?.build_variables
     ? parseEnvVariables(application.build_variables)
     : {};
+
+  const totalDeployments = deploymentsData?.total_count || 0;
+  const totalPages = Math.ceil(totalDeployments / deploymentsPerPage);
+
+  const tabs: TabItem[] = useMemo(
+    () => [
+      {
+        value: 'monitoring',
+        label: t('selfHost.application.tabs.monitoring'),
+        icon: Activity,
+        content: <Monitor application={application} />
+      },
+      {
+        value: 'configuration',
+        label: t('selfHost.application.tabs.configuration'),
+        icon: Settings,
+        content: (
+          <DeployConfigureForm
+            application_name={application?.name}
+            domain={application?.domain}
+            environment={application?.environment as Environment | undefined}
+            env_variables={envVariables}
+            build_variables={buildVariables}
+            build_pack={application?.build_pack as BuildPack}
+            branch={application?.branch}
+            port={application?.port?.toString()}
+            repository={application?.repository}
+            pre_run_commands={application?.pre_run_command}
+            post_run_commands={application?.post_run_command}
+            application_id={application?.id}
+            dockerFilePath={application?.dockerfile_path}
+            base_path={application?.base_path}
+          />
+        )
+      },
+      {
+        value: 'deployments',
+        label: t('selfHost.application.tabs.deployments'),
+        icon: Layers,
+        content: (
+          <DeploymentsList
+            deployments={application?.deployments}
+            currentPage={deploymentsPage}
+            totalPages={totalPages}
+            onPageChange={setDeploymentsPage}
+          />
+        )
+      },
+      {
+        value: 'logs',
+        label: t('selfHost.application.tabs.logs'),
+        icon: ScrollText,
+        content: (
+          <ApplicationLogs
+            id={application?.id || ''}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
+        )
+      }
+    ],
+    [
+      t,
+      application,
+      envVariables,
+      buildVariables,
+      deploymentsPage,
+      totalPages,
+      currentPage,
+      setCurrentPage,
+      setDeploymentsPage
+    ]
+  );
+
+  const sharedTabTriggerClassName =
+    'rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2';
 
   useEffect(() => {
     if (!message || !applicationRef.current) return;
@@ -144,7 +232,12 @@ function useApplicationDetails() {
     deploymentsPage,
     setDeploymentsPage,
     deploymentsPerPage,
-    totalDeployments: deploymentsData?.total_count || 0
+    totalDeployments,
+    totalPages,
+    activeTab,
+    setActiveTab,
+    tabs,
+    sharedTabTriggerClassName
   };
 }
 

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { FormattedLogEntry } from '../../hooks/use_deployment_logs_viewer';
+import { FormattedLogEntry } from '../../../../packages/hooks/applications/use_deployment_logs_viewer';
 
 interface DeploymentLogDetailsProps {
   log: FormattedLogEntry;

@@ -4,7 +4,10 @@ import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { FormattedLogEntry, LogLevel } from '../../hooks/use_deployment_logs_viewer';
+import {
+  FormattedLogEntry,
+  LogLevel
+} from '../../../../packages/hooks/applications/use_deployment_logs_viewer';
 
 interface DeploymentLogRowProps {
   log: FormattedLogEntry;

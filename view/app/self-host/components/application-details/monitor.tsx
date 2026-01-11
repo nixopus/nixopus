@@ -4,7 +4,7 @@ import { Application } from '@/redux/types/applications';
 import React from 'react';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMonitoringData } from '../../hooks/use_monitoring_data';
+import { useMonitoringData } from '../../../../packages/hooks/applications/use_monitoring_data';
 import { DeploymentOverview, LatestDeployment } from './monitoring';
 import { DeploymentHealthChart } from './monitoring/deployment-health-chart';
 

@@ -8,7 +8,7 @@ import { useWebSocket } from '@/hooks/socket-provider';
 import { useUpdateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';
 import { UpdateDeploymentRequest, Environment } from '@/redux/types/applications';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
-import { parsePort } from '../utils/parsePort';
+import { parsePort } from '@/packages/utils/util';
 import { useAppSelector } from '@/redux/hooks';
 import { useTranslation } from '@/hooks/use-translation';
 

@@ -17,6 +17,15 @@ import {
   Settings
 } from 'lucide-react';
 
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 type IconProps = React.ComponentProps<typeof FileCode>;
 
 export function getFileIcons(
@@ -25,7 +34,9 @@ export function getFileIcons(
   layout: 'grid' | 'list' | 'gallery'
 ): React.ReactNode {
   const iconSize = layout === 'grid' ? 'h-10 w-10 lg:h-20 lg:w-20' : 'h-5 w-5 lg:h-8 lg:w-8';
-  const baseProps: IconProps = { className: `${iconSize}` };
+  const baseProps: IconProps = {
+    className: `${iconSize}`
+  };
 
   if (type === 'folder') {
     return <Folder {...baseProps} className={`${iconSize} fill-[#58b7e9] text-[#58b7e9] `} />;
@@ -143,3 +154,8 @@ export function getFileIcons(
     }
   }
 }
+
+export const parsePort = (port: string) => {
+  const parsedPort = parseInt(port, 10);
+  return isNaN(parsedPort) ? null : parsedPort;
+};

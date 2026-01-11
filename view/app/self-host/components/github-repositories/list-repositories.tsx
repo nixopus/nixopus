@@ -1,6 +1,6 @@
 import React from 'react';
 import { GithubRepository } from '@/redux/types/github';
-import useGithubRepoPagination from '../../hooks/use_github_repo_pagination';
+import useGithubRepoPagination from '../../../../packages/hooks/applications/use_github_repo_pagination';
 import GithubRepositories, { GithubRepositoriesSkeletonLoader } from './repository-card';
 import PaginationWrapper from '@/components/ui/pagination';
 import { SearchBar } from '@/components/ui/search-bar';
@@ -9,7 +9,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
 import GitHubConnectorSettingsModal from '../github-connector/github-connector-settings-modal';
-import useGithubConnectorSettings from '../../hooks/use-github-connector-settings';
+import useGithubConnectorSettings from '../../../../packages/hooks/applications/use-github-connector-settings';
 import { useRouter } from 'next/navigation';
 
 function ListRepositories() {

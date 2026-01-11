@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useRef } from 'react';
-import { useGitHubAppSetup } from '../../hooks/use-github-app-setup';
+import { useGitHubAppSetup } from '../../../../packages/hooks/applications/use-github-app-setup';
 import { StepperNavigation } from './stepper-navigation';
 import { StepperControls } from './stepper-controls';
 import { StepPanel } from './step-panel';

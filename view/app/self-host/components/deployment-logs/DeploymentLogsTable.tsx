@@ -25,7 +25,7 @@ import {
   useDeploymentLogsViewer,
   LogFilters,
   LogLevel
-} from '../../hooks/use_deployment_logs_viewer';
+} from '../../../../packages/hooks/applications/use_deployment_logs_viewer';
 import { DeploymentLogRow } from './DeploymentLogRow';
 import { DeploymentLogDetails } from './DeploymentLogDetails';
 
