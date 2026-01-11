@@ -12,7 +12,7 @@ import { useIsAdminRegisteredQuery } from '@/redux/services/users/authApi';
 import { useAppDispatch } from '@/redux/hooks';
 import { initializeAuth } from '@/redux/features/users/authSlice';
 
-const registerSchema = (t: (key: translationKey, params?: Record<string, string>) => string) =>
+export const registerSchema = (t: (key: translationKey, params?: Record<string, string>) => string) =>
   z
     .object({
       email: z.string().email(t('auth.register.errors.invalidEmail')),
@@ -33,7 +33,7 @@ const registerSchema = (t: (key: translationKey, params?: Record<string, string>
       path: ['confirmPassword']
     });
 
-type RegisterForm = z.infer<ReturnType<typeof registerSchema>>;
+export type RegisterForm = z.infer<ReturnType<typeof registerSchema>>;
 
 function useRegister() {
   const { t } = useTranslation();

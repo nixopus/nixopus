@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { SuperTokensWrapper } from 'supertokens-auth-react';
 import SuperTokensReact from 'supertokens-auth-react';
 import { AuthRecipeComponentsOverrideContextProvider } from 'supertokens-auth-react/ui';
-import { frontendConfig, setRouter } from '@/app/config/frontend';
+import { frontendConfig, setRouter } from '@/packages/hooks/auth/frontend';
 import { usePathname, useRouter } from 'next/navigation';
 import { useIsAdminRegisteredQuery } from '@/redux/services/users/authApi';
 
