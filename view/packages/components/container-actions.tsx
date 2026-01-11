@@ -4,8 +4,8 @@ import { Play, Square, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { isNixopusContainer } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Action } from './container-card';
 import { ResourceGuard } from '@/packages/components/rbac';
-import { Action } from './card';
 import { cn } from '@/lib/utils';
 
 interface ContainerActionsProps {

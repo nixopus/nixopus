@@ -4,7 +4,7 @@ import React from 'react';
 import { Network } from 'lucide-react';
 import { SystemMetricCard } from './system-metric-card';
 import { NetworkCardSkeletonContent } from './skeletons/network';
-import { useNetwork } from '../../hooks/use-network';
+import { useNetwork } from '@/packages/hooks/dashboard/use-network';
 import { SystemStatsType } from '@/redux/types/monitor';
 import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 

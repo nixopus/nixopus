@@ -6,7 +6,7 @@ import { SystemStatsType } from '@/redux/types/monitor';
 import { TypographyMuted } from '@/components/ui/typography';
 import { DoughnutChartComponent } from '@/components/ui/doughnut-chart-component';
 import { SystemMetricCard } from './system-metric-card';
-import { useSystemMetric } from '../../hooks/use-system-metric';
+import { useSystemMetric } from '@/packages/hooks/dashboard/use-system-metric';
 import { formatGB, createMemoryChartData, createMemoryChartConfig } from '../utils/utils';
 import { DEFAULT_METRICS, CHART_COLORS } from '../utils/constants';
 import { MemoryUsageCardSkeletonContent } from './skeletons/memory-usage';
