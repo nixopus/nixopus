@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslation } from '@/hooks/use-translation';
-import PageLayout from '@/components/layout/page-layout';
+import PageLayout from '@/packages/layouts/page-layout';
 import { useExtensions } from '../../packages/hooks/extensions/use-extensions';
 import PaginationWrapper from '@/components/ui/pagination';
 import MainPageHeader from '@/components/ui/main-page-header';
@@ -32,6 +32,7 @@ export default function ExtensionsPage() {
     handlePageChange,
     handleInstall,
     handleViewDetails,
+    handleForkClick,
     handleRun,
     runModalOpen,
     setRunModalOpen,
@@ -57,10 +58,6 @@ export default function ExtensionsPage() {
     handleSubmit,
     requiredFields
   } = useExtensions();
-
-  if (isLoading) {
-    return <Skeleton />;
-  }
 
   return (
     <PageLayout maxWidth="full" padding="md" spacing="lg">
@@ -107,17 +104,19 @@ export default function ExtensionsPage() {
           error={error || undefined}
           onInstall={handleInstall}
           onViewDetails={handleViewDetails}
-          setForkOpen={setForkOpen}
+          onForkClick={handleForkClick}
           setConfirmOpen={setConfirmOpen}
           expanded={expanded}
           setExpanded={setExpanded}
           forkOpen={forkOpen}
+          setForkOpen={setForkOpen}
           confirmOpen={confirmOpen}
           forkYaml={forkYaml}
           setForkYaml={setForkYaml}
           preview={preview}
           variableColumns={variableColumns}
           doFork={doFork}
+          selectedExtension={selectedExtension}
         />
 
         {totalPages > 1 && (

@@ -1,7 +1,7 @@
 'use client';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import PageLayout from '@/components/layout/page-layout';
+import PageLayout from '@/packages/layouts/page-layout';
 
 export default function ContainersLoading() {
   return (

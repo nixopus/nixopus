@@ -26,13 +26,12 @@ import { Button } from '@/components/ui/button';
 import { ModeToggler } from '@/components/ui/theme-toggler';
 import { Separator } from '@/components/ui/separator';
 import { TeamSwitcher } from '@/components/ui/team-switcher';
-import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
-import { CreateTeam } from '@/components/features/create-team';
-import { NavMain } from '@/components/layout/nav-main';
-import { RBACGuard } from '@/components/rbac/RBACGuard';
-import { Terminal } from '@/app/terminal/terminal';
-import { TopbarWidgets } from '@/components/layout/topbar-widgets';
-import { Tour } from '@/components/Tour';
+import { AnyPermissionGuard } from '@/packages/components/rbac';
+import { CreateTeam } from '@/packages/components/team-settings';
+import { NavMain } from '@/packages/components/nav-main';
+import { RBACGuard } from '@/packages/components/rbac';
+import { Terminal } from '@/packages/components/terminal';
+import { TopbarWidgets } from '@/packages/components/topbar-widgets';
 import { useSettingsModal } from '@/hooks/use-settings-modal';
 import {
   AppSidebarProps,
@@ -42,6 +41,7 @@ import {
 } from '@/packages/types/layout';
 import { cn } from '@/lib/utils';
 import { useLayout } from '@/packages/hooks/use-layout';
+import { Tour } from './Tour';
 
 interface LayoutProps {
   children: React.ReactNode;

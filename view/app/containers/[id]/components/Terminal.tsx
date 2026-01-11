@@ -2,8 +2,8 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import '@xterm/xterm/css/xterm.css';
 import { v4 as uuidv4 } from 'uuid';
-import { useTerminal } from '@/app/terminal/utils/useTerminal';
-import { useContainerReady } from '@/app/terminal/utils/isContainerReady';
+import { useTerminal } from '@/packages/hooks/terminal/use-terminal';
+import { useContainerReady } from '@/packages/hooks/terminal/use-container-ready';
 import { useWebSocket } from '@/hooks/socket-provider';
 
 type TerminalProps = {

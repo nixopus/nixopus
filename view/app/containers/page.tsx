@@ -8,11 +8,10 @@ import ContainersLoading from './components/skeleton';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { FeatureNames } from '@/packages/types/feature-flags';
 import { Skeleton } from '@/components/ui/skeleton';
-import DisabledFeature from '@/components/features/disabled-feature';
-import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
+import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
 import useContainerList from './hooks/use-container-list';
 import { useViewMode } from './hooks/use-view-mode';
-import PageLayout from '@/components/layout/page-layout';
+import PageLayout from '@/packages/layouts/page-layout';
 import ContainersTable from './components/table';
 import PaginationWrapper from '@/components/ui/pagination';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
@@ -20,6 +19,7 @@ import { ContainerCard } from './components/card';
 import { cn } from '@/lib/utils';
 import MainPageHeader from '@/components/ui/main-page-header';
 import { translationKey } from '@/hooks/use-translation';
+import DisabledFeature from '@/packages/components/rbac';
 
 export default function ContainersPage() {
   const { viewMode, setViewMode } = useViewMode();

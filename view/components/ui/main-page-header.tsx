@@ -24,7 +24,10 @@ export function MainPageHeader({
   return (
     <div
       data-slot="main-page-header"
-      className={cn('flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-8', className)}
+      className={cn(
+        'flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-8',
+        className
+      )}
       {...props}
     >
       <div className="flex-1 min-w-0">
@@ -48,7 +51,10 @@ export function MainPageHeader({
         )}
       </div>
       {actions && (
-        <div data-slot="main-page-header-actions" className="flex items-center gap-2 shrink-0 sm:ml-4">
+        <div
+          data-slot="main-page-header-actions"
+          className="flex items-center gap-2 shrink-0 sm:ml-4"
+        >
           {actions}
         </div>
       )}

@@ -19,7 +19,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AceEditor from '@/components/ui/ace-editor';
-import { StepsSection } from '@/app/extensions/[id]/components/OverviewTab';
 import { CardWrapper } from '@/components/ui/card-wrapper';
 import { TypographyMuted, TypographySmall } from '@/components/ui/typography';
 import { DataTable } from '@/components/ui/data-table';
@@ -33,12 +32,154 @@ import {
   ExtensionCardProps,
   ExtensionInputProps
 } from '@/packages/types/extension';
-import { useExtensionInput } from '@/packages/hooks/extensions/use-extension-input';
-import { DialogAction } from '@/components/ui/dialog-wrapper';
 import { Sparkles, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ExtensionVariable } from '@/redux/types/extension';
 import { DialogWrapper } from '@/components/ui/dialog-wrapper';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useMemo } from 'react';
+import { TableColumn } from '@/components/ui/data-table';
+import { Badge } from '@/components/ui/badge';
+
+interface StepsSectionProps {
+  tRunLabel: string;
+  tValidateLabel: string;
+  title: string;
+  runSteps: any[];
+  validateSteps: any[];
+  openRunIndex: number | null;
+  setOpenRunIndex: (index: number | null) => void;
+  openValidateIndex: number | null;
+  setOpenValidateIndex: (index: number | null) => void;
+}
+
+function StepsSection({
+  tRunLabel,
+  tValidateLabel,
+  title,
+  runSteps,
+  validateSteps,
+  openRunIndex,
+  setOpenRunIndex,
+  openValidateIndex,
+  setOpenValidateIndex
+}: StepsSectionProps) {
+  const entryColumns: TableColumn<[string, any]>[] = useMemo(
+    () => [
+      {
+        key: 'key',
+        title: 'Key',
+        render: ([k]) => k,
+        width: '25%',
+        className: 'text-muted-foreground'
+      },
+      {
+        key: 'value',
+        title: 'Value',
+        render: ([, v]) => {
+          if (typeof v === 'object' && v !== null) {
+            return <pre className="text-xs">{JSON.stringify(v, null, 2)}</pre>;
+          }
+          return String(v ?? '');
+        }
+      }
+    ],
+    []
+  );
+
+  const createStepColumns = (
+    label: string,
+    openIndex: number | null,
+    onToggle: (index: number | null) => void
+  ): TableColumn<any>[] =>
+    useMemo(
+      () => [
+        {
+          key: 'step',
+          title: label,
+          render: (step, _, index) => {
+            const entries = Object.entries(step || {}).filter(
+              ([k]) => k !== 'name' && k !== 'type'
+            );
+            const isOpen = openIndex === index;
+            return (
+              <Collapsible open={isOpen} onOpenChange={(open) => onToggle(open ? index : null)}>
+                <CollapsibleTrigger className="w-full text-left flex items-start gap-2 group">
+                  <TypographyMuted className="mt-0.5 shrink-0">{index + 1}.</TypographyMuted>
+                  <div className="flex-1 min-w-0">
+                    <TypographySmall className="font-medium">
+                      {step?.name || step?.type || 'Step'}
+                    </TypographySmall>
+                    {step?.type && (
+                      <Badge variant="outline" className="ml-2">
+                        {step.type}
+                      </Badge>
+                    )}
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                      isOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </CollapsibleTrigger>
+                {entries.length > 0 && entryColumns && (
+                  <CollapsibleContent className="mt-3">
+                    <DataTable
+                      data={entries}
+                      columns={entryColumns}
+                      showBorder={true}
+                      striped={false}
+                      containerClassName="rounded-md"
+                    />
+                  </CollapsibleContent>
+                )}
+              </Collapsible>
+            );
+          }
+        }
+      ],
+      [label, openIndex, onToggle, entryColumns]
+    );
+
+  const runStepColumns = createStepColumns(tRunLabel, openRunIndex ?? null, setOpenRunIndex);
+  const validateStepColumns = createStepColumns(
+    tValidateLabel,
+    openValidateIndex ?? null,
+    setOpenValidateIndex
+  );
+
+  const hasRun = runSteps.length > 0;
+  const hasValidate = validateSteps.length > 0;
+
+  if (!hasRun && !hasValidate) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {hasRun && (
+        <DataTable
+          data={runSteps}
+          columns={runStepColumns}
+          showBorder={true}
+          striped={false}
+          rowClassName="border-0"
+        />
+      )}
+      {hasValidate && (
+        <DataTable
+          data={validateSteps}
+          columns={validateStepColumns}
+          showBorder={true}
+          striped={false}
+          rowClassName="border-0"
+        />
+      )}
+    </div>
+  );
+}
 
 export default function CategoryBadges({
   categories,
@@ -84,17 +225,19 @@ export function ExtensionGrid({
   error,
   onInstall,
   onViewDetails,
-  setForkOpen,
+  onForkClick,
   setConfirmOpen,
   expanded,
   setExpanded,
   forkOpen,
+  setForkOpen,
   confirmOpen,
   forkYaml,
   setForkYaml,
   preview,
   variableColumns,
-  doFork
+  doFork,
+  selectedExtension
 }: ExtensionsGridProps) {
   const { t } = useTranslation();
 
@@ -126,29 +269,38 @@ export function ExtensionGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {extensions.map((extension) => (
-        <ExtensionCard
-          key={extension.id}
-          extension={extension}
-          onInstall={onInstall}
-          onViewDetails={onViewDetails}
-          setForkOpen={setForkOpen}
-          setConfirmOpen={setConfirmOpen}
-          expanded={expanded}
-          setExpanded={setExpanded}
+    <>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {extensions.map((extension) => (
+          <ExtensionCard
+            key={extension.id}
+            extension={extension}
+            onInstall={onInstall}
+            onViewDetails={onViewDetails}
+            onForkClick={onForkClick}
+            setConfirmOpen={setConfirmOpen}
+            expanded={expanded}
+            setExpanded={setExpanded}
+            t={t}
+            confirmOpen={confirmOpen}
+          />
+        ))}
+      </div>
+      {selectedExtension && (
+        <ExtensionForkDialog
+          open={forkOpen}
+          onOpenChange={setForkOpen}
+          extension={selectedExtension}
           t={t}
-          forkOpen={forkOpen}
-          confirmOpen={confirmOpen}
           forkYaml={forkYaml}
           setForkYaml={setForkYaml}
           preview={preview}
           variableColumns={variableColumns}
           doFork={doFork}
-          isLoading={isLoading}
+          isLoading={false}
         />
-      ))}
-    </div>
+      )}
+    </>
   );
 }
 
@@ -200,13 +352,13 @@ export function ExtensionForkDialog({
           <SheetTitle>{t('extensions.fork') || 'Fork Extension'}</SheetTitle>
           <SheetDescription>{extension.description}</SheetDescription>
         </SheetHeader>
-        <div className="px-4 flex-1 overflow-hidden">
-          <Tabs defaultValue="edit" className="w-full flex-1 overflow-hidden">
+        <div className="px-4 flex-1 overflow-hidden flex flex-col min-h-0">
+          <Tabs defaultValue="edit" className="w-full flex-1 flex flex-col overflow-hidden min-h-0">
             <TabsList>
               <TabsTrigger value="edit">{t('common.edit') || 'Edit'}</TabsTrigger>
               <TabsTrigger value="preview">{t('common.preview') || 'Preview'}</TabsTrigger>
             </TabsList>
-            <TabsContent value="edit" className="overflow-hidden">
+            <TabsContent value="edit" className="overflow-hidden flex-1 flex flex-col min-h-0">
               <div className="flex flex-col gap-2 h-full">
                 <Label>{t('extensions.forkYaml') || 'YAML (optional)'}</Label>
                 <div className="flex-1">
@@ -220,7 +372,7 @@ export function ExtensionForkDialog({
                 </div>
               </div>
             </TabsContent>
-            <TabsContent value="preview" className="overflow-y-auto">
+            <TabsContent value="preview" className="flex-1 overflow-y-auto min-h-0">
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <CardWrapper compact>
@@ -241,15 +393,13 @@ export function ExtensionForkDialog({
                   </CardWrapper>
                 </div>
                 {preview?.variables && preview.variables.length > 0 && (
-                  <CardWrapper title="Variables">
-                    <DataTable
-                      data={preview.variables}
-                      columns={variableColumns}
-                      showBorder={false}
-                      hoverable={false}
-                      emptyMessage={t('extensions.noVariables') || 'No variables'}
-                    />
-                  </CardWrapper>
+                  <DataTable
+                    data={preview.variables}
+                    columns={variableColumns}
+                    showBorder={true}
+                    striped={false}
+                    rowClassName="border-0"
+                  />
                 )}
                 {(preview?.execution?.run?.length || preview?.execution?.validate?.length) && (
                   <StepsSection
@@ -288,29 +438,22 @@ export function ExtensionCard({
   onInstall,
   onViewDetails,
   onFork,
+  onForkClick,
   onRemove,
-  setForkOpen,
   setConfirmOpen,
   expanded,
   setExpanded,
   t,
-  forkOpen,
-  confirmOpen,
-  forkYaml,
-  setForkYaml,
-  preview,
-  variableColumns,
-  doFork,
-  isLoading
+  confirmOpen
 }: ExtensionCardProps) {
-  const headerActions = (
-    <div className="flex items-center gap-1">
+  const cardActions = (
+    <div className="flex items-center gap-1 shrink-0">
       {!extension.parent_extension_id && (
         <Button
           variant="ghost"
           size="icon"
           aria-label={t('extensions.fork') || 'Fork'}
-          onClick={() => setForkOpen(true)}
+          onClick={() => onForkClick?.(extension)}
         >
           <GitFork className="h-4 w-4" />
         </Button>
@@ -330,7 +473,7 @@ export function ExtensionCard({
   );
 
   const customHeader = (
-    <div className="flex items-start gap-4">
+    <div className="flex items-start gap-4 w-full">
       <div className="flex size-12 items-center justify-center rounded-full bg-muted shrink-0">
         <span className="text-lg font-bold text-muted-foreground">{extension.icon}</span>
       </div>
@@ -347,7 +490,7 @@ export function ExtensionCard({
           )}
         </div>
       </div>
-      {headerActions}
+      {cardActions}
     </div>
   );
 
@@ -388,18 +531,6 @@ export function ExtensionCard({
           </Button>
         </div>
       </CardWrapper>
-      <ExtensionForkDialog
-        open={forkOpen}
-        onOpenChange={setForkOpen}
-        extension={extension}
-        t={t}
-        forkYaml={forkYaml}
-        setForkYaml={setForkYaml}
-        preview={preview}
-        variableColumns={variableColumns}
-        doFork={doFork}
-        isLoading={isLoading}
-      />
       <DeleteDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
@@ -434,6 +565,28 @@ export function ExtensionInput({
   handleSubmit,
   requiredFields
 }: ExtensionInputProps) {
+  if (noFieldsToShow) {
+    return (
+      <DialogWrapper
+        open={open}
+        onOpenChange={onOpenChange}
+        title={
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <span>{extension?.name || t('extensions.run')}</span>
+          </div>
+        }
+        description={extension?.description}
+        actions={actions}
+        size="md"
+      >
+        <div className="py-2">
+          <p className="text-sm text-muted-foreground">No additional fields required.</p>
+        </div>
+      </DialogWrapper>
+    );
+  }
+
   return (
     <DialogWrapper
       open={open}
@@ -446,17 +599,36 @@ export function ExtensionInput({
       }
       description={extension?.description}
       actions={actions}
-      size={noFieldsToShow || isOnlyProxyDomain ? 'md' : 'lg'}
+      size={isOnlyProxyDomain ? 'md' : 'lg'}
     >
-      <div className="py-2">
-        {isOnlyProxyDomain && (
-          <ProxyDomainInput
-            variable={requiredFields[0]}
-            value={values[requiredFields[0].variable_name]}
-            error={errors[requiredFields[0].variable_name]}
-            onChange={handleChange}
-          />
-        )}
+      <div className="py-2 space-y-4">
+        {requiredFields.map((variable) => {
+          const isProxyDomain =
+            variable.variable_name.toLowerCase() === 'proxy_domain' ||
+            variable.variable_name.toLowerCase() === 'domain';
+
+          if (isProxyDomain) {
+            return (
+              <ProxyDomainInput
+                key={variable.id}
+                variable={variable}
+                value={values[variable.variable_name]}
+                error={errors[variable.variable_name]}
+                onChange={handleChange}
+              />
+            );
+          }
+
+          return (
+            <VariableInput
+              key={variable.id}
+              variable={variable}
+              value={values[variable.variable_name]}
+              error={errors[variable.variable_name]}
+              onChange={handleChange}
+            />
+          );
+        })}
       </div>
     </DialogWrapper>
   );
@@ -478,21 +650,133 @@ function ProxyDomainInput({
     <div className="space-y-2">
       <Label htmlFor={id} className="text-sm font-medium flex items-center gap-2">
         <Globe className="h-4 w-4 text-muted-foreground" />
-        Domain
+        {variable.variable_name}
+        {variable.is_required && <span className="text-destructive">*</span>}
       </Label>
       <Input
         id={id}
         type="text"
         value={(value as string) ?? ''}
         onChange={(e) => onChange(variable.variable_name, e.target.value)}
-        placeholder="app.example.com"
+        placeholder={variable.description || 'app.example.com'}
         className={cn('h-10', error && 'border-destructive focus-visible:ring-destructive')}
         autoFocus
       />
       {error && <p className="text-xs text-destructive">{error}</p>}
-      <p className="text-xs text-muted-foreground">
-        Enter the domain where this extension will be accessible
-      </p>
+      {variable.description && (
+        <p className="text-xs text-muted-foreground">{variable.description}</p>
+      )}
+    </div>
+  );
+}
+
+function VariableInput({
+  variable,
+  value,
+  error,
+  onChange
+}: {
+  variable: ExtensionVariable;
+  value: unknown;
+  error?: string;
+  onChange: (name: string, value: unknown) => void;
+}) {
+  const id = `var-${variable.variable_name}`;
+
+  const renderInput = () => {
+    switch (variable.variable_type) {
+      case 'integer':
+        return (
+          <Input
+            id={id}
+            type="number"
+            value={(value as number) ?? ''}
+            onChange={(e) => {
+              const num = e.target.value === '' ? '' : Number(e.target.value);
+              onChange(variable.variable_name, num);
+            }}
+            placeholder={variable.description || String(variable.default_value ?? '')}
+            className={cn('h-10', error && 'border-destructive focus-visible:ring-destructive')}
+          />
+        );
+      case 'array':
+        const arrayValue = Array.isArray(value) ? value.join(', ') : ((value as string) ?? '');
+        return (
+          <Input
+            id={id}
+            type="text"
+            value={arrayValue}
+            onChange={(e) => {
+              const arr = e.target.value
+                .split(',')
+                .map((x) => x.trim())
+                .filter((x) => x.length > 0);
+              onChange(variable.variable_name, arr);
+            }}
+            placeholder={variable.description || 'comma-separated values'}
+            className={cn('h-10', error && 'border-destructive focus-visible:ring-destructive')}
+          />
+        );
+      case 'boolean':
+        const checked = value === true || value === 'true' || value === 1;
+        return (
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id={id}
+              checked={checked}
+              onCheckedChange={(checked) => onChange(variable.variable_name, checked)}
+            />
+            <Label htmlFor={id} className="text-sm font-normal cursor-pointer">
+              {variable.description || 'Enable'}
+            </Label>
+          </div>
+        );
+      default:
+        // string or other types
+        const isLongText = variable.description && variable.description.length > 100;
+        if (isLongText) {
+          return (
+            <Textarea
+              id={id}
+              value={(value as string) ?? ''}
+              onChange={(e) => onChange(variable.variable_name, e.target.value)}
+              placeholder={variable.description || ''}
+              className={cn(
+                'min-h-[100px]',
+                error && 'border-destructive focus-visible:ring-destructive'
+              )}
+            />
+          );
+        }
+        return (
+          <Input
+            id={id}
+            type="text"
+            value={(value as string) ?? ''}
+            onChange={(e) => onChange(variable.variable_name, e.target.value)}
+            placeholder={variable.description || String(variable.default_value ?? '')}
+            className={cn('h-10', error && 'border-destructive focus-visible:ring-destructive')}
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id} className="text-sm font-medium">
+        {variable.variable_name}
+        {variable.is_required && <span className="text-destructive ml-1">*</span>}
+        {variable.variable_type && (
+          <span className="text-xs text-muted-foreground ml-2 font-normal">
+            ({variable.variable_type})
+          </span>
+        )}
+      </Label>
+      {renderInput()}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      {variable.description && variable.variable_type !== 'boolean' && (
+        <p className="text-xs text-muted-foreground">{variable.description}</p>
+      )}
     </div>
   );
 }

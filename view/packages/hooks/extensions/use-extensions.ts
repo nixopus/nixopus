@@ -55,7 +55,7 @@ export function useExtensions() {
       toast.error(t('extensions.deleteFailed') || 'Remove failed');
     }
   };
-  
+
   const queryParams: ExtensionListParams = {
     search: searchTerm || undefined,
     category: selectedCategory || undefined,
@@ -101,6 +101,11 @@ export function useExtensions() {
     router.push(`/extensions/${extension.id}`);
   };
 
+  const handleForkClick = (extension: Extension) => {
+    setSelectedExtension(extension);
+    setForkOpen(true);
+  };
+
   const error = apiError ? 'Failed to load extensions' : null;
 
   const [runExtensionMutation] = useRunExtensionMutation();
@@ -132,13 +137,15 @@ export function useExtensions() {
     try {
       const y = YAML.parse(forkYaml || '');
       const variables = y?.variables || {};
-      const variablesArray: VariableData[] = Object.entries(variables).map(([key, val]: [string, any]) => ({
-        name: key,
-        type: val?.variable_type || val?.type || '',
-        required: val?.is_required ? 'Yes' : 'No',
-        default: String(val?.default_value ?? ''),
-        description: val?.description || ''
-      }));
+      const variablesArray: VariableData[] = Object.entries(variables).map(
+        ([key, val]: [string, any]) => ({
+          name: key,
+          type: val?.variable_type || val?.type || '',
+          required: val?.is_required ? 'Yes' : 'No',
+          default: String(val?.default_value ?? ''),
+          description: val?.description || ''
+        })
+      );
       return {
         variables: variablesArray,
         execution: y?.execution || {},
@@ -158,8 +165,10 @@ export function useExtensions() {
   ];
 
   useEffect(() => {
-    if (forkOpen) {
-      setForkYaml(selectedExtension?.yaml_content || '');
+    if (forkOpen && selectedExtension) {
+      setForkYaml(selectedExtension.yaml_content || '');
+    } else if (!forkOpen) {
+      setSelectedExtension(null);
     }
   }, [forkOpen, selectedExtension]);
 
@@ -220,6 +229,7 @@ export function useExtensions() {
     handlePageChange,
     handleInstall,
     handleViewDetails,
+    handleForkClick,
     handleRun,
     handleCancel,
     runModalOpen,

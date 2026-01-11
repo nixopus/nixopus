@@ -13,12 +13,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import { WebSocketProvider } from '@/hooks/socket-provider';
 import { FeatureFlagsProvider } from '@/hooks/features_provider';
 import { SystemStatsProvider } from '@/hooks/system-stats-provider';
-import { palette } from '@/components/colors';
-import { SuperTokensProvider } from '@/components/supertokensProvider';
+import { palette } from '@/packages/utils/colors';
+import { SuperTokensProvider } from '@/packages/layouts/supertokensProvider';
 import { useSessionContext } from 'supertokens-auth-react/recipe/session';
 import { SettingsModalProvider } from '@/hooks/use-settings-modal';
-import { SettingsModal } from '@/components/settings/SettingsModal';
 import AppLayout from '@/packages/layouts/layout';
+import { SettingsModal } from '@/packages/components/settings';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

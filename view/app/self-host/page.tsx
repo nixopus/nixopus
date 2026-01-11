@@ -1,9 +1,9 @@
 'use client';
 import React from 'react';
-import GitHubAppSetup from './components/github-connector/github-app-setup';
-import ListRepositories from './components/github-repositories/list-repositories';
-import AppItem, { AppItemSkeleton } from './components/application';
-import useGetDeployedApplications from './hooks/use_get_deployed_applications';
+import GitHubAppSetup from '@/packages/components/github-connector';
+import { ListRepositories } from '@/packages/components/github-repositories';
+import AppItem, { AppItemSkeleton } from '../../packages/components/application';
+import useGetDeployedApplications from '../../packages/hooks/applications/use_get_deployed_applications';
 import PaginationWrapper from '@/components/ui/pagination';
 import { SearchBar } from '@/components/ui/search-bar';
 import { SortSelect } from '@/components/ui/sort-selector';
@@ -11,11 +11,11 @@ import { Application } from '@/redux/types/applications';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/use-translation';
 import { useFeatureFlags } from '@/hooks/features_provider';
-import Skeleton from '../file-manager/components/skeleton/Skeleton';
+import Skeleton from '../../packages/deprecated/file-manager/components/skeleton/Skeleton';
 import { FeatureNames } from '@/packages/types/feature-flags';
-import DisabledFeature from '@/components/features/disabled-feature';
-import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
-import PageLayout from '@/components/layout/page-layout';
+import DisabledFeature from '@/packages/components/rbac';
+import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
+import PageLayout from '@/packages/layouts/page-layout';
 import { TypographyH2, TypographyMuted } from '@/components/ui/typography';
 import { Plus } from 'lucide-react';
 import { LabelFilter } from '@/components/ui/label-filter';
@@ -115,7 +115,7 @@ function page() {
 
         {renderContent()}
 
-        {showApplications && (
+        {showApplications && !inGitHubFlow && (
           <>
             <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
               <div className="flex-1 min-w-[220px]">
