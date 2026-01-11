@@ -1,12 +1,14 @@
 'use client';
 import React from 'react';
-import { ListRepositories } from '@/packages/components/github-repositories';
-import { ResourceGuard } from '@/packages/components/rbac';
+import ListRepositories from '../components/github-repositories/list-repositories';
+import { useTranslation } from '@/hooks/use-translation';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
-import PageLayout from '@/packages/layouts/page-layout';
-import MainPageHeader from '@/components/ui/main-page-header';
+import PageLayout from '@/components/layout/page-layout';
 
 function page() {
+  const { t } = useTranslation();
+
   return (
     <ResourceGuard
       resource="deploy"
@@ -14,7 +16,6 @@ function page() {
       loadingFallback={<Skeleton className="h-96" />}
     >
       <PageLayout maxWidth="full" padding="md" spacing="lg">
-        <MainPageHeader label="Repository" description="Browse and manage projects" />
         <ListRepositories />
       </PageLayout>
     </ResourceGuard>

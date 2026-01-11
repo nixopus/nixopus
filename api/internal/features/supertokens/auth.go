@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
+	organization_storage "github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -44,6 +45,7 @@ var (
 		"terminal:create", "terminal:read", "terminal:update", "terminal:delete",
 		"feature_flags:read", "feature_flags:update",
 		"dashboard:read", "extension:read", "extension:create", "extension:update", "extension:delete",
+		"healthcheck:create", "healthcheck:read", "healthcheck:update", "healthcheck:delete",
 	}
 
 	memberPermissions = []string{
@@ -58,11 +60,13 @@ var (
 		"feature_flags:read",
 		"dashboard:read",
 		"extension:read",
+		"healthcheck:create", "healthcheck:read", "healthcheck:update", "healthcheck:delete",
 	}
 
 	viewerPermissions = []string{
 		"user:read", "organization:read", "container:read", "audit:read", "domain:read", "notification:read", "file-manager:read", "deploy:read", "feature_flags:read", "dashboard:read",
 		"extension:read",
+		"healthcheck:read",
 	}
 )
 
@@ -147,6 +151,11 @@ func Init(appInstance *storage.App) {
 
 	if seedErr := seedDefaultRolesAndPermissions(); seedErr != nil {
 		log.Printf("Failed to seed roles and permissions via SuperTokens: %v", seedErr)
+	}
+
+	// Update existing organization specific roles with new permissions
+	if updateErr := updateExistingOrganizationRoles(); updateErr != nil {
+		log.Printf("Failed to update existing organization roles: %v", updateErr)
 	}
 }
 
@@ -257,6 +266,51 @@ func seedDefaultRolesAndPermissions() error {
 		return err
 	}
 
+	return nil
+}
+
+// updateExistingOrganizationRoles updates all existing organization-specific roles with latest permissions
+func updateExistingOrganizationRoles() error {
+	if app == nil {
+		return fmt.Errorf("app instance not available")
+	}
+
+	// Get all organizations from database
+	orgStorage := &organization_storage.OrganizationStore{DB: app.Store.DB, Ctx: app.Ctx}
+	organizations, err := orgStorage.GetOrganizations()
+	if err != nil {
+		return fmt.Errorf("failed to get organizations: %w", err)
+	}
+
+	log.Printf("Updating roles for %d organizations", len(organizations))
+
+	// Update roles for each organization
+	for _, org := range organizations {
+		orgID := org.ID.String()
+
+		// Update admin role
+		adminRoleName := fmt.Sprintf("orgid_%s_admin", orgID)
+		if _, err := userroles.CreateNewRoleOrAddPermissions(adminRoleName, GetAdminPermissions(), nil); err != nil {
+			log.Printf("Failed to update admin role for organization %s: %v", orgID, err)
+			continue
+		}
+
+		// Update member role
+		memberRoleName := fmt.Sprintf("orgid_%s_member", orgID)
+		if _, err := userroles.CreateNewRoleOrAddPermissions(memberRoleName, GetMemberPermissions(), nil); err != nil {
+			log.Printf("Failed to update member role for organization %s: %v", orgID, err)
+			continue
+		}
+
+		// Update viewer role
+		viewerRoleName := fmt.Sprintf("orgid_%s_viewer", orgID)
+		if _, err := userroles.CreateNewRoleOrAddPermissions(viewerRoleName, GetViewerPermissions(), nil); err != nil {
+			log.Printf("Failed to update viewer role for organization %s: %v", orgID, err)
+			continue
+		}
+	}
+
+	log.Printf("Successfully updated roles for all organizations")
 	return nil
 }
 

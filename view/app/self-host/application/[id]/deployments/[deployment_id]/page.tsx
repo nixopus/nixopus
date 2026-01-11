@@ -2,12 +2,14 @@
 
 import React from 'react';
 import { useParams } from 'next/navigation';
-import { ResourceGuard } from '@/packages/components/rbac';
+import { useTranslation } from '@/hooks/use-translation';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
-import PageLayout from '@/packages/layouts/page-layout';
-import DeploymentLogsTable from '@/packages/components/deployment-logs';
+import { DeploymentLogsTable } from '@/app/self-host/components/deployment-logs';
+import PageLayout from '@/components/layout/page-layout';
 
 function page() {
+  const { t } = useTranslation();
   const { deployment_id } = useParams();
   const deploymentId = deployment_id?.toString() || '';
 

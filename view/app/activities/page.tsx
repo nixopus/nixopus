@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useTranslation } from '@/packages/hooks/shared/use-translation';
+import { useTranslation } from '@/hooks/use-translation';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';
@@ -14,8 +14,8 @@ import useActivities, {
   ActivityListProps,
   getActionColor,
   resourceTypeOptions
-} from '../../packages/hooks/activities/use-activities';
-import PageLayout from '@/packages/layouts/page-layout';
+} from './hooks/use-activities';
+import PageLayout from '@/components/layout/page-layout';
 
 export default function ActivitiesPage() {
   const { t } = useTranslation();
