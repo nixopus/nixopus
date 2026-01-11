@@ -11,7 +11,7 @@ import { Application } from '@/redux/types/applications';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/use-translation';
 import { useFeatureFlags } from '@/hooks/features_provider';
-import Skeleton from '../file-manager/components/skeleton/Skeleton';
+import Skeleton from '../../packages/deprecated/file-manager/components/skeleton/Skeleton';
 import { FeatureNames } from '@/packages/types/feature-flags';
 import DisabledFeature from '@/components/features/disabled-feature';
 import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
