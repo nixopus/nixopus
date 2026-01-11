@@ -12,7 +12,9 @@ import { useIsAdminRegisteredQuery } from '@/redux/services/users/authApi';
 import { useAppDispatch } from '@/redux/hooks';
 import { initializeAuth } from '@/redux/features/users/authSlice';
 
-export const registerSchema = (t: (key: translationKey, params?: Record<string, string>) => string) =>
+export const registerSchema = (
+  t: (key: translationKey, params?: Record<string, string>) => string
+) =>
   z
     .object({
       email: z.string().email(t('auth.register.errors.invalidEmail')),
