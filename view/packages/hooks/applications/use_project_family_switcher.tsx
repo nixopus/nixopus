@@ -1,22 +1,17 @@
-'use client';
-import React from 'react';
-import { ChevronsUpDown, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Application } from '@/redux/types/applications';
-import { useGetProjectFamilyQuery } from '@/redux/services/deploy/applicationsApi';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/use-translation';
+import { Application } from '@/redux/types/applications';
+import { useGetProjectFamilyQuery } from '@/redux/services/deploy/applicationsApi';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ChevronsUpDown, Check } from 'lucide-react';
+import {
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 
-interface ProjectFamilySwitcherProps {
+interface UseProjectFamilySwitcherProps {
   application: Application;
 }
 
@@ -33,7 +28,7 @@ const getEnvironmentStyles = (environment: string) => {
   }
 };
 
-export function ProjectFamilySwitcher({ application }: ProjectFamilySwitcherProps) {
+export function useProjectFamilySwitcher({ application }: UseProjectFamilySwitcherProps) {
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -42,37 +37,21 @@ export function ProjectFamilySwitcher({ application }: ProjectFamilySwitcherProp
     { skip: !application.family_id }
   );
 
-  if (!application.family_id) {
-    return null;
-  }
-
-  if (isLoading) {
-    return <Skeleton className="h-8 w-8 rounded-md" />;
-  }
-
-  if (!familyProjects || familyProjects.length <= 1) {
-    return null;
-  }
-
   const handleSelectProject = (projectId: string) => {
     if (projectId !== application.id) {
       router.push(`/self-host/application/${projectId}`);
     }
   };
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-          aria-label={t('selfHost.applicationDetails.header.familySwitcher.label')}
-        >
-          <ChevronsUpDown className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64">
+  const shouldShow = useMemo(() => {
+    return application.family_id && !isLoading && familyProjects && familyProjects.length > 1;
+  }, [application.family_id, isLoading, familyProjects]);
+
+  const dropdownContent = useMemo(() => {
+    if (!familyProjects) return null;
+
+    return (
+      <>
         <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
           {t('selfHost.applicationDetails.header.familySwitcher.title')}
         </div>
@@ -100,9 +79,29 @@ export function ProjectFamilySwitcher({ application }: ProjectFamilySwitcherProp
             {project.id === application.id && <Check className="h-4 w-4 shrink-0 text-primary" />}
           </DropdownMenuItem>
         ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </>
+    );
+  }, [familyProjects, application.id, t, handleSelectProject]);
+
+  const trigger = useMemo(
+    () => (
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+        aria-label={t('selfHost.applicationDetails.header.familySwitcher.label')}
+      >
+        <ChevronsUpDown className="h-4 w-4" />
+      </Button>
+    ),
+    [t]
   );
+
+  return {
+    shouldShow,
+    isLoading,
+    trigger,
+    dropdownContent
+  };
 }
 
-export default ProjectFamilySwitcher;
