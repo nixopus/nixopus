@@ -6,7 +6,7 @@ import { LogoutDialog } from '@/components/ui/logout-dialog';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { ResourceGuard } from '@/packages/components/rbac';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -47,7 +47,7 @@ import { useSettingsModal } from '@/hooks/use-settings-modal';
 import { SettingsCategory, useSettingsCategories } from '@/hooks/use-settings-categories';
 import { Heart, HelpCircle, AlertCircle, ArrowUpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useSettingsFooter } from '@/packages/hooks/use-settings-footer';
+import { useSettingsFooter } from '@/packages/hooks/settings/use-settings-footer';
 import { SettingsSidebarProps } from '../types/settings';
 
 interface SettingsContentProps {

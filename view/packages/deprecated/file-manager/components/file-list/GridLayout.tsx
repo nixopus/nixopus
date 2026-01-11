@@ -2,7 +2,7 @@ import React from 'react';
 import { FileData, FileType } from '@/redux/types/files';
 import { cn } from '@/lib/utils';
 import { Folder, File, Link2 } from 'lucide-react';
-import { formatFileSize } from '@/app/self-host/utils/formatFileSize';
+import { formatFileSize } from '@/packages/utils/util';
 
 interface GridLayoutProps {
   file: FileData;
