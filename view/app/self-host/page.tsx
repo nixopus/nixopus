@@ -1,8 +1,8 @@
 'use client';
 import React from 'react';
-import GitHubAppSetup from './components/github-connector/github-app-setup';
-import ListRepositories from './components/github-repositories/list-repositories';
-import AppItem, { AppItemSkeleton } from './components/application';
+import GitHubAppSetup from '@/packages/components/github-connector';
+import { ListRepositories } from '@/packages/components/github-repositories';
+import AppItem, { AppItemSkeleton } from '../../packages/components/application';
 import useGetDeployedApplications from '../../packages/hooks/applications/use_get_deployed_applications';
 import PaginationWrapper from '@/components/ui/pagination';
 import { SearchBar } from '@/components/ui/search-bar';
@@ -115,7 +115,7 @@ function page() {
 
         {renderContent()}
 
-        {showApplications && (
+        {showApplications && !inGitHubFlow && (
           <>
             <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
               <div className="flex-1 min-w-[220px]">
