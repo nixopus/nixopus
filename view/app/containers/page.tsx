@@ -11,6 +11,7 @@ import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
 import PaginationWrapper from '@/components/ui/pagination';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
+import { GroupedContainerView } from '@/packages/components/container';
 import { cn } from '@/lib/utils';
 import MainPageHeader from '@/components/ui/main-page-header';
 import { translationKey } from '@/packages/hooks/shared/use-translation';
@@ -26,6 +27,8 @@ export default function ContainersPage() {
 
   const {
     containers,
+    groups,
+    ungrouped,
     isLoading,
     isFetching,
     initialized,
@@ -59,6 +62,17 @@ export default function ContainersPage() {
     handleSortChange,
     sortOptions
   } = useContainers();
+
+  // Derive sort values from sortConfig
+  const sortBy = (sortConfig?.key || 'name') as 'name' | 'status';
+  const sortOrder = (sortConfig?.direction || 'asc') as 'asc' | 'desc';
+
+  // Handle sort toggle
+  const handleSort = (field: 'name' | 'status') => {
+    const newDirection =
+      sortConfig?.key === field && sortConfig?.direction === 'asc' ? 'desc' : 'asc';
+    handleSortChange(field, newDirection);
+  };
 
   if (!initialized && isLoading) {
     return <ContainersLoading />;
@@ -155,52 +169,30 @@ export default function ContainersPage() {
           </div>
         </div>
 
-        <div className="space-y-6">
-          {containers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-              <Box className="h-16 w-16 mb-4 opacity-20" />
-              <p className="text-lg font-medium">{t('containers.no_containers')}</p>
-              <p className="text-sm mt-1">No containers match your search criteria</p>
-            </div>
-          ) : viewMode === 'card' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {containers.map((container) => (
-                <ContainerCard
-                  key={container.id}
-                  container={container}
-                  onClick={() => router.push(`/containers/${container.id}`)}
-                  onAction={handleContainerAction}
-                />
-              ))}
-            </div>
-          ) : (
-            <ContainersTable
-              containersData={containers}
-              sortBy={sortConfig?.key || 'name'}
-              sortOrder={sortConfig?.direction || 'asc'}
-              onSort={(field) => {
-                const currentKey = sortConfig?.key || 'name';
-                const currentDir = sortConfig?.direction || 'asc';
-                if (currentKey === field) {
-                  handleSortChange(field, currentDir === 'asc' ? 'desc' : 'asc');
-                } else {
-                  handleSortChange(field, 'asc');
-                }
-              }}
-              onAction={handleContainerAction}
-            />
-          )}
+        {containers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+            <Box className="h-16 w-16 mb-4 opacity-20" />
+            <p className="text-lg font-medium">{t('containers.no_containers')}</p>
+            <p className="text-sm mt-1">No containers match your search criteria</p>
+          </div>
+        ) : (
+          <GroupedContainerView
+            groups={groups}
+            ungrouped={ungrouped}
+            viewMode={viewMode}
+            onContainerClick={(container) => router.push(`/containers/${container.id}`)}
+            onContainerAction={handleContainerAction}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSort={handleSort}
+          />
+        )}
 
-          {totalPages > 1 && (
-            <div className="flex justify-center pt-6">
-              <PaginationWrapper
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-              />
-            </div>
-          )}
-        </div>
+        {totalPages > 1 && (
+          <div className="flex justify-center pt-6">
+            <PaginationWrapper currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        )}
 
         <AnyPermissionGuard permissions={['container:delete']} loadingFallback={null}>
           <DeleteDialog

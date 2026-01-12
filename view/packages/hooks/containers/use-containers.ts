@@ -9,7 +9,8 @@ import {
   useStartContainerMutation,
   useStopContainerMutation,
   useGetContainersQuery,
-  Container
+  Container,
+  ContainerGroup
 } from '@/redux/services/container/containerApi';
 import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
 import { usePruneBuildCacheMutation } from '@/redux/services/container/imagesApi';
@@ -91,7 +92,16 @@ export function useContainers() {
 
   // Keep previous data to avoid page flash on param changes
   const [lastData, setLastData] = useState<
-    { containers: Container[]; total_count: number; page: number; page_size: number } | undefined
+    | {
+        containers?: Container[];
+        groups?: ContainerGroup[];
+        ungrouped?: Container[];
+        total_count: number;
+        group_count?: number;
+        page: number;
+        page_size: number;
+      }
+    | undefined
   >(undefined);
   const [initialized, setInitialized] = useState(false);
 
@@ -103,9 +113,32 @@ export function useContainers() {
   }, [data]);
 
   const effectiveData = data ?? lastData;
-  const containers = useMemo(() => effectiveData?.containers ?? [], [effectiveData]);
+
+  // Flatten groups and ungrouped for backward compatibility and stats
+  const containers = useMemo(() => {
+    const allContainers: Container[] = [];
+    if (effectiveData?.groups) {
+      for (const group of effectiveData.groups) {
+        allContainers.push(...group.containers);
+      }
+    }
+    if (effectiveData?.ungrouped) {
+      allContainers.push(...effectiveData.ungrouped);
+    }
+    // Fallback to containers array for backward compatibility
+    if (allContainers.length === 0 && effectiveData?.containers) {
+      return effectiveData.containers;
+    }
+    return allContainers;
+  }, [effectiveData]);
+
   const totalCount = effectiveData?.total_count ?? 0;
-  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  // Paginate by groups, so total pages = group_count / page_size
+  const groupCount = effectiveData?.group_count ?? 0;
+  const totalPages =
+    groupCount > 0
+      ? Math.max(1, Math.ceil(groupCount / pageSize))
+      : Math.max(1, Math.ceil(totalCount / pageSize));
 
   const runningCount = useMemo(
     () => containers.filter((c) => c.status === 'running').length,
@@ -174,6 +207,8 @@ export function useContainers() {
 
   return {
     containers,
+    groups: effectiveData?.groups ?? [],
+    ungrouped: effectiveData?.ungrouped ?? [],
     isLoading,
     isFetching,
     initialized,

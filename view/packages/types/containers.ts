@@ -260,3 +260,14 @@ export interface EmptyStateProps {
   message: string;
   className?: string;
 }
+
+export interface GroupedContainerViewProps {
+  groups: Array<{ application_id: string; application_name: string; containers: Container[] }>;
+  ungrouped?: Container[];
+  viewMode: 'table' | 'card';
+  onContainerClick: (container: Container) => void;
+  onContainerAction: (id: string, action: 'start' | 'stop' | 'remove') => void;
+  sortBy: 'name' | 'status';
+  sortOrder: 'asc' | 'desc';
+  onSort: (field: 'name' | 'status') => void;
+}
