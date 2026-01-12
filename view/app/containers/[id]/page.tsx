@@ -1,30 +1,20 @@
 'use client';
 
-import {
-  Play,
-  StopCircle,
-  Trash2,
-  Info,
-  Terminal,
-  RotateCw,
-  Layers,
-  ScrollText
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { OverviewTab } from './components/OverviewTab';
-import { LogsTab } from './components/LogsTab';
-import { Terminal as TerminalComponent } from './components/Terminal';
-import ContainerDetailsLoading from './components/ContainerDetailsLoading';
+import { Trash2, Info, Terminal, Layers, ScrollText } from 'lucide-react';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
-import { Images } from './components/images';
-import { ResourceGuard } from '@/components/rbac/PermissionGuard';
-import { Skeleton } from '@/components/ui/skeleton';
 import { isNixopusContainer } from '@/lib/utils';
-import PageLayout from '@/components/layout/page-layout';
-import useContainerDetails from '../hooks/use-container-details';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { useContainerDetail } from '../../../packages/hooks/containers/use-container-detail';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ContainerDetailsLoading from '../../../packages/components/container-skeletons';
+import { ContainerDetailsHeader } from '../../../packages/components/container';
+import {
+  OverviewTab,
+  LogsTab,
+  Terminal as TerminalComponent,
+  Images
+} from '../../../packages/components/container-sections';
+import { ResourceGuard } from '@/packages/components/rbac';
+import PageLayout from '@/packages/layouts/page-layout';
 
 export default function ContainerDetailsPage() {
   const {
@@ -39,7 +29,7 @@ export default function ContainerDetailsPage() {
     handleDeleteConfirm,
     isDeleteDialogOpen,
     setIsDeleteDialogOpen
-  } = useContainerDetails();
+  } = useContainerDetail();
 
   if (isLoading || !container) {
     return <ContainerDetailsLoading />;
@@ -47,112 +37,16 @@ export default function ContainerDetailsPage() {
 
   const isProtected = isNixopusContainer(container?.name);
 
-  const statusColor =
-    container.status === 'running'
-      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-      : container.status === 'exited'
-        ? 'bg-red-500/10 text-red-500 border-red-500/20'
-        : 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-
   return (
     <ResourceGuard resource="container" action="read" loadingFallback={<ContainerDetailsLoading />}>
       <PageLayout maxWidth="full" padding="md" spacing="lg">
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-4">
-            <div
-              className={cn(
-                'w-12 h-12 rounded-xl flex items-center justify-center',
-                container.status === 'running'
-                  ? 'bg-emerald-500/10'
-                  : container.status === 'exited'
-                    ? 'bg-red-500/10'
-                    : 'bg-amber-500/10'
-              )}
-            >
-              <div
-                className={cn(
-                  'w-3 h-3 rounded-full',
-                  container.status === 'running'
-                    ? 'bg-emerald-500 animate-pulse'
-                    : container.status === 'exited'
-                      ? 'bg-red-500'
-                      : 'bg-amber-500'
-                )}
-              />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">{container.name}</h1>
-              <div className="flex items-center gap-2 mt-1">
-                <code className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
-                  {container.id.slice(0, 12)}
-                </code>
-                <Badge variant="outline" className={cn('text-xs', statusColor)}>
-                  {container.status}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-            <ResourceGuard
-              resource="container"
-              action="update"
-              loadingFallback={<Skeleton className="h-9 w-24" />}
-            >
-              {container.status !== 'running' ? (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => handleContainerAction('start')}
-                  disabled={isLoading || isProtected}
-                  className="bg-emerald-600 hover:bg-emerald-700"
-                >
-                  <Play className="mr-2 h-4 w-4" />
-                  {t('containers.start')}
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleContainerAction('stop')}
-                    disabled={isLoading || isProtected}
-                  >
-                    <StopCircle className="mr-2 h-4 w-4" />
-                    {t('containers.stop')}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleContainerAction('restart')}
-                    disabled={isLoading || isProtected}
-                  >
-                    <RotateCw className="mr-2 h-4 w-4" />
-                    {t('containers.restart')}
-                  </Button>
-                </>
-              )}
-            </ResourceGuard>
-            <ResourceGuard
-              resource="container"
-              action="delete"
-              loadingFallback={<Skeleton className="h-9 w-20" />}
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleContainerAction('remove')}
-                disabled={isLoading || isProtected}
-                className="text-red-500 hover:text-red-600 hover:bg-red-500/10 border-red-500/20"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t('containers.remove')}
-              </Button>
-            </ResourceGuard>
-          </div>
-        </div>
+        <ContainerDetailsHeader
+          container={container}
+          isLoading={isLoading}
+          isProtected={isProtected}
+          handleContainerAction={handleContainerAction}
+          t={t}
+        />
 
         {/* Tabs Section */}
         <Tabs defaultValue="overview" className="w-full">

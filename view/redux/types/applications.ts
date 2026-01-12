@@ -1,4 +1,5 @@
 import { User } from './user';
+import { HealthCheck } from './healthcheck';
 
 export type Application = {
   id: string;
@@ -163,4 +164,22 @@ export interface DuplicateProjectRequest {
 // ProjectFamilyResponse contains the projects in a family.
 export interface ProjectFamilyResponse {
   projects: Application[];
+}
+
+// Health Check Component Props
+export interface HealthCheckChartProps {
+  applicationId: string;
+  setDialogOpen: (open: boolean) => void;
+  dialogOpen: boolean;
+}
+
+export interface HealthCheckCardProps {
+  application: Application;
+}
+
+export interface HealthCheckDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  application: Application;
+  healthCheck?: HealthCheck;
 }

@@ -130,18 +130,28 @@ type ContainerListRow struct {
 	Labels  map[string]string `json:"labels"`
 }
 
+// ContainerGroup represents a group of containers belonging to the same application
+type ContainerGroup struct {
+	ApplicationID   string      `json:"application_id"`
+	ApplicationName string      `json:"application_name"`
+	Containers      []Container `json:"containers"`
+}
+
 // ListContainersResponseData contains the data for list containers response
 type ListContainersResponseData struct {
-	Containers []Container `json:"containers"`
-	TotalCount int         `json:"total_count"`
-	Page       int         `json:"page"`
-	PageSize   int         `json:"page_size"`
-	SortBy     string      `json:"sort_by"`
-	SortOrder  string      `json:"sort_order"`
-	Search     string      `json:"search"`
-	Status     string      `json:"status"`
-	Name       string      `json:"name"`
-	Image      string      `json:"image"`
+	Containers []Container      `json:"containers"` // Deprecated: use Groups instead. Kept for backward compatibility
+	Groups     []ContainerGroup `json:"groups,omitempty"`
+	Ungrouped  []Container      `json:"ungrouped,omitempty"`
+	TotalCount int              `json:"total_count"` // Total number of containers (not groups)
+	GroupCount int              `json:"group_count"` // Total number of groups
+	Page       int              `json:"page"`
+	PageSize   int              `json:"page_size"`
+	SortBy     string           `json:"sort_by"`
+	SortOrder  string           `json:"sort_order"`
+	Search     string           `json:"search"`
+	Status     string           `json:"status"`
+	Name       string           `json:"name"`
+	Image      string           `json:"image"`
 }
 
 // ListContainersResponse is the typed response for listing containers

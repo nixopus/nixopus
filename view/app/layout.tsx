@@ -6,19 +6,19 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from '@/redux/store';
 import { Toaster } from '@/components/ui/sonner';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { useAppDispatch } from '@/redux/hooks';
 import { useEffect } from 'react';
 import { initializeAuth } from '@/redux/features/users/authSlice';
 import { usePathname, useRouter } from 'next/navigation';
-import { WebSocketProvider } from '@/hooks/socket-provider';
-import DashboardLayout from '@/components/layout/dashboard-layout';
-import { FeatureFlagsProvider } from '@/hooks/features_provider';
-import { SystemStatsProvider } from '@/hooks/system-stats-provider';
-import { palette } from '@/components/colors';
-import { SuperTokensProvider } from '@/components/supertokensProvider';
+import { WebSocketProvider } from '@/packages/hooks/shared/socket-provider';
+import { FeatureFlagsProvider } from '@/packages/hooks/shared/features_provider';
+import { SystemStatsProvider } from '@/packages/hooks/shared/system-stats-provider';
+import { palette } from '@/packages/utils/colors';
+import { SuperTokensProvider } from '@/packages/layouts/supertokensProvider';
 import { useSessionContext } from 'supertokens-auth-react/recipe/session';
-import { SettingsModalProvider } from '@/hooks/use-settings-modal';
-import { SettingsModal } from '@/components/settings/SettingsModal';
+import { SettingsModalProvider } from '@/packages/hooks/shared/use-settings-modal';
+import AppLayout from '@/packages/layouts/layout';
+import { SettingsModal } from '@/packages/components/settings';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -122,7 +122,7 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
                 <>{children}</>
               ) : (
                 <SystemStatsProvider>
-                  <DashboardLayout>{children}</DashboardLayout>
+                  <AppLayout>{children}</AppLayout>
                 </SystemStatsProvider>
               )}
             </FeatureFlagsProvider>

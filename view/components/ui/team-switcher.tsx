@@ -18,7 +18,7 @@ import {
   useSidebar
 } from '@/components/ui/sidebar';
 import { DeleteDialog } from './delete-dialog';
-import useTeamSwitcher from '@/hooks/use-team-switcher';
+import useTeamSwitcher from '@/packages/hooks/shared/use-team-switcher';
 import { useAppSelector } from '@/redux/hooks';
 import { UserOrganization } from '@/redux/types/orgs';
 
