@@ -1,31 +1,28 @@
 'use client';
 
 import React from 'react';
-import { RefreshCw, Trash2, Loader2, Scissors, LayoutGrid, List, Box, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import ContainersLoading from './components/skeleton';
+import { Trash2, Scissors, LayoutGrid, List, Box } from 'lucide-react';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
-import { FeatureNames } from '@/types/feature-flags';
+import { FeatureNames } from '@/packages/types/feature-flags';
 import { Skeleton } from '@/components/ui/skeleton';
-import DisabledFeature from '@/components/features/disabled-feature';
-import { ResourceGuard, AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
-import useContainerList from './hooks/use-container-list';
-import PageLayout from '@/components/layout/page-layout';
-import ContainersTable from './components/table';
+import { useContainers } from '@/packages/hooks/containers/use-containers';
+import { useViewMode } from '@/packages/hooks/containers/use-view-mode';
+import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
+import PageLayout from '@/packages/layouts/page-layout';
 import PaginationWrapper from '@/components/ui/pagination';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
-import { ContainerCard } from './components/card';
 import { cn } from '@/lib/utils';
+import MainPageHeader from '@/components/ui/main-page-header';
+import { translationKey } from '@/packages/hooks/shared/use-translation';
+import DisabledFeature from '@/packages/components/rbac';
+import { StatPill } from '@/packages/components/container';
+import { ContainersLoading } from '@/packages/components/container-skeletons';
+import { ActionHeader, ContainerCard, Action } from '@/packages/components/container';
+import ContainersTable from '@/packages/components/container';
+import { SearchBar } from '@/components/ui/search-bar';
 
 export default function ContainersPage() {
-  const [viewMode, setViewMode] = React.useState<'table' | 'card'>(() => {
-    if (typeof window !== 'undefined') {
-      const existing = window.localStorage.getItem('containers_view');
-      return (existing as 'table' | 'card') || 'table';
-    }
-    return 'table';
-  });
+  const { viewMode, setViewMode } = useViewMode();
 
   const {
     containers,
@@ -46,21 +43,22 @@ export default function ContainersPage() {
     router,
     containerToDelete,
     setContainerToDelete,
-    getGradientFromName,
     setShowPruneImagesConfirm,
     setShowPruneBuildCacheConfirm,
     page,
     setPage,
     totalPages,
     totalCount,
+    runningCount,
+    stoppedCount,
     pageSize,
     setPageSize,
     searchInput,
-    setSearchInput,
-    sortBy,
-    sortOrder,
-    handleSort
-  } = useContainerList();
+    handleSearchChange,
+    sortConfig,
+    handleSortChange,
+    sortOptions
+  } = useContainers();
 
   if (!initialized && isLoading) {
     return <ContainersLoading />;
@@ -74,50 +72,23 @@ export default function ContainersPage() {
     return <DisabledFeature />;
   }
 
-  const runningCount = containers.filter((c) => c.status === 'running').length;
-  const stoppedCount = containers.filter((c) => c.status !== 'running').length;
-
   return (
     <ResourceGuard resource="container" action="read" loadingFallback={<ContainersLoading />}>
       <PageLayout maxWidth="full" padding="md" spacing="lg" className="relative z-10">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">{t('containers.title')}</h1>
-            <p className="text-muted-foreground mt-1">{t('containers.description')}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={handleRefresh}
-              variant="outline"
-              size="sm"
-              disabled={isRefreshing || isFetching}
-            >
-              {isRefreshing || isFetching ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="mr-2 h-4 w-4" />
-              )}
-              {t('containers.refresh')}
-            </Button>
-            <AnyPermissionGuard
-              permissions={['container:delete']}
-              loadingFallback={<Skeleton className="h-9 w-20" />}
-            >
-              <Button variant="outline" size="sm" onClick={() => setShowPruneImagesConfirm(true)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t('containers.prune_images')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPruneBuildCacheConfirm(true)}
-              >
-                <Scissors className="mr-2 h-4 w-4" />
-                {t('containers.prune_build_cache')}
-              </Button>
-            </AnyPermissionGuard>
-          </div>
-        </div>
+        <MainPageHeader
+          label={t('containers.title')}
+          description={t('containers.description')}
+          actions={
+            <ActionHeader
+              handleRefresh={handleRefresh}
+              isRefreshing={isRefreshing}
+              isFetching={isFetching}
+              t={t}
+              setShowPruneImagesConfirm={setShowPruneImagesConfirm}
+              setShowPruneBuildCacheConfirm={setShowPruneBuildCacheConfirm}
+            />
+          }
+        />
 
         {totalCount > 0 && (
           <div className="flex items-center gap-6 mb-6">
@@ -129,15 +100,23 @@ export default function ContainersPage() {
 
         <div className="flex items-center gap-3 mb-6">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search containers..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-10"
+            <SearchBar
+              searchTerm={searchInput}
+              handleSearchChange={(e) => handleSearchChange(e.target.value)}
+              label={t('containers.searchPlaceholder')}
             />
           </div>
           <div className="flex items-center gap-2 ml-auto">
+            <SelectWrapper
+              value={sortConfig ? `${sortConfig.key}_${sortConfig.direction}` : 'name_asc'}
+              onValueChange={(value) => {
+                const [key, direction] = value.split('_') as ['name' | 'status', 'asc' | 'desc'];
+                handleSortChange(key, direction);
+              }}
+              options={sortOptions}
+              placeholder={t('containers.sortBy')}
+              className="w-full sm:w-[180px]"
+            />
             <SelectWrapper
               value={String(pageSize)}
               onValueChange={(v) => {
@@ -155,11 +134,7 @@ export default function ContainersPage() {
             />
             <div className="hidden sm:flex items-center border rounded-lg p-0.5">
               <button
-                onClick={() => {
-                  setViewMode('table');
-                  if (typeof window !== 'undefined')
-                    window.localStorage.setItem('containers_view', 'table');
-                }}
+                onClick={() => setViewMode('table')}
                 className={cn(
                   'p-2 rounded-md transition-colors',
                   viewMode === 'table' ? 'bg-muted' : 'hover:bg-muted/50'
@@ -168,11 +143,7 @@ export default function ContainersPage() {
                 <List className="h-4 w-4" />
               </button>
               <button
-                onClick={() => {
-                  setViewMode('card');
-                  if (typeof window !== 'undefined')
-                    window.localStorage.setItem('containers_view', 'card');
-                }}
+                onClick={() => setViewMode('card')}
                 className={cn(
                   'p-2 rounded-md transition-colors',
                   viewMode === 'card' ? 'bg-muted' : 'hover:bg-muted/50'
@@ -184,39 +155,52 @@ export default function ContainersPage() {
           </div>
         </div>
 
-        {containers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-            <Box className="h-16 w-16 mb-4 opacity-20" />
-            <p className="text-lg font-medium">{t('containers.no_containers')}</p>
-            <p className="text-sm mt-1">No containers match your search criteria</p>
-          </div>
-        ) : viewMode === 'card' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {containers.map((container) => (
-              <ContainerCard
-                key={container.id}
-                container={container}
-                onClick={() => router.push(`/containers/${container.id}`)}
-                getGradientFromName={getGradientFromName}
-                onAction={handleContainerAction}
-              />
-            ))}
-          </div>
-        ) : (
-          <ContainersTable
-            containersData={containers}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onSort={handleSort}
-            onAction={handleContainerAction}
-          />
-        )}
+        <div className="space-y-6">
+          {containers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+              <Box className="h-16 w-16 mb-4 opacity-20" />
+              <p className="text-lg font-medium">{t('containers.no_containers')}</p>
+              <p className="text-sm mt-1">No containers match your search criteria</p>
+            </div>
+          ) : viewMode === 'card' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {containers.map((container) => (
+                <ContainerCard
+                  key={container.id}
+                  container={container}
+                  onClick={() => router.push(`/containers/${container.id}`)}
+                  onAction={handleContainerAction}
+                />
+              ))}
+            </div>
+          ) : (
+            <ContainersTable
+              containersData={containers}
+              sortBy={sortConfig?.key || 'name'}
+              sortOrder={sortConfig?.direction || 'asc'}
+              onSort={(field) => {
+                const currentKey = sortConfig?.key || 'name';
+                const currentDir = sortConfig?.direction || 'asc';
+                if (currentKey === field) {
+                  handleSortChange(field, currentDir === 'asc' ? 'desc' : 'asc');
+                } else {
+                  handleSortChange(field, 'asc');
+                }
+              }}
+              onAction={handleContainerAction}
+            />
+          )}
 
-        {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-center">
-            <PaginationWrapper currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-          </div>
-        )}
+          {totalPages > 1 && (
+            <div className="flex justify-center pt-6">
+              <PaginationWrapper
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
+        </div>
 
         <AnyPermissionGuard permissions={['container:delete']} loadingFallback={null}>
           <DeleteDialog
@@ -255,30 +239,5 @@ export default function ContainersPage() {
         </AnyPermissionGuard>
       </PageLayout>
     </ResourceGuard>
-  );
-}
-
-function StatPill({
-  value,
-  label,
-  color
-}: {
-  value: number;
-  label: string;
-  color?: 'emerald' | 'zinc';
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      {color && (
-        <span
-          className={cn(
-            'w-2 h-2 rounded-full',
-            color === 'emerald' ? 'bg-emerald-500' : 'bg-zinc-500'
-          )}
-        />
-      )}
-      <span className="text-xl font-bold">{value}</span>
-      <span className="text-sm text-muted-foreground">{label}</span>
-    </div>
   );
 }

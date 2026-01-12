@@ -47,11 +47,11 @@ func (l *ExtensionLoader) LoadExtensionsFromDirectory(ctx context.Context, dirPa
 		}
 	}
 
-	// Remove extensions from database that are no longer in templates directory
-	if err := l.removeDeletedExtensions(ctx, foundExtensionIDs); err != nil {
-		log.Printf("Warning: Failed to remove deleted extensions: %v", err)
-		// Don't return error here as the main loading succeeded
-	}
+	// // Remove extensions from database that are no longer in templates directory
+	// if err := l.removeDeletedExtensions(ctx, foundExtensionIDs); err != nil {
+	// 	log.Printf("Warning: Failed to remove deleted extensions: %v", err)
+	// 	// Don't return error here as the main loading succeeded
+	// }
 
 	return nil
 }
