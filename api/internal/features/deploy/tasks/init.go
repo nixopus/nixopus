@@ -9,7 +9,6 @@ import (
 	"github.com/raghavyuva/caddygo"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	types "github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/queue"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/vmihailenco/taskq/v3"
@@ -44,9 +43,6 @@ var (
 
 var caddyClient *caddygo.Client
 
-// retryTracker tracks retry attempts per correlation ID
-var retryTracker = sync.Map{}
-
 func GetCaddyClient() *caddygo.Client {
 	if caddyClient == nil {
 		caddyClient = caddygo.NewClient(config.AppConfig.Proxy.CaddyEndpoint)
@@ -54,82 +50,14 @@ func GetCaddyClient() *caddygo.Client {
 	return caddyClient
 }
 
-func (t *TaskService) wrapHandlerWithRetryLogging(
-	taskName string,
-	retryLimit int,
-	handler func(context.Context, shared_types.TaskPayload) error,
-) func(context.Context, shared_types.TaskPayload) error {
-	return func(ctx context.Context, data shared_types.TaskPayload) error {
-		correlationID := data.CorrelationID
-		if correlationID == "" {
-			correlationID = fmt.Sprintf("%s-%d", taskName, time.Now().UnixNano())
-		}
-
-		// Get current attempt count (starts at 0 for first attempt)
-		retryCountInterface, _ := retryTracker.LoadOrStore(correlationID, 0)
-		attemptNumber := retryCountInterface.(int)
-		totalAttempts := retryLimit + 1
-
-		// Log attempt
-		if attemptNumber > 0 {
-			t.Logger.Log(logger.Warning, fmt.Sprintf("[%s] Retry attempt %d/%d for correlation_id=%s", taskName, attemptNumber+1, totalAttempts, correlationID), "")
-		} else {
-			t.Logger.Log(logger.Info, fmt.Sprintf("[%s] Start: correlation_id=%s", taskName, correlationID), "")
-		}
-
-		// Execute handler
-		err := handler(ctx, data)
-
-		if err != nil {
-			// Increment attempt count for next retry
-			attemptNumber++
-			retryTracker.Store(correlationID, attemptNumber)
-
-			// Log failure with retry count
-			t.Logger.Log(logger.Error, fmt.Sprintf("[%s] Failed (attempt %d/%d): correlation_id=%s, error=%v", taskName, attemptNumber, totalAttempts, correlationID, err), "")
-
-			// Clean up retry tracker after max retries
-			if attemptNumber >= retryLimit {
-				retryTracker.Delete(correlationID)
-				t.Logger.Log(logger.Error, fmt.Sprintf("[%s] Max retries (%d) exceeded for correlation_id=%s", taskName, totalAttempts, correlationID), "")
-			}
-
-			return err
-		}
-
-		if attemptNumber > 0 {
-			t.Logger.Log(logger.Info, fmt.Sprintf("[%s] Succeeded after %d retries: correlation_id=%s", taskName, attemptNumber, correlationID), "")
-		} else {
-			t.Logger.Log(logger.Info, fmt.Sprintf("[%s] Done: correlation_id=%s", taskName, correlationID), "")
-		}
-		retryTracker.Delete(correlationID)
-
-		return nil
-	}
-}
-
-// Configuration:
-// - ConsumerIdleTimeout: 10 minutes
-// - MinNumWorker: 2 => Minimum number of workers to start
-// - MaxNumWorker: 4 => Maximum number of workers to start
-// - ReservationSize: 1 => Number of tasks to reserve for each worker
-// - ReservationTimeout: 15 minutes => Timeout for reserving tasks
-// - WaitTimeout: 5 seconds => Timeout for waiting for a task
-// - BufferSize: 100 => Buffer size for the queue
-// - RetryLimit: 3 => Number of times to retry the task if it fails
-// - Handler: function that handles the task
-// - Name: name of the task
-// - Queue: queue to enqueue the task
-// - Task: task to enqueue the task
-
 func (t *TaskService) SetupCreateDeploymentQueue() {
 	onceQueues.Do(func() {
 		CreateDeploymentQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_CREATE_DEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        2,
+			MinNumWorker:        1,
 			MaxNumWorker:        4,
-			ReservationSize:     1,
+			ReservationSize:     4,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
 			BufferSize:          100,
@@ -137,18 +65,25 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 
 		TaskCreateDeployment = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_CREATE_DEPLOYMENT,
-			RetryLimit: 3,
-			Handler: t.wrapHandlerWithRetryLogging(TASK_CREATE_DEPLOYMENT, 3, func(ctx context.Context, data shared_types.TaskPayload) error {
-				return t.BuildPack(ctx, data)
-			}),
+			RetryLimit: 1,
+			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
+				fmt.Printf("[%s] start: correlation_id=%s\n", TASK_CREATE_DEPLOYMENT, data.CorrelationID)
+				err := t.BuildPack(ctx, data)
+				if err != nil {
+					fmt.Print("error handling create deployment: ", err)
+					return err
+				}
+				fmt.Printf("[%s] done: correlation_id=%s\n", TASK_CREATE_DEPLOYMENT, data.CorrelationID)
+				return nil
+			},
 		})
 
 		UpdateDeploymentQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_UPDATE_DEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        2,
+			MinNumWorker:        1,
 			MaxNumWorker:        4,
-			ReservationSize:     1,
+			ReservationSize:     4,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
 			BufferSize:          100,
@@ -156,19 +91,24 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 
 		TaskUpdateDeployment = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_UPDATE_DEPLOYMENT,
-			RetryLimit: 3,
-			Handler: t.wrapHandlerWithRetryLogging(TASK_UPDATE_DEPLOYMENT, 3, func(ctx context.Context, data shared_types.TaskPayload) error {
-				return t.HandleUpdateDeployment(ctx, data)
-			}),
+			RetryLimit: 1,
+			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
+				fmt.Println("Updating deployment")
+				err := t.HandleUpdateDeployment(ctx, data)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
 		})
 
 		// Redeploy queue and task registration
 		ReDeployQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_REDEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        2,
+			MinNumWorker:        1,
 			MaxNumWorker:        4,
-			ReservationSize:     1,
+			ReservationSize:     4,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
 			BufferSize:          100,
@@ -176,19 +116,24 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 
 		TaskReDeploy = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_REDEPLOYMENT,
-			RetryLimit: 3,
-			Handler: t.wrapHandlerWithRetryLogging(TASK_REDEPLOYMENT, 3, func(ctx context.Context, data shared_types.TaskPayload) error {
-				return t.HandleReDeploy(ctx, data)
-			}),
+			RetryLimit: 1,
+			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
+				fmt.Println("Redeploying application")
+				err := t.HandleReDeploy(ctx, data)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
 		})
 
 		// Rollback queue and task registration
 		RollbackQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_ROLLBACK,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        2,
+			MinNumWorker:        1,
 			MaxNumWorker:        4,
-			ReservationSize:     1,
+			ReservationSize:     4,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
 			BufferSize:          100,
@@ -196,19 +141,24 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 
 		TaskRollback = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_ROLLBACK,
-			RetryLimit: 3,
-			Handler: t.wrapHandlerWithRetryLogging(TASK_ROLLBACK, 3, func(ctx context.Context, data shared_types.TaskPayload) error {
-				return t.HandleRollback(ctx, data)
-			}),
+			RetryLimit: 1,
+			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
+				fmt.Println("Rolling back deployment")
+				err := t.HandleRollback(ctx, data)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
 		})
 
 		// Restart queue and task registration
 		RestartQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_RESTART,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        2,
+			MinNumWorker:        1,
 			MaxNumWorker:        4,
-			ReservationSize:     1,
+			ReservationSize:     4,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
 			BufferSize:          100,
@@ -216,10 +166,15 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 
 		TaskRestart = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_RESTART,
-			RetryLimit: 3,
-			Handler: t.wrapHandlerWithRetryLogging(TASK_RESTART, 3, func(ctx context.Context, data shared_types.TaskPayload) error {
-				return t.HandleRestart(ctx, data)
-			}),
+			RetryLimit: 1,
+			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
+				fmt.Println("Restarting deployment")
+				err := t.HandleRestart(ctx, data)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
 		})
 	})
 }
