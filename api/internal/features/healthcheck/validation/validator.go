@@ -48,7 +48,8 @@ func (v *Validator) validateCreateHealthCheckRequest(req types.CreateHealthCheck
 		req.Endpoint = "/"
 	}
 
-	if !strings.HasPrefix(req.Endpoint, "/") {
+	// Accept either a path (starting with "/") or a full URL (starting with "http://" or "https://")
+	if !strings.HasPrefix(req.Endpoint, "/") && !strings.HasPrefix(req.Endpoint, "http://") && !strings.HasPrefix(req.Endpoint, "https://") {
 		return types.ErrInvalidEndpoint
 	}
 
@@ -112,7 +113,8 @@ func (v *Validator) validateUpdateHealthCheckRequest(req types.UpdateHealthCheck
 		return types.ErrInvalidApplicationID
 	}
 
-	if req.Endpoint != "" && !strings.HasPrefix(req.Endpoint, "/") {
+	// Accept either a path (starting with "/") or a full URL (starting with "http://" or "https://")
+	if req.Endpoint != "" && !strings.HasPrefix(req.Endpoint, "/") && !strings.HasPrefix(req.Endpoint, "http://") && !strings.HasPrefix(req.Endpoint, "https://") {
 		return types.ErrInvalidEndpoint
 	}
 

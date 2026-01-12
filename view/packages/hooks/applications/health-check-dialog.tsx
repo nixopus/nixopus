@@ -101,7 +101,23 @@ export function HealthCheckDialog({
             <Input
               type="number"
               value={intervalSeconds}
-              onChange={(e) => setIntervalSeconds(parseInt(e.target.value) || 60)}
+              onChange={(e) => setIntervalSeconds(e.target.value)}
+              onBlur={(e) => {
+                const inputValue = e.target.value.trim();
+                if (inputValue === '') {
+                  setIntervalSeconds('60');
+                  return;
+                }
+                const value = parseInt(inputValue, 10);
+                if (isNaN(value)) {
+                  setIntervalSeconds('60');
+                } else if (value < 30) {
+                  setIntervalSeconds('30');
+                } else if (value > 3600) {
+                  setIntervalSeconds('3600');
+                }
+                // If value is valid and in range, don't update state to avoid resetting user input
+              }}
               min={30}
               max={3600}
             />
@@ -112,7 +128,23 @@ export function HealthCheckDialog({
             <Input
               type="number"
               value={timeoutSeconds}
-              onChange={(e) => setTimeoutSeconds(parseInt(e.target.value) || 30)}
+              onChange={(e) => setTimeoutSeconds(e.target.value)}
+              onBlur={(e) => {
+                const inputValue = e.target.value.trim();
+                if (inputValue === '') {
+                  setTimeoutSeconds('30');
+                  return;
+                }
+                const value = parseInt(inputValue, 10);
+                if (isNaN(value)) {
+                  setTimeoutSeconds('30');
+                } else if (value < 5) {
+                  setTimeoutSeconds('5');
+                } else if (value > 120) {
+                  setTimeoutSeconds('120');
+                }
+                // If value is valid and in range, don't update state to avoid resetting user input
+              }}
               min={5}
               max={120}
             />
