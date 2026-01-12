@@ -531,13 +531,15 @@ const ContainersTable = ({
           onSort={onSort}
         />
         <div>Image</div>
-        <SortableHeader
-          label={t('dashboard.containers.table.headers.status')}
-          field="status"
-          currentSort={sortBy}
-          currentOrder={sortOrder}
-          onSort={onSort}
-        />
+        <div className="w-24 text-left">
+          <SortableHeader
+            label={t('dashboard.containers.table.headers.status')}
+            field="status"
+            currentSort={sortBy}
+            currentOrder={sortOrder}
+            onSort={onSort}
+          />
+        </div>
         <div className="w-32">Ports</div>
         <div className="w-24"></div>
       </div>
@@ -562,7 +564,7 @@ function SortableHeader({ label, field, currentSort, currentOrder, onSort }: Sor
   return (
     <button
       onClick={() => onSort?.(field)}
-      className="flex items-center gap-1 hover:text-foreground transition-colors"
+      className="flex items-center justify-start gap-1 hover:text-foreground transition-colors"
     >
       {label}
       <span className="flex flex-col">

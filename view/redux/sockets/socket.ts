@@ -10,8 +10,14 @@ export const SubscribeToTopic = (id: string, type: string) => {
           resource_id: id
         }
       };
-      break;
-
+    case SOCKET_EVENTS.MONITOR_HEALTH_CHECK:
+      return {
+        action: SOCKET_ACTIONS.SUBSCRIBE,
+        topic: SOCKET_EVENTS.MONITOR_HEALTH_CHECK,
+        data: {
+          resource_id: id
+        }
+      };
     default:
       break;
   }
