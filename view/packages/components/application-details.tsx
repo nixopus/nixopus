@@ -1,4 +1,4 @@
-import { ApplicationDeployment, Status } from '@/redux/types/applications';
+import { ApplicationDeployment } from '@/redux/types/applications';
 import React, { useState } from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import PaginationWrapper from '@/components/ui/pagination';
@@ -19,7 +19,6 @@ import { ResourceGuard } from '@/packages/components/rbac';
 import SubPageHeader from '@/components/ui/sub-page-header';
 import { useApplicationHeader } from '@/packages/hooks/applications/use_application_header';
 import DeploymentLogsTable from '@/packages/components/deployment-logs';
-import { useMonitoringData } from '@/packages/hooks/applications/use_monitoring_data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProjectFamilySwitcher } from '@/packages/hooks/applications/use_project_family_switcher';
 import {
@@ -34,14 +33,20 @@ import { Check, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStatusIndicator } from '@/packages/hooks/applications/use_status_indicator';
 import { useLatestDeployment } from '@/packages/hooks/applications/use_latest_deployment';
-import { HealthCheckCard } from '@/packages/components/application-healthcheck';
-
-interface DeploymentsListProps {
-  deployments?: ApplicationDeployment[];
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}
+import { DraggableGrid } from '@/components/ui/draggable-grid';
+import { useMonitoring } from '@/packages/hooks/applications/use-monitoring';
+import { DeploymentsListProps, UseMonitoringReturn } from '../types/application';
+import { MonitorProps } from '../types/application';
+import { DeploymentOverviewProps } from '../types/application';
+import { DeploymentHealthChartProps } from '../types/application';
+import { LatestDeploymentProps } from '../types/application';
+import { InfoLineProps } from '../types/application';
+import { SectionLabelProps } from '../types/application';
+import { StatBlockProps } from '../types/application';
+import { StatusIndicatorProps } from '../types/application';
+import { DuplicateProjectDialogProps } from '../types/application';
+import { ApplicationLogsProps } from '../types/application';
+import { ProjectFamilySwitcherProps } from '../types/application';
 
 function DeploymentsList({
   deployments,
@@ -115,10 +120,6 @@ export const DeploymentStatusChart = ({
   );
 };
 
-interface DuplicateProjectDialogProps {
-  application: Application;
-}
-
 export function DuplicateProjectDialog({ application }: DuplicateProjectDialogProps) {
   const {
     open,
@@ -186,65 +187,55 @@ export const ApplicationDetailsHeader = ({ application }: { application?: Applic
   );
 };
 
-interface ApplicationLogsProps {
-  id: string;
-  currentPage?: number;
-  setCurrentPage?: (page: number) => void;
-}
-
 export const ApplicationLogs = ({ id }: ApplicationLogsProps) => {
   return <DeploymentLogsTable id={id} isDeployment={false} />;
 };
 
-interface MonitorProps {
-  application?: Application;
-}
-
 export function Monitor({ application }: MonitorProps) {
+  const monitoringHookResult = useMonitoring(application) as UseMonitoringReturn;
   const {
-    totalDeployments,
-    successfulDeployments,
-    failedDeployments,
-    currentStatus,
-    latestDeployment,
-    deploymentsByStatus,
-    successRate
-  } = useMonitoringData(application);
+    showDragHint,
+    mounted,
+    layoutResetKey,
+    hasCustomLayout,
+    dismissHint,
+    handleResetLayout,
+    handleLayoutChange,
+    monitoringItems
+  } = monitoringHookResult;
 
   if (!application) {
     return null;
   }
 
+  if (!mounted) {
+    return (
+      <ResourceGuard
+        resource="deploy"
+        action="read"
+        loadingFallback={<Skeleton className="h-96" />}
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-48 lg:col-span-2" />
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48 lg:col-span-7" />
+          <Skeleton className="h-48 lg:col-span-3" />
+        </div>
+      </ResourceGuard>
+    );
+  }
+
   return (
     <ResourceGuard resource="deploy" action="read" loadingFallback={<Skeleton className="h-96" />}>
-      <div className="space-y-8">
-        <DeploymentOverview
-          totalDeployments={totalDeployments}
-          successfulDeployments={successfulDeployments}
-          failedDeployments={failedDeployments}
-          currentStatus={currentStatus}
-        />
-
-        <HealthCheckCard application={application} />
-        <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-          <div className="lg:col-span-7">
-            <DeploymentHealthChart
-              deploymentsByStatus={deploymentsByStatus}
-              totalDeployments={totalDeployments}
-              successRate={successRate}
-            />
-          </div>
-          <div className="lg:col-span-3">
-            <LatestDeployment deployment={latestDeployment} />
-          </div>
-        </div>
-      </div>
+      <DraggableGrid
+        items={monitoringItems}
+        storageKey="monitoring-card-order"
+        gridCols="grid-cols-1 lg:grid-cols-2"
+        resetKey={layoutResetKey}
+        onReorder={handleLayoutChange}
+      />
     </ResourceGuard>
   );
-}
-
-interface ProjectFamilySwitcherProps {
-  application: Application;
 }
 
 export function ProjectFamilySwitcher({ application }: ProjectFamilySwitcherProps) {
@@ -267,13 +258,6 @@ export function ProjectFamilySwitcher({ application }: ProjectFamilySwitcherProp
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
-
-interface DeploymentOverviewProps {
-  totalDeployments: number;
-  successfulDeployments: number;
-  failedDeployments: number;
-  currentStatus?: string;
 }
 
 export function DeploymentOverview({
@@ -305,12 +289,6 @@ export function DeploymentOverview({
       </div>
     </CardWrapper>
   );
-}
-
-interface DeploymentHealthChartProps {
-  deploymentsByStatus: Record<string, number>;
-  totalDeployments: number;
-  successRate: number;
 }
 
 export function DeploymentHealthChart({
@@ -388,10 +366,6 @@ export function DeploymentHealthChart({
   );
 }
 
-interface LatestDeploymentProps {
-  deployment?: ApplicationDeployment;
-}
-
 export function LatestDeployment({ deployment }: LatestDeploymentProps) {
   const { t } = useTranslation();
   const { emptyStateContent, headerContent, infoLines, hasDeployment } = useLatestDeployment({
@@ -429,16 +403,6 @@ export function LatestDeployment({ deployment }: LatestDeploymentProps) {
       </div>
     </CardWrapper>
   );
-}
-
-interface InfoLineProps {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  displayValue?: string;
-  sublabel?: string;
-  mono?: boolean;
-  copyable?: boolean;
 }
 
 export function InfoLine({
@@ -486,24 +450,12 @@ export function InfoLine({
   );
 }
 
-interface SectionLabelProps {
-  children: React.ReactNode;
-}
-
 export function SectionLabel({ children }: SectionLabelProps) {
   return (
     <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
       {children}
     </h3>
   );
-}
-
-interface StatBlockProps {
-  value: string | number;
-  label: string;
-  sublabel?: string;
-  color?: 'emerald' | 'red' | 'amber' | 'blue' | 'purple';
-  pulse?: boolean;
 }
 
 export function StatBlock({ value, label, sublabel, color, pulse }: StatBlockProps) {
@@ -539,12 +491,6 @@ export function StatBlock({ value, label, sublabel, color, pulse }: StatBlockPro
       </div>
     </div>
   );
-}
-
-interface StatusIndicatorProps {
-  status?: Status;
-  size?: 'sm' | 'md' | 'lg';
-  showLabel?: boolean;
 }
 
 export function StatusIndicator({ status, size = 'md', showLabel = true }: StatusIndicatorProps) {
