@@ -5,12 +5,14 @@ import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { isNixopusContainer } from '@/lib/utils';
 import { useContainerDetail } from '../../../packages/hooks/containers/use-container-detail';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import ContainerDetailsLoading from '../../../packages/components/container-details-loading';
-import { ContainerDetailsHeader } from '../../../packages/components/container-details-header';
-import { OverviewTab } from '../../../packages/components/container-overview-tab';
-import { LogsTab } from '../../../packages/components/container-logs-tab';
-import { Terminal as TerminalComponent } from '../../../packages/components/container-terminal';
-import { Images } from '../../../packages/components/container-images';
+import ContainerDetailsLoading from '../../../packages/components/container-skeletons';
+import { ContainerDetailsHeader } from '../../../packages/components/container';
+import {
+  OverviewTab,
+  LogsTab,
+  Terminal as TerminalComponent,
+  Images
+} from '../../../packages/components/container-sections';
 import { ResourceGuard } from '@/packages/components/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
 

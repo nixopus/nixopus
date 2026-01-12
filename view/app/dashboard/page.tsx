@@ -14,11 +14,11 @@ import {
   LoadAverageCardSkeleton,
   MemoryUsageCardSkeleton,
   DiskUsageCardSkeleton
-} from '@/packages/components/dashboard/system/skeletons';
-import { ContainersWidgetSkeleton } from '@/packages/components/container';
+} from '@/packages/components/dashboard-skeletons';
+import { ContainersWidgetSkeleton } from '@/packages/components/container-skeletons';
 import PageLayout from '@/packages/layouts/page-layout';
 import { DraggableGrid } from '@/components/ui/draggable-grid';
-import { WidgetSelector } from '@/packages/components/dashboard/widget-selector';
+import { WidgetSelector } from '@/packages/components/dashboard';
 import { DashboardItem } from '@/packages/types/layout';
 import { ContainerData, SystemStatsType } from '@/redux/types/monitor';
 import MainPageHeader from '@/components/ui/main-page-header';

@@ -6,16 +6,18 @@ import { useGetSMTPConfigurationsQuery } from '@/redux/services/settings/notific
 import { useCheckForUpdatesQuery } from '@/redux/services/users/userApi';
 import { FeatureNames } from '@/packages/types/feature-flags';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import SystemInfoCard from '@/packages/components/dashboard/system/system-info';
-import ClockWidget from '@/packages/components/dashboard/system/clock';
-import NetworkWidget from '@/packages/components/dashboard/system/network';
-import LoadAverageCard from '@/packages/components/dashboard/system/load-average';
-import CPUUsageCard from '@/packages/components/dashboard/system/cpu-usage';
-import MemoryUsageCard from '@/packages/components/dashboard/system/memory-usage';
-import DiskUsageCard from '@/packages/components/dashboard/system/disk-usage';
-import ContainersWidget from '@/packages/components/container';
 import { DashboardItem } from '@/packages/types/layout';
-import { useContainer } from '@/packages/hooks/dashboard/container/use-container';
+import { useContainer } from '@/packages/hooks/dashboard/use-container';
+import {
+  ClockWidget,
+  ContainersWidget,
+  NetworkWidget,
+  SystemInfoCard
+} from '@/packages/components/dashboard';
+import { LoadAverageCard } from '@/packages/components/dashboard';
+import { CPUUsageCard } from '@/packages/components/dashboard';
+import { MemoryUsageCard } from '@/packages/components/dashboard';
+import { DiskUsageCard } from '@/packages/components/dashboard';
 
 export const useDashboard = () => {
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();

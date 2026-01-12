@@ -15,12 +15,11 @@ import { cn } from '@/lib/utils';
 import MainPageHeader from '@/components/ui/main-page-header';
 import { translationKey } from '@/packages/hooks/shared/use-translation';
 import DisabledFeature from '@/packages/components/rbac';
-import { StatPill } from '@/packages/components/container-stat-pill';
-import { ActionHeader } from '@/packages/components/container-action-header';
+import { StatPill } from '@/packages/components/container';
+import { ContainersLoading } from '@/packages/components/container-skeletons';
+import { ActionHeader, ContainerCard, Action } from '@/packages/components/container';
+import ContainersTable from '@/packages/components/container';
 import { SearchBar } from '@/components/ui/search-bar';
-import { ContainerCard } from '@/packages/components/container-card';
-import ContainersTable from '@/packages/components/container-table';
-import ContainersLoading from '@/packages/components/container-skeleton';
 
 export default function ContainersPage() {
   const { viewMode, setViewMode } = useViewMode();
