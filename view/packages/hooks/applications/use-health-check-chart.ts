@@ -5,6 +5,7 @@ import { useGetHealthCheckResultsQuery } from '@/redux/services/deploy/healthche
 import { HealthCheckResult } from '@/redux/types/healthcheck';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import type { ChartConfig } from '@/components/ui/chart';
+import { SelectOption } from '@/components/ui/select-wrapper';
 
 interface UseHealthCheckChartProps {
   applicationId: string;
@@ -113,8 +114,7 @@ export function useHealthCheckChart({ applicationId }: UseHealthCheckChartProps)
                 : timeRange === '90d'
                   ? 720
                   : 5;
-    const grouped: Record<string, { responseTime: number[]; healthy: number; total: number }> =
-      React.useMemo(() => ({}), []);
+    const grouped: Record<string, { responseTime: number[]; healthy: number; total: number }> = {};
 
     results.forEach((result: HealthCheckResult) => {
       const date = new Date(result.checked_at);
@@ -154,11 +154,116 @@ export function useHealthCheckChart({ applicationId }: UseHealthCheckChartProps)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [results, timeRange]);
 
+  const timeRangeOptions: SelectOption[] = React.useMemo(
+    () => [
+      {
+        value: '10m',
+        label: t('selfHost.monitoring.healthCheck.last10m' as any) || 'Last 10 minutes'
+      },
+      {
+        value: '1h',
+        label: t('selfHost.monitoring.healthCheck.last1h' as any) || 'Last 1 hour'
+      },
+      {
+        value: '24h',
+        label: t('selfHost.monitoring.healthCheck.last24h' as any) || 'Last 24 hours'
+      },
+      {
+        value: '7d',
+        label: t('selfHost.monitoring.healthCheck.last7d' as any) || 'Last 7 days'
+      },
+      {
+        value: '30d',
+        label: t('selfHost.monitoring.healthCheck.last30d' as any) || 'Last 30 days'
+      },
+      {
+        value: '90d',
+        label: t('selfHost.monitoring.healthCheck.last90d' as any) || 'Last 90 days'
+      }
+    ],
+    [t]
+  );
+
+  const xAxisTickFormatter = React.useCallback(
+    (value: string | number) => {
+      const date = new Date(value);
+      if (timeRange === '10m' || timeRange === '1h') {
+        return date.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit'
+        });
+      }
+      if (timeRange === '24h') {
+        return date.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit'
+        });
+      }
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+    },
+    [timeRange]
+  );
+
+  const tooltipLabelFormatter = React.useCallback(
+    (value: string | number) => {
+      const date = new Date(value);
+      if (timeRange === '10m' || timeRange === '1h' || timeRange === '24h') {
+        return date.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit'
+        });
+      }
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+    },
+    [timeRange]
+  );
+
+  const tooltipFormatter = React.useCallback(
+    (value: any, name: string | number, item: any, index: number, payload: any) => {
+      const nameStr = String(name);
+      if (nameStr === 'responseTime') {
+        return [
+          `${value}ms`,
+          t('selfHost.monitoring.healthCheck.responseTime' as any) || 'Response Time'
+        ];
+      }
+      if (nameStr === 'healthStatusHealthy' || nameStr === 'healthStatusUnhealthy') {
+        const data = payload as any;
+        const numValue = typeof value === 'number' ? value : parseFloat(String(value));
+        if (numValue === null || isNaN(numValue)) return null;
+        const status =
+          nameStr === 'healthStatusHealthy'
+            ? t('selfHost.monitoring.healthCheck.healthy' as any) || 'Healthy'
+            : t('selfHost.monitoring.healthCheck.unhealthy' as any) || 'Unhealthy';
+        return [
+          `${numValue.toFixed(1)}% (${data.healthyCount}/${data.totalCount})`,
+          `${t('selfHost.monitoring.healthCheck.healthStatus' as any) || 'Health Status'}: ${status}`
+        ];
+      }
+      return null;
+    },
+    [t]
+  );
+
   return {
     chartData,
     chartConfig,
     timeRange,
     setTimeRange,
+    timeRangeOptions,
+    xAxisTickFormatter,
+    tooltipLabelFormatter,
+    tooltipFormatter,
     isLoading,
     results,
     hasData: results && results.length > 0

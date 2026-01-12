@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   useCreateHealthCheckMutation,
   useUpdateHealthCheckMutation,
@@ -11,6 +11,8 @@ import { Application } from '@/redux/types/applications';
 import { HealthCheck } from '@/redux/types/healthcheck';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { toast } from 'sonner';
+import { SelectOption } from '@/components/ui/select-wrapper';
+import { DialogAction } from '@/components/ui/dialog-wrapper';
 
 interface UseHealthCheckDialogProps {
   application: Application;
@@ -125,20 +127,92 @@ export function useHealthCheckDialog({
     }
   };
 
+  const handleIntervalSecondsBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value.trim();
+    if (inputValue === '') {
+      setIntervalSeconds('60');
+      return;
+    }
+    const value = parseInt(inputValue, 10);
+    if (isNaN(value)) {
+      setIntervalSeconds('60');
+    } else if (value < 30) {
+      setIntervalSeconds('30');
+    } else if (value > 3600) {
+      setIntervalSeconds('3600');
+    }
+    // If value is valid and in range, don't update state to avoid resetting user input
+  };
+
+  const handleTimeoutSecondsBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value.trim();
+    if (inputValue === '') {
+      setTimeoutSeconds('30');
+      return;
+    }
+    const value = parseInt(inputValue, 10);
+    if (isNaN(value)) {
+      setTimeoutSeconds('30');
+    } else if (value < 5) {
+      setTimeoutSeconds('5');
+    } else if (value > 120) {
+      setTimeoutSeconds('120');
+    }
+    // If value is valid and in range, don't update state to avoid resetting user input
+  };
+
+  const methodOptions: SelectOption[] = useMemo(
+    () => [
+      { value: 'GET', label: 'GET' },
+      { value: 'POST', label: 'POST' },
+      { value: 'HEAD', label: 'HEAD' }
+    ],
+    []
+  );
+
+  const dialogActions: DialogAction[] = useMemo(
+    () => [
+      ...(healthCheck
+        ? [
+            {
+              label: t('selfHost.monitoring.healthCheck.delete' as any) || 'Delete',
+              onClick: handleDelete,
+              variant: 'destructive' as const,
+              disabled: isCreating || isUpdating,
+              loading: false
+            }
+          ]
+        : []),
+      {
+        label: healthCheck
+          ? t('selfHost.monitoring.healthCheck.update' as any) || 'Update'
+          : t('selfHost.monitoring.healthCheck.create' as any) || 'Create',
+        onClick: handleSubmit,
+        disabled: isCreating || isUpdating,
+        loading: isCreating || isUpdating
+      }
+    ],
+    [healthCheck, isCreating, isUpdating, t, handleSubmit, handleDelete]
+  );
+
   return {
     endpoint,
     setEndpoint,
     method,
     setMethod,
+    methodOptions,
     intervalSeconds,
     setIntervalSeconds,
+    handleIntervalSecondsBlur,
     timeoutSeconds,
     setTimeoutSeconds,
+    handleTimeoutSecondsBlur,
     enabled,
     setEnabled,
     handleSubmit,
     handleDelete,
     handleToggle,
+    dialogActions,
     isLoading: isCreating || isUpdating
   };
 }

@@ -34,6 +34,7 @@ import { Check, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStatusIndicator } from '@/packages/hooks/applications/use_status_indicator';
 import { useLatestDeployment } from '@/packages/hooks/applications/use_latest_deployment';
+import { HealthCheckCard } from '@/packages/components/application-healthcheck';
 
 interface DeploymentsListProps {
   deployments?: ApplicationDeployment[];
@@ -224,6 +225,7 @@ export function Monitor({ application }: MonitorProps) {
           currentStatus={currentStatus}
         />
 
+        <HealthCheckCard application={application} />
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
           <div className="lg:col-span-7">
             <DeploymentHealthChart

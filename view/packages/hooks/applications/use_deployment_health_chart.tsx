@@ -80,7 +80,7 @@ export function useDeploymentHealthChart({
 
   const customHeader = useMemo(
     () => (
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between w-full">
         <span>{t('selfHost.monitoring.chart.title')}</span>
         {headerActions}
       </div>
