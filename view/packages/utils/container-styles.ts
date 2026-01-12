@@ -1,9 +1,5 @@
 import { cn } from '@/lib/utils';
 
-// ============================================================================
-// Status Colors
-// ============================================================================
-
 export const getStatusColors = (status: string) => {
   const normalizedStatus = (status || '').toLowerCase();
   const isRunning = normalizedStatus === 'running';
@@ -32,10 +28,6 @@ export const getStatusIconClasses = (isRunning: boolean) => ({
   icon: cn('h-4 w-4', isRunning ? 'text-emerald-500' : 'text-zinc-500')
 });
 
-// ============================================================================
-// Port Colors
-// ============================================================================
-
 export const getPortColors = (hasPublic: boolean) => ({
   pill: hasPublic
     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
@@ -43,10 +35,6 @@ export const getPortColors = (hasPublic: boolean) => ({
   flow: hasPublic ? 'bg-emerald-500/5' : 'bg-zinc-500/5',
   text: hasPublic ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'
 });
-
-// ============================================================================
-// Text Colors
-// ============================================================================
 
 export const textColorClasses = {
   emerald: 'text-emerald-500',
@@ -65,10 +53,6 @@ export const bgColorClasses = {
   purple: 'bg-purple-500/10',
   zinc: 'bg-zinc-500/10'
 };
-
-// ============================================================================
-// Resource Gauge Colors
-// ============================================================================
 
 export const resourceGaugeColors = {
   blue: { bg: 'bg-blue-500', track: 'bg-blue-500/20', text: 'text-blue-500' },
