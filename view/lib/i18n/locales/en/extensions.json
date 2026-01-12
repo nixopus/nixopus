@@ -1,6 +1,7 @@
 {
   "extensions": {
     "title": "Extensions",
+    "description": "Discover and install extensions on your server",
     "subtitle": "Skip the boilerplate, Kick off your server setup in seconds",
     "exploreExtensions": "Explore Extensions Hub",
     "exploreExtensionsTitle": "Explore extensions",
