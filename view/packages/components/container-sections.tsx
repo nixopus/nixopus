@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
 import {
   Layers,
   Calendar,
@@ -31,9 +31,17 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { formatBytes } from '@/lib/utils';
 import { useGetImagesQuery } from '@/redux/services/container/imagesApi';
-import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import {
+  formatDate,
+  formatDateFull,
+  formatImageId,
+  bytesToMB
+} from '@/packages/utils/container-helpers';
 import { useContainerImages } from '@/packages/hooks/containers/use-container-images';
+import { useImageCard } from '@/packages/hooks/containers/use-image-card';
+import { useImageStatistics } from '@/packages/hooks/containers/use-image-statistics';
+import { useLogsActions } from '@/packages/hooks/containers/use-logs-actions';
 import {
   ContainerImage,
   ImagesProps,
@@ -68,13 +76,10 @@ import {
 import '@xterm/xterm/css/xterm.css';
 import { useContainerTerminal } from '@/packages/hooks/terminal/use-container-terminal';
 
-// ============================================================================
-// Images Section
-// ============================================================================
-
 export function Images({ containerId, imagePrefix }: ImagesProps) {
   const { data: images = [], isLoading } = useGetImagesQuery({ containerId, imagePrefix });
   const { t } = useTranslation();
+  const { totalSize, totalLayers } = useImageStatistics(images);
 
   if (isLoading) {
     return <ImagesSectionSkeleton />;
@@ -83,9 +88,6 @@ export function Images({ containerId, imagePrefix }: ImagesProps) {
   if (images.length === 0) {
     return <EmptyState icon={Layers} message={t('containers.images.none')} />;
   }
-
-  const totalSize = images.reduce((acc, img) => acc + img.size, 0);
-  const totalLayers = images.length;
 
   return (
     <div className="space-y-8">
@@ -117,18 +119,135 @@ function StatItem({ icon: Icon, value, label }: StatItemProps) {
   );
 }
 
-function ImageCard({ image, isFirst }: ImageCardProps) {
-  const [expanded, setExpanded] = useState(isFirst);
-  const { copied, copyToClipboard } = useContainerImages();
+function ActionButton({
+  onClick,
+  disabled,
+  loading,
+  icon: Icon,
+  label,
+  title
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  icon: React.ElementType;
+  label: string;
+  title?: string;
+}) {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={onClick}
+      disabled={disabled}
+      className="h-9"
+      title={title}
+    >
+      {loading ? (
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+      ) : (
+        <Icon className="h-4 w-4 mr-2" />
+      )}
+      {label}
+    </Button>
+  );
+}
 
-  const createdDate = new Date(image.created * 1000);
-  const primaryTag = image.repo_tags?.[0] || '<none>';
-  const hasLabels = image.labels && Object.keys(image.labels).length > 0;
+function IconButton({
+  onClick,
+  icon: Icon,
+  title,
+  disabled,
+  active
+}: {
+  onClick: () => void;
+  icon: React.ElementType;
+  title?: string;
+  disabled?: boolean;
+  active?: boolean;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={onClick}
+      className="h-8 px-2 text-muted-foreground"
+      title={title}
+      disabled={disabled}
+    >
+      <Icon className={cn('h-4 w-4', active && 'text-green-500')} />
+    </Button>
+  );
+}
+
+function TaggedList({
+  title,
+  items,
+  icon: Icon,
+  copied,
+  copyToClipboard,
+  variant = 'tag'
+}: {
+  title: string;
+  items: string[];
+  icon: React.ElementType;
+  copied: string | null;
+  copyToClipboard: (text: string, key: string) => void;
+  variant?: 'tag' | 'digest';
+}) {
+  const isDigest = variant === 'digest';
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
+      <div className={cn('flex flex-wrap gap-2', isDigest && 'flex-col space-y-1')}>
+        {items.map((item, idx) => (
+          <div
+            key={idx}
+            className={cn(
+              'group/item flex items-center gap-2',
+              isDigest
+                ? 'p-2 rounded-lg bg-zinc-950 text-zinc-400'
+                : 'px-3 py-1.5 rounded-lg bg-muted/30 text-sm'
+            )}
+          >
+            {!isDigest && <Icon className="h-3 w-3 text-muted-foreground" />}
+            {isDigest ? (
+              <code className="text-xs font-mono truncate flex-1">{item}</code>
+            ) : (
+              <span className="font-mono">{item}</span>
+            )}
+            <div
+              className={cn(
+                'opacity-0 group-hover/item:opacity-100 transition-opacity',
+                isDigest && 'flex-shrink-0'
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <CopyButton
+                copied={copied === `${variant}-${idx}`}
+                onCopy={() => copyToClipboard(item, `${variant}-${idx}`)}
+                size="sm"
+                className={isDigest ? 'text-zinc-500 hover:text-zinc-300' : ''}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ImageCard({ image, isFirst }: ImageCardProps) {
+  const { copied, copyToClipboard } = useContainerImages();
+  const { expanded, toggleExpanded, createdDate, primaryTag, hasLabels, imageId } = useImageCard(
+    image,
+    isFirst
+  );
 
   return (
     <div className="group">
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={toggleExpanded}
         className={cn(
           'w-full flex items-center gap-4 p-4 rounded-xl transition-colors text-left',
           'hover:bg-muted/30',
@@ -155,9 +274,7 @@ function ImageCard({ image, isFirst }: ImageCardProps) {
               </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5 font-mono">
-            {image.id.replace('sha256:', '').slice(0, 12)}
-          </p>
+          <p className="text-xs text-muted-foreground mt-0.5 font-mono">{imageId}</p>
         </div>
 
         <div className="hidden sm:flex items-center gap-6 text-sm text-muted-foreground">
@@ -167,7 +284,7 @@ function ImageCard({ image, isFirst }: ImageCardProps) {
           </span>
           <span className="flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
-            {formatDistanceToNow(createdDate, { addSuffix: true })}
+            {formatDate(createdDate.toISOString())}
           </span>
         </div>
 
@@ -185,14 +302,18 @@ function ImageCard({ image, isFirst }: ImageCardProps) {
             <DetailRow
               icon={Tag}
               label="Image ID"
-              value={image.id.replace('sha256:', '')}
-              displayValue={image.id.replace('sha256:', '').slice(0, 24) + '...'}
+              value={formatImageId(image.id, image.id.length)}
+              displayValue={formatImageId(image.id, 24) + '...'}
               mono
               copyable
               onCopy={() => copyToClipboard(image.id, 'id')}
               copied={copied === 'id'}
             />
-            <DetailRow icon={Calendar} label="Created" value={format(createdDate, 'PPpp')} />
+            <DetailRow
+              icon={Calendar}
+              label="Created"
+              value={formatDateFull(createdDate.toISOString())}
+            />
             <DetailRow
               icon={HardDrive}
               label="Size"
@@ -205,61 +326,25 @@ function ImageCard({ image, isFirst }: ImageCardProps) {
           </div>
 
           {image.repo_tags && image.repo_tags.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Tags
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {image.repo_tags.map((tag, idx) => (
-                  <div
-                    key={idx}
-                    className="group/tag flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/30 text-sm"
-                  >
-                    <Tag className="h-3 w-3 text-muted-foreground" />
-                    <span className="font-mono">{tag}</span>
-                    <div
-                      className="opacity-0 group-hover/tag:opacity-100 transition-opacity"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <CopyButton
-                        copied={copied === `tag-${idx}`}
-                        onCopy={() => copyToClipboard(tag, `tag-${idx}`)}
-                        size="sm"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <TaggedList
+              title="Tags"
+              items={image.repo_tags}
+              icon={Tag}
+              copied={copied}
+              copyToClipboard={copyToClipboard}
+              variant="tag"
+            />
           )}
 
           {image.repo_digests && image.repo_digests.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Digests
-              </p>
-              <div className="space-y-1">
-                {image.repo_digests.map((digest, idx) => (
-                  <div
-                    key={idx}
-                    className="group/digest flex items-center gap-2 p-2 rounded-lg bg-zinc-950 text-zinc-400"
-                  >
-                    <code className="text-xs font-mono truncate flex-1">{digest}</code>
-                    <div
-                      className="opacity-0 group-hover/digest:opacity-100 transition-opacity flex-shrink-0"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <CopyButton
-                        copied={copied === `digest-${idx}`}
-                        onCopy={() => copyToClipboard(digest, `digest-${idx}`)}
-                        size="sm"
-                        className="text-zinc-500 hover:text-zinc-300"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <TaggedList
+              title="Digests"
+              items={image.repo_digests}
+              icon={Tag}
+              copied={copied}
+              copyToClipboard={copyToClipboard}
+              variant="digest"
+            />
           )}
 
           {hasLabels && (
@@ -295,37 +380,25 @@ function DetailRow({
   copied
 }: DetailRowProps) {
   return (
-    <div className="flex items-start gap-2">
-      <Icon className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-      <div className="min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <div className="flex items-center gap-2">
-          <span className={cn('text-sm truncate', mono && 'font-mono')} title={value}>
-            {displayValue || value}
-          </span>
-          {copyable && onCopy && (
-            <div onClick={(e) => e.stopPropagation()}>
-              <CopyButton copied={!!copied} onCopy={onCopy} size="sm" />
-            </div>
-          )}
-        </div>
-        {sublabel && <p className="text-xs text-muted-foreground/60">{sublabel}</p>}
-      </div>
-    </div>
+    <InfoLine
+      icon={Icon}
+      label={label}
+      value={value}
+      displayValue={displayValue}
+      sublabel={sublabel}
+      mono={mono}
+      copyable={copyable}
+      onCopy={onCopy}
+      copied={copied}
+      variant="compact"
+    />
   );
 }
 
-// ============================================================================
-// Overview Tab
-// ============================================================================
-
 export function OverviewTab({ container }: OverviewTabProps) {
   const { copied, showRaw, setShowRaw, copyToClipboard } = useContainerOverview();
-
-  const memory = container.host_config.memory;
-  const memoryMB = memory > 0 ? Math.round(memory / (1024 * 1024)) : 0;
-  const memorySwap = container.host_config.memory_swap;
-  const swapMB = memorySwap > 0 ? Math.round(memorySwap / (1024 * 1024)) : 0;
+  const memoryMB = bytesToMB(container.host_config.memory);
+  const swapMB = bytesToMB(container.host_config.memory_swap);
 
   return (
     <div className="space-y-10">
@@ -408,7 +481,7 @@ export function OverviewTab({ container }: OverviewTabProps) {
             icon={HardDrive}
             label="Container ID"
             value={container.id}
-            displayValue={container.id.slice(0, 12) + '...'}
+            displayValue={formatImageId(container.id) + '...'}
             mono
             copyable
             onCopy={() => copyToClipboard(container.id, 'id')}
@@ -423,8 +496,8 @@ export function OverviewTab({ container }: OverviewTabProps) {
           <InfoLine
             icon={Clock}
             label="Created"
-            value={formatDistanceToNow(new Date(container.created), { addSuffix: true })}
-            sublabel={format(new Date(container.created), 'PPpp')}
+            value={formatDate(container.created)}
+            sublabel={formatDateFull(container.created)}
           />
         </div>
       </section>
@@ -555,28 +628,43 @@ function InfoLine({
   mono,
   copyable,
   onCopy,
-  copied
-}: InfoLineProps) {
+  copied,
+  variant = 'default'
+}: InfoLineProps & { variant?: 'default' | 'compact' }) {
+  const isCompact = variant === 'compact';
   return (
-    <div className="flex items-start gap-3 py-2">
-      <Icon className="h-4 w-4 mt-1 text-muted-foreground flex-shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">{label}</p>
+    <div className={cn('flex items-start', isCompact ? 'gap-2' : 'gap-3 py-2')}>
+      <Icon
+        className={cn('h-4 w-4 text-muted-foreground flex-shrink-0', isCompact ? 'mt-0.5' : 'mt-1')}
+      />
+      <div className={cn('min-w-0', !isCompact && 'flex-1')}>
+        <p
+          className={cn(
+            'text-xs text-muted-foreground',
+            !isCompact && 'uppercase tracking-wide mb-0.5'
+          )}
+        >
+          {label}
+        </p>
         <div className="flex items-center gap-2">
           <span className={cn('text-sm truncate', mono && 'font-mono')} title={value}>
             {displayValue || value}
           </span>
-          {copyable && onCopy && <CopyButton copied={!!copied} onCopy={onCopy} size="sm" />}
+          {copyable && onCopy && (
+            <div onClick={(e) => e.stopPropagation()}>
+              <CopyButton copied={!!copied} onCopy={onCopy} size="sm" />
+            </div>
+          )}
         </div>
-        {sublabel && <p className="text-xs text-muted-foreground/60 mt-0.5">{sublabel}</p>}
+        {sublabel && (
+          <p className={cn('text-xs text-muted-foreground/60', !isCompact && 'mt-0.5')}>
+            {sublabel}
+          </p>
+        )}
       </div>
     </div>
   );
 }
-
-// ============================================================================
-// Logs Tab
-// ============================================================================
 
 export function LogsTab({ container, logs, onLoadMore, onRefresh }: LogsTabProps) {
   const { t } = useTranslation();
@@ -603,21 +691,12 @@ export function LogsTab({ container, logs, onLoadMore, onRefresh }: LogsTabProps
     hasActiveFilters
   } = useContainerLogs(logs, container.name);
 
-  const handleLoadMore = async () => {
-    setIsLoadingMore(true);
-    await onLoadMore();
-    setIsLoadingMore(false);
-  };
-
-  const handleRefresh = async () => {
-    if (!onRefresh) return;
-    setIsRefreshing(true);
-    try {
-      await onRefresh();
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
+  const { handleLoadMore, handleRefresh } = useLogsActions(
+    onLoadMore,
+    onRefresh,
+    setIsLoadingMore,
+    setIsRefreshing
+  );
 
   return (
     <div className="space-y-4 overflow-x-hidden">
@@ -645,36 +724,22 @@ export function LogsTab({ container, logs, onLoadMore, onRefresh }: LogsTabProps
               </Button>
             )}
             {onRefresh && (
-              <Button
-                variant="outline"
-                size="sm"
+              <ActionButton
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="h-9"
+                loading={isRefreshing}
+                icon={RefreshCw}
+                label="Refresh"
                 title="Refresh logs"
-              >
-                {isRefreshing ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                )}
-                Refresh
-              </Button>
+              />
             )}
-            <Button
-              variant="outline"
-              size="sm"
+            <ActionButton
               onClick={handleLoadMore}
               disabled={isLoadingMore}
-              className="h-9"
-            >
-              {isLoadingMore ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              Load more
-            </Button>
+              loading={isLoadingMore}
+              icon={RefreshCw}
+              label="Load more"
+            />
           </div>
         </div>
 
@@ -696,49 +761,30 @@ export function LogsTab({ container, logs, onLoadMore, onRefresh }: LogsTabProps
             ))}
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="sm"
+            <IconButton
               onClick={handleCopyLogs}
-              className="h-8 px-2 text-muted-foreground"
+              icon={isCopied ? Check : Copy}
               title={t('containers.logs.copy')}
               disabled={parsedLogs.length === 0}
-            >
-              {isCopied ? (
-                <Check className="h-4 w-4 text-green-500" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
+              active={isCopied}
+            />
+            <IconButton
               onClick={handleDownloadLogs}
-              className="h-8 px-2 text-muted-foreground"
+              icon={Download}
               title={t('containers.logs.download')}
               disabled={parsedLogs.length === 0}
-            >
-              <Download className="h-4 w-4" />
-            </Button>
+            />
             <div className="w-px h-4 bg-border mx-1" />
-            <Button
-              variant="ghost"
-              size="sm"
+            <IconButton
               onClick={handleExpandCollapseToggle}
-              className="h-8 px-2 text-muted-foreground"
+              icon={ChevronsUpDown}
               title={allExpanded ? 'Collapse all' : 'Expand all'}
-            >
-              <ChevronsUpDown className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
+            />
+            <IconButton
               onClick={() => setIsDense(!isDense)}
-              className="h-8 px-2 text-muted-foreground"
+              icon={isDense ? Rows3 : Rows4}
               title={isDense ? 'Normal view' : 'Dense view'}
-            >
-              {isDense ? <Rows3 className="h-4 w-4" /> : <Rows4 className="h-4 w-4" />}
-            </Button>
+            />
           </div>
         </div>
       </div>
@@ -835,10 +881,6 @@ function LogEntry({ log, isExpanded, onToggle, isDense }: LogEntryProps) {
     </div>
   );
 }
-
-// ============================================================================
-// Terminal
-// ============================================================================
 
 export const Terminal: React.FC<TerminalProps> = ({ containerId }) => {
   const terminalRef = useRef<HTMLDivElement | null>(null);

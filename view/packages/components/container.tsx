@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Clock,
@@ -27,7 +27,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DataTable, TableColumn } from '@/components/ui/data-table';
 import {
   Dialog,
   DialogContent,
@@ -40,28 +39,31 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
+import type { Resource, Action as RBACAction } from '@/packages/utils/rbac';
 import SubPageHeader from '@/components/ui/sub-page-header';
 import { cn } from '@/lib/utils';
 import { useContainerActions } from '@/packages/hooks/containers/use-container-actions';
-import { translationKey } from '@/packages/hooks/shared/use-translation';
+import { useContainerNavigation } from '@/packages/hooks/containers/use-container-navigation';
+import { useContainerActionHandlers } from '@/packages/hooks/containers/use-container-action-handlers';
+import { useResourceLimitsDialog } from '@/packages/hooks/containers/use-resource-limits-dialog';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { formatDistanceToNow } from 'date-fns';
 import { Container } from '@/redux/services/container/containerApi';
-import { ContainerData } from '@/redux/types/monitor';
 import {
   getStatusIconClasses,
   getPortColors,
   getStatusColors
 } from '@/packages/utils/container-styles';
-import { useState } from 'react';
-import { UseFormReturn, ControllerRenderProps } from 'react-hook-form';
+import {
+  isRunning,
+  formatDate,
+  truncateId,
+  getPortsDisplay
+} from '@/packages/utils/container-helpers';
 import {
   useUpdateContainerResources,
   presetConfig,
   fieldConfigs,
   formatPresetValue,
-  PresetType,
-  FieldConfig,
   ResourceLimitsFormValues
 } from '@/packages/hooks/containers/use-update-container-resources';
 import {
@@ -91,19 +93,189 @@ import {
 
 export { Action };
 
+function GuardedButton({
+  resource,
+  action,
+  children,
+  loadingSize = 'h-8 w-8'
+}: {
+  resource: Resource;
+  action: RBACAction;
+  children: React.ReactNode;
+  loadingSize?: string;
+}) {
+  return (
+    <ResourceGuard
+      resource={resource}
+      action={action}
+      loadingFallback={<Skeleton className={cn('rounded-lg', loadingSize)} />}
+    >
+      {children}
+    </ResourceGuard>
+  );
+}
+
+function IconButton({
+  icon: Icon,
+  onClick,
+  disabled,
+  tooltip,
+  variant,
+  className
+}: ActionButtonProps & { className?: string }) {
+  const variants = {
+    success: 'hover:bg-emerald-500/10 hover:text-emerald-500',
+    warning: 'hover:bg-amber-500/10 hover:text-amber-500',
+    danger: 'hover:bg-red-500/10 hover:text-red-500'
+  };
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        'h-8 w-8 text-muted-foreground transition-colors',
+        variant && variants[variant],
+        disabled && 'opacity-50 cursor-not-allowed',
+        className
+      )}
+      title={tooltip}
+    >
+      <Icon className="h-4 w-4" />
+    </Button>
+  );
+}
+
+function ContainerMetadata({
+  container,
+  showIcon = true,
+  iconSize = 'md',
+  nameClassName,
+  idClassName
+}: {
+  container: Container;
+  showIcon?: boolean;
+  iconSize?: 'sm' | 'md';
+  nameClassName?: string;
+  idClassName?: string;
+}) {
+  const running = isRunning(container.status);
+  const iconClasses = getStatusIconClasses(running);
+  const iconSizes = { sm: 'h-4 w-4', md: 'h-5 w-5' };
+  const containerSizes = { sm: 'p-2 rounded-lg', md: 'p-2.5 rounded-xl' };
+
+  return (
+    <div className="flex items-center gap-3 min-w-0 flex-1">
+      {showIcon && (
+        <div className={cn(containerSizes[iconSize], 'flex-shrink-0', iconClasses.container)}>
+          <Box className={cn(iconSizes[iconSize], iconClasses.icon)} />
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <h3 className={cn('font-semibold truncate', nameClassName || 'font-medium')}>
+            {container.name}
+          </h3>
+          {running && showIcon && <StatusIndicator isRunning={true} size={iconSize} />}
+        </div>
+        <p className={cn('text-xs text-muted-foreground truncate mt-0.5 font-mono', idClassName)}>
+          {truncateId(container.id)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PortsList({
+  ports,
+  maxVisible = 2,
+  variant = 'pill',
+  showType = false,
+  emptyText = 'No ports'
+}: {
+  ports: any[];
+  maxVisible?: number;
+  variant?: 'pill' | 'inline';
+  showType?: boolean;
+  emptyText?: string;
+}) {
+  const display = getPortsDisplay(ports, maxVisible, variant);
+  if (!display) return <span className="text-xs text-muted-foreground/50">{emptyText}</span>;
+
+  const isVertical = variant === 'inline';
+  return (
+    <div
+      className={cn('flex', isVertical ? 'flex-col gap-1' : 'items-center gap-1 overflow-hidden')}
+    >
+      {display.visible.map((port, idx) => (
+        <PortDisplay key={idx} port={port} variant={variant} showType={showType} />
+      ))}
+      {display.remaining > 0 && (
+        <span className="text-xs text-muted-foreground">
+          +{display.remaining}
+          {isVertical ? ' more' : ''}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function ActionButtonGroup({
+  isRunning: running,
+  isProtected,
+  onStart,
+  onStop,
+  onRemove
+}: {
+  isRunning: boolean;
+  isProtected: boolean;
+  onStart: (e: React.MouseEvent) => void;
+  onStop: (e: React.MouseEvent) => void;
+  onRemove: (e: React.MouseEvent) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <GuardedButton resource="container" action="update">
+        {running ? (
+          <IconButton
+            icon={Square}
+            onClick={onStop}
+            disabled={isProtected}
+            tooltip="Stop container"
+            variant="warning"
+          />
+        ) : (
+          <IconButton
+            icon={Play}
+            onClick={onStart}
+            disabled={isProtected}
+            tooltip="Start container"
+            variant="success"
+          />
+        )}
+      </GuardedButton>
+      <GuardedButton resource="container" action="delete">
+        <IconButton
+          icon={Trash2}
+          onClick={onRemove}
+          disabled={isProtected}
+          tooltip="Remove container"
+          variant="danger"
+        />
+      </GuardedButton>
+    </div>
+  );
+}
+
 export function StatusIndicator({
   isRunning,
   size = 'md',
   showPulse = true
 }: StatusIndicatorProps) {
-  const sizes = {
-    sm: 'h-1.5 w-1.5',
-    md: 'h-2 w-2',
-    lg: 'h-3 w-3'
-  };
-
-  const sizeClass = sizes[size];
+  const sizes = { sm: 'h-1.5 w-1.5', md: 'h-2 w-2', lg: 'h-3 w-3' };
   const colors = getStatusColors(isRunning ? 'running' : 'stopped');
+  const sizeClass = sizes[size];
 
   return (
     <span className={cn('relative flex', sizeClass, 'flex-shrink-0')}>
@@ -127,11 +299,8 @@ export function CopyButton({
   className,
   showText = false
 }: CopyButtonProps) {
-  const iconSizes = {
-    sm: 'h-3 w-3',
-    md: 'h-4 w-4'
-  };
-
+  const iconSizes = { sm: 'h-3 w-3', md: 'h-4 w-4' };
+  const Icon = copied ? Check : Copy;
   return (
     <button
       onClick={onCopy}
@@ -140,17 +309,8 @@ export function CopyButton({
         className
       )}
     >
-      {copied ? (
-        <>
-          <Check className={cn(iconSizes[size], 'text-emerald-500')} />
-          {showText && <span className="ml-1 text-xs">Copied</span>}
-        </>
-      ) : (
-        <>
-          <Copy className={iconSizes[size]} />
-          {showText && <span className="ml-1 text-xs">Copy</span>}
-        </>
-      )}
+      <Icon className={cn(iconSizes[size], copied && 'text-emerald-500')} />
+      {showText && <span className="ml-1 text-xs">{copied ? 'Copied' : 'Copy'}</span>}
     </button>
   );
 }
@@ -158,27 +318,15 @@ export function CopyButton({
 export function PortDisplay({ port, variant = 'pill', showType = true }: PortDisplayProps) {
   const hasPublic = port.public_port > 0;
   const colors = getPortColors(hasPublic);
-
-  if (variant === 'pill') {
-    return (
-      <span
-        className={cn(
-          'inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono',
-          colors.pill
-        )}
-      >
-        {hasPublic ? (
-          <>
-            <span>{port.public_port}</span>
-            <ArrowRight className="h-2.5 w-2.5" />
-            <span>{port.private_port}</span>
-          </>
-        ) : (
-          <span>{port.private_port}</span>
-        )}
-      </span>
-    );
-  }
+  const portContent = hasPublic ? (
+    <>
+      <span>{port.public_port}</span>
+      <ArrowRight className={variant === 'flow' ? 'h-4 w-4' : 'h-2.5 w-2.5'} />
+      <span>{port.private_port}</span>
+    </>
+  ) : (
+    <span>{port.private_port}</span>
+  );
 
   if (variant === 'flow') {
     return (
@@ -218,19 +366,13 @@ export function PortDisplay({ port, variant = 'pill', showType = true }: PortDis
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 text-xs font-mono',
-        hasPublic ? colors.text : 'text-muted-foreground'
+        variant === 'pill'
+          ? 'inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono'
+          : 'inline-flex items-center gap-1 text-xs font-mono',
+        variant === 'pill' ? colors.pill : hasPublic ? colors.text : 'text-muted-foreground'
       )}
     >
-      {hasPublic ? (
-        <>
-          {port.public_port}
-          <ArrowRight className="h-2.5 w-2.5" />
-          {port.private_port}
-        </>
-      ) : (
-        port.private_port
-      )}
+      {portContent}
     </span>
   );
 }
@@ -251,8 +393,7 @@ export function EmptyState({ icon: Icon, message, className }: EmptyStateProps) 
 
 export function StatusBadge({ status, showDot = false, className }: StatusBadgeProps) {
   const colors = getStatusColors(status);
-  const isRunning = (status || '').toLowerCase() === 'running';
-
+  const running = isRunning(status);
   return (
     <span
       className={cn(
@@ -261,86 +402,29 @@ export function StatusBadge({ status, showDot = false, className }: StatusBadgeP
         className
       )}
     >
-      {showDot && isRunning && <StatusIndicator isRunning={true} size="sm" />}
+      {showDot && running && <StatusIndicator isRunning={true} size="sm" />}
       {status}
     </span>
   );
 }
 
 export const ContainerActions = ({ container, onAction }: ContainerActionsProps) => {
-  const { containerId, isProtected, isRunning } = useContainerActions(container);
-
-  function handleClick(e: React.MouseEvent, action: Action) {
-    e.stopPropagation();
-    onAction(containerId, action);
-  }
+  const { containerId, isProtected, isRunning: running } = useContainerActions(container);
+  const { handleStart, handleStop, handleRemove } = useContainerActionHandlers(
+    containerId,
+    onAction
+  );
 
   return (
-    <div className="flex items-center gap-1">
-      <ResourceGuard
-        resource="container"
-        action="update"
-        loadingFallback={<Skeleton className="h-8 w-8 rounded-lg" />}
-      >
-        {isRunning ? (
-          <ActionButton
-            icon={Square}
-            onClick={(e) => handleClick(e, Action.STOP)}
-            disabled={isProtected}
-            tooltip="Stop container"
-            variant="warning"
-          />
-        ) : (
-          <ActionButton
-            icon={Play}
-            onClick={(e) => handleClick(e, Action.START)}
-            disabled={isProtected}
-            tooltip="Start container"
-            variant="success"
-          />
-        )}
-      </ResourceGuard>
-      <ResourceGuard
-        resource="container"
-        action="delete"
-        loadingFallback={<Skeleton className="h-8 w-8 rounded-lg" />}
-      >
-        <ActionButton
-          icon={Trash2}
-          onClick={(e) => handleClick(e, Action.REMOVE)}
-          disabled={isProtected}
-          tooltip="Remove container"
-          variant="danger"
-        />
-      </ResourceGuard>
-    </div>
+    <ActionButtonGroup
+      isRunning={running}
+      isProtected={isProtected}
+      onStart={handleStart}
+      onStop={handleStop}
+      onRemove={handleRemove}
+    />
   );
 };
-
-function ActionButton({ icon: Icon, onClick, disabled, tooltip, variant }: ActionButtonProps) {
-  const variantStyles = {
-    success: 'hover:bg-emerald-500/10 hover:text-emerald-500',
-    warning: 'hover:bg-amber-500/10 hover:text-amber-500',
-    danger: 'hover:bg-red-500/10 hover:text-red-500'
-  };
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      disabled={disabled}
-      onClick={onClick}
-      className={cn(
-        'h-8 w-8 text-muted-foreground transition-colors',
-        variant && variantStyles[variant],
-        disabled && 'opacity-50 cursor-not-allowed'
-      )}
-      title={tooltip}
-    >
-      <Icon className="h-4 w-4" />
-    </Button>
-  );
-}
 
 export function ActionHeader({
   handleRefresh,
@@ -350,15 +434,11 @@ export function ActionHeader({
   setShowPruneImagesConfirm,
   setShowPruneBuildCacheConfirm
 }: ActionHeaderProps) {
+  const loading = isRefreshing || isFetching;
   return (
     <div className="flex items-center gap-2">
-      <Button
-        onClick={handleRefresh}
-        variant="outline"
-        size="sm"
-        disabled={isRefreshing || isFetching}
-      >
-        {isRefreshing || isFetching ? (
+      <Button onClick={handleRefresh} variant="outline" size="sm" disabled={loading}>
+        {loading ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
           <RefreshCw className="mr-2 h-4 w-4" />
@@ -383,35 +463,16 @@ export function ActionHeader({
 }
 
 export const ContainerCard = ({ container, onClick, onAction }: ContainerCardProps) => {
-  const isRunning = container.status === 'running';
-  const hasPorts = container.ports && container.ports.length > 0;
-  const iconClasses = getStatusIconClasses(isRunning);
-
   return (
     <div
       onClick={onClick}
       className={cn(
         'group relative rounded-xl p-5 cursor-pointer transition-all duration-200',
-        'hover:bg-muted/50',
-        'border border-transparent hover:border-border/50'
+        'hover:bg-muted/50 border border-transparent hover:border-border/50'
       )}
     >
       <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className={cn('p-2.5 rounded-xl flex-shrink-0', iconClasses.container)}>
-            <Box className={cn('h-5 w-5', iconClasses.icon)} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold truncate">{container.name}</h3>
-              {isRunning && <StatusIndicator isRunning={true} size="md" />}
-            </div>
-            <p className="text-xs text-muted-foreground truncate mt-0.5 font-mono">
-              {container.id.slice(0, 12)}
-            </p>
-          </div>
-        </div>
-
+        <ContainerMetadata container={container} nameClassName="font-semibold" />
         <div
           className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
           onClick={(e) => e.stopPropagation()}
@@ -427,29 +488,18 @@ export const ContainerCard = ({ container, onClick, onAction }: ContainerCardPro
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          {hasPorts ? (
-            <div className="flex items-center gap-1.5 overflow-hidden">
-              <Network className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-              <div className="flex items-center gap-1 overflow-hidden">
-                {container.ports.slice(0, 2).map((port, idx) => (
-                  <PortDisplay key={idx} port={port} variant="pill" showType={false} />
-                ))}
-                {container.ports.length > 2 && (
-                  <span className="text-xs text-muted-foreground">
-                    +{container.ports.length - 2}
-                  </span>
-                )}
-              </div>
-            </div>
-          ) : (
-            <span className="text-xs text-muted-foreground/50">No ports</span>
-          )}
+        <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
+          <Network className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+          <PortsList
+            ports={container.ports || []}
+            maxVisible={2}
+            variant="pill"
+            emptyText="No ports"
+          />
         </div>
-
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
           <Clock className="h-3 w-3" />
-          <span>{formatDistanceToNow(new Date(container.created), { addSuffix: true })}</span>
+          <span>{formatDate(container.created)}</span>
         </div>
       </div>
     </div>
@@ -464,11 +514,7 @@ const ContainersTable = ({
   onAction
 }: ContainersTableProps) => {
   const { t } = useTranslation();
-  const router = useRouter();
-
-  const handleRowClick = (container: Container) => {
-    router.push(`/containers/${container.id}`);
-  };
+  const { handleRowClick } = useContainerNavigation();
 
   if (containersData.length === 0) {
     return <EmptyState icon={Box} message={t('dashboard.containers.table.noContainers')} />;
@@ -538,56 +584,28 @@ function SortableHeader({ label, field, currentSort, currentOrder, onSort }: Sor
 }
 
 function ContainerRow({ container, onClick, onAction }: ContainerRowProps) {
-  const isRunning = container.status === 'running';
-  const hasPorts = container.ports && container.ports.length > 0;
-  const iconClasses = getStatusIconClasses(isRunning);
-
+  const running = isRunning(container.status);
   return (
     <div
       onClick={onClick}
       className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-4 px-4 py-3 items-center cursor-pointer hover:bg-muted/30 transition-colors group"
     >
-      <div className="flex items-center gap-3 min-w-0">
-        <div className={cn('p-2 rounded-lg flex-shrink-0', iconClasses.container)}>
-          <Box className={iconClasses.icon} />
-        </div>
-        <div className="min-w-0">
-          <p className="font-medium truncate">{container.name}</p>
-          <p className="text-xs text-muted-foreground font-mono">{container.id.slice(0, 12)}</p>
-        </div>
-      </div>
-
+      <ContainerMetadata container={container} iconSize="sm" />
       <div className="min-w-0">
         <p className="text-sm truncate text-muted-foreground" title={container.image}>
           {container.image}
         </p>
         <p className="text-xs text-muted-foreground/60 flex items-center gap-1 mt-0.5">
           <Clock className="h-3 w-3" />
-          {formatDistanceToNow(new Date(container.created), { addSuffix: true })}
+          {formatDate(container.created)}
         </p>
       </div>
-
       <div className="w-24">
-        <StatusBadge status={container.state || container.status} showDot={isRunning} />
+        <StatusBadge status={container.state || container.status} showDot={running} />
       </div>
-
       <div className="w-32">
-        {hasPorts ? (
-          <div className="flex flex-col gap-1">
-            {container.ports.slice(0, 2).map((port, idx) => (
-              <PortDisplay key={idx} port={port} variant="inline" showType={false} />
-            ))}
-            {container.ports.length > 2 && (
-              <span className="text-xs text-muted-foreground">
-                +{container.ports.length - 2} more
-              </span>
-            )}
-          </div>
-        ) : (
-          <span className="text-xs text-muted-foreground/50">—</span>
-        )}
+        <PortsList ports={container.ports || []} maxVisible={2} variant="inline" emptyText="—" />
       </div>
-
       <div
         className="w-24 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={(e) => e.stopPropagation()}
@@ -625,6 +643,8 @@ export function ContainerDetailsHeader({
   t
 }: ContainerDetailsHeaderProps) {
   const statusColors = getStatusColors(container.status);
+  const running = isRunning(container.status);
+  const disabled = isLoading || isProtected;
 
   const icon = (
     <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center', statusColors.bg)}>
@@ -635,7 +655,7 @@ export function ContainerDetailsHeader({
   const metadata = (
     <div className="flex items-center gap-2">
       <code className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
-        {container.id.slice(0, 12)}
+        {truncateId(container.id)}
       </code>
       <Badge variant="outline" className={cn('text-xs', statusColors.border)}>
         {container.status}
@@ -645,29 +665,14 @@ export function ContainerDetailsHeader({
 
   const actions = (
     <>
-      <ResourceGuard
-        resource="container"
-        action="update"
-        loadingFallback={<Skeleton className="h-9 w-24" />}
-      >
-        {container.status !== 'running' ? (
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => handleContainerAction('start')}
-            disabled={isLoading || isProtected}
-            className="bg-emerald-600 hover:bg-emerald-700"
-          >
-            <Play className="mr-2 h-4 w-4" />
-            {t('containers.start')}
-          </Button>
-        ) : (
+      <GuardedButton resource="container" action="update" loadingSize="h-9 w-24">
+        {running ? (
           <>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleContainerAction('stop')}
-              disabled={isLoading || isProtected}
+              disabled={disabled}
             >
               <StopCircle className="mr-2 h-4 w-4" />
               {t('containers.stop')}
@@ -676,30 +681,37 @@ export function ContainerDetailsHeader({
               variant="outline"
               size="sm"
               onClick={() => handleContainerAction('restart')}
-              disabled={isLoading || isProtected}
+              disabled={disabled}
             >
               <RotateCw className="mr-2 h-4 w-4" />
               {t('containers.restart')}
             </Button>
           </>
+        ) : (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => handleContainerAction('start')}
+            disabled={disabled}
+            className="bg-emerald-600 hover:bg-emerald-700"
+          >
+            <Play className="mr-2 h-4 w-4" />
+            {t('containers.start')}
+          </Button>
         )}
-      </ResourceGuard>
-      <ResourceGuard
-        resource="container"
-        action="delete"
-        loadingFallback={<Skeleton className="h-9 w-20" />}
-      >
+      </GuardedButton>
+      <GuardedButton resource="container" action="delete" loadingSize="h-9 w-20">
         <Button
           variant="outline"
           size="sm"
           onClick={() => handleContainerAction('remove')}
-          disabled={isLoading || isProtected}
+          disabled={disabled}
           className="text-red-500 hover:text-red-600 hover:bg-red-500/10 border-red-500/20"
         >
           <Trash2 className="mr-2 h-4 w-4" />
           {t('containers.remove')}
         </Button>
-      </ResourceGuard>
+      </GuardedButton>
     </>
   );
 
@@ -799,7 +811,6 @@ function ResourceField({ config, field }: ResourceFieldProps) {
 
 function FormActions({ isLoading, isDirty, onReset, onCancel }: FormActionsProps) {
   const { t } = useTranslation();
-
   return (
     <div className="flex justify-between pt-4">
       {isDirty ? (
@@ -840,7 +851,7 @@ function ResourceFields({ form }: ResourceFieldsProps) {
 
 export function ResourceLimitsForm({ container }: ResourceLimitsFormProps) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const closeDialogRef = useRef<() => void>(() => {});
 
   const { form, onSubmit, isLoading, resetToCurrentValues, applyPreset } =
     useUpdateContainerResources({
@@ -848,13 +859,15 @@ export function ResourceLimitsForm({ container }: ResourceLimitsFormProps) {
       currentMemory: container.host_config.memory,
       currentMemorySwap: container.host_config.memory_swap,
       currentCpuShares: container.host_config.cpu_shares,
-      onSuccess: () => setOpen(false)
+      onSuccess: () => closeDialogRef.current()
     });
 
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
-    if (newOpen) resetToCurrentValues();
-  };
+  const { open, handleOpenChange, handleCancel, closeDialog } =
+    useResourceLimitsDialog(resetToCurrentValues);
+
+  useEffect(() => {
+    closeDialogRef.current = closeDialog;
+  }, [closeDialog]);
 
   return (
     <ResourceGuard
@@ -887,7 +900,7 @@ export function ResourceLimitsForm({ container }: ResourceLimitsFormProps) {
                 isLoading={isLoading}
                 isDirty={form.formState.isDirty}
                 onReset={resetToCurrentValues}
-                onCancel={() => setOpen(false)}
+                onCancel={handleCancel}
               />
             </form>
           </Form>
