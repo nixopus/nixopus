@@ -43,13 +43,23 @@ export function useQuickDeployForm({
           }),
         domain: z
           .string()
-          .min(3, { message: t('selfHost.deployForm.validation.domain.minLength') })
-          .regex(
-            /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/,
+          .optional()
+          .refine(
+            (val) => {
+              // If domain is provided, validate it; if empty, allow it
+              if (!val || val.trim() === '') return true;
+              return (
+                val.length >= 3 &&
+                /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/.test(
+                  val
+                )
+              );
+            },
             {
               message: t('selfHost.deployForm.validation.domain.invalidFormat')
             }
-          ),
+          )
+          .default(''),
         branch: z
           .string()
           .min(1, { message: t('selfHost.deployForm.validation.branch.minLength') }),
@@ -122,13 +132,19 @@ export function useQuickDeployForm({
 
     const values = form.getValues();
     try {
-      const result = await createProject({
+      const projectData: any = {
         name: values.application_name,
-        domain: values.domain,
         repository: values.repository,
         branch: values.branch,
         build_pack: values.build_pack as BuildPack
-      }).unwrap();
+      };
+
+      // Only include domain if it's provided and not empty
+      if (values.domain && values.domain.trim() !== '') {
+        projectData.domain = values.domain.trim();
+      }
+
+      const result = await createProject(projectData).unwrap();
 
       toast.success(t('selfHost.quickDeploy.toast.draftSaved'));
       router.push('/self-host/application/' + result.id);
@@ -153,7 +169,7 @@ export function useQuickDeployForm({
         label: t('selfHost.quickDeploy.fields.domain.label'),
         name: 'domain',
         placeholder: t('selfHost.quickDeploy.fields.domain.placeholder'),
-        required: true
+        required: false
       },
       {
         key: 'branch',

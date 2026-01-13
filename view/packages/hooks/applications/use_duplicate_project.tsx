@@ -83,18 +83,24 @@ export function useDuplicateProject({ application }: UseDuplicateProjectProps) {
   }, [open, application.repository, fetchRepositoryBranches]);
 
   const handleDuplicate = async () => {
-    if (!domain || !environment || !branch) {
+    if (!environment || !branch) {
       toast.error(t('selfHost.applicationDetails.header.duplicate.validation'));
       return;
     }
 
     try {
-      const result = await duplicateProject({
+      const duplicateData: any = {
         source_project_id: application.id,
-        domain,
         environment,
         branch
-      }).unwrap();
+      };
+
+      // Only include domain if it's provided and not empty
+      if (domain && domain.trim() !== '') {
+        duplicateData.domain = domain.trim();
+      }
+
+      const result = await duplicateProject(duplicateData).unwrap();
 
       toast.success(t('selfHost.applicationDetails.header.duplicate.success'));
       setOpen(false);
@@ -118,7 +124,7 @@ export function useDuplicateProject({ application }: UseDuplicateProjectProps) {
     }
   };
 
-  const isFormValid = domain && environment && branch;
+  const isFormValid = environment && branch; // Domain is now optional
 
   const formFields = useMemo(
     () => [
