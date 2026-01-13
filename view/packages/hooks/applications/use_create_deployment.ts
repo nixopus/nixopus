@@ -64,13 +64,23 @@ function useCreateDeployment({
       .regex(/^[0-9]+$/, { message: t('selfHost.deployForm.validation.port.invalidFormat') }),
     domain: z
       .string()
-      .min(3, { message: t('selfHost.deployForm.validation.domain.minLength') })
-      .regex(
-        /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/,
+      .optional()
+      .refine(
+        (val) => {
+          // If domain is provided, validate it; if empty, allow it
+          if (!val || val.trim() === '') return true;
+          return (
+            val.length >= 3 &&
+            /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/.test(
+              val
+            )
+          );
+        },
         {
           message: t('selfHost.deployForm.validation.domain.invalidFormat')
         }
-      ),
+      )
+      .default(''),
     repository: z
       .string()
       .min(3, { message: t('selfHost.deployForm.validation.repository.minLength') })
@@ -157,12 +167,11 @@ function useCreateDeployment({
 
   async function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
     try {
-      const data = await createDeployment({
+      const deploymentData: any = {
         name: values.application_name,
         environment: values.environment,
         branch: values.branch,
         port: parseInt(values.port, 10),
-        domain: values.domain,
         repository: values.repository,
         build_pack: values.build_pack,
         environment_variables: values.env_variables,
@@ -171,7 +180,14 @@ function useCreateDeployment({
         post_run_command: values.post_run_commands as string,
         dockerfile_path: values.DockerfilePath,
         base_path: values.base_path
-      }).unwrap();
+      };
+
+      // Only include domain if it's provided and not empty
+      if (values.domain && values.domain.trim() !== '') {
+        deploymentData.domain = values.domain.trim();
+      }
+
+      const data = await createDeployment(deploymentData).unwrap();
 
       if (data?.deployments?.[0]?.id) {
         router.push('/self-host/application/' + data.id + '/deployments/' + data.deployments[0].id);

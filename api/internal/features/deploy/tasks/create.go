@@ -76,21 +76,24 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 	taskCtx.AddLog("Container updated successfully for application " + TaskPayload.Application.Name + " with container id " + containerResult.ContainerID)
 	taskCtx.LogAndUpdateStatus("Deployment completed successfully", shared_types.Deployed)
 
-	client := GetCaddyClient()
-	port, err := strconv.Atoi(containerResult.AvailablePort)
-	if err != nil {
-		taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
-		return err
-	}
-	upstreamHost := config.AppConfig.SSH.Host
+	// Only add domain if it's provided
+	if TaskPayload.Application.Domain != "" {
+		client := GetCaddyClient()
+		port, err := strconv.Atoi(containerResult.AvailablePort)
+		if err != nil {
+			taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
+			return err
+		}
+		upstreamHost := config.AppConfig.SSH.Host
 
-	err = client.AddDomainWithAutoTLS(TaskPayload.Application.Domain, upstreamHost, port, caddygo.DomainOptions{})
-	if err != nil {
-		fmt.Println("Failed to add domain: ", err)
-		taskCtx.LogAndUpdateStatus("Failed to add domain: "+err.Error(), shared_types.Failed)
-		return err
+		err = client.AddDomainWithAutoTLS(TaskPayload.Application.Domain, upstreamHost, port, caddygo.DomainOptions{})
+		if err != nil {
+			fmt.Println("Failed to add domain: ", err)
+			taskCtx.LogAndUpdateStatus("Failed to add domain: "+err.Error(), shared_types.Failed)
+			return err
+		}
+		client.Reload()
 	}
-	client.Reload()
 	return nil
 }
 
