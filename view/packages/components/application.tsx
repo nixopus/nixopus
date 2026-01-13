@@ -1,16 +1,17 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { ExternalLink } from 'lucide-react';
 import { Application } from '@/redux/types/applications';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useApplicationItem } from '@/packages/hooks/applications/use_application_item';
+import { DomainDropdown } from '@/packages/components/multi-domains';
 
 function AppItem(application: Application) {
   const {
     name,
     domain,
+    domains,
     currentStatus,
     statusConfig,
     environmentStyles,
@@ -48,24 +49,13 @@ function AppItem(application: Application) {
               <h3 className="font-semibold text-base tracking-tight truncate group-hover:text-primary transition-colors">
                 {name}
               </h3>
-              {domain && (
-                <a
-                  href={`https://${domain}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  title={`Open ${domain}`}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              )}
+              <DomainDropdown domains={domains} variant="icon" />
             </div>
 
             <div className="flex flex-wrap items-center gap-2 mt-2">
-              {domain && (
+              {domains && domains.length > 0 && (
                 <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded truncate max-w-[180px]">
-                  {domain}
+                  {domains[0].domain}
                 </span>
               )}
               <Badge variant="outline" className={cn('text-xs capitalize', environmentStyles)}>

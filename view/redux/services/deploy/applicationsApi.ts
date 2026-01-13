@@ -253,6 +253,28 @@ export const deployApi = createApi({
       transformResponse: (response: { data: string[] }) => {
         return response.data;
       }
+    }),
+    addApplicationDomain: builder.mutation<Application, { id: string; domain: string }>({
+      query: ({ id, domain }) => ({
+        url: `${DEPLOY.ADD_APPLICATION_DOMAIN}?id=${id}`,
+        method: 'POST',
+        body: { domain }
+      }),
+      invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: Application }) => {
+        return response.data;
+      }
+    }),
+    removeApplicationDomain: builder.mutation<Application, { id: string; domain: string }>({
+      query: ({ id, domain }) => ({
+        url: `${DEPLOY.REMOVE_APPLICATION_DOMAIN}?id=${id}`,
+        method: 'DELETE',
+        body: { domain }
+      }),
+      invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: Application }) => {
+        return response.data;
+      }
     })
   })
 });
