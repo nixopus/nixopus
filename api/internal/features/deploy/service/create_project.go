@@ -16,6 +16,13 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 	s.logger.Log(logger.Info, "creating project without deployment", "name: "+req.Name)
 
 	now := time.Now()
+
+	// Collect domains from both old Domain field (for backward compatibility) and new Domains array
+	domains := req.Domains
+	if len(domains) == 0 && req.Domain != "" {
+		domains = []string{req.Domain}
+	}
+
 	application := shared_types.Application{
 		ID:                   uuid.New(),
 		Name:                 req.Name,
@@ -28,7 +35,7 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 		PreRunCommand:        req.PreRunCommand,
 		PostRunCommand:       req.PostRunCommand,
 		Port:                 req.Port,
-		Domain:               req.Domain,
+		Domain:               req.Domain, // Keep for backward compatibility
 		UserID:               userID,
 		CreatedAt:            now,
 		UpdatedAt:            now,
@@ -41,6 +48,22 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 	if err := s.storage.AddApplication(&application); err != nil {
 		s.logger.Log(logger.Error, "failed to create application", err.Error())
 		return shared_types.Application{}, err
+	}
+
+	// Add domains to application_domains table
+	if len(domains) > 0 {
+		if err := s.storage.AddApplicationDomains(application.ID, domains); err != nil {
+			s.logger.Log(logger.Error, "failed to add domains", err.Error())
+			return shared_types.Application{}, err
+		}
+		// Load domains into application for response
+		domainsList, _ := s.storage.GetApplicationDomains(application.ID)
+		// Convert []ApplicationDomain to []*ApplicationDomain
+		domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
+		for i := range domainsList {
+			domainPtrs[i] = &domainsList[i]
+		}
+		application.Domains = domainPtrs
 	}
 
 	// Create an application status with "draft" status
