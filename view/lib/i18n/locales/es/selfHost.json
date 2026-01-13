@@ -71,6 +71,11 @@
           "label": "Ruta del Dockerfile",
           "description": "Ruta del dockerfile relativa a la ruta base"
         },
+        "dockerComposePath": {
+          "label": "Ruta de Docker Compose",
+          "description": "Ruta de su archivo docker-compose.yml relativa a la ruta base. Por defecto es 'docker-compose.yml' en el directorio de la ruta base.",
+          "placeholder": "docker-compose.yml"
+        },
         "environmentVariables": {
           "label": "Variables de Entorno",
           "description": "Escribe CLAVE=VALOR y presiona Enter para agregar",
@@ -239,6 +244,11 @@
           "label": "Ruta del Dockerfile",
           "description": "Ruta del dockerfile relativa a la ruta base",
           "placeholder": "Dockerfile"
+        },
+        "dockerComposePath": {
+          "label": "Ruta de Docker Compose",
+          "description": "Ruta de su archivo docker-compose.yml relativa a la ruta base. Por defecto es 'docker-compose.yml' en el directorio de la ruta base.",
+          "placeholder": "docker-compose.yml"
         },
         "branch": {
           "label": "Rama",

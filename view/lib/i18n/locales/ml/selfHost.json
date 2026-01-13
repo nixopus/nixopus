@@ -90,6 +90,11 @@
           "label": "ഡോക്കർഫയൽ പാത",
           "description": "ബേസ് പാത്തിനോടനുബന്ധിച്ച്"
         },
+        "dockerComposePath": {
+          "label": "ഡോക്കർ കോംപോസ് പാത",
+          "description": "ബേസ് പാതയുമായി ബന്ധപ്പെട്ട നിങ്ങളുടെ docker-compose.yml ഫയലിന്റെ പാത. ഡീഫോൾട്ട് ആണ് 'docker-compose.yml' ബേസ് പാത ഡയറക്ടറിയിൽ.",
+          "placeholder": "docker-compose.yml"
+        },
         "environmentVariables": {
           "label": "എൻവയോൺമെന്റ് വേരിയബിളുകൾ",
           "description": "KEY=VALUE നൽകി എൻറ്റർ അമർത്തുക",
@@ -258,6 +263,11 @@
           "label": "ഡോക്കർഫയൽ പാത",
           "description": "ബേസ് പാത്ത് അനുസരിച്ച് ഡോക്കർഫയൽ പാത",
           "placeholder": "ഡോക്കർഫയൽ"
+        },
+        "dockerComposePath": {
+          "label": "ഡോക്കർ കോംപോസ് പാത",
+          "description": "ബേസ് പാതയുമായി ബന്ധപ്പെട്ട നിങ്ങളുടെ docker-compose.yml ഫയലിന്റെ പാത. ഡീഫോൾട്ട് ആണ് 'docker-compose.yml' ബേസ് പാത ഡയറക്ടറിയിൽ.",
+          "placeholder": "docker-compose.yml"
         },
         "branch": {
           "label": "ബ്രാഞ്ച്",
