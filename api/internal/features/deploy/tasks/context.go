@@ -42,12 +42,6 @@ func (c *ContextTask) GetApplicationData(
 		timeValue = *createdAt
 	}
 
-	// Collect domains from both old Domain field (for backward compatibility) and new Domains array
-	domain := deployment.Domain
-	if domain == "" && len(deployment.Domains) > 0 {
-		domain = deployment.Domains[0] // Keep first domain in legacy field for backward compatibility
-	}
-
 	application := shared_types.Application{
 		ID:                   uuid.New(),
 		Name:                 deployment.Name,
@@ -60,7 +54,6 @@ func (c *ContextTask) GetApplicationData(
 		PreRunCommand:        deployment.PreRunCommand,
 		PostRunCommand:       deployment.PostRunCommand,
 		Port:                 deployment.Port,
-		Domain:               domain, // Keep for backward compatibility
 		UserID:               c.UserId,
 		CreatedAt:            timeValue,
 		UpdatedAt:            time.Now(),
@@ -209,9 +202,6 @@ func (c *ContextTask) PrepareCreateDeploymentContext() (shared_types.TaskPayload
 
 	// Add domains to application_domains table
 	domains := deployment.Domains
-	if len(domains) == 0 && deployment.Domain != "" {
-		domains = []string{deployment.Domain}
-	}
 	if len(domains) > 0 {
 		if err := c.TaskService.Storage.AddApplicationDomains(application.ID, domains); err != nil {
 			return shared_types.TaskPayload{}, err

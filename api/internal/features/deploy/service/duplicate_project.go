@@ -78,7 +78,6 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 		PreRunCommand:        sourceProject.PreRunCommand,
 		PostRunCommand:       sourceProject.PostRunCommand,
 		Port:                 sourceProject.Port,
-		Domain:               req.Domain,
 		UserID:               userID,
 		CreatedAt:            now,
 		UpdatedAt:            now,
@@ -111,6 +110,33 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 	}
 
 	newProject.Status = &appStatus
+
+	// Copy domains from source project or use provided domains
+	domains := req.Domains
+	if len(domains) == 0 {
+		// Load domains from source project
+		sourceDomains, err := s.storage.GetApplicationDomains(sourceProject.ID)
+		if err == nil {
+			for _, d := range sourceDomains {
+				domains = append(domains, d.Domain)
+			}
+		}
+	}
+
+	// Add domains to new project
+	if len(domains) > 0 {
+		if err := s.storage.AddApplicationDomains(newProject.ID, domains); err != nil {
+			s.logger.Log(logger.Error, "failed to add domains to duplicate project", err.Error())
+			return shared_types.Application{}, err
+		}
+		// Load domains into newProject for response
+		domainsList, _ := s.storage.GetApplicationDomains(newProject.ID)
+		domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
+		for i := range domainsList {
+			domainPtrs[i] = &domainsList[i]
+		}
+		newProject.Domains = domainPtrs
+	}
 
 	s.logger.Log(logger.Info, "project duplicated successfully", "new_id: "+newProject.ID.String())
 	return newProject, nil

@@ -25,8 +25,7 @@ type IsPortAlreadyTakenRequest struct {
 
 type CreateDeploymentRequest struct {
 	Name                 string                   `json:"name"`
-	Domain               string                   `json:"domain,omitempty"`  // Deprecated: Use Domains instead
-	Domains              []string                 `json:"domains,omitempty"` // New: Array of domains
+	Domains              []string                 `json:"domains,omitempty"`
 	Environment          shared_types.Environment `json:"environment"`
 	BuildPack            shared_types.BuildPack   `json:"build_pack"`
 	Repository           string                   `json:"repository"`
@@ -43,8 +42,7 @@ type CreateDeploymentRequest struct {
 // CreateProjectRequest is used to create a project (application) without triggering deployment.
 type CreateProjectRequest struct {
 	Name                 string                   `json:"name"`
-	Domain               string                   `json:"domain,omitempty"`  // Deprecated: Use Domains instead
-	Domains              []string                 `json:"domains,omitempty"` // New: Array of domains
+	Domains              []string                 `json:"domains,omitempty"`
 	Environment          shared_types.Environment `json:"environment,omitempty"`
 	BuildPack            shared_types.BuildPack   `json:"build_pack,omitempty"`
 	Repository           string                   `json:"repository"`
@@ -98,8 +96,7 @@ type RestartDeploymentRequest struct {
 // DuplicateProjectRequest is used to create a duplicate of an existing project with a different environment.
 type DuplicateProjectRequest struct {
 	SourceProjectID uuid.UUID                `json:"source_project_id"`
-	Domain          string                   `json:"domain,omitempty"`  // Deprecated: Use Domains instead
-	Domains         []string                 `json:"domains,omitempty"` // New: Array of domains
+	Domains         []string                 `json:"domains,omitempty"`
 	Environment     shared_types.Environment `json:"environment"`
 	Branch          string                   `json:"branch,omitempty"`
 }

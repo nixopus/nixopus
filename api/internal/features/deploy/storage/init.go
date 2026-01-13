@@ -72,7 +72,6 @@ func (s *DeployStorage) IsDomainAlreadyTaken(domain string) (bool, error) {
 		return false, nil
 	}
 	var count int
-	// Check both old applications.domain column (for backward compatibility) and new application_domains table
 	err := s.DB.NewSelect().
 		TableExpr("application_domains").
 		ColumnExpr("count(*)").
@@ -81,19 +80,6 @@ func (s *DeployStorage) IsDomainAlreadyTaken(domain string) (bool, error) {
 
 	if err != nil {
 		return false, err
-	}
-
-	// Also check legacy applications.domain column if it still exists
-	var legacyCount int
-	legacyErr := s.DB.NewSelect().
-		TableExpr("applications").
-		ColumnExpr("count(*)").
-		Where("domain = ? AND domain != ''", domain).
-		Scan(s.Ctx, &legacyCount)
-
-	// If legacy column doesn't exist, ignore the error
-	if legacyErr == nil {
-		count += legacyCount
 	}
 
 	return count > 0, nil

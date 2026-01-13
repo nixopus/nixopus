@@ -17,11 +17,7 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 
 	now := time.Now()
 
-	// Collect domains from both old Domain field (for backward compatibility) and new Domains array
 	domains := req.Domains
-	if len(domains) == 0 && req.Domain != "" {
-		domains = []string{req.Domain}
-	}
 
 	application := shared_types.Application{
 		ID:                   uuid.New(),
@@ -35,7 +31,6 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 		PreRunCommand:        req.PreRunCommand,
 		PostRunCommand:       req.PostRunCommand,
 		Port:                 req.Port,
-		Domain:               req.Domain, // Keep for backward compatibility
 		UserID:               userID,
 		CreatedAt:            now,
 		UpdatedAt:            now,

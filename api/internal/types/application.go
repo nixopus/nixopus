@@ -21,7 +21,6 @@ type Application struct {
 	Branch               string                   `json:"branch" bun:"branch,notnull"`
 	PreRunCommand        string                   `json:"pre_run_command" bun:"pre_run_command,notnull"`
 	PostRunCommand       string                   `json:"post_run_command" bun:"post_run_command,notnull"`
-	Domain               string                   `json:"domain" bun:"domain,notnull"` // Deprecated: Use Domains relationship instead
 	DockerfilePath       string                   `json:"dockerfile_path" bun:"dockerfile_path,notnull,default:Dockerfile"`
 	BasePath             string                   `json:"base_path" bun:"base_path,notnull,default:/"`
 	UserID               uuid.UUID                `json:"user_id" bun:"user_id,notnull,type:uuid"`
