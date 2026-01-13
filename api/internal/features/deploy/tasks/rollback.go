@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -39,8 +40,22 @@ func (t *TaskService) RollbackDeployment(request *types.RollbackDeploymentReques
 	return RollbackQueue.Add(TaskRollback.WithArgs(context.Background(), payload))
 }
 
-// HandleRollback uses Docker Swarm's native rollback capability for instant rollback
+// HandleRollback routes rollback based on the application's BuildPack type
 func (s *TaskService) HandleRollback(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	switch TaskPayload.Application.BuildPack {
+	case shared_types.DockerFile:
+		return s.HandleRollbackDockerfileDeployment(ctx, TaskPayload)
+	case shared_types.DockerCompose:
+		return s.HandleRollbackDockerComposeDeployment(ctx, TaskPayload)
+	case shared_types.Static:
+		return s.HandleRollbackStaticDeployment(ctx, TaskPayload)
+	default:
+		return types.ErrInvalidBuildPack
+	}
+}
+
+// HandleRollbackDockerfileDeployment uses Docker Swarm's native rollback capability for instant rollback
+func (s *TaskService) HandleRollbackDockerfileDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	taskCtx := s.NewTaskContext(TaskPayload)
 
 	taskCtx.LogAndUpdateStatus("Starting native swarm rollback", shared_types.Deploying)
@@ -81,4 +96,15 @@ func (s *TaskService) HandleRollback(ctx context.Context, TaskPayload shared_typ
 	taskCtx.LogAndUpdateStatus("Rollback completed successfully", shared_types.Deployed)
 
 	return nil
+}
+
+// HandleRollbackDockerComposeDeployment handles rollback of a Docker Compose application
+func (s *TaskService) HandleRollbackDockerComposeDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	return s.deployDockerCompose(ctx, TaskPayload, string(shared_types.DeploymentTypeRollback))
+}
+
+// HandleRollbackStaticDeployment handles rollback of a static application
+func (s *TaskService) HandleRollbackStaticDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	// TODO: Implement static rollback
+	return fmt.Errorf("static rollback not yet implemented")
 }
