@@ -478,7 +478,17 @@ export function ExtensionCard({
         <span className="text-lg font-bold text-muted-foreground">{extension.icon}</span>
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="text-lg font-bold mb-1">{extension.name}</h3>
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="text-lg font-bold">{extension.name}</h3>
+          {extension.featured && (
+            <Badge
+              variant="outline"
+              className="text-xs bg-yellow-500/10 border-yellow-500/50 text-yellow-600 dark:text-yellow-500 font-semibold"
+            >
+              Featured
+            </Badge>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
             {t('extensions.madeBy')} {extension.author}

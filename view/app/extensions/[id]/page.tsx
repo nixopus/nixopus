@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { OverviewTab } from '@/packages/components/extension-tabs';
 import { GitFork } from 'lucide-react';
 import SubPageHeader from '@/components/ui/sub-page-header';
+import { Badge } from '@/components/ui/badge';
 
 export default function ExtensionDetailsPage() {
   const {
@@ -72,7 +73,19 @@ export default function ExtensionDetailsPage() {
         }
       >
         <SubPageHeader
-          title={extension?.name || ''}
+          title={
+            <div className="flex items-center gap-2">
+              <span>{extension?.name || ''}</span>
+              {extension?.featured && (
+                <Badge
+                  variant="outline"
+                  className="text-xs bg-yellow-500/10 border-yellow-500/50 text-yellow-600 dark:text-yellow-500 font-semibold"
+                >
+                  Featured
+                </Badge>
+              )}
+            </div>
+          }
           metadata={extension?.author}
           actions={
             <div className="flex items-center gap-2">
