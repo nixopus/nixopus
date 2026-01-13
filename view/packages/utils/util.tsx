@@ -159,3 +159,5 @@ export const parsePort = (port: string) => {
   const parsedPort = parseInt(port, 10);
   return isNaN(parsedPort) ? null : parsedPort;
 };
+
+export const SHARED_DOMAIN_REGEX = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;

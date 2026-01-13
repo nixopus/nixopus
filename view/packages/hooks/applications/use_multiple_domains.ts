@@ -1,11 +1,10 @@
 import React from 'react';
 import { ApplicationDomain } from '@/redux/types/applications';
-
-export const DOMAIN_REGEX = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+import { SHARED_DOMAIN_REGEX } from '@/packages/utils/util';
 
 export const defaultValidator = (value: string): boolean => {
   if (!value || value.trim() === '') return true; // Empty is allowed
-  return DOMAIN_REGEX.test(value.trim());
+  return SHARED_DOMAIN_REGEX.test(value.trim());
 };
 
 interface UseMultipleDomainsProps {

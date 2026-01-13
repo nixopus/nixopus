@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Github } from 'lucide-react';
+import { defaultValidator } from './use_multiple_domains';
 
 interface UseQuickDeployFormProps {
   repository?: string;
@@ -47,17 +48,14 @@ export function useQuickDeployForm({
           .refine(
             (val) => {
               if (!val || val.length === 0) return true;
+              // Filter out empty domains and validate non-empty ones
               const nonEmpty = val.filter((d) => d && d.trim() !== '');
               if (nonEmpty.length > 5) return false; // Max 5 domains
+              // Check uniqueness
               const unique = new Set(nonEmpty.map((d) => d.trim().toLowerCase()));
               if (unique.size !== nonEmpty.length) return false;
-              return nonEmpty.every(
-                (d) =>
-                  d.length >= 3 &&
-                  /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/.test(
-                    d.trim()
-                  )
-              );
+              // Validate format using shared validator
+              return nonEmpty.every((d) => defaultValidator(d));
             },
             {
               message: t('selfHost.deployForm.validation.domain.invalidFormat')
@@ -174,7 +172,7 @@ export function useQuickDeployForm({
       },
       {
         key: 'domains',
-        type: 'input' as const,
+        type: 'multi-domains' as const,
         label: t('selfHost.quickDeploy.fields.domain.label'),
         name: 'domains',
         placeholder: t('selfHost.quickDeploy.fields.domain.placeholder'),

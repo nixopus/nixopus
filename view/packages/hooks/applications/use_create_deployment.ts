@@ -7,8 +7,8 @@ import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { useRouter } from 'next/navigation';
 import { useCreateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';
 import { toast } from 'sonner';
-import { useAppSelector } from '@/redux/hooks';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
+import { defaultValidator } from './use_multiple_domains';
 
 interface DeploymentFormValues {
   application_name: string;
@@ -74,14 +74,8 @@ function useCreateDeployment({
           // Check uniqueness
           const unique = new Set(nonEmpty.map((d) => d.trim().toLowerCase()));
           if (unique.size !== nonEmpty.length) return false;
-          // Validate format
-          return nonEmpty.every(
-            (d) =>
-              d.length >= 3 &&
-              /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/.test(
-                d.trim()
-              )
-          );
+          // Validate format using shared validator
+          return nonEmpty.every((d) => defaultValidator(d));
         },
         {
           message: t('selfHost.deployForm.validation.domain.invalidFormat')

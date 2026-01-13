@@ -433,7 +433,7 @@ export const QuickDeployForm = ({
                   );
                 }
 
-                if (field.name === 'domains') {
+                if (field.type === 'multi-domains') {
                   return (
                     <MultipleDomainInput
                       key={field.key}
