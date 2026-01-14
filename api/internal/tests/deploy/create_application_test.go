@@ -35,7 +35,7 @@ func TestCreateApplication(t *testing.T) {
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
-				Domain:      "test-app.example.com",
+				Domains:     []string{"test-app.example.com"},
 				Environment: shared_types.Development,
 				BuildPack:   shared_types.DockerFile,
 				Repository:  "https://github.com/test/test-app.git",
@@ -57,7 +57,7 @@ func TestCreateApplication(t *testing.T) {
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
-				Domain:      "test-app.example.com",
+				Domains:     []string{"test-app.example.com"},
 				Environment: shared_types.Development,
 				BuildPack:   shared_types.DockerFile,
 				Repository:  "https://github.com/test/test-app.git",
@@ -73,7 +73,7 @@ func TestCreateApplication(t *testing.T) {
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
-				Domain:      "test-app.example.com",
+				Domains:     []string{"test-app.example.com"},
 				Environment: shared_types.Development,
 				BuildPack:   shared_types.DockerFile,
 				Repository:  "https://github.com/test/test-app.git",
@@ -89,7 +89,7 @@ func TestCreateApplication(t *testing.T) {
 			organizationID: "",
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
-				Domain:      "test-app.example.com",
+				Domains:     []string{"test-app.example.com"},
 				Environment: shared_types.Development,
 				BuildPack:   shared_types.DockerFile,
 				Repository:  "https://github.com/test/test-app.git",
@@ -104,7 +104,7 @@ func TestCreateApplication(t *testing.T) {
 			cookies:        cookies,
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
-				Domain:      "test-app.example.com",
+				Domains:     []string{"test-app.example.com"},
 				Environment: shared_types.Development,
 				BuildPack:   shared_types.DockerFile,
 				Repository:  "https://github.com/test/test-app.git",
@@ -120,6 +120,7 @@ func TestCreateApplication(t *testing.T) {
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
+				Domains:     []string{},
 				Environment: shared_types.Development,
 				BuildPack:   shared_types.DockerFile,
 				Repository:  "https://github.com/test/test-app.git",
@@ -135,7 +136,7 @@ func TestCreateApplication(t *testing.T) {
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
-				Domain:      "test-app.example.com",
+				Domains:     []string{"test-app.example.com"},
 				Environment: shared_types.Development,
 				BuildPack:   shared_types.DockerFile,
 				Branch:      "main",
@@ -150,7 +151,7 @@ func TestCreateApplication(t *testing.T) {
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
-				Domain:      "test-app.example.com",
+				Domains:     []string{"test-app.example.com"},
 				Environment: shared_types.Development,
 				BuildPack:   shared_types.DockerFile,
 				Repository:  "https://github.com/test/test-app.git",
@@ -165,7 +166,7 @@ func TestCreateApplication(t *testing.T) {
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
-				Domain:      "test-app.example.com",
+				Domains:     []string{"test-app.example.com"},
 				Environment: "invalid",
 				BuildPack:   shared_types.DockerFile,
 				Repository:  "https://github.com/test/test-app.git",
@@ -181,7 +182,7 @@ func TestCreateApplication(t *testing.T) {
 			organizationID: orgID,
 			request: types.CreateDeploymentRequest{
 				Name:        "test-app",
-				Domain:      "test-app.example.com",
+				Domains:     []string{"test-app.example.com"},
 				Environment: shared_types.Development,
 				BuildPack:   "invalid",
 				Repository:  "https://github.com/test/test-app.git",

@@ -7,6 +7,40 @@ export interface SortConfig<T> {
   direction: SortDirection;
 }
 
+/**
+ * Converts a value to a string for search/sort operations.
+ * Handles arrays by extracting string values (e.g., ApplicationDomain[] -> domain strings).
+ */
+function valueToString(value: any): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  // Handle arrays
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return '';
+    }
+
+    // Extract string values from array elements
+    const stringValues = value
+      .map((item) => {
+        // If item is an object with a 'domain' property (e.g., ApplicationDomain)
+        if (item && typeof item === 'object' && 'domain' in item) {
+          return String(item.domain || '');
+        }
+        // If item is already a string or can be converted to string
+        return String(item || '');
+      })
+      .filter((str) => str.trim() !== ''); // Filter out empty strings
+
+    return stringValues.join(' '); // Join with space for search/sort
+  }
+
+  // Handle non-array values
+  return String(value);
+}
+
 export function useSearchable<T>(
   data: T[],
   searchKeys: (keyof T)[],
@@ -17,14 +51,18 @@ export function useSearchable<T>(
 
   const filteredAndSortedData = useMemo(() => {
     let result = data?.filter((item) =>
-      searchKeys.some((key) => String(item[key]).toLowerCase().includes(searchTerm.toLowerCase()))
+      searchKeys.some((key) =>
+        valueToString(item[key]).toLowerCase().includes(searchTerm.toLowerCase())
+      )
     );
 
     result.sort((a, b) => {
-      if (a[sortConfig.key] < b[sortConfig.key]) {
+      const aValue = valueToString(a[sortConfig.key]);
+      const bValue = valueToString(b[sortConfig.key]);
+      if (aValue < bValue) {
         return sortConfig.direction === 'asc' ? -1 : 1;
       }
-      if (a[sortConfig.key] > b[sortConfig.key]) {
+      if (aValue > bValue) {
         return sortConfig.direction === 'asc' ? 1 : -1;
       }
       return 0;

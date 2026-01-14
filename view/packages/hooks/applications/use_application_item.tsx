@@ -65,7 +65,7 @@ export function useApplicationItem(application: Application) {
   const router = useRouter();
   const {
     name,
-    domain,
+    domains,
     environment,
     updated_at,
     build_pack,
@@ -75,6 +75,13 @@ export function useApplicationItem(application: Application) {
     deployments,
     labels
   } = application;
+
+  const primaryDomain = useMemo(() => {
+    if (domains && domains.length > 0) {
+      return domains[0].domain;
+    }
+    return undefined;
+  }, [domains]);
 
   const latestDeployment = deployments?.[0];
   const currentStatus = latestDeployment?.status?.status || status?.status;
@@ -136,7 +143,8 @@ export function useApplicationItem(application: Application) {
 
   return {
     name,
-    domain,
+    domain: primaryDomain,
+    domains,
     currentStatus,
     statusConfig,
     environmentStyles,

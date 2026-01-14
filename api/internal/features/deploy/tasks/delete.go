@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // DeleteDeployment deletes a deployment and its associated resources.
@@ -20,7 +21,17 @@ func (s *TaskService) DeleteDeployment(deployment *types.DeleteDeploymentRequest
 		return fmt.Errorf("failed to get application details: %w", err)
 	}
 
-	domain := application.Domain
+	// Load domains if not already loaded
+	if application.Domains == nil || len(application.Domains) == 0 {
+		domainsList, err := s.Storage.GetApplicationDomains(application.ID)
+		if err == nil {
+			domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
+			for i := range domainsList {
+				domainPtrs[i] = &domainsList[i]
+			}
+			application.Domains = domainPtrs
+		}
+	}
 
 	services, err := s.DockerRepo.GetClusterServices()
 	if err != nil {
@@ -61,12 +72,23 @@ func (s *TaskService) DeleteDeployment(deployment *types.DeleteDeploymentRequest
 		s.Logger.Log(logger.Error, "Failed to remove repository", err.Error())
 	}
 
-	client := GetCaddyClient()
-	err = client.DeleteDomain(domain)
-	if err != nil {
-		s.Logger.Log(logger.Error, "Failed to remove domain", err.Error())
+	// Remove all domains from Caddy
+	if len(application.Domains) > 0 {
+		client := GetCaddyClient()
+		if client == nil {
+			s.Logger.Log(logger.Warning, "Caddy client not configured", "")
+		} else {
+			for _, appDomain := range application.Domains {
+				if appDomain.Domain != "" {
+					err = client.DeleteDomain(appDomain.Domain)
+					if err != nil {
+						s.Logger.Log(logger.Error, "Failed to remove domain", err.Error())
+					}
+				}
+			}
+			client.Reload()
+		}
 	}
-	client.Reload()
 
 	// Handle family cleanup: if this project belongs to a family,
 	// check if only one member remains and clear its family_id

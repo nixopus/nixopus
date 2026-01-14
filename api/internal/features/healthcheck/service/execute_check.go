@@ -14,6 +14,43 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// buildHealthCheckURL constructs the URL for a health check request.
+// If endpoint is a full URL, it's used directly. Otherwise, it constructs
+// the URL from the application's first domain.
+func (s *HealthCheckService) buildHealthCheckURL(healthCheck *shared_types.HealthCheck, application *shared_types.Application, deployStorage *storage.DeployStorage) (string, error) {
+	// If endpoint is a full URL, use it directly
+	if strings.HasPrefix(healthCheck.Endpoint, "http://") || strings.HasPrefix(healthCheck.Endpoint, "https://") {
+		return healthCheck.Endpoint, nil
+	}
+
+	// Load domains if not already loaded
+	if len(application.Domains) == 0 {
+		domainsList, err := deployStorage.GetApplicationDomains(application.ID)
+		if err != nil {
+			return "", fmt.Errorf("failed to load domains: %w", err)
+		}
+		domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
+		for i := range domainsList {
+			domainPtrs[i] = &domainsList[i]
+		}
+		application.Domains = domainPtrs
+	}
+
+	// Use first domain if available
+	if len(application.Domains) == 0 {
+		return "", fmt.Errorf("application has no domains configured")
+	}
+
+	domain := application.Domains[0].Domain
+	// Determine protocol: default to https, use http only for localhost/127.0.0.1
+	protocol := "https"
+	if strings.Contains(domain, "localhost") || strings.Contains(domain, "127.0.0.1") {
+		protocol = "http"
+	}
+
+	return fmt.Sprintf("%s://%s%s", protocol, domain, healthCheck.Endpoint), nil
+}
+
 // ExecuteHealthCheck performs an HTTP health check for a given health check configuration
 func (s *HealthCheckService) ExecuteHealthCheck(healthCheck *shared_types.HealthCheck) (*shared_types.HealthCheckResult, error) {
 	startTime := time.Now()
@@ -26,18 +63,9 @@ func (s *HealthCheckService) ExecuteHealthCheck(healthCheck *shared_types.Health
 		return nil, fmt.Errorf("failed to get application: %w", err)
 	}
 
-	var url string
-	// If endpoint is a full URL, use it directly; otherwise construct from application domain
-	if strings.HasPrefix(healthCheck.Endpoint, "http://") || strings.HasPrefix(healthCheck.Endpoint, "https://") {
-		url = healthCheck.Endpoint
-	} else {
-		protocol := "http"
-		if strings.Contains(application.Domain, "localhost") || strings.Contains(application.Domain, "127.0.0.1") {
-			protocol = "http"
-		} else {
-			protocol = "https"
-		}
-		url = fmt.Sprintf("%s://%s%s", protocol, application.Domain, healthCheck.Endpoint)
+	url, err := s.buildHealthCheckURL(healthCheck, &application, deployStorage)
+	if err != nil {
+		return nil, err
 	}
 
 	var req *http.Request

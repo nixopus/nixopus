@@ -63,7 +63,7 @@ func DuplicateProjectHandler(
 
 		duplicateRequest := types.DuplicateProjectRequest{
 			SourceProjectID: sourceProjectID,
-			Domain:          input.Domain,
+			Domains:         input.Domains,
 			Environment:     environment,
 			Branch:          input.Branch,
 		}

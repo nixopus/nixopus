@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Github } from 'lucide-react';
+import { defaultValidator } from './use_multiple_domains';
 
 interface UseQuickDeployFormProps {
   repository?: string;
@@ -41,25 +42,26 @@ export function useQuickDeployForm({
           .regex(/^[a-zA-Z0-9_-]+$/, {
             message: t('selfHost.deployForm.validation.applicationName.invalidFormat')
           }),
-        domain: z
-          .string()
+        domains: z
+          .array(z.string())
           .optional()
           .refine(
             (val) => {
-              // If domain is provided, validate it; if empty, allow it
-              if (!val || val.trim() === '') return true;
-              return (
-                val.length >= 3 &&
-                /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/.test(
-                  val
-                )
-              );
+              if (!val || val.length === 0) return true;
+              // Filter out empty domains and validate non-empty ones
+              const nonEmpty = val.filter((d) => d && d.trim() !== '');
+              if (nonEmpty.length > 5) return false; // Max 5 domains
+              // Check uniqueness
+              const unique = new Set(nonEmpty.map((d) => d.trim().toLowerCase()));
+              if (unique.size !== nonEmpty.length) return false;
+              // Validate format using shared validator
+              return nonEmpty.every((d) => defaultValidator(d));
             },
             {
               message: t('selfHost.deployForm.validation.domain.invalidFormat')
             }
           )
-          .default(''),
+          .default([]),
         branch: z
           .string()
           .min(1, { message: t('selfHost.deployForm.validation.branch.minLength') }),
@@ -73,7 +75,7 @@ export function useQuickDeployForm({
     resolver: zodResolver(quickDeploySchema),
     defaultValues: {
       application_name: application_name,
-      domain: '',
+      domains: [],
       branch: 'main',
       build_pack: 'dockerfile',
       repository: repository || ''
@@ -139,9 +141,14 @@ export function useQuickDeployForm({
         build_pack: values.build_pack as BuildPack
       };
 
-      // Only include domain if it's provided and not empty
-      if (values.domain && values.domain.trim() !== '') {
-        projectData.domain = values.domain.trim();
+      // Handle domains array
+      if (values.domains && values.domains.length > 0) {
+        const nonEmptyDomains = values.domains
+          .filter((d) => d && d.trim() !== '')
+          .map((d) => d.trim());
+        if (nonEmptyDomains.length > 0) {
+          projectData.domains = nonEmptyDomains;
+        }
       }
 
       const result = await createProject(projectData).unwrap();
@@ -164,10 +171,10 @@ export function useQuickDeployForm({
         required: true
       },
       {
-        key: 'domain',
-        type: 'input' as const,
+        key: 'domains',
+        type: 'multi-domains' as const,
         label: t('selfHost.quickDeploy.fields.domain.label'),
-        name: 'domain',
+        name: 'domains',
         placeholder: t('selfHost.quickDeploy.fields.domain.placeholder'),
         required: false
       },
