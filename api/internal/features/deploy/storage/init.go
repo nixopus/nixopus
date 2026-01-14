@@ -40,6 +40,10 @@ type DeployRepository interface {
 	GetApplicationDeployments(applicationID uuid.UUID) ([]shared_types.ApplicationDeployment, error)
 	GetPaginatedApplicationDeployments(applicationID uuid.UUID, page, pageSize int) ([]shared_types.ApplicationDeployment, int, error)
 	GetLogs(applicationID string, page, pageSize int, level string, startTime, endTime time.Time, searchTerm string) ([]shared_types.ApplicationLogs, int, error)
+	// Domain management methods
+	AddApplicationDomains(applicationID uuid.UUID, domains []string) error
+	RemoveApplicationDomain(applicationID uuid.UUID, domain string) error
+	GetApplicationDomains(applicationID uuid.UUID) ([]shared_types.ApplicationDomain, error)
 	GetDeploymentLogs(deploymentID string, page, pageSize int, level string, startTime, endTime time.Time, searchTerm string) ([]shared_types.ApplicationLogs, int, error)
 	GetApplicationByRepositoryID(repositoryID uint64) (shared_types.Application, error)
 	GetApplicationByRepositoryIDAndBranch(repositoryID uint64, branch string) ([]shared_types.Application, error)
@@ -64,14 +68,21 @@ func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
 }
 
 func (s *DeployStorage) IsDomainAlreadyTaken(domain string) (bool, error) {
+	if domain == "" {
+		return false, nil
+	}
 	var count int
 	err := s.DB.NewSelect().
-		TableExpr("applications").
+		TableExpr("application_domains").
 		ColumnExpr("count(*)").
 		Where("domain = ?", domain).
 		Scan(s.Ctx, &count)
 
-	return count > 0, err
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }
 
 func (s *DeployStorage) IsPortAlreadyTaken(port int) (bool, error) {
@@ -181,6 +192,7 @@ func (s *DeployStorage) GetApplications(page, pageSize int, organizationID uuid.
 		Relation("Status").
 		Relation("Logs").
 		Relation("Deployments.Status").
+		Relation("Domains").
 		Order("created_at DESC").
 		Limit(pageSize).
 		Offset(offset).
@@ -208,6 +220,7 @@ func (s *DeployStorage) GetApplicationById(id string, organizationID uuid.UUID) 
 	err := s.DB.NewSelect().
 		Model(&application).
 		Relation("Status").
+		Relation("Domains").
 		Where("a.id = ? AND a.organization_id = ?", id, organizationID).
 		Scan(s.Ctx)
 
@@ -431,6 +444,7 @@ func (s *DeployStorage) GetApplicationByRepositoryIDAndBranch(repositoryID uint6
 		Relation("Status").
 		Relation("Deployments", func(q *bun.SelectQuery) *bun.SelectQuery { return q.Order("created_at DESC") }).
 		Relation("Deployments.Status").
+		Relation("Domains").
 		Where("repository = ? AND branch = ?", fmt.Sprintf("%d", repositoryID), branch).
 		Scan(s.Ctx)
 
@@ -462,6 +476,7 @@ func (s *DeployStorage) GetProjectsByFamilyID(familyID uuid.UUID, organizationID
 			return q.Order("created_at DESC").Limit(1)
 		}).
 		Relation("Deployments.Status").
+		Relation("Domains").
 		Where("family_id = ? AND organization_id = ?", familyID, organizationID).
 		Order("created_at ASC").
 		Scan(s.Ctx)
@@ -540,4 +555,65 @@ func (s *DeployStorage) ClearFamilyIDIfSingleMember(familyID uuid.UUID) error {
 	}
 
 	return nil
+}
+
+// AddApplicationDomains adds multiple domains to an application.
+// Domains are validated for uniqueness globally before insertion.
+func (s *DeployStorage) AddApplicationDomains(applicationID uuid.UUID, domains []string) error {
+	if len(domains) == 0 {
+		return nil
+	}
+
+	// Check for duplicate domains globally
+	for _, domain := range domains {
+		if domain == "" {
+			continue
+		}
+		exists, err := s.IsDomainAlreadyTaken(domain)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return fmt.Errorf("domain %s is already taken", domain)
+		}
+	}
+
+	// Insert domains
+	for _, domain := range domains {
+		if domain == "" {
+			continue
+		}
+		appDomain := &shared_types.ApplicationDomain{
+			ID:            uuid.New(),
+			ApplicationID: applicationID,
+			Domain:        domain,
+			CreatedAt:     time.Now(),
+		}
+		_, err := s.DB.NewInsert().Model(appDomain).Exec(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to add domain %s: %w", domain, err)
+		}
+	}
+
+	return nil
+}
+
+// RemoveApplicationDomain removes a domain from an application.
+func (s *DeployStorage) RemoveApplicationDomain(applicationID uuid.UUID, domain string) error {
+	_, err := s.DB.NewDelete().
+		Model((*shared_types.ApplicationDomain)(nil)).
+		Where("application_id = ? AND domain = ?", applicationID, domain).
+		Exec(s.Ctx)
+	return err
+}
+
+// GetApplicationDomains retrieves all domains for an application.
+func (s *DeployStorage) GetApplicationDomains(applicationID uuid.UUID) ([]shared_types.ApplicationDomain, error) {
+	var domains []shared_types.ApplicationDomain
+	err := s.DB.NewSelect().
+		Model(&domains).
+		Where("application_id = ?", applicationID).
+		Order("created_at ASC").
+		Scan(s.Ctx)
+	return domains, err
 }

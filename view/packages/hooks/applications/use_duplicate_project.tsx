@@ -95,9 +95,9 @@ export function useDuplicateProject({ application }: UseDuplicateProjectProps) {
         branch
       };
 
-      // Only include domain if it's provided and not empty
+      // Include domains if provided
       if (domain && domain.trim() !== '') {
-        duplicateData.domain = domain.trim();
+        duplicateData.domains = [domain.trim()];
       }
 
       const result = await duplicateProject(duplicateData).unwrap();

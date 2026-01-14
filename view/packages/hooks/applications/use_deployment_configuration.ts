@@ -3,7 +3,7 @@ import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 interface UseDeploymentConfigurationProps {
   branch?: string;
-  domain?: string;
+  domains?: string[];
   build_pack?: BuildPack;
   env_variables?: Record<string, string>;
   build_variables?: Record<string, string>;
@@ -11,7 +11,7 @@ interface UseDeploymentConfigurationProps {
 
 export function useDeploymentConfiguration({
   branch = '',
-  domain = '',
+  domains = [],
   build_pack = BuildPack.Dockerfile,
   env_variables = {},
   build_variables = {}
@@ -82,7 +82,7 @@ export function useDeploymentConfiguration({
     },
     {
       label: t('selfHost.configuration.fields.domain.label'),
-      value: domain,
+      value: domains && domains.length > 0 ? domains.join(', ') : '',
       description: t('selfHost.configuration.fields.domain.description')
     },
     {

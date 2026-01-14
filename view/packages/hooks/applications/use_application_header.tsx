@@ -27,6 +27,7 @@ import {
   ProjectFamilySwitcher,
   DuplicateProjectDialog
 } from '@/packages/components/application-details';
+import { DomainDropdown } from '@/packages/components/multi-domains';
 import { AnyPermissionGuard } from '@/packages/components/rbac';
 import { useTranslation } from '../shared/use-translation';
 
@@ -222,31 +223,15 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
       <div className="flex items-center gap-2">
         <span className="capitalize">{application?.name}</span>
         {application && <ProjectFamilySwitcher application={application} />}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-          onClick={() => window.open('https://' + application?.domain, '_blank')}
-          aria-label={t('selfHost.applicationDetails.header.actions.open')}
-        >
-          <ExternalLink className="h-4 w-4" />
-        </Button>
+        {application && <DomainDropdown domains={application.domains} variant="icon" />}
       </div>
     ),
-    [application, t]
+    [application]
   );
 
   const metadata = useMemo(
     () => (
       <div className="flex flex-wrap items-center gap-2">
-        <a
-          href={'https://' + application?.domain}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-muted-foreground hover:text-foreground font-mono bg-muted px-2 py-0.5 rounded transition-colors"
-        >
-          {application?.domain}
-        </a>
         <Badge
           variant="outline"
           className={cn(

@@ -54,7 +54,6 @@ func (c *ContextTask) GetApplicationData(
 		PreRunCommand:        deployment.PreRunCommand,
 		PostRunCommand:       deployment.PostRunCommand,
 		Port:                 deployment.Port,
-		Domain:               deployment.Domain,
 		UserID:               c.UserId,
 		CreatedAt:            timeValue,
 		UpdatedAt:            time.Now(),
@@ -176,6 +175,19 @@ func (c *ContextTask) executeDBOperations(fn func() error, errMessage string) er
 	return nil
 }
 
+// loadDomainsIntoApplication loads domains from database into the application's Domains field
+func (c *ContextTask) loadDomainsIntoApplication(application *shared_types.Application) {
+	domainsList, err := c.TaskService.Storage.GetApplicationDomains(application.ID)
+	if err == nil && len(domainsList) > 0 {
+		// Convert []ApplicationDomain to []*ApplicationDomain
+		domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
+		for i := range domainsList {
+			domainPtrs[i] = &domainsList[i]
+		}
+		application.Domains = domainPtrs
+	}
+}
+
 // PrepareCreateDeploymentContext prepares the context for the deployment.
 // It returns an error if the operation fails.
 func (c *ContextTask) PrepareCreateDeploymentContext() (shared_types.TaskPayload, error) {
@@ -187,6 +199,17 @@ func (c *ContextTask) PrepareCreateDeploymentContext() (shared_types.TaskPayload
 	if err != nil {
 		return shared_types.TaskPayload{}, err
 	}
+
+	// Add domains to application_domains table
+	domains := deployment.Domains
+	if len(domains) > 0 {
+		if err := c.TaskService.Storage.AddApplicationDomains(application.ID, domains); err != nil {
+			return shared_types.TaskPayload{}, err
+		}
+	}
+
+	c.loadDomainsIntoApplication(&application)
+
 	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
 	if err != nil {
 		return shared_types.TaskPayload{}, err
@@ -210,6 +233,8 @@ func (c *ContextTask) PrepareUpdateDeploymentContext() (shared_types.TaskPayload
 	if err != nil {
 		return shared_types.TaskPayload{}, err
 	}
+
+	c.loadDomainsIntoApplication(&application)
 
 	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
 	if err != nil {
@@ -286,6 +311,8 @@ func (c *ContextTask) PrepareReDeploymentContext() (shared_types.TaskPayload, er
 		return shared_types.TaskPayload{}, err
 	}
 
+	c.loadDomainsIntoApplication(&app)
+
 	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
 	if err != nil {
 		return shared_types.TaskPayload{}, err
@@ -322,6 +349,9 @@ func (c *ContextTask) PrepareRollbackContext() (shared_types.TaskPayload, error)
 		return shared_types.TaskPayload{}, err
 	}
 
+	// Load domains into application for TaskPayload (available throughout deployment)
+	c.loadDomainsIntoApplication(&app)
+
 	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
 	if err != nil {
 		return shared_types.TaskPayload{}, err
@@ -347,6 +377,8 @@ func (c *ContextTask) PrepareRestartContext() (shared_types.TaskPayload, error) 
 	if err := c.PersistUpdateApplicationDeploymentData(app, applicationDeployment); err != nil {
 		return shared_types.TaskPayload{}, err
 	}
+
+	c.loadDomainsIntoApplication(&app)
 
 	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
 	if err != nil {
@@ -376,6 +408,8 @@ func (c *ContextTask) PrepareDeployProjectContext() (shared_types.TaskPayload, e
 	if err := c.TaskService.Storage.AddApplicationDeployment(&applicationDeployment); err != nil {
 		return shared_types.TaskPayload{}, err
 	}
+
+	c.loadDomainsIntoApplication(&app)
 
 	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
 	if err != nil {

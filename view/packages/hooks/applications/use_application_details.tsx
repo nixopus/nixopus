@@ -115,7 +115,7 @@ function useApplicationDetails() {
         content: (
           <DeployConfigureForm
             application_name={application?.name}
-            domain={application?.domain}
+            domains={application?.domains?.map((d) => d.domain)}
             environment={application?.environment as Environment | undefined}
             env_variables={envVariables}
             build_variables={buildVariables}

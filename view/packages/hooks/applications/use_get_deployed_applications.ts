@@ -58,7 +58,7 @@ function useGetDeployedApplications() {
     sortConfig
   } = useSearchable<Application>(
     applications?.applications || [],
-    ['name', 'domain', 'environment', 'updated_at', 'build_pack', 'port'],
+    ['name', 'domains', 'environment', 'updated_at', 'build_pack', 'port'],
     { key: 'name', direction: 'asc' }
   );
 
@@ -99,7 +99,7 @@ function useGetDeployedApplications() {
   const sortOptions: SortOption<Application>[] = React.useMemo(
     () => [
       { label: 'Name', value: 'name', direction: 'asc' },
-      { label: 'Domain', value: 'domain', direction: 'asc' },
+      { label: 'Domains', value: 'domains', direction: 'asc' },
       { label: 'Environment', value: 'environment', direction: 'asc' },
       { label: 'Updated At', value: 'updated_at', direction: 'asc' },
       { label: 'Build Pack', value: 'build_pack', direction: 'asc' },

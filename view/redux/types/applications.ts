@@ -1,6 +1,13 @@
 import { User } from './user';
 import { HealthCheck } from './healthcheck';
 
+export type ApplicationDomain = {
+  id: string;
+  application_id: string;
+  domain: string;
+  created_at: string;
+};
+
 export type Application = {
   id: string;
   name: string;
@@ -17,7 +24,7 @@ export type Application = {
   user_id: string;
   created_at: Date;
   updated_at: Date;
-  domain?: string;
+  domains?: ApplicationDomain[];
   user?: User;
   status?: ApplicationStatus;
   logs?: ApplicationLogs[];
@@ -99,7 +106,7 @@ export interface CreateApplicationRequest {
   environment: Environment;
   branch: string;
   port: number;
-  domain: string;
+  domains?: string[];
   repository: string;
   build_pack: BuildPack;
   environment_variables: Record<string, string>;
@@ -131,10 +138,10 @@ export interface ReDeployApplicationRequest {
 }
 
 // CreateProjectRequest is used to create a project without triggering deployment.
-// Only name, domain, and repository are required. Other fields have defaults.
+// Only name and repository are required. Domain is optional. Other fields have defaults.
 export interface CreateProjectRequest {
   name: string;
-  domain: string;
+  domains?: string[];
   repository: string;
   environment?: Environment;
   build_pack?: BuildPack;
@@ -156,7 +163,7 @@ export interface DeployProjectRequest {
 // DuplicateProjectRequest is used to create a duplicate of an existing project with a different environment.
 export interface DuplicateProjectRequest {
   source_project_id: string;
-  domain: string;
+  domains?: string[];
   environment: Environment;
   branch?: string;
 }

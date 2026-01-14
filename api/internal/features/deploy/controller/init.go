@@ -26,6 +26,7 @@ type DeployController struct {
 	store        *shared_storage.Store
 	validator    *validation.Validator
 	service      *service.DeployService
+	storage      *storage.DeployStorage
 	ctx          context.Context
 	logger       logger.Logger
 	notification *notification.NotificationManager
@@ -57,6 +58,7 @@ func NewDeployController(
 		store:        store,
 		validator:    validation.NewValidator(),
 		service:      service.NewDeployService(store, ctx, l, &storage),
+		storage:      &storage,
 		ctx:          ctx,
 		logger:       l,
 		notification: notificationManager,

@@ -70,7 +70,7 @@ func CreateProjectHandler(
 
 		createRequest := types.CreateProjectRequest{
 			Name:                 input.Name,
-			Domain:               input.Domain,
+			Domains:              input.Domains,
 			Repository:           input.Repository,
 			Environment:          environment,
 			BuildPack:            buildPack,

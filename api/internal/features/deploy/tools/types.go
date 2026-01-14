@@ -74,7 +74,7 @@ type GetDeploymentLogsOutput struct {
 // CreateProjectInput is the input structure for the MCP tool
 type CreateProjectInput struct {
 	Name                 string            `json:"name" jsonschema:"required"`
-	Domain               string            `json:"domain" jsonschema:"required"`
+	Domains              []string          `json:"domains,omitempty"`
 	Repository           string            `json:"repository" jsonschema:"required"`
 	Environment          string            `json:"environment,omitempty"`
 	BuildPack            string            `json:"build_pack,omitempty"`
@@ -105,10 +105,10 @@ type DeployProjectOutput struct {
 
 // DuplicateProjectInput is the input structure for the MCP tool
 type DuplicateProjectInput struct {
-	SourceProjectID string `json:"source_project_id" jsonschema:"required"`
-	Domain          string `json:"domain" jsonschema:"required"`
-	Environment     string `json:"environment" jsonschema:"required"`
-	Branch          string `json:"branch,omitempty"`
+	SourceProjectID string   `json:"source_project_id" jsonschema:"required"`
+	Domains         []string `json:"domains,omitempty"`
+	Environment     string   `json:"environment" jsonschema:"required"`
+	Branch          string   `json:"branch,omitempty"`
 }
 
 // DuplicateProjectOutput is the output structure for the MCP tool
