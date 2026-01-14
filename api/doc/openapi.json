@@ -2545,6 +2545,9 @@
 									"extension_type": {
 										"type": "string"
 									},
+									"featured": {
+										"type": "boolean"
+									},
 									"icon": {
 										"type": "string"
 									},
@@ -2718,6 +2721,9 @@
 					"extension_type": {
 						"type": "string"
 					},
+					"featured": {
+						"type": "boolean"
+					},
 					"icon": {
 						"type": "string"
 					},
@@ -2836,6 +2842,9 @@
 							},
 							"extension_type": {
 								"type": "string"
+							},
+							"featured": {
+								"type": "boolean"
 							},
 							"icon": {
 								"type": "string"
@@ -3002,6 +3011,9 @@
 							},
 							"extension_type": {
 								"type": "string"
+							},
+							"featured": {
+								"type": "boolean"
 							},
 							"icon": {
 								"type": "string"
@@ -5228,6 +5240,9 @@
 										"extension_type": {
 											"type": "string"
 										},
+										"featured": {
+											"type": "boolean"
+										},
 										"icon": {
 											"type": "string"
 										},
@@ -5407,6 +5422,9 @@
 										},
 										"extension_type": {
 											"type": "string"
+										},
+										"featured": {
+											"type": "boolean"
 										},
 										"icon": {
 											"type": "string"

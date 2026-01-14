@@ -67,6 +67,7 @@ func (p *Parser) convertToExtension(extYAML *ExtensionYAML, yamlContent string) 
 		ExtensionType:    types.ExtensionType(extYAML.Metadata.Type),
 		Version:          extYAML.Metadata.Version,
 		IsVerified:       extYAML.Metadata.IsVerified,
+		Featured:         extYAML.Metadata.Featured,
 		YAMLContent:      yamlContent,
 		ParsedContent:    string(parsedContent),
 		ContentHash:      hex.EncodeToString(hash[:]),

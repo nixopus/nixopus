@@ -45,6 +45,7 @@ export interface Extension {
   extension_type: ExtensionType;
   version: string;
   is_verified: boolean;
+  featured: boolean;
   yaml_content: string;
   parsed_content: string;
   content_hash: string;

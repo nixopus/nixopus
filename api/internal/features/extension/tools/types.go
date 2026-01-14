@@ -34,6 +34,7 @@ type MCPExtension struct {
 	ExtensionType     shared_types.ExtensionType     `json:"extension_type"`
 	Version           string                         `json:"version"`
 	IsVerified        bool                           `json:"is_verified"`
+	Featured          bool                           `json:"featured"`
 	YAMLContent       string                         `json:"yaml_content"`
 	ParsedContent     string                         `json:"parsed_content"`
 	ContentHash       string                         `json:"content_hash"`

@@ -129,6 +129,7 @@ func (s *ExtensionService) ForkExtension(extensionID string, yamlOverride string
 		fork.ExtensionType = ext.ExtensionType
 		fork.Version = ext.Version
 		fork.IsVerified = false
+		fork.Featured = false
 		fork.YAMLContent = yamlOverride
 		fork.ParsedContent = ext.ParsedContent
 		fork.ContentHash = ext.ContentHash

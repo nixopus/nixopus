@@ -171,11 +171,12 @@ func (s *ExtensionStorage) ListExtensions(params types.ExtensionListParams) (*ty
 		})
 	}
 
+	// Always sort featured extensions first, then apply user's sort preference
 	sortColumn := string(params.SortBy)
 	if params.SortDir == types.SortDirectionDesc {
-		query = query.Order(sortColumn + " DESC")
+		query = query.Order("featured DESC").Order(sortColumn + " DESC")
 	} else {
-		query = query.Order(sortColumn + " ASC")
+		query = query.Order("featured DESC").Order(sortColumn + " ASC")
 	}
 
 	var total int
