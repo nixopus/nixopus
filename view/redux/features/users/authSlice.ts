@@ -3,7 +3,7 @@ import { userApi } from '@/redux/services/users/userApi';
 import { User } from '@/redux/types/user';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { setAuthTokens, clearAuthTokens } from '@/lib/auth';
+import { setAuthTokens, clearAuthTokens } from '@/packages/utils/auth';
 import { doesSessionExist, signOut } from 'supertokens-auth-react/recipe/session';
 import { setActiveOrganization } from './userSlice';
 

@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
-import { DahboardUtilityHeader } from '@/components/layout/dashboard-page-header';
+import { DahboardUtilityHeader } from '@/packages/components/utility-header';
 import PaginationWrapper from '@/components/ui/pagination';
 import { DataTable, TableColumn } from '@/components/ui/data-table';
 import { ActivityMessage } from '@/redux/types/audit';
@@ -14,8 +14,8 @@ import useActivities, {
   ActivityListProps,
   getActionColor,
   resourceTypeOptions
-} from './hooks/use-activities';
-import PageLayout from '@/components/layout/page-layout';
+} from '../../packages/hooks/activities/use-activities';
+import PageLayout from '@/packages/layouts/page-layout';
 
 export default function ActivitiesPage() {
   const { t } = useTranslation();

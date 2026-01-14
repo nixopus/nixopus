@@ -9,7 +9,7 @@ import {
 } from '@reduxjs/toolkit/query/react';
 import { Mutex } from 'async-mutex';
 import { getAccessToken } from 'supertokens-auth-react/recipe/session';
-import { getAdvancedSettings } from '@/lib/advanced-settings';
+import { getAdvancedSettings } from '@/packages/utils/advanced-settings';
 
 const mutex = new Mutex();
 

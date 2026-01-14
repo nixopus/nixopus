@@ -6,7 +6,7 @@ import { useVerifyEmailMutation } from '@/redux/services/users/authApi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { useTranslation } from '@/hooks/use-translation';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { toast } from 'sonner';
 
 export default function VerifyEmailPage() {

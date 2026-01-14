@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { AIContent } from '@/components/ai';
-import { ThreadsSidebar } from '@/components/ai/threads-sidebar';
+import { AIContent } from '@/packages/components/ai-sheet';
+import { ThreadsSidebar } from '@/packages/components/ai-sheet';
 
 export default function ChatPage() {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);

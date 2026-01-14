@@ -29,18 +29,53 @@ func (c *ContainerController) ListContainers(fuegoCtx fuego.ContextNoBody) (*con
 			Status: http.StatusInternalServerError,
 		}
 	}
-	// Build summaries, then search/sort/paginate
+	// Build summaries, then search/sort
 	rows := summarizeContainers(containers)
-	pageRows, totalCount := applySearchSortPaginate(rows, params)
+	filteredRows := applySearchFilter(rows, params)
+	sortedRows := applySort(filteredRows, params)
 
-	result := c.appendContainerInfo(pageRows, containers)
+	// Group containers by application ID
+	groups, ungrouped := groupContainersByApplication(sortedRows, containers, c.dockerService)
+
+	// Sort groups by application name
+	sort.SliceStable(groups, func(i, j int) bool {
+		if params.SortOrder == "desc" {
+			return groups[i].ApplicationName > groups[j].ApplicationName
+		}
+		return groups[i].ApplicationName < groups[j].ApplicationName
+	})
+
+	// Paginate groups
+	totalGroupCount := len(groups)
+	start := (params.Page - 1) * params.PageSize
+	if start > totalGroupCount {
+		start = totalGroupCount
+	}
+	end := start + params.PageSize
+	if end > totalGroupCount {
+		end = totalGroupCount
+	}
+	paginatedGroups := groups[start:end]
+
+	// Calculate total container count
+	totalContainerCount := 0
+	for _, group := range groups {
+		totalContainerCount += len(group.Containers)
+	}
+	totalContainerCount += len(ungrouped)
+
+	// Include ungrouped containers on every page
+	// This ensures they're always visible regardless of pagination
+	paginatedUngrouped := ungrouped
 
 	return &containertypes.ListContainersResponse{
 		Status:  "success",
 		Message: "Containers fetched successfully",
 		Data: containertypes.ListContainersResponseData{
-			Containers: result,
-			TotalCount: totalCount,
+			Groups:     paginatedGroups,
+			Ungrouped:  paginatedUngrouped,
+			TotalCount: totalContainerCount,
+			GroupCount: totalGroupCount,
 			Page:       params.Page,
 			PageSize:   params.PageSize,
 			SortBy:     params.SortBy,
@@ -133,7 +168,7 @@ func summarizeContainers(summaries []container.Summary) []containertypes.Contain
 	return rows
 }
 
-func applySearchSortPaginate(rows []containertypes.ContainerListRow, p containertypes.ContainerListParams) ([]containertypes.ContainerListRow, int) {
+func applySearchFilter(rows []containertypes.ContainerListRow, p containertypes.ContainerListParams) []containertypes.ContainerListRow {
 	if p.Search != "" {
 		lower := strings.ToLower(p.Search)
 		filtered := make([]containertypes.ContainerListRow, 0, len(rows))
@@ -144,9 +179,12 @@ func applySearchSortPaginate(rows []containertypes.ContainerListRow, p container
 				filtered = append(filtered, r)
 			}
 		}
-		rows = filtered
+		return filtered
 	}
+	return rows
+}
 
+func applySort(rows []containertypes.ContainerListRow, p containertypes.ContainerListParams) []containertypes.ContainerListRow {
 	sort.SliceStable(rows, func(i, j int) bool {
 		switch p.SortBy {
 		case "status":
@@ -172,17 +210,117 @@ func applySearchSortPaginate(rows []containertypes.ContainerListRow, p container
 			return ai < aj
 		}
 	})
+	return rows
+}
 
-	totalCount := len(rows)
-	start := (p.Page - 1) * p.PageSize
-	if start > totalCount {
-		start = totalCount
+func groupContainersByApplication(
+	rows []containertypes.ContainerListRow,
+	summaries []container.Summary,
+	dockerService interface {
+		GetContainerById(id string) (container.InspectResponse, error)
+	},
+) ([]containertypes.ContainerGroup, []containertypes.Container) {
+	groupsMap := make(map[string]*containertypes.ContainerGroup)
+	ungrouped := make([]containertypes.Container, 0)
+
+	// Create a map of summaries by ID for quick lookup
+	summaryMap := make(map[string]container.Summary)
+	for _, s := range summaries {
+		summaryMap[s.ID] = s
 	}
-	end := start + p.PageSize
-	if end > totalCount {
-		end = totalCount
+
+	for _, row := range rows {
+		applicationID := ""
+		applicationName := "Unknown Application"
+		if row.Labels != nil {
+			if id, ok := row.Labels["com.application.id"]; ok {
+				applicationID = id
+			}
+			if name, ok := row.Labels["com.application.name"]; ok {
+				applicationName = name
+			}
+		}
+
+		// Get full container info
+		info, err := dockerService.GetContainerById(row.ID)
+		if err != nil {
+			continue
+		}
+
+		containerData := containertypes.Container{
+			ID:        row.ID,
+			Name:      row.Name,
+			Image:     row.Image,
+			Status:    row.Status,
+			State:     row.State,
+			Created:   info.Created,
+			Labels:    row.Labels,
+			Command:   "",
+			IPAddress: info.NetworkSettings.IPAddress,
+			HostConfig: containertypes.HostConfig{
+				Memory:     info.HostConfig.Memory,
+				MemorySwap: info.HostConfig.MemorySwap,
+				CPUShares:  info.HostConfig.CPUShares,
+			},
+		}
+
+		if info.Config != nil && info.Config.Cmd != nil && len(info.Config.Cmd) > 0 {
+			containerData.Command = info.Config.Cmd[0]
+		}
+
+		// Add ports from summary
+		if s, ok := summaryMap[row.ID]; ok {
+			for _, p := range s.Ports {
+				containerData.Ports = append(containerData.Ports, containertypes.Port{
+					PrivatePort: int(p.PrivatePort),
+					PublicPort:  int(p.PublicPort),
+					Type:        p.Type,
+				})
+			}
+		}
+
+		// Add mounts
+		for _, m := range info.Mounts {
+			containerData.Mounts = append(containerData.Mounts, containertypes.Mount{
+				Type:        string(m.Type),
+				Source:      m.Source,
+				Destination: m.Destination,
+				Mode:        m.Mode,
+			})
+		}
+
+		// Add networks
+		for name, network := range info.NetworkSettings.Networks {
+			containerData.Networks = append(containerData.Networks, containertypes.Network{
+				Name:       name,
+				IPAddress:  network.IPAddress,
+				Gateway:    network.Gateway,
+				MacAddress: network.MacAddress,
+				Aliases:    network.Aliases,
+			})
+		}
+
+		if applicationID != "" {
+			if _, exists := groupsMap[applicationID]; !exists {
+				groupsMap[applicationID] = &containertypes.ContainerGroup{
+					ApplicationID:   applicationID,
+					ApplicationName: applicationName,
+					Containers:      make([]containertypes.Container, 0),
+				}
+			}
+			groupsMap[applicationID].Containers = append(groupsMap[applicationID].Containers, containerData)
+		} else {
+			ungrouped = append(ungrouped, containerData)
+		}
 	}
-	return rows[start:end], totalCount
+
+	// Convert map to slice
+	groups := make([]containertypes.ContainerGroup, 0, len(groupsMap))
+	for _, group := range groupsMap {
+		groups = append(groups, *group)
+	}
+
+	return groups, ungrouped
 }
 
 func (c *ContainerController) appendContainerInfo(pageRows []containertypes.ContainerListRow, summaries []container.Summary) []containertypes.Container {

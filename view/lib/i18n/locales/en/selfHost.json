@@ -101,6 +101,45 @@
         "diskIO": "Disk I/O",
         "processes": "Processes",
         "lastUpdated": "Last updated"
+      },
+      "healthCheck": {
+        "title": "Health Check",
+        "notConfigured": "Health check is not configured for this application.",
+        "enable": "Enable Health Check",
+        "healthy": "Healthy",
+        "unhealthy": "Unhealthy",
+        "disabled": "Disabled",
+        "uptime": "Uptime",
+        "avgResponseTime": "Avg Response Time",
+        "lastChecked": "Last checked",
+        "editTitle": "Edit Health Check",
+        "createTitle": "Create Health Check",
+        "description": "Configure health check settings for your application",
+        "endpoint": "Endpoint",
+        "method": "Method",
+        "intervalSeconds": "Interval (seconds)",
+        "timeoutSeconds": "Timeout (seconds)",
+        "enabled": "Enabled",
+        "delete": "Delete",
+        "update": "Update",
+        "create": "Create",
+        "updated": "Health check updated successfully",
+        "created": "Health check created successfully",
+        "deleted": "Health check deleted successfully",
+        "error": "An error occurred",
+        "history": "Health Check History",
+        "historyDescription": "Response time and health status over time",
+        "loadingChartData": "Loading chart data...",
+        "noData": "No historical data available",
+        "selectTimeRange": "Select time range",
+        "last10m": "Last 10 minutes",
+        "last1h": "Last 1 hour",
+        "last24h": "Last 24 hours",
+        "last7d": "Last 7 days",
+        "last30d": "Last 30 days",
+        "last90d": "Last 90 days",
+        "responseTime": "Response Time",
+        "healthStatus": "Health Status"
       }
     },
     "page": {
@@ -129,6 +168,8 @@
         "dockerConfiguration": "Docker Configuration",
         "environmentVariables": "Environment Variables",
         "commands": "Commands",
+        "healthCheck": "Health Check",
+        "healthCheckDescription": "Monitor application health and availability",
         "deploymentInformation": "Deployment Information"
       },
       "fields": {
@@ -185,11 +226,24 @@
         "buildPack": {
           "label": "Build Pack",
           "description": "Build pack used for the application"
+        },
+        "healthCheckEndpoint": {
+          "description": "The endpoint path to check for health"
+        },
+        "healthCheckMethod": {
+          "description": "HTTP method used for health check"
+        },
+        "healthCheckInterval": {
+          "description": "How often to check health (in seconds)"
+        },
+        "healthCheckTimeout": {
+          "description": "Request timeout (in seconds)"
         }
       },
       "buttons": {
         "update": "Update Deployment",
-        "updating": "Updating..."
+        "updating": "Updating...",
+        "editHealthCheck": "Edit Health Check"
       }
     },
     "deployments": {

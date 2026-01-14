@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { FeatureFlag } from '@/types/feature-flags';
+import { FeatureFlag } from '@/packages/types/feature-flags';
 
 interface FeatureFlagsState {
   features: FeatureFlag[];

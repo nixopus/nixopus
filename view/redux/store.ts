@@ -19,6 +19,7 @@ import { domainsApi } from '@/redux/services/settings/domainsApi';
 import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorApi';
 import githubConnector from './features/github-connector/githubConnectorSlice';
 import { deployApi } from './services/deploy/applicationsApi';
+import { healthcheckApi } from './services/deploy/healthcheckApi';
 import { fileManagersApi } from './services/file-manager/fileManagersApi';
 import { auditApi } from './services/audit';
 import { FeatureFlagsApi } from './services/feature-flags/featureFlagsApi';
@@ -53,6 +54,7 @@ const rootReducer = combineReducers({
   [GithubConnectorApi.reducerPath]: GithubConnectorApi.reducer,
   githubConnector: githubConnector,
   [deployApi.reducerPath]: deployApi.reducer,
+  [healthcheckApi.reducerPath]: healthcheckApi.reducer,
   user: userSlice,
   fileManagersApi: fileManagersApi.reducer,
   [auditApi.reducerPath]: auditApi.reducer,
@@ -89,6 +91,7 @@ const storeOptions: ConfigureStoreOptions = {
       domainsApi.middleware,
       GithubConnectorApi.middleware,
       deployApi.middleware,
+      healthcheckApi.middleware,
       fileManagersApi.middleware,
       auditApi.middleware,
       FeatureFlagsApi.middleware,
