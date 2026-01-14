@@ -66,6 +66,11 @@ func NewDeployController(
 	}, nil
 }
 
+// Service returns the deploy service instance.
+func (c *DeployController) Service() *service.DeployService {
+	return c.service
+}
+
 // parseAndValidate parses and validates the request body.
 //
 // This method attempts to parse the request body into the provided 'req' interface

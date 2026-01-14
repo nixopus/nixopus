@@ -54,6 +54,7 @@ type DeployRepository interface {
 	GetEnvironmentsInFamily(familyID uuid.UUID, organizationID uuid.UUID) ([]shared_types.Environment, error)
 	CountFamilyMembers(familyID uuid.UUID) (int, error)
 	ClearFamilyIDIfSingleMember(familyID uuid.UUID) error
+	GetLatestDeployments(organizationID uuid.UUID, limit int) ([]shared_types.ApplicationDeployment, error)
 }
 
 func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
@@ -535,6 +536,27 @@ func (s *DeployStorage) CountFamilyMembers(familyID uuid.UUID) (int, error) {
 		Count(s.Ctx)
 
 	return count, err
+}
+
+// GetLatestDeployments retrieves the latest deployments across all applications for an organization.
+func (s *DeployStorage) GetLatestDeployments(organizationID uuid.UUID, limit int) ([]shared_types.ApplicationDeployment, error) {
+	var deployments []shared_types.ApplicationDeployment
+
+	err := s.DB.NewSelect().
+		Model(&deployments).
+		Relation("Application").
+		Relation("Status").
+		Join("JOIN applications a ON a.id = ad.application_id").
+		Where("a.organization_id = ?", organizationID).
+		Order("ad.created_at DESC").
+		Limit(limit).
+		Scan(s.Ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return deployments, nil
 }
 
 // ClearFamilyIDIfSingleMember clears the family_id if only one member remains in the family.

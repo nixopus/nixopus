@@ -18,10 +18,12 @@ import { LoadAverageCard } from '@/packages/components/dashboard';
 import { CPUUsageCard } from '@/packages/components/dashboard';
 import { MemoryUsageCard } from '@/packages/components/dashboard';
 import { DiskUsageCard } from '@/packages/components/dashboard';
+import { DeploymentsWidget } from '@/packages/components/deployments-widget';
+import { DeploymentStatsWidget } from '@/packages/components/deployments-widget';
 
 export const useDashboard = () => {
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
-  const { containersData, systemStats } = useMonitor();
+  const { containersData, systemStats, deploymentsData } = useMonitor();
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const { t } = useTranslation();
@@ -136,6 +138,14 @@ export const useDashboard = () => {
     {
       id: 'containers',
       label: 'Containers'
+    },
+    {
+      id: 'deployments',
+      label: 'Latest Deployments'
+    },
+    {
+      id: 'deployment-stats',
+      label: 'Deployment Stats'
     }
   ];
 
@@ -183,6 +193,17 @@ export const useDashboard = () => {
       component: <ContainersWidget containersData={containersData} columns={columns} />,
       className: 'md:col-span-2',
       isDefault: true
+    },
+    {
+      id: 'deployments',
+      component: <DeploymentsWidget deploymentsData={deploymentsData || []} />,
+      className: 'md:col-span-2',
+      isDefault: true
+    },
+    {
+      id: 'deployment-stats',
+      component: <DeploymentStatsWidget deploymentsData={deploymentsData || []} />,
+      isDefault: true
     }
   ];
 
@@ -209,6 +230,7 @@ export const useDashboard = () => {
     isDashboardEnabled,
     containersData,
     systemStats,
+    deploymentsData,
     smtpConfig,
     showDragHint,
     mounted,

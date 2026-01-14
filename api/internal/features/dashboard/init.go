@@ -22,7 +22,7 @@ func getDockerService() (*docker.DockerService, error) {
 	return service, nil
 }
 
-func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger) (*DashboardMonitor, error) {
+func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger, organizationID string, deployService DeployServiceProvider) (*DashboardMonitor, error) {
 	ssh_client := sshpkg.NewSSH()
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -33,14 +33,16 @@ func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger) (*DashboardMon
 	}
 
 	monitor := &DashboardMonitor{
-		conn:          conn,
-		sshpkg:        ssh_client,
-		log:           log,
-		ctx:           ctx,
-		cancel:        cancel,
-		Interval:      time.Second * 10,
-		Operations:    AllOperations,
-		dockerService: dockerService,
+		conn:           conn,
+		sshpkg:         ssh_client,
+		log:            log,
+		ctx:            ctx,
+		cancel:         cancel,
+		Interval:       time.Second * 10,
+		Operations:     AllOperations,
+		dockerService:  dockerService,
+		organizationID: organizationID,
+		deployService:  deployService,
 	}
 
 	return monitor, nil
@@ -97,6 +99,8 @@ func (m *DashboardMonitor) HandleOperation(operation DashboardOperation) {
 		m.GetContainers()
 	case GetSystemStats:
 		m.GetSystemStats()
+	case GetDeployments:
+		m.GetDeployments()
 	default:
 		m.log.Log(logger.Error, "Unknown operation", string(operation))
 	}
