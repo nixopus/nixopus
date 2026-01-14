@@ -57,11 +57,6 @@ export function OverviewTab({
         )}
         {extension?.version && <BadgeGroupItem>v{extension.version}</BadgeGroupItem>}
         {extension?.is_verified && <BadgeGroupItem>Verified</BadgeGroupItem>}
-        {extension?.featured && (
-          <BadgeGroupItem className="bg-yellow-500/10 border-yellow-500/50 text-yellow-600 dark:text-yellow-500 font-semibold">
-            Featured
-          </BadgeGroupItem>
-        )}
       </BadgeGroup>
 
       {extension?.variables && extension.variables.length > 0 && variableColumns && (
