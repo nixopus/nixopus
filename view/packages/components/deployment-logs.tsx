@@ -73,7 +73,7 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
   });
 
   return (
-    <CardWrapper className="border-0 shadow-none overflow-x-hidden">
+    <CardWrapper className="border-0 shadow-none overflow-x-hidden bg-transparent">
       <div className="space-y-3 pb-4 px-0 border-none border-b-0 min-w-0">
         {title && (
           <div className="flex items-center justify-between min-w-0 gap-2">

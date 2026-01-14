@@ -469,7 +469,7 @@ export const ContainerCard = ({ container, onClick, onAction }: ContainerCardPro
     <div
       onClick={onClick}
       className={cn(
-        'group relative rounded-xl p-5 cursor-pointer transition-all duration-200',
+        'group relative rounded-xl p-5 cursor-pointer transition-all bg-muted/50 duration-200',
         'hover:bg-muted/50 border border-transparent hover:border-border/50'
       )}
     >

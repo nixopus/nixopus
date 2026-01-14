@@ -18,12 +18,6 @@ export function useDeploymentConfiguration({
 }: UseDeploymentConfigurationProps) {
   const { t } = useTranslation();
 
-  // Check if build_pack is DockerCompose (handle both enum value 'dockerCompose' and API value 'docker-compose')
-  const isDockerCompose =
-    build_pack === BuildPack.DockerCompose ||
-    (build_pack as string) === 'docker-compose' ||
-    (build_pack as string) === 'dockerCompose';
-
   const environmentOptions = [
     {
       label: t('selfHost.deployForm.fields.environment.options.staging'),
@@ -47,14 +41,10 @@ export function useDeploymentConfiguration({
       descriptionText: t('selfHost.configuration.fields.basePath.description')
     },
     {
-      label: isDockerCompose
-        ? t('selfHost.configuration.fields.dockerComposePath.label')
-        : t('selfHost.configuration.fields.dockerfilePath.label'),
+      label: t('selfHost.configuration.fields.dockerfilePath.label'),
       name: 'DockerfilePath',
-      placeholder: isDockerCompose ? 'docker-compose.yml' : 'Dockerfile',
-      descriptionText: isDockerCompose
-        ? t('selfHost.configuration.fields.dockerComposePath.description')
-        : t('selfHost.configuration.fields.dockerfilePath.description')
+      placeholder: 'Dockerfile',
+      descriptionText: t('selfHost.configuration.fields.dockerfilePath.description')
     }
   ];
 
