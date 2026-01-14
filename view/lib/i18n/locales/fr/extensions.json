@@ -1,6 +1,7 @@
 {
   "extensions": {
     "title": "Extensions",
+    "description": "Découvrez et installez des extensions pour améliorer la configuration de votre serveur",
     "subtitle": "Omettez le boilerplate, lancez votre configuration de serveur en quelques secondes",
     "exploreExtensions": "Explorer le Hub d'Extensions",
     "exploreExtensionsTitle": "Explorer les extensions",

@@ -1,4 +1,4 @@
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import { useGetUserOrganizationsQuery } from '@/redux/services/users/userApi';
 import { useNavigationState } from '@/packages/hooks/shared/use_navigation_state';
@@ -58,6 +58,7 @@ export function useAppSidebar() {
   const dispatch = useAppDispatch();
   const { canAccessResource } = useRBAC();
   const router = useRouter();
+  const pathname = usePathname();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const { closeSettings } = useSettingsModal();
 
@@ -261,6 +262,21 @@ Add any other context about the problem here.`;
       refetch();
     }
   }, [activeOrg?.id, refetch]);
+
+  // Sync activeNav with current pathname to prevent multiple active menu items
+  useEffect(() => {
+    if (pathname) {
+      // Find the matching navigation item URL for the current pathname
+      const matchingNavItem = data.navMain.find(
+        (item) => pathname === item.url || pathname.startsWith(item.url + '/')
+      );
+
+      // Only update activeNav if we found a match and it's different from current activeNav
+      if (matchingNavItem && matchingNavItem.url !== activeNav) {
+        setActiveNav(matchingNavItem.url);
+      }
+    }
+  }, [pathname, activeNav, setActiveNav]);
 
   return {
     user,
