@@ -6,7 +6,8 @@ import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { TableColumn } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, AlertCircle, Loader2, Undo } from 'lucide-react';
+import { Undo } from 'lucide-react';
+import { getDeploymentStatusIcon } from '@/packages/utils/colors';
 
 interface UseDeploymentsListProps {
   deployments?: ApplicationDeployment[];
@@ -39,19 +40,6 @@ export function useDeploymentsList({ deployments }: UseDeploymentsListProps) {
     return `${minutes}m ${seconds}s`;
   };
 
-  const getStatusIcon = (status?: string) => {
-    switch (status?.toLowerCase()) {
-      case 'deployed':
-        return <CheckCircle2 className="h-4 w-4 text-green-600" />;
-      case 'failed':
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
-      case 'in_progress':
-        return <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />;
-      default:
-        return <CheckCircle2 className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
-
   const handleRowClick = (deployment: ApplicationDeployment) => {
     router.push(`/self-host/application/${deployment.application_id}/deployments/${deployment.id}`);
   };
@@ -67,7 +55,7 @@ export function useDeploymentsList({ deployments }: UseDeploymentsListProps) {
       title: t('selfHost.deployment.list.table.status'),
       render: (_, deployment) => (
         <div className="flex items-center gap-2">
-          {getStatusIcon(deployment.status?.status)}
+          {getDeploymentStatusIcon(deployment.status?.status)}
           <Badge
             variant={
               deployment.status?.status?.toLowerCase() === 'deployed'
@@ -131,7 +119,6 @@ export function useDeploymentsList({ deployments }: UseDeploymentsListProps) {
     handleRowClick,
     isLoading,
     formatDate,
-    calculateRunTime,
-    getStatusIcon
+    calculateRunTime
   };
 }

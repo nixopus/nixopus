@@ -10,6 +10,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type DashboardOperation string
@@ -17,11 +18,13 @@ type DashboardOperation string
 const (
 	GetContainers  DashboardOperation = "get_containers"
 	GetSystemStats DashboardOperation = "get_system_stats"
+	GetDeployments DashboardOperation = "get_deployments"
 )
 
 var AllOperations = []DashboardOperation{
 	GetContainers,
 	GetSystemStats,
+	GetDeployments,
 }
 
 type MonitoringConfig struct {
@@ -29,17 +32,26 @@ type MonitoringConfig struct {
 	Operations []DashboardOperation `json:"operations"`
 }
 
+// DeployServiceProvider defines the interface for fetching latest deployments.
+// This interface allows the dashboard monitor to work with any service that implements
+// GetLatestDeployments, enabling loose coupling and easier testing.
+type DeployServiceProvider interface {
+	GetLatestDeployments(organizationID string, limit int) ([]shared_types.ApplicationDeployment, error)
+}
+
 type DashboardMonitor struct {
-	conn          *websocket.Conn
-	connMutex     sync.Mutex
-	sshpkg        *sshpkg.SSH
-	log           logger.Logger
-	client        *goph.Client
-	Interval      time.Duration
-	Operations    []DashboardOperation
-	cancel        context.CancelFunc
-	ctx           context.Context
-	dockerService *docker.DockerService
+	conn           *websocket.Conn
+	connMutex      sync.Mutex
+	sshpkg         *sshpkg.SSH
+	log            logger.Logger
+	client         *goph.Client
+	Interval       time.Duration
+	Operations     []DashboardOperation
+	cancel         context.CancelFunc
+	ctx            context.Context
+	dockerService  *docker.DockerService
+	organizationID string
+	deployService  DeployServiceProvider
 }
 
 type SystemStats struct {

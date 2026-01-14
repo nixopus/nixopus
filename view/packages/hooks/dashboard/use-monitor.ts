@@ -1,31 +1,39 @@
 'use client';
 import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { ContainerData, SystemStatsType } from '@/redux/types/monitor';
+import { ApplicationDeployment } from '@/redux/types/applications';
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useAppSelector } from '@/redux/hooks';
 
 function use_monitor() {
   const { sendJsonMessage, message, isReady } = useWebSocket();
   const [containersData, setContainersData] = useState<ContainerData[]>([]);
   const [systemStats, setSystemStats] = useState<SystemStatsType | null>(null);
+  const [deploymentsData, setDeploymentsData] = useState<ApplicationDeployment[]>([]);
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const isInitializedRef = useRef(false);
 
+  const organizationId =
+    useAppSelector((state) => state.user.activeOrganization?.id) ||
+    useAppSelector((state) => state.auth.user?.organization_users?.[0]?.organization_id);
+
   const startMonitoring = useCallback(() => {
-    if (!isReady) return;
+    if (!isReady || !organizationId) return;
 
     console.log('Starting dashboard monitoring');
     sendJsonMessage({
       action: 'dashboard_monitor',
       data: {
         interval: 10,
-        operations: ['get_containers', 'get_system_stats']
+        operations: ['get_containers', 'get_system_stats', 'get_deployments'],
+        organization_id: organizationId
       }
     });
     setIsMonitoring(true);
     setLastError(null);
-  }, [isReady, sendJsonMessage]);
+  }, [isReady, sendJsonMessage, organizationId]);
 
   const stopMonitoring = useCallback(() => {
     console.log('Stopping dashboard monitoring');
@@ -51,6 +59,9 @@ function use_monitor() {
           setLastError(null);
         } else if (parsedMessage.action === 'get_system_stats' && parsedMessage.data) {
           setSystemStats(parsedMessage.data);
+          setLastError(null);
+        } else if (parsedMessage.action === 'get_deployments' && parsedMessage.data) {
+          setDeploymentsData(parsedMessage.data);
           setLastError(null);
         } else if (parsedMessage.action === 'error') {
           setLastError(parsedMessage.error || 'Unknown error occurred');
@@ -107,6 +118,7 @@ function use_monitor() {
   return {
     containersData,
     systemStats,
+    deploymentsData,
     isMonitoring,
     lastError,
     startMonitoring,

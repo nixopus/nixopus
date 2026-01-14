@@ -44,7 +44,16 @@ func (s *SocketServer) handleDashboardMonitor(conn *websocket.Conn, msg types.Pa
 	s.dashboardMutex.Lock()
 	monitor, exists := s.dashboardMonitors[conn]
 	if !exists {
-		newMonitor, err := dashboard.NewDashboardMonitor(conn, logger.NewLogger())
+		var organizationID string
+		if msg.Data != nil {
+			if dataMap, ok := msg.Data.(map[string]interface{}); ok {
+				if orgID, ok := dataMap["organization_id"].(string); ok {
+					organizationID = orgID
+				}
+			}
+		}
+
+		newMonitor, err := dashboard.NewDashboardMonitor(conn, logger.NewLogger(), organizationID, s.deployController.Service())
 		if err != nil {
 			s.dashboardMutex.Unlock()
 			s.sendError(conn, "Failed to create dashboard monitor")
