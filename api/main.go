@@ -86,6 +86,7 @@ func main() {
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		<-sigChan
 		log.Println("Shutting down...")
+		queue.Close()
 		schedulers.Main.Stop()
 		schedulers.HealthCheck.Stop()
 		os.Exit(0)

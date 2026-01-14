@@ -1701,6 +1701,62 @@
 				},
 				"type": "object"
 			},
+			"CreateHealthCheckRequest": {
+				"description": "CreateHealthCheckRequest schema",
+				"properties": {
+					"application_id": {
+						"type": "string"
+					},
+					"body": {
+						"nullable": true,
+						"type": "string"
+					},
+					"endpoint": {
+						"type": "string"
+					},
+					"expected_status_codes": {
+						"items": {
+							"type": "integer"
+						},
+						"nullable": true,
+						"type": "array"
+					},
+					"failure_threshold": {
+						"nullable": true,
+						"type": "integer"
+					},
+					"headers": {
+						"additionalProperties": {
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "object"
+					},
+					"interval_seconds": {
+						"nullable": true,
+						"type": "integer"
+					},
+					"method": {
+						"type": "string"
+					},
+					"retention_days": {
+						"nullable": true,
+						"type": "integer"
+					},
+					"success_threshold": {
+						"nullable": true,
+						"type": "integer"
+					},
+					"timeout_seconds": {
+						"nullable": true,
+						"type": "integer"
+					}
+				},
+				"required": [
+					"application_id"
+				],
+				"type": "object"
+			},
 			"CreateOrganizationRequest": {
 				"description": "CreateOrganizationRequest schema",
 				"properties": {
@@ -2489,6 +2545,9 @@
 									"extension_type": {
 										"type": "string"
 									},
+									"featured": {
+										"type": "boolean"
+									},
 									"icon": {
 										"type": "string"
 									},
@@ -2662,6 +2721,9 @@
 					"extension_type": {
 						"type": "string"
 					},
+					"featured": {
+						"type": "boolean"
+					},
 					"icon": {
 						"type": "string"
 					},
@@ -2780,6 +2842,9 @@
 							},
 							"extension_type": {
 								"type": "string"
+							},
+							"featured": {
+								"type": "boolean"
 							},
 							"icon": {
 								"type": "string"
@@ -2946,6 +3011,9 @@
 							},
 							"extension_type": {
 								"type": "string"
+							},
+							"featured": {
+								"type": "boolean"
 							},
 							"icon": {
 								"type": "string"
@@ -5172,6 +5240,9 @@
 										"extension_type": {
 											"type": "string"
 										},
+										"featured": {
+											"type": "boolean"
+										},
 										"icon": {
 											"type": "string"
 										},
@@ -5351,6 +5422,9 @@
 										},
 										"extension_type": {
 											"type": "string"
+										},
+										"featured": {
+											"type": "boolean"
 										},
 										"icon": {
 											"type": "string"
@@ -8100,6 +8174,26 @@
 				},
 				"type": "object"
 			},
+			"Response": {
+				"description": "Response schema",
+				"properties": {
+					"data": {
+						"nullable": true
+					},
+					"error": {
+						"nullable": true,
+						"type": "string"
+					},
+					"message": {
+						"nullable": true,
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"RestartDeploymentRequest": {
 				"description": "RestartDeploymentRequest schema",
 				"properties": {
@@ -8172,6 +8266,21 @@
 						"type": "string"
 					}
 				},
+				"type": "object"
+			},
+			"ToggleHealthCheckRequest": {
+				"description": "ToggleHealthCheckRequest schema",
+				"properties": {
+					"application_id": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"application_id"
+				],
 				"type": "object"
 			},
 			"TwoFactorLoginRequest": {
@@ -8423,6 +8532,64 @@
 						"type": "string"
 					}
 				},
+				"type": "object"
+			},
+			"UpdateHealthCheckRequest": {
+				"description": "UpdateHealthCheckRequest schema",
+				"properties": {
+					"application_id": {
+						"type": "string"
+					},
+					"body": {
+						"nullable": true,
+						"type": "string"
+					},
+					"endpoint": {
+						"nullable": true,
+						"type": "string"
+					},
+					"expected_status_codes": {
+						"items": {
+							"type": "integer"
+						},
+						"nullable": true,
+						"type": "array"
+					},
+					"failure_threshold": {
+						"nullable": true,
+						"type": "integer"
+					},
+					"headers": {
+						"additionalProperties": {
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "object"
+					},
+					"interval_seconds": {
+						"nullable": true,
+						"type": "integer"
+					},
+					"method": {
+						"nullable": true,
+						"type": "string"
+					},
+					"retention_days": {
+						"nullable": true,
+						"type": "integer"
+					},
+					"success_threshold": {
+						"nullable": true,
+						"type": "integer"
+					},
+					"timeout_seconds": {
+						"nullable": true,
+						"type": "integer"
+					}
+				},
+				"required": [
+					"application_id"
+				],
 				"type": "object"
 			},
 			"UpdateLabelsRequest": {
@@ -15138,6 +15305,516 @@
 				]
 			}
 		},
+		"/api/v1/healthcheck": {
+			"delete": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).DeleteHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "DELETE_/api/v1/healthcheck",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "delete health check",
+				"tags": [
+					"api/v1/healthcheck"
+				]
+			},
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).GetHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "GET_/api/v1/healthcheck",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "get health check",
+				"tags": [
+					"api/v1/healthcheck"
+				]
+			},
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).CreateHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "POST_/api/v1/healthcheck",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateHealthCheckRequest"
+							}
+						}
+					},
+					"description": "Request body for types.CreateHealthCheckRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "create health check",
+				"tags": [
+					"api/v1/healthcheck"
+				]
+			},
+			"put": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).UpdateHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "PUT_/api/v1/healthcheck",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateHealthCheckRequest"
+							}
+						}
+					},
+					"description": "Request body for types.UpdateHealthCheckRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "update health check",
+				"tags": [
+					"api/v1/healthcheck"
+				]
+			}
+		},
+		"/api/v1/healthcheck/results": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).GetHealthCheckResults`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "GET_/api/v1/healthcheck/results",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "get health check results",
+				"tags": [
+					"api/v1/healthcheck"
+				]
+			}
+		},
+		"/api/v1/healthcheck/stats": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).GetHealthCheckStats`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "GET_/api/v1/healthcheck/stats",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "get health check stats",
+				"tags": [
+					"api/v1/healthcheck"
+				]
+			}
+		},
+		"/api/v1/healthcheck/toggle": {
+			"patch": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).ToggleHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "PATCH_/api/v1/healthcheck/toggle",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/ToggleHealthCheckRequest"
+							}
+						}
+					},
+					"description": "Request body for types.ToggleHealthCheckRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "toggle health check",
+				"tags": [
+					"api/v1/healthcheck"
+				]
+			}
+		},
 		"/api/v1/notification/preferences": {
 			"get": {
 				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).GetPreferences`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
@@ -17988,6 +18665,9 @@
 		},
 		{
 			"name": "api/v1/health"
+		},
+		{
+			"name": "api/v1/healthcheck"
 		},
 		{
 			"name": "api/v1/notification"

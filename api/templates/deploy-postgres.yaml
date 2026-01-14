@@ -8,6 +8,7 @@ metadata:
   type: "install"
   version: "1.0.0"
   isVerified: false
+  featured: true
 
 variables:
   image:
