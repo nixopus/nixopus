@@ -111,15 +111,23 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 
 	newProject.Status = &appStatus
 
-	// Copy domains from source project or use provided domains
+	// Handle domains: require explicit domains when duplicating across environments
 	domains := req.Domains
 	if len(domains) == 0 {
 		// Load domains from source project
 		sourceDomains, err := s.storage.GetApplicationDomains(sourceProject.ID)
-		if err == nil {
-			for _, d := range sourceDomains {
-				domains = append(domains, d.Domain)
-			}
+		if err != nil {
+			s.logger.Log(logger.Error, "failed to load source domains", err.Error())
+			return shared_types.Application{}, err
+		}
+		// When duplicating across environments, require explicit domains to avoid routing conflicts
+		if sourceProject.Environment != req.Environment {
+			s.logger.Log(logger.Error, "domains required when duplicating across environments", "")
+			return shared_types.Application{}, types.ErrMissingDomain
+		}
+		// Same environment: copy domains from source
+		for _, d := range sourceDomains {
+			domains = append(domains, d.Domain)
 		}
 	}
 
@@ -130,7 +138,11 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 			return shared_types.Application{}, err
 		}
 		// Load domains into newProject for response
-		domainsList, _ := s.storage.GetApplicationDomains(newProject.ID)
+		domainsList, err := s.storage.GetApplicationDomains(newProject.ID)
+		if err != nil {
+			s.logger.Log(logger.Error, "failed to load domains after duplication", err.Error())
+			return shared_types.Application{}, err
+		}
 		domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
 		for i := range domainsList {
 			domainPtrs[i] = &domainsList[i]

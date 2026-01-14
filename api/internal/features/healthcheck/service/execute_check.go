@@ -26,13 +26,14 @@ func (s *HealthCheckService) buildHealthCheckURL(healthCheck *shared_types.Healt
 	// Load domains if not already loaded
 	if len(application.Domains) == 0 {
 		domainsList, err := deployStorage.GetApplicationDomains(application.ID)
-		if err == nil {
-			domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
-			for i := range domainsList {
-				domainPtrs[i] = &domainsList[i]
-			}
-			application.Domains = domainPtrs
+		if err != nil {
+			return "", fmt.Errorf("failed to load domains: %w", err)
 		}
+		domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
+		for i := range domainsList {
+			domainPtrs[i] = &domainsList[i]
+		}
+		application.Domains = domainPtrs
 	}
 
 	// Use first domain if available
@@ -41,11 +42,10 @@ func (s *HealthCheckService) buildHealthCheckURL(healthCheck *shared_types.Healt
 	}
 
 	domain := application.Domains[0].Domain
-	protocol := "http"
+	// Determine protocol: default to https, use http only for localhost/127.0.0.1
+	protocol := "https"
 	if strings.Contains(domain, "localhost") || strings.Contains(domain, "127.0.0.1") {
 		protocol = "http"
-	} else {
-		protocol = "https"
 	}
 
 	return fmt.Sprintf("%s://%s%s", protocol, domain, healthCheck.Endpoint), nil

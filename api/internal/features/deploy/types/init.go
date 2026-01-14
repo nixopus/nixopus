@@ -235,6 +235,7 @@ var (
 	ErrSameEnvironmentAsDuplicate       = errors.New("cannot duplicate project with the same environment")
 	ErrProjectFamilyNotFound            = errors.New("project family not found")
 	ErrDomainLimitReached               = errors.New("maximum of 5 domains per application reached")
+	ErrDomainAlreadyExists              = errors.New("domain already exists for this application")
 )
 
 const (

@@ -89,6 +89,16 @@ func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddAppli
 		}
 	}
 
+	// Check for duplicate domain
+	for _, existingDomain := range existingDomains {
+		if existingDomain.Domain == data.Domain {
+			return nil, fuego.HTTPError{
+				Err:    types.ErrDomainAlreadyExists,
+				Status: http.StatusBadRequest,
+			}
+		}
+	}
+
 	if len(existingDomains) >= 5 {
 		return nil, fuego.HTTPError{
 			Err:    types.ErrDomainLimitReached,

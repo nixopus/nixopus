@@ -75,15 +75,19 @@ func (s *TaskService) DeleteDeployment(deployment *types.DeleteDeploymentRequest
 	// Remove all domains from Caddy
 	if len(application.Domains) > 0 {
 		client := GetCaddyClient()
-		for _, appDomain := range application.Domains {
-			if appDomain.Domain != "" {
-				err = client.DeleteDomain(appDomain.Domain)
-				if err != nil {
-					s.Logger.Log(logger.Error, "Failed to remove domain", err.Error())
+		if client == nil {
+			s.Logger.Log(logger.Warning, "Caddy client not configured", "")
+		} else {
+			for _, appDomain := range application.Domains {
+				if appDomain.Domain != "" {
+					err = client.DeleteDomain(appDomain.Domain)
+					if err != nil {
+						s.Logger.Log(logger.Error, "Failed to remove domain", err.Error())
+					}
 				}
 			}
+			client.Reload()
 		}
-		client.Reload()
 	}
 
 	// Handle family cleanup: if this project belongs to a family,
