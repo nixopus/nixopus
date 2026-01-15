@@ -2,9 +2,9 @@
 
 <a href="https://nixopus.com"><img width="1800" height="520" alt="Nixopus" src="https://github.com/user-attachments/assets/e103a9df-7abf-4f78-b75a-221331231247" /></a>
 
-<h6 align="center">
+<h5 align="center">
   Open Source alternative to Vercel, Heroku, Netlify with Terminal integration, and Self Hosting capabilities
-</h6>
+</h5>
 
 <p align="center">
   <a href="https://nixopus.com"><b>Website</b></a> •
@@ -32,7 +32,6 @@
 - [Features](#features)
 - [Demo](#demo)
 - [Installation](#installation)
-- [Links](#links)
 - [License](#license)
 
 ---
@@ -178,22 +177,6 @@ For more detailed installation instructions, visit our [Installation Guide](http
 - **Roadmap**: [GitHub Discussions](https://github.com/raghavyuva/nixopus/discussions/262)
 - **Report Issues**: [GitHub Issues](https://github.com/raghavyuva/nixopus/issues)
 - **Feature Requests**: [GitHub Discussions](https://github.com/raghavyuva/nixopus/discussions)
-
----
-
-## License
-
-Nixopus is licensed under the **Functional Source License, Version 1.1, ALv2 Future License (FSL-1.1-ALv2)**.
-
-This license allows you to:
-
-- Use Nixopus for your internal use and access
-- Use it for non-commercial education and research
-- Provide professional services to licensees using Nixopus
-
-The license converts to Apache License 2.0 after two years from the release date.
-
-See [LICENSE.md](LICENSE.md) for full details.
 
 ---
 
