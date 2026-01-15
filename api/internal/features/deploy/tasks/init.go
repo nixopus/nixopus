@@ -55,12 +55,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 		CreateDeploymentQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_CREATE_DEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        1,
+			MinNumWorker:        4,
 			MaxNumWorker:        4,
-			ReservationSize:     4,
+			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          100,
+			BufferSize:          16,
 		})
 
 		TaskCreateDeployment = taskq.RegisterTask(&taskq.TaskOptions{
@@ -81,12 +81,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 		UpdateDeploymentQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_UPDATE_DEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        1,
+			MinNumWorker:        4,
 			MaxNumWorker:        4,
-			ReservationSize:     4,
+			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          100,
+			BufferSize:          16,
 		})
 
 		TaskUpdateDeployment = taskq.RegisterTask(&taskq.TaskOptions{
@@ -106,12 +106,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 		ReDeployQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_REDEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        1,
+			MinNumWorker:        4,
 			MaxNumWorker:        4,
-			ReservationSize:     4,
+			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          100,
+			BufferSize:          16,
 		})
 
 		TaskReDeploy = taskq.RegisterTask(&taskq.TaskOptions{
@@ -131,12 +131,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 		RollbackQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_ROLLBACK,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        1,
+			MinNumWorker:        4,
 			MaxNumWorker:        4,
-			ReservationSize:     4,
+			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          100,
+			BufferSize:          16,
 		})
 
 		TaskRollback = taskq.RegisterTask(&taskq.TaskOptions{
@@ -156,12 +156,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 		RestartQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_RESTART,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        1,
+			MinNumWorker:        4,
 			MaxNumWorker:        4,
-			ReservationSize:     4,
+			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          100,
+			BufferSize:          16,
 		})
 
 		TaskRestart = taskq.RegisterTask(&taskq.TaskOptions{
