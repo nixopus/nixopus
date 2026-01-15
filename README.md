@@ -2,9 +2,9 @@
 
 <a href="https://nixopus.com"><img width="1800" height="520" alt="Nixopus" src="https://github.com/user-attachments/assets/e103a9df-7abf-4f78-b75a-221331231247" /></a>
 
-<h3 align="center">
+<h6 align="center">
   Open Source alternative to Vercel, Heroku, Netlify with Terminal integration, and Self Hosting capabilities
-</h3>
+</h6>
 
 <p align="center">
   <a href="https://nixopus.com"><b>Website</b></a> •
