@@ -69,14 +69,11 @@ func RedeployApplicationHandler(
 			return nil, RedeployApplicationOutput{}, err
 		}
 
-		// Convert to MCP type to avoid circular references
-		mcpApplication := convertToMCPApplication(application)
-
 		return nil, RedeployApplicationOutput{
-			Response: MCPApplicationResponse{
+			Response: types.ApplicationResponse{
 				Status:  "success",
 				Message: "Application redeployed successfully",
-				Data:    mcpApplication,
+				Data:    application,
 			},
 		}, nil
 	}

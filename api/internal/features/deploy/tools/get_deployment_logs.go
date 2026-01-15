@@ -7,6 +7,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 )
@@ -75,18 +76,12 @@ func GetDeploymentLogsHandler(
 			return nil, GetDeploymentLogsOutput{}, err
 		}
 
-		// Convert to MCP types to avoid circular references
-		mcpLogs := make([]MCPApplicationLogs, len(logs))
-		for i, log := range logs {
-			mcpLogs[i] = convertToMCPApplicationLogs(log)
-		}
-
 		return nil, GetDeploymentLogsOutput{
-			Response: MCPLogsResponse{
+			Response: types.LogsResponse{
 				Status:  "success",
 				Message: "Deployment logs retrieved successfully",
-				Data: MCPLogsResponseData{
-					Logs:       mcpLogs,
+				Data: types.LogsResponseData{
+					Logs:       logs,
 					TotalCount: totalCount,
 					Page:       page,
 					PageSize:   pageSize,

@@ -153,10 +153,6 @@ export enum EXTENSIONURLS {
   GET_EXECUTION_LOGS = 'v1/extensions/execution/{execution_id}/logs'
 }
 
-export enum AGENTSURLS {
-  CHAT = 'v1/agents/chat'
-}
-
 export enum HEALTHCHECKURLS {
   GET_HEALTH_CHECK = 'v1/healthcheck',
   CREATE_HEALTH_CHECK = 'v1/healthcheck',

@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { HelpCircle, Settings, TerminalIcon } from 'lucide-react';
-import Image from 'next/image';
 import {
   Sidebar,
   SidebarContent,
@@ -43,8 +42,6 @@ import {
 import { cn } from '@/lib/utils';
 import { useLayout } from '@/packages/hooks/use-layout';
 import { Tour } from './Tour';
-import { AISheet } from '@/packages/components/ai-sheet';
-import nixopusLogo from '@/public/nixopus_logo_transparent.png';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -77,9 +74,6 @@ function Layout({ children }: LayoutProps) {
     setFitAddonRef,
     startTour
   } = useLayout();
-  const pathname = usePathname();
-  const isChatPage = pathname === '/chat';
-  const [isAISheetOpen, setIsAISheetOpen] = useState(false);
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -124,29 +118,6 @@ function Layout({ children }: LayoutProps) {
             />
           </div>
         </Tour>
-        {!isChatPage && (
-          <>
-            <AISheet open={isAISheetOpen} onOpenChange={setIsAISheetOpen} />
-            <Button
-              variant={isAISheetOpen ? 'secondary' : 'outline'}
-              size="icon"
-              onClick={() => setIsAISheetOpen(true)}
-              className={cn(
-                'fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 transition-all duration-200',
-                'hover:scale-110 hover:shadow-xl',
-                isAISheetOpen && 'bg-primary text-primary-foreground hover:bg-primary/90'
-              )}
-            >
-              <Image
-                src={nixopusLogo}
-                alt="Nixopus AI"
-                width={24}
-                height={24}
-                className="object-contain scale-200"
-              />
-            </Button>
-          </>
-        )}
       </SidebarInset>
     </SidebarProvider>
   );

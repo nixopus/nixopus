@@ -145,6 +145,12 @@ export const DeployConfigureForm = ({
     build_variables
   });
 
+  // Check if build_pack is DockerCompose (handle both enum value 'dockerCompose' and API value 'docker-compose')
+  const isDockerCompose =
+    build_pack === BuildPack.DockerCompose ||
+    (build_pack as string) === 'docker-compose' ||
+    (build_pack as string) === 'dockerCompose';
+
   const renderReadOnlyField = (label: string, value: string | undefined, description: string) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const displayValue = value || '-';
@@ -210,7 +216,7 @@ export const DeployConfigureForm = ({
                   selectOptions={environmentOptions}
                   required={false}
                 />
-                {build_pack !== BuildPack.Static && (
+                {build_pack !== BuildPack.Static && !isDockerCompose && (
                   <FormInputField
                     form={form}
                     label={t('selfHost.configuration.fields.port.label')}

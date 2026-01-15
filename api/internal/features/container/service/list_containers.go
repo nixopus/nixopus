@@ -194,16 +194,12 @@ func appendContainerInfo(dockerService *docker.DockerService, l logger.Logger, p
 			})
 		}
 		for name, network := range info.NetworkSettings.Networks {
-			aliases := network.Aliases
-			if aliases == nil {
-				aliases = []string{}
-			}
 			cd.Networks = append(cd.Networks, container_types.Network{
 				Name:       name,
 				IPAddress:  network.IPAddress,
 				Gateway:    network.Gateway,
 				MacAddress: network.MacAddress,
-				Aliases:    aliases,
+				Aliases:    network.Aliases,
 			})
 		}
 		result = append(result, cd)

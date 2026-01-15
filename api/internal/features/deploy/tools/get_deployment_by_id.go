@@ -5,6 +5,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/service"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 )
@@ -36,14 +37,11 @@ func GetDeploymentByIdHandler(
 			}, zero, nil
 		}
 
-		// Convert to MCP type to avoid circular references
-		mcpDeployment := convertToMCPApplicationDeployment(deployment)
-
 		return nil, GetDeploymentByIdOutput{
-			Response: MCPDeploymentResponse{
+			Response: types.DeploymentResponse{
 				Status:  "success",
 				Message: "Deployment retrieved successfully",
-				Data:    mcpDeployment,
+				Data:    deployment,
 			},
 		}, nil
 	}

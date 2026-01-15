@@ -68,16 +68,12 @@ func GetContainer(
 		if containerInfo.NetworkSettings.Networks != nil {
 			for name, network := range containerInfo.NetworkSettings.Networks {
 				if network != nil {
-					aliases := network.Aliases
-					if aliases == nil {
-						aliases = []string{}
-					}
 					containerData.Networks = append(containerData.Networks, container_types.Network{
 						Name:       name,
 						IPAddress:  network.IPAddress,
 						Gateway:    network.Gateway,
 						MacAddress: network.MacAddress,
-						Aliases:    aliases,
+						Aliases:    network.Aliases,
 					})
 				}
 			}

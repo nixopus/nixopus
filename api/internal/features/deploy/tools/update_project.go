@@ -84,14 +84,11 @@ func UpdateProjectHandler(
 			return nil, UpdateProjectOutput{}, err
 		}
 
-		// Convert to MCP type to avoid circular references
-		mcpApplication := convertToMCPApplication(application)
-
 		return nil, UpdateProjectOutput{
-			Response: MCPApplicationResponse{
+			Response: types.ApplicationResponse{
 				Status:  "success",
 				Message: "Application updated successfully",
-				Data:    mcpApplication,
+				Data:    application,
 			},
 		}, nil
 	}

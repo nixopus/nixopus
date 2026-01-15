@@ -41,19 +41,6 @@ export default function RootLayout({
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang="en">
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Store native fetch before SuperTokens wraps it
-              // This allows us to bypass SuperTokens interception for octoagent requests
-              if (typeof window !== 'undefined' && !window.__NATIVE_FETCH__) {
-                window.__NATIVE_FETCH__ = window.fetch.bind(window);
-              }
-            `
-          }}
-        />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning

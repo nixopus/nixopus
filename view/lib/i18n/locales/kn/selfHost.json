@@ -71,6 +71,11 @@
           "label": "ಡಾಕರ್‌ಫೈಲ್ ಪಥ",
           "description": "ಬೇಸ್ ಪಥಕ್ಕೆ ಸಂಬಂಧಿಸಿದಂತೆ ಡಾಕರ್‌ಫೈಲ್‌ನ ಪಥ"
         },
+        "dockerComposePath": {
+          "label": "ಡಾಕರ್ ಕಂಪೋಸ್ ಪಥ",
+          "description": "ಬೇಸ್ ಪಥಕ್ಕೆ ಸಂಬಂಧಿಸಿದಂತೆ ನಿಮ್ಮ docker-compose.yml ಫೈಲ್‌ನ ಪಥ. ಡೀಫಾಲ್ಟ್ ಆಗಿದೆ 'docker-compose.yml' ಬೇಸ್ ಪಥ ಡೈರೆಕ್ಟರಿಯಲ್ಲಿ.",
+          "placeholder": "docker-compose.yml"
+        },
         "environmentVariables": {
           "label": "ಪರಿಸರ ವೇರಿಯಬಲ್‌ಗಳು",
           "description": "KEY=VALUE ಎಂದು ಟೈಪ್ ಮಾಡಿ ಮತ್ತು ಸೇರಿಸಲು Enter ಒತ್ತಿ",
@@ -240,6 +245,11 @@
           "label": "ಡಾಕರ್‌ಫೈಲ್ ಪಥ",
           "description": "ಬೇಸ್ ಪಥಕ್ಕೆ ಸಂಬಂಧಿಸಿದಂತೆ ಡಾಕರ್‌ಫೈಲ್‌ನ ಪಥ",
           "placeholder": "ಡಾಕರ್‌ಫೈಲ್"
+        },
+        "dockerComposePath": {
+          "label": "ಡಾಕರ್ ಕಂಪೋಸ್ ಪಥ",
+          "description": "ಬೇಸ್ ಪಥಕ್ಕೆ ಸಂಬಂಧಿಸಿದಂತೆ ನಿಮ್ಮ docker-compose.yml ಫೈಲ್‌ನ ಪಥ. ಡೀಫಾಲ್ಟ್ ಆಗಿದೆ 'docker-compose.yml' ಬೇಸ್ ಪಥ ಡೈರೆಕ್ಟರಿಯಲ್ಲಿ.",
+          "placeholder": "docker-compose.yml"
         },
         "branch": {
           "label": "ಶಾಖೆ",
