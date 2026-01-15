@@ -32,7 +32,6 @@
 - [Features](#features)
 - [Demo](#demo)
 - [Installation](#installation)
-- [Contributing](#contributing)
 - [Links](#links)
 - [License](#license)
 
@@ -167,31 +166,6 @@ sudo nixopus install \
 > Running `nixopus install` requires root privileges (sudo) to install system dependencies like Docker. If you encounter permission errors, make sure to run the command with `sudo`.
 
 For more detailed installation instructions, visit our [Installation Guide](https://docs.nixopus.com/install/).
-
----
-
-## Contributing
-
-We welcome contributions of all kinds! Whether you're fixing bugs, adding features, or improving documentation, your help makes Nixopus better for everyone.
-
-### How to Contribute
-
-1. **Fork the repository**
-2. **Create a feature branch** (`git checkout -b feature/amazing-feature`)
-3. **Make your changes**
-4. **Commit your changes** (`git commit -m 'Add some amazing feature'`)
-5. **Push to the branch** (`git push origin feature/amazing-feature`)
-6. **Open a Pull Request**
-
-### Contribution Guidelines
-
-- Follow the existing code style and conventions
-- Write clear commit messages following [Conventional Commits](https://www.conventionalcommits.org/)
-- Add tests for new features
-- Update documentation as needed
-- Be respectful and constructive in discussions
-
-For a comprehensive guide, see our [Contributing Guide](https://docs.nixopus.com/contributing/).
 
 ---
 
