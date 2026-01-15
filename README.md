@@ -26,13 +26,27 @@
 
 ---
 
-## Table of Contents
+<details>
+<summary><h2>Table of Contents</h2></summary>
 
 - [Getting Started](#getting-started)
 - [Features](#features)
+  - [Core Capabilities](#core-capabilities)
+  - [Additional Features](#additional-features)
 - [Demo](#demo)
+  - [Dashboard Overview](#dashboard-overview)
+  - [Application Management](#application-management)
+  - [Terminal Integration](#terminal-integration)
+  - [File Manager](#file-manager)
 - [Installation](#installation)
-- [License](#license)
+  - [Quick Install](#quick-install)
+  - [Custom Installation](#custom-installation)
+  - [Installation Options](#installation-options)
+- [Links](#links)
+- [Acknowledgments](#acknowledgments)
+- [About the Name](#about-the-name)
+
+</details>
 
 ---
 
