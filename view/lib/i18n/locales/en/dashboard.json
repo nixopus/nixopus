@@ -83,6 +83,26 @@
     "smtpBanner": {
       "message": "Configure SMTP settings to receive notifications",
       "configure": "Configure"
+    },
+    "deployments": {
+      "title": "Latest Deployments",
+      "viewAll": "View All",
+      "noDeployments": "No deployments found",
+      "justNow": "Just now",
+      "minutesAgo": "m ago",
+      "hoursAgo": "h ago",
+      "daysAgo": "d ago"
+    },
+    "deploymentStats": {
+      "title": "Deployment Stats",
+      "noData": "No deployment data available",
+      "total": "Total",
+      "successRate": "Success Rate",
+      "deployed": "Deployed",
+      "failed": "Failed",
+      "inProgress": "In Progress",
+      "count": "Count",
+      "status": "Status"
     }
   }
 }

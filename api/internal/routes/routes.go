@@ -12,7 +12,8 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	audit "github.com/raghavyuva/nixopus-api/internal/features/audit/controller"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
-	authService "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
+	auth_service "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
+	auth_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	container "github.com/raghavyuva/nixopus-api/internal/features/container/controller"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
@@ -23,6 +24,7 @@ import (
 	feature_flags_storage "github.com/raghavyuva/nixopus-api/internal/features/feature-flags/storage"
 	file_manager "github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller"
 	githubConnector "github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller"
+	healthcheck "github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	notificationController "github.com/raghavyuva/nixopus-api/internal/features/notification/controller"
@@ -34,15 +36,19 @@ import (
 	update_service "github.com/raghavyuva/nixopus-api/internal/features/update/service"
 	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
 	"github.com/raghavyuva/nixopus-api/internal/middleware"
+	"github.com/raghavyuva/nixopus-api/internal/realtime"
+	"github.com/raghavyuva/nixopus-api/internal/scheduler"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	api "github.com/raghavyuva/nixopus-api/internal/version"
 )
 
 // Router holds the application dependencies for route handlers
 type Router struct {
-	app    *storage.App
-	cache  *cache.Cache
-	logger logger.Logger
+	app          *storage.App
+	cache        *cache.Cache
+	logger       logger.Logger
+	socketServer *realtime.SocketServer
+	schedulers   *scheduler.Schedulers
 }
 
 // MiddlewareConfig defines which middleware to apply to a route group
@@ -134,6 +140,11 @@ func (router *Router) setupAuthentication(server *fuego.Server) {
 	})
 }
 
+// SetSchedulers sets the schedulers on the router
+func (router *Router) SetSchedulers(schedulers *scheduler.Schedulers) {
+	router.schedulers = schedulers
+}
+
 // SetupRoutes initializes and configures all application routes
 func (router *Router) SetupRoutes() {
 	// Initialize SuperTokens and load environment
@@ -187,7 +198,7 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 	fuego.Post(webhookGroup, "", deployController.HandleGithubWebhook)
 
 	// WebSocket routes
-	router.RegisterWebSocketRoutes(server, deployController)
+	router.RegisterWebSocketRoutes(server, deployController, router.schedulers.HealthCheck)
 
 	// Public auth routes
 	authController := router.createAuthController(notificationManager)
@@ -308,6 +319,17 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	extensionGroup := fuego.Group(server, apiV1.Path+"/extensions")
 	router.applyMiddleware(extensionGroup, MiddlewareConfig{RBAC: true, Audit: true, ResourceName: "extension"})
 	router.RegisterExtensionRoutes(extensionGroup, extensionController)
+
+	// Health check routes
+	healthCheckController := healthcheck.NewHealthCheckController(router.app.Store, router.app.Ctx, router.logger)
+	healthCheckGroup := fuego.Group(server, apiV1.Path+"/healthcheck")
+	router.applyMiddleware(healthCheckGroup, MiddlewareConfig{
+		RBAC:         true,
+		FeatureFlag:  "deploy",
+		Audit:        true,
+		ResourceName: "healthcheck",
+	})
+	router.RegisterHealthCheckRoutes(healthCheckGroup, healthCheckController)
 }
 
 // createAuthController creates and returns an auth controller
@@ -315,8 +337,13 @@ func (router *Router) createAuthController(notificationManager *notification.Not
 	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	orgStorage := &organization_storage.OrganizationStore{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	orgService := organization_service.NewOrganizationService(router.app.Store, router.app.Ctx, router.logger, orgStorage, router.cache)
-	authService := authService.NewAuthService(userStorage, router.logger, orgService, router.app.Ctx)
-	return auth.NewAuthController(router.app.Ctx, router.logger, notificationManager, *authService)
+	authService := auth_service.NewAuthService(userStorage, router.logger, orgService, router.app.Ctx)
+
+	// Create API key service
+	apiKeyStorage := auth_storage.APIKeyStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
+	apiKeyService := auth_service.NewAPIKeyService(apiKeyStorage, router.logger)
+
+	return auth.NewAuthController(router.app.Ctx, router.logger, notificationManager, *authService, apiKeyService)
 }
 
 // createFeatureFlagController creates and returns a feature flag controller

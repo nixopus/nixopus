@@ -66,6 +66,7 @@ type Extension struct {
 	ExtensionType     ExtensionType     `json:"extension_type" bun:"extension_type,notnull"`
 	Version           string            `json:"version" bun:"version"`
 	IsVerified        bool              `json:"is_verified" bun:"is_verified,notnull,default:false"`
+	Featured          bool              `json:"featured" bun:"featured,notnull,default:false"`
 	YAMLContent       string            `json:"yaml_content" bun:"yaml_content,notnull"`
 	ParsedContent     string            `json:"parsed_content" bun:"parsed_content,notnull,type:jsonb"`
 	ContentHash       string            `json:"content_hash" bun:"content_hash,notnull"`

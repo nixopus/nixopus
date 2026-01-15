@@ -91,11 +91,14 @@ export enum DEPLOY {
   GET_APPLICATION_LOGS = 'v1/deploy/application/logs/{application_id}',
   GET_DEPLOYMENT_LOGS = 'v1/deploy/application/deployments/{deployment_id}/logs',
   GET_APPLICATION_DEPLOYMENTS = 'v1/deploy/application/deployments',
-  UPDATE_APPLICATION_LABELS = 'v1/deploy/application/labels'
+  UPDATE_APPLICATION_LABELS = 'v1/deploy/application/labels',
+  ADD_APPLICATION_DOMAIN = 'v1/deploy/application/domains',
+  REMOVE_APPLICATION_DOMAIN = 'v1/deploy/application/domains'
 }
 
 export enum SOCKET_EVENTS {
-  MONITOR_APPLICATION_DEPLOYMENT = 'monitor_application_deployment'
+  MONITOR_APPLICATION_DEPLOYMENT = 'monitor_application_deployment',
+  MONITOR_HEALTH_CHECK = 'monitor_health_check'
 }
 
 export enum SOCKET_ACTIONS {
@@ -150,4 +153,14 @@ export enum EXTENSIONURLS {
   GET_EXECUTION = 'v1/extensions/execution/{execution_id}',
   LIST_EXECUTIONS = 'v1/extensions/by-extension-id/{extension_id}/executions',
   GET_EXECUTION_LOGS = 'v1/extensions/execution/{execution_id}/logs'
+}
+
+export enum HEALTHCHECKURLS {
+  GET_HEALTH_CHECK = 'v1/healthcheck',
+  CREATE_HEALTH_CHECK = 'v1/healthcheck',
+  UPDATE_HEALTH_CHECK = 'v1/healthcheck',
+  DELETE_HEALTH_CHECK = 'v1/healthcheck',
+  TOGGLE_HEALTH_CHECK = 'v1/healthcheck/toggle',
+  GET_HEALTH_CHECK_RESULTS = 'v1/healthcheck/results',
+  GET_HEALTH_CHECK_STATS = 'v1/healthcheck/stats'
 }

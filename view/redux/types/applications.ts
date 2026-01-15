@@ -1,4 +1,12 @@
 import { User } from './user';
+import { HealthCheck } from './healthcheck';
+
+export type ApplicationDomain = {
+  id: string;
+  application_id: string;
+  domain: string;
+  created_at: string;
+};
 
 export type Application = {
   id: string;
@@ -16,7 +24,7 @@ export type Application = {
   user_id: string;
   created_at: Date;
   updated_at: Date;
-  domain?: string;
+  domains?: ApplicationDomain[];
   user?: User;
   status?: ApplicationStatus;
   logs?: ApplicationLogs[];
@@ -78,7 +86,16 @@ export type ApplicationLogsResponse = {
   total_pages: number;
 };
 
-export type Status = 'draft' | 'failed' | 'cloning' | 'building' | 'deploying' | 'deployed';
+export type Status =
+  | 'draft'
+  | 'failed'
+  | 'cloning'
+  | 'building'
+  | 'deploying'
+  | 'deployed'
+  | 'started'
+  | 'running'
+  | 'stopped';
 
 export type Environment = 'development' | 'staging' | 'production';
 
@@ -89,7 +106,7 @@ export interface CreateApplicationRequest {
   environment: Environment;
   branch: string;
   port: number;
-  domain: string;
+  domains?: string[];
   repository: string;
   build_pack: BuildPack;
   environment_variables: Record<string, string>;
@@ -121,10 +138,10 @@ export interface ReDeployApplicationRequest {
 }
 
 // CreateProjectRequest is used to create a project without triggering deployment.
-// Only name, domain, and repository are required. Other fields have defaults.
+// Only name and repository are required. Domain is optional. Other fields have defaults.
 export interface CreateProjectRequest {
   name: string;
-  domain: string;
+  domains?: string[];
   repository: string;
   environment?: Environment;
   build_pack?: BuildPack;
@@ -146,7 +163,7 @@ export interface DeployProjectRequest {
 // DuplicateProjectRequest is used to create a duplicate of an existing project with a different environment.
 export interface DuplicateProjectRequest {
   source_project_id: string;
-  domain: string;
+  domains?: string[];
   environment: Environment;
   branch?: string;
 }
@@ -154,4 +171,22 @@ export interface DuplicateProjectRequest {
 // ProjectFamilyResponse contains the projects in a family.
 export interface ProjectFamilyResponse {
   projects: Application[];
+}
+
+// Health Check Component Props
+export interface HealthCheckChartProps {
+  applicationId: string;
+  setDialogOpen: (open: boolean) => void;
+  dialogOpen: boolean;
+}
+
+export interface HealthCheckCardProps {
+  application: Application;
+}
+
+export interface HealthCheckDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  application: Application;
+  healthCheck?: HealthCheck;
 }

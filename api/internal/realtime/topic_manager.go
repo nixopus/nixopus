@@ -27,7 +27,7 @@ func (s *SocketServer) handleSubscribe(conn *websocket.Conn, msg types.Payload) 
 			}
 		}
 
-		s.SubscribeToTopic(topics(msg.Topic), resourceID, conn)
+		s.SubscribeToTopic(Topics(msg.Topic), resourceID, conn)
 		return
 	}
 	s.sendError(conn, "Invalid topic subscription format")
@@ -52,7 +52,7 @@ func (s *SocketServer) handleUnsubscribe(conn *websocket.Conn, msg types.Payload
 			}
 		}
 
-		s.UnsubscribeFromTopic(topics(msg.Topic), resourceID, conn)
+		s.UnsubscribeFromTopic(Topics(msg.Topic), resourceID, conn)
 		return
 	}
 
@@ -64,7 +64,7 @@ func (s *SocketServer) handleUnsubscribe(conn *websocket.Conn, msg types.Payload
 // The function takes a topic string and a connection as parameters and
 // stores the connection in the topic map. It is safe to call this function
 // concurrently from multiple goroutines.
-func (s *SocketServer) SubscribeToTopic(topic topics, resourceID string, conn *websocket.Conn) {
+func (s *SocketServer) SubscribeToTopic(topic Topics, resourceID string, conn *websocket.Conn) {
 	s.topicsMu.Lock()
 	defer s.topicsMu.Unlock()
 	var topicKey string
@@ -94,7 +94,7 @@ func (s *SocketServer) SubscribeToTopic(topic topics, resourceID string, conn *w
 // The function takes a topic string and a connection as parameters and
 // removes the connection from the topic map. It is safe to call this function
 // concurrently from multiple goroutines.
-func (s *SocketServer) UnsubscribeFromTopic(topic topics, resourceID string, conn *websocket.Conn) {
+func (s *SocketServer) UnsubscribeFromTopic(topic Topics, resourceID string, conn *websocket.Conn) {
 	s.topicsMu.Lock()
 	defer s.topicsMu.Unlock()
 	var topicKey string
@@ -126,7 +126,7 @@ func (s *SocketServer) UnsubscribeFromTopic(topic topics, resourceID string, con
 //
 // The function takes a topic string and a payload as parameters and
 // sends the payload to all connections subscribed to the topic.
-func (s *SocketServer) BroadcastToTopic(topic topics, resourceID string, payload interface{}) {
+func (s *SocketServer) BroadcastToTopic(topic Topics, resourceID string, payload interface{}) {
 	s.topicsMu.RLock()
 	defer s.topicsMu.RUnlock()
 	var topicKey string

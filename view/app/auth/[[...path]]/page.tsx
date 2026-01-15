@@ -1,7 +1,7 @@
 'use client';
 import { ResetPasswordUsingToken } from 'supertokens-auth-react/recipe/emailpassword/prebuiltui';
-import { LoginForm } from '@/components/features/login-form';
-import useAuth from '../hooks/use-auth';
+import { LoginForm } from '@/packages/components/login-form';
+import useAuth from '@/packages/hooks/auth/use-auth';
 
 export default function Auth() {
   const {

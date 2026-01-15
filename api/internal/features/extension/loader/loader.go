@@ -32,6 +32,12 @@ func (l *ExtensionLoader) LoadExtensionsFromDirectory(ctx context.Context, dirPa
 
 	log.Printf("Found %d extension files in %s", len(extensions), dirPath)
 
+	// Collect extension IDs found in templates directory
+	foundExtensionIDs := make(map[string]bool)
+	for _, extension := range extensions {
+		foundExtensionIDs[extension.ExtensionID] = true
+	}
+
 	for i, extension := range extensions {
 		variables := allVariables[i]
 
@@ -40,6 +46,12 @@ func (l *ExtensionLoader) LoadExtensionsFromDirectory(ctx context.Context, dirPa
 			continue
 		}
 	}
+
+	// // Remove extensions from database that are no longer in templates directory
+	// if err := l.removeDeletedExtensions(ctx, foundExtensionIDs); err != nil {
+	// 	log.Printf("Warning: Failed to remove deleted extensions: %v", err)
+	// 	// Don't return error here as the main loading succeeded
+	// }
 
 	return nil
 }
@@ -112,6 +124,44 @@ func (l *ExtensionLoader) deleteExtensionVariables(ctx context.Context, tx bun.T
 		Where("extension_id = ?", extensionID).
 		Exec(ctx)
 	return err
+}
+
+func (l *ExtensionLoader) removeDeletedExtensions(ctx context.Context, foundExtensionIDs map[string]bool) error {
+	// Get all extensions from database that are not deleted
+	var allExtensions []types.Extension
+	err := l.db.NewSelect().
+		Model(&allExtensions).
+		Where("deleted_at IS NULL").
+		Scan(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to query extensions: %w", err)
+	}
+
+	// Find extensions that exist in database but not in templates directory
+	var extensionsToDelete []string
+	for _, ext := range allExtensions {
+		if !foundExtensionIDs[ext.ExtensionID] {
+			extensionsToDelete = append(extensionsToDelete, ext.ExtensionID)
+		}
+	}
+
+	if len(extensionsToDelete) == 0 {
+		return nil
+	}
+
+	log.Printf("Removing %d extensions that are no longer in templates directory", len(extensionsToDelete))
+
+	// Soft delete extensions that are no longer in templates
+	_, err = l.db.NewUpdate().
+		Model((*types.Extension)(nil)).
+		Set("deleted_at = NOW()").
+		Where("extension_id IN (?) AND deleted_at IS NULL", bun.In(extensionsToDelete)).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete removed extensions: %w", err)
+	}
+
+	return nil
 }
 
 func (l *ExtensionLoader) LoadExtensionsFromTemplates(ctx context.Context) error {

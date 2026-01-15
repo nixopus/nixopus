@@ -25,7 +25,7 @@ type IsPortAlreadyTakenRequest struct {
 
 type CreateDeploymentRequest struct {
 	Name                 string                   `json:"name"`
-	Domain               string                   `json:"domain"`
+	Domains              []string                 `json:"domains,omitempty"`
 	Environment          shared_types.Environment `json:"environment"`
 	BuildPack            shared_types.BuildPack   `json:"build_pack"`
 	Repository           string                   `json:"repository"`
@@ -42,7 +42,7 @@ type CreateDeploymentRequest struct {
 // CreateProjectRequest is used to create a project (application) without triggering deployment.
 type CreateProjectRequest struct {
 	Name                 string                   `json:"name"`
-	Domain               string                   `json:"domain"`
+	Domains              []string                 `json:"domains,omitempty"`
 	Environment          shared_types.Environment `json:"environment,omitempty"`
 	BuildPack            shared_types.BuildPack   `json:"build_pack,omitempty"`
 	Repository           string                   `json:"repository"`
@@ -96,7 +96,7 @@ type RestartDeploymentRequest struct {
 // DuplicateProjectRequest is used to create a duplicate of an existing project with a different environment.
 type DuplicateProjectRequest struct {
 	SourceProjectID uuid.UUID                `json:"source_project_id"`
-	Domain          string                   `json:"domain"`
+	Domains         []string                 `json:"domains,omitempty"`
 	Environment     shared_types.Environment `json:"environment"`
 	Branch          string                   `json:"branch,omitempty"`
 }
@@ -234,6 +234,8 @@ var (
 	ErrEnvironmentAlreadyExistsInFamily = errors.New("a project with this environment already exists in the family")
 	ErrSameEnvironmentAsDuplicate       = errors.New("cannot duplicate project with the same environment")
 	ErrProjectFamilyNotFound            = errors.New("project family not found")
+	ErrDomainLimitReached               = errors.New("maximum of 5 domains per application reached")
+	ErrDomainAlreadyExists              = errors.New("domain already exists for this application")
 )
 
 const (
