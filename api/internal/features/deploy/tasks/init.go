@@ -55,17 +55,17 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 		CreateDeploymentQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_CREATE_DEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        1,
+			MinNumWorker:        4,
 			MaxNumWorker:        4,
-			ReservationSize:     4,
+			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          100,
+			BufferSize:          16,
 		})
 
 		TaskCreateDeployment = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_CREATE_DEPLOYMENT,
-			RetryLimit: 0,
+			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Printf("[%s] start: correlation_id=%s\n", TASK_CREATE_DEPLOYMENT, data.CorrelationID)
 				err := t.BuildPack(ctx, data)
@@ -81,17 +81,17 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 		UpdateDeploymentQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_UPDATE_DEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        1,
+			MinNumWorker:        4,
 			MaxNumWorker:        4,
-			ReservationSize:     4,
+			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          100,
+			BufferSize:          16,
 		})
 
 		TaskUpdateDeployment = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_UPDATE_DEPLOYMENT,
-			RetryLimit: 0,
+			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Updating deployment")
 				err := t.HandleUpdateDeployment(ctx, data)
@@ -106,17 +106,17 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 		ReDeployQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_REDEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        1,
+			MinNumWorker:        4,
 			MaxNumWorker:        4,
-			ReservationSize:     4,
+			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          100,
+			BufferSize:          16,
 		})
 
 		TaskReDeploy = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_REDEPLOYMENT,
-			RetryLimit: 0,
+			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Redeploying application")
 				err := t.HandleReDeploy(ctx, data)
@@ -131,17 +131,17 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 		RollbackQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_ROLLBACK,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        1,
+			MinNumWorker:        4,
 			MaxNumWorker:        4,
-			ReservationSize:     4,
+			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          100,
+			BufferSize:          16,
 		})
 
 		TaskRollback = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_ROLLBACK,
-			RetryLimit: 0,
+			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Rolling back deployment")
 				err := t.HandleRollback(ctx, data)
@@ -156,17 +156,17 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 		RestartQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_RESTART,
 			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        1,
+			MinNumWorker:        4,
 			MaxNumWorker:        4,
-			ReservationSize:     4,
+			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          100,
+			BufferSize:          16,
 		})
 
 		TaskRestart = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_RESTART,
-			RetryLimit: 0,
+			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				fmt.Println("Restarting deployment")
 				err := t.HandleRestart(ctx, data)

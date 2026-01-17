@@ -52,9 +52,6 @@ func validateDeploymentRequest(req *types.CreateDeploymentRequest) error {
 	if req.Name == "" {
 		return errors.New("name is required")
 	}
-	if req.Domain == "" {
-		return errors.New("domain is required")
-	}
 	if req.Environment == "" {
 		return errors.New("environment is required")
 	}
@@ -127,14 +124,12 @@ func validateRestartDeploymentRequest(req types.RestartDeploymentRequest) error 
 }
 
 // validateCreateProjectRequest validates a request to create a project without deploying.
-// Only name, domain, and repository are required. Other fields have defaults.
+// Only name and repository are required. Domain is optional. Other fields have defaults.
 func validateCreateProjectRequest(req *types.CreateProjectRequest) error {
 	if req.Name == "" {
 		return types.ErrMissingName
 	}
-	if req.Domain == "" {
-		return types.ErrMissingDomain
-	}
+	// Domain is now optional - validation removed
 	if req.Repository == "" {
 		return types.ErrMissingRepository
 	}
@@ -174,9 +169,6 @@ func validateDeployProjectRequest(req types.DeployProjectRequest) error {
 func validateDuplicateProjectRequest(req types.DuplicateProjectRequest) error {
 	if req.SourceProjectID == uuid.Nil {
 		return types.ErrMissingSourceProjectID
-	}
-	if req.Domain == "" {
-		return types.ErrMissingDomain
 	}
 	if req.Environment == "" {
 		return types.ErrInvalidEnvironment

@@ -7,15 +7,15 @@ import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { useRouter } from 'next/navigation';
 import { useCreateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';
 import { toast } from 'sonner';
-import { useAppSelector } from '@/redux/hooks';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
+import { defaultValidator } from './use_multiple_domains';
 
 interface DeploymentFormValues {
   application_name: string;
   environment: Environment;
   branch: string;
   port: string;
-  domain: string;
+  domains?: string[];
   repository: string;
   build_pack: BuildPack;
   env_variables: Record<string, string>;
@@ -31,7 +31,7 @@ function useCreateDeployment({
   environment = Environment.Production,
   branch = '',
   port = '3000',
-  domain = '',
+  domains = [],
   repository,
   build_pack = BuildPack.Dockerfile,
   env_variables = {},
@@ -62,15 +62,26 @@ function useCreateDeployment({
     port: z
       .string()
       .regex(/^[0-9]+$/, { message: t('selfHost.deployForm.validation.port.invalidFormat') }),
-    domain: z
-      .string()
-      .min(3, { message: t('selfHost.deployForm.validation.domain.minLength') })
-      .regex(
-        /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/,
+    domains: z
+      .array(z.string())
+      .optional()
+      .refine(
+        (val) => {
+          if (!val || val.length === 0) return true;
+          // Filter out empty domains and validate non-empty ones
+          const nonEmpty = val.filter((d) => d && d.trim() !== '');
+          if (nonEmpty.length > 5) return false; // Max 5 domains
+          // Check uniqueness
+          const unique = new Set(nonEmpty.map((d) => d.trim().toLowerCase()));
+          if (unique.size !== nonEmpty.length) return false;
+          // Validate format using shared validator
+          return nonEmpty.every((d) => defaultValidator(d));
+        },
         {
           message: t('selfHost.deployForm.validation.domain.invalidFormat')
         }
-      ),
+      )
+      .default([]),
     repository: z
       .string()
       .min(3, { message: t('selfHost.deployForm.validation.repository.minLength') })
@@ -105,7 +116,7 @@ function useCreateDeployment({
       environment,
       branch,
       port,
-      domain,
+      domains: domains || [],
       repository,
       build_pack: validBuildPack,
       env_variables,
@@ -122,7 +133,7 @@ function useCreateDeployment({
     if (environment) form.setValue('environment', environment);
     if (branch) form.setValue('branch', branch);
     if (port) form.setValue('port', port);
-    if (domain) form.setValue('domain', domain);
+    if (domains && domains.length > 0) form.setValue('domains', domains);
     if (repository) form.setValue('repository', repository);
     // Static build pack option commented out for deployment - default to Dockerfile if Static is provided
     if (build_pack)
@@ -144,7 +155,7 @@ function useCreateDeployment({
     environment,
     branch,
     port,
-    domain,
+    domains,
     repository,
     build_pack,
     env_variables,
@@ -157,12 +168,11 @@ function useCreateDeployment({
 
   async function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
     try {
-      const data = await createDeployment({
+      const deploymentData: any = {
         name: values.application_name,
         environment: values.environment,
         branch: values.branch,
         port: parseInt(values.port, 10),
-        domain: values.domain,
         repository: values.repository,
         build_pack: values.build_pack,
         environment_variables: values.env_variables,
@@ -171,7 +181,19 @@ function useCreateDeployment({
         post_run_command: values.post_run_commands as string,
         dockerfile_path: values.DockerfilePath,
         base_path: values.base_path
-      }).unwrap();
+      };
+
+      // Handle domains array
+      if (values.domains && values.domains.length > 0) {
+        const nonEmptyDomains = values.domains
+          .filter((d) => d && d.trim() !== '')
+          .map((d) => d.trim());
+        if (nonEmptyDomains.length > 0) {
+          deploymentData.domains = nonEmptyDomains;
+        }
+      }
+
+      const data = await createDeployment(deploymentData).unwrap();
 
       if (data?.deployments?.[0]?.id) {
         router.push('/self-host/application/' + data.id + '/deployments/' + data.deployments[0].id);

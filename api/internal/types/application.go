@@ -21,7 +21,6 @@ type Application struct {
 	Branch               string                   `json:"branch" bun:"branch,notnull"`
 	PreRunCommand        string                   `json:"pre_run_command" bun:"pre_run_command,notnull"`
 	PostRunCommand       string                   `json:"post_run_command" bun:"post_run_command,notnull"`
-	Domain               string                   `json:"domain" bun:"domain,notnull"`
 	DockerfilePath       string                   `json:"dockerfile_path" bun:"dockerfile_path,notnull,default:Dockerfile"`
 	BasePath             string                   `json:"base_path" bun:"base_path,notnull,default:/"`
 	UserID               uuid.UUID                `json:"user_id" bun:"user_id,notnull,type:uuid"`
@@ -35,6 +34,7 @@ type Application struct {
 	Deployments          []*ApplicationDeployment `json:"deployments,omitempty" bun:"rel:has-many,join:id=application_id"`
 	Organization         *Organization            `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	Labels               []string                 `json:"labels,omitempty" bun:"labels,array"`
+	Domains              []*ApplicationDomain     `json:"domains,omitempty" bun:"rel:has-many,join:id=application_id"`
 }
 
 type ApplicationDeployment struct {
@@ -86,6 +86,16 @@ type ApplicationLogs struct {
 
 	ApplicationDeployment *ApplicationDeployment `json:"application_deployment,omitempty" bun:"rel:belongs-to,join:application_deployment_id=id"`
 	Application           *Application           `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
+}
+
+type ApplicationDomain struct {
+	bun.BaseModel `bun:"table:application_domains,alias:ad" swaggerignore:"true"`
+	ID            uuid.UUID `json:"id" bun:"id,pk,type:uuid"`
+	ApplicationID uuid.UUID `json:"application_id" bun:"application_id,notnull,type:uuid"`
+	Domain        string    `json:"domain" bun:"domain,notnull"`
+	CreatedAt     time.Time `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
+
+	Application *Application `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
 }
 
 type Status string

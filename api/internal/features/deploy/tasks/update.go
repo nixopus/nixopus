@@ -115,21 +115,31 @@ func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload sh
 	taskCtx.AddLog("Container updated successfully for application " + TaskPayload.Application.Name + " with container id " + containerResult.ContainerID)
 	taskCtx.LogAndUpdateStatus("Deployment completed successfully", shared_types.Deployed)
 
-	client := GetCaddyClient()
-	port, err := strconv.Atoi(containerResult.AvailablePort)
-	if err != nil {
-		taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
-		return err
-	}
-	upstreamHost := config.AppConfig.SSH.Host
+	// Add domains to proxy if any are provided
+	if len(TaskPayload.Application.Domains) > 0 {
+		client := GetCaddyClient()
+		port, err := strconv.Atoi(containerResult.AvailablePort)
+		if err != nil {
+			taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
+			return err
+		}
+		upstreamHost := config.AppConfig.SSH.Host
 
-	err = client.AddDomainWithAutoTLS(TaskPayload.Application.Domain, upstreamHost, port, caddygo.DomainOptions{})
-	if err != nil {
-		fmt.Println("Failed to add domain: ", err)
-		taskCtx.LogAndUpdateStatus("Failed to add domain: "+err.Error(), shared_types.Failed)
-		return err
+		// Loop through all domains and add them with TLS
+		for _, appDomain := range TaskPayload.Application.Domains {
+			if appDomain.Domain == "" {
+				continue
+			}
+			err = client.AddDomainWithAutoTLS(appDomain.Domain, upstreamHost, port, caddygo.DomainOptions{})
+			if err != nil {
+				fmt.Printf("Failed to add domain %s: %v\n", appDomain.Domain, err)
+				taskCtx.LogAndUpdateStatus("Failed to add domain "+appDomain.Domain+": "+err.Error(), shared_types.Failed)
+				return err
+			}
+			taskCtx.AddLog("Domain " + appDomain.Domain + " added successfully with TLS")
+		}
+		client.Reload()
 	}
-	client.Reload()
 
 	return nil
 }

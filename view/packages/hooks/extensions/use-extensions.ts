@@ -167,10 +167,27 @@ export function useExtensions() {
   useEffect(() => {
     if (forkOpen && selectedExtension) {
       setForkYaml(selectedExtension.yaml_content || '');
-    } else if (!forkOpen) {
-      setSelectedExtension(null);
     }
   }, [forkOpen, selectedExtension]);
+
+  useEffect(() => {
+    if (selectedExtension?.id && runModalOpen && extensions.length > 0) {
+      const currentExtension = extensions.find((e) => e.id === selectedExtension.id);
+      if (currentExtension) {
+        const currentVars = JSON.stringify(currentExtension.variables || []);
+        const selectedVars = JSON.stringify(selectedExtension.variables || []);
+        if (currentVars !== selectedVars) {
+          setSelectedExtension(currentExtension);
+        }
+      }
+    }
+  }, [extensions, runModalOpen, selectedExtension?.id]);
+
+  useEffect(() => {
+    if (!runModalOpen && !forkOpen) {
+      setSelectedExtension(null);
+    }
+  }, [runModalOpen, forkOpen]);
 
   const doFork = async () => {
     try {

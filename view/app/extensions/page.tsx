@@ -63,6 +63,7 @@ export default function ExtensionsPage() {
     <PageLayout maxWidth="full" padding="md" spacing="lg">
       <MainPageHeader
         label={t('extensions.title')}
+        description={t('extensions.description')}
         actions={
           <div className="flex items-center gap-12">
             <SearchBar

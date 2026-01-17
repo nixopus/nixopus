@@ -1,3 +1,6 @@
+import React from 'react';
+import { CheckCircle2, AlertCircle, Loader2, Clock } from 'lucide-react';
+
 export interface ThemeColors {
   [key: string]: {
     background: string;
@@ -358,3 +361,55 @@ export const themeColors: ThemeColors = {
     'chart-5': '250 30% 62%'
   }
 };
+
+export function getDeploymentStatusIcon(status?: string): React.ReactElement {
+  const statusLower = String(status || '').toLowerCase();
+  
+  switch (statusLower) {
+    case 'deployed':
+      return <CheckCircle2 className="h-4 w-4 text-primary" />;
+    case 'failed':
+      return <AlertCircle className="h-4 w-4 text-destructive" />;
+    case 'in_progress':
+    case 'building':
+    case 'deploying':
+      return <Loader2 className="h-4 w-4 text-primary animate-spin" />;
+    default:
+      return <Clock className="h-4 w-4 text-muted-foreground" />;
+  }
+}
+
+export function getDeploymentStatusColor(status?: string): string {
+  const statusLower = String(status || '').toLowerCase();
+  
+  switch (statusLower) {
+    case 'deployed':
+      return 'bg-primary';
+    case 'failed':
+      return 'bg-destructive';
+    case 'in_progress':
+    case 'building':
+    case 'deploying':
+      return 'bg-primary';
+    default:
+      return 'bg-muted';
+  }
+}
+
+export function getDeploymentStatusBadgeClasses(status?: string): string {
+  const statusLower = String(status || '').toLowerCase();
+  
+  switch (statusLower) {
+    case 'deployed':
+      return 'bg-primary/10 text-primary';
+    case 'failed':
+      return 'bg-destructive/10 text-destructive';
+    case 'in_progress':
+    case 'building':
+    case 'deploying':
+      return 'bg-primary/10 text-primary';
+    default:
+      return 'bg-muted text-muted-foreground';
+  }
+}
+
