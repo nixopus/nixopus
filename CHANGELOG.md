@@ -1,3 +1,22 @@
+# [0.1.0-alpha.114](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.113...v0.1.0-alpha.114) (2026-01-15)
+
+
+### Bug Fixes
+
+* extension input not rendering for install input ([#960](https://github.com/raghavyuva/nixopus/issues/960)) ([47745fb](https://github.com/raghavyuva/nixopus/commit/47745fbe1416be6836c2b6457947b1befefc7cdf))
+
+
+### Features
+
+* add deployment widgets ([#970](https://github.com/raghavyuva/nixopus/issues/970)) ([9c002aa](https://github.com/raghavyuva/nixopus/commit/9c002aad419a2f214572bb85cd47d044afd8c465))
+* add migration fiels for multi domains per app ([a82090c](https://github.com/raghavyuva/nixopus/commit/a82090cf8f96aab845a3f2b5688851e8afb31c4b))
+* add support for multiple domain api changes ([#967](https://github.com/raghavyuva/nixopus/issues/967)) ([1ec25e8](https://github.com/raghavyuva/nixopus/commit/1ec25e85de54a2f91eebd120471f3759986494fb))
+* allow deployments without requiring domain ([6a7563e](https://github.com/raghavyuva/nixopus/commit/6a7563e5d18a7bd15a37fa19193131ab2a068014))
+* **queue:** support consumer lifecycle mgmt for queue & set retry to 1 ([#931](https://github.com/raghavyuva/nixopus/issues/931)) ([de833f7](https://github.com/raghavyuva/nixopus/commit/de833f7395f9a90cf82f0d1526373fcd815cfff8))
+* support for featured extensions ([#962](https://github.com/raghavyuva/nixopus/issues/962)) ([71190e8](https://github.com/raghavyuva/nixopus/commit/71190e8c9c7e55f44f0c8d6a111d99161d29255f))
+
+
+
 # [0.1.0-alpha.113](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.112...v0.1.0-alpha.113) (2026-01-12)
 
 
