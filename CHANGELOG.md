@@ -1,3 +1,12 @@
+# [0.1.0-alpha.115](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.114...v0.1.0-alpha.115) (2026-01-17)
+
+
+### Features
+
+* add shared packages to pkg ([#973](https://github.com/raghavyuva/nixopus/issues/973)) ([397d2fb](https://github.com/raghavyuva/nixopus/commit/397d2fb8cd3d34cd96fe777e693483148b0d84b7))
+
+
+
 # [0.1.0-alpha.114](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.113...v0.1.0-alpha.114) (2026-01-15)
 
 
