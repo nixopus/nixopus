@@ -17,9 +17,6 @@ import (
 func getBetterAuthURL() string {
 	url := os.Getenv("BETTER_AUTH_URL")
 	if url == "" {
-		url = os.Getenv("OCTOAGENT_URL")
-	}
-	if url == "" {
 		// Default fallback for development
 		url = "http://localhost:9090"
 	}
