@@ -133,7 +133,7 @@ function useTeamSwitcher() {
       setTeamDescription('');
 
       // Refresh the page to ensure all roles and permissions are updated
-      // This is necessary because SuperTokens roles are session based
+      // Refresh to ensure all roles and permissions are updated
       setTimeout(() => {
         window.location.reload();
       }, 1000);

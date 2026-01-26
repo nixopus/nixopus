@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
-import { useSessionContext } from 'supertokens-auth-react/recipe/session';
+import { authClient } from '@/packages/lib/auth-client';
 import { TypographyH1, TypographyMuted } from '@/components/ui/typography';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -245,29 +245,34 @@ export const AdminRegisteredError = ({ error }: AdminRegisteredErrorProps = {}) 
 export const AdminRegistrationSuccess = () => {
   const { t } = useTranslation();
   const router = useRouter();
-  const session = useSessionContext();
   const [countdown, setCountdown] = useState(3);
 
   // User is already logged in after registration, so redirect to dashboard
   useEffect(() => {
-    if (!session.loading) {
-      const sessionExists = 'doesSessionExist' in session ? session.doesSessionExist : false;
-      if (sessionExists) {
-        const timer = setInterval(() => {
-          setCountdown((prev) => {
-            if (prev <= 1) {
-              clearInterval(timer);
-              router.push('/dashboard');
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
+    const checkSession = async () => {
+      try {
+        const session = await authClient.getSession();
+        if (session?.data?.session) {
+          const timer = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                clearInterval(timer);
+                router.push('/dashboard');
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
 
-        return () => clearInterval(timer);
+          return () => clearInterval(timer);
+        }
+      } catch (error) {
+        // Session check failed, redirect anyway
+        router.push('/dashboard');
       }
-    }
-  }, [session, router]);
+    };
+    checkSession();
+  }, [router]);
 
   const handleGoToDashboard = () => {
     router.push('/dashboard');
