@@ -1,6 +1,8 @@
 package validation
 
 import (
+	"strings"
+
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
@@ -56,24 +58,37 @@ func (v *Validator) ValidateRequest(req any) error {
 //   - ClientSecret
 //   - WebhookSecret
 //
-// If any of these fields are empty, an error specific to the missing field
-// is returned. Otherwise, nil is returned.
+// If credentials are provided (at least one non-empty field), all must be provided.
+// If all are empty, validation passes (will use shared config).
 func (v *Validator) validateCreateGithubConnectorRequest(req types.CreateGithubConnectorRequest) error {
-	if req.Slug == "" {
-		return types.ErrMissingSlug
+	// Helper to check if string is truly empty (empty or whitespace only)
+	isEmpty := func(s string) bool {
+		return s == "" || strings.TrimSpace(s) == ""
 	}
-	if req.Pem == "" {
-		return types.ErrMissingPem
+
+	// Check if any credential is provided (non-empty)
+	hasCredentials := !isEmpty(req.Slug) || !isEmpty(req.Pem) || !isEmpty(req.ClientID) ||
+		!isEmpty(req.ClientSecret) || !isEmpty(req.WebhookSecret) || !isEmpty(req.AppID)
+
+	// If any credential is provided, all must be provided (backward compatibility)
+	if hasCredentials {
+		if isEmpty(req.Slug) {
+			return types.ErrMissingSlug
+		}
+		if isEmpty(req.Pem) {
+			return types.ErrMissingPem
+		}
+		if isEmpty(req.ClientID) {
+			return types.ErrMissingClientID
+		}
+		if isEmpty(req.ClientSecret) {
+			return types.ErrMissingClientSecret
+		}
+		if isEmpty(req.WebhookSecret) {
+			return types.ErrMissingWebhookSecret
+		}
 	}
-	if req.ClientID == "" {
-		return types.ErrMissingClientID
-	}
-	if req.ClientSecret == "" {
-		return types.ErrMissingClientSecret
-	}
-	if req.WebhookSecret == "" {
-		return types.ErrMissingWebhookSecret
-	}
+	// If no credentials provided, validation passes (will use shared config)
 	return nil
 }
 
