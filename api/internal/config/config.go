@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/raghavyuva/nixopus-api/internal/secrets"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/spf13/viper"
@@ -46,6 +47,25 @@ func getMigrationsPath() string {
 // environment variables, and defaults. It then creates a new PostgreSQL client using
 // the loaded configuration and initializes the storage.Store.
 func Init() *storage.Store {
+	// Load secrets from secret manager first (if enabled)
+	// This allows secrets to override .env file values
+	secretConfig := secrets.LoadSecretManagerConfig("api")
+	if secretConfig.Enabled {
+		secretManager, err := secrets.NewSecretManager(secretConfig)
+		if err != nil {
+			log.Printf("Warning: Failed to initialize secret manager: %v. Falling back to .env files", err)
+		} else {
+			// Load secrets with service-specific prefix (e.g., "API_", "NIXOPUS_API_")
+			prefixes := []string{"API_", "NIXOPUS_API_", ""}
+			for _, prefix := range prefixes {
+				if err := secrets.LoadSecretsIntoEnv(secretManager, prefix); err != nil {
+					log.Printf("Warning: Failed to load secrets with prefix %s: %v", prefix, err)
+				}
+			}
+		}
+	}
+
+	// Load .env file (will be overridden by secrets if they exist)
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Warning: .env file not found, using environment variables")
@@ -88,17 +108,9 @@ func Init() *storage.Store {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = storage.RunMigrations(store, storage_config.MigrationsPath)
-	if err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
-	}
 
-	log.Println("Migrations completed successfully")
 	if AppConfig.Server.Port == "" {
 		AppConfig.Server.Port = "8080"
-	}
-	if err != nil {
-		log.Fatalf("Failed to initialize postgres client: %v", err)
 	}
 
 	storage := storage.NewStore(store)
@@ -212,13 +224,25 @@ func setupEnvVarMappings() {
 	viper.BindEnv("app.version", "APP_VERSION")
 	viper.BindEnv("app.logs_path", "LOGS_PATH")
 
-	// SuperTokens
-	viper.BindEnv("supertokens.api_key", "SUPERTOKENS_API_KEY")
-	viper.BindEnv("supertokens.api_domain", "SUPERTOKENS_API_DOMAIN")
-	viper.BindEnv("supertokens.website_domain", "SUPERTOKENS_WEBSITE_DOMAIN")
-	viper.BindEnv("supertokens.connection_uri", "SUPERTOKENS_CONNECTION_URI")
-	viper.BindEnv("supertokens.enable_debug_logs", "SUPERTOKENS_ENABLE_DEBUG_LOGS")
-	viper.SetDefault("supertokens.enable_debug_logs", false)
+	// GitHub App (shared credentials)
+	viper.BindEnv("github.app_id", "GITHUB_APP_ID")
+	viper.BindEnv("github.slug", "GITHUB_APP_SLUG")
+	viper.BindEnv("github.pem", "GITHUB_APP_PEM")
+	viper.BindEnv("github.client_id", "GITHUB_APP_CLIENT_ID")
+	viper.BindEnv("github.client_secret", "GITHUB_APP_CLIENT_SECRET")
+	viper.BindEnv("github.webhook_secret", "GITHUB_APP_WEBHOOK_SECRET")
+	// Better Auth
+	viper.BindEnv("betterauth.url", "BETTER_AUTH_URL")
+	viper.BindEnv("betterauth.secret", "BETTER_AUTH_SECRET")
+
+	// Stripe
+	viper.BindEnv("stripe.secret_key", "STRIPE_SECRET_KEY")
+	viper.BindEnv("stripe.webhook_secret", "STRIPE_WEBHOOK_SECRET")
+	viper.BindEnv("stripe.price_id", "STRIPE_PRICE_ID")
+	viper.BindEnv("stripe.free_deployments_limit", "FREE_DEPLOYMENTS_LIMIT")
+
+	// Set default for free deployments limit
+	viper.SetDefault("stripe.free_deployments_limit", 1)
 }
 
 func validateConfig(config types.Config) error {
@@ -266,17 +290,11 @@ func validateConfig(config types.Config) error {
 	if config.CORS.AllowedOrigin == "" {
 		errors = append(errors, "CORS allowed origin is required")
 	}
-	if config.Supertokens.APIKey == "" {
-		errors = append(errors, "SuperTokens API key is required")
+	if config.BetterAuth.URL == "" {
+		errors = append(errors, "Better Auth URL is required")
 	}
-	if config.Supertokens.APIDomain == "" {
-		errors = append(errors, "SuperTokens API domain is required")
-	}
-	if config.Supertokens.WebsiteDomain == "" {
-		errors = append(errors, "SuperTokens website domain is required")
-	}
-	if config.Supertokens.ConnectionURI == "" {
-		errors = append(errors, "SuperTokens connection URI is required")
+	if config.BetterAuth.Secret == "" {
+		errors = append(errors, "Better Auth secret is required")
 	}
 
 	if len(errors) > 0 {
