@@ -42,9 +42,10 @@ func testRedisConnection(ctx context.Context, redisClient *redis.Client) {
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	// Load .env file if it exists (optional when using secret manager)
+	if err := godotenv.Load(); err != nil {
+		// .env file is optional when using secret manager, so we just log a warning
+		log.Println("Info: .env file not found, using environment variables and secret manager")
 	}
 
 	store := config.Init()

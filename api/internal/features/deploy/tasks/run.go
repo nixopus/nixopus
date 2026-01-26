@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/swarm"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
@@ -103,26 +104,16 @@ func (s *TaskService) AtomicUpdateContainer(r shared_types.TaskPayload, taskCont
 		return AtomicUpdateContainerResult{}, types.ErrFailedToGetAvailablePort
 	}
 
+	// Create or update service using shared utility
+	serviceID, err := CreateOrUpdateService(s.DockerRepo, serviceSpec, existingService)
+	if err != nil {
+		taskContext.LogAndUpdateStatus("Failed to create/update service: "+err.Error(), shared_types.Failed)
+		return AtomicUpdateContainerResult{}, err
+	}
 	if existingService != nil {
-		// Update existing service
-		s.formatLog(taskContext, "Updating existing service: %s", existingService.ID)
-		err = s.DockerRepo.UpdateService(existingService.ID, serviceSpec, "")
-		if err != nil {
-			taskContext.LogAndUpdateStatus("Failed to update service: "+err.Error(), shared_types.Failed)
-			return AtomicUpdateContainerResult{}, err
-		}
-		s.formatLog(taskContext, "Service updated successfully: %s", existingService.ID)
+		s.formatLog(taskContext, "Service updated successfully: %s", serviceID)
 	} else {
-		// Create new service
-		s.formatLog(taskContext, "Creating new service")
-		err = s.DockerRepo.CreateService(swarm.Service{
-			Spec: serviceSpec,
-		})
-		if err != nil {
-			taskContext.LogAndUpdateStatus("Failed to create service: "+err.Error(), shared_types.Failed)
-			return AtomicUpdateContainerResult{}, err
-		}
-		s.formatLog(taskContext, "Service created successfully")
+		s.formatLog(taskContext, "Service created successfully: %s", serviceID)
 	}
 
 	// Wait for service to be ready with retries
@@ -155,17 +146,63 @@ func (s *TaskService) AtomicUpdateContainer(r shared_types.TaskPayload, taskCont
 
 // getExistingService finds an existing swarm service for the application
 func (s *TaskService) getExistingService(r shared_types.TaskPayload, taskContext *TaskContext) (*swarm.Service, error) {
-	services, err := s.DockerRepo.GetClusterServices()
+	return FindServiceByName(s.DockerRepo, r.Application.Name)
+}
+
+// FindServiceByName finds a service by name (shared utility for both deploy and devrunner)
+func FindServiceByName(dockerRepo docker.DockerRepository, serviceName string) (*swarm.Service, error) {
+	services, err := dockerRepo.GetClusterServices()
 	if err != nil {
 		return nil, err
 	}
 
 	for _, service := range services {
-		if service.Spec.Annotations.Name == r.Application.Name {
+		if service.Spec.Annotations.Name == serviceName {
 			return &service, nil
 		}
 	}
 	return nil, nil
+}
+
+// FindServiceByLabel finds a service by label key-value pair (shared utility)
+func FindServiceByLabel(dockerRepo docker.DockerRepository, labelKey, labelValue string) (*swarm.Service, error) {
+	services, err := dockerRepo.GetClusterServices()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, service := range services {
+		if service.Spec.Labels != nil && service.Spec.Labels[labelKey] == labelValue {
+			return &service, nil
+		}
+	}
+	return nil, nil
+}
+
+// CreateOrUpdateService creates or updates a service (shared utility)
+func CreateOrUpdateService(dockerRepo docker.DockerRepository, serviceSpec swarm.ServiceSpec, existingService *swarm.Service) (string, error) {
+	if existingService != nil {
+		// Update existing service
+		err := dockerRepo.UpdateService(existingService.ID, serviceSpec, "")
+		if err != nil {
+			return "", fmt.Errorf("failed to update service: %w", err)
+		}
+		return existingService.ID, nil
+	} else {
+		// Create new service
+		err := dockerRepo.CreateService(swarm.Service{
+			Spec: serviceSpec,
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to create service: %w", err)
+		}
+		// Get created service ID by name
+		createdService, err := FindServiceByName(dockerRepo, serviceSpec.Annotations.Name)
+		if err != nil || createdService == nil {
+			return "", fmt.Errorf("failed to get created service: %w", err)
+		}
+		return createdService.ID, nil
+	}
 }
 
 // createServiceSpec creates a swarm service specification
@@ -223,17 +260,14 @@ func (s *TaskService) createServiceSpec(r shared_types.TaskPayload, taskContext 
 
 // getServiceInfo retrieves service information
 func (s *TaskService) getServiceInfo(r shared_types.TaskPayload, taskContext *TaskContext) (swarm.Service, error) {
-	services, err := s.DockerRepo.GetClusterServices()
+	service, err := FindServiceByName(s.DockerRepo, r.Application.Name)
 	if err != nil {
 		return swarm.Service{}, err
 	}
-
-	for _, service := range services {
-		if service.Spec.Annotations.Name == r.Application.Name {
-			return service, nil
-		}
+	if service == nil {
+		return swarm.Service{}, fmt.Errorf("service not found: %s", r.Application.Name)
 	}
-	return swarm.Service{}, fmt.Errorf("service not found: %s", r.Application.Name)
+	return *service, nil
 }
 
 // waitForServiceHealthy polls the service health until all replicas are running or timeout

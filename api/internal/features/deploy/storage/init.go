@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,7 +28,7 @@ type DeployRepository interface {
 	AddApplication(application *shared_types.Application) error
 	AddApplicationLogs(applicationLogs *shared_types.ApplicationLogs) error
 	AddApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
-	GetApplications(page int, pageSize int, organizationID uuid.UUID) ([]shared_types.Application, int, error)
+	GetApplications(page int, pageSize int, sortBy string, sortDirection string, organizationID uuid.UUID) ([]shared_types.Application, int, error)
 	UpdateApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
 	GetApplicationById(id string, organizationID uuid.UUID) (shared_types.Application, error)
 	AddApplicationDeployment(deployment *shared_types.ApplicationDeployment) error
@@ -175,7 +176,7 @@ func (s *DeployStorage) AddApplicationLogs(applicationLogs *shared_types.Applica
 	return nil
 }
 
-func (s *DeployStorage) GetApplications(page, pageSize int, organizationID uuid.UUID) ([]shared_types.Application, int, error) {
+func (s *DeployStorage) GetApplications(page, pageSize int, sortBy string, sortDirection string, organizationID uuid.UUID) ([]shared_types.Application, int, error) {
 	var applications []shared_types.Application
 
 	offset := (page - 1) * pageSize
@@ -188,17 +189,24 @@ func (s *DeployStorage) GetApplications(page, pageSize int, organizationID uuid.
 		return nil, 0, err
 	}
 
-	err = s.DB.NewSelect().
+	// Build order expression based on sort parameters
+	orderExpr := s.buildOrderExpression(sortBy, sortDirection)
+
+	query := s.DB.NewSelect().
 		Model(&applications).
 		Relation("Status").
 		Relation("Logs").
 		Relation("Deployments.Status").
 		Relation("Domains").
-		Order("created_at DESC").
 		Limit(pageSize).
 		Offset(offset).
-		Where("organization_id = ?", organizationID).
-		Scan(s.Ctx)
+		Where("organization_id = ?", organizationID)
+
+	if orderExpr != "" {
+		query = query.OrderExpr(orderExpr)
+	}
+
+	err = query.Scan(s.Ctx)
 
 	if err != nil {
 		return nil, 0, err
@@ -213,6 +221,42 @@ func (s *DeployStorage) GetApplications(page, pageSize int, organizationID uuid.
 	}
 
 	return applications, totalCount, nil
+}
+
+// buildOrderExpression builds the SQL ORDER BY expression based on sort parameters
+// Valid sortBy values: name, environment, updated_at, created_at
+// Valid sortDirection values: asc, desc (case-insensitive)
+// Defaults: sortBy="updated_at", sortDirection="desc" if not provided
+func (s *DeployStorage) buildOrderExpression(sortBy string, sortDirection string) string {
+	// Default to updated_at DESC if no sort specified
+	if sortBy == "" {
+		return "a.updated_at DESC"
+	}
+
+	// Normalize sort direction - default to ASC if empty or invalid
+	dir := "ASC"
+	sortDirLower := strings.ToLower(sortDirection)
+	if sortDirLower == "desc" {
+		dir = "DESC"
+	} else if sortDirLower != "asc" && sortDirection != "" {
+		// Invalid direction provided, default to ASC
+		dir = "ASC"
+	}
+
+	// Map sortBy to actual database column names
+	switch sortBy {
+	case "name":
+		return fmt.Sprintf("a.name %s", dir)
+	case "environment":
+		return fmt.Sprintf("a.environment %s", dir)
+	case "updated_at":
+		return fmt.Sprintf("a.updated_at %s", dir)
+	case "created_at":
+		return fmt.Sprintf("a.created_at %s", dir)
+	default:
+		// Invalid sortBy, return default
+		return "a.updated_at DESC"
+	}
 }
 
 func (s *DeployStorage) GetApplicationById(id string, organizationID uuid.UUID) (shared_types.Application, error) {

@@ -48,7 +48,7 @@ CONTAINER_ID=<id> AUTH_TOKEN=<token> make mcp-client-test
 The server requires:
 - Database connection (via config)
 - Redis connection (via config)
-- SuperTokens initialization
+- Better Auth configuration
 
 All configuration is loaded from the standard Nixopus config files.
 

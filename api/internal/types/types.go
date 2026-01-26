@@ -1,24 +1,23 @@
 package types
 
 type Config struct {
-	Server      ServerConfig      `mapstructure:"server"`
-	Database    DatabaseConfig    `mapstructure:"database"`
-	Redis       RedisConfig       `mapstructure:"redis"`
-	SSH         SSHConfig         `mapstructure:"ssh"`
-	Deployment  DeploymentConfig  `mapstructure:"deployment"`
-	Docker      DockerConfig      `mapstructure:"docker"`
-	Proxy       ProxyConfig       `mapstructure:"proxy"`
-	CORS        CORSConfig        `mapstructure:"cors"`
-	App         AppConfig         `mapstructure:"app"`
-	Supertokens SupertokensConfig `mapstructure:"supertokens"`
+	Server     ServerConfig     `mapstructure:"server"`
+	Database   DatabaseConfig   `mapstructure:"database"`
+	Redis      RedisConfig      `mapstructure:"redis"`
+	SSH        SSHConfig        `mapstructure:"ssh"`
+	Deployment DeploymentConfig `mapstructure:"deployment"`
+	Docker     DockerConfig     `mapstructure:"docker"`
+	Proxy      ProxyConfig      `mapstructure:"proxy"`
+	CORS       CORSConfig       `mapstructure:"cors"`
+	App        AppConfig        `mapstructure:"app"`
+	GitHub     GitHubConfig     `mapstructure:"github"`
+	BetterAuth BetterAuthConfig `mapstructure:"betterauth"`
+	Stripe     StripeConfig     `mapstructure:"stripe"`
 }
 
-type SupertokensConfig struct {
-	APIKey          string `mapstructure:"api_key" validate:"required"`
-	APIDomain       string `mapstructure:"api_domain" validate:"required"`
-	WebsiteDomain   string `mapstructure:"website_domain" validate:"required"`
-	ConnectionURI   string `mapstructure:"connection_uri" validate:"required"`
-	EnableDebugLogs bool   `mapstructure:"enable_debug_logs"`
+type BetterAuthConfig struct {
+	URL    string `mapstructure:"url" validate:"required"`
+	Secret string `mapstructure:"secret" validate:"required"`
 }
 
 type ServerConfig struct {
@@ -73,6 +72,22 @@ type AppConfig struct {
 	Environment string `mapstructure:"environment"`
 	Version     string `mapstructure:"version"`
 	LogsPath    string `mapstructure:"logs_path"`
+}
+
+type GitHubConfig struct {
+	AppID         string `mapstructure:"app_id"`
+	Slug          string `mapstructure:"slug"`
+	Pem           string `mapstructure:"pem"`
+	ClientID      string `mapstructure:"client_id"`
+	ClientSecret  string `mapstructure:"client_secret"`
+	WebhookSecret string `mapstructure:"webhook_secret"`
+}
+
+type StripeConfig struct {
+	SecretKey            string `mapstructure:"secret_key"`
+	WebhookSecret        string `mapstructure:"webhook_secret"`
+	PriceID              string `mapstructure:"price_id"`
+	FreeDeploymentsLimit int    `mapstructure:"free_deployments_limit"`
 }
 
 type ClientContext string

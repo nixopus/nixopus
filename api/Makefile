@@ -60,10 +60,10 @@ fixtures-clean:
 
 # MCP Server commands
 mcp-build:
-	@go build -o nixopus-mcp-server ./cmd/mcp-server
+	@go build -o bin/nixopus-mcp-server ./cmd/mcp-server
 
 mcp-run: mcp-build
-	@./nixopus-mcp-server
+	@./bin/nixopus-mcp-server
 
 mcp-dev:
 	@if command -v air >/dev/null 2>&1; then \

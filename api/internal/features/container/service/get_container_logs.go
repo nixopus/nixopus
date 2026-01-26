@@ -12,9 +12,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 // ContainerLogsOptions contains options for fetching container logs
@@ -86,43 +86,12 @@ func getOrganizationSettings(store *shared_storage.Store, ctx context.Context, o
 		return shared_types.DefaultOrganizationSettingsData()
 	}
 
-	orgStore := storage.OrganizationStore{DB: store.DB, Ctx: ctx}
-	settings, err := orgStore.GetOrganizationSettings(orgID.String())
-	if err != nil || settings == nil {
+	settings, err := utils.GetOrganizationSettings(ctx, store.DB, orgID)
+	if err != nil {
 		return shared_types.DefaultOrganizationSettingsData()
 	}
 
-	// Merge with defaults to ensure all fields are set
-	defaults := shared_types.DefaultOrganizationSettingsData()
-	result := shared_types.OrganizationSettingsData{
-		WebsocketReconnectAttempts:       settings.Settings.WebsocketReconnectAttempts,
-		WebsocketReconnectInterval:       settings.Settings.WebsocketReconnectInterval,
-		ApiRetryAttempts:                 settings.Settings.ApiRetryAttempts,
-		DisableApiCache:                  settings.Settings.DisableApiCache,
-		ContainerLogTailLines:            defaults.ContainerLogTailLines,
-		ContainerDefaultRestartPolicy:    defaults.ContainerDefaultRestartPolicy,
-		ContainerStopTimeout:             defaults.ContainerStopTimeout,
-		ContainerAutoPruneDanglingImages: defaults.ContainerAutoPruneDanglingImages,
-		ContainerAutoPruneBuildCache:     defaults.ContainerAutoPruneBuildCache,
-	}
-
-	if settings.Settings.ContainerLogTailLines != nil {
-		result.ContainerLogTailLines = settings.Settings.ContainerLogTailLines
-	}
-	if settings.Settings.ContainerDefaultRestartPolicy != nil {
-		result.ContainerDefaultRestartPolicy = settings.Settings.ContainerDefaultRestartPolicy
-	}
-	if settings.Settings.ContainerStopTimeout != nil {
-		result.ContainerStopTimeout = settings.Settings.ContainerStopTimeout
-	}
-	if settings.Settings.ContainerAutoPruneDanglingImages != nil {
-		result.ContainerAutoPruneDanglingImages = settings.Settings.ContainerAutoPruneDanglingImages
-	}
-	if settings.Settings.ContainerAutoPruneBuildCache != nil {
-		result.ContainerAutoPruneBuildCache = settings.Settings.ContainerAutoPruneBuildCache
-	}
-
-	return result
+	return settings
 }
 
 // decodeDockerLogs decodes Docker's log format (8-byte header + payload)

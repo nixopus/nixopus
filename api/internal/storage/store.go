@@ -6,14 +6,12 @@ import (
 	"log"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/extension/loader"
-	"github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/uptrace/bun"
 )
 
 type Store struct {
-	DB           *bun.DB
-	Organization storage.OrganizationRepository
+	DB *bun.DB
 }
 
 type App struct {
@@ -28,8 +26,7 @@ func NewApp(config *types.Config, store *Store, ctx context.Context) *App {
 
 func NewStore(db *bun.DB) *Store {
 	return &Store{
-		DB:           db,
-		Organization: &storage.OrganizationStore{DB: db, Ctx: context.Background()},
+		DB: db,
 	}
 }
 
@@ -60,6 +57,7 @@ func (s *Store) Init(ctx context.Context) error {
 
 	return nil
 }
+
 
 func (s *Store) DropAllTables(ctx context.Context) error {
 	models := []interface{}{

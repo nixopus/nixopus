@@ -4,6 +4,25 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// convertDomains converts []*ApplicationDomain to []MCPApplicationDomain
+func convertDomains(domains []*shared_types.ApplicationDomain) []MCPApplicationDomain {
+	if domains == nil {
+		return nil
+	}
+	result := make([]MCPApplicationDomain, len(domains))
+	for i, domain := range domains {
+		if domain != nil {
+			result[i] = MCPApplicationDomain{
+				ID:            domain.ID,
+				ApplicationID: domain.ApplicationID,
+				Domain:        domain.Domain,
+				CreatedAt:     domain.CreatedAt,
+			}
+		}
+	}
+	return result
+}
+
 // convertToMCPApplication converts shared_types.Application to MCPApplication
 // removing circular references (User, Organization, Status, Logs, Deployments)
 func convertToMCPApplication(app shared_types.Application) MCPApplication {
@@ -31,7 +50,7 @@ func convertToMCPApplication(app shared_types.Application) MCPApplication {
 		Branch:               app.Branch,
 		PreRunCommand:        app.PreRunCommand,
 		PostRunCommand:       app.PostRunCommand,
-		Domain:               app.Domain,
+		Domains:              convertDomains(app.Domains),
 		DockerfilePath:       app.DockerfilePath,
 		BasePath:             app.BasePath,
 		UserID:               app.UserID.String(),

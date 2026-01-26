@@ -2,8 +2,6 @@ package realtime
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -59,10 +57,8 @@ type SocketServer struct {
 
 // NewSocketServer initializes and returns a new instance of SocketServer.
 func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx context.Context) (*SocketServer, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	// Load .env file if it exists (optional when using secret manager)
+	_ = godotenv.Load()
 
 	pgListener := NewPostgresListener()
 
@@ -78,9 +74,8 @@ func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx 
 		dashboardMonitors:   make(map[*websocket.Conn]*dashboard.DashboardMonitor),
 		applicationMonitors: make(map[*websocket.Conn]*realtime.ApplicationMonitor),
 	}
-	err = StartListeningAndNotify(&server.postgres_listener, ctx, server)
+	err := StartListeningAndNotify(&server.postgres_listener, ctx, server)
 	if err != nil {
-		log.Printf("Error initializing postgres listener: %v", err)
 		return nil, err
 	}
 	return server, nil
@@ -104,9 +99,13 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	orgID := r.URL.Query().Get("organization-id")
+	if orgID != "" {
+		r.Header.Set("X-Organization-Id", orgID)
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("Error upgrading connection: %v", err)
 		return
 	}
 
@@ -116,9 +115,8 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 		token = token[7:]
 	}
 
-	user, err := s.verifyToken(token)
+	user, err := s.verifyToken(token, r)
 	if err != nil || user == nil {
-		log.Printf("Auth error: %v", err)
 		s.sendError(conn, "Invalid authorization token")
 		conn.Close()
 		return
@@ -127,7 +125,6 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 	s.conns.Store(conn, user.ID)
 	defer s.handleDisconnect(conn)
 
-	log.Printf("User authenticated: %s", user.ID)
 	s.readLoop(conn)
 }
 
@@ -140,7 +137,6 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 // Returns:
 //   - nil
 func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
-	userID, _ := s.conns.Load(conn)
 	s.conns.Delete(conn)
 
 	s.topicsMu.Lock()
@@ -179,7 +175,6 @@ func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
 	s.applicationMutex.Unlock()
 
 	conn.Close()
-	fmt.Printf("Client disconnected: %s (User ID: %v)\n", conn.RemoteAddr(), userID)
 }
 
 func (s *SocketServer) Shutdown() {
@@ -191,8 +186,7 @@ func (s *SocketServer) Shutdown() {
 }
 
 func (s *SocketServer) handlePing(conn *websocket.Conn) {
-	userID, _ := s.conns.Load(conn)
-	fmt.Printf("Received ping from %s (User ID: %v)\n", conn.RemoteAddr(), userID)
+	_, _ = s.conns.Load(conn)
 }
 
 func (s *SocketServer) sendError(conn *websocket.Conn, message string) {
