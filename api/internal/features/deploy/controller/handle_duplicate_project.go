@@ -201,3 +201,72 @@ func (c *DeployController) HandleGetEnvironmentsInFamily(f fuego.ContextNoBody) 
 		},
 	}, nil
 }
+
+// HandleAddApplicationToFamily adds a new application to an existing family (or creates a new family).
+// This is used for multi-application monorepo setups.
+func (c *DeployController) HandleAddApplicationToFamily(f fuego.ContextWithBody[types.AddApplicationToFamilyRequest]) (*types.ApplicationResponse, error) {
+	c.logger.Log(logger.Info, "adding application to family", "")
+
+	data, err := f.Body()
+	if err != nil {
+		c.logger.Log(logger.Error, "failed to read request body", err.Error())
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	c.logger.Log(logger.Info, "request body parsed successfully", "name: "+data.Name)
+
+	if err := c.validator.ValidateRequest(&data); err != nil {
+		c.logger.Log(logger.Error, "request validation failed", err.Error())
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	// Get user and organization from context (set by APIKeyAuthMiddleware)
+	user := utils.GetUser(f.Response(), f.Request())
+	if user == nil {
+		c.logger.Log(logger.Error, "user authentication failed", "")
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
+	}
+
+	organizationID := utils.GetOrganizationID(f.Request())
+	if organizationID == uuid.Nil {
+		c.logger.Log(logger.Error, "organization not found", "")
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
+	}
+
+	c.logger.Log(logger.Info, "attempting to add application to family", "name: "+data.Name+", user_id: "+user.ID.String())
+
+	application, err := c.service.AddApplicationToFamily(&data, user.ID, organizationID)
+	if err != nil {
+		c.logger.Log(logger.Error, "failed to add application to family", err.Error())
+
+		status := http.StatusInternalServerError
+		if err == types.ErrProjectFamilyNotFound {
+			status = http.StatusNotFound
+		}
+
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: status,
+		}
+	}
+
+	c.logger.Log(logger.Info, "application added to family successfully", "id: "+application.ID.String())
+
+	return &types.ApplicationResponse{
+		Status:  "success",
+		Message: "Application added to family successfully",
+		Data:    application,
+	}, nil
+}

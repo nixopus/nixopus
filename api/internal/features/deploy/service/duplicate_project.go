@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -182,6 +183,129 @@ func (s *DeployService) GetEnvironmentsInFamily(familyID uuid.UUID, organization
 	}
 
 	return environments, nil
+}
+
+// AddApplicationToFamily adds a new application to an existing family (or creates a new family).
+// This is used for multi-application monorepo setups where multiple apps share the same repository.
+func (s *DeployService) AddApplicationToFamily(req *types.AddApplicationToFamilyRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
+	s.logger.Log(logger.Info, "adding application to family", "name: "+req.Name)
+
+	// Determine family_id
+	var familyID *uuid.UUID
+	if req.FamilyID != nil {
+		familyID = req.FamilyID
+		// Validate that the family exists and belongs to the organization
+		existingApps, err := s.storage.GetProjectsByFamilyID(*familyID, organizationID)
+		if err != nil {
+			s.logger.Log(logger.Error, "failed to validate family", err.Error())
+			return shared_types.Application{}, err
+		}
+		if len(existingApps) == 0 {
+			s.logger.Log(logger.Error, "family not found", "")
+			return shared_types.Application{}, types.ErrProjectFamilyNotFound
+		}
+	} else {
+		// Create new family
+		newFamilyID := uuid.New()
+		familyID = &newFamilyID
+	}
+
+	// Set defaults
+	environment := req.Environment
+	if environment == "" {
+		environment = shared_types.Development
+	}
+
+	buildPack := req.BuildPack
+	if buildPack == "" {
+		buildPack = shared_types.DockerFile
+	}
+
+	basePath := req.Path
+	if basePath == "" {
+		basePath = "/"
+	}
+	// Ensure base path ends with / for proper prefix matching
+	if !strings.HasSuffix(basePath, "/") && basePath != "/" {
+		basePath += "/"
+	}
+
+	dockerfilePath := req.DockerfilePath
+	if dockerfilePath == "" {
+		dockerfilePath = "Dockerfile"
+	}
+
+	port := req.Port
+	if port == 0 {
+		port = 8080
+	}
+
+	now := time.Now()
+	application := shared_types.Application{
+		ID:                   uuid.New(),
+		Name:                 req.Name,
+		BuildVariables:       tasks.GetStringFromMap(req.BuildVariables),
+		EnvironmentVariables: tasks.GetStringFromMap(req.EnvironmentVariables),
+		Environment:          environment,
+		BuildPack:            buildPack,
+		Repository:           req.Repository,
+		Branch:               req.Branch,
+		PreRunCommand:        req.PreRunCommand,
+		PostRunCommand:       req.PostRunCommand,
+		Port:                 port,
+		UserID:               userID,
+		CreatedAt:            now,
+		UpdatedAt:            now,
+		DockerfilePath:       dockerfilePath,
+		BasePath:             basePath,
+		OrganizationID:       organizationID,
+		FamilyID:             familyID,
+		ProxyServer:          shared_types.Caddy,
+	}
+
+	// Save the application
+	if err := s.storage.AddApplication(&application); err != nil {
+		s.logger.Log(logger.Error, "failed to create application", err.Error())
+		return shared_types.Application{}, err
+	}
+
+	// Create application status with draft status
+	appStatus := shared_types.ApplicationStatus{
+		ID:            uuid.New(),
+		ApplicationID: application.ID,
+		Status:        shared_types.Draft,
+		CreatedAt:     now,
+		UpdatedAt:     now,
+	}
+
+	if err := s.storage.AddApplicationStatus(&appStatus); err != nil {
+		s.logger.Log(logger.Error, "failed to create application status", err.Error())
+		return shared_types.Application{}, err
+	}
+
+	application.Status = &appStatus
+
+	// Add domains if provided
+	if len(req.Domains) > 0 {
+		if err := s.storage.AddApplicationDomains(application.ID, req.Domains); err != nil {
+			s.logger.Log(logger.Error, "failed to add domains", err.Error())
+			return shared_types.Application{}, err
+		}
+		// Load domains into application for response
+		domainsList, err := s.storage.GetApplicationDomains(application.ID)
+		if err != nil {
+			s.logger.Log(logger.Error, "failed to load domains after creation", err.Error())
+			return shared_types.Application{}, err
+		}
+		domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
+		for i := range domainsList {
+			domainPtrs[i] = &domainsList[i]
+		}
+		application.Domains = domainPtrs
+	}
+
+	s.logger.Log(logger.Info, "application added to family successfully", "id: "+application.ID.String())
+	return application, nil
 }
 
 // generateDuplicateName creates a name for the duplicate project.

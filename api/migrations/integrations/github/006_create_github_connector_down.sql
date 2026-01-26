@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS github_connectors;

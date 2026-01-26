@@ -49,3 +49,15 @@ type UserPreferencesResponse struct {
 	Message string                        `json:"message"`
 	Data    *shared_types.UserPreferences `json:"data"`
 }
+
+// IsOnboardedResponseData holds the onboarding status
+type IsOnboardedResponseData struct {
+	IsOnboarded bool `json:"is_onboarded"`
+}
+
+// IsOnboardedResponse is the typed response for onboarding status
+type IsOnboardedResponse struct {
+	Status  string                  `json:"status"`
+	Message string                  `json:"message"`
+	Data    IsOnboardedResponseData `json:"data"`
+}

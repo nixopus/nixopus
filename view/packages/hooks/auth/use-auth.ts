@@ -1,8 +1,7 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSessionContext } from 'supertokens-auth-react/recipe/session';
-import { signIn } from 'supertokens-auth-react/recipe/emailpassword';
+import { authClient } from '@/packages/lib/auth-client';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/redux/hooks';
@@ -10,7 +9,6 @@ import { initializeAuth } from '@/redux/features/users/authSlice';
 
 function useAuth() {
   const router = useRouter();
-  const session = useSessionContext();
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const [loaded, setLoaded] = useState(false);
@@ -19,14 +17,9 @@ function useAuth() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (session.loading === false) {
-      if (session.doesSessionExist) {
-        router.push('/dashboard');
-      } else {
-        setLoaded(true);
-      }
-    }
-  }, [session, router]);
+    // Just mark as loaded - layout.tsx handles redirects for authenticated users
+    setLoaded(true);
+  }, []);
 
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(event.target.value);
@@ -44,25 +37,39 @@ function useAuth() {
 
     setIsLoading(true);
     try {
-      const response = await signIn({
-        formFields: [
-          { id: 'email', value: email },
-          { id: 'password', value: password }
-        ]
+      const result = await authClient.signIn.email({
+        email,
+        password
       });
 
-      if (response.status === 'FIELD_ERROR') {
-        response.formFields.forEach((field) => {
-          toast.error(field.error);
-        });
-      } else if (response.status === 'WRONG_CREDENTIALS_ERROR') {
-        toast.error(t('auth.login.errors.loginFailed'));
+      if (result.error) {
+        toast.error(result.error.message || t('auth.login.errors.loginFailed'));
       } else {
-        dispatch(initializeAuth() as any);
-        router.push('/dashboard');
+        await dispatch(initializeAuth() as any);
+        
+        // Check for pending organization invitation
+        const pendingInvite = sessionStorage.getItem('pendingInvite');
+        if (pendingInvite) {
+          try {
+            const inviteData = JSON.parse(pendingInvite);
+            sessionStorage.removeItem('pendingInvite');
+            // Redirect to organization invite page to complete the process
+            router.push(`/auth/organization-invite?token=${inviteData.token}&org_id=${inviteData.orgId}&email=${inviteData.email || ''}&role=${inviteData.role || 'viewer'}`);
+            return;
+          } catch (error) {
+            console.error('Error processing pending invite:', error);
+          }
+        }
+        
+        // Wait a moment for Redux state to update after initializeAuth
+        // The layout.tsx will handle redirect automatically, but we can also redirect here
+        // as a fallback after ensuring state is updated
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 200);
       }
-    } catch (error) {
-      toast.error(t('auth.login.errors.loginFailed'));
+    } catch (error: any) {
+      toast.error(error?.message || t('auth.login.errors.loginFailed'));
     } finally {
       setIsLoading(false);
     }

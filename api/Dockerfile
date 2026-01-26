@@ -23,7 +23,6 @@ RUN apk add --no-cache --no-scripts ca-certificates bash docker-cli
 WORKDIR /app
 
 COPY --from=builder /app/bin/nixopus-api .
-COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/templates ./templates
 
 RUN mkdir -p /etc/nixopus/ssh && \

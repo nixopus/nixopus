@@ -1,1 +1,0 @@
-ALTER TABLE domains DROP COLUMN organization_id;

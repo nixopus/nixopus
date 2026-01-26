@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	mcp_middleware "github.com/raghavyuva/nixopus-api/internal/mcp/middleware"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
@@ -67,18 +66,27 @@ func GetApplicationsHandler(
 			}
 		}
 
-		applications, totalCount, err := deployService.GetApplications(page, pageSize, organizationID)
+		sortBy := ""
+		sortDirection := ""
+
+		applications, totalCount, err := deployService.GetApplications(page, pageSize, sortBy, sortDirection, organizationID)
 		if err != nil {
 			l.Log(logger.Error, "Failed to get applications", err.Error())
 			return nil, GetApplicationsOutput{}, err
 		}
 
+		// Convert to MCP types to avoid circular references
+		mcpApplications := make([]MCPApplication, len(applications))
+		for i, app := range applications {
+			mcpApplications[i] = convertToMCPApplication(app)
+		}
+
 		return nil, GetApplicationsOutput{
-			Response: types.ListApplicationsResponse{
+			Response: MCPListApplicationsResponse{
 				Status:  "success",
 				Message: "Applications retrieved successfully",
-				Data: types.ListApplicationsResponseData{
-					Applications: applications,
+				Data: MCPListApplicationsResponseData{
+					Applications: mcpApplications,
 					TotalCount:   totalCount,
 					Page:         page,
 					PageSize:     pageSize,

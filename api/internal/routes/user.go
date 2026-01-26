@@ -9,7 +9,6 @@ import (
 func (router *Router) RegisterUserRoutes(userGroup *fuego.Server, userController *user.UserController) {
 	fuego.Get(userGroup, "", userController.GetUserDetails)
 	fuego.Patch(userGroup, "/name", userController.UpdateUserName)
-	fuego.Get(userGroup, "/organizations", userController.GetUserOrganizations)
 	fuego.Get(userGroup, "/settings", userController.GetSettings)
 	fuego.Patch(userGroup, "/settings/font", userController.UpdateFont)
 	fuego.Patch(userGroup, "/settings/theme", userController.UpdateTheme)
@@ -18,4 +17,5 @@ func (router *Router) RegisterUserRoutes(userGroup *fuego.Server, userController
 	fuego.Patch(userGroup, "/avatar", userController.UpdateAvatar)
 	fuego.Get(userGroup, "/preferences", userController.GetUserPreferences)
 	fuego.Put(userGroup, "/preferences", userController.UpdateUserPreferences)
+	fuego.Get(userGroup, "/onboarded", userController.GetIsOnboarded)
 }

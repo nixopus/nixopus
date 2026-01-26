@@ -1,5 +1,4 @@
 'use client';
-import { ResetPasswordUsingToken } from 'supertokens-auth-react/recipe/emailpassword/prebuiltui';
 import { LoginForm } from '@/packages/components/login-form';
 import useAuth from '@/packages/hooks/auth/use-auth';
 
@@ -22,24 +21,17 @@ export default function Auth() {
     );
   }
 
-  const path = typeof window !== 'undefined' ? window.location.pathname : '';
-  const isResetPath = path === '/auth/reset-password';
-
   return (
     <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm md:max-w-3xl">
-        {isResetPath ? (
-          <ResetPasswordUsingToken />
-        ) : (
-          <LoginForm
-            email={email}
-            password={password}
-            handleEmailChange={handleEmailChange}
-            handlePasswordChange={handlePasswordChange}
-            handleLogin={handleLogin}
-            isLoading={isLoading}
-          />
-        )}
+        <LoginForm
+          email={email}
+          password={password}
+          handleEmailChange={handleEmailChange}
+          handlePasswordChange={handlePasswordChange}
+          handleLogin={handleLogin}
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );

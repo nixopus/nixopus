@@ -9,9 +9,9 @@ import {
   ReactNode,
   useCallback
 } from 'react';
-import { getAccessToken } from 'supertokens-auth-react/recipe/session';
 import { useAppSelector } from '@/redux/hooks';
 import { getAdvancedSettings } from '@/packages/utils/advanced-settings';
+import { authClient } from '@/packages/lib/auth-client';
 
 type WebSocketContextValue = {
   isReady: boolean;
@@ -24,9 +24,9 @@ type WebSocketContextValue = {
 const WebSocketContext = createContext<WebSocketContextValue>({
   isReady: false,
   message: null,
-  sendMessage: () => {},
-  sendJsonMessage: () => {},
-  subscribe: () => () => {}
+  sendMessage: () => { },
+  sendJsonMessage: () => { },
+  subscribe: () => () => { }
 });
 
 interface WebSocketProviderProps {
@@ -55,8 +55,15 @@ export const WebSocketProvider = ({
   const messageQueueRef = useRef<string[]>([]);
   const listenersRef = useRef(new Set<(data: string) => void>());
   const { isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+  const organizationId = useAppSelector((state) => state.user.activeOrganization?.id) || '';
 
   const connectWebSocket = async () => {
+    const session = await authClient.getSession();
+    const token = session?.data?.session?.token || '';
+    if (!token) {
+      return;
+    }
+
     if (isConnectingRef.current) {
       console.log('Connection already in progress, skipping');
       return;
@@ -90,8 +97,7 @@ export const WebSocketProvider = ({
     console.log('Initiating WebSocket connection...');
 
     try {
-      const token = await getAccessToken();
-      const wsUrl = url || (await getWebsocketUrl()) + '?token=' + token;
+      const wsUrl = url || (await getWebsocketUrl()) + '?token=' + token + '&organization-id=' + organizationId;
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {

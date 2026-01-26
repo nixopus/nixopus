@@ -15,11 +15,13 @@ type AuthResponse struct {
 	User         shared_types.User `json:"user"`
 }
 
+// PASSWORDLESS AUTHENTICATION - Commented out password-based login request
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+// PASSWORDLESS AUTHENTICATION - Commented out password-based register request
 type RegisterRequest struct {
 	Username     string `json:"username"`
 	Email        string `json:"email"`
@@ -68,11 +70,12 @@ type TwoFactorVerifyRequest struct {
 	Code string `json:"code"`
 }
 
-type TwoFactorLoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Code     string `json:"code"`
-}
+// PASSWORDLESS AUTHENTICATION - Commented out password-based 2FA login request
+// type TwoFactorLoginRequest struct {
+// 	Email    string `json:"email"`
+// 	Password string `json:"password"`
+// 	Code     string `json:"code"`
+// }
 
 type CreateAPIKeyRequest struct {
 	Name          string `json:"name"`

@@ -2,30 +2,32 @@ package types
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
 
+// User represents the user table from Better Auth schema (auth_schema.ts)
+// Table: "user" with columns: id, name, email, email_verified, image, created_at, updated_at
 type User struct {
-	bun.BaseModel     `bun:"table:users,alias:u" swaggerignore:"true"`
-	ID                uuid.UUID            `json:"id" bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
-	SupertokensUserID string               `json:"supertokens_user_id" bun:"supertokens_user_id,type:text,unique"`
-	Username          string               `json:"username" bun:"username,type:text,notnull"`
-	Email             string               `json:"email" bun:"email,type:text,notnull,unique"`
-	Password          string               `json:"-" bun:"password,type:text"` // Optional for SuperTokens users
-	Avatar            string               `json:"avatar" bun:"avatar,type:text"`
-	CreatedAt         time.Time            `json:"created_at" bun:"created_at,type:timestamp,notnull,default:now()"`
-	UpdatedAt         time.Time            `json:"updated_at" bun:"updated_at,type:timestamp,notnull,default:now()"`
-	DeletedAt         *time.Time           `json:"deleted_at,omitempty" bun:"deleted_at"`
-	IsVerified        bool                 `json:"is_verified" bun:"is_verified,type:boolean,notnull,default:false"`
-	ResetToken        string               `json:"-" bun:"reset_token"`
-	Type              string               `json:"type" bun:"type,type:text,notnull"`
-	TwoFactorEnabled  bool                 `json:"two_factor_enabled" bun:"two_factor_enabled,type:boolean,notnull,default:false"`
-	TwoFactorSecret   string               `json:"two_factor_secret" bun:"two_factor_secret,type:text"`
+	bun.BaseModel     `bun:"table:user,alias:u" swaggerignore:"true"`
+	ID                uuid.UUID            `json:"id" bun:"id,pk,type:uuid"`
+	Name              string               `json:"name" bun:"name,type:text,notnull"`
+	Email             string               `json:"email" bun:"email,type:text,notnull"`
+	EmailVerified     bool                 `json:"email_verified" bun:"email_verified,type:boolean,notnull,default:false"`
+	Image             *string              `json:"image,omitempty" bun:"image,type:text"`
+	CreatedAt         time.Time            `json:"created_at" bun:"created_at,type:timestamp,notnull"`
+	UpdatedAt         time.Time            `json:"updated_at" bun:"updated_at,type:timestamp,notnull"`
 	Organizations     []*Organization      `json:"organizations,omitempty" bun:"m2m:organization_users,join:User=Organization"`
 	OrganizationUsers []*OrganizationUsers `json:"organization_users,omitempty" bun:"m2m:organization_users,join:User=Organization"`
+
+	// Backward compatibility fields (computed, not persisted)
+	Username          string `json:"username" bun:"-"`            // Computed from Name
+	Avatar            string `json:"avatar" bun:"-"`              // Computed from Image
+	IsVerified        bool   `json:"is_verified" bun:"-"`         // Computed from EmailVerified
+	SupertokensUserID string `json:"supertokens_user_id" bun:"-"` // Computed from ID
 }
 
 type RefreshToken struct {
@@ -37,7 +39,26 @@ type RefreshToken struct {
 	RevokedAt *time.Time `json:"revoked_at,omitempty" bson:"revoked_at,omitempty"`
 }
 
-// NewUser returns a new User with default values set. If the provided User has empty strings for Role, CreatedAt, UpdatedAt, DeletedAt, or IsVerified, the corresponding fields in the returned User will be set with default values.
+// ComputeCompatibilityFields computes backward compatibility fields from Better Auth fields
+func (u *User) ComputeCompatibilityFields() {
+	u.Username = u.Name
+	if u.Username == "" {
+		// Derive username from email if name is empty
+		if atIndex := strings.Index(u.Email, "@"); atIndex > 0 {
+			u.Username = u.Email[:atIndex]
+		} else {
+			u.Username = u.Email
+		}
+	}
+
+	if u.Image != nil {
+		u.Avatar = *u.Image
+	}
+	u.IsVerified = u.EmailVerified
+	u.SupertokensUserID = u.ID.String()
+}
+
+// NewUser returns a new User with default values set (for backward compatibility)
 func (u User) NewUser() User {
 	if u.CreatedAt.IsZero() {
 		u.CreatedAt = time.Now()
@@ -46,32 +67,35 @@ func (u User) NewUser() User {
 		u.UpdatedAt = time.Now()
 	}
 
-	return User{
-		ID:         uuid.New(),
-		Username:   u.Username,
-		Email:      u.Email,
-		Password:   u.Password,
-		Avatar:     u.Avatar,
-		CreatedAt:  u.CreatedAt,
-		UpdatedAt:  u.UpdatedAt,
-		DeletedAt:  u.DeletedAt,
-		IsVerified: u.IsVerified,
+	user := User{
+		ID:            uuid.New(),
+		Name:          u.Name,
+		Email:         u.Email,
+		EmailVerified: u.EmailVerified,
+		Image:         u.Image,
+		CreatedAt:     u.CreatedAt,
+		UpdatedAt:     u.UpdatedAt,
 	}
+	user.ComputeCompatibilityFields()
+	return user
 }
 
 func NewUser(email string, password string, username string, avatar string, role string, isVerified bool) User {
-	return User{
-		ID:         uuid.New(),
-		Username:   username,
-		Email:      email,
-		Password:   password,
-		Avatar:     avatar,
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
-		DeletedAt:  nil,
-		IsVerified: isVerified,
-		Type:       role,
+	var imagePtr *string
+	if avatar != "" {
+		imagePtr = &avatar
 	}
+	user := User{
+		ID:            uuid.New(),
+		Name:          username,
+		Email:         email,
+		EmailVerified: isVerified,
+		Image:         imagePtr,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+	user.ComputeCompatibilityFields()
+	return user
 }
 
 var (

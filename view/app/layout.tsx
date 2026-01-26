@@ -6,16 +6,15 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from '@/redux/store';
 import { Toaster } from '@/components/ui/sonner';
-import { useAppDispatch } from '@/redux/hooks';
-import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { useEffect, useState, useMemo } from 'react';
 import { initializeAuth } from '@/redux/features/users/authSlice';
 import { usePathname, useRouter } from 'next/navigation';
 import { WebSocketProvider } from '@/packages/hooks/shared/socket-provider';
 import { FeatureFlagsProvider } from '@/packages/hooks/shared/features_provider';
 import { SystemStatsProvider } from '@/packages/hooks/shared/system-stats-provider';
 import { palette } from '@/packages/utils/colors';
-import { SuperTokensProvider } from '@/packages/layouts/supertokensProvider';
-import { useSessionContext } from 'supertokens-auth-react/recipe/session';
+import { authClient } from '@/packages/lib/auth-client';
 import { SettingsModalProvider } from '@/packages/hooks/shared/use-settings-modal';
 import AppLayout from '@/packages/layouts/layout';
 import { SettingsModal } from '@/packages/components/settings';
@@ -47,9 +46,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       >
         <Provider store={store}>
           <PersistGate loading={null} persistor={persistor}>
-            <SuperTokensProvider>
-              <ChildrenWrapper>{children}</ChildrenWrapper>
-            </SuperTokensProvider>
+            <ChildrenWrapper>{children}</ChildrenWrapper>
           </PersistGate>
         </Provider>
       </body>
@@ -61,11 +58,9 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
   const pathname = usePathname();
   const router = useRouter();
-  const session = useSessionContext();
-
-  useEffect(() => {
-    dispatch(initializeAuth() as any);
-  }, [dispatch]);
+  const [isLoading, setIsLoading] = useState(true);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const isInitialized = useAppSelector((state) => state.auth.isInitialized);
 
   const PUBLIC_ROUTES = [
     '/login',
@@ -75,18 +70,53 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
     '/verify-email',
     '/auth/organization-invite'
   ];
-  const isPublicRoute = PUBLIC_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(route + '/')
+  const isPublicRoute = useMemo(
+    () => PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route + '/')),
+    [pathname]
   );
 
   useEffect(() => {
-    if (session.loading) return;
+    const initAuth = async () => {
+      await dispatch(initializeAuth() as any);
+      setIsLoading(false);
+    };
+    initAuth();
+  }, [dispatch]);
 
-    const sessionExists = 'doesSessionExist' in session ? session.doesSessionExist : false;
+  // Re-check session when pathname changes to catch login state changes
+  // This is a fallback in case Redux state hasn't updated yet
+  useEffect(() => {
+    if (!isInitialized) return;
+    
+    const checkSession = async () => {
+      try {
+        const session = await authClient.getSession();
+        const hasSession = !!session?.data?.session;
+        // If session exists but Redux says not authenticated, re-initialize
+        // This can happen right after login before Redux state updates
+        if (hasSession && !isAuthenticated) {
+          await dispatch(initializeAuth() as any);
+        }
+      } catch (error) {
+        // Session check failed, rely on Redux state
+      }
+    };
+    
+    // Only check on public routes to avoid unnecessary checks
+    if (isPublicRoute) {
+      checkSession();
+    }
+  }, [pathname, isAuthenticated, isInitialized, isPublicRoute, dispatch]);
 
-    if (!isPublicRoute && !sessionExists) {
-      router.push('/auth');
-    } else if (isPublicRoute && sessionExists) {
+  useEffect(() => {
+    if (isLoading || !isInitialized) return;
+
+    // Prevent redirect loops by checking if we're already on the target route
+    if (!isPublicRoute && !isAuthenticated) {
+      if (pathname !== '/auth') {
+        router.push('/auth');
+      }
+    } else if (isPublicRoute && isAuthenticated) {
       if (
         pathname === '/' ||
         pathname === '/auth' ||
@@ -96,9 +126,9 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
         router.push('/dashboard');
       }
     }
-  }, [pathname, session.loading, router, isPublicRoute]);
+  }, [pathname, isLoading, isInitialized, router, isPublicRoute, isAuthenticated]);
 
-  if (session.loading) {
+  if (isLoading) {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>

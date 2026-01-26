@@ -1,0 +1,31 @@
+{
+  "ai": {
+    "title": "Nixopus AI",
+    "emptyState": {
+      "title": "How can I help you?",
+      "description": "Ask me anything about your deployments, configurations, or get help with troubleshooting.",
+      "tryAskingAbout": "Try asking about"
+    },
+    "suggestions": {
+      "deploy": "How do I deploy a new application?",
+      "logs": "Show me recent activity logs",
+      "envVars": "Help me configure environment variables"
+    },
+    "input": {
+      "placeholder": "Ask me anything...",
+      "hint": "Press Enter to send, Shift + Enter for new line",
+      "attachFile": "Attach file",
+      "sendMessage": "Send message"
+    },
+    "threads": {
+      "newChat": "New Chat",
+      "recentChats": "Recent Chats",
+      "emptyState": {
+        "title": "No conversations yet",
+        "description": "Start a new chat above"
+      },
+      "error": "Failed to load threads",
+      "untitledChat": "Untitled Chat"
+    }
+  }
+}

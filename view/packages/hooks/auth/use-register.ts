@@ -2,7 +2,7 @@
 
 import { useTranslation, type translationKey } from '@/packages/hooks/shared/use-translation';
 import { useRouter } from 'next/navigation';
-import { signUp } from 'supertokens-auth-react/recipe/emailpassword';
+import { authClient } from '@/packages/lib/auth-client';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -72,21 +72,17 @@ function useRegister() {
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
     try {
-      const response = await signUp({
-        formFields: [
-          { id: 'email', value: data.email },
-          { id: 'password', value: data.password }
-        ]
+      // Extract name from email (part before @) or use a default
+      const name = data.email.split('@')[0] || 'User';
+      
+      const result = await authClient.signUp.email({
+        email: data.email,
+        password: data.password,
+        name: name
       });
 
-      if (response.status === 'FIELD_ERROR') {
-        response.formFields.forEach((field) => {
-          toast.error(field.error);
-        });
-      } else if (response.status === 'SIGN_UP_NOT_ALLOWED') {
-        toast.error(t('auth.register.errors.signUpNotAllowed.message' as any), {
-          description: t('auth.register.errors.signUpNotAllowed.description' as any)
-        });
+      if (result.error) {
+        toast.error(result.error.message || t('auth.register.errors.registerFailed'));
       } else {
         setRegistrationSuccess(true);
         toast.success(t('auth.register.successAdmin.title' as any), {

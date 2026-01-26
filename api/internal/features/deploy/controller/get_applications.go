@@ -20,6 +20,8 @@ func (c *DeployController) GetApplications(f fuego.ContextWithBody[GetApplicatio
 	w, r := f.Response(), f.Request()
 	page := r.URL.Query().Get("page")
 	pageSize := r.URL.Query().Get("page_size")
+	sortBy := r.URL.Query().Get("sort_by")
+	sortDirection := r.URL.Query().Get("sort_direction")
 	organizationID := utils.GetOrganizationID(r)
 	if organizationID == uuid.Nil {
 		c.logger.Log(logger.Error, "organization not found", "")
@@ -47,7 +49,7 @@ func (c *DeployController) GetApplications(f fuego.ContextWithBody[GetApplicatio
 		}
 	}
 
-	applications, totalCount, err := c.service.GetApplications(page, pageSize, organizationID)
+	applications, totalCount, err := c.service.GetApplications(page, pageSize, sortBy, sortDirection, organizationID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

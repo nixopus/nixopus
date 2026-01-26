@@ -32,18 +32,80 @@ func (l *ExtensionLoader) LoadExtensionsFromDirectory(ctx context.Context, dirPa
 
 	log.Printf("Found %d extension files in %s", len(extensions), dirPath)
 
+	if len(extensions) == 0 {
+		return nil
+	}
+
 	// Collect extension IDs found in templates directory
 	foundExtensionIDs := make(map[string]bool)
 	for _, extension := range extensions {
 		foundExtensionIDs[extension.ExtensionID] = true
 	}
 
+	// Batch fetch all existing extensions in one query
+	extensionIDs := make([]string, 0, len(extensions))
+	for _, ext := range extensions {
+		extensionIDs = append(extensionIDs, ext.ExtensionID)
+	}
+
+	var existingExtensions []types.Extension
+	err = l.db.NewSelect().
+		Model(&existingExtensions).
+		Where("extension_id IN (?) AND deleted_at IS NULL", bun.In(extensionIDs)).
+		Scan(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to fetch existing extensions: %w", err)
+	}
+
+	// Create a map of existing extensions by extension_id
+	existingMap := make(map[string]*types.Extension)
+	for i := range existingExtensions {
+		existingMap[existingExtensions[i].ExtensionID] = &existingExtensions[i]
+	}
+
+	// Separate extensions into insert, update, and skip batches
+	var toInsert []*types.Extension
+	var insertVariables [][]types.ExtensionVariable
+	var toUpdate []*types.Extension
+	var updateVariables [][]types.ExtensionVariable
+	skippedCount := 0
+
 	for i, extension := range extensions {
 		variables := allVariables[i]
+		existing, exists := existingMap[extension.ExtensionID]
 
-		if err := l.upsertExtension(ctx, extension, variables); err != nil {
-			log.Printf("Failed to load extension %s: %v", extension.ExtensionID, err)
-			continue
+		if exists {
+			// Check if content hash changed
+			if existing.ContentHash == extension.ContentHash {
+				skippedCount++
+				continue
+			}
+			// Extension exists but changed - needs update
+			extension.ID = existing.ID
+			extension.CreatedAt = existing.CreatedAt
+			toUpdate = append(toUpdate, extension)
+			updateVariables = append(updateVariables, variables)
+		} else {
+			// New extension - needs insert
+			extension.ID = uuid.New()
+			toInsert = append(toInsert, extension)
+			insertVariables = append(insertVariables, variables)
+		}
+	}
+
+	log.Printf("Processing: %d new, %d updated, %d unchanged", len(toInsert), len(toUpdate), skippedCount)
+
+	// Batch insert new extensions
+	if len(toInsert) > 0 {
+		if err := l.batchInsertExtensions(ctx, toInsert, insertVariables); err != nil {
+			return fmt.Errorf("failed to batch insert extensions: %w", err)
+		}
+	}
+
+	// Batch update changed extensions
+	if len(toUpdate) > 0 {
+		if err := l.batchUpdateExtensions(ctx, toUpdate, updateVariables); err != nil {
+			return fmt.Errorf("failed to batch update extensions: %w", err)
 		}
 	}
 
@@ -56,6 +118,103 @@ func (l *ExtensionLoader) LoadExtensionsFromDirectory(ctx context.Context, dirPa
 	return nil
 }
 
+// batchInsertExtensions inserts multiple extensions and their variables in a single transaction
+func (l *ExtensionLoader) batchInsertExtensions(ctx context.Context, extensions []*types.Extension, allVariables [][]types.ExtensionVariable) error {
+	if len(extensions) == 0 {
+		return nil
+	}
+
+	tx, err := l.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Bulk insert extensions
+	if _, err := tx.NewInsert().Model(&extensions).Exec(ctx); err != nil {
+		return fmt.Errorf("failed to batch insert extensions: %w", err)
+	}
+
+	// Collect all variables for bulk insert
+	var allVars []types.ExtensionVariable
+	for i, extension := range extensions {
+		variables := allVariables[i]
+		for j := range variables {
+			variables[j].ID = uuid.New()
+			variables[j].ExtensionID = extension.ID
+			allVars = append(allVars, variables[j])
+		}
+	}
+
+	// Bulk insert all variables
+	if len(allVars) > 0 {
+		if _, err := tx.NewInsert().Model(&allVars).Exec(ctx); err != nil {
+			return fmt.Errorf("failed to batch insert variables: %w", err)
+		}
+	}
+
+	return tx.Commit()
+}
+
+// batchUpdateExtensions updates multiple extensions and their variables in batches
+func (l *ExtensionLoader) batchUpdateExtensions(ctx context.Context, extensions []*types.Extension, allVariables [][]types.ExtensionVariable) error {
+	if len(extensions) == 0 {
+		return nil
+	}
+
+	tx, err := l.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Collect extension IDs for bulk variable deletion
+	extensionIDs := make([]uuid.UUID, len(extensions))
+	for i, ext := range extensions {
+		extensionIDs[i] = ext.ID
+	}
+
+	// Bulk delete old variables
+	if _, err := tx.NewDelete().
+		Model((*types.ExtensionVariable)(nil)).
+		Where("extension_id IN (?)", bun.In(extensionIDs)).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("failed to bulk delete variables: %w", err)
+	}
+
+	// Update each extension individually (bun doesn't support bulk update with different values)
+	for _, extension := range extensions {
+		if _, err := tx.NewUpdate().
+			Model(extension).
+			Column("name", "description", "author", "icon", "category", "extension_type", "version", "is_verified", "featured", "yaml_content", "parsed_content", "content_hash", "validation_status", "updated_at").
+			Where("id = ?", extension.ID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("failed to update extension %s: %w", extension.ExtensionID, err)
+		}
+	}
+
+	// Collect all variables for bulk insert
+	var allVars []types.ExtensionVariable
+	for i, extension := range extensions {
+		variables := allVariables[i]
+		for j := range variables {
+			variables[j].ID = uuid.New()
+			variables[j].ExtensionID = extension.ID
+			allVars = append(allVars, variables[j])
+		}
+	}
+
+	// Bulk insert new variables
+	if len(allVars) > 0 {
+		if _, err := tx.NewInsert().Model(&allVars).Exec(ctx); err != nil {
+			return fmt.Errorf("failed to batch insert variables: %w", err)
+		}
+	}
+
+	return tx.Commit()
+}
+
+// upsertExtension is kept for backward compatibility but is no longer used in batch operations
 func (l *ExtensionLoader) upsertExtension(ctx context.Context, extension *types.Extension, variables []types.ExtensionVariable) error {
 	tx, err := l.db.BeginTx(ctx, nil)
 	if err != nil {

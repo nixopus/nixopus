@@ -43,6 +43,8 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return validateDuplicateProjectRequest(*r)
 	case *types.GetProjectFamilyRequest:
 		return validateGetProjectFamilyRequest(*r)
+	case *types.AddApplicationToFamilyRequest:
+		return validateAddApplicationToFamilyRequest(r)
 	default:
 		return types.ErrInvalidRequestType
 	}
@@ -187,6 +189,36 @@ func validateDuplicateProjectRequest(req types.DuplicateProjectRequest) error {
 func validateGetProjectFamilyRequest(req types.GetProjectFamilyRequest) error {
 	if req.FamilyID == uuid.Nil {
 		return types.ErrMissingID
+	}
+	return nil
+}
+
+// validateAddApplicationToFamilyRequest validates a request to add an application to a family.
+func validateAddApplicationToFamilyRequest(req *types.AddApplicationToFamilyRequest) error {
+	if req.Name == "" {
+		return types.ErrMissingName
+	}
+	if req.Repository == "" {
+		return types.ErrMissingRepository
+	}
+	// Set defaults for optional fields
+	if req.Environment == "" {
+		req.Environment = "development"
+	}
+	if req.BuildPack == "" {
+		req.BuildPack = "dockerfile"
+	}
+	if req.Branch == "" {
+		req.Branch = "main"
+	}
+	if req.Port == 0 {
+		req.Port = 8080
+	}
+	if req.Path == "" {
+		req.Path = "/"
+	}
+	if req.DockerfilePath == "" {
+		req.DockerfilePath = "Dockerfile"
 	}
 	return nil
 }

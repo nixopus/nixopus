@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -33,7 +34,17 @@ func (c *GithubConnectorService) getInstallationToken(jwt string, installation_i
 
 	if resp.StatusCode != http.StatusCreated {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		errMsg := fmt.Sprintf("Failed to get installation token: %s - %s", resp.Status, string(bodyBytes))
+		bodyStr := string(bodyBytes)
+		
+		// Handle specific error cases
+		if resp.StatusCode == http.StatusNotFound {
+			return "", fmt.Errorf("installation not found: the GitHub installation ID '%s' is invalid or the app does not have access to it. Please reconnect your GitHub account", installation_id)
+		}
+		if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+			return "", fmt.Errorf("authentication failed: the GitHub App credentials are invalid or expired. Please check your app configuration")
+		}
+		
+		errMsg := fmt.Sprintf("Failed to get installation token: %s - %s", resp.Status, bodyStr)
 		return "", errors.New(errMsg)
 	}
 
@@ -50,7 +61,25 @@ func (c *GithubConnectorService) getInstallationToken(jwt string, installation_i
 }
 
 func GenerateJwt(app_credentials *shared_types.GithubConnector) string {
-	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(app_credentials.Pem))
+	var pem string
+	var appID string
+
+	// Use connector credentials if available, otherwise use shared config
+	if app_credentials != nil && app_credentials.Pem != "" && app_credentials.AppID != "" {
+		pem = app_credentials.Pem
+		appID = app_credentials.AppID
+	} else {
+		// Use shared GitHub App credentials from config
+		githubConfig := config.AppConfig.GitHub
+		if githubConfig.Pem == "" || githubConfig.AppID == "" {
+			fmt.Println("Error: GitHub App credentials not configured")
+			return ""
+		}
+		pem = githubConfig.Pem
+		appID = githubConfig.AppID
+	}
+
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(pem))
 	if err != nil {
 		fmt.Println("Error parsing private key:", err)
 		return ""
@@ -60,7 +89,7 @@ func GenerateJwt(app_credentials *shared_types.GithubConnector) string {
 	claims := jwt.MapClaims{
 		"iat": now.Unix(),
 		"exp": now.Add(time.Minute * 10).Unix(),
-		"iss": fmt.Sprintf("%v", app_credentials.AppID),
+		"iss": fmt.Sprintf("%v", appID),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)

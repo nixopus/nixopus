@@ -1,6 +1,8 @@
 package service
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -43,12 +45,21 @@ func (s *DomainsService) CreateDomain(req types.CreateDomainRequest, userID stri
 		return types.CreateDomainResponse{}, err
 	}
 
-	org, err := s.store.Organization.GetOrganization(req.OrganizationID.String())
+	// Verify organization exists in local database (for foreign key constraints)
+	var org shared_types.Organization
+	err = s.store.DB.NewSelect().
+		Model(&org).
+		Where("id = ?", req.OrganizationID.String()).
+		Scan(s.Ctx)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			s.logger.Log(logger.Error, "organization not found", req.OrganizationID.String())
+			return types.CreateDomainResponse{}, fmt.Errorf("organization not found")
+		}
 		s.logger.Log(logger.Error, "error while retrieving organization", err.Error())
 		return types.CreateDomainResponse{}, fmt.Errorf("organization not found")
 	}
-	if org == nil || org.ID == uuid.Nil {
+	if org.ID == uuid.Nil {
 		s.logger.Log(logger.Error, "organization not found", req.OrganizationID.String())
 		return types.CreateDomainResponse{}, fmt.Errorf("organization not found")
 	}

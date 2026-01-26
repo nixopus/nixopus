@@ -106,6 +106,24 @@ type GetProjectFamilyRequest struct {
 	FamilyID uuid.UUID `json:"family_id"`
 }
 
+// AddApplicationToFamilyRequest is used to add a new application to an existing family.
+type AddApplicationToFamilyRequest struct {
+	FamilyID             *uuid.UUID               `json:"family_id,omitempty"` // If nil, creates new family
+	Name                 string                   `json:"name"`
+	Path                 string                   `json:"path"` // Base path for the application, e.g., "api/" or "view/"
+	Repository           string                   `json:"repository"`
+	Branch               string                   `json:"branch,omitempty"`
+	Environment          shared_types.Environment `json:"environment,omitempty"`
+	BuildPack            shared_types.BuildPack   `json:"build_pack,omitempty"`
+	Port                 int                      `json:"port,omitempty"`
+	DockerfilePath       string                   `json:"dockerfile_path,omitempty"`
+	PreRunCommand        string                   `json:"pre_run_command,omitempty"`
+	PostRunCommand       string                   `json:"post_run_command,omitempty"`
+	BuildVariables       map[string]string        `json:"build_variables,omitempty"`
+	EnvironmentVariables map[string]string        `json:"environment_variables,omitempty"`
+	Domains              []string                 `json:"domains,omitempty"`
+}
+
 // ProjectFamilyResponseData contains the data for project family response.
 type ProjectFamilyResponseData struct {
 	Projects []shared_types.Application `json:"projects"`
@@ -236,6 +254,7 @@ var (
 	ErrProjectFamilyNotFound            = errors.New("project family not found")
 	ErrDomainLimitReached               = errors.New("maximum of 5 domains per application reached")
 	ErrDomainAlreadyExists              = errors.New("domain already exists for this application")
+	ErrPaymentRequired                  = errors.New("payment required: deployment limit reached, please upgrade your plan")
 )
 
 const (

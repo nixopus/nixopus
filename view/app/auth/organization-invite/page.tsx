@@ -7,7 +7,7 @@ import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import useOrganizationInvite from '../../../packages/hooks/auth/use-org-invite';
 
 export default function OrganizationInvitePage() {
-  const { message, router, orgId, handleIntermediateLogin, isLoading, status } =
+  const { message, router, orgId, handleLoginAndAccept, isLoading, status } =
     useOrganizationInvite();
 
   const renderContent = () => {
@@ -40,19 +40,19 @@ export default function OrganizationInvitePage() {
           </div>
         );
 
-      case 'intermediate':
+      case 'needs-auth':
         return (
           <div className="flex flex-col items-center space-y-4">
             <AlertCircle className="h-8 w-8 text-accent-foreground" />
             <p className="text-sm text-center">{message}</p>
-            <Button onClick={handleIntermediateLogin} disabled={isLoading} className="w-full">
+            <Button onClick={handleLoginAndAccept} disabled={isLoading} className="w-full">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Processing...
                 </>
               ) : (
-                'Complete Login on This Device'
+                'Sign In to Accept Invitation'
               )}
             </Button>
           </div>

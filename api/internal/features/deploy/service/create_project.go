@@ -19,6 +19,16 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 
 	domains := req.Domains
 
+	// Set BasePath default to "/" if empty (for CLI init, always root)
+	basePath := req.BasePath
+	if basePath == "" {
+		basePath = "/"
+	}
+
+	// Create a new family_id for this application
+	// This allows grouping multiple apps (monorepo) or environments (duplicates)
+	familyID := uuid.New()
+
 	application := shared_types.Application{
 		ID:                   uuid.New(),
 		Name:                 req.Name,
@@ -35,8 +45,9 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 		CreatedAt:            now,
 		UpdatedAt:            now,
 		DockerfilePath:       req.DockerfilePath,
-		BasePath:             req.BasePath,
+		BasePath:             basePath,
 		OrganizationID:       organizationID,
+		FamilyID:             &familyID,
 	}
 
 	// Begin transaction for atomicity
