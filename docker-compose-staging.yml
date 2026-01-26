@@ -24,6 +24,9 @@ services:
       nixopus-staging-db:
         condition: service_healthy
         required: false
+      nixopus-staging-auth:
+        condition: service_healthy
+        required: false
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8443/api/v1/health"]
       interval: 10s
@@ -90,6 +93,10 @@ services:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/view/.env:/app/.env
     networks:
       - nixopus-network
+    depends_on:
+      nixopus-staging-auth:
+        condition: service_healthy
+        required: false
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:7443"]
       interval: 10s
@@ -157,16 +164,22 @@ services:
       - "127.0.0.1:${AUTH_SERVICE_PORT:-9090}:9090"
     restart: unless-stopped
     env_file:
-      - ${NIXOPUS_HOME:-/etc/nixopus}/auth-service/.env
+      - ${NIXOPUS_HOME:-/etc/nixopus}/auth/.env
     volumes:
       - ./logs:/app/logs
-      - ${NIXOPUS_HOME:-/etc/nixopus}/auth-service/.env:/app/.env
+      - ${NIXOPUS_HOME:-/etc/nixopus}/auth/.env:/app/.env
     networks:
       - nixopus-network
     depends_on:
       nixopus-staging-db:
         condition: service_healthy
         required: false
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 networks:
   nixopus-network:
