@@ -1,5 +1,5 @@
 import { getOctoagentUrl } from '@/redux/conf';
-import { getAccessToken } from 'supertokens-auth-react/recipe/session';
+import { authClient } from '@/packages/lib/auth-client';
 
 const AGENT_ID = 'nixopusAgent';
 const RESOURCE_ID = 'nixopusAgent';
@@ -8,35 +8,37 @@ function getNativeFetch(): typeof fetch {
   if (typeof window === 'undefined') {
     return fetch;
   }
-  // @ts-ignore - accessing global native fetch
-  return (window as any).__NATIVE_FETCH__ || fetch;
+  return fetch;
 }
 
-async function getAuthToken(): Promise<string> {
-  const token = await getAccessToken();
-  if (!token) {
-    throw new Error('Not authenticated');
+async function getAuthToken(): Promise<string | null> {
+  const { data: session } = await authClient.getSession();
+  if (!session?.session) {
+    return null;
   }
-  return token;
+  return '';
 }
 
-function createAuthHeaders(token: string): HeadersInit {
-  return {
+function createAuthHeaders(token: string | null): HeadersInit {
+  const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`
   };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
 }
 
 function createRequestOptions(
   method: string,
-  token: string,
+  token: string | null,
   body?: string,
   signal?: AbortSignal
 ): RequestInit {
   return {
     method,
     headers: createAuthHeaders(token),
-    credentials: 'omit',
+    credentials: 'include',
     body,
     signal
   };

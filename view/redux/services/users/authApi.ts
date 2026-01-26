@@ -137,6 +137,9 @@ export const authApi = createApi({
       },
       invalidatesTags: [{ type: 'Authentication', id: 'LIST' }]
     }),
+    // This endpoint checks if an admin user is already registered
+    // Only used in the main view (not billing-view) to determine if registration should be allowed
+    // This is a backend endpoint, not a Better Auth endpoint
     isAdminRegistered: builder.query<boolean, void>({
       query: () => ({
         url: AUTHURLS.IS_ADMIN_REGISTERED,

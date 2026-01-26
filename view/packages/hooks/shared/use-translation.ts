@@ -20,7 +20,6 @@ import navigation from '@/lib/i18n/locales/en/navigation.json';
 import layout from '@/lib/i18n/locales/en/layout.json';
 import user from '@/lib/i18n/locales/en/user.json';
 import toasts from '@/lib/i18n/locales/en/toasts.json';
-import ai from '@/lib/i18n/locales/en/ai.json';
 
 // Merge all domain translations for type inference
 // Each domain file exports { domainName: { ... } }, so we merge them
@@ -44,8 +43,7 @@ type EnTranslations = Merge<
     typeof navigation &
     typeof layout &
     typeof user &
-    typeof toasts &
-    typeof ai
+    typeof toasts
 >;
 
 // Recursive way to infer types from nested json keys
@@ -75,8 +73,7 @@ const defaultTranslations: Record<string, any> = {
   ...navigation,
   ...layout,
   ...user,
-  ...toasts,
-  ...ai
+  ...toasts
 };
 
 export function useTranslation() {
