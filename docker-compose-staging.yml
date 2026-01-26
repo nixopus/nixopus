@@ -11,6 +11,8 @@ services:
     restart: unless-stopped
     env_file:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/api/.env
+    environment:
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://nixopus-staging-auth:9090}
     volumes:
       - ./logs:/app/logs
       - ${NIXOPUS_HOME:-/etc/nixopus}:/etc/nixopus
@@ -80,6 +82,7 @@ services:
     environment:
       - HOSTNAME=0.0.0.0
       - PORT=7443
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://nixopus-staging-auth:9090}
     env_file:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/view/.env
     volumes:
@@ -145,27 +148,25 @@ services:
       retries: 3
       start_period: 10s
 
-  supertokens:
-    image: registry.supertokens.io/supertokens/supertokens-postgresql:latest
+  nixopus-staging-auth:
+    build:
+      context: ${AUTH_SERVICE_PATH:-../auth}
+      dockerfile: ${AUTH_SERVICE_DOCKERFILE:-Dockerfile}
+    container_name: nixopus-staging-auth
+    ports:
+      - "127.0.0.1:${AUTH_SERVICE_PORT:-9090}:9090"
+    restart: unless-stopped
+    env_file:
+      - ${NIXOPUS_HOME:-/etc/nixopus}/auth-service/.env
+    volumes:
+      - ./logs:/app/logs
+      - ${NIXOPUS_HOME:-/etc/nixopus}/auth-service/.env:/app/.env
+    networks:
+      - nixopus-network
     depends_on:
       nixopus-staging-db:
         condition: service_healthy
         required: false
-    ports:
-      - "${SUPERTOKENS_API_PORT}:3567"
-    environment:
-      POSTGRESQL_TABLE_NAMES_PREFIX: "supertokens_"
-      POSTGRESQL_CONNECTION_URI: "${POSTGRESQL_CONNECTION_URI:-postgresql://${USERNAME}:${PASSWORD}@nixopus-staging-db:5432/${DB_NAME}}"
-      API_KEYS: "${SUPERTOKENS_API_KEY}"
-    networks:
-      - nixopus-network
-    restart: unless-stopped
-    healthcheck:
-      test: >
-        bash -c 'exec 3<>/dev/tcp/127.0.0.1/3567 && echo -e "GET /hello HTTP/1.1\r\nhost: 127.0.0.1:3567\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep "Hello"'
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 networks:
   nixopus-network:
