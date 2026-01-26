@@ -79,6 +79,9 @@ func (u *UserStorage) FindUserByEmail(email string) (*types.User, error) {
 		return nil, err
 	}
 
+	// Compute backward compatibility fields
+	user.ComputeCompatibilityFields()
+
 	return user, nil
 }
 
@@ -87,10 +90,12 @@ func (u *UserStorage) FindUserByEmail(email string) (*types.User, error) {
 // The function returns an error if the user does not exist or if the query
 // fails.
 func (u *UserStorage) FindUserByUsername(username string) (*types.User, error) {
+	// Since username is now computed from name, we need to query by name
+	// For backward compatibility, we'll search by name field
 	user := &types.User{}
 	err := u.getDB().NewSelect().
 		Model(user).
-		Where("username = ?", username).
+		Where("name = ?", username).
 		Relation("Organizations").
 		Scan(u.Ctx)
 	if err != nil {
@@ -105,6 +110,9 @@ func (u *UserStorage) FindUserByUsername(username string) (*types.User, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Compute backward compatibility fields
+	user.ComputeCompatibilityFields()
 
 	return user, nil
 }
@@ -119,18 +127,26 @@ func (u *UserStorage) FindUserByID(id string) (*types.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Compute backward compatibility fields
+	user.ComputeCompatibilityFields()
 	return user, nil
 }
 
-// FindUserBySupertokensID finds a user by SuperTokens user ID in the database.
+// FindUserBySupertokensID finds a user by Better Auth user ID in the database.
+// The field name is kept for backward compatibility but now stores Better Auth user IDs.
 //
 // The function returns an error if the user does not exist or if the query
 // fails.
 func (u *UserStorage) FindUserBySupertokensID(supertokensUserID string) (*types.User, error) {
 	user := &types.User{}
-	err := u.getDB().NewSelect().
+	userID, err := uuid.Parse(supertokensUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = u.getDB().NewSelect().
 		Model(user).
-		Where("supertokens_user_id = ?", supertokensUserID).
+		Where("id = ?", userID).
 		Relation("Organizations").
 		Scan(u.Ctx)
 	if err != nil {
@@ -145,6 +161,9 @@ func (u *UserStorage) FindUserBySupertokensID(supertokensUserID string) (*types.
 	if err != nil {
 		return nil, err
 	}
+
+	// Compute backward compatibility fields
+	user.ComputeCompatibilityFields()
 
 	return user, nil
 }
