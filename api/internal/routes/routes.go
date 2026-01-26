@@ -269,7 +269,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterNotificationRoutes(notificationGroup, notifController)
 
 	// Organization routes - migrated to Better Auth
-	// Organization management is now handled by Better Auth in octoagent
+	// Organization management is now handled by Better Auth
 
 	// File manager routes
 	fileManagerController := file_manager.NewFileManagerController(router.app.Ctx, router.logger, notificationManager)
