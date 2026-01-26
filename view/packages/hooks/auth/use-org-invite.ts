@@ -1,134 +1,98 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import {
-  consumeCode,
-  clearLoginAttemptInfo,
-  getLoginAttemptInfo
-} from 'supertokens-web-js/recipe/passwordless';
+import { authClient } from '@/packages/lib/auth-client';
+import { useAppDispatch } from '@/redux/hooks';
+import { initializeAuth } from '@/redux/features/users/authSlice';
+import { useAcceptInviteMutation } from '@/redux/services/users/userApi';
 
 function useOrganizationInvite() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const [acceptInvite, { isLoading: isAcceptingInvite }] = useAcceptInviteMutation();
   const orgId = searchParams.get('org_id');
-  const [isLoading, setIsLoading] = useState(false);
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'intermediate'>('loading');
+  const token = searchParams.get('token'); // Invitation token from URL
+  const email = searchParams.get('email');
+  const role = searchParams.get('role') || 'viewer';
+  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'needs-auth'>('loading');
   const [message, setMessage] = useState('');
-  const [isSameDevice, setIsSameDevice] = useState<boolean | null>(null);
 
   useEffect(() => {
-    checkDeviceAndHandleMagicLink();
+    handleInvitation();
   }, []);
 
-  const checkDeviceAndHandleMagicLink = async () => {
-    try {
-      // Check if this is the same browser/device that started the flow
-      const loginAttemptInfo = await getLoginAttemptInfo();
-      const sameDevice = loginAttemptInfo !== undefined;
-      setIsSameDevice(sameDevice);
-
-      if (sameDevice) {
-        // Same device - can consume the magic link directly
-        await handleMagicLinkConsumption();
-      } else {
-        // Different device - show intermediate step
-        setStatus('intermediate');
-        setMessage('Click the button below to complete your login on this device.');
-      }
-    } catch (error) {
-      console.error('Error checking device:', error);
-      setStatus('error');
-      setMessage('An error occurred while processing your invitation.');
-    }
-  };
-
-  const handleMagicLinkConsumption = async () => {
-    setIsLoading(true);
+  const handleInvitation = async () => {
     setStatus('loading');
     setMessage('Processing your invitation...');
 
     try {
-      // Create userContext with organization data from URL parameters
-      const userContext = orgId
-        ? {
-            organization_id: orgId,
-            role: searchParams.get('role') || 'viewer', // Default role if not specified
-            email: searchParams.get('email') || undefined
-          }
-        : undefined;
+      // Check if user is authenticated
+      const session = await authClient.getSession();
+      const isAuthenticated = !!session?.data?.session;
 
-      // For magic links, consumeCode() automatically reads the link code from the URL
-      // Pass the organization context to preserve invitation data and use preAPIHook to inject org data
-      const response = await consumeCode({
-        userContext,
-        options: {
-          preAPIHook: async (context) => {
-            // Add organization data to the request body or headers
-            if (orgId && userContext) {
-              try {
-                const requestBody = context.requestInit.body
-                  ? JSON.parse(context.requestInit.body as string)
-                  : {};
-                requestBody.organization_id = orgId;
-                requestBody.role = userContext.role;
-                requestBody.email = userContext.email;
+      if (!isAuthenticated) {
+        // User needs to authenticate first
+        setStatus('needs-auth');
+        setMessage('Please sign in to accept the invitation.');
+        return;
+      }
 
-                context.requestInit.body = JSON.stringify(requestBody);
-              } catch (error) {
-                console.error('Error modifying request:', error);
-              }
-            }
-
-            return context;
-          }
-        }
-      });
-
-      if (response.status === 'OK') {
-        // Clear login attempt info since login was successful
-        await clearLoginAttemptInfo();
-
-        setStatus('success');
-        setMessage('Welcome! You have successfully joined the organization.');
-
-        // Redirect to dashboard after a short delay
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 2000);
-      } else {
-        // Magic link expired, invalid, or denied
-        await clearLoginAttemptInfo();
+      if (!token) {
         setStatus('error');
-        setMessage(
-          'This invitation link has expired or is invalid. Please request a new invitation.'
-        );
+        setMessage('Invalid invitation link. Missing token.');
+        return;
       }
-    } catch (error: any) {
-      console.error('Error consuming magic link:', error);
-      await clearLoginAttemptInfo();
 
-      if (error.isSuperTokensGeneralError === true) {
-        setMessage(error.message);
-      } else {
-        setMessage('An error occurred while processing your invitation. Please try again.');
-      }
+      // Accept the invitation via RTK Query
+      await acceptInvitation();
+    } catch (error: any) {
+      console.error('Error processing invitation:', error);
       setStatus('error');
-    } finally {
-      setIsLoading(false);
+      setMessage(error?.message || 'An error occurred while processing your invitation.');
     }
   };
 
-  const handleIntermediateLogin = () => {
-    handleMagicLinkConsumption();
+  const acceptInvitation = async () => {
+    try {
+      // Use RTK Query mutation to accept invitation
+      await acceptInvite({
+        token: token!,
+        organization_id: orgId || undefined,
+        role: role || undefined,
+        email: email || undefined
+      }).unwrap();
+
+      // Refresh auth state to get updated organization list
+      await dispatch(initializeAuth() as any);
+
+      setStatus('success');
+      setMessage('Welcome! You have successfully joined the organization.');
+
+      // Redirect to dashboard after a short delay
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 2000);
+    } catch (error: any) {
+      console.error('Error accepting invitation:', error);
+      setStatus('error');
+      setMessage(error?.data?.message || error?.message || 'Failed to accept invitation. Please try again.');
+      throw error;
+    }
+  };
+
+  const handleLoginAndAccept = () => {
+    // Store invitation data in sessionStorage to retrieve after login
+    if (token && orgId) {
+      sessionStorage.setItem('pendingInvite', JSON.stringify({ token, orgId, email, role }));
+    }
+    router.push('/auth');
   };
 
   return {
-    handleIntermediateLogin,
-    checkDeviceAndHandleMagicLink,
-    isSameDevice,
-    message,
-    isLoading,
+    handleLoginAndAccept,
+    isLoading: isAcceptingInvite,
     status,
-    handleMagicLinkConsumption,
+    message,
     router,
     orgId
   };
