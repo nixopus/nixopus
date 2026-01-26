@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"sync"
 
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"gopkg.in/yaml.v3"
@@ -98,27 +99,59 @@ func (p *Parser) convertToVariables(extYAML *ExtensionYAML, extensionID string) 
 }
 
 func (p *Parser) LoadExtensionsFromDirectory(dirPath string) ([]*types.Extension, [][]types.ExtensionVariable, error) {
-	var extensions []*types.Extension
-	var allVariables [][]types.ExtensionVariable
-
 	files, err := filepath.Glob(filepath.Join(dirPath, "*.yaml"))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read directory: %w", err)
 	}
 
+	// Filter out rfc.yaml
+	validFiles := make([]string, 0, len(files))
 	for _, file := range files {
-		// Skip rfc.yaml file
-		if filepath.Base(file) == "rfc.yaml" {
-			continue
+		if filepath.Base(file) != "rfc.yaml" {
+			validFiles = append(validFiles, file)
 		}
+	}
 
-		extension, variables, err := p.ParseExtensionFile(file)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse %s: %w", file, err)
+	if len(validFiles) == 0 {
+		return []*types.Extension{}, [][]types.ExtensionVariable{}, nil
+	}
+
+	// Process files in parallel
+	type result struct {
+		extension *types.Extension
+		variables []types.ExtensionVariable
+		err       error
+		index     int
+	}
+
+	results := make([]result, len(validFiles))
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	// Process files concurrently
+	for i, file := range validFiles {
+		wg.Add(1)
+		go func(idx int, filePath string) {
+			defer wg.Done()
+			ext, vars, err := p.ParseExtensionFile(filePath)
+			mu.Lock()
+			results[idx] = result{extension: ext, variables: vars, err: err, index: idx}
+			mu.Unlock()
+		}(i, file)
+	}
+
+	wg.Wait()
+
+	// Collect results and check for errors
+	extensions := make([]*types.Extension, 0, len(validFiles))
+	allVariables := make([][]types.ExtensionVariable, 0, len(validFiles))
+
+	for _, res := range results {
+		if res.err != nil {
+			return nil, nil, fmt.Errorf("failed to parse file at index %d: %w", res.index, res.err)
 		}
-
-		extensions = append(extensions, extension)
-		allVariables = append(allVariables, variables)
+		extensions = append(extensions, res.extension)
+		allVariables = append(allVariables, res.variables)
 	}
 
 	return extensions, allVariables, nil
