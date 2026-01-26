@@ -12,7 +12,8 @@ export enum AUTHURLS {
   VERIFY_TWO_FACTOR = 'v1/auth/verify-2fa',
   DISABLE_TWO_FACTOR = 'v1/auth/disable-2fa',
   TWO_FACTOR_LOGIN = 'v1/auth/2fa-login',
-  IS_ADMIN_REGISTERED = 'v1/auth/is-admin-registered'
+  IS_ADMIN_REGISTERED = 'v1/auth/is-admin-registered',
+  CREATE_API_KEY = 'v1/auth/api-keys'
 }
 
 export enum USERURLS {
