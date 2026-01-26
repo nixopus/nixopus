@@ -148,6 +148,17 @@ export const authApi = createApi({
       transformResponse: (response: { data: { admin_registered: boolean } }) => {
         return response.data.admin_registered;
       }
+    }),
+    createAPIKey: builder.mutation<{ key: string }, { name: string; expiresInDays?: number }>({
+      query: (body) => ({
+        url: AUTHURLS.CREATE_API_KEY,
+        method: 'POST',
+        body
+      }),
+      transformResponse: (response: { data: { data: { Key: string } } }) => {
+        return { key: response.data.data.Key };
+      },
+      invalidatesTags: [{ type: 'Authentication', id: 'LIST' }]
     })
   })
 });
@@ -165,5 +176,6 @@ export const {
   useVerifyTwoFactorMutation,
   useDisableTwoFactorMutation,
   useTwoFactorLoginMutation,
-  useIsAdminRegisteredQuery
+  useIsAdminRegisteredQuery,
+  useCreateAPIKeyMutation
 } = authApi;
