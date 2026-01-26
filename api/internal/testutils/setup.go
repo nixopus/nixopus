@@ -13,17 +13,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
-	"github.com/raghavyuva/nixopus-api/internal/cache"
 	authService "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	authTypes "github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	organization_service "github.com/raghavyuva/nixopus-api/internal/features/organization/service"
-	organization_storage "github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
+	// organization_service "github.com/raghavyuva/nixopus-api/internal/features/organization/service"
+	// organization_storage "github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	dbstorage "github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/uptrace/bun"
@@ -63,8 +61,8 @@ type TestSetup struct {
 	Store       *dbstorage.Store
 	Logger      logger.Logger
 	UserStorage *user_storage.UserStorage
-	OrgStorage  *organization_storage.OrganizationStore
-	OrgService  *organization_service.OrganizationService
+	// OrgStorage  *organization_storage.OrganizationStore
+	// OrgService  *organization_service.OrganizationService
 	AuthService *authService.AuthService
 }
 
@@ -201,14 +199,14 @@ func NewTestSetup() *TestSetup {
 
 	// Create repositories
 	userStorage := &user_storage.UserStorage{DB: testDB, Ctx: ctx}
-	orgStorage := &organization_storage.OrganizationStore{DB: testDB, Ctx: ctx}
-	cache, err := cache.NewCache(getEnvOrDefault("REDIS_URL", "redis://localhost:6379"))
-	if err != nil {
-		panic(fmt.Sprintf("failed to create redis client: %v", err))
-	}
+	// orgStorage := &organization_storage.OrganizationStore{DB: testDB, Ctx: ctx}
+	// cache, err := cache.NewCache(getEnvOrDefault("REDIS_URL", "redis://localhost:6379"))
+	// if err != nil {
+	// 	panic(fmt.Sprintf("failed to create redis client: %v", err))
+	// }
 	// Create services
-	orgService := organization_service.NewOrganizationService(store, ctx, l, orgStorage, cache)
-	authService := authService.NewAuthService(userStorage, l, orgService, ctx)
+	// orgService := organization_service.NewOrganizationService(store, ctx, l, orgStorage, cache)
+	authService := authService.NewAuthService(userStorage, l, ctx)
 
 	return &TestSetup{
 		DB:          testDB,
@@ -216,68 +214,74 @@ func NewTestSetup() *TestSetup {
 		Store:       store,
 		Logger:      l,
 		UserStorage: userStorage,
-		OrgStorage:  orgStorage,
-		OrgService:  orgService,
+		// OrgStorage:  orgStorage,
+		// OrgService:  orgService,
 		AuthService: authService,
 	}
 }
 
 // CreateTestUserAndOrg creates a test user and organization
 // This should be called by individual test cases when needed
+// Deprecated: Use SignupViaSupertokens or SigninViaSupertokens instead
 func (s *TestSetup) CreateTestUserAndOrg() (*types.User, *types.Organization, error) {
-	authResponse, org, err := s.RegistrationHelper("test@example.com", "Password123@", "testuser", "test-org", "Test organization", "admin")
+	// Use SuperTokens for authentication instead
+	authResponse, err := s.SignupViaSupertokens("test@example.com", "Password123@")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create test user: %w", err)
 	}
 
-	return &authResponse.User, org, nil
+	// Get organization from the user's OrganizationUsers relation
+	var org *types.Organization
+	if len(authResponse.User.OrganizationUsers) > 0 && authResponse.User.OrganizationUsers[0].Organization != nil {
+		org = authResponse.User.OrganizationUsers[0].Organization
+	}
+
+	return authResponse.User, org, nil
 }
 
+// GetTestAuthResponse is deprecated - use GetSupertokensAuthResponse instead
 func (s *TestSetup) GetTestAuthResponse() (*authTypes.AuthResponse, *types.Organization, error) {
-	authResponse, org, err := s.RegistrationHelper("test@example.com", "Password123@", "testuser", "test-org", "Test organization", "admin")
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create test user: %w", err)
-	}
-
-	return authResponse, org, nil
+	// This function is deprecated since RegistrationHelper no longer works
+	// Use GetSupertokensAuthResponse instead
+	return nil, nil, fmt.Errorf("GetTestAuthResponse is deprecated - use GetSupertokensAuthResponse instead")
 }
 
+// RegistrationHelper is deprecated - Better Auth handles authentication now
+// Use SignupViaSupertokens or SigninViaSupertokens instead
 func (s *TestSetup) RegistrationHelper(email, password, username, orgName, orgDescription string, userType string) (*authTypes.AuthResponse, *types.Organization, error) {
-	// Create test user
-	registrationRequest := authTypes.RegisterRequest{
-		Email:    email,
-		Password: password,
-		Username: username,
-		Type:     userType,
-	}
-
-	authResponse, err := s.AuthService.Register(registrationRequest, "admin")
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create test user: %w", err)
-	}
-
-	// Create test organization
-	org := &types.Organization{
-		ID:          uuid.New(),
-		Name:        "test-org",
-		Description: "Test organization",
-	}
-
-	if err := s.OrgStorage.CreateOrganization(*org); err != nil {
-		return nil, nil, fmt.Errorf("failed to create test organization: %w", err)
-	}
-
-	orgUser := &types.OrganizationUsers{
-		ID:             uuid.New(),
-		UserID:         authResponse.User.ID,
-		OrganizationID: org.ID,
-	}
-
-	if err := s.OrgStorage.AddUserToOrganization(*orgUser); err != nil {
-		return nil, nil, fmt.Errorf("failed to add user to organization: %w", err)
-	}
-
-	return &authResponse, org, nil
+	// This function is deprecated since AuthService.Register() no longer exists
+	// Better Auth handles authentication now
+	// Use SignupViaSupertokens or SigninViaSupertokens for test authentication
+	return nil, nil, fmt.Errorf("RegistrationHelper is deprecated - use SignupViaSupertokens or SigninViaSupertokens instead")
+	
+	// Old implementation (commented out):
+	// registrationRequest := authTypes.RegisterRequest{
+	// 	Email:    email,
+	// 	Password: password,
+	// 	Username: username,
+	// 	Type:     userType,
+	// }
+	// authResponse, err := s.AuthService.Register(registrationRequest, "admin")
+	// if err != nil {
+	// 	return nil, nil, fmt.Errorf("failed to create test user: %w", err)
+	// }
+	// org := &types.Organization{
+	// 	ID:          uuid.New(),
+	// 	Name:        "test-org",
+	// 	Description: "Test organization",
+	// }
+	// if err := s.OrgStorage.CreateOrganization(*org); err != nil {
+	// 	return nil, nil, fmt.Errorf("failed to create test organization: %w", err)
+	// }
+	// orgUser := &types.OrganizationUsers{
+	// 	ID:             uuid.New(),
+	// 	UserID:         authResponse.User.ID,
+	// 	OrganizationID: org.ID,
+	// }
+	// if err := s.OrgStorage.AddUserToOrganization(*orgUser); err != nil {
+	// 	return nil, nil, fmt.Errorf("failed to add user to organization: %w", err)
+	// }
+	// return &authResponse, org, nil
 }
 
 // SignupViaSupertokens creates a user through SuperTokens HTTP API and returns session cookies.

@@ -66,7 +66,10 @@ func GetApplicationsHandler(
 			}
 		}
 
-		applications, totalCount, err := deployService.GetApplications(page, pageSize, organizationID)
+		sortBy := ""
+		sortDirection := ""
+
+		applications, totalCount, err := deployService.GetApplications(page, pageSize, sortBy, sortDirection, organizationID)
 		if err != nil {
 			l.Log(logger.Error, "Failed to get applications", err.Error())
 			return nil, GetApplicationsOutput{}, err

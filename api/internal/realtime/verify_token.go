@@ -3,45 +3,73 @@ package realtime
 import (
 	"fmt"
 	"net/http"
+	"time"
 
-	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
+	"github.com/google/uuid"
+	betterauth "github.com/raghavyuva/nixopus-api/internal/features/betterauth"
 	"github.com/raghavyuva/nixopus-api/internal/types"
-	session "github.com/supertokens/supertokens-golang/recipe/session"
 )
 
-// verifyToken verifies the SuperTokens session token and returns the user if the token is valid.
+// verifyToken verifies the Better Auth session token and returns the user if the token is valid.
+// This function uses Better Auth's VerifySession directly and creates a User object from the session response,
+// avoiding database queries for organization_users since Better Auth is the source of truth for organization membership.
 //
 // Parameters:
 //
-//	tokenString - the SuperTokens session token string to verify.
+//	tokenString - the Better Auth session token string to verify (from query param, fallback).
+//	originalRequest - the original HTTP request containing cookies (preferred method).
 //
 // Returns:
 //   - the user if the token is valid.
 //   - an error if the token is invalid.
-func (s *SocketServer) verifyToken(tokenString string) (*types.User, error) {
-	// Create a mock request with the token to verify the session
-	req, _ := http.NewRequest("GET", "/", nil)
-	req.Header.Set("Authorization", "Bearer "+tokenString)
-
-	var user *types.User
-	var err error
-
-	session.VerifySession(nil, func(w http.ResponseWriter, r *http.Request) {
-		sessionContainer := session.GetSessionFromRequestContext(r.Context())
-		userID := sessionContainer.GetUserID()
-		userStorage := user_storage.UserStorage{
-			DB:  s.db,
-			Ctx: s.ctx,
+func (s *SocketServer) verifyToken(tokenString string, originalRequest *http.Request) (*types.User, error) {
+	var req *http.Request
+	
+	// Prefer using the original request with actual cookies from the browser
+	// WebSocket upgrade requests include cookies, which Better Auth needs
+	if originalRequest != nil {
+		// Clone the request to avoid modifying the original
+		req = originalRequest.Clone(originalRequest.Context())
+		// Also add the token as Authorization header as fallback
+		if tokenString != "" {
+			req.Header.Set("Authorization", "Bearer "+tokenString)
 		}
-		user, err = userStorage.FindUserBySupertokensID(userID)
-		if err != nil {
-			fmt.Printf("Error finding user: %v\n", err)
-		}
-	}).ServeHTTP(nil, req)
-
-	if err != nil {
-		return nil, fmt.Errorf("user not found: %v", err)
+	} else {
+		// Fallback: create a mock request with the token
+		req, _ = http.NewRequest("GET", "/", nil)
+		req.Header.Set("Authorization", "Bearer "+tokenString)
+		// Also set as cookie if it's a cookie-based session
+		req.AddCookie(&http.Cookie{
+			Name:  "better-auth.session_token",
+			Value: tokenString,
+		})
 	}
+
+	// Verify Better Auth session - this is the source of truth for authentication and organization membership
+	sessionResp, err := betterauth.VerifySession(req)
+	if err != nil {
+		return nil, fmt.Errorf("session verification failed: %v", err)
+	}
+
+	// Parse Better Auth user ID
+	betterAuthUserID, err := uuid.Parse(sessionResp.User.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID format: %v", err)
+	}
+
+	// Create User object directly from Better Auth session response
+	// We don't need to query the database for organization_users since Better Auth provides organization info
+	user := &types.User{
+		ID:            betterAuthUserID,
+		Name:          sessionResp.User.Name,
+		Email:         sessionResp.User.Email,
+		EmailVerified: sessionResp.User.EmailVerified,
+		CreatedAt:     time.Now(), // Better Auth doesn't provide this, use current time
+		UpdatedAt:     time.Now(), // Better Auth doesn't provide this, use current time
+	}
+
+	// Compute backward compatibility fields
+	user.ComputeCompatibilityFields()
 
 	return user, nil
 }

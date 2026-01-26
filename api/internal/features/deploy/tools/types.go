@@ -3,7 +3,9 @@ package tools
 import (
 	"time"
 
+	"github.com/google/uuid"
 	deploy_types "github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
+	"github.com/uptrace/bun"
 )
 
 // DeleteApplicationInput is the input structure for the MCP tool
@@ -59,28 +61,38 @@ type GetApplicationDeploymentsOutput struct {
 
 // MCPApplication is a simplified Application without circular references
 type MCPApplication struct {
-	ID                   string    `json:"id"`
-	Name                 string    `json:"name"`
-	Port                 int       `json:"port"`
-	Environment          string    `json:"environment"`
-	ProxyServer          string    `json:"proxy_server"`
-	BuildVariables       string    `json:"build_variables"`
-	EnvironmentVariables string    `json:"environment_variables"`
-	BuildPack            string    `json:"build_pack"`
-	Repository           string    `json:"repository"`
-	Branch               string    `json:"branch"`
-	PreRunCommand        string    `json:"pre_run_command"`
-	PostRunCommand       string    `json:"post_run_command"`
-	Domain               string    `json:"domain"`
-	DockerfilePath       string    `json:"dockerfile_path"`
-	BasePath             string    `json:"base_path"`
-	UserID               string    `json:"user_id"`
-	OrganizationID       string    `json:"organization_id"`
-	FamilyID             *string   `json:"family_id,omitempty"`
-	CreatedAt            time.Time `json:"created_at"`
-	UpdatedAt            time.Time `json:"updated_at"`
-	Status               string    `json:"status,omitempty"`
-	Labels               []string  `json:"labels,omitempty"`
+	ID                   string                 `json:"id"`
+	Name                 string                 `json:"name"`
+	Port                 int                    `json:"port"`
+	Environment          string                 `json:"environment"`
+	ProxyServer          string                 `json:"proxy_server"`
+	BuildVariables       string                 `json:"build_variables"`
+	EnvironmentVariables string                 `json:"environment_variables"`
+	BuildPack            string                 `json:"build_pack"`
+	Repository           string                 `json:"repository"`
+	Branch               string                 `json:"branch"`
+	PreRunCommand        string                 `json:"pre_run_command"`
+	PostRunCommand       string                 `json:"post_run_command"`
+	Domains              []MCPApplicationDomain `json:"domains"`
+	DockerfilePath       string                 `json:"dockerfile_path"`
+	BasePath             string                 `json:"base_path"`
+	UserID               string                 `json:"user_id"`
+	OrganizationID       string                 `json:"organization_id"`
+	FamilyID             *string                `json:"family_id,omitempty"`
+	CreatedAt            time.Time              `json:"created_at"`
+	UpdatedAt            time.Time              `json:"updated_at"`
+	Status               string                 `json:"status,omitempty"`
+	Labels               []string               `json:"labels,omitempty"`
+}
+
+type MCPApplicationDomain struct {
+	bun.BaseModel `bun:"table:application_domains,alias:ad" swaggerignore:"true"`
+	ID            uuid.UUID `json:"id" bun:"id,pk,type:uuid"`
+	ApplicationID uuid.UUID `json:"application_id" bun:"application_id,notnull,type:uuid"`
+	Domain        string    `json:"domain" bun:"domain,notnull"`
+	CreatedAt     time.Time `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
+
+	Application *MCPApplication `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
 }
 
 // MCPApplicationResponse is the typed response for single application without circular references

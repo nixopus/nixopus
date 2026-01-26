@@ -87,7 +87,7 @@ func (s *UserStorage) GetUserOrganizationsWithRolesAndPermissions(userID string)
 	query := s.DB.NewSelect().
 		TableExpr("organization_users AS ou").
 		ColumnExpr("ou.*").
-		Join("LEFT JOIN organizations AS o ON o.id = ou.organization_id").
+		Join("LEFT JOIN organization AS o ON o.id = ou.organization_id").
 		Where("ou.user_id = ?", userID).
 		Where("ou.deleted_at IS NULL")
 

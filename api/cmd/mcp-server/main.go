@@ -8,11 +8,9 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/supertokens"
 	mcp_pkg "github.com/raghavyuva/nixopus-api/internal/mcp"
 	"github.com/raghavyuva/nixopus-api/internal/queue"
 	"github.com/raghavyuva/nixopus-api/internal/redisclient"
-	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/vmihailenco/taskq/v3"
 )
 
@@ -29,13 +27,6 @@ func main() {
 
 	taskq.SetLogger(log.New(io.Discard, "", 0))
 	queue.Init(redisClient)
-
-	// Initialize SuperTokens for authentication
-	app := &storage.App{
-		Store: store,
-		Ctx:   ctx,
-	}
-	supertokens.Init(app)
 
 	// Create MCP server
 	server := mcp.NewServer(&mcp.Implementation{
