@@ -16,7 +16,7 @@ export enum AUTHURLS {
 }
 
 export enum USERURLS {
-  USER_ORGANIZATIONS = 'v1/user/organizations',
+  USER_ORGANIZATIONS = 'auth/organization/list',
   CREATE_ORGANIZATION = 'v1/organizations',
   ADD_USER_TO_ORGANIZATION = 'v1/organizations/add-user',
   REMOVE_USER_FROM_ORGANIZATION = 'v1/organizations/remove-user',
@@ -35,6 +35,7 @@ export enum USERURLS {
   UPDATE_AVATAR = 'v1/user/avatar',
   SEND_INVITE = 'v1/organizations/invite/send',
   RESEND_INVITE = 'v1/organizations/invite/resend',
+  ACCEPT_INVITE = 'v1/organizations/invite/accept',
   GET_PREFERENCES = 'v1/user/preferences',
   UPDATE_PREFERENCES = 'v1/user/preferences',
   GET_ORGANIZATION_SETTINGS = 'v1/organizations/settings',
@@ -153,10 +154,6 @@ export enum EXTENSIONURLS {
   GET_EXECUTION = 'v1/extensions/execution/{execution_id}',
   LIST_EXECUTIONS = 'v1/extensions/by-extension-id/{extension_id}/executions',
   GET_EXECUTION_LOGS = 'v1/extensions/execution/{execution_id}/logs'
-}
-
-export enum AGENTSURLS {
-  CHAT = 'v1/agents/chat'
 }
 
 export enum HEALTHCHECKURLS {
