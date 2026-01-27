@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const getBackendUrl = () => {
-  return process.env.NEXT_PUBLIC_AUTH_URL || 'http://localhost:9090';
+  // Use AUTH_SERVICE_URL for server-side (Docker), fallback to NEXT_PUBLIC_AUTH_URL for client-side
+  return (
+    process.env.AUTH_SERVICE_URL || process.env.NEXT_PUBLIC_AUTH_URL || 'http://localhost:9090'
+  );
 };
 
 export async function GET(
@@ -96,6 +99,13 @@ async function proxyRequest(request: NextRequest, params: { all: string[] }) {
         headers.set(key, value);
       }
     });
+
+    // Ensure Origin header is set for Better Auth validation
+    // Use the original request's origin (from browser) for server-to-server requests
+    const origin = request.headers.get('origin');
+    if (origin && !headers.has('origin')) {
+      headers.set('origin', origin);
+    }
 
     // Make the request to the backend
     const response = await fetch(backendAuthUrl, {
