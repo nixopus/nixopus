@@ -107,13 +107,48 @@ async function proxyRequest(request: NextRequest, params: { all: string[] }) {
       }
     });
 
+    // Explicitly ensure cookies are forwarded from the incoming request
+    // In Node.js fetch, credentials: 'include' doesn't automatically forward cookies
+    // from the incoming request, so we need to extract and add them manually
+    // Check if cookies are already in headers (they should be, but ensure they are)
+    let cookieHeader = headers.get('cookie');
+    if (!cookieHeader) {
+      // Try to get from request headers directly
+      cookieHeader = request.headers.get('cookie');
+      if (cookieHeader) {
+        headers.set('cookie', cookieHeader);
+        console.log(
+          'DEBUG: Forwarding cookies to backend (from headers):',
+          cookieHeader.substring(0, 100) + '...'
+        );
+      } else {
+        // Fallback: try to get cookies from NextRequest cookies() API
+        const cookies = request.cookies.getAll();
+        if (cookies.length > 0) {
+          const cookieString = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+          headers.set('cookie', cookieString);
+          console.log(
+            'DEBUG: Forwarding cookies from cookies() API:',
+            cookies.map((c) => c.name).join(', ')
+          );
+        } else {
+          console.log('WARN: No cookies found in request - authentication will likely fail');
+        }
+      }
+    } else {
+      console.log(
+        'DEBUG: Cookies already in headers, forwarding:',
+        cookieHeader.substring(0, 100) + '...'
+      );
+    }
+
     // Make the request to the backend
     const response = await fetch(backendAuthUrl, {
       method: request.method,
       headers,
-      body,
-      // Important: include credentials (cookies) for Better Auth
-      credentials: 'include'
+      body
+      // Note: credentials: 'include' doesn't work in Node.js fetch for forwarding cookies
+      // We handle cookies explicitly above
     });
 
     // Get response body
@@ -126,8 +161,15 @@ async function proxyRequest(request: NextRequest, params: { all: string[] }) {
     });
 
     // Forward response headers (especially Set-Cookie for Better Auth)
+    // Use append() for Set-Cookie to preserve multiple cookie headers
     response.headers.forEach((value, key) => {
-      nextResponse.headers.set(key, value);
+      const lowerKey = key.toLowerCase();
+      if (lowerKey === 'set-cookie') {
+        // Set-Cookie headers must be appended, not set, to preserve multiple cookies
+        nextResponse.headers.append(key, value);
+      } else {
+        nextResponse.headers.set(key, value);
+      }
     });
 
     // Ensure CORS headers are set correctly
