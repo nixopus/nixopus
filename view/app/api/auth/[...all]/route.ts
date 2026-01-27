@@ -107,11 +107,6 @@ async function proxyRequest(request: NextRequest, params: { all: string[] }) {
       }
     });
 
-    const origin = request.headers.get('origin');
-    if (origin && !headers.has('origin')) {
-      headers.set('origin', origin);
-    }
-
     // Make the request to the backend
     const response = await fetch(backendAuthUrl, {
       method: request.method,
