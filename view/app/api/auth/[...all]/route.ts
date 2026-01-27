@@ -100,11 +100,30 @@ async function proxyRequest(request: NextRequest, params: { all: string[] }) {
       }
     });
 
+    // CRITICAL: Ensure Origin header is forwarded for Better Auth trusted origins validation
+    // Better Auth validates requests against trustedOrigins based on the Origin header
+    const origin = request.headers.get('origin') || request.headers.get('referer');
+    if (origin) {
+      // Extract origin from referer if origin header is missing
+      const originUrl = origin.startsWith('http') ? origin : `https://${origin}`;
+      try {
+        const url = new URL(originUrl);
+        headers.set('Origin', url.origin);
+      } catch {
+        // If parsing fails, use as-is
+        headers.set('Origin', origin);
+      }
+    }
+
     // Explicitly ensure cookies are forwarded from the incoming request
     // In Node.js fetch, credentials: 'include' doesn't automatically forward cookies
     // from the incoming request, so we need to extract and add them manually
-    if (!headers.get('cookie')) {
-      const cookieHeader = request.headers.get('cookie');
+    // Check if cookies were already forwarded in the header loop above
+    let cookieHeader = headers.get('cookie');
+
+    if (!cookieHeader) {
+      // Try to get cookies from request headers first
+      cookieHeader = request.headers.get('cookie');
       if (cookieHeader) {
         headers.set('cookie', cookieHeader);
       } else {
@@ -113,9 +132,16 @@ async function proxyRequest(request: NextRequest, params: { all: string[] }) {
         if (cookies.length > 0) {
           const cookieString = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
           headers.set('cookie', cookieString);
+          cookieHeader = cookieString;
         }
       }
     }
+
+    const hasCookies = !!cookieHeader;
+    const forwardedOrigin = headers.get('origin');
+    console.log(
+      `[Auth Proxy] ${request.method} ${path} - Cookies: ${hasCookies} (${cookieHeader ? cookieHeader.split(';').length : 0}), Origin: ${forwardedOrigin || 'none'}, Backend: ${backendAuthUrl}`
+    );
 
     // Make the request to the backend
     // Note: credentials: 'include' doesn't work in Node.js fetch for forwarding cookies
@@ -141,6 +167,8 @@ async function proxyRequest(request: NextRequest, params: { all: string[] }) {
       const lowerKey = key.toLowerCase();
       if (lowerKey === 'set-cookie') {
         // Set-Cookie headers must be appended, not set, to preserve multiple cookies
+        // In production, ensure cookies have proper domain/path settings
+        // Better Auth should set these, but we ensure they're forwarded correctly
         nextResponse.headers.append(key, value);
       } else {
         nextResponse.headers.set(key, value);
