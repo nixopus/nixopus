@@ -66,8 +66,8 @@ function useTeamSettings() {
 
   useEffect(() => {
     if (activeOrganization) {
-      setTeamName(activeOrganization.name);
-      setTeamDescription(activeOrganization.description);
+      setTeamName(activeOrganization.organization.name);
+      setTeamDescription(activeOrganization.organization.description);
     }
   }, [activeOrganization]);
 
@@ -137,14 +137,14 @@ function useTeamSettings() {
     setEditTeamDialogOpen(false);
     if (teamName.length <= 0 || teamDescription.length <= 0) {
       toast.error(t('settings.teams.messages.requiredFields'));
-      setTeamName(activeOrganization?.name || '');
-      setTeamDescription(activeOrganization?.description || '');
+      setTeamName(activeOrganization?.organization.name || '');
+      setTeamDescription(activeOrganization?.organization.description || '');
       return;
     }
 
     if (
-      teamName !== activeOrganization?.name ||
-      teamDescription !== activeOrganization?.description
+      teamName !== activeOrganization?.organization.name ||
+      teamDescription !== activeOrganization?.organization.description
     ) {
       try {
         await updateOrganizationDetails({
@@ -156,8 +156,8 @@ function useTeamSettings() {
         toast.success(t('settings.teams.messages.teamUpdated'));
       } catch (error) {
         toast.error(t('settings.teams.messages.teamUpdateFailed'));
-        setTeamName(activeOrganization?.name || '');
-        setTeamDescription(activeOrganization?.description || '');
+        setTeamName(activeOrganization?.organization.name || '');
+        setTeamDescription(activeOrganization?.organization.description || '');
       }
     }
   };

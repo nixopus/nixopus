@@ -96,21 +96,21 @@ function transformOrganization(org: BetterAuthOrganization): UserOrganization {
  * Transform Better Auth member to OrganizationUsers format
  */
 function transformMember(member: BetterAuthMember): OrganizationUsers {
-  const user = member.user || {};
+  const user = member.user || ({} as any);
   const role = member.role || 'member';
 
   return {
     id: member.id,
-    user_id: member.userId || user.id,
+    user_id: member.userId || user?.id || '',
     organization_id: member.organizationId,
     created_at: member.createdAt || new Date().toISOString(),
     updated_at: member.updatedAt || new Date().toISOString(),
     deleted_at: null,
     user: {
-      id: user.id || member.userId,
-      email: user.email || '',
-      username: user.name || user.username || '',
-      avatar: user.image || user.avatar || '',
+      id: user?.id || member.userId || '',
+      email: user?.email || '',
+      username: user?.name || user?.username || '',
+      avatar: user?.image || user?.avatar || '',
       type: Array.isArray(role) ? role[0] : role,
       organization_users: [],
       is_verified: user.emailVerified || false,

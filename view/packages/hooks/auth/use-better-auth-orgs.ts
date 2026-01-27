@@ -14,6 +14,7 @@
 
 import { useEffect, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
+import type { AppDispatch } from '@/redux/store';
 import {
   fetchUserOrganizations,
   fetchOrganizationMembers,
@@ -109,7 +110,7 @@ export function useUserOrganizations(
   options: UseUserOrganizationsOptions = {}
 ): UseUserOrganizationsReturn {
   const { autoFetch = true, skip = false } = options;
-  const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch() as AppDispatch;
 
   // Get state from Redux
   const organizations = useAppSelector((state) => state.orgs.organizations);
@@ -119,9 +120,11 @@ export function useUserOrganizations(
   // Auto-fetch on mount if enabled
   useEffect(() => {
     if (autoFetch && !skip && !isLoading && organizations.length === 0 && !error) {
+      // Dispatch async thunk - fire and forget in useEffect
       dispatch(fetchUserOrganizations());
     }
-  }, [autoFetch, skip, dispatch]); // Only depend on these to avoid re-fetching
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoFetch, skip]); // Only depend on these to avoid re-fetching
 
   // Refetch function (bypasses cache)
   const refetch = useCallback(async () => {
@@ -180,7 +183,7 @@ export function useOrganizationMembers(
   options: UseOrganizationMembersOptions = {}
 ): UseOrganizationMembersReturn {
   const { autoFetch = true, skip = false } = options;
-  const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch() as AppDispatch;
 
   // Get state from Redux
   const members = useAppSelector((state) =>
@@ -196,9 +199,11 @@ export function useOrganizationMembers(
   // Auto-fetch on mount if enabled
   useEffect(() => {
     if (autoFetch && !skip && organizationId && !isLoading && members.length === 0 && !error) {
+      // Dispatch async thunk - fire and forget in useEffect
       dispatch(fetchOrganizationMembers({ organizationId }));
     }
-  }, [autoFetch, skip, organizationId, dispatch]); // Only depend on these
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoFetch, skip, organizationId]); // Only depend on these
 
   // Refetch function (bypasses cache)
   const refetch = useCallback(async () => {

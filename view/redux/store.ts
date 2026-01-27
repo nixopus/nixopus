@@ -77,7 +77,7 @@ const appReducer = (state: RootReducer | undefined, action: { type: string }) =>
 
 const persistedReducer = persistReducer(persistConfig, appReducer);
 
-const storeOptions: ConfigureStoreOptions = {
+export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -102,9 +102,7 @@ const storeOptions: ConfigureStoreOptions = {
       extensionsApi.middleware
     ]),
   devTools: process.env.NODE_ENV === 'development'
-};
-
-export const store = configureStore(storeOptions);
+});
 
 export const persistor = persistStore(store);
 
