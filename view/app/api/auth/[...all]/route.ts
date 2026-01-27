@@ -107,8 +107,6 @@ async function proxyRequest(request: NextRequest, params: { all: string[] }) {
       }
     });
 
-    // Ensure Origin header is set for Better Auth validation
-    // Use the original request's origin (from browser) for server-to-server requests
     const origin = request.headers.get('origin');
     if (origin && !headers.has('origin')) {
       headers.set('origin', origin);
