@@ -54,7 +54,14 @@ async function proxyRequest(request: NextRequest, params: { all: string[] }) {
 
   // Build the backend URL
   const backendAuthUrl = `${backendUrl}/api/auth${path}${url.search ? `?${url.searchParams.toString()}` : ''}`;
-
+  console.log('backendAuthUrl', backendAuthUrl);
+  console.log('backendUrl', backendUrl);
+  console.log('path', path);
+  console.log('url', url);
+  console.log('request.url', request.url);
+  console.log('request.method', request.method);
+  console.log('request.headers', request.headers);
+  console.log('request.body', request.body);
   try {
     // Get request body if present
     let body: BodyInit | undefined;
