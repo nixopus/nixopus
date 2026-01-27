@@ -1,11 +1,11 @@
 import { useAppSelector } from '@/redux/hooks';
 import {
-  useGetOrganizationUsersQuery,
   useRemoveUserFromOrganizationMutation,
   useUpdateOrganizationDetailsMutation,
   useUpdateUserRoleMutation,
   useSendInviteMutation
 } from '@/redux/services/users/userApi';
+import { useOrganizationMembers } from '@/packages/hooks/auth/use-better-auth-orgs';
 import { UserTypes } from '@/redux/types/orgs';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -28,7 +28,7 @@ function useTeamSettings() {
     isLoading,
     error,
     refetch: refetchUsers
-  } = useGetOrganizationUsersQuery(activeOrganization?.id, {
+  } = useOrganizationMembers(activeOrganization?.id, {
     skip: !activeOrganization
   });
   const [updateOrganizationDetails, { isLoading: isUpdating, error: updateError }] =
