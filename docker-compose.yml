@@ -139,8 +139,8 @@ services:
       - "${CADDY_HTTPS_PORT:-443}:443"
     volumes:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/helpers/Caddyfile:/etc/caddy/Caddyfile
-      - ${NIXOPUS_HOME:-/etc/nixopus}/caddy:/data
-      - ${NIXOPUS_HOME:-/etc/nixopus}/caddy:/config
+      - ${NIXOPUS_HOME:-/etc/nixopus}/caddy/data:/data
+      - ${NIXOPUS_HOME:-/etc/nixopus}/caddy/config:/config
     command:
       [
         "caddy",
