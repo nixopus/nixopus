@@ -1,11 +1,11 @@
 import { useAppSelector } from '@/redux/hooks';
 import {
-  useGetOrganizationUsersQuery,
   useRemoveUserFromOrganizationMutation,
   useUpdateOrganizationDetailsMutation,
   useUpdateUserRoleMutation,
   useSendInviteMutation
 } from '@/redux/services/users/userApi';
+import { useOrganizationMembers } from '@/packages/hooks/auth/use-better-auth-orgs';
 import { UserTypes } from '@/redux/types/orgs';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -28,7 +28,7 @@ function useTeamSettings() {
     isLoading,
     error,
     refetch: refetchUsers
-  } = useGetOrganizationUsersQuery(activeOrganization?.id, {
+  } = useOrganizationMembers(activeOrganization?.id, {
     skip: !activeOrganization
   });
   const [updateOrganizationDetails, { isLoading: isUpdating, error: updateError }] =
@@ -66,8 +66,8 @@ function useTeamSettings() {
 
   useEffect(() => {
     if (activeOrganization) {
-      setTeamName(activeOrganization.name);
-      setTeamDescription(activeOrganization.description);
+      setTeamName(activeOrganization.organization.name);
+      setTeamDescription(activeOrganization.organization.description);
     }
   }, [activeOrganization]);
 
@@ -137,14 +137,14 @@ function useTeamSettings() {
     setEditTeamDialogOpen(false);
     if (teamName.length <= 0 || teamDescription.length <= 0) {
       toast.error(t('settings.teams.messages.requiredFields'));
-      setTeamName(activeOrganization?.name || '');
-      setTeamDescription(activeOrganization?.description || '');
+      setTeamName(activeOrganization?.organization.name || '');
+      setTeamDescription(activeOrganization?.organization.description || '');
       return;
     }
 
     if (
-      teamName !== activeOrganization?.name ||
-      teamDescription !== activeOrganization?.description
+      teamName !== activeOrganization?.organization.name ||
+      teamDescription !== activeOrganization?.organization.description
     ) {
       try {
         await updateOrganizationDetails({
@@ -156,8 +156,8 @@ function useTeamSettings() {
         toast.success(t('settings.teams.messages.teamUpdated'));
       } catch (error) {
         toast.error(t('settings.teams.messages.teamUpdateFailed'));
-        setTeamName(activeOrganization?.name || '');
-        setTeamDescription(activeOrganization?.description || '');
+        setTeamName(activeOrganization?.organization.name || '');
+        setTeamDescription(activeOrganization?.organization.description || '');
       }
     }
   };
