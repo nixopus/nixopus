@@ -40,9 +40,9 @@ const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryEr
       try {
         const session = await authClient.getSession();
         const token = session?.data?.session?.token;
+        const state = getState() as RootState;
         const organizationId =
-          (getState() as RootState).user.activeOrganization?.id ||
-          (getState() as RootState).auth.user?.organization_users?.[0]?.organization_id;
+          state.user.activeOrganization?.id || state.orgs.organizations[0]?.organization.id;
 
         if (token) {
           headers.set('authorization', `Bearer ${token}`);

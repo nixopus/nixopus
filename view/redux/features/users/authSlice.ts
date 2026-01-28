@@ -5,6 +5,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { authClient } from '@/packages/lib/auth-client';
 import { setActiveOrganization } from './userSlice';
+import { fetchUserOrganizations } from './orgSlice';
 
 interface AuthState {
   user: User | null;
@@ -41,9 +42,8 @@ export const initializeAuth = createAsyncThunk<AuthPayload | null, void, { rejec
         ).unwrap();
 
         try {
-          const organizationsResult = await dispatch(
-            userApi.endpoints.getUserOrganizations.initiate(undefined)
-          ).unwrap();
+          // Use new Better Auth organizations service
+          const organizationsResult = await dispatch(fetchUserOrganizations()).unwrap();
 
           if (organizationsResult && organizationsResult.length > 0) {
             const firstOrg = organizationsResult[0];
