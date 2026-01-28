@@ -79,7 +79,13 @@ function Layout({ children }: LayoutProps) {
     <SidebarProvider defaultOpen={false}>
       <AppSidebar
         user={user}
-        activeOrg={activeOrg}
+        activeOrg={
+          activeOrg
+            ? 'organization' in activeOrg
+              ? activeOrg.organization
+              : (activeOrg as any)
+            : null
+        }
         hasAnyPermission={hasAnyPermission}
         activeNav={activeNav}
         refetch={refetch}
