@@ -14,6 +14,7 @@ import { authApi } from '@/redux/services/users/authApi';
 import authReducer from '@/redux/features/users/authSlice';
 import { userApi } from '@/redux/services/users/userApi';
 import userSlice from '@/redux/features/users/userSlice';
+import orgSlice from '@/redux/features/users/orgSlice';
 import { notificationApi } from '@/redux/services/settings/notificationApi';
 import { domainsApi } from '@/redux/services/settings/domainsApi';
 import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorApi';
@@ -56,6 +57,7 @@ const rootReducer = combineReducers({
   [deployApi.reducerPath]: deployApi.reducer,
   [healthcheckApi.reducerPath]: healthcheckApi.reducer,
   user: userSlice,
+  orgs: orgSlice,
   fileManagersApi: fileManagersApi.reducer,
   [auditApi.reducerPath]: auditApi.reducer,
   [FeatureFlagsApi.reducerPath]: FeatureFlagsApi.reducer,
@@ -75,7 +77,7 @@ const appReducer = (state: RootReducer | undefined, action: { type: string }) =>
 
 const persistedReducer = persistReducer(persistConfig, appReducer);
 
-const storeOptions: ConfigureStoreOptions = {
+export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -100,9 +102,7 @@ const storeOptions: ConfigureStoreOptions = {
       extensionsApi.middleware
     ]),
   devTools: process.env.NODE_ENV === 'development'
-};
-
-export const store = configureStore(storeOptions);
+});
 
 export const persistor = persistStore(store);
 

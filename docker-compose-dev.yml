@@ -54,15 +54,23 @@ services:
     ports:
       - "127.0.0.1:${AUTH_SERVICE_PORT:-9090}:9090"
     restart: unless-stopped
-    env_file:
-      - ${NIXOPUS_HOME:-/etc/nixopus}/auth/.env
+    environment:
+      # Database connection - using service name for Docker network
+      - DATABASE_URL=postgresql://${USERNAME:-postgres}:${PASSWORD:-changeme}@nixopus-db:5432/${DB_NAME:-postgres}?sslmode=disable
+      # Redis connection - using service name for Docker network
+      - REDIS_URL=redis://nixopus-redis:6379
+      # Auth service configuration
+      - PORT=9090
+      - NODE_ENV=development
     volumes:
       - ./logs:/app/logs
-      - ${NIXOPUS_HOME:-/etc/nixopus}/auth/.env:/app/.env
     networks:
       - nixopus-network
     depends_on:
       nixopus-db:
+        condition: service_healthy
+        required: false
+      nixopus-redis:
         condition: service_healthy
         required: false
     healthcheck:
