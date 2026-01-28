@@ -1,3 +1,55 @@
+# [0.1.0-alpha.116](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.115...v0.1.0-alpha.116) (2026-01-28)
+
+
+### Bug Fixes
+
+* adapt authentication layer changes ([a1300c1](https://github.com/raghavyuva/nixopus/commit/a1300c18876b0b228ba3f0ec724f0845269620bd))
+* add auth service as a dependency in compose file ([b9650b9](https://github.com/raghavyuva/nixopus/commit/b9650b9f6d181c6b4cda739bfe1528aff5415a54))
+* extension loading time during init ([95053a0](https://github.com/raghavyuva/nixopus/commit/95053a073c392b75c6b9ea0d40651f25345fb7c5))
+* extension type circular import errors ([279a35d](https://github.com/raghavyuva/nixopus/commit/279a35dc49ef2bbcd3804eff5736d7d8b0a7f1b1))
+* mcp tool call failure due to type validations ([f911db4](https://github.com/raghavyuva/nixopus/commit/f911db4f251dbdfb4eea240d35dc1d0c0b39996f))
+* merge branch 'feat/develop' into feat/ai-sheet ([8e58747](https://github.com/raghavyuva/nixopus/commit/8e58747325f98fc532b2eb58e477f3a9470064c6))
+* move cli workflow to selfhost service ([cdf4ccf](https://github.com/raghavyuva/nixopus/commit/cdf4ccf610e13e94153ea79b57ce88055f2af70f))
+* remove OCTOAGENT_URL from env ([efdd8e7](https://github.com/raghavyuva/nixopus/commit/efdd8e79d8b333f16b8bbf4fa4072c90c3037520))
+* stream message parsing ([dd885e5](https://github.com/raghavyuva/nixopus/commit/dd885e519d864169b3311ba43c3cd6766d857857))
+* test list image and list container tools with mcp client ([8b66f7c](https://github.com/raghavyuva/nixopus/commit/8b66f7c8edd9020c5f70401ed6eeba7a1a3a4d7d))
+* view compile errors ([4a0d817](https://github.com/raghavyuva/nixopus/commit/4a0d817955b12ae09970008b82d3701222afb156))
+
+
+### Features
+
+* add commands for cli ([5f89722](https://github.com/raghavyuva/nixopus/commit/5f89722e7d729b5f176fea8e89ce5cf80190b38f))
+* add engine for mover ([ffad5dd](https://github.com/raghavyuva/nixopus/commit/ffad5dd10f43972b827a2a6c6bf68164f7dc6053))
+* add mcp server client support for nixopus container logs tool ([67898af](https://github.com/raghavyuva/nixopus/commit/67898afa283ae01cb4f43bf988417fdcee9d0769))
+* add octoagent ([dc8dc1d](https://github.com/raghavyuva/nixopus/commit/dc8dc1d82f146a135103c5bbbcadd80ddf3624c4))
+* add streamdown UI components ([15169ef](https://github.com/raghavyuva/nixopus/commit/15169efb228954b12f2be83debbbcac1e1b7af26))
+* add support for api key handling ([7a6f36a](https://github.com/raghavyuva/nixopus/commit/7a6f36aafee88bd92597115cf8c189c2f18c4a26))
+* add support for container resource update tool ([3b41812](https://github.com/raghavyuva/nixopus/commit/3b41812fe8dfbc2add1dff209a92489991128ad9))
+* add support for deployment operation tools ([c792da0](https://github.com/raghavyuva/nixopus/commit/c792da0461390fabd4d0ed0c731f00c305d3a695))
+* add support for deployment related tools ([cd34d16](https://github.com/raghavyuva/nixopus/commit/cd34d165f0fc530ca7d5cb7a8af39af05ff93748))
+* add support for duplicate project and deploy project tools ([f84b5f8](https://github.com/raghavyuva/nixopus/commit/f84b5f824f8aa6cc5782f72369c9150946cbd2da))
+* add support for extension tools ([a3c8467](https://github.com/raghavyuva/nixopus/commit/a3c8467c13c4ca7bd5c27786ebaa19861d28280e))
+* add support for file operation tools ([e689b9e](https://github.com/raghavyuva/nixopus/commit/e689b9e9d98de04071f8e87c85cb28c8d9b3e4a5))
+* add support for list containers tool ([ed38843](https://github.com/raghavyuva/nixopus/commit/ed38843907c8449eeeb4d96c849ce14245bee9a3))
+* add support for list images tool ([6b3c31d](https://github.com/raghavyuva/nixopus/commit/6b3c31d2873dd21a797f0e3ce87a28f7b49b69eb))
+* add support for live dev reload ([4e0ae5c](https://github.com/raghavyuva/nixopus/commit/4e0ae5c2d4cd67e021b39ead634acd285c419b1b))
+* add support for llms.txt file in documentation ([7ec70a7](https://github.com/raghavyuva/nixopus/commit/7ec70a7fde7b7cf7781471ab6b6c9e12f0a3714f))
+* add support for prune image and build cache tools ([9fd06ad](https://github.com/raghavyuva/nixopus/commit/9fd06ad1dec534ca18a1284fe48738f4b7a00fc2))
+* add support for remote command execution tool ([a5ec479](https://github.com/raghavyuva/nixopus/commit/a5ec4791090ca98920b3f84a74ae2c5f8188d5b0))
+* add support for restart and remove container mcp tools ([28440b5](https://github.com/raghavyuva/nixopus/commit/28440b59306f51182751b63936549fffbd3ad009))
+* add support for start and stop tools ([48676ab](https://github.com/raghavyuva/nixopus/commit/48676ab59559c8163a5afd34e620e815bae1782f))
+* add support for stripe payment ([f1c1565](https://github.com/raghavyuva/nixopus/commit/f1c15656e76e17c99bc1813acd03bce28d0787da))
+* add support for system stats tool ([50b9f3b](https://github.com/raghavyuva/nixopus/commit/50b9f3b4d37ac26fd2be7760bcfb6dfd6173c2a0))
+* add tool for container details ([9171b3c](https://github.com/raghavyuva/nixopus/commit/9171b3cf9bcc0e453b5701276979c6aa8c9a08ac))
+* add types utils for mcp integration in view ([4eb19c4](https://github.com/raghavyuva/nixopus/commit/4eb19c48f572fd9981284c7c40d5dba632e9f8d7))
+* add view changes for auth service migration ([c58d43b](https://github.com/raghavyuva/nixopus/commit/c58d43ba13241ca71bedd8a5eb8f53f21fe53dc8))
+* integrate AI chat with dashboard layout and i18n ([208cf56](https://github.com/raghavyuva/nixopus/commit/208cf56dec840e9003dd5e95e995b0080c37f304))
+* intg better_auth for auth service ([#989](https://github.com/raghavyuva/nixopus/issues/989)) ([4fa943a](https://github.com/raghavyuva/nixopus/commit/4fa943ab18fefd4b415f7038fdb2528074a06adb))
+* update compose file to make use of the latest auth service image ([e6377ea](https://github.com/raghavyuva/nixopus/commit/e6377ea6bb3b6f17387dfe339377f49d17a8d3a1))
+* wire up mover engine ([cd279ca](https://github.com/raghavyuva/nixopus/commit/cd279ca0b31bcf9d830d1c2738bdb872bd691102))
+
+
+
 # [0.1.0-alpha.115](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.114...v0.1.0-alpha.115) (2026-01-17)
 
 
