@@ -7,7 +7,7 @@ readonly GREEN='\033[0;32m'
 readonly BLUE='\033[0;34m'
 readonly NC='\033[0m'
 
-# CLI repository (fixed - CLI is hosted in installer repository)
+# CLI repository
 readonly CLI_REPO_URL="https://github.com/nixopus/installer"
 readonly CLI_BRANCH="main"
 readonly PACKAGE_JSON_URL_MASTER="https://raw.githubusercontent.com/nixopus/installer/main/package.json"
