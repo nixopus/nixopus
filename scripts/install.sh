@@ -209,7 +209,6 @@ install_package() {
     
     temp_file="/tmp/$package_name"
     
-    # Try different release tag formats
     for tag_format in "${tag_formats[@]}"; do
         download_url="$CLI_REPO_URL/releases/download/$tag_format/$package_name"
         log_info "Trying to download from: $download_url"
