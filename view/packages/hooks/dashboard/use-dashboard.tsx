@@ -28,7 +28,7 @@ export const useDashboard = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const { t } = useTranslation();
   const columns = useContainer();
-  const { data: smtpConfig } = useGetSMTPConfigurationsQuery(activeOrganization?.id, {
+  const { data: smtpConfig } = useGetSMTPConfigurationsQuery(activeOrganization?.id ?? '', {
     skip: !activeOrganization
   });
 

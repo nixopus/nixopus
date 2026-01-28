@@ -19,6 +19,13 @@ func getBetterAuthURL() string {
 	if url == "" {
 		// Default fallback for development
 		url = "http://localhost:9090"
+	} else {
+		// Ensure protocol is present (http:// or https://)
+		// If URL doesn't start with a protocol, assume https for production
+		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+			// Default to https if no protocol specified (production environments)
+			url = "https://" + url
+		}
 	}
 	return url
 }

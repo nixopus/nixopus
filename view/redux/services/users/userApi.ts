@@ -52,44 +52,7 @@ export const userApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ['User'],
   endpoints: (builder) => ({
-    getUserOrganizations: builder.query<UserOrganization[], void>({
-      query: () => {
-        // Better Auth endpoints go through Next.js proxy, use full URL with frontend origin
-        const url = typeof window !== 'undefined' 
-          ? `${window.location.origin}/api/${USERURLS.USER_ORGANIZATIONS}`
-          : USERURLS.USER_ORGANIZATIONS;
-        return {
-          url,
-          method: 'GET'
-        };
-      },
-      providesTags: [{ type: 'User', id: 'LIST' }],
-      transformResponse: (response: any) => {
-        // Better Auth returns organizations directly as array, transform to UserOrganization format
-        if (!response || !Array.isArray(response)) {
-          return [];
-        }
-        return response.map((org: any) => ({
-          id: org.id,
-          organization: {
-            id: org.id,
-            name: org.name,
-            description: org.metadata?.description || '',
-            created_at: org.createdAt || new Date().toISOString(),
-            updated_at: org.updatedAt || new Date().toISOString(),
-            deleted_at: null,
-          },
-          role: {
-            id: org.role || 'member',
-            name: org.role || 'member',
-            description: '',
-          },
-          created_at: org.createdAt || new Date().toISOString(),
-          updated_at: org.updatedAt || new Date().toISOString(),
-          deleted_at: null,
-        }));
-      }
-    }),
+    // Note: getUserOrganizations removed - now using Better Auth service layer via useUserOrganizations hook
     createOrganization: builder.mutation<Organization, CreateOrganizationRequest>({
       query(organization) {
         return {
@@ -142,13 +105,17 @@ export const userApi = createApi({
         return response.data;
       }
     }),
-    getActiveMember: builder.query<{ role: string | string[]; permissions?: string[] }, { organizationId: string; userId: string }>({
+    getActiveMember: builder.query<
+      { role: string | string[]; permissions?: string[] },
+      { organizationId: string; userId: string }
+    >({
       query: ({ organizationId }) => {
         // Use list-members endpoint with organizationId
         // We'll filter by userId in transformResponse
-        const url = typeof window !== 'undefined' 
-          ? `${window.location.origin}/api/auth/organization/list-members?organizationId=${organizationId}`
-          : `auth/organization/list-members?organizationId=${organizationId}`;
+        const url =
+          typeof window !== 'undefined'
+            ? `${window.location.origin}/api/auth/organization/list-members?organizationId=${organizationId}`
+            : `auth/organization/list-members?organizationId=${organizationId}`;
         return {
           url,
           method: 'GET'
@@ -158,7 +125,7 @@ export const userApi = createApi({
       transformResponse: (response: any, meta, { userId }) => {
         // Better Auth returns array of members, find the current user's member record
         let members = response;
-        
+
         // If wrapped in data property
         if (response?.data && Array.isArray(response.data)) {
           members = response.data;
@@ -166,82 +133,33 @@ export const userApi = createApi({
           // If not an array, try to extract members
           members = [];
         }
-        
+
         if (!members || members.length === 0) {
           console.warn('getActiveMember: No members found');
           return { role: 'member', permissions: [] };
         }
-        
+
         // Find the member record for the current user
         const member = members.find((m: any) => {
           const memberUserId = m.userId || m.user?.id;
           return memberUserId === userId;
         });
-        
+
         if (!member) {
           console.warn('getActiveMember: Current user not found in members list');
           return { role: 'member', permissions: [] };
         }
-        
+
         const role = member.role || 'member';
         const permissions = member.permissions || [];
-        
+
         return {
           role,
           permissions: Array.isArray(permissions) ? permissions : []
         };
       }
     }),
-    getOrganizationUsers: builder.query<OrganizationUsers[], string>({
-      query(organizationId) {
-        // Better Auth endpoints go through Next.js proxy, use full URL with frontend origin
-        const url = typeof window !== 'undefined' 
-          ? `${window.location.origin}/api/auth/organization/list-members?organizationId=${organizationId}`
-          : `auth/organization/list-members?organizationId=${organizationId}`;
-        return {
-          url,
-          method: 'GET'
-        };
-      },
-      providesTags: [{ type: 'User', id: 'LIST' }],
-      transformResponse: (response: any) => {
-        // Better Auth returns members directly as array
-        if (!response || !Array.isArray(response)) {
-          return [];
-        }
-        // Transform Better Auth member format to OrganizationUsers format
-        return response.map((member: any) => {
-          const user = member.user || {};
-          const role = member.role || 'member';
-          
-          return {
-            id: member.id,
-            user_id: member.userId || user.id,
-            organization_id: member.organizationId,
-            created_at: member.createdAt || new Date().toISOString(),
-            updated_at: member.updatedAt || new Date().toISOString(),
-            deleted_at: null,
-            user: {
-              id: user.id || member.userId,
-              email: user.email || '',
-              username: user.name || user.username || '',
-              avatar: user.image || user.avatar || '',
-              type: Array.isArray(role) ? role[0] : role,
-              organization_users: [],
-              is_verified: user.emailVerified || false,
-              is_email_verified: user.emailVerified || false,
-              two_factor_enabled: user.twoFactorEnabled || false,
-              two_factor_secret: '',
-              created_at: user.createdAt || new Date().toISOString(),
-              updated_at: user.updatedAt || new Date().toISOString(),
-              organizations: []
-            } as User,
-            roles: Array.isArray(role) ? role : [role],
-            permissions: member.permissions || []
-          };
-        });
-      }
-    }),
+    // Note: getOrganizationUsers removed - now using Better Auth service layer via useOrganizationMembers hook
     updateOrganizationDetails: builder.mutation<Organization, UpdateOrganizationDetailsRequest>({
       query(payload) {
         return {
@@ -446,13 +364,13 @@ export const userApi = createApi({
 });
 
 export const {
-  useGetUserOrganizationsQuery,
+  // useGetUserOrganizationsQuery - Removed: Use useUserOrganizations from @/packages/hooks/auth/use-better-auth-orgs
   useCreateOrganizationMutation,
   useAddUserToOrganizationMutation,
   useRemoveUserFromOrganizationMutation,
   useUpdateUserNameMutation,
   useGetActiveMemberQuery,
-  useGetOrganizationUsersQuery,
+  // useGetOrganizationUsersQuery - Removed: Use useOrganizationMembers from @/packages/hooks/auth/use-better-auth-orgs
   useUpdateOrganizationDetailsMutation,
   useCreateUserMutation,
   useUpdateUserRoleMutation,

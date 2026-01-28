@@ -17,6 +17,7 @@ export enum AUTHURLS {
 }
 
 export enum USERURLS {
+  /** @deprecated Use useUserOrganizations hook from @/packages/hooks/auth/use-better-auth-orgs instead */
   USER_ORGANIZATIONS = 'auth/organization/list',
   CREATE_ORGANIZATION = 'v1/organizations',
   ADD_USER_TO_ORGANIZATION = 'v1/organizations/add-user',

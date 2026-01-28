@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useUpdateFontMutation } from '@/redux/services/users/userApi';
-import { useAppSelector } from '@/redux/hooks';
-import { RootState } from '@/redux/store';
+import { useUpdateFontMutation, useGetUserSettingsQuery } from '@/redux/services/users/userApi';
 
 export const useFontSelection = () => {
   const [updateFont] = useUpdateFontMutation();
-  const userSettings = useAppSelector((state: RootState) => state.auth.userSettings);
+  const { data: userSettings } = useGetUserSettingsQuery();
   const [selectedFont, setSelectedFont] = useState(userSettings?.font_family || 'outfit');
 
   useEffect(() => {

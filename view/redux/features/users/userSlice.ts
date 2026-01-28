@@ -1,6 +1,6 @@
-import { userApi } from '@/redux/services/users/userApi';
 import { UserOrganization } from '@/redux/types/orgs';
 import { createSlice } from '@reduxjs/toolkit';
+import { fetchUserOrganizations } from './orgSlice';
 
 interface UserState {
   organizations: UserOrganization[];
@@ -21,14 +21,12 @@ export const userSlice = createSlice({
     }
   },
   extraReducers: (builder) => {
-    builder.addMatcher(
-      userApi.endpoints.getUserOrganizations.matchFulfilled,
-      (state, { payload }) => {
-        if (payload.length > 0) {
-          state.organizations = payload;
-        }
+    // Sync organizations from orgSlice when fetched
+    builder.addCase(fetchUserOrganizations.fulfilled, (state, { payload }) => {
+      if (payload.length > 0) {
+        state.organizations = payload;
       }
-    );
+    });
   }
 });
 

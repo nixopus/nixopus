@@ -44,7 +44,7 @@ export function TeamSwitcher({
   } = useTeamSwitcher();
 
   const canCreateOrg = () => {
-    if (user.type === 'admin') {
+    if (user && user.type === 'admin') {
       return true;
     }
     return false;
@@ -61,7 +61,7 @@ export function TeamSwitcher({
     <>
       <DeleteDialog
         title="Delete Organization"
-        description={`Are you sure you want to delete the organization "${displayTeam.name}"? This action cannot be undone.`}
+        description={`Are you sure you want to delete the organization "${'organization' in displayTeam ? displayTeam.organization.name : displayTeam.name}"? This action cannot be undone.`}
         onConfirm={handleDeleteOrganization}
         variant="destructive"
         icon={Trash2}
@@ -80,8 +80,16 @@ export function TeamSwitcher({
                   <Users className="size-4 text-background" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{displayTeam.name}</span>
-                  <span className="truncate text-xs">{displayTeam.description}</span>
+                  <span className="truncate font-medium">
+                    {'organization' in displayTeam
+                      ? displayTeam.organization.name
+                      : displayTeam.name}
+                  </span>
+                  <span className="truncate text-xs">
+                    {'organization' in displayTeam
+                      ? displayTeam.organization.description
+                      : displayTeam.description}
+                  </span>
                 </div>
                 <ChevronsUpDown className="ml-auto" />
               </SidebarMenuButton>

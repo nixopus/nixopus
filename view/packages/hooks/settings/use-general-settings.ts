@@ -42,6 +42,11 @@ function useGeneralSettings() {
       return;
     }
 
+    if (!user) {
+      setUsernameError(t('settings.account.errors.updateFailed'));
+      return;
+    }
+
     if (username === user.username) {
       setUsernameError(t('settings.account.errors.sameUsername'));
       return;

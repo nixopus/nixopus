@@ -17,7 +17,7 @@ function use_monitor() {
 
   const organizationId =
     useAppSelector((state) => state.user.activeOrganization?.id) ||
-    useAppSelector((state) => state.auth.user?.organization_users?.[0]?.organization_id);
+    useAppSelector((state) => state.orgs.organizations[0]?.organization.id);
 
   const startMonitoring = useCallback(() => {
     if (!isReady || !organizationId) return;

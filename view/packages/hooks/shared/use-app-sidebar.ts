@@ -1,6 +1,6 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
-import { useGetUserOrganizationsQuery } from '@/redux/services/users/userApi';
+import { useUserOrganizations } from '@/packages/hooks/auth/use-better-auth-orgs';
 import { useNavigationState } from '@/packages/hooks/shared/use_navigation_state';
 import { setActiveOrganization } from '@/redux/features/users/userSlice';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
@@ -51,8 +51,7 @@ const data = {
 export function useAppSidebar() {
   const { t } = useTranslation();
   const user = useAppSelector((state) => state.auth.user);
-  const { isLoading, refetch } = useGetUserOrganizationsQuery();
-  const organizations = useAppSelector((state) => state.user.organizations);
+  const { data: organizations, isLoading, refetch } = useUserOrganizations();
   const { activeNav, setActiveNav } = useNavigationState();
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const dispatch = useAppDispatch();
