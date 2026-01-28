@@ -7,14 +7,18 @@ readonly GREEN='\033[0;32m'
 readonly BLUE='\033[0;34m'
 readonly NC='\033[0m'
 
-# Default GitHub repository info
+# CLI repository
+readonly CLI_REPO_URL="https://github.com/nixopus/installer"
+readonly CLI_BRANCH="main"
+readonly PACKAGE_JSON_URL_MASTER="https://raw.githubusercontent.com/nixopus/installer/main/package.json"
+
+# Default GitHub repository info for platform installation
 DEFAULT_REPO_URL="https://github.com/raghavyuva/nixopus"
 DEFAULT_BRANCH="master"
 
-# Variables for custom repository and branch
+# Variables for custom repository and branch (for platform installation)
 REPO_URL="$DEFAULT_REPO_URL"
 BRANCH="$DEFAULT_BRANCH"
-readonly PACKAGE_JSON_URL_MASTER="https://raw.githubusercontent.com/raghavyuva/nixopus/master/package.json"
 
 # Logging functions
 log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
@@ -48,8 +52,10 @@ This script installs the nixopus CLI and optionally runs 'nixopus install' with 
 
 CLI Installation Options:
   --skip-nixopus-install    Skip running 'nixopus install' after CLI installation
-  --repo REPOSITORY         GitHub repository URL for CLI installation and passed to 'nixopus install' (default: https://github.com/raghavyuva/nixopus)
-  --branch BRANCH           Git branch to use for CLI installation and passed to 'nixopus install' (default: master)
+  --repo REPOSITORY         GitHub repository URL for platform installation (passed to 'nixopus install', default: https://github.com/raghavyuva/nixopus)
+                            Note: CLI is always installed from https://github.com/nixopus/installer
+  --branch BRANCH           Git branch to use for platform installation (passed to 'nixopus install', default: master)
+                            Note: CLI is always installed from the main branch of installer repository
 
 nixopus install Options (passed through to 'nixopus install'):
   -v, --verbose             Show more details while installing
@@ -102,7 +108,7 @@ Local Examples:
   $0 --force --timeout 600                     # Install CLI and run 'nixopus install' with force and custom timeout
   $0 --api-domain api.example.com --view-domain example.com  # Install CLI and run 'nixopus install' with custom domains
   $0 --dry-run --config-file /path/to/config   # Install CLI and run 'nixopus install' in dry-run mode with custom config
-  $0 --repo https://github.com/user/fork --branch develop  # Install CLI from custom repository and branch
+  $0 --repo https://github.com/user/fork --branch develop  # Install platform from custom repository and branch (CLI always from installer)
   $0 ssh --verbose                             # Install CLI and run 'nixopus install ssh --verbose'
   $0 deps --dry-run                            # Install CLI and run 'nixopus install deps --dry-run'
 
@@ -148,7 +154,7 @@ get_package_info() {
     local package_json
     package_json=$(curl -fsSL "$PACKAGE_JSON_URL_MASTER" 2>/dev/null || true)
     if [[ -z "$package_json" || "$package_json" != \{* ]]; then
-        log_error "Failed to fetch package.json from master branch"
+        log_error "Failed to fetch package.json from $CLI_REPO_URL ($CLI_BRANCH branch)"
         exit 1
     fi
 
@@ -171,7 +177,7 @@ build_package_name() {
         deb) echo "nixopus_${CLI_VERSION}_${arch}.deb" ;;
         rpm) echo "nixopus-${CLI_VERSION}-1.$([ "$arch" = "amd64" ] && echo "x86_64" || echo "aarch64").rpm" ;;
         apk) echo "nixopus_${CLI_VERSION}_${arch}.apk" ;;
-        tar) echo "nixopus-${CLI_VERSION}.tar" ;;
+        tar) echo "nixopus.tar" ;;
         pkg) echo "nixopus-${CLI_VERSION}-darwin-${arch}.pkg" ;;
         *) log_error "Unknown package type: $pkg_type"; exit 1 ;;
     esac
@@ -190,6 +196,8 @@ install_package() {
     local package_name
     local download_url
     local temp_file
+    local tag_formats=("v$CLI_VERSION" "$CLI_VERSION" "nixopus-$CLI_VERSION")
+    local download_success=false
     
     package_name=$(build_package_name "$arch" "$pkg_type")
     
@@ -199,13 +207,37 @@ install_package() {
         exit 1
     fi
     
-    download_url="$REPO_URL/releases/download/nixopus-$CLI_VERSION/$package_name"
     temp_file="/tmp/$package_name"
     
-    curl -L -o "$temp_file" "$download_url" || {
-        log_error "Failed to download package"
+    for tag_format in "${tag_formats[@]}"; do
+        download_url="$CLI_REPO_URL/releases/download/$tag_format/$package_name"
+        log_info "Trying to download from: $download_url"
+        
+        if curl -fsSL -o "$temp_file" "$download_url" 2>/dev/null; then
+            # Check if file is valid (not a 404 page - should be > 100 bytes for packages)
+            local file_size
+            if [[ "$(uname -s)" == "Darwin" ]]; then
+                file_size=$(stat -f%z "$temp_file" 2>/dev/null || echo 0)
+            else
+                file_size=$(stat -c%s "$temp_file" 2>/dev/null || echo 0)
+            fi
+            
+            if [[ -f "$temp_file" ]] && [[ $file_size -gt 100 ]]; then
+                download_success=true
+                log_success "Successfully downloaded package using tag: $tag_format"
+                break
+            else
+                rm -f "$temp_file"
+            fi
+        fi
+    done
+    
+    if [[ "$download_success" == false ]]; then
+        log_error "Failed to download package $package_name"
+        log_error "Tried tag formats: ${tag_formats[*]}"
+        log_error "Please check if release exists at: $CLI_REPO_URL/releases"
         exit 1
-    }
+    fi
     
     case "$pkg_type" in
         deb)
@@ -403,8 +435,8 @@ main() {
     done
 
     # Show repository and branch info
-    log_info "Using repository: $REPO_URL"
-    log_info "Using branch: $BRANCH"
+    log_info "Installing CLI from: $CLI_REPO_URL (branch: $CLI_BRANCH)"
+    log_info "Platform installation will use repository: $REPO_URL (branch: $BRANCH)"
     
     # Run main function with permission check
     pkg_type=$(detect_os)

@@ -163,7 +163,7 @@ services:
     image: ghcr.io/nixopus/auth:latest
     container_name: nixopus-auth
     ports:
-      - "127.0.0.1:${AUTH_SERVICE_PORT:-9090}:9090"
+      - "${AUTH_SERVICE_PORT:-9090}:9090"
     restart: unless-stopped
     env_file:
       - ${NIXOPUS_HOME:-/etc/nixopus}/auth/.env
