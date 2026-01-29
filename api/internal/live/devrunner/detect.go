@@ -1,6 +1,7 @@
 package devrunner
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -12,9 +13,9 @@ import (
 
 // DetectFramework analyzes the project at the given path and returns
 // the appropriate FrameworkStrategy for running its dev server.
-func DetectFramework(projectPath string) (FrameworkStrategy, error) {
+func DetectFramework(ctx context.Context, projectPath string) (FrameworkStrategy, error) {
 	for _, detector := range projectDetectors {
-		if strategy, err := detector(projectPath); err == nil && strategy != nil {
+		if strategy, err := detector(ctx, projectPath); err == nil && strategy != nil {
 			return strategy, nil
 		}
 	}
@@ -34,7 +35,7 @@ func GetStrategyByName(name string) (FrameworkStrategy, error) {
 // GetStrategyByNameWithPath returns a framework strategy by its name and configures it
 // based on the actual project at the given path. This is preferred over GetStrategyByName
 // when you have access to the project directory.
-func GetStrategyByNameWithPath(name, projectPath string) (FrameworkStrategy, error) {
+func GetStrategyByNameWithPath(ctx context.Context, name, projectPath string) (FrameworkStrategy, error) {
 	factory, exists := strategyRegistry[strings.ToLower(name)]
 	if !exists {
 		return nil, fmt.Errorf("unknown framework: %s", name)
@@ -44,16 +45,16 @@ func GetStrategyByNameWithPath(name, projectPath string) (FrameworkStrategy, err
 
 	// For Python frameworks, detect the actual main file and dependency manager
 	if pythonStrategy, ok := strategy.(*strategies.PythonStrategy); ok {
-		pythonStrategy.MainFile = strategy.DetectMainFile(projectPath)
-		depManager := detectPythonDepManager(projectPath)
+		pythonStrategy.MainFile = strategy.DetectMainFile(ctx, projectPath)
+		depManager := detectPythonDepManager(ctx, projectPath)
 		applyPythonDepManager(strategy, depManager)
 	}
 
 	// For Node.js frameworks that need main file detection (includes Express, Fastify, etc.)
 	if nodeStrategy, ok := strategy.(*strategies.NodeJSStrategy); ok {
-		pkg, err := readPackageJSON(projectPath)
+		pkg, err := readPackageJSON(ctx, projectPath)
 		if err == nil {
-			nodeStrategy.MainFile = strategy.DetectMainFile(projectPath)
+			nodeStrategy.MainFile = strategy.DetectMainFile(ctx, projectPath)
 			nodeStrategy.UseTypescript = pkg.hasPackage("typescript")
 			nodeStrategy.HasNodemon = pkg.hasPackage("nodemon")
 		}
@@ -63,9 +64,9 @@ func GetStrategyByNameWithPath(name, projectPath string) (FrameworkStrategy, err
 }
 
 // AnalyzeProject returns detailed information about the project.
-func AnalyzeProject(projectPath string) (*FrameworkInfo, error) {
+func AnalyzeProject(ctx context.Context, projectPath string) (*FrameworkInfo, error) {
 	for _, analyzer := range projectAnalyzers {
-		if info, err := analyzer(projectPath); err == nil && info != nil {
+		if info, err := analyzer(ctx, projectPath); err == nil && info != nil {
 			return info, nil
 		}
 	}
@@ -131,7 +132,7 @@ var strategyRegistry = map[string]strategyFactory{
 	"fastapi": func() FrameworkStrategy { return strategies.NewFastAPIStrategy() },
 }
 
-type projectDetector func(projectPath string) (FrameworkStrategy, error)
+type projectDetector func(ctx context.Context, projectPath string) (FrameworkStrategy, error)
 
 var projectDetectors = []projectDetector{
 	detectNodeProject,
@@ -141,7 +142,7 @@ var projectDetectors = []projectDetector{
 	// detectRustProject,
 }
 
-type projectAnalyzer func(projectPath string) (*FrameworkInfo, error)
+type projectAnalyzer func(ctx context.Context, projectPath string) (*FrameworkInfo, error)
 
 var projectAnalyzers = []projectAnalyzer{
 	analyzeNodeProject,
@@ -230,8 +231,8 @@ var nodeFrameworkDetectors = []nodeFrameworkDetector{
 	},
 }
 
-func detectNodeProject(projectPath string) (FrameworkStrategy, error) {
-	pkg, err := readPackageJSON(projectPath)
+func detectNodeProject(ctx context.Context, projectPath string) (FrameworkStrategy, error) {
+	pkg, err := readPackageJSON(ctx, projectPath)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +242,7 @@ func detectNodeProject(projectPath string) (FrameworkStrategy, error) {
 	}
 	// Set MainFile using the strategy's DetectMainFile method
 	if nodeStrategy, ok := strategy.(*strategies.NodeJSStrategy); ok {
-		nodeStrategy.MainFile = strategy.DetectMainFile(projectPath)
+		nodeStrategy.MainFile = strategy.DetectMainFile(ctx, projectPath)
 	}
 	return strategy, nil
 }
@@ -266,15 +267,15 @@ func detectNodeFramework(pkg packageJSON) (FrameworkStrategy, error) {
 	return nil, fmt.Errorf("no supported Node.js framework detected")
 }
 
-func analyzeNodeProject(projectPath string) (*FrameworkInfo, error) {
-	pkg, err := readPackageJSON(projectPath)
+func analyzeNodeProject(ctx context.Context, projectPath string) (*FrameworkInfo, error) {
+	pkg, err := readPackageJSON(ctx, projectPath)
 	if err != nil {
 		return nil, err
 	}
 
 	info := &FrameworkInfo{
 		Scripts:     pkg.Scripts,
-		HasLockFile: hasNodeLockFile(projectPath),
+		HasLockFile: hasNodeLockFile(ctx, projectPath),
 	}
 
 	// Detect framework name and version
@@ -318,13 +319,13 @@ var pythonIndicators = []string{"requirements.txt", "pyproject.toml", "setup.py"
 var pythonLockFiles = []string{"poetry.lock", "Pipfile.lock", "uv.lock", "requirements.lock"}
 var pythonFrameworks = []string{"django", "fastapi", "flask"}
 
-func detectPythonProject(projectPath string) (FrameworkStrategy, error) {
-	if !hasAnyFile(projectPath, pythonIndicators) {
+func detectPythonProject(ctx context.Context, projectPath string) (FrameworkStrategy, error) {
+	if !hasAnyFile(ctx, projectPath, pythonIndicators) {
 		return nil, fmt.Errorf("not a Python project")
 	}
 
-	deps := collectPythonDeps(projectPath)
-	depManager := detectPythonDepManager(projectPath)
+	deps := collectPythonDeps(ctx, projectPath)
+	depManager := detectPythonDepManager(ctx, projectPath)
 
 	// Check frameworks in order of specificity
 	if containsDep(deps, "django") {
@@ -336,33 +337,33 @@ func detectPythonProject(projectPath string) (FrameworkStrategy, error) {
 	if containsDep(deps, "fastapi") {
 		s := strategies.NewFastAPIStrategy()
 		applyPythonDepManager(s, depManager)
-		s.MainFile = s.DetectMainFile(projectPath)
+		s.MainFile = s.DetectMainFile(ctx, projectPath)
 		return s, nil
 	}
 
 	if containsDep(deps, "flask") {
 		s := strategies.NewFlaskStrategy()
 		applyPythonDepManager(s, depManager)
-		s.MainFile = s.DetectMainFile(projectPath)
+		s.MainFile = s.DetectMainFile(ctx, projectPath)
 		return s, nil
 	}
 
 	// Generic Python
 	s := strategies.NewPythonStrategy()
 	applyPythonDepManager(s, depManager)
-	s.MainFile = s.DetectMainFile(projectPath)
+	s.MainFile = s.DetectMainFile(ctx, projectPath)
 	return s, nil
 }
 
-func analyzePythonProject(projectPath string) (*FrameworkInfo, error) {
-	if !hasAnyFile(projectPath, pythonIndicators) {
+func analyzePythonProject(ctx context.Context, projectPath string) (*FrameworkInfo, error) {
+	if !hasAnyFile(ctx, projectPath, pythonIndicators) {
 		return nil, fmt.Errorf("not a Python project")
 	}
 
-	deps := collectPythonDeps(projectPath)
+	deps := collectPythonDeps(ctx, projectPath)
 
 	info := &FrameworkInfo{
-		HasLockFile: hasAnyFile(projectPath, pythonLockFiles),
+		HasLockFile: hasAnyFile(ctx, projectPath, pythonLockFiles),
 	}
 
 	// Detect framework
@@ -384,11 +385,11 @@ type pythonDepManager struct {
 	usesUv     bool
 }
 
-func detectPythonDepManager(projectPath string) pythonDepManager {
+func detectPythonDepManager(ctx context.Context, projectPath string) pythonDepManager {
 	return pythonDepManager{
-		usesPoetry: fileExists(filepath.Join(projectPath, "poetry.lock")),
-		usesPipenv: fileExists(filepath.Join(projectPath, "Pipfile.lock")),
-		usesUv:     fileExists(filepath.Join(projectPath, "uv.lock")),
+		usesPoetry: fileExists(ctx, filepath.Join(projectPath, "poetry.lock")),
+		usesPipenv: fileExists(ctx, filepath.Join(projectPath, "Pipfile.lock")),
+		usesUv:     fileExists(ctx, filepath.Join(projectPath, "uv.lock")),
 	}
 }
 
@@ -402,24 +403,24 @@ func applyPythonDepManager(s FrameworkStrategy, dm pythonDepManager) {
 }
 
 // collectPythonDeps gathers dependencies from all Python config files.
-func collectPythonDeps(projectPath string) []string {
+func collectPythonDeps(ctx context.Context, projectPath string) []string {
 	var deps []string
 
 	// Parse requirements.txt
-	deps = append(deps, parseRequirementsTxt(projectPath)...)
+	deps = append(deps, parseRequirementsTxt(ctx, projectPath)...)
 
 	// Check pyproject.toml, Pipfile for framework keywords
 	for _, file := range []string{"pyproject.toml", "Pipfile"} {
-		deps = append(deps, extractFrameworksFromFile(projectPath, file)...)
+		deps = append(deps, extractFrameworksFromFile(ctx, projectPath, file)...)
 	}
 
 	return deps
 }
 
-func parseRequirementsTxt(projectPath string) []string {
+func parseRequirementsTxt(ctx context.Context, projectPath string) []string {
 	var deps []string
 	filePath := filepath.Join(projectPath, "requirements.txt")
-	data, err := sftp.ReadFile(filePath)
+	data, err := sftp.ReadFile(ctx, filePath)
 	if err != nil {
 		return deps
 	}
@@ -436,10 +437,10 @@ func parseRequirementsTxt(projectPath string) []string {
 	return deps
 }
 
-func extractFrameworksFromFile(projectPath, filename string) []string {
+func extractFrameworksFromFile(ctx context.Context, projectPath, filename string) []string {
 	var deps []string
 	filePath := filepath.Join(projectPath, filename)
-	data, err := sftp.ReadFile(filePath)
+	data, err := sftp.ReadFile(ctx, filePath)
 	if err != nil {
 		return deps
 	}
@@ -466,10 +467,10 @@ func extractPackageName(line string) string {
 }
 
 // readPackageJSON reads and parses package.json from the project path.
-func readPackageJSON(projectPath string) (packageJSON, error) {
+func readPackageJSON(ctx context.Context, projectPath string) (packageJSON, error) {
 	var pkg packageJSON
 	filePath := filepath.Join(projectPath, "package.json")
-	data, err := sftp.ReadFile(filePath)
+	data, err := sftp.ReadFile(ctx, filePath)
 	if err != nil {
 		return pkg, fmt.Errorf("failed to read package.json via SFTP: %w", err)
 	}
@@ -490,14 +491,14 @@ func hasAllPackages(pkg packageJSON, packages []string) bool {
 }
 
 // fileExists checks if a file exists at the given path via SFTP.
-func fileExists(path string) bool {
-	return sftp.FileExists(path)
+func fileExists(ctx context.Context, path string) bool {
+	return sftp.FileExists(ctx, path)
 }
 
 // hasAnyFile checks if any of the specified files exist in the directory.
-func hasAnyFile(dir string, files []string) bool {
+func hasAnyFile(ctx context.Context, dir string, files []string) bool {
 	for _, f := range files {
-		if fileExists(filepath.Join(dir, f)) {
+		if fileExists(ctx, filepath.Join(dir, f)) {
 			return true
 		}
 	}
@@ -516,7 +517,7 @@ func containsDep(deps []string, name string) bool {
 }
 
 // hasNodeLockFile checks for Node.js lock files.
-func hasNodeLockFile(projectPath string) bool {
+func hasNodeLockFile(ctx context.Context, projectPath string) bool {
 	lockFiles := []string{"package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lockb"}
-	return hasAnyFile(projectPath, lockFiles)
+	return hasAnyFile(ctx, projectPath, lockFiles)
 }

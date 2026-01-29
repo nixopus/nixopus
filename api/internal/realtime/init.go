@@ -39,7 +39,8 @@ var upgrader = websocket.Upgrader{
 }
 
 type SocketServer struct {
-	conns               *sync.Map
+	conns               *sync.Map // conn -> userID
+	orgIDs              *sync.Map // conn -> organizationID
 	topicsMu            sync.RWMutex
 	topics              map[string]map[*websocket.Conn]bool
 	shutdown            chan struct{}
@@ -64,6 +65,7 @@ func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx 
 
 	server := &SocketServer{
 		conns:               &sync.Map{},
+		orgIDs:              &sync.Map{},
 		shutdown:            make(chan struct{}),
 		deployController:    deployController,
 		db:                  db,
@@ -115,7 +117,7 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 		token = token[7:]
 	}
 
-	user, err := s.verifyToken(token, r)
+	user, orgID, err := s.verifyToken(token, r)
 	if err != nil || user == nil {
 		s.sendError(conn, "Invalid authorization token")
 		conn.Close()
@@ -123,6 +125,9 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.conns.Store(conn, user.ID)
+	if orgID != "" {
+		s.orgIDs.Store(conn, orgID)
+	}
 	defer s.handleDisconnect(conn)
 
 	s.readLoop(conn)
@@ -138,6 +143,7 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 //   - nil
 func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
 	s.conns.Delete(conn)
+	s.orgIDs.Delete(conn)
 
 	s.topicsMu.Lock()
 	for topic, connections := range s.topics {

@@ -1,6 +1,7 @@
 package strategies
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -105,8 +106,8 @@ func (s *NodeJSStrategy) GetReadyLogPattern() string {
 }
 
 // DetectMainFile determines the main entry file from package.json.
-func (s *NodeJSStrategy) DetectMainFile(projectPath string) string {
-	pkg, err := readPackageJSON(projectPath)
+func (s *NodeJSStrategy) DetectMainFile(ctx context.Context, projectPath string) string {
+	pkg, err := readPackageJSON(ctx, projectPath)
 	if err != nil {
 		// Fallback to default based on TypeScript usage
 		if s.UseTypescript {
@@ -134,10 +135,10 @@ type packageJSON struct {
 }
 
 // readPackageJSON reads and parses package.json from the project path via SFTP.
-func readPackageJSON(projectPath string) (packageJSON, error) {
+func readPackageJSON(ctx context.Context, projectPath string) (packageJSON, error) {
 	var pkg packageJSON
 	filePath := filepath.Join(projectPath, "package.json")
-	data, err := sftp.ReadFile(filePath)
+	data, err := sftp.ReadFile(ctx, filePath)
 	if err != nil {
 		return pkg, fmt.Errorf("failed to read package.json via SFTP: %w", err)
 	}
