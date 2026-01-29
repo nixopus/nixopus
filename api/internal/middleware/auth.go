@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/cache"
@@ -18,19 +17,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-	"github.com/uptrace/bun"
 )
-
-// Member represents the member table from Better Auth schema (auth_schema.ts)
-// Table: "member" with columns: id, organization_id, user_id, role, created_at
-type Member struct {
-	bun.BaseModel  `bun:"table:member,alias:m"`
-	ID             uuid.UUID `bun:"id,pk,type:uuid"`
-	OrganizationID uuid.UUID `bun:"organization_id,type:uuid,notnull"`
-	UserID         uuid.UUID `bun:"user_id,type:uuid,notnull"`
-	Role           string    `bun:"role,type:text,notnull,default:'member'"`
-	CreatedAt      time.Time `bun:"created_at,type:timestamp,notnull"`
-}
 
 // AuthMiddleware is a middleware that checks if the request has a valid
 // Better Auth session. If the session is valid, it adds both the user and
@@ -100,43 +87,16 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 			ctx = context.WithValue(ctx, types.UserContextKey, &user)
 
 			if !isAuthEndpoint(r.URL.Path) {
-				// Get organization ID from Better Auth session or header
-				organizationID, err := utils.GetOrganizationIDString(ctx, r, app)
-				if err != nil || organizationID == "" {
-					// If no organization ID provided, use the first organization for the user
-					firstOrgID, err := getFirstUserOrganization(ctx, app, userIDUUID)
-					if err != nil || firstOrgID == "" {
-						log.Printf("WARN AuthMiddleware: No organization ID provided and user has no organizations")
-						utils.SendErrorResponse(w, "No organization ID provided and user has no organizations", http.StatusBadRequest)
-						return
+				// Resolve and verify organization membership
+				organizationID, err := resolveAndVerifyOrganization(ctx, r, cache, betterAuthUserID)
+				if err != nil {
+					log.Printf("ERROR AuthMiddleware: Failed to resolve organization: %v", err)
+					statusCode := http.StatusBadRequest
+					if strings.Contains(err.Error(), "does not belong") {
+						statusCode = http.StatusForbidden
 					}
-					organizationID = firstOrgID
-					log.Printf("INFO AuthMiddleware: Using first organization %s for user %s", organizationID, betterAuthUserID)
-				}
-
-				// Check organization membership via Better Auth API
-				// Use Better Auth user ID for membership check
-				var belongsToOrg bool
-				if cache != nil {
-					if cached, err := cache.GetOrgMembership(ctx, betterAuthUserID, organizationID); err == nil {
-						belongsToOrg = cached
-					}
-				}
-
-				if !belongsToOrg {
-					// Verify membership via Better Auth API
-					member, err := getBetterAuthOrganizationMember(ctx, r, betterAuthUserID, organizationID)
-					if err != nil || member == nil {
-						log.Printf("WARN AuthMiddleware: User %s (Better Auth ID: %s) does not belong to organization %s: %v", user.ID.String(), betterAuthUserID, organizationID, err)
-						utils.SendErrorResponse(w, "User does not belong to the specified organization", http.StatusForbidden)
-						return
-					}
-					belongsToOrg = true
-
-					// Cache the membership
-					if cache != nil {
-						cache.SetOrgMembership(ctx, betterAuthUserID, organizationID, belongsToOrg)
-					}
+					utils.SendErrorResponse(w, err.Error(), statusCode)
+					return
 				}
 
 				ctx = context.WithValue(ctx, types.OrganizationIDKey, organizationID)
@@ -183,24 +143,69 @@ func isAuthEndpoint(path string) bool {
 	return false
 }
 
-// getFirstUserOrganization gets the first organization ID for a user from the Better Auth member table
-func getFirstUserOrganization(ctx context.Context, app *storage.App, userID uuid.UUID) (string, error) {
-	var member Member
-	err := app.Store.DB.NewSelect().
-		Model(&member).
-		Where("user_id = ?", userID).
-		Order("created_at ASC").
-		Limit(1).
-		Scan(ctx)
-
+// resolveAndVerifyOrganization resolves the organization ID from Better Auth session
+// and verifies user membership via Better Auth API (with caching).
+func resolveAndVerifyOrganization(
+	ctx context.Context,
+	r *http.Request,
+	cache *cache.Cache,
+	betterAuthUserID string,
+) (string, error) {
+	// Get organization ID from Better Auth session only
+	organizationID, err := utils.GetOrganizationIDFromBetterAuth(r)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return "", fmt.Errorf("user has no organizations")
-		}
-		return "", fmt.Errorf("failed to query member table: %w", err)
+		return "", fmt.Errorf("failed to get organization ID from Better Auth session: %w", err)
 	}
 
-	return member.OrganizationID.String(), nil
+	if organizationID == "" {
+		return "", fmt.Errorf("no organization ID found in Better Auth session")
+	}
+
+	// Check organization membership via Better Auth API (with caching)
+	belongsToOrg, err := verifyOrganizationMembership(ctx, r, cache, betterAuthUserID, organizationID)
+	if err != nil {
+		return "", fmt.Errorf("user %s does not belong to organization %s: %w", betterAuthUserID, organizationID, err)
+	}
+
+	if !belongsToOrg {
+		return "", fmt.Errorf("user %s does not belong to organization %s", betterAuthUserID, organizationID)
+	}
+
+	return organizationID, nil
+}
+
+// verifyOrganizationMembership verifies if a user belongs to an organization.
+// Uses cache to avoid repeated API calls.
+func verifyOrganizationMembership(
+	ctx context.Context,
+	r *http.Request,
+	cache *cache.Cache,
+	betterAuthUserID string,
+	organizationID string,
+) (bool, error) {
+	// Check cache first
+	if cache != nil {
+		if cached, err := cache.GetOrgMembership(ctx, betterAuthUserID, organizationID); err == nil && cached {
+			return true, nil
+		}
+	}
+
+	// Verify membership via Better Auth API
+	member, err := getBetterAuthOrganizationMember(ctx, r, betterAuthUserID, organizationID)
+	if err != nil || member == nil {
+		// Cache negative result to avoid repeated API calls
+		if cache != nil {
+			cache.SetOrgMembership(ctx, betterAuthUserID, organizationID, false)
+		}
+		return false, err
+	}
+
+	// Cache positive result
+	if cache != nil {
+		cache.SetOrgMembership(ctx, betterAuthUserID, organizationID, true)
+	}
+
+	return true, nil
 }
 
 // tryAPIKeyAuth attempts to authenticate using API key from Authorization header
