@@ -53,6 +53,13 @@ export const initializeAuth = createAsyncThunk<AuthPayload | null, void, { rejec
           // Don't fail auth if organizations can't be loaded
         }
 
+        // Setup SSH key for self-hosted users (email/password users) post registration
+        try {
+          await dispatch(authApi.endpoints.setupSSHKey.initiate(undefined)).unwrap();
+        } catch (sshError: any) {
+          console.error('SSH key setup failed:', sshError);
+        }
+
         return {
           user: userResult,
           token: sessionResult.data.session.token || '',

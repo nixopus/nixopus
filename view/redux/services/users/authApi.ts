@@ -159,6 +159,15 @@ export const authApi = createApi({
         return { key: response.data.data.Key };
       },
       invalidatesTags: [{ type: 'Authentication', id: 'LIST' }]
+    }),
+    setupSSHKey: builder.mutation<{ status: string; message: string }, void>({
+      query: () => ({
+        url: AUTHURLS.SETUP_SSH_KEY,
+        method: 'POST'
+      }),
+      transformResponse: (response: { status: string; message: string }) => {
+        return response;
+      }
     })
   })
 });
@@ -177,5 +186,6 @@ export const {
   useDisableTwoFactorMutation,
   useTwoFactorLoginMutation,
   useIsAdminRegisteredQuery,
-  useCreateAPIKeyMutation
+  useCreateAPIKeyMutation,
+  useSetupSSHKeyMutation
 } = authApi;
