@@ -24,7 +24,7 @@ func (s *TaskService) runCommands(applicationID uuid.UUID, deploymentConfigID uu
 		return nil
 	}
 
-	manager, err := ssh.GetSSHManagerFromContext(context.Background(), s.Store)
+	manager, err := ssh.GetSSHManagerFromContext(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to get SSH manager: %w", err)
 	}

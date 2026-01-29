@@ -22,7 +22,7 @@ func RunCommandHandler(
 		req *mcp.CallToolRequest,
 		input RunCommandInput,
 	) (*mcp.CallToolResult, RunCommandOutput, error) {
-		manager, err := ssh.GetSSHManagerFromContext(toolCtx, store)
+		manager, err := ssh.GetSSHManagerFromContext(toolCtx)
 		if err != nil {
 			return nil, RunCommandOutput{
 				Output:   "",

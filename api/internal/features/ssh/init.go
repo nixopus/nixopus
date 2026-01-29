@@ -13,7 +13,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh/service"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
@@ -84,7 +83,11 @@ func GetSSHManager() *SSHManager {
 // GetSSHManagerForOrganization returns an SSHManager for a specific organization.
 // Caches managers per organization to avoid repeated database queries.
 // The manager is initialized with the active SSH key from the database for that organization.
-func GetSSHManagerForOrganization(ctx context.Context, store *shared_storage.Store, orgID uuid.UUID) (*SSHManager, error) {
+func GetSSHManagerForOrganization(ctx context.Context, orgID uuid.UUID) (*SSHManager, error) {
+	if config.GlobalStore == nil {
+		return nil, fmt.Errorf("global store not initialized, ensure config.Init() has been called")
+	}
+
 	orgIDStr := orgID.String()
 
 	// Check cache first
@@ -96,7 +99,7 @@ func GetSSHManagerForOrganization(ctx context.Context, store *shared_storage.Sto
 	orgManagersMu.RUnlock()
 
 	// Create new manager with organization-specific SSH config
-	sshService := service.NewSSHKeyService(store, ctx, logger.NewLogger())
+	sshService := service.NewSSHKeyService(config.GlobalStore, ctx, logger.NewLogger())
 	sshConfig, err := sshService.GetSSHConfigForOrganization(orgID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get SSH config for organization %s: %w", orgIDStr, err)
@@ -117,7 +120,8 @@ func GetSSHManagerForOrganization(ctx context.Context, store *shared_storage.Sto
 // GetSSHManagerFromContext extracts organization ID from context and returns the appropriate SSHManager.
 // This is the new primary entry point for getting SSH managers.
 // The organization ID should be set in context by the auth middleware via types.OrganizationIDKey.
-func GetSSHManagerFromContext(ctx context.Context, store *shared_storage.Store) (*SSHManager, error) {
+// Uses the global store set during config.Init().
+func GetSSHManagerFromContext(ctx context.Context) (*SSHManager, error) {
 	orgIDAny := ctx.Value(types.OrganizationIDKey)
 	if orgIDAny == nil {
 		return nil, fmt.Errorf("organization ID not found in context")
@@ -137,7 +141,7 @@ func GetSSHManagerFromContext(ctx context.Context, store *shared_storage.Store) 
 		return nil, fmt.Errorf("unexpected organization ID type in context: %T", v)
 	}
 
-	return GetSSHManagerForOrganization(ctx, store, orgID)
+	return GetSSHManagerForOrganization(ctx, orgID)
 }
 
 // NewSSHManager creates a new SSH manager with a single default client from config

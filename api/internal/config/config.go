@@ -17,7 +17,8 @@ import (
 )
 
 var (
-	AppConfig types.Config
+	AppConfig   types.Config
+	GlobalStore *storage.Store // Global storage instance, set during Init()
 )
 
 // getMigrationsPath returns the migrations path from environment variable or defaults to path relative to executable
@@ -113,15 +114,18 @@ func Init() *storage.Store {
 		AppConfig.Server.Port = "8080"
 	}
 
-	storage := storage.NewStore(store)
+	storageInstance := storage.NewStore(store)
 
-	err = storage.Init(context.Background())
+	err = storageInstance.Init(context.Background())
 
 	if err != nil {
 		log.Fatalf("Failed to initialize storage: %v", err)
 	}
 
-	return storage
+	// Set global store for use throughout the application
+	GlobalStore = storageInstance
+
+	return storageInstance
 }
 
 func initViper() {

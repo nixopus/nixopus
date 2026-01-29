@@ -55,7 +55,7 @@ func (s *TaskService) sanitizeEnvVars(envVars map[string]string) []string {
 }
 
 func (s *TaskService) getAvailablePort(ctx context.Context) (string, error) {
-	manager, err := ssh.GetSSHManagerFromContext(ctx, s.Store)
+	manager, err := ssh.GetSSHManagerFromContext(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get SSH manager: %w", err)
 	}
