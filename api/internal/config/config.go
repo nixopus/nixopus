@@ -201,14 +201,6 @@ func setupEnvVarMappings() {
 	// Redis
 	viper.BindEnv("redis.url", "REDIS_URL")
 
-	// SSH
-	viper.BindEnv("ssh.host", "SSH_HOST")
-	viper.BindEnv("ssh.port", "SSH_PORT")
-	viper.BindEnv("ssh.user", "SSH_USER")
-	viper.BindEnv("ssh.password", "SSH_PASSWORD")
-	viper.BindEnv("ssh.private_key", "SSH_PRIVATE_KEY")
-	viper.BindEnv("ssh.private_key_protected", "SSH_PRIVATE_KEY_PROTECTED")
-
 	// Deployment
 	viper.BindEnv("deployment.mount_path", "MOUNT_PATH")
 
@@ -275,14 +267,6 @@ func validateConfig(config types.Config) error {
 	if config.Redis.URL == "" {
 		errors = append(errors, "redis URL is required")
 	}
-
-	if config.SSH.Host == "" {
-		errors = append(errors, "SSH host is required")
-	}
-	if config.SSH.User == "" {
-		errors = append(errors, "SSH user is required")
-	}
-
 	if config.Deployment.MountPath == "" {
 		errors = append(errors, "deployment mount path is required")
 	}

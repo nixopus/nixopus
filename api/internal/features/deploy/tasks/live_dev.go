@@ -95,7 +95,7 @@ func (s *TaskService) HandleLiveDevDeployment(ctx context.Context, config LiveDe
 
 	// Add domain to Caddy if configured
 	if config.Domain != "" {
-		if err := s.addDomainToCaddy(config.Domain, port, taskCtx); err != nil {
+		if err := s.addDomainToCaddy(ctx, config.Domain, port, config.OrganizationID, taskCtx); err != nil {
 			// Log error but don't fail the deployment - domain can be added later
 			if taskCtx != nil {
 				taskCtx.AddLog(fmt.Sprintf("Warning: Failed to add domain to Caddy: %v", err))
@@ -479,13 +479,18 @@ func shellJoin(parts []string) string {
 }
 
 // addDomainToCaddy adds a domain to Caddy proxy
-func (s *TaskService) addDomainToCaddy(domain string, port int, taskCtx *LiveDevTaskContext) error {
+func (s *TaskService) addDomainToCaddy(ctx context.Context, domain string, port int, organizationID uuid.UUID, taskCtx *LiveDevTaskContext) error {
 	if taskCtx != nil {
 		taskCtx.AddLog(fmt.Sprintf("Adding domain %s to Caddy proxy...", domain))
 	}
 
 	client := caddygo.NewClient(config.AppConfig.Proxy.CaddyEndpoint)
-	upstreamHost := config.AppConfig.SSH.Host
+
+	// Get SSH host from organization-specific SSH manager
+	upstreamHost, err := GetSSHHostForOrganization(ctx, organizationID)
+	if err != nil {
+		return err
+	}
 
 	if err := client.AddDomainWithAutoTLS(domain, upstreamHost, port, caddygo.DomainOptions{}); err != nil {
 		return fmt.Errorf("failed to add domain to caddy: %w", err)
