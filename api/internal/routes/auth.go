@@ -39,4 +39,8 @@ func (router *Router) RegisterAuthenticatedAuthRoutes(authGroup *fuego.Server, a
 	fuego.Post(authGroup, "/api-keys", authController.CreateAPIKey)
 	fuego.Get(authGroup, "/api-keys", authController.ListAPIKeys)
 	fuego.Delete(authGroup, "/api-keys/{id}", authController.RevokeAPIKey)
+
+	// SSH key setup for self-hosted users (called after registration)
+	sshKeyController := router.createSSHKeyController()
+	fuego.Post(authGroup, "/setup-ssh-key", sshKeyController.SetupSelfHostedSSHKey)
 }

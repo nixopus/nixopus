@@ -29,6 +29,9 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	notificationController "github.com/raghavyuva/nixopus-api/internal/features/notification/controller"
+	ssh_key_controller "github.com/raghavyuva/nixopus-api/internal/features/ssh-key/controller"
+	ssh_key_service "github.com/raghavyuva/nixopus-api/internal/features/ssh-key/service"
+	ssh_key_storage "github.com/raghavyuva/nixopus-api/internal/features/ssh-key/storage"
 
 	// Organization packages removed - migrated to Better Auth
 	update "github.com/raghavyuva/nixopus-api/internal/features/update/controller"
@@ -394,4 +397,11 @@ func (router *Router) createFeatureFlagController() *feature_flags_controller.Fe
 	featureFlagStorage := &feature_flags_storage.FeatureFlagStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	featureFlagService := feature_flags_service.NewFeatureFlagService(featureFlagStorage, router.logger, router.app.Ctx)
 	return feature_flags_controller.NewFeatureFlagController(featureFlagService, router.logger, router.app.Ctx, router.cache)
+}
+
+// createSSHKeyController creates and returns an SSH key controller
+func (router *Router) createSSHKeyController() *ssh_key_controller.SSHKeyController {
+	sshKeyStorage := ssh_key_storage.NewSSHKeyStorage(router.app.Store.DB, router.app.Ctx)
+	sshKeyService := ssh_key_service.NewSSHKeyService(router.app.Store, router.app.Ctx, router.logger, sshKeyStorage)
+	return ssh_key_controller.NewSSHKeyController(router.app.Store, router.app.Ctx, router.logger, sshKeyService)
 }
