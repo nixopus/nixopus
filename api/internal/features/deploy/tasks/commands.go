@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -23,7 +24,10 @@ func (s *TaskService) runCommands(applicationID uuid.UUID, deploymentConfigID uu
 		return nil
 	}
 
-	manager := ssh.GetSSHManager()
+	manager, err := ssh.GetSSHManagerFromContext(context.Background(), s.Store)
+	if err != nil {
+		return fmt.Errorf("failed to get SSH manager: %w", err)
+	}
 	output, err := manager.RunCommand(command)
 	if err != nil {
 		taskCtx.AddLog(fmt.Sprintf("Error while running %s command %v", commandType, output))

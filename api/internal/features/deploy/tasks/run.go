@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -53,8 +54,11 @@ func (s *TaskService) sanitizeEnvVars(envVars map[string]string) []string {
 	return logEnvVars
 }
 
-func (s *TaskService) getAvailablePort() (string, error) {
-	manager := ssh.GetSSHManager()
+func (s *TaskService) getAvailablePort(ctx context.Context) (string, error) {
+	manager, err := ssh.GetSSHManagerFromContext(ctx, s.Store)
+	if err != nil {
+		return "", fmt.Errorf("failed to get SSH manager: %w", err)
+	}
 	client, err := manager.Connect()
 	if err != nil {
 		return "", err
@@ -81,7 +85,7 @@ func (s *TaskService) getAvailablePort() (string, error) {
 }
 
 // AtomicUpdateContainer performs a zero-downtime update of a running container
-func (s *TaskService) AtomicUpdateContainer(r shared_types.TaskPayload, taskContext *TaskContext) (AtomicUpdateContainerResult, error) {
+func (s *TaskService) AtomicUpdateContainer(ctx context.Context, r shared_types.TaskPayload, taskContext *TaskContext) (AtomicUpdateContainerResult, error) {
 	if r.Application.Name == "" {
 		return AtomicUpdateContainerResult{}, types.ErrMissingImageName
 	}
@@ -98,7 +102,7 @@ func (s *TaskService) AtomicUpdateContainer(r shared_types.TaskPayload, taskCont
 	}
 
 	// Create service spec
-	serviceSpec, availablePort := s.createServiceSpec(r, taskContext)
+	serviceSpec, availablePort := s.createServiceSpec(ctx, r, taskContext)
 	if availablePort == "" {
 		taskContext.LogAndUpdateStatus("Failed to get available port", shared_types.Failed)
 		return AtomicUpdateContainerResult{}, types.ErrFailedToGetAvailablePort
@@ -206,8 +210,8 @@ func CreateOrUpdateService(dockerRepo docker.DockerRepository, serviceSpec swarm
 }
 
 // createServiceSpec creates a swarm service specification
-func (s *TaskService) createServiceSpec(r shared_types.TaskPayload, taskContext *TaskContext) (swarm.ServiceSpec, string) {
-	availablePort, err := s.getAvailablePort()
+func (s *TaskService) createServiceSpec(ctx context.Context, r shared_types.TaskPayload, taskContext *TaskContext) (swarm.ServiceSpec, string) {
+	availablePort, err := s.getAvailablePort(ctx)
 	if err != nil {
 		taskContext.LogAndUpdateStatus("Failed to get available port: "+err.Error(), shared_types.Failed)
 		return swarm.ServiceSpec{}, ""

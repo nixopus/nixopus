@@ -106,7 +106,7 @@ func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload sh
 	taskCtx.AddLog("Image built successfully: " + buildImageResult + " for application " + TaskPayload.Application.Name)
 	taskCtx.UpdateStatus(shared_types.Deploying)
 
-	containerResult, err := s.AtomicUpdateContainer(TaskPayload, taskCtx)
+	containerResult, err := s.AtomicUpdateContainer(ctx, TaskPayload, taskCtx)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to update container: "+err.Error(), shared_types.Failed)
 		return err
