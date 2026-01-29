@@ -80,6 +80,9 @@ func GetSSHManagerForOrganization(ctx context.Context, orgID uuid.UUID) (*SSHMan
 	}
 
 	sshClient := NewSSHFromConfig(sshConfig)
+	if sshClient == nil {
+		return nil, fmt.Errorf("SSH config is nil for organization %s", orgIDStr)
+	}
 	manager := NewSSHManager()
 	manager.clients["default"] = sshClient
 
@@ -118,10 +121,11 @@ func GetSSHManagerFromContext(ctx context.Context) (*SSHManager, error) {
 	return GetSSHManagerForOrganization(ctx, orgID)
 }
 
-// NewSSHManager creates a new SSH manager with a single default client from config
-// For most use cases, prefer GetSSHManagerFromContext() to get an organization-specific manager
+// NewSSHManager creates a new empty SSH manager.
+// Clients must be added via AddClient() or use GetSSHManagerForOrganization() / GetSSHManagerFromContext()
+// to get an organization-specific manager with pre-configured clients.
+// For most use cases, prefer GetSSHManagerFromContext() to get an organization-specific manager.
 func NewSSHManager() *SSHManager {
-	defaultClient := NewSSH()
 	manager := &SSHManager{
 		clients:     make(map[string]*SSH),
 		defaultID:   "default",
@@ -129,7 +133,7 @@ func NewSSHManager() *SSHManager {
 		logger:      logger.NewLogger(),
 		maxIdleTime: 5 * time.Minute,
 	}
-	manager.clients["default"] = defaultClient
+	// Don't add default client - must be added via AddClient or GetSSHManagerForOrganization
 	go manager.cleanupIdleConnections()
 	return manager
 }
@@ -336,17 +340,47 @@ func (m *SSHManager) GetDefaultSSH() (*SSH, error) {
 	return m.GetClient("")
 }
 
-// NewSSH creates a new SSH client from the global config
-// This is the default way to create a single SSH client
-func NewSSH() *SSH {
-	return &SSH{
-		PrivateKey:          config.AppConfig.SSH.PrivateKey,
-		Host:                config.AppConfig.SSH.Host,
-		User:                config.AppConfig.SSH.User,
-		Port:                config.AppConfig.SSH.Port,
-		Password:            config.AppConfig.SSH.Password,
-		PrivateKeyProtected: config.AppConfig.SSH.PrivateKeyProtected,
+// GetOrganizationSSH returns the organization-specific SSH client struct
+// This manager is organization-specific, so this returns the organization's SSH client
+func (m *SSHManager) GetOrganizationSSH() (*SSH, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	client, exists := m.clients[m.defaultID]
+	if !exists {
+		return nil, fmt.Errorf("SSH client not found for organization")
 	}
+	return client, nil
+}
+
+// GetSSHHost returns the SSH host for the organization's SSH client
+func (m *SSHManager) GetSSHHost() (string, error) {
+	sshClient, err := m.GetOrganizationSSH()
+	if err != nil {
+		return "", fmt.Errorf("failed to get organization SSH client: %w", err)
+	}
+	if sshClient.Host == "" {
+		return "", fmt.Errorf("SSH host is not configured for organization")
+	}
+	return sshClient.Host, nil
+}
+
+// GetSSHUser returns the SSH user for the organization's SSH client
+func (m *SSHManager) GetSSHUser() (string, error) {
+	sshClient, err := m.GetOrganizationSSH()
+	if err != nil {
+		return "", fmt.Errorf("failed to get organization SSH client: %w", err)
+	}
+	if sshClient.User == "" {
+		return "", fmt.Errorf("SSH user is not configured for organization")
+	}
+	return sshClient.User, nil
+}
+
+// GetSSHConfig returns the SSH config struct for read-only access
+// Returns the organization-specific SSH configuration
+func (m *SSHManager) GetSSHConfig() (*SSH, error) {
+	return m.GetOrganizationSSH()
 }
 
 // NewSSHFromConfig creates a new SSH client from a custom SSHConfig
@@ -360,7 +394,7 @@ func NewSSH() *SSH {
 //	manager.AddClient("server2", client2)
 func NewSSHFromConfig(sshConfig *types.SSHConfig) *SSH {
 	if sshConfig == nil {
-		return NewSSH() // Fallback to default config
+		return nil // Don't fallback to config - SSH config must be provided
 	}
 	return &SSH{
 		PrivateKey:          sshConfig.PrivateKey,

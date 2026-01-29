@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -40,7 +41,9 @@ func (s *DomainsService) CreateDomain(req types.CreateDomainRequest, userID stri
 		return types.CreateDomainResponse{}, err
 	}
 
-	if err := validator.ValidateDomainBelongsToServer(req.Name); err != nil {
+	// Add organization ID to context for domain validation
+	orgCtx := context.WithValue(s.Ctx, shared_types.OrganizationIDKey, req.OrganizationID.String())
+	if err := validator.ValidateDomainBelongsToServer(orgCtx, req.Name); err != nil {
 		s.logger.Log(logger.Error, "domain does not belong to server", fmt.Sprintf("domain_name=%s", req.Name))
 		return types.CreateDomainResponse{}, err
 	}

@@ -1,11 +1,14 @@
 package tasks
 
 import (
+	"context"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -228,4 +231,20 @@ func (tc *LiveDevTaskContext) UpdateDeployment(updates map[string]interface{}) {
 // GetDeploymentID returns the deployment ID
 func (tc *LiveDevTaskContext) GetDeploymentID() uuid.UUID {
 	return tc.deploymentID
+}
+
+// GetSSHHostForOrganization gets the SSH host for a specific organization.
+// It creates a context with the organization ID and retrieves the SSH host
+// from the organization-specific SSH manager.
+func GetSSHHostForOrganization(ctx context.Context, organizationID uuid.UUID) (string, error) {
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, organizationID.String())
+	manager, err := ssh.GetSSHManagerFromContext(orgCtx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get SSH manager: %w", err)
+	}
+	upstreamHost, err := manager.GetSSHHost()
+	if err != nil {
+		return "", fmt.Errorf("failed to get SSH host: %w", err)
+	}
+	return upstreamHost, nil
 }
