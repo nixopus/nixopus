@@ -67,7 +67,7 @@ func (s *TaskService) HandleLiveDevDeployment(ctx context.Context, config LiveDe
 		taskCtx.AddLog(fmt.Sprintf("Detected framework: %s", strategy.Name()))
 	}
 
-	port, err := s.determinePort(config, strategy, taskCtx)
+	port, err := s.determinePort(ctx, config, strategy, taskCtx)
 	if err != nil {
 		if taskCtx != nil {
 			taskCtx.LogAndUpdateStatus(fmt.Sprintf("Failed to determine port: %v", err), shared_types.Failed)
@@ -157,7 +157,7 @@ func (s *TaskService) getFrameworkStrategy(config LiveDevConfig, taskCtx *LiveDe
 }
 
 // determinePort determines the port to use for the service
-func (s *TaskService) determinePort(config LiveDevConfig, strategy devrunner.FrameworkStrategy, taskCtx *LiveDevTaskContext) (int, error) {
+func (s *TaskService) determinePort(ctx context.Context, config LiveDevConfig, strategy devrunner.FrameworkStrategy, taskCtx *LiveDevTaskContext) (int, error) {
 	if config.Port > 0 {
 		if taskCtx != nil {
 			taskCtx.AddLog(fmt.Sprintf("Using specified port: %d", config.Port))
@@ -169,7 +169,7 @@ func (s *TaskService) determinePort(config LiveDevConfig, strategy devrunner.Fra
 		taskCtx.AddLog("Auto-allocating available port...")
 	}
 
-	availablePort, err := s.getAvailablePort()
+	availablePort, err := s.getAvailablePort(ctx)
 	if err != nil {
 		defaultPort := strategy.GetDefaultPort()
 		if taskCtx != nil {
