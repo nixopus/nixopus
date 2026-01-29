@@ -69,7 +69,7 @@ func (c *DeployController) DeleteApplication(f fuego.ContextWithBody[types.Delet
 	// 	}
 	// }
 
-	err = c.taskService.DeleteDeployment(&data, user.ID, organizationID)
+	err = c.taskService.DeleteDeployment(f.Request().Context(), &data, user.ID, organizationID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to delete application", "id: "+data.ID.String()+", error: "+err.Error())
 		return nil, fuego.HTTPError{
