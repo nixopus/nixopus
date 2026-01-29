@@ -554,7 +554,10 @@ func (s *DockerService) ContainerLogs(Ctx context.Context, containerID string, o
 
 // ComposeUp starts the Docker Compose services defined in the specified compose file
 func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]string) error {
-	manager := ssh.GetSSHManager()
+	manager, err := ssh.GetSSHManagerFromContext(s.Ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get SSH manager: %w", err)
+	}
 	envVarsStr := ""
 	for k, v := range envVars {
 		envVarsStr += fmt.Sprintf("export %s=%s && ", k, v)
@@ -570,7 +573,10 @@ func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]str
 
 // ComposeDown stops and removes the Docker Compose services
 func (s *DockerService) ComposeDown(composeFilePath string) error {
-	manager := ssh.GetSSHManager()
+	manager, err := ssh.GetSSHManagerFromContext(s.Ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get SSH manager: %w", err)
+	}
 	command := fmt.Sprintf("docker compose -f %s down", composeFilePath)
 	output, err := manager.RunCommand(command)
 	if err != nil {
@@ -581,7 +587,10 @@ func (s *DockerService) ComposeDown(composeFilePath string) error {
 
 // ComposeBuild builds the Docker Compose services
 func (s *DockerService) ComposeBuild(composeFilePath string, envVars map[string]string) error {
-	manager := ssh.GetSSHManager()
+	manager, err := ssh.GetSSHManagerFromContext(s.Ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get SSH manager: %w", err)
+	}
 	envVarsStr := ""
 	for k, v := range envVars {
 		envVarsStr += fmt.Sprintf("export %s=%s && ", k, v)

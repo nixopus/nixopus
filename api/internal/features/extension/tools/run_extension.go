@@ -32,7 +32,7 @@ func RunExtensionHandler(
 			variables = make(map[string]interface{})
 		}
 
-		execution, err := service.StartRun(input.ExtensionID, variables)
+		execution, err := service.StartRun(toolCtx, input.ExtensionID, variables)
 		if err != nil {
 			return nil, RunExtensionOutput{}, err
 		}
