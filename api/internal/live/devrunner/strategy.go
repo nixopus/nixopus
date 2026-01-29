@@ -1,5 +1,7 @@
 package devrunner
 
+import "context"
+
 // FrameworkStrategy defines the interface for framework-specific dev server configuration.
 // Each framework (Next.js, Vite, etc.) implements this interface to provide
 // the necessary configuration for running its dev server in a container.
@@ -40,5 +42,5 @@ type FrameworkStrategy interface {
 	// DetectMainFile analyzes the project at the given path and returns
 	// the main entry file for the framework. Returns empty string if not applicable
 	// or if the framework doesn't use a main file (e.g., uses npm scripts).
-	DetectMainFile(projectPath string) string
+	DetectMainFile(ctx context.Context, projectPath string) string
 }

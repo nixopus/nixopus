@@ -10,7 +10,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// verifyToken verifies the Better Auth session token and returns the user if the token is valid.
+// verifyToken verifies the Better Auth session token and returns the user and organization ID if the token is valid.
 // This function uses Better Auth's VerifySession directly and creates a User object from the session response,
 // avoiding database queries for organization_users since Better Auth is the source of truth for organization membership.
 //
@@ -21,10 +21,11 @@ import (
 //
 // Returns:
 //   - the user if the token is valid.
+//   - the organization ID if available.
 //   - an error if the token is invalid.
-func (s *SocketServer) verifyToken(tokenString string, originalRequest *http.Request) (*types.User, error) {
+func (s *SocketServer) verifyToken(tokenString string, originalRequest *http.Request) (*types.User, string, error) {
 	var req *http.Request
-	
+
 	// Prefer using the original request with actual cookies from the browser
 	// WebSocket upgrade requests include cookies, which Better Auth needs
 	if originalRequest != nil {
@@ -48,13 +49,22 @@ func (s *SocketServer) verifyToken(tokenString string, originalRequest *http.Req
 	// Verify Better Auth session - this is the source of truth for authentication and organization membership
 	sessionResp, err := betterauth.VerifySession(req)
 	if err != nil {
-		return nil, fmt.Errorf("session verification failed: %v", err)
+		return nil, "", fmt.Errorf("session verification failed: %v", err)
 	}
 
 	// Parse Better Auth user ID
 	betterAuthUserID, err := uuid.Parse(sessionResp.User.ID)
 	if err != nil {
-		return nil, fmt.Errorf("invalid user ID format: %v", err)
+		return nil, "", fmt.Errorf("invalid user ID format: %v", err)
+	}
+
+	// Extract organization ID from session
+	var orgID string
+	if sessionResp.Session.ActiveOrganizationID != nil && *sessionResp.Session.ActiveOrganizationID != "" {
+		orgID = *sessionResp.Session.ActiveOrganizationID
+	} else {
+		// Fallback to header if not in session
+		orgID = originalRequest.Header.Get("X-Organization-Id")
 	}
 
 	// Create User object directly from Better Auth session response
@@ -71,5 +81,5 @@ func (s *SocketServer) verifyToken(tokenString string, originalRequest *http.Req
 	// Compute backward compatibility fields
 	user.ComputeCompatibilityFields()
 
-	return user, nil
+	return user, orgID, nil
 }

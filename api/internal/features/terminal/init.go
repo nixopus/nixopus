@@ -1,6 +1,7 @@
 package terminal
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -43,8 +44,11 @@ type Terminal struct {
 	TerminalId string
 }
 
-func NewTerminal(conn *websocket.Conn, log *logger.Logger, terminalId string) (*Terminal, error) {
-	sshManager := sshpkg.GetSSHManager()
+func NewTerminal(ctx context.Context, conn *websocket.Conn, log *logger.Logger, terminalId string) (*Terminal, error) {
+	sshManager, err := sshpkg.GetSSHManagerFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
+	}
 	sshClient, err := sshManager.GetDefaultSSH()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get SSH client: %w", err)

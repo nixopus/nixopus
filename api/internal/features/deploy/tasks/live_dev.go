@@ -55,7 +55,7 @@ func (s *TaskService) HandleLiveDevDeployment(ctx context.Context, config LiveDe
 		taskCtx.AddLog(fmt.Sprintf("Starting live dev deployment for application %s", config.ApplicationID.String()))
 	}
 
-	strategy, err := s.getFrameworkStrategy(config, taskCtx)
+	strategy, err := s.getFrameworkStrategy(ctx, config, taskCtx)
 	if err != nil {
 		if taskCtx != nil {
 			taskCtx.LogAndUpdateStatus(fmt.Sprintf("Failed to get framework strategy: %v", err), shared_types.Failed)
@@ -130,12 +130,12 @@ func (s *TaskService) HandleLiveDevDeployment(ctx context.Context, config LiveDe
 }
 
 // getFrameworkStrategy retrieves or detects the framework strategy
-func (s *TaskService) getFrameworkStrategy(config LiveDevConfig, taskCtx *LiveDevTaskContext) (devrunner.FrameworkStrategy, error) {
+func (s *TaskService) getFrameworkStrategy(ctx context.Context, config LiveDevConfig, taskCtx *LiveDevTaskContext) (devrunner.FrameworkStrategy, error) {
 	if config.Framework != "" {
 		if taskCtx != nil {
 			taskCtx.AddLog(fmt.Sprintf("Using specified framework: %s", config.Framework))
 		}
-		strategy, err := devrunner.GetStrategyByNameWithPath(config.Framework, config.StagingPath)
+		strategy, err := devrunner.GetStrategyByNameWithPath(ctx, config.Framework, config.StagingPath)
 		if err != nil {
 			s.Logger.Log(logger.Error, fmt.Sprintf("[LiveDev] [%s] Failed to get strategy by name '%s': %v", config.ApplicationID, config.Framework, err), "")
 			return nil, fmt.Errorf("failed to get framework strategy '%s': %w", config.Framework, err)
@@ -147,7 +147,7 @@ func (s *TaskService) getFrameworkStrategy(config LiveDevConfig, taskCtx *LiveDe
 		taskCtx.AddLog("Auto-detecting framework from project files...")
 	}
 
-	strategy, err := devrunner.DetectFramework(config.StagingPath)
+	strategy, err := devrunner.DetectFramework(ctx, config.StagingPath)
 	if err != nil {
 		s.Logger.Log(logger.Error, fmt.Sprintf("[LiveDev] [%s] Framework detection failed: %v", config.ApplicationID, err), "")
 		return nil, fmt.Errorf("failed to detect framework at %s: %w", config.StagingPath, err)

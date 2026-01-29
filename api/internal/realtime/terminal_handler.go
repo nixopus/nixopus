@@ -1,6 +1,9 @@
 package realtime
 
 import (
+	"context"
+
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/terminal"
@@ -40,7 +43,18 @@ func (s *SocketServer) handleTerminal(conn *websocket.Conn, msg types.Payload) {
 
 	term, exists := s.terminals[conn][terminalId]
 	if !exists {
-		newTerminal, err := terminal.NewTerminal(conn, &logger.Logger{}, terminalId)
+		// Get organization ID from connection
+		orgIDVal, ok := s.orgIDs.Load(conn)
+		var ctx context.Context = context.Background()
+		if ok && orgIDVal != nil {
+			if orgIDStr, ok := orgIDVal.(string); ok && orgIDStr != "" {
+				// Parse and set organization ID in context
+				if orgID, err := uuid.Parse(orgIDStr); err == nil {
+					ctx = context.WithValue(ctx, types.OrganizationIDKey, orgID.String())
+				}
+			}
+		}
+		newTerminal, err := terminal.NewTerminal(ctx, conn, &logger.Logger{}, terminalId)
 		if err != nil {
 			s.sendError(conn, "Failed to start terminal")
 			return

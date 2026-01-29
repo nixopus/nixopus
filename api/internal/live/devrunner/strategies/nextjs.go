@@ -1,5 +1,7 @@
 package strategies
 
+import "context"
+
 type NextJSStrategy struct {
 	UseTurbopack  bool
 	UseTypescript bool
@@ -62,6 +64,6 @@ func (s *NextJSStrategy) GetReadyLogPattern() string {
 }
 
 // DetectMainFile returns empty string as Next.js uses npm scripts and doesn't require a main file.
-func (s *NextJSStrategy) DetectMainFile(projectPath string) string {
+func (s *NextJSStrategy) DetectMainFile(ctx context.Context, projectPath string) string {
 	return ""
 }
