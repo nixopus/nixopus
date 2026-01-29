@@ -21,7 +21,7 @@ func (c *FileManagerController) DeleteDirectory(f fuego.ContextWithBody[DeleteDi
 		}
 	}
 
-	err = c.service.DeleteDirectory(request.Path)
+	err = c.service.DeleteDirectory(f.Request().Context(), request.Path)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

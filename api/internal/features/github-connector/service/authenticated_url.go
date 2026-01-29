@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"path/filepath"
@@ -47,12 +48,16 @@ func (s *GithubConnectorService) CreateAuthenticatedRepoURL(repoURL, accessToken
 //	string - the path to which to clone the repository.
 //	bool - whether to pull the repository instead of cloning.
 //	error - any error that occurred.
-func (s *GithubConnectorService) GetClonePath(userID, environment, applicationID string) (string, bool, error) {
+func (s *GithubConnectorService) GetClonePath(ctx context.Context, userID, environment, applicationID string) (string, bool, error) {
 	repoBaseURL := config.AppConfig.Deployment.MountPath
 	clonePath := filepath.Join(repoBaseURL, userID, environment, applicationID)
 	var shouldPull bool
 
-	client, err := s.ssh.Connect()
+	sshManager, err := s.getSSHManager(ctx)
+	if err != nil {
+		return "", false, fmt.Errorf("failed to get SSH manager: %w", err)
+	}
+	client, err := sshManager.Connect()
 	if err != nil {
 		return "", false, fmt.Errorf("failed to connect via SSH: %w", err)
 	}

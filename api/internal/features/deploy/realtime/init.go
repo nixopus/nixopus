@@ -7,12 +7,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 func getDockerService() (*docker.DockerService, error) {
@@ -50,9 +51,26 @@ const (
 	ContainerStatistics ApplicationMonitorOperation = "container_statistics"
 )
 
-func NewApplicationMonitor(conn *websocket.Conn, log logger.Logger) (*ApplicationMonitor, error) {
-	ssh_client := sshpkg.NewSSH()
+func NewApplicationMonitor(conn *websocket.Conn, log logger.Logger, organizationID string) (*ApplicationMonitor, error) {
 	ctx, cancel := context.WithCancel(context.Background())
+
+	// Get organization-specific SSH client
+	orgID, err := uuid.Parse(organizationID)
+	if err != nil {
+		cancel()
+		return nil, fmt.Errorf("invalid organization ID: %w", err)
+	}
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, orgID.String())
+	manager, err := sshpkg.GetSSHManagerFromContext(orgCtx)
+	if err != nil {
+		cancel()
+		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
+	}
+	ssh_client, err := manager.GetOrganizationSSH()
+	if err != nil {
+		cancel()
+		return nil, fmt.Errorf("failed to get SSH client: %w", err)
+	}
 
 	dockerService, err := getDockerService()
 	if err != nil {

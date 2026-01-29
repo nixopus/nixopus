@@ -1,15 +1,17 @@
 package ssh
 
 import (
+	"context"
 	"fmt"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh/service"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
@@ -47,36 +49,83 @@ type SSHManager struct {
 }
 
 var (
-	// globalSSHManager is the singleton instance of SSHManager
-	globalSSHManager *SSHManager
-	globalSSHMu      sync.Once
+	// orgManagers caches SSHManager instances per organization ID
+	orgManagers   = make(map[string]*SSHManager)
+	orgManagersMu sync.RWMutex
 )
 
-// GetSSHManager returns the global singleton SSHManager instance
-// This ensures we have a single SSHManager instance across the entire application
-// It's initialized lazily on first access with the default SSH config
-func GetSSHManager() *SSHManager {
-	globalSSHMu.Do(func() {
-		defaultClient := NewSSH()
-		globalSSHManager = &SSHManager{
-			clients:     make(map[string]*SSH),
-			defaultID:   "default",
-			pool:        make(map[string]*connectionPoolEntry),
-			logger:      logger.NewLogger(),
-			maxIdleTime: 5 * time.Minute, // Close idle connections after 5 minutes
-		}
-		globalSSHManager.clients["default"] = defaultClient
-		// Start connection pool cleanup goroutine
-		go globalSSHManager.cleanupIdleConnections()
-	})
-	return globalSSHManager
+// GetSSHManagerForOrganization returns an SSHManager for a specific organization.
+// Caches managers per organization to avoid repeated database queries.
+// The manager is initialized with the active SSH key from the database for that organization.
+func GetSSHManagerForOrganization(ctx context.Context, orgID uuid.UUID) (*SSHManager, error) {
+	if config.GlobalStore == nil {
+		return nil, fmt.Errorf("global store not initialized, ensure config.Init() has been called")
+	}
+
+	orgIDStr := orgID.String()
+
+	// Check cache first
+	orgManagersMu.RLock()
+	if manager, exists := orgManagers[orgIDStr]; exists {
+		orgManagersMu.RUnlock()
+		return manager, nil
+	}
+	orgManagersMu.RUnlock()
+
+	// Create new manager with organization-specific SSH config
+	sshService := service.NewSSHKeyService(config.GlobalStore, ctx, logger.NewLogger())
+	sshConfig, err := sshService.GetSSHConfigForOrganization(orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get SSH config for organization %s: %w", orgIDStr, err)
+	}
+
+	sshClient := NewSSHFromConfig(sshConfig)
+	if sshClient == nil {
+		return nil, fmt.Errorf("SSH config is nil for organization %s", orgIDStr)
+	}
+	manager := NewSSHManager()
+	manager.clients["default"] = sshClient
+
+	// Cache manager
+	orgManagersMu.Lock()
+	orgManagers[orgIDStr] = manager
+	orgManagersMu.Unlock()
+
+	return manager, nil
 }
 
-// NewSSHManager creates a new SSH manager with a single default client from config
-// This maintains backward compatibility while enabling future multi-client support
-// For most use cases, prefer GetSSHManager() to use the singleton instance
+// GetSSHManagerFromContext extracts organization ID from context and returns the appropriate SSHManager.
+// This is the new primary entry point for getting SSH managers.
+// The organization ID should be set in context by the auth middleware via types.OrganizationIDKey.
+// Uses the global store set during config.Init().
+func GetSSHManagerFromContext(ctx context.Context) (*SSHManager, error) {
+	orgIDAny := ctx.Value(types.OrganizationIDKey)
+	if orgIDAny == nil {
+		return nil, fmt.Errorf("organization ID not found in context")
+	}
+
+	var orgID uuid.UUID
+	switch v := orgIDAny.(type) {
+	case string:
+		var err error
+		orgID, err = uuid.Parse(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid organization ID in context: %w", err)
+		}
+	case uuid.UUID:
+		orgID = v
+	default:
+		return nil, fmt.Errorf("unexpected organization ID type in context: %T", v)
+	}
+
+	return GetSSHManagerForOrganization(ctx, orgID)
+}
+
+// NewSSHManager creates a new empty SSH manager.
+// Clients must be added via AddClient() or use GetSSHManagerForOrganization() / GetSSHManagerFromContext()
+// to get an organization-specific manager with pre-configured clients.
+// For most use cases, prefer GetSSHManagerFromContext() to get an organization-specific manager.
 func NewSSHManager() *SSHManager {
-	defaultClient := NewSSH()
 	manager := &SSHManager{
 		clients:     make(map[string]*SSH),
 		defaultID:   "default",
@@ -84,7 +133,7 @@ func NewSSHManager() *SSHManager {
 		logger:      logger.NewLogger(),
 		maxIdleTime: 5 * time.Minute,
 	}
-	manager.clients["default"] = defaultClient
+	// Don't add default client - must be added via AddClient or GetSSHManagerForOrganization
 	go manager.cleanupIdleConnections()
 	return manager
 }
@@ -291,17 +340,47 @@ func (m *SSHManager) GetDefaultSSH() (*SSH, error) {
 	return m.GetClient("")
 }
 
-// NewSSH creates a new SSH client from the global config
-// This is the default way to create a single SSH client
-func NewSSH() *SSH {
-	return &SSH{
-		PrivateKey:          config.AppConfig.SSH.PrivateKey,
-		Host:                config.AppConfig.SSH.Host,
-		User:                config.AppConfig.SSH.User,
-		Port:                config.AppConfig.SSH.Port,
-		Password:            config.AppConfig.SSH.Password,
-		PrivateKeyProtected: config.AppConfig.SSH.PrivateKeyProtected,
+// GetOrganizationSSH returns the organization-specific SSH client struct
+// This manager is organization-specific, so this returns the organization's SSH client
+func (m *SSHManager) GetOrganizationSSH() (*SSH, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	client, exists := m.clients[m.defaultID]
+	if !exists {
+		return nil, fmt.Errorf("SSH client not found for organization")
 	}
+	return client, nil
+}
+
+// GetSSHHost returns the SSH host for the organization's SSH client
+func (m *SSHManager) GetSSHHost() (string, error) {
+	sshClient, err := m.GetOrganizationSSH()
+	if err != nil {
+		return "", fmt.Errorf("failed to get organization SSH client: %w", err)
+	}
+	if sshClient.Host == "" {
+		return "", fmt.Errorf("SSH host is not configured for organization")
+	}
+	return sshClient.Host, nil
+}
+
+// GetSSHUser returns the SSH user for the organization's SSH client
+func (m *SSHManager) GetSSHUser() (string, error) {
+	sshClient, err := m.GetOrganizationSSH()
+	if err != nil {
+		return "", fmt.Errorf("failed to get organization SSH client: %w", err)
+	}
+	if sshClient.User == "" {
+		return "", fmt.Errorf("SSH user is not configured for organization")
+	}
+	return sshClient.User, nil
+}
+
+// GetSSHConfig returns the SSH config struct for read-only access
+// Returns the organization-specific SSH configuration
+func (m *SSHManager) GetSSHConfig() (*SSH, error) {
+	return m.GetOrganizationSSH()
 }
 
 // NewSSHFromConfig creates a new SSH client from a custom SSHConfig
@@ -315,7 +394,7 @@ func NewSSH() *SSH {
 //	manager.AddClient("server2", client2)
 func NewSSHFromConfig(sshConfig *types.SSHConfig) *SSH {
 	if sshConfig == nil {
-		return NewSSH() // Fallback to default config
+		return nil // Don't fallback to config - SSH config must be provided
 	}
 	return &SSH{
 		PrivateKey:          sshConfig.PrivateKey,
@@ -382,17 +461,6 @@ func (s *SSH) ConnectWithRetry() (*goph.Client, error) {
 	}
 
 	return nil, fmt.Errorf("failed to connect with both private key and password after %d attempts: %w", maxRetries, err)
-}
-
-func parsePort(port string) uint64 {
-	if port == "" {
-		return 22
-	}
-	p, err := strconv.ParseUint(port, 10, 32)
-	if err != nil {
-		return 22
-	}
-	return p
 }
 
 func (s *SSH) ConnectWithPrivateKey() (*goph.Client, error) {

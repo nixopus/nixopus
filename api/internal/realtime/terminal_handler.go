@@ -1,6 +1,10 @@
 package realtime
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/terminal"
@@ -40,9 +44,30 @@ func (s *SocketServer) handleTerminal(conn *websocket.Conn, msg types.Payload) {
 
 	term, exists := s.terminals[conn][terminalId]
 	if !exists {
-		newTerminal, err := terminal.NewTerminal(conn, &logger.Logger{}, terminalId)
+		// Get organization ID from connection
+		orgIDVal, ok := s.orgIDs.Load(conn)
+		if !ok || orgIDVal == nil {
+			s.sendError(conn, "Organization ID not found for this connection")
+			return
+		}
+
+		orgIDStr, ok := orgIDVal.(string)
+		if !ok || orgIDStr == "" {
+			s.sendError(conn, "Invalid organization ID for this connection")
+			return
+		}
+
+		// Parse and set organization ID in context
+		orgID, err := uuid.Parse(orgIDStr)
 		if err != nil {
-			s.sendError(conn, "Failed to start terminal")
+			s.sendError(conn, fmt.Sprintf("Invalid organization ID format: %v", err))
+			return
+		}
+
+		ctx := context.WithValue(context.Background(), types.OrganizationIDKey, orgID.String())
+		newTerminal, err := terminal.NewTerminal(ctx, conn, &logger.Logger{}, terminalId)
+		if err != nil {
+			s.sendError(conn, fmt.Sprintf("Failed to start terminal: %v", err))
 			return
 		}
 		s.terminals[conn][terminalId] = newTerminal

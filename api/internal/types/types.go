@@ -4,7 +4,6 @@ type Config struct {
 	Server     ServerConfig     `mapstructure:"server"`
 	Database   DatabaseConfig   `mapstructure:"database"`
 	Redis      RedisConfig      `mapstructure:"redis"`
-	SSH        SSHConfig        `mapstructure:"ssh"`
 	Deployment DeploymentConfig `mapstructure:"deployment"`
 	Docker     DockerConfig     `mapstructure:"docker"`
 	Proxy      ProxyConfig      `mapstructure:"proxy"`

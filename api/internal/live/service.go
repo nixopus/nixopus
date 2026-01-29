@@ -12,6 +12,8 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // ServiceManager handles dev service lifecycle management
@@ -102,10 +104,11 @@ func (sm *ServiceManager) isServiceHealthy(service *swarm.Service) bool {
 
 func (sm *ServiceManager) buildLiveDevConfig(appCtx *ApplicationContext) tasks.LiveDevConfig {
 	cfg := tasks.LiveDevConfig{
-		ApplicationID: appCtx.ApplicationID,
-		StagingPath:   appCtx.StagingPath,
-		Port:          0,
-		EnvVars:       appCtx.EnvironmentVariables,
+		ApplicationID:  appCtx.ApplicationID,
+		OrganizationID: appCtx.OrganizationID,
+		StagingPath:    appCtx.StagingPath,
+		Port:           0,
+		EnvVars:        appCtx.EnvironmentVariables,
 	}
 
 	if appCtx.Domain != "" {
@@ -144,7 +147,19 @@ func (sm *ServiceManager) addDomainWithTLSIfConfigured(ctx context.Context, serv
 
 	// Add domain with TLS to Caddy
 	client := caddygo.NewClient(config.AppConfig.Proxy.CaddyEndpoint)
-	upstreamHost := config.AppConfig.SSH.Host
+
+	// Get SSH host from organization-specific SSH manager
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, appCtx.OrganizationID.String())
+	manager, err := ssh.GetSSHManagerFromContext(orgCtx)
+	if err != nil {
+		sm.logger.Log(logger.Warning, "failed to get SSH manager", fmt.Sprintf("application_id=%s domain=%s err=%v", appCtx.ApplicationID, domain, err))
+		return
+	}
+	upstreamHost, err := manager.GetSSHHost()
+	if err != nil {
+		sm.logger.Log(logger.Warning, "failed to get SSH host", fmt.Sprintf("application_id=%s domain=%s err=%v", appCtx.ApplicationID, domain, err))
+		return
+	}
 
 	if err := client.AddDomainWithAutoTLS(domain, upstreamHost, port, caddygo.DomainOptions{}); err != nil {
 		sm.logger.Log(logger.Warning, "failed to add domain with TLS to Caddy", fmt.Sprintf("application_id=%s domain=%s port=%d err=%v", appCtx.ApplicationID, domain, port, err))

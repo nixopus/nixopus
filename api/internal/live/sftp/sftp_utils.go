@@ -1,6 +1,7 @@
 package sftp
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -55,8 +56,11 @@ func CreateSFTPClientWithRetry(sshMgr *ssh.SSHManager) (*sftp.Client, error) {
 
 // ReadFile reads a file from the remote server via SFTP.
 // This is a generic utility function that can be used across packages to read files remotely.
-func ReadFile(filePath string) (string, error) {
-	sshMgr := ssh.GetSSHManager()
+func ReadFile(ctx context.Context, filePath string) (string, error) {
+	sshMgr, err := ssh.GetSSHManagerFromContext(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get SSH manager: %w", err)
+	}
 
 	sftpClient, err := CreateSFTPClientWithRetry(sshMgr)
 	if err != nil {
@@ -81,8 +85,11 @@ func ReadFile(filePath string) (string, error) {
 // FileExists checks if a file exists at the given path via SFTP.
 // This is a generic utility function that can be used across packages to check file existence remotely.
 // Note: For batch operations, use FilesExist instead.
-func FileExists(path string) bool {
-	sshMgr := ssh.GetSSHManager()
+func FileExists(ctx context.Context, path string) bool {
+	sshMgr, err := ssh.GetSSHManagerFromContext(ctx)
+	if err != nil {
+		return false
+	}
 
 	sftpClient, err := CreateSFTPClientWithRetry(sshMgr)
 	if err != nil {
@@ -106,8 +113,11 @@ func markAllAsNonExistent(paths []string) map[string]bool {
 // FilesExist checks if multiple files exist in a single SFTP session.
 // This is more efficient than calling FileExists multiple times.
 // Returns a map of file path to existence boolean.
-func FilesExist(paths []string) map[string]bool {
-	sshMgr := ssh.GetSSHManager()
+func FilesExist(ctx context.Context, paths []string) map[string]bool {
+	sshMgr, err := ssh.GetSSHManagerFromContext(ctx)
+	if err != nil {
+		return markAllAsNonExistent(paths)
+	}
 
 	sftpClient, err := CreateSFTPClientWithRetry(sshMgr)
 	if err != nil {

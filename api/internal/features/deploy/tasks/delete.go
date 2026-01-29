@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,7 +16,7 @@ import (
 // DeleteDeployment deletes a deployment and its associated resources.
 // It stops and removes the service, image, and repository.
 // It returns an error if any operation fails.
-func (s *TaskService) DeleteDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) error {
+func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.DeleteDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) error {
 	application, err := s.Storage.GetApplicationById(deployment.ID.String(), organizationID)
 	if err != nil {
 		return fmt.Errorf("failed to get application details: %w", err)
@@ -67,7 +68,7 @@ func (s *TaskService) DeleteDeployment(deployment *types.DeleteDeploymentRequest
 	repoPath := filepath.Join(os.Getenv("MOUNT_PATH"), userID.String(), string(application.Environment), application.ID.String())
 	s.Logger.Log(logger.Info, "Cleaning up repository directory", repoPath)
 
-	err = s.Github_service.RemoveRepository(repoPath)
+	err = s.Github_service.RemoveRepository(ctx, repoPath)
 	if err != nil {
 		s.Logger.Log(logger.Error, "Failed to remove repository", err.Error())
 	}

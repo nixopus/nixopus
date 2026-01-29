@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (s *ExtensionService) StartRun(extensionID string, variableValues map[string]interface{}) (*types.ExtensionExecution, error) {
+func (s *ExtensionService) StartRun(ctx context.Context, extensionID string, variableValues map[string]interface{}) (*types.ExtensionExecution, error) {
 	ext, err := s.storage.GetExtensionByID(extensionID)
 	if err != nil {
 		return nil, err
@@ -69,9 +70,17 @@ func (s *ExtensionService) StartRun(extensionID string, variableValues map[strin
 		return nil, err
 	}
 
-	sshManager := ssh.GetSSHManager()
-	sshClient, _ := sshManager.GetDefaultSSH() // Get default SSH client for extension engine
-	ctx := NewRunContext(exec, spec, variableValues, sshClient, steps)
-	go s.executeRun(ctx)
+	sshManager, err := ssh.GetSSHManagerFromContext(ctx)
+	if err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("failed to get SSH manager: %v", err), "")
+		return nil, err
+	}
+	sshClient, err := sshManager.GetDefaultSSH()
+	if err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("failed to get default SSH client: %v", err), "")
+		return nil, err
+	}
+	runCtx := NewRunContext(exec, spec, variableValues, sshClient, steps)
+	go s.executeRun(runCtx)
 	return exec, nil
 }

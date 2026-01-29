@@ -17,6 +17,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	"github.com/raghavyuva/nixopus-api/internal/features/update/types"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 const (
@@ -250,10 +251,43 @@ func (s *UpdateService) getBranch() string {
 }
 
 // PerformUpdate performs an update by running the nixopus update CLI command via SSH on the host
-func (s *UpdateService) PerformUpdate() error {
+// Requires organization context to get organization-specific SSH configuration
+func (s *UpdateService) PerformUpdate(ctx context.Context) error {
 	s.logger.Log(logger.Info, "Starting Nixopus update", "Connecting via SSH to run nixopus update")
 
-	sshClient := ssh.NewSSH()
+	// Get organization ID from context
+	orgIDAny := ctx.Value(shared_types.OrganizationIDKey)
+	if orgIDAny == nil {
+		return fmt.Errorf("organization ID not found in context - system updates require organization context")
+	}
+
+	var orgID uuid.UUID
+	switch v := orgIDAny.(type) {
+	case string:
+		var err error
+		orgID, err = uuid.Parse(v)
+		if err != nil {
+			return fmt.Errorf("invalid organization ID in context: %w", err)
+		}
+	case uuid.UUID:
+		orgID = v
+	default:
+		return fmt.Errorf("unexpected organization ID type: %T", orgIDAny)
+	}
+
+	// Get organization-specific SSH manager
+	manager, err := ssh.GetSSHManagerForOrganization(ctx, orgID)
+	if err != nil {
+		s.logger.Log(logger.Error, "Failed to get SSH manager", err.Error())
+		return fmt.Errorf("failed to get SSH manager: %w", err)
+	}
+
+	sshClient, err := manager.GetOrganizationSSH()
+	if err != nil {
+		s.logger.Log(logger.Error, "Failed to get SSH client", err.Error())
+		return fmt.Errorf("failed to get SSH client: %w", err)
+	}
+
 	client, err := sshClient.Connect()
 	if err != nil {
 		s.logger.Log(logger.Error, "Failed to connect via SSH", err.Error())

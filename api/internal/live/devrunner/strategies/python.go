@@ -1,6 +1,7 @@
 package strategies
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/raghavyuva/nixopus-api/internal/live/sftp"
@@ -182,14 +183,14 @@ func (s *PythonStrategy) GetReadyLogPattern() string {
 }
 
 // DetectMainFile finds the main Python file in the project.
-func (s *PythonStrategy) DetectMainFile(projectPath string) string {
+func (s *PythonStrategy) DetectMainFile(ctx context.Context, projectPath string) string {
 	candidates := []string{
 		"main.py", "app.py", "run.py", "server.py", "wsgi.py", "asgi.py",
 		"src/main.py", "src/app.py", "app/main.py", "app/__init__.py",
 	}
 
 	for _, candidate := range candidates {
-		if fileExists(filepath.Join(projectPath, candidate)) {
+		if fileExists(ctx, filepath.Join(projectPath, candidate)) {
 			return candidate
 		}
 	}
@@ -197,6 +198,6 @@ func (s *PythonStrategy) DetectMainFile(projectPath string) string {
 }
 
 // fileExists checks if a file exists at the given path via SFTP.
-func fileExists(path string) bool {
-	return sftp.FileExists(path)
+func fileExists(ctx context.Context, path string) bool {
+	return sftp.FileExists(ctx, path)
 }

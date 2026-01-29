@@ -1,6 +1,7 @@
 package live
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -141,13 +142,16 @@ func sanitizePath(stagingPath, filePath string) (string, error) {
 // The SSH client connection is pooled and should not be closed.
 // The returned SFTP client should be closed by the caller.
 // This function handles connection failures by retrying with a fresh connection.
-func getSFTPClient() (*sftp.Client, error) {
-	sshMgr := ssh.GetSSHManager()
+func getSFTPClient(ctx context.Context) (*sftp.Client, error) {
+	sshMgr, err := ssh.GetSSHManagerFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
+	}
 	return sftputil.CreateSFTPClientWithRetry(sshMgr)
 }
 
 // WriteToStaging writes the reassembled file to the staging directory via SFTP
-func (r *FileReceiver) WriteToStaging() error {
+func (r *FileReceiver) WriteToStaging(ctx context.Context) error {
 	// Reassemble file
 	content, err := r.Reassemble()
 	if err != nil {
@@ -166,7 +170,7 @@ func (r *FileReceiver) WriteToStaging() error {
 	}
 
 	// Get SFTP client
-	sftpClient, err := getSFTPClient()
+	sftpClient, err := getSFTPClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -225,7 +229,7 @@ func (r *FileReceiver) UpdateMetadata(totalChunks int, checksum string) {
 
 // DeleteFileFromStaging deletes a file from staging directory via SFTP
 // This is safer than using shell commands as it prevents command injection
-func DeleteFileFromStaging(stagingPath, filePath string) error {
+func DeleteFileFromStaging(ctx context.Context, stagingPath, filePath string) error {
 	// Sanitize path to prevent directory traversal attacks
 	fullPath, err := sanitizePath(stagingPath, filePath)
 	if err != nil {
@@ -233,7 +237,7 @@ func DeleteFileFromStaging(stagingPath, filePath string) error {
 	}
 
 	// Get SFTP client
-	sftpClient, err := getSFTPClient()
+	sftpClient, err := getSFTPClient(ctx)
 	if err != nil {
 		return err
 	}

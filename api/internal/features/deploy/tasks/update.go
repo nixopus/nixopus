@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/caddygo"
-	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
@@ -79,7 +78,7 @@ func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload sh
 
 	taskCtx.LogAndUpdateStatus("Starting deployment process", shared_types.Cloning)
 
-	repoPath, err := s.Clone(CloneConfig{
+	repoPath, err := s.Clone(ctx, CloneConfig{
 		TaskPayload:    TaskPayload,
 		DeploymentType: string(shared_types.DeploymentTypeUpdate),
 		TaskContext:    taskCtx,
@@ -106,7 +105,7 @@ func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload sh
 	taskCtx.AddLog("Image built successfully: " + buildImageResult + " for application " + TaskPayload.Application.Name)
 	taskCtx.UpdateStatus(shared_types.Deploying)
 
-	containerResult, err := s.AtomicUpdateContainer(TaskPayload, taskCtx)
+	containerResult, err := s.AtomicUpdateContainer(ctx, TaskPayload, taskCtx)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to update container: "+err.Error(), shared_types.Failed)
 		return err
@@ -123,7 +122,13 @@ func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload sh
 			taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
 			return err
 		}
-		upstreamHost := config.AppConfig.SSH.Host
+
+		// Get SSH host from organization-specific SSH manager
+		upstreamHost, err := GetSSHHostForOrganization(ctx, TaskPayload.Application.OrganizationID)
+		if err != nil {
+			taskCtx.LogAndUpdateStatus("Failed to get SSH host: "+err.Error(), shared_types.Failed)
+			return err
+		}
 
 		// Loop through all domains and add them with TLS
 		for _, appDomain := range TaskPayload.Application.Domains {

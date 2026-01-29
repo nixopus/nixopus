@@ -23,7 +23,7 @@ func (c *FileManagerController) CopyDirectory(f fuego.ContextWithBody[CopyDirect
 		}
 	}
 
-	err = c.service.CopyDirectory(request.FromPath, request.ToPath)
+	err = c.service.CopyDirectory(f.Request().Context(), request.FromPath, request.ToPath)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

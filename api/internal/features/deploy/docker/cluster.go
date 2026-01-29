@@ -1,24 +1,55 @@
 package docker
 
 import (
+	"context"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/api/types/volume"
-	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 func (s *DockerService) InitCluster() error {
-	config := config.AppConfig
+	return s.InitClusterWithContext(nil)
+}
 
-	// Use localhost as default advertise address if SSH host is not configured
-	// Useful during development
-	advertiseAddr := "127.0.0.1:2377"
-	if config.SSH.Host != "" {
-		advertiseAddr = config.SSH.Host + ":2377"
+// InitClusterWithContext initializes a Docker swarm cluster with optional organization context
+// If ctx is nil or doesn't contain organization ID, falls back to localhost
+func (s *DockerService) InitClusterWithContext(ctx context.Context) error {
+	advertiseAddr := "127.0.0.1:2377" // Default fallback
+
+	// Try to get SSH host from context if available
+	if ctx != nil {
+		orgIDAny := ctx.Value(shared_types.OrganizationIDKey)
+		if orgIDAny != nil {
+			var orgID uuid.UUID
+			switch v := orgIDAny.(type) {
+			case string:
+				if parsed, err := uuid.Parse(v); err == nil {
+					orgID = parsed
+				}
+			case uuid.UUID:
+				orgID = v
+			}
+
+			if orgID != uuid.Nil {
+				manager, err := ssh.GetSSHManagerForOrganization(ctx, orgID)
+				if err == nil {
+					if host, err := manager.GetSSHHost(); err == nil && host != "" {
+						advertiseAddr = host + ":2377"
+					}
+				}
+			}
+		}
 	}
+
+	// SSH configuration is now database-driven per organization
+	// If no organization context is provided, use localhost fallback
 
 	_, err := s.Cli.SwarmInit(s.Ctx, swarm.InitRequest{
 		ListenAddr: "0.0.0.0:2377",
@@ -33,13 +64,41 @@ func (s *DockerService) InitCluster() error {
 }
 
 func (s *DockerService) JoinCluster() error {
-	config := config.AppConfig
+	return s.JoinClusterWithContext(nil)
+}
 
-	// Use localhost as default advertise address if SSH host is not configured
-	advertiseAddr := "127.0.0.1:2377"
-	if config.SSH.Host != "" {
-		advertiseAddr = config.SSH.Host + ":2377"
+// JoinClusterWithContext joins a Docker swarm cluster with optional organization context
+// If ctx is nil or doesn't contain organization ID, falls back to localhost
+func (s *DockerService) JoinClusterWithContext(ctx context.Context) error {
+	advertiseAddr := "127.0.0.1:2377" // Default fallback
+
+	// Try to get SSH host from context if available
+	if ctx != nil {
+		orgIDAny := ctx.Value(shared_types.OrganizationIDKey)
+		if orgIDAny != nil {
+			var orgID uuid.UUID
+			switch v := orgIDAny.(type) {
+			case string:
+				if parsed, err := uuid.Parse(v); err == nil {
+					orgID = parsed
+				}
+			case uuid.UUID:
+				orgID = v
+			}
+
+			if orgID != uuid.Nil {
+				manager, err := ssh.GetSSHManagerForOrganization(ctx, orgID)
+				if err == nil {
+					if host, err := manager.GetSSHHost(); err == nil && host != "" {
+						advertiseAddr = host + ":2377"
+					}
+				}
+			}
+		}
 	}
+
+	// SSH configuration is now database-driven per organization
+	// If no organization context is provided, use localhost fallback
 
 	err := s.Cli.SwarmJoin(s.Ctx, swarm.JoinRequest{
 		ListenAddr:    "0.0.0.0:2377",

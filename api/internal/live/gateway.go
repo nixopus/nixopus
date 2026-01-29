@@ -61,7 +61,7 @@ func (g *Gateway) handleMessage(ctx context.Context, conn *websocket.Conn, appCt
 	case mover.MessageTypeFileContent:
 		return g.handleFileContent(ctx, conn, appCtx, msg)
 	case mover.MessageTypeFileDelete:
-		return g.handleFileDelete(appCtx, msg)
+		return g.handleFileDelete(ctx, appCtx, msg)
 	case mover.MessageTypePing:
 		return g.websocketHandler.sendPong(conn)
 	default:
@@ -162,7 +162,7 @@ func (g *Gateway) handleFileContent(ctx context.Context, conn *websocket.Conn, a
 	}
 
 	// Write to staging
-	if err := receiver.WriteToStaging(); err != nil {
+	if err := receiver.WriteToStaging(ctx); err != nil {
 		return fmt.Errorf("failed to write file to staging: %w", err)
 	}
 
@@ -180,7 +180,7 @@ func (g *Gateway) handleFileContent(ctx context.Context, conn *websocket.Conn, a
 	return nil
 }
 
-func (g *Gateway) handleFileDelete(appCtx *ApplicationContext, msg *mover.SyncMessage) error {
+func (g *Gateway) handleFileDelete(ctx context.Context, appCtx *ApplicationContext, msg *mover.SyncMessage) error {
 	var fileChange mover.FileChange
 	if err := g.unmarshalPayload(msg.Payload, &fileChange); err != nil {
 		return err
@@ -192,7 +192,7 @@ func (g *Gateway) handleFileDelete(appCtx *ApplicationContext, msg *mover.SyncMe
 		return fmt.Errorf("invalid file path: %w", err)
 	}
 
-	if err := DeleteFileFromStaging(appCtx.StagingPath, fileChange.Path); err != nil {
+	if err := DeleteFileFromStaging(ctx, appCtx.StagingPath, fileChange.Path); err != nil {
 		return fmt.Errorf("failed to delete file: %w", err)
 	}
 

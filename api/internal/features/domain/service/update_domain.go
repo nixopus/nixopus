@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -52,7 +53,9 @@ func (s *DomainsService) UpdateDomain(newName, userID, domainID string) (*shared
 	}
 
 	validator := validation.NewValidator(s.storage)
-	if err := validator.ValidateDomainBelongsToServer(newName); err != nil {
+	// Add organization ID to context for domain validation
+	orgCtx := context.WithValue(s.Ctx, shared_types.OrganizationIDKey, existing.OrganizationID.String())
+	if err := validator.ValidateDomainBelongsToServer(orgCtx, newName); err != nil {
 		s.logger.Log(logger.Error, "domain does not belong to server", fmt.Sprintf("domain_name=%s", newName))
 		return nil, err
 	}

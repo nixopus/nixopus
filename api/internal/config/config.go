@@ -17,7 +17,8 @@ import (
 )
 
 var (
-	AppConfig types.Config
+	AppConfig   types.Config
+	GlobalStore *storage.Store // Global storage instance, set during Init()
 )
 
 // getMigrationsPath returns the migrations path from environment variable or defaults to path relative to executable
@@ -113,15 +114,18 @@ func Init() *storage.Store {
 		AppConfig.Server.Port = "8080"
 	}
 
-	storage := storage.NewStore(store)
+	storageInstance := storage.NewStore(store)
 
-	err = storage.Init(context.Background())
+	err = storageInstance.Init(context.Background())
 
 	if err != nil {
 		log.Fatalf("Failed to initialize storage: %v", err)
 	}
 
-	return storage
+	// Set global store for use throughout the application
+	GlobalStore = storageInstance
+
+	return storageInstance
 }
 
 func initViper() {
@@ -197,14 +201,6 @@ func setupEnvVarMappings() {
 	// Redis
 	viper.BindEnv("redis.url", "REDIS_URL")
 
-	// SSH
-	viper.BindEnv("ssh.host", "SSH_HOST")
-	viper.BindEnv("ssh.port", "SSH_PORT")
-	viper.BindEnv("ssh.user", "SSH_USER")
-	viper.BindEnv("ssh.password", "SSH_PASSWORD")
-	viper.BindEnv("ssh.private_key", "SSH_PRIVATE_KEY")
-	viper.BindEnv("ssh.private_key_protected", "SSH_PRIVATE_KEY_PROTECTED")
-
 	// Deployment
 	viper.BindEnv("deployment.mount_path", "MOUNT_PATH")
 
@@ -271,14 +267,6 @@ func validateConfig(config types.Config) error {
 	if config.Redis.URL == "" {
 		errors = append(errors, "redis URL is required")
 	}
-
-	if config.SSH.Host == "" {
-		errors = append(errors, "SSH host is required")
-	}
-	if config.SSH.User == "" {
-		errors = append(errors, "SSH user is required")
-	}
-
 	if config.Deployment.MountPath == "" {
 		errors = append(errors, "deployment mount path is required")
 	}

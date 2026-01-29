@@ -55,7 +55,7 @@ func (s *TaskService) HandleLiveDevDeployment(ctx context.Context, config LiveDe
 		taskCtx.AddLog(fmt.Sprintf("Starting live dev deployment for application %s", config.ApplicationID.String()))
 	}
 
-	strategy, err := s.getFrameworkStrategy(config, taskCtx)
+	strategy, err := s.getFrameworkStrategy(ctx, config, taskCtx)
 	if err != nil {
 		if taskCtx != nil {
 			taskCtx.LogAndUpdateStatus(fmt.Sprintf("Failed to get framework strategy: %v", err), shared_types.Failed)
@@ -67,7 +67,7 @@ func (s *TaskService) HandleLiveDevDeployment(ctx context.Context, config LiveDe
 		taskCtx.AddLog(fmt.Sprintf("Detected framework: %s", strategy.Name()))
 	}
 
-	port, err := s.determinePort(config, strategy, taskCtx)
+	port, err := s.determinePort(ctx, config, strategy, taskCtx)
 	if err != nil {
 		if taskCtx != nil {
 			taskCtx.LogAndUpdateStatus(fmt.Sprintf("Failed to determine port: %v", err), shared_types.Failed)
@@ -95,7 +95,7 @@ func (s *TaskService) HandleLiveDevDeployment(ctx context.Context, config LiveDe
 
 	// Add domain to Caddy if configured
 	if config.Domain != "" {
-		if err := s.addDomainToCaddy(config.Domain, port, taskCtx); err != nil {
+		if err := s.addDomainToCaddy(ctx, config.Domain, port, config.OrganizationID, taskCtx); err != nil {
 			// Log error but don't fail the deployment - domain can be added later
 			if taskCtx != nil {
 				taskCtx.AddLog(fmt.Sprintf("Warning: Failed to add domain to Caddy: %v", err))
@@ -130,12 +130,12 @@ func (s *TaskService) HandleLiveDevDeployment(ctx context.Context, config LiveDe
 }
 
 // getFrameworkStrategy retrieves or detects the framework strategy
-func (s *TaskService) getFrameworkStrategy(config LiveDevConfig, taskCtx *LiveDevTaskContext) (devrunner.FrameworkStrategy, error) {
+func (s *TaskService) getFrameworkStrategy(ctx context.Context, config LiveDevConfig, taskCtx *LiveDevTaskContext) (devrunner.FrameworkStrategy, error) {
 	if config.Framework != "" {
 		if taskCtx != nil {
 			taskCtx.AddLog(fmt.Sprintf("Using specified framework: %s", config.Framework))
 		}
-		strategy, err := devrunner.GetStrategyByNameWithPath(config.Framework, config.StagingPath)
+		strategy, err := devrunner.GetStrategyByNameWithPath(ctx, config.Framework, config.StagingPath)
 		if err != nil {
 			s.Logger.Log(logger.Error, fmt.Sprintf("[LiveDev] [%s] Failed to get strategy by name '%s': %v", config.ApplicationID, config.Framework, err), "")
 			return nil, fmt.Errorf("failed to get framework strategy '%s': %w", config.Framework, err)
@@ -147,7 +147,7 @@ func (s *TaskService) getFrameworkStrategy(config LiveDevConfig, taskCtx *LiveDe
 		taskCtx.AddLog("Auto-detecting framework from project files...")
 	}
 
-	strategy, err := devrunner.DetectFramework(config.StagingPath)
+	strategy, err := devrunner.DetectFramework(ctx, config.StagingPath)
 	if err != nil {
 		s.Logger.Log(logger.Error, fmt.Sprintf("[LiveDev] [%s] Framework detection failed: %v", config.ApplicationID, err), "")
 		return nil, fmt.Errorf("failed to detect framework at %s: %w", config.StagingPath, err)
@@ -157,7 +157,7 @@ func (s *TaskService) getFrameworkStrategy(config LiveDevConfig, taskCtx *LiveDe
 }
 
 // determinePort determines the port to use for the service
-func (s *TaskService) determinePort(config LiveDevConfig, strategy devrunner.FrameworkStrategy, taskCtx *LiveDevTaskContext) (int, error) {
+func (s *TaskService) determinePort(ctx context.Context, config LiveDevConfig, strategy devrunner.FrameworkStrategy, taskCtx *LiveDevTaskContext) (int, error) {
 	if config.Port > 0 {
 		if taskCtx != nil {
 			taskCtx.AddLog(fmt.Sprintf("Using specified port: %d", config.Port))
@@ -169,7 +169,7 @@ func (s *TaskService) determinePort(config LiveDevConfig, strategy devrunner.Fra
 		taskCtx.AddLog("Auto-allocating available port...")
 	}
 
-	availablePort, err := s.getAvailablePort()
+	availablePort, err := s.getAvailablePort(ctx)
 	if err != nil {
 		defaultPort := strategy.GetDefaultPort()
 		if taskCtx != nil {
@@ -479,13 +479,18 @@ func shellJoin(parts []string) string {
 }
 
 // addDomainToCaddy adds a domain to Caddy proxy
-func (s *TaskService) addDomainToCaddy(domain string, port int, taskCtx *LiveDevTaskContext) error {
+func (s *TaskService) addDomainToCaddy(ctx context.Context, domain string, port int, organizationID uuid.UUID, taskCtx *LiveDevTaskContext) error {
 	if taskCtx != nil {
 		taskCtx.AddLog(fmt.Sprintf("Adding domain %s to Caddy proxy...", domain))
 	}
 
 	client := caddygo.NewClient(config.AppConfig.Proxy.CaddyEndpoint)
-	upstreamHost := config.AppConfig.SSH.Host
+
+	// Get SSH host from organization-specific SSH manager
+	upstreamHost, err := GetSSHHostForOrganization(ctx, organizationID)
+	if err != nil {
+		return err
+	}
 
 	if err := client.AddDomainWithAutoTLS(domain, upstreamHost, port, caddygo.DomainOptions{}); err != nil {
 		return fmt.Errorf("failed to add domain to caddy: %w", err)

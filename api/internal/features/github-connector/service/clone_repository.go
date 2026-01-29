@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -30,7 +31,7 @@ type CloneRepositoryConfig struct {
 //
 // If any errors occur during the process, the method logs the error and
 // returns the error.
-func (s *GithubConnectorService) CloneRepository(c CloneRepositoryConfig, commitHash *string) (string, error) {
+func (s *GithubConnectorService) CloneRepository(ctx context.Context, c CloneRepositoryConfig, commitHash *string) (string, error) {
 	// Fetch repository directly by ID based on installation
 	repo, err := s.GetGithubRepositoryByID(c.UserID, c.RepoID)
 	if err != nil {
@@ -72,7 +73,12 @@ func (s *GithubConnectorService) CloneRepository(c CloneRepositoryConfig, commit
 	if commitHash != nil {
 		latestCommitHash = *commitHash
 	} else {
-		latestCommitHash, err = s.gitClient.GetLatestCommitHash(repo_url, accessToken)
+		gitClient, err := s.getGitClient(ctx)
+		if err != nil {
+			s.logger.Log(logger.Error, fmt.Sprintf("Failed to get git client: %s", err.Error()), "")
+			return "", err
+		}
+		latestCommitHash, err = gitClient.GetLatestCommitHash(repo_url, accessToken)
 	}
 
 	if err != nil {
@@ -80,7 +86,7 @@ func (s *GithubConnectorService) CloneRepository(c CloneRepositoryConfig, commit
 		return "", err
 	}
 
-	clonePath, should_pull, err := s.GetClonePath(c.UserID, c.Environment, c.ApplicationID)
+	clonePath, should_pull, err := s.GetClonePath(ctx, c.UserID, c.Environment, c.ApplicationID)
 
 	s.logger.Log(logger.Info, fmt.Sprintf("Clone path: %s", clonePath), "")
 
@@ -91,7 +97,12 @@ func (s *GithubConnectorService) CloneRepository(c CloneRepositoryConfig, commit
 
 	if c.DeploymentType == shared_types.DeploymentTypeRollback {
 		s.logger.Log(logger.Info, "Rolling back repository", c.UserID)
-		err = s.gitClient.SetHeadToCommitHash(authenticatedURL, clonePath, latestCommitHash)
+		gitClient, err := s.getGitClient(ctx)
+		if err != nil {
+			s.logger.Log(logger.Error, fmt.Sprintf("Failed to get git client: %s", err.Error()), "")
+			return "", err
+		}
+		err = gitClient.SetHeadToCommitHash(authenticatedURL, clonePath, latestCommitHash)
 		if err != nil {
 			s.logger.Log(logger.Error, fmt.Sprintf("Failed to rollback repository: %s", err.Error()), "")
 			return "", err
@@ -99,20 +110,30 @@ func (s *GithubConnectorService) CloneRepository(c CloneRepositoryConfig, commit
 	} else {
 		if !should_pull {
 			s.logger.Log(logger.Info, "Cloning repository", c.UserID)
-			err = s.gitClient.Clone(authenticatedURL, clonePath)
+			gitClient, err := s.getGitClient(ctx)
+			if err != nil {
+				s.logger.Log(logger.Error, fmt.Sprintf("Failed to get git client: %s", err.Error()), "")
+				return "", err
+			}
+			err = gitClient.Clone(authenticatedURL, clonePath)
 			if err != nil {
 				s.logger.Log(logger.Error, fmt.Sprintf("Failed to clone repository: %s", err.Error()), "")
 				return "", err
 			}
 		} else {
-			if err := s.handleGitPull(authenticatedURL, clonePath, c.UserID); err != nil {
+			if err := s.handleGitPull(ctx, authenticatedURL, clonePath, c.UserID); err != nil {
 				return "", err
 			}
 		}
 
 		if c.Branch != "" {
 			s.logger.Log(logger.Info, fmt.Sprintf("Switching to branch %s", c.Branch), c.UserID)
-			err = s.gitClient.SwitchBranch(clonePath, c.Branch)
+			gitClient, err := s.getGitClient(ctx)
+			if err != nil {
+				s.logger.Log(logger.Error, fmt.Sprintf("Failed to get git client: %s", err.Error()), "")
+				return "", err
+			}
+			err = gitClient.SwitchBranch(clonePath, c.Branch)
 			if err != nil {
 				s.logger.Log(logger.Error, fmt.Sprintf("Failed to switch to branch %s: %s", c.Branch, err.Error()), "")
 				return "", err

@@ -1,6 +1,8 @@
 package validation
 
 import (
+	"context"
+	"fmt"
 	"net"
 	"os"
 	"strings"
@@ -9,6 +11,8 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // Validator handles domain validation logic
@@ -113,7 +117,7 @@ func (v *Validator) ValidateDeleteDomainRequest(req types.DeleteDomainRequest) e
 }
 
 // ValidateDomainBelongsToServer checks if the domain belongs to the current server by resolving its IP
-func (v *Validator) ValidateDomainBelongsToServer(domainName string) error {
+func (v *Validator) ValidateDomainBelongsToServer(ctx context.Context, domainName string) error {
 	// Check both config and env var directly (for tests that set ENV dynamically)
 	env := strings.ToLower(os.Getenv("ENV"))
 	development := config.AppConfig.App.Environment == "development" || env == "development" || env == "dev"
@@ -121,13 +125,35 @@ func (v *Validator) ValidateDomainBelongsToServer(domainName string) error {
 		return nil
 	}
 
-	serverHost := config.AppConfig.SSH.Host
-	if serverHost == "" {
+	// Extract organization ID from context
+	orgIDAny := ctx.Value(shared_types.OrganizationIDKey)
+	if orgIDAny == nil {
+		return fmt.Errorf("organization ID not found in context")
+	}
+
+	var orgID uuid.UUID
+	switch val := orgIDAny.(type) {
+	case string:
 		var err error
-		serverHost, err = os.Hostname()
+		orgID, err = uuid.Parse(val)
 		if err != nil {
-			return types.ErrDomainDoesNotBelongToServer
+			return fmt.Errorf("invalid organization ID: %w", err)
 		}
+	case uuid.UUID:
+		orgID = val
+	default:
+		return fmt.Errorf("unexpected organization ID type: %T", orgIDAny)
+	}
+
+	// Get SSH host from organization-specific SSH manager
+	manager, err := ssh.GetSSHManagerForOrganization(ctx, orgID)
+	if err != nil {
+		return fmt.Errorf("failed to get SSH manager: %w", err)
+	}
+
+	serverHost, err := manager.GetSSHHost()
+	if err != nil {
+		return fmt.Errorf("failed to get SSH host: %w", err)
 	}
 
 	// Handle wildcard domains by extracting main domain

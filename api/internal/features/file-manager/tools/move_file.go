@@ -23,8 +23,8 @@ func MoveFileHandler(
 		req *mcp.CallToolRequest,
 		input MoveFileInput,
 	) (*mcp.CallToolResult, MoveFileOutput, error) {
-		fileManagerService := file_manager_service.NewFileManagerService(ctx, l)
-		err := fileManagerService.MoveDirectory(input.FromPath, input.ToPath)
+		fileManagerService := file_manager_service.NewFileManagerService(toolCtx, store, l)
+		err := fileManagerService.MoveDirectory(toolCtx, input.FromPath, input.ToPath)
 		if err != nil {
 			return nil, MoveFileOutput{}, err
 		}
