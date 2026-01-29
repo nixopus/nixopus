@@ -1,5 +1,7 @@
 package strategies
 
+import "context"
+
 type ReactStrategy struct {
 	UseTypescript bool
 
@@ -87,6 +89,6 @@ func (s *ReactStrategy) GetReadyLogPattern() string {
 }
 
 // DetectMainFile returns empty string as React uses npm scripts and doesn't require a main file.
-func (s *ReactStrategy) DetectMainFile(projectPath string) string {
+func (s *ReactStrategy) DetectMainFile(ctx context.Context, projectPath string) string {
 	return ""
 }
