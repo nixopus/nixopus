@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 
@@ -50,35 +49,10 @@ type SSHManager struct {
 }
 
 var (
-	// globalSSHManager is the singleton instance of SSHManager
-	// Deprecated: Use GetSSHManagerFromContext instead for organization-specific managers
-	globalSSHManager *SSHManager
-	globalSSHMu      sync.Once
-
 	// orgManagers caches SSHManager instances per organization ID
 	orgManagers   = make(map[string]*SSHManager)
 	orgManagersMu sync.RWMutex
 )
-
-// GetSSHManager returns the global singleton SSHManager instance
-// Deprecated: Use GetSSHManagerFromContext instead for organization-specific managers.
-// This function is kept for backward compatibility during migration.
-func GetSSHManager() *SSHManager {
-	globalSSHMu.Do(func() {
-		defaultClient := NewSSH()
-		globalSSHManager = &SSHManager{
-			clients:     make(map[string]*SSH),
-			defaultID:   "default",
-			pool:        make(map[string]*connectionPoolEntry),
-			logger:      logger.NewLogger(),
-			maxIdleTime: 5 * time.Minute, // Close idle connections after 5 minutes
-		}
-		globalSSHManager.clients["default"] = defaultClient
-		// Start connection pool cleanup goroutine
-		go globalSSHManager.cleanupIdleConnections()
-	})
-	return globalSSHManager
-}
 
 // GetSSHManagerForOrganization returns an SSHManager for a specific organization.
 // Caches managers per organization to avoid repeated database queries.
@@ -145,8 +119,7 @@ func GetSSHManagerFromContext(ctx context.Context) (*SSHManager, error) {
 }
 
 // NewSSHManager creates a new SSH manager with a single default client from config
-// This maintains backward compatibility while enabling future multi-client support
-// For most use cases, prefer GetSSHManager() to use the singleton instance
+// For most use cases, prefer GetSSHManagerFromContext() to get an organization-specific manager
 func NewSSHManager() *SSHManager {
 	defaultClient := NewSSH()
 	manager := &SSHManager{
@@ -454,17 +427,6 @@ func (s *SSH) ConnectWithRetry() (*goph.Client, error) {
 	}
 
 	return nil, fmt.Errorf("failed to connect with both private key and password after %d attempts: %w", maxRetries, err)
-}
-
-func parsePort(port string) uint64 {
-	if port == "" {
-		return 22
-	}
-	p, err := strconv.ParseUint(port, 10, 32)
-	if err != nil {
-		return 22
-	}
-	return p
 }
 
 func (s *SSH) ConnectWithPrivateKey() (*goph.Client, error) {
