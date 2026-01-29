@@ -16,7 +16,7 @@ func (s *TaskService) HandleReDeploy(ctx context.Context, TaskPayload shared_typ
 
 	taskCtx.LogAndUpdateStatus("Starting redeploy process", shared_types.Cloning)
 
-	repoPath, err := s.Clone(CloneConfig{
+	repoPath, err := s.Clone(ctx, CloneConfig{
 		TaskPayload:    TaskPayload,
 		DeploymentType: string(shared_types.DeploymentTypeReDeploy),
 		TaskContext:    taskCtx,

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -10,27 +11,43 @@ import (
 )
 
 type GithubConnectorService struct {
-	store     *shared_storage.Store
-	ctx       context.Context
-	logger    logger.Logger
-	storage   storage.GithubConnectorRepository
-	gitClient GitClient
-	ssh       *ssh.SSHManager
+	store   *shared_storage.Store
+	ctx     context.Context
+	logger  logger.Logger
+	storage storage.GithubConnectorRepository
+}
+
+// getSSHManager gets the SSH manager from context (organization-specific)
+func (s *GithubConnectorService) getSSHManager(ctx context.Context) (*ssh.SSHManager, error) {
+	return ssh.GetSSHManagerFromContext(ctx)
+}
+
+// getGitClient creates or returns a GitClient with the current SSH client from context
+func (s *GithubConnectorService) getGitClient(ctx context.Context) (GitClient, error) {
+	sshManager, err := s.getSSHManager(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
+	}
+	sshClient, err := sshManager.GetDefaultSSH()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get default SSH client: %w", err)
+	}
+	return NewDefaultGitClient(s.logger, sshClient), nil
 }
 
 func NewGithubConnectorService(store *shared_storage.Store, ctx context.Context, l logger.Logger, GithubConnectorRepository storage.GithubConnectorRepository) *GithubConnectorService {
-	sshManager := ssh.GetSSHManager()
-	sshClient, _ := sshManager.GetDefaultSSH() // Get default SSH client for GitClient
 	return &GithubConnectorService{
-		store:     store,
-		ctx:       ctx,
-		logger:    l,
-		storage:   GithubConnectorRepository,
-		gitClient: NewDefaultGitClient(l, sshClient),
-		ssh:       sshManager,
+		store:   store,
+		ctx:     ctx,
+		logger:  l,
+		storage: GithubConnectorRepository,
 	}
 }
 
-func (s *GithubConnectorService) RemoveRepository(repoPath string) error {
-	return s.gitClient.RemoveRepository(repoPath)
+func (s *GithubConnectorService) RemoveRepository(ctx context.Context, repoPath string) error {
+	gitClient, err := s.getGitClient(ctx)
+	if err != nil {
+		return err
+	}
+	return gitClient.RemoveRepository(repoPath)
 }

@@ -272,7 +272,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	// Organization management is now handled by Better Auth
 
 	// File manager routes
-	fileManagerController := file_manager.NewFileManagerController(router.app.Ctx, router.logger, notificationManager)
+	fileManagerController := file_manager.NewFileManagerController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
 	fileManagerGroup := fuego.Group(server, apiV1.Path+"/file-manager")
 	router.applyMiddleware(fileManagerGroup, MiddlewareConfig{
 		RBAC:         false,

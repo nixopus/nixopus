@@ -79,7 +79,7 @@ func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload sh
 
 	taskCtx.LogAndUpdateStatus("Starting deployment process", shared_types.Cloning)
 
-	repoPath, err := s.Clone(CloneConfig{
+	repoPath, err := s.Clone(ctx, CloneConfig{
 		TaskPayload:    TaskPayload,
 		DeploymentType: string(shared_types.DeploymentTypeUpdate),
 		TaskContext:    taskCtx,

@@ -16,6 +16,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/mover"
+	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 var upgrader = websocket.Upgrader{
@@ -66,6 +67,9 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "Invalid authentication token", http.StatusUnauthorized)
 		return
 	}
+
+	// Set organization ID in context for downstream operations (SSH manager, etc.)
+	ctx = context.WithValue(ctx, types.OrganizationIDKey, apiKey.OrganizationID.String())
 
 	// Get application and validate ownership
 	appCtx, err := h.gateway.getApplicationContext(ctx, applicationID, apiKey.UserID, apiKey.OrganizationID)

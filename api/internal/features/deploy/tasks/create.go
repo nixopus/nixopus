@@ -40,7 +40,7 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 
 	taskCtx.LogAndUpdateStatus("Starting deployment process", shared_types.Cloning)
 
-	repoPath, err := t.Clone(CloneConfig{
+	repoPath, err := t.Clone(ctx, CloneConfig{
 		TaskPayload:    TaskPayload,
 		DeploymentType: string(shared_types.DeploymentTypeCreate),
 		TaskContext:    taskCtx,
