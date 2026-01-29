@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/raghavyuva/caddygo"
-	"github.com/raghavyuva/nixopus-api/internal/config"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -61,7 +60,13 @@ func (s *TaskService) HandleReDeploy(ctx context.Context, TaskPayload shared_typ
 			taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
 			return err
 		}
-		upstreamHost := config.AppConfig.SSH.Host
+
+		// Get SSH host from organization-specific SSH manager
+		upstreamHost, err := GetSSHHostForOrganization(ctx, TaskPayload.Application.OrganizationID)
+		if err != nil {
+			taskCtx.LogAndUpdateStatus("Failed to get SSH host: "+err.Error(), shared_types.Failed)
+			return err
+		}
 
 		// Loop through all domains and add them with TLS
 		for _, appDomain := range TaskPayload.Application.Domains {
