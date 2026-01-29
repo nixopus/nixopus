@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/raghavyuva/caddygo"
-	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	"github.com/raghavyuva/nixopus-api/internal/types"
@@ -15,13 +14,12 @@ type proxyModule struct{}
 
 func (proxyModule) Type() string { return "proxy" }
 
-func AddDomainToProxy(domain string, port string) error {
+func AddDomainToProxy(domain string, port string, upstreamHost string) error {
 	client := tasks.GetCaddyClient()
 	p, err := strconv.Atoi(port)
 	if err != nil {
 		return fmt.Errorf("invalid port: %w", err)
 	}
-	upstreamHost := config.AppConfig.SSH.Host
 	if err := client.AddDomainWithAutoTLS(domain, upstreamHost, p, caddygo.DomainOptions{}); err != nil {
 		return err
 	}
@@ -29,8 +27,8 @@ func AddDomainToProxy(domain string, port string) error {
 	return nil
 }
 
-func UpdateDomainInProxy(domain string, port string) error {
-	return AddDomainToProxy(domain, port)
+func UpdateDomainInProxy(domain string, port string, upstreamHost string) error {
+	return AddDomainToProxy(domain, port, upstreamHost)
 }
 
 func RemoveDomainFromProxy(domain string) error {
@@ -59,18 +57,24 @@ func (proxyModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[str
 		if domain == "" || port == "" {
 			return "proxy step skipped: domain and port are optional", nil, nil
 		}
-		if err := AddDomainToProxy(domain, port); err != nil {
+		if sshClient.Host == "" {
+			return "", nil, fmt.Errorf("SSH host not configured")
+		}
+		if err := AddDomainToProxy(domain, port, sshClient.Host); err != nil {
 			return "", nil, err
 		}
-		return fmt.Sprintf("proxy added for %s -> %s:%s", domain, config.AppConfig.SSH.Host, port), nil, nil
+		return fmt.Sprintf("proxy added for %s -> %s:%s", domain, sshClient.Host, port), nil, nil
 	case "update":
 		if domain == "" || port == "" {
 			return "proxy step skipped: domain and port are optional", nil, nil
 		}
-		if err := UpdateDomainInProxy(domain, port); err != nil {
+		if sshClient.Host == "" {
+			return "", nil, fmt.Errorf("SSH host not configured")
+		}
+		if err := UpdateDomainInProxy(domain, port, sshClient.Host); err != nil {
 			return "", nil, err
 		}
-		return fmt.Sprintf("proxy updated for %s -> %s:%s", domain, config.AppConfig.SSH.Host, port), nil, nil
+		return fmt.Sprintf("proxy updated for %s -> %s:%s", domain, sshClient.Host, port), nil, nil
 	case "remove":
 		if domain == "" {
 			return "proxy step skipped: domain is optional", nil, nil

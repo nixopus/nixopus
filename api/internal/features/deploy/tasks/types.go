@@ -32,6 +32,9 @@ type LiveDevConfig struct {
 	// ApplicationID is the associated application ID for logging
 	ApplicationID uuid.UUID
 
+	// OrganizationID is the organization ID for organization-specific operations
+	OrganizationID uuid.UUID
+
 	// StagingPath is the local filesystem path containing the project files
 	StagingPath string
 
