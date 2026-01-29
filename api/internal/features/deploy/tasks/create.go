@@ -67,7 +67,7 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 	taskCtx.AddLog("Image built successfully: " + buildImageResult + " for application " + TaskPayload.Application.Name)
 	taskCtx.UpdateStatus(shared_types.Deploying)
 
-	containerResult, err := t.AtomicUpdateContainer(TaskPayload, taskCtx)
+	containerResult, err := t.AtomicUpdateContainer(ctx, TaskPayload, taskCtx)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to update container: "+err.Error(), shared_types.Failed)
 		return err

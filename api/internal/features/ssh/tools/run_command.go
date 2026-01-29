@@ -22,10 +22,15 @@ func RunCommandHandler(
 		req *mcp.CallToolRequest,
 		input RunCommandInput,
 	) (*mcp.CallToolResult, RunCommandOutput, error) {
-		manager := ssh.GetSSHManager()
+		manager, err := ssh.GetSSHManagerFromContext(toolCtx, store)
+		if err != nil {
+			return nil, RunCommandOutput{
+				Output:   "",
+				ExitCode: -1,
+			}, err
+		}
 
 		var output string
-		var err error
 
 		if input.ClientID != "" {
 			output, err = manager.RunCommandWithID(input.ClientID, input.Command)
