@@ -23,8 +23,8 @@ func CreateDirectoryHandler(
 		req *mcp.CallToolRequest,
 		input CreateDirectoryInput,
 	) (*mcp.CallToolResult, CreateDirectoryOutput, error) {
-		fileManagerService := file_manager_service.NewFileManagerService(ctx, l)
-		err := fileManagerService.CreateDirectory(input.Path)
+		fileManagerService := file_manager_service.NewFileManagerService(toolCtx, store, l)
+		err := fileManagerService.CreateDirectory(toolCtx, input.Path)
 		if err != nil {
 			return nil, CreateDirectoryOutput{}, err
 		}

@@ -23,8 +23,8 @@ func ListFilesHandler(
 		req *mcp.CallToolRequest,
 		input ListFilesInput,
 	) (*mcp.CallToolResult, ListFilesOutput, error) {
-		fileManagerService := file_manager_service.NewFileManagerService(ctx, l)
-		files, err := fileManagerService.ListFiles(input.Path)
+		fileManagerService := file_manager_service.NewFileManagerService(toolCtx, store, l)
+		files, err := fileManagerService.ListFiles(toolCtx, input.Path)
 		if err != nil {
 			return nil, ListFilesOutput{}, err
 		}

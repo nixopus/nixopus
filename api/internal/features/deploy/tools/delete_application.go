@@ -61,7 +61,7 @@ func DeleteApplicationHandler(
 		}
 		userID := user.ID
 
-		err = taskService.DeleteDeployment(&deleteRequest, userID, organizationID)
+		err = taskService.DeleteDeployment(toolCtx, &deleteRequest, userID, organizationID)
 		if err != nil {
 			return nil, DeleteApplicationOutput{}, err
 		}

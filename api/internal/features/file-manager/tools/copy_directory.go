@@ -23,8 +23,8 @@ func CopyDirectoryHandler(
 		req *mcp.CallToolRequest,
 		input CopyDirectoryInput,
 	) (*mcp.CallToolResult, CopyDirectoryOutput, error) {
-		fileManagerService := file_manager_service.NewFileManagerService(ctx, l)
-		err := fileManagerService.CopyDirectory(input.FromPath, input.ToPath)
+		fileManagerService := file_manager_service.NewFileManagerService(toolCtx, store, l)
+		err := fileManagerService.CopyDirectory(toolCtx, input.FromPath, input.ToPath)
 		if err != nil {
 			return nil, CopyDirectoryOutput{}, err
 		}

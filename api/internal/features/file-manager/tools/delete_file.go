@@ -23,8 +23,8 @@ func DeleteFileHandler(
 		req *mcp.CallToolRequest,
 		input DeleteFileInput,
 	) (*mcp.CallToolResult, DeleteFileOutput, error) {
-		fileManagerService := file_manager_service.NewFileManagerService(ctx, l)
-		err := fileManagerService.DeleteFile(input.Path)
+		fileManagerService := file_manager_service.NewFileManagerService(toolCtx, store, l)
+		err := fileManagerService.DeleteFile(toolCtx, input.Path)
 		if err != nil {
 			return nil, DeleteFileOutput{}, err
 		}
