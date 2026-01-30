@@ -39,11 +39,6 @@ func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger, organizationID
 		cancel()
 		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	ssh_client, err := manager.GetOrganizationSSH()
-	if err != nil {
-		cancel()
-		return nil, fmt.Errorf("failed to get SSH client: %w", err)
-	}
 
 	dockerService, err := getDockerService()
 	if err != nil {
@@ -53,7 +48,7 @@ func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger, organizationID
 
 	monitor := &DashboardMonitor{
 		conn:           conn,
-		sshpkg:         ssh_client,
+		sshManager:     manager,
 		log:            log,
 		ctx:            ctx,
 		cancel:         cancel,
@@ -71,14 +66,7 @@ func (m *DashboardMonitor) Start() {
 	go func() {
 		ticker := time.NewTicker(m.Interval)
 		defer ticker.Stop()
-		client, err := m.sshpkg.Connect()
-		if err != nil {
-			m.log.Log(logger.Error, "Failed to connect to SSH server", err.Error())
-			m.BroadcastError(err.Error(), "ssh_connect")
-			return
-		}
-		m.client = client
-		defer client.Close()
+
 		m.HandleAllOperations()
 
 		for {
@@ -102,6 +90,22 @@ func (m *DashboardMonitor) Stop() {
 }
 
 func (m *DashboardMonitor) HandleAllOperations() {
+	// Check if operations are already running - skip if so to prevent concurrent execution
+	m.operationsMutex.Lock()
+	if m.operationsRunning {
+		m.operationsMutex.Unlock()
+		return
+	}
+	m.operationsRunning = true
+	m.operationsMutex.Unlock()
+
+	// Ensure we reset the flag when done
+	defer func() {
+		m.operationsMutex.Lock()
+		m.operationsRunning = false
+		m.operationsMutex.Unlock()
+	}()
+
 	for _, operation := range m.Operations {
 		select {
 		case <-m.ctx.Done():
@@ -144,11 +148,6 @@ func (m *DashboardMonitor) SetOperations(operations []DashboardOperation) {
 }
 
 func (m *DashboardMonitor) Close() {
-	if m.client != nil {
-		m.client.Close()
-		m.client = nil
-	}
-
 	if m.conn != nil {
 		m.connMutex.Lock()
 		_ = m.conn.WriteMessage(

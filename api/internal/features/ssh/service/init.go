@@ -44,14 +44,31 @@ func (s *SSHKeyService) GetSSHConfigForOrganization(orgID uuid.UUID) (*types.SSH
 
 	// Convert SSHKey to SSHConfig
 	// Note: Decryption of PrivateKeyEncrypted and PasswordEncrypted will be implemented later
+	privateKey := getStringValue(sshKey.PrivateKeyEncrypted)
+	password := getStringValue(sshKey.PasswordEncrypted)
+	host := getStringValue(sshKey.Host)
+	user := getStringValue(sshKey.User)
+	port := getUintFromInt(sshKey.Port, 22)
+
 	config := &types.SSHConfig{
-		Host:                getStringValue(sshKey.Host),
-		User:                getStringValue(sshKey.User),
-		Port:                getUintFromInt(sshKey.Port, 22),
-		PrivateKey:          getStringValue(sshKey.PrivateKeyEncrypted), // TODO: Decrypt
-		Password:            getStringValue(sshKey.PasswordEncrypted),   // TODO: Decrypt
-		PrivateKeyProtected: "",                                         // Not used in current implementation
+		Host:                host,
+		User:                user,
+		Port:                port,
+		PrivateKey:          privateKey,
+		Password:            password,
+		PrivateKeyProtected: "", // Not used in current implementation
 	}
+
+	// Log SSH credentials info (without sensitive data)
+	hasPrivateKey := len(privateKey) > 0
+	hasPassword := len(password) > 0
+	authMethod := "none"
+	if hasPrivateKey {
+		authMethod = "private_key"
+	} else if hasPassword {
+		authMethod = "password"
+	}
+	s.logger.Log(logger.Info, fmt.Sprintf("SSH config loaded for organization %s: host=%s, user=%s, port=%d, auth_method=%s, has_private_key=%v, has_password=%v", orgID.String(), host, user, port, authMethod, hasPrivateKey, hasPassword), "")
 
 	return config, nil
 }

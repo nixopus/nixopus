@@ -74,8 +74,8 @@ func buildURL(serverURL, path string) string {
 	return serverURL + path
 }
 
-// post makes a POST request with API key authentication
-func (c *baseHTTPClient) post(url string, body interface{}, apiKey string) (*http.Response, error) {
+// post makes a POST request with Bearer token authentication
+func (c *baseHTTPClient) post(url string, body interface{}, accessToken string) (*http.Response, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		jsonData, err := json.Marshal(body)
@@ -93,7 +93,11 @@ func (c *baseHTTPClient) post(url string, body interface{}, apiKey string) (*htt
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	// Add Bearer token to Authorization header
+	if accessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -167,7 +171,7 @@ func sanitizeHTTPError(err error) error {
 }
 
 // addApplicationToFamily calls the API to add an application to a family
-func addApplicationToFamily(serverURL, apiKey, familyID, name, basePath, repository, branch string, port int) (string, error) {
+func addApplicationToFamily(serverURL, accessToken, familyID, name, basePath, repository, branch string, port int) (string, error) {
 	// Parse family_id UUID
 	familyUUID, err := uuid.Parse(familyID)
 	if err != nil {
@@ -187,7 +191,7 @@ func addApplicationToFamily(serverURL, apiKey, familyID, name, basePath, reposit
 		BuildPack:  "dockerfile", // Default build pack
 	}
 
-	resp, err := client.post(url, reqBody, apiKey)
+	resp, err := client.post(url, reqBody, accessToken)
 	if err != nil {
 		return "", fmt.Errorf("failed to connect to server: %w", err)
 	}

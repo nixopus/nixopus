@@ -27,6 +27,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	notificationController "github.com/raghavyuva/nixopus-api/internal/features/notification/controller"
+	server_controller "github.com/raghavyuva/nixopus-api/internal/features/server/controller"
 
 	// Organization packages removed - migrated to Better Auth
 	update "github.com/raghavyuva/nixopus-api/internal/features/update/controller"
@@ -331,6 +332,16 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 		ResourceName: "extension",
 	})
 	router.RegisterExtensionRoutes(extensionGroup, extensionController)
+
+	// Server routes
+	serverController := server_controller.NewServerController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	serverGroup := fuego.Group(server, apiV1.Path+"/servers")
+	router.applyMiddleware(serverGroup, MiddlewareConfig{
+		RBAC:         false,
+		Audit:        false,
+		ResourceName: "server",
+	})
+	router.RegisterServerRoutes(serverGroup, serverController)
 }
 
 // createAuthController creates and returns an auth controller

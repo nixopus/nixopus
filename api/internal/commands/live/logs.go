@@ -25,9 +25,9 @@ type LogFetcher struct {
 
 // Config holds configuration for log fetching
 type Config struct {
-	Server  string
-	APIKey  string
-	Timeout time.Duration
+	Server      string
+	AccessToken string // Bearer token for API authentication
+	Timeout     time.Duration
 }
 
 // NewLogFetcher creates a new log fetcher
@@ -65,7 +65,10 @@ func (lf *LogFetcher) FetchContainerLogs(containerID string, tail int) ([]LogEnt
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+lf.config.APIKey)
+	// TODO: Add session token to Authorization header
+	if lf.config.AccessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+lf.config.AccessToken)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := lf.client.Do(req)
@@ -216,7 +219,10 @@ func (lf *LogFetcher) FetchApplicationLogs(applicationID string, maxLogs int) ([
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+lf.config.APIKey)
+	// TODO: Add session token to Authorization header
+	if lf.config.AccessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+lf.config.AccessToken)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := lf.client.Do(req)

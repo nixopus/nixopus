@@ -57,8 +57,8 @@ func buildURL(serverURL, path string) string {
 	return serverURL + path
 }
 
-// delete makes a DELETE request with API key authentication
-func (c *baseHTTPClient) delete(url string, body interface{}, apiKey string) (*http.Response, error) {
+// delete makes a DELETE request with Bearer token authentication
+func (c *baseHTTPClient) delete(url string, body interface{}, accessToken string) (*http.Response, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		jsonData, err := json.Marshal(body)
@@ -76,7 +76,11 @@ func (c *baseHTTPClient) delete(url string, body interface{}, apiKey string) (*h
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	// Add Bearer token to Authorization header
+	if accessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -150,7 +154,7 @@ func sanitizeHTTPError(err error) error {
 }
 
 // deleteApplication calls the API to delete an application
-func deleteApplication(serverURL, apiKey, applicationID string) error {
+func deleteApplication(serverURL, accessToken, applicationID string) error {
 	// Parse application ID UUID
 	appUUID, err := uuid.Parse(applicationID)
 	if err != nil {
@@ -164,7 +168,7 @@ func deleteApplication(serverURL, apiKey, applicationID string) error {
 		ID: appUUID,
 	}
 
-	resp, err := client.delete(url, reqBody, apiKey)
+	resp, err := client.delete(url, reqBody, accessToken)
 	if err != nil {
 		return fmt.Errorf("failed to connect to server: %w", err)
 	}

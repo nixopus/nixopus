@@ -86,9 +86,10 @@ func (s *AppSession) Stop() error {
 // runAllApps runs all apps in the family simultaneously
 func runAllApps(args []string) error {
 	// Load configuration
-	cfg, err := config.Load()
+	// Ensure initialization before loading config
+	cfg, err := ensureInitialized("")
 	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
+		return fmt.Errorf("failed to initialize or load config: %w", err)
 	}
 
 	// Get all apps from config
@@ -252,7 +253,11 @@ func runAllApps(args []string) error {
 // initializeAppSession initializes a single app session
 func initializeAppSession(session *AppSession, cfg *config.Config, tracker *mover.MultiAppTracker) error {
 	// Fetch application details
-	basePath, domainURL, err := getApplicationDetailsWithURL(cfg.Server, session.applicationID, cfg.APIKey)
+	// Check for access token
+	if cfg.AccessToken == "" {
+		return fmt.Errorf("not authenticated. Please run 'nixopus login' first")
+	}
+	basePath, domainURL, err := getApplicationDetailsWithURL(cfg.Server, session.applicationID, cfg.AccessToken)
 	if err != nil {
 		return fmt.Errorf("failed to fetch application details: %w", err)
 	}
@@ -269,7 +274,11 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 	}
 
 	// Create WebSocket client
-	wsURL := buildWebSocketURL(cfg.Server, session.applicationID, cfg.APIKey)
+	// Check for access token
+	if cfg.AccessToken == "" {
+		return fmt.Errorf("not authenticated. Please run 'nixopus login' first")
+	}
+	wsURL := buildWebSocketURL(cfg.Server, session.applicationID, cfg.AccessToken)
 	onStateChange := func(event mover.ConnectionEvent) {
 		var statusState mover.ConnectionStatus
 		switch event.State {
@@ -300,7 +309,7 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 	session.tracker.SetConnectionStatus(mover.ConnectionStatusConnecting)
 	client, err := mover.NewClient(
 		wsURL,
-		cfg.APIKey,
+		"", // TODO: Add session token
 		mover.WithOnStateChange(onStateChange),
 	)
 	if err != nil {
@@ -409,8 +418,8 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 }
 
 // getApplicationDetailsWithURL fetches application details and returns base_path and domain URL
-func getApplicationDetailsWithURL(server, applicationID, apiKey string) (string, string, error) {
-	basePath, err := getApplicationDetails(server, applicationID, apiKey)
+func getApplicationDetailsWithURL(server, applicationID, accessToken string) (string, string, error) {
+	basePath, err := getApplicationDetails(server, applicationID, accessToken)
 	if err != nil {
 		return "", "", err
 	}

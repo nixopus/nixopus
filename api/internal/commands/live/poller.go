@@ -59,9 +59,9 @@ func NewDeploymentPoller(config *config.Config, tracker *mover.Tracker, applicat
 			Timeout: apiTimeout,
 		},
 		logFetcher: NewLogFetcher(&Config{
-			Server:  config.Server,
-			APIKey:  config.APIKey,
-			Timeout: apiTimeout,
+			Server:      config.Server,
+			AccessToken: config.AccessToken,
+			Timeout:     apiTimeout,
 		}),
 		stop: make(chan struct{}),
 	}
@@ -102,7 +102,6 @@ func (p *DeploymentPoller) poll() {
 		return // Silently fail, will retry on next poll
 	}
 
-	req.Header.Set("Authorization", "Bearer "+p.config.APIKey)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := p.client.Do(req)

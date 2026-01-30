@@ -1,9 +1,20 @@
 APP_NAME=nixopus-api
+CLI_NAME=nixopus
+
 build: 
 	@go build -o bin/$(APP_NAME)
 
 run: build
 	@./bin/$(APP_NAME)
+
+cli-build:
+	@go build -o bin/$(CLI_NAME) ./cmd/nixopus
+
+cli-run: cli-build
+	@./bin/$(CLI_NAME)
+
+cli-install:
+	@go install ./cmd/nixopus
 
 test:
 	@go test -p 1 ./internal/features/... -v -count=1
@@ -23,7 +34,7 @@ format:
 		echo "goimports not found. Install with: go install golang.org/x/tools/cmd/goimports@latest"; \
 	fi
 
-.PHONY: fixtures-load fixtures-recreate fixtures-clean fixtures-help format
+.PHONY: fixtures-load fixtures-recreate fixtures-clean fixtures-help format cli-build cli-run cli-install
 
 fixtures-help:
 	@echo "Nixopus API Fixtures Commands:"
@@ -57,24 +68,3 @@ fixtures-recreate:
 
 fixtures-clean:
 	go run cmd/fixtures/main.go -fixture=fixtures/development/complete.yml -truncate
-
-# MCP Server commands
-mcp-build:
-	@go build -o bin/nixopus-mcp-server ./cmd/mcp-server
-
-mcp-run: mcp-build
-	@./bin/nixopus-mcp-server
-
-mcp-dev:
-	@if command -v air >/dev/null 2>&1; then \
-		air -c .air.mcp.toml; \
-	else \
-		echo "Air not found. Install with: go install github.com/air-verse/air@latest"; \
-		echo "Or run manually: go run ./cmd/mcp-server"; \
-	fi
-
-mcp-client:
-	@go run ./cmd/mcp-client
-
-mcp-client-test:
-	@go run ./cmd/mcp-client test

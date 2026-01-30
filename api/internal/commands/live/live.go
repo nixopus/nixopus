@@ -3,20 +3,25 @@ package live
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/httpclient"
 	"github.com/raghavyuva/nixopus-api/internal/mover"
 	"github.com/spf13/cobra"
 )
 
 var (
 	allFlag bool
+	envPath string
 )
 
 var LiveCmd = &cobra.Command{
@@ -34,6 +39,7 @@ var LiveCmd = &cobra.Command{
 
 func init() {
 	LiveCmd.Flags().BoolVar(&allFlag, "all", false, "Run all apps in the family simultaneously")
+	LiveCmd.Flags().StringVar(&envPath, "env-path", "", "Path to environment file (relative to project root, e.g., .env or .env.production). Only used during initialization if project is not initialized.")
 }
 
 func runSingleApp(args []string) error {
@@ -56,11 +62,11 @@ func runSingleApp(args []string) error {
 	// Give UI a moment to render the connecting box
 	time.Sleep(200 * time.Millisecond)
 
-	// Now load configuration (UI is already showing)
-	cfg, err := config.Load()
+	// Check if initialization is needed and run it if necessary
+	cfg, err := ensureInitialized(envPath)
 	if err != nil {
 		program.Quit()
-		return fmt.Errorf("failed to load config: %w", err)
+		return err
 	}
 
 	// Get app name from args (empty string means use default)
@@ -77,7 +83,7 @@ func runSingleApp(args []string) error {
 	}
 
 	// Fetch application details to get base_path
-	basePath, err := getApplicationDetails(cfg.Server, applicationID, cfg.APIKey)
+	basePath, err := getApplicationDetails(cfg.Server, applicationID, cfg.AccessToken)
 	if err != nil {
 		program.Quit()
 		return fmt.Errorf("failed to fetch application details: %w", err)
@@ -85,7 +91,12 @@ func runSingleApp(args []string) error {
 
 	// OPTIMIZATION: Start WebSocket connection IMMEDIATELY after config load
 	// Do other validations in parallel while connection is establishing
-	wsURL := buildWebSocketURL(cfg.Server, applicationID, cfg.APIKey)
+	// Check for access token
+	if cfg.AccessToken == "" {
+		program.Quit()
+		return fmt.Errorf("not authenticated. Please run 'nixopus login' first")
+	}
+	wsURL := buildWebSocketURL(cfg.Server, applicationID, cfg.AccessToken)
 	if wsURL == "" {
 		program.Quit()
 		return fmt.Errorf("failed to connect")
@@ -113,9 +124,10 @@ func runSingleApp(args []string) error {
 	clientChan := make(chan *mover.Client, 1)
 	clientErrChan := make(chan error, 1)
 	go func() {
+		// TODO: Add session token to mover client
 		client, err := mover.NewClient(
 			wsURL,
-			cfg.APIKey,
+			"", // TODO: Replace with session token
 			mover.WithOnStateChange(onStateChange),
 		)
 		if err != nil {
@@ -296,7 +308,8 @@ func runSingleApp(args []string) error {
 }
 
 // buildWebSocketURL builds the WebSocket URL from server URL
-func buildWebSocketURL(server, projectID, apiKey string) string {
+// buildWebSocketURL constructs the WebSocket URL for live deployment
+func buildWebSocketURL(server, projectID, accessToken string) string {
 	// Convert http:// to ws:// and https:// to wss://
 	wsURL := server
 	if strings.HasPrefix(wsURL, "http://") {
@@ -306,7 +319,11 @@ func buildWebSocketURL(server, projectID, apiKey string) string {
 	}
 
 	// Add WebSocket path and query params (using projectID as application_id)
-	wsURL += "/ws/live/" + projectID + "?token=" + apiKey
+	if accessToken != "" {
+		wsURL += "/ws/live/" + projectID + "?token=" + accessToken
+	} else {
+		wsURL += "/ws/live/" + projectID
+	}
 	return wsURL
 }
 
@@ -326,4 +343,222 @@ func isGitRepo(path string) bool {
 	gitDir := filepath.Join(path, ".git")
 	info, err := os.Stat(gitDir)
 	return err == nil && info.IsDir()
+}
+
+// ensureInitialized checks if the project is initialized and initializes it if needed
+func ensureInitialized(envPathFlag string) (*config.Config, error) {
+	// Try to load config
+	cfg, err := config.Load()
+	var existingCfg *config.Config
+	if err == nil {
+		existingCfg = cfg
+		// Config exists, check if it's complete
+		if cfg.FamilyID != "" && len(cfg.Applications) > 0 {
+			// Already initialized, return config
+			return cfg, nil
+		}
+		// Config exists but incomplete, need to initialize
+	} else {
+		// Config doesn't exist, try to load it anyway to get access token
+		// (might fail, but we'll handle that in createProject)
+		existingCfg, _ = config.Load()
+	}
+
+	// Check if user is authenticated before attempting initialization
+	if existingCfg == nil || existingCfg.AccessToken == "" {
+		return nil, fmt.Errorf("not authenticated. Please run 'nixopus login' first")
+	}
+
+	// Need to initialize - run init steps
+	server := config.GetServerURL()
+
+	// Validate env path if provided
+	if envPathFlag != "" {
+		if err := config.ValidateEnvPath(envPathFlag); err != nil {
+			return nil, fmt.Errorf("invalid env path: %w", err)
+		}
+	}
+
+	// Step 1: Parse env file if provided
+	var envVars map[string]string
+	if envPathFlag != "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get current directory: %w", err)
+		}
+		fullPath := filepath.Join(cwd, filepath.Clean(envPathFlag))
+		envVars, err = godotenv.Read(fullPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read env file %s: %w", envPathFlag, err)
+		}
+	}
+
+	// Step 2: Create project (use access token from existingCfg)
+	projectID, familyID, err := createProject(server, envVars, existingCfg.AccessToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create project: %w", err)
+	}
+
+	// Step 3: Save config
+	exclude := []string{
+		"*.log",
+		".git",
+		"node_modules",
+		"__pycache__",
+		".env",
+	}
+	if envPathFlag != "" {
+		// Remove env path from excludes
+		exclude = removeFromSlice(exclude, envPathFlag)
+	}
+
+	applications := map[string]string{
+		"default": projectID,
+	}
+
+	newCfg := &config.Config{
+		FamilyID:     familyID,
+		Applications: applications,
+		Sync: config.SyncConfig{
+			DebounceMs: 300,
+			Exclude:    exclude,
+		},
+		EnvPath: envPathFlag,
+	}
+
+	// Preserve access token from existing config
+	if existingCfg != nil && existingCfg.AccessToken != "" {
+		newCfg.AccessToken = existingCfg.AccessToken
+		newCfg.RefreshToken = existingCfg.RefreshToken
+	}
+
+	cfg = newCfg
+
+	if err := cfg.Save(); err != nil {
+		return nil, fmt.Errorf("failed to save config: %w", err)
+	}
+
+	return cfg, nil
+}
+
+// removeFromSlice removes an item from a string slice
+func removeFromSlice(slice []string, item string) []string {
+	result := make([]string, 0, len(slice))
+	for _, s := range slice {
+		if s != item {
+			result = append(result, s)
+		}
+	}
+	return result
+}
+
+// CreateProjectRequest represents the request body for creating a project
+type CreateProjectRequest struct {
+	Name                 string            `json:"name"`
+	Repository           string            `json:"repository"`
+	Branch               string            `json:"branch,omitempty"`
+	EnvironmentVariables map[string]string `json:"environment_variables,omitempty"`
+}
+
+// CreateProjectResponse represents the response from project creation endpoint
+type CreateProjectResponse struct {
+	Status    string `json:"status"`
+	Message   string `json:"message"`
+	ProjectID string `json:"project_id"`
+	FamilyID  string `json:"family_id"`
+}
+
+// getGitBranch gets the current git branch
+func getGitBranch() string {
+	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	output, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(output))
+}
+
+// getGitInfo gets the git repository name and remote URL
+func getGitInfo() (string, string, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", "", err
+	}
+	repoName := filepath.Base(cwd)
+
+	cmd := exec.Command("git", "config", "--get", "remote.origin.url")
+	output, err := cmd.Output()
+	if err != nil {
+		return repoName, repoName, nil
+	}
+
+	repoURL := strings.TrimSpace(string(output))
+	if repoURL == "" {
+		return repoName, repoName, nil
+	}
+
+	parts := strings.Split(repoURL, "/")
+	if len(parts) > 0 {
+		lastPart := strings.TrimSuffix(parts[len(parts)-1], ".git")
+		if lastPart != "" {
+			repoName = lastPart
+		}
+	}
+
+	return repoName, repoURL, nil
+}
+
+// createProject creates a draft project on the server using the CLI init endpoint
+// Returns: projectID, familyID, error
+func createProject(serverURL string, envVars map[string]string, accessToken string) (string, string, error) {
+	repoName, repoURL, err := getGitInfo()
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get git info: %w", err)
+	}
+
+	branch := getGitBranch()
+
+	if accessToken == "" {
+		return "", "", fmt.Errorf("not authenticated. Please run 'nixopus login' first")
+	}
+
+	// Use authenticated HTTP client
+	client := httpclient.NewAuthenticatedHTTPClient(accessToken)
+	url := httpclient.BuildURL(serverURL, "/api/v1/auth/cli-init")
+
+	reqBody := CreateProjectRequest{
+		Name:                 repoName,
+		Repository:           repoURL,
+		Branch:               branch,
+		EnvironmentVariables: envVars,
+	}
+
+	resp, err := client.Post(url, reqBody)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to connect to server: %w", err)
+	}
+
+	bodyBytes, err := httpclient.ReadResponseBody(resp)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return "", "", httpclient.HandleErrorResponse(resp, bodyBytes, "failed to create project")
+	}
+
+	var projectResp CreateProjectResponse
+	if err := httpclient.ParseJSONResponse(bodyBytes, &projectResp); err != nil {
+		return "", "", err
+	}
+
+	if projectResp.ProjectID == "" {
+		return "", "", fmt.Errorf("project ID not found in response")
+	}
+
+	if projectResp.FamilyID == "" {
+		return "", "", fmt.Errorf("family ID not found in response")
+	}
+
+	return projectResp.ProjectID, projectResp.FamilyID, nil
 }

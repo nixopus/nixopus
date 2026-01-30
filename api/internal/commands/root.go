@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/raghavyuva/nixopus-api/internal/commands/addcmd"
-	"github.com/raghavyuva/nixopus-api/internal/commands/initcmd"
 	"github.com/raghavyuva/nixopus-api/internal/commands/listcmd"
 	"github.com/raghavyuva/nixopus-api/internal/commands/live"
+	"github.com/raghavyuva/nixopus-api/internal/commands/logincmd"
 	"github.com/raghavyuva/nixopus-api/internal/commands/removecmd"
 	setenv "github.com/raghavyuva/nixopus-api/internal/commands/set_env"
 	"github.com/spf13/cobra"
@@ -32,7 +32,7 @@ func Execute() error {
 }
 
 func init() {
-	rootCmd.AddCommand(initcmd.InitCmd)
+	rootCmd.AddCommand(logincmd.LoginCmd)
 	rootCmd.AddCommand(addcmd.AddCmd)
 	rootCmd.AddCommand(listcmd.ListCmd)
 	rootCmd.AddCommand(removecmd.RemoveCmd)

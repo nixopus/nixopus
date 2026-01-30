@@ -1,3 +1,48 @@
+# [0.1.0-alpha.119](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.118...v0.1.0-alpha.119) (2026-01-30)
+
+
+### Bug Fixes
+
+* add raw ssh key for pem parsing of ssh ([9567cd9](https://github.com/raghavyuva/nixopus/commit/9567cd9f7015f582d9e229351b0548c821f51ca7))
+
+
+
+# [0.1.0-alpha.118](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.117...v0.1.0-alpha.118) (2026-01-30)
+
+
+### Bug Fixes
+
+* update device authorization flow and cors for multi origin requests ([be35799](https://github.com/raghavyuva/nixopus/commit/be35799622acb1d1c46f03ac8433c1d4967ffbea))
+
+
+### Features
+
+* add device authorization flow for login ([5ab4094](https://github.com/raghavyuva/nixopus/commit/5ab409430abe4cd36861df3ed3db64f4066cc538))
+
+
+
+# [0.1.0-alpha.117](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.116...v0.1.0-alpha.117) (2026-01-30)
+
+
+### Bug Fixes
+
+* add storage layer for ssh key management ([31336ef](https://github.com/raghavyuva/nixopus/commit/31336efb7cdfe2f7a0e4a721318abe3606310cca))
+* deprecate mcp tools and auth test cases ([#996](https://github.com/raghavyuva/nixopus/issues/996)) ([21f9fa9](https://github.com/raghavyuva/nixopus/commit/21f9fa93027938ee648c270e5f247c3b9d99dd61))
+* live deployment, git methods, file methods to pass the request context for ssh manager ([b82277b](https://github.com/raghavyuva/nixopus/commit/b82277b2ade6f6e36ba2cf4d420eafa9a97daf46))
+* remove newssh initializer and use ssh manager across all references ([34776a9](https://github.com/raghavyuva/nixopus/commit/34776a91bbd97e7b44c6fa8dc59f1f7be62dace3))
+* update strategies and sftp utils to pass context for ssh manger ([0e228ad](https://github.com/raghavyuva/nixopus/commit/0e228ad8b289bbd3d332a847930bd6db407cc60a))
+* wrong context used in run commands function ([97b171f](https://github.com/raghavyuva/nixopus/commit/97b171fc86eb77231c74478a5f33c0c833bff822))
+
+
+### Features
+
+* add global storage initializer to use across the codebase ([4b8a54e](https://github.com/raghavyuva/nixopus/commit/4b8a54ef3bf46c322f3e6ab22fd1dfd06d97bd75))
+* add ssh manager for org based retrieval based on context awareness ([9ef9005](https://github.com/raghavyuva/nixopus/commit/9ef90058fd65dcf5cdcae32d9543bf6447aaae76))
+* migrate deploy flow for getssh manager with context ([8e6e8c9](https://github.com/raghavyuva/nixopus/commit/8e6e8c908a66f7665da7b9270a4856b4a28ce278))
+* update extension to make use of context while creating ssh manager ([0ca8a30](https://github.com/raghavyuva/nixopus/commit/0ca8a304de676640a8b416e0bac583d81d464301))
+
+
+
 # [0.1.0-alpha.116](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.115...v0.1.0-alpha.116) (2026-01-28)
 
 

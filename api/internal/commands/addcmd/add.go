@@ -59,7 +59,7 @@ func runAddSteps(program *AddProgram, path, name string) error {
 
 	// Validate family_id exists
 	if cfg.FamilyID == "" {
-		program.Send(AddErrorMsg{Error: "family_id not found in config. Run 'nixopus init' first"})
+		program.Send(AddErrorMsg{Error: "family_id not found in config. Run 'nixopus live' to initialize first"})
 		program.Quit()
 		return fmt.Errorf("family_id not found in config")
 	}
@@ -81,7 +81,15 @@ func runAddSteps(program *AddProgram, path, name string) error {
 
 	program.Send(AddStepMsg{Step: step, Message: "Adding application to family..."})
 	server := config.GetServerURL()
-	applicationID, err := addApplicationToFamily(server, cfg.APIKey, cfg.FamilyID, name, basePath, repoURL, branch, 0)
+
+	// Check for access token
+	if cfg.AccessToken == "" {
+		program.Send(AddErrorMsg{Error: "not authenticated. Please run 'nixopus login' first"})
+		program.Quit()
+		return fmt.Errorf("not authenticated. Please run 'nixopus login' first")
+	}
+
+	applicationID, err := addApplicationToFamily(server, cfg.AccessToken, cfg.FamilyID, name, basePath, repoURL, branch, 0)
 	if err != nil {
 		program.Send(AddErrorMsg{Error: fmt.Sprintf("failed to add application: %v", err)})
 		program.Quit()

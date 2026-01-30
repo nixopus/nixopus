@@ -21,7 +21,7 @@ var ListCmd = &cobra.Command{
 
 		// Validate family_id exists
 		if cfg.FamilyID == "" {
-			return fmt.Errorf("family_id not found in config. Run 'nixopus init' first")
+			return fmt.Errorf("family_id not found in config. Run 'nixopus live' to initialize first")
 		}
 
 		// List applications from config

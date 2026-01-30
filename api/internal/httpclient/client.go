@@ -1,4 +1,4 @@
-package commands
+package httpclient
 
 import (
 	"bytes"
@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/raghavyuva/nixopus-api/internal/config"
 )
 
 // BaseHTTPClient provides a reusable HTTP client for making requests
@@ -208,4 +210,83 @@ func sanitizeHTTPError(err error) error {
 
 	// For other errors, return a generic message without exposing technical details
 	return fmt.Errorf("connection failed: %w", err)
+}
+
+// AuthenticatedHTTPClient provides an HTTP client with Bearer token authentication
+type AuthenticatedHTTPClient struct {
+	*BaseHTTPClient
+	accessToken string
+}
+
+// NewAuthenticatedHTTPClient creates a new authenticated HTTP client
+func NewAuthenticatedHTTPClient(accessToken string) *AuthenticatedHTTPClient {
+	return &AuthenticatedHTTPClient{
+		BaseHTTPClient: NewBaseHTTPClient(),
+		accessToken:    accessToken,
+	}
+}
+
+// CreateRequest creates a new HTTP request with Bearer token authentication
+func (c *AuthenticatedHTTPClient) CreateRequest(method, url string, body interface{}) (*http.Request, error) {
+	req, err := c.BaseHTTPClient.CreateRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add Bearer token to Authorization header
+	if c.accessToken != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.accessToken))
+	}
+
+	return req, nil
+}
+
+// Post makes an authenticated POST request
+func (c *AuthenticatedHTTPClient) Post(url string, body interface{}) (*http.Response, error) {
+	req, err := c.CreateRequest("POST", url, body)
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
+}
+
+// Get makes an authenticated GET request
+func (c *AuthenticatedHTTPClient) Get(url string) (*http.Response, error) {
+	req, err := c.CreateRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
+}
+
+// Put makes an authenticated PUT request
+func (c *AuthenticatedHTTPClient) Put(url string, body interface{}) (*http.Response, error) {
+	req, err := c.CreateRequest("PUT", url, body)
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
+}
+
+// Delete makes an authenticated DELETE request
+func (c *AuthenticatedHTTPClient) Delete(url string) (*http.Response, error) {
+	req, err := c.CreateRequest("DELETE", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
+}
+
+// GetAccessTokenFromConfig loads access token from config file
+func GetAccessTokenFromConfig() (string, error) {
+	cfg, err := config.Load()
+	if err != nil {
+		return "", fmt.Errorf("failed to load config: %w", err)
+	}
+
+	if cfg.AccessToken == "" {
+		return "", fmt.Errorf("not authenticated. Please run 'nixopus login' first")
+	}
+
+	return cfg.AccessToken, nil
 }

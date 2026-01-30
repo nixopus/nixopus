@@ -9,7 +9,7 @@ import (
 
 // getApplicationDetails fetches application details from the server to get base_path
 // Returns base_path (defaults to "/" if empty)
-func getApplicationDetails(server, applicationID, apiKey string) (string, error) {
+func getApplicationDetails(server, applicationID, accessToken string) (string, error) {
 	url := fmt.Sprintf("%s/api/v1/deploy/application?id=%s", server, applicationID)
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -17,7 +17,10 @@ func getApplicationDetails(server, applicationID, apiKey string) (string, error)
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	// Add Bearer token to Authorization header
+	if accessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
