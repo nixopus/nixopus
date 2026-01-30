@@ -15,7 +15,6 @@ import (
 	auth_service "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
 	auth_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
-	billing "github.com/raghavyuva/nixopus-api/internal/features/billing/controller"
 	container "github.com/raghavyuva/nixopus-api/internal/features/container/controller"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
 	domain "github.com/raghavyuva/nixopus-api/internal/features/domain/controller"
@@ -213,11 +212,6 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 
 	router.RegisterLiveDeployRoutes(server, apiV1)
 
-	// Stripe webhook route (public, uses signature verification)
-	billingController := billing.NewBillingController(router.app.Store, router.app.Ctx, router.logger, config.AppConfig.Stripe)
-	stripeWebhookGroup := fuego.Group(server, apiV1.Path+"/stripe")
-	fuego.Post(stripeWebhookGroup, "/webhook", billingController.HandleWebhook)
-
 	// Public auth routes
 	authController := router.createAuthController(notificationManager)
 	authGroup := fuego.Group(server, apiV1.Path+"/auth")
@@ -352,16 +346,6 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 		ResourceName: "healthcheck",
 	})
 	router.RegisterHealthCheckRoutes(healthCheckGroup, healthCheckController)
-
-	// Billing routes
-	billingController := billing.NewBillingController(router.app.Store, router.app.Ctx, router.logger, config.AppConfig.Stripe)
-	billingGroup := fuego.Group(server, apiV1.Path+"/billing")
-	router.applyMiddleware(billingGroup, MiddlewareConfig{
-		RBAC:         false,
-		Audit:        false,
-		ResourceName: "billing",
-	})
-	router.RegisterBillingRoutes(billingGroup, billingController)
 
 	// Extension routes
 	extensionController := extension.NewExtensionsController(router.app.Store, router.app.Ctx, router.logger)
