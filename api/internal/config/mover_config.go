@@ -21,12 +21,14 @@ func GetServerURL() string {
 // Config represents the nixopus configuration stored in .nixopus file
 type Config struct {
 	Server       string            `json:"server,omitempty"`
-	APIKey       string            `json:"api_key"`
 	ProjectID    string            `json:"project_id,omitempty"`
 	FamilyID     string            `json:"family_id,omitempty"`    // Family ID (group of apps)
 	Applications map[string]string `json:"applications,omitempty"` // Map of app name -> application_id
 	Sync         SyncConfig        `json:"sync"`
 	EnvPath      string            `json:"env_path,omitempty"`
+	// Authentication tokens (Better Auth Device Authorization Grant)
+	AccessToken  string `json:"access_token,omitempty"`  // Bearer token for API authentication
+	RefreshToken string `json:"refresh_token,omitempty"` // Optional refresh token
 }
 
 // SyncConfig represents sync-related configuration
@@ -72,7 +74,7 @@ func Load() (*Config, error) {
 
 	// Check if config file exists
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("config not found. Run 'nixopus init' first")
+		return nil, fmt.Errorf("config not found. Run 'nixopus live' to initialize and start deployment")
 	}
 
 	// Read config file
@@ -100,14 +102,9 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
-	// Ensure API key is present
-	if cfg.APIKey == "" {
-		return nil, fmt.Errorf("api_key not found in config. Run 'nixopus init' first")
-	}
-
 	// Ensure at least one application is present (either via ProjectID or Applications)
 	if cfg.ProjectID == "" && len(cfg.Applications) == 0 {
-		return nil, fmt.Errorf("no applications found in config. Run 'nixopus init' first")
+		return nil, fmt.Errorf("no applications found in config. Run 'nixopus live' to initialize and start deployment")
 	}
 
 	// Ensure Server is set (from env or default)
@@ -164,13 +161,15 @@ func (c *Config) Save() error {
 	}
 
 	// Create a copy of config for saving (without Server)
+	// Save access_token and refresh_token, but not deprecated APIKey
 	saveConfig := &Config{
-		APIKey:       c.APIKey,
 		FamilyID:     c.FamilyID,
 		Applications: c.Applications,
 		Sync:         c.Sync,
 		EnvPath:      c.EnvPath,
 		ProjectID:    c.ProjectID,
+		AccessToken:  c.AccessToken,
+		RefreshToken: c.RefreshToken,
 	}
 
 	// Marshal to JSON with indentation

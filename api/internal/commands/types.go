@@ -1,20 +1,7 @@
 package commands
 
-// ValidateAPIKeyRequest represents the request body for API key validation
-type ValidateAPIKeyRequest struct {
-	APIKey string `json:"api_key"`
-}
-
-// ValidateAPIKeyResponse represents the response from API key validation endpoint
-type ValidateAPIKeyResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-	Valid   bool   `json:"valid"`
-}
-
 // CreateProjectRequest represents the request body for creating a project
 type CreateProjectRequest struct {
-	APIKey               string            `json:"api_key"`
 	Name                 string            `json:"name"`
 	Repository           string            `json:"repository"`
 	Branch               string            `json:"branch,omitempty"`

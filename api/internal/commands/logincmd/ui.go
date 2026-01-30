@@ -1,4 +1,4 @@
-package initcmd
+package logincmd
 
 import (
 	"fmt"
@@ -7,8 +7,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// InitModel represents the bubbletea model for the init command
-type InitModel struct {
+// LoginModel represents the bubbletea model for the login command
+type LoginModel struct {
 	quitting bool
 	done     bool
 
@@ -19,24 +19,24 @@ type InitModel struct {
 	errorMsg    string
 
 	// Results
-	projectID string
-	envPath   string
+	verificationURL string
+	userCode        string
 }
 
-// NewInitModel creates a new init model
-func NewInitModel() InitModel {
-	return InitModel{
-		totalSteps: 4, // Validate API key, Parse env (optional), Create project, Save config
+// NewLoginModel creates a new login model
+func NewLoginModel() LoginModel {
+	return LoginModel{
+		totalSteps: 6, // Request code, Display URL, Display code, Open browser, Poll, Save token
 	}
 }
 
 // Init initializes the model
-func (m InitModel) Init() tea.Cmd {
+func (m LoginModel) Init() tea.Cmd {
 	return nil
 }
 
 // Update handles messages and updates the model
-func (m InitModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m LoginModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		return m, nil
@@ -48,18 +48,25 @@ func (m InitModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-	case InitStepMsg:
+	case LoginStepMsg:
 		m.currentStep = msg.Step
 		m.stepMessage = msg.Message
+		// Extract verification URL and user code from messages
+		if msg.Step == 1 && msg.Message != "" {
+			// Message format: "Visit: {url}"
+			m.verificationURL = msg.Message
+		}
+		if msg.Step == 2 && msg.Message != "" {
+			// Message format: "Enter code: {code}"
+			m.userCode = msg.Message
+		}
 		return m, nil
 
-	case InitSuccessMsg:
+	case LoginSuccessMsg:
 		m.done = true
-		m.projectID = msg.ProjectID
-		m.envPath = msg.EnvPath
 		return m, nil
 
-	case InitErrorMsg:
+	case LoginErrorMsg:
 		m.errorMsg = msg.Error
 		m.quitting = true
 		return m, tea.Quit
@@ -69,7 +76,7 @@ func (m InitModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // View renders the UI
-func (m InitModel) View() string {
+func (m LoginModel) View() string {
 	if m.quitting {
 		if m.errorMsg != "" {
 			return fmt.Sprintf("\n  %s %s\n\n", lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render("✗"), lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render(m.errorMsg))
@@ -89,7 +96,7 @@ func (m InitModel) View() string {
 		successMsg = m.renderSuccess()
 	}
 
-	// Combine all views (no centering, left-aligned like live command)
+	// Combine all views (no centering, left-aligned like init command)
 	content := lipgloss.JoinVertical(lipgloss.Left, banner, "", progress)
 	if successMsg != "" {
 		content = lipgloss.JoinVertical(lipgloss.Left, content, "", successMsg)
@@ -99,7 +106,7 @@ func (m InitModel) View() string {
 }
 
 // renderBanner renders the banner
-func (m InitModel) renderBanner() string {
+func (m LoginModel) renderBanner() string {
 	bannerStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("63")).
@@ -109,13 +116,13 @@ func (m InitModel) renderBanner() string {
 	title := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("63")).
-		Render("Nixopus Init")
+		Render("Nixopus Login")
 
 	return bannerStyle.Render(title)
 }
 
 // renderProgress renders the progress steps
-func (m InitModel) renderProgress() string {
+func (m LoginModel) renderProgress() string {
 	boxStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("240")).
@@ -124,10 +131,12 @@ func (m InitModel) renderProgress() string {
 		MaxWidth(55)
 
 	steps := []string{
-		"Validating API key...",
-		"Parsing environment variables...",
-		"Creating project...",
-		"Saving configuration...",
+		"Requesting device authorization...",
+		"Displaying verification URL...",
+		"Displaying user code...",
+		"Opening browser...",
+		"Waiting for authorization...",
+		"Saving access token...",
 	}
 
 	lines := []string{}
@@ -158,51 +167,23 @@ func (m InitModel) renderProgress() string {
 }
 
 // renderSuccess renders the success message
-func (m InitModel) renderSuccess() string {
-	// Box width: 55 chars total
-	// Account for: border (2 chars) + padding left (2) + padding right (2) = 6 chars
-	// Content width: 55 - 6 = 49 chars
+func (m LoginModel) renderSuccess() string {
 	boxStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("42")).
 		Padding(1, 2).
 		Width(55)
 
-	// Content width inside box: 55 - 4 (padding) = 51 chars
 	contentWidth := 51
 
 	lines := []string{
-		lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true).Render("✓ Initialized successfully!"),
+		lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true).Render("✓ Login successful!"),
 		"",
-		lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Config saved to: .nixopus"),
+		lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Access token saved to: .nixopus"),
+		"",
 	}
 
-	if m.projectID != "" {
-		domainURL := buildDomainURL(m.projectID)
-		if domainURL != "" {
-			lines = append(lines, "")
-			urlLabel := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("🌐 Your app will be available at:")
-			urlValue := lipgloss.NewStyle().
-				Foreground(lipgloss.Color("39")).
-				Width(contentWidth).
-				Render("   " + domainURL)
-			lines = append(lines, urlLabel, urlValue)
-		}
-	}
-
-	if m.envPath != "" {
-		lines = append(lines, "")
-		envText := fmt.Sprintf("Environment: %s", m.envPath)
-		envLine := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("240")).
-			Width(contentWidth).
-			Render(envText)
-		lines = append(lines, envLine)
-	}
-
-	lines = append(lines, "")
-	// Wrap long text to fit within box width
-	nextStepText := "Run 'nixopus live' to start deployment session"
+	nextStepText := "You can now use Nixopus commands"
 	nextStep := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("63")).
 		Bold(true).
@@ -211,72 +192,58 @@ func (m InitModel) renderSuccess() string {
 	lines = append(lines, nextStep)
 
 	lines = append(lines, "")
-	addAppsText := "To add more apps, use: nixopus add <path> <name>"
-	addApps := lipgloss.NewStyle().
+	initText := "Run 'nixopus live' to initialize and start deployment"
+	initLine := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("240")).
 		Width(contentWidth).
-		Render(addAppsText)
-	lines = append(lines, addApps)
+		Render(initText)
+	lines = append(lines, initLine)
 
 	content := lipgloss.JoinVertical(lipgloss.Left, lines...)
 	return boxStyle.Render(content)
 }
 
-// InitProgram wraps the bubbletea program for the init command
-type InitProgram struct {
+// LoginProgram wraps the bubbletea program for the login command
+type LoginProgram struct {
 	program *tea.Program
 }
 
-// NewInitProgram creates a new bubbletea program for the init command
-func NewInitProgram() *InitProgram {
-	model := NewInitModel()
+// NewLoginProgram creates a new bubbletea program for the login command
+func NewLoginProgram() *LoginProgram {
+	model := NewLoginModel()
 	p := tea.NewProgram(model)
 
-	return &InitProgram{
+	return &LoginProgram{
 		program: p,
 	}
 }
 
 // Start starts the program and returns when it exits
-func (p *InitProgram) Start() error {
+func (p *LoginProgram) Start() error {
 	_, err := p.program.Run()
 	return err
 }
 
 // Send sends a message to the program
-func (p *InitProgram) Send(msg tea.Msg) {
+func (p *LoginProgram) Send(msg tea.Msg) {
 	p.program.Send(msg)
 }
 
 // Quit quits the program
-func (p *InitProgram) Quit() {
+func (p *LoginProgram) Quit() {
 	p.program.Quit()
 }
 
-// InitStepMsg is sent when a step progresses
-type InitStepMsg struct {
+// LoginStepMsg is sent when a step progresses
+type LoginStepMsg struct {
 	Step    int
 	Message string
 }
 
-// InitSuccessMsg is sent when init completes successfully
-type InitSuccessMsg struct {
-	ProjectID string
-	EnvPath   string
-}
+// LoginSuccessMsg is sent when login completes successfully
+type LoginSuccessMsg struct{}
 
-// InitErrorMsg is sent when init fails
-type InitErrorMsg struct {
+// LoginErrorMsg is sent when login fails
+type LoginErrorMsg struct {
 	Error string
-}
-
-// buildDomainURL builds the domain URL from project ID
-// Format: https://{first-8-chars-of-project-id}.nixopus.com
-func buildDomainURL(projectID string) string {
-	if projectID == "" || len(projectID) < 8 {
-		return ""
-	}
-	// Take first 8 characters of project ID (UUID format)
-	subdomain := projectID[:8]
-	return "https://" + subdomain + ".nixopus.com"
 }
