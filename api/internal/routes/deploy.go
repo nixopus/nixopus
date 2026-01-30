@@ -18,6 +18,7 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 	fuego.Post(applicationGroup, "/project", deployController.HandleCreateProject)
 	fuego.Post(applicationGroup, "/project/deploy", deployController.HandleDeployProject)
 	fuego.Post(applicationGroup, "/project/duplicate", deployController.HandleDuplicateProject)
+	fuego.Post(applicationGroup, "/project/add-to-family", deployController.HandleAddApplicationToFamily)
 	fuego.Get(applicationGroup, "/project/family", deployController.HandleGetProjectFamily)
 	fuego.Get(applicationGroup, "/project/family/environments", deployController.HandleGetEnvironmentsInFamily)
 	fuego.Get(applicationGroup, "", deployController.GetApplicationById)
@@ -33,10 +34,4 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 	fuego.Put(applicationGroup, "/labels", deployController.UpdateApplicationLabels)
 	fuego.Post(applicationGroup, "/domains", deployController.AddApplicationDomain)
 	fuego.Delete(applicationGroup, "/domains", deployController.RemoveApplicationDomain)
-}
-
-// RegisterDeployAPIKeyRoutes registers API key authenticated deployment routes (for CLI)
-func (router *Router) RegisterDeployAPIKeyRoutes(apiKeyGroup *fuego.Server, deployController *deploy.DeployController) {
-	applicationGroup := fuego.Group(apiKeyGroup, "/application")
-	fuego.Post(applicationGroup, "/project/add-to-family", deployController.HandleAddApplicationToFamily)
 }

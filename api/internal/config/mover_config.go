@@ -1,4 +1,4 @@
-package cli_config
+package config
 
 import (
 	"encoding/json"

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	betterauth "github.com/raghavyuva/nixopus-api/internal/features/betterauth"
+	betterauth "github.com/raghavyuva/nixopus-api/internal/features/auth"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
