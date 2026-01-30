@@ -11,7 +11,6 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/audit/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/audit/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	org_types "github.com/raghavyuva/nixopus-api/internal/features/organization/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 	"github.com/uptrace/bun"
 )
@@ -53,7 +52,7 @@ func (c *AuditController) GetRecentAuditLogs(f fuego.ContextNoBody) (*types.GetA
 	orgIDStr := f.Request().Header.Get("X-ORGANIZATION-ID")
 	if orgIDStr == "" {
 		return nil, fuego.HTTPError{
-			Err:    org_types.ErrMissingOrganizationID,
+			Err:    errors.New("Missing organization id"),
 			Status: http.StatusBadRequest,
 		}
 	}
@@ -61,7 +60,7 @@ func (c *AuditController) GetRecentAuditLogs(f fuego.ContextNoBody) (*types.GetA
 	orgID, err := uuid.Parse(orgIDStr)
 	if err != nil {
 		return nil, fuego.HTTPError{
-			Err:    org_types.ErrInvalidOrganizationID,
+			Err:    errors.New("Invalid organization id"),
 			Status: http.StatusBadRequest,
 		}
 	}

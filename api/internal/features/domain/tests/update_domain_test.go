@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/config"
 	domainService "github.com/raghavyuva/nixopus-api/internal/features/domain/service"
 	domainStorage "github.com/raghavyuva/nixopus-api/internal/features/domain/storage"
 	domainTypes "github.com/raghavyuva/nixopus-api/internal/features/domain/types"
@@ -85,11 +84,8 @@ func TestUpdateDomain(t *testing.T) {
 		user, org, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
 
-		serverHost := config.AppConfig.SSH.Host
-		if serverHost == "" {
-			serverHost, err = os.Hostname()
-			assert.NoError(t, err)
-		}
+		serverHost, err := os.Hostname()
+		assert.NoError(t, err)
 
 		createReq := domainTypes.CreateDomainRequest{
 			Name:           "test1." + serverHost,
