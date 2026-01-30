@@ -17,7 +17,7 @@ import (
 // GetOrganizationIDFromBetterAuth gets organization ID from Better Auth session
 // Returns empty string if not found
 func GetOrganizationIDFromBetterAuth(r *http.Request) (string, error) {
-	sessionResp, err := betterauth.VerifySession(r)
+	sessionResp, err := auth.VerifySession(r)
 	if err != nil {
 		return "", fmt.Errorf("failed to verify session: %w", err)
 	}

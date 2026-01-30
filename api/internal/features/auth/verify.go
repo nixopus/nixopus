@@ -1,4 +1,4 @@
-package betterauth
+package auth
 
 import (
 	"bytes"
@@ -7,15 +7,15 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
+
+	"github.com/raghavyuva/nixopus-api/internal/config"
 )
 
-// getBetterAuthURL returns the Better Auth URL from environment variables
-// This reads the environment variable dynamically each time it's called,
-// ensuring that secrets loaded after package initialization are picked up
+// getBetterAuthURL returns the Better Auth URL from config
+// This reads the config value which is loaded from environment variables or config files
 func getBetterAuthURL() string {
-	url := os.Getenv("BETTER_AUTH_URL")
+	url := config.AppConfig.BetterAuth.URL
 	if url == "" {
 		// Default fallback for development
 		url = "http://localhost:9090"
