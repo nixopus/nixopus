@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/cli_config"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -49,7 +49,7 @@ func runRemoveSteps(program *RemoveProgram, name string) error {
 
 	// Step 1: Load config and find application
 	program.Send(RemoveStepMsg{Step: step, Message: "Loading configuration..."})
-	cfg, err := cli_config.Load()
+	cfg, err := config.Load()
 	if err != nil {
 		program.Send(RemoveErrorMsg{Error: fmt.Sprintf("failed to load config: %v", err)})
 		program.Quit()
@@ -80,7 +80,7 @@ func runRemoveSteps(program *RemoveProgram, name string) error {
 
 	// Step 2: Delete application from server
 	program.Send(RemoveStepMsg{Step: step, Message: "Deleting application from server..."})
-	server := cli_config.GetServerURL()
+	server := config.GetServerURL()
 	if err := deleteApplication(server, cfg.APIKey, applicationID); err != nil {
 		program.Send(RemoveErrorMsg{Error: fmt.Sprintf("failed to delete application: %v", err)})
 		program.Quit()

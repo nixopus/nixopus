@@ -61,18 +61,26 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-	apiKey, err := h.gateway.verifyAPIKey(ctx, token)
+	user, orgID, err := h.gateway.verifySession(ctx, token, r)
 	if err != nil {
-		h.logger.Log(logger.Error, "invalid API key", err.Error())
+		h.logger.Log(logger.Error, "invalid session", err.Error())
 		http.Error(w, "Invalid authentication token", http.StatusUnauthorized)
 		return
 	}
 
+	// Parse organization ID
+	organizationID, err := uuid.Parse(orgID)
+	if err != nil {
+		h.logger.Log(logger.Error, "invalid organization ID", err.Error())
+		http.Error(w, "Invalid organization", http.StatusUnauthorized)
+		return
+	}
+
 	// Set organization ID in context for downstream operations (SSH manager, etc.)
-	ctx = context.WithValue(ctx, types.OrganizationIDKey, apiKey.OrganizationID.String())
+	ctx = context.WithValue(ctx, types.OrganizationIDKey, orgID)
 
 	// Get application and validate ownership
-	appCtx, err := h.gateway.getApplicationContext(ctx, applicationID, apiKey.UserID, apiKey.OrganizationID)
+	appCtx, err := h.gateway.getApplicationContext(ctx, applicationID, user.ID, organizationID)
 	if err != nil {
 		h.logger.Log(logger.Error, "failed to get application context", fmt.Sprintf("application_id=%s err=%v", applicationID, err))
 		http.Error(w, fmt.Sprintf("Application not found or access denied: %v", err), http.StatusNotFound)

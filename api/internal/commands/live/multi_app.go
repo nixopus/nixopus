@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/cli_config"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/mover"
 )
 
@@ -86,7 +86,7 @@ func (s *AppSession) Stop() error {
 // runAllApps runs all apps in the family simultaneously
 func runAllApps(args []string) error {
 	// Load configuration
-	cfg, err := cli_config.Load()
+	cfg, err := config.Load()
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -99,8 +99,8 @@ func runAllApps(args []string) error {
 	// Deduplicate: if multiple names point to same app ID, prefer "default" over others
 	// This prevents showing the same app twice (e.g., "default" and "root" pointing to same ID)
 	preferredNames := []string{"default", "root"} // preference order
-	appIDToName := make(map[string]string)         // appID -> best name found so far
-	
+	appIDToName := make(map[string]string)        // appID -> best name found so far
+
 	// First pass: collect all app IDs and track the most preferred name for each
 	for name, appID := range cfg.Applications {
 		if appID == "" {
@@ -131,7 +131,7 @@ func runAllApps(args []string) error {
 		}
 		sessions = append(sessions, session)
 	}
-	
+
 	// Ensure we have at least one session
 	if len(sessions) == 0 {
 		return fmt.Errorf("no valid applications found in config. Use 'nixopus add' to add applications")
@@ -196,14 +196,14 @@ func runAllApps(args []string) error {
 					// Update tracker with error
 					info := s.GetStatusInfo()
 					tracker.UpdateSession(s.name, mover.AppSessionInfo{
-						Name:           s.name,
-						ApplicationID:  s.applicationID,
-						Status:         mover.ConnectionStatusDisconnected,
-						FilesSynced:    info.FilesSynced,
+						Name:            s.name,
+						ApplicationID:   s.applicationID,
+						Status:          mover.ConnectionStatusDisconnected,
+						FilesSynced:     info.FilesSynced,
 						ChangesDetected: info.ChangesDetected,
-						URL:            info.URL,
-						Deployment:     info.Deployment,
-						Error:          err,
+						URL:             info.URL,
+						Deployment:      info.Deployment,
+						Error:           err,
 					})
 				}
 			}(session)
@@ -250,7 +250,7 @@ func runAllApps(args []string) error {
 }
 
 // initializeAppSession initializes a single app session
-func initializeAppSession(session *AppSession, cfg *cli_config.Config, tracker *mover.MultiAppTracker) error {
+func initializeAppSession(session *AppSession, cfg *config.Config, tracker *mover.MultiAppTracker) error {
 	// Fetch application details
 	basePath, domainURL, err := getApplicationDetailsWithURL(cfg.Server, session.applicationID, cfg.APIKey)
 	if err != nil {
@@ -283,17 +283,17 @@ func initializeAppSession(session *AppSession, cfg *cli_config.Config, tracker *
 			statusState = mover.ConnectionStatusDisconnected
 		}
 		session.tracker.SetConnectionStatus(statusState)
-		
+
 		// Update multi-app tracker
 		info := session.GetStatusInfo()
 		tracker.UpdateSession(session.name, mover.AppSessionInfo{
-			Name:           session.name,
-			ApplicationID:  session.applicationID,
-			Status:         info.ConnectionStatus,
-			FilesSynced:    info.FilesSynced,
+			Name:            session.name,
+			ApplicationID:   session.applicationID,
+			Status:          info.ConnectionStatus,
+			FilesSynced:     info.FilesSynced,
 			ChangesDetected: info.ChangesDetected,
-			URL:            info.URL,
-			Deployment:     info.Deployment,
+			URL:             info.URL,
+			Deployment:      info.Deployment,
 		})
 	}
 
@@ -335,11 +335,11 @@ func initializeAppSession(session *AppSession, cfg *cli_config.Config, tracker *
 
 	// Create sync engine
 	engine, err := mover.NewEngine(mover.EngineConfig{
-		RootPath:         watchPath,
-		Client:           client,
-		Excludes:         cfg.Sync.Exclude,
-		DebounceMs:       cfg.Sync.DebounceMs,
-		OnStateChange:    onStateChange,
+		RootPath:      watchPath,
+		Client:        client,
+		Excludes:      cfg.Sync.Exclude,
+		DebounceMs:    cfg.Sync.DebounceMs,
+		OnStateChange: onStateChange,
 		OnFileSynced: func(path string) {
 			session.tracker.IncrementFilesSynced()
 			// Note: Tracker updates are batched via the 5-second ticker in poller goroutine
@@ -362,7 +362,7 @@ func initializeAppSession(session *AppSession, cfg *cli_config.Config, tracker *
 	// Start deployment poller with callback to update multi-app tracker
 	pollerCtx, pollerCancel := context.WithCancel(context.Background())
 	poller := NewDeploymentPoller(cfg, session.tracker, session.applicationID)
-	
+
 	// Wrap the poller's update function to also update multi-app tracker
 	go func() {
 		ticker := time.NewTicker(5 * time.Second)
@@ -372,20 +372,20 @@ func initializeAppSession(session *AppSession, cfg *cli_config.Config, tracker *
 			case <-ticker.C:
 				info := session.GetStatusInfo()
 				tracker.UpdateSession(session.name, mover.AppSessionInfo{
-					Name:           session.name,
-					ApplicationID:  session.applicationID,
-					Status:         info.ConnectionStatus,
-					FilesSynced:    info.FilesSynced,
+					Name:            session.name,
+					ApplicationID:   session.applicationID,
+					Status:          info.ConnectionStatus,
+					FilesSynced:     info.FilesSynced,
 					ChangesDetected: info.ChangesDetected,
-					URL:            info.URL,
-					Deployment:     info.Deployment,
+					URL:             info.URL,
+					Deployment:      info.Deployment,
 				})
 			case <-pollerCtx.Done():
 				return
 			}
 		}
 	}()
-	
+
 	go poller.Start(pollerCtx)
 
 	session.mu.Lock()
@@ -396,13 +396,13 @@ func initializeAppSession(session *AppSession, cfg *cli_config.Config, tracker *
 	// Initial tracker update
 	info := session.GetStatusInfo()
 	tracker.UpdateSession(session.name, mover.AppSessionInfo{
-		Name:           session.name,
-		ApplicationID:  session.applicationID,
-		Status:         info.ConnectionStatus,
-		FilesSynced:    info.FilesSynced,
+		Name:            session.name,
+		ApplicationID:   session.applicationID,
+		Status:          info.ConnectionStatus,
+		FilesSynced:     info.FilesSynced,
 		ChangesDetected: info.ChangesDetected,
-		URL:            info.URL,
-		Deployment:     info.Deployment,
+		URL:             info.URL,
+		Deployment:      info.Deployment,
 	})
 
 	return nil

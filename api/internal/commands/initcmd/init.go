@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/raghavyuva/nixopus-api/internal/cli_config"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +18,7 @@ var InitCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		apiKey, _ := cmd.Flags().GetString("api-key")
 		envPath, _ := cmd.Flags().GetString("env-path")
-		server := cli_config.GetServerURL()
+		server := config.GetServerURL()
 
 		// Start bubbletea program
 		program := NewInitProgram()
@@ -80,7 +80,7 @@ func runInitSteps(program *InitProgram, server, apiKey, envPath string) error {
 
 	// Validate env path if provided (before UI starts, so we can show error immediately)
 	if envPath != "" {
-		if err := cli_config.ValidateEnvPath(envPath); err != nil {
+		if err := config.ValidateEnvPath(envPath); err != nil {
 			program.Send(InitErrorMsg{Error: fmt.Sprintf("invalid env path: %v", err)})
 			program.Quit()
 			return err
@@ -144,11 +144,11 @@ func runInitSteps(program *InitProgram, server, apiKey, envPath string) error {
 		"default": projectID,
 	}
 
-	cfg := &cli_config.Config{
+	cfg := &config.Config{
 		APIKey:       apiKey,
 		FamilyID:     familyID,
 		Applications: applications,
-		Sync: cli_config.SyncConfig{
+		Sync: config.SyncConfig{
 			DebounceMs: 300,
 			Exclude:    exclude,
 		},

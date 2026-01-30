@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/cli_config"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -53,14 +53,14 @@ If an env path is set, it will be:
 // runSetEnvSteps runs the set-env steps and sends updates to the UI
 func runSetEnvSteps(program *SetEnvProgram, envPath string) error {
 	// Validate the env path
-	if err := cli_config.ValidateEnvPath(envPath); err != nil {
+	if err := config.ValidateEnvPath(envPath); err != nil {
 		program.Send(SetEnvErrorMsg{Error: fmt.Sprintf("invalid env path: %v", err)})
 		program.Quit()
 		return err
 	}
 
 	// Load existing config
-	cfg, err := cli_config.Load()
+	cfg, err := config.Load()
 	if err != nil {
 		program.Send(SetEnvErrorMsg{Error: fmt.Sprintf("failed to load config: %v", err)})
 		program.Quit()

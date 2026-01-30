@@ -245,7 +245,7 @@ func (c *Client) establishConnection() error {
 // dialWebSocket creates a new WebSocket connection with auth
 func (c *Client) dialWebSocket() (*websocket.Conn, error) {
 	// Create custom dialer with increased handshake timeout
-	// This allows time for server-side database operations (API key verification, app context lookup)
+	// This allows time for server-side database operations (session verification, app context lookup)
 	dialer := &websocket.Dialer{
 		HandshakeTimeout:  handshakeTimeout,
 		ReadBufferSize:    1024,

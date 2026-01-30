@@ -2,7 +2,6 @@ package validation
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"regexp"
 	"strings"
@@ -80,29 +79,9 @@ func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decode
 	return json.NewDecoder(body).Decode(decoded)
 }
 
-// ValidateRequest validates request body - only API key requests are supported
+// ValidateRequest validates request body
 // Better Auth handles authentication requests
 func (v *Validator) ValidateRequest(req interface{}) error {
-	switch r := req.(type) {
-	case *types.CreateAPIKeyRequest:
-		return v.validateCreateAPIKeyRequest(*r)
-	default:
-		fmt.Printf("invalid request type: %T\n", req)
-		return types.ErrInvalidRequestType
-	}
-}
-
-func (v *Validator) validateCreateAPIKeyRequest(req types.CreateAPIKeyRequest) error {
-	if req.Name == "" {
-		return types.ErrMissingRequiredFields
-	}
-	if utf8.RuneCountInString(req.Name) > 255 {
-		return fmt.Errorf("name must be at most 255 characters")
-	}
-	if req.ExpiresInDays != nil {
-		if *req.ExpiresInDays < 1 || *req.ExpiresInDays > 365 {
-			return fmt.Errorf("expires_in_days must be between 1 and 365")
-		}
-	}
-	return nil
+	// No validation needed - Better Auth handles all authentication
+	return types.ErrInvalidRequestType
 }

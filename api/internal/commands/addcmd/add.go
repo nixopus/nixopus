@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/cli_config"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -50,7 +50,7 @@ func runAddSteps(program *AddProgram, path, name string) error {
 
 	// Step 1: Load and validate config
 	program.Send(AddStepMsg{Step: step, Message: "Loading configuration..."})
-	cfg, err := cli_config.Load()
+	cfg, err := config.Load()
 	if err != nil {
 		program.Send(AddErrorMsg{Error: fmt.Sprintf("failed to load config: %v", err)})
 		program.Quit()
@@ -80,7 +80,7 @@ func runAddSteps(program *AddProgram, path, name string) error {
 	basePath := normalizeBasePath(path)
 
 	program.Send(AddStepMsg{Step: step, Message: "Adding application to family..."})
-	server := cli_config.GetServerURL()
+	server := config.GetServerURL()
 	applicationID, err := addApplicationToFamily(server, cfg.APIKey, cfg.FamilyID, name, basePath, repoURL, branch, 0)
 	if err != nil {
 		program.Send(AddErrorMsg{Error: fmt.Sprintf("failed to add application: %v", err)})

@@ -226,7 +226,7 @@ func (c *DeployController) HandleAddApplicationToFamily(f fuego.ContextWithBody[
 		}
 	}
 
-	// Get user and organization from context (set by APIKeyAuthMiddleware)
+	// Get user and organization from context (set by AuthMiddleware)
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
 		c.logger.Log(logger.Error, "user authentication failed", "")

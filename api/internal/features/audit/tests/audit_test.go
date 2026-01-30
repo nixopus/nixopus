@@ -20,8 +20,6 @@ func TestAuditService(t *testing.T) {
 		ID:        uuid.New(),
 		Email:     "test@example.com",
 		Username:  "testuser",
-		Password:  "hashedpassword",
-		Type:      "viewer",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -29,11 +27,9 @@ func TestAuditService(t *testing.T) {
 	assert.NoError(t, err)
 
 	org := &types.Organization{
-		ID:          uuid.New(),
-		Name:        "Test Org",
-		Description: "Test Organization",
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:        uuid.New(),
+		Name:      "Test Org",
+		CreatedAt: time.Now(),
 	}
 	_, err = setup.DB.NewInsert().Model(org).Exec(setup.Ctx)
 	assert.NoError(t, err)

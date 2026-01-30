@@ -11,13 +11,12 @@ import (
 )
 
 type AuthController struct {
-	validator     *validation.Validator
-	service       auth_service.AuthServiceInterface
-	apiKeyService *auth_service.APIKeyService
-	store         *shared_storage.Store
-	ctx           context.Context
-	logger        logger.Logger
-	notification  *notification.NotificationManager
+	validator    *validation.Validator
+	service      auth_service.AuthServiceInterface
+	store        *shared_storage.Store
+	ctx          context.Context
+	logger       logger.Logger
+	notification *notification.NotificationManager
 }
 
 func NewAuthController(
@@ -25,16 +24,14 @@ func NewAuthController(
 	logger logger.Logger,
 	notificationManager *notification.NotificationManager,
 	authService auth_service.AuthService,
-	apiKeyService *auth_service.APIKeyService,
 	store *shared_storage.Store,
 ) *AuthController {
 	return &AuthController{
-		validator:     validation.NewValidator(),
-		service:       &authService,
-		apiKeyService: apiKeyService,
-		store:         store,
-		ctx:           ctx,
-		logger:        logger,
-		notification:  notificationManager,
+		validator:    validation.NewValidator(),
+		service:      &authService,
+		store:        store,
+		ctx:          ctx,
+		logger:       logger,
+		notification: notificationManager,
 	}
 }

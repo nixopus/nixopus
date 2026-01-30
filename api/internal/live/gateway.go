@@ -9,10 +9,11 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	api_key_service "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
-	api_key_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
+	betterauth "github.com/raghavyuva/nixopus-api/internal/features/auth"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/mover"
@@ -47,10 +48,65 @@ func (g *Gateway) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	g.websocketHandler.HandleWebSocket(w, r)
 }
 
-func (g *Gateway) verifyAPIKey(ctx context.Context, token string) (*shared_types.APIKey, error) {
-	apiKeyStorage := api_key_storage.APIKeyStorage{DB: g.store.DB, Ctx: ctx}
-	apiKeyService := api_key_service.NewAPIKeyService(apiKeyStorage, g.logger)
-	return apiKeyService.VerifyAPIKey(token)
+// verifySession verifies the Better Auth session token and returns the user and organization ID
+func (g *Gateway) verifySession(ctx context.Context, tokenString string, originalRequest *http.Request) (*shared_types.User, string, error) {
+	var req *http.Request
+
+	// Prefer using the original request with actual cookies from the browser
+	// WebSocket upgrade requests include cookies, which Better Auth needs
+	if originalRequest != nil {
+		// Clone the request to avoid modifying the original
+		req = originalRequest.Clone(originalRequest.Context())
+		// Also add the token as Authorization header as fallback
+		if tokenString != "" {
+			req.Header.Set("Authorization", "Bearer "+tokenString)
+		}
+	} else {
+		// Fallback: create a mock request with the token
+		req, _ = http.NewRequest("GET", "/", nil)
+		req.Header.Set("Authorization", "Bearer "+tokenString)
+		// Also set as cookie if it's a cookie-based session
+		req.AddCookie(&http.Cookie{
+			Name:  "better-auth.session_token",
+			Value: tokenString,
+		})
+	}
+
+	// Verify Better Auth session - this is the source of truth for authentication and organization membership
+	sessionResp, err := betterauth.VerifySession(req)
+	if err != nil {
+		return nil, "", fmt.Errorf("session verification failed: %v", err)
+	}
+
+	// Parse Better Auth user ID
+	betterAuthUserID, err := uuid.Parse(sessionResp.User.ID)
+	if err != nil {
+		return nil, "", fmt.Errorf("invalid user ID format: %v", err)
+	}
+
+	// Extract organization ID from session
+	var orgID string
+	if sessionResp.Session.ActiveOrganizationID != nil && *sessionResp.Session.ActiveOrganizationID != "" {
+		orgID = *sessionResp.Session.ActiveOrganizationID
+	} else {
+		// Fallback to header if not in session
+		orgID = originalRequest.Header.Get("X-Organization-Id")
+	}
+
+	// Create User object directly from Better Auth session response
+	user := &shared_types.User{
+		ID:            betterAuthUserID,
+		Name:          sessionResp.User.Name,
+		Email:         sessionResp.User.Email,
+		EmailVerified: sessionResp.User.EmailVerified,
+		CreatedAt:     time.Now(), // Better Auth doesn't provide this, use current time
+		UpdatedAt:     time.Now(), // Better Auth doesn't provide this, use current time
+	}
+
+	// Compute backward compatibility fields
+	user.ComputeCompatibilityFields()
+
+	return user, orgID, nil
 }
 
 // handleMessage routes messages to appropriate handlers based on message type

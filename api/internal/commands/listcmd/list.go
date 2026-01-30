@@ -3,7 +3,7 @@ package listcmd
 import (
 	"fmt"
 
-	"github.com/raghavyuva/nixopus-api/internal/cli_config"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +14,7 @@ var ListCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load config
-		cfg, err := cli_config.Load()
+		cfg, err := config.Load()
 		if err != nil {
 			return fmt.Errorf("failed to load config: %w", err)
 		}
