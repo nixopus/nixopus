@@ -10,9 +10,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/cache"
+	betterauth "github.com/raghavyuva/nixopus-api/internal/features/auth"
 	api_key_service "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
 	api_key_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
-	betterauth "github.com/raghavyuva/nixopus-api/internal/features/betterauth"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
