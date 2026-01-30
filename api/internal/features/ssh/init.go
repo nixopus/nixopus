@@ -468,7 +468,7 @@ func (s *SSH) ConnectWithPrivateKey() (*goph.Client, error) {
 		return nil, fmt.Errorf("private key is required for SSH connection")
 	}
 
-	auth, err := goph.Key(s.PrivateKey, "")
+	auth, err := goph.RawKey(s.PrivateKey, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create SSH auth from private key: %w", err)
 	}
