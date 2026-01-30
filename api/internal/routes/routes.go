@@ -13,7 +13,6 @@ import (
 	audit "github.com/raghavyuva/nixopus-api/internal/features/audit/controller"
 	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
 	auth_service "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
-	auth_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
 	container "github.com/raghavyuva/nixopus-api/internal/features/container/controller"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
@@ -138,13 +137,6 @@ func (router *Router) setupAuthentication(server *fuego.Server) {
 				next.ServeHTTP(w, r)
 				return
 			}
-			// Skip global auth for API key routes (they have their own APIKeyAuthMiddleware)
-			// API key routes use APIKeyAuthMiddleware which is applied to their route group
-			// We detect API key routes by checking if they're under /deploy/application/project/add-to-family
-			if strings.HasPrefix(r.URL.Path, "/api/v1/deploy/application/project/add-to-family") {
-				next.ServeHTTP(w, r)
-				return
-			}
 			middleware.AuthMiddleware(next, router.app, router.cache).ServeHTTP(w, r)
 		})
 	})
@@ -220,11 +212,6 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 
 // registerProtectedRoutes registers routes that require authentication
 func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Version, notificationManager *notification.NotificationManager) {
-	// Protected auth routes
-	authController := router.createAuthController(notificationManager)
-	authProtectedGroup := fuego.Group(server, apiV1.Path+"/auth")
-	router.RegisterAuthenticatedAuthRoutes(authProtectedGroup, authController)
-
 	// User routes
 	userController := user.NewUserController(router.app.Store, router.app.Ctx, router.logger, router.cache)
 	userGroup := fuego.Group(server, apiV1.Path+"/user")
@@ -290,19 +277,6 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterDeployRoutes(deployGroup, deployController)
 
-	// Deploy API key routes (for CLI - uses API key authentication instead of session)
-	deployAPIKeyGroup := fuego.Group(server, apiV1.Path+"/deploy")
-	fuego.Use(deployAPIKeyGroup, func(next http.Handler) http.Handler {
-		return middleware.APIKeyAuthMiddleware(next, router.app)
-	})
-	router.applyMiddleware(deployAPIKeyGroup, MiddlewareConfig{
-		RBAC:         false,
-		FeatureFlag:  "deploy",
-		Audit:        false,
-		ResourceName: "deploy",
-	})
-	router.RegisterDeployAPIKeyRoutes(deployAPIKeyGroup, deployController)
-
 	// Audit routes
 	auditController := audit.NewAuditController(router.app.Store.DB, router.app.Ctx, router.logger)
 	auditGroup := fuego.Group(server, apiV1.Path+"/audit")
@@ -360,17 +334,11 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 }
 
 // createAuthController creates and returns an auth controller
-// Only used for API key management - Better Auth handles authentication
+// Better Auth handles authentication
 func (router *Router) createAuthController(notificationManager *notification.NotificationManager) *auth.AuthController {
 	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
-	// Create minimal auth service (only GetUserByEmail is used)
 	authService := auth_service.NewAuthService(userStorage, router.logger, router.app.Ctx)
-
-	// Create API key service
-	apiKeyStorage := auth_storage.APIKeyStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
-	apiKeyService := auth_service.NewAPIKeyService(apiKeyStorage, router.logger)
-
-	return auth.NewAuthController(router.app.Ctx, router.logger, notificationManager, *authService, apiKeyService, router.app.Store)
+	return auth.NewAuthController(router.app.Ctx, router.logger, notificationManager, *authService, router.app.Store)
 }
 
 // createFeatureFlagController creates and returns a feature flag controller
