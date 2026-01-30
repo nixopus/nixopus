@@ -79,8 +79,7 @@ var LoginCmd = &cobra.Command{
 
 // runLoginSteps runs the login steps and sends updates to the UI
 func runLoginSteps(program *LoginProgram, betterAuthURL, frontendURL, clientID, scope string) error {
-	// Step 1: Request device code
-	program.Send(LoginStepMsg{Step: 0, Message: "Requesting device authorization..."})
+	// Request device code
 	deviceCodeResp, err := RequestDeviceCode(betterAuthURL, clientID, scope)
 	if err != nil {
 		program.Send(LoginErrorMsg{Error: fmt.Sprintf("Failed to request device code: %v", err)})
@@ -88,36 +87,19 @@ func runLoginSteps(program *LoginProgram, betterAuthURL, frontendURL, clientID, 
 		return err
 	}
 
-	// Step 2: Display user code
-	formattedCode := FormatUserCode(deviceCodeResp.UserCode)
-
 	// Construct frontend verification URL (frontend serves the /device page)
 	frontendVerificationURL := fmt.Sprintf("%s/device?user_code=%s", frontendURL, deviceCodeResp.UserCode)
 
+	// Display URL - user can click if browser opening fails
 	program.Send(LoginStepMsg{
-		Step:    1,
-		Message: fmt.Sprintf("Visit: %s/device", frontendURL),
-	})
-	program.Send(LoginStepMsg{
-		Step:    2,
-		Message: fmt.Sprintf("Enter code: %s", formattedCode),
+		Step:    0,
+		Message: frontendVerificationURL,
 	})
 
-	// Step 3: Open browser to frontend URL
-	program.Send(LoginStepMsg{Step: 3, Message: "Opening browser..."})
-	if err := openBrowser(frontendVerificationURL); err != nil {
-		program.Send(LoginStepMsg{
-			Step:    3,
-			Message: fmt.Sprintf("Could not open browser. Please visit: %s", frontendVerificationURL),
-		})
-	}
+	// Try to open browser (silently fail if it doesn't work)
+	_ = openBrowser(frontendVerificationURL)
 
-	program.Send(LoginStepMsg{
-		Step:    4,
-		Message: fmt.Sprintf("Waiting for authorization... (polling every %ds)", deviceCodeResp.Interval),
-	})
-
-	// Step 4: Poll for access token
+	// Poll for access token
 	accessToken, refreshToken, err := PollForToken(
 		betterAuthURL,
 		deviceCodeResp.DeviceCode,
@@ -130,9 +112,6 @@ func runLoginSteps(program *LoginProgram, betterAuthURL, frontendURL, clientID, 
 		program.Quit()
 		return err
 	}
-
-	// Step 5: Save access token to config
-	program.Send(LoginStepMsg{Step: 5, Message: "Saving access token..."})
 
 	// Load existing config or create new one
 	cfg, err := config.Load()

@@ -26,7 +26,7 @@ type LoginModel struct {
 // NewLoginModel creates a new login model
 func NewLoginModel() LoginModel {
 	return LoginModel{
-		totalSteps: 6, // Request code, Display URL, Display code, Open browser, Poll, Save token
+		totalSteps: 1, // Just show URL and wait
 	}
 }
 
@@ -121,7 +121,7 @@ func (m LoginModel) renderBanner() string {
 	return bannerStyle.Render(title)
 }
 
-// renderProgress renders the progress steps
+// renderProgress renders the URL
 func (m LoginModel) renderProgress() string {
 	boxStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
@@ -130,36 +130,17 @@ func (m LoginModel) renderProgress() string {
 		Width(55).
 		MaxWidth(55)
 
-	steps := []string{
-		"Requesting device authorization...",
-		"Displaying verification URL...",
-		"Displaying user code...",
-		"Opening browser...",
-		"Waiting for authorization...",
-		"Saving access token...",
-	}
-
 	lines := []string{}
-	for i, step := range steps {
-		var indicator string
-		var stepText string
-		if i < m.currentStep {
-			indicator = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render("✓")
-			stepText = step
-		} else if i == m.currentStep {
-			indicator = lipgloss.NewStyle().Foreground(lipgloss.Color("220")).Render("⏳")
-			stepText = step
-		} else {
-			indicator = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("○")
-			stepText = step
-		}
-		lines = append(lines, fmt.Sprintf("%s %s", indicator, stepText))
-	}
-
 	if m.stepMessage != "" {
+		// Display the URL as a clickable link
+		urlStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("63")).
+			Underline(true)
+		lines = append(lines, urlStyle.Render(m.stepMessage))
 		lines = append(lines, "")
-		msg := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(m.stepMessage)
-		lines = append(lines, msg)
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Waiting for authorization..."))
+	} else {
+		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Initializing..."))
 	}
 
 	content := lipgloss.JoinVertical(lipgloss.Left, lines...)
@@ -179,19 +160,8 @@ func (m LoginModel) renderSuccess() string {
 	lines := []string{
 		lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true).Render("✓ Login successful!"),
 		"",
-		lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Access token saved to: .nixopus"),
-		"",
 	}
 
-	nextStepText := "You can now use Nixopus commands"
-	nextStep := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("63")).
-		Bold(true).
-		Width(contentWidth).
-		Render(nextStepText)
-	lines = append(lines, nextStep)
-
-	lines = append(lines, "")
 	initText := "Run 'nixopus live' to initialize and start deployment"
 	initLine := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("240")).
