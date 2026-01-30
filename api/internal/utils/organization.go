@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/betterauth"
+	"github.com/raghavyuva/nixopus-api/internal/features/auth"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/uptrace/bun"
@@ -17,7 +17,7 @@ import (
 // GetOrganizationIDFromBetterAuth gets organization ID from Better Auth session
 // Returns empty string if not found
 func GetOrganizationIDFromBetterAuth(r *http.Request) (string, error) {
-	sessionResp, err := betterauth.VerifySession(r)
+	sessionResp, err := auth.VerifySession(r)
 	if err != nil {
 		return "", fmt.Errorf("failed to verify session: %w", err)
 	}

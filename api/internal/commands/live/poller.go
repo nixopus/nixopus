@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/cli_config"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/mover"
 )
 
@@ -41,7 +41,7 @@ type Log struct {
 
 // DeploymentPoller polls the API for deployment status updates
 type DeploymentPoller struct {
-	config        *cli_config.Config
+	config        *config.Config
 	tracker       *mover.Tracker
 	client        *http.Client
 	logFetcher    *LogFetcher
@@ -50,7 +50,7 @@ type DeploymentPoller struct {
 }
 
 // NewDeploymentPoller creates a new deployment poller
-func NewDeploymentPoller(config *cli_config.Config, tracker *mover.Tracker, applicationID string) *DeploymentPoller {
+func NewDeploymentPoller(config *config.Config, tracker *mover.Tracker, applicationID string) *DeploymentPoller {
 	return &DeploymentPoller{
 		config:        config,
 		tracker:       tracker,

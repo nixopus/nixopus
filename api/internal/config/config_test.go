@@ -53,11 +53,6 @@ func TestConfigLoading(t *testing.T) {
 				Redis: types.RedisConfig{
 					URL: "redis://test-redis:6379",
 				},
-				SSH: types.SSHConfig{
-					Host: "test-ssh-host",
-					Port: 2222,
-					User: "sshuser",
-				},
 				Deployment: types.DeploymentConfig{
 					MountPath: "/test/mount",
 				},
@@ -118,9 +113,6 @@ func TestConfigLoading(t *testing.T) {
 			assert.Equal(t, tt.expectedConfig.Database.Name, config.Database.Name, "Database name mismatch")
 			assert.Equal(t, tt.expectedConfig.Database.SSLMode, config.Database.SSLMode, "Database SSL mode mismatch")
 			assert.Equal(t, tt.expectedConfig.Redis.URL, config.Redis.URL, "Redis URL mismatch")
-			assert.Equal(t, tt.expectedConfig.SSH.Host, config.SSH.Host, "SSH host mismatch")
-			assert.Equal(t, tt.expectedConfig.SSH.Port, config.SSH.Port, "SSH port mismatch")
-			assert.Equal(t, tt.expectedConfig.SSH.User, config.SSH.User, "SSH user mismatch")
 			assert.Equal(t, tt.expectedConfig.Deployment.MountPath, config.Deployment.MountPath, "Mount path mismatch")
 			assert.Equal(t, tt.expectedConfig.Proxy.CaddyEndpoint, config.Proxy.CaddyEndpoint, "Caddy endpoint mismatch")
 			assert.Equal(t, tt.expectedConfig.CORS.AllowedOrigin, config.CORS.AllowedOrigin, "Allowed origin mismatch")
@@ -202,8 +194,6 @@ func TestConfigValidation(t *testing.T) {
 		assert.NotEmpty(t, config.Database.Password, "Database password should not be empty")
 		assert.NotEmpty(t, config.Database.Name, "Database name should not be empty")
 		assert.NotEmpty(t, config.Redis.URL, "Redis URL should not be empty")
-		assert.NotEmpty(t, config.SSH.Host, "SSH host should not be empty")
-		assert.NotEmpty(t, config.SSH.User, "SSH user should not be empty")
 		assert.NotEmpty(t, config.Deployment.MountPath, "Mount path should not be empty")
 		assert.NotEmpty(t, config.Proxy.CaddyEndpoint, "Caddy endpoint should not be empty")
 		assert.NotEmpty(t, config.CORS.AllowedOrigin, "Allowed origin should not be empty")
@@ -368,10 +358,6 @@ func TestConfigurationValidation(t *testing.T) {
 			Redis: types.RedisConfig{
 				URL: "redis://localhost:6379",
 			},
-			SSH: types.SSHConfig{
-				Host: "localhost",
-				User: "root",
-			},
 			Deployment: types.DeploymentConfig{
 				MountPath: "/tmp",
 			},
@@ -401,10 +387,6 @@ func TestConfigurationValidation(t *testing.T) {
 			},
 			Redis: types.RedisConfig{
 				URL: "", // Missing Redis URL
-			},
-			SSH: types.SSHConfig{
-				Host: "localhost",
-				User: "", // Missing SSH user
 			},
 			Deployment: types.DeploymentConfig{
 				MountPath: "/tmp",
