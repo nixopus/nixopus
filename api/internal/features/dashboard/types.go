@@ -42,7 +42,7 @@ type DeployServiceProvider interface {
 type DashboardMonitor struct {
 	conn           *websocket.Conn
 	connMutex      sync.Mutex
-	sshpkg         *sshpkg.SSH
+	sshManager     *sshpkg.SSHManager
 	log            logger.Logger
 	client         *goph.Client
 	Interval       time.Duration

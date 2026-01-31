@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -277,11 +278,13 @@ func (m *DashboardMonitor) GetSystemStats() {
 }
 
 func (m *DashboardMonitor) getCommandOutput(cmd string) (string, error) {
-	if m.client == nil {
-		return "", fmt.Errorf("SSH client is not connected")
+	// Get connection from pool (reuses existing or creates new if needed)
+	client, err := m.sshManager.Connect()
+	if err != nil {
+		return "", fmt.Errorf("SSH client is not connected: %w", err)
 	}
 
-	session, err := m.client.NewSession()
+	session, err := client.NewSession()
 	if err != nil {
 		m.log.Log(logger.Error, "Failed to create new session", err.Error())
 		return "", err
@@ -296,7 +299,7 @@ func (m *DashboardMonitor) getCommandOutput(cmd string) (string, error) {
 	if err != nil {
 		errMsg := fmt.Sprintf("Command failed: %s, stderr: %s", err.Error(), stderrBuf.String())
 		m.log.Log(logger.Error, errMsg, "")
-		return "", fmt.Errorf(errMsg)
+		return "", errors.New(errMsg)
 	}
 
 	return stdoutBuf.String(), nil

@@ -39,11 +39,6 @@ func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger, organizationID
 		cancel()
 		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	ssh_client, err := manager.GetOrganizationSSH()
-	if err != nil {
-		cancel()
-		return nil, fmt.Errorf("failed to get SSH client: %w", err)
-	}
 
 	dockerService, err := getDockerService()
 	if err != nil {
@@ -53,7 +48,7 @@ func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger, organizationID
 
 	monitor := &DashboardMonitor{
 		conn:           conn,
-		sshpkg:         ssh_client,
+		sshManager:     manager,
 		log:            log,
 		ctx:            ctx,
 		cancel:         cancel,
@@ -71,19 +66,28 @@ func (m *DashboardMonitor) Start() {
 	go func() {
 		ticker := time.NewTicker(m.Interval)
 		defer ticker.Stop()
-		client, err := m.sshpkg.Connect()
+
+		// Get connection from pool (will reuse existing or create new)
+		client, err := m.sshManager.Connect()
 		if err != nil {
 			m.log.Log(logger.Error, "Failed to connect to SSH server", err.Error())
 			m.BroadcastError(err.Error(), "ssh_connect")
 			return
 		}
 		m.client = client
-		defer client.Close()
 		m.HandleAllOperations()
 
 		for {
 			select {
 			case <-ticker.C:
+				// Reuse existing connection from pool, reconnect if needed
+				client, err := m.sshManager.Connect()
+				if err != nil {
+					m.log.Log(logger.Error, "Failed to reconnect to SSH server", err.Error())
+					m.BroadcastError(err.Error(), "ssh_connect")
+					continue
+				}
+				m.client = client
 				m.HandleAllOperations()
 			case <-m.ctx.Done():
 				m.log.Log(logger.Info, "Dashboard monitor stopped", "")
@@ -144,10 +148,9 @@ func (m *DashboardMonitor) SetOperations(operations []DashboardOperation) {
 }
 
 func (m *DashboardMonitor) Close() {
-	if m.client != nil {
-		m.client.Close()
-		m.client = nil
-	}
+	// Don't close SSH client here - it's managed by the connection pool
+	// The pool will handle cleanup when connections are idle
+	m.client = nil
 
 	if m.conn != nil {
 		m.connMutex.Lock()
