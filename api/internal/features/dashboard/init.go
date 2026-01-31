@@ -106,6 +106,22 @@ func (m *DashboardMonitor) Stop() {
 }
 
 func (m *DashboardMonitor) HandleAllOperations() {
+	// Check if operations are already running - skip if so to prevent concurrent execution
+	m.operationsMutex.Lock()
+	if m.operationsRunning {
+		m.operationsMutex.Unlock()
+		return
+	}
+	m.operationsRunning = true
+	m.operationsMutex.Unlock()
+
+	// Ensure we reset the flag when done
+	defer func() {
+		m.operationsMutex.Lock()
+		m.operationsRunning = false
+		m.operationsMutex.Unlock()
+	}()
+
 	for _, operation := range m.Operations {
 		select {
 		case <-m.ctx.Done():

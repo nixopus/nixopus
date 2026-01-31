@@ -5713,6 +5713,419 @@
 				},
 				"type": "object"
 			},
+			"ListServersResponse": {
+				"description": "ListServersResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"is_active": {
+								"nullable": true,
+								"type": "boolean"
+							},
+							"page": {
+								"type": "integer"
+							},
+							"page_size": {
+								"type": "integer"
+							},
+							"search": {
+								"type": "string"
+							},
+							"servers": {
+								"items": {
+									"properties": {
+										"auth_method": {
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"description": {
+											"nullable": true,
+											"type": "string"
+										},
+										"fingerprint": {
+											"nullable": true,
+											"type": "string"
+										},
+										"host": {
+											"nullable": true,
+											"type": "string"
+										},
+										"id": {},
+										"is_active": {
+											"type": "boolean"
+										},
+										"key_size": {
+											"nullable": true,
+											"type": "integer"
+										},
+										"key_type": {
+											"nullable": true,
+											"type": "string"
+										},
+										"last_used_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"name": {
+											"type": "string"
+										},
+										"organization": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"id": {},
+												"logo": {
+													"nullable": true,
+													"type": "string"
+												},
+												"metadata": {
+													"nullable": true,
+													"type": "string"
+												},
+												"name": {
+													"type": "string"
+												},
+												"slug": {
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"organization_id": {},
+										"port": {
+											"nullable": true,
+											"type": "integer"
+										},
+										"provision": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"domain": {
+													"nullable": true,
+													"type": "string"
+												},
+												"error": {
+													"nullable": true,
+													"type": "string"
+												},
+												"id": {},
+												"lxd_container_name": {
+													"nullable": true,
+													"type": "string"
+												},
+												"organization": {
+													"nullable": true,
+													"properties": {
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"id": {},
+														"logo": {
+															"nullable": true,
+															"type": "string"
+														},
+														"metadata": {
+															"nullable": true,
+															"type": "string"
+														},
+														"name": {
+															"type": "string"
+														},
+														"slug": {
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"organization_id": {},
+												"ssh_key": {
+													"nullable": true,
+													"properties": {
+														"auth_method": {
+															"type": "string"
+														},
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"deleted_at": {
+															"format": "date-time",
+															"nullable": true,
+															"type": "string"
+														},
+														"description": {
+															"nullable": true,
+															"type": "string"
+														},
+														"fingerprint": {
+															"nullable": true,
+															"type": "string"
+														},
+														"host": {
+															"nullable": true,
+															"type": "string"
+														},
+														"id": {},
+														"is_active": {
+															"type": "boolean"
+														},
+														"key_size": {
+															"nullable": true,
+															"type": "integer"
+														},
+														"key_type": {
+															"nullable": true,
+															"type": "string"
+														},
+														"last_used_at": {
+															"format": "date-time",
+															"nullable": true,
+															"type": "string"
+														},
+														"name": {
+															"type": "string"
+														},
+														"organization": {
+															"nullable": true,
+															"properties": {
+																"created_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"id": {},
+																"logo": {
+																	"nullable": true,
+																	"type": "string"
+																},
+																"metadata": {
+																	"nullable": true,
+																	"type": "string"
+																},
+																"name": {
+																	"type": "string"
+																},
+																"slug": {
+																	"type": "string"
+																}
+															},
+															"type": "object"
+														},
+														"organization_id": {},
+														"port": {
+															"nullable": true,
+															"type": "integer"
+														},
+														"public_key": {
+															"nullable": true,
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"user": {
+															"nullable": true,
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"ssh_key_id": {
+													"nullable": true
+												},
+												"status": {
+													"type": "string"
+												},
+												"subdomain": {
+													"nullable": true,
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"user": {
+													"nullable": true,
+													"properties": {
+														"avatar": {
+															"type": "string"
+														},
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"email": {
+															"type": "string"
+														},
+														"email_verified": {
+															"type": "boolean"
+														},
+														"id": {},
+														"image": {
+															"nullable": true,
+															"type": "string"
+														},
+														"is_verified": {
+															"type": "boolean"
+														},
+														"name": {
+															"type": "string"
+														},
+														"organization_users": {
+															"items": {
+																"nullable": true,
+																"properties": {
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"deleted_at": {
+																		"format": "date-time",
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"id": {},
+																	"organization": {
+																		"nullable": true,
+																		"properties": {
+																			"created_at": {
+																				"format": "date-time",
+																				"type": "string"
+																			},
+																			"id": {},
+																			"logo": {
+																				"nullable": true,
+																				"type": "string"
+																			},
+																			"metadata": {
+																				"nullable": true,
+																				"type": "string"
+																			},
+																			"name": {
+																				"type": "string"
+																			},
+																			"slug": {
+																				"type": "string"
+																			}
+																		},
+																		"type": "object"
+																	},
+																	"organization_id": {},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"user": {
+																		"$ref": "#/components/schemas/User"
+																	},
+																	"user_id": {}
+																},
+																"type": "object"
+															},
+															"type": "array"
+														},
+														"organizations": {
+															"items": {
+																"nullable": true,
+																"properties": {
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"id": {},
+																	"logo": {
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"metadata": {
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"name": {
+																		"type": "string"
+																	},
+																	"slug": {
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"type": "array"
+														},
+														"supertokens_user_id": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"username": {
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"user_id": {}
+											},
+											"type": "object"
+										},
+										"public_key": {
+											"nullable": true,
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"user": {
+											"nullable": true,
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"sort_by": {
+								"type": "string"
+							},
+							"sort_order": {
+								"type": "string"
+							},
+							"status": {
+								"type": "string"
+							},
+							"total_count": {
+								"type": "integer"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"LogsResponse": {
 				"description": "LogsResponse schema",
 				"properties": {
@@ -14468,6 +14881,75 @@
 				]
 			}
 		},
+		"/api/v1/servers": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/server/controller.(*ServerController).ListServers`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
+				"operationId": "GET_/api/v1/servers",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ListServersResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/ListServersResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "list servers",
+				"tags": [
+					"api/v1/servers"
+				]
+			}
+		},
 		"/api/v1/update": {
 			"post": {
 				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/update/controller.(*UpdateController).PerformUpdate`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
@@ -15706,6 +16188,9 @@
 		},
 		{
 			"name": "api/v1/notification"
+		},
+		{
+			"name": "api/v1/servers"
 		},
 		{
 			"name": "api/v1/update"

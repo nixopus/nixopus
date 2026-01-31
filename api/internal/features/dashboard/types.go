@@ -40,18 +40,20 @@ type DeployServiceProvider interface {
 }
 
 type DashboardMonitor struct {
-	conn           *websocket.Conn
-	connMutex      sync.Mutex
-	sshManager     *sshpkg.SSHManager
-	log            logger.Logger
-	client         *goph.Client
-	Interval       time.Duration
-	Operations     []DashboardOperation
-	cancel         context.CancelFunc
-	ctx            context.Context
-	dockerService  *docker.DockerService
-	organizationID string
-	deployService  DeployServiceProvider
+	conn              *websocket.Conn
+	connMutex         sync.Mutex
+	operationsMutex   sync.Mutex // Prevents concurrent execution of HandleAllOperations
+	operationsRunning bool       // Flag to track if operations are currently running
+	sshManager        *sshpkg.SSHManager
+	log               logger.Logger
+	client            *goph.Client
+	Interval          time.Duration
+	Operations        []DashboardOperation
+	cancel            context.CancelFunc
+	ctx               context.Context
+	dockerService     *docker.DockerService
+	organizationID    string
+	deployService     DeployServiceProvider
 }
 
 type SystemStats struct {
