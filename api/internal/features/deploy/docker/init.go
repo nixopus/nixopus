@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
-	"sync"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -20,16 +17,17 @@ import (
 	"github.com/google/uuid"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/uptrace/bun"
 )
 
 type DockerService struct {
-	Cli    *client.Client
-	Ctx    context.Context
-	logger logger.Logger
+	Cli       *client.Client
+	Ctx       context.Context
+	logger    logger.Logger
+	sshTunnel *SSHTunnel
 }
 
 type DockerRepository interface {
@@ -82,184 +80,82 @@ type DockerRepository interface {
 	GetServiceByID(serviceID string) (swarm.Service, error)
 }
 
-type DockerClient struct {
-	Client *client.Client
-}
+// NewDockerServiceWithServer creates a new instance of DockerService using SSH tunneling.
+// Requires organizationID to be provided - returns nil if SSH tunnel cannot be established.
+func NewDockerServiceWithServer(db *bun.DB, ctx context.Context, organizationID uuid.UUID) *DockerService {
+	lgr := logger.NewLogger()
+	cli, tunnel := newDockerClientWithSSHTunnel(lgr, ctx, organizationID)
 
-// DockerClientConfig represents configuration for a Docker client connection
-type DockerClientConfig struct {
-	Host    string // Docker daemon host (e.g., "unix:///var/run/docker.sock", "tcp://host:2376")
-	Context context.Context
-	Logger  logger.Logger
-}
-
-// DockerManager manages multiple Docker client connections to different Docker daemons/sockets
-// For now, it defaults to single client mode for backward compatibility
-// In the future, it can be extended to support multiple Docker hosts/daemons
-type DockerManager struct {
-	clients   map[string]*client.Client      // Map of client ID to Docker client
-	configs   map[string]*DockerClientConfig // Map of client ID to config
-	defaultID string                         // ID of the default client
-	mu        sync.RWMutex                   // Mutex for thread safe access
-}
-
-var (
-	// orgManagers caches DockerManager instances per organization ID
-	orgManagers   = make(map[string]*DockerManager)
-	orgManagersMu sync.RWMutex
-)
-
-// AddClient adds a new Docker client connection to the manager with a unique ID
-// The host can be a Unix socket (unix:///path/to/socket) or TCP (tcp://host:port)
-// Example: AddClient("server1", "tcp://192.168.1.100:2376")
-// Example: AddClient("server2", "unix:///var/run/docker.sock")
-func (m *DockerManager) AddClient(id string, host string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if id == "" {
-		return fmt.Errorf("client ID cannot be empty")
-	}
-	if host == "" {
-		return fmt.Errorf("Docker host cannot be empty")
+	// If SSH tunnel failed, cli will be nil
+	if cli == nil {
+		lgr.Log(logger.Error, "Failed to create Docker client via SSH tunnel", "")
+		return nil
 	}
 
-	// Check if an existing client exists and close it before overwriting
-	if existingClient, exists := m.clients[id]; exists {
-		if err := existingClient.Close(); err != nil {
-			// Log the error but don't fail - we'll still replace the client
-			if config, ok := m.configs[id]; ok {
-				config.Logger.Log(logger.Warning, fmt.Sprintf("Failed to close existing Docker client %s", id), err.Error())
-			} else {
-				// Fallback to default logger if config doesn't exist
-				defaultLogger := logger.NewLogger()
-				defaultLogger.Log(logger.Warning, fmt.Sprintf("Failed to close existing Docker client %s", id), err.Error())
-			}
+	svc := &DockerService{
+		Cli:       cli,
+		Ctx:       context.Background(),
+		logger:    lgr,
+		sshTunnel: tunnel,
+	}
+
+	if !isClusterInitialized(svc.Cli) {
+		if err := svc.InitCluster(); err != nil {
+			svc.logger.Log(logger.Warning, "Failed to initialize cluster", err.Error())
+		} else {
+			svc.logger.Log(logger.Info, "Cluster initialized successfully", "")
 		}
+	} else {
+		svc.logger.Log(logger.Info, "Cluster already initialized", "")
 	}
 
+	return svc
+}
+
+func newDockerClientWithSSHTunnel(lgr logger.Logger, ctx context.Context, organizationID uuid.UUID) (*client.Client, *SSHTunnel) {
+	if organizationID == uuid.Nil {
+		lgr.Log(logger.Error, "Organization ID is required", "")
+		return nil, nil
+	}
+
+	// Get SSH manager for organization
+	sshManager, err := ssh.GetSSHManagerForOrganization(ctx, organizationID)
+	if err != nil {
+		lgr.Log(logger.Error, "Failed to get SSH manager for organization", err.Error())
+		return nil, nil
+	}
+
+	// Get SSH client struct (not the goph.Client connection)
+	sshClient, err := sshManager.GetOrganizationSSH()
+	if err != nil {
+		lgr.Log(logger.Error, "Failed to get SSH client", err.Error())
+		return nil, nil
+	}
+
+	// Create SSH tunnel
+	tunnel, err := CreateSSHTunnel(sshClient, lgr)
+	if err != nil || tunnel == nil {
+		lgr.Log(logger.Error, "Failed to create SSH tunnel", err.Error())
+		return nil, nil
+	}
+
+	// Create Docker client over tunnel
+	// Docker client requires unix:/// (three slashes) for absolute paths
+	// filepath.Join returns absolute paths, so tunnel.localSocket already starts with /
+	host := fmt.Sprintf("unix://%s", tunnel.localSocket)
+	lgr.Log(logger.Info, "SSH tunnel established; using tunneled docker socket", fmt.Sprintf("host=%s, socket=%s", host, tunnel.localSocket))
 	cli, err := client.NewClientWithOpts(
 		client.WithHost(host),
 		client.WithAPIVersionNegotiation(),
 	)
 	if err != nil {
-		// Try with TLS if available
-		cli, err = client.NewClientWithOpts(
-			client.WithHost(host),
-			client.WithAPIVersionNegotiation(),
-			client.WithTLSClientConfigFromEnv(),
-		)
-		if err != nil {
-			return fmt.Errorf("failed to create Docker client for %s: %w", host, err)
-		}
+		lgr.Log(logger.Error, "Failed to create docker client over SSH tunnel", err.Error())
+		tunnel.Close()
+		return nil, nil
 	}
 
-	m.clients[id] = cli
-	m.configs[id] = &DockerClientConfig{
-		Host:    host,
-		Context: context.Background(),
-		Logger:  logger.NewLogger(),
-	}
-	return nil
-}
-
-// GetClient retrieves a Docker client by ID, or returns the default client if ID is empty
-func (m *DockerManager) GetClient(id string) (*client.Client, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	if id == "" {
-		id = m.defaultID
-	}
-
-	client, exists := m.clients[id]
-	if !exists {
-		return nil, fmt.Errorf("Docker client with ID '%s' not found", id)
-	}
-
-	return client, nil
-}
-
-// GetService retrieves a DockerService for a specific client ID
-// This wraps the client with the service interface for backward compatibility
-func (m *DockerManager) GetService(id string) (*DockerService, error) {
-	cli, err := m.GetClient(id)
-	if err != nil {
-		return nil, err
-	}
-
-	m.mu.RLock()
-	config, exists := m.configs[id]
-	m.mu.RUnlock()
-
-	if !exists {
-		config = &DockerClientConfig{
-			Host:    "unix:///var/run/docker.sock",
-			Context: context.Background(),
-			Logger:  logger.NewLogger(),
-		}
-	}
-
-	return &DockerService{
-		Cli:    cli,
-		Ctx:    config.Context,
-		logger: config.Logger,
-	}, nil
-}
-
-// SetDefault sets the default client ID
-func (m *DockerManager) SetDefault(id string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if _, exists := m.clients[id]; !exists {
-		return fmt.Errorf("Docker client with ID '%s' does not exist", id)
-	}
-
-	m.defaultID = id
-	return nil
-}
-
-// ListClients returns a list of all client IDs
-func (m *DockerManager) ListClients() []string {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	ids := make([]string, 0, len(m.clients))
-	for id := range m.clients {
-		ids = append(ids, id)
-	}
-	return ids
-}
-
-// GetDefaultService returns the default Docker service
-func (m *DockerManager) GetDefaultService() (*DockerService, error) {
-	return m.GetService("")
-}
-
-// NewDockerService creates a new instance of DockerService using the default docker client.
-func NewDockerService() *DockerService {
-	client, _ := NewDockerClient()
-	service := &DockerService{
-		Cli:    client,
-		Ctx:    context.Background(),
-		logger: logger.NewLogger(),
-	}
-
-	// Initialize cluster if not already initialized, this should be run on master node only
-	// TODO: Add a check to see if the node is the master node
-	// WARNING: This should be thought again during multi-server architecture feature
-	if !isClusterInitialized(client) {
-		if err := service.InitCluster(); err != nil {
-			service.logger.Log(logger.Warning, "Failed to initialize cluster", err.Error())
-		} else {
-			service.logger.Log(logger.Info, "Cluster initialized successfully", "")
-		}
-	} else {
-		service.logger.Log(logger.Info, "Cluster already initialized", "")
-	}
-
-	return service
+	lgr.Log(logger.Info, "Docker client created over SSH tunnel", "")
+	return cli, tunnel
 }
 
 func isClusterInitialized(cli *client.Client) bool {
@@ -278,153 +174,23 @@ func NewDockerServiceWithClient(cli *client.Client, ctx context.Context, logger 
 	}
 }
 
-// NewDockerClient creates a new docker client with the environment variables and
-// the correct API version negotiation.
-// Returns the client and the actual host string that was used for the connection.
-func NewDockerClient() (*client.Client, string) {
-	defaultHost := "unix:///var/run/docker.sock"
-	cli, err := client.NewClientWithOpts(
-		client.WithHost(defaultHost),
-		client.WithAPIVersionNegotiation(),
-	)
-	if err == nil {
-		return cli, defaultHost
-	}
-
-	// Try with FromEnv and TLS
-	cli, err = client.NewClientWithOpts(
-		client.FromEnv,
-		client.WithAPIVersionNegotiation(),
-		client.WithTLSClientConfigFromEnv(),
-	)
-	if err == nil {
-		// Extract host from environment or use default
-		host := getHostFromEnv()
-		return cli, host
-	}
-
-	// Try with FromEnv without TLS
-	cli, err = client.NewClientWithOpts(
-		client.FromEnv,
-		client.WithAPIVersionNegotiation(),
-	)
-	if err == nil {
-		host := getHostFromEnv()
-		return cli, host
-	}
-
-	panic(err)
-}
-
-// getHostFromEnv extracts the Docker host from environment variables
-// Returns the host from DOCKER_HOST env var, or default socket if not set
-func getHostFromEnv() string {
-	if host := os.Getenv("DOCKER_HOST"); host != "" {
-		return host
-	}
-	return "unix:///var/run/docker.sock"
-}
-
-// NewDockerClientWithTLS creates a Docker client with TLS configuration
-func NewDockerClientWithTLS(host string, caCert, clientCert, clientKey string) (*client.Client, error) {
-	if caCert == "" || clientCert == "" || clientKey == "" {
-		return nil, fmt.Errorf("TLS certificates are required")
-	}
-
-	// Create temporary files for certificates
-	tmpDir, err := os.MkdirTemp("", "docker-certs-")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temp directory: %w", err)
-	}
-	defer os.RemoveAll(tmpDir) // Cleanup handled by client
-
-	caCertPath := filepath.Join(tmpDir, "ca.pem")
-	certPath := filepath.Join(tmpDir, "cert.pem")
-	keyPath := filepath.Join(tmpDir, "key.pem")
-
-	if err := os.WriteFile(caCertPath, []byte(caCert), 0644); err != nil {
-		return nil, fmt.Errorf("failed to write CA cert: %w", err)
-	}
-	if err := os.WriteFile(certPath, []byte(clientCert), 0644); err != nil {
-		return nil, fmt.Errorf("failed to write client cert: %w", err)
-	}
-	if err := os.WriteFile(keyPath, []byte(clientKey), 0600); err != nil {
-		return nil, fmt.Errorf("failed to write client key: %w", err)
-	}
-
-	cli, err := client.NewClientWithOpts(
-		client.WithHost(host),
-		client.WithAPIVersionNegotiation(),
-		client.WithTLSClientConfig(caCertPath, certPath, keyPath),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Docker client with TLS: %w", err)
-	}
-
-	return cli, nil
-}
-
 // GetDockerServiceForOrganization returns a DockerService for a specific organization.
-// Caches managers per organization to avoid repeated database queries.
+// Uses SSH tunneling exclusively - returns error if SSH tunnel cannot be established.
 func GetDockerServiceForOrganization(ctx context.Context, orgID uuid.UUID) (*DockerService, error) {
 	if config.GlobalStore == nil {
 		return nil, fmt.Errorf("global store not initialized, ensure config.Init() has been called")
 	}
 
-	orgIDStr := orgID.String()
-
-	// Check cache first
-	orgManagersMu.RLock()
-	if manager, exists := orgManagers[orgIDStr]; exists {
-		orgManagersMu.RUnlock()
-		return manager.GetDefaultService()
-	}
-	orgManagersMu.RUnlock()
-
-	// Get organization-specific Docker config
-	dockerService := service.NewDockerConfigService(config.GlobalStore, ctx, logger.NewLogger())
-	dockerConfig, err := dockerService.GetDockerConfigForOrganization(orgID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Docker config for organization %s: %w", orgIDStr, err)
+	if config.GlobalStore.DB == nil {
+		return nil, fmt.Errorf("database not initialized")
 	}
 
-	// Create Docker client with TLS if enabled
-	var cli *client.Client
-	if dockerConfig.TLSEnabled {
-		cli, err = NewDockerClientWithTLS(
-			dockerConfig.Host,
-			dockerConfig.CACert,
-			dockerConfig.ClientCert,
-			dockerConfig.ClientKey,
-		)
-	} else {
-		cli, err = client.NewClientWithOpts(
-			client.WithHost(dockerConfig.Host),
-			client.WithAPIVersionNegotiation(),
-		)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Docker client for organization %s: %w", orgIDStr, err)
+	svc := NewDockerServiceWithServer(config.GlobalStore.DB, ctx, orgID)
+	if svc == nil {
+		return nil, fmt.Errorf("failed to create Docker service via SSH tunnel for organization %s", orgID.String())
 	}
 
-	// Create manager and cache it
-	manager := &DockerManager{
-		clients:   make(map[string]*client.Client),
-		configs:   make(map[string]*DockerClientConfig),
-		defaultID: "default",
-	}
-	manager.clients["default"] = cli
-	manager.configs["default"] = &DockerClientConfig{
-		Host:    dockerConfig.Host,
-		Context: ctx,
-		Logger:  logger.NewLogger(),
-	}
-
-	orgManagersMu.Lock()
-	orgManagers[orgIDStr] = manager
-	orgManagersMu.Unlock()
-
-	return manager.GetDefaultService()
+	return svc, nil
 }
 
 // GetDockerServiceFromContext extracts organization ID from context and returns the appropriate DockerRepository.
@@ -758,4 +524,12 @@ func (s *DockerService) PruneImages(opts filters.Args) (image.PruneReport, error
 //	error - an error if the update fails.
 func (s *DockerService) UpdateContainerResources(containerID string, resources container.UpdateConfig) (container.ContainerUpdateOKBody, error) {
 	return s.Cli.ContainerUpdate(s.Ctx, containerID, resources)
+}
+
+// Close cleans up the DockerService and any SSH tunnels
+func (s *DockerService) Close() error {
+	if s.sshTunnel != nil {
+		return s.sshTunnel.cleanup()
+	}
+	return nil
 }
