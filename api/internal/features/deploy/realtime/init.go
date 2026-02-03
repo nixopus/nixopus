@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
@@ -32,7 +31,6 @@ type ApplicationMonitor struct {
 	connMutex     sync.Mutex
 	sshManager    *sshpkg.SSHManager
 	log           logger.Logger
-	client        *goph.Client
 	Interval      time.Duration
 	cancel        context.CancelFunc
 	ctx           context.Context
@@ -92,27 +90,11 @@ func (m *ApplicationMonitor) Start() {
 		ticker := time.NewTicker(m.Interval)
 		defer ticker.Stop()
 
-		// Get connection from pool (will reuse existing or create new)
-		client, err := m.sshManager.Connect()
-		if err != nil {
-			m.log.Log(logger.Error, "Failed to connect to SSH server", err.Error())
-			m.BroadcastError(err.Error(), "ssh_connect")
-			return
-		}
-		m.client = client
 		m.HandleAllOperations()
 
 		for {
 			select {
 			case <-ticker.C:
-				// Reuse existing connection from pool, reconnect if needed
-				client, err := m.sshManager.Connect()
-				if err != nil {
-					m.log.Log(logger.Error, "Failed to reconnect to SSH server", err.Error())
-					m.BroadcastError(err.Error(), "ssh_connect")
-					continue
-				}
-				m.client = client
 				m.HandleAllOperations()
 			case <-m.ctx.Done():
 				m.log.Log(logger.Info, "Application monitor stopped", "")
@@ -233,10 +215,7 @@ func (m *ApplicationMonitor) SetOperations(operations []ApplicationMonitorOperat
 }
 
 func (m *ApplicationMonitor) Close() {
-	// Don't close SSH client here - it's managed by the connection pool
-	// The pool will handle cleanup when connections are idle
-	m.client = nil
-
+	// SSH connections are managed by the connection pool - no cleanup needed here
 	if m.conn != nil {
 		m.connMutex.Lock()
 		_ = m.conn.WriteMessage(
