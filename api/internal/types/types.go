@@ -5,7 +5,7 @@ type Config struct {
 	Database   DatabaseConfig   `mapstructure:"database"`
 	Redis      RedisConfig      `mapstructure:"redis"`
 	Deployment DeploymentConfig `mapstructure:"deployment"`
-	Docker     DockerConfig     `mapstructure:"docker"`
+	Docker     DockerAppConfig  `mapstructure:"docker"`
 	Proxy      ProxyConfig      `mapstructure:"proxy"`
 	CORS       CORSConfig       `mapstructure:"cors"`
 	App        AppConfig        `mapstructure:"app"`
@@ -53,7 +53,7 @@ type DeploymentConfig struct {
 	MountPath string `mapstructure:"mount_path" validate:"required"`
 }
 
-type DockerConfig struct {
+type DockerAppConfig struct {
 	Host    string `mapstructure:"host"`
 	Port    string `mapstructure:"port"`
 	Context string `mapstructure:"context"`
