@@ -49,7 +49,7 @@ type DashboardMonitor struct {
 	Operations        []DashboardOperation
 	cancel            context.CancelFunc
 	ctx               context.Context
-	dockerService     *docker.DockerService
+	dockerService     docker.DockerRepository
 	organizationID    string
 	deployService     DeployServiceProvider
 }

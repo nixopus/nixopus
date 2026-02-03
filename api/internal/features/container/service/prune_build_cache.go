@@ -14,7 +14,7 @@ type PruneBuildCacheOptions struct {
 
 // PruneBuildCache prunes Docker build cache
 func PruneBuildCache(
-	dockerService *docker.DockerService,
+	dockerService docker.DockerRepository,
 	l logger.Logger,
 	opts PruneBuildCacheOptions,
 ) (container_types.MessageResponse, error) {

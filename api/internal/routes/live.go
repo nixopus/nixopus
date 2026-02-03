@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-fuego/fuego"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	deploy_storage "github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
 	deploy_tasks "github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	github_connector_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
@@ -32,16 +31,9 @@ func NewLiveDeployController(store *storage.Store) *LiveDeployController {
 	// Initialize TaskService for live dev deployments
 	ctx := context.Background()
 	deployStorage := deploy_storage.DeployStorage{DB: store.DB, Ctx: ctx}
-	dockerRepo, err := docker.GetDockerManager().GetDefaultService()
-	if err != nil {
-		log.Fatalf("Failed to get Docker service: %v", err)
-	}
-	if dockerRepo == nil {
-		log.Fatalf("Docker service is nil")
-	}
 	githubConnectorStorage := github_connector_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx}
 	githubConnectorService := github_connector_service.NewGithubConnectorService(store, ctx, sharedLogger, &githubConnectorStorage)
-	taskService := deploy_tasks.NewTaskService(&deployStorage, sharedLogger, dockerRepo, githubConnectorService, store)
+	taskService := deploy_tasks.NewTaskService(&deployStorage, sharedLogger, githubConnectorService, store)
 	taskService.SetupCreateDeploymentQueue() // This also sets up LiveDevQueue via onceQueues
 	taskService.StartConsumers(ctx)
 

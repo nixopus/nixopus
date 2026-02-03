@@ -34,7 +34,7 @@ type ContainerLogsOptions struct {
 func GetContainerLogs(
 	ctx context.Context,
 	store *shared_storage.Store,
-	dockerService *docker.DockerService,
+	dockerService docker.DockerRepository,
 	l logger.Logger,
 	opts ContainerLogsOptions,
 ) (string, error) {

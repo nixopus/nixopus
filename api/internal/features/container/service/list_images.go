@@ -19,7 +19,7 @@ type ListImagesOptions struct {
 
 // ListImages retrieves a list of Docker images with optional filtering
 func ListImages(
-	dockerService *docker.DockerService,
+	dockerService docker.DockerRepository,
 	l logger.Logger,
 	opts ListImagesOptions,
 ) (container_types.ListImagesResponse, error) {

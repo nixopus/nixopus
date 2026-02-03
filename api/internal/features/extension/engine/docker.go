@@ -19,7 +19,7 @@ type dockerModule struct{}
 
 func (dockerModule) Type() string { return "docker" }
 
-func (dockerModule) Execute(_ *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
+func (dockerModule) Execute(ctx context.Context, _ *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
 	action, _ := step.Properties["action"].(string)
 	name, _ := step.Properties["name"].(string)
 	image, _ := step.Properties["image"].(string)
@@ -51,9 +51,9 @@ func (dockerModule) Execute(_ *ssh.SSH, step types.SpecStep, vars map[string]int
 		return "", nil, fmt.Errorf("docker: action is required (name=%q image=%q tag=%q)", name, image, tag)
 	}
 
-	svc, err := deploydocker.GetDockerManager().GetDefaultService()
+	svc, err := deploydocker.GetDockerServiceFromContext(ctx)
 	if err != nil {
-		return "", nil, fmt.Errorf("docker: failed to get default docker service: %w", err)
+		return "", nil, fmt.Errorf("docker: failed to get docker service from context: %w", err)
 	}
 	if svc == nil {
 		return "", nil, fmt.Errorf("docker: docker service is nil")
@@ -61,13 +61,13 @@ func (dockerModule) Execute(_ *ssh.SSH, step types.SpecStep, vars map[string]int
 
 	type handler func() (string, func(), error)
 	handlers := map[string]handler{
-		"pull": func() (string, func(), error) { return dockerPull(svc, image, tag) },
+		"pull": func() (string, func(), error) { return dockerPull(ctx, svc, image, tag) },
 		"run": func() (string, func(), error) {
-			return dockerRun(svc, name, image, tag, ports, restart, cmdStr, envAny, volumesAny, networksAny, vars)
+			return dockerRun(ctx, svc, name, image, tag, ports, restart, cmdStr, envAny, volumesAny, networksAny, vars)
 		},
-		"stop":  func() (string, func(), error) { return dockerStop(svc, name) },
-		"start": func() (string, func(), error) { return dockerStart(svc, name) },
-		"rm":    func() (string, func(), error) { return dockerRm(svc, name) },
+		"stop":  func() (string, func(), error) { return dockerStop(ctx, svc, name) },
+		"start": func() (string, func(), error) { return dockerStart(ctx, svc, name) },
+		"rm":    func() (string, func(), error) { return dockerRm(ctx, svc, name) },
 	}
 
 	h, ok := handlers[action]
@@ -188,7 +188,7 @@ func normalizeEnv(v interface{}, vars map[string]interface{}) ([]string, error) 
 	}
 }
 
-func findContainerIDByName(svc *deploydocker.DockerService, name string) (string, error) {
+func findContainerIDByName(ctx context.Context, svc deploydocker.DockerRepository, name string) (string, error) {
 	if name == "" {
 		return "", fmt.Errorf("name is required")
 	}
@@ -210,7 +210,7 @@ func init() {
 	RegisterModule(dockerModule{})
 }
 
-func dockerPull(svc *deploydocker.DockerService, image string, tag string) (string, func(), error) {
+func dockerPull(ctx context.Context, svc deploydocker.DockerRepository, image string, tag string) (string, func(), error) {
 	if image == "" {
 		return "", nil, fmt.Errorf("docker: image is required for pull")
 	}
@@ -218,7 +218,7 @@ func dockerPull(svc *deploydocker.DockerService, image string, tag string) (stri
 	if tag != "" {
 		ref = fmt.Sprintf("%s:%s", image, tag)
 	}
-	r, err := svc.Cli.ImagePull(context.Background(), ref, imagetypes.PullOptions{})
+	r, err := svc.ImagePull(ctx, ref, imagetypes.PullOptions{})
 	if err != nil {
 		return "", nil, fmt.Errorf("docker: image pull failed ref=%q: %w", ref, err)
 	}
@@ -228,7 +228,8 @@ func dockerPull(svc *deploydocker.DockerService, image string, tag string) (stri
 }
 
 func dockerRun(
-	svc *deploydocker.DockerService,
+	ctx context.Context,
+	svc deploydocker.DockerRepository,
 	name string,
 	image string,
 	tag string,
@@ -303,8 +304,8 @@ func dockerRun(
 	return resp.ID, compensate, nil
 }
 
-func dockerStop(svc *deploydocker.DockerService, name string) (string, func(), error) {
-	id, err := findContainerIDByName(svc, name)
+func dockerStop(ctx context.Context, svc deploydocker.DockerRepository, name string) (string, func(), error) {
+		id, err := findContainerIDByName(ctx, svc, name)
 	if err != nil {
 		return "", nil, fmt.Errorf("docker: stop failed - %w", err)
 	}
@@ -315,8 +316,8 @@ func dockerStop(svc *deploydocker.DockerService, name string) (string, func(), e
 	return id, compensate, nil
 }
 
-func dockerStart(svc *deploydocker.DockerService, name string) (string, func(), error) {
-	id, err := findContainerIDByName(svc, name)
+func dockerStart(ctx context.Context, svc deploydocker.DockerRepository, name string) (string, func(), error) {
+		id, err := findContainerIDByName(ctx, svc, name)
 	if err != nil {
 		return "", nil, fmt.Errorf("docker: start failed - %w", err)
 	}
@@ -327,8 +328,8 @@ func dockerStart(svc *deploydocker.DockerService, name string) (string, func(), 
 	return id, compensate, nil
 }
 
-func dockerRm(svc *deploydocker.DockerService, name string) (string, func(), error) {
-	id, err := findContainerIDByName(svc, name)
+func dockerRm(ctx context.Context, svc deploydocker.DockerRepository, name string) (string, func(), error) {
+		id, err := findContainerIDByName(ctx, svc, name)
 	if err != nil {
 		return "", nil, fmt.Errorf("docker: rm failed - %w", err)
 	}

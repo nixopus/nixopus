@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/docker/docker/api/types"
@@ -16,9 +17,13 @@ import (
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
+	"github.com/google/uuid"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type DockerService struct {
@@ -38,12 +43,14 @@ type DockerRepository interface {
 	GetContainerLogs(containerID string, opts container.LogsOptions) (io.Reader, error)
 	GetContainerById(containerID string) (container.InspectResponse, error)
 	GetImageById(imageID string, opts client.ImageInspectOption) (image.InspectResponse, error)
+	ImagePull(ctx context.Context, ref string, opts image.PullOptions) (io.ReadCloser, error)
 
 	BuildImage(opts types.ImageBuildOptions, buildContext io.Reader) (types.ImageBuildResponse, error)
 	CreateContainer(config container.Config, hostConfig container.HostConfig, networkConfig network.NetworkingConfig, containerName string) (container.CreateResponse, error)
 	// CreateDeployment(deployment *deploy_types.CreateDeploymentRequest, userID uuid.UUID, contextPath string) error
 	ContainerLogs(ctx context.Context, containerID string, opts container.LogsOptions) (io.ReadCloser, error)
 	RestartContainer(containerID string, opts container.StopOptions) error
+	UpdateContainerResources(containerID string, resources container.UpdateConfig) (container.ContainerUpdateOKBody, error)
 
 	ComposeUp(composeFilePath string, envVars map[string]string) error
 	ComposeDown(composeFilePath string) error
@@ -97,65 +104,10 @@ type DockerManager struct {
 }
 
 var (
-	// globalDockerManager is the singleton instance of DockerManager
-	globalDockerManager *DockerManager
-	globalDockerMu      sync.Once
+	// orgManagers caches DockerManager instances per organization ID
+	orgManagers   = make(map[string]*DockerManager)
+	orgManagersMu sync.RWMutex
 )
-
-// GetDockerManager returns the global singleton DockerManager instance
-// This ensures we have a single DockerManager instance across the entire application
-// It's initialized lazily on first access with the default Docker client
-//
-// IMPORTANT: Cluster initialization is performed automatically during the first call
-// to GetDockerManager(). This lazy initialization may introduce unpredictable latency
-// if the first access happens during a request-handling path. The cluster initialization
-// logic (lines 130-143) executes synchronously and may take several seconds to complete.
-//
-// For production deployments, consider:
-//   - Performing cluster initialization explicitly during application startup
-//   - Pre-warming the DockerManager by calling GetDockerManager() during initialization
-//   - Monitoring the first request latency to identify any initialization delays
-//
-// Cluster initialization is performed automatically (same as NewDockerService)
-func GetDockerManager() *DockerManager {
-	globalDockerMu.Do(func() {
-		defaultClient, actualHost := NewDockerClient()
-		defaultLogger := logger.NewLogger()
-		defaultCtx := context.Background()
-
-		globalDockerManager = &DockerManager{
-			clients:   make(map[string]*client.Client),
-			configs:   make(map[string]*DockerClientConfig),
-			defaultID: "default",
-		}
-		globalDockerManager.clients["default"] = defaultClient
-		globalDockerManager.configs["default"] = &DockerClientConfig{
-			Host:    actualHost, // Use the actual host that was connected to
-			Context: defaultCtx,
-			Logger:  defaultLogger,
-		}
-
-		// Initialize cluster if not already initialized (same behavior as NewDockerService)
-		// This should be run on master node only
-		// TODO: Add a check to see if the node is the master node
-		// WARNING: This should be thought again during multi-server architecture feature
-		if !isClusterInitialized(defaultClient) {
-			tempService := &DockerService{
-				Cli:    defaultClient,
-				Ctx:    defaultCtx,
-				logger: defaultLogger,
-			}
-			if err := tempService.InitCluster(); err != nil {
-				defaultLogger.Log(logger.Warning, "Failed to initialize cluster", err.Error())
-			} else {
-				defaultLogger.Log(logger.Info, "Cluster initialized successfully", "")
-			}
-		} else {
-			defaultLogger.Log(logger.Info, "Cluster already initialized", "")
-		}
-	})
-	return globalDockerManager
-}
 
 // AddClient adds a new Docker client connection to the manager with a unique ID
 // The host can be a Unix socket (unix:///path/to/socket) or TCP (tcp://host:port)
@@ -373,6 +325,133 @@ func getHostFromEnv() string {
 	return "unix:///var/run/docker.sock"
 }
 
+// NewDockerClientWithTLS creates a Docker client with TLS configuration
+func NewDockerClientWithTLS(host string, caCert, clientCert, clientKey string) (*client.Client, error) {
+	if caCert == "" || clientCert == "" || clientKey == "" {
+		return nil, fmt.Errorf("TLS certificates are required")
+	}
+
+	// Create temporary files for certificates
+	tmpDir, err := os.MkdirTemp("", "docker-certs-")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpDir) // Cleanup handled by client
+
+	caCertPath := filepath.Join(tmpDir, "ca.pem")
+	certPath := filepath.Join(tmpDir, "cert.pem")
+	keyPath := filepath.Join(tmpDir, "key.pem")
+
+	if err := os.WriteFile(caCertPath, []byte(caCert), 0644); err != nil {
+		return nil, fmt.Errorf("failed to write CA cert: %w", err)
+	}
+	if err := os.WriteFile(certPath, []byte(clientCert), 0644); err != nil {
+		return nil, fmt.Errorf("failed to write client cert: %w", err)
+	}
+	if err := os.WriteFile(keyPath, []byte(clientKey), 0600); err != nil {
+		return nil, fmt.Errorf("failed to write client key: %w", err)
+	}
+
+	cli, err := client.NewClientWithOpts(
+		client.WithHost(host),
+		client.WithAPIVersionNegotiation(),
+		client.WithTLSClientConfig(caCertPath, certPath, keyPath),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Docker client with TLS: %w", err)
+	}
+
+	return cli, nil
+}
+
+// GetDockerServiceForOrganization returns a DockerService for a specific organization.
+// Caches managers per organization to avoid repeated database queries.
+func GetDockerServiceForOrganization(ctx context.Context, orgID uuid.UUID) (*DockerService, error) {
+	if config.GlobalStore == nil {
+		return nil, fmt.Errorf("global store not initialized, ensure config.Init() has been called")
+	}
+
+	orgIDStr := orgID.String()
+
+	// Check cache first
+	orgManagersMu.RLock()
+	if manager, exists := orgManagers[orgIDStr]; exists {
+		orgManagersMu.RUnlock()
+		return manager.GetDefaultService()
+	}
+	orgManagersMu.RUnlock()
+
+	// Get organization-specific Docker config
+	dockerService := service.NewDockerConfigService(config.GlobalStore, ctx, logger.NewLogger())
+	dockerConfig, err := dockerService.GetDockerConfigForOrganization(orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Docker config for organization %s: %w", orgIDStr, err)
+	}
+
+	// Create Docker client with TLS if enabled
+	var cli *client.Client
+	if dockerConfig.TLSEnabled {
+		cli, err = NewDockerClientWithTLS(
+			dockerConfig.Host,
+			dockerConfig.CACert,
+			dockerConfig.ClientCert,
+			dockerConfig.ClientKey,
+		)
+	} else {
+		cli, err = client.NewClientWithOpts(
+			client.WithHost(dockerConfig.Host),
+			client.WithAPIVersionNegotiation(),
+		)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Docker client for organization %s: %w", orgIDStr, err)
+	}
+
+	// Create manager and cache it
+	manager := &DockerManager{
+		clients:   make(map[string]*client.Client),
+		configs:   make(map[string]*DockerClientConfig),
+		defaultID: "default",
+	}
+	manager.clients["default"] = cli
+	manager.configs["default"] = &DockerClientConfig{
+		Host:    dockerConfig.Host,
+		Context: ctx,
+		Logger:  logger.NewLogger(),
+	}
+
+	orgManagersMu.Lock()
+	orgManagers[orgIDStr] = manager
+	orgManagersMu.Unlock()
+
+	return manager.GetDefaultService()
+}
+
+// GetDockerServiceFromContext extracts organization ID from context and returns the appropriate DockerRepository.
+// Returns an error if organization ID is not found in context.
+func GetDockerServiceFromContext(ctx context.Context) (DockerRepository, error) {
+	orgIDAny := ctx.Value(shared_types.OrganizationIDKey)
+	if orgIDAny == nil {
+		return nil, fmt.Errorf("organization ID not found in context")
+	}
+
+	var orgID uuid.UUID
+	switch v := orgIDAny.(type) {
+	case string:
+		var err error
+		orgID, err = uuid.Parse(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid organization ID in context: %w", err)
+		}
+	case uuid.UUID:
+		orgID = v
+	default:
+		return nil, fmt.Errorf("unexpected organization ID type in context: %T", v)
+	}
+
+	return GetDockerServiceForOrganization(ctx, orgID)
+}
+
 // ListAllContainers returns a list of all containers running on the host, along with their
 // IDs, names, and statuses. The returned list is sorted by container ID in ascending order.
 //
@@ -489,6 +568,22 @@ func (s *DockerService) ListAllImages(opts image.ListOptions) []image.Summary {
 //	error - an error if the inspection fails or the image does not exist.
 func (s *DockerService) GetImageById(imageID string, opts client.ImageInspectOption) (image.InspectResponse, error) {
 	return s.Cli.ImageInspect(s.Ctx, imageID, opts)
+}
+
+// ImagePull pulls a Docker image from a registry.
+//
+// Parameters:
+//
+//	ctx - the context for the pull operation, allowing for cancellation and timeouts.
+//	ref - the image reference (e.g., "nginx:latest" or "nginx:1.21").
+//	opts - options for the pull operation.
+//
+// Returns:
+//
+//	io.ReadCloser - a reader containing the pull progress/output.
+//	error - an error if the pull fails.
+func (s *DockerService) ImagePull(ctx context.Context, ref string, opts image.PullOptions) (io.ReadCloser, error) {
+	return s.Cli.ImagePull(ctx, ref, opts)
 }
 
 // BuildImage builds a Docker image using the specified build options.

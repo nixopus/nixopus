@@ -80,7 +80,7 @@ func (s *ExtensionService) StartRun(ctx context.Context, extensionID string, var
 		s.logger.Log(logger.Error, fmt.Sprintf("failed to get default SSH client: %v", err), "")
 		return nil, err
 	}
-	runCtx := NewRunContext(exec, spec, variableValues, sshClient, steps)
+	runCtx := NewRunContext(ctx, exec, spec, variableValues, sshClient, steps)
 	go s.executeRun(runCtx)
 	return exec, nil
 }
