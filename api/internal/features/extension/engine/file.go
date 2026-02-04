@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -127,7 +128,7 @@ func expandTilde(path string, sshClient *ssh.SSH) string {
 	return path
 }
 
-func (fileModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
+func (fileModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
 	action, _ := step.Properties["action"].(string)
 	srcRaw, _ := step.Properties["src"].(string)
 	destRaw, _ := step.Properties["dest"].(string)

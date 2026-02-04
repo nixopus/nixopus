@@ -204,11 +204,6 @@ func setupEnvVarMappings() {
 	// Deployment
 	viper.BindEnv("deployment.mount_path", "MOUNT_PATH")
 
-	// Docker
-	viper.BindEnv("docker.host", "DOCKER_HOST")
-	viper.BindEnv("docker.port", "DOCKER_PORT")
-	viper.BindEnv("docker.context", "DOCKER_CONTEXT")
-
 	// Proxy
 	viper.BindEnv("proxy.caddy_endpoint", "CADDY_ENDPOINT")
 

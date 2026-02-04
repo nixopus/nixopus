@@ -168,7 +168,7 @@ func (s *ExtensionService) getStepByPhaseAndOrder(steps *[]types.ExecutionStep, 
 
 func (s *ExtensionService) executeSpecStep(ctx *RunContext, spec types.SpecStep) (string, error) {
 	if m := engine.GetModule(spec.Type); m != nil {
-		out, comp, err := m.Execute(ctx.SSH, spec, ctx.Vars)
+		out, comp, err := m.Execute(ctx.Ctx, ctx.SSH, spec, ctx.Vars)
 		if err == nil && comp != nil {
 			ctx.pushCompensation(comp)
 		}

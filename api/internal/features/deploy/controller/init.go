@@ -3,11 +3,9 @@ package controller
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
@@ -40,17 +38,8 @@ func NewDeployController(
 	notificationManager *notification.NotificationManager,
 ) (*DeployController, error) {
 	storage := storage.DeployStorage{DB: store.DB, Ctx: ctx}
-	docker_repo, err := docker.GetDockerManager().GetDefaultService()
-	if err != nil {
-		l.Log(logger.Error, "Failed to get default docker service", err.Error())
-		return nil, fmt.Errorf("failed to get default docker service: %w", err)
-	}
-	if docker_repo == nil {
-		l.Log(logger.Error, "Docker service is nil", "")
-		return nil, fmt.Errorf("docker service is nil")
-	}
 	github_service := github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx})
-	taskService := tasks.NewTaskService(&storage, l, docker_repo, github_service, store)
+	taskService := tasks.NewTaskService(&storage, l, github_service, store)
 	taskService.SetupCreateDeploymentQueue()
 	taskService.StartConsumers(ctx)
 

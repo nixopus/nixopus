@@ -10,8 +10,9 @@ import (
 
 func (c *ContainerController) RestartContainer(f fuego.ContextNoBody) (*types.ContainerActionResponse, error) {
 	containerID := f.PathParam("container_id")
+	ctx := f.Request().Context()
 
-	if resp, skipped := c.isProtectedContainer(containerID, "restart"); skipped {
+	if resp, skipped := c.isProtectedContainer(ctx, containerID, "restart"); skipped {
 		return resp, nil
 	}
 
@@ -24,12 +25,20 @@ func (c *ContainerController) RestartContainer(f fuego.ContextNoBody) (*types.Co
 		timeout = *orgSettings.ContainerStopTimeout
 	}
 
+	dockerService, err := c.getDockerService(ctx)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
 	opts := service.RestartContainerOptions{
 		ContainerID: containerID,
 		Timeout:     &timeout,
 	}
 
-	response, err := service.RestartContainer(c.dockerService, c.logger, opts)
+	response, err := service.RestartContainer(dockerService, c.logger, opts)
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,

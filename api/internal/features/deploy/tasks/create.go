@@ -50,6 +50,10 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 	}
 
 	taskCtx.LogAndUpdateStatus("Repository cloned successfully", shared_types.Building)
+	
+	// Add organization ID to context for docker service
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, TaskPayload.Application.OrganizationID.String())
+	
 	taskCtx.AddLog("Building image from Dockerfile " + repoPath + " for application " + TaskPayload.Application.Name)
 	buildImageResult, err := t.BuildImage(BuildConfig{
 		TaskPayload:       TaskPayload,
@@ -57,6 +61,7 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 		Force:             false,
 		ForceWithoutCache: false,
 		TaskContext:       taskCtx,
+		Context:           orgCtx,
 	})
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to build image: "+err.Error(), shared_types.Failed)

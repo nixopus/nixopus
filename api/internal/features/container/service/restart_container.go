@@ -15,7 +15,7 @@ type RestartContainerOptions struct {
 
 // RestartContainer restarts a Docker container
 func RestartContainer(
-	dockerService *docker.DockerService,
+	dockerService docker.DockerRepository,
 	l logger.Logger,
 	opts RestartContainerOptions,
 ) (container_types.ContainerActionResponse, error) {

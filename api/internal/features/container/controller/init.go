@@ -17,11 +17,10 @@ import (
 )
 
 type ContainerController struct {
-	store         *shared_storage.Store
-	dockerService *docker.DockerService
-	ctx           context.Context
-	logger        logger.Logger
-	notification  *notification.NotificationManager
+	store        *shared_storage.Store
+	ctx          context.Context
+	logger       logger.Logger
+	notification *notification.NotificationManager
 }
 
 func NewContainerController(
@@ -30,24 +29,32 @@ func NewContainerController(
 	l logger.Logger,
 	notificationManager *notification.NotificationManager,
 ) (*ContainerController, error) {
-	dockerService, err := docker.GetDockerManager().GetDefaultService()
+	return &ContainerController{
+		store:        store,
+		ctx:          ctx,
+		logger:       l,
+		notification: notificationManager,
+	}, nil
+}
+
+// getDockerService retrieves docker service from request context
+func (c *ContainerController) getDockerService(ctx context.Context) (docker.DockerRepository, error) {
+	dockerService, err := docker.GetDockerServiceFromContext(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get default docker service: %w", err)
+		return nil, fmt.Errorf("failed to get docker service: %w", err)
 	}
 	if dockerService == nil {
 		return nil, fmt.Errorf("docker service is nil")
 	}
-	return &ContainerController{
-		store:         store,
-		dockerService: dockerService,
-		ctx:           ctx,
-		logger:        l,
-		notification:  notificationManager,
-	}, nil
+	return dockerService, nil
 }
 
-func (c *ContainerController) isProtectedContainer(containerID string, action string) (*types.ContainerActionResponse, bool) {
-	details, err := c.dockerService.GetContainerById(containerID)
+func (c *ContainerController) isProtectedContainer(ctx context.Context, containerID string, action string) (*types.ContainerActionResponse, bool) {
+	dockerService, err := c.getDockerService(ctx)
+	if err != nil {
+		return nil, false
+	}
+	details, err := dockerService.GetContainerById(containerID)
 	if err != nil {
 		return nil, false
 	}

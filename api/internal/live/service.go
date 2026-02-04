@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/caddygo"
 	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
@@ -37,7 +38,7 @@ func NewServiceManager(stagingManager *StagingManager, taskService *tasks.TaskSe
 // EnsureDevServiceStarted ensures the dev service is running for the application
 func (sm *ServiceManager) EnsureDevServiceStarted(ctx context.Context, appCtx *ApplicationContext) {
 	// Find existing service by application ID
-	existingService, err := tasks.FindServiceByLabel(sm.taskService.DockerRepo, "com.application.id", appCtx.ApplicationID.String())
+	existingService, err := tasks.FindServiceByLabel(ctx, "com.application.id", appCtx.ApplicationID.String())
 	if err != nil {
 		sm.logger.Log(logger.Error, "failed to check service existence by application ID", fmt.Sprintf("application_id=%s err=%v", appCtx.ApplicationID, err))
 		return
@@ -45,7 +46,7 @@ func (sm *ServiceManager) EnsureDevServiceStarted(ctx context.Context, appCtx *A
 
 	// If service exists and is healthy, bind mount will automatically pick up changes
 	if existingService != nil {
-		if sm.isServiceHealthy(existingService) {
+		if sm.isServiceHealthy(ctx, existingService) {
 			// Add domain with TLS if configured
 			sm.addDomainWithTLSIfConfigured(ctx, existingService, appCtx)
 			return
@@ -94,8 +95,12 @@ func (sm *ServiceManager) scheduleApplicationStartingClear(applicationID uuid.UU
 }
 
 // isServiceHealthy checks if the service is running with the desired number of tasks
-func (sm *ServiceManager) isServiceHealthy(service *swarm.Service) bool {
-	running, desired, err := sm.taskService.DockerRepo.GetServiceHealth(*service)
+func (sm *ServiceManager) isServiceHealthy(ctx context.Context, service *swarm.Service) bool {
+	dockerService, err := docker.GetDockerServiceFromContext(ctx)
+	if err != nil {
+		return false
+	}
+	running, desired, err := dockerService.GetServiceHealth(*service)
 	if err != nil || running < desired || desired == 0 {
 		return false
 	}

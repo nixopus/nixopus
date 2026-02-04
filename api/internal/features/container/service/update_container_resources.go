@@ -19,7 +19,7 @@ type UpdateContainerResourcesOptions struct {
 
 // UpdateContainerResources updates the resource limits of a running container
 func UpdateContainerResources(
-	dockerService *docker.DockerService,
+	dockerService docker.DockerRepository,
 	l logger.Logger,
 	opts UpdateContainerResourcesOptions,
 ) (container_types.UpdateContainerResourcesResponse, error) {

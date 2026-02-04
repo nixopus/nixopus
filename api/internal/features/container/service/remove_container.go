@@ -15,7 +15,7 @@ type RemoveContainerOptions struct {
 
 // RemoveContainer removes a Docker container
 func RemoveContainer(
-	dockerService *docker.DockerService,
+	dockerService docker.DockerRepository,
 	l logger.Logger,
 	opts RemoveContainerOptions,
 ) (container_types.ContainerActionResponse, error) {

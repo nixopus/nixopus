@@ -51,8 +51,7 @@ func (j *PruneImagesJob) Run(ctx context.Context, orgID uuid.UUID) error {
 		"",
 	)
 
-	// Get Docker service
-	dockerService, err := docker.GetDockerManager().GetDefaultService()
+	dockerService, err := docker.GetDockerServiceFromContext(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get docker service: %w", err)
 	}

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -12,7 +13,7 @@ type packageModule struct{}
 
 func (packageModule) Type() string { return "package" }
 
-func (packageModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
+func (packageModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
 	nameRaw, _ := step.Properties["name"].(string)
 	stateRaw, _ := step.Properties["state"].(string)
 

@@ -53,7 +53,13 @@ func (s *TaskService) HandleRollback(ctx context.Context, TaskPayload shared_typ
 
 	taskCtx.AddLog("Rolling back service " + serviceID + " using Docker Swarm native rollback")
 
-	err := s.DockerRepo.RollbackService(serviceID)
+	dockerService, err := s.getDockerService(ctx)
+	if err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to get docker service: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
+	err = dockerService.RollbackService(serviceID)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to rollback service: "+err.Error(), shared_types.Failed)
 		return err
@@ -62,7 +68,7 @@ func (s *TaskService) HandleRollback(ctx context.Context, TaskPayload shared_typ
 	// Wait for rollback to complete
 	time.Sleep(time.Second * 5)
 
-	serviceInfo, err := s.DockerRepo.GetServiceByID(serviceID)
+	serviceInfo, err := dockerService.GetServiceByID(serviceID)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to get service info after rollback: "+err.Error(), shared_types.Failed)
 		return err
@@ -70,7 +76,7 @@ func (s *TaskService) HandleRollback(ctx context.Context, TaskPayload shared_typ
 
 	// Check service's health
 	if serviceInfo.Spec.Mode.Replicated != nil && serviceInfo.Spec.Mode.Replicated.Replicas != nil {
-		running, _, err := s.DockerRepo.GetServiceHealth(serviceInfo)
+		running, _, err := dockerService.GetServiceHealth(serviceInfo)
 		if err != nil || running < int(*serviceInfo.Spec.Mode.Replicated.Replicas) {
 			taskCtx.LogAndUpdateStatus("Service health check failed after rollback", shared_types.Failed)
 			return types.ErrFailedToUpdateContainer

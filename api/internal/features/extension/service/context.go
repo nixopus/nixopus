@@ -1,11 +1,14 @@
 package service
 
 import (
+	"context"
+
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type RunContext struct {
+	Ctx   context.Context
 	Exec  *types.ExtensionExecution
 	Spec  types.ExtensionSpec
 	Vars  map[string]interface{}
@@ -16,8 +19,9 @@ type RunContext struct {
 	rolledBack    bool
 }
 
-func NewRunContext(exec *types.ExtensionExecution, spec types.ExtensionSpec, vars map[string]interface{}, sshClient *ssh.SSH, steps []types.ExecutionStep) *RunContext {
+func NewRunContext(ctx context.Context, exec *types.ExtensionExecution, spec types.ExtensionSpec, vars map[string]interface{}, sshClient *ssh.SSH, steps []types.ExecutionStep) *RunContext {
 	return &RunContext{
+		Ctx:           ctx,
 		Exec:          exec,
 		Spec:          spec,
 		Vars:          vars,

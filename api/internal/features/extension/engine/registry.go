@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"sync"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
@@ -12,7 +13,7 @@ type Module interface {
 	// Type returns the step type this module handles
 	Type() string
 	// Execute runs the step and returns output or an error.
-	Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error)
+	Execute(ctx context.Context, sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error)
 }
 
 var (

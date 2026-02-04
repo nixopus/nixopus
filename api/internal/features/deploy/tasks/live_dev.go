@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/caddygo"
 	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/live/devrunner"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -80,7 +81,7 @@ func (s *TaskService) HandleLiveDevDeployment(ctx context.Context, config LiveDe
 		taskCtx.UpdateStatus(shared_types.Building)
 	}
 
-	service, err := s.ensureService(config, strategy, port, taskCtx)
+	service, err := s.ensureService(ctx, config, strategy, port, taskCtx)
 	if err != nil {
 		if taskCtx != nil {
 			taskCtx.LogAndUpdateStatus(fmt.Sprintf("Failed to create/update service: %v", err), shared_types.Failed)
@@ -196,7 +197,7 @@ func (s *TaskService) determinePort(ctx context.Context, config LiveDevConfig, s
 
 // ensureService creates or updates the service and returns it
 // For live dev, we match by application ID to update existing services for the same project
-func (s *TaskService) ensureService(config LiveDevConfig, strategy devrunner.FrameworkStrategy, port int, taskCtx *LiveDevTaskContext) (*swarm.Service, error) {
+func (s *TaskService) ensureService(ctx context.Context, config LiveDevConfig, strategy devrunner.FrameworkStrategy, port int, taskCtx *LiveDevTaskContext) (*swarm.Service, error) {
 	if taskCtx != nil {
 		taskCtx.AddLog("Checking for existing service...")
 	}
@@ -206,7 +207,7 @@ func (s *TaskService) ensureService(config LiveDevConfig, strategy devrunner.Fra
 		return nil, fmt.Errorf("application ID is required to find or create service")
 	}
 
-	existingService, err := FindServiceByLabel(s.DockerRepo, "com.application.id", config.ApplicationID.String())
+	existingService, err := FindServiceByLabel(ctx, "com.application.id", config.ApplicationID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to check existing service: %w", err)
 	}
@@ -238,7 +239,7 @@ func (s *TaskService) ensureService(config LiveDevConfig, strategy devrunner.Fra
 		taskCtx.AddLog(fmt.Sprintf("Mount: %s -> %s", config.StagingPath, strategy.GetWorkdir()))
 	}
 
-	_, err = CreateOrUpdateService(s.DockerRepo, serviceSpec, existingService)
+	_, err = CreateOrUpdateService(ctx, serviceSpec, existingService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create/update service: %w", err)
 	}
@@ -248,7 +249,7 @@ func (s *TaskService) ensureService(config LiveDevConfig, strategy devrunner.Fra
 	}
 
 	// Verify service by application ID
-	service, err := FindServiceByLabel(s.DockerRepo, "com.application.id", config.ApplicationID.String())
+	service, err := FindServiceByLabel(ctx, "com.application.id", config.ApplicationID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service: %w", err)
 	}
@@ -415,14 +416,14 @@ func (s *TaskService) waitForLiveDevServiceHealthy(ctx context.Context, service 
 				// Get final service state for detailed error
 				var finalService *swarm.Service
 				if applicationID != "" {
-					if refreshedService, err := FindServiceByLabel(s.DockerRepo, "com.application.id", applicationID); err == nil && refreshedService != nil {
+					if refreshedService, err := FindServiceByLabel(ctx, "com.application.id", applicationID); err == nil && refreshedService != nil {
 						finalService = refreshedService
 					}
 				}
 				if finalService == nil {
 					finalService = &service
 				}
-				taskStates := s.getTaskStatesForService(*finalService)
+				taskStates := s.getTaskStatesForService(ctx, *finalService)
 				if taskCtx != nil {
 					taskCtx.AddLog(fmt.Sprintf("Timeout waiting for service to start after %d attempts. Task states: %s", checkCount, taskStates))
 				}
@@ -432,7 +433,7 @@ func (s *TaskService) waitForLiveDevServiceHealthy(ctx context.Context, service 
 			// Refresh service object to get latest task states
 			var currentService *swarm.Service
 			if applicationID != "" {
-				if refreshedService, err := FindServiceByLabel(s.DockerRepo, "com.application.id", applicationID); err == nil && refreshedService != nil {
+				if refreshedService, err := FindServiceByLabel(ctx, "com.application.id", applicationID); err == nil && refreshedService != nil {
 					currentService = refreshedService
 				}
 			}
@@ -441,7 +442,14 @@ func (s *TaskService) waitForLiveDevServiceHealthy(ctx context.Context, service 
 			}
 
 			// Check Docker service health
-			running, desired, err := s.DockerRepo.GetServiceHealth(*currentService)
+			dockerService, err := docker.GetDockerServiceFromContext(ctx)
+			if err != nil {
+				if taskCtx != nil && checkCount%10 == 0 {
+					taskCtx.AddLog(fmt.Sprintf("Failed to get docker service (attempt %d): %v", checkCount, err))
+				}
+				continue
+			}
+			running, desired, err := dockerService.GetServiceHealth(*currentService)
 			if err != nil {
 				if taskCtx != nil && checkCount%10 == 0 {
 					taskCtx.AddLog(fmt.Sprintf("Failed to get Docker service health (attempt %d): %v", checkCount, err))
@@ -451,7 +459,7 @@ func (s *TaskService) waitForLiveDevServiceHealthy(ctx context.Context, service 
 
 			// Log task states periodically for debugging
 			if taskCtx != nil && checkCount%10 == 0 {
-				taskStates := s.getTaskStatesForService(*currentService)
+				taskStates := s.getTaskStatesForService(ctx, *currentService)
 				taskCtx.AddLog(fmt.Sprintf("Docker health: %d/%d running (attempt %d). Task states: %s", running, desired, checkCount, taskStates))
 			}
 

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
@@ -11,7 +12,7 @@ type commandModule struct{}
 
 func (commandModule) Type() string { return "command" }
 
-func (commandModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
+func (commandModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
 	raw, _ := step.Properties["cmd"].(string)
 	if raw == "" {
 		return "", nil, fmt.Errorf("command: 'cmd' is required")

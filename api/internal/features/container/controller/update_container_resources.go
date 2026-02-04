@@ -12,8 +12,9 @@ import (
 // It validates the resource limits and verifies the container is running before applying the update.
 func (c *ContainerController) UpdateContainerResources(f fuego.ContextWithBody[types.UpdateContainerResourcesRequest]) (*types.UpdateContainerResourcesResponse, error) {
 	containerID := f.PathParam("container_id")
+	ctx := f.Request().Context()
 
-	if resp, skipped := c.isProtectedContainer(containerID, "update resources"); skipped {
+	if resp, skipped := c.isProtectedContainer(ctx, containerID, "update resources"); skipped {
 		return &types.UpdateContainerResourcesResponse{
 			Status:  resp.Status,
 			Message: resp.Message,
@@ -31,6 +32,14 @@ func (c *ContainerController) UpdateContainerResources(f fuego.ContextWithBody[t
 		}
 	}
 
+	dockerService, err := c.getDockerService(ctx)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
 	opts := service.UpdateContainerResourcesOptions{
 		ContainerID: containerID,
 		Memory:      body.Memory,
@@ -38,7 +47,7 @@ func (c *ContainerController) UpdateContainerResources(f fuego.ContextWithBody[t
 		CPUShares:   body.CPUShares,
 	}
 
-	response, err := service.UpdateContainerResources(c.dockerService, c.logger, opts)
+	response, err := service.UpdateContainerResources(dockerService, c.logger, opts)
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,

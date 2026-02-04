@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,6 +26,7 @@ type BuildConfig struct {
 	Force             bool
 	ForceWithoutCache bool
 	TaskContext       *TaskContext
+	Context           context.Context // Context for organization-aware docker service
 }
 
 // buildImageFromDockerfile builds a Docker image from a Dockerfile using the provided DeployerConfig. It logs
@@ -64,8 +66,16 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	b.TaskContext.AddLog("Dockerfile validation successful")
 
 	b.TaskContext.AddLog("Starting Docker image build...")
+	
+	// Get docker service from context (organization-aware)
+	dockerRepo, err := s.getDockerService(b.Context)
+	if err != nil {
+		b.TaskContext.LogAndUpdateStatus("Failed to get docker service: "+err.Error(), shared_types.Failed)
+		return "", fmt.Errorf("failed to get docker service: %w", err)
+	}
+	
 	buildOptions := s.createBuildOptions(b, dockerfile_path)
-	resp, err := s.DockerRepo.BuildImage(buildOptions, archive)
+	resp, err := dockerRepo.BuildImage(buildOptions, archive)
 	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Failed to build image: "+err.Error(), shared_types.Failed)
 		return "", err

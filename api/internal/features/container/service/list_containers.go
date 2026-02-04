@@ -13,7 +13,7 @@ import (
 
 // ListContainers retrieves a paginated, filtered, and sorted list of containers
 func ListContainers(
-	dockerService *docker.DockerService,
+	dockerService docker.DockerRepository,
 	l logger.Logger,
 	params container_types.ContainerListParams,
 ) (container_types.ListContainersResponse, error) {
@@ -143,7 +143,7 @@ func applySearchSortPaginate(rows []container_types.ContainerListRow, p containe
 	return rows[start:end], totalCount
 }
 
-func appendContainerInfo(dockerService *docker.DockerService, l logger.Logger, pageRows []container_types.ContainerListRow, summaries []container.Summary) []container_types.Container {
+func appendContainerInfo(dockerService docker.DockerRepository, l logger.Logger, pageRows []container_types.ContainerListRow, summaries []container.Summary) []container_types.Container {
 	result := make([]container_types.Container, 0, len(pageRows))
 	for _, r := range pageRows {
 		info, err := dockerService.GetContainerById(r.ID)

@@ -11,8 +11,17 @@ import (
 
 func (c *ContainerController) GetContainer(f fuego.ContextNoBody) (*types.GetContainerResponse, error) {
 	containerID := f.PathParam("container_id")
+	ctx := f.Request().Context()
 
-	containerData, err := service.GetContainer(c.dockerService, c.logger, containerID)
+	dockerService, err := c.getDockerService(ctx)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	containerData, err := service.GetContainer(dockerService, c.logger, containerID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

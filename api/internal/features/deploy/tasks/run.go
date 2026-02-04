@@ -96,7 +96,7 @@ func (s *TaskService) AtomicUpdateContainer(ctx context.Context, r shared_types.
 	s.formatLog(taskContext, types.LogPreparingToUpdateContainer, r.Application.Name)
 
 	// Check if service already exists
-	existingService, err := s.getExistingService(r, taskContext)
+	existingService, err := s.getExistingService(ctx, r, taskContext)
 	if err != nil {
 		s.formatLog(taskContext, "No existing service found, creating new service", "")
 	}
@@ -109,7 +109,7 @@ func (s *TaskService) AtomicUpdateContainer(ctx context.Context, r shared_types.
 	}
 
 	// Create or update service using shared utility
-	serviceID, err := CreateOrUpdateService(s.DockerRepo, serviceSpec, existingService)
+	serviceID, err := CreateOrUpdateService(ctx, serviceSpec, existingService)
 	if err != nil {
 		taskContext.LogAndUpdateStatus("Failed to create/update service: "+err.Error(), shared_types.Failed)
 		return AtomicUpdateContainerResult{}, err
@@ -121,7 +121,7 @@ func (s *TaskService) AtomicUpdateContainer(ctx context.Context, r shared_types.
 	}
 
 	// Wait for service to be ready with retries
-	serviceInfo, err := s.waitForServiceHealthy(r, taskContext, 120*time.Second, 5*time.Second)
+	serviceInfo, err := s.waitForServiceHealthy(ctx, r, taskContext, 120*time.Second, 5*time.Second)
 	if err != nil {
 		taskContext.LogAndUpdateStatus("Service health check failed: "+err.Error(), shared_types.Failed)
 		return AtomicUpdateContainerResult{}, types.ErrFailedToUpdateContainer
@@ -149,13 +149,17 @@ func (s *TaskService) AtomicUpdateContainer(ctx context.Context, r shared_types.
 }
 
 // getExistingService finds an existing swarm service for the application
-func (s *TaskService) getExistingService(r shared_types.TaskPayload, taskContext *TaskContext) (*swarm.Service, error) {
-	return FindServiceByName(s.DockerRepo, r.Application.Name)
+func (s *TaskService) getExistingService(ctx context.Context, r shared_types.TaskPayload, taskContext *TaskContext) (*swarm.Service, error) {
+	return FindServiceByName(ctx, r.Application.Name)
 }
 
 // FindServiceByName finds a service by name (shared utility for both deploy and devrunner)
-func FindServiceByName(dockerRepo docker.DockerRepository, serviceName string) (*swarm.Service, error) {
-	services, err := dockerRepo.GetClusterServices()
+func FindServiceByName(ctx context.Context, serviceName string) (*swarm.Service, error) {
+	dockerService, err := docker.GetDockerServiceFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get docker service: %w", err)
+	}
+	services, err := dockerService.GetClusterServices()
 	if err != nil {
 		return nil, err
 	}
@@ -169,8 +173,12 @@ func FindServiceByName(dockerRepo docker.DockerRepository, serviceName string) (
 }
 
 // FindServiceByLabel finds a service by label key-value pair (shared utility)
-func FindServiceByLabel(dockerRepo docker.DockerRepository, labelKey, labelValue string) (*swarm.Service, error) {
-	services, err := dockerRepo.GetClusterServices()
+func FindServiceByLabel(ctx context.Context, labelKey, labelValue string) (*swarm.Service, error) {
+	dockerService, err := docker.GetDockerServiceFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get docker service: %w", err)
+	}
+	services, err := dockerService.GetClusterServices()
 	if err != nil {
 		return nil, err
 	}
@@ -184,24 +192,28 @@ func FindServiceByLabel(dockerRepo docker.DockerRepository, labelKey, labelValue
 }
 
 // CreateOrUpdateService creates or updates a service (shared utility)
-func CreateOrUpdateService(dockerRepo docker.DockerRepository, serviceSpec swarm.ServiceSpec, existingService *swarm.Service) (string, error) {
+func CreateOrUpdateService(ctx context.Context, serviceSpec swarm.ServiceSpec, existingService *swarm.Service) (string, error) {
+	dockerService, err := docker.GetDockerServiceFromContext(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get docker service: %w", err)
+	}
 	if existingService != nil {
 		// Update existing service
-		err := dockerRepo.UpdateService(existingService.ID, serviceSpec, "")
+		err := dockerService.UpdateService(existingService.ID, serviceSpec, "")
 		if err != nil {
 			return "", fmt.Errorf("failed to update service: %w", err)
 		}
 		return existingService.ID, nil
 	} else {
 		// Create new service
-		err := dockerRepo.CreateService(swarm.Service{
+		err := dockerService.CreateService(swarm.Service{
 			Spec: serviceSpec,
 		})
 		if err != nil {
 			return "", fmt.Errorf("failed to create service: %w", err)
 		}
 		// Get created service ID by name
-		createdService, err := FindServiceByName(dockerRepo, serviceSpec.Annotations.Name)
+		createdService, err := FindServiceByName(ctx, serviceSpec.Annotations.Name)
 		if err != nil || createdService == nil {
 			return "", fmt.Errorf("failed to get created service: %w", err)
 		}
@@ -263,8 +275,8 @@ func (s *TaskService) createServiceSpec(ctx context.Context, r shared_types.Task
 }
 
 // getServiceInfo retrieves service information
-func (s *TaskService) getServiceInfo(r shared_types.TaskPayload, taskContext *TaskContext) (swarm.Service, error) {
-	service, err := FindServiceByName(s.DockerRepo, r.Application.Name)
+func (s *TaskService) getServiceInfo(ctx context.Context, r shared_types.TaskPayload, taskContext *TaskContext) (swarm.Service, error) {
+	service, err := FindServiceByName(ctx, r.Application.Name)
 	if err != nil {
 		return swarm.Service{}, err
 	}
@@ -275,13 +287,18 @@ func (s *TaskService) getServiceInfo(r shared_types.TaskPayload, taskContext *Ta
 }
 
 // waitForServiceHealthy polls the service health until all replicas are running or timeout
-func (s *TaskService) waitForServiceHealthy(r shared_types.TaskPayload, taskContext *TaskContext, timeout, pollInterval time.Duration) (swarm.Service, error) {
+func (s *TaskService) waitForServiceHealthy(ctx context.Context, r shared_types.TaskPayload, taskContext *TaskContext, timeout, pollInterval time.Duration) (swarm.Service, error) {
 	deadline := time.Now().Add(timeout)
 
 	s.formatLog(taskContext, "Waiting for service to become healthy (timeout: %s)", timeout)
 
+	dockerService, err := s.getDockerService(ctx)
+	if err != nil {
+		return swarm.Service{}, fmt.Errorf("failed to get docker service: %w", err)
+	}
+
 	for time.Now().Before(deadline) {
-		serviceInfo, err := s.getServiceInfo(r, taskContext)
+		serviceInfo, err := s.getServiceInfo(ctx, r, taskContext)
 		if err != nil {
 			s.formatLog(taskContext, "Failed to get service info, retrying: %s", err.Error())
 			time.Sleep(pollInterval)
@@ -295,7 +312,7 @@ func (s *TaskService) waitForServiceHealthy(r shared_types.TaskPayload, taskCont
 		}
 
 		desiredReplicas := int(*serviceInfo.Spec.Mode.Replicated.Replicas)
-		running, _, err := s.DockerRepo.GetServiceHealth(serviceInfo)
+		running, _, err := dockerService.GetServiceHealth(serviceInfo)
 		if err != nil {
 			s.formatLog(taskContext, "Failed to get service health, retrying: %s", err.Error())
 			time.Sleep(pollInterval)
@@ -303,7 +320,7 @@ func (s *TaskService) waitForServiceHealthy(r shared_types.TaskPayload, taskCont
 		}
 
 		// Get detailed task states for debugging
-		taskStates := s.getTaskStatesForService(serviceInfo)
+		taskStates := s.getTaskStatesForService(ctx, serviceInfo)
 		s.formatLog(taskContext, "Service health: %d/%d running, task states: %s", running, desiredReplicas, taskStates)
 
 		if running >= desiredReplicas {
@@ -315,14 +332,18 @@ func (s *TaskService) waitForServiceHealthy(r shared_types.TaskPayload, taskCont
 	}
 
 	// Final attempt to get detailed error info
-	serviceInfo, _ := s.getServiceInfo(r, taskContext)
-	taskStates := s.getTaskStatesForService(serviceInfo)
+	serviceInfo, _ := s.getServiceInfo(ctx, r, taskContext)
+	taskStates := s.getTaskStatesForService(ctx, serviceInfo)
 	return swarm.Service{}, fmt.Errorf("timeout waiting for service to become healthy, task states: %s", taskStates)
 }
 
 // getTaskStatesForService returns a summary of task states for debugging
-func (s *TaskService) getTaskStatesForService(service swarm.Service) string {
-	tasks, err := s.DockerRepo.GetClusterTasks()
+func (s *TaskService) getTaskStatesForService(ctx context.Context, service swarm.Service) string {
+	dockerService, err := s.getDockerService(ctx)
+	if err != nil {
+		return fmt.Sprintf("failed to get docker service: %s", err.Error())
+	}
+	tasks, err := dockerService.GetClusterTasks()
 	if err != nil {
 		return fmt.Sprintf("failed to get tasks: %s", err.Error())
 	}
