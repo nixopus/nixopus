@@ -14,7 +14,7 @@ type StartContainerOptions struct {
 
 // StartContainer starts a Docker container
 func StartContainer(
-	dockerService *docker.DockerService,
+	dockerService docker.DockerRepository,
 	l logger.Logger,
 	opts StartContainerOptions,
 ) (container_types.ContainerActionResponse, error) {

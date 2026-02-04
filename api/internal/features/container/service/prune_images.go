@@ -16,7 +16,7 @@ type PruneImagesOptions struct {
 
 // PruneImages prunes Docker images with optional filtering
 func PruneImages(
-	dockerService *docker.DockerService,
+	dockerService docker.DockerRepository,
 	l logger.Logger,
 	opts PruneImagesOptions,
 ) (container_types.PruneImagesResponse, error) {

@@ -15,7 +15,7 @@ type StopContainerOptions struct {
 
 // StopContainer stops a Docker container
 func StopContainer(
-	dockerService *docker.DockerService,
+	dockerService docker.DockerRepository,
 	l logger.Logger,
 	opts StopContainerOptions,
 ) (container_types.ContainerActionResponse, error) {

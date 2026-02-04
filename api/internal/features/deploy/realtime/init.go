@@ -15,8 +15,8 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func getDockerService() (*docker.DockerService, error) {
-	service, err := docker.GetDockerManager().GetDefaultService()
+func getDockerService(ctx context.Context) (docker.DockerRepository, error) {
+	service, err := docker.GetDockerServiceFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ type ApplicationMonitor struct {
 	Interval      time.Duration
 	cancel        context.CancelFunc
 	ctx           context.Context
-	dockerService *docker.DockerService
+	dockerService docker.DockerRepository
 	Operations    []ApplicationMonitorOperation
 }
 
@@ -65,7 +65,7 @@ func NewApplicationMonitor(conn *websocket.Conn, log logger.Logger, organization
 		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
 	}
 
-	dockerService, err := getDockerService()
+	dockerService, err := getDockerService(orgCtx)
 	if err != nil {
 		cancel()
 		return nil, fmt.Errorf("failed to get docker service: %w", err)

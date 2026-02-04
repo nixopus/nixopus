@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -40,7 +41,7 @@ func RemoveDomainFromProxy(domain string) error {
 	return nil
 }
 
-func (proxyModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
+func (proxyModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
 	action, _ := step.Properties["action"].(string)
 	domain, _ := step.Properties["domain"].(string)
 	port, _ := step.Properties["port"].(string)

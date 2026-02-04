@@ -123,8 +123,9 @@ func (s *Scheduler) runJobsForOrganization(org *types.OrganizationSettings) {
 			continue
 		}
 
-		// Create timeout context for this job
-		jobCtx, jobCancel := context.WithTimeout(s.ctx, s.config.JobTimeout)
+		// Create timeout context for this job with organization ID
+		timeoutCtx, jobCancel := context.WithTimeout(s.ctx, s.config.JobTimeout)
+		jobCtx := context.WithValue(timeoutCtx, types.OrganizationIDKey, org.OrganizationID)
 
 		start := time.Now()
 		err := job.Run(jobCtx, org.OrganizationID)

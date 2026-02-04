@@ -23,13 +23,22 @@ func (c *ContainerController) PruneImages(f fuego.ContextWithBody[PruneImagesReq
 		}
 	}
 
+	ctx := f.Request().Context()
+	dockerService, err := c.getDockerService(ctx)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
 	opts := service.PruneImagesOptions{
 		Until:    req.Until,
 		Label:    req.Label,
 		Dangling: req.Dangling,
 	}
 
-	response, err := service.PruneImages(c.dockerService, c.logger, opts)
+	response, err := service.PruneImages(dockerService, c.logger, opts)
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
