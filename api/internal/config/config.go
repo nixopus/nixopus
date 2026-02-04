@@ -201,9 +201,6 @@ func setupEnvVarMappings() {
 	// Redis
 	viper.BindEnv("redis.url", "REDIS_URL")
 
-	// Deployment
-	viper.BindEnv("deployment.mount_path", "MOUNT_PATH")
-
 	// Proxy
 	viper.BindEnv("proxy.caddy_endpoint", "CADDY_ENDPOINT")
 
@@ -225,12 +222,6 @@ func setupEnvVarMappings() {
 	// Better Auth
 	viper.BindEnv("betterauth.url", "BETTER_AUTH_URL")
 	viper.BindEnv("betterauth.secret", "BETTER_AUTH_SECRET")
-
-	// Stripe
-	viper.BindEnv("stripe.secret_key", "STRIPE_SECRET_KEY")
-	viper.BindEnv("stripe.webhook_secret", "STRIPE_WEBHOOK_SECRET")
-	viper.BindEnv("stripe.price_id", "STRIPE_PRICE_ID")
-	viper.BindEnv("stripe.free_deployments_limit", "FREE_DEPLOYMENTS_LIMIT")
 
 	// Set default for free deployments limit
 	viper.SetDefault("stripe.free_deployments_limit", 1)
@@ -261,9 +252,6 @@ func validateConfig(config types.Config) error {
 
 	if config.Redis.URL == "" {
 		errors = append(errors, "redis URL is required")
-	}
-	if config.Deployment.MountPath == "" {
-		errors = append(errors, "deployment mount path is required")
 	}
 
 	if config.Proxy.CaddyEndpoint == "" {

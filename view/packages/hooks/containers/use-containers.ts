@@ -15,7 +15,7 @@ import {
 import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
 import { usePruneBuildCacheMutation } from '@/redux/services/container/imagesApi';
 import { usePruneImagesMutation } from '@/redux/services/container/imagesApi';
-import { SelectOption } from '@/components/ui/select-wrapper';
+import { SelectOption } from '@nixopus/ui';
 
 export function useContainers() {
   const { t } = useTranslation();

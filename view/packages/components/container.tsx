@@ -25,9 +25,9 @@ import {
   Info,
   ChevronRight
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
+import { Skeleton } from '@nixopus/ui';
 import {
   Dialog,
   DialogContent,
@@ -35,13 +35,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger
-} from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+} from '@nixopus/ui';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@nixopus/ui';
 import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
 import type { Resource, Action as RBACAction } from '@/packages/utils/rbac';
-import SubPageHeader from '@/components/ui/sub-page-header';
+import { SubPageHeader } from '@nixopus/ui';
 import { cn } from '@/lib/utils';
 import { useContainerActions } from '@/packages/hooks/containers/use-container-actions';
 import { useContainerNavigation } from '@/packages/hooks/containers/use-container-navigation';

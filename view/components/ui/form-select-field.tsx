@@ -6,8 +6,8 @@ import {
   FormMessage,
   FormField,
   FormDescription
-} from '@/components/ui/form';
-import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
+} from '@nixopus/ui';
+import { SelectWrapper, SelectOption } from '@nixopus/ui';
 
 type FormSelectFieldProps = {
   form: any;

@@ -1,17 +1,17 @@
 'use client';
 
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import { BadgeGroup, BadgeGroupItem } from '@/components/ui/badge-group';
-import { CardWrapper } from '@/components/ui/card-wrapper';
-import { DataTable, type TableColumn } from '@/components/ui/data-table';
-import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
+import { Skeleton } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
+import { BadgeGroup, BadgeGroupItem } from '@nixopus/ui';
+import { CardWrapper } from '@nixopus/ui';
+import { DataTable, type TableColumn } from '@nixopus/ui';
+import { TypographySmall, TypographyMuted } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@nixopus/ui';
 import React from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@nixopus/ui';
 import { ChevronRight, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {

@@ -4,10 +4,10 @@ import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Application } from '@/redux/types/applications';
 import { useGetProjectFamilyQuery } from '@/redux/services/deploy/applicationsApi';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
 import { ChevronsUpDown, Check } from 'lucide-react';
-import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { DropdownMenuItem } from '@nixopus/ui';
 
 interface UseProjectFamilySwitcherProps {
   application: Application;

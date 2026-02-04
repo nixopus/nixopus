@@ -2,20 +2,13 @@
 import React from 'react';
 import { Mail, Slack, MessageSquare } from 'lucide-react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form';
-import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
-import { PasswordInputField } from '@/components/ui/password-input-field';
-import { Label } from '@/components/ui/label';
+import { Button } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
+import { Switch } from '@nixopus/ui';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@nixopus/ui';
+import { TypographySmall, TypographyMuted } from '@nixopus/ui';
+import { PasswordInputField } from '@nixopus/ui';
+import { Label } from '@nixopus/ui';
 import {
   ChannelTabProps,
   NotificationPreferenceCardProps,

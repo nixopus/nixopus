@@ -14,15 +14,15 @@ import {
   SidebarRail,
   SidebarTrigger
 } from '@/components/ui/sidebar';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@nixopus/ui';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator
-} from '@/components/ui/breadcrumb';
-import { Button } from '@/components/ui/button';
+} from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
 import { ModeToggler } from '@/components/ui/theme-toggler';
 import { Separator } from '@/components/ui/separator';
 import { TeamSwitcher } from '@/components/ui/team-switcher';

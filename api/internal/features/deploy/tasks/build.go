@@ -11,12 +11,12 @@ import (
 	"strings"
 
 	docker_types "github.com/docker/docker/api/types"
-	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/google/uuid"
 	"github.com/moby/term"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	sftputil "github.com/raghavyuva/nixopus-api/internal/live/sftp"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -39,18 +39,28 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 		buildContextPath = filepath.Join(b.ContextPath, b.Application.BasePath)
 	}
 
-	if _, err := os.Stat(buildContextPath); os.IsNotExist(err) {
+	// Get SSH manager from context to check path and create archive on remote server
+	sshManager, err := sshpkg.GetSSHManagerFromContext(b.Context)
+	if err != nil {
+		b.TaskContext.LogAndUpdateStatus("Failed to get SSH manager: "+err.Error(), shared_types.Failed)
+		return "", fmt.Errorf("failed to get SSH manager: %w", err)
+	}
+
+	// Check if path exists on remote server using SFTP with retry logic
+	b.TaskContext.AddLog("Checking build context path on remote server...")
+	sftpClient, err := sftputil.CreateSFTPClientWithRetry(sshManager)
+	if err != nil {
+		b.TaskContext.LogAndUpdateStatus("Failed to create SFTP client: "+err.Error(), shared_types.Failed)
+		return "", fmt.Errorf("failed to create SFTP client: %w", err)
+	}
+	defer sftpClient.Close()
+
+	info, err := sftpClient.Stat(buildContextPath)
+	if err != nil || !info.IsDir() {
 		b.TaskContext.LogAndUpdateStatus("Build context path does not exist: "+buildContextPath, shared_types.Failed)
 		return "", fmt.Errorf("build context path does not exist: %s", buildContextPath)
 	}
-
-	b.TaskContext.AddLog("Creating build context archive...")
-	archive, err := s.createBuildContextArchive(buildContextPath)
-	if err != nil {
-		b.TaskContext.LogAndUpdateStatus("Failed to create build context archive: "+err.Error(), shared_types.Failed)
-		return "", err
-	}
-	b.TaskContext.AddLog("Build context archive created successfully")
+	b.TaskContext.AddLog("Build context path verified on remote server")
 
 	dockerfile_path := "Dockerfile"
 	if b.Application.DockerfilePath != "" {
@@ -59,21 +69,30 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 
 	dockerfileFullPath := filepath.Join(buildContextPath, dockerfile_path)
 	b.TaskContext.AddLog("Validating Dockerfile path...")
-	if _, err := os.Stat(dockerfileFullPath); os.IsNotExist(err) {
+	_, err = sftpClient.Stat(dockerfileFullPath)
+	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Dockerfile not found at path: "+dockerfileFullPath, shared_types.Failed)
-		return "", fmt.Errorf("dockerfile not found at path: %v", err)
+		return "", fmt.Errorf("dockerfile not found at path: %s", dockerfileFullPath)
 	}
 	b.TaskContext.AddLog("Dockerfile validation successful")
 
+	b.TaskContext.AddLog("Creating build context archive on remote server...")
+	archive, err := s.createBuildContextArchiveFromRemote(b.Context, buildContextPath)
+	if err != nil {
+		b.TaskContext.LogAndUpdateStatus("Failed to create build context archive: "+err.Error(), shared_types.Failed)
+		return "", err
+	}
+	b.TaskContext.AddLog("Build context archive created successfully")
+
 	b.TaskContext.AddLog("Starting Docker image build...")
-	
+
 	// Get docker service from context (organization-aware)
 	dockerRepo, err := s.getDockerService(b.Context)
 	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Failed to get docker service: "+err.Error(), shared_types.Failed)
 		return "", fmt.Errorf("failed to get docker service: %w", err)
 	}
-	
+
 	buildOptions := s.createBuildOptions(b, dockerfile_path)
 	resp, err := dockerRepo.BuildImage(buildOptions, archive)
 	if err != nil {
@@ -104,16 +123,124 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	return b.Application.Name, nil
 }
 
-// createBuildContextArchive creates a tar archive of the build context at the provided path.
+// createBuildContextArchiveFromRemote creates a tar archive of the build context on the remote SSH server.
+// It runs tar command on the remote server and streams the output back.
 // It returns the archive as an io.Reader and an error if the archive creation fails.
-func (s *TaskService) createBuildContextArchive(contextPath string) (io.Reader, error) {
-	buildContextTar, err := archive.TarWithOptions(contextPath, &archive.TarOptions{
-		ExcludePatterns: []string{".git", "node_modules", "vendor"},
-	})
+func (s *TaskService) createBuildContextArchiveFromRemote(ctx context.Context, contextPath string) (io.Reader, error) {
+	sshManager, err := sshpkg.GetSSHManagerFromContext(ctx)
 	if err != nil {
-		return nil, types.ErrFailedToCreateTarFromContext
+		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	return buildContextTar, nil
+
+	// Get connection from pool for streaming (long-running connection)
+	// Use retry logic for session creation to handle closed connections
+	// Note: This is a special case where we need both session and client for remoteTarReader
+	const maxRetries = 2
+	var session interface {
+		Wait() error
+		Close() error
+		StdoutPipe() (io.Reader, error)
+		Start(string) error
+	}
+	var client interface {
+		Close() error
+	}
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		clientConn, connErr := sshManager.Connect()
+		if connErr != nil {
+			return nil, fmt.Errorf("failed to connect via SSH: %w", connErr)
+		}
+		client = clientConn
+
+		sess, sessErr := clientConn.NewSession()
+		if sessErr != nil {
+			if sshpkg.IsClosedConnectionError(sessErr) {
+				// Remove bad connection and retry
+				sshManager.CloseConnection("")
+				if attempt < maxRetries-1 {
+					continue
+				}
+			}
+			return nil, fmt.Errorf("failed to create SSH session: %w", sessErr)
+		}
+		session = sess
+		break
+	}
+
+	if session == nil {
+		return nil, fmt.Errorf("failed to create SSH session after %d attempts", maxRetries)
+	}
+	// Don't defer session.Close() here - remoteTarReader handles it
+
+	// Create tar command that excludes common directories
+	// Use --exclude patterns similar to archive.TarWithOptions
+	tarCmd := fmt.Sprintf("cd %s && tar --exclude='.git' --exclude='node_modules' --exclude='vendor' -czf - .", contextPath)
+
+	// Get stdout pipe to stream tar output
+	stdout, err := session.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stdout pipe: %w", err)
+	}
+
+	// Start the command
+	if err := session.Start(tarCmd); err != nil {
+		return nil, fmt.Errorf("failed to start tar command: %w", err)
+	}
+
+	// Return a reader that will close the session and client when done
+	// Note: We don't defer Close() here because we need to keep them alive
+	// until the reader is done. The remoteTarReader will handle cleanup.
+	return &remoteTarReader{
+		reader:  stdout,
+		session: session,
+		client:  client,
+		done:    make(chan struct{}),
+	}, nil
+}
+
+// remoteTarReader wraps the SSH session stdout and ensures cleanup
+type remoteTarReader struct {
+	reader  io.Reader
+	session interface {
+		Wait() error
+		Close() error
+	}
+	client interface {
+		Close() error
+	}
+	closed bool
+	done   chan struct{}
+}
+
+func (r *remoteTarReader) Read(p []byte) (n int, err error) {
+	if r.closed {
+		return 0, io.EOF
+	}
+	n, err = r.reader.Read(p)
+	if err == io.EOF {
+		// Wait for session to complete, then close both session and client
+		go func() {
+			r.session.Wait()
+			r.session.Close()
+			if r.client != nil {
+				r.client.Close()
+			}
+			close(r.done)
+		}()
+		r.closed = true
+	} else if err != nil {
+		// If there's an error reading, clean up immediately
+		go func() {
+			r.session.Close()
+			if r.client != nil {
+				r.client.Close()
+			}
+			close(r.done)
+		}()
+		r.closed = true
+	}
+	return n, err
 }
 
 // createBuildOptions creates a docker_types.ImageBuildOptions struct based on the provided DeployerConfig.

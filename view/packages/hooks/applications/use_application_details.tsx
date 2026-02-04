@@ -13,7 +13,7 @@ import {
   ApplicationDeploymentStatus
 } from '@/redux/types/applications';
 import { BuildPack, Environment } from '@/redux/types/deploy-form';
-import type { TabItem } from '@/components/ui/tabs-wrapper';
+import type { TabItem } from '@nixopus/ui';
 import { Activity, Settings, Layers, ScrollText } from 'lucide-react';
 import DeploymentsList, {
   ApplicationLogs,

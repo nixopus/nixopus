@@ -31,7 +31,6 @@ func TestConfigLoading(t *testing.T) {
 				"SSH_HOST":       "test-ssh-host",
 				"SSH_PORT":       "2222",
 				"SSH_USER":       "sshuser",
-				"MOUNT_PATH":     "/test/mount",
 				"CADDY_ENDPOINT": "http://test-caddy:2019",
 				"ALLOWED_ORIGIN": "http://test-frontend:3000",
 				"ENV":            "test",
@@ -52,9 +51,6 @@ func TestConfigLoading(t *testing.T) {
 				},
 				Redis: types.RedisConfig{
 					URL: "redis://test-redis:6379",
-				},
-				Deployment: types.DeploymentConfig{
-					MountPath: "/test/mount",
 				},
 				Proxy: types.ProxyConfig{
 					CaddyEndpoint: "http://test-caddy:2019",
@@ -113,7 +109,6 @@ func TestConfigLoading(t *testing.T) {
 			assert.Equal(t, tt.expectedConfig.Database.Name, config.Database.Name, "Database name mismatch")
 			assert.Equal(t, tt.expectedConfig.Database.SSLMode, config.Database.SSLMode, "Database SSL mode mismatch")
 			assert.Equal(t, tt.expectedConfig.Redis.URL, config.Redis.URL, "Redis URL mismatch")
-			assert.Equal(t, tt.expectedConfig.Deployment.MountPath, config.Deployment.MountPath, "Mount path mismatch")
 			assert.Equal(t, tt.expectedConfig.Proxy.CaddyEndpoint, config.Proxy.CaddyEndpoint, "Caddy endpoint mismatch")
 			assert.Equal(t, tt.expectedConfig.CORS.AllowedOrigin, config.CORS.AllowedOrigin, "Allowed origin mismatch")
 			assert.Equal(t, tt.expectedConfig.App.Environment, config.App.Environment, "Environment mismatch")
@@ -160,7 +155,6 @@ func TestConfigValidation(t *testing.T) {
 		os.Setenv("REDIS_URL", "redis://localhost:6379")
 		os.Setenv("SSH_HOST", "localhost")
 		os.Setenv("SSH_USER", "root")
-		os.Setenv("MOUNT_PATH", "/tmp")
 		os.Setenv("CADDY_ENDPOINT", "http://localhost:2019")
 		os.Setenv("ALLOWED_ORIGIN", "http://localhost:3000")
 
@@ -174,7 +168,6 @@ func TestConfigValidation(t *testing.T) {
 			os.Unsetenv("REDIS_URL")
 			os.Unsetenv("SSH_HOST")
 			os.Unsetenv("SSH_USER")
-			os.Unsetenv("MOUNT_PATH")
 			os.Unsetenv("CADDY_ENDPOINT")
 			os.Unsetenv("ALLOWED_ORIGIN")
 		}()
@@ -194,7 +187,6 @@ func TestConfigValidation(t *testing.T) {
 		assert.NotEmpty(t, config.Database.Password, "Database password should not be empty")
 		assert.NotEmpty(t, config.Database.Name, "Database name should not be empty")
 		assert.NotEmpty(t, config.Redis.URL, "Redis URL should not be empty")
-		assert.NotEmpty(t, config.Deployment.MountPath, "Mount path should not be empty")
 		assert.NotEmpty(t, config.Proxy.CaddyEndpoint, "Caddy endpoint should not be empty")
 		assert.NotEmpty(t, config.CORS.AllowedOrigin, "Allowed origin should not be empty")
 	})
@@ -215,7 +207,6 @@ func TestProductionEnvironmentSimulation(t *testing.T) {
 			"SSH_PORT":        "22",
 			"SSH_USER":        "root",
 			"SSH_PRIVATE_KEY": "/etc/nixopus/ssh/id_rsa",
-			"MOUNT_PATH":      "/etc/nixopus/configs",
 			"CADDY_ENDPOINT":  "http://nixopus-caddy:2019",
 			"ALLOWED_ORIGIN":  "https://app.nixopus.com",
 			"ENV":             "production",
@@ -240,7 +231,6 @@ func TestProductionEnvironmentSimulation(t *testing.T) {
 		assert.Equal(t, "nixopus-db", config.Database.Host, "Production DB host should be nixopus-db")
 		assert.Equal(t, "production", config.App.Environment, "Environment should be production")
 		assert.Equal(t, "https://app.nixopus.com", config.CORS.AllowedOrigin, "Production allowed origin should be HTTPS")
-		assert.Equal(t, "/etc/nixopus/configs", config.Deployment.MountPath, "Production mount path should be /etc/nixopus/configs")
 		assert.Equal(t, "/var/log/nixopus", config.App.LogsPath, "Production logs path should be /var/log/nixopus")
 	})
 }
@@ -358,9 +348,6 @@ func TestConfigurationValidation(t *testing.T) {
 			Redis: types.RedisConfig{
 				URL: "redis://localhost:6379",
 			},
-			Deployment: types.DeploymentConfig{
-				MountPath: "/tmp",
-			},
 			Proxy: types.ProxyConfig{
 				CaddyEndpoint: "http://localhost:2019",
 			},
@@ -387,9 +374,6 @@ func TestConfigurationValidation(t *testing.T) {
 			},
 			Redis: types.RedisConfig{
 				URL: "", // Missing Redis URL
-			},
-			Deployment: types.DeploymentConfig{
-				MountPath: "/tmp",
 			},
 			Proxy: types.ProxyConfig{
 				CaddyEndpoint: "http://localhost:2019",

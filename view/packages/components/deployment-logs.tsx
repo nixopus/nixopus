@@ -2,11 +2,11 @@
 
 import React from 'react';
 import { RefreshCw, X, ChevronRight } from 'lucide-react';
-import { CardWrapper } from '@/components/ui/card-wrapper';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { CardWrapper } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
+import { Skeleton } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
 import { cn } from '@/lib/utils';
 import {
   useDeploymentLogsViewer,

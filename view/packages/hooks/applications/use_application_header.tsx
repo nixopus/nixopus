@@ -10,9 +10,9 @@ import {
   useDeployProjectMutation
 } from '@/redux/services/deploy/applicationsApi';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { Button } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
 import { ExternalLink, RotateCcw, Trash2, Rocket, RefreshCw, X, Plus } from 'lucide-react';
 import {
   DropdownMenu,
@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+} from '@nixopus/ui';
 import { MoreVertical } from 'lucide-react';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import {

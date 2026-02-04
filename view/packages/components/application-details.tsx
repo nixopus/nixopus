@@ -1,31 +1,27 @@
 import { ApplicationDeployment } from '@/redux/types/applications';
 import React, { useState } from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import PaginationWrapper from '@/components/ui/pagination';
-import { DataTable } from '@/components/ui/data-table';
+import { PaginationWrapper } from '@nixopus/ui';
+import { DataTable } from '@nixopus/ui';
 import { useDeploymentsList } from '@/packages/hooks/applications/use_deployments_list';
 import { useDeploymentStatusChart } from '@/packages/hooks/applications/use_deployment_status_chart';
-import { CardWrapper } from '@/components/ui/card-wrapper';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { CardWrapper } from '@nixopus/ui';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@nixopus/ui';
 import { BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Bar } from 'recharts';
 import { Application } from '@/redux/types/applications';
 import { useDuplicateProject } from '@/packages/hooks/applications/use_duplicate_project';
-import { DialogWrapper } from '@/components/ui/dialog-wrapper';
-import { Label } from '@/components/ui/label';
-import { SelectWrapper } from '@/components/ui/select-wrapper';
-import { Input } from '@/components/ui/input';
+import { DialogWrapper } from '@nixopus/ui';
+import { Label } from '@nixopus/ui';
+import { SelectWrapper } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
 import { ResourceGuard } from '@/packages/components/rbac';
-import SubPageHeader from '@/components/ui/sub-page-header';
+import { SubPageHeader } from '@nixopus/ui';
 import { useApplicationHeader } from '@/packages/hooks/applications/use_application_header';
 import DeploymentLogsTable from '@/packages/components/deployment-logs';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@nixopus/ui';
 import { useProjectFamilySwitcher } from '@/packages/hooks/applications/use_project_family_switcher';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@nixopus/ui';
 import { useDeploymentOverview } from '@/packages/hooks/applications/use_deployment_overview';
 import { useDeploymentHealthChart } from '@/packages/hooks/applications/use_deployment_health_chart';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -33,7 +29,7 @@ import { Check, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStatusIndicator } from '@/packages/hooks/applications/use_status_indicator';
 import { useLatestDeployment } from '@/packages/hooks/applications/use_latest_deployment';
-import { DraggableGrid } from '@/components/ui/draggable-grid';
+import { DraggableGrid } from '@nixopus/ui';
 import { useMonitoring } from '@/packages/hooks/applications/use-monitoring';
 import { DeploymentsListProps, UseMonitoringReturn } from '../types/application';
 import { MonitorProps } from '../types/application';

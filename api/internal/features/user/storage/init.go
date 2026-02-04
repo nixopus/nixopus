@@ -27,6 +27,8 @@ type UserRepository interface {
 	UpdateUserAvatar(ctx context.Context, userID string, avatarData string) error
 	GetUserPreferences(userID string) (*shared_types.UserPreferences, error)
 	UpdateUserPreferences(userID string, preferences shared_types.UserPreferencesData) (*shared_types.UserPreferences, error)
+	GetIsOnboarded(userID string) (bool, error)
+	MarkOnboardingComplete(userID string) error
 }
 
 func CreateNewUserStorage(db *bun.DB, ctx context.Context) *UserStorage {
@@ -257,4 +259,36 @@ func (s *UserStorage) UpdateUserPreferences(userID string, preferences shared_ty
 		return nil, fmt.Errorf("failed to refetch user preferences after update: %w", err)
 	}
 	return updatedPrefs, nil
+}
+
+// GetIsOnboarded retrieves the is_onboarded status for a user from the database.
+func (s *UserStorage) GetIsOnboarded(userID string) (bool, error) {
+	var user shared_types.User
+	err := s.DB.NewSelect().
+		Model(&user).
+		Column("is_onboarded").
+		Where("id = ?", userID).
+		Scan(s.Ctx)
+
+	if err != nil {
+		return false, fmt.Errorf("failed to get onboarding status: %w", err)
+	}
+
+	return user.IsOnboarded, nil
+}
+
+// MarkOnboardingComplete sets the is_onboarded field to true for a user.
+func (s *UserStorage) MarkOnboardingComplete(userID string) error {
+	_, err := s.DB.NewUpdate().
+		Model((*shared_types.User)(nil)).
+		Set("is_onboarded = ?", true).
+		Set("updated_at = ?", time.Now()).
+		Where("id = ?", userID).
+		Exec(s.Ctx)
+
+	if err != nil {
+		return fmt.Errorf("failed to mark onboarding as complete: %w", err)
+	}
+
+	return nil
 }

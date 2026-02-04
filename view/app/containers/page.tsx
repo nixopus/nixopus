@@ -4,23 +4,23 @@ import React from 'react';
 import { Trash2, Scissors, LayoutGrid, List, Box } from 'lucide-react';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { FeatureNames } from '@/packages/types/feature-flags';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@nixopus/ui';
 import { useContainers } from '@/packages/hooks/containers/use-containers';
 import { useViewMode } from '@/packages/hooks/containers/use-view-mode';
 import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
-import PaginationWrapper from '@/components/ui/pagination';
-import { SelectWrapper } from '@/components/ui/select-wrapper';
+import { PaginationWrapper } from '@nixopus/ui';
+import { SelectWrapper } from '@nixopus/ui';
 import { GroupedContainerView } from '@/packages/components/container';
 import { cn } from '@/lib/utils';
-import MainPageHeader from '@/components/ui/main-page-header';
+import { MainPageHeader } from '@nixopus/ui';
 import { translationKey } from '@/packages/hooks/shared/use-translation';
 import DisabledFeature from '@/packages/components/rbac';
 import { StatPill } from '@/packages/components/container';
 import { ContainersLoading } from '@/packages/components/container-skeletons';
 import { ActionHeader, ContainerCard, Action } from '@/packages/components/container';
 import ContainersTable from '@/packages/components/container';
-import { SearchBar } from '@/components/ui/search-bar';
+import { SearchBar } from '@nixopus/ui';
 
 export default function ContainersPage() {
   const { viewMode, setViewMode } = useViewMode();

@@ -1,19 +1,19 @@
 'use client';
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Form } from '@/components/ui/form';
-import FormInputField from '@/components/ui/form-input-field';
+import { Button } from '@nixopus/ui';
+import { Form } from '@nixopus/ui';
+import { FormInputField } from '@nixopus/ui';
 import FormSelectField from '@/components/ui/form-select-field';
 import { MultipleDomainInput } from '@/packages/components/multi-domains';
 import { EnvVariablesEditor } from '@/components/ui/env-variables-editor';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@nixopus/ui';
 import { BuildPack, Environment } from '@/redux/types/deploy-form';
 import useUpdateDeployment from '@/packages/hooks/applications/use_update_deployment';
 import { useDeploymentConfiguration } from '@/packages/hooks/applications/use_deployment_configuration';
 import { parsePort } from '@/packages/utils/util';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@nixopus/ui';
 import {
   ChevronDownIcon,
   ChevronRightIcon,
@@ -24,7 +24,7 @@ import {
   Terminal
 } from 'lucide-react';
 import { useQuickDeployForm } from '@/packages/hooks/applications/use_quick_deploy_form';
-import { CardWrapper } from '@/components/ui/card-wrapper';
+import { CardWrapper } from '@nixopus/ui';
 import { Plus } from 'lucide-react';
 
 interface DeployConfigureProps {

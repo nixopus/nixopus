@@ -5,7 +5,7 @@ import { useGetHealthCheckResultsQuery } from '@/redux/services/deploy/healthche
 import { HealthCheckResult } from '@/redux/types/healthcheck';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import type { ChartConfig } from '@/components/ui/chart';
-import { SelectOption } from '@/components/ui/select-wrapper';
+import { SelectOption } from '@nixopus/ui';
 
 interface UseHealthCheckChartProps {
   applicationId: string;

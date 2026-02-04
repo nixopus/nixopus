@@ -171,7 +171,6 @@ export const useDashboard = () => {
     {
       id: 'system-info',
       component: <SystemInfoCard systemStats={systemStats} />,
-      className: 'md:col-span-2',
       isDefault: true
     },
     {

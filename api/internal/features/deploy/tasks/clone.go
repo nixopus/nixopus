@@ -29,8 +29,10 @@ func (t *TaskService) Clone(ctx context.Context, cloneConfig CloneConfig) (strin
 		Branch:         cloneConfig.Application.Branch,
 		ApplicationID:  cloneConfig.Application.ID.String(),
 	}
+	// Add organization ID to context for SSH manager access
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, cloneConfig.Application.OrganizationID.String())
 	// we will pass the commit hash to the clone repository function for rollback feature otherwise it will clone the latest commit
-	repoPath, err := t.Github_service.CloneRepository(ctx, cloneRepositoryConfig, &cloneConfig.ApplicationDeployment.CommitHash)
+	repoPath, err := t.Github_service.CloneRepository(orgCtx, cloneRepositoryConfig, &cloneConfig.ApplicationDeployment.CommitHash)
 	if err != nil {
 		return "", fmt.Errorf("failed to clone repository: %w", err)
 	}

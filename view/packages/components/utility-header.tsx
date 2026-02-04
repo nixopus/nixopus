@@ -1,9 +1,9 @@
 import React from 'react';
 import { SortOption, SortSelect } from '@/components/ui/sort-selector';
-import { SearchBar } from '@/components/ui/search-bar';
+import { SearchBar } from '@nixopus/ui';
 import { SortConfig } from '@/packages/hooks/shared/use-searchable';
-import { TypographyH2 } from '@/components/ui/typography';
-import MainPageHeader from '../../components/ui/main-page-header';
+import { TypographyH2 } from '@nixopus/ui';
+import { MainPageHeader } from '@nixopus/ui';
 
 interface DashboardPageHeaderProps {
   className?: string;

@@ -18,6 +18,7 @@ type User struct {
 	Email             string               `json:"email" bun:"email,type:text,notnull"`
 	EmailVerified     bool                 `json:"email_verified" bun:"email_verified,type:boolean,notnull,default:false"`
 	Image             *string              `json:"image,omitempty" bun:"image,type:text"`
+	IsOnboarded       bool                 `json:"is_onboarded" bun:"is_onboarded,type:boolean,notnull,default:false"`
 	CreatedAt         time.Time            `json:"created_at" bun:"created_at,type:timestamp,notnull"`
 	UpdatedAt         time.Time            `json:"updated_at" bun:"updated_at,type:timestamp,notnull"`
 	Organizations     []*Organization      `json:"organizations,omitempty" bun:"m2m:organization_users,join:User=Organization"`

@@ -2,22 +2,21 @@
 
 import React from 'react';
 import { Mail, User, CheckCircle, AlertCircle, CheckCircle2, XCircle, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
+import { Label } from '@nixopus/ui';
+import { Alert, AlertDescription, AlertTitle } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { LanguageSwitcher } from '@/packages/components/language-switcher';
-import { SelectWrapper } from '@/components/ui/select-wrapper';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@nixopus/ui';
 import { RBACGuard } from '@/packages/components/rbac';
-import { TypographySmall, TypographyMuted, TypographyH3 } from '@/components/ui/typography';
+import { TypographySmall, TypographyMuted, TypographyH3 } from '@nixopus/ui';
 import UploadAvatar from '@/components/ui/upload_avatar';
-import { Badge } from '@/components/ui/badge';
-import { TabsContent } from '@/components/ui/tabs';
+import { Badge } from '@nixopus/ui';
+import { TabsContent } from '@nixopus/ui';
 import { QRCodeSVG } from 'qrcode.react';
 import { Shield } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@nixopus/ui';
 import {
   AccountSectionProps,
   AvatarSectionProps,
@@ -39,26 +38,18 @@ export function AccountSection({
   user,
   userSettings,
   isGettingUserSettings,
-  isUpdatingFont,
   isUpdatingTheme,
   isUpdatingLanguage,
   isUpdatingAutoUpdate,
   handleThemeChange,
   handleLanguageChange,
-  handleAutoUpdateChange,
-  handleFontUpdate
+  handleAutoUpdateChange
 }: AccountSectionProps) {
   const { t } = useTranslation();
-  const {
-    isSendingVerification,
-    verificationSent,
-    verificationError,
-    handleFontChange,
-    handleSendVerification
-  } = useAccountSection({
-    userSettings,
-    handleFontUpdate
-  });
+  const { isSendingVerification, verificationSent, verificationError, handleSendVerification } =
+    useAccountSection({
+      userSettings
+    });
 
   return (
     <div className="space-y-8">
@@ -157,45 +148,6 @@ export function AccountSection({
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        <div>
-          <TypographySmall className="text-sm font-medium">
-            {t('settings.account.preferences.title')}
-          </TypographySmall>
-          <TypographyMuted className="text-xs mt-1">
-            {t('settings.account.preferences.description')}
-          </TypographyMuted>
-        </div>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <TypographyMuted className="text-sm">{t('settings.preferences.font')}</TypographyMuted>
-            <RBACGuard resource="user" action="update">
-              <SelectWrapper
-                value={userSettings.font_family || 'outfit'}
-                onValueChange={handleFontChange}
-                options={[
-                  { value: 'geist', label: t('settings.preferences.fontOptions.geist') },
-                  { value: 'inter', label: t('settings.preferences.fontOptions.inter') },
-                  { value: 'roboto', label: t('settings.preferences.fontOptions.roboto') },
-                  { value: 'poppins', label: t('settings.preferences.fontOptions.poppins') },
-                  { value: 'montserrat', label: t('settings.preferences.fontOptions.montserrat') },
-                  {
-                    value: 'space-grotesk',
-                    label: t('settings.preferences.fontOptions.spaceGrotesk')
-                  },
-                  { value: 'outfit', label: t('settings.preferences.fontOptions.outfit') },
-                  { value: 'jakarta', label: t('settings.preferences.fontOptions.jakarta') },
-                  { value: 'system', label: t('settings.preferences.fontOptions.system') }
-                ]}
-                placeholder={t('settings.preferences.font')}
-                disabled={isUpdatingFont}
-                className="w-[180px]"
-              />
-            </RBACGuard>
           </div>
         </div>
       </div>

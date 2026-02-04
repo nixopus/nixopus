@@ -4,8 +4,8 @@ import { AlertTriangle } from 'lucide-react';
 import { Action, Permission, Resource } from '@/packages/utils/rbac';
 import { useRBAC } from '@/packages/utils/rbac';
 import { AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Button } from '@nixopus/ui';
+import { Card } from '@nixopus/ui';
 
 interface AccessDeniedProps {
   title?: string;

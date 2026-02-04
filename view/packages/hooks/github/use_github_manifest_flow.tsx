@@ -4,7 +4,7 @@ import { GitHubAppCredentials, GitHubAppManifest, GitHubAppStatus } from '@/redu
 import { useCreateGithubConnectorMutation } from '@/redux/services/connector/githubConnectorApi';
 import { getWebhookUrl } from '@/redux/conf';
 import { Loader2 } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@nixopus/ui';
 
 interface UseGithubManifestFlowProps {
   organization?: string;

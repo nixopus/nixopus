@@ -4,7 +4,6 @@ type Config struct {
 	Server     ServerConfig     `mapstructure:"server"`
 	Database   DatabaseConfig   `mapstructure:"database"`
 	Redis      RedisConfig      `mapstructure:"redis"`
-	Deployment DeploymentConfig `mapstructure:"deployment"`
 	Proxy      ProxyConfig      `mapstructure:"proxy"`
 	CORS       CORSConfig       `mapstructure:"cors"`
 	App        AppConfig        `mapstructure:"app"`
@@ -46,10 +45,6 @@ type SSHConfig struct {
 	Password            string `mapstructure:"password"`
 	PrivateKey          string `mapstructure:"private_key"`
 	PrivateKeyProtected string `mapstructure:"private_key_protected"`
-}
-
-type DeploymentConfig struct {
-	MountPath string `mapstructure:"mount_path" validate:"required"`
 }
 
 type ProxyConfig struct {

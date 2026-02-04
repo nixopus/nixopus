@@ -1,5 +1,5 @@
 import React from 'react';
-import { SelectWrapper, SelectOption } from '@/components/ui/select-wrapper';
+import { SelectWrapper, SelectOption } from '@nixopus/ui';
 
 export interface SortOption<T> {
   value: keyof T;

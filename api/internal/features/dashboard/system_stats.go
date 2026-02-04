@@ -283,13 +283,8 @@ func (m *DashboardMonitor) GetSystemStats() {
 }
 
 func (m *DashboardMonitor) getCommandOutput(cmd string) (string, error) {
-	// Get connection from pool (reuses existing or creates new if needed)
-	client, err := m.sshManager.Connect()
-	if err != nil {
-		return "", fmt.Errorf("SSH client is not connected: %w", err)
-	}
-
-	session, err := client.NewSession()
+	// Use centralized session creation with retry logic
+	session, err := m.sshManager.NewSessionWithRetry("")
 	if err != nil {
 		m.log.Log(logger.Error, "Failed to create new session", err.Error())
 		return "", err

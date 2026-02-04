@@ -60,3 +60,13 @@ func (m *MockUserStorage) UpdateUserPreferences(userID string, preferences share
 	}
 	return args.Get(0).(*shared_types.UserPreferences), args.Error(1)
 }
+
+func (m *MockUserStorage) GetIsOnboarded(userID string) (bool, error) {
+	args := m.Called(userID)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockUserStorage) MarkOnboardingComplete(userID string) error {
+	args := m.Called(userID)
+	return args.Error(0)
+}

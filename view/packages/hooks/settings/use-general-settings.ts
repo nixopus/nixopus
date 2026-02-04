@@ -1,7 +1,6 @@
 import { useAppSelector } from '@/redux/hooks';
 import {
   useGetUserSettingsQuery,
-  useUpdateFontMutation,
   useUpdateAutoUpdateMutation,
   useUpdateLanguageMutation,
   useUpdateThemeMutation,
@@ -31,7 +30,6 @@ function useGeneralSettings() {
     isLoading: isGettingUserSettings,
     refetch: refetchUserSettings
   } = useGetUserSettingsQuery();
-  const [updateFont, { isLoading: isUpdatingFont }] = useUpdateFontMutation();
   const [updateTheme, { isLoading: isUpdatingTheme }] = useUpdateThemeMutation();
   const [updateLanguage, { isLoading: isUpdatingLanguage }] = useUpdateLanguageMutation();
   const [updateAutoUpdate, { isLoading: isUpdatingAutoUpdate }] = useUpdateAutoUpdateMutation();
@@ -83,15 +81,6 @@ function useGeneralSettings() {
     }
   };
 
-  const handleFontChange = async (fontFamily: string, fontSize: number) => {
-    try {
-      await updateFont({ font_family: fontFamily, font_size: fontSize });
-      refetchUserSettings();
-    } catch (error) {
-      console.error(t('settings.account.errors.fontUpdateFailed'), error);
-    }
-  };
-
   const handleThemeChange = async (theme: string) => {
     try {
       await updateTheme({ theme });
@@ -134,14 +123,12 @@ function useGeneralSettings() {
     user,
     userSettings,
     isGettingUserSettings,
-    isUpdatingFont,
     isUpdatingTheme,
     isUpdatingLanguage,
     isUpdatingAutoUpdate,
     handleThemeChange,
     handleLanguageChange,
-    handleAutoUpdateChange,
-    handleFontUpdate: handleFontChange
+    handleAutoUpdateChange
   };
 }
 

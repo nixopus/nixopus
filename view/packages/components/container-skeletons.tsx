@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CardWrapper } from '@/components/ui/card-wrapper';
+import { Skeleton } from '@nixopus/ui';
+import { CardWrapper } from '@nixopus/ui';
 import PageLayout from '@/packages/layouts/page-layout';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Package } from 'lucide-react';

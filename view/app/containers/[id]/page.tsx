@@ -4,7 +4,7 @@ import { Trash2, Info, Terminal, Layers, ScrollText } from 'lucide-react';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { isNixopusContainer } from '@/lib/utils';
 import { useContainerDetail } from '../../../packages/hooks/containers/use-container-detail';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@nixopus/ui';
 import ContainerDetailsLoading from '../../../packages/components/container-skeletons';
 import { ContainerDetailsHeader } from '../../../packages/components/container';
 import {

@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { BadgeGroup, BadgeGroupItem } from '@/components/ui/badge-group';
+import { BadgeGroup, BadgeGroupItem } from '@nixopus/ui';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@nixopus/ui';
+import { Alert, AlertDescription } from '@nixopus/ui';
 import { AlertCircle } from 'lucide-react';
 import {
   Sheet,
@@ -14,16 +14,16 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter
-} from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
+import { Label } from '@nixopus/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@nixopus/ui';
 import AceEditor from '@/components/ui/ace-editor';
-import { CardWrapper } from '@/components/ui/card-wrapper';
-import { TypographyMuted, TypographySmall } from '@/components/ui/typography';
-import { DataTable } from '@/components/ui/data-table';
+import { CardWrapper } from '@nixopus/ui';
+import { TypographyMuted, TypographySmall } from '@nixopus/ui';
+import { DataTable } from '@nixopus/ui';
 import { ExternalLink, Check, GitFork, Trash2, ChevronDown } from 'lucide-react';
-import { CardDescription } from '@/components/ui/card';
+import { CardDescription } from '@nixopus/ui';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import {
   CategoryBadgesProps,
@@ -33,15 +33,15 @@ import {
   ExtensionInputProps
 } from '@/packages/types/extension';
 import { Sparkles, Globe } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@nixopus/ui';
+import { Textarea } from '@nixopus/ui';
+import { Checkbox } from '@nixopus/ui';
 import { ExtensionVariable } from '@/redux/types/extension';
-import { DialogWrapper } from '@/components/ui/dialog-wrapper';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { DialogWrapper } from '@nixopus/ui';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@nixopus/ui';
 import { useMemo } from 'react';
-import { TableColumn } from '@/components/ui/data-table';
-import { Badge } from '@/components/ui/badge';
+import { TableColumn } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
 
 interface StepsSectionProps {
   tRunLabel: string;

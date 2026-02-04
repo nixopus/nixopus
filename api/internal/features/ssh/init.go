@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -191,6 +192,22 @@ func (m *SSHManager) Connect() (*goph.Client, error) {
 	return m.ConnectWithID("")
 }
 
+// IsClosedConnectionError checks if the error indicates a closed network connection.
+// This is useful for detecting stale SSH connections that need to be removed from the pool.
+func IsClosedConnectionError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errMsg := err.Error()
+	return strings.Contains(errMsg, "use of closed network connection") ||
+		strings.Contains(errMsg, "connection closed")
+}
+
+// isClosedConnectionError is an internal alias for IsClosedConnectionError
+func isClosedConnectionError(err error) bool {
+	return IsClosedConnectionError(err)
+}
+
 // isConnectionAlive checks if an SSH connection is still valid by attempting to create a test session
 func (m *SSHManager) isConnectionAlive(client *goph.Client) bool {
 	if client == nil {
@@ -203,6 +220,41 @@ func (m *SSHManager) isConnectionAlive(client *goph.Client) bool {
 	}
 	session.Close()
 	return true
+}
+
+// NewSessionWithRetry creates a new SSH session with automatic retry on closed connection errors.
+// This method handles stale connections by removing them from the pool and retrying.
+// The returned session should be closed by the caller when done.
+func (m *SSHManager) NewSessionWithRetry(id string) (*ssh.Session, error) {
+	const maxRetries = 2
+
+	if id == "" {
+		id = m.defaultID
+	}
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		// Get connection from pool (reuses existing or creates new if needed)
+		client, err := m.ConnectWithID(id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect via SSH: %w", err)
+		}
+
+		session, err := client.NewSession()
+		if err != nil {
+			if isClosedConnectionError(err) {
+				// Remove the bad connection from pool and retry
+				m.CloseConnection(id)
+				if attempt < maxRetries-1 {
+					continue
+				}
+			}
+			return nil, fmt.Errorf("failed to create SSH session: %w", err)
+		}
+
+		return session, nil
+	}
+
+	return nil, fmt.Errorf("failed to create SSH session after %d attempts due to connection issues", maxRetries)
 }
 
 // ConnectWithID connects to a specific SSH client by ID with connection pooling

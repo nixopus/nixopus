@@ -8,8 +8,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList
-} from './command';
-import { Button } from './button';
+} from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
 import { palette, themeColors } from '@/packages/utils/colors';
 
 export function ModeToggler() {
@@ -81,7 +81,7 @@ export function ModeToggler() {
       </div>
       <CommandDialog
         open={open}
-        onOpenChange={(nextOpen) => {
+        onOpenChange={(nextOpen: boolean) => {
           if (nextOpen) {
             // capture the theme at dialog open for preview revert
             startThemeRef.current = theme || prevTheme;
