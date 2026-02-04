@@ -153,31 +153,165 @@ func (r *LocalSystemReader) CPUCounts(logical bool) (int, error) {
 	return count, nil
 }
 
-func (r *LocalSystemReader) CPUPercent(interval time.Duration, percpu bool) ([]float64, error) {
-	cmd := exec.Command("sh", "-c", "top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\\([0-9.]*\\)%%* *id.*/\\1/' | awk '{print 100 - $1}'")
-	output, err := cmd.Output()
+// procStatSample represents a snapshot of /proc/stat CPU times
+type procStatSample struct {
+	cpuTimes map[string][]uint64 // core name -> [user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice]
+}
+
+// readProcStat reads /proc/stat and parses CPU times
+func (r *LocalSystemReader) readProcStat() (*procStatSample, error) {
+	data, err := os.ReadFile("/proc/stat")
 	if err != nil {
-		return nil, fmt.Errorf("failed to get CPU percentage: %w", err)
+		return nil, err
 	}
 
-	val, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 64)
+	sample := &procStatSample{
+		cpuTimes: make(map[string][]uint64),
+	}
+
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		if !strings.HasPrefix(line, "cpu") {
+			continue
+		}
+
+		fields := strings.Fields(line)
+		if len(fields) < 11 {
+			continue
+		}
+
+		cpuName := fields[0]
+		times := make([]uint64, 10)
+		for i := 1; i < 11 && i < len(fields); i++ {
+			val, err := strconv.ParseUint(fields[i], 10, 64)
+			if err != nil {
+				continue
+			}
+			times[i-1] = val
+		}
+		sample.cpuTimes[cpuName] = times
+	}
+
+	return sample, nil
+}
+
+// calculatePerCoreCPUPercent calculates CPU usage percentage for each core
+func (r *LocalSystemReader) calculatePerCoreCPUPercent(first, second *procStatSample) ([]float64, error) {
+	var percentages []float64
+
+	// Get core count to determine how many cores we should have
+	coreCount, err := r.CPUCounts(true)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse CPU percentage: %w", err)
+		return nil, fmt.Errorf("failed to get CPU count: %w", err)
+	}
+
+	// Process each CPU core (cpu0, cpu1, cpu2, etc.)
+	for i := 0; i < coreCount; i++ {
+		cpuName := fmt.Sprintf("cpu%d", i)
+		firstTimes, ok1 := first.cpuTimes[cpuName]
+		secondTimes, ok2 := second.cpuTimes[cpuName]
+
+		if !ok1 || !ok2 {
+			// If we can't find this core, use 0.0
+			percentages = append(percentages, 0.0)
+			continue
+		}
+
+		percent := r.calculateCPUPercentFromTimes(firstTimes, secondTimes)
+		percentages = append(percentages, percent)
+	}
+
+	if len(percentages) == 0 {
+		return nil, fmt.Errorf("no CPU cores found in /proc/stat")
+	}
+
+	return percentages, nil
+}
+
+// calculateOverallCPUPercent calculates overall CPU usage percentage
+func (r *LocalSystemReader) calculateOverallCPUPercent(first, second *procStatSample) ([]float64, error) {
+	firstTimes, ok1 := first.cpuTimes["cpu"]
+	secondTimes, ok2 := second.cpuTimes["cpu"]
+
+	if !ok1 || !ok2 {
+		return nil, fmt.Errorf("failed to find overall CPU stats in /proc/stat")
+	}
+
+	percent := r.calculateCPUPercentFromTimes(firstTimes, secondTimes)
+	return []float64{percent}, nil
+}
+
+// calculateCPUPercentFromTimes calculates CPU percentage from two time samples
+func (r *LocalSystemReader) calculateCPUPercentFromTimes(firstTimes, secondTimes []uint64) float64 {
+	if len(firstTimes) < 4 || len(secondTimes) < 4 {
+		return 0.0
+	}
+
+	// Calculate total time (sum of all CPU time fields)
+	var firstTotal, secondTotal uint64
+	var firstIdle, secondIdle uint64
+
+	for i := 0; i < len(firstTimes) && i < len(secondTimes); i++ {
+		firstTotal += firstTimes[i]
+		secondTotal += secondTimes[i]
+	}
+
+	// Idle time is the sum of idle and iowait (indices 3 and 4)
+	firstIdle = firstTimes[3]
+	if len(firstTimes) > 4 {
+		firstIdle += firstTimes[4]
+	}
+
+	secondIdle = secondTimes[3]
+	if len(secondTimes) > 4 {
+		secondIdle += secondTimes[4]
+	}
+
+	// Calculate differences
+	totalDiff := secondTotal - firstTotal
+	idleDiff := secondIdle - firstIdle
+
+	if totalDiff == 0 {
+		return 0.0
+	}
+
+	// CPU usage = 100 - (idle percentage)
+	idlePercent := float64(idleDiff) / float64(totalDiff) * 100.0
+	cpuUsage := 100.0 - idlePercent
+
+	// Clamp to valid range
+	if cpuUsage < 0.0 {
+		cpuUsage = 0.0
+	}
+	if cpuUsage > 100.0 {
+		cpuUsage = 100.0
+	}
+
+	return cpuUsage
+}
+
+func (r *LocalSystemReader) CPUPercent(interval time.Duration, percpu bool) ([]float64, error) {
+	// Use /proc/stat for accurate CPU usage calculation
+	// Read first sample
+	firstSample, err := r.readProcStat()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read /proc/stat: %w", err)
+	}
+
+	// Wait for the interval
+	time.Sleep(interval)
+
+	// Read second sample
+	secondSample, err := r.readProcStat()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read /proc/stat: %w", err)
 	}
 
 	if percpu {
-		coreCount, err := r.CPUCounts(true)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get CPU count: %w", err)
-		}
-		percentages := make([]float64, coreCount)
-		for i := range percentages {
-			percentages[i] = val
-		}
-		return percentages, nil
+		return r.calculatePerCoreCPUPercent(firstSample, secondSample)
 	}
 
-	return []float64{val}, nil
+	return r.calculateOverallCPUPercent(firstSample, secondSample)
 }
 
 func (r *LocalSystemReader) VirtualMemory() (*VirtualMemoryStat, error) {
@@ -407,61 +541,159 @@ func (r *RemoteSystemReader) CPUCounts(logical bool) (int, error) {
 }
 
 func (r *RemoteSystemReader) CPUPercent(interval time.Duration, percpu bool) ([]float64, error) {
-	// Use a simple command-based approach for CPU percentage
-	// This uses 'top' or 'vmstat' to get current CPU usage
-	var cmd string
-	if percpu {
-		// For per-core, we'll get overall and divide (simplified approach)
-		// A more accurate implementation would parse /proc/stat with two samples
-		cmd = "grep -c processor /proc/cpuinfo"
-		coreCountStr, err := r.cmdExecutor(cmd)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get CPU count: %w", err)
-		}
-		coreCount, err := strconv.Atoi(strings.TrimSpace(coreCountStr))
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse CPU count: %w", err)
-		}
-
-		// Get overall CPU usage and replicate for each core
-		overallSlice, err := r.getOverallCPUPercent()
-		if err != nil {
-			return nil, err
-		}
-
-		var overallValue float64
-		if len(overallSlice) > 0 {
-			overallValue = overallSlice[0]
-		}
-
-		percentages := make([]float64, coreCount)
-		for i := range percentages {
-			percentages[i] = overallValue
-		}
-		return percentages, nil
+	// Use /proc/stat for accurate CPU usage calculation
+	// Read first sample
+	firstSample, err := r.readProcStatRemote()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read /proc/stat: %w", err)
 	}
 
-	// Get overall CPU usage
-	return r.getOverallCPUPercent()
+	// Wait for the interval
+	time.Sleep(interval)
+
+	// Read second sample
+	secondSample, err := r.readProcStatRemote()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read /proc/stat: %w", err)
+	}
+
+	if percpu {
+		return r.calculatePerCoreCPUPercentRemote(firstSample, secondSample)
+	}
+
+	return r.calculateOverallCPUPercentRemote(firstSample, secondSample)
 }
 
-func (r *RemoteSystemReader) getOverallCPUPercent() ([]float64, error) {
-	cmd := "top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\\([0-9.]*\\)%%* *id.*/\\1/' | awk '{print 100 - $1}'"
-	output, err := r.cmdExecutor(cmd)
+// readProcStatRemote reads /proc/stat via command executor and parses CPU times
+func (r *RemoteSystemReader) readProcStatRemote() (*procStatSample, error) {
+	output, err := r.cmdExecutor("cat /proc/stat")
 	if err != nil {
-		return nil, fmt.Errorf("failed to get CPU percentage: %w", err)
+		return nil, err
 	}
 
-	if output == "" {
-		return nil, fmt.Errorf("empty output from CPU percentage command")
+	sample := &procStatSample{
+		cpuTimes: make(map[string][]uint64),
 	}
 
-	val, err := strconv.ParseFloat(strings.TrimSpace(output), 64)
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		if !strings.HasPrefix(line, "cpu") {
+			continue
+		}
+
+		fields := strings.Fields(line)
+		if len(fields) < 11 {
+			continue
+		}
+
+		cpuName := fields[0]
+		times := make([]uint64, 10)
+		for i := 1; i < 11 && i < len(fields); i++ {
+			val, err := strconv.ParseUint(fields[i], 10, 64)
+			if err != nil {
+				continue
+			}
+			times[i-1] = val
+		}
+		sample.cpuTimes[cpuName] = times
+	}
+
+	return sample, nil
+}
+
+// calculatePerCoreCPUPercentRemote calculates CPU usage percentage for each core
+func (r *RemoteSystemReader) calculatePerCoreCPUPercentRemote(first, second *procStatSample) ([]float64, error) {
+	var percentages []float64
+
+	// Get core count to determine how many cores we should have
+	coreCount, err := r.CPUCounts(true)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse CPU percentage: %w", err)
+		return nil, fmt.Errorf("failed to get CPU count: %w", err)
 	}
 
-	return []float64{val}, nil
+	// Process each CPU core (cpu0, cpu1, cpu2, etc.)
+	for i := 0; i < coreCount; i++ {
+		cpuName := fmt.Sprintf("cpu%d", i)
+		firstTimes, ok1 := first.cpuTimes[cpuName]
+		secondTimes, ok2 := second.cpuTimes[cpuName]
+
+		if !ok1 || !ok2 {
+			// If we can't find this core, use 0.0
+			percentages = append(percentages, 0.0)
+			continue
+		}
+
+		percent := r.calculateCPUPercentFromTimesRemote(firstTimes, secondTimes)
+		percentages = append(percentages, percent)
+	}
+
+	if len(percentages) == 0 {
+		return nil, fmt.Errorf("no CPU cores found in /proc/stat")
+	}
+
+	return percentages, nil
+}
+
+// calculateOverallCPUPercentRemote calculates overall CPU usage percentage
+func (r *RemoteSystemReader) calculateOverallCPUPercentRemote(first, second *procStatSample) ([]float64, error) {
+	firstTimes, ok1 := first.cpuTimes["cpu"]
+	secondTimes, ok2 := second.cpuTimes["cpu"]
+
+	if !ok1 || !ok2 {
+		return nil, fmt.Errorf("failed to find overall CPU stats in /proc/stat")
+	}
+
+	percent := r.calculateCPUPercentFromTimesRemote(firstTimes, secondTimes)
+	return []float64{percent}, nil
+}
+
+// calculateCPUPercentFromTimesRemote calculates CPU percentage from two time samples
+func (r *RemoteSystemReader) calculateCPUPercentFromTimesRemote(firstTimes, secondTimes []uint64) float64 {
+	if len(firstTimes) < 4 || len(secondTimes) < 4 {
+		return 0.0
+	}
+
+	// Calculate total time (sum of all CPU time fields)
+	var firstTotal, secondTotal uint64
+	var firstIdle, secondIdle uint64
+
+	for i := 0; i < len(firstTimes) && i < len(secondTimes); i++ {
+		firstTotal += firstTimes[i]
+		secondTotal += secondTimes[i]
+	}
+
+	// Idle time is the sum of idle and iowait (indices 3 and 4)
+	firstIdle = firstTimes[3]
+	if len(firstTimes) > 4 {
+		firstIdle += firstTimes[4]
+	}
+
+	secondIdle = secondTimes[3]
+	if len(secondTimes) > 4 {
+		secondIdle += secondTimes[4]
+	}
+
+	// Calculate differences
+	totalDiff := secondTotal - firstTotal
+	idleDiff := secondIdle - firstIdle
+
+	if totalDiff == 0 {
+		return 0.0
+	}
+
+	// CPU usage = 100 - (idle percentage)
+	idlePercent := float64(idleDiff) / float64(totalDiff) * 100.0
+	cpuUsage := 100.0 - idlePercent
+
+	// Clamp to valid range
+	if cpuUsage < 0.0 {
+		cpuUsage = 0.0
+	}
+	if cpuUsage > 100.0 {
+		cpuUsage = 100.0
+	}
+
+	return cpuUsage
 }
 
 func (r *RemoteSystemReader) VirtualMemory() (*VirtualMemoryStat, error) {
