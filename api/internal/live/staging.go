@@ -38,9 +38,11 @@ func (sm *StagingManager) GetStagingPath(ctx context.Context, applicationID, use
 		return "", err
 	}
 
+	// Add organization ID to context for SSH manager access
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, organizationID.String())
 	// Use GetClonePath which creates the staging directory using the same pattern as normal deployments
 	// Path structure: {mountPath}/{userID}/{environment}/{applicationID}
-	stagingPath, _, err := sm.githubService.GetClonePath(ctx, userID.String(), string(application.Environment), applicationID.String())
+	stagingPath, _, err := sm.githubService.GetClonePath(orgCtx, userID.String(), string(application.Environment), applicationID.String())
 	if err != nil {
 		return "", err
 	}
