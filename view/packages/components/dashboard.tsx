@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Activity, BarChart, Clock, HardDrive, Plus } from 'lucide-react';
+import { Activity, BarChart, Clock, HardDrive, Plus, Monitor, Terminal, Timer } from 'lucide-react';
 import { ArrowDownCircle, ArrowUpCircle, Network, Server } from 'lucide-react';
 import {
   DropdownMenu,
@@ -42,7 +42,7 @@ import { DraggableGrid } from '@nixopus/ui';
 import { DoughnutChartComponent } from '@/components/ui/doughnut-chart-component';
 import { useNetwork } from '@/packages/hooks/dashboard/use-network';
 import { useDiskMountsColumns } from '@/packages/hooks/dashboard/use-disk-mounts-columns';
-import { useSystemInfoItems } from '@/packages/hooks/dashboard/use-system-info-items';
+import { useSystemInfoData } from '@/packages/hooks/dashboard/use-system-info-items';
 import { useSystemStatsItems } from '@/packages/hooks/dashboard/use-system-stats-items';
 import { useTopCores } from '@/packages/hooks/dashboard/use-top-cores';
 import { useLoadAverageItems } from '@/packages/hooks/dashboard/use-load-average-items';
@@ -60,7 +60,6 @@ import {
   MemoryUsageCardProps,
   NetworkWidgetProps,
   SystemInfoCardProps,
-  SystemInfoItemProps,
   SystemMetricCardProps,
   SystemStatsProps
 } from '@/packages/types/dashboard';
@@ -483,18 +482,6 @@ export const NetworkWidget: React.FC<NetworkWidgetProps> = ({ systemStats }) => 
   );
 };
 
-export const SystemInfoItem: React.FC<SystemInfoItemProps> = ({ icon, label, value }) => {
-  return (
-    <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-      <div className="mt-0.5">{icon}</div>
-      <div className="flex-1 min-w-0">
-        <TypographyMuted className="text-xs font-medium">{label}</TypographyMuted>
-        <TypographySmall className="text-xs font-semibold truncate">{value}</TypographySmall>
-      </div>
-    </div>
-  );
-};
-
 export const SystemInfoCard: React.FC<SystemInfoCardProps> = ({ systemStats }) => {
   const { t } = useTranslation();
 
@@ -502,21 +489,78 @@ export const SystemInfoCard: React.FC<SystemInfoCardProps> = ({ systemStats }) =
     return <SystemInfoCardSkeleton />;
   }
 
-  const systemInfoItems = useSystemInfoItems(systemStats);
+  const info = useSystemInfoData(systemStats);
+
+  const infoItems = [
+    {
+      icon: Monitor,
+      iconColor: 'text-blue-500',
+      bgColor: 'bg-blue-500/10',
+      label: 'Hostname',
+      value: info.hostname
+    },
+    {
+      icon: Server,
+      iconColor: 'text-purple-500',
+      bgColor: 'bg-purple-500/10',
+      label: 'OS',
+      value: info.os
+    },
+    {
+      icon: Cpu,
+      iconColor: 'text-emerald-500',
+      bgColor: 'bg-emerald-500/10',
+      label: `CPU (${info.cores} cores)`,
+      value: info.cpu
+    },
+    {
+      icon: Terminal,
+      iconColor: 'text-orange-500',
+      bgColor: 'bg-orange-500/10',
+      label: 'Kernel',
+      value: info.kernel
+    }
+  ];
 
   return (
     <Card className="overflow-hidden h-full flex flex-col w-full">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-3">
         <CardTitle className="text-sm font-bold flex items-center">
           <Server className="h-4 w-4 mr-2 text-muted-foreground" />
           <TypographySmall>{t('dashboard.system.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {systemInfoItems.map((item, index) => (
-            <SystemInfoItem key={index} icon={item.icon} label={item.label} value={item.value} />
-          ))}
+        <div className="grid grid-cols-2 gap-4">
+          {infoItems.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <div key={index} className="flex items-start gap-2.5">
+                <div className={`p-1.5 rounded-md ${item.bgColor}`}>
+                  <Icon className={`h-3.5 w-3.5 ${item.iconColor}`} />
+                </div>
+                <div className="flex-1 min-w-0 space-y-1">
+                  <TypographyMuted className="text-[10px] uppercase tracking-wider font-medium">
+                    {item.label}
+                  </TypographyMuted>
+                  <p className="text-sm font-semibold truncate text-foreground" title={item.value}>
+                    {item.value}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+          <div className="col-span-2 flex items-start gap-2.5">
+            <div className="p-1.5 rounded-md bg-amber-500/10">
+              <Timer className="h-3.5 w-3.5 text-amber-500" />
+            </div>
+            <div className="flex-1 min-w-0 space-y-1">
+              <TypographyMuted className="text-[10px] uppercase tracking-wider font-medium">
+                Uptime
+              </TypographyMuted>
+              <p className="text-sm font-semibold text-foreground">{info.uptime}</p>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
