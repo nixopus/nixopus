@@ -75,12 +75,6 @@ export interface SystemInfoCardProps {
   systemStats: SystemStatsType | null;
 }
 
-export interface SystemInfoItemProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}
-
 export interface SystemMetricCardProps {
   title: string;
   icon: LucideIcon;
