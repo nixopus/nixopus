@@ -127,9 +127,7 @@ const MonitoringSection = ({
   if (!systemStats) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="md:col-span-2">
-          <SystemInfoCardSkeleton />
-        </div>
+        <SystemInfoCardSkeleton />
         <LoadAverageCardSkeleton />
         <CPUUsageCardSkeleton />
         <MemoryUsageCardSkeleton />
