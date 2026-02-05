@@ -70,15 +70,8 @@ func (t *Terminal) Start() {
 	go t.bufferFlusher()
 
 	go func() {
-		// Get connection from pool - always use the pool as single source of truth
-		client, err := t.sshManager.Connect()
-		if err != nil {
-			t.log.Log(logger.Error, "Failed to connect to SSH", err.Error())
-			close(t.done)
-			return
-		}
-
-		session, err := client.NewSession()
+		// Use centralized session creation with retry logic
+		session, err := t.sshManager.NewSessionWithRetry("")
 		if err != nil {
 			t.log.Log(logger.Error, "Failed to create session", err.Error())
 			close(t.done)
