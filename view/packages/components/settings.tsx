@@ -240,14 +240,12 @@ function GeneralSettingsContent() {
                 }
               }
               isGettingUserSettings={settings.isGettingUserSettings}
-              isUpdatingFont={settings.isUpdatingFont}
               isUpdatingTheme={settings.isUpdatingTheme}
               isUpdatingLanguage={settings.isUpdatingLanguage}
               isUpdatingAutoUpdate={settings.isUpdatingAutoUpdate}
               handleThemeChange={settings.handleThemeChange}
               handleLanguageChange={settings.handleLanguageChange}
               handleAutoUpdateChange={settings.handleAutoUpdateChange}
-              handleFontUpdate={settings.handleFontUpdate}
             />
           </div>
         </div>
@@ -677,7 +675,7 @@ export function SettingsSidebar({
   };
 
   return (
-    <div className="w-[240px] flex-shrink-0 bg-muted/50 border-r flex flex-col">
+    <div className="w-[208px] flex-shrink-0 bg-muted/50 border-r flex flex-col">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {accountCategories.length > 0 && (
           <div className="space-y-1">
