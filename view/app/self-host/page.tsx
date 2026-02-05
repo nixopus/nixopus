@@ -4,11 +4,11 @@ import GitHubAppSetup from '@/packages/components/github-connector';
 import { ListRepositories } from '@/packages/components/github-repositories';
 import AppItem, { AppItemSkeleton } from '../../packages/components/application';
 import useGetDeployedApplications from '../../packages/hooks/applications/use_get_deployed_applications';
-import PaginationWrapper from '@/components/ui/pagination';
-import { SearchBar } from '@/components/ui/search-bar';
+import { PaginationWrapper } from '@nixopus/ui';
+import { SearchBar } from '@nixopus/ui';
 import { SortSelect } from '@/components/ui/sort-selector';
 import { Application } from '@/redux/types/applications';
-import { Button } from '@/components/ui/button';
+import { Button } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
 import Skeleton from '../../packages/deprecated/file-manager/components/skeleton/Skeleton';
@@ -16,10 +16,10 @@ import { FeatureNames } from '@/packages/types/feature-flags';
 import DisabledFeature from '@/packages/components/rbac';
 import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
-import { TypographyH2, TypographyMuted } from '@/components/ui/typography';
+import { TypographyH2, TypographyMuted } from '@nixopus/ui';
 import { Plus } from 'lucide-react';
 import { LabelFilter } from '@/components/ui/label-filter';
-import MainPageHeader from '@/components/ui/main-page-header';
+import { MainPageHeader } from '@nixopus/ui';
 
 function page() {
   const { t } = useTranslation();

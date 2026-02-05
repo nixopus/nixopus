@@ -10,7 +10,7 @@ import useNotificationSettings from '@/packages/hooks/settings/use-notification-
 import useTeamSettings from '@/packages/hooks/settings/use-team-settings';
 import { useAdvancedSettings } from '@/packages/hooks/settings/use-advanced-settings';
 import { SMTPFormData } from '@/redux/types/notification';
-import { SelectOption } from '@/components/ui/select-wrapper';
+import { SelectOption } from '@nixopus/ui';
 
 export type SettingType = 'number' | 'switch' | 'select';
 

@@ -3,7 +3,7 @@ import React from 'react';
 import { TrashIcon, CheckIcon, Folder } from 'lucide-react';
 import Skeleton from './components/skeleton/Skeleton';
 import Header from './components/layout/Header';
-import { SearchBar } from '@/components/ui/search-bar';
+import { SearchBar } from '@nixopus/ui';
 import { Breadcrumbs } from './components/breadcrumbs/Breadcrumbs';
 import SortMethods from './components/actions/SortMethods';
 import LayoutSwitcher from './components/layout/LayoutSwitcher';
@@ -21,7 +21,7 @@ import { FeatureNames } from '@/packages/types/feature-flags';
 import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
 import { useIsMobile } from '@/packages/hooks/shared/use-mobile';
-import { DialogWrapper } from '@/components/ui/dialog-wrapper';
+import { DialogWrapper } from '@nixopus/ui';
 import FileInfo from './components/file-list/FileInfo';
 import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
 

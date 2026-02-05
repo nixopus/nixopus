@@ -8,9 +8,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+} from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
 import {
   Dialog,
   DialogContent,
@@ -18,9 +18,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
+} from '@nixopus/ui';
+import { Checkbox } from '@nixopus/ui';
+import { ScrollArea } from '@nixopus/ui';
 import {
   Eye,
   EyeOff,

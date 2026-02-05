@@ -1,8 +1,8 @@
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@nixopus/ui';
+import { Card, CardContent } from '@nixopus/ui';
 import { Application } from '@/redux/types/applications';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@nixopus/ui';
 import { cn } from '@/lib/utils';
 import { useApplicationItem } from '@/packages/hooks/applications/use_application_item';
 import { DomainDropdown } from '@/packages/components/multi-domains';
