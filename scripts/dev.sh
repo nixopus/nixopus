@@ -178,7 +178,6 @@ create_api_env() {
     local CADDY_ADMIN_PORT=${CADDY_ADMIN_PORT:-2019}
     local SSH_USER=${SSH_USER:-${USER:-user}}
     local SSH_KEY_PATH="${HOME}/.ssh/id_rsa_nixopus"
-    local MOUNT_PATH=${MOUNT_PATH:-./configs}
     local LOGS_PATH=${LOGS_PATH:-./logs}
     local APP_VERSION=${APP_VERSION:-0.1.0-alpha.11}
     
@@ -231,7 +230,6 @@ ALLOWED_ORIGIN=http://localhost:${VIEW_PORT}
 # Application Configuration
 ENV=development
 LOGS_PATH=${LOGS_PATH}
-MOUNT_PATH=${MOUNT_PATH}
 APP_VERSION=${APP_VERSION}
 EOF
     

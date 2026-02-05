@@ -9,7 +9,6 @@ services:
       HOST_NAME: ${DB_HOST:-nixopus-db}
       DB_PORT: ${DB_PORT:-5432}
       SSL_MODE: ${DB_SSL_MODE:-disable}
-      MOUNT_PATH: ${MOUNT_PATH:-/etc/nixopus/configs}
       SSH_HOST: ${SSH_HOST:-localhost}
       SSH_PORT: ${SSH_PORT:-22}
       SSH_USER: ${SSH_USER:-root}

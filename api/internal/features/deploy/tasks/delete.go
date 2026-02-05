@@ -3,8 +3,6 @@ package tasks
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/docker/docker/api/types/image"
 	"github.com/google/uuid"
@@ -70,10 +68,16 @@ func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.De
 		}
 	}
 
-	repoPath := filepath.Join(os.Getenv("MOUNT_PATH"), userID.String(), string(application.Environment), application.ID.String())
-	s.Logger.Log(logger.Info, "Cleaning up repository directory", repoPath)
-
-	err = s.Github_service.RemoveRepository(ctx, repoPath)
+	// Add organization ID to context for SSH manager access
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, organizationID.String())
+	// Get repository path using the same method as cloning (on tenant's SSH server)
+	repoPath, _, err := s.Github_service.GetClonePath(orgCtx, userID.String(), string(application.Environment), application.ID.String())
+	if err != nil {
+		s.Logger.Log(logger.Error, fmt.Sprintf("Failed to get repository path: %s", err.Error()), "")
+	} else {
+		s.Logger.Log(logger.Info, "Cleaning up repository directory", repoPath)
+		err = s.Github_service.RemoveRepository(orgCtx, repoPath)
+	}
 	if err != nil {
 		s.Logger.Log(logger.Error, "Failed to remove repository", err.Error())
 	}
