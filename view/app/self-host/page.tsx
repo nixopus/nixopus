@@ -11,7 +11,6 @@ import { Application } from '@/redux/types/applications';
 import { Button } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
-import Skeleton from '../../packages/deprecated/file-manager/components/skeleton/Skeleton';
 import { FeatureNames } from '@/packages/types/feature-flags';
 import DisabledFeature from '@/packages/components/rbac';
 import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
@@ -20,6 +19,7 @@ import { TypographyH2, TypographyMuted } from '@nixopus/ui';
 import { Plus } from 'lucide-react';
 import { LabelFilter } from '@/components/ui/label-filter';
 import { MainPageHeader } from '@nixopus/ui';
+import { Skeleton } from '@nixopus/ui';
 
 function page() {
   const { t } = useTranslation();
