@@ -18,4 +18,5 @@ func (router *Router) RegisterUserRoutes(userGroup *fuego.Server, userController
 	fuego.Get(userGroup, "/preferences", userController.GetUserPreferences)
 	fuego.Put(userGroup, "/preferences", userController.UpdateUserPreferences)
 	fuego.Get(userGroup, "/onboarded", userController.GetIsOnboarded)
+	fuego.Post(userGroup, "/onboarded", userController.MarkOnboardingComplete)
 }
