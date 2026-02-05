@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { LanguageSwitcher } from '@/packages/components/language-switcher';
-import { SelectWrapper } from '@/components/ui/select-wrapper';
 import { Switch } from '@/components/ui/switch';
 import { RBACGuard } from '@/packages/components/rbac';
 import { TypographySmall, TypographyMuted, TypographyH3 } from '@/components/ui/typography';
@@ -39,25 +38,21 @@ export function AccountSection({
   user,
   userSettings,
   isGettingUserSettings,
-  isUpdatingFont,
   isUpdatingTheme,
   isUpdatingLanguage,
   isUpdatingAutoUpdate,
   handleThemeChange,
   handleLanguageChange,
-  handleAutoUpdateChange,
-  handleFontUpdate
+  handleAutoUpdateChange
 }: AccountSectionProps) {
   const { t } = useTranslation();
   const {
     isSendingVerification,
     verificationSent,
     verificationError,
-    handleFontChange,
     handleSendVerification
   } = useAccountSection({
-    userSettings,
-    handleFontUpdate
+    userSettings
   });
 
   return (
@@ -157,45 +152,6 @@ export function AccountSection({
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        <div>
-          <TypographySmall className="text-sm font-medium">
-            {t('settings.account.preferences.title')}
-          </TypographySmall>
-          <TypographyMuted className="text-xs mt-1">
-            {t('settings.account.preferences.description')}
-          </TypographyMuted>
-        </div>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <TypographyMuted className="text-sm">{t('settings.preferences.font')}</TypographyMuted>
-            <RBACGuard resource="user" action="update">
-              <SelectWrapper
-                value={userSettings.font_family || 'outfit'}
-                onValueChange={handleFontChange}
-                options={[
-                  { value: 'geist', label: t('settings.preferences.fontOptions.geist') },
-                  { value: 'inter', label: t('settings.preferences.fontOptions.inter') },
-                  { value: 'roboto', label: t('settings.preferences.fontOptions.roboto') },
-                  { value: 'poppins', label: t('settings.preferences.fontOptions.poppins') },
-                  { value: 'montserrat', label: t('settings.preferences.fontOptions.montserrat') },
-                  {
-                    value: 'space-grotesk',
-                    label: t('settings.preferences.fontOptions.spaceGrotesk')
-                  },
-                  { value: 'outfit', label: t('settings.preferences.fontOptions.outfit') },
-                  { value: 'jakarta', label: t('settings.preferences.fontOptions.jakarta') },
-                  { value: 'system', label: t('settings.preferences.fontOptions.system') }
-                ]}
-                placeholder={t('settings.preferences.font')}
-                disabled={isUpdatingFont}
-                className="w-[180px]"
-              />
-            </RBACGuard>
           </div>
         </div>
       </div>
