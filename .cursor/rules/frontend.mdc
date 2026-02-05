@@ -137,10 +137,10 @@ import { useDispatch, useSelector } from 'react-redux';
 ### Always Use shadcn Components
 ```typescript
 // ✅ Correct: Use shadcn components
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@nixopus/ui';
+import { Card, CardHeader, CardContent } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
+import { Skeleton } from '@nixopus/ui';
 
 // ❌ Never write plain HTML for interactive elements
 <button className="...">Click</button>
@@ -383,7 +383,7 @@ export const RepositoryCardSkeleton: React.FC = () => (
 
 ### Import Aliases
 ```typescript
-import { ... } from '@/components/ui/...'    // shadcn components
+import { ... } from '@nixopus/ui'    // shadcn components
 import { ... } from '@/hooks/...'            // Global hooks
 import { ... } from '@/redux/hooks'          // useAppDispatch, useAppSelector
 import { ... } from '@/redux/services/...'   // RTK Query hooks

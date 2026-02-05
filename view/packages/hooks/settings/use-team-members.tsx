@@ -5,21 +5,21 @@ import { useRBAC } from '@/packages/utils/rbac';
 import { useAppSelector } from '@/redux/hooks';
 import { User } from '@/redux/types/user';
 import { UserTypes } from '@/redux/types/orgs';
-import { TableColumn } from '@/components/ui/data-table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { TableColumn } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+} from '@nixopus/ui';
 import { TrashIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from 'lucide-react';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@nixopus/ui';
 import { ResourceGuard } from '@/packages/components/rbac';
-import { TypographyMuted } from '@/components/ui/typography';
+import { TypographyMuted } from '@nixopus/ui';
 import { EditUser, MAX_VISIBLE_PERMISSIONS } from '../../types/settings';
 import { useTranslation } from '../shared/use-translation';
 

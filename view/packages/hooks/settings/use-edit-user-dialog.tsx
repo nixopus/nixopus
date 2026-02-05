@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { UserTypes } from '@/redux/types/orgs';
 import { toast } from 'sonner';
-import { DialogAction } from '@/components/ui/dialog-wrapper';
+import { DialogAction } from '@nixopus/ui';
 import { EditUserDialogProps } from '../../types/settings';
 
 export function useEditUserDialog({ isOpen, onClose, user, onSave }: EditUserDialogProps) {

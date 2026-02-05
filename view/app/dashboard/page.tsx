@@ -4,10 +4,10 @@ import React from 'react';
 import { useDashboard } from '@/packages/hooks/dashboard/use-dashboard';
 import { RefreshCw } from 'lucide-react';
 import DisabledFeature from '@/packages/components/rbac';
-import { Button } from '@/components/ui/button';
-import { Banner } from '@/components/ui/banner';
+import { Button } from '@nixopus/ui';
+import { Banner } from '@nixopus/ui';
 import { ResourceGuard } from '@/packages/components/rbac';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@nixopus/ui';
 import {
   SystemInfoCardSkeleton,
   CPUUsageCardSkeleton,
@@ -17,11 +17,11 @@ import {
 } from '@/packages/components/dashboard-skeletons';
 import { ContainersWidgetSkeleton } from '@/packages/components/container-skeletons';
 import PageLayout from '@/packages/layouts/page-layout';
-import { DraggableGrid } from '@/components/ui/draggable-grid';
+import { DraggableGrid } from '@nixopus/ui';
 import { WidgetSelector } from '@/packages/components/dashboard';
 import { DashboardItem } from '@/packages/types/layout';
 import { ContainerData, SystemStatsType } from '@/redux/types/monitor';
-import MainPageHeader from '@/components/ui/main-page-header';
+import { MainPageHeader } from '@nixopus/ui';
 
 // for dashboard page, we need to check if the user has the dashboard:read permission
 function DashboardPage() {

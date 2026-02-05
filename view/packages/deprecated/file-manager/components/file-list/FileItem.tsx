@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DialogWrapper } from '@/components/ui/dialog-wrapper';
+import { DialogWrapper } from '@nixopus/ui';
 import { FileData } from '@/redux/types/files';
 import FileInfo from './FileInfo';
 import { DeleteDialog } from '@/components/ui/delete-dialog';

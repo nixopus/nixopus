@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container } from '@/redux/services/container/containerApi';
 import { ContainerData } from '@/redux/types/monitor';
-import { TableColumn } from '@/components/ui/data-table';
+import { TableColumn } from '@nixopus/ui';
 import { translationKey } from '@/packages/hooks/shared/use-translation';
 import { ControllerRenderProps, UseFormReturn } from 'react-hook-form';
 import {

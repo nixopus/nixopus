@@ -8,15 +8,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TypographyMuted } from '@/components/ui/typography';
+} from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
+import { Alert, AlertDescription } from '@nixopus/ui';
+import { TypographyMuted } from '@nixopus/ui';
 import useSmtpBanner from '@/packages/hooks/dashboard/use-smtp-banner';
 import { X } from 'lucide-react';
 import { ArrowRight, Package } from 'lucide-react';
-import { CardWrapper } from '@/components/ui/card-wrapper';
-import { DataTable } from '@/components/ui/data-table';
+import { CardWrapper } from '@nixopus/ui';
+import { DataTable } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useRouter } from 'next/navigation';
 import { ContainersWidgetProps } from '@/packages/types/containers';
@@ -35,10 +35,10 @@ import { Cpu } from 'lucide-react';
 import { DEFAULT_METRICS } from '@/packages/utils/dashboard';
 import { useSystemMetric } from '@/packages/hooks/dashboard/use-system-metric';
 import { BarChartComponent } from '@/components/ui/bar-chart-component';
-import { TypographySmall } from '@/components/ui/typography';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { CardTitle } from '@/components/ui/card';
-import { DraggableGrid } from '@/components/ui/draggable-grid';
+import { TypographySmall } from '@nixopus/ui';
+import { Card, CardContent, CardHeader } from '@nixopus/ui';
+import { CardTitle } from '@nixopus/ui';
+import { DraggableGrid } from '@nixopus/ui';
 import { DoughnutChartComponent } from '@/components/ui/doughnut-chart-component';
 import { useNetwork } from '@/packages/hooks/dashboard/use-network';
 import { useDiskMountsColumns } from '@/packages/hooks/dashboard/use-disk-mounts-columns';

@@ -1,13 +1,13 @@
 'use client';
 
 import PageLayout from '@/packages/layouts/page-layout';
-import TabsWrapper, { TabsWrapperList } from '@/components/ui/tabs-wrapper';
+import TabsWrapper, { TabsWrapperList } from '@nixopus/ui';
 import useExtensionDetails from '../../../packages/hooks/extensions/use-extension-detail';
 import { ExtensionInput, ExtensionForkDialog } from '@/packages/components/extension';
-import { Button } from '@/components/ui/button';
+import { Button } from '@nixopus/ui';
 import { OverviewTab } from '@/packages/components/extension-tabs';
 import { GitFork } from 'lucide-react';
-import SubPageHeader from '@/components/ui/sub-page-header';
+import { SubPageHeader } from '@nixopus/ui';
 
 export default function ExtensionDetailsPage() {
   const {
