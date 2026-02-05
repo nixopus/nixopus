@@ -61,3 +61,9 @@ type IsOnboardedResponse struct {
 	Message string                  `json:"message"`
 	Data    IsOnboardedResponseData `json:"data"`
 }
+
+// MarkOnboardingCompleteResponse is the response for marking onboarding complete
+// Returns only the data field as specified in the API requirements
+type MarkOnboardingCompleteResponse struct {
+	Data IsOnboardedResponseData `json:"data"`
+}
