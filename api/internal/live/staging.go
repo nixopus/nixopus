@@ -40,8 +40,8 @@ func (sm *StagingManager) GetStagingPath(ctx context.Context, applicationID, use
 
 	// Add organization ID to context for SSH manager access
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, organizationID.String())
-	// Use GetClonePath which creates the staging directory using the same pattern as normal deployments
-	// Path structure: {mountPath}/{userID}/{environment}/{applicationID}
+	// Use GetClonePath which creates the staging directory on the tenant's SSH server
+	// Path structure: /var/nixopus/repos/{userID}/{environment}/{applicationID}
 	stagingPath, _, err := sm.githubService.GetClonePath(orgCtx, userID.String(), string(application.Environment), applicationID.String())
 	if err != nil {
 		return "", err
@@ -88,9 +88,4 @@ func (sm *StagingManager) RemoveFileReceiver(applicationID uuid.UUID, path strin
 			delete(sm.fileReceivers, applicationID)
 		}
 	}
-}
-
-// GetStagingPathForApplication is a helper that gets staging path from application
-func GetStagingPathForApplication(mountPath string, userID uuid.UUID, environment shared_types.Environment, applicationID uuid.UUID) string {
-	return filepath.Join(mountPath, userID.String(), string(environment), applicationID.String())
 }
