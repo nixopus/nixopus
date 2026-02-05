@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger
-} from '@/components/ui/context-menu';
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@nixopus/ui';
 import {
   Copy,
   EyeIcon,
@@ -19,7 +14,7 @@ import {
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { FileData } from '@/redux/types/files';
 import { toast } from 'sonner';
-import { DialogWrapper } from '@/components/ui/dialog-wrapper';
+import { DialogWrapper } from '@nixopus/ui';
 import FileUpload from '../actions/Upload';
 import { useCreateDirectoryMutation } from '@/redux/services/file-manager/fileManagersApi';
 import { ResourceGuard } from '@/packages/components/rbac';

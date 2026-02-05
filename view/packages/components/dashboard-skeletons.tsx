@@ -2,17 +2,17 @@
 
 import React from 'react';
 import { HardDrive } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { TypographySmall } from '@/components/ui/typography';
+import { Skeleton } from '@nixopus/ui';
+import { TypographySmall } from '@nixopus/ui';
 import { useSystemMetric } from '@/packages/hooks/dashboard/use-system-metric';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { DEFAULT_METRICS } from '@/packages/utils/dashboard';
-import { Card } from '@/components/ui/card';
-import { CardHeader } from '@/components/ui/card';
-import { CardTitle } from '@/components/ui/card';
+import { Card } from '@nixopus/ui';
+import { CardHeader } from '@nixopus/ui';
+import { CardTitle } from '@nixopus/ui';
 import { Server } from 'lucide-react';
-import { TypographyMuted } from '@/components/ui/typography';
-import { CardContent } from '@/components/ui/card';
+import { TypographyMuted } from '@nixopus/ui';
+import { CardContent } from '@nixopus/ui';
 import { Cpu } from 'lucide-react';
 import { Activity } from 'lucide-react';
 import { BarChart } from 'lucide-react';

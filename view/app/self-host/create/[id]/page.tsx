@@ -3,7 +3,7 @@ import React from 'react';
 import useFindRepository from '@/packages/hooks/applications/use_find_repository';
 import { QuickDeployForm } from '@/packages/components/application-form';
 import { ResourceGuard } from '@/packages/components/rbac';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@nixopus/ui';
 import PageLayout from '@/packages/layouts/page-layout';
 
 function page() {

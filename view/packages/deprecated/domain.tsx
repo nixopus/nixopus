@@ -1,23 +1,23 @@
-import { DialogWrapper, DialogAction } from '@/components/ui/dialog-wrapper';
+import { DialogWrapper, DialogAction } from '@nixopus/ui';
 import React from 'react';
 import { useDeleteDomainMutation } from '@/redux/services/settings/domainsApi';
 import { toast } from 'sonner';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Domain } from '@/redux/types/domain';
 import { ResourceGuard } from '@/packages/components/rbac';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
 import { Edit, Trash2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { DataTable, TableColumn } from '@/components/ui/data-table';
+import { Badge } from '@nixopus/ui';
+import { DataTable, TableColumn } from '@nixopus/ui';
 import { useCreateDomainMutation } from '@/redux/services/settings/domainsApi';
 import { useUpdateDomainMutation } from '@/redux/services/settings/domainsApi';
 import { useAppSelector } from '@/redux/hooks';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input } from '@nixopus/ui';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@nixopus/ui';
 
 interface DeleteDomainProps {
   open: boolean;

@@ -26,8 +26,8 @@ import {
   Network,
   Terminal as TerminalIcon
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Input } from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { formatBytes } from '@/lib/utils';
 import { useGetImagesQuery } from '@/redux/services/container/imagesApi';

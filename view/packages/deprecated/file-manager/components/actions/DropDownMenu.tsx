@@ -1,13 +1,13 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@nixopus/ui';
 import { Upload, FolderPlus, Eye, EyeOff, MoreVertical } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { DialogWrapper } from '@/components/ui/dialog-wrapper';
+} from '@nixopus/ui';
+import { DialogWrapper } from '@nixopus/ui';
 import FileUpload from './Upload';
 import { FileData } from '@/redux/types/files';
 import { useCreateDirectoryMutation } from '@/redux/services/file-manager/fileManagersApi';

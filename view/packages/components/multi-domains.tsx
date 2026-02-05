@@ -7,19 +7,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
+} from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
 import { ApplicationDomain } from '@/redux/types/applications';
 import { cn } from '@/lib/utils';
 import { Controller } from 'react-hook-form';
-import {
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormDescription,
-  FormMessage
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
 import { X, Plus } from 'lucide-react';
 import { useDomainDropdown } from '@/packages/hooks/applications/use_multiple_domains';
 import {

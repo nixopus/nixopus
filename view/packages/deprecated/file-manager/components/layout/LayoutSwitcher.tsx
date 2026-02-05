@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid, List } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@nixopus/ui';
 
 interface FileManagerLayoutsProps {
   layout: 'grid' | 'list';

@@ -11,8 +11,8 @@ import { Application } from '@/redux/types/applications';
 import { HealthCheck } from '@/redux/types/healthcheck';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { toast } from 'sonner';
-import { SelectOption } from '@/components/ui/select-wrapper';
-import { DialogAction } from '@/components/ui/dialog-wrapper';
+import { SelectOption } from '@nixopus/ui';
+import { DialogAction } from '@nixopus/ui';
 
 interface UseHealthCheckDialogProps {
   application: Application;
