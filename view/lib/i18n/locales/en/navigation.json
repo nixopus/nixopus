@@ -1,7 +1,7 @@
 {
   "navigation": {
     "dashboard": "Dashboard",
-    "selfHost": "Self Host",
+    "selfHost": "Apps",
     "fileManager": "File Manager",
     "extensions": "Extensions",
     "settings": "Settings",
