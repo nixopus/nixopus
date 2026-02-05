@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@nixopus/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@nixopus/ui';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import useOrganizationInvite from '../../../packages/hooks/auth/use-org-invite';
 

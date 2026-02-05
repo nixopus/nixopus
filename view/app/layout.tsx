@@ -1,11 +1,11 @@
 'use client';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { ThemeProvider } from '@/components/ui/theme-provider';
+import { ThemeProvider } from '@nixopus/ui';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from '@/redux/store';
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster } from '@nixopus/ui';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { useEffect, useState, useMemo } from 'react';
 import { initializeAuth } from '@/redux/features/users/authSlice';
@@ -87,7 +87,7 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
   // This is a fallback in case Redux state hasn't updated yet
   useEffect(() => {
     if (!isInitialized) return;
-    
+
     const checkSession = async () => {
       try {
         const session = await authClient.getSession();
@@ -101,7 +101,7 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
         // Session check failed, rely on Redux state
       }
     };
-    
+
     // Only check on public routes to avoid unnecessary checks
     if (isPublicRoute) {
       checkSession();

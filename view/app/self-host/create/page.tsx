@@ -2,9 +2,9 @@
 import React from 'react';
 import { ListRepositories } from '@/packages/components/github-repositories';
 import { ResourceGuard } from '@/packages/components/rbac';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@nixopus/ui';
 import PageLayout from '@/packages/layouts/page-layout';
-import MainPageHeader from '@/components/ui/main-page-header';
+import { MainPageHeader } from '@nixopus/ui';
 
 function page() {
   return (

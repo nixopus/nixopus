@@ -5,8 +5,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
 
 interface LogoutDialogProps {
   open: boolean;

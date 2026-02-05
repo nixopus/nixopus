@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
+import { Progress } from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
 import { Upload, Trash } from 'lucide-react';
-import { DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DialogContent, DialogHeader, DialogTitle } from '@nixopus/ui';
 import { useFileOperations } from '../../hooks/file-operations/useOperations';
 import { ResourceGuard } from '@/packages/components/rbac';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
