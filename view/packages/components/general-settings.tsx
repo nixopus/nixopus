@@ -2,21 +2,21 @@
 
 import React from 'react';
 import { Mail, User, CheckCircle, AlertCircle, CheckCircle2, XCircle, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
+import { Label } from '@nixopus/ui';
+import { Alert, AlertDescription, AlertTitle } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { LanguageSwitcher } from '@/packages/components/language-switcher';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@nixopus/ui';
 import { RBACGuard } from '@/packages/components/rbac';
-import { TypographySmall, TypographyMuted, TypographyH3 } from '@/components/ui/typography';
+import { TypographySmall, TypographyMuted, TypographyH3 } from '@nixopus/ui';
 import UploadAvatar from '@/components/ui/upload_avatar';
-import { Badge } from '@/components/ui/badge';
-import { TabsContent } from '@/components/ui/tabs';
+import { Badge } from '@nixopus/ui';
+import { TabsContent } from '@nixopus/ui';
 import { QRCodeSVG } from 'qrcode.react';
 import { Shield } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@nixopus/ui';
 import {
   AccountSectionProps,
   AvatarSectionProps,
@@ -46,14 +46,10 @@ export function AccountSection({
   handleAutoUpdateChange
 }: AccountSectionProps) {
   const { t } = useTranslation();
-  const {
-    isSendingVerification,
-    verificationSent,
-    verificationError,
-    handleSendVerification
-  } = useAccountSection({
-    userSettings
-  });
+  const { isSendingVerification, verificationSent, verificationError, handleSendVerification } =
+    useAccountSection({
+      userSettings
+    });
 
   return (
     <div className="space-y-8">

@@ -3,7 +3,7 @@
 import React from 'react';
 import { useParams } from 'next/navigation';
 import { ResourceGuard } from '@/packages/components/rbac';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@nixopus/ui';
 import PageLayout from '@/packages/layouts/page-layout';
 import DeploymentLogsTable from '@/packages/components/deployment-logs';
 

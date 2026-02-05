@@ -2,11 +2,11 @@
 
 import React, { useRef } from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import DialogWrapper, { DialogAction } from '@/components/ui/dialog-wrapper';
+import { Button } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
+import { Skeleton } from '@nixopus/ui';
+import { Alert, AlertDescription } from '@nixopus/ui';
+import { DialogWrapper, type DialogAction } from '@nixopus/ui';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import {
   Github,

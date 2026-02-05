@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { SelectWrapper } from '@/components/ui/select-wrapper';
+import { SelectWrapper } from '@nixopus/ui';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';
-import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
+import { TypographySmall, TypographyMuted } from '@nixopus/ui';
 import { DahboardUtilityHeader } from '@/packages/components/utility-header';
-import PaginationWrapper from '@/components/ui/pagination';
-import { DataTable, TableColumn } from '@/components/ui/data-table';
+import { PaginationWrapper } from '@nixopus/ui';
+import { DataTable, TableColumn } from '@nixopus/ui';
 import { ActivityMessage } from '@/redux/types/audit';
 import useActivities, {
   ActivityListProps,

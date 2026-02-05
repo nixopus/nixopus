@@ -1,10 +1,10 @@
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { PasswordInputField } from '@/components/ui/password-input-field';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@nixopus/ui';
+import { Card, CardContent } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
+import { PasswordInputField } from '@nixopus/ui';
+import { Label } from '@nixopus/ui';
+import { Alert, AlertDescription } from '@nixopus/ui';
 import nixopusLogo from '@/public/nixopus_logo_transparent.png';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import Link from 'next/link';

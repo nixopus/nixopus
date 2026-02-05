@@ -5,7 +5,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator
-} from '@/components/ui/breadcrumb';
+} from '@nixopus/ui';
 import { HomeIcon } from 'lucide-react';
 import React from 'react';
 

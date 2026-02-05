@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@nixopus/ui';
 import { ArrowUpDown } from 'lucide-react';
 import {
   DropdownMenu,
@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuRadioItem,
   DropdownMenuRadioGroup
-} from '@/components/ui/dropdown-menu';
+} from '@nixopus/ui';
 import { FileData } from '@/redux/types/files';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
