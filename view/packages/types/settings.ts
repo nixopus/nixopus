@@ -105,14 +105,12 @@ export interface AccountSectionProps {
   user: UserType;
   userSettings: UserSettings;
   isGettingUserSettings: boolean;
-  isUpdatingFont: boolean;
   isUpdatingTheme: boolean;
   isUpdatingLanguage: boolean;
   isUpdatingAutoUpdate: boolean;
   handleThemeChange: (theme: string) => void;
   handleLanguageChange: (language: string) => void;
   handleAutoUpdateChange: (autoUpdate: boolean) => void;
-  handleFontUpdate: (fontFamily: string, fontSize: number) => Promise<void>;
 }
 
 export interface AvatarSectionProps {
