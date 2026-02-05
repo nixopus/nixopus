@@ -4,7 +4,7 @@ import React, { useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { PanelBottom, PanelRight, Plus, SplitSquareVertical, X } from 'lucide-react';
 import { useSplitPaneHeader } from '@/packages/hooks/terminal/use-split-pane-header';
-import { Button } from '@/components/ui/button';
+import { Button } from '@nixopus/ui';
 import {
   SplitPaneHeaderProps,
   TerminalHeaderProps,
@@ -19,7 +19,7 @@ import DisabledFeature from '@/packages/components/rbac';
 import { FeatureNames } from '@/packages/types/feature-flags';
 import { AnyPermissionGuard } from '@/packages/components/rbac';
 import { useRBAC } from '@/packages/utils/rbac';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@nixopus/ui';
 import { useTerminalSessions } from '@/packages/hooks/terminal/use-terminal-sessions';
 import { useTerminalStyles } from '@/packages/hooks/terminal/use-terminal-styles';
 import { useTerminalKeyboardShortcuts } from '@/packages/hooks/terminal/use-terminal-keyboard-shortcuts';

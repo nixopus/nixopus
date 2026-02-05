@@ -1,8 +1,8 @@
-import { TableColumn } from '@/components/ui/data-table';
+import { TableColumn } from '@nixopus/ui';
 import { ContainerData } from '@/redux/types/monitor';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { TypographyMuted, TypographySmall } from '@/components/ui/typography';
-import { Badge } from '@/components/ui/badge';
+import { TypographyMuted, TypographySmall } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
 import { truncateId, getStatusColor } from '@/packages/utils/dashboard';
 
 export function useContainer() {

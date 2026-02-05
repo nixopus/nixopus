@@ -1,5 +1,5 @@
 import React from 'react';
-import { DraggableItem } from '@/components/ui/draggable-grid';
+import { DraggableItem } from '@nixopus/ui';
 import { SystemStatsType } from '@/redux/types/monitor';
 
 export interface SystemStatsComponentCreators {
