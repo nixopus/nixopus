@@ -4,8 +4,9 @@ import React, { useEffect } from 'react';
 
 function page() {
   const router = useRouter();
+
   useEffect(() => {
-    router.push('/dashboard');
+    router.push('/apps');
     return () => {};
   }, []);
 

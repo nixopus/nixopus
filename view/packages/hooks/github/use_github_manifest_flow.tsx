@@ -85,8 +85,8 @@ export function useGithubManifestFlow({
         url: webhookUrl || `${window.location.origin}/github/webhook`,
         active: true
       },
-      redirect_url: redirectUrl || `${window.location.origin}/self-host`,
-      callback_urls: [redirectUrl || `${window.location.origin}/self-host`],
+      redirect_url: redirectUrl || `${window.location.origin}/apps`,
+      callback_urls: [redirectUrl || `${window.location.origin}/apps`],
       public: true,
       default_permissions: {
         contents: 'read',
@@ -95,7 +95,7 @@ export function useGithubManifestFlow({
         pull_requests: 'write'
       },
       default_events: ['issues', 'issue_comment', 'pull_request', 'push'],
-      setup_url: `${window.location.origin}/self-host`,
+      setup_url: `${window.location.origin}/apps`,
       setup_on_update: true
     };
 

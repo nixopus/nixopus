@@ -22,12 +22,7 @@ export default function ActivitiesPage() {
 
   return (
     <PageLayout maxWidth="full" padding="md" spacing="lg">
-      <ActivityList
-        title={t('activities.list.title')}
-        description={t('activities.list.description')}
-        showFilters={true}
-        pageSize={20}
-      />
+      <ActivityList title={t('activities.list.title')} showFilters={true} pageSize={20} />
     </PageLayout>
   );
 }

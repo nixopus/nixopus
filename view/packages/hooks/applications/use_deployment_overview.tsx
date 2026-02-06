@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { Activity } from 'lucide-react';
 
 interface UseDeploymentOverviewProps {
   totalDeployments: number;
@@ -67,18 +66,7 @@ export function useDeploymentOverview({
     [totalDeployments, successfulDeployments, failedDeployments, currentStatus, isActive, t]
   );
 
-  const title = useMemo(
-    () => (
-      <div className="flex items-center gap-2">
-        <Activity className="h-5 w-5 text-muted-foreground" />
-        <span>{t('selfHost.monitoring.overview.title')}</span>
-      </div>
-    ),
-    [t]
-  );
-
   return {
-    title,
     statBlocks
   };
 }

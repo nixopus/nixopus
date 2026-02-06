@@ -91,7 +91,7 @@ export default function ContainersPage() {
       <PageLayout maxWidth="full" padding="md" spacing="lg" className="relative z-10">
         <MainPageHeader
           label={t('containers.title')}
-          description={t('containers.description')}
+          highlightLabel={false}
           actions={
             <ActionHeader
               handleRefresh={handleRefresh}

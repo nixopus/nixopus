@@ -213,7 +213,7 @@ function useGetDeployedApplications() {
           newUrl.searchParams.delete('installation_id');
           newUrl.searchParams.delete('connector_id');
           router.replace(newUrl.pathname + newUrl.search, { scroll: false });
-          router.push('/self-host');
+          router.push('/apps');
         } catch (error) {
           console.error('Failed to update GitHub connector:', error);
           setInGitHubFlow(false);

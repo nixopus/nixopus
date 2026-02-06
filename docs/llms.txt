@@ -12,7 +12,7 @@
 
 ### Core Features
 
-- [Hosting Projects](/llms.txt/docs/self-host/index.md): Deploy applications from GitHub repositories with automatic builds and container management.
+- [Hosting Projects](/llms.txt/docs/apps/index.md): Deploy applications from GitHub repositories with automatic builds and container management.
 - [Terminal](/llms.txt/docs/terminal/index.md): Access your VPS directly from the dashboard with a secure, browser-based terminal.
 - [File Manager](/llms.txt/docs/file-manager/index.md): Browse and manage files on your VPS through a visual interface.
 - [Extensions](/llms.txt/docs/extensions/index.md): Automate server tasks through a library of pre-built configurations.

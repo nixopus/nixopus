@@ -154,7 +154,7 @@ export function useQuickDeployForm({
       const result = await createProject(projectData).unwrap();
 
       toast.success(t('selfHost.quickDeploy.toast.draftSaved'));
-      router.push('/self-host/application/' + result.id);
+      router.push('/apps/application/' + result.id);
     } catch {
       toast.error(t('selfHost.quickDeploy.toast.saveFailed'));
     }
