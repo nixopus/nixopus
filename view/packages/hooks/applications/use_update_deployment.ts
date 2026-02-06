@@ -136,7 +136,7 @@ function useUpdateDeployment({
       const data = await updateDeployment(updateData).unwrap();
 
       if (data?.id) {
-        router.push('/self-host/application/' + data.id);
+        router.push('/apps/application/' + data.id);
         toast.success(t('selfHost.deployForm.success.update'));
       }
     } catch (error) {

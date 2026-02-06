@@ -75,7 +75,7 @@ function DeploymentsList({
           )}
         </>
       ) : (
-        <div className="text-center py-12 rounded-lg border">
+        <div className="text-center py-12 rounded-lg border border-border">
           <p className="text-muted-foreground">{t('selfHost.deployment.list.noDeployments')}</p>
         </div>
       )}
@@ -174,11 +174,11 @@ export function DuplicateProjectDialog({ application }: DuplicateProjectDialogPr
 }
 
 export const ApplicationDetailsHeader = ({ application }: { application?: Application }) => {
-  const { icon, title, metadata, actions } = useApplicationHeader({ application });
+  const { title, metadata, actions } = useApplicationHeader({ application });
 
   return (
     <ResourceGuard resource="deploy" action="read" loadingFallback={null}>
-      <SubPageHeader icon={icon} title={title} metadata={metadata} actions={actions} />
+      <SubPageHeader title={title} metadata={metadata} actions={actions} />
     </ResourceGuard>
   );
 };
@@ -262,7 +262,7 @@ export function DeploymentOverview({
   failedDeployments,
   currentStatus
 }: DeploymentOverviewProps) {
-  const { title, statBlocks } = useDeploymentOverview({
+  const { statBlocks } = useDeploymentOverview({
     totalDeployments,
     successfulDeployments,
     failedDeployments,
@@ -270,7 +270,7 @@ export function DeploymentOverview({
   });
 
   return (
-    <CardWrapper header={title}>
+    <CardWrapper>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         {statBlocks.map((block) => (
           <StatBlock

@@ -2,6 +2,59 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { getAdvancedSettings } from '@/packages/utils/advanced-settings';
 import type { ExitHandler, TerminalOutput } from '../../types/terminal';
+import { useTheme } from 'next-themes';
+
+const darkTerminalTheme = {
+  foreground: '#fafafa',
+  background: '#171717',
+  cursor: '#fafafa',
+  cursorAccent: '#343434',
+  selectionBackground: '#4b876120',
+  selectionForeground: '#fafafa',
+  selectionInactiveBackground: '#fafafa10',
+  black: '#444444',
+  red: '#c75148',
+  green: '#4b8761',
+  yellow: '#facc15',
+  blue: '#7ca790',
+  magenta: '#c084fc',
+  cyan: '#4b8761',
+  white: '#fafafa',
+  brightBlack: '#555555',
+  brightRed: '#c75148',
+  brightGreen: '#7ca790',
+  brightYellow: '#fde047',
+  brightBlue: '#7ca790',
+  brightMagenta: '#d8b4fe',
+  brightCyan: '#7ca790',
+  brightWhite: '#fafafa'
+};
+
+const lightTerminalTheme = {
+  foreground: '#1e1e2e',
+  background: '#f8f8fa',
+  cursor: '#0d9488',
+  cursorAccent: '#f8f8fa',
+  selectionBackground: '#3b82f630',
+  selectionForeground: '#1e1e2e',
+  selectionInactiveBackground: '#3b82f615',
+  black: '#e4e4e7',
+  red: '#dc2626',
+  green: '#16a34a',
+  yellow: '#ca8a04',
+  blue: '#2563eb',
+  magenta: '#9333ea',
+  cyan: '#0d9488',
+  white: '#1e1e2e',
+  brightBlack: '#a1a1aa',
+  brightRed: '#ef4444',
+  brightGreen: '#22c55e',
+  brightYellow: '#eab308',
+  brightBlue: '#3b82f6',
+  brightMagenta: '#a855f7',
+  brightCyan: '#14b8a6',
+  brightWhite: '#09090b'
+};
 
 const CTRL_C = '\x03';
 
@@ -23,13 +76,13 @@ export const useTerminal = (
   const fitAddonRef = useRef<any | null>(null);
   const { isStopped, setIsStopped } = StopExecution();
   const { sendJsonMessage, subscribe, isReady } = useWebSocket();
+  const { resolvedTheme } = useTheme();
   const [terminalInstance, setTerminalInstance] = useState<any | null>(null);
   const resizeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const terminalInstanceRef = useRef<any | null>(null);
   const pendingOutputRef = useRef<string[]>([]);
   const currentLineRef = useRef<string>('');
 
-  // Keep refs for WebSocket to ensure we always use the latest values
   const isReadyRef = useRef(isReady);
   const sendJsonMessageRef = useRef(sendJsonMessage);
 
@@ -55,7 +108,6 @@ export const useTerminal = (
       setTerminalInstance(null);
     }
     pendingOutputRef.current = [];
-    // Clear the terminal container to remove any stale input
     if (terminalRef.current) {
       terminalRef.current.innerHTML = '';
     }
@@ -181,34 +233,7 @@ export const useTerminal = (
         fontWeightBold: '600',
         letterSpacing: terminalSettings.terminalLetterSpacing,
         lineHeight: terminalSettings.terminalLineHeight,
-        theme: {
-          // Warp-inspired dark theme with vibrant accents
-          foreground: '#e4e4e7',
-          background: '#0c0c0f',
-          cursor: '#22d3ee',
-          cursorAccent: '#0c0c0f',
-          selectionBackground: '#3b82f620',
-          selectionForeground: '#ffffff',
-          selectionInactiveBackground: '#3b82f610',
-          // ANSI colors - vibrant and modern
-          black: '#18181b',
-          red: '#f87171',
-          green: '#4ade80',
-          yellow: '#facc15',
-          blue: '#60a5fa',
-          magenta: '#c084fc',
-          cyan: '#22d3ee',
-          white: '#e4e4e7',
-          // Bright variants
-          brightBlack: '#52525b',
-          brightRed: '#fca5a5',
-          brightGreen: '#86efac',
-          brightYellow: '#fde047',
-          brightBlue: '#93c5fd',
-          brightMagenta: '#d8b4fe',
-          brightCyan: '#67e8f9',
-          brightWhite: '#fafafa'
-        },
+        theme: resolvedTheme === 'dark' ? darkTerminalTheme : lightTerminalTheme,
         allowTransparency: true,
         rightClickSelectsWord: true,
         disableStdin: !allowInput,
@@ -414,6 +439,14 @@ export const useTerminal = (
       console.error('Error initializing terminal:', error);
     }
   }, [safeSendMessage, terminalRef, terminalInstance, allowInput, terminalId]);
+
+  // Update xterm theme when app theme changes
+  useEffect(() => {
+    const instance = terminalInstanceRef.current;
+    if (!instance) return;
+    const newTheme = resolvedTheme === 'dark' ? darkTerminalTheme : lightTerminalTheme;
+    instance.options.theme = newTheme;
+  }, [resolvedTheme]);
 
   return {
     terminalRef,

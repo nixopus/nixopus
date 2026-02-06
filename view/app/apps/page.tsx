@@ -95,15 +95,11 @@ function page() {
             label={
               isShowingRepositories ? t('selfHost.repositories.title') : t('selfHost.page.title')
             }
-            description={
-              isShowingRepositories
-                ? t('selfHost.repositories.search.placeholder')
-                : t('selfHost.page.description')
-            }
+            highlightLabel={false}
             actions={
               showApplications ? (
                 <AnyPermissionGuard permissions={['deploy:create']} loadingFallback={null}>
-                  <Button onClick={() => router.push('/self-host/create')} className="gap-2">
+                  <Button onClick={() => router.push('/apps/create')} className="gap-2">
                     <Plus className="h-4 w-4" />
                     {t('selfHost.page.createButton')}
                   </Button>

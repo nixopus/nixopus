@@ -6,7 +6,7 @@ function page() {
   const router = useRouter();
 
   useEffect(() => {
-    router.push('/self-host');
+    router.push('/apps');
     return () => {};
   }, []);
 

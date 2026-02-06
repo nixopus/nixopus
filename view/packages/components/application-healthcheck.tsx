@@ -78,10 +78,6 @@ export function HealthCheckChart({ applicationId, setDialogOpen }: HealthCheckCh
             <div className="text-sm font-bold">
               {t('selfHost.monitoring.healthCheck.history' as any) || 'Health Check History'}
             </div>
-            <div className="text-sm text-muted-foreground">
-              {t('selfHost.monitoring.healthCheck.historyDescription' as any) ||
-                'Response time and health status over time'}
-            </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Button variant="ghost" size="sm" onClick={() => setDialogOpen(true)}>
@@ -279,7 +275,6 @@ export function HealthCheckDialog({
           ? t('selfHost.monitoring.healthCheck.editTitle' as any)
           : t('selfHost.monitoring.healthCheck.createTitle' as any)
       }
-      description={t('selfHost.monitoring.healthCheck.description' as any)}
       actions={dialogActions}
       loading={isLoading}
     >

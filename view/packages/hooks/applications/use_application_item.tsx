@@ -138,7 +138,7 @@ export function useApplicationItem(application: Application) {
   }, [labels]);
 
   const handleClick = () => {
-    router.push(`/self-host/application/${id}`);
+    router.push(`/apps/application/${id}`);
   };
 
   return {

@@ -37,7 +37,7 @@ export function useProjectFamilySwitcher({ application }: UseProjectFamilySwitch
 
   const handleSelectProject = (projectId: string) => {
     if (projectId !== application.id) {
-      router.push(`/self-host/application/${projectId}`);
+      router.push(`/apps/application/${projectId}`);
     }
   };
 

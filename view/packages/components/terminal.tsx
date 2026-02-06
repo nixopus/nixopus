@@ -56,7 +56,7 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
         minWidth: '200px',
         padding: '4px',
         overflow: 'hidden',
-        backgroundColor: '#0c0c0f',
+        backgroundColor: 'var(--terminal-bg)',
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
         height: '100%',
@@ -106,11 +106,20 @@ export const SessionTab: React.FC<SessionTabProps> = ({
     >
       <div className="relative flex items-center justify-center w-3 h-3">
         {status === 'loading' ? (
-          <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          <div
+            className="w-2 h-2 rounded-full animate-pulse"
+            style={{ backgroundColor: 'var(--terminal-status-loading)' }}
+          />
         ) : status === 'active' ? (
-          <div className="w-2 h-2 rounded-full bg-emerald-400 terminal-ready-indicator" />
+          <div
+            className="w-2 h-2 rounded-full terminal-ready-indicator"
+            style={{ backgroundColor: 'var(--terminal-status-active)' }}
+          />
         ) : (
-          <div className="w-2 h-2 rounded-full bg-zinc-500" />
+          <div
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: 'var(--terminal-status-idle)' }}
+          />
         )}
       </div>
 
@@ -128,7 +137,7 @@ export const SessionTab: React.FC<SessionTabProps> = ({
           className={cn(
             'ml-1 p-0.5 rounded transition-all duration-200',
             'opacity-0 group-hover:opacity-100',
-            'hover:bg-white/10 text-[var(--terminal-text-muted)] hover:text-[var(--terminal-text)]'
+            'hover:bg-[var(--terminal-tab-hover)] text-[var(--terminal-text-muted)] hover:text-[var(--terminal-text)]'
           )}
           onClick={(e) => {
             e.stopPropagation();
@@ -161,7 +170,7 @@ export const SplitPaneHeader: React.FC<SplitPaneHeaderProps> = ({
     <div
       className={cn(
         'relative flex items-center justify-between h-6 px-2 cursor-pointer transition-all duration-200',
-        'bg-transparent hover:bg-white/[0.02]'
+        'bg-transparent hover:bg-[var(--terminal-tab-hover)]'
       )}
       onClick={onFocus}
     >
@@ -180,7 +189,7 @@ export const SplitPaneHeader: React.FC<SplitPaneHeaderProps> = ({
           <button
             className={cn(
               'p-0.5 rounded transition-all duration-200',
-              'text-[#666] hover:text-[#fff] hover:bg-white/10'
+              'text-[var(--terminal-text-muted)] hover:text-[var(--terminal-text)] hover:bg-[var(--terminal-tab-hover)]'
             )}
             onClick={(e) => {
               e.stopPropagation();
@@ -214,16 +223,7 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
   newTabLabel
 }) => {
   return (
-    <div
-      className="flex h-10 min-h-10 items-center px-2 gap-2 overflow-hidden shrink-0"
-      style={{
-        borderBottom: '1px solid var(--terminal-border)',
-        background: 'rgba(18, 18, 22, 0.98)',
-        width: '100%',
-        maxWidth: '100%',
-        boxSizing: 'border-box'
-      }}
-    >
+    <div className="flex h-10 min-h-10 items-center px-2 gap-2 overflow-hidden shrink-0 w-full max-w-full box-border border-b border-[var(--terminal-border)] bg-[var(--terminal-header-bg)]">
       <div className="flex-1 min-w-0 overflow-hidden">
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
           {sessions.map((session, index) => (
@@ -295,7 +295,7 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
           title={closeLabel}
           className={cn(
             'h-6 w-6 rounded-md transition-all duration-200',
-            'hover:bg-red-500/10 hover:text-red-400',
+            'hover:bg-[var(--terminal-close-hover-bg)] hover:text-[var(--terminal-close-hover-text)]',
             'text-[var(--terminal-text-muted)]'
           )}
         >
@@ -450,7 +450,7 @@ export const Terminal: React.FC<TerminalProps> = ({
                       {index > 0 && (
                         <ResizableHandle
                           withHandle
-                          className="bg-[#3a3a3a] hover:bg-[#4a4a4a] transition-colors duration-200 w-[2px] focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="bg-[var(--terminal-split-border)] hover:bg-[var(--terminal-split-active)] transition-colors duration-200 w-[2px] focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                       )}
                       <ResizablePanel
