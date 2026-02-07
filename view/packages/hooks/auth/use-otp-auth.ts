@@ -26,10 +26,10 @@ function useOtpAuth() {
     setEmail(event.target.value);
   };
 
-  const handleOtpChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOtpChange = (value: string) => {
     // Only allow numeric input
-    const value = event.target.value.replace(/\D/g, '');
-    setOtp(value);
+    const numericValue = value.replace(/\D/g, '');
+    setOtp(numericValue);
   };
 
   const handleSendOtp = async () => {
