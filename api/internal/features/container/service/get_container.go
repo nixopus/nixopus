@@ -10,7 +10,7 @@ import (
 
 // GetContainer retrieves detailed container information and transforms it to Container type.
 func GetContainer(
-	dockerService *docker.DockerService,
+	dockerService docker.DockerRepository,
 	l logger.Logger,
 	containerID string,
 ) (container_types.Container, error) {

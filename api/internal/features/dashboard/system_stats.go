@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -10,11 +11,6 @@ import (
 	"time"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/disk"
-	"github.com/shirou/gopsutil/v3/host"
-	"github.com/shirou/gopsutil/v3/mem"
-	"github.com/shirou/gopsutil/v3/net"
 )
 
 const (
@@ -28,6 +24,7 @@ type CommandExecutor func(cmd string) (string, error)
 // GetSystemStatsOptions contains options for getting system stats
 type GetSystemStatsOptions struct {
 	CommandExecutor CommandExecutor // Optional: if nil, uses local exec.Command
+	SystemReader    SystemReader    // Optional: if nil, creates appropriate reader based on CommandExecutor
 }
 
 // CollectSystemStats retrieves system statistics. Can be used by DashboardMonitor or MCP tools.
@@ -35,6 +32,7 @@ func CollectSystemStats(
 	l logger.Logger,
 	opts GetSystemStatsOptions,
 ) (SystemStats, error) {
+	// Create command executor for basic system info commands
 	cmdExecutor := opts.CommandExecutor
 	if cmdExecutor == nil {
 		cmdExecutor = func(cmd string) (string, error) {
@@ -44,6 +42,14 @@ func CollectSystemStats(
 			}
 			return strings.TrimSpace(string(output)), nil
 		}
+	}
+
+	// Always use remote system reader (uses command executor)
+	var systemReader SystemReader
+	if opts.SystemReader != nil {
+		systemReader = opts.SystemReader
+	} else {
+		systemReader = NewRemoteSystemReader(cmdExecutor, l)
 	}
 
 	osType, err := cmdExecutor("uname -s")
@@ -76,7 +82,7 @@ func CollectSystemStats(
 	}
 
 	var uptime string
-	if hostInfo, err := host.Info(); err == nil {
+	if hostInfo, err := systemReader.HostInfo(); err == nil {
 		uptime = time.Duration(hostInfo.Uptime * uint64(time.Second)).String()
 	}
 
@@ -87,19 +93,19 @@ func CollectSystemStats(
 
 	stats.Load.Uptime = uptime
 
-	if cpuInfo, err := cpu.Info(); err == nil && len(cpuInfo) > 0 {
+	if cpuInfo, err := systemReader.CPUInfo(); err == nil && len(cpuInfo) > 0 {
 		stats.CPUInfo = cpuInfo[0].ModelName
 	}
 
 	if stats.CPUCores == 0 {
-		if coreCount, err := cpu.Counts(true); err == nil {
+		if coreCount, err := systemReader.CPUCounts(true); err == nil {
 			stats.CPUCores = coreCount
 		}
 	}
 
-	stats.CPU = getCPUStats()
+	stats.CPU = getCPUStats(systemReader)
 
-	if memInfo, err := mem.VirtualMemory(); err == nil {
+	if memInfo, err := systemReader.VirtualMemory(); err == nil {
 		stats.Memory = MemoryStats{
 			Total:      float64(memInfo.Total) / bytesInGB,
 			Used:       float64(memInfo.Used) / bytesInGB,
@@ -115,11 +121,11 @@ func CollectSystemStats(
 		AllMounts: []DiskMount{},
 	}
 
-	if diskInfo, err := disk.Partitions(false); err == nil && len(diskInfo) > 0 {
+	if diskInfo, err := systemReader.DiskPartitions(false); err == nil && len(diskInfo) > 0 {
 		diskStats.AllMounts = make([]DiskMount, 0, len(diskInfo))
 
 		for _, partition := range diskInfo {
-			if usage, err := disk.Usage(partition.Mountpoint); err == nil {
+			if usage, err := systemReader.DiskUsage(partition.Mountpoint); err == nil {
 				mount := DiskMount{
 					Filesystem: partition.Fstype,
 					Size:       formatBytes(usage.Total, "GB"),
@@ -148,7 +154,7 @@ func CollectSystemStats(
 
 	stats.Disk = diskStats
 
-	stats.Network = getNetworkStats()
+	stats.Network = getNetworkStats(systemReader)
 
 	return stats, nil
 }
@@ -184,13 +190,13 @@ func parseLoadAverage(loadStr string) LoadStats {
 	return loadStats
 }
 
-func getCPUStats() CPUStats {
+func getCPUStats(reader SystemReader) CPUStats {
 	cpuStats := CPUStats{
 		Overall: 0.0,
 		PerCore: []CPUCore{},
 	}
 
-	perCorePercent, err := cpu.Percent(time.Second, true)
+	perCorePercent, err := reader.CPUPercent(time.Second, true)
 	if err == nil && len(perCorePercent) > 0 {
 		cpuStats.PerCore = make([]CPUCore, len(perCorePercent))
 		var totalUsage float64 = 0
@@ -205,7 +211,7 @@ func getCPUStats() CPUStats {
 
 		cpuStats.Overall = totalUsage / float64(len(perCorePercent))
 	} else {
-		if overallPercent, err := cpu.Percent(time.Second, false); err == nil && len(overallPercent) > 0 {
+		if overallPercent, err := reader.CPUPercent(time.Second, false); err == nil && len(overallPercent) > 0 {
 			cpuStats.Overall = overallPercent[0]
 		}
 	}
@@ -213,12 +219,12 @@ func getCPUStats() CPUStats {
 	return cpuStats
 }
 
-func getNetworkStats() NetworkStats {
+func getNetworkStats(reader SystemReader) NetworkStats {
 	networkStats := NetworkStats{
 		Interfaces: []NetworkInterface{},
 	}
 
-	if ioCounters, err := net.IOCounters(true); err == nil {
+	if ioCounters, err := reader.IOCounters(true); err == nil {
 		var totalSent, totalRecv, totalPacketsSent, totalPacketsRecv uint64
 
 		for _, counter := range ioCounters {
@@ -277,11 +283,8 @@ func (m *DashboardMonitor) GetSystemStats() {
 }
 
 func (m *DashboardMonitor) getCommandOutput(cmd string) (string, error) {
-	if m.client == nil {
-		return "", fmt.Errorf("SSH client is not connected")
-	}
-
-	session, err := m.client.NewSession()
+	// Use centralized session creation with retry logic
+	session, err := m.sshManager.NewSessionWithRetry("")
 	if err != nil {
 		m.log.Log(logger.Error, "Failed to create new session", err.Error())
 		return "", err
@@ -296,7 +299,7 @@ func (m *DashboardMonitor) getCommandOutput(cmd string) (string, error) {
 	if err != nil {
 		errMsg := fmt.Sprintf("Command failed: %s, stderr: %s", err.Error(), stderrBuf.String())
 		m.log.Log(logger.Error, errMsg, "")
-		return "", fmt.Errorf(errMsg)
+		return "", errors.New(errMsg)
 	}
 
 	return stdoutBuf.String(), nil

@@ -2,7 +2,7 @@
 
 import { ChevronRight } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@nixopus/ui';
 import {
   SidebarGroup,
   SidebarMenu,

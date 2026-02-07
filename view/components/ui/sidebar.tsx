@@ -7,22 +7,16 @@ import { PanelLeftIcon, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
 
 import { useIsMobile } from '@/packages/hooks/shared/use-mobile';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle
-} from '@/components/ui/sheet';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
+import { Separator } from '@nixopus/ui';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@nixopus/ui';
+import { Skeleton } from '@nixopus/ui';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@nixopus/ui';
 
 const SIDEBAR_STORAGE_KEY = 'sidebar_state';
-const SIDEBAR_WIDTH = '16rem';
-const SIDEBAR_WIDTH_MOBILE = '18rem';
+const SIDEBAR_WIDTH = '13rem';
+const SIDEBAR_WIDTH_MOBILE = '16rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 

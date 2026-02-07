@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -39,13 +40,14 @@ type connectionPoolEntry struct {
 // For now, it defaults to single client mode for backward compatibility
 // In the future, it can be extended to support multiple clients/discoveries
 type SSHManager struct {
-	clients     map[string]*SSH                 // Map of client ID to SSH config
-	defaultID   string                          // ID of the default client
-	mu          sync.RWMutex                    // Mutex for thread safe access
-	pool        map[string]*connectionPoolEntry // Connection pool by client ID
-	poolMu      sync.RWMutex                    // Mutex for connection pool
-	logger      logger.Logger                   // Logger for connection errors
-	maxIdleTime time.Duration                   // Maximum idle time before closing connection
+	clients        map[string]*SSH                 // Map of client ID to SSH config
+	defaultID      string                          // ID of the default client
+	mu             sync.RWMutex                    // Mutex for thread safe access
+	pool           map[string]*connectionPoolEntry // Connection pool by client ID
+	poolMu         sync.RWMutex                    // Mutex for connection pool
+	connectingMu   map[string]*sync.Mutex          // Mutex per client ID to prevent concurrent connection creation
+	connectingMuMu sync.Mutex                      // Mutex for accessing connectingMu map
+	maxIdleTime    time.Duration                   // Maximum idle time before closing connection
 }
 
 var (
@@ -127,11 +129,11 @@ func GetSSHManagerFromContext(ctx context.Context) (*SSHManager, error) {
 // For most use cases, prefer GetSSHManagerFromContext() to get an organization-specific manager.
 func NewSSHManager() *SSHManager {
 	manager := &SSHManager{
-		clients:     make(map[string]*SSH),
-		defaultID:   "default",
-		pool:        make(map[string]*connectionPoolEntry),
-		logger:      logger.NewLogger(),
-		maxIdleTime: 5 * time.Minute,
+		clients:      make(map[string]*SSH),
+		defaultID:    "default",
+		pool:         make(map[string]*connectionPoolEntry),
+		connectingMu: make(map[string]*sync.Mutex),
+		maxIdleTime:  5 * time.Minute,
 	}
 	// Don't add default client - must be added via AddClient or GetSSHManagerForOrganization
 	go manager.cleanupIdleConnections()
@@ -190,6 +192,22 @@ func (m *SSHManager) Connect() (*goph.Client, error) {
 	return m.ConnectWithID("")
 }
 
+// IsClosedConnectionError checks if the error indicates a closed network connection.
+// This is useful for detecting stale SSH connections that need to be removed from the pool.
+func IsClosedConnectionError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errMsg := err.Error()
+	return strings.Contains(errMsg, "use of closed network connection") ||
+		strings.Contains(errMsg, "connection closed")
+}
+
+// isClosedConnectionError is an internal alias for IsClosedConnectionError
+func isClosedConnectionError(err error) bool {
+	return IsClosedConnectionError(err)
+}
+
 // isConnectionAlive checks if an SSH connection is still valid by attempting to create a test session
 func (m *SSHManager) isConnectionAlive(client *goph.Client) bool {
 	if client == nil {
@@ -202,6 +220,41 @@ func (m *SSHManager) isConnectionAlive(client *goph.Client) bool {
 	}
 	session.Close()
 	return true
+}
+
+// NewSessionWithRetry creates a new SSH session with automatic retry on closed connection errors.
+// This method handles stale connections by removing them from the pool and retrying.
+// The returned session should be closed by the caller when done.
+func (m *SSHManager) NewSessionWithRetry(id string) (*ssh.Session, error) {
+	const maxRetries = 2
+
+	if id == "" {
+		id = m.defaultID
+	}
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		// Get connection from pool (reuses existing or creates new if needed)
+		client, err := m.ConnectWithID(id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect via SSH: %w", err)
+		}
+
+		session, err := client.NewSession()
+		if err != nil {
+			if isClosedConnectionError(err) {
+				// Remove the bad connection from pool and retry
+				m.CloseConnection(id)
+				if attempt < maxRetries-1 {
+					continue
+				}
+			}
+			return nil, fmt.Errorf("failed to create SSH session: %w", err)
+		}
+
+		return session, nil
+	}
+
+	return nil, fmt.Errorf("failed to create SSH session after %d attempts due to connection issues", maxRetries)
 }
 
 // ConnectWithID connects to a specific SSH client by ID with connection pooling
@@ -223,10 +276,29 @@ func (m *SSHManager) ConnectWithID(id string) (*goph.Client, error) {
 
 	// Validate the pooled connection is still alive
 	if client != nil {
-		if m.isConnectionAlive(client) {
+		// Check if connection was recently used (within last 30 seconds) - skip validation if so
+		// This avoids unnecessary validation checks that can fail due to server rate limiting
+		m.poolMu.RLock()
+		entry, entryExists := m.pool[id]
+		recentlyUsed := false
+		var lastUsed time.Time
+		if entryExists && entry != nil {
+			entry.mu.RLock()
+			lastUsed = entry.lastUsed
+			entry.mu.RUnlock()
+			// If used within last 30 seconds, consider it still valid without validation
+			if time.Since(lastUsed) < 30*time.Second {
+				recentlyUsed = true
+			}
+		}
+		m.poolMu.RUnlock()
+
+		// Only validate if not recently used (to avoid unnecessary checks that might fail)
+		// Recently used connections are assumed to be alive to avoid false negatives
+		if recentlyUsed || m.isConnectionAlive(client) {
 			// Connection is valid, update last used time and return
 			m.poolMu.Lock()
-			if entry, exists := m.pool[id]; exists {
+			if entry, exists := m.pool[id]; exists && entry != nil {
 				entry.mu.Lock()
 				entry.lastUsed = time.Now()
 				entry.mu.Unlock()
@@ -248,6 +320,41 @@ func (m *SSHManager) ConnectWithID(id string) (*goph.Client, error) {
 	}
 
 	// No valid pooled connection available, create new one
+	// Use per-client-ID mutex to prevent concurrent connection creation
+	m.connectingMuMu.Lock()
+	connMu, exists := m.connectingMu[id]
+	if !exists {
+		connMu = &sync.Mutex{}
+		m.connectingMu[id] = connMu
+	}
+	m.connectingMuMu.Unlock()
+
+	connMu.Lock()
+	defer connMu.Unlock()
+
+	// Double-check: another goroutine might have created the connection while we waited
+	m.poolMu.RLock()
+	entry, exists = m.pool[id]
+	var existingClient *goph.Client
+	if exists && entry != nil {
+		entry.mu.RLock()
+		existingClient = entry.client
+		entry.mu.RUnlock()
+	}
+	m.poolMu.RUnlock()
+
+	if existingClient != nil && m.isConnectionAlive(existingClient) {
+		// Connection was created by another goroutine, use it
+		m.poolMu.Lock()
+		if entry, exists := m.pool[id]; exists {
+			entry.mu.Lock()
+			entry.lastUsed = time.Now()
+			entry.mu.Unlock()
+		}
+		m.poolMu.Unlock()
+		return existingClient, nil
+	}
+
 	sshClient, err := m.GetClient(id)
 	if err != nil {
 		return nil, err
@@ -438,72 +545,40 @@ func (s *SSH) ConnectWithRetry() (*goph.Client, error) {
 		return nil, fmt.Errorf("user and host are required for SSH connection")
 	}
 
-	var privateKeyErr error
-	var passwordErr error
+	hasPrivateKey := len(s.PrivateKey) > 0
+	hasPassword := len(s.Password) > 0
 
-	// Try private key first if available
-	if s.PrivateKey != "" {
+	// Try private key first
+	if hasPrivateKey {
 		client, err := s.ConnectWithPrivateKey()
 		if err == nil {
 			return client, nil
 		}
-		privateKeyErr = err
 	}
 
-	// If private key fails or is not available, try password if configured
-	if s.Password != "" {
-		maxRetries := 3
-		baseDelay := 100 * time.Millisecond
+	// If private key fails, try password with exponential backoff
+	if !hasPassword {
+		return nil, fmt.Errorf("no authentication method available: private key missing and password missing")
+	}
 
-		for attempt := 0; attempt < maxRetries; attempt++ {
-			if attempt > 0 {
-				delay := time.Duration(attempt) * baseDelay
-				time.Sleep(delay)
-			}
+	maxRetries := 3
+	baseDelay := 100 * time.Millisecond
 
-			client, err := s.ConnectWithPassword()
-			if err == nil {
-				return client, nil
-			}
-			passwordErr = err
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			delay := time.Duration(attempt) * baseDelay
+			time.Sleep(delay)
 		}
-	}
 
-	// Build comprehensive error message
-	var attemptedMethods []string
-	var errors []string
-
-	if s.PrivateKey != "" {
-		attemptedMethods = append(attemptedMethods, "private key")
-		if privateKeyErr != nil {
-			errors = append(errors, fmt.Sprintf("private key: %v", privateKeyErr))
+		client, err := s.ConnectWithPassword()
+		if err == nil {
+			return client, nil
 		}
+		lastErr = err
 	}
 
-	if s.Password != "" {
-		attemptedMethods = append(attemptedMethods, "password")
-		if passwordErr != nil {
-			errors = append(errors, fmt.Sprintf("password: %v", passwordErr))
-		}
-	}
-
-	if len(attemptedMethods) == 0 {
-		return nil, fmt.Errorf("no authentication method configured: both private key and password are empty")
-	}
-
-	errorMsg := fmt.Sprintf("failed to connect using %s", attemptedMethods[0])
-	if len(attemptedMethods) > 1 {
-		errorMsg = fmt.Sprintf("failed to connect using %s and %s", attemptedMethods[0], attemptedMethods[1])
-	}
-
-	if len(errors) > 0 {
-		errorMsg += fmt.Sprintf(": %s", errors[0])
-		if len(errors) > 1 {
-			errorMsg += fmt.Sprintf("; %s", errors[1])
-		}
-	}
-
-	return nil, fmt.Errorf(errorMsg)
+	return nil, fmt.Errorf("failed to connect with both private key and password after %d attempts: %w", maxRetries, lastErr)
 }
 
 func (s *SSH) ConnectWithPrivateKey() (*goph.Client, error) {

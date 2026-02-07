@@ -3,18 +3,18 @@
 import React from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { LogoutDialog } from '@/components/ui/logout-dialog';
-import { Button } from '@/components/ui/button';
+import { Button } from '@nixopus/ui';
 import { LogOut } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@nixopus/ui';
 import { ResourceGuard } from '@/packages/components/rbac';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { TypographyMuted, TypographyH1 } from '@/components/ui/typography';
+import { Input } from '@nixopus/ui';
+import { Label } from '@nixopus/ui';
+import { Switch } from '@nixopus/ui';
+import { TypographyMuted, TypographyH1 } from '@nixopus/ui';
 import { RotateCcw } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@nixopus/ui';
 import { cn } from '@/lib/utils';
-import { SelectWrapper } from '@/components/ui/select-wrapper';
+import { SelectWrapper } from '@nixopus/ui';
 import {
   AvatarSection,
   AccountSection,
@@ -42,14 +42,14 @@ import {
   useKeyboardShortcutsSettingsContent,
   type SettingConfig
 } from '@/packages/hooks/settings/use-settings-content';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@nixopus/ui';
 import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
 import {
   SettingsCategory,
   useSettingsCategories
 } from '@/packages/hooks/shared/use-settings-categories';
 import { Heart, HelpCircle, AlertCircle, ArrowUpCircle } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@nixopus/ui';
 import { useSettingsFooter } from '@/packages/hooks/settings/use-settings-footer';
 import { SettingsSidebarProps } from '../types/settings';
 
@@ -240,14 +240,12 @@ function GeneralSettingsContent() {
                 }
               }
               isGettingUserSettings={settings.isGettingUserSettings}
-              isUpdatingFont={settings.isUpdatingFont}
               isUpdatingTheme={settings.isUpdatingTheme}
               isUpdatingLanguage={settings.isUpdatingLanguage}
               isUpdatingAutoUpdate={settings.isUpdatingAutoUpdate}
               handleThemeChange={settings.handleThemeChange}
               handleLanguageChange={settings.handleLanguageChange}
               handleAutoUpdateChange={settings.handleAutoUpdateChange}
-              handleFontUpdate={settings.handleFontUpdate}
             />
           </div>
         </div>
@@ -677,7 +675,7 @@ export function SettingsSidebar({
   };
 
   return (
-    <div className="w-[240px] flex-shrink-0 bg-muted/50 border-r flex flex-col">
+    <div className="w-[208px] flex-shrink-0 bg-muted/50 border-r flex flex-col">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {accountCategories.length > 0 && (
           <div className="space-y-1">

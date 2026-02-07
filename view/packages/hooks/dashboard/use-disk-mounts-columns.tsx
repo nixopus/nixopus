@@ -1,5 +1,5 @@
-import { TableColumn } from '@/components/ui/data-table';
-import { TypographySmall } from '@/components/ui/typography';
+import { TableColumn } from '@nixopus/ui';
+import { TypographySmall } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { MountData } from '@/packages/types/dashboard';
 

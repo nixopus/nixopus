@@ -50,7 +50,8 @@ func NewUpdateService(storage *storage.App, logger *logger.Logger, ctx context.C
 }
 
 func getEnvironment() Environment {
-	if config.AppConfig.Docker.Context == "nixopus-staging" {
+	env := strings.ToLower(config.AppConfig.App.Environment)
+	if env == "staging" || env == "stage" {
 		return Staging
 	}
 	return Production

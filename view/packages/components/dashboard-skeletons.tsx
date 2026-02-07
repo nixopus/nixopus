@@ -2,17 +2,17 @@
 
 import React from 'react';
 import { HardDrive } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { TypographySmall } from '@/components/ui/typography';
+import { Skeleton } from '@nixopus/ui';
+import { TypographySmall } from '@nixopus/ui';
 import { useSystemMetric } from '@/packages/hooks/dashboard/use-system-metric';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { DEFAULT_METRICS } from '@/packages/utils/dashboard';
-import { Card } from '@/components/ui/card';
-import { CardHeader } from '@/components/ui/card';
-import { CardTitle } from '@/components/ui/card';
+import { Card } from '@nixopus/ui';
+import { CardHeader } from '@nixopus/ui';
+import { CardTitle } from '@nixopus/ui';
 import { Server } from 'lucide-react';
-import { TypographyMuted } from '@/components/ui/typography';
-import { CardContent } from '@/components/ui/card';
+import { TypographyMuted } from '@nixopus/ui';
+import { CardContent } from '@nixopus/ui';
 import { Cpu } from 'lucide-react';
 import { Activity } from 'lucide-react';
 import { BarChart } from 'lucide-react';
@@ -281,23 +281,20 @@ export function SystemInfoCardSkeleton() {
 
   return (
     <Card className="overflow-hidden h-full flex flex-col w-full">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-3">
         <CardTitle className="text-sm font-bold flex items-center">
           <Server className="h-4 w-4 mr-2 text-muted-foreground" />
           <TypographySmall>{t('dashboard.system.title')}</TypographySmall>
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[...Array(8)].map((_, index) => (
-            <div key={index} className="flex items-start gap-3 p-2 rounded-lg">
-              {/* Icon placeholder */}
-              <Skeleton className="h-4 w-4 mt-0.5 rounded" />
-              <div className="flex-1 min-w-0 space-y-1">
-                {/* Label */}
-                <Skeleton className="h-3 w-16" />
-                {/* Value */}
-                <Skeleton className="h-3 w-20" />
+        <div className="grid grid-cols-2 gap-4">
+          {[...Array(4)].map((_, index) => (
+            <div key={index} className={`flex items-start gap-2.5 ${index === 3 ? 'col-span-2' : ''}`}>
+              <Skeleton className="h-6 w-6 rounded-md" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-2 w-16" />
+                <Skeleton className="h-4 w-24" />
               </div>
             </div>
           ))}

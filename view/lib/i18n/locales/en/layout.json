@@ -2,8 +2,8 @@
   "layout": {
     "breadcrumbs": {
       "home": "Home",
-      "dashboard": "Dashboard",
-      "selfHost": "Self Host",
+      "dashboard": "Charts",
+      "selfHost": "Apps",
       "fileManager": "File Manager",
       "settings": "Settings",
       "general": "General",

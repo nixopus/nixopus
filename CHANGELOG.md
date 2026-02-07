@@ -1,3 +1,31 @@
+# [0.1.0-alpha.122](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.121...v0.1.0-alpha.122) (2026-02-04)
+
+
+### Bug Fixes
+
+* syntax error in ssh init ([d440cfe](https://github.com/raghavyuva/nixopus/commit/d440cfe280384d5871503c90348c90d2d596c35c))
+
+
+
+# [0.1.0-alpha.121](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.120...v0.1.0-alpha.121) (2026-02-04)
+
+
+### Bug Fixes
+
+* concurrent operation write issue in handle all operation websocket ([9bf7989](https://github.com/raghavyuva/nixopus/commit/9bf798922d0b200713935c1224267d01471987be))
+* concurrent ssh connection issue in dashboard monitoring ([b5fdfdb](https://github.com/raghavyuva/nixopus/commit/b5fdfdba0eb555fac04d0c56fc3f14596ea1bb1d))
+* connection reuse logic for dashboard monitoring ([2cf2068](https://github.com/raghavyuva/nixopus/commit/2cf206832254bf3982f3830930f32944ea4b7d50))
+
+
+### Features
+
+* add route server lsting ([948d207](https://github.com/raghavyuva/nixopus/commit/948d207e57a7839c03077075f950096a478ac032))
+* add user-provision model and server list types ([6454ccc](https://github.com/raghavyuva/nixopus/commit/6454ccc3a711d894447fe22f1893781d8eaa5dea))
+* organization aware docker service ([#1005](https://github.com/raghavyuva/nixopus/issues/1005)) ([9c6e434](https://github.com/raghavyuva/nixopus/commit/9c6e43407a52b6ec8837c70284dad8c46c3df9e9)), closes [#1006](https://github.com/raghavyuva/nixopus/issues/1006)
+* paginated api for server/project listing ([ce99384](https://github.com/raghavyuva/nixopus/commit/ce99384c0659922054df8f49a48629f078152518))
+
+
+
 # [0.1.0-alpha.120](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.119...v0.1.0-alpha.120) (2026-01-30)
 
 

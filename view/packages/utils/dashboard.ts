@@ -1,5 +1,5 @@
-import { BarChartDataItem } from '@/components/ui/bar-chart-component';
-import { DoughnutChartDataItem } from '@/components/ui/doughnut-chart-component';
+import { BarChartDataItem } from '@nixopus/ui';
+import { DoughnutChartDataItem } from '@nixopus/ui';
 
 // Color constants for charts and visualizations
 export const CHART_COLORS = {

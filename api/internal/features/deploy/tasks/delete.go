@@ -3,8 +3,6 @@ package tasks
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/docker/docker/api/types/image"
 	"github.com/google/uuid"
@@ -34,41 +32,52 @@ func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.De
 		}
 	}
 
-	services, err := s.DockerRepo.GetClusterServices()
+	dockerService, err := s.getDockerService(ctx)
 	if err != nil {
-		s.Logger.Log(logger.Error, "Failed to get services", err.Error())
+		s.Logger.Log(logger.Error, "Failed to get docker service", err.Error())
 	} else {
-		for _, service := range services {
-			if service.Spec.Annotations.Name == application.Name {
-				s.Logger.Log(logger.Info, "Deleting service", service.ID)
-				if err := s.DockerRepo.DeleteService(service.ID); err != nil {
-					s.Logger.Log(logger.Error, "Failed to delete service", err.Error())
-				} else {
-					s.Logger.Log(logger.Info, "Service deleted successfully", service.ID)
+		services, err := dockerService.GetClusterServices()
+		if err != nil {
+			s.Logger.Log(logger.Error, "Failed to get services", err.Error())
+		} else {
+			for _, service := range services {
+				if service.Spec.Annotations.Name == application.Name {
+					s.Logger.Log(logger.Info, "Deleting service", service.ID)
+					if err := dockerService.DeleteService(service.ID); err != nil {
+						s.Logger.Log(logger.Error, "Failed to delete service", err.Error())
+					} else {
+						s.Logger.Log(logger.Info, "Service deleted successfully", service.ID)
+					}
+					break
 				}
-				break
+			}
+		}
+
+		deployments, err := s.Storage.GetApplicationDeployments(application.ID)
+		if err != nil {
+			s.Logger.Log(logger.Error, "Failed to get application deployments", err.Error())
+		} else {
+			for _, dep := range deployments {
+				if dep.ContainerImage != "" {
+					s.Logger.Log(logger.Info, "Removing image", dep.ContainerImage)
+					if err := dockerService.RemoveImage(dep.ContainerImage, image.RemoveOptions{Force: true}); err != nil {
+						s.Logger.Log(logger.Error, "Failed to remove image", err.Error())
+					}
+				}
 			}
 		}
 	}
 
-	deployments, err := s.Storage.GetApplicationDeployments(application.ID)
+	// Add organization ID to context for SSH manager access
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, organizationID.String())
+	// Get repository path using the same method as cloning (on tenant's SSH server)
+	repoPath, _, err := s.Github_service.GetClonePath(orgCtx, userID.String(), string(application.Environment), application.ID.String())
 	if err != nil {
-		s.Logger.Log(logger.Error, "Failed to get application deployments", err.Error())
+		s.Logger.Log(logger.Error, fmt.Sprintf("Failed to get repository path: %s", err.Error()), "")
 	} else {
-		for _, dep := range deployments {
-			if dep.ContainerImage != "" {
-				s.Logger.Log(logger.Info, "Removing image", dep.ContainerImage)
-				if err := s.DockerRepo.RemoveImage(dep.ContainerImage, image.RemoveOptions{Force: true}); err != nil {
-					s.Logger.Log(logger.Error, "Failed to remove image", err.Error())
-				}
-			}
-		}
+		s.Logger.Log(logger.Info, "Cleaning up repository directory", repoPath)
+		err = s.Github_service.RemoveRepository(orgCtx, repoPath)
 	}
-
-	repoPath := filepath.Join(os.Getenv("MOUNT_PATH"), userID.String(), string(application.Environment), application.ID.String())
-	s.Logger.Log(logger.Info, "Cleaning up repository directory", repoPath)
-
-	err = s.Github_service.RemoveRepository(ctx, repoPath)
 	if err != nil {
 		s.Logger.Log(logger.Error, "Failed to remove repository", err.Error())
 	}

@@ -8,30 +8,38 @@ import (
 )
 
 func (m *DashboardMonitor) Broadcast(action string, message interface{}) {
-	lockAcquired := make(chan bool, 1)
-	go func() {
-		m.connMutex.Lock()
-		lockAcquired <- true
-	}()
+	m.connMutex.Lock()
+	defer m.connMutex.Unlock()
 
-	select {
-	case <-lockAcquired:
-		defer m.connMutex.Unlock()
-		if m.conn == nil {
-			m.log.Log(logger.Error, "WebSocket connection is nil", "")
-			return
-		}
-		_ = m.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-
-		if err := m.conn.WriteJSON(map[string]interface{}{"action": action, "data": message, "timestamp": time.Now().Unix(), "topic": "dashboard_monitor"}); err != nil {
-			m.log.Log(logger.Error, "Failed to broadcast message", err.Error())
-		}
-
-		_ = m.conn.SetWriteDeadline(time.Time{})
-
-	case <-time.After(3 * time.Second):
-		m.log.Log(logger.Error, "Timeout waiting for broadcast lock", "")
+	// Check connection before any operations
+	if m.conn == nil {
+		return
 	}
+
+	// Prepare message data
+	msg := map[string]interface{}{
+		"action":    action,
+		"data":      message,
+		"timestamp": time.Now().Unix(),
+		"topic":     "dashboard_monitor",
+	}
+
+	// Set write deadline
+	deadline := time.Now().Add(5 * time.Second)
+	if err := m.conn.SetWriteDeadline(deadline); err != nil {
+		m.log.Log(logger.Error, "Failed to set write deadline", err.Error())
+		return
+	}
+
+	// Write JSON message - this is the only place that writes to the connection
+	// The mutex ensures only one goroutine can execute this at a time
+	if err := m.conn.WriteJSON(msg); err != nil {
+		m.log.Log(logger.Error, "Failed to broadcast message", err.Error())
+		return
+	}
+
+	// Reset deadline after successful write
+	_ = m.conn.SetWriteDeadline(time.Time{})
 }
 
 func (m *DashboardMonitor) BroadcastDebug(message string) {

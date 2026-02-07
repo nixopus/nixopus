@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
 import { X, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	"golang.org/x/crypto/ssh"
@@ -37,7 +36,6 @@ type Terminal struct {
 	log        logger.Logger
 	wsLock     sync.Mutex
 
-	client  *goph.Client
 	session *ssh.Session
 	stdin   io.WriteCloser
 
@@ -72,18 +70,10 @@ func (t *Terminal) Start() {
 	go t.bufferFlusher()
 
 	go func() {
-		client, err := t.sshManager.Connect()
-		if err != nil {
-			t.log.Log(logger.Error, "Failed to connect to SSH", err.Error())
-			close(t.done)
-			return
-		}
-		t.client = client
-
-		session, err := client.NewSession()
+		// Use centralized session creation with retry logic
+		session, err := t.sshManager.NewSessionWithRetry("")
 		if err != nil {
 			t.log.Log(logger.Error, "Failed to create session", err.Error())
-			client.Close()
 			close(t.done)
 			return
 		}
@@ -233,10 +223,6 @@ func (t *Terminal) Close() error {
 
 	if t.session != nil {
 		t.session.Close()
-	}
-
-	if t.client != nil {
-		t.client.Close()
 	}
 
 	t.wsLock.Lock()

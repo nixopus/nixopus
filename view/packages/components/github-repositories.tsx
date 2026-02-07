@@ -1,19 +1,19 @@
 import React from 'react';
 import { GithubRepository } from '@/redux/types/github';
 import useGithubRepoPagination from '../hooks/applications/use_github_repo_pagination';
-import PaginationWrapper from '@/components/ui/pagination';
-import { SearchBar } from '@/components/ui/search-bar';
+import { PaginationWrapper } from '@nixopus/ui';
+import { SearchBar } from '@nixopus/ui';
 import { SortSelect } from '@/components/ui/sort-selector';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { Button } from '@/components/ui/button';
+import { Button } from '@nixopus/ui';
 import { Settings } from 'lucide-react';
 import useGithubConnectorSettings from '../hooks/applications/use-github-connector-settings';
 import { useRouter } from 'next/navigation';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CardWrapper } from '@/components/ui/card-wrapper';
-import { CardTitle } from '@/components/ui/card';
-import { CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@nixopus/ui';
+import { CardWrapper } from '@nixopus/ui';
+import { CardTitle } from '@nixopus/ui';
+import { CardDescription } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
 import { Github } from 'lucide-react';
 import { ExternalLink } from 'lucide-react';
 import { useRepositoryCard } from '@/packages/hooks/github/use_repository_card';
@@ -80,12 +80,13 @@ export function ListRepositories() {
   return (
     <div>
       <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
-        <div className="flex-1 min-w-[220px]">
+        <div className="flex-1 max-w-fit ">
           <SearchBar
             searchTerm={searchTerm}
             handleSearchChange={handleSearchChange}
             label={t('selfHost.repositories.search.placeholder')}
             isLoading={isSearching}
+            className="min-w-[280px] [&_input]:pl-12 [&_svg]:ml-3 [&_svg]:left-3"
           />
         </div>
         <div className="flex items-center gap-2">
