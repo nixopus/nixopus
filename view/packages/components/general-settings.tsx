@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Mail, User, CheckCircle, AlertCircle, CheckCircle2, XCircle, Search } from 'lucide-react';
+import { Mail, User, CheckCircle, CheckCircle2, XCircle, Search, Shield } from 'lucide-react';
 import { Button } from '@nixopus/ui';
 import { Input } from '@nixopus/ui';
 import { Label } from '@nixopus/ui';
@@ -15,7 +15,6 @@ import UploadAvatar from '@/components/ui/upload_avatar';
 import { Badge } from '@nixopus/ui';
 import { TabsContent } from '@nixopus/ui';
 import { QRCodeSVG } from 'qrcode.react';
-import { Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@nixopus/ui';
 import {
   AccountSectionProps,
@@ -46,10 +45,6 @@ export function AccountSection({
   handleAutoUpdateChange
 }: AccountSectionProps) {
   const { t } = useTranslation();
-  const { isSendingVerification, verificationSent, verificationError, handleSendVerification } =
-    useAccountSection({
-      userSettings
-    });
 
   return (
     <div className="space-y-8">
@@ -58,9 +53,6 @@ export function AccountSection({
           <TypographySmall className="text-sm font-medium">
             {t('settings.account.title')}
           </TypographySmall>
-          <TypographyMuted className="text-xs mt-1">
-            {t('settings.account.description')}
-          </TypographyMuted>
         </div>
         <div className="space-y-6">
           <div className="space-y-2">
@@ -106,48 +98,7 @@ export function AccountSection({
               <Mail size={16} />
               {t('settings.account.email.label')}
             </Label>
-            <div className="flex flex-col gap-2">
-              <Input id="email" value={email} readOnly disabled className="bg-muted/50" />
-              {user && !user.is_verified && (
-                <div className="space-y-2">
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>{t('settings.account.email.notVerified.title')}</AlertTitle>
-                    <AlertDescription>
-                      {t('settings.account.email.notVerified.description')}
-                    </AlertDescription>
-                  </Alert>
-                  <RBACGuard resource="user" action="update">
-                    <Button
-                      onClick={handleSendVerification}
-                      disabled={isSendingVerification || verificationSent}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      {isSendingVerification
-                        ? t('settings.account.email.notVerified.sending')
-                        : verificationSent
-                          ? t('settings.account.email.notVerified.sent')
-                          : t('settings.account.email.notVerified.sendButton')}
-                    </Button>
-                  </RBACGuard>
-                  {verificationError && (
-                    <TypographySmall className="text-red-500 text-xs">
-                      {verificationError}
-                    </TypographySmall>
-                  )}
-                  {verificationSent && (
-                    <Alert variant="default">
-                      <CheckCircle className="h-4 w-4" />
-                      <AlertTitle>{t('settings.account.email.notVerified.sent')}</AlertTitle>
-                      <AlertDescription>
-                        {t('settings.account.email.notVerified.checkEmail')}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-              )}
-            </div>
+            <Input id="email" value={email} readOnly disabled className="bg-muted/50" />
           </div>
         </div>
       </div>
@@ -157,9 +108,6 @@ export function AccountSection({
           <TypographySmall className="text-sm font-medium">
             {t('settings.preferences.language.title')}
           </TypographySmall>
-          <TypographyMuted className="text-xs mt-1">
-            {t('settings.preferences.language.description')}
-          </TypographyMuted>
         </div>
         <div className="flex items-center justify-between">
           <TypographyMuted className="text-sm">
@@ -180,9 +128,6 @@ export function AccountSection({
             <TypographySmall className="text-sm font-medium">
               {t('settings.preferences.autoUpdate.title')}
             </TypographySmall>
-            <TypographyMuted className="text-xs mt-1">
-              {t('settings.preferences.autoUpdate.description')}
-            </TypographyMuted>
           </div>
           <RBACGuard resource="user" action="update">
             <Switch
@@ -206,9 +151,6 @@ export function AvatarSection({ onImageChange, user }: AvatarSectionProps) {
         <TypographySmall className="text-sm font-medium">
           {t('settings.account.avatar.title')}
         </TypographySmall>
-        <TypographyMuted className="text-xs mt-1">
-          {t('settings.account.avatar.description')}
-        </TypographyMuted>
       </div>
       <RBACGuard resource="user" action="update">
         <UploadAvatar
@@ -289,7 +231,7 @@ export function FeatureFlagsSettings() {
             </Badge>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto space-y-6">
+        <div className="flex-1 overflow-y-auto no-scrollbar space-y-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

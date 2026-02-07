@@ -211,7 +211,7 @@ function GeneralSettingsContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="space-y-6 flex-1 overflow-y-auto">
+      <div className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
         <h2 className="text-2xl font-semibold">{t('settings.title')}</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <AvatarSection onImageChange={settings.onImageChange} user={settings.user!} />
@@ -408,7 +408,7 @@ function NetworkSettingsContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="space-y-6 flex-1 overflow-y-auto">
+      <div className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold">{t('settings.network.title')}</h2>
@@ -444,7 +444,7 @@ function TerminalSettingsContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="space-y-6 flex-1 overflow-y-auto">
+      <div className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold">{t('settings.terminal.title')}</h2>
@@ -480,7 +480,7 @@ function ContainerSettingsContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="space-y-6 flex-1 overflow-y-auto">
+      <div className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold">{t('settings.container.title')}</h2>
@@ -516,7 +516,7 @@ function TroubleshootingSettingsContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="space-y-6 flex-1 overflow-y-auto">
+      <div className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold">{t('settings.troubleshooting.title')}</h2>
@@ -676,7 +676,7 @@ export function SettingsSidebar({
 
   return (
     <div className="w-[208px] flex-shrink-0 bg-muted/50 border-r flex flex-col">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4">
         {accountCategories.length > 0 && (
           <div className="space-y-1">
             <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
