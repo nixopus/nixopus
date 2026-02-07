@@ -1,6 +1,6 @@
 {
   "dashboard": {
-    "title": "Panel de control",
+    "title": "Gráficos",
     "description": "Monitorea tus aplicaciones y recursos del sistema",
     "containers": {
       "title": "Contenedores",
