@@ -46,7 +46,7 @@ function useAuth() {
         toast.error(result.error.message || t('auth.login.errors.loginFailed'));
       } else {
         await dispatch(initializeAuth() as any);
-        
+
         // Check for pending organization invitation
         const pendingInvite = sessionStorage.getItem('pendingInvite');
         if (pendingInvite) {
@@ -54,18 +54,20 @@ function useAuth() {
             const inviteData = JSON.parse(pendingInvite);
             sessionStorage.removeItem('pendingInvite');
             // Redirect to organization invite page to complete the process
-            router.push(`/auth/organization-invite?token=${inviteData.token}&org_id=${inviteData.orgId}&email=${inviteData.email || ''}&role=${inviteData.role || 'viewer'}`);
+            router.push(
+              `/auth/organization-invite?token=${inviteData.token}&org_id=${inviteData.orgId}&email=${inviteData.email || ''}&role=${inviteData.role || 'viewer'}`
+            );
             return;
           } catch (error) {
             console.error('Error processing pending invite:', error);
           }
         }
-        
+
         // Wait a moment for Redux state to update after initializeAuth
         // The layout.tsx will handle redirect automatically, but we can also redirect here
         // as a fallback after ensuring state is updated
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push('/charts');
         }, 200);
       }
     } catch (error: any) {
