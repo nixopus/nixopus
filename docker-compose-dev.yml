@@ -54,6 +54,8 @@ services:
     ports:
       - "127.0.0.1:${AUTH_SERVICE_PORT:-9090}:9090"
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       # Database connection - using service name for Docker network
       - DATABASE_URL=postgresql://${USERNAME:-postgres}:${PASSWORD:-changeme}@nixopus-db:5432/${DB_NAME:-postgres}?sslmode=disable
@@ -62,6 +64,13 @@ services:
       # Auth service configuration
       - PORT=9090
       - NODE_ENV=development
+      # Better Auth configuration
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:9090}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      # Email configuration
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL}
     volumes:
       - ./logs:/app/logs
     networks:
