@@ -80,12 +80,13 @@ export function ListRepositories() {
   return (
     <div>
       <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
-        <div className="flex-1 min-w-[220px]">
+        <div className="flex-1 max-w-fit ">
           <SearchBar
             searchTerm={searchTerm}
             handleSearchChange={handleSearchChange}
             label={t('selfHost.repositories.search.placeholder')}
             isLoading={isSearching}
+            className="min-w-[280px] [&_input]:pl-12 [&_svg]:ml-3 [&_svg]:left-3"
           />
         </div>
         <div className="flex items-center gap-2">
