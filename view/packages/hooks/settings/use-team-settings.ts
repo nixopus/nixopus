@@ -65,7 +65,7 @@ function useTeamSettings() {
   }, [apiUsers]);
 
   useEffect(() => {
-    if (activeOrganization) {
+    if (activeOrganization?.organization) {
       setTeamName(activeOrganization.organization.name);
       setTeamDescription(activeOrganization.organization.description);
     }
