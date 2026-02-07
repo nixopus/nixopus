@@ -123,7 +123,7 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
         pathname === '/login' ||
         pathname === '/register'
       ) {
-        router.push('/dashboard');
+        router.push('/apps');
       }
     }
   }, [pathname, isLoading, isInitialized, router, isPublicRoute, isAuthenticated]);

@@ -27,7 +27,7 @@ function useGithubCallback() {
           setStatus('success');
           console.log('installationId', installationId);
           window.history.replaceState({}, document.title, window.location.pathname);
-          router.push('/self-host/create/');
+          router.push('/apps/create/');
         } catch (err) {
           setError(t('selfHost.githubCallback.error.installationFailed'));
           setStatus('error');

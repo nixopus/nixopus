@@ -150,10 +150,10 @@
         "description": "You don't have permission to view self-hosted applications"
       },
       "createButton": "Create",
-      "loading": "Loading applications...",
+      "loading": "Loading applications",
       "noApplications": "No applications found",
       "search": {
-        "placeholder": "Search applications..."
+        "placeholder": "Search"
       },
       "sort": {
         "name": "Name",
@@ -335,7 +335,7 @@
         "exitFullscreen": "Exit Fullscreen",
         "download": "Download",
         "search": {
-          "placeholder": "Search logs...",
+          "placeholder": "Search",
           "previous": "Previous",
           "next": "Next",
           "results": "{current} of {total}"
@@ -540,7 +540,7 @@
       "title": "Repositories",
       "noRepositories": "No repositories found",
       "search": {
-        "placeholder": "Search repositories..."
+        "placeholder": "Search"
       },
       "sort": {
         "name": "Name",

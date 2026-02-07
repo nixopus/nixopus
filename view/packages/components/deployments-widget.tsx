@@ -32,7 +32,7 @@ export const DeploymentsWidget: React.FC<DeploymentsWidgetProps> = ({ deployment
   const { deploymentItems, isEmpty } = useDeploymentsWidget(deploymentsData);
 
   const cardActions = (
-    <Button variant="outline" size="sm" onClick={() => router.push('/self-host')}>
+    <Button variant="outline" size="sm" onClick={() => router.push('/apps')}>
       <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
       View All
     </Button>
@@ -40,9 +40,7 @@ export const DeploymentsWidget: React.FC<DeploymentsWidgetProps> = ({ deployment
 
   const handleDeploymentClick = (deployment: ApplicationDeployment) => {
     if (deployment.application_id) {
-      router.push(
-        `/self-host/application/${deployment.application_id}/deployments/${deployment.id}`
-      );
+      router.push(`/apps/application/${deployment.application_id}/deployments/${deployment.id}`);
     }
   };
 

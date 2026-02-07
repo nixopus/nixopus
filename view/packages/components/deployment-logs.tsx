@@ -73,7 +73,7 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
   });
 
   return (
-    <CardWrapper className="border-0 shadow-none overflow-x-hidden bg-transparent">
+    <CardWrapper className="border-0 border-border shadow-none overflow-x-hidden bg-transparent">
       <div className="space-y-3 pb-4 px-0 border-none border-b-0 min-w-0">
         {title && (
           <div className="flex items-center justify-between min-w-0 gap-2">
@@ -132,7 +132,7 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
               <Badge
                 key={option.value}
                 variant={filters.level === option.value ? 'default' : 'outline'}
-                className="cursor-pointer transition-colors flex-shrink-0"
+                className="cursor-pointer transition-colors flex-shrink-0 border border-border"
                 onClick={() => handleLevelChange(option.value)}
               >
                 {option.label}
@@ -160,8 +160,8 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
           </div>
         </div>
       </div>
-      <div className="p-0 border rounded-md overflow-hidden min-w-0">
-        <div className="flex items-center gap-3 px-4 py-2 border-b bg-muted/30 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-0">
+      <div className="p-0 border border-border rounded-md overflow-hidden min-w-0">
+        <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-0">
           {tableHeaderColumns.map((col) => (
             <div key={col.key} className={`${col.width} flex-shrink-0`}>
               {col.label}
@@ -198,7 +198,7 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
                     <div className="ml-7 min-w-0">
                       <div
                         className={cn(
-                          'font-mono bg-muted/50 rounded border break-words whitespace-pre-wrap overflow-wrap-anywhere',
+                          'font-mono bg-muted/50 rounded border border-border break-words whitespace-pre-wrap overflow-wrap-anywhere',
                           isDense ? 'text-xs p-2' : 'text-sm p-3'
                         )}
                       >

@@ -11,7 +11,7 @@ export default function Home() {
 
   useEffect(() => {
     if (isInitialized && isAuthenticated) {
-      router.push('/dashboard');
+      router.push('/apps');
     } else {
       router.push('/auth');
     }

@@ -57,7 +57,7 @@ function DashboardPage() {
       <PageLayout maxWidth="full" padding="md" spacing="lg">
         <MainPageHeader
           label={t('dashboard.title')}
-          description={t('dashboard.description')}
+          highlightLabel={false}
           actions={
             <div className="flex items-center gap-2">
               <WidgetSelector availableWidgets={availableWidgets} onAddWidget={handleAddWidget} />

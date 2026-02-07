@@ -15,7 +15,11 @@ export const useLayout = () => {
     refetch,
     t,
     filteredNavItems,
-    setActiveNav
+    setActiveNav,
+    showLogoutDialog,
+    handleLogoutClick,
+    handleLogoutConfirm,
+    handleLogoutCancel
   } = useAppSidebar();
   const {
     addTeamModalOpen,
@@ -84,6 +88,10 @@ export const useLayout = () => {
     fitAddonRef,
     setFitAddonRef,
     startTour,
-    breadcrumbs
+    breadcrumbs,
+    showLogoutDialog,
+    handleLogoutClick,
+    handleLogoutConfirm,
+    handleLogoutCancel
   };
 };

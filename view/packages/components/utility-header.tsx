@@ -8,11 +8,18 @@ import { MainPageHeader } from '@nixopus/ui';
 interface DashboardPageHeaderProps {
   className?: string;
   label: string;
-  description: string;
+  description?: string;
 }
 
 export function DashboardPageHeader({ className, label, description }: DashboardPageHeaderProps) {
-  return <MainPageHeader className={className} label={label} description={description} />;
+  return (
+    <MainPageHeader
+      className={className}
+      label={label}
+      description={description}
+      highlightLabel={false}
+    />
+  );
 }
 
 export default DashboardPageHeader;

@@ -6,30 +6,60 @@ export const terminalStyles = `
     background: transparent;
   }
   .xterm-viewport::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in oklch, var(--foreground) 15%, transparent);
     border-radius: 4px;
   }
   .xterm-viewport::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: color-mix(in oklch, var(--foreground) 25%, transparent);
+  }
+  .dark .xterm-viewport::-webkit-scrollbar-thumb {
+    background: color-mix(in oklch, var(--foreground) 10%, transparent);
+  }
+  .dark .xterm-viewport::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklch, var(--foreground) 20%, transparent);
   }
   
   /* Ensure terminal respects parent container */
   .terminal-container {
-    --terminal-bg: #0c0c0f;
-    --terminal-header-bg: rgba(18, 18, 22, 0.95);
-    --terminal-border: rgba(255, 255, 255, 0.06);
-    --terminal-tab-active: rgba(34, 211, 238, 0.1);
-    --terminal-tab-hover: rgba(255, 255, 255, 0.05);
-    --terminal-accent: #22d3ee;
-    --terminal-text: #e4e4e7;
-    --terminal-text-muted: #71717a;
-    --terminal-glow: 0 0 20px rgba(34, 211, 238, 0.15);
-    --terminal-split-border: #3a3a3a;
-    --terminal-split-active: #4a4a4a;
+    --terminal-bg: var(--card);
+    --terminal-header-bg: color-mix(in oklch, var(--card) 98%, transparent);
+    --terminal-border: var(--border);
+    --terminal-tab-active: color-mix(in oklch, var(--accent) 10%, transparent);
+    --terminal-tab-hover: color-mix(in oklch, var(--foreground) 4%, transparent);
+    --terminal-accent: var(--accent);
+    --terminal-text: var(--card-foreground);
+    --terminal-text-muted: var(--muted-foreground);
+    --terminal-glow: 0 0 20px color-mix(in oklch, var(--accent) 15%, transparent);
+    --terminal-split-border: var(--border);
+    --terminal-split-active: color-mix(in oklch, var(--foreground) 15%, transparent);
+    --terminal-status-loading: var(--chart-4);
+    --terminal-status-active: var(--chart-1);
+    --terminal-status-idle: var(--muted-foreground);
+    --terminal-close-hover-bg: color-mix(in oklch, var(--destructive) 10%, transparent);
+    --terminal-close-hover-text: var(--destructive);
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
     contain: inline-size;
+  }
+
+  .dark .terminal-container {
+    --terminal-bg: var(--card);
+    --terminal-header-bg: color-mix(in oklch, var(--card) 95%, transparent);
+    --terminal-border: var(--border);
+    --terminal-tab-active: color-mix(in oklch, var(--accent) 10%, transparent);
+    --terminal-tab-hover: color-mix(in oklch, var(--foreground) 5%, transparent);
+    --terminal-accent: var(--accent);
+    --terminal-text: var(--card-foreground);
+    --terminal-text-muted: var(--muted-foreground);
+    --terminal-glow: 0 0 20px color-mix(in oklch, var(--accent) 15%, transparent);
+    --terminal-split-border: var(--border);
+    --terminal-split-active: color-mix(in oklch, var(--foreground) 20%, transparent);
+    --terminal-status-loading: var(--chart-4);
+    --terminal-status-active: var(--chart-1);
+    --terminal-status-idle: var(--muted-foreground);
+    --terminal-close-hover-bg: color-mix(in oklch, var(--destructive) 10%, transparent);
+    --terminal-close-hover-text: var(--destructive);
   }
   
   /* Ensure xterm doesn't cause overflow - constrain all xterm elements */
@@ -88,8 +118,12 @@ export const terminalStyles = `
   }
 
   .terminal-container [data-panel-resize-handle-id]:active {
-    background-color: #5a5a5a !important;
+    background-color: var(--terminal-split-active) !important;
     width: 4px;
+  }
+
+  .dark .terminal-container [data-panel-resize-handle-id]:active {
+    background-color: var(--terminal-split-active) !important;
   }
 
   .terminal-container [data-panel-resize-handle-id]:focus,
@@ -101,9 +135,14 @@ export const terminalStyles = `
 
   /* Add a visual indicator when dragging */
   .terminal-container [data-panel-resize-handle-id][data-resize-handle-active] {
-    background-color: #5a5a5a !important;
-    box-shadow: 0 0 8px rgba(90, 90, 90, 0.4);
+    background-color: var(--terminal-split-active) !important;
+    box-shadow: 0 0 8px color-mix(in oklch, var(--foreground) 20%, transparent);
     width: 4px;
+  }
+
+  .dark .terminal-container [data-panel-resize-handle-id][data-resize-handle-active] {
+    background-color: var(--terminal-split-active) !important;
+    box-shadow: 0 0 8px color-mix(in oklch, var(--foreground) 20%, transparent);
   }
   
   @keyframes terminalFadeIn {
@@ -119,11 +158,11 @@ export const terminalStyles = `
   
   @keyframes pulseGlow {
     0%, 100% {
-      box-shadow: 0 0 6px rgba(16, 185, 129, 0.6), 0 0 12px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 0 6px color-mix(in oklch, var(--terminal-status-active) 60%, transparent), 0 0 12px color-mix(in oklch, var(--terminal-status-active) 30%, transparent);
       transform: scale(1);
     }
     50% {
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.8), 0 0 20px rgba(16, 185, 129, 0.4);
+      box-shadow: 0 0 10px color-mix(in oklch, var(--terminal-status-active) 80%, transparent), 0 0 20px color-mix(in oklch, var(--terminal-status-active) 40%, transparent);
       transform: scale(1.1);
     }
   }

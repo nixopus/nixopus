@@ -125,7 +125,7 @@ Report issues and request features on the [GitHub repository](https://github.com
 ## Next Steps
 
 - [Installation Guide](/install/) for detailed setup options
-- [Hosting Projects](/self-host/) to deploy your first application
+- [Hosting Projects](/apps/) to deploy your first application
 - [Terminal](/terminal/) for server command execution
 - [File Manager](/file-manager/) to browse and edit files
 - [Notifications](/notifications/) to configure alerts

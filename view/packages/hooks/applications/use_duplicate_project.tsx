@@ -105,7 +105,7 @@ export function useDuplicateProject({ application }: UseDuplicateProjectProps) {
       toast.success(t('selfHost.applicationDetails.header.duplicate.success'));
       setOpen(false);
       resetForm();
-      router.push(`/self-host/application/${result.id}`);
+      router.push(`/apps/application/${result.id}`);
     } catch (error) {
       toast.error(t('selfHost.applicationDetails.header.duplicate.error'));
     }

@@ -73,7 +73,6 @@ export default function ExtensionDetailsPage() {
       >
         <SubPageHeader
           title={extension?.name || ''}
-          metadata={extension?.author}
           actions={
             <div className="flex items-center gap-2">
               <Button

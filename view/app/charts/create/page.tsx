@@ -14,7 +14,7 @@ function page() {
       loadingFallback={<Skeleton className="h-96" />}
     >
       <PageLayout maxWidth="full" padding="md" spacing="lg">
-        <MainPageHeader label="Repository" description="Browse and manage projects" />
+        <MainPageHeader label="Repository" highlightLabel={false} />
         <ListRepositories />
       </PageLayout>
     </ResourceGuard>

@@ -5,9 +5,9 @@ const LAST_ACTIVE_NAV_KEY = 'last_active_nav';
 export function useNavigationState() {
   const [activeNav, setActiveNav] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem(LAST_ACTIVE_NAV_KEY) || '/dashboard';
+      return localStorage.getItem(LAST_ACTIVE_NAV_KEY) || '/apps';
     }
-    return '/dashboard';
+    return '/apps';
   });
 
   useEffect(() => {

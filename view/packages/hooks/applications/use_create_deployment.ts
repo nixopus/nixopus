@@ -196,9 +196,9 @@ function useCreateDeployment({
       const data = await createDeployment(deploymentData).unwrap();
 
       if (data?.deployments?.[0]?.id) {
-        router.push('/self-host/application/' + data.id + '/deployments/' + data.deployments[0].id);
+        router.push('/apps/application/' + data.id + '/deployments/' + data.deployments[0].id);
       } else {
-        router.push('/self-host/application/' + data.id + '?logs=true');
+        router.push('/apps/application/' + data.id + '?logs=true');
       }
     } catch (error) {
       toast.error(t('selfHost.deployForm.errors.createFailed'));

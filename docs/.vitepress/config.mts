@@ -83,7 +83,7 @@ export default withMermaid(
           text: 'Features',
           items: [
             { text: "Extensions", link: "/extensions/index.md" },
-            { text: "Hosting Projects", link: "/self-host/index.md" },
+            { text: "Hosting Projects", link: "/apps/index.md" },
             { text: 'Terminal', link: '/terminal/index.md' },
             { text: "File Manager", link: "/file-manager/index.md" },
             // { text: "Notifications", link: "/notifications/index.md" }

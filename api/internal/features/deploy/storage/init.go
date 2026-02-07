@@ -183,6 +183,7 @@ func (s *DeployStorage) GetApplications(page, pageSize int, sortBy string, sortD
 
 	totalCount, err := s.DB.NewSelect().
 		Model((*shared_types.Application)(nil)).
+		Where("organization_id = ?", organizationID).
 		Count(s.Ctx)
 
 	if err != nil {

@@ -41,7 +41,7 @@ export function useDeploymentsList({ deployments }: UseDeploymentsListProps) {
   };
 
   const handleRowClick = (deployment: ApplicationDeployment) => {
-    router.push(`/self-host/application/${deployment.application_id}/deployments/${deployment.id}`);
+    router.push(`/apps/application/${deployment.application_id}/deployments/${deployment.id}`);
   };
 
   const handleRollback = (deploymentId: string, e: React.MouseEvent) => {
