@@ -28,7 +28,8 @@ export function OtpLoginForm({ ...props }: OtpLoginFormProps) {
     email: props.email,
     otp: props.otp,
     handleSendOtp: props.handleSendOtp,
-    handleVerifyOtp: props.handleVerifyOtp
+    handleVerifyOtp: props.handleVerifyOtp,
+    isVerifyingOtp: props.isVerifyingOtp
   });
 
   return (
