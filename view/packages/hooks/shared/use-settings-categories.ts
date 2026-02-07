@@ -1,17 +1,6 @@
 'use client';
 
-import {
-  Settings,
-  Bell,
-  Globe,
-  Users,
-  Flag,
-  Keyboard,
-  Wifi,
-  Bug,
-  Terminal,
-  Container
-} from 'lucide-react';
+import { Settings, Bell, Globe, Keyboard, Wifi, Bug, Terminal, Container } from 'lucide-react';
 import { useRBAC } from '@/packages/utils/rbac';
 import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
 import { FeatureNames } from '@/packages/types/feature-flags';
@@ -46,14 +35,6 @@ export function useSettingsCategories(): SettingsCategory[] {
       label: 'Domains',
       icon: Globe,
       visible: isFeatureEnabled(FeatureNames.FeatureDomain) && !!activeOrg?.id,
-      scope: 'organization'
-    },
-    { id: 'teams', label: 'Teams', icon: Users, visible: !!activeOrg?.id, scope: 'organization' },
-    {
-      id: 'feature-flags',
-      label: 'Feature Flags',
-      icon: Flag,
-      visible: canAccessResource('feature-flags', 'read'),
       scope: 'organization'
     },
     {
