@@ -1,6 +1,6 @@
 {
   "dashboard": {
-    "title": "Dashboard",
+    "title": "Charts",
     "description": "Monitor your applications and system resources",
     "containers": {
       "title": "Containers",

@@ -367,6 +367,9 @@
 								"nullable": true,
 								"type": "string"
 							},
+							"is_onboarded": {
+								"type": "boolean"
+							},
 							"is_verified": {
 								"type": "boolean"
 							},
@@ -742,6 +745,9 @@
 									"image": {
 										"nullable": true,
 										"type": "string"
+									},
+									"is_onboarded": {
+										"type": "boolean"
 									},
 									"is_verified": {
 										"type": "boolean"
@@ -1202,6 +1208,9 @@
 									"image": {
 										"nullable": true,
 										"type": "string"
+									},
+									"is_onboarded": {
+										"type": "boolean"
 									},
 									"is_verified": {
 										"type": "boolean"
@@ -2026,6 +2035,9 @@
 											"image": {
 												"nullable": true,
 												"type": "string"
+											},
+											"is_onboarded": {
+												"type": "boolean"
 											},
 											"is_verified": {
 												"type": "boolean"
@@ -3559,6 +3571,9 @@
 													"nullable": true,
 													"type": "string"
 												},
+												"is_onboarded": {
+													"type": "boolean"
+												},
 												"is_verified": {
 													"type": "boolean"
 												},
@@ -4473,6 +4488,9 @@
 														"image": {
 															"nullable": true,
 															"type": "string"
+														},
+														"is_onboarded": {
+															"type": "boolean"
 														},
 														"is_verified": {
 															"type": "boolean"
@@ -5981,6 +5999,9 @@
 															"nullable": true,
 															"type": "string"
 														},
+														"is_onboarded": {
+															"type": "boolean"
+														},
 														"is_verified": {
 															"type": "boolean"
 														},
@@ -6404,6 +6425,9 @@
 															"nullable": true,
 															"type": "string"
 														},
+														"is_onboarded": {
+															"type": "boolean"
+														},
 														"is_verified": {
 															"type": "boolean"
 														},
@@ -6630,6 +6654,20 @@
 					},
 					"status": {
 						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"MarkOnboardingCompleteResponse": {
+				"description": "MarkOnboardingCompleteResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"is_onboarded": {
+								"type": "boolean"
+							}
+						},
+						"type": "object"
 					}
 				},
 				"type": "object"
@@ -7014,6 +7052,9 @@
 												"image": {
 													"nullable": true,
 													"type": "string"
+												},
+												"is_onboarded": {
+													"type": "boolean"
 												},
 												"is_verified": {
 													"type": "boolean"
@@ -7793,6 +7834,9 @@
 						"nullable": true,
 						"type": "string"
 					},
+					"is_onboarded": {
+						"type": "boolean"
+					},
 					"is_verified": {
 						"type": "boolean"
 					},
@@ -8036,6 +8080,9 @@
 										"nullable": true,
 										"type": "string"
 									},
+									"is_onboarded": {
+										"type": "boolean"
+									},
 									"is_verified": {
 										"type": "boolean"
 									},
@@ -8172,6 +8219,9 @@
 							"image": {
 								"nullable": true,
 								"type": "string"
+							},
+							"is_onboarded": {
+								"type": "boolean"
 							},
 							"is_verified": {
 								"type": "boolean"
@@ -8337,6 +8387,9 @@
 									"image": {
 										"nullable": true,
 										"type": "string"
+									},
+									"is_onboarded": {
+										"type": "boolean"
 									},
 									"is_verified": {
 										"type": "boolean"
@@ -15392,6 +15445,73 @@
 					}
 				},
 				"summary": "get is onboarded",
+				"tags": [
+					"api/v1/user"
+				]
+			},
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/user/controller.(*UserController).MarkOnboardingComplete`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
+				"operationId": "POST_/api/v1/user/onboarded",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MarkOnboardingCompleteResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/MarkOnboardingCompleteResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "mark onboarding complete",
 				"tags": [
 					"api/v1/user"
 				]

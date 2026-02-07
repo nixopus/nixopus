@@ -16,7 +16,7 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Folder, Home, Package, Container, Puzzle } from 'lucide-react';
+import { Folder, Home, Package, Container, Puzzle, BarChart } from 'lucide-react';
 import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
 
 const data = {
@@ -24,7 +24,7 @@ const data = {
     {
       title: 'navigation.dashboard',
       url: '/dashboard',
-      icon: Home,
+      icon: BarChart,
       resource: 'dashboard'
     },
     {

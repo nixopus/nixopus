@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "dashboard": "Panel de Control",
+    "dashboard": "Gráficos",
     "selfHost": "Apps",
     "fileManager": "Gestor de Archivos",
     "extensions": "Extensiones",
@@ -13,7 +13,7 @@
     "layout": {
       "breadcrumbs": {
         "home": "Inicio",
-        "dashboard": "Panel de Control",
+        "dashboard": "Gráficos",
         "selfHost": "Apps",
         "fileManager": "Gestor de Archivos",
         "settings": "Configuración",
