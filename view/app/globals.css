@@ -2,6 +2,16 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import 'tailwindcss';
 
+/* Scan nixopus-ui npm package source files for Tailwind classes */
+/* Tailwind resolves @source paths from the project root (billing-view/) */
+@source "../node_modules/@nixopus/ui/src/**/*.{ts,tsx}";
+/* Ensure app's own files are also scanned (in case @source replaces default scanning) */
+@source "./**/*.{ts,tsx}";
+@source "../packages/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+
+@plugin "tailwindcss-animate";
+
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
