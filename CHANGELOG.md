@@ -1,3 +1,33 @@
+# [0.1.0-alpha.124](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.123...v0.1.0-alpha.124) (2026-02-07)
+
+
+### Bug Fixes
+
+* yarn lock out of sync ([67d9fb1](https://github.com/raghavyuva/nixopus/commit/67d9fb191c5855a11b471ea64f1215af82f8a185))
+
+
+
+# [0.1.0-alpha.123](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.122...v0.1.0-alpha.123) (2026-02-07)
+
+
+### Bug Fixes
+
+* add remote staging area for build contexts ([4b709bb](https://github.com/raghavyuva/nixopus/commit/4b709bb18883be58479a91af297ad143c180a667))
+* context propogation in clone task ([a6bddb4](https://github.com/raghavyuva/nixopus/commit/a6bddb4b837eb9161401c1612e53441e9321911b))
+* cpu core calculation widget to use remote ssh ([f4b53ec](https://github.com/raghavyuva/nixopus/commit/f4b53ecc314c01040d392b6d123a2642a4ee3768))
+* handle optional organization in team settings ([#1004](https://github.com/raghavyuva/nixopus/issues/1004)) ([5b9a295](https://github.com/raghavyuva/nixopus/commit/5b9a295fc43c5d48c67ea1b8e2bd4e3bc3c3fa92))
+* remove better auth org test file ([7fe2ded](https://github.com/raghavyuva/nixopus/commit/7fe2ded2cec1c06f4ebe028e63c90245c9c12994))
+* remove deprecated folder from view ([9737350](https://github.com/raghavyuva/nixopus/commit/9737350e42dc6adbd3d5ac675c909e8b33ba8e24))
+* update self host page to make use of skeleton import from nixopus-ui ([42e40c2](https://github.com/raghavyuva/nixopus/commit/42e40c2217593122bf2e378c39b1c0074e39ab3b))
+* user menu and theme switcher color change ([607add8](https://github.com/raghavyuva/nixopus/commit/607add848fb0e0a04f022b1e09cad9d88876e578))
+
+
+### Features
+
+* add onboarding verification apis for user ([836b0bc](https://github.com/raghavyuva/nixopus/commit/836b0bc9baae0afc9501ea677b49642c16e2aba1))
+
+
+
 # [0.1.0-alpha.122](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.121...v0.1.0-alpha.122) (2026-02-04)
 
 
