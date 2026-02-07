@@ -47,7 +47,10 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+        <Button
+          variant="ghost"
+          className="relative h-9 w-9 rounded-full hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
           <Avatar className="h-9 w-9">
             {user?.avatar && <AvatarImage src={user.avatar} alt={displayName} />}
             <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
@@ -85,7 +88,12 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
             <DropdownMenuItem
               key={themeName}
               onClick={() => setTheme(themeName)}
-              className={cn('flex items-center gap-2 cursor-pointer', isActive && 'bg-card')}
+              className={cn(
+                'flex items-center gap-2 cursor-pointer',
+                isActive
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground focus:bg-sidebar-accent focus:text-sidebar-accent-foreground'
+                  : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus:bg-sidebar-accent focus:text-sidebar-accent-foreground'
+              )}
               style={
                 isActive && cardColor
                   ? {
@@ -94,7 +102,11 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
                   : undefined
               }
             >
-              {isActive ? <Check className="h-4 w-4 text-primary" /> : <div className="h-4 w-4" />}
+              {isActive ? (
+                <Check className="h-4 w-4 text-sidebar-accent-foreground" />
+              ) : (
+                <div className="h-4 w-4" />
+              )}
               <span className="capitalize">{themeName}</span>
             </DropdownMenuItem>
           );

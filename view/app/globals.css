@@ -86,8 +86,8 @@
   --sidebar-foreground: oklch(0.2397390833315577 0.04744254850061158 327.77);
   --sidebar-primary: oklch(0.72 0.19 150);
   --sidebar-primary-foreground: oklch(0.98 0.002 150);
-  --sidebar-accent: oklch(0.72 0.19 150);
-  --sidebar-accent-foreground: oklch(0.98 0.002 150);
+  --sidebar-accent: var(--secondary);
+  --sidebar-accent-foreground: var(--secondary-foreground);
   --sidebar-border: oklch(0.82 0.004 142.4);
   --sidebar-ring: oklch(0.45105005237918105 0.30158800230122107 267.77);
   --chart-1: oklch(0.4665060861235537 0.1358273419866176 147.76999999999998);
@@ -122,8 +122,8 @@
   --sidebar-foreground: oklch(0.98 0.002 270);
   --sidebar-primary: oklch(0.72 0.18 155);
   --sidebar-primary-foreground: oklch(0.98 0.002 270);
-  --sidebar-accent: oklch(0.22 0.004 270);
-  --sidebar-accent-foreground: oklch(0.98 0.002 270);
+  --sidebar-accent: var(--secondary);
+  --sidebar-accent-foreground: var(--secondary-foreground);
   --sidebar-border: oklch(0.24 0.004 270);
   --sidebar-ring: oklch(0.72 0.18 155);
 
@@ -145,7 +145,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-sans);
+    font-family: var(--font-roboto);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
@@ -169,7 +169,7 @@
   pre,
   kbd,
   samp {
-    font-family: var(--font-mono);
+    font-family: var(--font-jetbrains-mono);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
