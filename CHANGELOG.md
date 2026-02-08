@@ -1,3 +1,12 @@
+# [0.1.0-alpha.124](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.123...v0.1.0-alpha.124) (2026-02-07)
+
+
+### Bug Fixes
+
+* yarn lock out of sync ([67d9fb1](https://github.com/raghavyuva/nixopus/commit/67d9fb191c5855a11b471ea64f1215af82f8a185))
+
+
+
 # [0.1.0-alpha.123](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.122...v0.1.0-alpha.123) (2026-02-07)
 
 

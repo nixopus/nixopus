@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Mail, User, CheckCircle, AlertCircle, CheckCircle2, XCircle, Search } from 'lucide-react';
+import { Mail, User, CheckCircle, CheckCircle2, XCircle, Search, Shield } from 'lucide-react';
 import { Button } from '@nixopus/ui';
 import { Input } from '@nixopus/ui';
 import { Label } from '@nixopus/ui';
@@ -15,7 +15,6 @@ import UploadAvatar from '@/components/ui/upload_avatar';
 import { Badge } from '@nixopus/ui';
 import { TabsContent } from '@nixopus/ui';
 import { QRCodeSVG } from 'qrcode.react';
-import { Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@nixopus/ui';
 import {
   AccountSectionProps,
@@ -23,7 +22,6 @@ import {
   SecuritySectionProps
 } from '@/packages/types/settings';
 import { useAccountSection } from '@/packages/hooks/settings/use-account-section';
-import { useFeatureFlagsSettings } from '@/packages/hooks/settings/use-feature-flags-settings';
 import { useTwoFactorSetup } from '@/packages/hooks/settings/use-two-factor-setup';
 
 export function AccountSection({
@@ -46,10 +44,6 @@ export function AccountSection({
   handleAutoUpdateChange
 }: AccountSectionProps) {
   const { t } = useTranslation();
-  const { isSendingVerification, verificationSent, verificationError, handleSendVerification } =
-    useAccountSection({
-      userSettings
-    });
 
   return (
     <div className="space-y-8">
@@ -58,9 +52,6 @@ export function AccountSection({
           <TypographySmall className="text-sm font-medium">
             {t('settings.account.title')}
           </TypographySmall>
-          <TypographyMuted className="text-xs mt-1">
-            {t('settings.account.description')}
-          </TypographyMuted>
         </div>
         <div className="space-y-6">
           <div className="space-y-2">
@@ -106,48 +97,7 @@ export function AccountSection({
               <Mail size={16} />
               {t('settings.account.email.label')}
             </Label>
-            <div className="flex flex-col gap-2">
-              <Input id="email" value={email} readOnly disabled className="bg-muted/50" />
-              {user && !user.is_verified && (
-                <div className="space-y-2">
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>{t('settings.account.email.notVerified.title')}</AlertTitle>
-                    <AlertDescription>
-                      {t('settings.account.email.notVerified.description')}
-                    </AlertDescription>
-                  </Alert>
-                  <RBACGuard resource="user" action="update">
-                    <Button
-                      onClick={handleSendVerification}
-                      disabled={isSendingVerification || verificationSent}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      {isSendingVerification
-                        ? t('settings.account.email.notVerified.sending')
-                        : verificationSent
-                          ? t('settings.account.email.notVerified.sent')
-                          : t('settings.account.email.notVerified.sendButton')}
-                    </Button>
-                  </RBACGuard>
-                  {verificationError && (
-                    <TypographySmall className="text-red-500 text-xs">
-                      {verificationError}
-                    </TypographySmall>
-                  )}
-                  {verificationSent && (
-                    <Alert variant="default">
-                      <CheckCircle className="h-4 w-4" />
-                      <AlertTitle>{t('settings.account.email.notVerified.sent')}</AlertTitle>
-                      <AlertDescription>
-                        {t('settings.account.email.notVerified.checkEmail')}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-              )}
-            </div>
+            <Input id="email" value={email} readOnly disabled className="bg-muted/50" />
           </div>
         </div>
       </div>
@@ -157,9 +107,6 @@ export function AccountSection({
           <TypographySmall className="text-sm font-medium">
             {t('settings.preferences.language.title')}
           </TypographySmall>
-          <TypographyMuted className="text-xs mt-1">
-            {t('settings.preferences.language.description')}
-          </TypographyMuted>
         </div>
         <div className="flex items-center justify-between">
           <TypographyMuted className="text-sm">
@@ -180,9 +127,6 @@ export function AccountSection({
             <TypographySmall className="text-sm font-medium">
               {t('settings.preferences.autoUpdate.title')}
             </TypographySmall>
-            <TypographyMuted className="text-xs mt-1">
-              {t('settings.preferences.autoUpdate.description')}
-            </TypographyMuted>
           </div>
           <RBACGuard resource="user" action="update">
             <Switch
@@ -206,9 +150,6 @@ export function AvatarSection({ onImageChange, user }: AvatarSectionProps) {
         <TypographySmall className="text-sm font-medium">
           {t('settings.account.avatar.title')}
         </TypographySmall>
-        <TypographyMuted className="text-xs mt-1">
-          {t('settings.account.avatar.description')}
-        </TypographyMuted>
       </div>
       <RBACGuard resource="user" action="update">
         <UploadAvatar
@@ -218,171 +159,6 @@ export function AvatarSection({ onImageChange, user }: AvatarSectionProps) {
         />
       </RBACGuard>
     </div>
-  );
-}
-
-export function FeatureFlagsSettings() {
-  const { t } = useTranslation();
-  const {
-    isLoading,
-    searchTerm,
-    setSearchTerm,
-    filterEnabled,
-    setFilterEnabled,
-    handleToggleFeature,
-    getGroupIcon,
-    groupedFeatures,
-    enabledFeatures,
-    disabledFeatures
-  } = useFeatureFlagsSettings();
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-4 bg-muted rounded w-1/4 mb-2"></div>
-                <div className="space-y-2">
-                  {[1, 2].map((j) => (
-                    <div
-                      key={j}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
-                      <div className="space-y-2">
-                        <div className="h-4 bg-muted rounded w-32"></div>
-                        <div className="h-3 bg-muted rounded w-48"></div>
-                      </div>
-                      <div className="h-6 w-11 bg-muted rounded-full"></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <RBACGuard resource="feature-flags" action="read">
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <TypographyH3 className="text-lg font-semibold">
-              {t('settings.featureFlags.title')}
-            </TypographyH3>
-            <TypographyMuted className="text-xs mt-1">
-              {t('settings.featureFlags.description')}
-            </TypographyMuted>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="flex items-center gap-1">
-              <CheckCircle2 className="h-3 w-3" />
-              {enabledFeatures}
-            </Badge>
-            <Badge variant="outline" className="flex items-center gap-1">
-              <XCircle className="h-3 w-3" />
-              {disabledFeatures}
-            </Badge>
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto space-y-6">
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t('settings.featureFlags.searchPlaceholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex gap-1">
-                {(['all', 'enabled', 'disabled'] as const).map((filter) => (
-                  <Button
-                    key={filter}
-                    variant={filterEnabled === filter ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilterEnabled(filter)}
-                  >
-                    {t(`settings.featureFlags.filters.${filter}`)}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {groupedFeatures.size === 0 ? (
-            <Alert>
-              <Search className="h-4 w-4" />
-              <AlertDescription>
-                {searchTerm || filterEnabled !== 'all'
-                  ? t('settings.featureFlags.noResults')
-                  : t('settings.featureFlags.noFeatures')}
-              </AlertDescription>
-            </Alert>
-          ) : (
-            Array.from(groupedFeatures.entries())
-              .filter(([group]) => group !== 'notifications')
-              .map(([group, features], index) => {
-                const GroupIcon = getGroupIcon(group);
-                const enabledInGroup = features.filter((f) => f.is_enabled).length;
-
-                return (
-                  <div key={group} className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <GroupIcon className="h-4 w-4 text-muted-foreground" />
-                        <TypographySmall className="font-semibold">
-                          {t(`settings.featureFlags.groups.${group}.title` as any)}
-                        </TypographySmall>
-                        <Badge variant="outline" className="text-xs">
-                          {enabledInGroup}/{features.length}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      {features?.map((feature) => (
-                        <div
-                          key={feature.feature_name}
-                          className="flex items-center justify-between p-4 rounded-md bg-muted/30 transition-colors hover:bg-muted/50"
-                        >
-                          <div className="space-y-1 flex-1">
-                            <div className="flex items-center gap-2">
-                              <TypographySmall className="font-medium">
-                                {t(
-                                  `settings.featureFlags.features.${feature.feature_name}.title` as any
-                                )}
-                              </TypographySmall>
-                            </div>
-                            <TypographyMuted className="text-sm">
-                              {t(
-                                `settings.featureFlags.features.${feature.feature_name}.description` as any
-                              )}
-                            </TypographyMuted>
-                          </div>
-                          <RBACGuard resource="feature-flags" action="update">
-                            <Switch
-                              checked={feature.is_enabled}
-                              onCheckedChange={(checked) =>
-                                handleToggleFeature(feature.feature_name, checked)
-                              }
-                            />
-                          </RBACGuard>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })
-          )}
-        </div>
-      </div>
-    </RBACGuard>
   );
 }
 
