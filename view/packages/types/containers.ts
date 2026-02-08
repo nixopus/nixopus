@@ -59,6 +59,7 @@ export interface ContainersTableProps {
   sortOrder?: 'asc' | 'desc';
   onSort?: (field: SortField) => void;
   onAction?: (id: string, action: Action) => void;
+  onRowClick?: (container: Container) => void;
 }
 
 export interface SortableHeaderProps {
@@ -86,6 +87,8 @@ export interface ContainerDetailsHeaderProps {
   isProtected: boolean;
   handleContainerAction: (action: ContainerAction) => void;
   t: (key: translationKey, params?: Record<string, string>) => string;
+  onExecute?: () => void;
+  terminalOpen?: boolean;
 }
 
 export interface OverviewTabProps {

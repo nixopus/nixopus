@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Layers,
-  Calendar,
   HardDrive,
   Tag,
   Copy,
@@ -23,8 +22,7 @@ import {
   Box,
   Cpu,
   MemoryStick,
-  Network,
-  Terminal as TerminalIcon
+  Network
 } from 'lucide-react';
 import { Input } from '@nixopus/ui';
 import { Button } from '@nixopus/ui';
@@ -52,7 +50,6 @@ import {
   LogEntryProps,
   TerminalProps,
   OverviewTabProps,
-  StatBlockProps,
   ResourceGaugeProps,
   InfoLineProps
 } from '@/packages/types/containers';
@@ -60,12 +57,10 @@ import {
   CopyButton,
   EmptyState,
   PortDisplay,
-  StatusIndicator,
   ResourceLimitsForm
 } from '@/packages/components/container';
 import { ImagesSectionSkeleton } from '@/packages/components/container-skeletons';
 import { useContainerOverview } from '@/packages/hooks/containers/use-container-overview';
-import { textColorClasses, resourceGaugeColors } from '@/packages/utils/container-styles';
 import { Container } from '@/redux/services/container/containerApi';
 import {
   useContainerLogs,
@@ -79,7 +74,8 @@ import { useContainerTerminal } from '@/packages/hooks/terminal/use-container-te
 export function Images({ containerId, imagePrefix }: ImagesProps) {
   const { data: images = [], isLoading } = useGetImagesQuery({ containerId, imagePrefix });
   const { t } = useTranslation();
-  const { totalSize, totalLayers } = useImageStatistics(images);
+  const { totalLayers } = useImageStatistics(images);
+  const [open, setOpen] = useState(false);
 
   if (isLoading) {
     return <ImagesSectionSkeleton />;
@@ -90,17 +86,28 @@ export function Images({ containerId, imagePrefix }: ImagesProps) {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center gap-8">
-        <StatItem icon={Layers} value={totalLayers} label="Image Layers" />
-        <StatItem icon={HardDrive} value={formatBytes(totalSize)} label="Total Size" />
-      </div>
-
-      <div className="space-y-4">
-        {images.map((image, index) => (
-          <ImageCard key={image.id} image={image} isFirst={index === 0} />
-        ))}
-      </div>
+    <div className="border rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors"
+      >
+        <span className="flex items-center gap-2">
+          <Layers className="h-4 w-4 text-muted-foreground" />
+          {t('containers.images.title')}
+        </span>
+        <ChevronDown
+          className={cn('h-4 w-4 text-muted-foreground transition-transform', open && 'rotate-180')}
+        />
+      </button>
+      {open && (
+        <div className="border-t px-4 py-4 space-y-6">
+          <div className="space-y-4">
+            {images.map((image, index) => (
+              <ImageCard key={image.id} image={image} isFirst={index === 0} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -175,7 +182,7 @@ function IconButton({
       title={title}
       disabled={disabled}
     >
-      <Icon className={cn('h-4 w-4', active && 'text-green-500')} />
+      <Icon className={cn('h-4 w-4', active && 'text-foreground')} />
     </Button>
   );
 }
@@ -206,7 +213,7 @@ function TaggedList({
             className={cn(
               'group/item flex items-center gap-2',
               isDigest
-                ? 'p-2 rounded-lg bg-zinc-950 text-zinc-400'
+                ? 'p-2 rounded-lg bg-card text-muted-foreground'
                 : 'px-3 py-1.5 rounded-lg bg-muted/30 text-sm'
             )}
           >
@@ -239,44 +246,22 @@ function TaggedList({
 
 function ImageCard({ image, isFirst }: ImageCardProps) {
   const { copied, copyToClipboard } = useContainerImages();
-  const { expanded, toggleExpanded, createdDate, primaryTag, hasLabels, imageId } = useImageCard(
-    image,
-    isFirst
-  );
+  const { createdDate, primaryTag, hasLabels } = useImageCard(image, isFirst);
 
   return (
-    <div className="group">
-      <button
-        onClick={toggleExpanded}
-        className={cn(
-          'w-full flex items-center gap-4 p-4 rounded-xl transition-colors text-left',
-          'hover:bg-muted/30',
-          expanded && 'bg-muted/20'
-        )}
-      >
-        <div
-          className={cn(
-            'p-3 rounded-xl transition-colors',
-            isFirst ? 'bg-emerald-500/10' : 'bg-muted/50'
-          )}
-        >
-          <Package
-            className={cn('h-5 w-5', isFirst ? 'text-emerald-500' : 'text-muted-foreground')}
-          />
-        </div>
-
+    <div className="py-4 space-y-4 border-b border-border last:border-b-0">
+      <div className="flex items-center gap-4">
+        <Package className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-semibold truncate">{primaryTag}</span>
             {isFirst && (
-              <span className="px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <span className="px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide rounded-full bg-muted text-muted-foreground">
                 Current
               </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5 font-mono">{imageId}</p>
         </div>
-
         <div className="hidden sm:flex items-center gap-6 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <HardDrive className="h-3.5 w-3.5" />
@@ -287,81 +272,59 @@ function ImageCard({ image, isFirst }: ImageCardProps) {
             {formatDate(createdDate.toISOString())}
           </span>
         </div>
+      </div>
 
-        <ChevronDown
-          className={cn(
-            'h-4 w-4 text-muted-foreground transition-transform',
-            expanded && 'rotate-180'
-          )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <DetailRow
+          icon={Tag}
+          label="Image ID"
+          value={formatImageId(image.id, image.id.length)}
+          displayValue={formatImageId(image.id, 24) + '...'}
+          mono
+          copyable
+          onCopy={() => copyToClipboard(image.id, 'id')}
+          copied={copied === 'id'}
         />
-      </button>
+        {image.shared_size > 0 && (
+          <DetailRow icon={Layers} label="Shared Size" value={formatBytes(image.shared_size)} />
+        )}
+      </div>
 
-      {expanded && (
-        <div className="px-4 pb-4 pt-2 space-y-4 ml-[60px]">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <DetailRow
-              icon={Tag}
-              label="Image ID"
-              value={formatImageId(image.id, image.id.length)}
-              displayValue={formatImageId(image.id, 24) + '...'}
-              mono
-              copyable
-              onCopy={() => copyToClipboard(image.id, 'id')}
-              copied={copied === 'id'}
-            />
-            <DetailRow
-              icon={Calendar}
-              label="Created"
-              value={formatDateFull(createdDate.toISOString())}
-            />
-            <DetailRow
-              icon={HardDrive}
-              label="Size"
-              value={formatBytes(image.size)}
-              sublabel={`Virtual: ${formatBytes(image.virtual_size)}`}
-            />
-            {image.shared_size > 0 && (
-              <DetailRow icon={Layers} label="Shared Size" value={formatBytes(image.shared_size)} />
-            )}
-          </div>
+      {image.repo_tags && image.repo_tags.length > 0 && (
+        <TaggedList
+          title="Tags"
+          items={image.repo_tags}
+          icon={Tag}
+          copied={copied}
+          copyToClipboard={copyToClipboard}
+          variant="tag"
+        />
+      )}
 
-          {image.repo_tags && image.repo_tags.length > 0 && (
-            <TaggedList
-              title="Tags"
-              items={image.repo_tags}
-              icon={Tag}
-              copied={copied}
-              copyToClipboard={copyToClipboard}
-              variant="tag"
-            />
-          )}
+      {image.repo_digests && image.repo_digests.length > 0 && (
+        <TaggedList
+          title="Digests"
+          items={image.repo_digests}
+          icon={Tag}
+          copied={copied}
+          copyToClipboard={copyToClipboard}
+          variant="digest"
+        />
+      )}
 
-          {image.repo_digests && image.repo_digests.length > 0 && (
-            <TaggedList
-              title="Digests"
-              items={image.repo_digests}
-              icon={Tag}
-              copied={copied}
-              copyToClipboard={copyToClipboard}
-              variant="digest"
-            />
-          )}
-
-          {hasLabels && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Labels
-              </p>
-              <div className="grid grid-cols-1 gap-1">
-                {Object.entries(image.labels).map(([key, value]) => (
-                  <div key={key} className="flex items-start gap-2 py-1.5 text-sm">
-                    <span className="text-muted-foreground font-mono text-xs">{key}:</span>
-                    <span className="font-mono text-xs break-all">{value}</span>
-                  </div>
-                ))}
+      {hasLabels && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Labels
+          </p>
+          <div className="grid grid-cols-1 gap-1">
+            {Object.entries(image.labels).map(([key, value]) => (
+              <div key={key} className="flex items-start gap-2 py-1.5 text-sm">
+                <span className="text-muted-foreground font-mono text-xs">{key}:</span>
+                <span className="font-mono text-xs break-all">{value}</span>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -396,222 +359,96 @@ function DetailRow({
 }
 
 export function OverviewTab({ container }: OverviewTabProps) {
-  const { copied, showRaw, setShowRaw, copyToClipboard } = useContainerOverview();
+  const { copied, copyToClipboard } = useContainerOverview();
   const memoryMB = bytesToMB(container.host_config.memory);
   const swapMB = bytesToMB(container.host_config.memory_swap);
 
   return (
-    <div className="space-y-10">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatBlock
-          value={container.status}
-          label="Status"
-          color={container.status === 'running' ? 'emerald' : 'red'}
-          pulse={container.status === 'running'}
-        />
-        <StatBlock
-          value={memoryMB > 0 ? `${memoryMB} MB` : '∞'}
-          label="Memory Limit"
-          sublabel={memoryMB === 0 ? 'Unlimited' : undefined}
-        />
-        <StatBlock value={container.host_config.cpu_shares.toString()} label="CPU Shares" />
-        <StatBlock
-          value={container.ports?.length || 0}
-          label="Exposed Ports"
-          sublabel={container.ports?.length ? 'configured' : 'none'}
-        />
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <ResourceLimitsForm container={container} />
       </div>
 
-      <section className="space-y-8">
-        <div className="flex items-center gap-4">
-          <SectionLabel>Resource Allocation</SectionLabel>
-          <ResourceLimitsForm container={container} />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <ResourceGauge
-            icon={MemoryStick}
-            label="Memory"
-            value={memoryMB}
-            maxLabel={memoryMB > 0 ? `${memoryMB} MB` : 'No Limit'}
-            color="blue"
-            unlimited={memoryMB === 0}
-          />
-          <ResourceGauge
-            icon={HardDrive}
-            label="Swap"
-            value={swapMB}
-            maxLabel={swapMB > 0 ? `${swapMB} MB` : 'No Limit'}
-            color="purple"
-            unlimited={swapMB === 0}
-          />
-          <ResourceGauge
-            icon={Cpu}
-            label="CPU Shares"
-            value={container.host_config.cpu_shares}
-            maxLabel={`${container.host_config.cpu_shares} shares`}
-            color="amber"
-            showBar={false}
-          />
-        </div>
-      </section>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <ResourceGauge
+          icon={MemoryStick}
+          label="Memory"
+          value={memoryMB}
+          maxLabel={memoryMB > 0 ? `${memoryMB} MB` : 'No Limit'}
+          color="blue"
+          unlimited={memoryMB === 0}
+        />
+        <ResourceGauge
+          icon={HardDrive}
+          label="Swap"
+          value={swapMB}
+          maxLabel={swapMB > 0 ? `${swapMB} MB` : 'No Limit'}
+          color="purple"
+          unlimited={swapMB === 0}
+        />
+        <ResourceGauge
+          icon={Cpu}
+          label="CPU Shares"
+          value={container.host_config.cpu_shares}
+          maxLabel={`${container.host_config.cpu_shares} shares`}
+          color="amber"
+          showBar={false}
+        />
+      </div>
 
       {container.ports && container.ports.length > 0 && (
-        <section className="space-y-4">
-          <SectionLabel>Network Configuration</SectionLabel>
-          <div className="flex flex-wrap gap-4">
-            {container.ports.map((port, idx) => (
-              <PortDisplay key={idx} port={port} variant="flow" />
-            ))}
-          </div>
-        </section>
+        <div className="flex flex-wrap gap-3">
+          {container.ports.map((port, idx) => (
+            <PortDisplay key={idx} port={port} variant="flow" />
+          ))}
+        </div>
       )}
 
-      <section className="space-y-8">
-        <SectionLabel>Container Identity</SectionLabel>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
-          <InfoLine
-            icon={Box}
-            label="Image"
-            value={container.image}
-            copyable
-            onCopy={() => copyToClipboard(container.image, 'image')}
-            copied={copied === 'image'}
-          />
-          <InfoLine
-            icon={HardDrive}
-            label="Container ID"
-            value={container.id}
-            displayValue={formatImageId(container.id) + '...'}
-            mono
-            copyable
-            onCopy={() => copyToClipboard(container.id, 'id')}
-            copied={copied === 'id'}
-          />
-          <InfoLine
-            icon={Network}
-            label="IP Address"
-            value={container.ip_address || 'Not assigned'}
-            mono
-          />
-          <InfoLine
-            icon={Clock}
-            label="Created"
-            value={formatDate(container.created)}
-            sublabel={formatDateFull(container.created)}
-          />
-        </div>
-      </section>
-
-      {container.command && (
-        <section className="space-y-8">
-          <SectionLabel>Entrypoint</SectionLabel>
-          <div className="relative group">
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-zinc-950 text-zinc-300">
-              <TerminalIcon className="h-4 w-4 mt-0.5 text-zinc-500 flex-shrink-0" />
-              <code className="text-sm font-mono break-all">{container.command}</code>
-            </div>
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <CopyButton
-                copied={copied === 'cmd'}
-                onCopy={() => copyToClipboard(container.command, 'cmd')}
-                size="sm"
-                className="text-zinc-400 hover:text-zinc-200"
-              />
-            </div>
-          </div>
-        </section>
-      )}
-
-      <section className="pt-4">
-        <button
-          onClick={() => setShowRaw(!showRaw)}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ChevronDown className={cn('h-4 w-4 transition-transform', showRaw && 'rotate-180')} />
-          <span>Raw inspection data</span>
-        </button>
-        {showRaw && (
-          <div className="mt-4 relative group">
-            <div className="absolute top-3 right-3 z-10">
-              <CopyButton
-                copied={copied === 'raw'}
-                onCopy={() => copyToClipboard(JSON.stringify(container, null, 2), 'raw')}
-                size="sm"
-                showText
-                className="text-zinc-400"
-              />
-            </div>
-            <pre className="p-4 rounded-xl bg-zinc-950 text-zinc-400 text-xs font-mono overflow-auto max-h-[400px] no-scrollbar">
-              {JSON.stringify(container, null, 2)}
-            </pre>
-          </div>
-        )}
-      </section>
-    </div>
-  );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-      {children}
-    </h3>
-  );
-}
-
-function StatBlock({ value, label, sublabel, color, pulse }: StatBlockProps) {
-  return (
-    <div className="relative">
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          {pulse && <StatusIndicator isRunning={true} size="md" />}
-          <span
-            className={cn(
-              'text-2xl font-bold tracking-tight capitalize',
-              color && textColorClasses[color]
-            )}
-          >
-            {value}
-          </span>
-        </div>
-        <p className="text-sm text-muted-foreground">{label}</p>
-        {sublabel && <p className="text-xs text-muted-foreground/60">{sublabel}</p>}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-12">
+        <InfoLine
+          icon={Box}
+          label="Image"
+          value={container.image}
+          copyable
+          onCopy={() => copyToClipboard(container.image, 'image')}
+          copied={copied === 'image'}
+        />
+        <InfoLine
+          icon={HardDrive}
+          label="Container ID"
+          value={container.id}
+          displayValue={formatImageId(container.id) + '...'}
+          mono
+          copyable
+          onCopy={() => copyToClipboard(container.id, 'id')}
+          copied={copied === 'id'}
+        />
+        <InfoLine
+          icon={Network}
+          label="IP Address"
+          value={container.ip_address || 'Not assigned'}
+          mono
+        />
+        <InfoLine
+          icon={Clock}
+          label="Created"
+          value={formatDate(container.created)}
+          sublabel={formatDateFull(container.created)}
+        />
       </div>
     </div>
   );
 }
 
-function ResourceGauge({
-  icon: Icon,
-  label,
-  value,
-  maxLabel,
-  color,
-  unlimited,
-  showBar = true
-}: ResourceGaugeProps) {
-  const colors = resourceGaugeColors[color];
-
+function ResourceGauge({ icon: Icon, label, maxLabel, unlimited }: ResourceGaugeProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-1">
       <div className="flex items-center gap-2">
-        <div className={cn('p-2 rounded-lg', colors.track)}>
-          <Icon className={cn('h-4 w-4', colors.text)} />
-        </div>
-        <span className="text-sm font-medium">{label}</span>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">{label}</span>
       </div>
-
-      {showBar && !unlimited && (
-        <div className={cn('h-2 rounded-full overflow-hidden', colors.track)}>
-          <div className={cn('h-full rounded-full', colors.bg)} style={{ width: '70%' }} />
-        </div>
-      )}
-
       {unlimited ? (
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold">∞</span>
-          <span className="text-sm text-muted-foreground">Unlimited</span>
-        </div>
+        <p className="text-lg font-semibold">Unlimited</p>
       ) : (
         <p className="text-lg font-semibold">{maxLabel}</p>
       )}
@@ -619,7 +456,7 @@ function ResourceGauge({
   );
 }
 
-function InfoLine({
+export function InfoLine({
   icon: Icon,
   label,
   value,
@@ -628,10 +465,24 @@ function InfoLine({
   mono,
   copyable,
   onCopy,
-  copied,
+  copied: externalCopied,
   variant = 'default'
 }: InfoLineProps & { variant?: 'default' | 'compact' }) {
+  const [internalCopied, setInternalCopied] = useState(false);
   const isCompact = variant === 'compact';
+
+  const handleCopy = () => {
+    if (onCopy) {
+      onCopy();
+    } else {
+      navigator.clipboard.writeText(value);
+      setInternalCopied(true);
+      setTimeout(() => setInternalCopied(false), 2000);
+    }
+  };
+
+  const isCopied = onCopy ? !!externalCopied : internalCopied;
+
   return (
     <div className={cn('flex items-start', isCompact ? 'gap-2' : 'gap-3 py-2')}>
       <Icon
@@ -650,9 +501,9 @@ function InfoLine({
           <span className={cn('text-sm truncate', mono && 'font-mono')} title={value}>
             {displayValue || value}
           </span>
-          {copyable && onCopy && (
+          {copyable && (
             <div onClick={(e) => e.stopPropagation()}>
-              <CopyButton copied={!!copied} onCopy={onCopy} size="sm" />
+              <CopyButton copied={isCopied} onCopy={handleCopy} size="sm" />
             </div>
           )}
         </div>
@@ -789,8 +640,8 @@ export function LogsTab({ container, logs, onLoadMore, onRefresh }: LogsTabProps
         </div>
       </div>
 
-      <div className="rounded-lg border overflow-hidden bg-zinc-950 min-w-0">
-        <div className="flex items-center gap-3 px-4 py-2 text-xs font-medium text-zinc-500 uppercase tracking-wider border-b border-zinc-800 min-w-0">
+      <div className="rounded-lg border overflow-hidden bg-card min-w-0">
+        <div className="flex items-center gap-3 px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b min-w-0">
           <div className="w-4 flex-shrink-0" />
           <div className="w-14 flex-shrink-0">Level</div>
           <div className="w-40 flex-shrink-0">Time</div>
@@ -870,7 +721,7 @@ function LogEntry({ log, isExpanded, onToggle, isDense }: LogEntryProps) {
         <div className="px-4 pb-3 pt-1 min-w-0 overflow-x-hidden">
           <pre
             className={cn(
-              'ml-8 p-3 rounded bg-zinc-900 text-zinc-300 font-mono whitespace-pre-wrap break-words overflow-wrap-anywhere',
+              'ml-8 p-3 rounded bg-muted text-card-foreground font-mono whitespace-pre-wrap break-words overflow-wrap-anywhere',
               isDense ? 'text-[11px]' : 'text-xs'
             )}
           >

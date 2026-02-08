@@ -56,6 +56,7 @@ export interface MonitorProps {
 
 export interface ApplicationLogsProps {
   id: string;
+  applicationId: string;
   currentPage?: number;
   setCurrentPage?: (page: number) => void;
 }
