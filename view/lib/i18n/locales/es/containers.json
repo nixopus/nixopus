@@ -9,6 +9,8 @@
     "ports": "Puertos",
     "actions": "Acciones",
     "refresh": "Actualizar",
+    "selectContainer": "Select container",
+    "backToContainers": "Volver a contenedores",
     "searchPlaceholder": "Buscar contenedores...",
     "sortBy": "Ordenar por",
     "sortOptions": {
@@ -37,7 +39,16 @@
     "prune_images_error": "Error al eliminar las imágenes",
     "prune_build_cache_error": "Error al eliminar la caché de compilación",
     "overview": "Resumen",
-    "logs": "Logs",
+    "logs": {
+      "title": "Logs",
+      "copy": "Copiar logs",
+      "download": "Descargar logs",
+      "copySuccess": "Logs copiados al portapapeles",
+      "copyError": "Error al copiar logs",
+      "copyEmpty": "No hay logs para copiar",
+      "downloadSuccess": "Logs descargados",
+      "downloadEmpty": "No hay logs para descargar"
+    },
     "details": "Detalles",
     "basic_info": "Información básica",
     "resources": "Recursos",
@@ -49,6 +60,12 @@
     "load_more_logs": "Cargar más logs",
     "no_logs": "No se encontraron logs",
     "no_containers": "No se encontraron contenedores",
+    "noContainersForApplication": "No se encontraron contenedores para esta aplicación",
+    "total": "Total",
+    "running": "En ejecución",
+    "stopped": "Detenido",
+    "delete_title": "Eliminar Contenedor",
+    "delete_description": "¿Estás seguro de que quieres eliminar este contenedor?",
     "more_ports": "+{count} más",
     "no_ports_exposed": "No hay puertos expuestos",
     "deleteDialog": {
@@ -77,6 +94,52 @@
       "size": "Tamaño",
       "containers": "Contenedores",
       "none": "<ninguno>"
+    },
+    "resourceLimits": {
+      "title": "Límites de Recursos",
+      "description": "Configurar límites de memoria, swap y CPU para este contenedor",
+      "editButton": "Editar Límites",
+      "memory": {
+        "label": "Límite de Memoria",
+        "description": "Memoria máxima que el contenedor puede usar. Establecer en 0 para ilimitado.",
+        "placeholder": "ej., 512",
+        "unit": "MB",
+        "unlimited": "Ilimitado"
+      },
+      "memorySwap": {
+        "label": "Límite de Memoria + Swap",
+        "description": "Memoria total incluyendo swap. Establecer en 0 para ilimitado, o -1 para swap ilimitado.",
+        "placeholder": "ej., 1024",
+        "unit": "MB",
+        "unlimited": "Ilimitado"
+      },
+      "cpuShares": {
+        "label": "Acciones de CPU",
+        "description": "Peso relativo de CPU. Por defecto es 1024. Valores más altos obtienen más tiempo de CPU.",
+        "placeholder": "ej., 1024"
+      },
+      "presets": {
+        "label": "Ajustes Rápidos",
+        "small": "Pequeño (256 MB)",
+        "medium": "Mediano (512 MB)",
+        "large": "Grande (1 GB)",
+        "xlarge": "Extra Grande (2 GB)",
+        "unlimited": "Ilimitado"
+      },
+      "buttons": {
+        "save": "Guardar Cambios",
+        "saving": "Guardando...",
+        "cancel": "Cancelar",
+        "reset": "Restablecer a Actual"
+      },
+      "success": "Límites de recursos actualizados correctamente",
+      "error": "Error al actualizar límites de recursos",
+      "warnings": "Actualizado con advertencias",
+      "validation": {
+        "memoryMin": "La memoria debe ser 0 (ilimitado) o al menos 6 MB",
+        "swapMin": "El swap debe ser -1, 0, o mayor que el límite de memoria",
+        "cpuSharesMin": "Las acciones de CPU deben ser al menos 2"
+      }
     }
   }
 }

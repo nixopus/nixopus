@@ -23,7 +23,8 @@ import {
   Settings2,
   Zap,
   Info,
-  ChevronRight
+  ChevronRight,
+  Terminal as TerminalIcon
 } from 'lucide-react';
 import { Button } from '@nixopus/ui';
 import { Badge } from '@nixopus/ui';
@@ -49,11 +50,7 @@ import { useContainerActionHandlers } from '@/packages/hooks/containers/use-cont
 import { useResourceLimitsDialog } from '@/packages/hooks/containers/use-resource-limits-dialog';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Container } from '@/redux/services/container/containerApi';
-import {
-  getStatusIconClasses,
-  getPortColors,
-  getStatusColors
-} from '@/packages/utils/container-styles';
+import { getPortColors, getStatusColors } from '@/packages/utils/container-styles';
 import {
   isRunning,
   formatDate,
@@ -162,25 +159,20 @@ function ContainerMetadata({
   nameClassName?: string;
   idClassName?: string;
 }) {
-  const running = isRunning(container.status);
-  const iconClasses = getStatusIconClasses(running);
   const iconSizes = { sm: 'h-4 w-4', md: 'h-5 w-5' };
   const containerSizes = { sm: 'p-2 rounded-lg', md: 'p-2.5 rounded-xl' };
 
   return (
     <div className="flex items-center gap-3 min-w-0 flex-1">
       {showIcon && (
-        <div className={cn(containerSizes[iconSize], 'flex-shrink-0', iconClasses.container)}>
-          <Box className={cn(iconSizes[iconSize], iconClasses.icon)} />
+        <div className={cn(containerSizes[iconSize], 'flex-shrink-0 bg-muted')}>
+          <Box className={cn(iconSizes[iconSize], 'text-muted-foreground')} />
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <h3 className={cn('font-semibold truncate', nameClassName || 'font-medium')}>
-            {container.name}
-          </h3>
-          {running && showIcon && <StatusIndicator isRunning={true} size={iconSize} />}
-        </div>
+        <h3 className={cn('font-semibold truncate', nameClassName || 'font-medium')}>
+          {container.name}
+        </h3>
         <p className={cn('text-xs text-muted-foreground truncate mt-0.5 font-mono', idClassName)}>
           {truncateId(container.id)}
         </p>
@@ -311,7 +303,7 @@ export function CopyButton({
         className
       )}
     >
-      <Icon className={cn(iconSizes[size], copied && 'text-emerald-500')} />
+      <Icon className={cn(iconSizes[size], copied && 'text-foreground')} />
       {showText && <span className="ml-1 text-xs">{copied ? 'Copied' : 'Copy'}</span>}
     </button>
   );
@@ -332,19 +324,12 @@ export function PortDisplay({ port, variant = 'pill', showType = true }: PortDis
 
   if (variant === 'flow') {
     return (
-      <div
-        className={cn(
-          'flex items-center gap-3 px-4 py-3 rounded-xl transition-colors',
-          colors.flow
-        )}
-      >
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-muted/50">
         {hasPublic ? (
           <>
             <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4 text-emerald-500" />
-              <span className="font-mono text-lg font-semibold text-emerald-600 dark:text-emerald-400">
-                {port.public_port}
-              </span>
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              <span className="font-mono text-lg font-semibold">{port.public_port}</span>
             </div>
             <ArrowRight className="h-4 w-4 text-muted-foreground" />
             <div className="flex items-center gap-2">
@@ -393,18 +378,14 @@ export function EmptyState({ icon: Icon, message, className }: EmptyStateProps) 
   );
 }
 
-export function StatusBadge({ status, showDot = false, className }: StatusBadgeProps) {
-  const colors = getStatusColors(status);
-  const running = isRunning(status);
+export function StatusBadge({ status, className }: StatusBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
-        colors.badge,
+        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground',
         className
       )}
     >
-      {showDot && running && <StatusIndicator isRunning={true} size="sm" />}
       {status}
     </span>
   );
@@ -513,7 +494,8 @@ const ContainersTable = ({
   sortBy = 'name',
   sortOrder = 'asc',
   onSort,
-  onAction
+  onAction,
+  onRowClick
 }: ContainersTableProps) => {
   const { t } = useTranslation();
   const { handleRowClick } = useContainerNavigation();
@@ -551,7 +533,7 @@ const ContainersTable = ({
           <ContainerRow
             key={container.id}
             container={container}
-            onClick={() => handleRowClick(container)}
+            onClick={() => (onRowClick ? onRowClick(container) : handleRowClick(container))}
             onAction={onAction}
           />
         ))}
@@ -588,7 +570,6 @@ function SortableHeader({ label, field, currentSort, currentOrder, onSort }: Sor
 }
 
 function ContainerRow({ container, onClick, onAction }: ContainerRowProps) {
-  const running = isRunning(container.status);
   return (
     <div
       onClick={onClick}
@@ -605,7 +586,7 @@ function ContainerRow({ container, onClick, onAction }: ContainerRowProps) {
         </p>
       </div>
       <div className="w-24">
-        <StatusBadge status={container.state || container.status} showDot={running} />
+        <StatusBadge status={container.state || container.status} />
       </div>
       <div className="w-32">
         <PortsList ports={container.ports || []} maxVisible={2} variant="inline" emptyText="—" />
@@ -644,15 +625,16 @@ export function ContainerDetailsHeader({
   isLoading,
   isProtected,
   handleContainerAction,
-  t
+  t,
+  onExecute,
+  terminalOpen
 }: ContainerDetailsHeaderProps) {
-  const statusColors = getStatusColors(container.status);
   const running = isRunning(container.status);
   const disabled = isLoading || isProtected;
 
   const icon = (
-    <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center', statusColors.bg)}>
-      <div className={cn('w-3 h-3 rounded-full', statusColors.dot)} />
+    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-muted">
+      <Box className="h-5 w-5 text-muted-foreground" />
     </div>
   );
 
@@ -661,7 +643,7 @@ export function ContainerDetailsHeader({
       <code className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
         {truncateId(container.id)}
       </code>
-      <Badge variant="outline" className={cn('text-xs', statusColors.border)}>
+      <Badge variant="outline" className="text-xs">
         {container.status}
       </Badge>
     </div>
@@ -669,6 +651,12 @@ export function ContainerDetailsHeader({
 
   const actions = (
     <>
+      {running && onExecute && (
+        <Button variant={terminalOpen ? 'secondary' : 'outline'} size="sm" onClick={onExecute}>
+          <TerminalIcon className="mr-2 h-4 w-4" />
+          Execute
+        </Button>
+      )}
       <GuardedButton resource="container" action="update" loadingSize="h-9 w-24">
         {running ? (
           <>
@@ -697,7 +685,6 @@ export function ContainerDetailsHeader({
             size="sm"
             onClick={() => handleContainerAction('start')}
             disabled={disabled}
-            className="bg-emerald-600 hover:bg-emerald-700"
           >
             <Play className="mr-2 h-4 w-4" />
             {t('containers.start')}
@@ -706,11 +693,10 @@ export function ContainerDetailsHeader({
       </GuardedButton>
       <GuardedButton resource="container" action="delete" loadingSize="h-9 w-20">
         <Button
-          variant="outline"
+          variant="destructive"
           size="sm"
           onClick={() => handleContainerAction('remove')}
           disabled={disabled}
-          className="text-red-500 hover:text-red-600 hover:bg-red-500/10 border-red-500/20"
         >
           <Trash2 className="mr-2 h-4 w-4" />
           {t('containers.remove')}
