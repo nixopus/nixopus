@@ -42,7 +42,12 @@
         "monitoring": "നിരീക്ഷണം",
         "configuration": "കോൺഫിഗറേഷൻ",
         "deployments": "വിന്യാസങ്ങൾ",
-        "logs": "ലോഗുകൾ"
+        "logs": "ലോഗുകൾ",
+        "resources": "വിഭവങ്ങൾ"
+      },
+      "logs": {
+        "deployment": "Deployment",
+        "resources": "Resources"
       }
     },
     "page": {
