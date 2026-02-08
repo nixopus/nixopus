@@ -1,6 +1,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useTheme } from 'next-themes';
 import { Blocks, Settings, ChevronRight, TerminalIcon } from 'lucide-react';
 import {
   Sidebar,
@@ -292,10 +293,13 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const { openSettings } = useSettingsModal();
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
 
   if (!user || !activeOrg) {
     return null;
   }
+
+  const logoSrc = resolvedTheme === 'dark' ? '/logo_white.png' : '/logo_black.png';
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -304,7 +308,7 @@ export function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="pointer-events-none">
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
-                <Image src="/logo.png" alt="Nixopus" width={32} height={32} />
+                <Image src={logoSrc} alt="Nixopus" width={32} height={32} />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">Nixopus</span>
