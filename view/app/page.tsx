@@ -2,7 +2,6 @@
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAppSelector } from '@/redux/hooks';
-import { Loader2 } from 'lucide-react';
 
 export default function Home() {
   const router = useRouter();
@@ -18,8 +17,21 @@ export default function Home() {
   }, [isAuthenticated, isInitialized, router]);
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin" />
+    <div className="flex h-screen flex-col items-center justify-center bg-background">
+      <div className="flex items-center gap-1.5">
+        <div
+          className="app-loading-dot h-1.5 w-1.5 rounded-full bg-primary/60"
+          style={{ animationDelay: '0ms' }}
+        />
+        <div
+          className="app-loading-dot h-1.5 w-1.5 rounded-full bg-primary/60"
+          style={{ animationDelay: '150ms' }}
+        />
+        <div
+          className="app-loading-dot h-1.5 w-1.5 rounded-full bg-primary/60"
+          style={{ animationDelay: '300ms' }}
+        />
+      </div>
     </div>
   );
 }

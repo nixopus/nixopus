@@ -16,7 +16,7 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Container, Layers, ChartColumnDecreasing } from 'lucide-react';
+import { Layers, ChartColumnDecreasing } from 'lucide-react';
 import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
 
 const data = {
@@ -32,12 +32,6 @@ const data = {
       url: '/charts',
       icon: ChartColumnDecreasing,
       resource: 'dashboard'
-    },
-    {
-      title: 'navigation.containers',
-      url: '/containers',
-      icon: Container,
-      resource: 'container'
     }
   ]
 };

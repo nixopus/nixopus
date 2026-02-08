@@ -23,7 +23,12 @@
         "monitoring": "ಮೇಲ್ವಿಚಾರಣೆ",
         "configuration": "ಕಾನ್ಫಿಗರೇಶನ್",
         "deployments": "ನಿಯೋಜನೆಗಳು",
-        "logs": "ಲಾಗ್‌ಗಳು"
+        "logs": "ಲಾಗ್‌ಗಳು",
+        "resources": "ಸಂಪನ್ಮೂಲಗಳು"
+      },
+      "logs": {
+        "deployment": "Deployment",
+        "resources": "Resources"
       }
     },
     "page": {

@@ -23,7 +23,12 @@
         "monitoring": "Surveillance",
         "configuration": "Configuration",
         "deployments": "Déploiements",
-        "logs": "Journaux"
+        "logs": "Journaux",
+        "resources": "Ressources"
+      },
+      "logs": {
+        "deployment": "Deployment",
+        "resources": "Resources"
       }
     },
     "page": {

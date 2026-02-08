@@ -18,6 +18,8 @@ import { authClient } from '@/packages/lib/auth-client';
 import { SettingsModalProvider } from '@/packages/hooks/shared/use-settings-modal';
 import AppLayout from '@/packages/layouts/layout';
 import { SettingsModal } from '@/packages/components/settings';
+import Image from 'next/image';
+import { useTheme } from 'next-themes';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -37,9 +39,42 @@ export default function RootLayout({
   return <Layout>{children}</Layout>;
 }
 
+const AppLoadingScreen = () => {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const logoSrc = mounted && resolvedTheme === 'dark' ? '/logo_white.png' : '/logo_black.png';
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background">
+      <div className="app-loading-logo">
+        <Image src={logoSrc} alt="Nixopus" width={48} height={48} priority />
+      </div>
+      <div className="mt-8 flex items-center gap-1.5">
+        <div
+          className="app-loading-dot h-1.5 w-1.5 rounded-full bg-primary/60"
+          style={{ animationDelay: '0ms' }}
+        />
+        <div
+          className="app-loading-dot h-1.5 w-1.5 rounded-full bg-primary/60"
+          style={{ animationDelay: '150ms' }}
+        />
+        <div
+          className="app-loading-dot h-1.5 w-1.5 rounded-full bg-primary/60"
+          style={{ animationDelay: '300ms' }}
+        />
+      </div>
+    </div>
+  );
+};
+
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
@@ -128,14 +163,6 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
     }
   }, [pathname, isLoading, isInitialized, router, isPublicRoute, isAuthenticated]);
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-      </div>
-    );
-  }
-
   return (
     <>
       <ThemeProvider
@@ -145,20 +172,24 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
         disableTransitionOnChange
         themes={palette}
       >
-        <SettingsModalProvider>
-          <WebSocketProvider>
-            <FeatureFlagsProvider>
-              {isPublicRoute ? (
-                <>{children}</>
-              ) : (
-                <SystemStatsProvider>
-                  <AppLayout>{children}</AppLayout>
-                </SystemStatsProvider>
-              )}
-            </FeatureFlagsProvider>
-          </WebSocketProvider>
-          <SettingsModal />
-        </SettingsModalProvider>
+        {isLoading ? (
+          <AppLoadingScreen />
+        ) : (
+          <SettingsModalProvider>
+            <WebSocketProvider>
+              <FeatureFlagsProvider>
+                {isPublicRoute ? (
+                  <>{children}</>
+                ) : (
+                  <SystemStatsProvider>
+                    <AppLayout>{children}</AppLayout>
+                  </SystemStatsProvider>
+                )}
+              </FeatureFlagsProvider>
+            </WebSocketProvider>
+            <SettingsModal />
+          </SettingsModalProvider>
+        )}
       </ThemeProvider>
       <Toaster />
     </>
