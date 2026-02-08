@@ -1,3 +1,12 @@
+# [0.1.0-alpha.125](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.124...v0.1.0-alpha.125) (2026-02-08)
+
+
+### Features
+
+* add logo white and black based on theme change ([#1020](https://github.com/raghavyuva/nixopus/issues/1020)) ([421a500](https://github.com/raghavyuva/nixopus/commit/421a50091663236ca4e82de7562e49a37cd2e0f6))
+
+
+
 # [0.1.0-alpha.124](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.123...v0.1.0-alpha.124) (2026-02-07)
 
 
