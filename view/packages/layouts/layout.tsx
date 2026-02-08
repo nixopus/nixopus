@@ -306,7 +306,11 @@ export function AppSidebar({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="pointer-events-none">
+            <SidebarMenuButton
+              size="lg"
+              onClick={() => router.push('/apps')}
+              className="cursor-pointer"
+            >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
                 <Image src={logoSrc} alt="Nixopus" width={32} height={32} />
               </div>
