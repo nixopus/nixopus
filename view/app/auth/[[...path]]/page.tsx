@@ -15,8 +15,21 @@ export default function Auth() {
 
   if (!loaded) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+      <div className="flex h-screen flex-col items-center justify-center bg-background">
+        <div className="flex items-center gap-1.5">
+          <div
+            className="app-loading-dot h-1.5 w-1.5 rounded-full bg-primary/60"
+            style={{ animationDelay: '0ms' }}
+          />
+          <div
+            className="app-loading-dot h-1.5 w-1.5 rounded-full bg-primary/60"
+            style={{ animationDelay: '150ms' }}
+          />
+          <div
+            className="app-loading-dot h-1.5 w-1.5 rounded-full bg-primary/60"
+            style={{ animationDelay: '300ms' }}
+          />
+        </div>
       </div>
     );
   }

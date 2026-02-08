@@ -99,36 +99,36 @@
   --radius: 0.5rem;
 }
 .dark {
-  --background: oklch(0.13 0.004 270);
+  --background: oklch(0.2046 0 0);
   --foreground: oklch(0.98 0.002 270);
-  --card: oklch(0.17 0.004 270);
+  --card: oklch(0.2393 0 0);
   --card-foreground: oklch(0.98 0.002 270);
-  --popover: oklch(0.17 0.004 270);
+  --popover: oklch(0.2393 0 0);
   --popover-foreground: oklch(0.98 0.002 270);
-  --muted: oklch(0.22 0.004 270);
+  --muted: oklch(0.2393 0 0);
   --muted-foreground: oklch(0.55 0.01 270);
-  --primary: oklch(0.72 0.18 155);
-  --primary-foreground: oklch(0.98 0.002 270);
-  --secondary: oklch(0.22 0.004 270);
+  --primary: oklch(0.4334 0.0979 155.1);
+  --primary-foreground: oklch(0.9768 0.0129 353.13);
+  --secondary: oklch(0.2393 0 0);
   --secondary-foreground: oklch(0.98 0.002 270);
-  --accent: oklch(0.22 0.004 270);
+  --accent: oklch(0.5743 0.0717 161.24);
   --accent-foreground: oklch(0.98 0.002 270);
   --destructive: oklch(0.45 0.18 25);
   --destructive-foreground: oklch(0.95 0.05 25);
-  --border: oklch(0.24 0.004 270);
-  --input: oklch(0.22 0.004 270);
-  --ring: oklch(0.72 0.18 155);
+  --border: oklch(0.3012 0 0);
+  --input: oklch(0.3012 0 0);
+  --ring: oklch(0.5743 0.0717 161.24);
 
-  --sidebar: var(--card);
+  --sidebar: oklch(0.2046 0 0);
   --sidebar-foreground: oklch(0.98 0.002 270);
-  --sidebar-primary: oklch(0.72 0.18 155);
+  --sidebar-primary: oklch(0.4334 0.0979 155.1);
   --sidebar-primary-foreground: oklch(0.98 0.002 270);
-  --sidebar-accent: var(--card);
-  --sidebar-accent-foreground: var(--card-foreground);
-  --sidebar-border: oklch(0.24 0.004 270);
-  --sidebar-ring: oklch(0.72 0.18 155);
+  --sidebar-accent: oklch(0.2393 0 0);
+  --sidebar-accent-foreground: oklch(0.98 0.002 270);
+  --sidebar-border: oklch(0.3012 0 0);
+  --sidebar-ring: oklch(0.5743 0.0717 161.24);
 
-  --chart-1: oklch(0.72 0.18 155);
+  --chart-1: oklch(0.4334 0.0979 155.1);
   --chart-2: oklch(0.65 0.2 200);
   --chart-3: oklch(0.7 0.15 280);
   --chart-4: oklch(0.68 0.18 45);
@@ -376,6 +376,40 @@
   .dark .input-premium:focus {
     box-shadow: 0 0 0 3px oklch(0.72 0.18 155 / 0.15);
   }
+}
+
+/* App loading screen animations */
+@keyframes loading-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes loading-dot-bounce {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.app-loading-logo {
+  animation: loading-breathe 2s ease-in-out infinite;
+}
+
+.app-loading-dot {
+  animation: loading-dot-bounce 1.4s ease-in-out infinite both;
 }
 
 /* Force border-border on all cards - outside layer system */

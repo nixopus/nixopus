@@ -51,7 +51,12 @@
         "monitoring": "Monitoring",
         "configuration": "Configuration",
         "deployments": "Deployments",
-        "logs": "Logs"
+        "logs": "Logs",
+        "resources": "Resources"
+      },
+      "logs": {
+        "deployment": "Deployment",
+        "resources": "Resources"
       }
     },
     "monitoring": {
