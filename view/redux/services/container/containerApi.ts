@@ -184,5 +184,6 @@ export const {
   useStopContainerMutation,
   useRemoveContainerMutation,
   useGetContainerLogsQuery,
+  useLazyGetContainerLogsQuery,
   useUpdateContainerResourcesMutation
 } = containerApi;
