@@ -7,7 +7,6 @@ import { useAppSelector } from '@/redux/hooks';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
 import useGeneralSettings from '@/packages/hooks/settings/use-general-settings';
 import useNotificationSettings from '@/packages/hooks/settings/use-notification-settings';
-import useTeamSettings from '@/packages/hooks/settings/use-team-settings';
 import { useAdvancedSettings } from '@/packages/hooks/settings/use-advanced-settings';
 import { SMTPFormData } from '@/redux/types/notification';
 import { SelectOption } from '@nixopus/ui';
@@ -82,11 +81,6 @@ export function useNotificationsSettingsContent() {
     handleSaveSlack,
     handleSaveDiscord
   };
-}
-
-export function useTeamsSettingsContent() {
-  const settings = useTeamSettings();
-  return { settings };
 }
 
 export function useDomainsSettingsContent() {

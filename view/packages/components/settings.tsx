@@ -15,26 +15,14 @@ import { RotateCcw } from 'lucide-react';
 import { Skeleton } from '@nixopus/ui';
 import { cn } from '@/lib/utils';
 import { SelectWrapper } from '@nixopus/ui';
-import {
-  AvatarSection,
-  AccountSection,
-  FeatureFlagsSettings
-} from '@/packages/components/general-settings';
+import { AvatarSection, AccountSection } from '@/packages/components/general-settings';
 import { NotificationChannelsTab } from '@/packages/components/notification-settings';
 import { NotificationPreferencesTab } from '@/packages/components/notification-settings';
-import {
-  AddMember,
-  TeamMembers,
-  EditTeam,
-  TeamStats,
-  RecentActivity
-} from '@/packages/components/team-settings';
 // import DomainsTable from '@/app/settings/domains/components/domainsTable';
 // import UpdateDomainDialog from '@/app/settings/domains/components/update-domain';
 import {
   useGeneralSettingsContent,
   useNotificationsSettingsContent,
-  useTeamsSettingsContent,
   useNetworkSettingsContent,
   useTerminalSettingsContent,
   useContainerSettingsContent,
@@ -307,67 +295,6 @@ function NotificationsSettingsContent() {
   );
 }
 
-function TeamsSettingsContent() {
-  const { t } = useTranslation();
-  const { settings } = useTeamsSettingsContent();
-
-  return (
-    <ResourceGuard resource="organization" action="read">
-      <div className="space-y-6">
-        <h2 className="text-2xl font-semibold">Teams</h2>
-        <div className="flex items-center justify-between">
-          <div>
-            <TypographyH1>{settings.teamName}</TypographyH1>
-            <TypographyMuted>{settings.teamDescription}</TypographyMuted>
-          </div>
-          <div className="flex gap-2">
-            <ResourceGuard resource="organization" action="update">
-              <EditTeam
-                teamName={settings.teamName || ''}
-                teamDescription={settings.teamDescription || ''}
-                setEditTeamDialogOpen={settings.setEditTeamDialogOpen}
-                handleUpdateTeam={settings.handleUpdateTeam}
-                setTeamName={settings.setTeamName}
-                setTeamDescription={settings.setTeamDescription}
-                isEditTeamDialogOpen={settings.isEditTeamDialogOpen}
-                isUpdating={settings.isUpdating}
-              />
-            </ResourceGuard>
-            <ResourceGuard resource="user" action="create">
-              <AddMember
-                isAddUserDialogOpen={settings.isAddUserDialogOpen}
-                setIsAddUserDialogOpen={settings.setIsAddUserDialogOpen}
-                newUser={settings.newUser}
-                setNewUser={settings.setNewUser}
-                handleSendInvite={settings.handleSendInvite}
-                isInviteLoading={settings.isInviteLoading}
-              />
-            </ResourceGuard>
-          </div>
-        </div>
-        {settings.users.length > 0 ? (
-          <TeamMembers
-            users={settings.users}
-            handleRemoveUser={settings.handleRemoveUser}
-            getRoleBadgeVariant={settings.getRoleBadgeVariant}
-            onUpdateUser={settings.handleUpdateUser}
-          />
-        ) : (
-          <div className="text-center text-muted-foreground">{t('settings.teams.noMembers')}</div>
-        )}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TeamStats users={settings.users} />
-          <RecentActivity />
-        </div>
-      </div>
-    </ResourceGuard>
-  );
-}
-
-function FeatureFlagsSettingsContent() {
-  return <FeatureFlagsSettings />;
-}
-
 function KeyboardShortcutsSettingsContent() {
   const { t } = useTranslation();
   const { shortcuts } = useKeyboardShortcutsSettingsContent();
@@ -547,9 +474,7 @@ export function SettingsContent({ activeCategory }: SettingsContentProps) {
     <div className="flex-1 flex flex-col overflow-hidden p-6">
       {activeCategory === 'general' && <GeneralSettingsContent />}
       {activeCategory === 'notifications' && <NotificationsSettingsContent />}
-      {activeCategory === 'teams' && <TeamsSettingsContent />}
       {/* {activeCategory === 'domains' && <DomainsSettingsContent />} */}
-      {activeCategory === 'feature-flags' && <FeatureFlagsSettingsContent />}
       {activeCategory === 'keyboard-shortcuts' && <KeyboardShortcutsSettingsContent />}
       {activeCategory === 'network' && <NetworkSettingsContent />}
       {activeCategory === 'terminal' && <TerminalSettingsContent />}
