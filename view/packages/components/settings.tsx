@@ -234,7 +234,7 @@ function GeneralSettingsContent() {
                   font_size: 16,
                   language: 'en',
                   theme: 'light',
-                  auto_update: true,
+                  auto_update: false,
                   created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString()
                 }

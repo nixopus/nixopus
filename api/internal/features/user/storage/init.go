@@ -135,7 +135,7 @@ func (s *UserStorage) GetUserSettings(userID string) (*shared_types.UserSettings
 				FontSize:   16,
 				Language:   "en",
 				Theme:      "light",
-				AutoUpdate: true,
+				AutoUpdate: false,
 				CreatedAt:  time.Now(),
 				UpdatedAt:  time.Now(),
 			}
