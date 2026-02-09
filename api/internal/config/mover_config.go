@@ -9,15 +9,16 @@ import (
 )
 
 const (
-	productionServerURL = "https://api.nixopus.com"
+	productionServerURL = "http://localhost:8080"
 	configFileName      = ".nixopus"
 	authFileName        = "auth.json"
 )
 
 // AuthConfig represents global authentication configuration stored in user's home directory
 type AuthConfig struct {
-	AccessToken  string `json:"access_token,omitempty"`  // Bearer token for API authentication
-	RefreshToken string `json:"refresh_token,omitempty"` // Optional refresh token
+	AccessToken    string `json:"access_token,omitempty"`    // Bearer token for API authentication
+	RefreshToken   string `json:"refresh_token,omitempty"`   // Optional refresh token
+	OrganizationID string `json:"organization_id,omitempty"` // Active organization ID from Better Auth
 }
 
 // GetServerURL returns the server URL from environment variable or default
@@ -33,7 +34,6 @@ type Config struct {
 	Applications map[string]string `json:"applications,omitempty"` // Map of app name -> application_id
 	Sync         SyncConfig        `json:"sync"`
 	EnvPath      string            `json:"env_path,omitempty"`
-	// Note: Authentication tokens are now stored globally in ~/.config/nixopus/auth.json
 }
 
 // SyncConfig represents sync-related configuration
@@ -296,7 +296,7 @@ func LoadAuth() (*AuthConfig, error) {
 	return auth, nil
 }
 
-// SaveAuth saves authentication tokens to global storage
+// SaveAuth saves authentication tokens and organization ID to global storage
 func SaveAuth(accessToken, refreshToken string) error {
 	if err := ensureAuthDir(); err != nil {
 		return err
@@ -307,9 +307,14 @@ func SaveAuth(accessToken, refreshToken string) error {
 		return err
 	}
 
+	// Load existing auth to preserve organization_id if not being changed
+	existing, _ := LoadAuth()
 	auth := &AuthConfig{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+	}
+	if existing != nil && existing.OrganizationID != "" {
+		auth.OrganizationID = existing.OrganizationID
 	}
 
 	// Marshal to JSON with indentation
@@ -319,6 +324,36 @@ func SaveAuth(accessToken, refreshToken string) error {
 	}
 
 	// Write to file with restricted permissions (0600 = rw-------)
+	if err := os.WriteFile(authPath, data, 0600); err != nil {
+		return fmt.Errorf("failed to write auth file: %w", err)
+	}
+
+	return nil
+}
+
+// SaveOrganizationID saves the organization ID to global auth storage
+func SaveOrganizationID(organizationID string) error {
+	auth, err := LoadAuth()
+	if err != nil {
+		auth = &AuthConfig{}
+	}
+
+	auth.OrganizationID = organizationID
+
+	if err := ensureAuthDir(); err != nil {
+		return err
+	}
+
+	authPath, err := getAuthPath()
+	if err != nil {
+		return err
+	}
+
+	data, err := json.MarshalIndent(auth, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal auth: %w", err)
+	}
+
 	if err := os.WriteFile(authPath, data, 0600); err != nil {
 		return fmt.Errorf("failed to write auth file: %w", err)
 	}
@@ -338,6 +373,20 @@ func GetAccessToken() (string, error) {
 	}
 
 	return auth.AccessToken, nil
+}
+
+// GetOrganizationID returns the organization ID from global storage
+func GetOrganizationID() (string, error) {
+	auth, err := LoadAuth()
+	if err != nil {
+		return "", err
+	}
+
+	if auth.OrganizationID == "" {
+		return "", fmt.Errorf("no organization ID found. Please run 'nixopus login' again")
+	}
+
+	return auth.OrganizationID, nil
 }
 
 // ClearAuth removes authentication tokens from global storage

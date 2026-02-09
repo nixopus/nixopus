@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/httpclient"
 )
 
 // AddApplicationToFamilyRequest represents the request body for adding an app to family
@@ -94,10 +95,8 @@ func (c *baseHTTPClient) post(url string, body interface{}, accessToken string) 
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	// Add Bearer token to Authorization header
-	if accessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+accessToken)
-	}
+	// Add auth headers (Bearer token + X-Organization-Id)
+	httpclient.SetAuthHeaders(req, accessToken)
 
 	resp, err := c.client.Do(req)
 	if err != nil {

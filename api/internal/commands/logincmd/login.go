@@ -169,6 +169,16 @@ func runLoginSteps(program *LoginProgram, betterAuthURL, frontendURL, clientID, 
 		return err
 	}
 
+	// Fetch user's organizations and save the first org ID
+	orgs, err := FetchUserOrganizations(betterAuthURL, accessToken)
+	if err != nil {
+		program.Send(LoginStepMsg{Step: 2, Message: fmt.Sprintf("Warning: could not fetch organizations: %v", err)})
+	} else if len(orgs) > 0 {
+		if err := config.SaveOrganizationID(orgs[0].ID); err != nil {
+			program.Send(LoginStepMsg{Step: 2, Message: fmt.Sprintf("Warning: could not save organization ID: %v", err)})
+		}
+	}
+
 	// Send success message
 	program.Send(LoginSuccessMsg{})
 

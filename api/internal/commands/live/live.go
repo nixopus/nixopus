@@ -88,19 +88,13 @@ func runSingleApp(args []string) error {
 		return fmt.Errorf("failed to get application ID: %w", err)
 	}
 
-	// Get access token from global auth storage
 	accessToken, err := config.GetAccessToken()
 	if err != nil {
 		program.Quit()
 		return fmt.Errorf("not authenticated. Please run 'nixopus login' first: %w", err)
 	}
 
-	// Fetch application details to get base_path
-	basePath, err := getApplicationDetails(cfg.Server, applicationID, accessToken)
-	if err != nil {
-		program.Quit()
-		return fmt.Errorf("failed to fetch application details: %w", err)
-	}
+	basePath := "/"
 
 	// OPTIMIZATION: Start WebSocket connection IMMEDIATELY after config load
 	// Do other validations in parallel while connection is establishing
@@ -523,7 +517,7 @@ func createProject(serverURL string, envVars map[string]string, accessToken stri
 
 	// Use authenticated HTTP client
 	client := httpclient.NewAuthenticatedHTTPClient(accessToken)
-	url := httpclient.BuildURL(serverURL, "/api/v1/auth/cli-init")
+	url := httpclient.BuildURL(serverURL, "/api/v1/auth/cli/init")
 
 	reqBody := CreateProjectRequest{
 		Name:                 repoName,

@@ -14,12 +14,17 @@ import (
 // DetectFramework analyzes the project at the given path and returns
 // the appropriate FrameworkStrategy for running its dev server.
 func DetectFramework(ctx context.Context, projectPath string) (FrameworkStrategy, error) {
+	var detectionErrors []string
 	for _, detector := range projectDetectors {
-		if strategy, err := detector(ctx, projectPath); err == nil && strategy != nil {
+		strategy, err := detector(ctx, projectPath)
+		if err == nil && strategy != nil {
 			return strategy, nil
 		}
+		if err != nil {
+			detectionErrors = append(detectionErrors, err.Error())
+		}
 	}
-	return nil, fmt.Errorf("could not detect framework for project at %s", projectPath)
+	return nil, fmt.Errorf("could not detect framework for project at %s (errors: %s)", projectPath, strings.Join(detectionErrors, "; "))
 }
 
 // GetStrategyByName returns a framework strategy by its name.

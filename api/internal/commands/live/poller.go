@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/httpclient"
 	"github.com/raghavyuva/nixopus-api/internal/mover"
 )
 
@@ -46,6 +47,7 @@ type DeploymentPoller struct {
 	client        *http.Client
 	logFetcher    *LogFetcher
 	applicationID string
+	accessToken   string
 	stop          chan struct{}
 }
 
@@ -58,6 +60,7 @@ func NewDeploymentPoller(cfg *config.Config, tracker *mover.Tracker, application
 		config:        cfg,
 		tracker:       tracker,
 		applicationID: applicationID,
+		accessToken:   accessToken,
 		client: &http.Client{
 			Timeout: apiTimeout,
 		},
@@ -106,6 +109,7 @@ func (p *DeploymentPoller) poll() {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	httpclient.SetAuthHeaders(req, p.accessToken)
 
 	resp, err := p.client.Do(req)
 	if err != nil {
