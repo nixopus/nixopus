@@ -277,16 +277,7 @@ func (c *AuthenticatedHTTPClient) Delete(url string) (*http.Response, error) {
 	return c.Do(req)
 }
 
-// GetAccessTokenFromConfig loads access token from config file
+// GetAccessTokenFromConfig loads access token from global auth storage
 func GetAccessTokenFromConfig() (string, error) {
-	cfg, err := config.Load()
-	if err != nil {
-		return "", fmt.Errorf("failed to load config: %w", err)
-	}
-
-	if cfg.AccessToken == "" {
-		return "", fmt.Errorf("not authenticated. Please run 'nixopus login' first")
-	}
-
-	return cfg.AccessToken, nil
+	return config.GetAccessToken()
 }

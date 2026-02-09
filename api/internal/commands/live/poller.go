@@ -50,17 +50,20 @@ type DeploymentPoller struct {
 }
 
 // NewDeploymentPoller creates a new deployment poller
-func NewDeploymentPoller(config *config.Config, tracker *mover.Tracker, applicationID string) *DeploymentPoller {
+func NewDeploymentPoller(cfg *config.Config, tracker *mover.Tracker, applicationID string) *DeploymentPoller {
+	// Get access token from global auth storage
+	accessToken, _ := config.GetAccessToken()
+
 	return &DeploymentPoller{
-		config:        config,
+		config:        cfg,
 		tracker:       tracker,
 		applicationID: applicationID,
 		client: &http.Client{
 			Timeout: apiTimeout,
 		},
 		logFetcher: NewLogFetcher(&Config{
-			Server:      config.Server,
-			AccessToken: config.AccessToken,
+			Server:      cfg.Server,
+			AccessToken: accessToken,
 			Timeout:     apiTimeout,
 		}),
 		stop: make(chan struct{}),
