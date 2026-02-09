@@ -496,7 +496,7 @@ export function SettingsModal() {
     <Dialog open={open} onOpenChange={closeSettings}>
       <DialogContent className="w-screen h-screen max-w-none sm:max-w-[1200px] sm:w-[90vw] sm:h-[90vh] p-0 flex flex-col sm:flex-row overflow-hidden">
         <DialogTitle className="sr-only">Settings</DialogTitle>
-        <div className="flex flex-col sm:w-[220px] sm:border-r bg-muted/50">
+        <div className="flex flex-col sm:w-[220px] bg-muted/50">
           <SettingsSidebar
             categories={categories}
             activeCategory={activeCategory}
