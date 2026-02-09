@@ -1,9 +1,6 @@
 package commands
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/raghavyuva/nixopus-api/internal/commands/addcmd"
 	"github.com/raghavyuva/nixopus-api/internal/commands/listcmd"
 	"github.com/raghavyuva/nixopus-api/internal/commands/live"
@@ -23,8 +20,6 @@ var rootCmd = &cobra.Command{
 // Execute runs the root command
 func Execute() error {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n\n", err)
-		fmt.Fprintf(os.Stderr, "%s\n", rootCmd.UsageString())
 		return err
 	}
 	return nil
