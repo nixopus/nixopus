@@ -24,6 +24,13 @@ type ServiceManager struct {
 	logger               logger.Logger
 	startingMu           sync.Mutex
 	startingApplications map[uuid.UUID]bool // Track applications that are starting
+	// serviceReady tracks applications that already have a healthy service running,
+	// preventing repeated Docker API calls on every file write.
+	serviceReadyMu sync.RWMutex
+	serviceReady   map[uuid.UUID]bool
+	// ensureDebounceMu protects the debounce timers
+	ensureDebounceMu sync.Mutex
+	ensureTimers     map[uuid.UUID]*time.Timer
 }
 
 func NewServiceManager(stagingManager *StagingManager, taskService *tasks.TaskService, logger logger.Logger) *ServiceManager {
@@ -32,11 +39,45 @@ func NewServiceManager(stagingManager *StagingManager, taskService *tasks.TaskSe
 		taskService:          taskService,
 		logger:               logger,
 		startingApplications: make(map[uuid.UUID]bool),
+		serviceReady:         make(map[uuid.UUID]bool),
+		ensureTimers:         make(map[uuid.UUID]*time.Timer),
 	}
 }
 
-// EnsureDevServiceStarted ensures the dev service is running for the application
+// EnsureDevServiceStarted ensures the dev service is running for the application.
+// This method is debounced: rapid calls (e.g. during initial file sync) are coalesced
+// into a single check after a short delay, preventing a flood of SSH tunnel creations.
 func (sm *ServiceManager) EnsureDevServiceStarted(ctx context.Context, appCtx *ApplicationContext) {
+	// Fast path: if we already know the service is healthy, skip entirely.
+	// The bind mount picks up file changes automatically once the service is running.
+	sm.serviceReadyMu.RLock()
+	ready := sm.serviceReady[appCtx.ApplicationID]
+	sm.serviceReadyMu.RUnlock()
+	if ready {
+		return
+	}
+
+	// Debounce: coalesce rapid calls into a single check after 2 seconds.
+	// During initial sync, dozens of files arrive per second — we only need one check.
+	sm.ensureDebounceMu.Lock()
+	if existing, ok := sm.ensureTimers[appCtx.ApplicationID]; ok {
+		existing.Stop()
+	}
+	// Capture context values we need (context itself may be cancelled by the time timer fires)
+	ctxCopy := context.WithoutCancel(ctx)
+	sm.ensureTimers[appCtx.ApplicationID] = time.AfterFunc(2*time.Second, func() {
+		sm.doEnsureDevServiceStarted(ctxCopy, appCtx)
+	})
+	sm.ensureDebounceMu.Unlock()
+}
+
+// doEnsureDevServiceStarted is the actual implementation that checks and starts the dev service.
+func (sm *ServiceManager) doEnsureDevServiceStarted(ctx context.Context, appCtx *ApplicationContext) {
+	// Clean up the timer reference
+	sm.ensureDebounceMu.Lock()
+	delete(sm.ensureTimers, appCtx.ApplicationID)
+	sm.ensureDebounceMu.Unlock()
+
 	// Find existing service by application ID
 	existingService, err := tasks.FindServiceByLabel(ctx, "com.application.id", appCtx.ApplicationID.String())
 	if err != nil {
@@ -47,6 +88,10 @@ func (sm *ServiceManager) EnsureDevServiceStarted(ctx context.Context, appCtx *A
 	// If service exists and is healthy, bind mount will automatically pick up changes
 	if existingService != nil {
 		if sm.isServiceHealthy(ctx, existingService) {
+			// Mark as ready so future file writes skip the check entirely
+			sm.serviceReadyMu.Lock()
+			sm.serviceReady[appCtx.ApplicationID] = true
+			sm.serviceReadyMu.Unlock()
 			// Add domain with TLS if configured
 			sm.addDomainWithTLSIfConfigured(ctx, existingService, appCtx)
 			return
@@ -87,7 +132,10 @@ func (sm *ServiceManager) markApplicationStarting(applicationID uuid.UUID) bool 
 
 func (sm *ServiceManager) scheduleApplicationStartingClear(applicationID uuid.UUID) {
 	go func() {
-		time.Sleep(5 * time.Second)
+		// Use a longer cooldown to prevent rapid retry loops when service creation
+		// fails (e.g. framework detection failure). The debounced EnsureDevServiceStarted
+		// will queue another attempt after this cooldown expires.
+		time.Sleep(30 * time.Second)
 		sm.startingMu.Lock()
 		delete(sm.startingApplications, applicationID)
 		sm.startingMu.Unlock()

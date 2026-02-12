@@ -213,20 +213,25 @@ func sanitizeHTTPError(err error) error {
 }
 
 // AuthenticatedHTTPClient provides an HTTP client with Bearer token authentication
+// and automatic X-Organization-Id header from global auth storage
 type AuthenticatedHTTPClient struct {
 	*BaseHTTPClient
-	accessToken string
+	accessToken    string
+	organizationID string
 }
 
-// NewAuthenticatedHTTPClient creates a new authenticated HTTP client
+// NewAuthenticatedHTTPClient creates a new authenticated HTTP client.
+// It automatically loads the organization ID from global auth storage.
 func NewAuthenticatedHTTPClient(accessToken string) *AuthenticatedHTTPClient {
+	orgID, _ := config.GetOrganizationID()
 	return &AuthenticatedHTTPClient{
 		BaseHTTPClient: NewBaseHTTPClient(),
 		accessToken:    accessToken,
+		organizationID: orgID,
 	}
 }
 
-// CreateRequest creates a new HTTP request with Bearer token authentication
+// CreateRequest creates a new HTTP request with Bearer token and X-Organization-Id headers
 func (c *AuthenticatedHTTPClient) CreateRequest(method, url string, body interface{}) (*http.Request, error) {
 	req, err := c.BaseHTTPClient.CreateRequest(method, url, body)
 	if err != nil {
@@ -236,6 +241,11 @@ func (c *AuthenticatedHTTPClient) CreateRequest(method, url string, body interfa
 	// Add Bearer token to Authorization header
 	if c.accessToken != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.accessToken))
+	}
+
+	// Add Organization ID header (required by server middleware)
+	if c.organizationID != "" {
+		req.Header.Set("X-Organization-Id", c.organizationID)
 	}
 
 	return req, nil
@@ -277,16 +287,24 @@ func (c *AuthenticatedHTTPClient) Delete(url string) (*http.Response, error) {
 	return c.Do(req)
 }
 
-// GetAccessTokenFromConfig loads access token from config file
+// GetAccessTokenFromConfig loads access token from global auth storage
 func GetAccessTokenFromConfig() (string, error) {
-	cfg, err := config.Load()
-	if err != nil {
-		return "", fmt.Errorf("failed to load config: %w", err)
-	}
+	return config.GetAccessToken()
+}
 
-	if cfg.AccessToken == "" {
-		return "", fmt.Errorf("not authenticated. Please run 'nixopus login' first")
-	}
+// GetOrganizationIDFromConfig loads organization ID from global auth storage
+func GetOrganizationIDFromConfig() string {
+	orgID, _ := config.GetOrganizationID()
+	return orgID
+}
 
-	return cfg.AccessToken, nil
+// SetAuthHeaders sets Authorization and X-Organization-Id headers on an HTTP request.
+// Use this for any raw http.Request that needs CLI authentication.
+func SetAuthHeaders(req *http.Request, accessToken string) {
+	if accessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+	}
+	if orgID, err := config.GetOrganizationID(); err == nil && orgID != "" {
+		req.Header.Set("X-Organization-Id", orgID)
+	}
 }

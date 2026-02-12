@@ -213,6 +213,12 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 
 // registerProtectedRoutes registers routes that require authentication
 func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Version, notificationManager *notification.NotificationManager) {
+	// Authenticated auth routes (CLI init requires authentication)
+	authController := router.createAuthController(notificationManager)
+	authProtectedGroup := fuego.Group(server, apiV1.Path+"/auth")
+	router.applyMiddleware(authProtectedGroup, MiddlewareConfig{RBAC: false, Audit: false, ResourceName: "auth"})
+	router.RegisterAuthProtectedRoutes(authProtectedGroup, authController)
+
 	// User routes
 	userController := user.NewUserController(router.app.Store, router.app.Ctx, router.logger, router.cache)
 	userGroup := fuego.Group(server, apiV1.Path+"/user")

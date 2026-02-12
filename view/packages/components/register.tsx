@@ -257,7 +257,7 @@ export const AdminRegistrationSuccess = () => {
             setCountdown((prev) => {
               if (prev <= 1) {
                 clearInterval(timer);
-                router.push('/dashboard');
+                router.push('/charts');
                 return 0;
               }
               return prev - 1;
@@ -268,14 +268,14 @@ export const AdminRegistrationSuccess = () => {
         }
       } catch (error) {
         // Session check failed, redirect anyway
-        router.push('/dashboard');
+        router.push('/charts');
       }
     };
     checkSession();
   }, [router]);
 
   const handleGoToDashboard = () => {
-    router.push('/dashboard');
+    router.push('/charts');
   };
 
   return (

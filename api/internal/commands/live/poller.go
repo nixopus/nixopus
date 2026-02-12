@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/httpclient"
 	"github.com/raghavyuva/nixopus-api/internal/mover"
 )
 
@@ -46,21 +47,26 @@ type DeploymentPoller struct {
 	client        *http.Client
 	logFetcher    *LogFetcher
 	applicationID string
+	accessToken   string
 	stop          chan struct{}
 }
 
 // NewDeploymentPoller creates a new deployment poller
-func NewDeploymentPoller(config *config.Config, tracker *mover.Tracker, applicationID string) *DeploymentPoller {
+func NewDeploymentPoller(cfg *config.Config, tracker *mover.Tracker, applicationID string) *DeploymentPoller {
+	// Get access token from global auth storage
+	accessToken, _ := config.GetAccessToken()
+
 	return &DeploymentPoller{
-		config:        config,
+		config:        cfg,
 		tracker:       tracker,
 		applicationID: applicationID,
+		accessToken:   accessToken,
 		client: &http.Client{
 			Timeout: apiTimeout,
 		},
 		logFetcher: NewLogFetcher(&Config{
-			Server:      config.Server,
-			AccessToken: config.AccessToken,
+			Server:      cfg.Server,
+			AccessToken: accessToken,
 			Timeout:     apiTimeout,
 		}),
 		stop: make(chan struct{}),
@@ -103,6 +109,7 @@ func (p *DeploymentPoller) poll() {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	httpclient.SetAuthHeaders(req, p.accessToken)
 
 	resp, err := p.client.Do(req)
 	if err != nil {

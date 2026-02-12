@@ -7,17 +7,18 @@ import { toast } from 'sonner';
 import { useAppDispatch } from '@/redux/hooks';
 import { initializeAuth } from '@/redux/features/users/authSlice';
 
-function useAuth() {
+function useOtpAuth() {
   const router = useRouter();
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const [loaded, setLoaded] = useState(false);
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
 
   useEffect(() => {
-    // Just mark as loaded - layout.tsx handles redirects for authenticated users
     setLoaded(true);
   }, []);
 
@@ -25,25 +26,53 @@ function useAuth() {
     setEmail(event.target.value);
   };
 
-  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(event.target.value);
+  const handleOtpChange = (value: string) => {
+    // Only allow numeric input
+    const numericValue = value.replace(/\D/g, '');
+    setOtp(numericValue);
   };
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      toast.error(t('auth.login.errors.requiredFields'));
+  const handleSendOtp = async () => {
+    if (!email) {
+      toast.error(t('auth.otpLogin.errors.emailRequired'));
       return;
     }
 
-    setIsLoading(true);
+    setIsSendingOtp(true);
     try {
-      const result = await authClient.signIn.email({
+      const result = await authClient.emailOtp.sendVerificationOtp({
         email,
-        password
+        type: 'sign-in'
       });
 
       if (result.error) {
-        toast.error(result.error.message || t('auth.login.errors.loginFailed'));
+        toast.error(result.error.message || t('auth.otpLogin.errors.sendFailed'));
+      } else {
+        setOtpSent(true);
+        toast.success(t('auth.otpLogin.otpSentSuccess'));
+      }
+    } catch (error: any) {
+      toast.error(error?.message || t('auth.otpLogin.errors.sendFailed'));
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!email || !otp) {
+      toast.error(t('auth.otpLogin.errors.otpRequired'));
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    try {
+      const result = await authClient.signIn.emailOtp({
+        email,
+        otp
+      });
+
+      if (result.error) {
+        toast.error(result.error.message || t('auth.otpLogin.errors.verifyFailed'));
       } else {
         await dispatch(initializeAuth() as any);
 
@@ -53,7 +82,6 @@ function useAuth() {
           try {
             const inviteData = JSON.parse(pendingInvite);
             sessionStorage.removeItem('pendingInvite');
-            // Redirect to organization invite page to complete the process
             router.push(
               `/auth/organization-invite?token=${inviteData.token}&org_id=${inviteData.orgId}&email=${inviteData.email || ''}&role=${inviteData.role || 'viewer'}`
             );
@@ -63,28 +91,29 @@ function useAuth() {
           }
         }
 
-        // Wait a moment for Redux state to update after initializeAuth
-        // The layout.tsx will handle redirect automatically, but we can also redirect here
-        // as a fallback after ensuring state is updated
         setTimeout(() => {
           router.push('/charts');
         }, 200);
       }
     } catch (error: any) {
-      toast.error(error?.message || t('auth.login.errors.loginFailed'));
+      toast.error(error?.message || t('auth.otpLogin.errors.verifyFailed'));
     } finally {
-      setIsLoading(false);
+      setIsVerifyingOtp(false);
     }
   };
+
   return {
-    handleLogin,
+    handleSendOtp,
+    handleVerifyOtp,
     handleEmailChange,
-    handlePasswordChange,
-    isLoading,
+    handleOtpChange,
+    isSendingOtp,
+    isVerifyingOtp,
     loaded,
     email,
-    password
+    otp,
+    otpSent
   };
 }
 
-export default useAuth;
+export default useOtpAuth;
