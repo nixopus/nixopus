@@ -1,3 +1,17 @@
+# [0.1.0-alpha.127](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.126...v0.1.0-alpha.127) (2026-02-12)
+
+
+### Bug Fixes
+
+* authentication in nixopus cli ([#1031](https://github.com/raghavyuva/nixopus/issues/1031)) ([6ac9d67](https://github.com/raghavyuva/nixopus/commit/6ac9d6729bb5c32f6ca7d639af6d17382ecae8a3))
+
+
+### Features
+
+* add OTP login support and fix auth issues ([ac44728](https://github.com/raghavyuva/nixopus/commit/ac447284bfeddf399833d29dd350f94aa83b0755))
+
+
+
 # [0.1.0-alpha.126](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.125...v0.1.0-alpha.126) (2026-02-12)
 
 
