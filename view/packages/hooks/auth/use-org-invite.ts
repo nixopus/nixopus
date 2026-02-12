@@ -70,12 +70,14 @@ function useOrganizationInvite() {
 
       // Redirect to dashboard after a short delay
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push('/charts');
       }, 2000);
     } catch (error: any) {
       console.error('Error accepting invitation:', error);
       setStatus('error');
-      setMessage(error?.data?.message || error?.message || 'Failed to accept invitation. Please try again.');
+      setMessage(
+        error?.data?.message || error?.message || 'Failed to accept invitation. Please try again.'
+      );
       throw error;
     }
   };

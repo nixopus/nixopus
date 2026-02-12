@@ -1,3 +1,12 @@
+# [0.1.0-alpha.126](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.125...v0.1.0-alpha.126) (2026-02-12)
+
+
+### Bug Fixes
+
+* display 4 apps in apps page ([#1030](https://github.com/raghavyuva/nixopus/issues/1030)) ([8ef53c0](https://github.com/raghavyuva/nixopus/commit/8ef53c0f4dc2a4a3b6ab932670c27159520d6047))
+
+
+
 # [0.1.0-alpha.125](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.124...v0.1.0-alpha.125) (2026-02-08)
 
 

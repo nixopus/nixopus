@@ -15,9 +15,12 @@ function use_monitor() {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const isInitializedRef = useRef(false);
 
-  const organizationId =
-    useAppSelector((state) => state.user.activeOrganization?.id) ||
-    useAppSelector((state) => state.orgs.organizations[0]?.organization.id);
+  const organizationId = useAppSelector((state) => {
+    const activeId = state.user.activeOrganization?.id;
+    const fallbackId = state.orgs.organizations[0]?.organization.id;
+
+    return activeId || fallbackId;
+  });
 
   const startMonitoring = useCallback(() => {
     if (!isReady || !organizationId) return;
