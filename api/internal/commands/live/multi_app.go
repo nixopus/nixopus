@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/raghavyuva/nixopus-api/internal/commands/logincmd"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/mover"
 )
@@ -85,6 +86,11 @@ func (s *AppSession) Stop() error {
 
 // runAllApps runs all apps in the family simultaneously
 func runAllApps(args []string) error {
+	// Check authentication first - prompt for login if not authenticated
+	if err := logincmd.EnsureAuthenticated(); err != nil {
+		return fmt.Errorf("authentication required: %w", err)
+	}
+
 	// Load configuration
 	// Ensure initialization before loading config
 	cfg, err := ensureInitialized("")
@@ -252,12 +258,14 @@ func runAllApps(args []string) error {
 
 // initializeAppSession initializes a single app session
 func initializeAppSession(session *AppSession, cfg *config.Config, tracker *mover.MultiAppTracker) error {
-	// Fetch application details
-	// Check for access token
-	if cfg.AccessToken == "" {
-		return fmt.Errorf("not authenticated. Please run 'nixopus login' first")
+	// Get access token from global auth storage
+	accessToken, err := config.GetAccessToken()
+	if err != nil {
+		return fmt.Errorf("not authenticated: %w", err)
 	}
-	basePath, domainURL, err := getApplicationDetailsWithURL(cfg.Server, session.applicationID, cfg.AccessToken)
+
+	// Fetch application details
+	basePath, domainURL, err := getApplicationDetailsWithURL(cfg.Server, session.applicationID, accessToken)
 	if err != nil {
 		return fmt.Errorf("failed to fetch application details: %w", err)
 	}
@@ -274,11 +282,7 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 	}
 
 	// Create WebSocket client
-	// Check for access token
-	if cfg.AccessToken == "" {
-		return fmt.Errorf("not authenticated. Please run 'nixopus login' first")
-	}
-	wsURL := buildWebSocketURL(cfg.Server, session.applicationID, cfg.AccessToken)
+	wsURL := buildWebSocketURL(cfg.Server, session.applicationID, accessToken)
 	onStateChange := func(event mover.ConnectionEvent) {
 		var statusState mover.ConnectionStatus
 		switch event.State {

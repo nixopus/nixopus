@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/raghavyuva/nixopus-api/internal/commands/logincmd"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/httpclient"
 	"github.com/raghavyuva/nixopus-api/internal/mover"
@@ -43,6 +44,11 @@ func init() {
 }
 
 func runSingleApp(args []string) error {
+	// Check authentication first - prompt for login if not authenticated
+	if err := logincmd.EnsureAuthenticated(); err != nil {
+		return fmt.Errorf("authentication required: %w", err)
+	}
+
 	// Initialize status tracker
 	tracker := mover.NewTracker()
 
@@ -82,21 +88,17 @@ func runSingleApp(args []string) error {
 		return fmt.Errorf("failed to get application ID: %w", err)
 	}
 
-	// Fetch application details to get base_path
-	basePath, err := getApplicationDetails(cfg.Server, applicationID, cfg.AccessToken)
+	accessToken, err := config.GetAccessToken()
 	if err != nil {
 		program.Quit()
-		return fmt.Errorf("failed to fetch application details: %w", err)
+		return fmt.Errorf("not authenticated. Please run 'nixopus login' first: %w", err)
 	}
+
+	basePath := "/"
 
 	// OPTIMIZATION: Start WebSocket connection IMMEDIATELY after config load
 	// Do other validations in parallel while connection is establishing
-	// Check for access token
-	if cfg.AccessToken == "" {
-		program.Quit()
-		return fmt.Errorf("not authenticated. Please run 'nixopus login' first")
-	}
-	wsURL := buildWebSocketURL(cfg.Server, applicationID, cfg.AccessToken)
+	wsURL := buildWebSocketURL(cfg.Server, applicationID, accessToken)
 	if wsURL == "" {
 		program.Quit()
 		return fmt.Errorf("failed to connect")
@@ -349,24 +351,20 @@ func isGitRepo(path string) bool {
 func ensureInitialized(envPathFlag string) (*config.Config, error) {
 	// Try to load config
 	cfg, err := config.Load()
-	var existingCfg *config.Config
 	if err == nil {
-		existingCfg = cfg
 		// Config exists, check if it's complete
 		if cfg.FamilyID != "" && len(cfg.Applications) > 0 {
 			// Already initialized, return config
 			return cfg, nil
 		}
 		// Config exists but incomplete, need to initialize
-	} else {
-		// Config doesn't exist, try to load it anyway to get access token
-		// (might fail, but we'll handle that in createProject)
-		existingCfg, _ = config.Load()
 	}
 
 	// Check if user is authenticated before attempting initialization
-	if existingCfg == nil || existingCfg.AccessToken == "" {
-		return nil, fmt.Errorf("not authenticated. Please run 'nixopus login' first")
+	// This should not happen if EnsureAuthenticated was called, but double-check
+	accessToken, err := config.GetAccessToken()
+	if err != nil {
+		return nil, fmt.Errorf("not authenticated: %w", err)
 	}
 
 	// Need to initialize - run init steps
@@ -393,8 +391,8 @@ func ensureInitialized(envPathFlag string) (*config.Config, error) {
 		}
 	}
 
-	// Step 2: Create project (use access token from existingCfg)
-	projectID, familyID, err := createProject(server, envVars, existingCfg.AccessToken)
+	// Step 2: Create project (use access token from global auth)
+	projectID, familyID, err := createProject(server, envVars, accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create project: %w", err)
 	}
@@ -424,12 +422,7 @@ func ensureInitialized(envPathFlag string) (*config.Config, error) {
 			Exclude:    exclude,
 		},
 		EnvPath: envPathFlag,
-	}
-
-	// Preserve access token from existing config
-	if existingCfg != nil && existingCfg.AccessToken != "" {
-		newCfg.AccessToken = existingCfg.AccessToken
-		newCfg.RefreshToken = existingCfg.RefreshToken
+		// Auth tokens are stored globally, not in project config
 	}
 
 	cfg = newCfg
@@ -519,12 +512,12 @@ func createProject(serverURL string, envVars map[string]string, accessToken stri
 	branch := getGitBranch()
 
 	if accessToken == "" {
-		return "", "", fmt.Errorf("not authenticated. Please run 'nixopus login' first")
+		return "", "", fmt.Errorf("not authenticated")
 	}
 
 	// Use authenticated HTTP client
 	client := httpclient.NewAuthenticatedHTTPClient(accessToken)
-	url := httpclient.BuildURL(serverURL, "/api/v1/auth/cli-init")
+	url := httpclient.BuildURL(serverURL, "/api/v1/auth/cli/init")
 
 	reqBody := CreateProjectRequest{
 		Name:                 repoName,

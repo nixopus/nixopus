@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/raghavyuva/nixopus-api/internal/httpclient"
 )
 
 // getApplicationDetails fetches application details from the server to get base_path
@@ -17,10 +19,8 @@ func getApplicationDetails(server, applicationID, accessToken string) (string, e
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Add Bearer token to Authorization header
-	if accessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+accessToken)
-	}
+	// Add auth headers (Bearer token + X-Organization-Id)
+	httpclient.SetAuthHeaders(req, accessToken)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

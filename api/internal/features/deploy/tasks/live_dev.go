@@ -41,6 +41,13 @@ func (s *TaskService) StartLiveDevTask(ctx context.Context, config LiveDevConfig
 
 // HandleLiveDevDeployment handles the live dev deployment task
 func (s *TaskService) HandleLiveDevDeployment(ctx context.Context, config LiveDevConfig) error {
+	// CRITICAL: The task queue worker provides a bare context without organization ID.
+	// Inject the organization ID from config so downstream SFTP and Docker operations
+	// (which use GetSSHManagerFromContext / GetDockerServiceFromContext) can find it.
+	if config.OrganizationID != uuid.Nil {
+		ctx = context.WithValue(ctx, shared_types.OrganizationIDKey, config.OrganizationID.String())
+	}
+
 	// Create task context for logging (only if ApplicationID is provided)
 	var taskCtx *LiveDevTaskContext
 	if config.ApplicationID != uuid.Nil {
@@ -130,7 +137,9 @@ func (s *TaskService) HandleLiveDevDeployment(ctx context.Context, config LiveDe
 	return nil
 }
 
-// getFrameworkStrategy retrieves or detects the framework strategy
+// getFrameworkStrategy retrieves or detects the framework strategy.
+// During initial file sync, project files (e.g. package.json) may not have arrived yet,
+// so this retries detection a few times with a delay to allow the sync to complete.
 func (s *TaskService) getFrameworkStrategy(ctx context.Context, config LiveDevConfig, taskCtx *LiveDevTaskContext) (devrunner.FrameworkStrategy, error) {
 	if config.Framework != "" {
 		if taskCtx != nil {
@@ -148,13 +157,38 @@ func (s *TaskService) getFrameworkStrategy(ctx context.Context, config LiveDevCo
 		taskCtx.AddLog("Auto-detecting framework from project files...")
 	}
 
-	strategy, err := devrunner.DetectFramework(ctx, config.StagingPath)
-	if err != nil {
-		s.Logger.Log(logger.Error, fmt.Sprintf("[LiveDev] [%s] Framework detection failed: %v", config.ApplicationID, err), "")
-		return nil, fmt.Errorf("failed to detect framework at %s: %w", config.StagingPath, err)
+	// Retry detection to handle the case where files are still being synced.
+	// During initial sync, package.json / requirements.txt may not have arrived yet.
+	const maxDetectionRetries = 3
+	const detectionRetryDelay = 5 * time.Second
+
+	var lastErr error
+	for attempt := 1; attempt <= maxDetectionRetries; attempt++ {
+		strategy, err := devrunner.DetectFramework(ctx, config.StagingPath)
+		if err == nil {
+			if taskCtx != nil && attempt > 1 {
+				taskCtx.AddLog(fmt.Sprintf("Framework detected on attempt %d", attempt))
+			}
+			return strategy, nil
+		}
+		lastErr = err
+
+		if attempt < maxDetectionRetries {
+			if taskCtx != nil {
+				taskCtx.AddLog(fmt.Sprintf("Framework not detected yet (attempt %d/%d), waiting for files to sync...", attempt, maxDetectionRetries))
+			}
+			s.Logger.Log(logger.Info, fmt.Sprintf("[LiveDev] [%s] Framework detection attempt %d/%d failed: %v, retrying in %v", config.ApplicationID, attempt, maxDetectionRetries, err, detectionRetryDelay), "")
+
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(detectionRetryDelay):
+			}
+		}
 	}
 
-	return strategy, nil
+	s.Logger.Log(logger.Error, fmt.Sprintf("[LiveDev] [%s] Framework detection failed after %d attempts: %v", config.ApplicationID, maxDetectionRetries, lastErr), "")
+	return nil, fmt.Errorf("failed to detect framework at %s: %w", config.StagingPath, lastErr)
 }
 
 // determinePort determines the port to use for the service

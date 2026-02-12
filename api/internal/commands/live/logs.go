@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/raghavyuva/nixopus-api/internal/httpclient"
 )
 
 // LogEntry represents a single log entry with timestamp and source
@@ -65,10 +67,8 @@ func (lf *LogFetcher) FetchContainerLogs(containerID string, tail int) ([]LogEnt
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// TODO: Add session token to Authorization header
-	if lf.config.AccessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+lf.config.AccessToken)
-	}
+	// Add auth headers (Bearer token + X-Organization-Id)
+	httpclient.SetAuthHeaders(req, lf.config.AccessToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := lf.client.Do(req)
@@ -219,10 +219,8 @@ func (lf *LogFetcher) FetchApplicationLogs(applicationID string, maxLogs int) ([
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// TODO: Add session token to Authorization header
-	if lf.config.AccessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+lf.config.AccessToken)
-	}
+	// Add auth headers (Bearer token + X-Organization-Id)
+	httpclient.SetAuthHeaders(req, lf.config.AccessToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := lf.client.Do(req)

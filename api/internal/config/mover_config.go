@@ -9,9 +9,17 @@ import (
 )
 
 const (
-	productionServerURL = "https://api.nixopus.com"
+	productionServerURL = "http://localhost:8080"
 	configFileName      = ".nixopus"
+	authFileName        = "auth.json"
 )
+
+// AuthConfig represents global authentication configuration stored in user's home directory
+type AuthConfig struct {
+	AccessToken    string `json:"access_token,omitempty"`    // Bearer token for API authentication
+	RefreshToken   string `json:"refresh_token,omitempty"`   // Optional refresh token
+	OrganizationID string `json:"organization_id,omitempty"` // Active organization ID from Better Auth
+}
 
 // GetServerURL returns the server URL from environment variable or default
 func GetServerURL() string {
@@ -26,9 +34,6 @@ type Config struct {
 	Applications map[string]string `json:"applications,omitempty"` // Map of app name -> application_id
 	Sync         SyncConfig        `json:"sync"`
 	EnvPath      string            `json:"env_path,omitempty"`
-	// Authentication tokens (Better Auth Device Authorization Grant)
-	AccessToken  string `json:"access_token,omitempty"`  // Bearer token for API authentication
-	RefreshToken string `json:"refresh_token,omitempty"` // Optional refresh token
 }
 
 // SyncConfig represents sync-related configuration
@@ -160,16 +165,15 @@ func (c *Config) Save() error {
 		return fmt.Errorf("failed to get config path: %w", err)
 	}
 
-	// Create a copy of config for saving (without Server)
-	// Save access_token and refresh_token, but not deprecated APIKey
+	// Create a copy of config for saving (without Server and auth tokens)
+	// Auth tokens are stored globally, not in project config
 	saveConfig := &Config{
 		FamilyID:     c.FamilyID,
 		Applications: c.Applications,
 		Sync:         c.Sync,
 		EnvPath:      c.EnvPath,
 		ProjectID:    c.ProjectID,
-		AccessToken:  c.AccessToken,
-		RefreshToken: c.RefreshToken,
+		// Auth tokens are stored globally, not in project config
 	}
 
 	// Marshal to JSON with indentation
@@ -232,6 +236,171 @@ func ValidateEnvPath(envPath string) error {
 	fullPath := filepath.Join(cwd, cleanPath)
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		return fmt.Errorf("env file not found: %s", envPath)
+	}
+
+	return nil
+}
+
+// getAuthPath returns the path to the global auth file in ~/.config/nixopus/auth.json
+func getAuthPath() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get home directory: %w", err)
+	}
+
+	configDir := filepath.Join(homeDir, ".config", "nixopus")
+	authPath := filepath.Join(configDir, authFileName)
+
+	return authPath, nil
+}
+
+// ensureAuthDir ensures the auth directory exists
+func ensureAuthDir() error {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %w", err)
+	}
+
+	configDir := filepath.Join(homeDir, ".config", "nixopus")
+	if err := os.MkdirAll(configDir, 0700); err != nil {
+		return fmt.Errorf("failed to create auth directory: %w", err)
+	}
+
+	return nil
+}
+
+// LoadAuth loads authentication tokens from global storage
+func LoadAuth() (*AuthConfig, error) {
+	authPath, err := getAuthPath()
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if auth file exists
+	if _, err := os.Stat(authPath); os.IsNotExist(err) {
+		// Return empty auth config if file doesn't exist
+		return &AuthConfig{}, nil
+	}
+
+	// Read auth file
+	data, err := os.ReadFile(authPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read auth file: %w", err)
+	}
+
+	auth := &AuthConfig{}
+	if err := json.Unmarshal(data, auth); err != nil {
+		return nil, fmt.Errorf("failed to parse auth file: %w", err)
+	}
+
+	return auth, nil
+}
+
+// SaveAuth saves authentication tokens and organization ID to global storage
+func SaveAuth(accessToken, refreshToken string) error {
+	if err := ensureAuthDir(); err != nil {
+		return err
+	}
+
+	authPath, err := getAuthPath()
+	if err != nil {
+		return err
+	}
+
+	// Load existing auth to preserve organization_id if not being changed
+	existing, _ := LoadAuth()
+	auth := &AuthConfig{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+	if existing != nil && existing.OrganizationID != "" {
+		auth.OrganizationID = existing.OrganizationID
+	}
+
+	// Marshal to JSON with indentation
+	data, err := json.MarshalIndent(auth, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal auth: %w", err)
+	}
+
+	// Write to file with restricted permissions (0600 = rw-------)
+	if err := os.WriteFile(authPath, data, 0600); err != nil {
+		return fmt.Errorf("failed to write auth file: %w", err)
+	}
+
+	return nil
+}
+
+// SaveOrganizationID saves the organization ID to global auth storage
+func SaveOrganizationID(organizationID string) error {
+	auth, err := LoadAuth()
+	if err != nil {
+		auth = &AuthConfig{}
+	}
+
+	auth.OrganizationID = organizationID
+
+	if err := ensureAuthDir(); err != nil {
+		return err
+	}
+
+	authPath, err := getAuthPath()
+	if err != nil {
+		return err
+	}
+
+	data, err := json.MarshalIndent(auth, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal auth: %w", err)
+	}
+
+	if err := os.WriteFile(authPath, data, 0600); err != nil {
+		return fmt.Errorf("failed to write auth file: %w", err)
+	}
+
+	return nil
+}
+
+// GetAccessToken returns the access token from global storage
+func GetAccessToken() (string, error) {
+	auth, err := LoadAuth()
+	if err != nil {
+		return "", err
+	}
+
+	if auth.AccessToken == "" {
+		return "", fmt.Errorf("not authenticated. Please run 'nixopus login' first")
+	}
+
+	return auth.AccessToken, nil
+}
+
+// GetOrganizationID returns the organization ID from global storage
+func GetOrganizationID() (string, error) {
+	auth, err := LoadAuth()
+	if err != nil {
+		return "", err
+	}
+
+	if auth.OrganizationID == "" {
+		return "", fmt.Errorf("no organization ID found. Please run 'nixopus login' again")
+	}
+
+	return auth.OrganizationID, nil
+}
+
+// ClearAuth removes authentication tokens from global storage
+func ClearAuth() error {
+	authPath, err := getAuthPath()
+	if err != nil {
+		return err
+	}
+
+	// Remove auth file if it exists
+	if _, err := os.Stat(authPath); err == nil {
+		if err := os.Remove(authPath); err != nil {
+			return fmt.Errorf("failed to remove auth file: %w", err)
+		}
 	}
 
 	return nil

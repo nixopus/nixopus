@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 )
 
 const (
@@ -255,6 +256,9 @@ func (c *Client) dialWebSocket() (*websocket.Conn, error) {
 
 	header := http.Header{}
 	header.Set("Authorization", "Bearer "+c.token)
+	if orgID, err := config.GetOrganizationID(); err == nil && orgID != "" {
+		header.Set("X-Organization-Id", orgID)
+	}
 	conn, _, err := dialer.Dial(c.serverURL, header)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)

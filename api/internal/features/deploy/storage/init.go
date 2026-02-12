@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"sort"
 	"strings"
@@ -271,6 +272,9 @@ func (s *DeployStorage) GetApplicationById(id string, organizationID uuid.UUID) 
 		Scan(s.Ctx)
 
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return shared_types.Application{}, fmt.Errorf("application not found")
+		}
 		return shared_types.Application{}, err
 	}
 

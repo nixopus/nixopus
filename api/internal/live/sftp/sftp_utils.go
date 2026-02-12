@@ -11,17 +11,25 @@ import (
 )
 
 const (
-	maxRetries = 2
+	// maxRetries controls how many times SFTP client creation is retried on stale connections.
+	maxRetries = 3
 )
 
-// isClosedConnectionError checks if the error indicates a closed network connection.
+// isClosedConnectionError checks if the error indicates a closed or stale network connection.
+// This includes EOF errors which occur when the remote SSH connection has been dropped.
 func isClosedConnectionError(err error) bool {
 	if err == nil {
 		return false
 	}
+	if err == io.EOF {
+		return true
+	}
 	errMsg := err.Error()
 	return strings.Contains(errMsg, "use of closed network connection") ||
-		strings.Contains(errMsg, "connection closed")
+		strings.Contains(errMsg, "connection closed") ||
+		strings.Contains(errMsg, "EOF") ||
+		strings.Contains(errMsg, "broken pipe") ||
+		strings.Contains(errMsg, "connection reset by peer")
 }
 
 // CreateSFTPClientWithRetry creates an SFTP client with automatic retry logic.

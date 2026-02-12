@@ -172,8 +172,10 @@ func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Requ
 
 	req.Header.Set("Content-Type", "application/json")
 
-	// Forward cookies from original request if available (for Better Auth authentication)
 	if originalReq != nil {
+		if authHeader := originalReq.Header.Get("Authorization"); authHeader != "" {
+			req.Header.Set("Authorization", authHeader)
+		}
 		for _, cookie := range originalReq.Cookies() {
 			req.AddCookie(cookie)
 		}

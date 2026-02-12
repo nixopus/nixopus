@@ -162,7 +162,7 @@ func (m LoginModel) renderSuccess() string {
 		"",
 	}
 
-	initText := "Run 'nixopus live' to initialize and start deployment"
+	initText := "You can now run 'nixopus live' to start deployment"
 	initLine := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("240")).
 		Width(contentWidth).
