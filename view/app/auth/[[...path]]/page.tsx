@@ -4,7 +4,7 @@ import { OtpLoginForm } from '@/packages/components/otp-login-form';
 import useAuth from '@/packages/hooks/auth/use-auth';
 import useOtpAuth from '@/packages/hooks/auth/use-otp-auth';
 
-const isSelfHosted = process.env.NEXT_PUBLIC_IS_SELF_HOSTED === 'true';
+const isSelfHosted = process.env.NEXT_PUBLIC_IS_SELF_HOSTED !== 'false';
 
 export default function Auth() {
   const {
