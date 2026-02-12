@@ -177,6 +177,59 @@ func PollForToken(betterAuthURL, deviceCode, clientID string, interval, expiresI
 	return "", "", fmt.Errorf("polling timeout - device code expired")
 }
 
+// BetterAuthOrganization represents an organization from Better Auth
+type BetterAuthOrganization struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Slug      string `json:"slug,omitempty"`
+	CreatedAt string `json:"createdAt,omitempty"`
+}
+
+// FetchUserOrganizations fetches the user's organizations from Better Auth using the access token
+func FetchUserOrganizations(betterAuthURL, accessToken string) ([]BetterAuthOrganization, error) {
+	betterAuthURL = strings.TrimSuffix(betterAuthURL, "/")
+	requestURL := fmt.Sprintf("%s/api/auth/organization/list", betterAuthURL)
+
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	req, err := http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch organizations: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to fetch organizations (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var orgs []BetterAuthOrganization
+	if err := json.Unmarshal(body, &orgs); err != nil {
+		var wrapped struct {
+			Data []BetterAuthOrganization `json:"data"`
+		}
+		if err2 := json.Unmarshal(body, &wrapped); err2 != nil {
+			return nil, fmt.Errorf("failed to parse organizations response: %w", err)
+		}
+		orgs = wrapped.Data
+	}
+
+	return orgs, nil
+}
+
 // FormatUserCode formats user code with dash (e.g., ABCD-1234)
 func FormatUserCode(userCode string) string {
 	if len(userCode) >= 8 {

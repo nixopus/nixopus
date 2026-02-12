@@ -82,14 +82,15 @@ func runRemoveSteps(program *RemoveProgram, name string) error {
 	program.Send(RemoveStepMsg{Step: step, Message: "Deleting application from server..."})
 	server := config.GetServerURL()
 
-	// Check for access token
-	if cfg.AccessToken == "" {
+	// Get access token from global auth storage
+	accessToken, err := config.GetAccessToken()
+	if err != nil {
 		program.Send(RemoveErrorMsg{Error: "not authenticated. Please run 'nixopus login' first"})
 		program.Quit()
-		return fmt.Errorf("not authenticated. Please run 'nixopus login' first")
+		return fmt.Errorf("not authenticated. Please run 'nixopus login' first: %w", err)
 	}
 
-	if err := deleteApplication(server, cfg.AccessToken, applicationID); err != nil {
+	if err := deleteApplication(server, accessToken, applicationID); err != nil {
 		program.Send(RemoveErrorMsg{Error: fmt.Sprintf("failed to delete application: %v", err)})
 		program.Quit()
 		return err

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sync"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -29,6 +31,24 @@ type DockerService struct {
 	logger    logger.Logger
 	sshTunnel *SSHTunnel
 }
+
+// cachedDockerService holds a cached DockerService along with its creation time
+// so we can expire stale connections.
+type cachedDockerService struct {
+	service   *DockerService
+	createdAt time.Time
+}
+
+var (
+	// dockerServiceCache caches DockerService instances per organization UUID to avoid
+	// creating a new SSH tunnel + Docker client on every call. This prevents the DoS-like
+	// pattern of rapidly spawning tunnels during live dev sessions.
+	dockerServiceCache sync.Map // map[uuid.UUID]*cachedDockerService
+
+	// cacheMaxAge is how long a cached Docker service is considered valid before
+	// a new one is created. Tunnels can go stale, so we expire them periodically.
+	cacheMaxAge = 5 * time.Minute
+)
 
 type DockerRepository interface {
 	ListAllContainers() ([]container.Summary, error)
@@ -176,6 +196,7 @@ func NewDockerServiceWithClient(cli *client.Client, ctx context.Context, logger 
 
 // GetDockerServiceForOrganization returns a DockerService for a specific organization.
 // Uses SSH tunneling exclusively - returns error if SSH tunnel cannot be established.
+// Connections are cached per organization to avoid creating a new SSH tunnel on every call.
 func GetDockerServiceForOrganization(ctx context.Context, orgID uuid.UUID) (*DockerService, error) {
 	if config.GlobalStore == nil {
 		return nil, fmt.Errorf("global store not initialized, ensure config.Init() has been called")
@@ -185,12 +206,61 @@ func GetDockerServiceForOrganization(ctx context.Context, orgID uuid.UUID) (*Doc
 		return nil, fmt.Errorf("database not initialized")
 	}
 
+	// Check cache first
+	if cached, ok := dockerServiceCache.Load(orgID); ok {
+		entry := cached.(*cachedDockerService)
+		// Validate the cached connection is still usable and not too old
+		if time.Since(entry.createdAt) < cacheMaxAge && entry.service != nil && entry.service.Cli != nil {
+			// Quick health check: ping the Docker daemon
+			if _, err := entry.service.Cli.Ping(ctx); err == nil {
+				return entry.service, nil
+			}
+			// Ping failed — stale connection, clean up and create a new one
+			entry.service.Close()
+			dockerServiceCache.Delete(orgID)
+		} else if entry.service != nil {
+			// Expired, clean up
+			entry.service.Close()
+			dockerServiceCache.Delete(orgID)
+		}
+	}
+
 	svc := NewDockerServiceWithServer(config.GlobalStore.DB, ctx, orgID)
 	if svc == nil {
 		return nil, fmt.Errorf("failed to create Docker service via SSH tunnel for organization %s", orgID.String())
 	}
 
+	// Store in cache
+	dockerServiceCache.Store(orgID, &cachedDockerService{
+		service:   svc,
+		createdAt: time.Now(),
+	})
+
 	return svc, nil
+}
+
+// InvalidateDockerServiceCache removes a cached DockerService for the given organization,
+// closing the underlying SSH tunnel. Use this when the SSH connection is known to be broken.
+func InvalidateDockerServiceCache(orgID uuid.UUID) {
+	if cached, ok := dockerServiceCache.LoadAndDelete(orgID); ok {
+		entry := cached.(*cachedDockerService)
+		if entry.service != nil {
+			entry.service.Close()
+		}
+	}
+}
+
+// CloseAllDockerServiceCaches closes and removes all cached Docker services.
+// Should be called during graceful shutdown.
+func CloseAllDockerServiceCaches() {
+	dockerServiceCache.Range(func(key, value interface{}) bool {
+		entry := value.(*cachedDockerService)
+		if entry.service != nil {
+			entry.service.Close()
+		}
+		dockerServiceCache.Delete(key)
+		return true
+	})
 }
 
 // GetDockerServiceFromContext extracts organization ID from context and returns the appropriate DockerRepository.

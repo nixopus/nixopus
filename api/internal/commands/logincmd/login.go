@@ -30,14 +30,8 @@ var LoginCmd = &cobra.Command{
 			authURL = "https://auth.nixopus.com" // Default production URL
 		}
 
-		// Get Frontend URL from flag or environment
-		frontend := frontendURL
-		if frontend == "" {
-			frontend = os.Getenv("FRONTEND_URL")
-		}
-		if frontend == "" {
-			frontend = "http://localhost:3000" // Default frontend URL for development
-		}
+		// Always use dashboard.nixopus.com for login display
+		frontend := "https://dashboard.nixopus.com"
 
 		// Get client ID from flag or environment
 		cliClientID := clientID
@@ -77,6 +71,61 @@ var LoginCmd = &cobra.Command{
 	},
 }
 
+// EnsureAuthenticated checks if the user is authenticated and prompts for login if not.
+// Returns an error if authentication fails or is cancelled.
+func EnsureAuthenticated() error {
+	// Check global auth storage for existing token
+	accessToken, err := config.GetAccessToken()
+	if err == nil && accessToken != "" {
+		// Already authenticated
+		return nil
+	}
+
+	// Not authenticated, prompt for login
+	return performLogin()
+}
+
+// performLogin performs the login flow
+func performLogin() error {
+	// Get Better Auth URL from environment
+	authURL := os.Getenv("BETTER_AUTH_URL")
+	if authURL == "" {
+		authURL = "https://auth.nixopus.com" // Default production URL
+	}
+
+	// Always use dashboard.nixopus.com for login display
+	frontend := "https://dashboard.nixopus.com"
+
+	// Get client ID from environment
+	cliClientID := os.Getenv("OAUTH_CLIENT_ID")
+	if cliClientID == "" {
+		cliClientID = "nixopus-cli" // Default client ID
+	}
+
+	scope := "openid profile email"
+
+	// Start bubbletea program
+	program := NewLoginProgram()
+
+	// Run login steps in a goroutine
+	done := make(chan error, 1)
+	go func() {
+		done <- runLoginSteps(program, authURL, frontend, cliClientID, scope)
+	}()
+
+	// Start UI and wait for completion
+	if err := program.Start(); err != nil {
+		return err
+	}
+
+	// Wait for login to complete
+	if err := <-done; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // runLoginSteps runs the login steps and sends updates to the UI
 func runLoginSteps(program *LoginProgram, betterAuthURL, frontendURL, clientID, scope string) error {
 	// Request device code
@@ -113,34 +162,21 @@ func runLoginSteps(program *LoginProgram, betterAuthURL, frontendURL, clientID, 
 		return err
 	}
 
-	// Load existing config or create new one
-	cfg, err := config.Load()
-	if err != nil {
-		// Config doesn't exist, create a new one
-		cfg = &config.Config{
-			Sync: config.SyncConfig{
-				DebounceMs: 300,
-				Exclude: []string{
-					"*.log",
-					".git",
-					"node_modules",
-					"__pycache__",
-					".env",
-				},
-			},
-		}
-	}
-
-	// Update tokens
-	cfg.AccessToken = accessToken
-	if refreshToken != "" {
-		cfg.RefreshToken = refreshToken
-	}
-
-	if err := cfg.Save(); err != nil {
+	// Save tokens to global auth storage (not project config)
+	if err := config.SaveAuth(accessToken, refreshToken); err != nil {
 		program.Send(LoginErrorMsg{Error: fmt.Sprintf("Failed to save access token: %v", err)})
 		program.Quit()
 		return err
+	}
+
+	// Fetch user's organizations and save the first org ID
+	orgs, err := FetchUserOrganizations(betterAuthURL, accessToken)
+	if err != nil {
+		program.Send(LoginStepMsg{Step: 2, Message: fmt.Sprintf("Warning: could not fetch organizations: %v", err)})
+	} else if len(orgs) > 0 {
+		if err := config.SaveOrganizationID(orgs[0].ID); err != nil {
+			program.Send(LoginStepMsg{Step: 2, Message: fmt.Sprintf("Warning: could not save organization ID: %v", err)})
+		}
 	}
 
 	// Send success message

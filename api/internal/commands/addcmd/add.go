@@ -82,14 +82,15 @@ func runAddSteps(program *AddProgram, path, name string) error {
 	program.Send(AddStepMsg{Step: step, Message: "Adding application to family..."})
 	server := config.GetServerURL()
 
-	// Check for access token
-	if cfg.AccessToken == "" {
+	// Get access token from global auth storage
+	accessToken, err := config.GetAccessToken()
+	if err != nil {
 		program.Send(AddErrorMsg{Error: "not authenticated. Please run 'nixopus login' first"})
 		program.Quit()
-		return fmt.Errorf("not authenticated. Please run 'nixopus login' first")
+		return fmt.Errorf("not authenticated. Please run 'nixopus login' first: %w", err)
 	}
 
-	applicationID, err := addApplicationToFamily(server, cfg.AccessToken, cfg.FamilyID, name, basePath, repoURL, branch, 0)
+	applicationID, err := addApplicationToFamily(server, accessToken, cfg.FamilyID, name, basePath, repoURL, branch, 0)
 	if err != nil {
 		program.Send(AddErrorMsg{Error: fmt.Sprintf("failed to add application: %v", err)})
 		program.Quit()
