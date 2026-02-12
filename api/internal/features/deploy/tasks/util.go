@@ -117,6 +117,9 @@ type LiveDevTaskContext struct {
 	applicationID uuid.UUID
 	deploymentID  uuid.UUID
 	statusID      uuid.UUID
+	// OnBuildLog is called for every log line during the build, enabling real-time
+	// streaming to the CLI via WebSocket. When nil, logs are only written to the DB.
+	OnBuildLog func(applicationID uuid.UUID, logLine string)
 }
 
 // NewLiveDevTaskContext creates a new task context for live dev deployments
@@ -169,7 +172,7 @@ func (tc *LiveDevTaskContext) AddLog(logMessage string) {
 	appLog := shared_types.ApplicationLogs{
 		ID:                      uuid.New(),
 		ApplicationID:           tc.applicationID,
-		Log:                     "[LiveDev] " + logMessage,
+		Log:                     logMessage,
 		CreatedAt:               time.Now(),
 		UpdatedAt:               time.Now(),
 		ApplicationDeploymentID: tc.deploymentID,
@@ -228,14 +231,19 @@ func (tc *LiveDevTaskContext) UpdateDeployment(updates map[string]interface{}) {
 	}
 }
 
-// GetDeploymentID returns the deployment ID
 func (tc *LiveDevTaskContext) GetDeploymentID() uuid.UUID {
 	return tc.deploymentID
 }
 
-// GetSSHHostForOrganization gets the SSH host for a specific organization.
-// It creates a context with the organization ID and retrieves the SSH host
-// from the organization-specific SSH manager.
+func (tc *LiveDevTaskContext) toTaskContext() *TaskContext {
+	return &TaskContext{
+		service:       tc.service,
+		applicationID: tc.applicationID,
+		deploymentID:  tc.deploymentID,
+		statusID:      tc.statusID,
+	}
+}
+
 func GetSSHHostForOrganization(ctx context.Context, organizationID uuid.UUID) (string, error) {
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, organizationID.String())
 	manager, err := ssh.GetSSHManagerFromContext(orgCtx)

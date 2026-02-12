@@ -65,8 +65,21 @@ func (s *TaskService) HandleRollback(ctx context.Context, TaskPayload shared_typ
 		return err
 	}
 
-	// Wait for rollback to complete
-	time.Sleep(time.Second * 5)
+	for i := 0; i < 15; i++ {
+		time.Sleep(2 * time.Second)
+		serviceInfo, getErr := dockerService.GetServiceByID(serviceID)
+		if getErr != nil {
+			continue
+		}
+		if serviceInfo.Spec.Mode.Replicated != nil && serviceInfo.Spec.Mode.Replicated.Replicas != nil {
+			running, _, healthErr := dockerService.GetServiceHealth(serviceInfo)
+			if healthErr == nil && running >= int(*serviceInfo.Spec.Mode.Replicated.Replicas) {
+				taskCtx.AddLog("Service rolled back successfully using native swarm rollback")
+				taskCtx.LogAndUpdateStatus("Rollback completed successfully", shared_types.Deployed)
+				return nil
+			}
+		}
+	}
 
 	serviceInfo, err := dockerService.GetServiceByID(serviceID)
 	if err != nil {

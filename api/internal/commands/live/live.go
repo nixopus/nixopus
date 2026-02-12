@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -21,8 +22,9 @@ import (
 )
 
 var (
-	allFlag bool
-	envPath string
+	allFlag           bool
+	envPath           string
+	forceFullSyncFlag bool
 )
 
 var LiveCmd = &cobra.Command{
@@ -41,39 +43,53 @@ var LiveCmd = &cobra.Command{
 func init() {
 	LiveCmd.Flags().BoolVar(&allFlag, "all", false, "Run all apps in the family simultaneously")
 	LiveCmd.Flags().StringVar(&envPath, "env-path", "", "Path to environment file (relative to project root, e.g., .env or .env.production). Only used during initialization if project is not initialized.")
+	LiveCmd.Flags().BoolVar(&forceFullSyncFlag, "force-full-sync", false, "Bypass incremental sync; clear persisted state and sync all files")
 }
 
 func runSingleApp(args []string) error {
+	// Set up terminal and event bus
+	term := NewTerminal()
+	bus := NewEventBus(100)
+
+	// Start the agent UI immediately so the user sees output right away
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	agentUI := NewAgentUI(bus, term)
+	uiDone := make(chan error, 1)
+	go func() { uiDone <- agentUI.Run(ctx) }()
+
+	// Header
+	bus.Send(Event{Type: EventInfo, Message: "nixopus"})
+	bus.Send(Event{Type: EventInfo})
+
 	// Check authentication first - prompt for login if not authenticated
 	if err := logincmd.EnsureAuthenticated(); err != nil {
+		bus.Send(Event{Type: EventError, Message: fmt.Sprintf("Authentication required: %v", err)})
+		cancel()
 		return fmt.Errorf("authentication required: %w", err)
 	}
 
-	// Initialize status tracker
+	// Create agent client immediately after auth so all subsequent events can use it
+	accessTokenForAgent, _ := config.GetAccessToken()
+	threadID := fmt.Sprintf("live-%d", time.Now().UnixMilli())
+	agentClient := NewAgentClient(accessTokenForAgent, threadID)
+	agentUI.SetAgentClient(agentClient)
+
+	bus.Send(Event{Type: EventAuth, Message: "Authenticated", NeedsLLM: true})
+
+	// Initialize status tracker (still used by poller internally)
 	tracker := mover.NewTracker()
 
-	// Start bubbletea program IMMEDIATELY to show connecting UI before any initialization
-	program := NewProgram(tracker)
-
-	// Run program in background
-	done := make(chan error, 1)
-	programStarted := make(chan bool, 1)
-	go func() {
-		programStarted <- true
-		done <- program.Start()
-	}()
-
-	// Wait for program to start and render
-	<-programStarted
-	// Give UI a moment to render the connecting box
-	time.Sleep(200 * time.Millisecond)
-
 	// Check if initialization is needed and run it if necessary
+	bus.Send(Event{Type: EventInfo, Message: "Checking project..."})
 	cfg, err := ensureInitialized(envPath)
 	if err != nil {
-		program.Quit()
+		bus.Send(Event{Type: EventError, Message: fmt.Sprintf("Initialization failed: %v", err)})
+		cancel()
 		return err
 	}
+	bus.Send(Event{Type: EventConfig, Message: "Project initialized", NeedsLLM: true})
 
 	// Get app name from args (empty string means use default)
 	appName := ""
@@ -84,52 +100,51 @@ func runSingleApp(args []string) error {
 	// Get application ID from config
 	applicationID, err := cfg.GetApplicationID(appName)
 	if err != nil {
-		program.Quit()
+		bus.Send(Event{Type: EventError, Message: fmt.Sprintf("Failed to get application ID: %v", err)})
+		cancel()
 		return fmt.Errorf("failed to get application ID: %w", err)
 	}
 
 	accessToken, err := config.GetAccessToken()
 	if err != nil {
-		program.Quit()
+		bus.Send(Event{Type: EventError, Message: "Not authenticated"})
+		cancel()
 		return fmt.Errorf("not authenticated. Please run 'nixopus login' first: %w", err)
 	}
 
 	basePath := "/"
 
-	// OPTIMIZATION: Start WebSocket connection IMMEDIATELY after config load
-	// Do other validations in parallel while connection is establishing
+	// Build WebSocket URL
 	wsURL := buildWebSocketURL(cfg.Server, applicationID, accessToken)
 	if wsURL == "" {
-		program.Quit()
+		bus.Send(Event{Type: EventError, Message: "Failed to build connection URL"})
+		cancel()
 		return fmt.Errorf("failed to connect")
 	}
 
-	// Connection state handler - maps mover states to status states
+	// Connection state handler — publishes events instead of updating Bubble Tea model
 	onStateChange := func(event mover.ConnectionEvent) {
-		var statusState mover.ConnectionStatus
+		tracker.SetConnectionStatus(connectionStatusFromMover(event.State))
 		switch event.State {
 		case mover.StateConnected:
-			statusState = mover.ConnectionStatusConnected
+			bus.Send(Event{Type: EventConnected})
 		case mover.StateConnecting:
-			statusState = mover.ConnectionStatusConnecting
+			bus.Send(Event{Type: EventConnecting})
 		case mover.StateReconnecting:
-			statusState = mover.ConnectionStatusReconnecting
+			bus.Send(Event{Type: EventReconnecting})
 		case mover.StateDisconnected:
-			statusState = mover.ConnectionStatusDisconnected
+			bus.Send(Event{Type: EventDisconnected})
 		}
-		tracker.SetConnectionStatus(statusState)
 	}
 
-	// Start WebSocket connection in background (non-blocking)
-	// This begins the handshake immediately while we do other validations
-	tracker.SetConnectionStatus(mover.ConnectionStatusConnecting)
+	// Start WebSocket connection in background
+	bus.Send(Event{Type: EventConnecting})
 	clientChan := make(chan *mover.Client, 1)
 	clientErrChan := make(chan error, 1)
 	go func() {
-		// TODO: Add session token to mover client
 		client, err := mover.NewClient(
 			wsURL,
-			"", // TODO: Replace with session token
+			"",
 			mover.WithOnStateChange(onStateChange),
 		)
 		if err != nil {
@@ -139,41 +154,34 @@ func runSingleApp(args []string) error {
 		clientChan <- client
 	}()
 
-	// Do other validations in parallel while connection is establishing
-	// Run validations concurrently to maximize overlap with connection attempt
+	// Calculate domain URL (pure, no I/O — safe to do on main goroutine)
+	domainURL := buildDomainURL(applicationID, cfg.DeployDomain)
+	if domainURL != "" {
+		tracker.SetURL(domainURL)
+	}
+
+	// Run validations in parallel
 	validationErrChan := make(chan error, 1)
 	repoPathChan := make(chan string, 1)
 	go func() {
-		// Calculate and set domain URL immediately (client-side calculation)
-		// Domain format: https://{first-8-chars-of-application-id}.nixopus.com
-		domainURL := buildDomainURL(applicationID)
-		if domainURL != "" {
-			tracker.SetURL(domainURL)
-		}
-
-		// Get current working directory
 		wd, err := os.Getwd()
 		if err != nil {
 			validationErrChan <- fmt.Errorf("failed to get current directory: %w", err)
 			return
 		}
 
-		// Git repository is required
 		if !isGitRepo(wd) {
 			validationErrChan <- fmt.Errorf("git repository required: not a git repository in %s", wd)
 			return
 		}
 
-		// Check and set environment file path if configured
 		if cfg.EnvPath != "" {
-			// Resolve env path relative to repo root
 			envFilePath := cfg.EnvPath
 			if !strings.HasPrefix(envFilePath, "/") {
 				envFilePath = fmt.Sprintf("%s/%s", wd, envFilePath)
 			}
-			// Verify env file exists
 			if _, err := os.Stat(envFilePath); err == nil {
-				tracker.SetEnvPath(cfg.EnvPath) // Store relative path for display
+				tracker.SetEnvPath(cfg.EnvPath)
 			}
 		}
 
@@ -181,15 +189,13 @@ func runSingleApp(args []string) error {
 		validationErrChan <- nil
 	}()
 
-	// Wait for both WebSocket client and validations to complete
-	// This allows connection and validations to happen in parallel
+	// Wait for both WebSocket client and validations
 	var client *mover.Client
 	var validationErr error
 	var clientErr error
 	var repoPath string
 	completed := 0
 
-	// Wait for both to complete (whichever finishes first)
 	for completed < 2 {
 		select {
 		case client = <-clientChan:
@@ -203,67 +209,172 @@ func runSingleApp(args []string) error {
 		case path := <-repoPathChan:
 			repoPath = path
 		case <-time.After(30 * time.Second):
-			program.Quit()
+			bus.Send(Event{Type: EventError, Message: "Initialization timeout"})
+			cancel()
 			return fmt.Errorf("initialization timeout")
 		}
 	}
 
-	// Ensure we got repoPath (it might have been sent before we started waiting)
 	if repoPath == "" {
 		select {
 		case repoPath = <-repoPathChan:
 		case <-time.After(1 * time.Second):
-			program.Quit()
+			cancel()
 			return fmt.Errorf("failed to get repository path")
 		}
 	}
 
-	// Check for errors
 	if validationErr != nil {
 		if client != nil {
 			client.Close()
 		}
-		program.Quit()
+		bus.Send(Event{Type: EventError, Message: validationErr.Error()})
+		cancel()
 		return validationErr
 	}
 	if clientErr != nil {
-		program.Quit()
+		errMsg := clientErr.Error()
+		if strings.Contains(errMsg, "404") || strings.Contains(errMsg, "bad handshake") {
+			bus.Send(Event{Type: EventError, Message: "Connection rejected by server. Check SSH/staging config."})
+			cancel()
+			return fmt.Errorf("connection rejected by server: %w", clientErr)
+		}
+		bus.Send(Event{Type: EventError, Message: fmt.Sprintf("Connection failed: %v", clientErr)})
+		cancel()
 		return fmt.Errorf("failed to connect: %w", clientErr)
 	}
 	if client == nil {
-		program.Quit()
+		cancel()
 		return fmt.Errorf("client not initialized")
 	}
 	defer client.Close()
 
-	// Determine root path based on base_path
-	// If base_path is "/", watch entire repo
-	// Otherwise, watch only the subdirectory
+	// Determine watch path
 	watchPath := repoPath
 	if basePath != "" && basePath != "/" {
-		// Normalize base_path (remove leading/trailing slashes)
 		normalizedBasePath := strings.Trim(basePath, "/")
 		if normalizedBasePath != "" {
 			watchPath = filepath.Join(repoPath, normalizedBasePath)
-			// Verify the path exists
 			if _, err := os.Stat(watchPath); os.IsNotExist(err) {
-				program.Quit()
+				cancel()
 				return fmt.Errorf("base_path '%s' does not exist in repository", basePath)
 			}
 		}
 	}
 
+	syncStatePath, err := config.GetSyncStatePath()
+	if err != nil {
+		cancel()
+		return fmt.Errorf("failed to get sync state path: %w", err)
+	}
+
+	// Resolve env file path
+	var envFilePath string
+	if cfg.EnvPath != "" {
+		cleanPath := filepath.Clean(cfg.EnvPath)
+		if !filepath.IsAbs(cleanPath) {
+			envFilePath = filepath.Join(repoPath, cleanPath)
+		} else {
+			envFilePath = cleanPath
+		}
+		if _, err := os.Stat(envFilePath); err != nil {
+			envFilePath = ""
+		}
+	}
+
+	// File sync counters — batched into periodic progress events
+	var syncMu sync.Mutex
+	filesSynced := 0
+	changesDetected := 0
+
 	engine, err := mover.NewEngine(mover.EngineConfig{
-		RootPath:         watchPath,
-		Client:           client,
-		Excludes:         cfg.Sync.Exclude,
-		DebounceMs:       cfg.Sync.DebounceMs,
-		OnStateChange:    onStateChange,
-		OnFileSynced:     func(path string) { tracker.IncrementFilesSynced() },
-		OnChangeDetected: func(path string) { tracker.IncrementChanges() },
+		RootPath:      watchPath,
+		Client:        client,
+		Excludes:      cfg.Sync.Exclude,
+		DebounceMs:    cfg.Sync.DebounceMs,
+		OnStateChange: onStateChange,
+		OnFileSynced: func(path string) {
+			tracker.IncrementFilesSynced()
+			syncMu.Lock()
+			filesSynced++
+			syncMu.Unlock()
+		},
+		OnChangeDetected: func(path string) {
+			tracker.IncrementChanges()
+			syncMu.Lock()
+			changesDetected++
+			syncMu.Unlock()
+		},
+		OnServerMessage: func(msg mover.SyncMessage) {
+			switch msg.Type {
+			case mover.MessageTypePipelineProgress:
+				if payload, ok := msg.Payload.(map[string]interface{}); ok {
+					stageId, _ := payload["stage_id"].(string)
+					message, _ := payload["message"].(string)
+					bus.Send(Event{
+						Type:    EventPipelineProgress,
+						Message: message,
+						Payload: PipelineProgressPayload{
+							StageId: stageId,
+							Message: message,
+						},
+					})
+				}
+			case mover.MessageTypeBuildStatus:
+				if payload, ok := msg.Payload.(map[string]interface{}); ok {
+					phase, _ := payload["phase"].(string)
+					message, _ := payload["message"].(string)
+					errMsg, _ := payload["error"].(string)
+					ev := Event{
+						Type:    EventBuildStatus,
+						Message: message,
+						Payload: BuildStatusPayload{
+							Phase:   phase,
+							Message: message,
+							Error:   errMsg,
+						},
+					}
+					if phase == "error" {
+						ev.NeedsLLM = true
+					}
+					bus.Send(ev)
+				}
+			case mover.MessageTypeBuildLog:
+				if payload, ok := msg.Payload.(map[string]interface{}); ok {
+					logLine, _ := payload["log"].(string)
+					timestamp, _ := payload["timestamp"].(string)
+					bus.Send(Event{
+						Type:    EventBuildLog,
+						Message: logLine,
+						Payload: BuildLogPayload{
+							Log:       logLine,
+							Timestamp: timestamp,
+						},
+					})
+				}
+			case mover.MessageTypeDeploymentStatus:
+				if payload, ok := msg.Payload.(map[string]interface{}); ok {
+					status, _ := payload["status"].(string)
+					deploymentID, _ := payload["deployment_id"].(string)
+					ev := Event{
+						Type:    EventDeploymentStatus,
+						Message: fmt.Sprintf("Deployment status: %s", status),
+						Payload: DeploymentStatusPayload{
+							Status:       status,
+							DeploymentID: deploymentID,
+						},
+					}
+					bus.Send(ev)
+				}
+			}
+		},
+		SyncStatePath: syncStatePath,
+		ApplicationID: applicationID,
+		ForceFullSync: forceFullSyncFlag,
+		EnvFilePath:   envFilePath,
 	})
 	if err != nil {
-		program.Quit()
+		cancel()
 		return fmt.Errorf("failed to create sync engine: %w", err)
 	}
 
@@ -271,42 +382,61 @@ func runSingleApp(args []string) error {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
+	bus.Send(Event{Type: EventSyncStart})
 	if err := engine.Start(); err != nil {
-		program.Quit()
+		cancel()
 		return fmt.Errorf("failed to start sync: %w", err)
 	}
 
-	// Start deployment status poller
-	pollerCtx, pollerCancel := context.WithCancel(context.Background())
-	poller := NewDeploymentPoller(cfg, tracker, applicationID)
-	go poller.Start(pollerCtx)
-	defer func() {
-		poller.Stop()
-		pollerCancel()
+	// Periodic sync progress reporter
+	go func() {
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+		lastSynced := 0
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				syncMu.Lock()
+				current := filesSynced
+				syncMu.Unlock()
+				if current != lastSynced {
+					bus.Send(Event{Type: EventSyncProgress, Message: fmt.Sprintf("Syncing... %d files", current)})
+					lastSynced = current
+				}
+			}
+		}
 	}()
 
-	// The UI will automatically switch from connecting box to status box
-	// when connection status becomes Connected (handled in TickMsg)
-
-	// Wait for either interrupt or program exit
+	// Wait for shutdown signal
 	select {
 	case <-sigChan:
-		// User pressed Ctrl+C
-		program.Quit()
-		<-done // Wait for program to exit
-	case err := <-done:
-		// Program exited
-		if err != nil {
-			return fmt.Errorf("UI program error: %w", err)
-		}
+		cancel()
+	case <-uiDone:
 	}
 
-	// Stop engine
 	if err := engine.Stop(); err != nil {
 		return fmt.Errorf("failed to stop sync engine: %w", err)
 	}
 
 	return nil
+}
+
+// connectionStatusFromMover maps mover connection states to tracker connection statuses.
+func connectionStatusFromMover(state mover.ConnectionState) mover.ConnectionStatus {
+	switch state {
+	case mover.StateConnected:
+		return mover.ConnectionStatusConnected
+	case mover.StateConnecting:
+		return mover.ConnectionStatusConnecting
+	case mover.StateReconnecting:
+		return mover.ConnectionStatusReconnecting
+	case mover.StateDisconnected:
+		return mover.ConnectionStatusDisconnected
+	default:
+		return mover.ConnectionStatusDisconnected
+	}
 }
 
 // buildWebSocketURL builds the WebSocket URL from server URL
@@ -330,14 +460,16 @@ func buildWebSocketURL(server, projectID, accessToken string) string {
 }
 
 // buildDomainURL builds the domain URL from project ID
-// Format: https://{first-8-chars-of-project-id}.nixopus.com
-func buildDomainURL(projectID string) string {
+// deployDomain is optional; when empty, uses config.GetDeployDomain()
+// Format: https://{first-8-chars-of-project-id}.{deploy_domain}
+func buildDomainURL(projectID, deployDomain string) string {
 	if projectID == "" || len(projectID) < 8 {
 		return ""
 	}
-	// Take first 8 characters of project ID (UUID format)
-	subdomain := projectID[:8]
-	return "https://" + subdomain + ".nixopus.com"
+	if deployDomain == "" {
+		deployDomain = config.GetDeployDomain()
+	}
+	return "https://" + projectID[:8] + "." + deployDomain
 }
 
 // isGitRepo checks if the given path is a git repository
@@ -392,22 +524,18 @@ func ensureInitialized(envPathFlag string) (*config.Config, error) {
 	}
 
 	// Step 2: Create project (use access token from global auth)
-	projectID, familyID, err := createProject(server, envVars, accessToken)
+	projectID, familyID, deployDomain, err := createProject(server, envVars, accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create project: %w", err)
 	}
 
-	// Step 3: Save config
+	// Step 3: Save config (keep .env excluded - values are sent separately, not the file)
 	exclude := []string{
 		"*.log",
 		".git",
 		"node_modules",
 		"__pycache__",
 		".env",
-	}
-	if envPathFlag != "" {
-		// Remove env path from excludes
-		exclude = removeFromSlice(exclude, envPathFlag)
 	}
 
 	applications := map[string]string{
@@ -421,8 +549,8 @@ func ensureInitialized(envPathFlag string) (*config.Config, error) {
 			DebounceMs: 300,
 			Exclude:    exclude,
 		},
-		EnvPath: envPathFlag,
-		// Auth tokens are stored globally, not in project config
+		EnvPath:      envPathFlag,
+		DeployDomain: deployDomain,
 	}
 
 	cfg = newCfg
@@ -432,17 +560,6 @@ func ensureInitialized(envPathFlag string) (*config.Config, error) {
 	}
 
 	return cfg, nil
-}
-
-// removeFromSlice removes an item from a string slice
-func removeFromSlice(slice []string, item string) []string {
-	result := make([]string, 0, len(slice))
-	for _, s := range slice {
-		if s != item {
-			result = append(result, s)
-		}
-	}
-	return result
 }
 
 // CreateProjectRequest represents the request body for creating a project
@@ -455,10 +572,11 @@ type CreateProjectRequest struct {
 
 // CreateProjectResponse represents the response from project creation endpoint
 type CreateProjectResponse struct {
-	Status    string `json:"status"`
-	Message   string `json:"message"`
-	ProjectID string `json:"project_id"`
-	FamilyID  string `json:"family_id"`
+	Status       string `json:"status"`
+	Message      string `json:"message"`
+	ProjectID    string `json:"project_id"`
+	FamilyID     string `json:"family_id"`
+	DeployDomain string `json:"deploy_domain,omitempty"`
 }
 
 // getGitBranch gets the current git branch
@@ -502,17 +620,17 @@ func getGitInfo() (string, string, error) {
 }
 
 // createProject creates a draft project on the server using the CLI init endpoint
-// Returns: projectID, familyID, error
-func createProject(serverURL string, envVars map[string]string, accessToken string) (string, string, error) {
+// Returns: projectID, familyID, deployDomain, error
+func createProject(serverURL string, envVars map[string]string, accessToken string) (string, string, string, error) {
 	repoName, repoURL, err := getGitInfo()
 	if err != nil {
-		return "", "", fmt.Errorf("failed to get git info: %w", err)
+		return "", "", "", fmt.Errorf("failed to get git info: %w", err)
 	}
 
 	branch := getGitBranch()
 
 	if accessToken == "" {
-		return "", "", fmt.Errorf("not authenticated")
+		return "", "", "", fmt.Errorf("not authenticated")
 	}
 
 	// Use authenticated HTTP client
@@ -528,30 +646,30 @@ func createProject(serverURL string, envVars map[string]string, accessToken stri
 
 	resp, err := client.Post(url, reqBody)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to connect to server: %w", err)
+		return "", "", "", fmt.Errorf("failed to connect to server: %w", err)
 	}
 
 	bodyBytes, err := httpclient.ReadResponseBody(resp)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to read response body: %w", err)
+		return "", "", "", err
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return "", "", httpclient.HandleErrorResponse(resp, bodyBytes, "failed to create project")
+		return "", "", "", httpclient.HandleErrorResponse(resp, bodyBytes, "failed to create project")
 	}
 
 	var projectResp CreateProjectResponse
 	if err := httpclient.ParseJSONResponse(bodyBytes, &projectResp); err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	if projectResp.ProjectID == "" {
-		return "", "", fmt.Errorf("project ID not found in response")
+		return "", "", "", fmt.Errorf("project ID not found in response")
 	}
 
 	if projectResp.FamilyID == "" {
-		return "", "", fmt.Errorf("family ID not found in response")
+		return "", "", "", fmt.Errorf("family ID not found in response")
 	}
 
-	return projectResp.ProjectID, projectResp.FamilyID, nil
+	return projectResp.ProjectID, projectResp.FamilyID, projectResp.DeployDomain, nil
 }

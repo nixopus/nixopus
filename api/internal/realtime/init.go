@@ -38,6 +38,11 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// LiveDevNotificationHandler is called for live_dev_logs and live_dev_status
+// PostgreSQL notifications. The Gateway implements this to forward build logs
+// and status changes to the appropriate WebSocket client.
+type LiveDevNotificationHandler func(channel, payload string)
+
 type SocketServer struct {
 	conns               *sync.Map // conn -> userID
 	orgIDs              *sync.Map // conn -> organizationID
@@ -54,6 +59,9 @@ type SocketServer struct {
 	dashboardMutex      sync.Mutex
 	applicationMonitors map[*websocket.Conn]*realtime.ApplicationMonitor
 	applicationMutex    sync.Mutex
+
+	liveDevHandler   LiveDevNotificationHandler
+	liveDevHandlerMu sync.RWMutex
 }
 
 // NewSocketServer initializes and returns a new instance of SocketServer.
@@ -181,6 +189,14 @@ func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
 	s.applicationMutex.Unlock()
 
 	conn.Close()
+}
+
+// SetLiveDevHandler registers a handler for live_dev_logs and live_dev_status
+// notifications from PostgreSQL. The live Gateway calls this during initialization.
+func (s *SocketServer) SetLiveDevHandler(handler LiveDevNotificationHandler) {
+	s.liveDevHandlerMu.Lock()
+	s.liveDevHandler = handler
+	s.liveDevHandlerMu.Unlock()
 }
 
 func (s *SocketServer) Shutdown() {

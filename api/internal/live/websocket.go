@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -20,8 +21,8 @@ import (
 )
 
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+	ReadBufferSize:  256 * 1024,
+	WriteBufferSize: 256 * 1024,
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
@@ -61,7 +62,7 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-	user, orgID, err := h.gateway.verifySession(ctx, token, r)
+	user, orgID, err := h.gateway.VerifySession(ctx, token, r)
 	if err != nil {
 		h.logger.Log(logger.Error, "invalid session", err.Error())
 		http.Error(w, "Invalid authentication token", http.StatusUnauthorized)
@@ -79,8 +80,7 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	// Set organization ID in context for downstream operations (SSH manager, etc.)
 	ctx = context.WithValue(ctx, types.OrganizationIDKey, orgID)
 
-	// Get application and validate ownership
-	appCtx, err := h.gateway.getApplicationContext(ctx, applicationID, user.ID, organizationID)
+	appCtx, err := h.gateway.getApplicationContext(ctx, r, token, applicationID, user.ID, organizationID)
 	if err != nil {
 		h.logger.Log(logger.Error, "failed to get application context", fmt.Sprintf("application_id=%s err=%v", applicationID, err))
 		http.Error(w, fmt.Sprintf("Application not found or access denied: %v", err), http.StatusNotFound)
@@ -95,6 +95,16 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	defer conn.Close()
 
 	h.logger.Log(logger.Info, "websocket connection established", fmt.Sprintf("application_id=%s", applicationID))
+
+	// Track this connection so pipeline progress can be sent to the client
+	h.gateway.registerConn(applicationID, conn, h)
+	defer h.gateway.unregisterConn(applicationID)
+
+	// Send manifest immediately so client can skip already-synced files
+	if err := h.sendManifest(conn, appCtx.ApplicationID.String()); err != nil {
+		h.logger.Log(logger.Warning, "failed to send manifest", err.Error())
+	}
+
 	h.processMessages(ctx, conn, appCtx)
 }
 
@@ -196,6 +206,21 @@ func (h *WebSocketHandler) sendAck(conn *websocket.Conn, filePath string) error 
 	})
 }
 
+// sendManifest sends the server's file manifest to the client for incremental sync.
+// Includes root_hash so client can skip full diff when roots match.
+func (h *WebSocketHandler) sendManifest(conn *websocket.Conn, applicationID string) error {
+	paths := h.gateway.manifestStore.GetPaths(applicationID)
+	if paths == nil {
+		paths = make(map[string]string)
+	}
+	tree := mover.BuildFromPaths(paths)
+	return h.sendMessage(conn, mover.SyncMessage{
+		Type:      mover.MessageTypeManifest,
+		Timestamp: time.Now(),
+		Payload:   mover.ManifestPayload{Paths: paths, RootHash: tree.RootHash, Version: 1},
+	})
+}
+
 // sendPong sends a pong message in response to a ping
 func (h *WebSocketHandler) sendPong(conn *websocket.Conn) error {
 	return conn.WriteJSON(mover.SyncMessage{
@@ -212,8 +237,7 @@ func (h *WebSocketHandler) sendMessage(conn *websocket.Conn, msg mover.SyncMessa
 	return conn.WriteJSON(msg)
 }
 
-// getApplicationContext gets application information and staging path
-func (g *Gateway) getApplicationContext(ctx context.Context, applicationID, userID, organizationID uuid.UUID) (*ApplicationContext, error) {
+func (g *Gateway) getApplicationContext(ctx context.Context, r *http.Request, token string, applicationID, userID, organizationID uuid.UUID) (*ApplicationContext, error) {
 	// Get application
 	deployStorage := storage.DeployStorage{DB: g.store.DB, Ctx: ctx}
 	application, err := deployStorage.GetApplicationById(applicationID.String(), organizationID)
@@ -232,8 +256,8 @@ func (g *Gateway) getApplicationContext(ctx context.Context, applicationID, user
 		return nil, fmt.Errorf("failed to get staging path: %w", err)
 	}
 
-	// Generate domain name based on application ID: {first-8-chars}.nixopus.com
-	domain := fmt.Sprintf("%s.nixopus.com", applicationID.String()[:8])
+	// Generate domain name based on application ID: {first-8-chars}.{deploy_domain}
+	domain := fmt.Sprintf("%s.%s", applicationID.String()[:8], config.GetDeployDomain())
 
 	// Parse environment variables from application
 	envVars := tasks.GetMapFromString(application.EnvironmentVariables)
@@ -244,15 +268,25 @@ func (g *Gateway) getApplicationContext(ctx context.Context, applicationID, user
 		basePath = "/"
 	}
 
+	repoSource := g.stagingManager.GetRepositorySource(ctx, &application)
+
+	authCookie := ""
+	if r != nil {
+		authCookie = r.Header.Get("Cookie")
+	}
+
 	return &ApplicationContext{
 		ApplicationID:        applicationID,
 		UserID:               userID,
 		OrganizationID:       organizationID,
 		StagingPath:          stagingPath,
+		RepositorySource:     repoSource,
 		BasePath:             basePath,
 		Environment:          application.Environment,
 		Domain:               domain,
 		Config:               make(map[string]interface{}),
 		EnvironmentVariables: envVars,
+		AuthToken:            token,
+		AuthCookie:           authCookie,
 	}, nil
 }

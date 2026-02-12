@@ -69,7 +69,7 @@ func (s *TaskService) getAvailablePort(ctx context.Context) (string, error) {
 
 	getUsedPorts := "command -v ss >/dev/null 2>&1 && ss -tan | awk '{print $4}' | cut -d':' -f2 | grep '[0-9]\\{1,5\\}' | sort -u || netstat -tan | awk '{print $4}' | grep ':[0-9]' | cut -d':' -f2 | sort -u"
 
-	cmd := fmt.Sprintf("comm -23 <(%s) <(%s) | sort -R | head -n 1 | tr -d '\\n'", generatePorts, getUsedPorts)
+	cmd := fmt.Sprintf("comm -23 <(%s) <(%s) | shuf -n 1 | tr -d '\\n'", generatePorts, getUsedPorts)
 
 	output, err := client.Run(cmd)
 	if err != nil {
@@ -121,7 +121,7 @@ func (s *TaskService) AtomicUpdateContainer(ctx context.Context, r shared_types.
 	}
 
 	// Wait for service to be ready with retries
-	serviceInfo, err := s.waitForServiceHealthy(ctx, r, taskContext, 120*time.Second, 5*time.Second)
+	serviceInfo, err := s.waitForServiceHealthy(ctx, r, taskContext, 120*time.Second, 2*time.Second)
 	if err != nil {
 		taskContext.LogAndUpdateStatus("Service health check failed: "+err.Error(), shared_types.Failed)
 		return AtomicUpdateContainerResult{}, types.ErrFailedToUpdateContainer
@@ -189,6 +189,18 @@ func FindServiceByLabel(ctx context.Context, labelKey, labelValue string) (*swar
 		}
 	}
 	return nil, nil
+}
+
+const labelWorkdir = "nixopus.workdir"
+
+// GetWorkdirFromService returns the workdir from nixopus.workdir label, or "/app" if unset.
+func GetWorkdirFromService(service *swarm.Service) string {
+	if service != nil && service.Spec.Labels != nil {
+		if w := service.Spec.Labels[labelWorkdir]; w != "" {
+			return w
+		}
+	}
+	return "/app"
 }
 
 // CreateOrUpdateService creates or updates a service (shared utility)

@@ -1,7 +1,6 @@
 package live
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -25,8 +24,6 @@ type AppSession struct {
 	client        *mover.Client
 	engine        *mover.Engine
 	tracker       *mover.Tracker
-	poller        *DeploymentPoller
-	pollerCancel  context.CancelFunc
 	error         error
 	mu            sync.RWMutex
 }
@@ -71,12 +68,6 @@ func (s *AppSession) Stop() error {
 	}
 	if s.client != nil {
 		s.client.Close()
-	}
-	if s.poller != nil {
-		s.poller.Stop()
-	}
-	if s.pollerCancel != nil {
-		s.pollerCancel()
 	}
 	if len(errs) > 0 {
 		return fmt.Errorf("errors stopping %s: %v", s.name, errs)
@@ -265,7 +256,7 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 	}
 
 	// Fetch application details
-	basePath, domainURL, err := getApplicationDetailsWithURL(cfg.Server, session.applicationID, accessToken)
+	basePath, domainURL, err := getApplicationDetailsWithURL(cfg.Server, session.applicationID, accessToken, cfg.DeployDomain)
 	if err != nil {
 		return fmt.Errorf("failed to fetch application details: %w", err)
 	}
@@ -346,6 +337,27 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 		}
 	}
 
+	syncStatePath, err := config.GetSyncStatePath()
+	if err != nil {
+		return fmt.Errorf("failed to get sync state path: %w", err)
+	}
+
+	// Resolve env file path (values only, file is never synced)
+	var envFilePath string
+	if cfg.EnvPath != "" {
+		cleanPath := filepath.Clean(cfg.EnvPath)
+		if !filepath.IsAbs(cleanPath) {
+			envFilePath = filepath.Join(wd, cleanPath)
+		} else {
+			envFilePath = cleanPath
+		}
+		if _, err := os.Stat(envFilePath); err == nil {
+			// File exists, will send values
+		} else {
+			envFilePath = ""
+		}
+	}
+
 	// Create sync engine
 	engine, err := mover.NewEngine(mover.EngineConfig{
 		RootPath:      watchPath,
@@ -363,6 +375,10 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 			// Note: Tracker updates are batched via the 5-second ticker in poller goroutine
 			// This reduces mutex contention when many apps are detecting changes simultaneously
 		},
+		SyncStatePath: syncStatePath,
+		ApplicationID: session.applicationID,
+		ForceFullSync: forceFullSyncFlag,
+		EnvFilePath:   envFilePath,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create sync engine: %w", err)
@@ -373,39 +389,6 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 	session.mu.Unlock()
 
 	// Start deployment poller with callback to update multi-app tracker
-	pollerCtx, pollerCancel := context.WithCancel(context.Background())
-	poller := NewDeploymentPoller(cfg, session.tracker, session.applicationID)
-
-	// Wrap the poller's update function to also update multi-app tracker
-	go func() {
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				info := session.GetStatusInfo()
-				tracker.UpdateSession(session.name, mover.AppSessionInfo{
-					Name:            session.name,
-					ApplicationID:   session.applicationID,
-					Status:          info.ConnectionStatus,
-					FilesSynced:     info.FilesSynced,
-					ChangesDetected: info.ChangesDetected,
-					URL:             info.URL,
-					Deployment:      info.Deployment,
-				})
-			case <-pollerCtx.Done():
-				return
-			}
-		}
-	}()
-
-	go poller.Start(pollerCtx)
-
-	session.mu.Lock()
-	session.poller = poller
-	session.pollerCancel = pollerCancel
-	session.mu.Unlock()
-
 	// Initial tracker update
 	info := session.GetStatusInfo()
 	tracker.UpdateSession(session.name, mover.AppSessionInfo{
@@ -422,13 +405,13 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 }
 
 // getApplicationDetailsWithURL fetches application details and returns base_path and domain URL
-func getApplicationDetailsWithURL(server, applicationID, accessToken string) (string, string, error) {
+func getApplicationDetailsWithURL(server, applicationID, accessToken, deployDomain string) (string, string, error) {
 	basePath, err := getApplicationDetails(server, applicationID, accessToken)
 	if err != nil {
 		return "", "", err
 	}
 
-	domainURL := buildDomainURL(applicationID)
+	domainURL := buildDomainURL(applicationID, deployDomain)
 	return basePath, domainURL, nil
 }
 

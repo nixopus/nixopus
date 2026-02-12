@@ -21,6 +21,13 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "readMore": "Read more",
-    "readLess": "Read less"
+    "readLess": "Read less",
+    "notFound": {
+      "code": "404",
+      "title": "Page Not Found",
+      "description": "The page you're looking for doesn't exist or has been moved.",
+      "goHome": "Go to Dashboard",
+      "goBack": "Go Back"
+    }
   }
 }

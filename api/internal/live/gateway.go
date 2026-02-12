@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,26 +22,249 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-const chunkSize = int64(64 * 1024)
+const (
+	chunkSize             = int64(64 * 1024)
+	fileCompletionWorkers = 8
+	completionJobBuffer   = 128
+)
+
+type fileCompletionJob struct {
+	content       []byte
+	path          string
+	checksum      string
+	stagingPath   string
+	appCtx        *ApplicationContext
+	conn          *websocket.Conn
+	applicationID uuid.UUID
+}
 
 type Gateway struct {
-	stagingManager   *StagingManager
-	serviceManager   *ServiceManager
-	websocketHandler *WebSocketHandler
-	store            *shared_storage.Store
-	logger           logger.Logger
+	stagingManager    *StagingManager
+	buildFirstManager *BuildFirstManager
+	websocketHandler  *WebSocketHandler
+	manifestStore     *ManifestStore
+	store             *shared_storage.Store
+	logger            logger.Logger
+	completionJobs    chan fileCompletionJob
+
+	// sessionEnvStore: env vars from client (set-env file values, never the file itself)
+	sessionEnvStore   map[string]map[string]string
+	sessionEnvStoreMu sync.RWMutex
+
+	// activeConns tracks the WebSocket connection per application for sending pipeline progress
+	activeConnsMu sync.RWMutex
+	activeConns   map[uuid.UUID]*activeConn
+}
+
+type activeConn struct {
+	conn    *websocket.Conn
+	handler *WebSocketHandler
 }
 
 func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, store *shared_storage.Store) *Gateway {
 	logger := logger.NewLogger()
 	gateway := &Gateway{
-		stagingManager: stagingManager,
-		serviceManager: NewServiceManager(stagingManager, taskService, logger),
-		store:          store,
-		logger:         logger,
+		stagingManager:  stagingManager,
+		manifestStore:   NewManifestStore(),
+		store:           store,
+		logger:          logger,
+		completionJobs:  make(chan fileCompletionJob, completionJobBuffer),
+		sessionEnvStore: make(map[string]map[string]string),
+		activeConns:     make(map[uuid.UUID]*activeConn),
 	}
+	gateway.buildFirstManager = NewBuildFirstManager(stagingManager, taskService, logger, func(appID uuid.UUID) map[string]string {
+		return gateway.GetSessionEnv(appID)
+	})
+	gateway.buildFirstManager.SetPipelineProgressFunc(func(appID uuid.UUID, stageId, message string) {
+		gateway.sendPipelineProgress(appID, stageId, message)
+	})
+	gateway.buildFirstManager.SetBuildStatusFunc(func(appID uuid.UUID, phase, message, errMsg string) {
+		gateway.sendBuildStatus(appID, phase, message, errMsg)
+	})
 	gateway.websocketHandler = NewWebSocketHandler(gateway, logger)
+	for i := 0; i < fileCompletionWorkers; i++ {
+		go gateway.runFileCompletionWorker()
+	}
 	return gateway
+}
+
+// registerConn tracks an active WebSocket connection for an application.
+func (g *Gateway) registerConn(appID uuid.UUID, conn *websocket.Conn, handler *WebSocketHandler) {
+	g.activeConnsMu.Lock()
+	g.activeConns[appID] = &activeConn{conn: conn, handler: handler}
+	g.activeConnsMu.Unlock()
+}
+
+// unregisterConn removes the tracked WebSocket connection for an application.
+func (g *Gateway) unregisterConn(appID uuid.UUID) {
+	g.activeConnsMu.Lock()
+	delete(g.activeConns, appID)
+	g.activeConnsMu.Unlock()
+}
+
+// sendPipelineProgress sends a pipeline_progress message to the WebSocket client for the given app.
+func (g *Gateway) sendPipelineProgress(appID uuid.UUID, stageId, message string) {
+	g.activeConnsMu.RLock()
+	ac := g.activeConns[appID]
+	g.activeConnsMu.RUnlock()
+
+	if ac == nil {
+		return
+	}
+
+	msg := mover.SyncMessage{
+		Type:      mover.MessageTypePipelineProgress,
+		Timestamp: time.Now(),
+		Payload: mover.PipelineProgressPayload{
+			StageId: stageId,
+			Message: message,
+		},
+	}
+	if err := ac.handler.sendMessage(ac.conn, msg); err != nil {
+		g.logger.Log(logger.Warning, "failed to send pipeline progress", fmt.Sprintf("app=%s err=%v", appID, err))
+	}
+}
+
+// sendBuildStatus sends a build lifecycle status message to the WebSocket client for the given app.
+func (g *Gateway) sendBuildStatus(appID uuid.UUID, phase, message, errMsg string) {
+	g.activeConnsMu.RLock()
+	ac := g.activeConns[appID]
+	g.activeConnsMu.RUnlock()
+
+	if ac == nil {
+		return
+	}
+
+	msg := mover.SyncMessage{
+		Type:      mover.MessageTypeBuildStatus,
+		Timestamp: time.Now(),
+		Payload: mover.BuildStatusPayload{
+			Phase:   phase,
+			Message: message,
+			Error:   errMsg,
+		},
+	}
+	if err := ac.handler.sendMessage(ac.conn, msg); err != nil {
+		g.logger.Log(logger.Warning, "failed to send build status", fmt.Sprintf("app=%s err=%v", appID, err))
+	}
+}
+
+// sendBuildLog sends a build log line to the WebSocket client for the given app.
+// Called when a live_dev_logs notification arrives from PostgreSQL.
+func (g *Gateway) sendBuildLog(appID uuid.UUID, log string, timestamp string) {
+	g.activeConnsMu.RLock()
+	ac := g.activeConns[appID]
+	g.activeConnsMu.RUnlock()
+
+	if ac == nil {
+		return
+	}
+
+	msg := mover.SyncMessage{
+		Type:      mover.MessageTypeBuildLog,
+		Timestamp: time.Now(),
+		Payload: mover.BuildLogPayload{
+			Log:       log,
+			Timestamp: timestamp,
+		},
+	}
+	if err := ac.handler.sendMessage(ac.conn, msg); err != nil {
+		g.logger.Log(logger.Warning, "failed to send build log", fmt.Sprintf("app=%s err=%v", appID, err))
+	}
+}
+
+// sendDeploymentStatus sends a deployment status change to the WebSocket client for the given app.
+// Called when a live_dev_status notification arrives from PostgreSQL.
+func (g *Gateway) sendDeploymentStatus(appID uuid.UUID, status string) {
+	g.activeConnsMu.RLock()
+	ac := g.activeConns[appID]
+	g.activeConnsMu.RUnlock()
+
+	if ac == nil {
+		return
+	}
+
+	msg := mover.SyncMessage{
+		Type:      mover.MessageTypeDeploymentStatus,
+		Timestamp: time.Now(),
+		Payload: mover.DeploymentStatusPayload{
+			Status: status,
+		},
+	}
+	if err := ac.handler.sendMessage(ac.conn, msg); err != nil {
+		g.logger.Log(logger.Warning, "failed to send deployment status", fmt.Sprintf("app=%s err=%v", appID, err))
+	}
+}
+
+// HandleLiveDevNotification processes live_dev_logs and live_dev_status notifications
+// from the PostgresListener. This is registered as a callback on the SocketServer.
+func (g *Gateway) HandleLiveDevNotification(channel, payload string) {
+	switch channel {
+	case "live_dev_logs":
+		var n struct {
+			ApplicationID string `json:"application_id"`
+			Log           string `json:"log"`
+			CreatedAt     string `json:"created_at"`
+		}
+		if err := json.Unmarshal([]byte(payload), &n); err != nil {
+			g.logger.Log(logger.Warning, "failed to parse live_dev_logs notification", err.Error())
+			return
+		}
+		appID, err := uuid.Parse(n.ApplicationID)
+		if err != nil {
+			return
+		}
+		g.sendBuildLog(appID, n.Log, n.CreatedAt)
+
+	case "live_dev_status":
+		var n struct {
+			ApplicationID string `json:"application_id"`
+			Status        string `json:"status"`
+		}
+		if err := json.Unmarshal([]byte(payload), &n); err != nil {
+			g.logger.Log(logger.Warning, "failed to parse live_dev_status notification", err.Error())
+			return
+		}
+		appID, err := uuid.Parse(n.ApplicationID)
+		if err != nil {
+			return
+		}
+		g.sendDeploymentStatus(appID, n.Status)
+	}
+}
+
+// runFileCompletionWorker processes file write + ACK in parallel (non-blocking for read loop)
+func (g *Gateway) runFileCompletionWorker() {
+	for job := range g.completionJobs {
+		ctx := context.WithValue(context.Background(), shared_types.OrganizationIDKey, job.appCtx.OrganizationID.String())
+		if err := WriteContentToStaging(ctx, job.stagingPath, job.path, job.content, job.checksum); err != nil {
+			g.logger.Log(logger.Error, "failed to write file to staging", fmt.Sprintf("path=%s err=%v", job.path, err))
+			continue
+		}
+		g.manifestStore.Set(job.applicationID.String(), job.path, job.checksum)
+		g.logger.Log(logger.Info, "file received and written", job.path)
+		if g.buildFirstManager != nil {
+			g.buildFirstManager.HandleFileWritten(ctx, job.appCtx, job.path, job.content)
+		}
+		if err := g.websocketHandler.sendAck(job.conn, job.path); err != nil {
+			g.logger.Log(logger.Warning, "failed to send ACK", fmt.Sprintf("path=%s err=%v", job.path, err))
+		}
+	}
+}
+
+// BuildFirstManager returns the build-first manager for wiring callbacks (e.g. from TaskService).
+func (g *Gateway) BuildFirstManager() *BuildFirstManager {
+	return g.buildFirstManager
+}
+
+// GetSessionEnv returns env vars sent from client (set-env file values) for an application.
+func (g *Gateway) GetSessionEnv(applicationID uuid.UUID) map[string]string {
+	g.sessionEnvStoreMu.RLock()
+	defer g.sessionEnvStoreMu.RUnlock()
+	if env, ok := g.sessionEnvStore[applicationID.String()]; ok {
+		return env
+	}
+	return nil
 }
 
 // HandleWebSocket delegates to the WebSocket handler
@@ -48,8 +272,8 @@ func (g *Gateway) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	g.websocketHandler.HandleWebSocket(w, r)
 }
 
-// verifySession verifies the Better Auth session token and returns the user and organization ID
-func (g *Gateway) verifySession(ctx context.Context, tokenString string, originalRequest *http.Request) (*shared_types.User, string, error) {
+// VerifySession verifies the Better Auth session token and returns the user and organization ID
+func (g *Gateway) VerifySession(ctx context.Context, tokenString string, originalRequest *http.Request) (*shared_types.User, string, error) {
 	var req *http.Request
 
 	// Prefer using the original request with actual cookies from the browser
@@ -118,6 +342,8 @@ func (g *Gateway) handleMessage(ctx context.Context, conn *websocket.Conn, appCt
 		return g.handleFileContent(ctx, conn, appCtx, msg)
 	case mover.MessageTypeFileDelete:
 		return g.handleFileDelete(ctx, appCtx, msg)
+	case mover.MessageTypeEnvVars:
+		return g.handleEnvVars(ctx, appCtx, msg)
 	case mover.MessageTypePing:
 		return g.websocketHandler.sendPong(conn)
 	default:
@@ -169,6 +395,26 @@ func (g *Gateway) validateFilePath(filePath string, basePath string) error {
 	return nil
 }
 
+func (g *Gateway) handleEnvVars(ctx context.Context, appCtx *ApplicationContext, msg *mover.SyncMessage) error {
+	var payload mover.EnvVarsPayload
+	if err := g.unmarshalPayload(msg.Payload, &payload); err != nil {
+		return err
+	}
+	if len(payload.Vars) == 0 {
+		return nil
+	}
+	g.sessionEnvStoreMu.Lock()
+	g.sessionEnvStore[appCtx.ApplicationID.String()] = payload.Vars
+	g.sessionEnvStoreMu.Unlock()
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, appCtx.OrganizationID.String())
+	if err := tasks.UpdateLiveDevServiceEnv(orgCtx, appCtx.ApplicationID, payload.Vars); err != nil {
+		g.logger.Log(logger.Warning, "failed to update service env", fmt.Sprintf("app=%s err=%v", appCtx.ApplicationID, err))
+	} else {
+		g.logger.Log(logger.Info, "env vars updated, service rolling new tasks", appCtx.ApplicationID.String())
+	}
+	return nil
+}
+
 func (g *Gateway) handleFileChange(appCtx *ApplicationContext, msg *mover.SyncMessage) error {
 	var fileChange mover.FileChange
 	if err := g.unmarshalPayload(msg.Payload, &fileChange); err != nil {
@@ -217,20 +463,39 @@ func (g *Gateway) handleFileContent(ctx context.Context, conn *websocket.Conn, a
 		return nil
 	}
 
-	// Write to staging
-	if err := receiver.WriteToStaging(ctx); err != nil {
-		return fmt.Errorf("failed to write file to staging: %w", err)
+	content, err := receiver.Reassemble()
+	if err != nil {
+		return fmt.Errorf("failed to reassemble file: %w", err)
 	}
 
-	g.logger.Log(logger.Info, "file received and written", fileContent.Path)
 	g.stagingManager.RemoveFileReceiver(appCtx.ApplicationID, fileContent.Path)
 
-	if g.serviceManager != nil {
-		g.serviceManager.EnsureDevServiceStarted(ctx, appCtx)
+	// Offload write + ACK to worker pool - read loop continues immediately
+	job := fileCompletionJob{
+		content:       content,
+		path:          fileContent.Path,
+		checksum:      fileContent.Checksum,
+		stagingPath:   appCtx.StagingPath,
+		appCtx:        appCtx,
+		conn:          conn,
+		applicationID: appCtx.ApplicationID,
 	}
-
-	if err := g.websocketHandler.sendAck(conn, fileContent.Path); err != nil {
-		g.logger.Log(logger.Warning, "failed to send ACK", fmt.Sprintf("path=%s err=%v", fileContent.Path, err))
+	select {
+	case g.completionJobs <- job:
+		// Queued - worker will handle it
+	default:
+		// Queue full - fall back to synchronous write to avoid dropping
+		if err := WriteContentToStaging(ctx, job.stagingPath, job.path, job.content, job.checksum); err != nil {
+			return fmt.Errorf("failed to write file to staging: %w", err)
+		}
+		g.manifestStore.Set(job.applicationID.String(), job.path, job.checksum)
+		g.logger.Log(logger.Info, "file received and written", job.path)
+		if g.buildFirstManager != nil {
+			g.buildFirstManager.HandleFileWritten(ctx, job.appCtx, job.path, job.content)
+		}
+		if err := g.websocketHandler.sendAck(conn, fileContent.Path); err != nil {
+			g.logger.Log(logger.Warning, "failed to send ACK", fmt.Sprintf("path=%s err=%v", fileContent.Path, err))
+		}
 	}
 
 	return nil
@@ -252,6 +517,11 @@ func (g *Gateway) handleFileDelete(ctx context.Context, appCtx *ApplicationConte
 		return fmt.Errorf("failed to delete file: %w", err)
 	}
 
+	g.manifestStore.Remove(appCtx.ApplicationID.String(), fileChange.Path)
+
 	g.logger.Log(logger.Info, "file deleted", fileChange.Path)
+	if g.buildFirstManager != nil {
+		g.buildFirstManager.HandleFileDeleted(ctx, appCtx, fileChange.Path)
+	}
 	return nil
 }

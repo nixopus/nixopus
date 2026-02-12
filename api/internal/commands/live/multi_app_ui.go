@@ -46,6 +46,12 @@ func (m MultiAppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleWindowResize(msg)
 	case tea.KeyMsg:
 		return m.handleKeyPress(msg)
+	case tea.MouseMsg:
+		if m.showLogs && m.logsViewport.MouseWheelEnabled {
+			var cmd tea.Cmd
+			m.logsViewport, cmd = m.logsViewport.Update(msg)
+			return m, cmd
+		}
 	case TickMsg:
 		return m.handleTick()
 	}
@@ -54,10 +60,9 @@ func (m MultiAppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // handleWindowResize updates viewport dimensions
 func (m MultiAppModel) handleWindowResize(msg tea.WindowSizeMsg) (MultiAppModel, tea.Cmd) {
-	if m.showLogs {
-		m.logsViewport.Width = logsViewportWidth
-		m.logsViewport.Height = msg.Height - headerReserveSpace - 10
-	}
+	// Always update viewport dimensions so it has correct size when user opens logs
+	m.logsViewport.Width = logsViewportWidth
+	m.logsViewport.Height = msg.Height - headerReserveSpace - 10
 	return m, nil
 }
 
@@ -65,12 +70,7 @@ func (m MultiAppModel) handleWindowResize(msg tea.WindowSizeMsg) (MultiAppModel,
 func (m MultiAppModel) handleKeyPress(msg tea.KeyMsg) (MultiAppModel, tea.Cmd) {
 	key := msg.String()
 
-	if m.showLogs {
-		if cmd := m.handleLogsScrolling(key); cmd != nil {
-			return m, cmd
-		}
-	}
-
+	// Handle global commands first (these take precedence over viewport)
 	switch key {
 	case "ctrl+c", keyQuit:
 		m.quitting = true
@@ -81,32 +81,14 @@ func (m MultiAppModel) handleKeyPress(msg tea.KeyMsg) (MultiAppModel, tea.Cmd) {
 		return m.toggleShortcutsView()
 	}
 
-	return m, nil
-}
-
-// handleLogsScrolling processes scroll commands
-func (m MultiAppModel) handleLogsScrolling(key string) tea.Cmd {
-	switch key {
-	case keyScrollUp, "k":
-		m.logsViewport.LineUp(1)
-		return nil
-	case keyScrollDown, "j":
-		m.logsViewport.LineDown(1)
-		return nil
-	case keyPageUp:
-		m.logsViewport.PageUp()
-		return nil
-	case keyPageDown, " ":
-		m.logsViewport.PageDown()
-		return nil
-	case keyHome, "g":
-		m.logsViewport.GotoTop()
-		return nil
-	case keyEnd, "G":
-		m.logsViewport.GotoBottom()
-		return nil
+	// When in logs view, delegate keys to viewport (handles ↑/↓, j/k, pgup/pgdown, etc.)
+	if m.showLogs {
+		var cmd tea.Cmd
+		m.logsViewport, cmd = m.logsViewport.Update(msg)
+		return m, cmd
 	}
-	return nil
+
+	return m, nil
 }
 
 // toggleLogsView switches between logs view and status view
@@ -136,7 +118,7 @@ func (m MultiAppModel) toggleShortcutsView() (MultiAppModel, tea.Cmd) {
 // handleTick processes periodic refresh updates
 func (m MultiAppModel) handleTick() (MultiAppModel, tea.Cmd) {
 	sessions := m.tracker.GetSessions()
-	
+
 	// Transition from initialization to connected state
 	if m.isInitializing {
 		allConnected := true
@@ -266,12 +248,12 @@ func (m MultiAppModel) renderStatusBox() string {
 func (m MultiAppModel) formatAppStatus(session *mover.AppSessionInfo) string {
 	statusIcon := m.formatConnectionStatusIcon(session.Status)
 	nameStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(colorInfo))
-	
+
 	name := nameStyle.Render(session.Name)
 	status := m.formatConnectionStatus(session.Status)
-	
+
 	line := fmt.Sprintf("  %s %s  %s", statusIcon, name, status)
-	
+
 	if session.Error != nil {
 		errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(colorError))
 		line += "  " + errorStyle.Render("✗ "+session.Error.Error())
@@ -282,7 +264,7 @@ func (m MultiAppModel) formatAppStatus(session *mover.AppSessionInfo) string {
 			line += "  " + urlStyle.Render(session.URL)
 		}
 	}
-	
+
 	return line
 }
 
@@ -349,7 +331,7 @@ func (m MultiAppModel) formatUptime(d time.Duration) string {
 func (m MultiAppModel) renderLogsView() string {
 	boxStyle := m.createBoxStyle(colorMuted)
 	sessions := m.tracker.GetSessions()
-	
+
 	header := lipgloss.NewStyle().
 		Foreground(lipgloss.Color(colorMuted)).
 		Bold(true).
@@ -433,7 +415,7 @@ func (m MultiAppModel) renderLogsFooter(session *mover.AppSessionInfo) string {
 	}
 
 	hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(colorMuted))
-	footerLines = append(footerLines, hintStyle.Render("↑/↓: scroll  g/G: top/bottom  l: back"))
+	footerLines = append(footerLines, hintStyle.Render("↑/↓: scroll  l: back"))
 
 	return strings.Join(footerLines, "  |  ")
 }
@@ -547,7 +529,7 @@ type MultiAppProgram struct {
 // NewMultiAppProgram creates a new bubbletea program for multi-app live session
 func NewMultiAppProgram(tracker *mover.MultiAppTracker) *MultiAppProgram {
 	model := NewMultiAppModel(tracker)
-	p := tea.NewProgram(model, tea.WithAltScreen())
+	p := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
 
 	return &MultiAppProgram{
 		program: p,

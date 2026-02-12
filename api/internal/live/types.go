@@ -36,9 +36,12 @@ type ApplicationContext struct {
 	UserID               uuid.UUID
 	OrganizationID       uuid.UUID
 	StagingPath          string
-	BasePath             string // Base path for monorepo apps (e.g., "api", "apps/frontend")
+	RepositorySource     string
+	BasePath             string
 	Environment          shared_types.Environment
 	Domain               string
 	Config               map[string]interface{}
 	EnvironmentVariables map[string]string
+	AuthToken            string
+	AuthCookie           string
 }
