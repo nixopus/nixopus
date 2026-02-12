@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from '@nixopus/ui';
 import { TypographyMuted } from '@nixopus/ui';
 import useSmtpBanner from '@/packages/hooks/dashboard/use-smtp-banner';
 import { X } from 'lucide-react';
-import { ArrowRight, Package } from 'lucide-react';
+import { Package } from 'lucide-react';
 import { CardWrapper } from '@nixopus/ui';
 import { DataTable } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
@@ -128,20 +128,9 @@ export function SMTPBanner() {
 
 export const ContainersWidget: React.FC<ContainersWidgetProps> = ({ containersData, columns }) => {
   const { t } = useTranslation();
-  const router = useRouter();
 
   return (
-    <CardWrapper
-      title={t('dashboard.containers.title')}
-      icon={Package}
-      compact
-      actions={
-        <Button variant="outline" size="sm" onClick={() => router.push('/containers')}>
-          <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-          {t('dashboard.containers.viewAll')}
-        </Button>
-      }
-    >
+    <CardWrapper title={t('dashboard.containers.title')} icon={Package} compact>
       <DataTable
         data={containersData}
         columns={columns}

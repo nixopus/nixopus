@@ -19,11 +19,17 @@ interface DeploymentLogsTableProps {
   id: string;
   isDeployment?: boolean;
   title?: string;
+  additionalLogs?: FormattedLogEntry[];
 }
 
-export function DeploymentLogsTable({ id, isDeployment = false, title }: DeploymentLogsTableProps) {
+export function DeploymentLogsTable({
+  id,
+  isDeployment = false,
+  title,
+  additionalLogs
+}: DeploymentLogsTableProps) {
   const {
-    logs,
+    logs: deploymentLogs,
     isLoading,
     toggleLogExpansion,
     isLogExpanded,
@@ -41,6 +47,12 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
     setIsDense,
     refreshLogs
   } = useDeploymentLogsViewer({ id, isDeployment });
+
+  const logs = React.useMemo(() => {
+    if (!additionalLogs || additionalLogs.length === 0) return deploymentLogs;
+    const merged = [...deploymentLogs, ...additionalLogs];
+    return merged.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [deploymentLogs, additionalLogs]);
 
   const {
     hasLogs,
