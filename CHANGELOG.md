@@ -1,3 +1,12 @@
+# [0.1.0-alpha.128](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.127...v0.1.0-alpha.128) (2026-02-12)
+
+
+### Bug Fixes
+
+* use email/password login unless explicitly set to false ([#1033](https://github.com/raghavyuva/nixopus/issues/1033)) ([564407f](https://github.com/raghavyuva/nixopus/commit/564407fcb30bbee72b872c05bb8486016776b496))
+
+
+
 # [0.1.0-alpha.127](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.126...v0.1.0-alpha.127) (2026-02-12)
 
 

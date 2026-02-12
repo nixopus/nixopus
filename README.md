@@ -46,19 +46,19 @@ This section will help you set up Nixopus on your VPS quickly.
 **To get started without domain names, and to try out over ip:port deployment:**
 
 ```bash
-curl -sSL https://install.nixopus.com | bash
+sudo curl -sSL https://install.nixopus.com | bash
 ```
 
 **For custom ip setups:**
 
 ```bash
-curl -sSL https://install.nixopus.com | bash -s -- --host-ip 10.0.0.154
+sudo curl -sSL https://install.nixopus.com | bash -s -- --host-ip 10.0.0.154
 ```
 
 **To install only the CLI tool without running `nixopus install`:**
 
 ```bash
-curl -sSL https://install.nixopus.com | bash -s -- --skip-nixopus-install
+sudo curl -sSL https://install.nixopus.com | bash -s -- --skip-nixopus-install
 ```
 
 #### Optional Parameters
