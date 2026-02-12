@@ -252,3 +252,9 @@ func (t *Terminal) ResizeTerminal(rows, cols uint16) error {
 
 	return t.session.WindowChange(int(rows), int(cols))
 }
+
+func (t *Terminal) UpdateLastPing() {
+	if t.sshManager != nil {
+		t.sshManager.UpdateLastPing("")
+	}
+}

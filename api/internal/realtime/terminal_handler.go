@@ -2,7 +2,9 @@ package realtime
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -76,6 +78,50 @@ func (s *SocketServer) handleTerminal(conn *websocket.Conn, msg types.Payload) {
 	}
 
 	term.WriteMessage(input)
+}
+
+// handleTerminalPing handles ping messages from terminal clients to keep connections alive
+// Parameters:
+//
+//	conn - the *websocket.Conn representing the client connection.
+//	msg - the types.Payload representing the ping message from the client.
+func (s *SocketServer) handleTerminalPing(conn *websocket.Conn, msg types.Payload) {
+	s.terminalMutex.Lock()
+	defer s.terminalMutex.Unlock()
+
+	dataMap, ok := msg.Data.(map[string]interface{})
+	if !ok {
+		s.sendError(conn, "Invalid ping data")
+		return
+	}
+	terminalId, ok := dataMap["terminalId"].(string)
+	if !ok {
+		s.sendError(conn, "Missing terminalId in ping")
+		return
+	}
+
+	if s.terminals[conn] != nil {
+		if term, exists := s.terminals[conn][terminalId]; exists {
+			fmt.Printf("Terminal ping received for terminal %s\n", terminalId)
+			term.UpdateLastPing()
+		}
+	}
+
+	pongMsg := types.Payload{
+		Action: "terminal_pong",
+		Data: map[string]interface{}{
+			"terminalId": terminalId,
+			"timestamp":  time.Now().Unix(),
+		},
+	}
+
+	jsonData, err := json.Marshal(pongMsg)
+	if err != nil {
+		s.sendError(conn, "Failed to marshal pong response")
+		return
+	}
+
+	conn.WriteMessage(websocket.TextMessage, jsonData)
 }
 
 // handleTerminalResize handles the terminal resize.

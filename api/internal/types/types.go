@@ -94,6 +94,7 @@ const (
 	AUTHENTICATE           AvailableActions = "authenticate"
 	TERMINAL               AvailableActions = "terminal"
 	TERMINAL_RESIZE        AvailableActions = "terminal_resize"
+	TERMINAL_PING          AvailableActions = "terminal_ping"
 	DASHBOARD_MONITOR      AvailableActions = "dashboard_monitor"
 	STOP_DASHBOARD_MONITOR AvailableActions = "stop_dashboard_monitor"
 	MONITOR_APPLICATION    AvailableActions = "monitor_application"

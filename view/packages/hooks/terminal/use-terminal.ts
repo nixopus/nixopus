@@ -82,6 +82,7 @@ export const useTerminal = (
   const terminalInstanceRef = useRef<any | null>(null);
   const pendingOutputRef = useRef<string[]>([]);
   const currentLineRef = useRef<string>('');
+  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const isReadyRef = useRef(isReady);
   const sendJsonMessageRef = useRef(sendJsonMessage);
@@ -113,6 +114,10 @@ export const useTerminal = (
     }
     if (resizeTimeoutRef.current) {
       clearTimeout(resizeTimeoutRef.current);
+    }
+    if (pingIntervalRef.current) {
+      clearInterval(pingIntervalRef.current);
+      pingIntervalRef.current = null;
     }
   }, []);
 
@@ -150,6 +155,11 @@ export const useTerminal = (
         return;
       }
 
+      if (parsedMessage?.action === 'terminal_pong') {
+        console.log(`Received pong for terminal: ${parsedMessage.data?.terminalId}`);
+        return;
+      }
+
       if (parsedMessage?.type === OutputType.EXIT) {
         destroyTerminal();
         return;
@@ -170,6 +180,20 @@ export const useTerminal = (
     },
     [destroyTerminal, terminalId]
   );
+
+  // Send ping to keep terminal connection alive
+  const sendPing = useCallback(() => {
+    if (!isReady || !terminalId) return;
+
+    console.log(`Sending ping for terminal: ${terminalId}`);
+    safeSendMessage({
+      action: 'terminal_ping',
+      data: {
+        terminalId,
+        timestamp: Date.now()
+      }
+    });
+  }, [isReady, terminalId, safeSendMessage]);
 
   useEffect(() => {
     // Critical: process every WS frame. Using a single `message` state drops frames under load.
@@ -439,6 +463,21 @@ export const useTerminal = (
       console.error('Error initializing terminal:', error);
     }
   }, [safeSendMessage, terminalRef, terminalInstance, allowInput, terminalId]);
+
+  useEffect(() => {
+    if (!isReady || !terminalId) return;
+    if (pingIntervalRef.current) {
+      clearInterval(pingIntervalRef.current);
+    }
+    pingIntervalRef.current = setInterval(sendPing, 25000);
+    sendPing();
+    return () => {
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current);
+        pingIntervalRef.current = null;
+      }
+    };
+  }, [isReady, terminalId, sendPing]);
 
   // Update xterm theme when app theme changes
   useEffect(() => {

@@ -45,6 +45,9 @@ func (s *SocketServer) readLoop(conn *websocket.Conn) {
 		case types.TERMINAL_RESIZE:
 			s.handleTerminalResize(conn, msg)
 
+		case types.TERMINAL_PING:
+			s.handleTerminalPing(conn, msg)
+
 		case types.DASHBOARD_MONITOR:
 			s.handleDashboardMonitor(conn, msg)
 

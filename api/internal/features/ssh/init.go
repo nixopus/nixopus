@@ -33,6 +33,7 @@ type SSH struct {
 type connectionPoolEntry struct {
 	client   *goph.Client
 	lastUsed time.Time
+	lastPing time.Time
 	mu       sync.RWMutex
 }
 
@@ -133,7 +134,7 @@ func NewSSHManager() *SSHManager {
 		defaultID:    "default",
 		pool:         make(map[string]*connectionPoolEntry),
 		connectingMu: make(map[string]*sync.Mutex),
-		maxIdleTime:  5 * time.Minute,
+		maxIdleTime:  15 * time.Minute,
 	}
 	// Don't add default client - must be added via AddClient or GetSSHManagerForOrganization
 	go manager.cleanupIdleConnections()
@@ -257,6 +258,21 @@ func (m *SSHManager) NewSessionWithRetry(id string) (*ssh.Session, error) {
 	return nil, fmt.Errorf("failed to create SSH session after %d attempts due to connection issues", maxRetries)
 }
 
+// UpdateLastPing updates the last ping timestamp for a connection
+func (m *SSHManager) UpdateLastPing(id string) {
+	if id == "" {
+		id = m.defaultID
+	}
+	m.poolMu.Lock()
+	defer m.poolMu.Unlock()
+
+	if entry, exists := m.pool[id]; exists && entry != nil {
+		entry.mu.Lock()
+		entry.lastPing = time.Now()
+		entry.mu.Unlock()
+	}
+}
+
 // ConnectWithID connects to a specific SSH client by ID with connection pooling
 func (m *SSHManager) ConnectWithID(id string) (*goph.Client, error) {
 	if id == "" {
@@ -276,18 +292,20 @@ func (m *SSHManager) ConnectWithID(id string) (*goph.Client, error) {
 
 	// Validate the pooled connection is still alive
 	if client != nil {
-		// Check if connection was recently used (within last 30 seconds) - skip validation if so
+		// Check if connection was recently used or pinged (within last 30 seconds) - skip validation if so
 		// This avoids unnecessary validation checks that can fail due to server rate limiting
 		m.poolMu.RLock()
 		entry, entryExists := m.pool[id]
 		recentlyUsed := false
 		var lastUsed time.Time
+		var lastPing time.Time
 		if entryExists && entry != nil {
 			entry.mu.RLock()
 			lastUsed = entry.lastUsed
+			lastPing = entry.lastPing
 			entry.mu.RUnlock()
-			// If used within last 30 seconds, consider it still valid without validation
-			if time.Since(lastUsed) < 30*time.Second {
+			// If used or pinged within last 30 seconds, consider it still valid without validation
+			if time.Since(lastUsed) < 30*time.Second || time.Since(lastPing) < 30*time.Second {
 				recentlyUsed = true
 			}
 		}
@@ -301,7 +319,13 @@ func (m *SSHManager) ConnectWithID(id string) (*goph.Client, error) {
 			if entry, exists := m.pool[id]; exists && entry != nil {
 				entry.mu.Lock()
 				entry.lastUsed = time.Now()
+				wasRecentlyUsed := recentlyUsed
 				entry.mu.Unlock()
+				if wasRecentlyUsed {
+					fmt.Printf("SSHManager: Reusing recently used connection for client %s\n", id)
+				} else {
+					fmt.Printf("SSHManager: Reusing validated connection for client %s\n", id)
+				}
 			}
 			m.poolMu.Unlock()
 			return client, nil
@@ -370,6 +394,7 @@ func (m *SSHManager) ConnectWithID(id string) (*goph.Client, error) {
 	m.pool[id] = &connectionPoolEntry{
 		client:   client,
 		lastUsed: time.Now(),
+		lastPing: time.Now(),
 	}
 	m.poolMu.Unlock()
 
@@ -386,7 +411,15 @@ func (m *SSHManager) cleanupIdleConnections() {
 		m.poolMu.Lock()
 		for id, entry := range m.pool {
 			entry.mu.Lock()
-			if entry.client != nil && now.Sub(entry.lastUsed) > m.maxIdleTime {
+			// Keep connections alive longer if they have recent ping activity
+			// This prevents terminals from losing their session state
+			idleThreshold := m.maxIdleTime
+			if !entry.lastPing.IsZero() && now.Sub(entry.lastPing) < 5*time.Minute {
+				// If pinged recently, extend lifetime significantly
+				idleThreshold = 10 * time.Minute
+			}
+
+			if entry.client != nil && now.Sub(entry.lastUsed) > idleThreshold {
 				entry.client.Close()
 				entry.client = nil
 				delete(m.pool, id)
