@@ -238,7 +238,11 @@ function GeneralSettingsContent() {
           </div>
         </div>
       </div>
-      <Button variant="secondary" onClick={sidebar.handleLogoutClick} className="w-full gap-2">
+      <Button
+        variant="secondary"
+        onClick={sidebar.handleLogoutClick}
+        className="w-full gap-2 mt-4 sm:mb-0"
+      >
         <LogOut className="h-4 w-4" />
         {t('user.menu.logout')}
       </Button>
@@ -471,7 +475,7 @@ function TroubleshootingSettingsContent() {
 
 export function SettingsContent({ activeCategory }: SettingsContentProps) {
   return (
-    <div className="flex-1 flex flex-col overflow-hidden p-6">
+    <div className="flex-1 flex flex-col overflow-y-auto sm:overflow-hidden p-3 sm:p-6 pb-6 sm:pb-6">
       {activeCategory === 'general' && <GeneralSettingsContent />}
       {activeCategory === 'notifications' && <NotificationsSettingsContent />}
       {/* {activeCategory === 'domains' && <DomainsSettingsContent />} */}
@@ -487,16 +491,27 @@ export function SettingsContent({ activeCategory }: SettingsContentProps) {
 export function SettingsModal() {
   const { open, closeSettings, activeCategory, setActiveCategory } = useSettingsModal();
   const categories = useSettingsCategories();
+
   return (
     <Dialog open={open} onOpenChange={closeSettings}>
-      <DialogContent className="!max-w-[1200px] w-[90vw] max-h-[90vh] h-[90vh] p-0 flex overflow-hidden">
+      <DialogContent className="w-screen h-screen max-w-none sm:max-w-[1200px] sm:w-[90vw] sm:h-[90vh] p-0 flex flex-col sm:flex-row overflow-hidden">
         <DialogTitle className="sr-only">Settings</DialogTitle>
-        <SettingsSidebar
-          categories={categories}
-          activeCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
-        />
-        <SettingsContent activeCategory={activeCategory} />
+        <div className="flex flex-col sm:w-[220px] bg-muted/50">
+          <SettingsSidebar
+            categories={categories}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+          />
+          <div className="hidden sm:block">
+            <SettingsFooter />
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <SettingsContent activeCategory={activeCategory} />
+          <div className="sm:hidden">
+            <SettingsFooter />
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -582,6 +597,34 @@ export function SettingsSidebar({
   const accountCategories = visibleCategories.filter((cat) => cat.scope === 'account');
   const orgCategories = visibleCategories.filter((cat) => cat.scope === 'organization');
 
+  const mobileOptions = [
+    ...(accountCategories.length > 0
+      ? [
+          {
+            value: '__account__',
+            label: t('settings.sidebar.account'),
+            disabled: true
+          },
+          ...accountCategories.map((cat) => ({
+            value: cat.id,
+            label: `  ${cat.label}`
+          }))
+        ]
+      : []),
+    ...(orgCategories.length > 0
+      ? [
+          {
+            value: '__org__',
+            label: t('settings.sidebar.organization'),
+            disabled: true
+          },
+          ...orgCategories.map((cat) => ({
+            value: cat.id,
+            label: `  ${cat.label}`
+          }))
+        ]
+      : [])
+  ];
   const renderCategoryButton = (cat: SettingsCategory) => {
     const Icon = cat.icon;
     return (
@@ -589,37 +632,49 @@ export function SettingsSidebar({
         key={cat.id}
         onClick={() => onCategoryChange(cat.id)}
         className={cn(
-          'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors overflow-hidden text-left',
+          'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors text-left',
           activeCategory === cat.id ? 'bg-muted font-medium' : 'hover:bg-muted/50'
         )}
       >
-        <Icon className="h-4 w-4 flex-shrink-0" />
-        <span className="min-w-0 break-normal leading-normal text-left">{cat.label}</span>
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className="truncate">{cat.label}</span>
       </button>
     );
   };
 
   return (
-    <div className="w-[208px] flex-shrink-0 bg-muted/50 border-r flex flex-col">
-      <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4">
-        {accountCategories.length > 0 && (
-          <div className="space-y-1">
-            <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {t('settings.sidebar.account')}
-            </div>
-            {accountCategories.map(renderCategoryButton)}
-          </div>
-        )}
-        {orgCategories.length > 0 && (
-          <div className="space-y-1">
-            <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {t('settings.sidebar.organization')}
-            </div>
-            {orgCategories.map(renderCategoryButton)}
-          </div>
-        )}
+    <>
+      <div className="sm:hidden w-full border-b bg-muted/40 p-3 pr-12">
+        <SelectWrapper
+          value={activeCategory}
+          onValueChange={(val) => {
+            if (val.startsWith('__')) return;
+            onCategoryChange(val);
+          }}
+          options={mobileOptions}
+          className=" h-11"
+        />
       </div>
-      <SettingsFooter />
-    </div>
+      <div className="hidden sm:flex w-[220px] shrink-0 bg-muted/50 border-r flex-col flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex-1 p-4 space-y-4">
+          {accountCategories.length > 0 && (
+            <div className="space-y-1">
+              <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase">
+                {t('settings.sidebar.account')}
+              </div>
+              {accountCategories.map(renderCategoryButton)}
+            </div>
+          )}
+          {orgCategories.length > 0 && (
+            <div className="space-y-1">
+              <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase">
+                {t('settings.sidebar.organization')}
+              </div>
+              {orgCategories.map(renderCategoryButton)}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
