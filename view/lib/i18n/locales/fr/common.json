@@ -21,6 +21,13 @@
     "enabled": "Activé",
     "disabled": "Désactivé",
     "readMore": "Lire plus",
-    "readLess": "Lire moins"
+    "readLess": "Lire moins",
+    "notFound": {
+      "code": "404",
+      "title": "Page Non Trouvée",
+      "description": "La page que vous recherchez n'existe pas ou a été déplacée.",
+      "goHome": "Aller au Tableau de Bord",
+      "goBack": "Retour"
+    }
   }
 }

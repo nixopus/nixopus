@@ -1325,6 +1325,58 @@
 				},
 				"type": "object"
 			},
+			"CLIInitRequest": {
+				"description": "CLIInitRequest schema",
+				"properties": {
+					"branch": {
+						"nullable": true,
+						"type": "string"
+					},
+					"domains": {
+						"items": {
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "array"
+					},
+					"environment_variables": {
+						"additionalProperties": {
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "object"
+					},
+					"name": {
+						"type": "string"
+					},
+					"repository": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"CLIInitResponse": {
+				"description": "CLIInitResponse schema",
+				"properties": {
+					"domain": {
+						"nullable": true,
+						"type": "string"
+					},
+					"family_id": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"project_id": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"CategoriesResponse": {
 				"description": "CategoriesResponse schema",
 				"properties": {
@@ -8628,6 +8680,86 @@
 				"summary": "get recent audit logs",
 				"tags": [
 					"api/v1/audit"
+				]
+			}
+		},
+		"/api/v1/auth/cli/init": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).HandleCLIInit`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
+				"operationId": "POST_/api/v1/auth/cli/init",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/CLIInitRequest"
+							}
+						}
+					},
+					"description": "Request body for auth.CLIInitRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CLIInitResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/CLIInitResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "handle c l i init",
+				"tags": [
+					"api/v1/auth"
 				]
 			}
 		},
