@@ -13,7 +13,10 @@ def walk_directory(path):
         full_path = os.path.join(path, item)
 
         if os.path.isdir(full_path):
-            tree[item] = walk_directory(full_path)
+            try:
+                tree[item] = walk_directory(full_path)
+            except PermissionError:
+                tree[item] = {"Permission Denied": {}}
         else:
             tree[item] = {}
 
