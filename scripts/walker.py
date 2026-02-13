@@ -14,8 +14,14 @@ def walk_directory(path):
     return tree
 
 
+def print_tree(tree, indent=""):
+    for key, value in tree.items():
+        print(indent + "├── " + key)
+        print_tree(value, indent + "│   ")
+
+
 if __name__ == "__main__":
     path = input("Enter directory path: ")
 
     result = walk_directory(path)
-    print(result)
+    print_tree(result)
