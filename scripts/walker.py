@@ -3,7 +3,13 @@ import os
 def walk_directory(path):
     tree = {}
 
-    for item in os.listdir(path):
+    try:
+        items = os.listdir(path)
+    except Exception as e:
+        print("Error accessing directory:", e)
+        return {}
+
+    for item in items:
         full_path = os.path.join(path, item)
 
         if os.path.isdir(full_path):
