@@ -94,6 +94,12 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	defer conn.Close()
 
 	h.logger.Log(logger.Info, "websocket connection established", fmt.Sprintf("application_id=%s", applicationID))
+
+	// Send manifest immediately so client can skip already-synced files
+	if err := h.sendManifest(conn, appCtx.ApplicationID.String()); err != nil {
+		h.logger.Log(logger.Warning, "failed to send manifest", err.Error())
+	}
+
 	h.processMessages(ctx, conn, appCtx)
 }
 
@@ -192,6 +198,21 @@ func (h *WebSocketHandler) sendAck(conn *websocket.Conn, filePath string) error 
 		Type:      mover.MessageTypeAck,
 		Timestamp: time.Now(),
 		Payload:   map[string]interface{}{"file_path": filePath, "status": "received"},
+	})
+}
+
+// sendManifest sends the server's file manifest to the client for incremental sync.
+// Includes root_hash so client can skip full diff when roots match.
+func (h *WebSocketHandler) sendManifest(conn *websocket.Conn, applicationID string) error {
+	paths := h.gateway.manifestStore.GetPaths(applicationID)
+	if paths == nil {
+		paths = make(map[string]string)
+	}
+	tree := mover.BuildFromPaths(paths)
+	return h.sendMessage(conn, mover.SyncMessage{
+		Type:      mover.MessageTypeManifest,
+		Timestamp: time.Now(),
+		Payload:   mover.ManifestPayload{Paths: paths, RootHash: tree.RootHash, Version: 1},
 	})
 }
 

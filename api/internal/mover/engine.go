@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,9 +17,10 @@ import (
 )
 
 const (
-	defaultDebounceMs  = 100 // Fast response with fsnotify
-	largeSyncThreshold = 100
-	chunkSize          = 64 * 1024 // 64KB
+	defaultDebounceMs   = 100 // Fast response with fsnotify
+	largeSyncThreshold  = 100
+	chunkSize           = 64 * 1024 // 64KB
+	manifestWaitTimeout = 5 * time.Second
 )
 
 // ChangeType represents the type of file change
@@ -47,6 +50,10 @@ type Engine struct {
 	syncedFiles   map[string]string // path -> checksum of synced files
 	syncedMu      sync.RWMutex
 
+	syncState     *SyncState // Optional persisted sync state
+	applicationID string     // Application ID for sync state (when syncState is set)
+	forceFullSync bool       // When true, skip manifest merge and sync all files
+
 	// Connection state tracking
 	isConnected   bool
 	connectedMu   sync.RWMutex
@@ -70,6 +77,9 @@ type EngineConfig struct {
 	OnStateChange    func(ConnectionEvent)
 	OnFileSynced     func(string) // Called when a file is successfully synced
 	OnChangeDetected func(string) // Called when a file change is detected
+	SyncStatePath    string       // Path to .nixopus-sync-state.json for persisted sync state (empty = disabled)
+	ApplicationID    string       // Application ID for multi-app state (required if SyncStatePath is set)
+	ForceFullSync    bool         // If true, skip loading state and clear persisted state; sync all files
 }
 
 // NewEngine creates a new sync engine using fsnotify for file watching.
@@ -89,6 +99,26 @@ func NewEngine(cfg EngineConfig) (*Engine, error) {
 		return nil, fmt.Errorf("failed to create file watcher: %w", err)
 	}
 
+	syncedFiles := make(map[string]string)
+	var syncState *SyncState
+	if cfg.SyncStatePath != "" && cfg.ApplicationID != "" {
+		syncState = NewSyncState(cfg.SyncStatePath)
+		if !cfg.ForceFullSync {
+			if err := syncState.Load(); err != nil {
+				// Log but continue with empty state (full sync)
+			}
+			if paths := syncState.GetPaths(cfg.ApplicationID); paths != nil {
+				for p, c := range paths {
+					syncedFiles[p] = c
+				}
+			}
+		} else {
+			// Clear persisted state for this app so next run is also fresh
+			syncState.SetAllPaths(cfg.ApplicationID, nil)
+			_ = syncState.Save()
+		}
+	}
+
 	engine := &Engine{
 		rootPath:         cfg.RootPath,
 		client:           cfg.Client,
@@ -96,7 +126,10 @@ func NewEngine(cfg EngineConfig) (*Engine, error) {
 		debounceDelay:    time.Duration(debounceMs) * time.Millisecond,
 		fileWatcher:      fw,
 		stopChan:         make(chan struct{}),
-		syncedFiles:      make(map[string]string),
+		syncedFiles:      syncedFiles,
+		syncState:        syncState,
+		applicationID:    cfg.ApplicationID,
+		forceFullSync:    cfg.ForceFullSync,
 		isConnected:      true, // Assume connected initially
 		pendingChanges:   make([]FileChangeEvent, 0),
 		onStateChange:    cfg.OnStateChange,
@@ -182,37 +215,175 @@ func (e *Engine) Start() error {
 	}
 
 	go e.watchLoop()
+	go e.drainReceiveChannel() // Prevent receive channel from blocking read loop
 	return nil
 }
 
 // InitialSync performs the initial full sync by walking the directory
-// Uses parallel processing for better performance
+// Skips files whose local checksum matches persisted/server state.
 func (e *Engine) InitialSync() error {
+	// Wait for server manifest and merge into syncedFiles (server is source of truth)
+	// Skip merge when ForceFullSync so we sync everything
+	manifest := e.waitForManifest()
+	if !e.forceFullSync && manifest != nil && manifest.paths != nil {
+		e.syncedMu.Lock()
+		for p, c := range manifest.paths {
+			e.syncedFiles[p] = c
+		}
+		e.syncedMu.Unlock()
+	}
+
 	files, err := e.getAllSyncableFiles()
 	if err != nil {
 		return fmt.Errorf("failed to get files: %w", err)
 	}
 
-	totalFiles := len(files)
-
-	// Use parallel processing for large syncs
-	if totalFiles > largeSyncThreshold {
-		return e.parallelSync(files)
+	// Prune non-existent paths from persisted state (e.g. after git branch switch)
+	if e.syncState != nil && e.applicationID != "" {
+		existingSet := make(map[string]bool, len(files))
+		for _, f := range files {
+			existingSet[filepath.ToSlash(filepath.Clean(f))] = true
+		}
+		e.syncState.PruneNonexistentPaths(e.applicationID, existingSet)
+		_ = e.syncState.Save()
 	}
 
-	// Sequential sync for small syncs (less overhead)
-	for _, file := range files {
-		change := FileChangeEvent{
-			Path: file,
-			Type: ChangeAdded,
+	// Build local Merkle tree and diff against server state
+	filesToSync, filesToDelete := e.merkleDiffWithRootCheck(files, manifest)
+
+	// Send deletes for files server has but we don't (e.g. deleted locally)
+	for _, file := range filesToDelete {
+		if err := e.sendDeleteMessage(file); err != nil {
+			return fmt.Errorf("failed to send delete %s: %w", file, err)
 		}
-		if err := e.sendChange(change); err != nil {
-			return fmt.Errorf("failed to send file %s: %w", file, err)
+		if e.syncState != nil && e.applicationID != "" {
+			e.syncState.RemovePath(e.applicationID, file)
+			_ = e.syncState.Save()
 		}
-		// Notify file synced (sendChange already calls onFileSynced on success)
+		e.syncedMu.Lock()
+		delete(e.syncedFiles, file)
+		e.syncedMu.Unlock()
+	}
+
+	// Use parallel processing for large syncs
+	if len(filesToSync) > largeSyncThreshold {
+		if err := e.parallelSync(filesToSync); err != nil {
+			return err
+		}
+	} else {
+		// Sequential sync for small syncs (less overhead)
+		for _, file := range filesToSync {
+			change := FileChangeEvent{Path: file, Type: ChangeAdded}
+			if err := e.sendChange(change); err != nil {
+				return fmt.Errorf("failed to send file %s: %w", file, err)
+			}
+		}
+	}
+
+	// Persist Merkle root for cache hint (Phase 3b)
+	if e.syncState != nil && e.applicationID != "" {
+		e.syncedMu.RLock()
+		tree := BuildFromPaths(e.syncedFiles)
+		e.syncedMu.RUnlock()
+		if tree.RootHash != "" {
+			e.syncState.SetRootHash(e.applicationID, tree.RootHash)
+			_ = e.syncState.Save()
+		}
+	}
+
+	// Log sync summary
+	totalFiles := len(files)
+	skipped := totalFiles - len(filesToSync) // Files that matched and were not sent
+	if totalFiles > 0 {
+		log.Printf("sync: %d synced, %d deleted, %d skipped (%d total)", len(filesToSync), len(filesToDelete), skipped, totalFiles)
 	}
 
 	return nil
+}
+
+// manifestResult holds both paths and root_hash from server (Phase 3b).
+type manifestResult struct {
+	paths    map[string]string
+	rootHash string
+}
+
+// waitForManifest waits for the server's manifest message (or timeout).
+// Returns paths and root_hash from server, or nil paths if not received.
+func (e *Engine) waitForManifest() *manifestResult {
+	receive := e.client.Receive()
+	deadline := time.After(manifestWaitTimeout)
+	for {
+		select {
+		case msg, ok := <-receive:
+			if !ok {
+				return nil
+			}
+			if msg.Type == MessageTypeManifest {
+				if m := extractManifestPayload(msg.Payload); m != nil {
+					return m
+				}
+			}
+		case <-deadline:
+			return nil
+		}
+	}
+}
+
+// extractManifestPayload extracts ManifestPayload from message.
+func extractManifestPayload(payload interface{}) *manifestResult {
+	if payload == nil {
+		return nil
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return nil
+	}
+	var m ManifestPayload
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil
+	}
+	return &manifestResult{paths: m.Paths, rootHash: m.RootHash}
+}
+
+// merkleDiffWithRootCheck builds a Merkle tree from local files and diffs against server state.
+// Phase 3b: If server root_hash matches local root, skip full diff (0 files to sync).
+func (e *Engine) merkleDiffWithRootCheck(files []string, manifest *manifestResult) (toSync []string, toDelete []string) {
+	localLeaves := make(map[string]string)
+	for _, file := range files {
+		fullPath := filepath.Join(e.rootPath, file)
+		checksum := e.computeFileChecksum(fullPath)
+		if checksum == "" {
+			toSync = append(toSync, filepath.ToSlash(filepath.Clean(file)))
+			continue
+		}
+		normPath := filepath.ToSlash(filepath.Clean(file))
+		localLeaves[normPath] = checksum
+	}
+
+	tree := BuildFromPaths(localLeaves)
+
+	// Phase 3b fast path: if roots match, nothing to sync or delete
+	if manifest != nil && manifest.rootHash != "" && tree.RootHash != "" && manifest.rootHash == tree.RootHash {
+		return nil, nil
+	}
+	// Both empty: server and local have no files
+	if manifest != nil && manifest.rootHash == "" && tree.RootHash == "" && len(localLeaves) == 0 {
+		e.syncedMu.RLock()
+		serverEmpty := len(e.syncedFiles) == 0
+		e.syncedMu.RUnlock()
+		if serverEmpty {
+			return nil, nil
+		}
+	}
+
+	e.syncedMu.RLock()
+	serverLeaves := make(map[string]string, len(e.syncedFiles))
+	for p, c := range e.syncedFiles {
+		serverLeaves[p] = c
+	}
+	e.syncedMu.RUnlock()
+
+	return DiffAgainst(tree, serverLeaves)
 }
 
 // parallelSync performs parallel file syncing using worker pool pattern
@@ -298,10 +469,29 @@ func (e *Engine) Sync() error {
 // Stop stops the sync engine
 func (e *Engine) Stop() error {
 	close(e.stopChan)
+	if e.syncState != nil {
+		_ = e.syncState.Save()
+	}
 	if e.fileWatcher != nil {
 		return e.fileWatcher.Stop()
 	}
 	return nil
+}
+
+// drainReceiveChannel reads from client.Receive() to prevent the channel from filling
+// and blocking the WebSocket read loop. Messages are discarded (manifest already consumed).
+func (e *Engine) drainReceiveChannel() {
+	receive := e.client.Receive()
+	for {
+		select {
+		case <-e.stopChan:
+			return
+		case _, ok := <-receive:
+			if !ok {
+				return
+			}
+		}
+	}
 }
 
 // watchLoop processes file system events from the watcher
@@ -382,6 +572,10 @@ func (e *Engine) handleWatcherEvent(event Event) error {
 		e.syncedMu.Lock()
 		delete(e.syncedFiles, event.Path)
 		e.syncedMu.Unlock()
+		if e.syncState != nil && e.applicationID != "" {
+			e.syncState.RemovePath(e.applicationID, event.Path)
+			_ = e.syncState.Save()
+		}
 	}
 
 	// Check if connected - if not, queue the change
@@ -537,6 +731,11 @@ func (e *Engine) sendFileContent(change FileChangeEvent) error {
 	e.syncedMu.Lock()
 	e.syncedFiles[change.Path] = checksum
 	e.syncedMu.Unlock()
+
+	if e.syncState != nil && e.applicationID != "" {
+		e.syncState.SetPath(e.applicationID, change.Path, checksum)
+		_ = e.syncState.Save()
+	}
 
 	if err := e.sendFileChangeNotification(change, info, checksum); err != nil {
 		return err
