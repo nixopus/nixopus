@@ -42,25 +42,14 @@ func (s *TaskService) getDockerService(ctx context.Context) (docker.DockerReposi
 
 // LiveDevConfig holds configuration for starting a live dev service
 type LiveDevConfig struct {
-	// ApplicationID is the associated application ID for logging
-	ApplicationID uuid.UUID
-
-	// OrganizationID is the organization ID for organization-specific operations
+	ApplicationID  uuid.UUID
 	OrganizationID uuid.UUID
-
-	// StagingPath is the local filesystem path containing the project files
-	StagingPath string
-
-	// Framework is the detected or specified framework (e.g., "nextjs", "vite")
-	// If empty, auto-detection will be attempted
-	Framework string
-
-	// Port is the port to expose the dev server on (0 = auto-allocate)
-	Port int
-
-	// EnvVars are additional environment variables to set in the container
-	EnvVars map[string]string
-
-	// Domain is the domain name to route to this container (optional)
-	Domain string
+	StagingPath    string
+	Framework      string
+	Port           int
+	EnvVars        map[string]string
+	Domain         string
+	DockerfilePath string
+	InternalPort   int
+	Workdir        string
 }

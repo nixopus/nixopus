@@ -79,8 +79,7 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	// Set organization ID in context for downstream operations (SSH manager, etc.)
 	ctx = context.WithValue(ctx, types.OrganizationIDKey, orgID)
 
-	// Get application and validate ownership
-	appCtx, err := h.gateway.getApplicationContext(ctx, applicationID, user.ID, organizationID)
+	appCtx, err := h.gateway.getApplicationContext(ctx, r, token, applicationID, user.ID, organizationID)
 	if err != nil {
 		h.logger.Log(logger.Error, "failed to get application context", fmt.Sprintf("application_id=%s err=%v", applicationID, err))
 		http.Error(w, fmt.Sprintf("Application not found or access denied: %v", err), http.StatusNotFound)
@@ -212,8 +211,7 @@ func (h *WebSocketHandler) sendMessage(conn *websocket.Conn, msg mover.SyncMessa
 	return conn.WriteJSON(msg)
 }
 
-// getApplicationContext gets application information and staging path
-func (g *Gateway) getApplicationContext(ctx context.Context, applicationID, userID, organizationID uuid.UUID) (*ApplicationContext, error) {
+func (g *Gateway) getApplicationContext(ctx context.Context, r *http.Request, token string, applicationID, userID, organizationID uuid.UUID) (*ApplicationContext, error) {
 	// Get application
 	deployStorage := storage.DeployStorage{DB: g.store.DB, Ctx: ctx}
 	application, err := deployStorage.GetApplicationById(applicationID.String(), organizationID)
@@ -244,15 +242,25 @@ func (g *Gateway) getApplicationContext(ctx context.Context, applicationID, user
 		basePath = "/"
 	}
 
+	repoSource := g.stagingManager.GetRepositorySource(ctx, &application)
+
+	authCookie := ""
+	if r != nil {
+		authCookie = r.Header.Get("Cookie")
+	}
+
 	return &ApplicationContext{
 		ApplicationID:        applicationID,
 		UserID:               userID,
 		OrganizationID:       organizationID,
 		StagingPath:          stagingPath,
+		RepositorySource:     repoSource,
 		BasePath:             basePath,
 		Environment:          application.Environment,
 		Domain:               domain,
 		Config:               make(map[string]interface{}),
 		EnvironmentVariables: envVars,
+		AuthToken:            token,
+		AuthCookie:           authCookie,
 	}, nil
 }

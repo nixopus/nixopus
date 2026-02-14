@@ -1,4 +1,4 @@
-package sftp
+package utils
 
 import (
 	"context"

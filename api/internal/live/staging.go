@@ -3,6 +3,7 @@ package live
 import (
 	"context"
 	"path/filepath"
+	"strconv"
 	"sync"
 
 	"github.com/google/uuid"
@@ -56,7 +57,18 @@ func (sm *StagingManager) GetStagingPath(ctx context.Context, applicationID, use
 	return stagingPath, nil
 }
 
-// GetFileReceiver gets or creates a file receiver for an application and path
+func (sm *StagingManager) GetRepositorySource(ctx context.Context, application *shared_types.Application) string {
+	repoID, err := strconv.ParseUint(application.Repository, 10, 64)
+	if err != nil {
+		return ""
+	}
+	repo, err := sm.githubService.GetGithubRepositoryByID(application.UserID.String(), repoID)
+	if err != nil {
+		return ""
+	}
+	return repo.FullName
+}
+
 func (sm *StagingManager) GetFileReceiver(applicationID uuid.UUID, path string, totalChunks int, checksum string, stagingPath string) *FileReceiver {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()

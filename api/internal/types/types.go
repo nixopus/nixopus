@@ -10,6 +10,11 @@ type Config struct {
 	GitHub     GitHubConfig     `mapstructure:"github"`
 	BetterAuth BetterAuthConfig `mapstructure:"betterauth"`
 	Stripe     StripeConfig     `mapstructure:"stripe"`
+	Agent      AgentConfig      `mapstructure:"agent"`
+}
+
+type AgentConfig struct {
+	Endpoint string `mapstructure:"endpoint"`
 }
 
 type BetterAuthConfig struct {
