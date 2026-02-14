@@ -21,8 +21,9 @@ import (
 )
 
 var (
-	allFlag bool
-	envPath string
+	allFlag           bool
+	envPath           string
+	forceFullSyncFlag bool
 )
 
 var LiveCmd = &cobra.Command{
@@ -41,6 +42,7 @@ var LiveCmd = &cobra.Command{
 func init() {
 	LiveCmd.Flags().BoolVar(&allFlag, "all", false, "Run all apps in the family simultaneously")
 	LiveCmd.Flags().StringVar(&envPath, "env-path", "", "Path to environment file (relative to project root, e.g., .env or .env.production). Only used during initialization if project is not initialized.")
+	LiveCmd.Flags().BoolVar(&forceFullSyncFlag, "force-full-sync", false, "Bypass incremental sync; clear persisted state and sync all files")
 }
 
 func runSingleApp(args []string) error {
@@ -253,6 +255,12 @@ func runSingleApp(args []string) error {
 		}
 	}
 
+	syncStatePath, err := config.GetSyncStatePath()
+	if err != nil {
+		program.Quit()
+		return fmt.Errorf("failed to get sync state path: %w", err)
+	}
+
 	engine, err := mover.NewEngine(mover.EngineConfig{
 		RootPath:         watchPath,
 		Client:           client,
@@ -261,6 +269,9 @@ func runSingleApp(args []string) error {
 		OnStateChange:    onStateChange,
 		OnFileSynced:     func(path string) { tracker.IncrementFilesSynced() },
 		OnChangeDetected: func(path string) { tracker.IncrementChanges() },
+		SyncStatePath:    syncStatePath,
+		ApplicationID:    applicationID,
+		ForceFullSync:    forceFullSyncFlag,
 	})
 	if err != nil {
 		program.Quit()

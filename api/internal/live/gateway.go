@@ -27,6 +27,7 @@ type Gateway struct {
 	stagingManager    *StagingManager
 	buildFirstManager *BuildFirstManager
 	websocketHandler  *WebSocketHandler
+	manifestStore     *ManifestStore
 	store             *shared_storage.Store
 	logger            logger.Logger
 }
@@ -36,6 +37,7 @@ func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, 
 	gateway := &Gateway{
 		stagingManager:    stagingManager,
 		buildFirstManager: NewBuildFirstManager(stagingManager, taskService, logger),
+		manifestStore:     NewManifestStore(),
 		store:             store,
 		logger:            logger,
 	}
@@ -226,6 +228,8 @@ func (g *Gateway) handleFileContent(ctx context.Context, conn *websocket.Conn, a
 		return fmt.Errorf("failed to write file to staging: %w", err)
 	}
 
+	g.manifestStore.Set(appCtx.ApplicationID.String(), fileContent.Path, fileContent.Checksum)
+
 	g.logger.Log(logger.Info, "file received and written", fileContent.Path)
 	g.stagingManager.RemoveFileReceiver(appCtx.ApplicationID, fileContent.Path)
 
@@ -255,6 +259,8 @@ func (g *Gateway) handleFileDelete(ctx context.Context, appCtx *ApplicationConte
 	if err := DeleteFileFromStaging(ctx, appCtx.StagingPath, fileChange.Path); err != nil {
 		return fmt.Errorf("failed to delete file: %w", err)
 	}
+
+	g.manifestStore.Remove(appCtx.ApplicationID.String(), fileChange.Path)
 
 	g.logger.Log(logger.Info, "file deleted", fileChange.Path)
 	if g.buildFirstManager != nil {

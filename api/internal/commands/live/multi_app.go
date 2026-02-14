@@ -346,6 +346,11 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 		}
 	}
 
+	syncStatePath, err := config.GetSyncStatePath()
+	if err != nil {
+		return fmt.Errorf("failed to get sync state path: %w", err)
+	}
+
 	// Create sync engine
 	engine, err := mover.NewEngine(mover.EngineConfig{
 		RootPath:      watchPath,
@@ -363,6 +368,9 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 			// Note: Tracker updates are batched via the 5-second ticker in poller goroutine
 			// This reduces mutex contention when many apps are detecting changes simultaneously
 		},
+		SyncStatePath: syncStatePath,
+		ApplicationID: session.applicationID,
+		ForceFullSync: forceFullSyncFlag,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create sync engine: %w", err)

@@ -12,6 +12,7 @@ const (
 	productionServerURL = "http://localhost:8080"
 	configFileName      = ".nixopus"
 	authFileName        = "auth.json"
+	syncStateFileName   = "sync-state.json"
 )
 
 // AuthConfig represents global authentication configuration stored in user's home directory
@@ -252,6 +253,18 @@ func getAuthPath() (string, error) {
 	authPath := filepath.Join(configDir, authFileName)
 
 	return authPath, nil
+}
+
+// GetSyncStatePath returns the path to the sync state file in ~/.config/nixopus/sync-state.json
+func GetSyncStatePath() (string, error) {
+	if err := ensureAuthDir(); err != nil {
+		return "", err
+	}
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get home directory: %w", err)
+	}
+	return filepath.Join(homeDir, ".config", "nixopus", syncStateFileName), nil
 }
 
 // ensureAuthDir ensures the auth directory exists
