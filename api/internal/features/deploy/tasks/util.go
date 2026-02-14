@@ -228,14 +228,19 @@ func (tc *LiveDevTaskContext) UpdateDeployment(updates map[string]interface{}) {
 	}
 }
 
-// GetDeploymentID returns the deployment ID
 func (tc *LiveDevTaskContext) GetDeploymentID() uuid.UUID {
 	return tc.deploymentID
 }
 
-// GetSSHHostForOrganization gets the SSH host for a specific organization.
-// It creates a context with the organization ID and retrieves the SSH host
-// from the organization-specific SSH manager.
+func (tc *LiveDevTaskContext) toTaskContext() *TaskContext {
+	return &TaskContext{
+		service:       tc.service,
+		applicationID: tc.applicationID,
+		deploymentID:  tc.deploymentID,
+		statusID:      tc.statusID,
+	}
+}
+
 func GetSSHHostForOrganization(ctx context.Context, organizationID uuid.UUID) (string, error) {
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, organizationID.String())
 	manager, err := ssh.GetSSHManagerFromContext(orgCtx)

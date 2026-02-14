@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	pollInterval = 2 * time.Second
+	pollInterval = 30 * time.Second
 	apiTimeout   = 5 * time.Second
 )
 

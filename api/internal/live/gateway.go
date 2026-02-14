@@ -24,20 +24,20 @@ import (
 const chunkSize = int64(64 * 1024)
 
 type Gateway struct {
-	stagingManager   *StagingManager
-	serviceManager   *ServiceManager
-	websocketHandler *WebSocketHandler
-	store            *shared_storage.Store
-	logger           logger.Logger
+	stagingManager    *StagingManager
+	buildFirstManager *BuildFirstManager
+	websocketHandler  *WebSocketHandler
+	store             *shared_storage.Store
+	logger            logger.Logger
 }
 
 func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, store *shared_storage.Store) *Gateway {
 	logger := logger.NewLogger()
 	gateway := &Gateway{
-		stagingManager: stagingManager,
-		serviceManager: NewServiceManager(stagingManager, taskService, logger),
-		store:          store,
-		logger:         logger,
+		stagingManager:    stagingManager,
+		buildFirstManager: NewBuildFirstManager(stagingManager, taskService, logger),
+		store:             store,
+		logger:            logger,
 	}
 	gateway.websocketHandler = NewWebSocketHandler(gateway, logger)
 	return gateway
@@ -217,7 +217,11 @@ func (g *Gateway) handleFileContent(ctx context.Context, conn *websocket.Conn, a
 		return nil
 	}
 
-	// Write to staging
+	content, err := receiver.Reassemble()
+	if err != nil {
+		return fmt.Errorf("failed to reassemble file: %w", err)
+	}
+
 	if err := receiver.WriteToStaging(ctx); err != nil {
 		return fmt.Errorf("failed to write file to staging: %w", err)
 	}
@@ -225,8 +229,8 @@ func (g *Gateway) handleFileContent(ctx context.Context, conn *websocket.Conn, a
 	g.logger.Log(logger.Info, "file received and written", fileContent.Path)
 	g.stagingManager.RemoveFileReceiver(appCtx.ApplicationID, fileContent.Path)
 
-	if g.serviceManager != nil {
-		g.serviceManager.EnsureDevServiceStarted(ctx, appCtx)
+	if g.buildFirstManager != nil {
+		g.buildFirstManager.HandleFileWritten(ctx, appCtx, fileContent.Path, content)
 	}
 
 	if err := g.websocketHandler.sendAck(conn, fileContent.Path); err != nil {
@@ -253,5 +257,8 @@ func (g *Gateway) handleFileDelete(ctx context.Context, appCtx *ApplicationConte
 	}
 
 	g.logger.Log(logger.Info, "file deleted", fileChange.Path)
+	if g.buildFirstManager != nil {
+		g.buildFirstManager.HandleFileDeleted(ctx, appCtx, fileChange.Path)
+	}
 	return nil
 }

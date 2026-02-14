@@ -197,7 +197,7 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			Name:       TASK_LIVE_DEV,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, config LiveDevConfig) error {
-				err := t.HandleLiveDevDeployment(ctx, config)
+				err := t.HandleBuildFirstLiveDev(ctx, config)
 				if err != nil {
 					fmt.Printf("error handling live dev deployment: %v\n", err)
 					return err

@@ -12,7 +12,7 @@ import (
 
 	"github.com/pkg/sftp"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	sftputil "github.com/raghavyuva/nixopus-api/internal/live/sftp"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 // FileReceiver receives and reassembles file chunks
@@ -147,7 +147,7 @@ func getSFTPClient(ctx context.Context) (*sftp.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	return sftputil.CreateSFTPClientWithRetry(sshMgr)
+	return utils.CreateSFTPClientWithRetry(sshMgr)
 }
 
 // WriteToStaging writes the reassembled file to the staging directory via SFTP

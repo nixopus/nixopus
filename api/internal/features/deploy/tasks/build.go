@@ -16,8 +16,8 @@ import (
 	"github.com/moby/term"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	sftputil "github.com/raghavyuva/nixopus-api/internal/live/sftp"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 type BuildConfig struct {
@@ -48,7 +48,7 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 
 	// Check if path exists on remote server using SFTP with retry logic
 	b.TaskContext.AddLog("Checking build context path on remote server...")
-	sftpClient, err := sftputil.CreateSFTPClientWithRetry(sshManager)
+	sftpClient, err := utils.CreateSFTPClientWithRetry(sshManager)
 	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Failed to create SFTP client: "+err.Error(), shared_types.Failed)
 		return "", fmt.Errorf("failed to create SFTP client: %w", err)
