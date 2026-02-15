@@ -415,6 +415,57 @@ func (m *SSHManager) CloseConnection(id string) {
 	m.poolMu.Unlock()
 }
 
+// CloseAllConnections closes all pooled SSH connections.
+// Call this before invalidating a cached manager to avoid connection leaks.
+func (m *SSHManager) CloseAllConnections() {
+	m.poolMu.Lock()
+	for id, entry := range m.pool {
+		entry.mu.Lock()
+		if entry.client != nil {
+			entry.client.Close()
+			entry.client = nil
+		}
+		entry.mu.Unlock()
+		delete(m.pool, id)
+	}
+	m.poolMu.Unlock()
+}
+
+// InvalidateSSHManagerCache performs soft invalidation: removes the cached SSHManager from the cache
+// without closing existing connections. Existing terminal sessions continue until they exit or go idle.
+// The next call to GetSSHManagerForOrganization will fetch fresh SSH config from the database.
+// Call this when SSH keys are created, updated, or when the active key changes.
+// Also invalidate the Docker service cache (docker.InvalidateDockerServiceCache) when SSH config changes.
+func InvalidateSSHManagerCache(orgID uuid.UUID) {
+	InvalidateSSHManagerCacheWithOptions(orgID, InvalidateOptions{Soft: true})
+}
+
+// InvalidateSSHManagerCacheForce performs hard invalidation: removes the cache and closes all connections.
+// Use only when credentials are compromised or you need to force-disconnect all sessions immediately.
+func InvalidateSSHManagerCacheForce(orgID uuid.UUID) {
+	InvalidateSSHManagerCacheWithOptions(orgID, InvalidateOptions{Soft: false})
+}
+
+// InvalidateOptions configures how cache invalidation behaves.
+type InvalidateOptions struct {
+	// Soft: if true, evict from cache only; existing connections stay open and drain naturally.
+	// If false, close all connections immediately (disrupts active terminal sessions).
+	Soft bool
+}
+
+// InvalidateSSHManagerCacheWithOptions invalidates the cache with explicit soft/hard behavior.
+func InvalidateSSHManagerCacheWithOptions(orgID uuid.UUID, opts InvalidateOptions) {
+	orgIDStr := orgID.String()
+	orgManagersMu.Lock()
+	defer orgManagersMu.Unlock()
+	if manager, exists := orgManagers[orgIDStr]; exists {
+		if !opts.Soft {
+			manager.CloseAllConnections()
+		}
+		delete(orgManagers, orgIDStr)
+	}
+}
+
 // RunCommand runs a command on the default SSH client
 func (m *SSHManager) RunCommand(cmd string) (string, error) {
 	return m.RunCommandWithID("", cmd)
