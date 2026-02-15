@@ -416,7 +416,6 @@ func (m *SSHManager) CloseConnection(id string) {
 }
 
 // CloseAllConnections closes all pooled SSH connections.
-// Call this before invalidating a cached manager to avoid connection leaks.
 func (m *SSHManager) CloseAllConnections() {
 	m.poolMu.Lock()
 	for id, entry := range m.pool {
@@ -431,29 +430,23 @@ func (m *SSHManager) CloseAllConnections() {
 	m.poolMu.Unlock()
 }
 
-// InvalidateSSHManagerCache performs soft invalidation: removes the cached SSHManager from the cache
-// without closing existing connections. Existing terminal sessions continue until they exit or go idle.
-// The next call to GetSSHManagerForOrganization will fetch fresh SSH config from the database.
-// Call this when SSH keys are created, updated, or when the active key changes.
-// Also invalidate the Docker service cache (docker.InvalidateDockerServiceCache) when SSH config changes.
+// InvalidateSSHManagerCache evicts the manager from cache (soft); existing connections drain naturally.
+// TODO: Call in handlers that change active key for SSH keys table
 func InvalidateSSHManagerCache(orgID uuid.UUID) {
 	InvalidateSSHManagerCacheWithOptions(orgID, InvalidateOptions{Soft: true})
 }
 
-// InvalidateSSHManagerCacheForce performs hard invalidation: removes the cache and closes all connections.
-// Use only when credentials are compromised or you need to force-disconnect all sessions immediately.
+// InvalidateSSHManagerCacheForce evicts cache and closes all connections; use for credential revocation.
 func InvalidateSSHManagerCacheForce(orgID uuid.UUID) {
 	InvalidateSSHManagerCacheWithOptions(orgID, InvalidateOptions{Soft: false})
 }
 
-// InvalidateOptions configures how cache invalidation behaves.
+// InvalidateOptions configures soft (evict only) vs hard (evict + close connections) invalidation.
 type InvalidateOptions struct {
-	// Soft: if true, evict from cache only; existing connections stay open and drain naturally.
-	// If false, close all connections immediately (disrupts active terminal sessions).
 	Soft bool
 }
 
-// InvalidateSSHManagerCacheWithOptions invalidates the cache with explicit soft/hard behavior.
+// InvalidateSSHManagerCacheWithOptions invalidates with explicit soft/hard behavior.
 func InvalidateSSHManagerCacheWithOptions(orgID uuid.UUID, opts InvalidateOptions) {
 	orgIDStr := orgID.String()
 	orgManagersMu.Lock()
