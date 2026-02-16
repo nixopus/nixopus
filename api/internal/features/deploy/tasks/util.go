@@ -117,6 +117,9 @@ type LiveDevTaskContext struct {
 	applicationID uuid.UUID
 	deploymentID  uuid.UUID
 	statusID      uuid.UUID
+	// OnBuildLog is called for every log line during the build, enabling real-time
+	// streaming to the CLI via WebSocket. When nil, logs are only written to the DB.
+	OnBuildLog func(applicationID uuid.UUID, logLine string)
 }
 
 // NewLiveDevTaskContext creates a new task context for live dev deployments
@@ -169,7 +172,7 @@ func (tc *LiveDevTaskContext) AddLog(logMessage string) {
 	appLog := shared_types.ApplicationLogs{
 		ID:                      uuid.New(),
 		ApplicationID:           tc.applicationID,
-		Log:                     "[LiveDev] " + logMessage,
+		Log:                     logMessage,
 		CreatedAt:               time.Now(),
 		UpdatedAt:               time.Now(),
 		ApplicationDeploymentID: tc.deploymentID,

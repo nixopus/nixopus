@@ -96,6 +96,10 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 
 	h.logger.Log(logger.Info, "websocket connection established", fmt.Sprintf("application_id=%s", applicationID))
 
+	// Track this connection so pipeline progress can be sent to the client
+	h.gateway.registerConn(applicationID, conn, h)
+	defer h.gateway.unregisterConn(applicationID)
+
 	// Send manifest immediately so client can skip already-synced files
 	if err := h.sendManifest(conn, appCtx.ApplicationID.String()); err != nil {
 		h.logger.Log(logger.Warning, "failed to send manifest", err.Error())
