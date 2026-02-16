@@ -4,6 +4,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/commands/addcmd"
 	"github.com/raghavyuva/nixopus-api/internal/commands/listcmd"
 	"github.com/raghavyuva/nixopus-api/internal/commands/live"
+	"github.com/raghavyuva/nixopus-api/internal/commands/pause"
 	"github.com/raghavyuva/nixopus-api/internal/commands/removecmd"
 	setenv "github.com/raghavyuva/nixopus-api/internal/commands/set_env"
 	"github.com/spf13/cobra"
@@ -28,7 +29,8 @@ func Execute() error {
 func init() {
 	rootCmd.AddCommand(addcmd.AddCmd)
 	rootCmd.AddCommand(listcmd.ListCmd)
-	rootCmd.AddCommand(removecmd.RemoveCmd)
 	rootCmd.AddCommand(live.LiveCmd)
+	rootCmd.AddCommand(pause.PauseCmd)
+	rootCmd.AddCommand(removecmd.RemoveCmd)
 	rootCmd.AddCommand(setenv.SetEnvCmd)
 }

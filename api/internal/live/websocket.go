@@ -61,7 +61,7 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-	user, orgID, err := h.gateway.verifySession(ctx, token, r)
+	user, orgID, err := h.gateway.VerifySession(ctx, token, r)
 	if err != nil {
 		h.logger.Log(logger.Error, "invalid session", err.Error())
 		http.Error(w, "Invalid authentication token", http.StatusUnauthorized)
