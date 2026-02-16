@@ -76,6 +76,16 @@ func (bfm *BuildFirstManager) HandleFileWritten(ctx context.Context, appCtx *App
 				workdir := tasks.GetWorkdirFromService(service)
 				bfm.MarkDeployed(appCtx.ApplicationID, workdir)
 				bfm.logger.Log(logger.Info, "recovered deployed state from running container", appCtx.ApplicationID.String())
+			} else if tasks.IsLiveDevServicePaused(service) {
+				// Service was paused; resume it instead of full rebuild
+				workdir, err := bfm.taskService.ResumeLiveDevService(ctx, appCtx.ApplicationID, nil)
+				if err != nil {
+					bfm.logger.Log(logger.Warning, "resume failed, triggering build", err.Error())
+					bfm.triggerBuild(ctx, appCtx)
+					return
+				}
+				bfm.MarkDeployed(appCtx.ApplicationID, workdir)
+				bfm.logger.Log(logger.Info, "resumed paused live dev service", appCtx.ApplicationID.String())
 			} else {
 				bfm.triggerBuild(ctx, appCtx)
 				return

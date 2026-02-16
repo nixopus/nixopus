@@ -391,6 +391,87 @@ func (s *TaskService) waitForLiveDevServiceHealthy(ctx context.Context, service 
 	}
 }
 
+// PauseLiveDevService scales the live dev service to 0 replicas, pausing it.
+// Returns nil if service was paused or did not exist.
+func PauseLiveDevService(ctx context.Context, applicationID uuid.UUID) error {
+	existingService, err := FindServiceByLabel(ctx, "com.application.id", applicationID.String())
+	if err != nil {
+		return fmt.Errorf("failed to find live dev service: %w", err)
+	}
+	if existingService == nil {
+		return nil // No service to pause
+	}
+	if !isLiveDevService(existingService) {
+		return fmt.Errorf("service is not a live dev service")
+	}
+	dockerService, err := docker.GetDockerServiceFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get docker service: %w", err)
+	}
+	return dockerService.ScaleService(existingService.ID, 0, "")
+}
+
+// ResumeLiveDevService scales a paused live dev service from 0 to 1 and waits for it to be healthy.
+// Returns the workdir on success.
+func (s *TaskService) ResumeLiveDevService(ctx context.Context, applicationID uuid.UUID, taskCtx *LiveDevTaskContext) (string, error) {
+	existingService, err := FindServiceByLabel(ctx, "com.application.id", applicationID.String())
+	if err != nil {
+		return "", fmt.Errorf("failed to find live dev service: %w", err)
+	}
+	if existingService == nil {
+		return "", fmt.Errorf("no live dev service found for application %s", applicationID)
+	}
+	if !isLiveDevService(existingService) {
+		return "", fmt.Errorf("service is not a live dev service")
+	}
+	replicas := uint64(0)
+	if existingService.Spec.Mode.Replicated != nil && existingService.Spec.Mode.Replicated.Replicas != nil {
+		replicas = *existingService.Spec.Mode.Replicated.Replicas
+	}
+	if replicas > 0 {
+		return GetWorkdirFromService(existingService), nil
+	}
+	dockerService, err := s.getDockerService(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get docker service: %w", err)
+	}
+	if err := dockerService.ScaleService(existingService.ID, 1, ""); err != nil {
+		return "", fmt.Errorf("failed to scale service: %w", err)
+	}
+	if taskCtx != nil {
+		taskCtx.AddLog("Resuming paused live dev service")
+	}
+	if err := s.waitForLiveDevServiceHealthy(ctx, *existingService, taskCtx); err != nil {
+		return "", fmt.Errorf("service failed to become healthy: %w", err)
+	}
+	refreshed, _ := FindServiceByLabel(ctx, "com.application.id", applicationID.String())
+	if refreshed != nil {
+		return GetWorkdirFromService(refreshed), nil
+	}
+	return GetWorkdirFromService(existingService), nil
+}
+
+func isLiveDevService(service *swarm.Service) bool {
+	if service == nil {
+		return false
+	}
+	if service.Spec.Annotations.Labels != nil && service.Spec.Annotations.Labels["nixopus.type"] == "devrunner" {
+		return true
+	}
+	return false
+}
+
+// IsLiveDevServicePaused returns true if the service exists and is scaled to 0 replicas.
+func IsLiveDevServicePaused(service *swarm.Service) bool {
+	if service == nil || !isLiveDevService(service) {
+		return false
+	}
+	if service.Spec.Mode.Replicated == nil || service.Spec.Mode.Replicated.Replicas == nil {
+		return false
+	}
+	return *service.Spec.Mode.Replicated.Replicas == 0
+}
+
 // UpdateLiveDevServiceEnv updates the environment variables of a running live dev service.
 // Docker Swarm will roll out new tasks with the updated env, so the process picks up the new values.
 func UpdateLiveDevServiceEnv(ctx context.Context, applicationID uuid.UUID, envVars map[string]string) error {

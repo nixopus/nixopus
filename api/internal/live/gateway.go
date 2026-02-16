@@ -111,8 +111,8 @@ func (g *Gateway) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	g.websocketHandler.HandleWebSocket(w, r)
 }
 
-// verifySession verifies the Better Auth session token and returns the user and organization ID
-func (g *Gateway) verifySession(ctx context.Context, tokenString string, originalRequest *http.Request) (*shared_types.User, string, error) {
+// VerifySession verifies the Better Auth session token and returns the user and organization ID
+func (g *Gateway) VerifySession(ctx context.Context, tokenString string, originalRequest *http.Request) (*shared_types.User, string, error) {
 	var req *http.Request
 
 	// Prefer using the original request with actual cookies from the browser
