@@ -35,6 +35,7 @@ type Config struct {
 	Applications map[string]string `json:"applications,omitempty"` // Map of app name -> application_id
 	Sync         SyncConfig        `json:"sync"`
 	EnvPath      string            `json:"env_path,omitempty"`
+	DeployDomain string            `json:"deploy_domain,omitempty"` // Base domain for URL generation (e.g. nixopus.com)
 }
 
 // SyncConfig represents sync-related configuration
@@ -151,6 +152,7 @@ func (c *Config) Save() error {
 		Sync:         c.Sync,
 		EnvPath:      c.EnvPath,
 		ProjectID:    c.ProjectID,
+		DeployDomain: c.DeployDomain,
 		// Auth tokens are stored globally, not in project config
 	}
 

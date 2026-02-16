@@ -147,8 +147,8 @@ func runSingleApp(args []string) error {
 	repoPathChan := make(chan string, 1)
 	go func() {
 		// Calculate and set domain URL immediately (client-side calculation)
-		// Domain format: https://{first-8-chars-of-application-id}.nixopus.com
-		domainURL := buildDomainURL(applicationID)
+		// Domain format: https://{first-8-chars-of-application-id}.{deploy_domain}
+		domainURL := buildDomainURL(applicationID, cfg.DeployDomain)
 		if domainURL != "" {
 			tracker.SetURL(domainURL)
 		}
@@ -363,14 +363,16 @@ func buildWebSocketURL(server, projectID, accessToken string) string {
 }
 
 // buildDomainURL builds the domain URL from project ID
-// Format: https://{first-8-chars-of-project-id}.nixopus.com
-func buildDomainURL(projectID string) string {
+// deployDomain is optional; when empty, uses config.GetDeployDomain()
+// Format: https://{first-8-chars-of-project-id}.{deploy_domain}
+func buildDomainURL(projectID, deployDomain string) string {
 	if projectID == "" || len(projectID) < 8 {
 		return ""
 	}
-	// Take first 8 characters of project ID (UUID format)
-	subdomain := projectID[:8]
-	return "https://" + subdomain + ".nixopus.com"
+	if deployDomain == "" {
+		deployDomain = config.GetDeployDomain()
+	}
+	return "https://" + projectID[:8] + "." + deployDomain
 }
 
 // isGitRepo checks if the given path is a git repository
@@ -425,7 +427,7 @@ func ensureInitialized(envPathFlag string) (*config.Config, error) {
 	}
 
 	// Step 2: Create project (use access token from global auth)
-	projectID, familyID, err := createProject(server, envVars, accessToken)
+	projectID, familyID, deployDomain, err := createProject(server, envVars, accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create project: %w", err)
 	}
@@ -450,8 +452,8 @@ func ensureInitialized(envPathFlag string) (*config.Config, error) {
 			DebounceMs: 300,
 			Exclude:    exclude,
 		},
-		EnvPath: envPathFlag,
-		// Auth tokens are stored globally, not in project config
+		EnvPath:      envPathFlag,
+		DeployDomain: deployDomain,
 	}
 
 	cfg = newCfg
@@ -473,10 +475,11 @@ type CreateProjectRequest struct {
 
 // CreateProjectResponse represents the response from project creation endpoint
 type CreateProjectResponse struct {
-	Status    string `json:"status"`
-	Message   string `json:"message"`
-	ProjectID string `json:"project_id"`
-	FamilyID  string `json:"family_id"`
+	Status       string `json:"status"`
+	Message      string `json:"message"`
+	ProjectID    string `json:"project_id"`
+	FamilyID     string `json:"family_id"`
+	DeployDomain string `json:"deploy_domain,omitempty"`
 }
 
 // getGitBranch gets the current git branch
@@ -520,17 +523,17 @@ func getGitInfo() (string, string, error) {
 }
 
 // createProject creates a draft project on the server using the CLI init endpoint
-// Returns: projectID, familyID, error
-func createProject(serverURL string, envVars map[string]string, accessToken string) (string, string, error) {
+// Returns: projectID, familyID, deployDomain, error
+func createProject(serverURL string, envVars map[string]string, accessToken string) (string, string, string, error) {
 	repoName, repoURL, err := getGitInfo()
 	if err != nil {
-		return "", "", fmt.Errorf("failed to get git info: %w", err)
+		return "", "", "", fmt.Errorf("failed to get git info: %w", err)
 	}
 
 	branch := getGitBranch()
 
 	if accessToken == "" {
-		return "", "", fmt.Errorf("not authenticated")
+		return "", "", "", fmt.Errorf("not authenticated")
 	}
 
 	// Use authenticated HTTP client
@@ -546,30 +549,30 @@ func createProject(serverURL string, envVars map[string]string, accessToken stri
 
 	resp, err := client.Post(url, reqBody)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to connect to server: %w", err)
+		return "", "", "", fmt.Errorf("failed to connect to server: %w", err)
 	}
 
 	bodyBytes, err := httpclient.ReadResponseBody(resp)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to read response body: %w", err)
+		return "", "", "", err
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return "", "", httpclient.HandleErrorResponse(resp, bodyBytes, "failed to create project")
+		return "", "", "", httpclient.HandleErrorResponse(resp, bodyBytes, "failed to create project")
 	}
 
 	var projectResp CreateProjectResponse
 	if err := httpclient.ParseJSONResponse(bodyBytes, &projectResp); err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	if projectResp.ProjectID == "" {
-		return "", "", fmt.Errorf("project ID not found in response")
+		return "", "", "", fmt.Errorf("project ID not found in response")
 	}
 
 	if projectResp.FamilyID == "" {
-		return "", "", fmt.Errorf("family ID not found in response")
+		return "", "", "", fmt.Errorf("family ID not found in response")
 	}
 
-	return projectResp.ProjectID, projectResp.FamilyID, nil
+	return projectResp.ProjectID, projectResp.FamilyID, projectResp.DeployDomain, nil
 }

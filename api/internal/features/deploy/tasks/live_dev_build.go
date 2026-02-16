@@ -108,7 +108,7 @@ func (s *TaskService) HandleBuildFirstLiveDev(ctx context.Context, config LiveDe
 	}
 
 	if config.Domain != "" {
-		if err := s.addDomainToCaddy(ctx, config.Domain, port, config.OrganizationID, taskCtx); err != nil {
+		if err := s.addDomainToCaddy(ctx, config.ApplicationID, config.Domain, port, config.OrganizationID, taskCtx); err != nil {
 			if taskCtx != nil {
 				taskCtx.AddLog(fmt.Sprintf("Warning: domain setup failed: %v", err))
 			}
@@ -519,7 +519,7 @@ func UpdateLiveDevServiceEnv(ctx context.Context, applicationID uuid.UUID, envVa
 	return err
 }
 
-func (s *TaskService) addDomainToCaddy(ctx context.Context, domain string, port int, organizationID uuid.UUID, taskCtx *LiveDevTaskContext) error {
+func (s *TaskService) addDomainToCaddy(ctx context.Context, applicationID uuid.UUID, domain string, port int, organizationID uuid.UUID, taskCtx *LiveDevTaskContext) error {
 	if taskCtx != nil {
 		taskCtx.AddLog(fmt.Sprintf("Adding domain %s to Caddy proxy...", domain))
 	}
@@ -536,6 +536,21 @@ func (s *TaskService) addDomainToCaddy(ctx context.Context, domain string, port 
 
 	if err := client.AddDomainWithAutoTLS(domain, upstreamHost, port, caddygo.DomainOptions{}); err != nil {
 		return fmt.Errorf("failed to add domain to caddy: %w", err)
+	}
+
+	// Store domain in application_domains for lookup (e.g. auth, domain resolution)
+	// Idempotent: skip if this application already has this domain (e.g. on rebuild)
+	existingDomains, err := s.Storage.GetApplicationDomains(applicationID)
+	if err == nil {
+		for _, d := range existingDomains {
+			if d.Domain == domain {
+				client.Reload()
+				return nil // already stored
+			}
+		}
+	}
+	if err := s.Storage.AddApplicationDomains(applicationID, []string{domain}); err != nil {
+		return fmt.Errorf("failed to store domain: %w", err)
 	}
 
 	client.Reload()
