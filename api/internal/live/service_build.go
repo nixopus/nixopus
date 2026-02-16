@@ -15,12 +15,18 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
+// BuildStatusFunc is called at key points during the build lifecycle.
+// phase is one of: "starting", "generating_dockerfile", "dockerfile_ready", "building_container", "error".
+type BuildStatusFunc func(applicationID uuid.UUID, phase, message, errMsg string)
+
 type BuildFirstManager struct {
-	stagingManager     *StagingManager
-	taskService        *tasks.TaskService
-	injector           *FileInjector
-	logger             logger.Logger
-	sessionEnvResolver SessionEnvResolver
+	stagingManager       *StagingManager
+	taskService          *tasks.TaskService
+	injector             *FileInjector
+	logger               logger.Logger
+	sessionEnvResolver   SessionEnvResolver
+	pipelineProgressFunc PipelineProgressFunc
+	buildStatusFunc      BuildStatusFunc
 
 	deployedMu sync.RWMutex
 	deployed   map[uuid.UUID]*deployedApp
@@ -39,6 +45,10 @@ type deployedApp struct {
 // SessionEnvResolver returns session env vars (from client's set-env file) for an application.
 // Session env overrides DB env when building. Nil = no session env.
 type SessionEnvResolver func(applicationID uuid.UUID) map[string]string
+
+// PipelineProgressFunc is called for each progress event during Dockerfile generation.
+// applicationID identifies which app the progress is for. stageId and message describe the event.
+type PipelineProgressFunc func(applicationID uuid.UUID, stageId, message string)
 
 func NewBuildFirstManager(stagingManager *StagingManager, taskService *tasks.TaskService, logger logger.Logger, sessionEnvResolver SessionEnvResolver) *BuildFirstManager {
 	return &BuildFirstManager{
@@ -167,7 +177,9 @@ func (bfm *BuildFirstManager) doBuild(ctx context.Context, appCtx *ApplicationCo
 		bfm.buildingMu.Unlock()
 	}()
 
-	bfm.logger.Log(logger.Info, "starting build-first deployment", appCtx.ApplicationID.String())
+	appID := appCtx.ApplicationID
+	bfm.logger.Log(logger.Info, "starting build-first deployment", appID.String())
+	bfm.emitBuildStatus(appID, "starting", "Build triggered, analyzing codebase...", "")
 
 	source := appCtx.StagingPath
 	auth := dockerfile_generator.AuthHeaders{
@@ -175,31 +187,47 @@ func (bfm *BuildFirstManager) doBuild(ctx context.Context, appCtx *ApplicationCo
 		Cookie: appCtx.AuthCookie,
 	}
 	client := dockerfile_generator.NewClient(config.AppConfig.Agent.Endpoint)
-	resp, err := client.GenerateWithMode(ctx, source, appCtx.OrganizationID.String(), "development", auth)
+
+	var onProgress dockerfile_generator.ProgressFunc
+	if bfm.pipelineProgressFunc != nil {
+		onProgress = func(stageId, message string) {
+			bfm.pipelineProgressFunc(appID, stageId, message)
+		}
+	}
+
+	bfm.emitBuildStatus(appID, "generating_dockerfile", "Generating Dockerfile...", "")
+
+	resp, err := client.GenerateWithProgress(ctx, source, appCtx.OrganizationID.String(), "development", auth, onProgress)
 	if err != nil {
-		bfm.logger.Log(logger.Error, "dockerfile generator failed", fmt.Sprintf("app=%s err=%v", appCtx.ApplicationID, err))
+		errMsg := fmt.Sprintf("app=%s err=%v", appID, err)
+		bfm.logger.Log(logger.Error, "dockerfile generator failed", errMsg)
+		bfm.emitBuildStatus(appID, "error", "Dockerfile generation failed", err.Error())
 		return
 	}
 
+	bfm.emitBuildStatus(appID, "dockerfile_ready", "Dockerfile ready, writing to staging...", "")
+
 	dockerfilePath, err := WriteDockerfileToStaging(ctx, appCtx.StagingPath, resp.Dockerfile)
 	if err != nil {
-		bfm.logger.Log(logger.Error, "failed to write dockerfile", fmt.Sprintf("app=%s err=%v", appCtx.ApplicationID, err))
+		errMsg := fmt.Sprintf("app=%s err=%v", appID, err)
+		bfm.logger.Log(logger.Error, "failed to write dockerfile", errMsg)
+		bfm.emitBuildStatus(appID, "error", "Failed to write Dockerfile", err.Error())
 		return
 	}
 
 	if resp.Dockerignore != "" {
 		if _, err := WriteDockerignoreToStaging(ctx, appCtx.StagingPath, resp.Dockerignore); err != nil {
-			bfm.logger.Log(logger.Warning, "failed to write .dockerignore", fmt.Sprintf("app=%s err=%v", appCtx.ApplicationID, err))
+			bfm.logger.Log(logger.Warning, "failed to write .dockerignore", fmt.Sprintf("app=%s err=%v", appID, err))
 		}
 	}
 
 	var sessionEnv map[string]string
 	if bfm.sessionEnvResolver != nil {
-		sessionEnv = bfm.sessionEnvResolver(appCtx.ApplicationID)
+		sessionEnv = bfm.sessionEnvResolver(appID)
 	}
 	envVars := mergeEnvVars(appCtx.EnvironmentVariables, sessionEnv)
 	cfg := tasks.LiveDevConfig{
-		ApplicationID:  appCtx.ApplicationID,
+		ApplicationID:  appID,
 		OrganizationID: appCtx.OrganizationID,
 		StagingPath:    appCtx.StagingPath,
 		EnvVars:        envVars,
@@ -211,8 +239,12 @@ func (bfm *BuildFirstManager) doBuild(ctx context.Context, appCtx *ApplicationCo
 		cfg.Domain = appCtx.Domain
 	}
 
+	bfm.emitBuildStatus(appID, "building_container", "Starting container build...", "")
+
 	if err := bfm.taskService.StartLiveDevTask(ctx, cfg); err != nil {
-		bfm.logger.Log(logger.Error, "build-first deployment failed", fmt.Sprintf("app=%s err=%v", appCtx.ApplicationID, err))
+		errMsg := fmt.Sprintf("app=%s err=%v", appID, err)
+		bfm.logger.Log(logger.Error, "build-first deployment failed", errMsg)
+		bfm.emitBuildStatus(appID, "error", "Container build failed", err.Error())
 		return
 	}
 
@@ -225,6 +257,24 @@ func (bfm *BuildFirstManager) markUndeployed(appID uuid.UUID) {
 	bfm.deployedMu.Lock()
 	delete(bfm.deployed, appID)
 	bfm.deployedMu.Unlock()
+}
+
+// SetPipelineProgressFunc sets the callback for real-time pipeline progress events.
+// Must be called before any builds start, typically right after creating the manager.
+func (bfm *BuildFirstManager) SetPipelineProgressFunc(fn PipelineProgressFunc) {
+	bfm.pipelineProgressFunc = fn
+}
+
+// SetBuildStatusFunc sets the callback for build lifecycle events.
+func (bfm *BuildFirstManager) SetBuildStatusFunc(fn BuildStatusFunc) {
+	bfm.buildStatusFunc = fn
+}
+
+// emitBuildStatus sends a build lifecycle event if the callback is set.
+func (bfm *BuildFirstManager) emitBuildStatus(appID uuid.UUID, phase, message, errMsg string) {
+	if bfm.buildStatusFunc != nil {
+		bfm.buildStatusFunc(appID, phase, message, errMsg)
+	}
 }
 
 // MarkDeployed is called when a live dev build completes and the container is healthy.

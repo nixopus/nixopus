@@ -6,17 +6,49 @@ import "time"
 type MessageType string
 
 const (
-	MessageTypeFileChange  MessageType = "file_change"
-	MessageTypeFileContent MessageType = "file_content"
-	MessageTypeFileDelete  MessageType = "file_delete"
-	MessageTypeEnvVars     MessageType = "env_vars"
-	MessageTypeSync        MessageType = "sync"
-	MessageTypeAck         MessageType = "ack"
-	MessageTypeError       MessageType = "error"
-	MessageTypePing        MessageType = "ping"
-	MessageTypePong        MessageType = "pong"
-	MessageTypeManifest    MessageType = "manifest"
+	MessageTypeFileChange       MessageType = "file_change"
+	MessageTypeFileContent      MessageType = "file_content"
+	MessageTypeFileDelete       MessageType = "file_delete"
+	MessageTypeEnvVars          MessageType = "env_vars"
+	MessageTypeSync             MessageType = "sync"
+	MessageTypeAck              MessageType = "ack"
+	MessageTypeError            MessageType = "error"
+	MessageTypePing             MessageType = "ping"
+	MessageTypePong             MessageType = "pong"
+	MessageTypeManifest         MessageType = "manifest"
+	MessageTypePipelineProgress MessageType = "pipeline_progress"
+	MessageTypeBuildStatus      MessageType = "build_status"
+	MessageTypeBuildLog         MessageType = "build_log"
+	MessageTypeDeploymentStatus MessageType = "deployment_status"
 )
+
+// PipelineProgressPayload carries real-time progress from the pipeline agent
+// during Dockerfile generation. Sent from server to client over WebSocket.
+type PipelineProgressPayload struct {
+	StageId string `json:"stage_id"` // e.g. "resolve-repo", "dockerfile-generate"
+	Message string `json:"message"`  // human-readable progress message
+}
+
+// BuildStatusPayload carries build lifecycle events from server to client.
+// Sent at key points during the build process so the CLI can show progress.
+type BuildStatusPayload struct {
+	Phase   string `json:"phase"`           // "starting", "generating_dockerfile", "dockerfile_ready", "building_container", "error"
+	Message string `json:"message"`         // human-readable description
+	Error   string `json:"error,omitempty"` // error details when phase is "error"
+}
+
+// BuildLogPayload carries a single build log line from the database via
+// PostgreSQL NOTIFY -> Gateway -> WebSocket -> CLI.
+type BuildLogPayload struct {
+	Log       string `json:"log"`
+	Timestamp string `json:"timestamp,omitempty"`
+}
+
+// DeploymentStatusPayload carries a deployment status change from the database.
+type DeploymentStatusPayload struct {
+	Status       string `json:"status"`
+	DeploymentID string `json:"deployment_id,omitempty"`
+}
 
 // EnvVarsPayload carries parsed env key-value pairs from the client (not the raw file)
 type EnvVarsPayload struct {
