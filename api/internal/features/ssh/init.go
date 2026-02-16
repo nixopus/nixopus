@@ -430,31 +430,14 @@ func (m *SSHManager) CloseAllConnections() {
 	m.poolMu.Unlock()
 }
 
-// InvalidateSSHManagerCache evicts the manager from cache (soft); existing connections drain naturally.
+// InvalidateSSHManagerCache evicts the manager from cache and closes all connections.
 // TODO: Call in handlers that change active key for SSH keys table
 func InvalidateSSHManagerCache(orgID uuid.UUID) {
-	InvalidateSSHManagerCacheWithOptions(orgID, InvalidateOptions{Soft: true})
-}
-
-// InvalidateSSHManagerCacheForce evicts cache and closes all connections; use for credential revocation.
-func InvalidateSSHManagerCacheForce(orgID uuid.UUID) {
-	InvalidateSSHManagerCacheWithOptions(orgID, InvalidateOptions{Soft: false})
-}
-
-// InvalidateOptions configures soft (evict only) vs hard (evict + close connections) invalidation.
-type InvalidateOptions struct {
-	Soft bool
-}
-
-// InvalidateSSHManagerCacheWithOptions invalidates with explicit soft/hard behavior.
-func InvalidateSSHManagerCacheWithOptions(orgID uuid.UUID, opts InvalidateOptions) {
 	orgIDStr := orgID.String()
 	orgManagersMu.Lock()
 	defer orgManagersMu.Unlock()
 	if manager, exists := orgManagers[orgIDStr]; exists {
-		if !opts.Soft {
-			manager.CloseAllConnections()
-		}
+		manager.CloseAllConnections()
 		delete(orgManagers, orgIDStr)
 	}
 }

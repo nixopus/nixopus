@@ -40,3 +40,9 @@ type ListServersResponse struct {
 	Message string                  `json:"message"`
 	Data    ListServersResponseData `json:"data"`
 }
+
+// MessageResponse is a generic response with status and message.
+type MessageResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}

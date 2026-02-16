@@ -8,4 +8,5 @@ import (
 // RegisterServerRoutes registers server management routes
 func (router *Router) RegisterServerRoutes(serverGroup *fuego.Server, serverController *server_controller.ServerController) {
 	fuego.Get(serverGroup, "", serverController.ListServers)
+	fuego.Post(serverGroup, "/refresh-cache", serverController.RefreshSSHCache)
 }
