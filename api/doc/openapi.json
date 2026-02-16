@@ -1358,6 +1358,10 @@
 			"CLIInitResponse": {
 				"description": "CLIInitResponse schema",
 				"properties": {
+					"deploy_domain": {
+						"nullable": true,
+						"type": "string"
+					},
 					"domain": {
 						"nullable": true,
 						"type": "string"
