@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/go-fuego/fuego"
+	"github.com/google/uuid"
 
 	deploy_storage "github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
 	deploy_tasks "github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
@@ -41,6 +42,12 @@ func NewLiveDeployController(store *storage.Store) *LiveDeployController {
 	stagingManager := live.NewStagingManager(githubConnectorService, &deployStorage)
 
 	gateway := live.NewGateway(stagingManager, taskService, store)
+
+	// Wire callback: when live dev build completes and container is healthy, mark deployed
+	// so file injection is used instead of full rebuilds.
+	taskService.SetOnLiveDevDeployed(func(appID uuid.UUID, workdir string) {
+		gateway.BuildFirstManager().MarkDeployed(appID, workdir)
+	})
 
 	log.Println("Live deploy components initialized")
 

@@ -21,7 +21,21 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-const chunkSize = int64(64 * 1024)
+const (
+	chunkSize             = int64(64 * 1024)
+	fileCompletionWorkers = 8
+	completionJobBuffer   = 128
+)
+
+type fileCompletionJob struct {
+	content       []byte
+	path          string
+	checksum      string
+	stagingPath   string
+	appCtx        *ApplicationContext
+	conn          *websocket.Conn
+	applicationID uuid.UUID
+}
 
 type Gateway struct {
 	stagingManager    *StagingManager
@@ -30,6 +44,7 @@ type Gateway struct {
 	manifestStore     *ManifestStore
 	store             *shared_storage.Store
 	logger            logger.Logger
+	completionJobs    chan fileCompletionJob
 }
 
 func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, store *shared_storage.Store) *Gateway {
@@ -40,9 +55,37 @@ func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, 
 		manifestStore:     NewManifestStore(),
 		store:             store,
 		logger:            logger,
+		completionJobs:    make(chan fileCompletionJob, completionJobBuffer),
 	}
 	gateway.websocketHandler = NewWebSocketHandler(gateway, logger)
+	for i := 0; i < fileCompletionWorkers; i++ {
+		go gateway.runFileCompletionWorker()
+	}
 	return gateway
+}
+
+// runFileCompletionWorker processes file write + ACK in parallel (non-blocking for read loop)
+func (g *Gateway) runFileCompletionWorker() {
+	for job := range g.completionJobs {
+		ctx := context.WithValue(context.Background(), shared_types.OrganizationIDKey, job.appCtx.OrganizationID.String())
+		if err := WriteContentToStaging(ctx, job.stagingPath, job.path, job.content, job.checksum); err != nil {
+			g.logger.Log(logger.Error, "failed to write file to staging", fmt.Sprintf("path=%s err=%v", job.path, err))
+			continue
+		}
+		g.manifestStore.Set(job.applicationID.String(), job.path, job.checksum)
+		g.logger.Log(logger.Info, "file received and written", job.path)
+		if g.buildFirstManager != nil {
+			g.buildFirstManager.HandleFileWritten(ctx, job.appCtx, job.path, job.content)
+		}
+		if err := g.websocketHandler.sendAck(job.conn, job.path); err != nil {
+			g.logger.Log(logger.Warning, "failed to send ACK", fmt.Sprintf("path=%s err=%v", job.path, err))
+		}
+	}
+}
+
+// BuildFirstManager returns the build-first manager for wiring callbacks (e.g. from TaskService).
+func (g *Gateway) BuildFirstManager() *BuildFirstManager {
+	return g.buildFirstManager
 }
 
 // HandleWebSocket delegates to the WebSocket handler
@@ -224,21 +267,34 @@ func (g *Gateway) handleFileContent(ctx context.Context, conn *websocket.Conn, a
 		return fmt.Errorf("failed to reassemble file: %w", err)
 	}
 
-	if err := receiver.WriteToStaging(ctx); err != nil {
-		return fmt.Errorf("failed to write file to staging: %w", err)
-	}
-
-	g.manifestStore.Set(appCtx.ApplicationID.String(), fileContent.Path, fileContent.Checksum)
-
-	g.logger.Log(logger.Info, "file received and written", fileContent.Path)
 	g.stagingManager.RemoveFileReceiver(appCtx.ApplicationID, fileContent.Path)
 
-	if g.buildFirstManager != nil {
-		g.buildFirstManager.HandleFileWritten(ctx, appCtx, fileContent.Path, content)
+	// Offload write + ACK to worker pool - read loop continues immediately
+	job := fileCompletionJob{
+		content:       content,
+		path:          fileContent.Path,
+		checksum:      fileContent.Checksum,
+		stagingPath:   appCtx.StagingPath,
+		appCtx:        appCtx,
+		conn:          conn,
+		applicationID: appCtx.ApplicationID,
 	}
-
-	if err := g.websocketHandler.sendAck(conn, fileContent.Path); err != nil {
-		g.logger.Log(logger.Warning, "failed to send ACK", fmt.Sprintf("path=%s err=%v", fileContent.Path, err))
+	select {
+	case g.completionJobs <- job:
+		// Queued - worker will handle it
+	default:
+		// Queue full - fall back to synchronous write to avoid dropping
+		if err := WriteContentToStaging(ctx, job.stagingPath, job.path, job.content, job.checksum); err != nil {
+			return fmt.Errorf("failed to write file to staging: %w", err)
+		}
+		g.manifestStore.Set(job.applicationID.String(), job.path, job.checksum)
+		g.logger.Log(logger.Info, "file received and written", job.path)
+		if g.buildFirstManager != nil {
+			g.buildFirstManager.HandleFileWritten(ctx, job.appCtx, job.path, job.content)
+		}
+		if err := g.websocketHandler.sendAck(conn, fileContent.Path); err != nil {
+			g.logger.Log(logger.Warning, "failed to send ACK", fmt.Sprintf("path=%s err=%v", fileContent.Path, err))
+		}
 	}
 
 	return nil

@@ -249,8 +249,8 @@ func (c *Client) dialWebSocket() (*websocket.Conn, error) {
 	// This allows time for server-side database operations (session verification, app context lookup)
 	dialer := &websocket.Dialer{
 		HandshakeTimeout:  handshakeTimeout,
-		ReadBufferSize:    1024,
-		WriteBufferSize:   1024,
+		ReadBufferSize:    256 * 1024,
+		WriteBufferSize:   256 * 1024,
 		EnableCompression: false,
 	}
 

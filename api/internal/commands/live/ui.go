@@ -42,12 +42,6 @@ const (
 	keyToggleLogs      = "l"
 	keyToggleShortcuts = "s"
 	keyQuit            = "q"
-	keyScrollUp        = "up"
-	keyScrollDown      = "down"
-	keyPageUp          = "pgup"
-	keyPageDown        = "pgdown"
-	keyHome            = "home"
-	keyEnd             = "end"
 )
 
 // Deployment status strings
@@ -100,6 +94,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		return m.handleKeyPress(msg)
 
+	case tea.MouseMsg:
+		if m.showLogs && m.logsViewport.MouseWheelEnabled {
+			var cmd tea.Cmd
+			m.logsViewport, cmd = m.logsViewport.Update(msg)
+			return m, cmd
+		}
+
 	case TickMsg:
 		return m.handleTick()
 	}
@@ -108,11 +109,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // handleWindowResize updates viewport dimensions when window size changes.
+// We always update viewport dimensions (not just when showLogs) so the viewport
+// has correct size when the user first opens the logs view.
 func (m Model) handleWindowResize(msg tea.WindowSizeMsg) (Model, tea.Cmd) {
-	if m.showLogs {
-		m.logsViewport.Width = logsViewportWidth
-		m.logsViewport.Height = msg.Height - headerReserveSpace
-	}
+	m.logsViewport.Width = logsViewportWidth
+	m.logsViewport.Height = msg.Height - headerReserveSpace
 	return m, nil
 }
 
@@ -120,14 +121,7 @@ func (m Model) handleWindowResize(msg tea.WindowSizeMsg) (Model, tea.Cmd) {
 func (m Model) handleKeyPress(msg tea.KeyMsg) (Model, tea.Cmd) {
 	key := msg.String()
 
-	// Handle scrolling when in logs view
-	if m.showLogs {
-		if cmd := m.handleLogsScrolling(key); cmd != nil {
-			return m, cmd
-		}
-	}
-
-	// Handle global commands
+	// Handle global commands first (these take precedence over viewport)
 	switch key {
 	case "ctrl+c", keyQuit:
 		m.quitting = true
@@ -138,32 +132,14 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (Model, tea.Cmd) {
 		return m.toggleShortcutsView()
 	}
 
-	return m, nil
-}
-
-// handleLogsScrolling processes scroll commands in logs view.
-func (m Model) handleLogsScrolling(key string) tea.Cmd {
-	switch key {
-	case keyScrollUp, "k":
-		m.logsViewport.LineUp(1)
-		return nil
-	case keyScrollDown, "j":
-		m.logsViewport.LineDown(1)
-		return nil
-	case keyPageUp:
-		m.logsViewport.PageUp()
-		return nil
-	case keyPageDown, " ":
-		m.logsViewport.PageDown()
-		return nil
-	case keyHome, "g":
-		m.logsViewport.GotoTop()
-		return nil
-	case keyEnd, "G":
-		m.logsViewport.GotoBottom()
-		return nil
+	// When in logs view, delegate keys to viewport (handles ↑/↓, j/k, pgup/pgdown, etc.)
+	if m.showLogs {
+		var cmd tea.Cmd
+		m.logsViewport, cmd = m.logsViewport.Update(msg)
+		return m, cmd
 	}
-	return nil
+
+	return m, nil
 }
 
 // toggleLogsView switches between logs view and status view.
@@ -318,7 +294,7 @@ func (m Model) buildStatusLines(info mover.StatusInfo) []string {
 	// Add URL if available
 	if info.URL != "" {
 		lines = append(lines, "")
-		urlLabel := lipgloss.NewStyle().Foreground(lipgloss.Color(colorMuted)).Render("🌐 Your app is live at:")
+		urlLabel := lipgloss.NewStyle().Foreground(lipgloss.Color(colorMuted)).Render("Your app is live at:")
 		urlValue := lipgloss.NewStyle().Foreground(lipgloss.Color(colorInfo)).Render(info.URL)
 		lines = append(lines, urlLabel, "   "+urlValue)
 	}
@@ -505,7 +481,7 @@ func (m Model) renderLogsFooter(info mover.StatusInfo) string {
 	}
 
 	hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(colorMuted))
-	footerLines = append(footerLines, hintStyle.Render("↑/↓: scroll  g/G: top/bottom  l: back"))
+	footerLines = append(footerLines, hintStyle.Render("↑/↓: scroll  l: back"))
 
 	return strings.Join(footerLines, "  |  ")
 }
@@ -620,7 +596,7 @@ type Program struct {
 // NewProgram creates a new bubbletea program for the live session.
 func NewProgram(tracker *mover.Tracker) *Program {
 	model := NewModel(tracker)
-	p := tea.NewProgram(model, tea.WithAltScreen())
+	p := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
 
 	return &Program{
 		program: p,

@@ -41,6 +41,13 @@ func LiveDevImageName(applicationID uuid.UUID) string {
 	return fmt.Sprintf("nixopus-dev-%s", applicationID.String())
 }
 
+func workdirOrDefault(w string) string {
+	if w != "" {
+		return w
+	}
+	return "/app"
+}
+
 func (s *TaskService) HandleBuildFirstLiveDev(ctx context.Context, config LiveDevConfig) error {
 	if config.OrganizationID != uuid.Nil {
 		ctx = context.WithValue(ctx, shared_types.OrganizationIDKey, config.OrganizationID.String())
@@ -118,6 +125,16 @@ func (s *TaskService) HandleBuildFirstLiveDev(ctx context.Context, config LiveDe
 
 	if taskCtx != nil {
 		taskCtx.LogAndUpdateStatus(fmt.Sprintf("Dev server running on port %d", port), shared_types.Deployed)
+	}
+
+	// Mark deployed only after container is healthy, so file injection can succeed.
+	// Previously we marked when the task was queued, causing injection failures and extra rebuilds.
+	workdir := config.Workdir
+	if workdir == "" {
+		workdir = "/app"
+	}
+	if s.OnLiveDevDeployed != nil {
+		s.OnLiveDevDeployed(config.ApplicationID, workdir)
 	}
 
 	return nil
@@ -242,6 +259,7 @@ func (s *TaskService) createBuildFirstServiceSpec(config LiveDevConfig, imageNam
 				"com.application.id": config.ApplicationID.String(),
 				"nixopus.type":       "devrunner",
 				"nixopus.build_mode": "build-first",
+				"nixopus.workdir":    workdirOrDefault(config.Workdir),
 			},
 		},
 		Mode: swarm.ServiceMode{
