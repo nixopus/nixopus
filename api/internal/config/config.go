@@ -256,10 +256,6 @@ func validateConfig(config types.Config) error {
 		errors = append(errors, "redis URL is required")
 	}
 
-	if config.Proxy.CaddyEndpoint == "" {
-		errors = append(errors, "proxy caddy endpoint is required")
-	}
-
 	if config.CORS.AllowedOrigin == "" {
 		errors = append(errors, "CORS allowed origin is required")
 	}

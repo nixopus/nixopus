@@ -9,6 +9,7 @@ const (
 	MessageTypeFileChange  MessageType = "file_change"
 	MessageTypeFileContent MessageType = "file_content"
 	MessageTypeFileDelete  MessageType = "file_delete"
+	MessageTypeEnvVars     MessageType = "env_vars"
 	MessageTypeSync        MessageType = "sync"
 	MessageTypeAck         MessageType = "ack"
 	MessageTypeError       MessageType = "error"
@@ -16,6 +17,11 @@ const (
 	MessageTypePong        MessageType = "pong"
 	MessageTypeManifest    MessageType = "manifest"
 )
+
+// EnvVarsPayload carries parsed env key-value pairs from the client (not the raw file)
+type EnvVarsPayload struct {
+	Vars map[string]string `json:"vars"`
+}
 
 // ManifestPayload is sent by server on WebSocket connect with path→checksum for skip logic.
 // Phase 3b: RootHash allows client to skip full diff when roots match.

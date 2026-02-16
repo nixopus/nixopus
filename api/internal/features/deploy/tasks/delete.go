@@ -84,9 +84,9 @@ func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.De
 
 	// Remove all domains from Caddy
 	if len(application.Domains) > 0 {
-		client := GetCaddyClient()
-		if client == nil {
-			s.Logger.Log(logger.Warning, "Caddy client not configured", "")
+		client, err := GetCaddyClient(orgCtx, nil, &s.Logger)
+		if err != nil {
+			s.Logger.Log(logger.Warning, "Caddy client not configured", err.Error())
 		} else {
 			for _, appDomain := range application.Domains {
 				if appDomain.Domain != "" {

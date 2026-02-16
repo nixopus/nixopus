@@ -15,8 +15,11 @@ type proxyModule struct{}
 
 func (proxyModule) Type() string { return "proxy" }
 
-func AddDomainToProxy(domain string, port string, upstreamHost string) error {
-	client := tasks.GetCaddyClient()
+func AddDomainToProxy(ctx context.Context, sshClient *ssh.SSH, domain string, port string, upstreamHost string) error {
+	client, err := tasks.GetCaddyClient(ctx, sshClient, nil)
+	if err != nil {
+		return err
+	}
 	p, err := strconv.Atoi(port)
 	if err != nil {
 		return fmt.Errorf("invalid port: %w", err)
@@ -28,12 +31,15 @@ func AddDomainToProxy(domain string, port string, upstreamHost string) error {
 	return nil
 }
 
-func UpdateDomainInProxy(domain string, port string, upstreamHost string) error {
-	return AddDomainToProxy(domain, port, upstreamHost)
+func UpdateDomainInProxy(ctx context.Context, sshClient *ssh.SSH, domain string, port string, upstreamHost string) error {
+	return AddDomainToProxy(ctx, sshClient, domain, port, upstreamHost)
 }
 
-func RemoveDomainFromProxy(domain string) error {
-	client := tasks.GetCaddyClient()
+func RemoveDomainFromProxy(ctx context.Context, sshClient *ssh.SSH, domain string) error {
+	client, err := tasks.GetCaddyClient(ctx, sshClient, nil)
+	if err != nil {
+		return err
+	}
 	if err := client.DeleteDomain(domain); err != nil {
 		return err
 	}
@@ -61,7 +67,7 @@ func (proxyModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types.S
 		if sshClient.Host == "" {
 			return "", nil, fmt.Errorf("SSH host not configured")
 		}
-		if err := AddDomainToProxy(domain, port, sshClient.Host); err != nil {
+		if err := AddDomainToProxy(ctx, sshClient, domain, port, sshClient.Host); err != nil {
 			return "", nil, err
 		}
 		return fmt.Sprintf("proxy added for %s -> %s:%s", domain, sshClient.Host, port), nil, nil
@@ -72,7 +78,7 @@ func (proxyModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types.S
 		if sshClient.Host == "" {
 			return "", nil, fmt.Errorf("SSH host not configured")
 		}
-		if err := UpdateDomainInProxy(domain, port, sshClient.Host); err != nil {
+		if err := UpdateDomainInProxy(ctx, sshClient, domain, port, sshClient.Host); err != nil {
 			return "", nil, err
 		}
 		return fmt.Sprintf("proxy updated for %s -> %s:%s", domain, sshClient.Host, port), nil, nil
@@ -80,7 +86,7 @@ func (proxyModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types.S
 		if domain == "" {
 			return "proxy step skipped: domain is optional", nil, nil
 		}
-		if err := RemoveDomainFromProxy(domain); err != nil {
+		if err := RemoveDomainFromProxy(ctx, sshClient, domain); err != nil {
 			return "", nil, err
 		}
 		return fmt.Sprintf("proxy removed for %s", domain), nil, nil

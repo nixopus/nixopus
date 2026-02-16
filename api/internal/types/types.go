@@ -53,7 +53,7 @@ type SSHConfig struct {
 }
 
 type ProxyConfig struct {
-	CaddyEndpoint string `mapstructure:"caddy_endpoint" validate:"required"`
+	CaddyEndpoint string `mapstructure:"caddy_endpoint"` // Caddy admin API (tunneled via SSH). Defaults to http://localhost:2019
 }
 
 type CORSConfig struct {

@@ -16,10 +16,11 @@ import (
 )
 
 type BuildFirstManager struct {
-	stagingManager *StagingManager
-	taskService    *tasks.TaskService
-	injector       *FileInjector
-	logger         logger.Logger
+	stagingManager     *StagingManager
+	taskService        *tasks.TaskService
+	injector           *FileInjector
+	logger             logger.Logger
+	sessionEnvResolver SessionEnvResolver
 
 	deployedMu sync.RWMutex
 	deployed   map[uuid.UUID]*deployedApp
@@ -35,15 +36,20 @@ type deployedApp struct {
 	workdir string
 }
 
-func NewBuildFirstManager(stagingManager *StagingManager, taskService *tasks.TaskService, logger logger.Logger) *BuildFirstManager {
+// SessionEnvResolver returns session env vars (from client's set-env file) for an application.
+// Session env overrides DB env when building. Nil = no session env.
+type SessionEnvResolver func(applicationID uuid.UUID) map[string]string
+
+func NewBuildFirstManager(stagingManager *StagingManager, taskService *tasks.TaskService, logger logger.Logger, sessionEnvResolver SessionEnvResolver) *BuildFirstManager {
 	return &BuildFirstManager{
-		stagingManager: stagingManager,
-		taskService:    taskService,
-		injector:       NewFileInjector(logger),
-		logger:         logger,
-		deployed:       make(map[uuid.UUID]*deployedApp),
-		buildTimers:    make(map[uuid.UUID]*time.Timer),
-		building:       make(map[uuid.UUID]bool),
+		stagingManager:     stagingManager,
+		taskService:        taskService,
+		injector:           NewFileInjector(logger),
+		logger:             logger,
+		deployed:           make(map[uuid.UUID]*deployedApp),
+		buildTimers:        make(map[uuid.UUID]*time.Timer),
+		building:           make(map[uuid.UUID]bool),
+		sessionEnvResolver: sessionEnvResolver,
 	}
 }
 
@@ -87,6 +93,7 @@ func (bfm *BuildFirstManager) HandleFileWritten(ctx context.Context, appCtx *App
 		return
 	}
 
+	// .env is excluded from sync; values are sent via env_vars message from client
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {
 		if attempt > 0 {
@@ -176,11 +183,16 @@ func (bfm *BuildFirstManager) doBuild(ctx context.Context, appCtx *ApplicationCo
 		}
 	}
 
+	var sessionEnv map[string]string
+	if bfm.sessionEnvResolver != nil {
+		sessionEnv = bfm.sessionEnvResolver(appCtx.ApplicationID)
+	}
+	envVars := mergeEnvVars(appCtx.EnvironmentVariables, sessionEnv)
 	cfg := tasks.LiveDevConfig{
 		ApplicationID:  appCtx.ApplicationID,
 		OrganizationID: appCtx.OrganizationID,
 		StagingPath:    appCtx.StagingPath,
-		EnvVars:        appCtx.EnvironmentVariables,
+		EnvVars:        envVars,
 		DockerfilePath: dockerfilePath,
 		InternalPort:   resp.Port,
 		Workdir:        resp.Workdir,
@@ -310,4 +322,19 @@ func IsDependencyFile(filePath string) bool {
 		}
 	}
 	return false
+}
+
+// mergeEnvVars merges base and override; override takes precedence.
+func mergeEnvVars(base, override map[string]string) map[string]string {
+	if len(override) == 0 {
+		return base
+	}
+	out := make(map[string]string, len(base)+len(override))
+	for k, v := range base {
+		out[k] = v
+	}
+	for k, v := range override {
+		out[k] = v
+	}
+	return out
 }

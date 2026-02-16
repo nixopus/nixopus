@@ -266,6 +266,22 @@ func runSingleApp(args []string) error {
 		return fmt.Errorf("failed to get sync state path: %w", err)
 	}
 
+	// Resolve env file path (values only, file is never synced)
+	var envFilePath string
+	if cfg.EnvPath != "" {
+		cleanPath := filepath.Clean(cfg.EnvPath)
+		if !filepath.IsAbs(cleanPath) {
+			envFilePath = filepath.Join(repoPath, cleanPath)
+		} else {
+			envFilePath = cleanPath
+		}
+		if _, err := os.Stat(envFilePath); err == nil {
+			// File exists, will send values
+		} else {
+			envFilePath = "" // Don't watch if file doesn't exist
+		}
+	}
+
 	engine, err := mover.NewEngine(mover.EngineConfig{
 		RootPath:         watchPath,
 		Client:           client,
@@ -277,6 +293,7 @@ func runSingleApp(args []string) error {
 		SyncStatePath:    syncStatePath,
 		ApplicationID:    applicationID,
 		ForceFullSync:    forceFullSyncFlag,
+		EnvFilePath:      envFilePath,
 	})
 	if err != nil {
 		program.Quit()
@@ -413,17 +430,13 @@ func ensureInitialized(envPathFlag string) (*config.Config, error) {
 		return nil, fmt.Errorf("failed to create project: %w", err)
 	}
 
-	// Step 3: Save config
+	// Step 3: Save config (keep .env excluded - values are sent separately, not the file)
 	exclude := []string{
 		"*.log",
 		".git",
 		"node_modules",
 		"__pycache__",
 		".env",
-	}
-	if envPathFlag != "" {
-		// Remove env path from excludes
-		exclude = removeFromSlice(exclude, envPathFlag)
 	}
 
 	applications := map[string]string{
@@ -448,17 +461,6 @@ func ensureInitialized(envPathFlag string) (*config.Config, error) {
 	}
 
 	return cfg, nil
-}
-
-// removeFromSlice removes an item from a string slice
-func removeFromSlice(slice []string, item string) []string {
-	result := make([]string, 0, len(slice))
-	for _, s := range slice {
-		if s != item {
-			result = append(result, s)
-		}
-	}
-	return result
 }
 
 // CreateProjectRequest represents the request body for creating a project

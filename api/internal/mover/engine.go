@@ -13,6 +13,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/fsnotify/fsnotify"
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -65,6 +68,12 @@ type Engine struct {
 	// Pending changes during disconnect
 	pendingChanges []FileChangeEvent
 	pendingMu      sync.Mutex
+
+	// Env file (values only, never synced)
+	envFilePath   string
+	envStopChan   chan struct{}
+	envDebounceMu sync.Mutex
+	envDebounceT  *time.Timer
 }
 
 // EngineConfig holds configuration for the sync engine
@@ -79,6 +88,7 @@ type EngineConfig struct {
 	SyncStatePath    string       // Path to .nixopus-sync-state.json for persisted sync state (empty = disabled)
 	ApplicationID    string       // Application ID for multi-app state (required if SyncStatePath is set)
 	ForceFullSync    bool         // If true, skip loading state and clear persisted state; sync all files
+	EnvFilePath      string       // Absolute path to .env file; when set, values are sent (file is never synced)
 }
 
 // NewEngine creates a new sync engine using fsnotify for file watching.
@@ -134,6 +144,10 @@ func NewEngine(cfg EngineConfig) (*Engine, error) {
 		onStateChange:    cfg.OnStateChange,
 		onFileSynced:     cfg.OnFileSynced,
 		onChangeDetected: cfg.OnChangeDetected,
+		envFilePath:      cfg.EnvFilePath,
+	}
+	if cfg.EnvFilePath != "" {
+		engine.envStopChan = make(chan struct{})
 	}
 
 	return engine, nil
@@ -206,6 +220,12 @@ func (e *Engine) flushPendingChanges() {
 func (e *Engine) Start() error {
 	if err := e.InitialSync(); err != nil {
 		return fmt.Errorf("initial sync failed: %w", err)
+	}
+
+	// Send initial env vars if configured (file is never synced, values only)
+	if e.envFilePath != "" {
+		e.sendEnvVars()
+		go e.watchEnvFile()
 	}
 
 	// Start file system watcher
@@ -461,6 +481,9 @@ func (e *Engine) Sync() error {
 // Stop stops the sync engine
 func (e *Engine) Stop() error {
 	close(e.stopChan)
+	if e.envFilePath != "" && e.envStopChan != nil {
+		close(e.envStopChan)
+	}
 	if e.syncState != nil {
 		_ = e.syncState.Save()
 	}
@@ -468,6 +491,70 @@ func (e *Engine) Stop() error {
 		return e.fileWatcher.Stop()
 	}
 	return nil
+}
+
+// sendEnvVars reads the env file, parses it, and sends the values to the server (file is never synced).
+func (e *Engine) sendEnvVars() {
+	if e.envFilePath == "" {
+		return
+	}
+	data, err := os.ReadFile(e.envFilePath)
+	if err != nil {
+		return // File may not exist yet
+	}
+	envVars, err := godotenv.Unmarshal(string(data))
+	if err != nil || len(envVars) == 0 {
+		return
+	}
+	e.connectedMu.RLock()
+	connected := e.isConnected
+	e.connectedMu.RUnlock()
+	if !connected {
+		return
+	}
+	msg := e.newSyncMessage(MessageTypeEnvVars, EnvVarsPayload{Vars: envVars})
+	_ = e.client.Send(msg)
+}
+
+// watchEnvFile watches the env file for changes and sends parsed values (file content is never synced).
+func (e *Engine) watchEnvFile() {
+	w, err := fsnotify.NewWatcher()
+	if err != nil {
+		return
+	}
+	defer w.Close()
+	dir := filepath.Dir(e.envFilePath)
+	if err := w.Add(dir); err != nil {
+		return
+	}
+	for {
+		select {
+		case <-e.envStopChan:
+			return
+		case event, ok := <-w.Events:
+			if !ok {
+				return
+			}
+			if event.Name != e.envFilePath {
+				continue
+			}
+			if event.Op&(fsnotify.Write|fsnotify.Create) == 0 {
+				continue
+			}
+			// Debounce
+			e.envDebounceMu.Lock()
+			if e.envDebounceT != nil {
+				e.envDebounceT.Stop()
+			}
+			e.envDebounceT = time.AfterFunc(e.debounceDelay, func() {
+				e.envDebounceMu.Lock()
+				e.envDebounceT = nil
+				e.envDebounceMu.Unlock()
+				e.sendEnvVars()
+			})
+			e.envDebounceMu.Unlock()
+		}
+	}
 }
 
 // drainReceiveChannel reads from client.Receive() to prevent the channel from filling

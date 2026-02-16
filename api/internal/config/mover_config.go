@@ -130,32 +130,9 @@ func Load() (*Config, error) {
 		}
 	}
 
-	// Ensure env path is not in exclude list if it's set
-	if cfg.EnvPath != "" {
-		cfg.Sync.Exclude = removeFromExcludes(cfg.Sync.Exclude, cfg.EnvPath)
-	}
+	// .env stays excluded - values are sent from client, file is never synced
 
 	return cfg, nil
-}
-
-// removeFromExcludes removes an item from the exclude list
-func removeFromExcludes(excludes []string, item string) []string {
-	result := make([]string, 0, len(excludes))
-	cleanItem := filepath.Clean(item)
-	baseName := filepath.Base(cleanItem)
-
-	for _, exclude := range excludes {
-		// Remove exact match
-		if exclude == item || exclude == cleanItem {
-			continue
-		}
-		// Remove base name match (e.g., if exclude is ".env" and item is ".env.production")
-		if exclude == baseName {
-			continue
-		}
-		result = append(result, exclude)
-	}
-	return result
 }
 
 // Save writes the configuration to .nixopus file

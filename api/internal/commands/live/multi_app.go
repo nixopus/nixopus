@@ -351,6 +351,22 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 		return fmt.Errorf("failed to get sync state path: %w", err)
 	}
 
+	// Resolve env file path (values only, file is never synced)
+	var envFilePath string
+	if cfg.EnvPath != "" {
+		cleanPath := filepath.Clean(cfg.EnvPath)
+		if !filepath.IsAbs(cleanPath) {
+			envFilePath = filepath.Join(wd, cleanPath)
+		} else {
+			envFilePath = cleanPath
+		}
+		if _, err := os.Stat(envFilePath); err == nil {
+			// File exists, will send values
+		} else {
+			envFilePath = ""
+		}
+	}
+
 	// Create sync engine
 	engine, err := mover.NewEngine(mover.EngineConfig{
 		RootPath:      watchPath,
@@ -371,6 +387,7 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 		SyncStatePath: syncStatePath,
 		ApplicationID: session.applicationID,
 		ForceFullSync: forceFullSyncFlag,
+		EnvFilePath:   envFilePath,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create sync engine: %w", err)

@@ -8,7 +8,6 @@ import (
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/caddygo"
-	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -392,12 +391,63 @@ func (s *TaskService) waitForLiveDevServiceHealthy(ctx context.Context, service 
 	}
 }
 
+// UpdateLiveDevServiceEnv updates the environment variables of a running live dev service.
+// Docker Swarm will roll out new tasks with the updated env, so the process picks up the new values.
+func UpdateLiveDevServiceEnv(ctx context.Context, applicationID uuid.UUID, envVars map[string]string) error {
+	existingService, err := FindServiceByLabel(ctx, "com.application.id", applicationID.String())
+	if err != nil {
+		return fmt.Errorf("failed to find service: %w", err)
+	}
+	if existingService == nil {
+		return fmt.Errorf("no live dev service found for application %s", applicationID)
+	}
+
+	// Ensure it's a devrunner service
+	if existingService.Spec.Annotations.Labels == nil ||
+		existingService.Spec.Annotations.Labels["nixopus.type"] != "devrunner" {
+		return fmt.Errorf("service is not a live dev service")
+	}
+
+	// Build new env slice
+	var envSlice []string
+	for k, v := range envVars {
+		envSlice = append(envSlice, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	// Create updated spec: clone current spec and replace Env
+	updatedSpec := existingService.Spec
+	if updatedSpec.TaskTemplate.ContainerSpec == nil {
+		return fmt.Errorf("service spec has no container spec")
+	}
+	// Clone ContainerSpec to avoid mutating the original
+	containerSpec := *updatedSpec.TaskTemplate.ContainerSpec
+	containerSpec.Env = envSlice
+	updatedSpec.TaskTemplate.ContainerSpec = &containerSpec
+
+	// Preserve service name for update
+	updatedSpec.Annotations.Name = existingService.Spec.Annotations.Name
+	if updatedSpec.Annotations.Labels == nil {
+		updatedSpec.Annotations.Labels = make(map[string]string)
+	}
+	for k, v := range existingService.Spec.Annotations.Labels {
+		updatedSpec.Annotations.Labels[k] = v
+	}
+	updatedSpec.Annotations.Labels["nixopus.last_update"] = fmt.Sprintf("%d", time.Now().Unix())
+
+	_, err = CreateOrUpdateService(ctx, updatedSpec, existingService)
+	return err
+}
+
 func (s *TaskService) addDomainToCaddy(ctx context.Context, domain string, port int, organizationID uuid.UUID, taskCtx *LiveDevTaskContext) error {
 	if taskCtx != nil {
 		taskCtx.AddLog(fmt.Sprintf("Adding domain %s to Caddy proxy...", domain))
 	}
 
-	client := caddygo.NewClient(config.AppConfig.Proxy.CaddyEndpoint)
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, organizationID.String())
+	client, err := GetCaddyClient(orgCtx, nil, &s.Logger)
+	if err != nil {
+		return fmt.Errorf("failed to get Caddy client: %w", err)
+	}
 	upstreamHost, err := GetSSHHostForOrganization(ctx, organizationID)
 	if err != nil {
 		return err

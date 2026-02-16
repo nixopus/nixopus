@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -45,18 +46,25 @@ type Gateway struct {
 	store             *shared_storage.Store
 	logger            logger.Logger
 	completionJobs    chan fileCompletionJob
+
+	// sessionEnvStore: env vars from client (set-env file values, never the file itself)
+	sessionEnvStore   map[string]map[string]string
+	sessionEnvStoreMu sync.RWMutex
 }
 
 func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, store *shared_storage.Store) *Gateway {
 	logger := logger.NewLogger()
 	gateway := &Gateway{
-		stagingManager:    stagingManager,
-		buildFirstManager: NewBuildFirstManager(stagingManager, taskService, logger),
-		manifestStore:     NewManifestStore(),
-		store:             store,
-		logger:            logger,
-		completionJobs:    make(chan fileCompletionJob, completionJobBuffer),
+		stagingManager:  stagingManager,
+		manifestStore:   NewManifestStore(),
+		store:           store,
+		logger:          logger,
+		completionJobs:  make(chan fileCompletionJob, completionJobBuffer),
+		sessionEnvStore: make(map[string]map[string]string),
 	}
+	gateway.buildFirstManager = NewBuildFirstManager(stagingManager, taskService, logger, func(appID uuid.UUID) map[string]string {
+		return gateway.GetSessionEnv(appID)
+	})
 	gateway.websocketHandler = NewWebSocketHandler(gateway, logger)
 	for i := 0; i < fileCompletionWorkers; i++ {
 		go gateway.runFileCompletionWorker()
@@ -86,6 +94,16 @@ func (g *Gateway) runFileCompletionWorker() {
 // BuildFirstManager returns the build-first manager for wiring callbacks (e.g. from TaskService).
 func (g *Gateway) BuildFirstManager() *BuildFirstManager {
 	return g.buildFirstManager
+}
+
+// GetSessionEnv returns env vars sent from client (set-env file values) for an application.
+func (g *Gateway) GetSessionEnv(applicationID uuid.UUID) map[string]string {
+	g.sessionEnvStoreMu.RLock()
+	defer g.sessionEnvStoreMu.RUnlock()
+	if env, ok := g.sessionEnvStore[applicationID.String()]; ok {
+		return env
+	}
+	return nil
 }
 
 // HandleWebSocket delegates to the WebSocket handler
@@ -163,6 +181,8 @@ func (g *Gateway) handleMessage(ctx context.Context, conn *websocket.Conn, appCt
 		return g.handleFileContent(ctx, conn, appCtx, msg)
 	case mover.MessageTypeFileDelete:
 		return g.handleFileDelete(ctx, appCtx, msg)
+	case mover.MessageTypeEnvVars:
+		return g.handleEnvVars(ctx, appCtx, msg)
 	case mover.MessageTypePing:
 		return g.websocketHandler.sendPong(conn)
 	default:
@@ -211,6 +231,26 @@ func (g *Gateway) validateFilePath(filePath string, basePath string) error {
 		return fmt.Errorf("invalid path after cleaning: %s", filePath)
 	}
 
+	return nil
+}
+
+func (g *Gateway) handleEnvVars(ctx context.Context, appCtx *ApplicationContext, msg *mover.SyncMessage) error {
+	var payload mover.EnvVarsPayload
+	if err := g.unmarshalPayload(msg.Payload, &payload); err != nil {
+		return err
+	}
+	if len(payload.Vars) == 0 {
+		return nil
+	}
+	g.sessionEnvStoreMu.Lock()
+	g.sessionEnvStore[appCtx.ApplicationID.String()] = payload.Vars
+	g.sessionEnvStoreMu.Unlock()
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, appCtx.OrganizationID.String())
+	if err := tasks.UpdateLiveDevServiceEnv(orgCtx, appCtx.ApplicationID, payload.Vars); err != nil {
+		g.logger.Log(logger.Warning, "failed to update service env", fmt.Sprintf("app=%s err=%v", appCtx.ApplicationID, err))
+	} else {
+		g.logger.Log(logger.Info, "env vars updated, service rolling new tasks", appCtx.ApplicationID.String())
+	}
 	return nil
 }
 

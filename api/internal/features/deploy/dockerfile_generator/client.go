@@ -26,7 +26,7 @@ func NewClient(baseURL string) *Client {
 	return &Client{
 		baseURL: baseURL,
 		httpClient: &http.Client{
-			Timeout: 120 * time.Second,
+			Timeout: 300 * time.Second, // 5 minutes for Dockerfile generation
 		},
 	}
 }
