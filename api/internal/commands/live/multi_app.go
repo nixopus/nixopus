@@ -265,7 +265,7 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 	}
 
 	// Fetch application details
-	basePath, domainURL, err := getApplicationDetailsWithURL(cfg.Server, session.applicationID, accessToken)
+	basePath, domainURL, err := getApplicationDetailsWithURL(cfg.Server, session.applicationID, accessToken, cfg.DeployDomain)
 	if err != nil {
 		return fmt.Errorf("failed to fetch application details: %w", err)
 	}
@@ -447,13 +447,13 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 }
 
 // getApplicationDetailsWithURL fetches application details and returns base_path and domain URL
-func getApplicationDetailsWithURL(server, applicationID, accessToken string) (string, string, error) {
+func getApplicationDetailsWithURL(server, applicationID, accessToken, deployDomain string) (string, string, error) {
 	basePath, err := getApplicationDetails(server, applicationID, accessToken)
 	if err != nil {
 		return "", "", err
 	}
 
-	domainURL := buildDomainURL(applicationID)
+	domainURL := buildDomainURL(applicationID, deployDomain)
 	return basePath, domainURL, nil
 }
 

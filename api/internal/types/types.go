@@ -61,9 +61,10 @@ type CORSConfig struct {
 }
 
 type AppConfig struct {
-	Environment string `mapstructure:"environment"`
-	Version     string `mapstructure:"version"`
-	LogsPath    string `mapstructure:"logs_path"`
+	Environment  string `mapstructure:"environment"`
+	Version      string `mapstructure:"version"`
+	LogsPath     string `mapstructure:"logs_path"`
+	DeployDomain string `mapstructure:"deploy_domain"` // Base domain for generated app URLs (e.g. nixopus.com)
 }
 
 type GitHubConfig struct {

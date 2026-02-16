@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -251,8 +252,8 @@ func (g *Gateway) getApplicationContext(ctx context.Context, r *http.Request, to
 		return nil, fmt.Errorf("failed to get staging path: %w", err)
 	}
 
-	// Generate domain name based on application ID: {first-8-chars}.nixopus.com
-	domain := fmt.Sprintf("%s.nixopus.com", applicationID.String()[:8])
+	// Generate domain name based on application ID: {first-8-chars}.{deploy_domain}
+	domain := fmt.Sprintf("%s.%s", applicationID.String()[:8], config.GetDeployDomain())
 
 	// Parse environment variables from application
 	envVars := tasks.GetMapFromString(application.EnvironmentVariables)
