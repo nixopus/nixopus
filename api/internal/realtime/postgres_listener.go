@@ -58,9 +58,13 @@ func (c *PostgresListener) ListenToApplicationChanges(ctx context.Context) (<-ch
 		return nil, err
 	}
 
-	_, err = conn.Exec(ctx, "LISTEN application_changes")
-	if err != nil {
-		return nil, err
+	// Subscribe to all channels on the same pgx connection
+	channels := []string{"application_changes", "live_dev_logs", "live_dev_status"}
+	for _, ch := range channels {
+		if _, err := conn.Exec(ctx, "LISTEN "+ch); err != nil {
+			conn.Close(ctx)
+			return nil, fmt.Errorf("LISTEN %s: %w", ch, err)
+		}
 	}
 
 	go func() {
@@ -120,10 +124,8 @@ func StartListeningAndNotify(pgListener *PostgresListener, ctx context.Context, 
 // processing of further notifications.
 func (s *SocketServer) handleNotifications(notificationChan <-chan *PostgresNotification) {
 	for notification := range notificationChan {
-		// fmt.Printf("Received notification on channel %s: %s\n",
-		// 	notification.Channel, notification.Payload)
-
-		if notification.Channel == "application_changes" {
+		switch notification.Channel {
+		case "application_changes":
 			var parsedPayload struct {
 				Table         string                 `json:"table"`
 				Action        string                 `json:"action"`
@@ -145,8 +147,15 @@ func (s *SocketServer) handleNotifications(notificationChan <-chan *PostgresNoti
 				"data":           parsedPayload.Data,
 			}
 
-			// we will broadcast the message to the topic here so all the clients who are subscribed to the topic will receive the message
 			s.BroadcastToTopic(MonitorApplicationDeployment, resourceID, messageData)
+
+		case "live_dev_logs", "live_dev_status":
+			s.liveDevHandlerMu.RLock()
+			handler := s.liveDevHandler
+			s.liveDevHandlerMu.RUnlock()
+			if handler != nil {
+				handler(notification.Channel, notification.Payload)
+			}
 		}
 	}
 }

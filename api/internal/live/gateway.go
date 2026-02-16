@@ -50,6 +50,15 @@ type Gateway struct {
 	// sessionEnvStore: env vars from client (set-env file values, never the file itself)
 	sessionEnvStore   map[string]map[string]string
 	sessionEnvStoreMu sync.RWMutex
+
+	// activeConns tracks the WebSocket connection per application for sending pipeline progress
+	activeConnsMu sync.RWMutex
+	activeConns   map[uuid.UUID]*activeConn
+}
+
+type activeConn struct {
+	conn    *websocket.Conn
+	handler *WebSocketHandler
 }
 
 func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, store *shared_storage.Store) *Gateway {
@@ -61,15 +70,167 @@ func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, 
 		logger:          logger,
 		completionJobs:  make(chan fileCompletionJob, completionJobBuffer),
 		sessionEnvStore: make(map[string]map[string]string),
+		activeConns:     make(map[uuid.UUID]*activeConn),
 	}
 	gateway.buildFirstManager = NewBuildFirstManager(stagingManager, taskService, logger, func(appID uuid.UUID) map[string]string {
 		return gateway.GetSessionEnv(appID)
+	})
+	gateway.buildFirstManager.SetPipelineProgressFunc(func(appID uuid.UUID, stageId, message string) {
+		gateway.sendPipelineProgress(appID, stageId, message)
+	})
+	gateway.buildFirstManager.SetBuildStatusFunc(func(appID uuid.UUID, phase, message, errMsg string) {
+		gateway.sendBuildStatus(appID, phase, message, errMsg)
 	})
 	gateway.websocketHandler = NewWebSocketHandler(gateway, logger)
 	for i := 0; i < fileCompletionWorkers; i++ {
 		go gateway.runFileCompletionWorker()
 	}
 	return gateway
+}
+
+// registerConn tracks an active WebSocket connection for an application.
+func (g *Gateway) registerConn(appID uuid.UUID, conn *websocket.Conn, handler *WebSocketHandler) {
+	g.activeConnsMu.Lock()
+	g.activeConns[appID] = &activeConn{conn: conn, handler: handler}
+	g.activeConnsMu.Unlock()
+}
+
+// unregisterConn removes the tracked WebSocket connection for an application.
+func (g *Gateway) unregisterConn(appID uuid.UUID) {
+	g.activeConnsMu.Lock()
+	delete(g.activeConns, appID)
+	g.activeConnsMu.Unlock()
+}
+
+// sendPipelineProgress sends a pipeline_progress message to the WebSocket client for the given app.
+func (g *Gateway) sendPipelineProgress(appID uuid.UUID, stageId, message string) {
+	g.activeConnsMu.RLock()
+	ac := g.activeConns[appID]
+	g.activeConnsMu.RUnlock()
+
+	if ac == nil {
+		return
+	}
+
+	msg := mover.SyncMessage{
+		Type:      mover.MessageTypePipelineProgress,
+		Timestamp: time.Now(),
+		Payload: mover.PipelineProgressPayload{
+			StageId: stageId,
+			Message: message,
+		},
+	}
+	if err := ac.handler.sendMessage(ac.conn, msg); err != nil {
+		g.logger.Log(logger.Warning, "failed to send pipeline progress", fmt.Sprintf("app=%s err=%v", appID, err))
+	}
+}
+
+// sendBuildStatus sends a build lifecycle status message to the WebSocket client for the given app.
+func (g *Gateway) sendBuildStatus(appID uuid.UUID, phase, message, errMsg string) {
+	g.activeConnsMu.RLock()
+	ac := g.activeConns[appID]
+	g.activeConnsMu.RUnlock()
+
+	if ac == nil {
+		return
+	}
+
+	msg := mover.SyncMessage{
+		Type:      mover.MessageTypeBuildStatus,
+		Timestamp: time.Now(),
+		Payload: mover.BuildStatusPayload{
+			Phase:   phase,
+			Message: message,
+			Error:   errMsg,
+		},
+	}
+	if err := ac.handler.sendMessage(ac.conn, msg); err != nil {
+		g.logger.Log(logger.Warning, "failed to send build status", fmt.Sprintf("app=%s err=%v", appID, err))
+	}
+}
+
+// sendBuildLog sends a build log line to the WebSocket client for the given app.
+// Called when a live_dev_logs notification arrives from PostgreSQL.
+func (g *Gateway) sendBuildLog(appID uuid.UUID, log string, timestamp string) {
+	g.activeConnsMu.RLock()
+	ac := g.activeConns[appID]
+	g.activeConnsMu.RUnlock()
+
+	if ac == nil {
+		return
+	}
+
+	msg := mover.SyncMessage{
+		Type:      mover.MessageTypeBuildLog,
+		Timestamp: time.Now(),
+		Payload: mover.BuildLogPayload{
+			Log:       log,
+			Timestamp: timestamp,
+		},
+	}
+	if err := ac.handler.sendMessage(ac.conn, msg); err != nil {
+		g.logger.Log(logger.Warning, "failed to send build log", fmt.Sprintf("app=%s err=%v", appID, err))
+	}
+}
+
+// sendDeploymentStatus sends a deployment status change to the WebSocket client for the given app.
+// Called when a live_dev_status notification arrives from PostgreSQL.
+func (g *Gateway) sendDeploymentStatus(appID uuid.UUID, status string) {
+	g.activeConnsMu.RLock()
+	ac := g.activeConns[appID]
+	g.activeConnsMu.RUnlock()
+
+	if ac == nil {
+		return
+	}
+
+	msg := mover.SyncMessage{
+		Type:      mover.MessageTypeDeploymentStatus,
+		Timestamp: time.Now(),
+		Payload: mover.DeploymentStatusPayload{
+			Status: status,
+		},
+	}
+	if err := ac.handler.sendMessage(ac.conn, msg); err != nil {
+		g.logger.Log(logger.Warning, "failed to send deployment status", fmt.Sprintf("app=%s err=%v", appID, err))
+	}
+}
+
+// HandleLiveDevNotification processes live_dev_logs and live_dev_status notifications
+// from the PostgresListener. This is registered as a callback on the SocketServer.
+func (g *Gateway) HandleLiveDevNotification(channel, payload string) {
+	switch channel {
+	case "live_dev_logs":
+		var n struct {
+			ApplicationID string `json:"application_id"`
+			Log           string `json:"log"`
+			CreatedAt     string `json:"created_at"`
+		}
+		if err := json.Unmarshal([]byte(payload), &n); err != nil {
+			g.logger.Log(logger.Warning, "failed to parse live_dev_logs notification", err.Error())
+			return
+		}
+		appID, err := uuid.Parse(n.ApplicationID)
+		if err != nil {
+			return
+		}
+		g.sendBuildLog(appID, n.Log, n.CreatedAt)
+
+	case "live_dev_status":
+		var n struct {
+			ApplicationID string `json:"application_id"`
+			Status        string `json:"status"`
+		}
+		if err := json.Unmarshal([]byte(payload), &n); err != nil {
+			g.logger.Log(logger.Warning, "failed to parse live_dev_status notification", err.Error())
+			return
+		}
+		appID, err := uuid.Parse(n.ApplicationID)
+		if err != nil {
+			return
+		}
+		g.sendDeploymentStatus(appID, n.Status)
+	}
 }
 
 // runFileCompletionWorker processes file write + ACK in parallel (non-blocking for read loop)

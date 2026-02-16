@@ -64,6 +64,13 @@ func NewLiveDeployController(store *storage.Store) *LiveDeployController {
 func (router *Router) RegisterLiveDeployRoutes(server *fuego.Server, apiV1 api.Version) {
 	controller := NewLiveDeployController(router.app.Store)
 
+	// Wire live dev PostgreSQL notifications from the shared listener to the Gateway.
+	// The SocketServer's PostgresListener already subscribes to live_dev_logs and
+	// live_dev_status channels; we just need to route those to the Gateway.
+	if router.socketServer != nil {
+		router.socketServer.SetLiveDevHandler(controller.gateway.HandleLiveDevNotification)
+	}
+
 	// WebSocket endpoint for live deploy (register at root level to match /ws/live/{application_id})
 	wsHandler := func(c fuego.ContextNoBody) (interface{}, error) {
 		controller.gateway.HandleWebSocket(c.Response(), c.Request())
