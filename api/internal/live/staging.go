@@ -2,11 +2,14 @@ package live
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
 	github_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -45,6 +48,17 @@ func (sm *StagingManager) GetStagingPath(ctx context.Context, applicationID, use
 	// Path structure: /var/nixopus/repos/{userID}/{environment}/{applicationID}
 	stagingPath, _, err := sm.githubService.GetClonePath(orgCtx, userID.String(), string(application.Environment), applicationID.String())
 	if err != nil {
+		// In development, fall back to local staging when SSH is not configured (common when running API locally)
+		if config.AppConfig.App.Environment == "development" || config.AppConfig.App.Environment == "dev" {
+			localPath := filepath.Join(os.TempDir(), "nixopus-staging", userID.String(), string(application.Environment), applicationID.String())
+			if application.BasePath != "" && application.BasePath != "/" {
+				localPath = filepath.Join(localPath, application.BasePath)
+			}
+			if err := os.MkdirAll(localPath, 0755); err != nil {
+				return "", err
+			}
+			return localPath, nil
+		}
 		return "", err
 	}
 
@@ -55,6 +69,20 @@ func (sm *StagingManager) GetStagingPath(ctx context.Context, applicationID, use
 	}
 
 	return stagingPath, nil
+}
+
+// isLocalStagingPath returns true if the staging path is a local development path (not on remote SSH server)
+func isLocalStagingPath(stagingPath string) bool {
+	localRoot := filepath.Join(os.TempDir(), "nixopus-staging")
+	absRoot, err := filepath.Abs(localRoot)
+	if err != nil {
+		return false
+	}
+	absPath, err := filepath.Abs(stagingPath)
+	if err != nil {
+		return false
+	}
+	return strings.HasPrefix(absPath, absRoot+string(filepath.Separator)) || absPath == absRoot
 }
 
 func (sm *StagingManager) GetRepositorySource(ctx context.Context, application *shared_types.Application) string {

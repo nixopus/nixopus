@@ -230,6 +230,11 @@ func runSingleApp(args []string) error {
 	}
 	if clientErr != nil {
 		program.Quit()
+		errMsg := clientErr.Error()
+		// Provide helpful hint when server rejects connection (often staging/SSH setup for new projects)
+		if strings.Contains(errMsg, "404") || strings.Contains(errMsg, "bad handshake") {
+			return fmt.Errorf("connection rejected by server: %w\n\nThis often happens when the staging environment cannot be set up (e.g. SSH not configured for your organization). Check server logs for details.", clientErr)
+		}
 		return fmt.Errorf("failed to connect: %w", clientErr)
 	}
 	if client == nil {

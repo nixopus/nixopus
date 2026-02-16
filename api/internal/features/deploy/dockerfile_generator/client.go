@@ -33,6 +33,7 @@ func NewClient(baseURL string) *Client {
 
 type pipelineRunRequest struct {
 	Source        string `json:"source"`
+	Mode          string `json:"mode,omitempty"` // "development" for live reload, "production" for optimized build
 	ModelOverride string `json:"modelOverride,omitempty"`
 }
 
@@ -77,11 +78,16 @@ type AuthHeaders struct {
 }
 
 func (c *Client) Generate(ctx context.Context, source, organizationID string, auth AuthHeaders) (*GenerateResponse, error) {
+	return c.GenerateWithMode(ctx, source, organizationID, "", auth)
+}
+
+// GenerateWithMode generates a Dockerfile. Pass mode "development" for live reload.
+func (c *Client) GenerateWithMode(ctx context.Context, source, organizationID, mode string, auth AuthHeaders) (*GenerateResponse, error) {
 	if c.baseURL == "" {
 		return nil, fmt.Errorf("agent endpoint not configured")
 	}
 
-	reqBody := pipelineRunRequest{Source: source}
+	reqBody := pipelineRunRequest{Source: source, Mode: mode}
 	body, err := json.Marshal(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("marshal request: %w", err)

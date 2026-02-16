@@ -12,20 +12,31 @@ import (
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 )
 
+// OnLiveDevDeployedFunc is called when a live dev build completes and the container is healthy.
+// Used by BuildFirstManager to switch from full-build mode to inject mode.
+type OnLiveDevDeployedFunc func(applicationID uuid.UUID, workdir string)
+
 type TaskService struct {
-	Storage        storage.DeployRepository
-	Logger         logger.Logger
-	Github_service *github_service.GithubConnectorService
-	Store          *shared_storage.Store
+	Storage           storage.DeployRepository
+	Logger            logger.Logger
+	Github_service    *github_service.GithubConnectorService
+	Store             *shared_storage.Store
+	OnLiveDevDeployed OnLiveDevDeployedFunc
 }
 
 func NewTaskService(storage storage.DeployRepository, logger logger.Logger, githubService *github_service.GithubConnectorService, store *shared_storage.Store) *TaskService {
 	return &TaskService{
-		Storage:        storage,
-		Logger:         logger,
-		Github_service: githubService,
-		Store:          store,
+		Storage:           storage,
+		Logger:            logger,
+		Github_service:    githubService,
+		Store:             store,
+		OnLiveDevDeployed: nil,
 	}
+}
+
+// SetOnLiveDevDeployed sets the callback invoked when a live dev build completes and container is healthy.
+func (s *TaskService) SetOnLiveDevDeployed(fn OnLiveDevDeployedFunc) {
+	s.OnLiveDevDeployed = fn
 }
 
 // getDockerService retrieves docker service from context (organization-aware)
