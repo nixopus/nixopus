@@ -1,7 +1,6 @@
 package live
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -25,8 +24,6 @@ type AppSession struct {
 	client        *mover.Client
 	engine        *mover.Engine
 	tracker       *mover.Tracker
-	poller        *DeploymentPoller
-	pollerCancel  context.CancelFunc
 	error         error
 	mu            sync.RWMutex
 }
@@ -71,12 +68,6 @@ func (s *AppSession) Stop() error {
 	}
 	if s.client != nil {
 		s.client.Close()
-	}
-	if s.poller != nil {
-		s.poller.Stop()
-	}
-	if s.pollerCancel != nil {
-		s.pollerCancel()
 	}
 	if len(errs) > 0 {
 		return fmt.Errorf("errors stopping %s: %v", s.name, errs)
@@ -398,39 +389,6 @@ func initializeAppSession(session *AppSession, cfg *config.Config, tracker *move
 	session.mu.Unlock()
 
 	// Start deployment poller with callback to update multi-app tracker
-	pollerCtx, pollerCancel := context.WithCancel(context.Background())
-	poller := NewDeploymentPoller(cfg, session.tracker, session.applicationID)
-
-	// Wrap the poller's update function to also update multi-app tracker
-	go func() {
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				info := session.GetStatusInfo()
-				tracker.UpdateSession(session.name, mover.AppSessionInfo{
-					Name:            session.name,
-					ApplicationID:   session.applicationID,
-					Status:          info.ConnectionStatus,
-					FilesSynced:     info.FilesSynced,
-					ChangesDetected: info.ChangesDetected,
-					URL:             info.URL,
-					Deployment:      info.Deployment,
-				})
-			case <-pollerCtx.Done():
-				return
-			}
-		}
-	}()
-
-	go poller.Start(pollerCtx)
-
-	session.mu.Lock()
-	session.poller = poller
-	session.pollerCancel = pollerCancel
-	session.mu.Unlock()
-
 	// Initial tracker update
 	info := session.GetStatusInfo()
 	tracker.UpdateSession(session.name, mover.AppSessionInfo{
