@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -289,13 +288,6 @@ func (e *Engine) InitialSync() error {
 			e.syncState.SetRootHash(e.applicationID, tree.RootHash)
 			_ = e.syncState.Save()
 		}
-	}
-
-	// Log sync summary
-	totalFiles := len(files)
-	skipped := totalFiles - len(filesToSync) // Files that matched and were not sent
-	if totalFiles > 0 {
-		log.Printf("sync: %d synced, %d deleted, %d skipped (%d total)", len(filesToSync), len(filesToDelete), skipped, totalFiles)
 	}
 
 	return nil

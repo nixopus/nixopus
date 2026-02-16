@@ -3,6 +3,7 @@ package live
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -64,8 +65,19 @@ func (bfm *BuildFirstManager) GetWorkdir(appID uuid.UUID) string {
 
 func (bfm *BuildFirstManager) HandleFileWritten(ctx context.Context, appCtx *ApplicationContext, filePath string, content []byte) {
 	if !bfm.IsDeployed(appCtx.ApplicationID) {
-		bfm.triggerBuild(ctx, appCtx)
-		return
+		if service, err := tasks.FindServiceByLabel(ctx, "com.application.id", appCtx.ApplicationID.String()); err == nil && service != nil {
+			if bfm.injector.IsContainerRunning(ctx, appCtx) {
+				workdir := tasks.GetWorkdirFromService(service)
+				bfm.MarkDeployed(appCtx.ApplicationID, workdir)
+				bfm.logger.Log(logger.Info, "recovered deployed state from running container", appCtx.ApplicationID.String())
+			} else {
+				bfm.triggerBuild(ctx, appCtx)
+				return
+			}
+		} else {
+			bfm.triggerBuild(ctx, appCtx)
+			return
+		}
 	}
 
 	if IsDependencyFile(filePath) {
@@ -75,11 +87,19 @@ func (bfm *BuildFirstManager) HandleFileWritten(ctx context.Context, appCtx *App
 		return
 	}
 
-	if err := bfm.injector.InjectFile(ctx, appCtx, filePath, content, bfm.GetWorkdir(appCtx.ApplicationID)); err != nil {
-		bfm.logger.Log(logger.Warning, "file injection failed, triggering rebuild", fmt.Sprintf("path=%s err=%v", filePath, err))
-		bfm.markUndeployed(appCtx.ApplicationID)
-		bfm.triggerBuild(ctx, appCtx)
+	var lastErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		if attempt > 0 {
+			time.Sleep(time.Duration(attempt) * time.Second)
+		}
+		lastErr = bfm.injector.InjectFile(ctx, appCtx, filePath, content, bfm.GetWorkdir(appCtx.ApplicationID))
+		if lastErr == nil {
+			return
+		}
 	}
+	bfm.logger.Log(logger.Warning, "file injection failed after retries, triggering rebuild", fmt.Sprintf("path=%s err=%v", filePath, lastErr))
+	bfm.markUndeployed(appCtx.ApplicationID)
+	bfm.triggerBuild(ctx, appCtx)
 }
 
 func (bfm *BuildFirstManager) HandleFileDeleted(ctx context.Context, appCtx *ApplicationContext, filePath string) {
@@ -138,7 +158,7 @@ func (bfm *BuildFirstManager) doBuild(ctx context.Context, appCtx *ApplicationCo
 		Cookie: appCtx.AuthCookie,
 	}
 	client := dockerfile_generator.NewClient(config.AppConfig.Agent.Endpoint)
-	resp, err := client.Generate(ctx, source, appCtx.OrganizationID.String(), auth)
+	resp, err := client.GenerateWithMode(ctx, source, appCtx.OrganizationID.String(), "development", auth)
 	if err != nil {
 		bfm.logger.Log(logger.Error, "dockerfile generator failed", fmt.Sprintf("app=%s err=%v", appCtx.ApplicationID, err))
 		return
@@ -174,10 +194,8 @@ func (bfm *BuildFirstManager) doBuild(ctx context.Context, appCtx *ApplicationCo
 		return
 	}
 
-	bfm.deployedMu.Lock()
-	bfm.deployed[appCtx.ApplicationID] = &deployedApp{workdir: resp.Workdir}
-	bfm.deployedMu.Unlock()
-
+	// Deployed state is set by TaskService.OnLiveDevDeployed when the container is healthy,
+	// not here. Previously marking immediately caused injection to fail (container not ready).
 	bfm.logger.Log(logger.Info, "build-first deployment queued", appCtx.ApplicationID.String())
 }
 
@@ -187,16 +205,35 @@ func (bfm *BuildFirstManager) markUndeployed(appID uuid.UUID) {
 	bfm.deployedMu.Unlock()
 }
 
+// MarkDeployed is called when a live dev build completes and the container is healthy.
+// Enables file injection instead of full rebuilds. Used by TaskService.OnLiveDevDeployed callback.
+func (bfm *BuildFirstManager) MarkDeployed(appID uuid.UUID, workdir string) {
+	if workdir == "" {
+		workdir = "/app"
+	}
+	bfm.deployedMu.Lock()
+	bfm.deployed[appID] = &deployedApp{workdir: workdir}
+	bfm.deployedMu.Unlock()
+	bfm.logger.Log(logger.Info, "live dev container ready, inject mode enabled", appID.String())
+}
+
 const generatedDockerfileName = "Dockerfile.nixopus.dev"
 
 func WriteDockerfileToStaging(ctx context.Context, stagingPath string, content string) (string, error) {
+	fullPath := filepath.Join(stagingPath, generatedDockerfileName)
+
+	if isLocalStagingPath(stagingPath) {
+		if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
+			return "", fmt.Errorf("failed to write Dockerfile: %w", err)
+		}
+		return generatedDockerfileName, nil
+	}
+
 	sftpClient, err := getSFTPClient(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get SFTP client: %w", err)
 	}
 	defer sftpClient.Close()
-
-	fullPath := filepath.Join(stagingPath, generatedDockerfileName)
 
 	file, err := sftpClient.Create(fullPath)
 	if err != nil {
@@ -212,13 +249,20 @@ func WriteDockerfileToStaging(ctx context.Context, stagingPath string, content s
 }
 
 func WriteDockerignoreToStaging(ctx context.Context, stagingPath string, content string) (string, error) {
+	fullPath := filepath.Join(stagingPath, ".dockerignore")
+
+	if isLocalStagingPath(stagingPath) {
+		if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
+			return "", fmt.Errorf("failed to write .dockerignore: %w", err)
+		}
+		return ".dockerignore", nil
+	}
+
 	sftpClient, err := getSFTPClient(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get SFTP client: %w", err)
 	}
 	defer sftpClient.Close()
-
-	fullPath := filepath.Join(stagingPath, ".dockerignore")
 
 	file, err := sftpClient.Create(fullPath)
 	if err != nil {
