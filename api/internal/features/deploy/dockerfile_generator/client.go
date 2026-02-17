@@ -41,6 +41,7 @@ func NewClient(baseURL string) *Client {
 type pipelineRunRequest struct {
 	Source        string `json:"source"`
 	Mode          string `json:"mode,omitempty"`
+	ApplicationID string `json:"applicationId,omitempty"`
 	ModelOverride string `json:"modelOverride,omitempty"`
 }
 
@@ -84,26 +85,27 @@ type AuthHeaders struct {
 	Cookie string
 }
 
-func (c *Client) Generate(ctx context.Context, source, organizationID string, auth AuthHeaders) (*GenerateResponse, error) {
-	return c.GenerateWithMode(ctx, source, organizationID, "", auth)
+func (c *Client) Generate(ctx context.Context, source, organizationID, applicationID string, auth AuthHeaders) (*GenerateResponse, error) {
+	return c.GenerateWithMode(ctx, source, organizationID, applicationID, "", auth)
 }
 
 // GenerateWithMode generates a Dockerfile. Pass mode "development" for live reload.
 // When onProgress is non-nil, uses SSE streaming to receive real-time progress events.
 // When onProgress is nil, falls back to a standard JSON request.
-func (c *Client) GenerateWithMode(ctx context.Context, source, organizationID, mode string, auth AuthHeaders) (*GenerateResponse, error) {
-	return c.GenerateWithProgress(ctx, source, organizationID, mode, auth, nil)
+func (c *Client) GenerateWithMode(ctx context.Context, source, organizationID, applicationID, mode string, auth AuthHeaders) (*GenerateResponse, error) {
+	return c.GenerateWithProgress(ctx, source, organizationID, applicationID, mode, auth, nil)
 }
 
 // GenerateWithProgress generates a Dockerfile with real-time progress streaming.
 // When onProgress is non-nil, requests SSE from the pipeline endpoint and calls
 // onProgress for each progress event before returning the final result.
-func (c *Client) GenerateWithProgress(ctx context.Context, source, organizationID, mode string, auth AuthHeaders, onProgress ProgressFunc) (*GenerateResponse, error) {
+// applicationID must reference an app with a codebase index in application_context and application_file_chunks.
+func (c *Client) GenerateWithProgress(ctx context.Context, source, organizationID, applicationID, mode string, auth AuthHeaders, onProgress ProgressFunc) (*GenerateResponse, error) {
 	if c.baseURL == "" {
 		return nil, fmt.Errorf("agent endpoint not configured")
 	}
 
-	reqBody := pipelineRunRequest{Source: source, Mode: mode}
+	reqBody := pipelineRunRequest{Source: source, Mode: mode, ApplicationID: applicationID}
 	body, err := json.Marshal(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("marshal request: %w", err)

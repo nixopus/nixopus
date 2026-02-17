@@ -97,7 +97,19 @@ func (sm *StagingManager) GetRepositorySource(ctx context.Context, application *
 	return repo.FullName
 }
 
+// GetFileReceiver gets or creates a file receiver. Uses RLock fast path when receiver exists.
 func (sm *StagingManager) GetFileReceiver(applicationID uuid.UUID, path string, totalChunks int, checksum string, stagingPath string) *FileReceiver {
+	// Fast path: receiver exists and checksum matches, use RLock
+	sm.mu.RLock()
+	if appReceivers := sm.fileReceivers[applicationID]; appReceivers != nil {
+		if receiver, exists := appReceivers[path]; exists && receiver.Checksum == checksum {
+			sm.mu.RUnlock()
+			return receiver
+		}
+	}
+	sm.mu.RUnlock()
+
+	// Slow path: create receiver
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
@@ -109,6 +121,7 @@ func (sm *StagingManager) GetFileReceiver(applicationID uuid.UUID, path string, 
 		if receiver.Checksum != checksum {
 			receiver.Reset(totalChunks, checksum)
 		}
+		receiver.UpdateMetadata(totalChunks, checksum)
 		return receiver
 	}
 
