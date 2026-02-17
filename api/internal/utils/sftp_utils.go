@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/sftp"
@@ -63,50 +65,100 @@ func CreateSFTPClientWithRetry(sshMgr *ssh.SSHManager) (*sftp.Client, error) {
 }
 
 // ReadFile reads a file from the remote server via SFTP.
-// This is a generic utility function that can be used across packages to read files remotely.
+// Uses org-scoped SFTP pool when context has OrganizationIDKey.
 func ReadFile(ctx context.Context, filePath string) (string, error) {
-	sshMgr, err := ssh.GetSSHManagerFromContext(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to get SSH manager: %w", err)
-	}
-
-	sftpClient, err := CreateSFTPClientWithRetry(sshMgr)
+	var content string
+	err := WithSFTPClientFromPool(ctx, func(sftpClient *sftp.Client) error {
+		file, err := sftpClient.Open(filePath)
+		if err != nil {
+			return fmt.Errorf("failed to open file via SFTP: %w", err)
+		}
+		defer file.Close()
+		data, err := io.ReadAll(file)
+		if err != nil {
+			return fmt.Errorf("failed to read file content via SFTP: %w", err)
+		}
+		content = string(data)
+		return nil
+	})
 	if err != nil {
 		return "", err
 	}
-	defer sftpClient.Close()
+	return content, nil
+}
 
-	file, err := sftpClient.Open(filePath)
+// ReadFileBytes reads a file from the remote server via SFTP, returning raw bytes.
+// Uses org-scoped SFTP pool when context has OrganizationIDKey.
+func ReadFileBytes(ctx context.Context, filePath string) ([]byte, error) {
+	var data []byte
+	err := WithSFTPClientFromPool(ctx, func(sftpClient *sftp.Client) error {
+		file, err := sftpClient.Open(filePath)
+		if err != nil {
+			return fmt.Errorf("failed to open file via SFTP: %w", err)
+		}
+		defer file.Close()
+		data, err = io.ReadAll(file)
+		return err
+	})
 	if err != nil {
-		return "", fmt.Errorf("failed to open file via SFTP: %w", err)
+		return nil, err
+	}
+	return data, nil
+}
+
+// WithSFTPClient runs fn with an SFTP client from the org-scoped pool.
+// Context must have types.OrganizationIDKey set (required for GetSSHManagerFromContext).
+// Reuses pooled connections per organization to reduce connection churn.
+func WithSFTPClient(ctx context.Context, fn func(*sftp.Client) error) error {
+	return WithSFTPClientFromPool(ctx, fn)
+}
+
+// ReadFileBytesFromClient reads a file via an existing SFTP client. Prefer this inside WithSFTPClient
+// to avoid creating multiple connections.
+func ReadFileBytesFromClient(client *sftp.Client, filePath string) ([]byte, error) {
+	file, err := client.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file via SFTP: %w", err)
 	}
 	defer file.Close()
+	return io.ReadAll(file)
+}
 
-	content, err := io.ReadAll(file)
-	if err != nil {
-		return "", fmt.Errorf("failed to read file content via SFTP: %w", err)
-	}
-
-	return string(content), nil
+// WalkRemote walks the directory tree at root via SFTP using a single connection.
+// walkFn receives the client so it can read files without opening new connections.
+// walkFn can return filepath.SkipDir to skip a directory.
+// Context must have SSH manager set (e.g. OrganizationIDKey for tenant resolution).
+func WalkRemote(ctx context.Context, root string, walkFn func(client *sftp.Client, path string, info os.FileInfo, err error) error) error {
+	return WithSFTPClient(ctx, func(client *sftp.Client) error {
+		walker := client.Walk(root)
+		for walker.Step() {
+			if err := walker.Err(); err != nil {
+				return walkFn(client, walker.Path(), nil, err)
+			}
+			path := walker.Path()
+			stat := walker.Stat()
+			if err := walkFn(client, path, stat, nil); err != nil {
+				if err == filepath.SkipDir && stat != nil && stat.IsDir() {
+					walker.SkipDir()
+					continue
+				}
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // FileExists checks if a file exists at the given path via SFTP.
-// This is a generic utility function that can be used across packages to check file existence remotely.
-// Note: For batch operations, use FilesExist instead.
+// Uses org-scoped SFTP pool when context has OrganizationIDKey.
 func FileExists(ctx context.Context, path string) bool {
-	sshMgr, err := ssh.GetSSHManagerFromContext(ctx)
-	if err != nil {
-		return false
-	}
-
-	sftpClient, err := CreateSFTPClientWithRetry(sshMgr)
-	if err != nil {
-		return false
-	}
-	defer sftpClient.Close()
-
-	_, err = sftpClient.Stat(path)
-	return err == nil
+	var exists bool
+	_ = WithSFTPClientFromPool(ctx, func(sftpClient *sftp.Client) error {
+		_, err := sftpClient.Stat(path)
+		exists = err == nil
+		return nil
+	})
+	return exists
 }
 
 // markAllAsNonExistent is a helper function that marks all paths as non-existent.
@@ -119,25 +171,18 @@ func markAllAsNonExistent(paths []string) map[string]bool {
 }
 
 // FilesExist checks if multiple files exist in a single SFTP session.
-// This is more efficient than calling FileExists multiple times.
-// Returns a map of file path to existence boolean.
+// Uses org-scoped SFTP pool. Returns a map of file path to existence boolean.
 func FilesExist(ctx context.Context, paths []string) map[string]bool {
-	sshMgr, err := ssh.GetSSHManagerFromContext(ctx)
-	if err != nil {
-		return markAllAsNonExistent(paths)
-	}
-
-	sftpClient, err := CreateSFTPClientWithRetry(sshMgr)
-	if err != nil {
-		return markAllAsNonExistent(paths)
-	}
-	defer sftpClient.Close()
-
 	result := make(map[string]bool, len(paths))
-	for _, path := range paths {
-		_, err := sftpClient.Stat(path)
-		result[path] = err == nil
+	err := WithSFTPClientFromPool(ctx, func(sftpClient *sftp.Client) error {
+		for _, path := range paths {
+			_, err := sftpClient.Stat(path)
+			result[path] = err == nil
+		}
+		return nil
+	})
+	if err != nil {
+		return markAllAsNonExistent(paths)
 	}
-
 	return result
 }
