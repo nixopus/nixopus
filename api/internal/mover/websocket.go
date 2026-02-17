@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"os"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -12,6 +14,24 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 )
+
+var (
+	sendBufferSize    int
+	receiveBufferSize int
+)
+
+func init() {
+	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_MOVER_SEND_BUFFER")); err == nil && v > 0 {
+		sendBufferSize = v
+	} else {
+		sendBufferSize = 8192 // Handle 2000+ files (file_change + chunks per file)
+	}
+	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_MOVER_RECEIVE_BUFFER")); err == nil && v > 0 {
+		receiveBufferSize = v
+	} else {
+		receiveBufferSize = 1024
+	}
+}
 
 const (
 	writeWait             = 10 * time.Second
@@ -103,8 +123,8 @@ func NewClient(serverURL, token string, opts ...ClientOption) (*Client, error) {
 	c := &Client{
 		serverURL:       serverURL,
 		token:           token,
-		send:            make(chan SyncMessage, 1024),
-		receive:         make(chan SyncMessage, 256),
+		send:            make(chan SyncMessage, sendBufferSize),
+		receive:         make(chan SyncMessage, receiveBufferSize),
 		done:            make(chan struct{}),
 		state:           StateDisconnected,
 		pendingMessages: make([]SyncMessage, 0),
@@ -434,18 +454,73 @@ func (c *Client) handleReadError(err error) {
 	}
 }
 
-// parseAndForwardMessage parses JSON and sends to receive channel
+// recvEnvelope is the first-pass decode. Payload stays as json.RawMessage
+// to avoid double Marshal/Unmarshal when forwarding to typed structs.
+type recvEnvelope struct {
+	Type      MessageType     `json:"type"`
+	Timestamp time.Time       `json:"timestamp"`
+	Payload   json.RawMessage `json:"payload"`
+}
+
+// parseAndForwardMessage parses JSON once and unmarshals Payload into the typed struct.
+// Avoids double encode (was: Unmarshal full → Marshal payload → Unmarshal payload).
 func (c *Client) parseAndForwardMessage(message []byte) bool {
-	var msg SyncMessage
-	if err := json.Unmarshal(message, &msg); err != nil {
+	var env recvEnvelope
+	if err := json.Unmarshal(message, &env); err != nil {
 		return true // Continue on parse error
 	}
+
+	payload := c.unmarshalPayloadByType(env.Type, env.Payload)
+	msg := SyncMessage{Type: env.Type, Timestamp: env.Timestamp, Payload: payload}
 
 	select {
 	case c.receive <- msg:
 		return true
 	case <-c.done:
 		return false
+	}
+}
+
+// unmarshalPayloadByType unmarshals RawMessage into the appropriate typed struct.
+func (c *Client) unmarshalPayloadByType(typ MessageType, raw json.RawMessage) interface{} {
+	if len(raw) == 0 {
+		return nil
+	}
+	switch typ {
+	case MessageTypeManifest:
+		var m ManifestPayload
+		if err := json.Unmarshal(raw, &m); err != nil {
+			return nil
+		}
+		return m
+	case MessageTypePipelineProgress:
+		var m PipelineProgressPayload
+		if err := json.Unmarshal(raw, &m); err != nil {
+			return nil
+		}
+		return m
+	case MessageTypeBuildStatus:
+		var m BuildStatusPayload
+		if err := json.Unmarshal(raw, &m); err != nil {
+			return nil
+		}
+		return m
+	case MessageTypeBuildLog:
+		var m BuildLogPayload
+		if err := json.Unmarshal(raw, &m); err != nil {
+			return nil
+		}
+		return m
+	case MessageTypeDeploymentStatus:
+		var m DeploymentStatusPayload
+		if err := json.Unmarshal(raw, &m); err != nil {
+			return nil
+		}
+		return m
+	default:
+		var v interface{}
+		_ = json.Unmarshal(raw, &v)
+		return v
 	}
 }
 
