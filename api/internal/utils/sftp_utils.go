@@ -29,6 +29,7 @@ func isClosedConnectionError(err error) bool {
 	errMsg := err.Error()
 	return strings.Contains(errMsg, "use of closed network connection") ||
 		strings.Contains(errMsg, "connection closed") ||
+		strings.Contains(errMsg, "connection lost") ||
 		strings.Contains(errMsg, "EOF") ||
 		strings.Contains(errMsg, "broken pipe") ||
 		strings.Contains(errMsg, "connection reset by peer")

@@ -3,6 +3,7 @@ package ssh
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"sync"
@@ -36,6 +37,10 @@ type connectionPoolEntry struct {
 	mu       sync.RWMutex
 }
 
+// SSHConnectFunc creates SSH connections. Used for dependency injection in tests.
+// When non-nil, ConnectWithID uses it instead of sshClient.ConnectWithRetry.
+type SSHConnectFunc func(id string) (*goph.Client, error)
+
 // SSHManager manages multiple SSH clients and provides a unified interface
 // For now, it defaults to single client mode for backward compatibility
 // In the future, it can be extended to support multiple clients/discoveries
@@ -48,6 +53,7 @@ type SSHManager struct {
 	connectingMu   map[string]*sync.Mutex          // Mutex per client ID to prevent concurrent connection creation
 	connectingMuMu sync.Mutex                      // Mutex for accessing connectingMu map
 	maxIdleTime    time.Duration                   // Maximum idle time before closing connection
+	connectFunc    SSHConnectFunc                  // when non-nil, used for ConnectWithID (for tests)
 }
 
 var (
@@ -128,14 +134,27 @@ func GetSSHManagerFromContext(ctx context.Context) (*SSHManager, error) {
 // to get an organization-specific manager with pre-configured clients.
 // For most use cases, prefer GetSSHManagerFromContext() to get an organization-specific manager.
 func NewSSHManager() *SSHManager {
+	return newSSHManager(5*time.Minute, nil)
+}
+
+// NewSSHManagerForTest creates a manager with an optional connection factory for testing.
+// When connectFunc is non-nil, ConnectWithID uses it instead of real SSH. maxIdleTime can be 0 for default.
+func NewSSHManagerForTest(connectFunc SSHConnectFunc, maxIdleTime time.Duration) *SSHManager {
+	if maxIdleTime == 0 {
+		maxIdleTime = 5 * time.Minute
+	}
+	return newSSHManager(maxIdleTime, connectFunc)
+}
+
+func newSSHManager(maxIdleTime time.Duration, connectFunc SSHConnectFunc) *SSHManager {
 	manager := &SSHManager{
 		clients:      make(map[string]*SSH),
 		defaultID:    "default",
 		pool:         make(map[string]*connectionPoolEntry),
 		connectingMu: make(map[string]*sync.Mutex),
-		maxIdleTime:  5 * time.Minute,
+		maxIdleTime:  maxIdleTime,
+		connectFunc:  connectFunc,
 	}
-	// Don't add default client - must be added via AddClient or GetSSHManagerForOrganization
 	go manager.cleanupIdleConnections()
 	return manager
 }
@@ -192,15 +211,22 @@ func (m *SSHManager) Connect() (*goph.Client, error) {
 	return m.ConnectWithID("")
 }
 
-// IsClosedConnectionError checks if the error indicates a closed network connection.
-// This is useful for detecting stale SSH connections that need to be removed from the pool.
+// IsClosedConnectionError checks if the error indicates a closed or stale network connection.
+// Aligned with SFTP pool detection: EOF, broken pipe, connection reset, etc.
 func IsClosedConnectionError(err error) bool {
 	if err == nil {
 		return false
 	}
+	if err == io.EOF {
+		return true
+	}
 	errMsg := err.Error()
 	return strings.Contains(errMsg, "use of closed network connection") ||
-		strings.Contains(errMsg, "connection closed")
+		strings.Contains(errMsg, "connection closed") ||
+		strings.Contains(errMsg, "connection lost") ||
+		strings.Contains(errMsg, "EOF") ||
+		strings.Contains(errMsg, "broken pipe") ||
+		strings.Contains(errMsg, "connection reset by peer")
 }
 
 // isClosedConnectionError is an internal alias for IsClosedConnectionError
@@ -267,6 +293,7 @@ func (m *SSHManager) ConnectWithID(id string) (*goph.Client, error) {
 	m.poolMu.RLock()
 	entry, exists := m.pool[id]
 	var client *goph.Client
+	var err error
 	if exists && entry != nil {
 		entry.mu.RLock()
 		client = entry.client
@@ -355,14 +382,21 @@ func (m *SSHManager) ConnectWithID(id string) (*goph.Client, error) {
 		return existingClient, nil
 	}
 
-	sshClient, err := m.GetClient(id)
+	if m.connectFunc != nil {
+		client, err = m.connectFunc(id)
+	} else {
+		var sshClient *SSH
+		sshClient, err = m.GetClient(id)
+		if err != nil {
+			return nil, err
+		}
+		client, err = sshClient.ConnectWithRetry()
+	}
 	if err != nil {
 		return nil, err
 	}
-
-	client, err = sshClient.ConnectWithRetry()
-	if err != nil {
-		return nil, err
+	if client == nil {
+		return nil, fmt.Errorf("SSH connection factory returned nil client")
 	}
 
 	// Store in pool
