@@ -10,6 +10,7 @@ const (
 	MessageTypeFileContent      MessageType = "file_content"
 	MessageTypeFileDelete       MessageType = "file_delete"
 	MessageTypeEnvVars          MessageType = "env_vars"
+	MessageTypeSyncComplete     MessageType = "sync_complete"
 	MessageTypeSync             MessageType = "sync"
 	MessageTypeAck              MessageType = "ack"
 	MessageTypeError            MessageType = "error"
