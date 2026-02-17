@@ -47,8 +47,16 @@ func NewDB(c *Config) (*bun.DB, error) {
 	config.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 
 	sqldb := stdlib.OpenDB(*config)
-	sqldb.SetMaxOpenConns(c.MaxOpenConn)
-	sqldb.SetMaxIdleConns(c.MaxIdleConn)
+	maxOpen := c.MaxOpenConn
+	if maxOpen <= 0 {
+		maxOpen = 10
+	}
+	sqldb.SetMaxOpenConns(maxOpen)
+	maxIdle := c.MaxIdleConn
+	if maxIdle <= 0 {
+		maxIdle = 5
+	}
+	sqldb.SetMaxIdleConns(maxIdle)
 
 	db := bun.NewDB(sqldb, pgdialect.New())
 

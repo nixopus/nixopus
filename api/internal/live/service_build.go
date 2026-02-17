@@ -9,10 +9,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/sftp"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/dockerfile_generator"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 // BuildStatusFunc is called at key points during the build lifecycle.
@@ -81,29 +83,25 @@ func (bfm *BuildFirstManager) GetWorkdir(appID uuid.UUID) string {
 
 func (bfm *BuildFirstManager) HandleFileWritten(ctx context.Context, appCtx *ApplicationContext, filePath string, content []byte) {
 	if !bfm.IsDeployed(appCtx.ApplicationID) {
+		// When not deployed: only recover or resume. Build is triggered by sync_complete, not by individual files.
 		if service, err := tasks.FindServiceByLabel(ctx, "com.application.id", appCtx.ApplicationID.String()); err == nil && service != nil {
 			if bfm.injector.IsContainerRunning(ctx, appCtx) {
 				workdir := tasks.GetWorkdirFromService(service)
 				bfm.MarkDeployed(appCtx.ApplicationID, workdir)
 				bfm.logger.Log(logger.Info, "recovered deployed state from running container", appCtx.ApplicationID.String())
 			} else if tasks.IsLiveDevServicePaused(service) {
-				// Service was paused; resume it instead of full rebuild
 				workdir, err := bfm.taskService.ResumeLiveDevService(ctx, appCtx.ApplicationID, nil)
 				if err != nil {
-					bfm.logger.Log(logger.Warning, "resume failed, triggering build", err.Error())
-					bfm.triggerBuild(ctx, appCtx)
+					bfm.logger.Log(logger.Warning, "resume failed, waiting for sync_complete to build", err.Error())
 					return
 				}
 				bfm.MarkDeployed(appCtx.ApplicationID, workdir)
 				bfm.logger.Log(logger.Info, "resumed paused live dev service", appCtx.ApplicationID.String())
-			} else {
-				bfm.triggerBuild(ctx, appCtx)
-				return
 			}
-		} else {
-			bfm.triggerBuild(ctx, appCtx)
-			return
+			// else: service exists but not running/paused; wait for sync_complete
 		}
+		// No service or not recoverable: wait for sync_complete to trigger build
+		return
 	}
 
 	if IsDependencyFile(filePath) {
@@ -158,6 +156,46 @@ func (bfm *BuildFirstManager) triggerBuild(ctx context.Context, appCtx *Applicat
 	bfm.buildDebounceMu.Unlock()
 }
 
+// TriggerBuildImmediate starts a build immediately without debounce.
+// Used when client sends sync_complete (all files arrived); no need to wait for more edits.
+func (bfm *BuildFirstManager) TriggerBuildImmediate(ctx context.Context, appCtx *ApplicationContext) {
+	bfm.buildDebounceMu.Lock()
+	if existing, ok := bfm.buildTimers[appCtx.ApplicationID]; ok {
+		existing.Stop()
+		delete(bfm.buildTimers, appCtx.ApplicationID)
+	}
+	bfm.buildDebounceMu.Unlock()
+	go bfm.doBuild(context.WithoutCancel(ctx), appCtx)
+}
+
+// HandleSyncComplete is called when the client sends sync_complete (all files synced).
+// Triggers build immediately if not deployed; no debounce since we know sync is done.
+func (bfm *BuildFirstManager) HandleSyncComplete(ctx context.Context, appCtx *ApplicationContext) {
+	if bfm.IsDeployed(appCtx.ApplicationID) {
+		return
+	}
+	if service, err := tasks.FindServiceByLabel(ctx, "com.application.id", appCtx.ApplicationID.String()); err == nil && service != nil {
+		if bfm.injector.IsContainerRunning(ctx, appCtx) {
+			workdir := tasks.GetWorkdirFromService(service)
+			bfm.MarkDeployed(appCtx.ApplicationID, workdir)
+			bfm.logger.Log(logger.Info, "recovered deployed state from sync_complete", appCtx.ApplicationID.String())
+			return
+		}
+		if tasks.IsLiveDevServicePaused(service) {
+			workdir, err := bfm.taskService.ResumeLiveDevService(ctx, appCtx.ApplicationID, nil)
+			if err != nil {
+				bfm.logger.Log(logger.Warning, "resume failed on sync_complete, triggering build", err.Error())
+				bfm.TriggerBuildImmediate(ctx, appCtx)
+				return
+			}
+			bfm.MarkDeployed(appCtx.ApplicationID, workdir)
+			bfm.logger.Log(logger.Info, "resumed paused service on sync_complete", appCtx.ApplicationID.String())
+			return
+		}
+	}
+	bfm.TriggerBuildImmediate(ctx, appCtx)
+}
+
 func (bfm *BuildFirstManager) doBuild(ctx context.Context, appCtx *ApplicationContext) {
 	bfm.buildDebounceMu.Lock()
 	delete(bfm.buildTimers, appCtx.ApplicationID)
@@ -197,7 +235,7 @@ func (bfm *BuildFirstManager) doBuild(ctx context.Context, appCtx *ApplicationCo
 
 	bfm.emitBuildStatus(appID, "generating_dockerfile", "Generating Dockerfile...", "")
 
-	resp, err := client.GenerateWithProgress(ctx, source, appCtx.OrganizationID.String(), "development", auth, onProgress)
+	resp, err := client.GenerateWithProgress(ctx, source, appCtx.OrganizationID.String(), appCtx.ApplicationID.String(), "development", auth, onProgress)
 	if err != nil {
 		errMsg := fmt.Sprintf("app=%s err=%v", appID, err)
 		bfm.logger.Log(logger.Error, "dockerfile generator failed", errMsg)
@@ -301,22 +339,18 @@ func WriteDockerfileToStaging(ctx context.Context, stagingPath string, content s
 		return generatedDockerfileName, nil
 	}
 
-	sftpClient, err := getSFTPClient(ctx)
+	err := utils.WithSFTPClientFromPool(ctx, func(sftpClient *sftp.Client) error {
+		file, err := sftpClient.Create(fullPath)
+		if err != nil {
+			return fmt.Errorf("failed to create Dockerfile: %w", err)
+		}
+		defer file.Close()
+		_, err = file.Write([]byte(content))
+		return err
+	})
 	if err != nil {
-		return "", fmt.Errorf("failed to get SFTP client: %w", err)
+		return "", err
 	}
-	defer sftpClient.Close()
-
-	file, err := sftpClient.Create(fullPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to create Dockerfile: %w", err)
-	}
-	defer file.Close()
-
-	if _, err := file.Write([]byte(content)); err != nil {
-		return "", fmt.Errorf("failed to write Dockerfile: %w", err)
-	}
-
 	return generatedDockerfileName, nil
 }
 
@@ -330,22 +364,18 @@ func WriteDockerignoreToStaging(ctx context.Context, stagingPath string, content
 		return ".dockerignore", nil
 	}
 
-	sftpClient, err := getSFTPClient(ctx)
+	err := utils.WithSFTPClientFromPool(ctx, func(sftpClient *sftp.Client) error {
+		file, err := sftpClient.Create(fullPath)
+		if err != nil {
+			return fmt.Errorf("failed to create .dockerignore: %w", err)
+		}
+		defer file.Close()
+		_, err = file.Write([]byte(content))
+		return err
+	})
 	if err != nil {
-		return "", fmt.Errorf("failed to get SFTP client: %w", err)
+		return "", err
 	}
-	defer sftpClient.Close()
-
-	file, err := sftpClient.Create(fullPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to create .dockerignore: %w", err)
-	}
-	defer file.Close()
-
-	if _, err := file.Write([]byte(content)); err != nil {
-		return "", fmt.Errorf("failed to write .dockerignore: %w", err)
-	}
-
 	return ".dockerignore", nil
 }
 

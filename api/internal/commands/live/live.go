@@ -543,6 +543,7 @@ func ensureInitialized(envPathFlag string) (*config.Config, error) {
 	}
 
 	newCfg := &config.Config{
+		Server:       config.GetServerURL(),
 		FamilyID:     familyID,
 		Applications: applications,
 		Sync: config.SyncConfig{

@@ -197,6 +197,12 @@ func setupEnvVarMappings() {
 	viper.BindEnv("database.password", "PASSWORD")
 	viper.BindEnv("database.name", "DB_NAME")
 	viper.BindEnv("database.ssl_mode", "SSL_MODE")
+	viper.BindEnv("database.max_open_conn", "DB_MAX_OPEN_CONN")
+	viper.BindEnv("database.max_idle_conn", "DB_MAX_IDLE_CONN")
+
+	// Default connection pool limits to avoid exhausting Supabase/Postgres (session pools often 15-20)
+	viper.SetDefault("database.max_open_conn", 10)
+	viper.SetDefault("database.max_idle_conn", 5)
 
 	// Redis
 	viper.BindEnv("redis.url", "REDIS_URL")
