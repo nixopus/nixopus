@@ -1,15 +1,16 @@
 package mover
 
 import (
+	"bufio"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -19,11 +20,31 @@ import (
 )
 
 const (
-	defaultDebounceMs   = 100 // Fast response with fsnotify
-	largeSyncThreshold  = 100
-	chunkSize           = 64 * 1024 // 64KB
-	manifestWaitTimeout = 5 * time.Second
+	defaultDebounceMs      = 100 // Fast response with fsnotify
+	largeSyncThreshold     = 50  // Use parallel sync earlier (was 100)
+	chunkSize              = 64 * 1024
+	manifestWaitTimeout    = 5 * time.Second
+	defaultSyncWorkers     = 20 // Scale for 2000+ file projects
+	defaultSyncConcurrency = 50
 )
+
+var (
+	syncWorkers     int
+	syncConcurrency int
+)
+
+func init() {
+	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_MOVER_SYNC_WORKERS")); err == nil && v > 0 {
+		syncWorkers = v
+	} else {
+		syncWorkers = defaultSyncWorkers
+	}
+	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_MOVER_SYNC_CONCURRENCY")); err == nil && v > 0 {
+		syncConcurrency = v
+	} else {
+		syncConcurrency = defaultSyncConcurrency
+	}
+}
 
 // ChangeType represents the type of file change
 type ChangeType string
@@ -102,9 +123,10 @@ func NewEngine(cfg EngineConfig) (*Engine, error) {
 
 	// Create file system watcher
 	fw, err := New(Config{
-		RootPath:       cfg.RootPath,
-		DebounceMs:     debounceMs,
-		IgnorePatterns: cfg.Excludes,
+		RootPath:         cfg.RootPath,
+		DebounceMs:       debounceMs,
+		IgnorePatterns:   cfg.Excludes,
+		EventsBufferSize: 512, // Handle bursty events (npm install, large refactors)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create file watcher: %w", err)
@@ -280,7 +302,6 @@ func (e *Engine) InitialSync() error {
 		}
 		if e.syncState != nil && e.applicationID != "" {
 			e.syncState.RemovePath(e.applicationID, file)
-			_ = e.syncState.Save()
 		}
 		e.syncedMu.Lock()
 		delete(e.syncedFiles, file)
@@ -311,6 +332,11 @@ func (e *Engine) InitialSync() error {
 			e.syncState.SetRootHash(e.applicationID, tree.RootHash)
 			_ = e.syncState.Save()
 		}
+	}
+
+	// Signal server that initial sync is complete; triggers immediate build (no debounce).
+	if err := e.client.Send(e.newSyncMessage(MessageTypeSyncComplete, nil)); err != nil {
+		return fmt.Errorf("failed to send sync_complete: %w", err)
 	}
 
 	return nil
@@ -345,34 +371,81 @@ func (e *Engine) waitForManifest() *manifestResult {
 }
 
 // extractManifestPayload extracts ManifestPayload from message.
+// Payload is already ManifestPayload from parseAndForwardMessage (no double encode).
 func extractManifestPayload(payload interface{}) *manifestResult {
 	if payload == nil {
 		return nil
 	}
-	data, err := json.Marshal(payload)
-	if err != nil {
+	switch m := payload.(type) {
+	case ManifestPayload:
+		return &manifestResult{paths: m.Paths, rootHash: m.RootHash}
+	case *ManifestPayload:
+		if m != nil {
+			return &manifestResult{paths: m.Paths, rootHash: m.RootHash}
+		}
+		return nil
+	default:
 		return nil
 	}
-	var m ManifestPayload
-	if err := json.Unmarshal(data, &m); err != nil {
-		return nil
+}
+
+// computeChecksumsParallel computes file checksums in parallel for initial sync diff.
+// Returns path->checksum for successful reads; paths that fail are omitted (caller adds to toSync).
+func (e *Engine) computeChecksumsParallel(files []string) map[string]string {
+	if len(files) == 0 {
+		return make(map[string]string)
 	}
-	return &manifestResult{paths: m.Paths, rootHash: m.RootHash}
+	workers := syncWorkers
+	if workers > len(files) {
+		workers = len(files)
+	}
+	type result struct {
+		normPath string
+		checksum string
+	}
+	results := make(chan result, len(files))
+	jobs := make(chan string, len(files))
+	var wg sync.WaitGroup
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for file := range jobs {
+				fullPath := filepath.Join(e.rootPath, file)
+				checksum := e.computeFileChecksum(fullPath)
+				if checksum != "" {
+					results <- result{filepath.ToSlash(filepath.Clean(file)), checksum}
+				}
+			}
+		}()
+	}
+	go func() {
+		for _, f := range files {
+			jobs <- f
+		}
+		close(jobs)
+	}()
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+	localLeaves := make(map[string]string, len(files))
+	for r := range results {
+		localLeaves[r.normPath] = r.checksum
+	}
+	return localLeaves
 }
 
 // merkleDiffWithRootCheck builds a Merkle tree from local files and diffs against server state.
 // Phase 3b: If server root_hash matches local root, skip full diff (0 files to sync).
+// Uses parallel checksum computation for 2000+ file projects.
 func (e *Engine) merkleDiffWithRootCheck(files []string, manifest *manifestResult) (toSync []string, toDelete []string) {
-	localLeaves := make(map[string]string)
+	localLeaves := e.computeChecksumsParallel(files)
 	for _, file := range files {
-		fullPath := filepath.Join(e.rootPath, file)
-		checksum := e.computeFileChecksum(fullPath)
-		if checksum == "" {
-			toSync = append(toSync, filepath.ToSlash(filepath.Clean(file)))
-			continue
-		}
 		normPath := filepath.ToSlash(filepath.Clean(file))
-		localLeaves[normPath] = checksum
+		if _, ok := localLeaves[normPath]; !ok {
+			toSync = append(toSync, normPath)
+		}
 	}
 
 	tree := BuildFromPaths(localLeaves)
@@ -401,38 +474,44 @@ func (e *Engine) merkleDiffWithRootCheck(files []string, manifest *manifestResul
 	return DiffAgainst(tree, serverLeaves)
 }
 
-// parallelSync performs parallel file syncing using worker pool pattern
+// parallelSyncJob is pooled to reduce allocations during large syncs.
+type parallelSyncJob struct {
+	index int
+	file  string
+}
+
+// parallelSyncResult carries per-file result for batch state update
+type parallelSyncResult struct {
+	path     string
+	checksum string
+	err      error
+}
+
+var parallelSyncJobPool = sync.Pool{
+	New: func() interface{} { return &parallelSyncJob{} },
+}
+
+// parallelSync performs parallel file syncing using worker pool pattern.
+// Batches syncedFiles and syncState updates at the end to reduce lock contention.
 func (e *Engine) parallelSync(files []string) error {
-	const maxWorkers = 10     // Optimal balance between speed and resource usage
-	const maxConcurrency = 20 // Maximum concurrent file operations
-
-	// Create worker pool
-	type job struct {
-		index int
-		file  string
-	}
-
-	jobs := make(chan job, maxConcurrency)
-	results := make(chan error, len(files))
+	jobs := make(chan *parallelSyncJob, syncConcurrency)
+	results := make(chan parallelSyncResult, len(files))
 	var wg sync.WaitGroup
 
-	// Start workers
-	for w := 0; w < maxWorkers; w++ {
+	// Start workers - send files without per-file state updates (batch at end)
+	for w := 0; w < syncWorkers; w++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for j := range jobs {
-				change := FileChangeEvent{
-					Path: j.file,
-					Type: ChangeAdded,
-				}
-				if err := e.sendChange(change); err != nil {
-					results <- fmt.Errorf("failed to send file %s: %w", j.file, err)
+				change := FileChangeEvent{Path: j.file, Type: ChangeAdded}
+				checksum, err := e.sendFileContentNoStateUpdate(change)
+				if err != nil {
+					results <- parallelSyncResult{path: j.file, err: fmt.Errorf("failed to send file %s: %w", j.file, err)}
 				} else {
-					results <- nil
-					// sendChange already calls onFileSynced on success
+					results <- parallelSyncResult{path: j.file, checksum: checksum}
 				}
-				// Continue processing other jobs even if one fails
+				parallelSyncJobPool.Put(j)
 			}
 		}()
 	}
@@ -441,7 +520,9 @@ func (e *Engine) parallelSync(files []string) error {
 	go func() {
 		defer close(jobs)
 		for i, file := range files {
-			jobs <- job{index: i, file: file}
+			j := parallelSyncJobPool.Get().(*parallelSyncJob)
+			j.index, j.file = i, file
+			jobs <- j
 		}
 	}()
 
@@ -451,17 +532,21 @@ func (e *Engine) parallelSync(files []string) error {
 		close(results)
 	}()
 
-	// Collect results - count to ensure all files were processed
+	// Collect results and batch state update (one Lock for syncedFiles, one merge for syncState)
 	var firstErr error
+	batchedPaths := make(map[string]string)
 	resultCount := 0
-	for err := range results {
+	for r := range results {
 		resultCount++
-		if err != nil && firstErr == nil {
-			firstErr = err
+		if r.err != nil && firstErr == nil {
+			firstErr = r.err
+		}
+		if r.checksum != "" {
+			normPath := filepath.ToSlash(filepath.Clean(r.path))
+			batchedPaths[normPath] = r.checksum
 		}
 	}
 
-	// Verify all files were processed
 	if resultCount != len(files) {
 		if firstErr == nil {
 			return fmt.Errorf("not all files were processed: expected %d, got %d results", len(files), resultCount)
@@ -471,6 +556,26 @@ func (e *Engine) parallelSync(files []string) error {
 
 	if firstErr != nil {
 		return firstErr
+	}
+
+	// Batch update syncedFiles and syncState (avoids N locks during sync)
+	if len(batchedPaths) > 0 {
+		e.syncedMu.Lock()
+		for p, c := range batchedPaths {
+			e.syncedFiles[p] = c
+		}
+		e.syncedMu.Unlock()
+		if e.syncState != nil && e.applicationID != "" {
+			existing := e.syncState.GetPaths(e.applicationID)
+			merged := make(map[string]string, len(existing)+len(batchedPaths))
+			for p, c := range existing {
+				merged[p] = c
+			}
+			for p, c := range batchedPaths {
+				merged[p] = c
+			}
+			e.syncState.SetAllPaths(e.applicationID, merged)
+		}
 	}
 
 	return nil
@@ -665,7 +770,6 @@ func (e *Engine) handleWatcherEvent(event Event) error {
 		e.syncedMu.Unlock()
 		if e.syncState != nil && e.applicationID != "" {
 			e.syncState.RemovePath(e.applicationID, event.Path)
-			_ = e.syncState.Save()
 		}
 	}
 
@@ -700,50 +804,103 @@ func (e *Engine) handleWatcherEvent(event Event) error {
 	return err
 }
 
-// getAllSyncableFiles walks the directory and returns all files to sync
+// getAllSyncableFiles walks the directory and returns all files to sync.
+// Uses batched git check-ignore for 1000+ file projects (single exec instead of N).
 func (e *Engine) getAllSyncableFiles() ([]string, error) {
-	var files []string
+	var candidates []string
 
 	err := filepath.Walk(e.rootPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil // Skip inaccessible paths
 		}
 
-		// Get relative path
 		relPath, err := filepath.Rel(e.rootPath, path)
 		if err != nil {
 			return nil
 		}
-
-		// Skip root
 		if relPath == "." {
 			return nil
 		}
 
-		// Skip directories (but continue walking into them)
 		if info.IsDir() {
-			// Skip ignored directories entirely
 			if e.shouldIgnoreDir(relPath) {
 				return filepath.SkipDir
 			}
 			return nil
 		}
 
-		// Skip excluded files
 		if e.shouldExclude(relPath) {
 			return nil
 		}
 
-		// Check if file is gitignored
-		if e.isGitIgnored(relPath) {
-			return nil
-		}
-
-		files = append(files, relPath)
+		candidates = append(candidates, relPath)
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return files, err
+	// Batch git check-ignore: single exec for all paths (handles 2000+ files)
+	ignored := e.batchGitCheckIgnore(candidates)
+	if len(ignored) == 0 {
+		return candidates, nil
+	}
+	ignoredSet := make(map[string]bool, len(ignored))
+	for _, p := range ignored {
+		ignoredSet[p] = true
+	}
+
+	files := make([]string, 0, len(candidates)-len(ignored))
+	for _, p := range candidates {
+		if !ignoredSet[p] {
+			files = append(files, p)
+		}
+	}
+	return files, nil
+}
+
+// batchGitCheckIgnore runs git check-ignore --stdin for all paths in one exec.
+// Returns paths that are ignored. Empty on error (fallback: include all).
+func (e *Engine) batchGitCheckIgnore(paths []string) []string {
+	if len(paths) == 0 {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "git", "check-ignore", "--stdin")
+	cmd.Dir = e.rootPath
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return nil
+	}
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil
+	}
+	if err := cmd.Start(); err != nil {
+		return nil
+	}
+
+	// Write paths, one per line
+	go func() {
+		defer stdin.Close()
+		for _, p := range paths {
+			stdin.Write([]byte(p + "\n"))
+		}
+	}()
+
+	// Read ignored paths (output is one path per line)
+	var ignored []string
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line != "" {
+			ignored = append(ignored, line)
+		}
+	}
+	cmd.Wait()
+	return ignored
 }
 
 // shouldIgnoreDir checks if a directory should be skipped entirely
@@ -768,15 +925,13 @@ func (e *Engine) shouldIgnoreDir(relPath string) bool {
 	return false
 }
 
-// isGitIgnored checks if a file is ignored by git
+// isGitIgnored checks if a file is ignored by git (used by watch path, not initial sync)
 func (e *Engine) isGitIgnored(relPath string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
 	cmd := exec.CommandContext(ctx, "git", "check-ignore", "-q", relPath)
 	cmd.Dir = e.rootPath
 	err := cmd.Run()
-	// Exit code 0 = ignored, 1 = not ignored
 	return err == nil
 }
 
@@ -803,45 +958,58 @@ func (e *Engine) sendDeleteMessage(path string) error {
 
 // sendFileContent reads and sends file content to the server
 func (e *Engine) sendFileContent(change FileChangeEvent) error {
-	fullPath := filepath.Join(e.rootPath, change.Path)
-
-	info, err := os.Stat(fullPath)
+	checksum, err := e.sendFileContentNoStateUpdate(change)
 	if err != nil {
-		return fmt.Errorf("failed to stat file: %w", err)
+		return err
 	}
-	if info.IsDir() {
-		return nil
-	}
-
-	content, checksum, err := e.readFileWithChecksum(fullPath)
-	if err != nil {
-		return fmt.Errorf("failed to read file: %w", err)
+	if checksum == "" {
+		return nil // directory, skipped
 	}
 
-	// Store checksum for deduplication
+	// Store checksum for deduplication (used by watcher path, single-file updates)
 	e.syncedMu.Lock()
 	e.syncedFiles[change.Path] = checksum
 	e.syncedMu.Unlock()
 
 	if e.syncState != nil && e.applicationID != "" {
 		e.syncState.SetPath(e.applicationID, change.Path, checksum)
-		_ = e.syncState.Save()
 	}
 
-	if err := e.sendFileChangeNotification(change, info, checksum); err != nil {
-		return err
-	}
-
-	if err = e.sendFileContentChunks(change.Path, content, checksum); err != nil {
-		return err
-	}
-
-	// File successfully synced
 	if e.onFileSynced != nil {
 		e.onFileSynced(change.Path)
 	}
-
 	return nil
+}
+
+// sendFileContentNoStateUpdate sends file content without updating syncedFiles or syncState.
+// Used by parallelSync for batch state updates. Returns (checksum, error).
+func (e *Engine) sendFileContentNoStateUpdate(change FileChangeEvent) (string, error) {
+	fullPath := filepath.Join(e.rootPath, change.Path)
+
+	info, err := os.Stat(fullPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to stat file: %w", err)
+	}
+	if info.IsDir() {
+		return "", nil
+	}
+
+	content, checksum, err := e.readFileWithChecksum(fullPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file: %w", err)
+	}
+
+	if err := e.sendFileChangeNotification(change, info, checksum); err != nil {
+		return "", err
+	}
+	if err = e.sendFileContentChunks(change.Path, content, checksum); err != nil {
+		return "", err
+	}
+
+	if e.onFileSynced != nil {
+		e.onFileSynced(change.Path)
+	}
+	return checksum, nil
 }
 
 // readFileWithChecksum reads a file and calculates its checksum
