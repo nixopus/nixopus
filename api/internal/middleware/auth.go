@@ -11,6 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/cache"
 	betterauth "github.com/raghavyuva/nixopus-api/internal/features/auth"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
@@ -84,6 +86,9 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 			}
 
 			ctx = context.WithValue(ctx, types.OrganizationIDKey, organizationID)
+
+			// On first request after login (new session), invalidate SSH and Docker caches for this org
+			invokeSSHInvalidationOnNewSession(ctx, cache, sessionResp.Session.ID, organizationID)
 		}
 
 		r = r.WithContext(ctx)
@@ -149,6 +154,28 @@ func resolveAndVerifyOrganization(
 	}
 
 	return organizationID, nil
+}
+
+// invokeSSHInvalidationOnNewSession invalidates SSH and Docker caches when we see a new session (first request after login).
+func invokeSSHInvalidationOnNewSession(ctx context.Context, c *cache.Cache, sessionID, orgID string) {
+	if sessionID == "" || orgID == "" {
+		return
+	}
+	if c != nil {
+		already, err := c.HasSessionSSHInvalidated(ctx, sessionID, orgID)
+		if err != nil || already {
+			return
+		}
+	}
+	orgUUID, err := uuid.Parse(orgID)
+	if err != nil {
+		return
+	}
+	ssh.InvalidateSSHManagerCache(orgUUID)
+	docker.InvalidateDockerServiceCache(orgUUID)
+	if c != nil {
+		_ = c.MarkSessionSSHInvalidated(ctx, sessionID, orgID)
+	}
 }
 
 // verifyOrganizationMembership verifies if a user belongs to an organization.

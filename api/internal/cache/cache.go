@@ -13,14 +13,16 @@ import (
 )
 
 const (
-	UserCacheKeyPrefix          = "user:"
-	OrgMembershipCacheKeyPrefix = "org_membership:"
-	UserCacheTTL                = 10 * time.Minute
-	OrgMembershipCacheTTL       = 30 * time.Minute
-	FeatureFlagCacheKeyPrefix   = "feature_flag:"
-	FeatureFlagCacheTTL         = 10 * time.Minute
-	RBACCacheKeyPrefix          = "rbac:"
-	RBACCacheTTL                = 5 * time.Minute
+	UserCacheKeyPrefix             = "user:"
+	OrgMembershipCacheKeyPrefix    = "org_membership:"
+	SessionSSHInvalidatedKeyPrefix = "session_ssh_inv:"
+	UserCacheTTL                   = 10 * time.Minute
+	OrgMembershipCacheTTL          = 30 * time.Minute
+	SessionSSHInvalidatedTTL       = 24 * time.Hour
+	FeatureFlagCacheKeyPrefix      = "feature_flag:"
+	FeatureFlagCacheTTL            = 10 * time.Minute
+	RBACCacheKeyPrefix             = "rbac:"
+	RBACCacheTTL                   = 5 * time.Minute
 )
 
 type Cache struct {
@@ -192,4 +194,20 @@ func (c *Cache) SetRBACPermissions(ctx context.Context, userID, orgID string, pe
 func (c *Cache) InvalidateRBACPermissions(ctx context.Context, userID, orgID string) error {
 	key := fmt.Sprintf("%s%s:%s", RBACCacheKeyPrefix, userID, orgID)
 	return c.client.Del(ctx, key).Err()
+}
+
+// MarkSessionSSHInvalidated marks that we've invalidated SSH/Docker cache for this session+org (first request after login).
+func (c *Cache) MarkSessionSSHInvalidated(ctx context.Context, sessionID, orgID string) error {
+	key := SessionSSHInvalidatedKeyPrefix + sessionID + ":" + orgID
+	return c.client.Set(ctx, key, "1", SessionSSHInvalidatedTTL).Err()
+}
+
+// HasSessionSSHInvalidated returns true if we've already invalidated for this session+org.
+func (c *Cache) HasSessionSSHInvalidated(ctx context.Context, sessionID, orgID string) (bool, error) {
+	key := SessionSSHInvalidatedKeyPrefix + sessionID + ":" + orgID
+	_, err := c.client.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return false, nil
+	}
+	return err == nil, err
 }

@@ -51,22 +51,17 @@ type SSHManager struct {
 }
 
 var (
-	// orgManagers caches SSHManager instances per organization ID
 	orgManagers   = make(map[string]*SSHManager)
 	orgManagersMu sync.RWMutex
 )
 
-// GetSSHManagerForOrganization returns an SSHManager for a specific organization.
-// Caches managers per organization to avoid repeated database queries.
-// The manager is initialized with the active SSH key from the database for that organization.
+// GetSSHManagerForOrganization returns an SSHManager for the organization. Cache is invalidated on login via auth middleware.
 func GetSSHManagerForOrganization(ctx context.Context, orgID uuid.UUID) (*SSHManager, error) {
 	if config.GlobalStore == nil {
 		return nil, fmt.Errorf("global store not initialized, ensure config.Init() has been called")
 	}
 
 	orgIDStr := orgID.String()
-
-	// Check cache first
 	orgManagersMu.RLock()
 	if manager, exists := orgManagers[orgIDStr]; exists {
 		orgManagersMu.RUnlock()
@@ -74,9 +69,8 @@ func GetSSHManagerForOrganization(ctx context.Context, orgID uuid.UUID) (*SSHMan
 	}
 	orgManagersMu.RUnlock()
 
-	// Create new manager with organization-specific SSH config
-	sshService := service.NewSSHKeyService(config.GlobalStore, ctx, logger.NewLogger())
-	sshConfig, err := sshService.GetSSHConfigForOrganization(orgID)
+	sshSvc := service.NewSSHKeyService(config.GlobalStore, ctx, logger.NewLogger())
+	sshConfig, err := sshSvc.GetSSHConfigForOrganization(orgID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get SSH config for organization %s: %w", orgIDStr, err)
 	}
@@ -88,7 +82,6 @@ func GetSSHManagerForOrganization(ctx context.Context, orgID uuid.UUID) (*SSHMan
 	manager := NewSSHManager()
 	manager.clients["default"] = sshClient
 
-	// Cache manager
 	orgManagersMu.Lock()
 	orgManagers[orgIDStr] = manager
 	orgManagersMu.Unlock()
@@ -431,7 +424,6 @@ func (m *SSHManager) CloseAllConnections() {
 }
 
 // InvalidateSSHManagerCache evicts the manager from cache and closes all connections.
-// TODO: Call in handlers that change active key for SSH keys table
 func InvalidateSSHManagerCache(orgID uuid.UUID) {
 	orgIDStr := orgID.String()
 	orgManagersMu.Lock()
