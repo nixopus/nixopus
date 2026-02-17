@@ -15,6 +15,16 @@ const (
 	RoleViewer = "viewer"
 )
 
+// Member represents Better Auth member table (org membership)
+type Member struct {
+	bun.BaseModel  `bun:"table:member,alias:m" swaggerignore:"true"`
+	ID             uuid.UUID `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
+	OrganizationID uuid.UUID `bun:"organization_id,notnull,type:uuid"`
+	UserID         uuid.UUID `bun:"user_id,notnull,type:uuid"`
+	Role           string    `bun:"role,notnull,default:member"`
+	CreatedAt      time.Time `bun:"created_at,notnull"`
+}
+
 // Organization matches Better Auth organization structure
 // Better Auth is the source of truth - local records are synced for foreign key constraints
 type Organization struct {
