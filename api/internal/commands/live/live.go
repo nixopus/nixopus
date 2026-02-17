@@ -308,7 +308,16 @@ func runSingleApp(args []string) error {
 		OnServerMessage: func(msg mover.SyncMessage) {
 			switch msg.Type {
 			case mover.MessageTypePipelineProgress:
-				if payload, ok := msg.Payload.(map[string]interface{}); ok {
+				if p, ok := msg.Payload.(mover.PipelineProgressPayload); ok {
+					bus.Send(Event{
+						Type:    EventPipelineProgress,
+						Message: p.Message,
+						Payload: PipelineProgressPayload{
+							StageId: p.StageId,
+							Message: p.Message,
+						},
+					})
+				} else if payload, ok := msg.Payload.(map[string]interface{}); ok {
 					stageId, _ := payload["stage_id"].(string)
 					message, _ := payload["message"].(string)
 					bus.Send(Event{
@@ -321,7 +330,21 @@ func runSingleApp(args []string) error {
 					})
 				}
 			case mover.MessageTypeBuildStatus:
-				if payload, ok := msg.Payload.(map[string]interface{}); ok {
+				if p, ok := msg.Payload.(mover.BuildStatusPayload); ok {
+					ev := Event{
+						Type:    EventBuildStatus,
+						Message: p.Message,
+						Payload: BuildStatusPayload{
+							Phase:   p.Phase,
+							Message: p.Message,
+							Error:   p.Error,
+						},
+					}
+					if p.Phase == "error" {
+						ev.NeedsLLM = true
+					}
+					bus.Send(ev)
+				} else if payload, ok := msg.Payload.(map[string]interface{}); ok {
 					phase, _ := payload["phase"].(string)
 					message, _ := payload["message"].(string)
 					errMsg, _ := payload["error"].(string)
@@ -340,7 +363,16 @@ func runSingleApp(args []string) error {
 					bus.Send(ev)
 				}
 			case mover.MessageTypeBuildLog:
-				if payload, ok := msg.Payload.(map[string]interface{}); ok {
+				if p, ok := msg.Payload.(mover.BuildLogPayload); ok {
+					bus.Send(Event{
+						Type:    EventBuildLog,
+						Message: p.Log,
+						Payload: BuildLogPayload{
+							Log:       p.Log,
+							Timestamp: p.Timestamp,
+						},
+					})
+				} else if payload, ok := msg.Payload.(map[string]interface{}); ok {
 					logLine, _ := payload["log"].(string)
 					timestamp, _ := payload["timestamp"].(string)
 					bus.Send(Event{
@@ -353,18 +385,26 @@ func runSingleApp(args []string) error {
 					})
 				}
 			case mover.MessageTypeDeploymentStatus:
-				if payload, ok := msg.Payload.(map[string]interface{}); ok {
+				if p, ok := msg.Payload.(mover.DeploymentStatusPayload); ok {
+					bus.Send(Event{
+						Type:    EventDeploymentStatus,
+						Message: fmt.Sprintf("Deployment status: %s", p.Status),
+						Payload: DeploymentStatusPayload{
+							Status:       p.Status,
+							DeploymentID: p.DeploymentID,
+						},
+					})
+				} else if payload, ok := msg.Payload.(map[string]interface{}); ok {
 					status, _ := payload["status"].(string)
 					deploymentID, _ := payload["deployment_id"].(string)
-					ev := Event{
+					bus.Send(Event{
 						Type:    EventDeploymentStatus,
 						Message: fmt.Sprintf("Deployment status: %s", status),
 						Payload: DeploymentStatusPayload{
 							Status:       status,
 							DeploymentID: deploymentID,
 						},
-					}
-					bus.Send(ev)
+					})
 				}
 			}
 		},

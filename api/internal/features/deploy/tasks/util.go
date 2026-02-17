@@ -39,6 +39,7 @@ type TaskContext struct {
 	applicationID uuid.UUID
 	deploymentID  uuid.UUID
 	statusID      uuid.UUID
+	onLogCallback func(applicationID uuid.UUID, logLine string) // for live dev real-time streaming
 }
 
 func (s *TaskService) NewTaskContext(result shared_types.TaskPayload) *TaskContext {
@@ -91,6 +92,9 @@ func (tc *TaskContext) AddLog(logMessage string) {
 	err := tc.service.Storage.AddApplicationLogs(&appLog)
 	if err != nil {
 		tc.service.Logger.Log(logger.Error, "Failed to add application log: "+err.Error(), "")
+	}
+	if tc.onLogCallback != nil {
+		tc.onLogCallback(tc.applicationID, logMessage)
 	}
 }
 
@@ -159,15 +163,19 @@ func (s *TaskService) NewLiveDevTaskContext(config LiveDevConfig) (*LiveDevTaskC
 		return nil, err
 	}
 
-	return &LiveDevTaskContext{
+	tc := &LiveDevTaskContext{
 		service:       s,
 		applicationID: config.ApplicationID,
 		deploymentID:  deploymentID,
 		statusID:      statusID,
-	}, nil
+	}
+	if s.OnLiveDevLog != nil {
+		tc.OnBuildLog = s.OnLiveDevLog
+	}
+	return tc, nil
 }
 
-// AddLog adds a log entry for the live dev deployment
+// AddLog adds a log entry for the live dev deployment and streams to CLI if OnBuildLog is set.
 func (tc *LiveDevTaskContext) AddLog(logMessage string) {
 	appLog := shared_types.ApplicationLogs{
 		ID:                      uuid.New(),
@@ -181,6 +189,9 @@ func (tc *LiveDevTaskContext) AddLog(logMessage string) {
 	err := tc.service.Storage.AddApplicationLogs(&appLog)
 	if err != nil {
 		tc.service.Logger.Log(logger.Error, "Failed to add live dev log: "+err.Error(), "")
+	}
+	if tc.OnBuildLog != nil {
+		tc.OnBuildLog(tc.applicationID, logMessage)
 	}
 }
 
@@ -236,11 +247,16 @@ func (tc *LiveDevTaskContext) GetDeploymentID() uuid.UUID {
 }
 
 func (tc *LiveDevTaskContext) toTaskContext() *TaskContext {
+	var onLog func(applicationID uuid.UUID, logLine string)
+	if tc.service.OnLiveDevLog != nil {
+		onLog = tc.service.OnLiveDevLog
+	}
 	return &TaskContext{
 		service:       tc.service,
 		applicationID: tc.applicationID,
 		deploymentID:  tc.deploymentID,
 		statusID:      tc.statusID,
+		onLogCallback: onLog,
 	}
 }
 

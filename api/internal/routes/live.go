@@ -51,6 +51,10 @@ func NewLiveDeployController(store *storage.Store) *LiveDeployController {
 		gateway.BuildFirstManager().MarkDeployed(appID, workdir)
 	})
 
+	taskService.SetOnLiveDevLog(func(appID uuid.UUID, logLine string) {
+		gateway.SendBuildLog(appID, logLine)
+	})
+
 	log.Println("Live deploy components initialized")
 
 	return &LiveDeployController{

@@ -392,24 +392,3 @@ func (a *AgentUI) handleUserInput(text string) {
 		NeedsLLM: true,
 	})
 }
-
-// streamUserQuestion sends a user question to the agent and streams the response.
-// This is called from dispatchToAgent when the event originated from user input.
-func (a *AgentUI) streamUserQuestion(text string) {
-	messages := []AgentMessage{{Role: "user", Content: text}}
-	ch, err := a.agentClient.Stream(a.ctx, messages)
-	if err != nil {
-		a.writer.Warning(fmt.Sprintf("Agent unavailable: %v", err))
-		return
-	}
-
-	for chunk := range ch {
-		if strings.HasPrefix(chunk, "[error]") {
-			a.writer.Error(strings.TrimPrefix(chunk, "[error] "))
-			break
-		}
-		a.agentResp <- chunk
-	}
-	a.streamer.Flush()
-	a.writer.Blank()
-}
