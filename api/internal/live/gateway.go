@@ -7,9 +7,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,10 +26,27 @@ import (
 )
 
 const (
-	chunkSize             = int64(64 * 1024)
-	fileCompletionWorkers = 8
-	completionJobBuffer   = 128
+	chunkSize = int64(64 * 1024)
 )
+
+var (
+	fileCompletionWorkers int
+	completionJobBuffer   int
+)
+
+func init() {
+	// Configurable via env for ops tuning. Defaults: 4 workers (avoids exhausting DB pool with Supabase).
+	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_LIVE_COMPLETION_WORKERS")); err == nil && v > 0 {
+		fileCompletionWorkers = v
+	} else {
+		fileCompletionWorkers = 4
+	}
+	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_LIVE_COMPLETION_BUFFER")); err == nil && v > 0 {
+		completionJobBuffer = v
+	} else {
+		completionJobBuffer = 256
+	}
+}
 
 type fileCompletionJob struct {
 	content       []byte
@@ -38,14 +58,28 @@ type fileCompletionJob struct {
 	applicationID uuid.UUID
 }
 
+var jobPool = sync.Pool{
+	New: func() interface{} { return &fileCompletionJob{} },
+}
+
+func getJob() *fileCompletionJob { return jobPool.Get().(*fileCompletionJob) }
+func putJob(job *fileCompletionJob) {
+	job.content, job.appCtx, job.conn = nil, nil, nil
+	job.path, job.checksum, job.stagingPath = "", "", ""
+	job.applicationID = uuid.Nil
+	jobPool.Put(job)
+}
+
 type Gateway struct {
 	stagingManager    *StagingManager
 	buildFirstManager *BuildFirstManager
 	websocketHandler  *WebSocketHandler
-	manifestStore     *ManifestStore
 	store             *shared_storage.Store
 	logger            logger.Logger
-	completionJobs    chan fileCompletionJob
+	completionJobs    chan *fileCompletionJob
+	workerWg          sync.WaitGroup
+	shuttingDown      atomic.Bool
+	shutdownOnce      sync.Once
 
 	// sessionEnvStore: env vars from client (set-env file values, never the file itself)
 	sessionEnvStore   map[string]map[string]string
@@ -65,10 +99,9 @@ func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, 
 	logger := logger.NewLogger()
 	gateway := &Gateway{
 		stagingManager:  stagingManager,
-		manifestStore:   NewManifestStore(),
 		store:           store,
 		logger:          logger,
-		completionJobs:  make(chan fileCompletionJob, completionJobBuffer),
+		completionJobs:  make(chan *fileCompletionJob, completionJobBuffer),
 		sessionEnvStore: make(map[string]map[string]string),
 		activeConns:     make(map[uuid.UUID]*activeConn),
 	}
@@ -83,9 +116,24 @@ func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, 
 	})
 	gateway.websocketHandler = NewWebSocketHandler(gateway, logger)
 	for i := 0; i < fileCompletionWorkers; i++ {
-		go gateway.runFileCompletionWorker()
+		gateway.workerWg.Add(1)
+		go func() {
+			defer gateway.workerWg.Done()
+			gateway.runFileCompletionWorker()
+		}()
 	}
 	return gateway
+}
+
+// Shutdown gracefully stops the Gateway: signals completion workers to drain and waits for them.
+// After Shutdown, new file completions will run inline (completeFileSync) instead of queuing.
+// Safe to call multiple times; only the first call performs shutdown.
+func (g *Gateway) Shutdown() {
+	g.shutdownOnce.Do(func() {
+		g.shuttingDown.Store(true)
+		close(g.completionJobs)
+		g.workerWg.Wait()
+	})
 }
 
 // registerConn tracks an active WebSocket connection for an application.
@@ -233,22 +281,58 @@ func (g *Gateway) HandleLiveDevNotification(channel, payload string) {
 	}
 }
 
-// runFileCompletionWorker processes file write + ACK in parallel (non-blocking for read loop)
+// completeFileSync performs write, manifest, chunk index, inject, and ACK.
+// Used by workers and by sync fallback when completion queue is full.
+// Staging write runs in parallel with DB ops; manifest and chunk index run sequentially
+// to reduce peak DB connections (avoids exhausting Supabase connection pool).
+// HandleFileWritten fires async.
+// Returns error only when write fails (caller can send error to client); manifest/index failures are logged.
+func (g *Gateway) completeFileSync(ctx context.Context, job *fileCompletionJob, conn *websocket.Conn, path string) error {
+	var writeErr, manifestErr, indexErr error
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		writeErr = WriteContentToStaging(ctx, job.stagingPath, job.path, job.content, job.checksum)
+	}()
+	go func() {
+		defer wg.Done()
+		manifestErr = AddPath(ctx, g.store, job.applicationID, job.path, job.checksum)
+		indexErr = IndexFileChunks(ctx, g.store, job.applicationID, job.path, job.content)
+	}()
+	wg.Wait()
+
+	if writeErr != nil {
+		g.logger.Log(logger.Error, "failed to write file to staging", fmt.Sprintf("path=%s err=%v", job.path, writeErr))
+		return fmt.Errorf("failed to write file to staging: %w", writeErr)
+	}
+	if manifestErr != nil {
+		g.logger.Log(logger.Warning, "failed to persist manifest", fmt.Sprintf("app=%s err=%v", job.applicationID, manifestErr))
+	}
+	if indexErr != nil {
+		g.logger.Log(logger.Warning, "failed to index file chunks", fmt.Sprintf("app=%s path=%s err=%v", job.applicationID, job.path, indexErr))
+	}
+
+	g.logger.Log(logger.Debug, "file received and written", job.path)
+
+	if g.buildFirstManager != nil {
+		go g.buildFirstManager.HandleFileWritten(ctx, job.appCtx, job.path, job.content)
+	}
+
+	if err := g.websocketHandler.sendAck(conn, path); err != nil {
+		g.logger.Log(logger.Warning, "failed to send ACK", fmt.Sprintf("path=%s err=%v", path, err))
+	}
+	return nil
+}
+
+// runFileCompletionWorker processes file write + ACK. Delegates to completeFileSync for
+// parallel write, manifest, chunk index, and async HandleFileWritten.
 func (g *Gateway) runFileCompletionWorker() {
 	for job := range g.completionJobs {
 		ctx := context.WithValue(context.Background(), shared_types.OrganizationIDKey, job.appCtx.OrganizationID.String())
-		if err := WriteContentToStaging(ctx, job.stagingPath, job.path, job.content, job.checksum); err != nil {
-			g.logger.Log(logger.Error, "failed to write file to staging", fmt.Sprintf("path=%s err=%v", job.path, err))
-			continue
-		}
-		g.manifestStore.Set(job.applicationID.String(), job.path, job.checksum)
-		g.logger.Log(logger.Info, "file received and written", job.path)
-		if g.buildFirstManager != nil {
-			g.buildFirstManager.HandleFileWritten(ctx, job.appCtx, job.path, job.content)
-		}
-		if err := g.websocketHandler.sendAck(job.conn, job.path); err != nil {
-			g.logger.Log(logger.Warning, "failed to send ACK", fmt.Sprintf("path=%s err=%v", job.path, err))
-		}
+		g.completeFileSync(ctx, job, job.conn, job.path)
+		putJob(job)
 	}
 }
 
@@ -258,13 +342,21 @@ func (g *Gateway) BuildFirstManager() *BuildFirstManager {
 }
 
 // GetSessionEnv returns env vars sent from client (set-env file values) for an application.
+// Returns a copy to prevent callers from mutating the shared store.
 func (g *Gateway) GetSessionEnv(applicationID uuid.UUID) map[string]string {
 	g.sessionEnvStoreMu.RLock()
-	defer g.sessionEnvStoreMu.RUnlock()
-	if env, ok := g.sessionEnvStore[applicationID.String()]; ok {
-		return env
+	env := g.sessionEnvStore[applicationID.String()]
+	if env == nil {
+		g.sessionEnvStoreMu.RUnlock()
+		return nil
 	}
-	return nil
+	// Copy while holding RLock so we get a consistent snapshot
+	out := make(map[string]string, len(env))
+	for k, v := range env {
+		out[k] = v
+	}
+	g.sessionEnvStoreMu.RUnlock()
+	return out
 }
 
 // HandleWebSocket delegates to the WebSocket handler
@@ -333,33 +425,25 @@ func (g *Gateway) VerifySession(ctx context.Context, tokenString string, origina
 	return user, orgID, nil
 }
 
-// handleMessage routes messages to appropriate handlers based on message type
-func (g *Gateway) handleMessage(ctx context.Context, conn *websocket.Conn, appCtx *ApplicationContext, msg *mover.SyncMessage) error {
+// handleMessage routes messages to appropriate handlers based on message type.
+// msg.Payload is json.RawMessage — handlers unmarshal directly (no double encode).
+func (g *Gateway) handleMessage(ctx context.Context, conn *websocket.Conn, appCtx *ApplicationContext, msg *recvMessage) error {
 	switch msg.Type {
 	case mover.MessageTypeFileChange:
-		return g.handleFileChange(appCtx, msg)
+		return g.handleFileChange(appCtx, msg.Payload)
 	case mover.MessageTypeFileContent:
-		return g.handleFileContent(ctx, conn, appCtx, msg)
+		return g.handleFileContent(ctx, conn, appCtx, msg.Payload)
 	case mover.MessageTypeFileDelete:
-		return g.handleFileDelete(ctx, appCtx, msg)
+		return g.handleFileDelete(ctx, appCtx, msg.Payload)
 	case mover.MessageTypeEnvVars:
-		return g.handleEnvVars(ctx, appCtx, msg)
+		return g.handleEnvVars(ctx, appCtx, msg.Payload)
+	case mover.MessageTypeSyncComplete:
+		return g.handleSyncComplete(ctx, appCtx)
 	case mover.MessageTypePing:
 		return g.websocketHandler.sendPong(conn)
 	default:
 		return fmt.Errorf("unknown message type: %s", msg.Type)
 	}
-}
-
-func (g *Gateway) unmarshalPayload(payload interface{}, target interface{}) error {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal payload: %w", err)
-	}
-	if err := json.Unmarshal(data, target); err != nil {
-		return fmt.Errorf("failed to unmarshal payload: %w", err)
-	}
-	return nil
 }
 
 // validateFilePath validates that a file path is safe and doesn't escape the base_path
@@ -395,19 +479,31 @@ func (g *Gateway) validateFilePath(filePath string, basePath string) error {
 	return nil
 }
 
-func (g *Gateway) handleEnvVars(ctx context.Context, appCtx *ApplicationContext, msg *mover.SyncMessage) error {
-	var payload mover.EnvVarsPayload
-	if err := g.unmarshalPayload(msg.Payload, &payload); err != nil {
-		return err
+func (g *Gateway) handleSyncComplete(ctx context.Context, appCtx *ApplicationContext) error {
+	// Client signals all files have been synced; trigger build immediately (no debounce).
+	g.buildFirstManager.HandleSyncComplete(ctx, appCtx)
+	g.logger.Log(logger.Info, "sync_complete received", appCtx.ApplicationID.String())
+	return nil
+}
+
+func (g *Gateway) handleEnvVars(ctx context.Context, appCtx *ApplicationContext, payload json.RawMessage) error {
+	var p mover.EnvVarsPayload
+	if err := json.Unmarshal(payload, &p); err != nil {
+		return fmt.Errorf("failed to unmarshal env_vars payload: %w", err)
 	}
-	if len(payload.Vars) == 0 {
+	if len(p.Vars) == 0 {
 		return nil
 	}
+	// Store a copy to prevent client from mutating our stored map
+	vars := make(map[string]string, len(p.Vars))
+	for k, v := range p.Vars {
+		vars[k] = v
+	}
 	g.sessionEnvStoreMu.Lock()
-	g.sessionEnvStore[appCtx.ApplicationID.String()] = payload.Vars
+	g.sessionEnvStore[appCtx.ApplicationID.String()] = vars
 	g.sessionEnvStoreMu.Unlock()
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, appCtx.OrganizationID.String())
-	if err := tasks.UpdateLiveDevServiceEnv(orgCtx, appCtx.ApplicationID, payload.Vars); err != nil {
+	if err := tasks.UpdateLiveDevServiceEnv(orgCtx, appCtx.ApplicationID, p.Vars); err != nil {
 		g.logger.Log(logger.Warning, "failed to update service env", fmt.Sprintf("app=%s err=%v", appCtx.ApplicationID, err))
 	} else {
 		g.logger.Log(logger.Info, "env vars updated, service rolling new tasks", appCtx.ApplicationID.String())
@@ -415,10 +511,10 @@ func (g *Gateway) handleEnvVars(ctx context.Context, appCtx *ApplicationContext,
 	return nil
 }
 
-func (g *Gateway) handleFileChange(appCtx *ApplicationContext, msg *mover.SyncMessage) error {
+func (g *Gateway) handleFileChange(appCtx *ApplicationContext, payload json.RawMessage) error {
 	var fileChange mover.FileChange
-	if err := g.unmarshalPayload(msg.Payload, &fileChange); err != nil {
-		return err
+	if err := json.Unmarshal(payload, &fileChange); err != nil {
+		return fmt.Errorf("failed to unmarshal file_change payload: %w", err)
 	}
 
 	// Validate file path is within base_path
@@ -433,14 +529,14 @@ func (g *Gateway) handleFileChange(appCtx *ApplicationContext, msg *mover.SyncMe
 	}
 	g.stagingManager.GetFileReceiver(appCtx.ApplicationID, fileChange.Path, totalChunks, fileChange.Checksum, appCtx.StagingPath)
 
-	g.logger.Log(logger.Info, "file change received", fmt.Sprintf("path=%s op=%s size=%d chunks=%d", fileChange.Path, fileChange.Operation, fileChange.Size, totalChunks))
+	g.logger.Log(logger.Debug, "file change received", fmt.Sprintf("path=%s op=%s size=%d chunks=%d", fileChange.Path, fileChange.Operation, fileChange.Size, totalChunks))
 	return nil
 }
 
-func (g *Gateway) handleFileContent(ctx context.Context, conn *websocket.Conn, appCtx *ApplicationContext, msg *mover.SyncMessage) error {
+func (g *Gateway) handleFileContent(ctx context.Context, conn *websocket.Conn, appCtx *ApplicationContext, payload json.RawMessage) error {
 	var fileContent mover.FileContent
-	if err := g.unmarshalPayload(msg.Payload, &fileContent); err != nil {
-		return err
+	if err := json.Unmarshal(payload, &fileContent); err != nil {
+		return fmt.Errorf("failed to unmarshal file_content payload: %w", err)
 	}
 
 	// Validate file path is within base_path
@@ -471,40 +567,41 @@ func (g *Gateway) handleFileContent(ctx context.Context, conn *websocket.Conn, a
 	g.stagingManager.RemoveFileReceiver(appCtx.ApplicationID, fileContent.Path)
 
 	// Offload write + ACK to worker pool - read loop continues immediately
-	job := fileCompletionJob{
-		content:       content,
-		path:          fileContent.Path,
-		checksum:      fileContent.Checksum,
-		stagingPath:   appCtx.StagingPath,
-		appCtx:        appCtx,
-		conn:          conn,
-		applicationID: appCtx.ApplicationID,
+	job := getJob()
+	job.content = content
+	job.path = fileContent.Path
+	job.checksum = fileContent.Checksum
+	job.stagingPath = appCtx.StagingPath
+	job.appCtx = appCtx
+	job.conn = conn
+	job.applicationID = appCtx.ApplicationID
+
+	// During shutdown, run inline to avoid send on closed channel
+	if g.shuttingDown.Load() {
+		err := g.completeFileSync(ctx, job, conn, fileContent.Path)
+		putJob(job)
+		return err
 	}
+
 	select {
 	case g.completionJobs <- job:
-		// Queued - worker will handle it
+		// Queued - worker will handle it and putJob
 	default:
-		// Queue full - fall back to synchronous write to avoid dropping
-		if err := WriteContentToStaging(ctx, job.stagingPath, job.path, job.content, job.checksum); err != nil {
-			return fmt.Errorf("failed to write file to staging: %w", err)
+		// Queue full - fall back to parallel sync to avoid dropping
+		if err := g.completeFileSync(ctx, job, conn, fileContent.Path); err != nil {
+			putJob(job)
+			return err
 		}
-		g.manifestStore.Set(job.applicationID.String(), job.path, job.checksum)
-		g.logger.Log(logger.Info, "file received and written", job.path)
-		if g.buildFirstManager != nil {
-			g.buildFirstManager.HandleFileWritten(ctx, job.appCtx, job.path, job.content)
-		}
-		if err := g.websocketHandler.sendAck(conn, fileContent.Path); err != nil {
-			g.logger.Log(logger.Warning, "failed to send ACK", fmt.Sprintf("path=%s err=%v", fileContent.Path, err))
-		}
+		putJob(job)
 	}
 
 	return nil
 }
 
-func (g *Gateway) handleFileDelete(ctx context.Context, appCtx *ApplicationContext, msg *mover.SyncMessage) error {
+func (g *Gateway) handleFileDelete(ctx context.Context, appCtx *ApplicationContext, payload json.RawMessage) error {
 	var fileChange mover.FileChange
-	if err := g.unmarshalPayload(msg.Payload, &fileChange); err != nil {
-		return err
+	if err := json.Unmarshal(payload, &fileChange); err != nil {
+		return fmt.Errorf("failed to unmarshal file_delete payload: %w", err)
 	}
 
 	// Validate file path is within base_path
@@ -517,9 +614,14 @@ func (g *Gateway) handleFileDelete(ctx context.Context, appCtx *ApplicationConte
 		return fmt.Errorf("failed to delete file: %w", err)
 	}
 
-	g.manifestStore.Remove(appCtx.ApplicationID.String(), fileChange.Path)
+	if err := RemovePath(ctx, g.store, appCtx.ApplicationID, fileChange.Path); err != nil {
+		g.logger.Log(logger.Warning, "failed to persist manifest after delete", fmt.Sprintf("app=%s err=%v", appCtx.ApplicationID, err))
+	}
+	if err := DeleteFileChunks(ctx, g.store, appCtx.ApplicationID, fileChange.Path); err != nil {
+		g.logger.Log(logger.Warning, "failed to delete file chunks", fmt.Sprintf("app=%s path=%s err=%v", appCtx.ApplicationID, fileChange.Path, err))
+	}
 
-	g.logger.Log(logger.Info, "file deleted", fileChange.Path)
+	g.logger.Log(logger.Debug, "file deleted", fileChange.Path)
 	if g.buildFirstManager != nil {
 		g.buildFirstManager.HandleFileDeleted(ctx, appCtx, fileChange.Path)
 	}

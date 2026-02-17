@@ -58,7 +58,6 @@ func (s *Store) Init(ctx context.Context) error {
 	return nil
 }
 
-
 func (s *Store) DropAllTables(ctx context.Context) error {
 	models := []interface{}{
 		(*types.ApplicationLogs)(nil),
