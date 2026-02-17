@@ -10,7 +10,10 @@ import (
 	"time"
 )
 
-const syncStateVersion = 1
+const (
+	syncStateVersion    = 1
+	syncStateDebounceMs = 500 // Debounce saves to batch rapid updates
+)
 
 // persistableState is the JSON structure written to disk.
 type persistableState struct {
@@ -26,12 +29,15 @@ type appState struct {
 
 // SyncState persists path→checksum state per application for incremental sync.
 // State is stored in .nixopus-sync-state.json in the project root.
+// Save is debounced to batch rapid updates during sync.
 type SyncState struct {
-	path   string
-	mu     sync.RWMutex
-	state  *persistableState
-	dirty  bool
-	saveMu sync.Mutex
+	path        string
+	mu          sync.RWMutex
+	state       *persistableState
+	dirty       bool
+	saveMu      sync.Mutex
+	saveTimer   *time.Timer
+	saveTimerMu sync.Mutex
 }
 
 // NewSyncState creates a SyncState that reads/writes to the given path.
@@ -98,6 +104,7 @@ func (s *SyncState) SetRootHash(applicationID, rootHash string) {
 	app.UpdatedAt = time.Now().UTC()
 	s.state.Applications[applicationID] = app
 	s.dirty = true
+	s.scheduleSave()
 }
 
 // GetPaths returns a copy of path→checksum for the given application ID.
@@ -131,6 +138,7 @@ func (s *SyncState) SetPath(applicationID, path, checksum string) {
 	app.UpdatedAt = time.Now().UTC()
 	s.state.Applications[applicationID] = app
 	s.dirty = true
+	s.scheduleSave()
 }
 
 // PruneNonexistentPaths removes paths from state that are not in existingPaths.
@@ -151,6 +159,7 @@ func (s *SyncState) PruneNonexistentPaths(applicationID string, existingPaths ma
 		}
 	}
 	s.state.Applications[applicationID] = app
+	s.scheduleSave()
 }
 
 // RemovePath removes a path from the application's state (e.g. on delete).
@@ -166,6 +175,7 @@ func (s *SyncState) RemovePath(applicationID, path string) {
 	app.UpdatedAt = time.Now().UTC()
 	s.state.Applications[applicationID] = app
 	s.dirty = true
+	s.scheduleSave()
 }
 
 // SetAllPaths replaces all paths for an application (e.g. after full sync).
@@ -183,9 +193,11 @@ func (s *SyncState) SetAllPaths(applicationID string, paths map[string]string) {
 		UpdatedAt: time.Now().UTC(),
 	}
 	s.dirty = true
+	s.scheduleSave()
 }
 
 // Save persists state to disk. Uses atomic write (temp file + rename).
+// When called from hot path (SetPath, etc.), scheduleSave is used instead for debouncing.
 func (s *SyncState) Save() error {
 	s.mu.Lock()
 	if !s.dirty {
@@ -195,7 +207,10 @@ func (s *SyncState) Save() error {
 	stateCopy := s.copyStateLocked()
 	s.dirty = false
 	s.mu.Unlock()
+	return s.writeToDisk(stateCopy)
+}
 
+func (s *SyncState) writeToDisk(stateCopy *persistableState) error {
 	s.saveMu.Lock()
 	defer s.saveMu.Unlock()
 
@@ -220,6 +235,22 @@ func (s *SyncState) Save() error {
 	}
 
 	return nil
+}
+
+// scheduleSave debounces Save. Call from hot path (SetPath, RemovePath, etc.)
+// instead of Save directly. Immediate save still available via Save().
+func (s *SyncState) scheduleSave() {
+	s.saveTimerMu.Lock()
+	defer s.saveTimerMu.Unlock()
+	if s.saveTimer != nil {
+		s.saveTimer.Stop()
+	}
+	s.saveTimer = time.AfterFunc(syncStateDebounceMs*time.Millisecond, func() {
+		s.saveTimerMu.Lock()
+		s.saveTimer = nil
+		s.saveTimerMu.Unlock()
+		s.Save()
+	})
 }
 
 func (s *SyncState) copyStateLocked() *persistableState {

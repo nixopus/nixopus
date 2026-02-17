@@ -4,6 +4,7 @@ package mover
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -47,9 +48,10 @@ type Event struct {
 
 // Config holds watcher configuration
 type Config struct {
-	RootPath       string
-	DebounceMs     int
-	IgnorePatterns []string
+	RootPath         string
+	DebounceMs       int
+	IgnorePatterns   []string
+	EventsBufferSize int // Events channel capacity; 0 = 512 (for 2000+ file bursts)
 }
 
 // Watcher watches a directory for file changes using OS-level notifications.
@@ -70,10 +72,14 @@ func New(cfg Config) (*Watcher, error) {
 		return nil, fmt.Errorf("failed to create watcher: %w", err)
 	}
 
+	eventsBuf := 512
+	if cfg.EventsBufferSize > 0 {
+		eventsBuf = cfg.EventsBufferSize
+	}
 	w := &Watcher{
 		rootPath:      cfg.RootPath,
 		watcher:       fsWatcher,
-		events:        make(chan Event, 100),
+		events:        make(chan Event, eventsBuf),
 		errors:        make(chan error, 10),
 		done:          make(chan struct{}),
 		debounceDelay: parseDebounceDuration(cfg.DebounceMs),
@@ -116,20 +122,43 @@ func (w *Watcher) Stop() error {
 }
 
 func (w *Watcher) addWatchRecursive(root string) error {
-	return filepath.Walk(root, w.visitDir)
-}
-
-func (w *Watcher) visitDir(path string, info os.FileInfo, err error) error {
-	if err != nil || !info.IsDir() {
+	// Two-phase: collect dirs (skip fast-ignored), batch git check, then add watches.
+	// Avoids N git check-ignore execs for large trees (e.g. 500+ dirs at startup).
+	type dirEntry struct {
+		fullPath string
+		relPath  string
+	}
+	var dirs []dirEntry
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil || !info.IsDir() {
+			return nil
+		}
+		relPath, e := filepath.Rel(w.rootPath, path)
+		if e != nil {
+			return nil
+		}
+		if w.ignorer.shouldIgnoreFast(relPath) {
+			return filepath.SkipDir
+		}
+		dirs = append(dirs, dirEntry{path, relPath})
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	if len(dirs) == 0 {
 		return nil
 	}
-
-	relPath, _ := filepath.Rel(w.rootPath, path)
-	if w.ignorer.shouldIgnore(relPath) {
-		return filepath.SkipDir
+	relPaths := make([]string, len(dirs))
+	for i, d := range dirs {
+		relPaths[i] = d.relPath
 	}
-
-	_ = w.watcher.Add(path)
+	w.ignorer.batchResolve(relPaths)
+	for _, d := range dirs {
+		if !w.ignorer.isGitIgnored(d.relPath) {
+			_ = w.watcher.Add(d.fullPath)
+		}
+	}
 	return nil
 }
 
@@ -160,7 +189,8 @@ func (w *Watcher) handleFsEvent(fsEvent fsnotify.Event, debouncer *debouncer) {
 		return
 	}
 
-	if w.ignorer.shouldIgnore(relPath) {
+	// Fast checks only here; git check is batched at flush to avoid N execs on npm install
+	if w.ignorer.shouldIgnoreFast(relPath) {
 		return
 	}
 
@@ -197,7 +227,19 @@ func (w *Watcher) convertEvent(fsEvent fsnotify.Event) (EventType, bool) {
 }
 
 func (w *Watcher) flushEvents(events map[string]Event) {
+	if len(events) == 0 {
+		return
+	}
+	paths := make([]string, 0, len(events))
+	for path := range events {
+		paths = append(paths, path)
+	}
+	// Batch git check-ignore for burst events (npm install, etc.)
+	w.ignorer.batchResolve(paths)
 	for _, event := range events {
+		if w.ignorer.isGitIgnored(event.Path) {
+			continue
+		}
 		select {
 		case w.events <- event:
 		case <-w.done:
@@ -257,7 +299,6 @@ func (d *debouncer) flush() {
 	d.onFlush(toSend)
 }
 
-
 type pathIgnorer struct {
 	rootPath   string
 	patterns   []string
@@ -276,15 +317,18 @@ func newPathIgnorer(rootPath string, patterns []string) *pathIgnorer {
 }
 
 func (p *pathIgnorer) shouldIgnore(relPath string) bool {
+	if p.shouldIgnoreFast(relPath) {
+		return true
+	}
+	return p.isGitIgnored(relPath)
+}
+
+// shouldIgnoreFast does cheap checks only (builtin + patterns). Use for per-event path; git check is batched at flush.
+func (p *pathIgnorer) shouldIgnoreFast(relPath string) bool {
 	if p.isBuiltinIgnored(relPath) {
 		return true
 	}
-
-	if p.matchesPattern(relPath) {
-		return true
-	}
-
-	return p.isGitIgnored(relPath)
+	return p.matchesPattern(relPath)
 }
 
 func (p *pathIgnorer) isBuiltinIgnored(relPath string) bool {
@@ -315,6 +359,76 @@ func (p *pathIgnorer) isGitIgnored(relPath string) bool {
 	p.gitCache[relPath] = ignored
 	p.gitCacheMu.Unlock()
 
+	return ignored
+}
+
+// batchResolve runs git check-ignore --stdin for uncached paths. Call before filtering a batch of events.
+func (p *pathIgnorer) batchResolve(paths []string) {
+	uncached := make([]string, 0, len(paths))
+	p.gitCacheMu.RLock()
+	for _, path := range paths {
+		if _, ok := p.gitCache[path]; !ok {
+			uncached = append(uncached, path)
+		}
+	}
+	p.gitCacheMu.RUnlock()
+	if len(uncached) == 0 {
+		return
+	}
+
+	ignoredSet := p.batchGitCheckIgnore(uncached)
+	p.gitCacheMu.Lock()
+	for _, path := range ignoredSet {
+		p.gitCache[path] = true
+	}
+	for _, path := range uncached {
+		if !contains(ignoredSet, path) {
+			p.gitCache[path] = false
+		}
+	}
+	p.gitCacheMu.Unlock()
+}
+
+func contains(s []string, x string) bool {
+	for _, v := range s {
+		if v == x {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *pathIgnorer) batchGitCheckIgnore(paths []string) []string {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "git", "check-ignore", "--stdin")
+	cmd.Dir = p.rootPath
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return nil
+	}
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil
+	}
+	if err := cmd.Start(); err != nil {
+		return nil
+	}
+	go func() {
+		defer stdin.Close()
+		for _, path := range paths {
+			stdin.Write([]byte(path + "\n"))
+		}
+	}()
+	var ignored []string
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line != "" {
+			ignored = append(ignored, line)
+		}
+	}
+	cmd.Wait()
 	return ignored
 }
 
