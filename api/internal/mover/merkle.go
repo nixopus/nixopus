@@ -122,3 +122,42 @@ func DiffAgainst(local *Tree, serverLeaves map[string]string) (toSync []string, 
 func normalizeMerklePath(p string) string {
 	return filepath.ToSlash(filepath.Clean(p))
 }
+
+// ComputeSimhash produces a 256-bit simhash from path→checksum leaves.
+// Octodel parity: hashes each file checksum into a 256-dim vector, thresholds, outputs hex.
+// Used for codebase similarity fingerprint.
+func ComputeSimhash(leaves map[string]string) string {
+	if len(leaves) == 0 {
+		return ""
+	}
+	v := make([]int32, 256)
+
+	for _, hash := range leaves {
+		if len(hash) != 64 {
+			continue
+		}
+		decoded, err := hex.DecodeString(hash)
+		if err != nil || len(decoded) != 32 {
+			continue
+		}
+		for i := 0; i < 256; i++ {
+			byteIdx := i >> 3
+			bitIdx := i & 7
+			if (decoded[byteIdx]>>bitIdx)&1 == 1 {
+				v[i]++
+			} else {
+				v[i]--
+			}
+		}
+	}
+
+	out := make([]byte, 32)
+	for i := 0; i < 256; i++ {
+		if v[i] > 0 {
+			byteIdx := i >> 3
+			bitIdx := i & 7
+			out[byteIdx] |= 1 << bitIdx
+		}
+	}
+	return hex.EncodeToString(out)
+}
