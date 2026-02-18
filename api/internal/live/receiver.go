@@ -5,14 +5,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/pkg/sftp"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	sftputil "github.com/raghavyuva/nixopus-api/internal/live/sftp"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 // FileReceiver receives and reassembles file chunks
@@ -84,10 +84,49 @@ func (r *FileReceiver) Reassemble() ([]byte, error) {
 
 // VerifyChecksum verifies the file checksum
 func (r *FileReceiver) VerifyChecksum(content []byte) bool {
+	return verifyChecksum(content, r.Checksum)
+}
+
+// verifyChecksum verifies content matches the expected SHA256 hex checksum
+func verifyChecksum(content []byte, expected string) bool {
 	hasher := sha256.New()
 	hasher.Write(content)
 	calculated := hex.EncodeToString(hasher.Sum(nil))
-	return calculated == r.Checksum
+	return calculated == expected
+}
+
+// WriteContentToStaging writes pre-assembled content to staging (used by async workers)
+func WriteContentToStaging(ctx context.Context, stagingPath, path string, content []byte, checksum string) error {
+	if !verifyChecksum(content, checksum) {
+		return fmt.Errorf("checksum mismatch for file %s", path)
+	}
+	fullPath, err := sanitizePath(stagingPath, path)
+	if err != nil {
+		return fmt.Errorf("invalid file path: %w", err)
+	}
+	if isLocalStagingPath(stagingPath) {
+		dirPath := filepath.Dir(fullPath)
+		if err := os.MkdirAll(dirPath, 0755); err != nil {
+			return fmt.Errorf("failed to create directory: %w", err)
+		}
+		return os.WriteFile(fullPath, content, 0644)
+	}
+	return utils.WithSFTPClientFromPool(ctx, func(sftpClient *sftp.Client) error {
+		dirPath := filepath.Dir(fullPath)
+		if err := sftpClient.MkdirAll(dirPath); err != nil {
+			return fmt.Errorf("failed to create directory via SFTP: %w", err)
+		}
+		file, err := sftpClient.Create(fullPath)
+		if err != nil {
+			return fmt.Errorf("failed to create file via SFTP: %w", err)
+		}
+		defer file.Close()
+		if _, err := file.Write(content); err != nil {
+			return fmt.Errorf("failed to write file content via SFTP: %w", err)
+		}
+		_ = sftpClient.Chmod(fullPath, 0644)
+		return nil
+	})
 }
 
 // sanitizePath ensures the path stays within the staging directory
@@ -138,19 +177,7 @@ func sanitizePath(stagingPath, filePath string) (string, error) {
 	return fullPath, nil
 }
 
-// getSFTPClient creates and returns an SFTP client.
-// The SSH client connection is pooled and should not be closed.
-// The returned SFTP client should be closed by the caller.
-// This function handles connection failures by retrying with a fresh connection.
-func getSFTPClient(ctx context.Context) (*sftp.Client, error) {
-	sshMgr, err := ssh.GetSSHManagerFromContext(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
-	}
-	return sftputil.CreateSFTPClientWithRetry(sshMgr)
-}
-
-// WriteToStaging writes the reassembled file to the staging directory via SFTP
+// WriteToStaging writes the reassembled file to the staging directory via SFTP (or local filesystem in dev mode)
 func (r *FileReceiver) WriteToStaging(ctx context.Context) error {
 	// Reassemble file
 	content, err := r.Reassemble()
@@ -169,39 +196,31 @@ func (r *FileReceiver) WriteToStaging(ctx context.Context) error {
 		return fmt.Errorf("invalid file path: %w", err)
 	}
 
-	// Get SFTP client
-	sftpClient, err := getSFTPClient(ctx)
-	if err != nil {
-		return err
-	}
-	defer sftpClient.Close()
-
-	// Create directory if needed
-	dirPath := filepath.Dir(fullPath)
-	if err := sftpClient.MkdirAll(dirPath); err != nil {
-		return fmt.Errorf("failed to create directory via SFTP: %w", err)
+	// Use local I/O when staging path is local (development mode fallback)
+	if isLocalStagingPath(r.StagingPath) {
+		dirPath := filepath.Dir(fullPath)
+		if err := os.MkdirAll(dirPath, 0755); err != nil {
+			return fmt.Errorf("failed to create directory: %w", err)
+		}
+		return os.WriteFile(fullPath, content, 0644)
 	}
 
-	// Create and write file via SFTP
-	file, err := sftpClient.Create(fullPath)
-	if err != nil {
-		return fmt.Errorf("failed to create file via SFTP: %w", err)
-	}
-	defer file.Close()
-
-	if _, err := file.Write(content); err != nil {
-		return fmt.Errorf("failed to write file content via SFTP: %w", err)
-	}
-
-	// Set file permissions (0644)
-	if err := sftpClient.Chmod(fullPath, 0644); err != nil {
-		// Log but don't fail - permissions are best effort
-		// Note: This is in receiver.go which doesn't have direct logger access
-		// The error is non-critical so we silently continue
-		_ = err
-	}
-
-	return nil
+	return utils.WithSFTPClientFromPool(ctx, func(sftpClient *sftp.Client) error {
+		dirPath := filepath.Dir(fullPath)
+		if err := sftpClient.MkdirAll(dirPath); err != nil {
+			return fmt.Errorf("failed to create directory via SFTP: %w", err)
+		}
+		file, err := sftpClient.Create(fullPath)
+		if err != nil {
+			return fmt.Errorf("failed to create file via SFTP: %w", err)
+		}
+		defer file.Close()
+		if _, err := file.Write(content); err != nil {
+			return fmt.Errorf("failed to write file content via SFTP: %w", err)
+		}
+		_ = sftpClient.Chmod(fullPath, 0644)
+		return nil
+	})
 }
 
 // Reset resets the receiver for a new file transfer (clears all chunks)
@@ -227,8 +246,7 @@ func (r *FileReceiver) UpdateMetadata(totalChunks int, checksum string) {
 	r.TotalChunks = totalChunks
 }
 
-// DeleteFileFromStaging deletes a file from staging directory via SFTP
-// This is safer than using shell commands as it prevents command injection
+// DeleteFileFromStaging deletes a file from staging directory via SFTP (or local filesystem in dev mode)
 func DeleteFileFromStaging(ctx context.Context, stagingPath, filePath string) error {
 	// Sanitize path to prevent directory traversal attacks
 	fullPath, err := sanitizePath(stagingPath, filePath)
@@ -236,17 +254,19 @@ func DeleteFileFromStaging(ctx context.Context, stagingPath, filePath string) er
 		return fmt.Errorf("invalid file path: %w", err)
 	}
 
-	// Get SFTP client
-	sftpClient, err := getSFTPClient(ctx)
-	if err != nil {
-		return err
-	}
-	defer sftpClient.Close()
-
-	// Delete file via SFTP (safer than shell command)
-	if err := sftpClient.Remove(fullPath); err != nil {
-		return fmt.Errorf("failed to delete file via SFTP: %w", err)
+	// Use local I/O when staging path is local (development mode fallback)
+	if isLocalStagingPath(stagingPath) {
+		if err := os.Remove(fullPath); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("failed to delete file: %w", err)
+		}
+		return nil
 	}
 
-	return nil
+	err = utils.WithSFTPClientFromPool(ctx, func(sftpClient *sftp.Client) error {
+		if err := sftpClient.Remove(fullPath); err != nil {
+			return fmt.Errorf("failed to delete file via SFTP: %w", err)
+		}
+		return nil
+	})
+	return err
 }

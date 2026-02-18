@@ -2,7 +2,6 @@ package setenv
 
 import (
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"github.com/raghavyuva/nixopus-api/internal/config"
@@ -12,13 +11,9 @@ import (
 var SetEnvCmd = &cobra.Command{
 	Use:   "set-env",
 	Short: "Set the environment file path for deployment",
-	Long: `Set the path to the environment file that should be synced and used during deployment.
-The path should be relative to the project root (e.g., .env, .env.production, config/.env).
-
-If an env path is set, it will be:
-- Synced to the deployment environment
-- Made available when services run
-- Removed from the exclude list if it was previously excluded`,
+	Long: `Set the path to the environment file (e.g., .env, .env.production) relative to project root.
+The file itself is never synced. Its values are read locally and sent to the server when you run 'nixopus live'.
+Changes to the env file update the container's environment automatically.`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		envPath := args[0]
@@ -69,14 +64,7 @@ func runSetEnvSteps(program *SetEnvProgram, envPath string) error {
 
 	// Update config
 	cfg.EnvPath = envPath
-
-	// Remove env path from excludes if it's in there
-	cfg.Sync.Exclude = removeFromSlice(cfg.Sync.Exclude, envPath)
-
-	// Also remove common patterns that might match
-	cleanPath := filepath.Clean(envPath)
-	baseName := filepath.Base(cleanPath)
-	cfg.Sync.Exclude = removeFromSlice(cfg.Sync.Exclude, baseName)
+	// .env stays excluded; values are sent from client, file is never synced
 
 	// Save config
 	if err := cfg.Save(); err != nil {
@@ -93,17 +81,6 @@ func runSetEnvSteps(program *SetEnvProgram, envPath string) error {
 	program.Quit()
 
 	return nil
-}
-
-// removeFromSlice removes an item from a string slice
-func removeFromSlice(slice []string, item string) []string {
-	result := make([]string, 0, len(slice))
-	for _, s := range slice {
-		if s != item {
-			result = append(result, s)
-		}
-	}
-	return result
 }
 
 func init() {

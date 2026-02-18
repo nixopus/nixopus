@@ -20,6 +20,13 @@
     "enabled": "Habilitado",
     "disabled": "Deshabilitado",
     "readMore": "Leer más",
-    "readLess": "Leer menos"
+    "readLess": "Leer menos",
+    "notFound": {
+      "code": "404",
+      "title": "Página No Encontrada",
+      "description": "La página que buscas no existe o ha sido movida.",
+      "goHome": "Ir al Panel",
+      "goBack": "Volver"
+    }
   }
 }

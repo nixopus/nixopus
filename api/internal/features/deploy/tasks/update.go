@@ -89,10 +89,10 @@ func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload sh
 	}
 
 	taskCtx.LogAndUpdateStatus("Repository cloned successfully", shared_types.Building)
-	
+
 	// Add organization ID to context for docker service
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, TaskPayload.Application.OrganizationID.String())
-	
+
 	taskCtx.AddLog("Building image from Dockerfile " + repoPath + " for application " + TaskPayload.Application.Name)
 	buildImageResult, err := s.BuildImage(BuildConfig{
 		TaskPayload:       TaskPayload,
@@ -121,7 +121,11 @@ func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload sh
 
 	// Add domains to proxy if any are provided
 	if len(TaskPayload.Application.Domains) > 0 {
-		client := GetCaddyClient()
+		client, err := GetCaddyClient(orgCtx, nil, &s.Logger)
+		if err != nil {
+			taskCtx.LogAndUpdateStatus("Failed to get Caddy client: "+err.Error(), shared_types.Failed)
+			return err
+		}
 		port, err := strconv.Atoi(containerResult.AvailablePort)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
