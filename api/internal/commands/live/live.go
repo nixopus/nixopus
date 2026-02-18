@@ -1,6 +1,7 @@
 package live
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"net/http"
@@ -69,12 +70,6 @@ func runSingleApp(args []string) error {
 		cancel()
 		return fmt.Errorf("authentication required: %w", err)
 	}
-
-	// Create agent client immediately after auth so all subsequent events can use it
-	accessTokenForAgent, _ := config.GetAccessToken()
-	threadID := fmt.Sprintf("live-%d", time.Now().UnixMilli())
-	agentClient := NewAgentClient(accessTokenForAgent, threadID)
-	agentUI.SetAgentClient(agentClient)
 
 	bus.Send(Event{Type: EventAuth, Message: "Authenticated", NeedsLLM: true})
 
@@ -287,6 +282,10 @@ func runSingleApp(args []string) error {
 	filesSynced := 0
 	changesDetected := 0
 
+	// Workflow execution state — only one workflow per app at a time (idempotency on reconnect)
+	var workflowRunningMu sync.Mutex
+	workflowRunning := false
+
 	engine, err := mover.NewEngine(mover.EngineConfig{
 		RootPath:      watchPath,
 		Client:        client,
@@ -406,6 +405,86 @@ func runSingleApp(args []string) error {
 						},
 					})
 				}
+			case mover.MessageTypeCodebaseIndexed:
+				workflowRunningMu.Lock()
+				if workflowRunning {
+					workflowRunningMu.Unlock()
+					break
+				}
+				workflowRunning = true
+				workflowRunningMu.Unlock()
+
+				appID, orgID, source, mode := extractCodebaseIndexedPayload(msg.Payload)
+				if appID == "" {
+					bus.Send(Event{Type: EventError, Message: "codebase_indexed: missing application_id"})
+					workflowRunningMu.Lock()
+					workflowRunning = false
+					workflowRunningMu.Unlock()
+					break
+				}
+				if orgID == "" {
+					if fallbackOrg, err := config.GetOrganizationID(); err == nil && fallbackOrg != "" {
+						orgID = fallbackOrg
+					}
+				}
+
+				wfClient := NewDeploymentWorkflowClient(accessToken, orgID)
+				go func() {
+					defer func() {
+						workflowRunningMu.Lock()
+						workflowRunning = false
+						workflowRunningMu.Unlock()
+					}()
+
+					bus.Send(Event{Type: EventBuildStatus, Message: "Running deployment workflow...", Payload: BuildStatusPayload{Phase: "generating_dockerfile", Message: "Analyzing codebase..."}})
+
+					result, err := wfClient.Run(context.Background(), appID, source, mode, func(stepID, message string) {
+						bus.Send(Event{
+							Type:    EventPipelineProgress,
+							Message: message,
+							Payload: PipelineProgressPayload{StageId: stepID, Message: message},
+						})
+					}, func(ctx context.Context, approval *ApprovalContext) (bool, error) {
+						// Human-in-the-loop: show proposal (including prompt) via AgentUI, then wait for input
+						if approval != nil {
+							bus.Send(Event{
+								Type: EventApprovalNeeded,
+								Payload: ApprovalNeededPayload{
+									Dockerfile:      approval.Dockerfile,
+									Summary:         approval.Summary,
+									ValidationScore: approval.ValidationScore,
+									Suggestions:     approval.Suggestions,
+								},
+							})
+						} else {
+							term.Println("")
+							term.Print("Approve deployment? [y/N]: ")
+						}
+						scanner := bufio.NewScanner(os.Stdin)
+						if !scanner.Scan() {
+							return false, scanner.Err()
+						}
+						s := strings.ToLower(strings.TrimSpace(scanner.Text()))
+						return s == "y" || s == "yes", nil
+					})
+					if err != nil {
+						bus.Send(Event{Type: EventError, Message: fmt.Sprintf("Workflow failed: %v", err)})
+						bus.Send(Event{Type: EventBuildStatus, Message: err.Error(), Payload: BuildStatusPayload{Phase: "error", Message: err.Error(), Error: err.Error()}, NeedsLLM: true})
+						return
+					}
+
+					triggerPayload := result.ToTriggerBuildPayload()
+					if err := client.Send(mover.SyncMessage{
+						Type:      mover.MessageTypeTriggerBuild,
+						Timestamp: time.Now(),
+						Payload:   triggerPayload,
+					}); err != nil {
+						bus.Send(Event{Type: EventError, Message: fmt.Sprintf("Failed to send Dockerfile: %v", err)})
+						return
+					}
+
+					bus.Send(Event{Type: EventBuildStatus, Message: "Dockerfile sent, starting build...", Payload: BuildStatusPayload{Phase: "dockerfile_ready", Message: "Dockerfile sent to server"}})
+				}()
 			}
 		},
 		SyncStatePath: syncStatePath,
@@ -510,6 +589,29 @@ func buildDomainURL(projectID, deployDomain string) string {
 		deployDomain = config.GetDeployDomain()
 	}
 	return "https://" + projectID[:8] + "." + deployDomain
+}
+
+// extractCodebaseIndexedPayload extracts app ID, org ID, source, and mode from codebase_indexed payload.
+func extractCodebaseIndexedPayload(payload interface{}) (appID, orgID, source, mode string) {
+	if p, ok := payload.(mover.CodebaseIndexedPayload); ok {
+		return p.ApplicationID, p.OrganizationID, p.Source, p.Mode
+	}
+	if m, ok := payload.(map[string]interface{}); ok {
+		if v, ok := m["application_id"].(string); ok {
+			appID = v
+		}
+		if v, ok := m["organization_id"].(string); ok {
+			orgID = v
+		}
+		if v, ok := m["source"].(string); ok {
+			source = v
+		}
+		if v, ok := m["mode"].(string); ok {
+			mode = v
+		}
+		return appID, orgID, source, mode
+	}
+	return "", "", "", ""
 }
 
 // isGitRepo checks if the given path is a git repository

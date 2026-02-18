@@ -2,6 +2,7 @@ package live
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -63,6 +64,16 @@ func (w *Writer) Blank() {
 	w.term.Println("")
 }
 
+// Print writes text without a trailing newline. Use for inline prompts.
+func (w *Writer) Print(text string) {
+	w.term.Print(text)
+}
+
+// Println writes a line with newline.
+func (w *Writer) Println(text string) {
+	w.term.Println(text)
+}
+
 // Header prints bold text. Used once at startup for the banner.
 func (w *Writer) Header(text string) {
 	w.term.Println(fmt.Sprintf("  %s", boldStyle.Render(text)))
@@ -71,4 +82,50 @@ func (w *Writer) Header(text string) {
 // UserInput prints what the user typed, styled as "you: text".
 func (w *Writer) UserInput(text string) {
 	w.term.Println(fmt.Sprintf("\n%s %s\n", dimStyle.Render("you:"), text))
+}
+
+// codeStyle for Dockerfile/code blocks.
+var codeStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
+
+// ApprovalProposal renders a structured Dockerfile approval UI: header, summary,
+// validation, suggestions, and the proposed Dockerfile in a readable code block.
+func (w *Writer) ApprovalProposal(summary string, validationScore int, suggestions []string, dockerfile string) {
+	w.Blank()
+	w.term.Println(fmt.Sprintf("  %s", boldStyle.Render("━━ Dockerfile proposal ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")))
+	w.Blank()
+
+	if summary != "" {
+		if validationScore > 0 && validationScore < 70 {
+			w.term.Println(fmt.Sprintf("  %s %s", yellowStyle.Render("!"), summary))
+		} else if validationScore == 0 {
+			w.term.Println(fmt.Sprintf("  %s %s", yellowStyle.Render("!"), summary))
+		} else {
+			w.term.Println(fmt.Sprintf("  %s %s", greenStyle.Render(">"), summary))
+		}
+	}
+	if validationScore >= 0 {
+		scoreLabel := fmt.Sprintf("Validation score: %d/100", validationScore)
+		if validationScore < 50 {
+			w.term.Println(fmt.Sprintf("  %s %s", dimStyle.Render("  "), yellowStyle.Render(scoreLabel)))
+		} else {
+			w.term.Println(fmt.Sprintf("  %s %s", dimStyle.Render("  "), dimStyle.Render(scoreLabel)))
+		}
+	}
+	if len(suggestions) > 0 {
+		w.Blank()
+		w.term.Println(fmt.Sprintf("  %s", dimStyle.Render("Suggestions:")))
+		for _, s := range suggestions {
+			w.term.Println(fmt.Sprintf("  %s %s", dimStyle.Render("  •"), s))
+		}
+	}
+	if dockerfile != "" {
+		w.Blank()
+		w.term.Println(fmt.Sprintf("  %s", dimStyle.Render("Proposed Dockerfile:")))
+		for _, line := range strings.Split(dockerfile, "\n") {
+			w.term.Println(fmt.Sprintf("  %s %s", dimStyle.Render("│"), codeStyle.Render(line)))
+		}
+	}
+	w.Blank()
+	w.term.Print(fmt.Sprintf("  %s ", boldStyle.Render("Approve deployment?")))
+	w.term.Print(fmt.Sprintf("%s ", dimStyle.Render("[y/N]:")))
 }

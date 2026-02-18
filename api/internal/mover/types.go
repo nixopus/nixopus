@@ -21,6 +21,8 @@ const (
 	MessageTypeBuildStatus      MessageType = "build_status"
 	MessageTypeBuildLog         MessageType = "build_log"
 	MessageTypeDeploymentStatus MessageType = "deployment_status"
+	MessageTypeCodebaseIndexed  MessageType = "codebase_indexed"
+	MessageTypeTriggerBuild     MessageType = "trigger_build"
 )
 
 // PipelineProgressPayload carries real-time progress from the pipeline agent
@@ -49,6 +51,22 @@ type BuildLogPayload struct {
 type DeploymentStatusPayload struct {
 	Status       string `json:"status"`
 	DeploymentID string `json:"deployment_id,omitempty"`
+}
+
+// CodebaseIndexedPayload signals the CLI to run the deployment workflow.
+type CodebaseIndexedPayload struct {
+	ApplicationID  string `json:"application_id"`
+	OrganizationID string `json:"organization_id"`
+	Source         string `json:"source"`
+	Mode           string `json:"mode"` // production | development
+}
+
+// TriggerBuildPayload carries the generated Dockerfile from workflow to gateway for build.
+type TriggerBuildPayload struct {
+	Dockerfile   string `json:"dockerfile"`
+	Dockerignore string `json:"dockerignore"`
+	Port         int    `json:"port"`
+	Workdir      string `json:"workdir"`
 }
 
 // EnvVarsPayload carries parsed env key-value pairs from the client (not the raw file)

@@ -119,6 +119,9 @@ func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, 
 	gateway.buildFirstManager.SetBuildStatusFunc(func(appID uuid.UUID, phase, message, errMsg string) {
 		gateway.sendBuildStatus(appID, phase, message, errMsg)
 	})
+	gateway.buildFirstManager.SetCodebaseIndexedFunc(func(appCtx *ApplicationContext) {
+		_ = gateway.sendCodebaseIndexed(appCtx)
+	})
 	gateway.websocketHandler = NewWebSocketHandler(gateway, logger)
 	for i := 0; i < fileCompletionWorkers; i++ {
 		gateway.workerWg.Add(1)
@@ -271,6 +274,37 @@ func (g *Gateway) sendBuildLog(appID uuid.UUID, log string, timestamp string) {
 	if err := ac.handler.sendMessage(ac.conn, msg); err != nil {
 		g.logger.Log(logger.Warning, "failed to send build log", fmt.Sprintf("app=%s err=%v", appID, err))
 	}
+}
+
+// sendCodebaseIndexed sends codebase_indexed to the CLI when indexing is complete.
+// Signals the CLI to run the deployment workflow.
+func (g *Gateway) sendCodebaseIndexed(appCtx *ApplicationContext) error {
+	g.activeConnsMu.RLock()
+	ac := g.activeConns[appCtx.ApplicationID]
+	g.activeConnsMu.RUnlock()
+
+	if ac == nil {
+		g.logger.Log(logger.Warning, "no active connection for codebase_indexed", appCtx.ApplicationID.String())
+		return nil
+	}
+
+	payload := mover.CodebaseIndexedPayload{
+		ApplicationID:  appCtx.ApplicationID.String(),
+		OrganizationID: appCtx.OrganizationID.String(),
+		Source:         appCtx.StagingPath,
+		Mode:           "development",
+	}
+	msg := mover.SyncMessage{
+		Type:      mover.MessageTypeCodebaseIndexed,
+		Timestamp: time.Now(),
+		Payload:   payload,
+	}
+	if err := ac.handler.sendMessage(ac.conn, msg); err != nil {
+		g.logger.Log(logger.Warning, "failed to send codebase_indexed", fmt.Sprintf("app=%s err=%v", appCtx.ApplicationID, err))
+		return err
+	}
+	g.logger.Log(logger.Info, "codebase_indexed sent", fmt.Sprintf("app=%s org=%s source=%s", appCtx.ApplicationID, appCtx.OrganizationID, appCtx.StagingPath))
+	return nil
 }
 
 // sendDeploymentStatus sends a deployment status change to the WebSocket client for the given app.
@@ -492,6 +526,8 @@ func (g *Gateway) handleMessage(ctx context.Context, conn *websocket.Conn, appCt
 		return g.handleEnvVars(ctx, appCtx, msg.Payload)
 	case mover.MessageTypeSyncComplete:
 		return g.handleSyncComplete(ctx, appCtx)
+	case mover.MessageTypeTriggerBuild:
+		return g.handleTriggerBuild(ctx, appCtx, msg.Payload)
 	case mover.MessageTypePing:
 		return g.websocketHandler.sendPong(conn)
 	default:
@@ -535,7 +571,27 @@ func (g *Gateway) validateFilePath(filePath string, basePath string) error {
 func (g *Gateway) handleSyncComplete(ctx context.Context, appCtx *ApplicationContext) error {
 	g.logger.Log(logger.Info, "sync_complete received", appCtx.ApplicationID.String())
 	g.waitForPendingCompletions(appCtx.ApplicationID, 60*time.Second)
-	g.buildFirstManager.HandleSyncComplete(ctx, appCtx)
+
+	if g.buildFirstManager.TryRecoverFromSyncComplete(ctx, appCtx) {
+		return nil
+	}
+
+	return g.sendCodebaseIndexed(appCtx)
+}
+
+func (g *Gateway) handleTriggerBuild(ctx context.Context, appCtx *ApplicationContext, payload json.RawMessage) error {
+	var p mover.TriggerBuildPayload
+	if err := json.Unmarshal(payload, &p); err != nil {
+		return fmt.Errorf("failed to unmarshal trigger_build payload: %w", err)
+	}
+	if p.Dockerfile == "" {
+		return fmt.Errorf("trigger_build requires dockerfile")
+	}
+
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, appCtx.OrganizationID.String())
+	if err := g.buildFirstManager.StartBuildFromDockerfile(orgCtx, appCtx, p.Dockerfile, p.Dockerignore, p.Port, p.Workdir); err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -10,8 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/sftp"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/dockerfile_generator"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
@@ -29,6 +27,7 @@ type BuildFirstManager struct {
 	sessionEnvResolver   SessionEnvResolver
 	pipelineProgressFunc PipelineProgressFunc
 	buildStatusFunc      BuildStatusFunc
+	codebaseIndexedFunc  CodebaseIndexedFunc
 
 	deployedMu sync.RWMutex
 	deployed   map[uuid.UUID]*deployedApp
@@ -51,6 +50,10 @@ type SessionEnvResolver func(applicationID uuid.UUID) map[string]string
 // PipelineProgressFunc is called for each progress event during Dockerfile generation.
 // applicationID identifies which app the progress is for. stageId and message describe the event.
 type PipelineProgressFunc func(applicationID uuid.UUID, stageId, message string)
+
+// CodebaseIndexedFunc is called when the CLI should run the deployment workflow (e.g. after sync_complete or dependency change).
+// The gateway sends codebase_indexed to the client.
+type CodebaseIndexedFunc func(appCtx *ApplicationContext)
 
 func NewBuildFirstManager(stagingManager *StagingManager, taskService *tasks.TaskService, logger logger.Logger, sessionEnvResolver SessionEnvResolver) *BuildFirstManager {
 	return &BuildFirstManager{
@@ -149,112 +152,76 @@ func (bfm *BuildFirstManager) triggerBuild(ctx context.Context, appCtx *Applicat
 	if existing, ok := bfm.buildTimers[appCtx.ApplicationID]; ok {
 		existing.Stop()
 	}
-	ctxCopy := context.WithoutCancel(ctx)
+	appCtxCopy := appCtx
 	bfm.buildTimers[appCtx.ApplicationID] = time.AfterFunc(3*time.Second, func() {
-		bfm.doBuild(ctxCopy, appCtx)
+		if bfm.codebaseIndexedFunc != nil {
+			bfm.codebaseIndexedFunc(appCtxCopy)
+		}
 	})
 	bfm.buildDebounceMu.Unlock()
 }
 
-// TriggerBuildImmediate starts a build immediately without debounce.
-// Used when client sends sync_complete (all files arrived); no need to wait for more edits.
-func (bfm *BuildFirstManager) TriggerBuildImmediate(ctx context.Context, appCtx *ApplicationContext) {
-	bfm.buildDebounceMu.Lock()
-	if existing, ok := bfm.buildTimers[appCtx.ApplicationID]; ok {
-		existing.Stop()
-		delete(bfm.buildTimers, appCtx.ApplicationID)
-	}
-	bfm.buildDebounceMu.Unlock()
-	go bfm.doBuild(context.WithoutCancel(ctx), appCtx)
-}
-
-// HandleSyncComplete is called when the client sends sync_complete (all files synced).
-// Triggers build immediately if not deployed; no debounce since we know sync is done.
-func (bfm *BuildFirstManager) HandleSyncComplete(ctx context.Context, appCtx *ApplicationContext) {
+// TryRecoverFromSyncComplete attempts to recover (resume, mark deployed) when sync_complete is received.
+// Returns true if recovery was done, false if a new build is needed (caller should send codebase_indexed).
+func (bfm *BuildFirstManager) TryRecoverFromSyncComplete(ctx context.Context, appCtx *ApplicationContext) bool {
 	if bfm.IsDeployed(appCtx.ApplicationID) {
-		return
+		return true
 	}
 	if service, err := tasks.FindServiceByLabel(ctx, "com.application.id", appCtx.ApplicationID.String()); err == nil && service != nil {
 		if bfm.injector.IsContainerRunning(ctx, appCtx) {
 			workdir := tasks.GetWorkdirFromService(service)
 			bfm.MarkDeployed(appCtx.ApplicationID, workdir)
 			bfm.logger.Log(logger.Info, "recovered deployed state from sync_complete", appCtx.ApplicationID.String())
-			return
+			return true
 		}
 		if tasks.IsLiveDevServicePaused(service) {
 			workdir, err := bfm.taskService.ResumeLiveDevService(ctx, appCtx.ApplicationID, nil)
 			if err != nil {
-				bfm.logger.Log(logger.Warning, "resume failed on sync_complete, triggering build", err.Error())
-				bfm.TriggerBuildImmediate(ctx, appCtx)
-				return
+				bfm.logger.Log(logger.Warning, "resume failed on sync_complete", err.Error())
+				return false
 			}
 			bfm.MarkDeployed(appCtx.ApplicationID, workdir)
 			bfm.logger.Log(logger.Info, "resumed paused service on sync_complete", appCtx.ApplicationID.String())
-			return
+			return true
 		}
 	}
-	bfm.TriggerBuildImmediate(ctx, appCtx)
+	return false
 }
 
-func (bfm *BuildFirstManager) doBuild(ctx context.Context, appCtx *ApplicationContext) {
-	bfm.buildDebounceMu.Lock()
-	delete(bfm.buildTimers, appCtx.ApplicationID)
-	bfm.buildDebounceMu.Unlock()
-
-	bfm.buildingMu.Lock()
-	if bfm.building[appCtx.ApplicationID] {
-		bfm.buildingMu.Unlock()
+// HandleSyncComplete is called when the client sends sync_complete (all files synced).
+// For recovery cases, performs recovery. For build-needed cases, caller should send codebase_indexed.
+// Deprecated: Use TryRecoverFromSyncComplete; gateway sends codebase_indexed when it returns false.
+func (bfm *BuildFirstManager) HandleSyncComplete(ctx context.Context, appCtx *ApplicationContext) {
+	if bfm.TryRecoverFromSyncComplete(ctx, appCtx) {
 		return
 	}
-	bfm.building[appCtx.ApplicationID] = true
-	bfm.buildingMu.Unlock()
+	// Need new build - gateway sends codebase_indexed; do not call pipeline
+}
 
-	defer func() {
-		bfm.buildingMu.Lock()
-		delete(bfm.building, appCtx.ApplicationID)
-		bfm.buildingMu.Unlock()
-	}()
-
+// StartBuildFromDockerfile writes the Dockerfile to staging and starts the live dev build.
+// Used when the client sends trigger_build with a generated Dockerfile from the Mastra workflow.
+func (bfm *BuildFirstManager) StartBuildFromDockerfile(ctx context.Context, appCtx *ApplicationContext, dockerfile, dockerignore string, port int, workdir string) error {
 	appID := appCtx.ApplicationID
-	bfm.logger.Log(logger.Info, "starting build-first deployment", appID.String())
-	bfm.emitBuildStatus(appID, "starting", "Build triggered, analyzing codebase...", "")
+	bfm.logger.Log(logger.Info, "starting build from provided Dockerfile", appID.String())
+	bfm.emitBuildStatus(appID, "starting", "Writing Dockerfile and starting container build...", "")
 
-	source := appCtx.StagingPath
-	auth := dockerfile_generator.AuthHeaders{
-		Token:  appCtx.AuthToken,
-		Cookie: appCtx.AuthCookie,
+	if port <= 0 {
+		port = 3000
 	}
-	client := dockerfile_generator.NewClient(config.AppConfig.Agent.Endpoint)
-
-	var onProgress dockerfile_generator.ProgressFunc
-	if bfm.pipelineProgressFunc != nil {
-		onProgress = func(stageId, message string) {
-			bfm.pipelineProgressFunc(appID, stageId, message)
-		}
+	if workdir == "" {
+		workdir = "/app"
 	}
 
-	bfm.emitBuildStatus(appID, "generating_dockerfile", "Generating Dockerfile...", "")
-
-	resp, err := client.GenerateWithProgress(ctx, source, appCtx.OrganizationID.String(), appCtx.ApplicationID.String(), "development", auth, onProgress)
-	if err != nil {
-		errMsg := fmt.Sprintf("app=%s err=%v", appID, err)
-		bfm.logger.Log(logger.Error, "dockerfile generator failed", errMsg)
-		bfm.emitBuildStatus(appID, "error", "Dockerfile generation failed", err.Error())
-		return
-	}
-
-	bfm.emitBuildStatus(appID, "dockerfile_ready", "Dockerfile ready, writing to staging...", "")
-
-	dockerfilePath, err := WriteDockerfileToStaging(ctx, appCtx.StagingPath, resp.Dockerfile)
+	dockerfilePath, err := WriteDockerfileToStaging(ctx, appCtx.StagingPath, dockerfile)
 	if err != nil {
 		errMsg := fmt.Sprintf("app=%s err=%v", appID, err)
 		bfm.logger.Log(logger.Error, "failed to write dockerfile", errMsg)
 		bfm.emitBuildStatus(appID, "error", "Failed to write Dockerfile", err.Error())
-		return
+		return fmt.Errorf("failed to write Dockerfile: %w", err)
 	}
 
-	if resp.Dockerignore != "" {
-		if _, err := WriteDockerignoreToStaging(ctx, appCtx.StagingPath, resp.Dockerignore); err != nil {
+	if dockerignore != "" {
+		if _, err := WriteDockerignoreToStaging(ctx, appCtx.StagingPath, dockerignore); err != nil {
 			bfm.logger.Log(logger.Warning, "failed to write .dockerignore", fmt.Sprintf("app=%s err=%v", appID, err))
 		}
 	}
@@ -270,8 +237,8 @@ func (bfm *BuildFirstManager) doBuild(ctx context.Context, appCtx *ApplicationCo
 		StagingPath:    appCtx.StagingPath,
 		EnvVars:        envVars,
 		DockerfilePath: dockerfilePath,
-		InternalPort:   resp.Port,
-		Workdir:        resp.Workdir,
+		InternalPort:   port,
+		Workdir:        workdir,
 	}
 	if appCtx.Domain != "" {
 		cfg.Domain = appCtx.Domain
@@ -283,12 +250,11 @@ func (bfm *BuildFirstManager) doBuild(ctx context.Context, appCtx *ApplicationCo
 		errMsg := fmt.Sprintf("app=%s err=%v", appID, err)
 		bfm.logger.Log(logger.Error, "build-first deployment failed", errMsg)
 		bfm.emitBuildStatus(appID, "error", "Container build failed", err.Error())
-		return
+		return fmt.Errorf("container build failed: %w", err)
 	}
 
-	// Deployed state is set by TaskService.OnLiveDevDeployed when the container is healthy,
-	// not here. Previously marking immediately caused injection to fail (container not ready).
 	bfm.logger.Log(logger.Info, "build-first deployment queued", appCtx.ApplicationID.String())
+	return nil
 }
 
 func (bfm *BuildFirstManager) markUndeployed(appID uuid.UUID) {
@@ -301,6 +267,12 @@ func (bfm *BuildFirstManager) markUndeployed(appID uuid.UUID) {
 // Must be called before any builds start, typically right after creating the manager.
 func (bfm *BuildFirstManager) SetPipelineProgressFunc(fn PipelineProgressFunc) {
 	bfm.pipelineProgressFunc = fn
+}
+
+// SetCodebaseIndexedFunc sets the callback for when the CLI should run the deployment workflow.
+// When set, triggerBuild will call this instead of the pipeline.
+func (bfm *BuildFirstManager) SetCodebaseIndexedFunc(fn CodebaseIndexedFunc) {
+	bfm.codebaseIndexedFunc = fn
 }
 
 // SetBuildStatusFunc sets the callback for build lifecycle events.

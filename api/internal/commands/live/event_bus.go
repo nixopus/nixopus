@@ -27,6 +27,7 @@ const (
 	EventBuildStatus      EventType = "build_status"
 	EventBuildLog         EventType = "build_log"
 	EventDeploymentStatus EventType = "deployment_status"
+	EventApprovalNeeded   EventType = "approval_needed"
 )
 
 // EventPayload is the interface for type-safe event data.
@@ -97,6 +98,16 @@ type DeploymentStatusPayload struct {
 
 func (DeploymentStatusPayload) eventPayload() {}
 
+// ApprovalNeededPayload carries the Dockerfile proposal for human approval.
+type ApprovalNeededPayload struct {
+	Dockerfile      string
+	Summary         string
+	ValidationScore int
+	Suggestions     []string
+}
+
+func (ApprovalNeededPayload) eventPayload() {}
+
 // Event is a deployment lifecycle event published by various components
 // (auth, sync engine, poller, watcher) and consumed by the AgentUI.
 type Event struct {
@@ -116,7 +127,8 @@ func (e Event) isPriority() bool {
 		e.Type == EventDeployed ||
 		e.Type == EventBuildFailed ||
 		e.Type == EventDeployFailed ||
-		e.Type == EventBuildSuccess {
+		e.Type == EventBuildSuccess ||
+		e.Type == EventApprovalNeeded {
 		return true
 	}
 	// Build status errors are priority so the CLI always shows them

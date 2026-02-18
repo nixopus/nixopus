@@ -682,7 +682,8 @@ func (e *Engine) drainReceiveChannel() {
 			if e.onServerMessage != nil {
 				switch msg.Type {
 				case MessageTypePipelineProgress, MessageTypeBuildStatus,
-					MessageTypeBuildLog, MessageTypeDeploymentStatus:
+					MessageTypeBuildLog, MessageTypeDeploymentStatus,
+					MessageTypeCodebaseIndexed:
 					e.onServerMessage(msg)
 				}
 			}
