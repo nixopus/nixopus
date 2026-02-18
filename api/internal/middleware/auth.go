@@ -93,6 +93,7 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 
 func isAuthEndpoint(path string) bool {
 	authPaths := []string{
+		"/api/v1/auth/bootstrap",
 		"/api/v1/auth/login",
 		"/api/v1/auth/2fa-login",
 		"/api/v1/auth/verify-2fa",
