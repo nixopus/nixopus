@@ -45,6 +45,11 @@ var (
 	// pattern of rapidly spawning tunnels during live dev sessions.
 	dockerServiceCache sync.Map // map[uuid.UUID]*cachedDockerService
 
+	// orgMutexes serializes GetDockerServiceForOrganization per org so concurrent callers
+	// (e.g. 100+ HandleFileWritten goroutines) don't race on cache check, invalidation,
+	// and creation—only one creation per org at a time.
+	orgMutexes sync.Map // map[string]*sync.Mutex
+
 	// cacheMaxAge is how long a cached Docker service is considered valid before
 	// a new one is created. Tunnels can go stale, so we expire them periodically.
 	cacheMaxAge = 5 * time.Minute
@@ -194,9 +199,16 @@ func NewDockerServiceWithClient(cli *client.Client, ctx context.Context, logger 
 	}
 }
 
+func getOrgMutex(orgID uuid.UUID) *sync.Mutex {
+	v, _ := orgMutexes.LoadOrStore(orgID.String(), &sync.Mutex{})
+	return v.(*sync.Mutex)
+}
+
 // GetDockerServiceForOrganization returns a DockerService for a specific organization.
 // Uses SSH tunneling exclusively - returns error if SSH tunnel cannot be established.
 // Connections are cached per organization to avoid creating a new SSH tunnel on every call.
+// A per-org mutex serializes all callers so concurrent HandleFileWritten goroutines
+// don't race on cache invalidation (avoiding multiple Close) and only one creation runs.
 func GetDockerServiceForOrganization(ctx context.Context, orgID uuid.UUID) (*DockerService, error) {
 	if config.GlobalStore == nil {
 		return nil, fmt.Errorf("global store not initialized, ensure config.Init() has been called")
@@ -206,36 +218,37 @@ func GetDockerServiceForOrganization(ctx context.Context, orgID uuid.UUID) (*Doc
 		return nil, fmt.Errorf("database not initialized")
 	}
 
-	// Check cache first
+	mu := getOrgMutex(orgID)
+	mu.Lock()
+	defer mu.Unlock()
+
+	// Check cache (fast path when valid)
 	if cached, ok := dockerServiceCache.Load(orgID); ok {
 		entry := cached.(*cachedDockerService)
-		// Validate the cached connection is still usable and not too old
 		if time.Since(entry.createdAt) < cacheMaxAge && entry.service != nil && entry.service.Cli != nil {
-			// Quick health check: ping the Docker daemon
 			if _, err := entry.service.Cli.Ping(ctx); err == nil {
 				return entry.service, nil
 			}
-			// Ping failed — stale connection, clean up and create a new one
-			entry.service.Close()
-			dockerServiceCache.Delete(orgID)
-		} else if entry.service != nil {
-			// Expired, clean up
-			entry.service.Close()
-			dockerServiceCache.Delete(orgID)
+		}
+		// Invalid or expired: atomically remove and close (only we can do this while holding lock)
+		if old, ok := dockerServiceCache.LoadAndDelete(orgID); ok {
+			oldEntry := old.(*cachedDockerService)
+			if oldEntry.service != nil {
+				_ = oldEntry.service.Close()
+			}
 		}
 	}
 
+	// Cache miss: create (we hold the lock, so only one creation per org at a time)
 	svc := NewDockerServiceWithServer(config.GlobalStore.DB, ctx, orgID)
 	if svc == nil {
 		return nil, fmt.Errorf("failed to create Docker service via SSH tunnel for organization %s", orgID.String())
 	}
 
-	// Store in cache
 	dockerServiceCache.Store(orgID, &cachedDockerService{
 		service:   svc,
 		createdAt: time.Now(),
 	})
-
 	return svc, nil
 }
 

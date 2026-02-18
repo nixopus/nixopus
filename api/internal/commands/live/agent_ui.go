@@ -3,52 +3,22 @@ package live
 import (
 	"context"
 	"fmt"
-	"strings"
-	"sync"
-	"sync/atomic"
 )
 
-// AgentUI is the main orchestrator that replaces Bubble Tea.
-// It listens on an EventBus and routes events to either
-// the writer (direct status output) or the agent (intelligent responses).
+// AgentUI is the main orchestrator. It listens on an EventBus and routes events to the writer.
 type AgentUI struct {
-	ctx      context.Context
-	writer   *Writer
-	streamer *Streamer
-	input    *InputReader
-	bus      *EventBus
-
-	// agentClient communicates with the remote Mastra deploy agent.
-	// When nil, agent events fall back to direct output.
-	agentClient *AgentClient
-
-	// agentResp receives streamed text chunks from background agent calls.
-	agentResp chan string
-
-	// agentBusy is true while an agent call is in-flight.
-	agentBusy atomic.Bool
-
-	// agentQueue holds events that arrived while an agent call was in-flight.
-	agentQueueMu sync.Mutex
-	agentQueue   []Event
+	ctx    context.Context
+	writer *Writer
+	bus    *EventBus
 }
 
 // NewAgentUI creates the agent UI wired to the given event bus.
-// The agent client can be set later via SetAgentClient once auth is available.
 func NewAgentUI(bus *EventBus, term *Terminal) *AgentUI {
 	w := NewWriter(term)
 	return &AgentUI{
-		writer:    w,
-		streamer:  NewStreamer(w),
-		input:     NewInputReader(term.IsTTY()),
-		bus:       bus,
-		agentResp: make(chan string, 64),
+		writer: w,
+		bus:    bus,
 	}
-}
-
-// SetAgentClient sets the agent HTTP client. Safe to call while Run is active.
-func (a *AgentUI) SetAgentClient(client *AgentClient) {
-	a.agentClient = client
 }
 
 // Run is the main loop. It processes events until ctx is cancelled.
@@ -56,7 +26,6 @@ func (a *AgentUI) SetAgentClient(client *AgentClient) {
 // they are never starved by a flood of normal events.
 func (a *AgentUI) Run(ctx context.Context) error {
 	a.ctx = ctx
-	a.input.Start(ctx)
 
 	for {
 		// First, drain any priority events without blocking.
@@ -82,25 +51,16 @@ func (a *AgentUI) Run(ctx context.Context) error {
 				return nil
 			}
 			a.routeEvent(ev)
-		case chunk, ok := <-a.agentResp:
-			if ok {
-				a.streamer.WriteChunk(chunk)
-			}
-		case text, ok := <-a.input.Chan():
-			if !ok {
-				continue
-			}
-			a.handleUserInput(text)
 		case <-ctx.Done():
 			return nil
 		}
 	}
 }
 
-// routeEvent dispatches an event to either the agent or direct output.
+// routeEvent dispatches an event to direct output.
 func (a *AgentUI) routeEvent(ev Event) {
 	if ev.NeedsLLM {
-		a.dispatchToAgent(ev)
+		a.handleAgentEventFallback(ev)
 	} else {
 		a.handleDirectEvent(ev)
 	}
@@ -125,9 +85,9 @@ func (a *AgentUI) handleDirectEvent(ev Event) {
 		a.writer.FinishProgress(ev.Message)
 	case EventPipelineProgress:
 		if p, ok := ev.Payload.(PipelineProgressPayload); ok {
-			a.writer.Progress(fmt.Sprintf("[%s] %s", p.StageId, p.Message))
+			a.writer.Detail(fmt.Sprintf("[%s] %s", p.StageId, p.Message))
 		} else if ev.Message != "" {
-			a.writer.Progress(ev.Message)
+			a.writer.Detail(ev.Message)
 		}
 	case EventBuildStatus:
 		if p, ok := ev.Payload.(BuildStatusPayload); ok {
@@ -174,6 +134,11 @@ func (a *AgentUI) handleDirectEvent(ev Event) {
 		a.writer.FinishProgress(ev.Message)
 	case EventInfo:
 		a.writer.Detail(ev.Message)
+	case EventApprovalNeeded:
+		if p, ok := ev.Payload.(ApprovalNeededPayload); ok {
+			a.writer.FinishProgress("") // Clear any in-place progress before showing proposal
+			a.writer.ApprovalProposal(p.Summary, p.ValidationScore, p.Suggestions, p.Dockerfile)
+		}
 	case EventError:
 		a.writer.Error(ev.Message)
 	default:
@@ -183,149 +148,7 @@ func (a *AgentUI) handleDirectEvent(ev Event) {
 	}
 }
 
-// dispatchToAgent sends an event to the agent in a background goroutine.
-// If an agent call is already in-flight, the event is queued and processed
-// when the current call finishes. This prevents blocking the UI loop.
-func (a *AgentUI) dispatchToAgent(ev Event) {
-	if a.agentBusy.Load() {
-		a.agentQueueMu.Lock()
-		a.agentQueue = append(a.agentQueue, ev)
-		a.agentQueueMu.Unlock()
-		return
-	}
-
-	a.agentBusy.Store(true)
-	go func() {
-		defer func() {
-			a.agentBusy.Store(false)
-			a.drainAgentQueue()
-		}()
-		a.handleAgentEvent(ev)
-	}()
-}
-
-// drainAgentQueue processes any events that were queued while an agent call was in-flight.
-func (a *AgentUI) drainAgentQueue() {
-	for {
-		a.agentQueueMu.Lock()
-		if len(a.agentQueue) == 0 {
-			a.agentQueueMu.Unlock()
-			return
-		}
-		ev := a.agentQueue[0]
-		a.agentQueue = a.agentQueue[1:]
-		a.agentQueueMu.Unlock()
-
-		a.agentBusy.Store(true)
-		a.handleAgentEvent(ev)
-		a.agentBusy.Store(false)
-	}
-}
-
-// handleAgentEvent sends event context to the deploy agent and streams the response.
-// Falls back to direct output when the agent client is nil or the call fails.
-func (a *AgentUI) handleAgentEvent(ev Event) {
-	if a.agentClient == nil {
-		a.handleAgentEventFallback(ev)
-		return
-	}
-
-	// Build the message for the agent based on event type
-	msg := a.buildAgentMessage(ev)
-	if msg == "" {
-		a.handleAgentEventFallback(ev)
-		return
-	}
-
-	messages := []AgentMessage{{Role: "user", Content: msg}}
-	ch, err := a.agentClient.Stream(a.ctx, messages)
-	if err != nil {
-		a.writer.Warning(fmt.Sprintf("Agent unavailable: %v", err))
-		a.handleAgentEventFallback(ev)
-		return
-	}
-
-	// Stream response chunks to the UI
-	gotOutput := false
-	for chunk := range ch {
-		if strings.HasPrefix(chunk, "[error]") {
-			a.writer.Error(strings.TrimPrefix(chunk, "[error] "))
-			gotOutput = true
-			break
-		}
-		if !gotOutput {
-			a.writer.Blank()
-			gotOutput = true
-		}
-		a.agentResp <- chunk
-	}
-	a.streamer.Flush()
-	if gotOutput {
-		a.writer.Blank()
-	}
-}
-
-// buildAgentMessage constructs a prompt for the agent based on the event.
-func (a *AgentUI) buildAgentMessage(ev Event) string {
-	switch ev.Type {
-	case EventAuth:
-		return fmt.Sprintf("[system event: auth] %s", ev.Message)
-	case EventConfig:
-		return fmt.Sprintf("[system event: config] %s", ev.Message)
-	case EventEnvCheck:
-		msg := fmt.Sprintf("[system event: env_check] %s", ev.Message)
-		if p, ok := ev.Payload.(EnvCheckPayload); ok {
-			if len(p.Missing) > 0 {
-				msg += fmt.Sprintf("\nMissing env vars: %s", strings.Join(p.Missing, ", "))
-			}
-			if len(p.Found) > 0 {
-				msg += fmt.Sprintf("\nFound env vars: %s", strings.Join(p.Found, ", "))
-			}
-		}
-		return msg
-	case EventFileDetected:
-		return fmt.Sprintf("[system event: file_detected] %s", ev.Message)
-	case EventBuildFailed:
-		msg := "[system event: build_failed]"
-		if ev.Message != "" {
-			msg += " " + ev.Message
-		}
-		if p, ok := ev.Payload.(BuildFailedPayload); ok {
-			if p.Error != "" {
-				msg += "\nError: " + p.Error
-			}
-			if len(p.Logs) > 0 {
-				// Send last 30 log lines to keep context window manageable
-				start := 0
-				if len(p.Logs) > 30 {
-					start = len(p.Logs) - 30
-				}
-				msg += "\nBuild logs (last lines):\n" + strings.Join(p.Logs[start:], "\n")
-			}
-		}
-		return msg
-	case EventBuildSuccess:
-		return "[system event: build_success] Build completed successfully."
-	case EventBuildStatus:
-		if p, ok := ev.Payload.(BuildStatusPayload); ok && p.Phase == "error" {
-			msg := fmt.Sprintf("[system event: build_error] %s", p.Message)
-			if p.Error != "" {
-				msg += "\nError details: " + p.Error
-			}
-			return msg
-		}
-		return ""
-	case EventDeployFailed:
-		return fmt.Sprintf("[system event: deploy_failed] %s", ev.Message)
-	default:
-		if ev.Message != "" {
-			return fmt.Sprintf("[system event: %s] %s", ev.Type, ev.Message)
-		}
-		return ""
-	}
-}
-
-// handleAgentEventFallback displays events directly when the agent is unavailable.
+// handleAgentEventFallback displays events directly.
 func (a *AgentUI) handleAgentEventFallback(ev Event) {
 	switch ev.Type {
 	case EventAuth:
@@ -370,25 +193,4 @@ func (a *AgentUI) handleAgentEventFallback(ev Event) {
 	default:
 		a.handleDirectEvent(ev)
 	}
-}
-
-// handleUserInput processes text typed by the user.
-// When an agent client is available, sends the question to the agent.
-func (a *AgentUI) handleUserInput(text string) {
-	if text == "" {
-		return
-	}
-	a.writer.UserInput(text)
-
-	if a.agentClient == nil {
-		a.writer.Detail("(Agent not connected)")
-		return
-	}
-
-	// Send to agent in background via dispatch
-	a.dispatchToAgent(Event{
-		Type:     EventInfo,
-		Message:  text,
-		NeedsLLM: true,
-	})
 }
