@@ -316,7 +316,7 @@ func (bfm *BuildFirstManager) emitBuildStatus(appID uuid.UUID, phase, message, e
 }
 
 // MarkDeployed is called when a live dev build completes and the container is healthy.
-// Enables file injection instead of full rebuilds. Used by TaskService.OnLiveDevDeployed callback.
+// Enables file injection instead of full rebuilds.
 func (bfm *BuildFirstManager) MarkDeployed(appID uuid.UUID, workdir string) {
 	if workdir == "" {
 		workdir = "/app"

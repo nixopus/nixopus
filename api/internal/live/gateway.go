@@ -88,6 +88,10 @@ type Gateway struct {
 	// activeConns tracks the WebSocket connection per application for sending pipeline progress
 	activeConnsMu sync.RWMutex
 	activeConns   map[uuid.UUID]*activeConn
+
+	// pendingCompletions tracks in-flight file writes per app; build must wait for 0 before starting
+	pendingCompletions   map[string]*atomic.Int64
+	pendingCompletionsMu sync.RWMutex
 }
 
 type activeConn struct {
@@ -98,12 +102,13 @@ type activeConn struct {
 func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, store *shared_storage.Store) *Gateway {
 	logger := logger.NewLogger()
 	gateway := &Gateway{
-		stagingManager:  stagingManager,
-		store:           store,
-		logger:          logger,
-		completionJobs:  make(chan *fileCompletionJob, completionJobBuffer),
-		sessionEnvStore: make(map[string]map[string]string),
-		activeConns:     make(map[uuid.UUID]*activeConn),
+		stagingManager:     stagingManager,
+		store:              store,
+		logger:             logger,
+		completionJobs:     make(chan *fileCompletionJob, completionJobBuffer),
+		sessionEnvStore:    make(map[string]map[string]string),
+		activeConns:        make(map[uuid.UUID]*activeConn),
+		pendingCompletions: make(map[string]*atomic.Int64),
 	}
 	gateway.buildFirstManager = NewBuildFirstManager(stagingManager, taskService, logger, func(appID uuid.UUID) map[string]string {
 		return gateway.GetSessionEnv(appID)
@@ -148,6 +153,48 @@ func (g *Gateway) unregisterConn(appID uuid.UUID) {
 	g.activeConnsMu.Lock()
 	delete(g.activeConns, appID)
 	g.activeConnsMu.Unlock()
+}
+
+// getOrCreatePendingCounter returns the atomic counter for an app, creating it if needed.
+func (g *Gateway) getOrCreatePendingCounter(appID uuid.UUID) *atomic.Int64 {
+	key := appID.String()
+	g.pendingCompletionsMu.Lock()
+	defer g.pendingCompletionsMu.Unlock()
+	if c, ok := g.pendingCompletions[key]; ok {
+		return c
+	}
+	c := &atomic.Int64{}
+	g.pendingCompletions[key] = c
+	return c
+}
+
+// incPendingCompletion increments the in-flight file count for an app (call when queuing a job).
+func (g *Gateway) incPendingCompletion(appID uuid.UUID) {
+	g.getOrCreatePendingCounter(appID).Add(1)
+}
+
+// decPendingCompletion decrements the in-flight file count (call when a completion job finishes).
+func (g *Gateway) decPendingCompletion(appID uuid.UUID) {
+	g.getOrCreatePendingCounter(appID).Add(-1)
+}
+
+// waitForPendingCompletions blocks until the app has no pending file writes or timeout expires.
+func (g *Gateway) waitForPendingCompletions(appID uuid.UUID, timeout time.Duration) {
+	deadline := time.Now().Add(timeout)
+	tick := 10 * time.Millisecond
+	for time.Now().Before(deadline) {
+		g.pendingCompletionsMu.RLock()
+		c, ok := g.pendingCompletions[appID.String()]
+		g.pendingCompletionsMu.RUnlock()
+		if !ok || c.Load() <= 0 {
+			return
+		}
+		time.Sleep(tick)
+		if tick < 100*time.Millisecond {
+			tick = 50 * time.Millisecond
+		}
+	}
+	g.logger.Log(logger.Warning, "timeout waiting for pending file completions before build", appID.String())
 }
 
 // sendPipelineProgress sends a pipeline_progress message to the WebSocket client for the given app.
@@ -197,8 +244,13 @@ func (g *Gateway) sendBuildStatus(appID uuid.UUID, phase, message, errMsg string
 	}
 }
 
+// SendBuildLog streams a build log line to the WebSocket client for the given app.
+func (g *Gateway) SendBuildLog(appID uuid.UUID, logLine string) {
+	timestamp := time.Now().Format("2006-01-02T15:04:05.000Z07:00")
+	g.sendBuildLog(appID, logLine, timestamp)
+}
+
 // sendBuildLog sends a build log line to the WebSocket client for the given app.
-// Called when a live_dev_logs notification arrives from PostgreSQL.
 func (g *Gateway) sendBuildLog(appID uuid.UUID, log string, timestamp string) {
 	g.activeConnsMu.RLock()
 	ac := g.activeConns[appID]
@@ -332,6 +384,7 @@ func (g *Gateway) runFileCompletionWorker() {
 	for job := range g.completionJobs {
 		ctx := context.WithValue(context.Background(), shared_types.OrganizationIDKey, job.appCtx.OrganizationID.String())
 		g.completeFileSync(ctx, job, job.conn, job.path)
+		g.decPendingCompletion(job.applicationID)
 		putJob(job)
 	}
 }
@@ -480,9 +533,9 @@ func (g *Gateway) validateFilePath(filePath string, basePath string) error {
 }
 
 func (g *Gateway) handleSyncComplete(ctx context.Context, appCtx *ApplicationContext) error {
-	// Client signals all files have been synced; trigger build immediately (no debounce).
-	g.buildFirstManager.HandleSyncComplete(ctx, appCtx)
 	g.logger.Log(logger.Info, "sync_complete received", appCtx.ApplicationID.String())
+	g.waitForPendingCompletions(appCtx.ApplicationID, 60*time.Second)
+	g.buildFirstManager.HandleSyncComplete(ctx, appCtx)
 	return nil
 }
 
@@ -585,6 +638,7 @@ func (g *Gateway) handleFileContent(ctx context.Context, conn *websocket.Conn, a
 
 	select {
 	case g.completionJobs <- job:
+		g.incPendingCompletion(appCtx.ApplicationID)
 		// Queued - worker will handle it and putJob
 	default:
 		// Queue full - fall back to parallel sync to avoid dropping
