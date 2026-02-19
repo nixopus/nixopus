@@ -3,8 +3,8 @@ metadata:
   name: "n8n"
   description: "n8n is a workflow automation tool that lets you connect applications and automate tasks easily."
   author: "Nixopus Team"
-  icon: "https://n8n.io/brandguidelines/logo-dark.svg"
-  category: "Development"
+  icon: "🔄"
+  category: "Containers"
   type: "install"
   version: "1.0.0"
   isVerified: false

@@ -1,0 +1,142 @@
+metadata:
+  id: "deploy-manyfold"
+  name: "Manyfold"
+  description: "Manyfold is an open source, self-hosted web application for managing a collection of 3D models, particularly focused on 3D printing. Uses manyfold image from linuxserver.io. Requires a separate Redis/Valkey instance. Sqlite is supported but we recommend an external Postgres or MariaDB database for better performance."
+  author: "Nixopus Team"
+  icon: "📦"
+  category: "Media"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Manyfold"
+    default: "lscr.io/linuxserver/manyfold"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Manyfold container"
+    default: "manyfold"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port for Manyfold web frontend"
+    default: 3214
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Manyfold web frontend"
+    default: 3214
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Manyfold persistent configuration data"
+    default: "manyfold-config"
+    is_required: true
+
+  libraries_volume_name:
+    type: "string"
+    description: "Named Docker volume for 3D model libraries (optional, you can mount multiple paths as needed)"
+    default: ""
+    is_required: false
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  database_url:
+    type: "string"
+    description: "Database connection URL. For sqlite: sqlite3:/config/manyfold.sqlite3. For postgres/mariadb: <scheme>://<username>:<password>@<hostname>:<port>/<db name> (scheme: postgresql or mysql2, special chars must be URL encoded)"
+    default: ""
+    is_required: true
+
+  redis_url:
+    type: "string"
+    description: "Redis/Valkey database URL in redis://<hostname>:<port>/<db number> format"
+    default: ""
+    is_required: true
+
+  secret_key_base:
+    type: "string"
+    description: "Browser session and database encryption key (optional, if unset a random one will be generated on init, but database is locked to this key)"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Manyfold web frontend (optional, recommended for internet access)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing Manyfold container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull Manyfold image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Manyfold container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+          - "{{ libraries_volume_name }}:/libraries"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          DATABASE_URL: "{{ database_url }}"
+          REDIS_URL: "{{ redis_url }}"
+          SECRET_KEY_BASE: "{{ secret_key_base }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+    - name: "Add proxy for Manyfold web frontend"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
+

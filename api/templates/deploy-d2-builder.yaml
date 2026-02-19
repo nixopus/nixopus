@@ -1,0 +1,86 @@
+metadata:
+  id: "deploy-d2-builder"
+  name: "D2 Builder"
+  description: "D2 Builder is an internal LinuxServer.io CI tool for generating SVG files. It expects to run as part of the LSIO CI process and is not intended for public consumption. Uses d2-builder image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "🔧"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for D2 Builder"
+    default: "lscr.io/linuxserver/d2-builder"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the D2 Builder container"
+    default: "d2-builder"
+    is_required: true
+
+  output_volume_name:
+    type: "string"
+    description: "Named Docker volume or host path for output directory where generated SVG files will be created"
+    default: "d2-builder-output"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  build_target:
+    type: "string"
+    description: "Build target (e.g., mastodon:latest)"
+    default: ""
+    is_required: true
+
+execution:
+  run:
+    - name: "Remove existing D2 Builder container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull D2 Builder image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run D2 Builder container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        volumes:
+          - "{{ output_volume_name }}:/output"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+        restart: "no"
+      timeout: 600
+

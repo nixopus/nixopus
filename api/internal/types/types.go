@@ -1,10 +1,5 @@
 package types
 
-import (
-	"log"
-	"os"
-)
-
 type Config struct {
 	Server     ServerConfig     `mapstructure:"server"`
 	Database   DatabaseConfig   `mapstructure:"database"`
@@ -16,17 +11,6 @@ type Config struct {
 	BetterAuth BetterAuthConfig `mapstructure:"betterauth"`
 	Stripe     StripeConfig     `mapstructure:"stripe"`
 	Agent      AgentConfig      `mapstructure:"agent"`
-	Trail      TrailConfig      `mapstructure:"trail"`
-	S3         S3Config         `mapstructure:"s3"`
-}
-
-type S3Config struct {
-	Endpoint  string `mapstructure:"endpoint"`
-	Bucket    string `mapstructure:"bucket"`
-	Region    string `mapstructure:"region"`
-	AccessKey string `mapstructure:"access_key"`
-	SecretKey string `mapstructure:"secret_key"`
-	UseSSL    bool   `mapstructure:"use_ssl"`
 }
 
 type AgentConfig struct {
@@ -99,14 +83,6 @@ type StripeConfig struct {
 	FreeDeploymentsLimit int    `mapstructure:"free_deployments_limit"`
 }
 
-// TrailConfig holds configuration for trail provisioning.
-type TrailConfig struct {
-	MaxConcurrentTrails int      `mapstructure:"max_concurrent_trails"`
-	DefaultImage        string   `mapstructure:"default_image"`
-	AllowedImages       []string `mapstructure:"allowed_images"`
-	TrailDomain         string   `mapstructure:"trail_domain"`
-}
-
 type ClientContext string
 type contextKey string
 
@@ -135,18 +111,7 @@ type Payload struct {
 	Topic  string           `json:"topic"`
 }
 
-var JWTSecretKey []byte
-
-const defaultJWTSecret = "a3f1b9c7e2d4a6f8b0c1d3e5f7a9b2c4d6e8f0a1b3c5d7e9f0a2b4c6d8e0f1"
-
-func InitJWTSecret() {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" || len(secret) < 32 {
-		log.Println("WARNING: JWT_SECRET is not set or too short, falling back to default secret.")
-		secret = defaultJWTSecret
-	}
-	JWTSecretKey = []byte(secret)
-}
+var JWTSecretKey = []byte("secret-key")
 
 type ValidationError struct {
 	Field   string `json:"field"`

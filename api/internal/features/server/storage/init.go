@@ -54,12 +54,11 @@ func (s *ServerStorage) ListServersByOrganizationID(orgID uuid.UUID, params type
 		})
 	}
 
-	// If status filter is provided, filter by user.provision_status
+	// If status filter is provided, only return SSH keys that have provision details with that status
 	if params.Status != "" {
 		query = query.Join("INNER JOIN user_provision_details AS upd ON sk.id = upd.ssh_key_id").
-			Join("INNER JOIN \"user\" AS u ON upd.user_id = u.id").
 			Where("upd.organization_id = ?", orgID).
-			Where("u.provision_status = ?", params.Status)
+			Where("upd.status = ?", params.Status)
 	}
 
 	// Build count query for total count
@@ -81,12 +80,11 @@ func (s *ServerStorage) ListServersByOrganizationID(orgID uuid.UUID, params type
 		})
 	}
 
-	// If status filter is provided, filter count by user.provision_status
+	// If status filter is provided, only count SSH keys that have provision details with that status
 	if params.Status != "" {
 		countQuery = countQuery.Join("INNER JOIN user_provision_details AS upd ON sk.id = upd.ssh_key_id").
-			Join("INNER JOIN \"user\" AS u ON upd.user_id = u.id").
 			Where("upd.organization_id = ?", orgID).
-			Where("u.provision_status = ?", params.Status)
+			Where("upd.status = ?", params.Status)
 	}
 
 	// Get total count
@@ -148,8 +146,10 @@ func (s *ServerStorage) ListServersByOrganizationID(orgID uuid.UUID, params type
 		Where("ssh_key_id IN (?)", bun.In(sshKeyIDs)).
 		Where("organization_id = ?", orgID)
 
-	// Note: Status filter is now applied via user.provision_status join above
-	// No need to filter provision details by status here
+	// Apply status filter if provided
+	if params.Status != "" {
+		provisionQuery = provisionQuery.Where("status = ?", params.Status)
+	}
 
 	err = provisionQuery.Scan(s.Ctx)
 	if err != nil {

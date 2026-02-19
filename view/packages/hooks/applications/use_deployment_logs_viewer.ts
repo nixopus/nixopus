@@ -63,26 +63,23 @@ export function useDeploymentLogsViewer({
   const {
     data: deploymentLogs,
     isLoading: isLoadingDeployment,
-    isFetching: isFetchingDeployment,
     refetch: refetchDeploymentLogs
   } = useGetDeploymentLogsQuery(
     { id, page: currentPage, page_size: pageSize, search_term: searchTerm },
-    { skip: !isDeployment || !id, refetchOnMountOrArgChange: true }
+    { skip: !isDeployment || !id }
   );
 
   const {
     data: applicationLogs,
     isLoading: isLoadingApplication,
-    isFetching: isFetchingApplication,
     refetch: refetchApplicationLogs
   } = useGetApplicationLogsQuery(
     { id, page: currentPage, page_size: pageSize, search_term: searchTerm },
-    { skip: isDeployment || !id, refetchOnMountOrArgChange: true }
+    { skip: isDeployment || !id }
   );
 
   const logsResponse = isDeployment ? deploymentLogs : applicationLogs;
   const isLoading = isDeployment ? isLoadingDeployment : isLoadingApplication;
-  const isFetching = isDeployment ? isFetchingDeployment : isFetchingApplication;
 
   useEffect(() => {
     if (!message) return;
@@ -90,7 +87,7 @@ export function useDeploymentLogsViewer({
   }, [message, isDeployment, id]);
 
   useEffect(() => {
-    if (logsResponse && Array.isArray(logsResponse.logs)) {
+    if (logsResponse?.logs) {
       syncLogsFromResponse(logsResponse.logs, currentPage, setAllLogs);
     }
   }, [logsResponse, currentPage]);
@@ -128,30 +125,17 @@ export function useDeploymentLogsViewer({
 
   const refreshLogs = useCallback(async () => {
     setAllLogs([]);
-    if (currentPage === 1) {
-      // Already on page 1: manual refetch needed (setCurrentPage won't trigger a new request)
-      // Set logs directly from refetch result - useEffect may not run due to RTK Query structural sharing
-      if (isDeployment) {
-        const result = await refetchDeploymentLogs();
-        if (result?.data?.logs) {
-          setAllLogs(result.data.logs);
-        }
-      } else {
-        const result = await refetchApplicationLogs();
-        if (result?.data?.logs) {
-          setAllLogs(result.data.logs);
-        }
-      }
+    setCurrentPage(1);
+    if (isDeployment) {
+      await refetchDeploymentLogs();
     } else {
-      // On another page: setCurrentPage(1) triggers RTK Query to fetch page 1 automatically
-      setCurrentPage(1);
+      await refetchApplicationLogs();
     }
-  }, [currentPage, isDeployment, refetchDeploymentLogs, refetchApplicationLogs]);
+  }, [isDeployment, refetchDeploymentLogs, refetchApplicationLogs]);
 
   return {
     logs: formattedLogs,
     isLoading,
-    isFetching,
     expandedLogIds,
     toggleLogExpansion,
     isLogExpanded,
@@ -161,11 +145,8 @@ export function useDeploymentLogsViewer({
     setSearchTerm,
     currentPage,
     setCurrentPage,
-    totalPages:
-      logsResponse?.page_size && logsResponse?.total_count != null
-        ? Math.ceil(logsResponse.total_count / logsResponse.page_size) || 1
-        : 1,
-    totalCount: logsResponse?.total_count ?? 0,
+    totalPages: logsResponse?.total_pages || 1,
+    totalCount: logsResponse?.total_count || 0,
     filters,
     setFilters,
     clearFilters,

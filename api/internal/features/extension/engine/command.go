@@ -20,13 +20,7 @@ func (commandModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types
 	revertRaw, _ := step.Properties["revert_cmd"].(string)
 	user, _ := step.Properties["user"].(string)
 
-	if user != "" {
-		if err := validateShellArgs(map[string]string{"user": user}); err != nil {
-			return "", nil, fmt.Errorf("command: %w", err)
-		}
-	}
-
-	cmd := replaceVarsSafe(raw, vars)
+	cmd := replaceVars(raw, vars)
 	if user != "" {
 		cmd = fmt.Sprintf("sudo -u %s %s", user, cmd)
 	}
@@ -40,7 +34,7 @@ func (commandModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types
 
 	var compensate func()
 	if revertRaw != "" {
-		rev := replaceVarsSafe(revertRaw, vars)
+		rev := replaceVars(revertRaw, vars)
 		if user != "" {
 			rev = fmt.Sprintf("sudo -u %s %s", user, rev)
 		}

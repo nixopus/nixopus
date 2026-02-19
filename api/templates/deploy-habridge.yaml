@@ -1,0 +1,133 @@
+metadata:
+  id: "deploy-habridge"
+  name: "HA-Bridge"
+  description: "HA-Bridge emulates Philips Hue API to other home automation gateways such as an Amazon Echo/Dot Gen 1 or other systems that support Philips Hue. The Bridge handles basic commands such as On, Off and brightness commands of the hue protocol. This bridge can control most devices that have a distinct API. Uses habridge image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "🏠"
+  category: "Network"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for HA-Bridge"
+    default: "lscr.io/linuxserver/habridge"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the HA-Bridge container"
+    default: "habridge"
+    is_required: true
+
+  webui_host_port:
+    type: "integer"
+    description: "Host port for HA-Bridge web UI"
+    default: 8080
+    is_required: true
+
+  webui_container_port:
+    type: "integer"
+    description: "Container port for HA-Bridge web UI"
+    default: 8080
+    is_required: true
+
+  communication_host_port:
+    type: "integer"
+    description: "Host port for HA-Bridge communication port"
+    default: 50000
+    is_required: true
+
+  communication_container_port:
+    type: "integer"
+    description: "Container port for HA-Bridge communication"
+    default: 50000
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for HA-Bridge configuration files and data"
+    default: "habridge-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  sec_key:
+    type: "string"
+    description: "Key used to secure communication (optional)"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for HA-Bridge web UI (optional, recommended for internet access)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing HA-Bridge container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull HA-Bridge image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run HA-Bridge container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ webui_host_port }}:{{ webui_container_port }},{{ communication_host_port }}:{{ communication_container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          SEC_KEY: "{{ sec_key }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+    - name: "Add proxy for HA-Bridge web UI"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ webui_host_port }}"
+      timeout: 30
+

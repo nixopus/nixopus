@@ -34,5 +34,4 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 	fuego.Put(applicationGroup, "/labels", deployController.UpdateApplicationLabels)
 	fuego.Post(applicationGroup, "/domains", deployController.AddApplicationDomain)
 	fuego.Delete(applicationGroup, "/domains", deployController.RemoveApplicationDomain)
-	fuego.Post(applicationGroup, "/recover", deployController.HandleRecover)
 }

@@ -52,8 +52,6 @@ type ApplicationDeployment struct {
 	ContainerName   string                       `json:"container_name" bun:"container_name"`
 	ContainerImage  string                       `json:"container_image" bun:"container_image"`
 	ContainerStatus string                       `json:"container_status" bun:"container_status"`
-	ImageS3Key      string                       `json:"image_s3_key" bun:"image_s3_key,default:''"`
-	ImageSize       int64                        `json:"image_size" bun:"image_size,default:0"`
 }
 
 type ApplicationStatus struct {

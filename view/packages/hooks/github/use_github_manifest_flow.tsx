@@ -53,21 +53,6 @@ const generateState = (): string => {
     .reduce((acc, val) => acc + val.toString(16).padStart(2, '0'), '');
 };
 
-const attemptConversion = async (code: string): Promise<GitHubAppCredentials> => {
-  const response = await fetch(`https://api.github.com/app-manifests/${code}/conversions`, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/vnd.github.v3+json'
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to convert manifest');
-  }
-
-  return await response.json();
-};
-
 export function useGithubManifestFlow({
   organization,
   appUrl = process.env.NEXT_PUBLIC_APP_URL,
@@ -136,20 +121,19 @@ export function useGithubManifestFlow({
   const handleGitHubCallback = useCallback(
     async (code: string, stateParam: string | null): Promise<void> => {
       setStatus('converting');
-      setError(null); // Clear any previous errors
-
       try {
-        // Wait 5 seconds before first attempt
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        const response = await fetch(`https://api.github.com/app-manifests/${code}/conversions`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/vnd.github.v3+json'
+          }
+        });
 
-        let credentials: GitHubAppCredentials;
-        try {
-          credentials = await attemptConversion(code);
-        } catch (firstError) {
-          // Retry once after another 5 second wait
-          await new Promise((resolve) => setTimeout(resolve, 5000));
-          credentials = await attemptConversion(code);
+        if (!response.ok) {
+          throw new Error('Failed to convert manifest');
         }
+
+        const credentials: GitHubAppCredentials = await response.json();
 
         await createGithubConnector({
           app_id: credentials.id.toString(),

@@ -144,13 +144,6 @@
 									"type": "string"
 								},
 								"id": {},
-								"image_s3_key": {
-									"type": "string"
-								},
-								"image_size": {
-									"format": "int64",
-									"type": "integer"
-								},
 								"logs": {
 									"items": {
 										"nullable": true,
@@ -464,10 +457,6 @@
 								},
 								"type": "array"
 							},
-							"provision_status": {
-								"nullable": true,
-								"type": "string"
-							},
 							"supertokens_user_id": {
 								"type": "string"
 							},
@@ -534,13 +523,6 @@
 											"type": "string"
 										},
 										"id": {},
-										"image_s3_key": {
-											"type": "string"
-										},
-										"image_size": {
-											"format": "int64",
-											"type": "integer"
-										},
 										"logs": {
 											"items": {
 												"nullable": true,
@@ -854,10 +836,6 @@
 										},
 										"type": "array"
 									},
-									"provision_status": {
-										"nullable": true,
-										"type": "string"
-									},
 									"supertokens_user_id": {
 										"type": "string"
 									},
@@ -896,13 +874,6 @@
 						"type": "string"
 					},
 					"id": {},
-					"image_s3_key": {
-						"type": "string"
-					},
-					"image_size": {
-						"format": "int64",
-						"type": "integer"
-					},
 					"logs": {
 						"items": {
 							"nullable": true,
@@ -1011,13 +982,6 @@
 											"type": "string"
 										},
 										"id": {},
-										"image_s3_key": {
-											"type": "string"
-										},
-										"image_size": {
-											"format": "int64",
-											"type": "integer"
-										},
 										"logs": {
 											"items": {
 												"nullable": true,
@@ -1335,10 +1299,6 @@
 										},
 										"type": "array"
 									},
-									"provision_status": {
-										"nullable": true,
-										"type": "string"
-									},
 									"supertokens_user_id": {
 										"type": "string"
 									},
@@ -1361,64 +1321,6 @@
 					},
 					"status": {
 						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"BootstrapResponse": {
-				"description": "BootstrapResponse schema",
-				"properties": {
-					"activeOrganizationId": {
-						"nullable": true,
-						"type": "string"
-					},
-					"hasServers": {
-						"type": "boolean"
-					},
-					"organizations": {
-						"items": {
-							"properties": {
-								"id": {
-									"type": "string"
-								},
-								"name": {
-									"type": "string"
-								},
-								"role": {
-									"type": "string"
-								}
-							},
-							"type": "object"
-						},
-						"type": "array"
-					},
-					"provisionId": {
-						"nullable": true,
-						"type": "string"
-					},
-					"provisionStep": {
-						"nullable": true,
-						"type": "string"
-					},
-					"user": {
-						"properties": {
-							"email": {
-								"type": "string"
-							},
-							"id": {
-								"type": "string"
-							},
-							"isOnboarded": {
-								"type": "boolean"
-							},
-							"name": {
-								"type": "string"
-							},
-							"provisionStatus": {
-								"type": "string"
-							}
-						},
-						"type": "object"
 					}
 				},
 				"type": "object"
@@ -1967,13 +1869,6 @@
 													"type": "string"
 												},
 												"id": {},
-												"image_s3_key": {
-													"type": "string"
-												},
-												"image_size": {
-													"format": "int64",
-													"type": "integer"
-												},
 												"logs": {
 													"items": {
 														"nullable": true,
@@ -2287,10 +2182,6 @@
 												},
 												"type": "array"
 											},
-											"provision_status": {
-												"nullable": true,
-												"type": "string"
-											},
 											"supertokens_user_id": {
 												"type": "string"
 											},
@@ -2329,13 +2220,6 @@
 								"type": "string"
 							},
 							"id": {},
-							"image_s3_key": {
-								"type": "string"
-							},
-							"image_size": {
-								"format": "int64",
-								"type": "integer"
-							},
 							"logs": {
 								"items": {
 									"nullable": true,
@@ -2480,22 +2364,6 @@
 						"type": "string"
 					},
 					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"ExecuteRequest": {
-				"description": "ExecuteRequest schema",
-				"properties": {
-					"args": {
-						"items": {
-							"type": "string"
-						},
-						"nullable": true,
-						"type": "array"
-					},
-					"command": {
 						"type": "string"
 					}
 				},
@@ -3532,13 +3400,6 @@
 														"type": "string"
 													},
 													"id": {},
-													"image_s3_key": {
-														"type": "string"
-													},
-													"image_size": {
-														"format": "int64",
-														"type": "integer"
-													},
 													"logs": {
 														"items": {
 															"nullable": true,
@@ -3855,10 +3716,6 @@
 														"type": "object"
 													},
 													"type": "array"
-												},
-												"provision_status": {
-													"nullable": true,
-													"type": "string"
 												},
 												"supertokens_user_id": {
 													"type": "string"
@@ -4465,13 +4322,6 @@
 																"type": "string"
 															},
 															"id": {},
-															"image_s3_key": {
-																"type": "string"
-															},
-															"image_size": {
-																"format": "int64",
-																"type": "integer"
-															},
 															"logs": {
 																"items": {
 																	"nullable": true,
@@ -4785,10 +4635,6 @@
 															},
 															"type": "array"
 														},
-														"provision_status": {
-															"nullable": true,
-															"type": "string"
-														},
 														"supertokens_user_id": {
 															"type": "string"
 														},
@@ -4827,13 +4673,6 @@
 											"type": "string"
 										},
 										"id": {},
-										"image_s3_key": {
-											"type": "string"
-										},
-										"image_size": {
-											"format": "int64",
-											"type": "integer"
-										},
 										"logs": {
 											"items": {
 												"nullable": true,
@@ -6184,8 +6023,7 @@
 												"ssh_key_id": {
 													"nullable": true
 												},
-												"step": {
-													"nullable": true,
+												"status": {
 													"type": "string"
 												},
 												"subdomain": {
@@ -6307,10 +6145,6 @@
 															},
 															"type": "array"
 														},
-														"provision_status": {
-															"nullable": true,
-															"type": "string"
-														},
 														"supertokens_user_id": {
 															"type": "string"
 														},
@@ -6424,13 +6258,6 @@
 																"type": "string"
 															},
 															"id": {},
-															"image_s3_key": {
-																"type": "string"
-															},
-															"image_size": {
-																"format": "int64",
-																"type": "integer"
-															},
 															"logs": {
 																"items": {
 																	"nullable": true,
@@ -6744,10 +6571,6 @@
 															},
 															"type": "array"
 														},
-														"provision_status": {
-															"nullable": true,
-															"type": "string"
-														},
 														"supertokens_user_id": {
 															"type": "string"
 														},
@@ -6792,13 +6615,6 @@
 													"type": "string"
 												},
 												"id": {},
-												"image_s3_key": {
-													"type": "string"
-												},
-												"image_size": {
-													"format": "int64",
-													"type": "integer"
-												},
 												"logs": {
 													"items": {
 														"nullable": true,
@@ -7075,13 +6891,6 @@
 														"type": "string"
 													},
 													"id": {},
-													"image_s3_key": {
-														"type": "string"
-													},
-													"image_size": {
-														"format": "int64",
-														"type": "integer"
-													},
 													"logs": {
 														"items": {
 															"nullable": true,
@@ -7399,10 +7208,6 @@
 													},
 													"type": "array"
 												},
-												"provision_status": {
-													"nullable": true,
-													"type": "string"
-												},
 												"supertokens_user_id": {
 													"type": "string"
 												},
@@ -7429,16 +7234,6 @@
 						"type": "string"
 					},
 					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"ProvisionRequest": {
-				"description": "ProvisionRequest schema",
-				"properties": {
-					"image": {
-						"nullable": true,
 						"type": "string"
 					}
 				},
@@ -7549,77 +7344,6 @@
 				},
 				"type": "object"
 			},
-			"RecoverRequest": {
-				"description": "RecoverRequest schema",
-				"properties": {
-					"application_id": {
-						"nullable": true
-					}
-				},
-				"type": "object"
-			},
-			"RecoverResponse": {
-				"description": "RecoverResponse schema",
-				"properties": {
-					"data": {
-						"properties": {
-							"failed": {
-								"items": {
-									"properties": {
-										"application_id": {},
-										"application_name": {
-											"type": "string"
-										},
-										"reason": {
-											"type": "string"
-										}
-									},
-									"type": "object"
-								},
-								"type": "array"
-							},
-							"recovered": {
-								"items": {
-									"properties": {
-										"application_id": {},
-										"application_name": {
-											"type": "string"
-										},
-										"reason": {
-											"type": "string"
-										}
-									},
-									"type": "object"
-								},
-								"type": "array"
-							},
-							"skipped": {
-								"items": {
-									"properties": {
-										"application_id": {},
-										"application_name": {
-											"type": "string"
-										},
-										"reason": {
-											"type": "string"
-										}
-									},
-									"type": "object"
-								},
-								"type": "array"
-							}
-						},
-						"type": "object"
-					},
-					"message": {
-						"type": "string"
-					},
-					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
 			"RemoveApplicationDomainRequest": {
 				"description": "RemoveApplicationDomainRequest schema",
 				"properties": {
@@ -7713,24 +7437,6 @@
 							}
 						},
 						"type": "object"
-					},
-					"message": {
-						"type": "string"
-					},
-					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"SSHConnectionStatusResponse": {
-				"description": "SSHConnectionStatusResponse schema",
-				"properties": {
-					"connected": {
-						"type": "boolean"
-					},
-					"is_configured": {
-						"type": "boolean"
 					},
 					"message": {
 						"type": "string"
@@ -8283,10 +7989,6 @@
 						},
 						"type": "array"
 					},
-					"provision_status": {
-						"nullable": true,
-						"type": "string"
-					},
 					"supertokens_user_id": {
 						"type": "string"
 					},
@@ -8533,10 +8235,6 @@
 										},
 										"type": "array"
 									},
-									"provision_status": {
-										"nullable": true,
-										"type": "string"
-									},
 									"supertokens_user_id": {
 										"type": "string"
 									},
@@ -8676,10 +8374,6 @@
 									"type": "object"
 								},
 								"type": "array"
-							},
-							"provision_status": {
-								"nullable": true,
-								"type": "string"
 							},
 							"supertokens_user_id": {
 								"type": "string"
@@ -8849,10 +8543,6 @@
 										},
 										"type": "array"
 									},
-									"provision_status": {
-										"nullable": true,
-										"type": "string"
-									},
 									"supertokens_user_id": {
 										"type": "string"
 									},
@@ -9003,75 +8693,6 @@
 				"summary": "get recent audit logs",
 				"tags": [
 					"api/v1/audit"
-				]
-			}
-		},
-		"/api/v1/auth/bootstrap": {
-			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).HandleBootstrap`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
-				"operationId": "GET_/api/v1/auth/bootstrap",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/BootstrapResponse"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/BootstrapResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "handle bootstrap",
-				"tags": [
-					"api/v1/auth"
 				]
 			}
 		},
@@ -11419,87 +11040,6 @@
 				]
 			}
 		},
-		"/api/v1/deploy/application/recover": {
-			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleRecover`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
-				"operationId": "POST_/api/v1/deploy/application/recover",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"*/*": {
-							"schema": {
-								"$ref": "#/components/schemas/RecoverRequest"
-							}
-						}
-					},
-					"description": "Request body for types.RecoverRequest",
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/RecoverResponse"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/RecoverResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "handle recover",
-				"tags": [
-					"api/v1/deploy",
-					"application"
-				]
-			}
-		},
 		"/api/v1/deploy/application/redeploy": {
 			"post": {
 				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).ReDeployApplication`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
@@ -12194,86 +11734,6 @@
 				"summary": "get domains",
 				"tags": [
 					"api/v1/domains"
-				]
-			}
-		},
-		"/api/v1/execute": {
-			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/execute/controller.(*ExecuteController).Execute`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
-				"operationId": "POST_/api/v1/execute",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"*/*": {
-							"schema": {
-								"$ref": "#/components/schemas/ExecuteRequest"
-							}
-						}
-					},
-					"description": "Request body for types.ExecuteRequest",
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/Response"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/Response"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "execute",
-				"tags": [
-					"api/v1/execute"
 				]
 			}
 		},
@@ -15768,232 +15228,6 @@
 				]
 			}
 		},
-		"/api/v1/servers/ssh/status": {
-			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/server/controller.(*ServerController).CheckSSHStatus`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
-				"operationId": "GET_/api/v1/servers/ssh/status",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/SSHConnectionStatusResponse"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/SSHConnectionStatusResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "check s s h status",
-				"tags": [
-					"api/v1/servers"
-				]
-			}
-		},
-		"/api/v1/trail/provision": {
-			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/trail/controller.(*TrailController).ProvisionTrail`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
-				"operationId": "POST_/api/v1/trail/provision",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"*/*": {
-							"schema": {
-								"$ref": "#/components/schemas/ProvisionRequest"
-							}
-						}
-					},
-					"description": "Request body for types.ProvisionRequest",
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/Response"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/Response"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "provision trail",
-				"tags": [
-					"api/v1/trail"
-				]
-			}
-		},
-		"/api/v1/trail/status/{sessionId}": {
-			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/trail/controller.(*TrailController).GetStatus`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
-				"operationId": "GET_/api/v1/trail/status/:sessionId",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "sessionId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/Response"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/Response"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "get status",
-				"tags": [
-					"api/v1/trail"
-				]
-			}
-		},
 		"/api/v1/update": {
 			"post": {
 				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/update/controller.(*UpdateController).PerformUpdate`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
@@ -17280,9 +16514,6 @@
 			"name": "api/v1/domains"
 		},
 		{
-			"name": "api/v1/execute"
-		},
-		{
 			"name": "api/v1/extensions"
 		},
 		{
@@ -17308,9 +16539,6 @@
 		},
 		{
 			"name": "api/v1/servers"
-		},
-		{
-			"name": "api/v1/trail"
 		},
 		{
 			"name": "api/v1/update"

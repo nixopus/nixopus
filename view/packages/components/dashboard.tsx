@@ -126,8 +126,6 @@ export function SMTPBanner() {
   );
 }
 
-export { SSHBanner } from './dashboard/ssh-banner';
-
 export const ContainersWidget: React.FC<ContainersWidgetProps> = ({ containersData, columns }) => {
   const { t } = useTranslation();
 

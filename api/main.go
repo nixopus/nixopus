@@ -48,7 +48,6 @@ func main() {
 		log.Println("Info: .env file not found, using environment variables and secret manager")
 	}
 
-	types.InitJWTSecret()
 	store := config.Init()
 	ctx := context.Background()
 	app := storage.NewApp(&types.Config{}, store, ctx)
@@ -64,9 +63,6 @@ func main() {
 
 	taskq.SetLogger(log.New(io.Discard, "", 0))
 	queue.Init(redisClient)
-
-	// Initialize trail provision queue
-	queue.SetupProvisionQueue()
 
 	router := routes.NewRouter(app)
 

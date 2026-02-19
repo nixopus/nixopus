@@ -31,7 +31,6 @@ export function DeploymentLogsTable({
   const {
     logs: deploymentLogs,
     isLoading,
-    isFetching,
     toggleLogExpansion,
     isLogExpanded,
     expandAll,
@@ -181,7 +180,7 @@ export function DeploymentLogsTable({
             </div>
           ))}
         </div>
-        {(isLoading || isFetching) && logs.length === 0 ? (
+        {isLoading && logs.length === 0 ? (
           <div className="p-4 space-y-3">
             {loadingSkeletons.map((i) => (
               <Skeleton key={i} className="h-12 w-full" />

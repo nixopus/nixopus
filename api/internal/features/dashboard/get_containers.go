@@ -6,11 +6,11 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
-func (p *OrgPoller) getContainers() {
-	containers, err := p.dockerService.ListAllContainers()
+func (m *DashboardMonitor) GetContainers() {
+	containers, err := m.dockerService.ListAllContainers()
 	if err != nil {
-		p.log.Log(logger.Error, "Failed to get containers", err.Error())
-		p.broadcastError(err.Error(), GetContainers)
+		m.log.Log(logger.Error, "Failed to get containers", err.Error())
+		m.BroadcastError(err.Error(), GetContainers)
 		return
 	}
 
@@ -22,5 +22,5 @@ func (p *OrgPoller) getContainers() {
 		containers = containers[:4]
 	}
 
-	p.broadcast(string(GetContainers), containers)
+	m.Broadcast(string(GetContainers), containers)
 }

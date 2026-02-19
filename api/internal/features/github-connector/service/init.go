@@ -22,13 +22,17 @@ func (s *GithubConnectorService) getSSHManager(ctx context.Context) (*ssh.SSHMan
 	return ssh.GetSSHManagerFromContext(ctx)
 }
 
-// getGitClient creates a GitClient backed by the org's pooled SSHManager.
+// getGitClient creates or returns a GitClient with the current SSH client from context
 func (s *GithubConnectorService) getGitClient(ctx context.Context) (GitClient, error) {
 	sshManager, err := s.getSSHManager(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	return NewDefaultGitClient(s.logger, sshManager), nil
+	sshClient, err := sshManager.GetDefaultSSH()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get default SSH client: %w", err)
+	}
+	return NewDefaultGitClient(s.logger, sshClient), nil
 }
 
 func NewGithubConnectorService(store *shared_storage.Store, ctx context.Context, l logger.Logger, GithubConnectorRepository storage.GithubConnectorRepository) *GithubConnectorService {

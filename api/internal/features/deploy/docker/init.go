@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"regexp"
-	"strings"
 	"sync"
 	"time"
 
@@ -24,15 +22,8 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
 	"github.com/uptrace/bun"
 )
-
-func init() {
-	ssh.RegisterInvalidateHook(func(orgID uuid.UUID) {
-		InvalidateDockerServiceCache(orgID)
-	})
-}
 
 type DockerService struct {
 	Cli       *client.Client
@@ -511,11 +502,12 @@ func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]str
 	if err != nil {
 		return fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	envVarsStr, err := buildSafeEnvExports(envVars)
-	if err != nil {
-		return fmt.Errorf("invalid environment variables: %w", err)
+	envVarsStr := ""
+	for k, v := range envVars {
+		envVarsStr += fmt.Sprintf("export %s=%s && ", k, v)
 	}
-	command := fmt.Sprintf("%sdocker compose -f %s up -d --force-recreate --remove-orphans 2>&1", envVarsStr, utils.ShellQuote(composeFilePath))
+	// Use --force-recreate to handle existing containers and --remove-orphans to clean up old containers
+	command := fmt.Sprintf("%sdocker compose -f %s up -d --force-recreate --remove-orphans 2>&1", envVarsStr, composeFilePath)
 	output, err := manager.RunCommand(command)
 	if err != nil {
 		return fmt.Errorf("failed to start docker compose services: %v, output: %s", err, output)
@@ -529,7 +521,7 @@ func (s *DockerService) ComposeDown(composeFilePath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	command := fmt.Sprintf("docker compose -f %s down", utils.ShellQuote(composeFilePath))
+	command := fmt.Sprintf("docker compose -f %s down", composeFilePath)
 	output, err := manager.RunCommand(command)
 	if err != nil {
 		return fmt.Errorf("failed to stop docker compose services: %v, output: %s", err, output)
@@ -543,11 +535,11 @@ func (s *DockerService) ComposeBuild(composeFilePath string, envVars map[string]
 	if err != nil {
 		return fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	envVarsStr, err := buildSafeEnvExports(envVars)
-	if err != nil {
-		return fmt.Errorf("invalid environment variables: %w", err)
+	envVarsStr := ""
+	for k, v := range envVars {
+		envVarsStr += fmt.Sprintf("export %s=%s && ", k, v)
 	}
-	command := fmt.Sprintf("%sdocker compose -f %s build", envVarsStr, utils.ShellQuote(composeFilePath))
+	command := fmt.Sprintf("%sdocker compose -f %s build", envVarsStr, composeFilePath)
 	output, err := manager.RunCommand(command)
 	if err != nil {
 		return fmt.Errorf("failed to build docker compose services: %v, output: %s", err, output)
@@ -623,22 +615,4 @@ func (s *DockerService) Close() error {
 		return s.sshTunnel.cleanup()
 	}
 	return nil
-}
-
-// envKeyPattern validates that env var keys contain only safe characters.
-var envKeyPattern = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
-
-// buildSafeEnvExports builds shell export statements with properly quoted values.
-func buildSafeEnvExports(envVars map[string]string) (string, error) {
-	if len(envVars) == 0 {
-		return "", nil
-	}
-	var parts []string
-	for k, v := range envVars {
-		if !envKeyPattern.MatchString(k) {
-			return "", fmt.Errorf("invalid environment variable name: %s", k)
-		}
-		parts = append(parts, fmt.Sprintf("export %s=%s", k, utils.ShellQuote(v)))
-	}
-	return strings.Join(parts, " && ") + " && ", nil
 }

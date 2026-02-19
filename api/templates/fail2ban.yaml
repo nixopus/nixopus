@@ -8,7 +8,7 @@ metadata:
   type: "install"
   version: "1.0.0"
   isVerified: false
-  featured: false
+  featured: true
 
 variables:
   ssh_port:

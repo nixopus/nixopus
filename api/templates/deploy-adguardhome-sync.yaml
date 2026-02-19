@@ -1,0 +1,128 @@
+metadata:
+  id: "deploy-adguardhome-sync"
+  name: "AdGuardHome Sync"
+  description: "AdGuardHome Sync is a tool to synchronize AdGuardHome config to replica instances. It allows you to keep multiple AdGuardHome instances in sync with a master configuration. uses adguardhome-sync image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "🔄"
+  category: "Network"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for AdGuardHome Sync"
+    default: "lscr.io/linuxserver/adguardhome-sync"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the AdGuardHome Sync container"
+    default: "adguardhome-sync"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose AdGuardHome Sync web API"
+    default: 8080
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for AdGuardHome Sync web API"
+    default: 8080
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for AdGuardHome Sync configuration files"
+    default: "adguardhome-sync-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  config_file:
+    type: "string"
+    description: "Path to the config file inside the container"
+    default: "/config/adguardhome-sync.yaml"
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for AdGuardHome Sync (optional)"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Remove existing AdGuardHome Sync container if present"
+      type: "docker"
+      properties:
+        action: "rm"
+        name: "{{ container_name }}"
+      timeout: 30
+
+    - name: "Pull AdGuardHome Sync image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run AdGuardHome Sync container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ config_volume_name }}:/config"
+        env:
+          PUID: "{{ puid }}"
+          PGID: "{{ pgid }}"
+          TZ: "{{ timezone }}"
+          CONFIGFILE: "{{ config_file }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+    - name: "Add proxy for AdGuardHome Sync"
+      type: "proxy"
+      properties:
+        action: "add"
+        domain: "{{ proxy_domain }}"
+        port: "{{ host_port }}"
+      timeout: 30
+
+  # validate:
+  #   - name: "Check AdGuardHome Sync web API is accessible"
+  #     type: "command"
+  #     properties:
+  #       cmd: "sh -c 'for i in $(seq 1 30); do code=$(curl -fsS -o /dev/null -w \"%{http_code}\\n\" http://localhost:{{ host_port }} || true); echo \"HTTP $code\"; echo $code | grep -E \"^(200|301|302)$\" && exit 0; sleep 2; done; exit 1'"
+  #     timeout: 60
+

@@ -3,7 +3,7 @@ metadata:
   name: "Netdata"
   description: "Real-time performance monitoring and troubleshooting for systems and applications"
   author: "Nixopus Team"
-  icon: "https://www.netdata.cloud/img/netdata-logo.svg"
+  icon: "📈"
   category: "Monitoring"
   type: "install"
   version: "1.0.0"
