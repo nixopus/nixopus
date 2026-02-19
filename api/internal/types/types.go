@@ -10,6 +10,11 @@ type Config struct {
 	GitHub     GitHubConfig     `mapstructure:"github"`
 	BetterAuth BetterAuthConfig `mapstructure:"betterauth"`
 	Stripe     StripeConfig     `mapstructure:"stripe"`
+	Agent      AgentConfig      `mapstructure:"agent"`
+}
+
+type AgentConfig struct {
+	Endpoint string `mapstructure:"endpoint"`
 }
 
 type BetterAuthConfig struct {
@@ -48,7 +53,7 @@ type SSHConfig struct {
 }
 
 type ProxyConfig struct {
-	CaddyEndpoint string `mapstructure:"caddy_endpoint" validate:"required"`
+	CaddyEndpoint string `mapstructure:"caddy_endpoint"` // Caddy admin API (tunneled via SSH). Defaults to http://localhost:2019
 }
 
 type CORSConfig struct {
@@ -56,9 +61,10 @@ type CORSConfig struct {
 }
 
 type AppConfig struct {
-	Environment string `mapstructure:"environment"`
-	Version     string `mapstructure:"version"`
-	LogsPath    string `mapstructure:"logs_path"`
+	Environment  string `mapstructure:"environment"`
+	Version      string `mapstructure:"version"`
+	LogsPath     string `mapstructure:"logs_path"`
+	DeployDomain string `mapstructure:"deploy_domain"` // Base domain for generated app URLs (e.g. nixopus.com)
 }
 
 type GitHubConfig struct {

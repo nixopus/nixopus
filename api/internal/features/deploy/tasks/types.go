@@ -12,20 +12,42 @@ import (
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 )
 
+// OnLiveDevDeployedFunc is called when a live dev build completes and the container is healthy.
+// Used by BuildFirstManager to switch from full-build mode to inject mode.
+type OnLiveDevDeployedFunc func(applicationID uuid.UUID, workdir string)
+
+// OnLiveDevLogFunc is called for every log line during a live dev build, enabling real-time
+// streaming to the CLI via WebSocket (bypasses PostgreSQL NOTIFY).
+type OnLiveDevLogFunc func(applicationID uuid.UUID, logLine string)
+
 type TaskService struct {
-	Storage        storage.DeployRepository
-	Logger         logger.Logger
-	Github_service *github_service.GithubConnectorService
-	Store          *shared_storage.Store
+	Storage           storage.DeployRepository
+	Logger            logger.Logger
+	Github_service    *github_service.GithubConnectorService
+	Store             *shared_storage.Store
+	OnLiveDevDeployed OnLiveDevDeployedFunc
+	OnLiveDevLog      OnLiveDevLogFunc
 }
 
 func NewTaskService(storage storage.DeployRepository, logger logger.Logger, githubService *github_service.GithubConnectorService, store *shared_storage.Store) *TaskService {
 	return &TaskService{
-		Storage:        storage,
-		Logger:         logger,
-		Github_service: githubService,
-		Store:          store,
+		Storage:           storage,
+		Logger:            logger,
+		Github_service:    githubService,
+		Store:             store,
+		OnLiveDevDeployed: nil,
 	}
+}
+
+// SetOnLiveDevDeployed sets the callback invoked when a live dev build completes and container is healthy.
+func (s *TaskService) SetOnLiveDevDeployed(fn OnLiveDevDeployedFunc) {
+	s.OnLiveDevDeployed = fn
+}
+
+// SetOnLiveDevLog sets the callback invoked for each log line during a live dev build.
+// Streams logs directly to WebSocket client (does not rely on PostgreSQL live_dev_logs trigger).
+func (s *TaskService) SetOnLiveDevLog(fn OnLiveDevLogFunc) {
+	s.OnLiveDevLog = fn
 }
 
 // getDockerService retrieves docker service from context (organization-aware)
@@ -42,25 +64,14 @@ func (s *TaskService) getDockerService(ctx context.Context) (docker.DockerReposi
 
 // LiveDevConfig holds configuration for starting a live dev service
 type LiveDevConfig struct {
-	// ApplicationID is the associated application ID for logging
-	ApplicationID uuid.UUID
-
-	// OrganizationID is the organization ID for organization-specific operations
+	ApplicationID  uuid.UUID
 	OrganizationID uuid.UUID
-
-	// StagingPath is the local filesystem path containing the project files
-	StagingPath string
-
-	// Framework is the detected or specified framework (e.g., "nextjs", "vite")
-	// If empty, auto-detection will be attempted
-	Framework string
-
-	// Port is the port to expose the dev server on (0 = auto-allocate)
-	Port int
-
-	// EnvVars are additional environment variables to set in the container
-	EnvVars map[string]string
-
-	// Domain is the domain name to route to this container (optional)
-	Domain string
+	StagingPath    string
+	Framework      string
+	Port           int
+	EnvVars        map[string]string
+	Domain         string
+	DockerfilePath string
+	InternalPort   int
+	Workdir        string
 }

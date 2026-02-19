@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -8,6 +9,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -202,14 +204,14 @@ func (c *DeployController) RemoveApplicationDomain(f fuego.ContextWithBody[Remov
 	}
 
 	// Remove domain from Caddy proxy immediately
-	client := tasks.GetCaddyClient()
-	if client != nil {
-		if err := client.DeleteDomain(data.Domain); err != nil {
-			c.logger.Log(logger.Warning, "failed to remove domain from proxy", err.Error())
-			// Don't fail the request if proxy removal fails, domain is already removed from DB
-		} else {
-			client.Reload()
-		}
+	orgCtx := context.WithValue(f.Request().Context(), shared_types.OrganizationIDKey, organizationID.String())
+	client, clientErr := tasks.GetCaddyClient(orgCtx, nil, &c.logger)
+	if clientErr != nil {
+		c.logger.Log(logger.Warning, "failed to get Caddy client", clientErr.Error())
+	} else if err := client.DeleteDomain(data.Domain); err != nil {
+		c.logger.Log(logger.Warning, "failed to remove domain from proxy", err.Error())
+	} else {
+		client.Reload()
 	}
 
 	// Reload application with domains

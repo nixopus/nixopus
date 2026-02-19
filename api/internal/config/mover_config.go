@@ -12,6 +12,7 @@ const (
 	productionServerURL = "http://localhost:8080"
 	configFileName      = ".nixopus"
 	authFileName        = "auth.json"
+	syncStateFileName   = "sync-state.json"
 )
 
 // AuthConfig represents global authentication configuration stored in user's home directory
@@ -34,6 +35,7 @@ type Config struct {
 	Applications map[string]string `json:"applications,omitempty"` // Map of app name -> application_id
 	Sync         SyncConfig        `json:"sync"`
 	EnvPath      string            `json:"env_path,omitempty"`
+	DeployDomain string            `json:"deploy_domain,omitempty"` // Base domain for URL generation (e.g. nixopus.com)
 }
 
 // SyncConfig represents sync-related configuration
@@ -129,32 +131,9 @@ func Load() (*Config, error) {
 		}
 	}
 
-	// Ensure env path is not in exclude list if it's set
-	if cfg.EnvPath != "" {
-		cfg.Sync.Exclude = removeFromExcludes(cfg.Sync.Exclude, cfg.EnvPath)
-	}
+	// .env stays excluded - values are sent from client, file is never synced
 
 	return cfg, nil
-}
-
-// removeFromExcludes removes an item from the exclude list
-func removeFromExcludes(excludes []string, item string) []string {
-	result := make([]string, 0, len(excludes))
-	cleanItem := filepath.Clean(item)
-	baseName := filepath.Base(cleanItem)
-
-	for _, exclude := range excludes {
-		// Remove exact match
-		if exclude == item || exclude == cleanItem {
-			continue
-		}
-		// Remove base name match (e.g., if exclude is ".env" and item is ".env.production")
-		if exclude == baseName {
-			continue
-		}
-		result = append(result, exclude)
-	}
-	return result
 }
 
 // Save writes the configuration to .nixopus file
@@ -173,6 +152,7 @@ func (c *Config) Save() error {
 		Sync:         c.Sync,
 		EnvPath:      c.EnvPath,
 		ProjectID:    c.ProjectID,
+		DeployDomain: c.DeployDomain,
 		// Auth tokens are stored globally, not in project config
 	}
 
@@ -252,6 +232,18 @@ func getAuthPath() (string, error) {
 	authPath := filepath.Join(configDir, authFileName)
 
 	return authPath, nil
+}
+
+// GetSyncStatePath returns the path to the sync state file in ~/.config/nixopus/sync-state.json
+func GetSyncStatePath() (string, error) {
+	if err := ensureAuthDir(); err != nil {
+		return "", err
+	}
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get home directory: %w", err)
+	}
+	return filepath.Join(homeDir, ".config", "nixopus", syncStateFileName), nil
 }
 
 // ensureAuthDir ensures the auth directory exists

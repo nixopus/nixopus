@@ -5,6 +5,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/raghavyuva/nixopus-api/internal/config"
 )
 
 // IsGitRepo checks if the given path is a git repository
@@ -57,15 +59,10 @@ func getGitInfo() (string, string, error) {
 	return repoName, repoURL, nil
 }
 
-// BuildDomainURL builds the domain URL from project ID
-// Format: https://{first-8-chars-of-project-id}.nixopus.com
+// BuildDomainURL builds the domain URL from project ID using config.
+// Format: https://{first-8-chars-of-project-id}.{deploy_domain}
 func BuildDomainURL(projectID string) string {
-	if projectID == "" || len(projectID) < 8 {
-		return ""
-	}
-	// Take first 8 characters of project ID (UUID format)
-	subdomain := projectID[:8]
-	return "https://" + subdomain + ".nixopus.com"
+	return config.BuildDeployDomainURL(projectID)
 }
 
 // RemoveFromSlice removes an item from a string slice

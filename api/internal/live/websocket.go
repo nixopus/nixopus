@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -20,8 +21,8 @@ import (
 )
 
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+	ReadBufferSize:  256 * 1024,
+	WriteBufferSize: 256 * 1024,
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
@@ -30,11 +31,12 @@ const (
 	writeDeadline = 10 * time.Second
 )
 
-// WebSocketHandler manages WebSocket connections and message processing
+// WebSocketHandler manages WebSocket connections and message processing.
+// Uses per-connection write mutexes to avoid serializing writes across different connections.
 type WebSocketHandler struct {
-	gateway *Gateway
-	logger  logger.Logger
-	writeMu sync.Mutex
+	gateway     *Gateway
+	logger      logger.Logger
+	connWriteMu sync.Map // map[*websocket.Conn]*sync.Mutex — per-connection write serialization
 }
 
 // NewWebSocketHandler creates a new WebSocket handler
@@ -61,7 +63,7 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-	user, orgID, err := h.gateway.verifySession(ctx, token, r)
+	user, orgID, err := h.gateway.VerifySession(ctx, token, r)
 	if err != nil {
 		h.logger.Log(logger.Error, "invalid session", err.Error())
 		http.Error(w, "Invalid authentication token", http.StatusUnauthorized)
@@ -79,8 +81,7 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	// Set organization ID in context for downstream operations (SSH manager, etc.)
 	ctx = context.WithValue(ctx, types.OrganizationIDKey, orgID)
 
-	// Get application and validate ownership
-	appCtx, err := h.gateway.getApplicationContext(ctx, applicationID, user.ID, organizationID)
+	appCtx, err := h.gateway.getApplicationContext(ctx, r, token, applicationID, user.ID, organizationID)
 	if err != nil {
 		h.logger.Log(logger.Error, "failed to get application context", fmt.Sprintf("application_id=%s err=%v", applicationID, err))
 		http.Error(w, fmt.Sprintf("Application not found or access denied: %v", err), http.StatusNotFound)
@@ -95,6 +96,19 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	defer conn.Close()
 
 	h.logger.Log(logger.Info, "websocket connection established", fmt.Sprintf("application_id=%s", applicationID))
+
+	// Track this connection so pipeline progress can be sent to the client
+	h.gateway.registerConn(applicationID, conn, h)
+	defer func() {
+		h.cleanupConnMutex(conn)
+		h.gateway.unregisterConn(applicationID)
+	}()
+
+	// Send manifest immediately so client can skip already-synced files
+	if err := h.sendManifest(ctx, conn, appCtx.ApplicationID); err != nil {
+		h.logger.Log(logger.Warning, "failed to send manifest", err.Error())
+	}
+
 	h.processMessages(ctx, conn, appCtx)
 }
 
@@ -130,14 +144,14 @@ func (h *WebSocketHandler) processMessages(ctx context.Context, conn *websocket.
 			continue
 		}
 
-		var msg mover.SyncMessage
+		var msg recvMessage
 		if err := json.Unmarshal(message, &msg); err != nil {
 			h.logger.Log(logger.Error, "failed to parse message", err.Error())
 			h.sendError(conn, "invalid_message", "Failed to parse message")
 			continue
 		}
 
-		h.processMessage(ctx, conn, appCtx, msg)
+		h.processMessage(ctx, conn, appCtx, &msg)
 	}
 
 	h.logger.Log(logger.Info, "websocket connection closed", fmt.Sprintf("application_id=%s", appCtx.ApplicationID))
@@ -153,6 +167,9 @@ func (h *WebSocketHandler) setupConnectionHandlers(conn *websocket.Conn) {
 	conn.SetPingHandler(func(appData string) error {
 		conn.SetReadDeadline(time.Now().Add(readDeadline))
 		conn.SetWriteDeadline(time.Now().Add(writeDeadline))
+		mu := h.getConnMutex(conn)
+		mu.Lock()
+		defer mu.Unlock()
 		return conn.WriteControl(websocket.PongMessage, []byte(appData), time.Now().Add(writeDeadline))
 	})
 }
@@ -168,9 +185,17 @@ func (h *WebSocketHandler) handleReadError(err error, applicationID uuid.UUID) {
 	}
 }
 
+// recvMessage is the receive-only message shape. Payload as json.RawMessage avoids
+// double encode: we unmarshal once, then unmarshal Payload directly into typed structs.
+type recvMessage struct {
+	Type      mover.MessageType `json:"type"`
+	Timestamp time.Time         `json:"timestamp"`
+	Payload   json.RawMessage   `json:"payload"`
+}
+
 // processMessage processes a single message and delegates to the gateway for handling
-func (h *WebSocketHandler) processMessage(ctx context.Context, conn *websocket.Conn, appCtx *ApplicationContext, msg mover.SyncMessage) {
-	if err := h.gateway.handleMessage(ctx, conn, appCtx, &msg); err != nil {
+func (h *WebSocketHandler) processMessage(ctx context.Context, conn *websocket.Conn, appCtx *ApplicationContext, msg *recvMessage) {
+	if err := h.gateway.handleMessage(ctx, conn, appCtx, msg); err != nil {
 		h.logger.Log(logger.Error, "failed to handle message", err.Error())
 		if sendErr := h.sendError(conn, "processing_error", err.Error()); sendErr != nil {
 			h.logger.Log(logger.Error, "failed to send error message", sendErr.Error())
@@ -196,24 +221,64 @@ func (h *WebSocketHandler) sendAck(conn *websocket.Conn, filePath string) error 
 	})
 }
 
-// sendPong sends a pong message in response to a ping
+// sendManifest sends the server's file manifest to the client for incremental sync.
+// Includes root_hash so client can skip full diff when roots match.
+// Always loads from DB (single source of truth).
+func (h *WebSocketHandler) sendManifest(ctx context.Context, conn *websocket.Conn, applicationID uuid.UUID) error {
+	paths, _, err := LoadManifest(ctx, h.gateway.store, applicationID)
+	if err != nil {
+		return err
+	}
+	if paths == nil {
+		paths = make(map[string]string)
+	}
+	tree := mover.BuildFromPaths(paths)
+	return h.sendMessage(conn, mover.SyncMessage{
+		Type:      mover.MessageTypeManifest,
+		Timestamp: time.Now(),
+		Payload:   mover.ManifestPayload{Paths: paths, RootHash: tree.RootHash, Version: 1},
+	})
+}
+
+// sendPong sends a pong message in response to a ping.
+// Uses sendMessage for proper per-connection write serialization (avoids race with other writers).
 func (h *WebSocketHandler) sendPong(conn *websocket.Conn) error {
-	return conn.WriteJSON(mover.SyncMessage{
+	return h.sendMessage(conn, mover.SyncMessage{
 		Type:      mover.MessageTypePong,
 		Timestamp: time.Now(),
 	})
 }
 
-// sendMessage sends a message to the WebSocket connection with write mutex protection
+// sendMessage sends a message to the WebSocket connection with per-connection write mutex.
+// Gorilla websocket allows one concurrent writer per connection; each conn has its own mutex
+// so different connections can write concurrently without blocking each other.
 func (h *WebSocketHandler) sendMessage(conn *websocket.Conn, msg mover.SyncMessage) error {
-	h.writeMu.Lock()
-	defer h.writeMu.Unlock()
+	mu := h.getConnMutex(conn)
+	mu.Lock()
+	defer mu.Unlock()
 	conn.SetWriteDeadline(time.Now().Add(writeDeadline))
 	return conn.WriteJSON(msg)
 }
 
-// getApplicationContext gets application information and staging path
-func (g *Gateway) getApplicationContext(ctx context.Context, applicationID, userID, organizationID uuid.UUID) (*ApplicationContext, error) {
+// getConnMutex returns (or creates) the write mutex for a connection.
+func (h *WebSocketHandler) getConnMutex(conn *websocket.Conn) *sync.Mutex {
+	if v, ok := h.connWriteMu.Load(conn); ok {
+		return v.(*sync.Mutex)
+	}
+	mu := &sync.Mutex{}
+	if v, loaded := h.connWriteMu.LoadOrStore(conn, mu); loaded {
+		return v.(*sync.Mutex)
+	}
+	return mu
+}
+
+// cleanupConnMutex removes the mutex for a closed connection to avoid leaks.
+// Must be called when the connection is closed (e.g. in defer).
+func (h *WebSocketHandler) cleanupConnMutex(conn *websocket.Conn) {
+	h.connWriteMu.Delete(conn)
+}
+
+func (g *Gateway) getApplicationContext(ctx context.Context, r *http.Request, token string, applicationID, userID, organizationID uuid.UUID) (*ApplicationContext, error) {
 	// Get application
 	deployStorage := storage.DeployStorage{DB: g.store.DB, Ctx: ctx}
 	application, err := deployStorage.GetApplicationById(applicationID.String(), organizationID)
@@ -232,8 +297,8 @@ func (g *Gateway) getApplicationContext(ctx context.Context, applicationID, user
 		return nil, fmt.Errorf("failed to get staging path: %w", err)
 	}
 
-	// Generate domain name based on application ID: {first-8-chars}.nixopus.com
-	domain := fmt.Sprintf("%s.nixopus.com", applicationID.String()[:8])
+	// Generate domain name based on application ID: {first-8-chars}.{deploy_domain}
+	domain := fmt.Sprintf("%s.%s", applicationID.String()[:8], config.GetDeployDomain())
 
 	// Parse environment variables from application
 	envVars := tasks.GetMapFromString(application.EnvironmentVariables)
@@ -244,15 +309,25 @@ func (g *Gateway) getApplicationContext(ctx context.Context, applicationID, user
 		basePath = "/"
 	}
 
+	repoSource := g.stagingManager.GetRepositorySource(ctx, &application)
+
+	authCookie := ""
+	if r != nil {
+		authCookie = r.Header.Get("Cookie")
+	}
+
 	return &ApplicationContext{
 		ApplicationID:        applicationID,
 		UserID:               userID,
 		OrganizationID:       organizationID,
 		StagingPath:          stagingPath,
+		RepositorySource:     repoSource,
 		BasePath:             basePath,
 		Environment:          application.Environment,
 		Domain:               domain,
 		Config:               make(map[string]interface{}),
 		EnvironmentVariables: envVars,
+		AuthToken:            token,
+		AuthCookie:           authCookie,
 	}, nil
 }

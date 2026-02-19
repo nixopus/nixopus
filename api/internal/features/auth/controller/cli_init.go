@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	deploy_service "github.com/raghavyuva/nixopus-api/internal/features/deploy/service"
 	deploy_storage "github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
 	deploy_types "github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
@@ -25,11 +26,12 @@ type CLIInitRequest struct {
 
 // CLIInitResponse represents the response from CLI init
 type CLIInitResponse struct {
-	Status    string `json:"status"`
-	Message   string `json:"message"`
-	ProjectID string `json:"project_id"`
-	FamilyID  string `json:"family_id"`
-	Domain    string `json:"domain,omitempty"`
+	Status       string `json:"status"`
+	Message      string `json:"message"`
+	ProjectID    string `json:"project_id"`
+	FamilyID     string `json:"family_id"`
+	Domain       string `json:"domain,omitempty"`        // Full domain (e.g. abc12345.nixopus.com)
+	DeployDomain string `json:"deploy_domain,omitempty"` // Base domain for URL generation (e.g. nixopus.com)
 }
 
 // HandleCLIInit handles CLI init - creates a draft project
@@ -107,15 +109,15 @@ func (ar *AuthController) HandleCLIInit(c fuego.ContextWithBody[CLIInitRequest])
 		}
 	}
 
-	// Determine domain: use first custom domain if available, otherwise generate default domain
+	// Determine domain: use first custom domain if available, otherwise generate default from config
 	var domain string
 	if len(application.Domains) > 0 && application.Domains[0] != nil {
 		domain = application.Domains[0].Domain
 	} else {
-		// Generate default domain: {first-8-chars}.nixopus.com (without protocol)
+		// Generate default domain: {first-8-chars}.{deploy_domain} (without protocol)
 		appIDStr := application.ID.String()
 		if len(appIDStr) >= 8 {
-			domain = fmt.Sprintf("%s.nixopus.com", appIDStr[:8])
+			domain = fmt.Sprintf("%s.%s", appIDStr[:8], config.GetDeployDomain())
 		}
 	}
 
@@ -125,10 +127,11 @@ func (ar *AuthController) HandleCLIInit(c fuego.ContextWithBody[CLIInitRequest])
 	}
 
 	return &CLIInitResponse{
-		Status:    "success",
-		Message:   "Project created successfully",
-		ProjectID: application.ID.String(),
-		FamilyID:  familyID,
-		Domain:    domain,
+		Status:       "success",
+		Message:      "Project created successfully",
+		ProjectID:    application.ID.String(),
+		FamilyID:     familyID,
+		Domain:       domain,
+		DeployDomain: config.GetDeployDomain(),
 	}, nil
 }

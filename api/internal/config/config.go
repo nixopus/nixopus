@@ -197,12 +197,20 @@ func setupEnvVarMappings() {
 	viper.BindEnv("database.password", "PASSWORD")
 	viper.BindEnv("database.name", "DB_NAME")
 	viper.BindEnv("database.ssl_mode", "SSL_MODE")
+	viper.BindEnv("database.max_open_conn", "DB_MAX_OPEN_CONN")
+	viper.BindEnv("database.max_idle_conn", "DB_MAX_IDLE_CONN")
+
+	// Default connection pool limits to avoid exhausting Supabase/Postgres (session pools often 15-20)
+	viper.SetDefault("database.max_open_conn", 10)
+	viper.SetDefault("database.max_idle_conn", 5)
 
 	// Redis
 	viper.BindEnv("redis.url", "REDIS_URL")
 
 	// Proxy
 	viper.BindEnv("proxy.caddy_endpoint", "CADDY_ENDPOINT")
+
+	viper.BindEnv("agent.endpoint", "AGENT_ENDPOINT")
 
 	// CORS
 	viper.BindEnv("cors.allowed_origin", "ALLOWED_ORIGIN")
@@ -211,6 +219,7 @@ func setupEnvVarMappings() {
 	viper.BindEnv("app.environment", "ENV")
 	viper.BindEnv("app.version", "APP_VERSION")
 	viper.BindEnv("app.logs_path", "LOGS_PATH")
+	viper.BindEnv("app.deploy_domain", "DEPLOY_DOMAIN")
 
 	// GitHub App (shared credentials)
 	viper.BindEnv("github.app_id", "GITHUB_APP_ID")
@@ -225,6 +234,7 @@ func setupEnvVarMappings() {
 
 	// Set default for free deployments limit
 	viper.SetDefault("stripe.free_deployments_limit", 1)
+	viper.SetDefault("app.deploy_domain", "nixopus.com")
 }
 
 func validateConfig(config types.Config) error {
@@ -254,10 +264,6 @@ func validateConfig(config types.Config) error {
 		errors = append(errors, "redis URL is required")
 	}
 
-	if config.Proxy.CaddyEndpoint == "" {
-		errors = append(errors, "proxy caddy endpoint is required")
-	}
-
 	if config.CORS.AllowedOrigin == "" {
 		errors = append(errors, "CORS allowed origin is required")
 	}
@@ -273,4 +279,25 @@ func validateConfig(config types.Config) error {
 	}
 
 	return nil
+}
+
+// GetDeployDomain returns the base domain for generated app URLs.
+// Uses AppConfig when initialized, otherwise DEPLOY_DOMAIN env, otherwise default.
+func GetDeployDomain() string {
+	if AppConfig.App.DeployDomain != "" {
+		return AppConfig.App.DeployDomain
+	}
+	if domain := os.Getenv("DEPLOY_DOMAIN"); domain != "" {
+		return domain
+	}
+	return "nixopus.com"
+}
+
+// BuildDeployDomainURL builds the full deploy URL from project/application ID.
+// Format: https://{first-8-chars}.{deploy_domain}
+func BuildDeployDomainURL(projectID string) string {
+	if projectID == "" || len(projectID) < 8 {
+		return ""
+	}
+	return "https://" + projectID[:8] + "." + GetDeployDomain()
 }
