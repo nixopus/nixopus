@@ -1,3 +1,25 @@
+# [0.1.0-alpha.129](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.128...v0.1.0-alpha.129) (2026-02-18)
+
+
+### Bug Fixes
+
+* build streaming via websocket for cli ([#1052](https://github.com/raghavyuva/nixopus/issues/1052)) ([8eca2eb](https://github.com/raghavyuva/nixopus/commit/8eca2ebe6f554371a7e1a9c69b42bab40877a037))
+* merkle tree based syncing to server ([f1d50b5](https://github.com/raghavyuva/nixopus/commit/f1d50b55547acbd739467f5338845a455554cb70))
+* streaming response on cli ([#1053](https://github.com/raghavyuva/nixopus/issues/1053)) ([47faa5a](https://github.com/raghavyuva/nixopus/commit/47faa5ab920dd834911a93a98457ba8bd239020c))
+
+
+### Features
+
+* add bootstrap API to streamlining onboarding ([#1051](https://github.com/raghavyuva/nixopus/issues/1051)) ([74b9abb](https://github.com/raghavyuva/nixopus/commit/74b9abb31257f7cee506b8484d962511006793e4))
+* add puase and scaling down ([e2725f5](https://github.com/raghavyuva/nixopus/commit/e2725f576d1cb806d8358da96bffd8d6bf8faa7f))
+* add support for fast engine sync to cloud ([7955de4](https://github.com/raghavyuva/nixopus/commit/7955de4113e0cfe0a4b672524d2817043b3afc13))
+* add support for injection based reload ([c8d0956](https://github.com/raghavyuva/nixopus/commit/c8d0956d4ecfb013fe6ed63d145d7a6b5f51747f))
+* caddy proxy tunneled to remote server ([460a89a](https://github.com/raghavyuva/nixopus/commit/460a89ac5e8989dd5145d2e9cb85c47e0041359a))
+* pipeline progress and build status streaming ([8a30e97](https://github.com/raghavyuva/nixopus/commit/8a30e97f56c12132cf879bac20c21b002f780c40))
+* replace hardcoded domain names ([a8f7268](https://github.com/raghavyuva/nixopus/commit/a8f7268a5693d6a48dcbd01e529dbbb5c4b640dd))
+
+
+
 # [0.1.0-alpha.128](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.127...v0.1.0-alpha.128) (2026-02-12)
 
 

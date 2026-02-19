@@ -9,6 +9,7 @@ export async function GET() {
     websocketUrl: process.env.WEBSOCKET_URL || 'ws://localhost:8080/ws',
     webhookUrl: process.env.WEBHOOK_URL || 'http://localhost:8080/webhook',
     port: process.env.NEXT_PUBLIC_PORT || '7443',
-    websiteDomain
+    websiteDomain,
+    passwordLoginEnabled: process.env.PASSWORD_LOGIN_ENABLED !== 'false'
   });
 }

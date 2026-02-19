@@ -3,10 +3,11 @@ import { LoginForm } from '@/packages/components/login-form';
 import { OtpLoginForm } from '@/packages/components/otp-login-form';
 import useAuth from '@/packages/hooks/auth/use-auth';
 import useOtpAuth from '@/packages/hooks/auth/use-otp-auth';
-
-const passwordLoginEnabled = process.env.NEXT_PUBLIC_PASSWORD_LOGIN_ENABLED !== 'false';
+import { usePasswordLoginEnabled } from '@/packages/hooks/shared/use-config';
 
 export default function Auth() {
+  const passwordLoginEnabled = usePasswordLoginEnabled();
+
   const {
     isLoading,
     handleEmailChange: handleEmailLoginChange,
@@ -30,7 +31,8 @@ export default function Auth() {
     loaded: otpLoaded
   } = useOtpAuth();
 
-  const loaded = passwordLoginEnabled ? loginLoaded : otpLoaded;
+  const loaded =
+    passwordLoginEnabled === null ? false : passwordLoginEnabled ? loginLoaded : otpLoaded;
 
   if (!loaded) {
     return (
