@@ -17,6 +17,7 @@ import (
 	container "github.com/raghavyuva/nixopus-api/internal/features/container/controller"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
 	domain "github.com/raghavyuva/nixopus-api/internal/features/domain/controller"
+	execute "github.com/raghavyuva/nixopus-api/internal/features/execute/controller"
 	extension "github.com/raghavyuva/nixopus-api/internal/features/extension/controller"
 	feature_flags_controller "github.com/raghavyuva/nixopus-api/internal/features/feature-flags/controller"
 	feature_flags_service "github.com/raghavyuva/nixopus-api/internal/features/feature-flags/service"
@@ -28,6 +29,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	notificationController "github.com/raghavyuva/nixopus-api/internal/features/notification/controller"
 	server_controller "github.com/raghavyuva/nixopus-api/internal/features/server/controller"
+	trail "github.com/raghavyuva/nixopus-api/internal/features/trail/controller"
 
 	// Organization packages removed - migrated to Better Auth
 	update "github.com/raghavyuva/nixopus-api/internal/features/update/controller"
@@ -348,6 +350,27 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 		ResourceName: "server",
 	})
 	router.RegisterServerRoutes(serverGroup, serverController)
+
+	// Trail routes
+	trailController := trail.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
+	trailGroup := fuego.Group(server, apiV1.Path+"/trail")
+	router.applyMiddleware(trailGroup, MiddlewareConfig{
+		RBAC:         false,
+		FeatureFlag:  "trail",
+		Audit:        false,
+		ResourceName: "trail",
+	})
+	router.RegisterTrailRoutes(trailGroup, trailController)
+
+	// Execute routes
+	executeController := execute.NewExecuteController(router.app.Ctx, router.logger)
+	executeGroup := fuego.Group(server, apiV1.Path+"/execute")
+	router.applyMiddleware(executeGroup, MiddlewareConfig{
+		RBAC:         false,
+		Audit:        true,
+		ResourceName: "execute",
+	})
+	router.RegisterExecuteRoutes(executeGroup, executeController)
 }
 
 // createAuthController creates and returns an auth controller
