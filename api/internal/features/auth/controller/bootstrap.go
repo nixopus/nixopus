@@ -34,6 +34,7 @@ type BootstrapResponse struct {
 	ActiveOrganizationID *string        `json:"activeOrganizationId"`
 	HasServers           bool           `json:"hasServers"`
 	ProvisionID          *string        `json:"provisionId,omitempty"`
+	ProvisionStep        *string        `json:"provisionStep,omitempty"`
 }
 
 // HandleBootstrap returns user, orgs, activeOrgId, isOnboarded, provisionStatus, hasServers.
@@ -114,8 +115,9 @@ func (ac *AuthController) HandleBootstrap(c fuego.ContextNoBody) (*BootstrapResp
 		}
 	}
 
-	// provisionId when PROVISIONING (from user_provision_details)
+	// provisionId and provisionStep when PROVISIONING (from user_provision_details)
 	var provisionID *string
+	var provisionStep *string
 	if provisionStatus == "PROVISIONING" {
 		var upd types.UserProvisionDetails
 		err = ac.store.DB.NewSelect().
@@ -127,6 +129,10 @@ func (ac *AuthController) HandleBootstrap(c fuego.ContextNoBody) (*BootstrapResp
 		if err == nil {
 			id := upd.ID.String()
 			provisionID = &id
+			if upd.Step != nil {
+				step := string(*upd.Step)
+				provisionStep = &step
+			}
 		}
 	}
 
@@ -142,5 +148,6 @@ func (ac *AuthController) HandleBootstrap(c fuego.ContextNoBody) (*BootstrapResp
 		ActiveOrganizationID: activeOrgIDPtr,
 		HasServers:           hasServers,
 		ProvisionID:          provisionID,
+		ProvisionStep:        provisionStep,
 	}, nil
 }
