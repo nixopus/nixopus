@@ -81,7 +81,6 @@ export default function Auth() {
             isSendingOtp={isSendingOtp}
             isVerifyingOtp={isVerifyingOtp}
             otpSent={otpSent}
-            hideRegistration={isAdminRegistered}
           />
         )}
       </div>

@@ -7,7 +7,6 @@ import { Alert, AlertDescription } from '@nixopus/ui';
 import { OTPInput } from '@nixopus/ui';
 import nixopusLogo from '@/public/nixopus_logo_transparent.png';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import Link from 'next/link';
 import { useOtpLoginForm } from '@/packages/hooks/auth/use-otp-login-form';
 
 export interface OtpLoginFormProps {
@@ -115,12 +114,6 @@ export function OtpLoginForm({ ...props }: OtpLoginFormProps) {
                   {props.isSendingOtp ? t('auth.otpLogin.sending') : t('auth.otpLogin.resendOtp')}
                 </Button>
               )}
-              <div className="text-center text-sm">
-                Don&apos;t have an account?{' '}
-                <Link href="/register" className="underline underline-offset-4">
-                  {t('auth.register.title')}
-                </Link>
-              </div>
             </div>
           </div>
           <div className="bg-muted relative hidden md:block">
