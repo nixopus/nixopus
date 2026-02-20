@@ -89,6 +89,7 @@ func Init() *storage.Store {
 	log.Printf("Server will start on port: %s", AppConfig.Server.Port)
 	log.Printf("Database host: %s:%s", AppConfig.Database.Host, AppConfig.Database.Port)
 	log.Printf("Redis URL configured: %t", AppConfig.Redis.URL != "")
+	log.Printf("S3 image storage configured: %t", AppConfig.S3.Bucket != "")
 
 	migrationsPath := getMigrationsPath()
 
@@ -231,6 +232,16 @@ func setupEnvVarMappings() {
 	// Better Auth
 	viper.BindEnv("betterauth.url", "BETTER_AUTH_URL")
 	viper.BindEnv("betterauth.secret", "BETTER_AUTH_SECRET")
+
+	// S3 (optional, for image storage)
+	viper.BindEnv("s3.endpoint", "S3_ENDPOINT")
+	viper.BindEnv("s3.bucket", "S3_BUCKET")
+	viper.BindEnv("s3.region", "S3_REGION")
+	viper.BindEnv("s3.access_key", "S3_ACCESS_KEY")
+	viper.BindEnv("s3.secret_key", "S3_SECRET_KEY")
+	viper.BindEnv("s3.use_ssl", "S3_USE_SSL")
+
+	viper.SetDefault("s3.use_ssl", true)
 
 	// Set default for free deployments limit
 	viper.SetDefault("stripe.free_deployments_limit", 1)

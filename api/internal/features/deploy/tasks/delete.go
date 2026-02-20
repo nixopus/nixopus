@@ -6,6 +6,8 @@ import (
 
 	"github.com/docker/docker/api/types/image"
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/config"
+	s3store "github.com/raghavyuva/nixopus-api/internal/features/deploy/s3"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -62,6 +64,22 @@ func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.De
 					s.Logger.Log(logger.Info, "Removing image", dep.ContainerImage)
 					if err := dockerService.RemoveImage(dep.ContainerImage, image.RemoveOptions{Force: true}); err != nil {
 						s.Logger.Log(logger.Error, "Failed to remove image", err.Error())
+					}
+				}
+			}
+
+			if s3store.IsConfigured(config.AppConfig.S3) {
+				store, err := s3store.NewImageStore(config.AppConfig.S3)
+				if err != nil {
+					s.Logger.Log(logger.Error, "Failed to create S3 store for cleanup", err.Error())
+				} else {
+					for _, dep := range deployments {
+						if dep.ImageS3Key != "" {
+							s.Logger.Log(logger.Info, "Removing S3 image", dep.ImageS3Key)
+							if err := store.DeleteImage(ctx, dep.ImageS3Key); err != nil {
+								s.Logger.Log(logger.Error, "Failed to remove S3 image", err.Error())
+							}
+						}
 					}
 				}
 			}

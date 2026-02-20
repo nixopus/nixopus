@@ -11,6 +11,16 @@ type Config struct {
 	BetterAuth BetterAuthConfig `mapstructure:"betterauth"`
 	Stripe     StripeConfig     `mapstructure:"stripe"`
 	Agent      AgentConfig      `mapstructure:"agent"`
+	S3         S3Config         `mapstructure:"s3"`
+}
+
+type S3Config struct {
+	Endpoint  string `mapstructure:"endpoint"`
+	Bucket    string `mapstructure:"bucket"`
+	Region    string `mapstructure:"region"`
+	AccessKey string `mapstructure:"access_key"`
+	SecretKey string `mapstructure:"secret_key"`
+	UseSSL    bool   `mapstructure:"use_ssl"`
 }
 
 type AgentConfig struct {

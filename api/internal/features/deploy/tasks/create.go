@@ -69,6 +69,9 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 	}
 
 	taskCtx.AddLog("Image built successfully: " + buildImageResult + " for application " + TaskPayload.Application.Name)
+
+	t.ExportAndRecordImage(orgCtx, TaskPayload, buildImageResult, taskCtx)
+
 	taskCtx.UpdateStatus(shared_types.Deploying)
 
 	containerResult, err := t.AtomicUpdateContainer(orgCtx, TaskPayload, taskCtx)
