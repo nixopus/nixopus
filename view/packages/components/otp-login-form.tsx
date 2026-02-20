@@ -47,6 +47,11 @@ export function OtpLoginForm({ ...props }: OtpLoginFormProps) {
                 </div>
               )}
               {!props.otpSent && (
+                <div className="flex flex-col items-center text-center">
+                  <h1 className="text-2xl font-bold">Login with OTP</h1>
+                </div>
+              )}
+              {!props.otpSent && (
                 <div className="grid gap-3">
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

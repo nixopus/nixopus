@@ -77,6 +77,11 @@ export function LoginForm({ ...props }: LoginFormProps) {
                 </div>
               )}
               {!props.showTwoFactor && (
+                <div className="flex flex-col items-center text-center">
+                  <h1 className="text-2xl font-bold">Login with password</h1>
+                </div>
+              )}
+              {!props.showTwoFactor && (
                 <>
                   <div className="grid gap-3">
                     <Input
