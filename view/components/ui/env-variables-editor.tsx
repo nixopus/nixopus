@@ -9,9 +9,9 @@ import {
   FormLabel,
   FormMessage
 } from '@nixopus/ui';
-import { Input } from '@nixopus/ui';
 import { Textarea } from '@nixopus/ui';
 import { Button } from '@nixopus/ui';
+import AceEditor from '@/components/ui/ace-editor';
 import {
   Dialog,
   DialogContent,
@@ -36,8 +36,7 @@ import {
   Copy,
   CheckCircle2,
   ChevronDown,
-  ChevronUp,
-  ClipboardPaste
+  ChevronUp
 } from 'lucide-react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import {
@@ -259,6 +258,60 @@ const EnvVariableRow = ({
   );
 };
 
+interface ImportVariablesDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  importText: string;
+  onImportTextChange: (text: string) => void;
+  onSubmit: () => void;
+}
+
+const ImportVariablesDialog = ({
+  open,
+  onOpenChange,
+  importText,
+  onImportTextChange,
+  onSubmit
+}: ImportVariablesDialogProps) => {
+  const { t } = useTranslation();
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>{t('selfHost.envEditor.pastePreview.title')}</DialogTitle>
+          <DialogDescription>{t('selfHost.envEditor.pastePreview.description')}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3 flex-1 min-h-0 flex flex-col">
+          <div className="flex-1 min-h-0 border rounded-md overflow-hidden">
+            <AceEditor
+              mode="text"
+              value={importText}
+              onChange={onImportTextChange}
+              name="import-variables-editor"
+              height="400px"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <FileText size={12} />
+            {t('selfHost.envEditor.pasteHint')}
+          </p>
+        </div>
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {t('common.cancel')}
+          </Button>
+          <Button onClick={onSubmit} disabled={!importText.trim()}>
+            {t('selfHost.envEditor.importPasted')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 interface PastePreviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -353,7 +406,8 @@ export const EnvVariablesEditor = ({
   defaultValues = {}
 }: EnvVariablesEditorProps) => {
   const { t } = useTranslation();
-  const [bulkPasteText, setBulkPasteText] = React.useState('');
+  const [importModalOpen, setImportModalOpen] = React.useState(false);
+  const [importText, setImportText] = React.useState('');
 
   const {
     variables,
@@ -389,7 +443,7 @@ export const EnvVariablesEditor = ({
     copyVariable,
     copyAllVariables,
     toggleExpand,
-    handleBulkPaste
+    importVariablesDirectly
   } = useEnvVariablesEditor({
     validator,
     defaultValues,
@@ -397,24 +451,28 @@ export const EnvVariablesEditor = ({
     formFieldName: name
   });
 
-  const handleBulkPasteEvent = React.useCallback(
+  const handleImportSubmit = React.useCallback(() => {
+    if (importText.trim()) {
+      importVariablesDirectly(importText);
+      setImportText('');
+      setImportModalOpen(false);
+    }
+  }, [importText, importVariablesDirectly]);
+
+  const handleKeyPaste = React.useCallback(
     (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
       const pastedText = e.clipboardData.getData('text');
       if (isMultiLineEnvPaste(pastedText)) {
         e.preventDefault();
-        setBulkPasteText(pastedText);
-        handleBulkPaste(pastedText);
+        setImportText(pastedText);
+        setImportModalOpen(true);
+      } else {
+        // Allow normal paste for single line
+        handlePaste(e);
       }
     },
-    [handleBulkPaste]
+    [handlePaste]
   );
-
-  const handleBulkPasteClick = React.useCallback(() => {
-    if (bulkPasteText.trim()) {
-      handleBulkPaste(bulkPasteText);
-      setBulkPasteText('');
-    }
-  }, [bulkPasteText, handleBulkPaste]);
 
   return (
     <FormField
@@ -431,38 +489,6 @@ export const EnvVariablesEditor = ({
 
           <FormControl>
             <div className="space-y-3">
-              {/* Bulk Paste Area - Top for easy access */}
-              <div className="rounded-lg border border-dashed p-4 bg-muted/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <ClipboardPaste size={16} className="text-muted-foreground" />
-                  <span className="text-sm font-medium">{t('selfHost.envEditor.bulkPaste')}</span>
-                </div>
-                <Textarea
-                  value={bulkPasteText}
-                  onChange={(e) => setBulkPasteText(e.target.value)}
-                  onPaste={handleBulkPasteEvent}
-                  placeholder={t('selfHost.envEditor.bulkPastePlaceholder')}
-                  className="font-mono text-sm min-h-[80px] resize-none"
-                  rows={4}
-                />
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                    <FileText size={12} />
-                    {t('selfHost.envEditor.pasteHint')}
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleBulkPasteClick}
-                    disabled={!bulkPasteText.trim()}
-                    className="h-7 text-xs"
-                  >
-                    {t('selfHost.envEditor.importPasted')}
-                  </Button>
-                </div>
-              </div>
-
               {/* Add New Variable Input - Middle for primary action */}
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
@@ -470,7 +496,7 @@ export const EnvVariablesEditor = ({
                     value={newKey}
                     onChange={(e) => updateNewKey(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    onPaste={handlePaste}
+                    onPaste={handleKeyPaste}
                     placeholder={t('selfHost.envEditor.keyPlaceholder')}
                     className={cn(
                       'font-mono text-sm min-h-[36px] max-w-[200px] resize-none',
@@ -572,6 +598,13 @@ export const EnvVariablesEditor = ({
           <FormDescription>{description}</FormDescription>
           <FormMessage />
 
+          <ImportVariablesDialog
+            open={importModalOpen}
+            onOpenChange={setImportModalOpen}
+            importText={importText}
+            onImportTextChange={setImportText}
+            onSubmit={handleImportSubmit}
+          />
           <PastePreviewDialog
             open={pastePreviewOpen}
             onOpenChange={setPastePreviewOpen}

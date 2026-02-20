@@ -287,6 +287,24 @@ export function useEnvVariablesEditor({
     }
   }, []);
 
+  const importVariablesDirectly = useCallback((text: string) => {
+    if (isMultiLineEnvPaste(text)) {
+      const parsed = parseEnvText(text);
+      setVariables((prev) => {
+        const newVars = [...prev];
+        Object.entries(parsed).forEach(([key, value]) => {
+          const existingIndex = newVars.findIndex((v) => v.key === key);
+          if (existingIndex !== -1) {
+            newVars[existingIndex] = { key, value, isSecret: false };
+          } else {
+            newVars.push({ key, value, isSecret: false });
+          }
+        });
+        return newVars;
+      });
+    }
+  }, []);
+
   return {
     variables,
     newKey,
@@ -321,6 +339,7 @@ export function useEnvVariablesEditor({
     copyVariable,
     copyAllVariables,
     toggleExpand,
-    handleBulkPaste
+    handleBulkPaste,
+    importVariablesDirectly
   };
 }

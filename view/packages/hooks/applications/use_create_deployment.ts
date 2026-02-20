@@ -107,8 +107,9 @@ function useCreateDeployment({
     base_path: z.string().optional().default(base_path)
   });
 
-  // Static build pack option commented out for deployment - default to Dockerfile if Static is provided
-  const validBuildPack = build_pack === BuildPack.Static ? BuildPack.Dockerfile : build_pack;
+  // Static and DockerCompose build pack options commented out for deployment - default to Dockerfile
+  // Since schema only accepts Dockerfile, ensure we always use Dockerfile
+  const validBuildPack = BuildPack.Dockerfile;
 
   const form = useForm<z.infer<typeof deploymentFormSchema>>({
     resolver: zodResolver(deploymentFormSchema),
@@ -136,12 +137,9 @@ function useCreateDeployment({
     if (port) form.setValue('port', port);
     if (domains && domains.length > 0) form.setValue('domains', domains);
     if (repository) form.setValue('repository', repository);
-    // Static build pack option commented out for deployment - default to Dockerfile if Static is provided
-    if (build_pack)
-      form.setValue(
-        'build_pack',
-        build_pack === BuildPack.Static ? BuildPack.Dockerfile : build_pack
-      );
+    // Static and DockerCompose build pack options commented out for deployment - always use Dockerfile
+    // Schema only accepts Dockerfile, so always set to Dockerfile regardless of input
+    form.setValue('build_pack', BuildPack.Dockerfile);
     if (env_variables && Object.keys(env_variables).length > 0)
       form.setValue('env_variables', env_variables);
     if (build_variables && Object.keys(build_variables).length > 0)

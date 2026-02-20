@@ -7,6 +7,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/server/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/server/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 )
 
@@ -72,5 +73,64 @@ func (s *ServerService) ListServers(orgID uuid.UUID, params types.ServerListPara
 			Status:     params.Status,
 			IsActive:   params.IsActive,
 		},
+	}, nil
+}
+
+// CheckSSHConnection checks if SSH connection is available for the organization
+func (s *ServerService) CheckSSHConnection(orgID uuid.UUID) (*types.SSHConnectionStatusResponse, error) {
+	// Get SSH manager for the organization
+	sshMgr, err := ssh.GetSSHManagerForOrganization(s.ctx, orgID)
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), orgID.String())
+		return &types.SSHConnectionStatusResponse{
+			Status:       "error",
+			Connected:    false,
+			Message:      "Failed to get SSH manager",
+			IsConfigured: false,
+		}, nil
+	}
+
+	// Check if SSH is configured
+	sshConfig, err := sshMgr.GetSSHConfig()
+	if err != nil || sshConfig == nil || sshConfig.Host == "" {
+		return &types.SSHConnectionStatusResponse{
+			Status:       "not_configured",
+			Connected:    false,
+			Message:      "SSH is not configured for this organization",
+			IsConfigured: false,
+		}, nil
+	}
+
+	// Try to connect
+	client, err := sshMgr.Connect()
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), orgID.String())
+		return &types.SSHConnectionStatusResponse{
+			Status:       "disconnected",
+			Connected:    false,
+			Message:      "Unable to connect to SSH server",
+			IsConfigured: true,
+		}, nil
+	}
+	defer client.Close()
+
+	// Test connection by creating a session
+	session, err := client.NewSession()
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), orgID.String())
+		return &types.SSHConnectionStatusResponse{
+			Status:       "disconnected",
+			Connected:    false,
+			Message:      "Unable to create SSH session",
+			IsConfigured: true,
+		}, nil
+	}
+	session.Close()
+
+	return &types.SSHConnectionStatusResponse{
+		Status:       "connected",
+		Connected:    true,
+		Message:      "SSH connection is active",
+		IsConfigured: true,
 	}, nil
 }
