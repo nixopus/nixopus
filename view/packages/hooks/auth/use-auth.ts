@@ -67,7 +67,7 @@ function useAuth() {
         // The layout.tsx will handle redirect automatically, but we can also redirect here
         // as a fallback after ensuring state is updated
         setTimeout(() => {
-          router.push('/charts');
+          router.push('/apps');
         }, 200);
       }
     } catch (error: any) {

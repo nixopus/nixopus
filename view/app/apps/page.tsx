@@ -20,6 +20,7 @@ import { Plus } from 'lucide-react';
 import { LabelFilter } from '@/components/ui/label-filter';
 import { MainPageHeader } from '@nixopus/ui';
 import { Skeleton } from '@nixopus/ui';
+import { SSHBanner } from '@/packages/components/dashboard';
 
 function page() {
   const { t } = useTranslation();
@@ -108,6 +109,8 @@ function page() {
             }
           />
         )}
+
+        <SSHBanner />
 
         {renderContent()}
 

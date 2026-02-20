@@ -22,6 +22,7 @@ import { WidgetSelector } from '@/packages/components/dashboard';
 import { DashboardItem } from '@/packages/types/layout';
 import { ContainerData, SystemStatsType } from '@/redux/types/monitor';
 import { MainPageHeader } from '@nixopus/ui';
+import { SSHBanner } from '@/packages/components/dashboard/ssh-banner';
 
 // for dashboard page, we need to check if the user has the dashboard:read permission
 function DashboardPage() {
@@ -85,6 +86,7 @@ function DashboardPage() {
             className="mb-4"
           />
         )}
+        <SSHBanner />
         {/* TODO: Re-enable SMTP banner when notifications feature is working */}
         {/* <SMTPBannerConditional hasSMTPConfig={!!smtpConfig} /> */}
         <MonitoringSection

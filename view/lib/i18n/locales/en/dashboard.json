@@ -84,6 +84,12 @@
       "message": "Configure SMTP settings to receive notifications",
       "configure": "Configure"
     },
+    "sshBanner": {
+      "message": "SSH connection is not working. Please check your server configuration.",
+      "notConfigured": "SSH is not configured for your server. Please configure SSH settings to connect to your server.",
+      "notConnected": "Unable to connect to SSH server. Please troubleshoot your SSH configuration.",
+      "troubleshoot": "Troubleshoot"
+    },
     "deployments": {
       "title": "Latest Deployments",
       "viewAll": "View All",
