@@ -23,6 +23,7 @@ export interface LoginFormProps {
   showTwoFactor?: boolean;
   handleTwoFactorLogin?: () => void;
   isTwoFactorLoading?: boolean;
+  hideRegistration?: boolean;
 }
 
 export function LoginForm({ ...props }: LoginFormProps) {
@@ -150,12 +151,14 @@ export function LoginForm({ ...props }: LoginFormProps) {
                     ? t('auth.login.loading')
                     : t('auth.login.submit')}
               </Button>
-              <div className="text-center text-sm">
-                Don&apos;t have an account?{' '}
-                <Link href="/register" className="underline underline-offset-4">
-                  {t('auth.register.title')}
-                </Link>
-              </div>
+              {!props.hideRegistration && (
+                <div className="text-center text-sm">
+                  Don&apos;t have an account?{' '}
+                  <Link href="/register" className="underline underline-offset-4">
+                    {t('auth.register.title')}
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
           <div className="bg-muted relative hidden md:block">
