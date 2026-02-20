@@ -45,22 +45,66 @@ export function useQuickDeployForm({
         domains: z
           .array(z.string())
           .optional()
-          .refine(
-            (val) => {
-              if (!val || val.length === 0) return true;
-              // Filter out empty domains and validate non-empty ones
-              const nonEmpty = val.filter((d) => d && d.trim() !== '');
-              if (nonEmpty.length > 5) return false; // Max 5 domains
-              // Check uniqueness
-              const unique = new Set(nonEmpty.map((d) => d.trim().toLowerCase()));
-              if (unique.size !== nonEmpty.length) return false;
-              // Validate format using shared validator
-              return nonEmpty.every((d) => defaultValidator(d));
-            },
-            {
-              message: t('selfHost.deployForm.validation.domain.invalidFormat')
+          .superRefine((val, ctx) => {
+            if (!val || val.length === 0) return;
+
+            // Track original indices for non-empty domains
+            const nonEmptyWithIndices: Array<{ domain: string; originalIndex: number }> = [];
+            val.forEach((domain, index) => {
+              if (domain && domain.trim() !== '') {
+                nonEmptyWithIndices.push({
+                  domain: domain.trim(),
+                  originalIndex: index
+                });
+              }
+            });
+
+            // Check max domains limit
+            if (nonEmptyWithIndices.length > 5) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: t('selfHost.deployForm.validation.domain.maxDomains'),
+                path: ['domains']
+              });
+              return;
             }
-          )
+
+            // Check for duplicates within the array (case-insensitive)
+            const domainMap = new Map<string, number[]>();
+            nonEmptyWithIndices.forEach(({ domain, originalIndex }) => {
+              const normalized = domain.toLowerCase();
+              if (!domainMap.has(normalized)) {
+                domainMap.set(normalized, []);
+              }
+              domainMap.get(normalized)!.push(originalIndex);
+            });
+
+            // Report duplicate domains - prioritize duplicate errors
+            const duplicateIndices = new Set<number>();
+            domainMap.forEach((indices) => {
+              if (indices.length > 1) {
+                indices.forEach((index) => {
+                  duplicateIndices.add(index);
+                  ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: t('selfHost.deployForm.validation.domain.duplicate'),
+                    path: ['domains', index]
+                  });
+                });
+              }
+            });
+
+            // Validate format using shared validator (skip if already marked as duplicate)
+            nonEmptyWithIndices.forEach(({ domain, originalIndex }) => {
+              if (!duplicateIndices.has(originalIndex) && !defaultValidator(domain)) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: t('selfHost.deployForm.validation.domain.invalidFormat'),
+                  path: ['domains', originalIndex]
+                });
+              }
+            });
+          })
           .default([]),
         branch: z
           .string()
@@ -129,15 +173,52 @@ export function useQuickDeployForm({
     const isValid = await form.trigger();
     if (!isValid) {
       const fieldErrors = form.formState.errors;
-      const messages = Object.values(fieldErrors)
-        .map((err) => err?.message)
-        .filter(Boolean);
+
+      // Helper function to extract all error messages from nested structures
+      const extractErrorMessages = (errors: any): string[] => {
+        const messages: string[] = [];
+
+        if (errors && typeof errors === 'object') {
+          // Check for direct message
+          if (errors.message) {
+            messages.push(errors.message);
+          }
+
+          // Check for _errors array
+          if (Array.isArray(errors._errors)) {
+            messages.push(...errors._errors.filter(Boolean));
+          }
+
+          // Recursively check nested objects/arrays
+          Object.values(errors).forEach((value) => {
+            if (value && typeof value === 'object') {
+              messages.push(...extractErrorMessages(value));
+            }
+          });
+        }
+
+        return messages;
+      };
+
+      const allMessages = extractErrorMessages(fieldErrors);
+
+      // Prioritize duplicate errors over format errors
+      const duplicateMessages = allMessages.filter(
+        (msg) => msg.includes('already added') || msg.includes('duplicate')
+      );
+      const otherMessages = allMessages.filter(
+        (msg) => !msg.includes('already added') && !msg.includes('duplicate')
+      );
+
+      // Show duplicate errors first if they exist
+      const messagesToShow = duplicateMessages.length > 0 ? duplicateMessages : otherMessages;
+
       toast.warning(
-        messages.length === 1
-          ? String(messages[0])
+        messagesToShow.length === 1
+          ? String(messagesToShow[0])
           : t('selfHost.quickDeploy.toast.validationFailed' as any),
         {
-          description: messages.length > 1 ? messages.join('. ') : undefined
+          description: messagesToShow.length > 1 ? messagesToShow.join('. ') : undefined
         }
       );
       return;
