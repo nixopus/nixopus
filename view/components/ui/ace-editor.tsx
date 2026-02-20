@@ -6,6 +6,7 @@ const Ace = dynamic(
     const ace = await import('react-ace');
     await import('ace-builds/src-noconflict/mode-yaml');
     await import('ace-builds/src-noconflict/mode-sh');
+    await import('ace-builds/src-noconflict/mode-text');
     await import('ace-builds/src-noconflict/theme-terminal');
     return ace;
   },
@@ -13,7 +14,7 @@ const Ace = dynamic(
 );
 
 export interface AceEditorProps {
-  mode: 'yaml' | 'sh';
+  mode: 'yaml' | 'sh' | 'text';
   value: string;
   onChange: (value: string) => void;
   name: string;

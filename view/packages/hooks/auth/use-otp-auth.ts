@@ -92,7 +92,7 @@ function useOtpAuth() {
         }
 
         setTimeout(() => {
-          router.push('/charts');
+          router.push('/apps');
         }, 200);
       }
     } catch (error: any) {

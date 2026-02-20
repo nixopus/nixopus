@@ -4,9 +4,11 @@ import { OtpLoginForm } from '@/packages/components/otp-login-form';
 import useAuth from '@/packages/hooks/auth/use-auth';
 import useOtpAuth from '@/packages/hooks/auth/use-otp-auth';
 import { usePasswordLoginEnabled } from '@/packages/hooks/shared/use-config';
+import { useIsAdminRegisteredQuery } from '@/redux/services/users/authApi';
 
 export default function Auth() {
   const passwordLoginEnabled = usePasswordLoginEnabled();
+  const { data: isAdminRegistered } = useIsAdminRegisteredQuery();
 
   const {
     isLoading,
@@ -66,6 +68,7 @@ export default function Auth() {
             handlePasswordChange={handlePasswordChange}
             handleLogin={handleLogin}
             isLoading={isLoading}
+            hideRegistration={isAdminRegistered}
           />
         ) : (
           <OtpLoginForm

@@ -1396,6 +1396,10 @@
 						"nullable": true,
 						"type": "string"
 					},
+					"provisionStep": {
+						"nullable": true,
+						"type": "string"
+					},
 					"user": {
 						"properties": {
 							"email": {
@@ -2476,6 +2480,22 @@
 						"type": "string"
 					},
 					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ExecuteRequest": {
+				"description": "ExecuteRequest schema",
+				"properties": {
+					"args": {
+						"items": {
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "array"
+					},
+					"command": {
 						"type": "string"
 					}
 				},
@@ -6164,7 +6184,8 @@
 												"ssh_key_id": {
 													"nullable": true
 												},
-												"status": {
+												"step": {
+													"nullable": true,
 													"type": "string"
 												},
 												"subdomain": {
@@ -7413,6 +7434,16 @@
 				},
 				"type": "object"
 			},
+			"ProvisionRequest": {
+				"description": "ProvisionRequest schema",
+				"properties": {
+					"image": {
+						"nullable": true,
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"PruneBuildCacheRequest": {
 				"description": "PruneBuildCacheRequest schema",
 				"properties": {
@@ -7682,6 +7713,24 @@
 							}
 						},
 						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"SSHConnectionStatusResponse": {
+				"description": "SSHConnectionStatusResponse schema",
+				"properties": {
+					"connected": {
+						"type": "boolean"
+					},
+					"is_configured": {
+						"type": "boolean"
 					},
 					"message": {
 						"type": "string"
@@ -12148,6 +12197,86 @@
 				]
 			}
 		},
+		"/api/v1/execute": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/execute/controller.(*ExecuteController).Execute`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "POST_/api/v1/execute",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/ExecuteRequest"
+							}
+						}
+					},
+					"description": "Request body for types.ExecuteRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "execute",
+				"tags": [
+					"api/v1/execute"
+				]
+			}
+		},
 		"/api/v1/extensions": {
 			"get": {
 				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).GetExtensions`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
@@ -15639,6 +15768,232 @@
 				]
 			}
 		},
+		"/api/v1/servers/ssh/status": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/server/controller.(*ServerController).CheckSSHStatus`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
+				"operationId": "GET_/api/v1/servers/ssh/status",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SSHConnectionStatusResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/SSHConnectionStatusResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "check s s h status",
+				"tags": [
+					"api/v1/servers"
+				]
+			}
+		},
+		"/api/v1/trail/provision": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/trail/controller.(*TrailController).ProvisionTrail`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"operationId": "POST_/api/v1/trail/provision",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/ProvisionRequest"
+							}
+						}
+					},
+					"description": "Request body for types.ProvisionRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "provision trail",
+				"tags": [
+					"api/v1/trail"
+				]
+			}
+		},
+		"/api/v1/trail/status/{sessionId}": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/trail/controller.(*TrailController).GetStatus`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"operationId": "GET_/api/v1/trail/status/:sessionId",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sessionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "get status",
+				"tags": [
+					"api/v1/trail"
+				]
+			}
+		},
 		"/api/v1/update": {
 			"post": {
 				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/update/controller.(*UpdateController).PerformUpdate`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
@@ -16925,6 +17280,9 @@
 			"name": "api/v1/domains"
 		},
 		{
+			"name": "api/v1/execute"
+		},
+		{
 			"name": "api/v1/extensions"
 		},
 		{
@@ -16950,6 +17308,9 @@
 		},
 		{
 			"name": "api/v1/servers"
+		},
+		{
+			"name": "api/v1/trail"
 		},
 		{
 			"name": "api/v1/update"

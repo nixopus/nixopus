@@ -246,6 +246,18 @@ func setupEnvVarMappings() {
 	// Set default for free deployments limit
 	viper.SetDefault("stripe.free_deployments_limit", 1)
 	viper.SetDefault("app.deploy_domain", "nixopus.com")
+
+	// Trail provisioning configuration
+	viper.BindEnv("trail.max_concurrent_trails", "MAX_CONCURRENT_TRAILS")
+	viper.BindEnv("trail.default_image", "DEFAULT_IMAGE_CONTAINER_NAME")
+	viper.BindEnv("trail.allowed_images", "ALLOWED_TRAIL_IMAGES")
+	viper.BindEnv("trail.trail_domain", "TRAIL_DOMAIN")
+
+	// Trail defaults (matching abyss defaults)
+	viper.SetDefault("trail.max_concurrent_trails", 7)
+	viper.SetDefault("trail.default_image", "nixopus-trail")
+	viper.SetDefault("trail.allowed_images", []string{"nixopus-trail"})
+	viper.SetDefault("trail.trail_domain", "nixopus.com")
 }
 
 func validateConfig(config types.Config) error {

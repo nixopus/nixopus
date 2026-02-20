@@ -467,7 +467,9 @@
         "domain": {
           "minLength": "Domain name must be at least 3 characters long.",
           "invalidFormat": "Please enter a valid domain name (e.g., example.com).",
-          "notAllowed": "This domain is not allowed. You can add it in the Settings > Domains section to make it available."
+          "notAllowed": "This domain is not allowed. You can add it in the Settings > Domains section to make it available.",
+          "duplicate": "This domain is already added. Please use a different domain.",
+          "maxDomains": "Maximum of 5 domains allowed per application."
         },
         "repository": {
           "minLength": "Repository name must be at least 3 characters.",
@@ -664,6 +666,8 @@
         "draftSaved": "Project saved as draft. You can deploy it later.",
         "deploymentStarted": "Deployment started successfully",
         "saveFailed": "Failed to save project",
+        "saveFailedDescription": "Something went wrong while creating the project. Please check your inputs and try again.",
+        "validationFailed": "Please fix the errors before saving",
         "deployFailed": "Failed to start deployment"
       }
     },
@@ -698,6 +702,17 @@
       "hide": "Hide value",
       "markSecret": "Mark as secret",
       "unmarkSecret": "Unmark as secret",
+      "copy": "Copy variable",
+      "copied": "Copied!",
+      "copyAll": "Copy all",
+      "showMore": "Show more",
+      "showLess": "Show less",
+      "variable": "variable",
+      "variables": "variables",
+      "bulkPaste": "Bulk Paste",
+      "bulkPastePlaceholder": "Paste environment variables here (KEY=VALUE format, one per line)...",
+      "importVariables": "Import Variables",
+      "importPasted": "Import",
       "errors": {
         "invalidFormat": "Must be in format KEY=VALUE"
       },

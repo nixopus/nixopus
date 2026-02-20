@@ -16,6 +16,7 @@ type Config struct {
 	BetterAuth BetterAuthConfig `mapstructure:"betterauth"`
 	Stripe     StripeConfig     `mapstructure:"stripe"`
 	Agent      AgentConfig      `mapstructure:"agent"`
+	Trail      TrailConfig      `mapstructure:"trail"`
 	S3         S3Config         `mapstructure:"s3"`
 }
 
@@ -96,6 +97,14 @@ type StripeConfig struct {
 	WebhookSecret        string `mapstructure:"webhook_secret"`
 	PriceID              string `mapstructure:"price_id"`
 	FreeDeploymentsLimit int    `mapstructure:"free_deployments_limit"`
+}
+
+// TrailConfig holds configuration for trail provisioning.
+type TrailConfig struct {
+	MaxConcurrentTrails int      `mapstructure:"max_concurrent_trails"`
+	DefaultImage        string   `mapstructure:"default_image"`
+	AllowedImages       []string `mapstructure:"allowed_images"`
+	TrailDomain         string   `mapstructure:"trail_domain"`
 }
 
 type ClientContext string
