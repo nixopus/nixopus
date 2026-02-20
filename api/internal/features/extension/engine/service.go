@@ -27,6 +27,14 @@ func (serviceModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types
 	if action == "" {
 		return "", nil, fmt.Errorf("service action is required for service step")
 	}
+
+	if err := validateShellArgs(map[string]string{
+		"name":   name,
+		"action": action,
+		"user":   runAsUser,
+	}); err != nil {
+		return "", nil, fmt.Errorf("service module: %w", err)
+	}
 	cmd := serviceCmd(sshClient, action, name, step.Timeout)
 	if runAsUser != "" {
 		cmd = fmt.Sprintf("sudo -u %s %s", runAsUser, cmd)

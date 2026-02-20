@@ -7,7 +7,7 @@ import (
 
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/caddygo"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -525,27 +525,23 @@ func (s *TaskService) addDomainToCaddy(ctx context.Context, applicationID uuid.U
 	}
 
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, organizationID.String())
-	client, err := GetCaddyClient(orgCtx, nil, &s.Logger)
-	if err != nil {
-		return fmt.Errorf("failed to get Caddy client: %w", err)
-	}
 	upstreamHost, err := GetSSHHostForOrganization(ctx, organizationID)
 	if err != nil {
 		return err
 	}
 
-	if err := client.AddDomainWithAutoTLS(domain, upstreamHost, port, caddygo.DomainOptions{}); err != nil {
+	routes := []caddy.DomainRoute{
+		{Domain: domain, UpstreamDial: caddy.FormatDial(upstreamHost, port)},
+	}
+	if err := caddy.AddDomainsWithRetry(orgCtx, nil, &s.Logger, routes); err != nil {
 		return fmt.Errorf("failed to add domain to caddy: %w", err)
 	}
 
-	// Store domain in application_domains for lookup (e.g. auth, domain resolution)
-	// Idempotent: skip if this application already has this domain (e.g. on rebuild)
 	existingDomains, err := s.Storage.GetApplicationDomains(applicationID)
 	if err == nil {
 		for _, d := range existingDomains {
 			if d.Domain == domain {
-				client.Reload()
-				return nil // already stored
+				return nil
 			}
 		}
 	}
@@ -553,6 +549,5 @@ func (s *TaskService) addDomainToCaddy(ctx context.Context, applicationID uuid.U
 		return fmt.Errorf("failed to store domain: %w", err)
 	}
 
-	client.Reload()
 	return nil
 }

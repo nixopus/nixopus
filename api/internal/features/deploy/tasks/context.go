@@ -344,6 +344,8 @@ func (c *ContextTask) PrepareRollbackContext() (shared_types.TaskPayload, error)
 
 	applicationDeployment := c.GetDeploymentConfig(app.ID)
 	applicationDeployment.CommitHash = dep.CommitHash
+	applicationDeployment.ImageS3Key = dep.ImageS3Key
+	applicationDeployment.ContainerID = dep.ContainerID
 
 	if err := c.PersistUpdateApplicationDeploymentData(app, applicationDeployment); err != nil {
 		return shared_types.TaskPayload{}, err

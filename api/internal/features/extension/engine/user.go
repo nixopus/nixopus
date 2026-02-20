@@ -30,6 +30,15 @@ func (userModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types.Sp
 		return "", nil, fmt.Errorf("username is required for user operations")
 	}
 
+	if err := validateShellArgs(map[string]string{
+		"username": username,
+		"shell":    shell,
+		"home":     home,
+		"groups":   groups,
+	}); err != nil {
+		return "", nil, fmt.Errorf("user module: %w", err)
+	}
+
 	tools := userTools(sshClient)
 	var cmd string
 	switch action {

@@ -3,7 +3,7 @@ metadata:
   name: "Qdrant"
   description: "Qdrant is a vector similarity search engine and vector database"
   author: "Nixopus Team"
-  icon: "🔍"
+  icon: "https://qdrant.tech/img/qdrant-logo.svg"
   category: "Database"
   type: "install"
   version: "1.0.0"

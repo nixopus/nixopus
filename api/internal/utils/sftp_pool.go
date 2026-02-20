@@ -12,6 +12,12 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+func init() {
+	ssh.RegisterInvalidateHook(func(orgID uuid.UUID) {
+		InvalidateSFTPPoolForOrg(orgID.String())
+	})
+}
+
 const (
 	defaultSFTPIdleTimeout = 5 * time.Minute
 )
@@ -193,4 +199,21 @@ func (p *SFTPPool) touch(orgID string) {
 	if entry, ok := p.clients[orgID]; ok {
 		entry.lastUsed = time.Now()
 	}
+}
+
+// EvictOrg removes and closes the SFTP client for a specific organization.
+// Safe to call even if no client is cached for the org.
+func (p *SFTPPool) EvictOrg(orgID string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if entry, ok := p.clients[orgID]; ok {
+		entry.client.Close()
+		delete(p.clients, orgID)
+	}
+}
+
+// InvalidateSFTPPoolForOrg removes the cached SFTP client for an organization
+// from the global pool. Call when the org's SSH config changes.
+func InvalidateSFTPPoolForOrg(orgID string) {
+	globalSFTPPool.EvictOrg(orgID)
 }

@@ -6,6 +6,9 @@ import (
 
 	"github.com/docker/docker/api/types/image"
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
+	s3store "github.com/raghavyuva/nixopus-api/internal/features/deploy/s3"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -65,6 +68,22 @@ func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.De
 					}
 				}
 			}
+
+			if s3store.IsConfigured(config.AppConfig.S3) {
+				store, err := s3store.NewImageStore(config.AppConfig.S3)
+				if err != nil {
+					s.Logger.Log(logger.Error, "Failed to create S3 store for cleanup", err.Error())
+				} else {
+					for _, dep := range deployments {
+						if dep.ImageS3Key != "" {
+							s.Logger.Log(logger.Info, "Removing S3 image", dep.ImageS3Key)
+							if err := store.DeleteImage(ctx, dep.ImageS3Key); err != nil {
+								s.Logger.Log(logger.Error, "Failed to remove S3 image", err.Error())
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -82,21 +101,18 @@ func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.De
 		s.Logger.Log(logger.Error, "Failed to remove repository", err.Error())
 	}
 
-	// Remove all domains from Caddy
 	if len(application.Domains) > 0 {
-		client, err := GetCaddyClient(orgCtx, nil, &s.Logger)
-		if err != nil {
-			s.Logger.Log(logger.Warning, "Caddy client not configured", err.Error())
-		} else {
-			for _, appDomain := range application.Domains {
-				if appDomain.Domain != "" {
-					err = client.DeleteDomain(appDomain.Domain)
-					if err != nil {
-						s.Logger.Log(logger.Error, "Failed to remove domain", err.Error())
-					}
-				}
+		var domainNames []string
+		for _, appDomain := range application.Domains {
+			if appDomain.Domain != "" {
+				domainNames = append(domainNames, appDomain.Domain)
 			}
-			client.Reload()
+		}
+		if err := caddy.RemoveDomainsWithRetry(orgCtx, nil, &s.Logger, domainNames); err != nil {
+			s.Logger.Log(logger.Warning, "failed to remove domains from proxy, enqueueing for retry", err.Error())
+			if enqErr := caddy.EnqueuePendingRemoval(organizationID, domainNames...); enqErr != nil {
+				s.Logger.Log(logger.Error, "failed to enqueue pending removal", enqErr.Error())
+			}
 		}
 	}
 
