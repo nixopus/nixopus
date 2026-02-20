@@ -29,6 +29,12 @@ func Init(client *redis.Client) {
 	registeredQueues = make([]string, 0)
 }
 
+// RedisClient returns the shared Redis client for direct operations
+// (e.g. sets for pending removal tracking). Returns nil if not initialized.
+func RedisClient() *redis.Client {
+	return redisClient
+}
+
 // RegisterQueue registers a new queue with the shared redis client.
 func RegisterQueue(opts *taskq.QueueOptions) taskq.Queue {
 	if opts.Redis == nil {

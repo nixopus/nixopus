@@ -3,10 +3,11 @@ package engine
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 
-	"github.com/raghavyuva/caddygo"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
+	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
@@ -16,18 +17,22 @@ type proxyModule struct{}
 func (proxyModule) Type() string { return "proxy" }
 
 func AddDomainToProxy(ctx context.Context, sshClient *ssh.SSH, domain string, port string, upstreamHost string) error {
-	client, err := tasks.GetCaddyClient(ctx, sshClient, nil)
-	if err != nil {
-		return err
-	}
 	p, err := strconv.Atoi(port)
 	if err != nil {
 		return fmt.Errorf("invalid port: %w", err)
 	}
-	if err := client.AddDomainWithAutoTLS(domain, upstreamHost, p, caddygo.DomainOptions{}); err != nil {
+	dial := caddy.FormatDial(upstreamHost, p)
+	if err := caddy.AddDomainsWithRetry(ctx, sshClient, nil, []caddy.DomainRoute{
+		{Domain: domain, UpstreamDial: dial},
+	}); err != nil {
 		return err
 	}
-	client.Reload()
+
+	if orgID, ok := orgIDFromCtx(ctx); ok {
+		if tErr := caddy.TrackExtensionDomain(orgID, domain, dial); tErr != nil {
+			log.Printf("failed to track extension domain %s: %v", domain, tErr)
+		}
+	}
 	return nil
 }
 
@@ -36,15 +41,33 @@ func UpdateDomainInProxy(ctx context.Context, sshClient *ssh.SSH, domain string,
 }
 
 func RemoveDomainFromProxy(ctx context.Context, sshClient *ssh.SSH, domain string) error {
-	client, err := tasks.GetCaddyClient(ctx, sshClient, nil)
-	if err != nil {
+	if err := caddy.RemoveDomainsWithRetry(ctx, sshClient, nil, []string{domain}); err != nil {
+		if orgID, ok := orgIDFromCtx(ctx); ok {
+			if enqErr := caddy.EnqueuePendingRemoval(orgID, domain); enqErr != nil {
+				log.Printf("failed to enqueue pending removal for %s: %v", domain, enqErr)
+			}
+		}
 		return err
 	}
-	if err := client.DeleteDomain(domain); err != nil {
-		return err
+
+	if orgID, ok := orgIDFromCtx(ctx); ok {
+		if tErr := caddy.UntrackExtensionDomain(orgID, domain); tErr != nil {
+			log.Printf("failed to untrack extension domain %s: %v", domain, tErr)
+		}
 	}
-	client.Reload()
 	return nil
+}
+
+func orgIDFromCtx(ctx context.Context) (uuid.UUID, bool) {
+	s, ok := ctx.Value(types.OrganizationIDKey).(string)
+	if !ok {
+		return uuid.Nil, false
+	}
+	id, err := uuid.Parse(s)
+	if err != nil {
+		return uuid.Nil, false
+	}
+	return id, true
 }
 
 func (proxyModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
