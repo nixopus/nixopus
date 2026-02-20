@@ -27,6 +27,13 @@ func (packageModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types
 		state = "present"
 	}
 
+	if err := validateShellArgs(map[string]string{
+		"name":  name,
+		"state": state,
+	}); err != nil {
+		return "", nil, fmt.Errorf("package module: %w", err)
+	}
+
 	pm, err := detectPackageManager(sshClient)
 	if err != nil {
 		return "", nil, err
