@@ -57,6 +57,8 @@ type DeployRepository interface {
 	CountFamilyMembers(familyID uuid.UUID) (int, error)
 	ClearFamilyIDIfSingleMember(familyID uuid.UUID) error
 	GetLatestDeployments(organizationID uuid.UUID, limit int) ([]shared_types.ApplicationDeployment, error)
+	GetDeployedApplications(organizationID uuid.UUID) ([]shared_types.Application, error)
+	GetLatestS3Deployment(applicationID uuid.UUID) (*shared_types.ApplicationDeployment, error)
 }
 
 func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
@@ -687,4 +689,46 @@ func (s *DeployStorage) GetApplicationDomains(applicationID uuid.UUID) ([]shared
 		Order("created_at ASC").
 		Scan(s.Ctx)
 	return domains, err
+}
+
+// GetDeployedApplications returns all applications with status "deployed" for an organization.
+func (s *DeployStorage) GetDeployedApplications(organizationID uuid.UUID) ([]shared_types.Application, error) {
+	var applications []shared_types.Application
+
+	err := s.DB.NewSelect().
+		Model(&applications).
+		Relation("Status").
+		Relation("Domains").
+		Where("a.organization_id = ?", organizationID).
+		Where("EXISTS (SELECT 1 FROM application_status ast WHERE ast.application_id = a.id AND ast.status = ?)", shared_types.Deployed).
+		Scan(s.Ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return applications, nil
+}
+
+// GetLatestS3Deployment returns the most recent deployment with an S3 image key for an application.
+func (s *DeployStorage) GetLatestS3Deployment(applicationID uuid.UUID) (*shared_types.ApplicationDeployment, error) {
+	var deployment shared_types.ApplicationDeployment
+
+	err := s.DB.NewSelect().
+		Model(&deployment).
+		Relation("Status").
+		Where("ad.application_id = ?", applicationID).
+		Where("ad.image_s3_key != ''").
+		Order("ad.created_at DESC").
+		Limit(1).
+		Scan(s.Ctx)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &deployment, nil
 }
