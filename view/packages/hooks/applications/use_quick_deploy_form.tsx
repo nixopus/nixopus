@@ -65,7 +65,7 @@ export function useQuickDeployForm({
         branch: z
           .string()
           .min(1, { message: t('selfHost.deployForm.validation.branch.minLength') }),
-        build_pack: z.enum(['dockerfile', 'docker-compose']),
+        build_pack: z.enum(['dockerfile' /* , 'docker-compose' */]),
         repository: z.string()
       }),
     [t]
@@ -212,8 +212,8 @@ export function useQuickDeployForm({
         name: 'build_pack',
         placeholder: t('selfHost.quickDeploy.fields.buildPack.placeholder'),
         selectOptions: [
-          { label: 'Dockerfile', value: 'dockerfile' },
-          { label: 'Docker Compose', value: 'docker-compose' }
+          { label: 'Dockerfile', value: 'dockerfile' }
+          // { label: 'Docker Compose', value: 'docker-compose' }
         ],
         required: false
       }

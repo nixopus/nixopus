@@ -89,9 +89,10 @@ function useCreateDeployment({
         message: t('selfHost.deployForm.validation.repository.invalidFormat')
       }),
     build_pack: z
-      .enum([BuildPack.Dockerfile, BuildPack.DockerCompose /* BuildPack.Static */])
+      .enum([BuildPack.Dockerfile /* , BuildPack.DockerCompose */ /* BuildPack.Static */])
       .refine(
-        (value) => value === BuildPack.Dockerfile || value === BuildPack.DockerCompose,
+        (value) => value === BuildPack.Dockerfile /* || value === BuildPack.DockerCompose */,
+        // DockerCompose build pack option commented out for deployment
         // Static build pack option commented out for deployment
         // value === BuildPack.Static,
         {
