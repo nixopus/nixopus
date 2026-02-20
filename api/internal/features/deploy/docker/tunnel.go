@@ -6,26 +6,33 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"time"
 
+	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 )
 
-// SSHTunnel represents an SSH tunnel that forwards Unix socket connections
-// to a remote Docker daemon socket through SSH
+const remoteDockerSocket = "/var/run/docker.sock"
+
+// SSHTunnel forwards local Unix socket connections to a remote Docker daemon
+// socket over a single, persistent SSH connection. Multiple Docker API calls
+// multiplex as channels on the one TCP connection, avoiding SSH rate-limits.
 type SSHTunnel struct {
 	localSocket string
 	sshClient   *ssh.SSH
 	listener    net.Listener
 	cleanup     func() error
+
+	conn   *goph.Client
+	connMu sync.Mutex
 }
 
 // CreateSSHTunnel creates a local Unix socket and forwards all connections
-// through the provided SSH client to the remote Docker daemon socket
-// at /var/run/docker.sock. It returns an SSHTunnel with a cleanup function
-// that closes the listener and removes the temporary socket file.
-func CreateSSHTunnel(sshClient *ssh.SSH, logger logger.Logger) (*SSHTunnel, error) {
+// through the provided SSH client to the remote Docker daemon socket.
+func CreateSSHTunnel(sshClient *ssh.SSH, lgr logger.Logger) (*SSHTunnel, error) {
 	tempDir := os.TempDir()
 	localSocket := filepath.Join(tempDir, fmt.Sprintf("docker-ssh-%d.sock", time.Now().UnixNano()))
 
@@ -47,12 +54,54 @@ func CreateSSHTunnel(sshClient *ssh.SSH, logger logger.Logger) (*SSHTunnel, erro
 		},
 	}
 
-	go tunnel.handleConnections(logger)
+	go tunnel.handleConnections(lgr)
 
 	return tunnel, nil
 }
 
-// handleConnections manages the SSH tunnel connections
+// getConn returns the persistent SSH connection, creating it on first call.
+func (t *SSHTunnel) getConn() (*goph.Client, error) {
+	t.connMu.Lock()
+	defer t.connMu.Unlock()
+	if t.conn != nil {
+		return t.conn, nil
+	}
+	conn, err := t.sshClient.Connect()
+	if err != nil {
+		return nil, err
+	}
+	t.conn = conn
+	return conn, nil
+}
+
+// resetConn closes the current connection so the next getConn creates a fresh one.
+func (t *SSHTunnel) resetConn() {
+	t.connMu.Lock()
+	defer t.connMu.Unlock()
+	if t.conn != nil {
+		t.conn.Close()
+		t.conn = nil
+	}
+}
+
+// isConnectionLevelError returns true for errors that indicate the SSH TCP
+// connection itself is dead (EOF, broken pipe, reset). Returns false for
+// channel-level errors like "open failed" which mean the remote resource
+// (e.g. Docker socket) is unavailable but the SSH connection is fine.
+func isConnectionLevelError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if err == io.EOF {
+		return true
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "EOF") ||
+		strings.Contains(msg, "broken pipe") ||
+		strings.Contains(msg, "connection reset") ||
+		strings.Contains(msg, "use of closed network connection")
+}
+
 func (t *SSHTunnel) handleConnections(lgr logger.Logger) {
 	for {
 		localConn, err := t.listener.Accept()
@@ -65,21 +114,37 @@ func (t *SSHTunnel) handleConnections(lgr logger.Logger) {
 	}
 }
 
-// forwardConnection forwards a local connection through the SSH tunnel to the remote Docker socket
+// forwardConnection opens a channel on the persistent SSH connection to reach
+// the remote Docker socket. If the channel open fails due to a stale TCP
+// connection (EOF, broken pipe), it reconnects once and retries. Channel-level
+// failures like "open failed" (Docker not running) do NOT trigger a reconnect.
 func (t *SSHTunnel) forwardConnection(localConn net.Conn, lgr logger.Logger) {
 	defer localConn.Close()
 
-	sshConn, err := t.sshClient.Connect()
+	conn, err := t.getConn()
 	if err != nil {
 		lgr.Log(logger.Error, "Failed to establish SSH connection", err.Error())
 		return
 	}
-	defer sshConn.Close()
 
-	remoteConn, err := sshConn.Dial("unix", "/var/run/docker.sock")
+	remoteConn, err := conn.Dial("unix", remoteDockerSocket)
 	if err != nil {
-		lgr.Log(logger.Error, "Failed to connect to remote Docker socket", err.Error())
-		return
+		if !isConnectionLevelError(err) {
+			lgr.Log(logger.Error, "Failed to connect to remote Docker socket", err.Error())
+			return
+		}
+		// Connection-level error: reset and retry once.
+		t.resetConn()
+		conn, err = t.getConn()
+		if err != nil {
+			lgr.Log(logger.Error, "Failed to re-establish SSH connection", err.Error())
+			return
+		}
+		remoteConn, err = conn.Dial("unix", remoteDockerSocket)
+		if err != nil {
+			lgr.Log(logger.Error, "Failed to connect to remote Docker socket", err.Error())
+			return
+		}
 	}
 	defer remoteConn.Close()
 
@@ -98,8 +163,9 @@ func (t *SSHTunnel) forwardConnection(localConn net.Conn, lgr logger.Logger) {
 	<-done
 }
 
-// Close cleans up the SSH tunnel by closing the listener and removing the socket file
+// Close tears down the persistent SSH connection and the local socket.
 func (t *SSHTunnel) Close() error {
+	t.resetConn()
 	if t.cleanup != nil {
 		return t.cleanup()
 	}

@@ -26,32 +26,55 @@ var AllOperations = []DashboardOperation{
 	GetDeployments,
 }
 
+const defaultPollerInterval = 10 * time.Second
+
 type MonitoringConfig struct {
 	Interval   time.Duration        `json:"interval"`
 	Operations []DashboardOperation `json:"operations"`
 }
 
 // DeployServiceProvider defines the interface for fetching latest deployments.
-// This interface allows the dashboard monitor to work with any service that implements
-// GetLatestDeployments, enabling loose coupling and easier testing.
 type DeployServiceProvider interface {
 	GetLatestDeployments(organizationID string, limit int) ([]shared_types.ApplicationDeployment, error)
 }
 
+// OrgPoller runs a single polling loop per organization. All DashboardMonitors
+// for the same org share one poller, so only ONE SSH session is created per
+// polling interval regardless of how many users have the dashboard open.
+type OrgPoller struct {
+	subMu          sync.RWMutex
+	subscribers    map[*DashboardMonitor]struct{}
+	sshManager     *sshpkg.SSHManager
+	dockerService  docker.DockerRepository
+	deployService  DeployServiceProvider
+	organizationID string
+	log            logger.Logger
+
+	runMu   sync.Mutex
+	running bool
+	ctx     context.Context
+	cancel  context.CancelFunc
+}
+
+var (
+	orgPollers   = make(map[string]*OrgPoller)
+	orgPollersMu sync.Mutex
+)
+
+// DashboardMonitor is a thin wrapper around a WebSocket connection that
+// subscribes to a shared OrgPoller. It does NOT run its own polling loop.
 type DashboardMonitor struct {
-	conn              *websocket.Conn
-	connMutex         sync.Mutex
-	operationsMutex   sync.Mutex // Prevents concurrent execution of HandleAllOperations
-	operationsRunning bool       // Flag to track if operations are currently running
-	sshManager        *sshpkg.SSHManager
-	log               logger.Logger
-	Interval          time.Duration
-	Operations        []DashboardOperation
-	cancel            context.CancelFunc
-	ctx               context.Context
-	dockerService     docker.DockerRepository
-	organizationID    string
-	deployService     DeployServiceProvider
+	conn      *websocket.Conn
+	connMutex sync.Mutex
+	log       logger.Logger
+	poller    *OrgPoller
+
+	subMu      sync.Mutex
+	subscribed bool
+
+	// Kept for API compatibility with the realtime package.
+	Interval   time.Duration
+	Operations []DashboardOperation
 }
 
 type SystemStats struct {
