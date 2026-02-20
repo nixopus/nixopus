@@ -8,7 +8,6 @@ import { OTPInput } from '@nixopus/ui';
 import nixopusLogo from '@/public/logo_white.png';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useOtpLoginForm } from '@/packages/hooks/auth/use-otp-login-form';
-import { Mail } from 'lucide-react';
 
 export interface OtpLoginFormProps {
   email: string;
@@ -53,18 +52,14 @@ export function OtpLoginForm({ ...props }: OtpLoginFormProps) {
               )}
               {!props.otpSent && (
                 <div className="grid gap-3">
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      className="pl-10"
-                      placeholder={t('auth.login.emailPlaceholder')}
-                      required
-                      value={props.email}
-                      onChange={props.handleEmailChange}
-                    />
-                  </div>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder={t('auth.login.emailPlaceholder')}
+                    required
+                    value={props.email}
+                    onChange={props.handleEmailChange}
+                  />
                   {emailError && (
                     <Alert variant="destructive">
                       <AlertDescription className="text-xs !text-red-600 font-medium">
