@@ -101,7 +101,8 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 
 	b.TaskContext.LogAndUpdateStatus("Image built successfully", shared_types.Deploying)
 
-	return b.Application.Name, nil
+	commitTag := CommitImageTag(b.Application.Name, b.ApplicationDeployment.CommitHash)
+	return commitTag, nil
 }
 
 // createBuildContextArchiveFromRemote runs docker build on the remote server (build context stays on remote).
@@ -122,10 +123,11 @@ func (s *TaskService) createBuildContextArchiveFromRemote(ctx context.Context, b
 		}
 		return nil, fmt.Errorf("failed to create SSH session: %w", err)
 	}
-	imageTag := fmt.Sprintf("%s:latest", b.Application.Name)
+	latestTag := fmt.Sprintf("%s:latest", b.Application.Name)
+	commitTag := CommitImageTag(b.Application.Name, b.ApplicationDeployment.CommitHash)
 	escape := func(x string) string { return "'" + strings.ReplaceAll(x, "'", "'\\''") + "'" }
 	quotedPath := escape(contextPath)
-	buildCmd := fmt.Sprintf("cd %s && docker build --progress=plain -t %s -f %s", quotedPath, imageTag, dockerfilePath)
+	buildCmd := fmt.Sprintf("cd %s && docker build --progress=plain -t %s -t %s -f %s", quotedPath, latestTag, commitTag, dockerfilePath)
 	if b.ForceWithoutCache {
 		buildCmd += " --no-cache"
 	}
@@ -200,6 +202,23 @@ func (r *remoteBuildReader) checkWait() error {
 		return fmt.Errorf("docker build failed: %w", err)
 	}
 	return nil
+}
+
+// CommitImageTag returns a Docker image tag based on the app name and commit hash.
+// Falls back to "latest" if the commit hash is empty.
+func CommitImageTag(appName, commitHash string) string {
+	short := shortHash(commitHash)
+	if short == "" {
+		return appName + ":latest"
+	}
+	return appName + ":" + short
+}
+
+func shortHash(hash string) string {
+	if len(hash) >= 8 {
+		return hash[:8]
+	}
+	return hash
 }
 
 // prepareBuildArgs takes a DeployerConfig and returns a map of build arguments extracted from the build variables
