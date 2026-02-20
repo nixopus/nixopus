@@ -3,8 +3,8 @@ metadata:
   name: "DokuWiki"
   description: "DokuWiki is a simple to use and highly versatile Open Source wiki software that doesn't require a database. It is loved by users for its clean and readable syntax. The ease of maintenance, backup and integration makes it an administrator's favorite. Uses dokuwiki image from linuxserver.io"
   author: "Nixopus Team"
-  icon: "📝"
-  category: "Containers"
+  icon: "https://www.dokuwiki.org/lib/tpl/dokuwiki/images/logo.png"
+  category: "Productivity"
   type: "install"
   version: "1.0.0"
   isVerified: false

@@ -25,6 +25,12 @@ import (
 	"github.com/uptrace/bun"
 )
 
+func init() {
+	ssh.RegisterInvalidateHook(func(orgID uuid.UUID) {
+		InvalidateDockerServiceCache(orgID)
+	})
+}
+
 type DockerService struct {
 	Cli       *client.Client
 	Ctx       context.Context

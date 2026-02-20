@@ -3,7 +3,7 @@ metadata:
   name: "HedgeDoc"
   description: "HedgeDoc is a real-time, multi-platform collaborative markdown note editor. This means that you can write notes with other people on your desktop, tablet or even on the phone. You can sign-in via multiple auth providers like Facebook, Twitter, GitHub and many more. Uses hedgedoc image from linuxserver.io. Requires a database (MariaDB, MySQL, PostgreSQL, or SQLite)."
   author: "Nixopus Team"
-  icon: "📝"
+  icon: "https://hedgedoc.org/images/banner/hedgedoc_banner_color_horizontal.svg"
   category: "Productivity"
   type: "install"
   version: "1.0.0"

@@ -3,8 +3,8 @@ metadata:
   name: "Apprise API"
   description: "Apprise API takes advantage of Apprise through your network with a user-friendly API. Send notifications to more than 100 services. An incredibly lightweight gateway to Apprise. Uses apprise-api image from linuxserver.io"
   author: "Nixopus Team"
-  icon: "📢"
-  category: "Containers"
+  icon: "https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png"
+  category: "Monitoring"
   type: "install"
   version: "1.0.0"
   isVerified: false

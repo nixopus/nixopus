@@ -144,6 +144,13 @@
 									"type": "string"
 								},
 								"id": {},
+								"image_s3_key": {
+									"type": "string"
+								},
+								"image_size": {
+									"format": "int64",
+									"type": "integer"
+								},
 								"logs": {
 									"items": {
 										"nullable": true,
@@ -527,6 +534,13 @@
 											"type": "string"
 										},
 										"id": {},
+										"image_s3_key": {
+											"type": "string"
+										},
+										"image_size": {
+											"format": "int64",
+											"type": "integer"
+										},
 										"logs": {
 											"items": {
 												"nullable": true,
@@ -882,6 +896,13 @@
 						"type": "string"
 					},
 					"id": {},
+					"image_s3_key": {
+						"type": "string"
+					},
+					"image_size": {
+						"format": "int64",
+						"type": "integer"
+					},
 					"logs": {
 						"items": {
 							"nullable": true,
@@ -990,6 +1011,13 @@
 											"type": "string"
 										},
 										"id": {},
+										"image_s3_key": {
+											"type": "string"
+										},
+										"image_size": {
+											"format": "int64",
+											"type": "integer"
+										},
 										"logs": {
 											"items": {
 												"nullable": true,
@@ -1939,6 +1967,13 @@
 													"type": "string"
 												},
 												"id": {},
+												"image_s3_key": {
+													"type": "string"
+												},
+												"image_size": {
+													"format": "int64",
+													"type": "integer"
+												},
 												"logs": {
 													"items": {
 														"nullable": true,
@@ -2294,6 +2329,13 @@
 								"type": "string"
 							},
 							"id": {},
+							"image_s3_key": {
+								"type": "string"
+							},
+							"image_size": {
+								"format": "int64",
+								"type": "integer"
+							},
 							"logs": {
 								"items": {
 									"nullable": true,
@@ -3474,6 +3516,13 @@
 														"type": "string"
 													},
 													"id": {},
+													"image_s3_key": {
+														"type": "string"
+													},
+													"image_size": {
+														"format": "int64",
+														"type": "integer"
+													},
 													"logs": {
 														"items": {
 															"nullable": true,
@@ -4400,6 +4449,13 @@
 																"type": "string"
 															},
 															"id": {},
+															"image_s3_key": {
+																"type": "string"
+															},
+															"image_size": {
+																"format": "int64",
+																"type": "integer"
+															},
 															"logs": {
 																"items": {
 																	"nullable": true,
@@ -4755,6 +4811,13 @@
 											"type": "string"
 										},
 										"id": {},
+										"image_s3_key": {
+											"type": "string"
+										},
+										"image_size": {
+											"format": "int64",
+											"type": "integer"
+										},
 										"logs": {
 											"items": {
 												"nullable": true,
@@ -6345,6 +6408,13 @@
 																"type": "string"
 															},
 															"id": {},
+															"image_s3_key": {
+																"type": "string"
+															},
+															"image_size": {
+																"format": "int64",
+																"type": "integer"
+															},
 															"logs": {
 																"items": {
 																	"nullable": true,
@@ -6706,6 +6776,13 @@
 													"type": "string"
 												},
 												"id": {},
+												"image_s3_key": {
+													"type": "string"
+												},
+												"image_size": {
+													"format": "int64",
+													"type": "integer"
+												},
 												"logs": {
 													"items": {
 														"nullable": true,
@@ -6982,6 +7059,13 @@
 														"type": "string"
 													},
 													"id": {},
+													"image_s3_key": {
+														"type": "string"
+													},
+													"image_size": {
+														"format": "int64",
+														"type": "integer"
+													},
 													"logs": {
 														"items": {
 															"nullable": true,
