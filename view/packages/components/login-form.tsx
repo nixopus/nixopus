@@ -5,7 +5,7 @@ import { Input } from '@nixopus/ui';
 import { PasswordInputField } from '@nixopus/ui';
 import { Label } from '@nixopus/ui';
 import { Alert, AlertDescription } from '@nixopus/ui';
-import nixopusLogo from '@/public/nixopus_logo_transparent.png';
+import nixopusLogo from '@/public/logo_white.png';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -68,20 +68,17 @@ export function LoginForm({ ...props }: LoginFormProps) {
         <CardContent className="grid p-0 md:grid-cols-2">
           <div className="p-6 md:p-8">
             <div className="flex flex-col gap-6">
-              <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold">
-                  {props.showTwoFactor ? t('auth.login.2fa.title') : t('auth.login.title')}
-                </h1>
-                <p className="text-muted-foreground text-balance">
-                  {props.showTwoFactor
-                    ? t('auth.login.2fa.description')
-                    : t('auth.login.description')}
-                </p>
-              </div>
+              {props.showTwoFactor && (
+                <div className="flex flex-col items-center text-center">
+                  <h1 className="text-2xl font-bold">{t('auth.login.2fa.title')}</h1>
+                  <p className="text-muted-foreground text-balance">
+                    {t('auth.login.2fa.description')}
+                  </p>
+                </div>
+              )}
               {!props.showTwoFactor && (
                 <>
                   <div className="grid gap-3">
-                    <Label htmlFor="email">{t('auth.email')}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -99,21 +96,20 @@ export function LoginForm({ ...props }: LoginFormProps) {
                     )}
                   </div>
                   <div className="grid gap-3">
-                    <div className="flex items-center">
-                      <Label htmlFor="password">{t('auth.password')}</Label>
-                      <Link
-                        href="/auth/reset-password"
-                        className="ml-auto text-sm underline-offset-2 hover:underline"
-                      >
-                        {t('auth.login.forgotPassword')}
-                      </Link>
-                    </div>
                     <PasswordInputField
                       id="password"
                       required
                       value={props.password}
                       onChange={props.handlePasswordChange}
                     />
+                    <div className="flex justify-end">
+                      <Link
+                        href="/auth/reset-password"
+                        className="text-sm underline-offset-2 hover:underline"
+                      >
+                        {t('auth.login.forgotPassword')}
+                      </Link>
+                    </div>
                     {passwordError && (
                       <Alert variant="destructive">
                         <AlertDescription className="text-xs !text-red-600 font-medium">
@@ -165,7 +161,7 @@ export function LoginForm({ ...props }: LoginFormProps) {
             <img
               src={nixopusLogo.src}
               alt="Nixopus Logo"
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-contain p-8"
             />
           </div>
         </CardContent>
