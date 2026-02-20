@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/caddygo"
@@ -109,15 +110,48 @@ func (t *CaddyTunnel) Close() error {
 	return nil
 }
 
-// caddyTunnelCache caches Caddy tunnels and clients per SSH host.
+// caddyTunnelCache caches Caddy tunnels and clients per SSH host with TTL-based
+// eviction. Idle tunnels are cleaned up to avoid holding thousands of SSH
+// connections open at scale.
 var (
 	caddyTunnelCache   = make(map[string]*caddyTunnelEntry)
 	caddyTunnelCacheMu sync.RWMutex
+	tunnelCleanupOnce  sync.Once
 )
 
+const tunnelIdleTTL = 10 * time.Minute
+
 type caddyTunnelEntry struct {
-	tunnel *CaddyTunnel
-	client *caddygo.Client
+	tunnel   *CaddyTunnel
+	client   *caddygo.Client
+	lastUsed time.Time
+}
+
+func startTunnelCleanup() {
+	tunnelCleanupOnce.Do(func() {
+		go func() {
+			ticker := time.NewTicker(1 * time.Minute)
+			defer ticker.Stop()
+			for range ticker.C {
+				evictIdleTunnels()
+			}
+		}()
+	})
+}
+
+func evictIdleTunnels() {
+	caddyTunnelCacheMu.Lock()
+	defer caddyTunnelCacheMu.Unlock()
+
+	now := time.Now()
+	for key, entry := range caddyTunnelCache {
+		if now.Sub(entry.lastUsed) > tunnelIdleTTL {
+			if entry.tunnel != nil {
+				entry.tunnel.Close()
+			}
+			delete(caddyTunnelCache, key)
+		}
+	}
 }
 
 const defaultCaddyPort = "2019"
@@ -188,11 +222,16 @@ func GetCaddyClient(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Logger)
 		return nil, fmt.Errorf("SSH host is required for Caddy tunnel")
 	}
 
+	startTunnelCleanup()
+
 	caddyTunnelCacheMu.RLock()
 	entry, exists := caddyTunnelCache[key]
 	caddyTunnelCacheMu.RUnlock()
 
 	if exists && entry != nil && entry.tunnel != nil {
+		caddyTunnelCacheMu.Lock()
+		entry.lastUsed = time.Now()
+		caddyTunnelCacheMu.Unlock()
 		return entry.client, nil
 	}
 
@@ -208,7 +247,7 @@ func GetCaddyClient(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Logger)
 	client := caddygo.NewClient(tunnel.Endpoint())
 
 	caddyTunnelCacheMu.Lock()
-	caddyTunnelCache[key] = &caddyTunnelEntry{tunnel: tunnel, client: client}
+	caddyTunnelCache[key] = &caddyTunnelEntry{tunnel: tunnel, client: client, lastUsed: time.Now()}
 	caddyTunnelCacheMu.Unlock()
 
 	return client, nil

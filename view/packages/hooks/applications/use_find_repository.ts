@@ -6,9 +6,9 @@ import { useEffect, useState } from 'react';
 
 /**
  * @description
- * This hook is used to manage the state of the repository when the user navigates to /dashboard/create/:id
+ * This hook is used to manage the state of the repository when the user navigates to /apps/create/:id
  * It takes the repository id from the url and finds the corresponding repository in the redux store
- * If the repository is not found, it redirects to /dashboard
+ * If the repository is not found, it redirects to /apps
  * @returns an object with the selected repository
  */
 function useFindRepository() {
@@ -20,9 +20,9 @@ function useFindRepository() {
 
   // this will trigger when user refreshes the page, or there is no state of repositories in redux store
   useEffect(() => {
-    // if there are no repositories, simply redirect to dashboard
+    // if there are no repositories, simply redirect to apps
     if (repositories.length <= 0) {
-      router.push(`/dashboard`);
+      router.push(`/apps`);
       return;
     }
     // find the selected repository by matching the id in the url

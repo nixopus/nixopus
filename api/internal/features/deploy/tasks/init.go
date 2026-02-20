@@ -6,11 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/raghavyuva/caddygo"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
 	types "github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	"github.com/raghavyuva/nixopus-api/internal/queue"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/vmihailenco/taskq/v3"
@@ -46,12 +42,6 @@ var (
 	QUEUE_LIVE_DEV          = "live-dev"
 	TASK_LIVE_DEV           = "task_live_dev"
 )
-
-// GetCaddyClient returns a caddygo client that reaches Caddy via SSH tunnel.
-// Uses ctx organization or sshClient to get SSH config. Caches tunnel per host.
-func GetCaddyClient(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Logger) (*caddygo.Client, error) {
-	return caddy.GetCaddyClient(ctx, sshClient, lgr)
-}
 
 func (t *TaskService) SetupCreateDeploymentQueue() {
 	onceQueues.Do(func() {
