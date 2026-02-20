@@ -7518,6 +7518,77 @@
 				},
 				"type": "object"
 			},
+			"RecoverRequest": {
+				"description": "RecoverRequest schema",
+				"properties": {
+					"application_id": {
+						"nullable": true
+					}
+				},
+				"type": "object"
+			},
+			"RecoverResponse": {
+				"description": "RecoverResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"failed": {
+								"items": {
+									"properties": {
+										"application_id": {},
+										"application_name": {
+											"type": "string"
+										},
+										"reason": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"recovered": {
+								"items": {
+									"properties": {
+										"application_id": {},
+										"application_name": {
+											"type": "string"
+										},
+										"reason": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"skipped": {
+								"items": {
+									"properties": {
+										"application_id": {},
+										"application_name": {
+											"type": "string"
+										},
+										"reason": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"RemoveApplicationDomainRequest": {
 				"description": "RemoveApplicationDomainRequest schema",
 				"properties": {
@@ -11293,6 +11364,87 @@
 					}
 				},
 				"summary": "handle get environments in family",
+				"tags": [
+					"api/v1/deploy",
+					"application"
+				]
+			}
+		},
+		"/api/v1/deploy/application/recover": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleRecover`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"operationId": "POST_/api/v1/deploy/application/recover",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/RecoverRequest"
+							}
+						}
+					},
+					"description": "Request body for types.RecoverRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RecoverResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/RecoverResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "handle recover",
 				"tags": [
 					"api/v1/deploy",
 					"application"

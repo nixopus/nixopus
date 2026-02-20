@@ -220,7 +220,30 @@ type LabelsResponse struct {
 	Data    []string `json:"data"`
 }
 
+type RecoverRequest struct {
+	ApplicationID *uuid.UUID `json:"application_id,omitempty"`
+}
+
+type RecoverAppResult struct {
+	ApplicationID   uuid.UUID `json:"application_id"`
+	ApplicationName string    `json:"application_name"`
+	Reason          string    `json:"reason"`
+}
+
+type RecoverResult struct {
+	Recovered []RecoverAppResult `json:"recovered"`
+	Skipped   []RecoverAppResult `json:"skipped"`
+	Failed    []RecoverAppResult `json:"failed"`
+}
+
+type RecoverResponse struct {
+	Status  string        `json:"status"`
+	Message string        `json:"message"`
+	Data    RecoverResult `json:"data"`
+}
+
 var (
+	ErrS3NotConfigured                  = errors.New("S3 image storage is not configured")
 	ErrMissingID                        = errors.New("id is required")
 	ErrInvalidRequestType               = errors.New("invalid request type")
 	ErrMissingName                      = errors.New("name is required")
