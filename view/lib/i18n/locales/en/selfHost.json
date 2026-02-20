@@ -711,6 +711,7 @@
       "variables": "variables",
       "bulkPaste": "Bulk Paste",
       "bulkPastePlaceholder": "Paste environment variables here (KEY=VALUE format, one per line)...",
+      "importVariables": "Import Variables",
       "importPasted": "Import",
       "errors": {
         "invalidFormat": "Must be in format KEY=VALUE"
