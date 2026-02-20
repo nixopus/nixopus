@@ -3,8 +3,8 @@ metadata:
   name: "Linkding"
   description: "Linkding is a self-hosted bookmark manager that allows you to save, organize, and search your bookmarks. It provides a clean, modern interface for managing your bookmarks with features like tagging, full-text search, and import/export capabilities."
   author: "Nixopus Team"
-  icon: "🔗"
-  category: "Containers"
+  icon: "https://linkding.link/_astro/logo.DkvM5cgj.svg"
+  category: "Productivity"
   type: "install"
   version: "1.0.0"
   isVerified: false

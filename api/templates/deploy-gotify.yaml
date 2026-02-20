@@ -3,8 +3,8 @@ metadata:
   name: "Gotify"
   description: "Gotify is a simple server for sending and receiving messages in real-time, perfect for push notifications and alerts."
   author: "Nixopus Team"
-  icon: "📨"
-  category: "Containers"
+  icon: "https://raw.githubusercontent.com/gotify/logo/master/gotify-logo.png"
+  category: "Monitoring"
   type: "install"
   version: "1.0.0"
   isVerified: false

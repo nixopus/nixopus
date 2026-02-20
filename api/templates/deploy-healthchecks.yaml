@@ -3,8 +3,8 @@ metadata:
   name: "Healthchecks"
   description: "Healthchecks is a watchdog for your cron jobs. It's a web server that listens for pings from your cron jobs, plus a web interface. Uses healthchecks image from linuxserver.io"
   author: "Nixopus Team"
-  icon: "💚"
-  category: "Network"
+  icon: "https://healthchecks.io/static/img/logo-full-ua2.svg"
+  category: "Monitoring"
   type: "install"
   version: "1.0.0"
   isVerified: false

@@ -3,7 +3,7 @@ metadata:
   name: "Beszel"
   description: "Simple, lightweight server monitoring with Docker stats, historical data, and alerts. Beszel provides real-time monitoring of your server resources with a clean, intuitive interface for tracking CPU, memory, disk usage, and more."
   author: "Nixopus Team"
-  icon: "📈"
+  icon: "https://beszel.dev/image/home-dashboard.png"
   category: "Monitoring"
   type: "install"
   version: "1.0.0"
