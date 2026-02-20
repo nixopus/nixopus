@@ -10,15 +10,25 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/go-fuego/fuego"
 	containertypes "github.com/raghavyuva/nixopus-api/internal/features/container/types"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
 func (c *ContainerController) ListContainers(fuegoCtx fuego.ContextNoBody) (*containertypes.ListContainersResponse, error) {
 	// normalize query params
 	params := parseContainerListParams(fuegoCtx.Request())
+	ctx := fuegoCtx.Request().Context()
+
+	dockerService, err := c.getDockerService(ctx)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
 
 	// Get pre-filtered summaries from Docker
-	containers, err := c.dockerService.ListContainers(container.ListOptions{
+	containers, err := dockerService.ListContainers(container.ListOptions{
 		All:     true,
 		Filters: buildDockerFilters(params),
 	})
@@ -35,7 +45,7 @@ func (c *ContainerController) ListContainers(fuegoCtx fuego.ContextNoBody) (*con
 	sortedRows := applySort(filteredRows, params)
 
 	// Group containers by application ID
-	groups, ungrouped := groupContainersByApplication(sortedRows, containers, c.dockerService)
+	groups, ungrouped := groupContainersByApplication(sortedRows, containers, dockerService)
 
 	// Sort groups by application name
 	sort.SliceStable(groups, func(i, j int) bool {
@@ -323,10 +333,10 @@ func groupContainersByApplication(
 	return groups, ungrouped
 }
 
-func (c *ContainerController) appendContainerInfo(pageRows []containertypes.ContainerListRow, summaries []container.Summary) []containertypes.Container {
+func (c *ContainerController) appendContainerInfo(dockerService docker.DockerRepository, pageRows []containertypes.ContainerListRow, summaries []container.Summary) []containertypes.Container {
 	result := make([]containertypes.Container, 0, len(pageRows))
 	for _, r := range pageRows {
-		info, err := c.dockerService.GetContainerById(r.ID)
+		info, err := dockerService.GetContainerById(r.ID)
 		if err != nil {
 			c.logger.Log(logger.Error, "Error inspecting container", r.ID)
 			continue
@@ -371,12 +381,16 @@ func (c *ContainerController) appendContainerInfo(pageRows []containertypes.Cont
 			})
 		}
 		for name, network := range info.NetworkSettings.Networks {
+			aliases := network.Aliases
+			if aliases == nil {
+				aliases = []string{}
+			}
 			cd.Networks = append(cd.Networks, containertypes.Network{
 				Name:       name,
 				IPAddress:  network.IPAddress,
 				Gateway:    network.Gateway,
 				MacAddress: network.MacAddress,
-				Aliases:    network.Aliases,
+				Aliases:    aliases,
 			})
 		}
 		result = append(result, cd)

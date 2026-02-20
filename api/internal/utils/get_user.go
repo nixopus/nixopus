@@ -34,6 +34,8 @@ func GetUser(w http.ResponseWriter, r *http.Request) *types.User {
 	return user
 }
 
+// GetOrganizationID gets organization ID from context
+// For Better Auth integration, use GetOrCreateOrganizationID instead
 func GetOrganizationID(r *http.Request) uuid.UUID {
 	organizationIDAny := r.Context().Value(types.OrganizationIDKey)
 	if organizationIDAny == nil {

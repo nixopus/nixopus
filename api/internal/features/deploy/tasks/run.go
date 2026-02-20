@@ -1,12 +1,14 @@
 package tasks
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types/swarm"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
@@ -52,8 +54,11 @@ func (s *TaskService) sanitizeEnvVars(envVars map[string]string) []string {
 	return logEnvVars
 }
 
-func (s *TaskService) getAvailablePort() (string, error) {
-	manager := ssh.GetSSHManager()
+func (s *TaskService) getAvailablePort(ctx context.Context) (string, error) {
+	manager, err := ssh.GetSSHManagerFromContext(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get SSH manager: %w", err)
+	}
 	client, err := manager.Connect()
 	if err != nil {
 		return "", err
@@ -64,7 +69,7 @@ func (s *TaskService) getAvailablePort() (string, error) {
 
 	getUsedPorts := "command -v ss >/dev/null 2>&1 && ss -tan | awk '{print $4}' | cut -d':' -f2 | grep '[0-9]\\{1,5\\}' | sort -u || netstat -tan | awk '{print $4}' | grep ':[0-9]' | cut -d':' -f2 | sort -u"
 
-	cmd := fmt.Sprintf("comm -23 <(%s) <(%s) | sort -R | head -n 1 | tr -d '\\n'", generatePorts, getUsedPorts)
+	cmd := fmt.Sprintf("comm -23 <(%s) <(%s) | shuf -n 1 | tr -d '\\n'", generatePorts, getUsedPorts)
 
 	output, err := client.Run(cmd)
 	if err != nil {
@@ -80,7 +85,7 @@ func (s *TaskService) getAvailablePort() (string, error) {
 }
 
 // AtomicUpdateContainer performs a zero-downtime update of a running container
-func (s *TaskService) AtomicUpdateContainer(r shared_types.TaskPayload, taskContext *TaskContext) (AtomicUpdateContainerResult, error) {
+func (s *TaskService) AtomicUpdateContainer(ctx context.Context, r shared_types.TaskPayload, taskContext *TaskContext) (AtomicUpdateContainerResult, error) {
 	if r.Application.Name == "" {
 		return AtomicUpdateContainerResult{}, types.ErrMissingImageName
 	}
@@ -91,42 +96,32 @@ func (s *TaskService) AtomicUpdateContainer(r shared_types.TaskPayload, taskCont
 	s.formatLog(taskContext, types.LogPreparingToUpdateContainer, r.Application.Name)
 
 	// Check if service already exists
-	existingService, err := s.getExistingService(r, taskContext)
+	existingService, err := s.getExistingService(ctx, r, taskContext)
 	if err != nil {
 		s.formatLog(taskContext, "No existing service found, creating new service", "")
 	}
 
 	// Create service spec
-	serviceSpec, availablePort := s.createServiceSpec(r, taskContext)
+	serviceSpec, availablePort := s.createServiceSpec(ctx, r, taskContext)
 	if availablePort == "" {
 		taskContext.LogAndUpdateStatus("Failed to get available port", shared_types.Failed)
 		return AtomicUpdateContainerResult{}, types.ErrFailedToGetAvailablePort
 	}
 
+	// Create or update service using shared utility
+	serviceID, err := CreateOrUpdateService(ctx, serviceSpec, existingService)
+	if err != nil {
+		taskContext.LogAndUpdateStatus("Failed to create/update service: "+err.Error(), shared_types.Failed)
+		return AtomicUpdateContainerResult{}, err
+	}
 	if existingService != nil {
-		// Update existing service
-		s.formatLog(taskContext, "Updating existing service: %s", existingService.ID)
-		err = s.DockerRepo.UpdateService(existingService.ID, serviceSpec, "")
-		if err != nil {
-			taskContext.LogAndUpdateStatus("Failed to update service: "+err.Error(), shared_types.Failed)
-			return AtomicUpdateContainerResult{}, err
-		}
-		s.formatLog(taskContext, "Service updated successfully: %s", existingService.ID)
+		s.formatLog(taskContext, "Service updated successfully: %s", serviceID)
 	} else {
-		// Create new service
-		s.formatLog(taskContext, "Creating new service")
-		err = s.DockerRepo.CreateService(swarm.Service{
-			Spec: serviceSpec,
-		})
-		if err != nil {
-			taskContext.LogAndUpdateStatus("Failed to create service: "+err.Error(), shared_types.Failed)
-			return AtomicUpdateContainerResult{}, err
-		}
-		s.formatLog(taskContext, "Service created successfully")
+		s.formatLog(taskContext, "Service created successfully: %s", serviceID)
 	}
 
 	// Wait for service to be ready with retries
-	serviceInfo, err := s.waitForServiceHealthy(r, taskContext, 120*time.Second, 5*time.Second)
+	serviceInfo, err := s.waitForServiceHealthy(ctx, r, taskContext, 120*time.Second, 2*time.Second)
 	if err != nil {
 		taskContext.LogAndUpdateStatus("Service health check failed: "+err.Error(), shared_types.Failed)
 		return AtomicUpdateContainerResult{}, types.ErrFailedToUpdateContainer
@@ -154,23 +149,93 @@ func (s *TaskService) AtomicUpdateContainer(r shared_types.TaskPayload, taskCont
 }
 
 // getExistingService finds an existing swarm service for the application
-func (s *TaskService) getExistingService(r shared_types.TaskPayload, taskContext *TaskContext) (*swarm.Service, error) {
-	services, err := s.DockerRepo.GetClusterServices()
+func (s *TaskService) getExistingService(ctx context.Context, r shared_types.TaskPayload, taskContext *TaskContext) (*swarm.Service, error) {
+	return FindServiceByName(ctx, r.Application.Name)
+}
+
+// FindServiceByName finds a service by name (shared utility for both deploy and devrunner)
+func FindServiceByName(ctx context.Context, serviceName string) (*swarm.Service, error) {
+	dockerService, err := docker.GetDockerServiceFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get docker service: %w", err)
+	}
+	services, err := dockerService.GetClusterServices()
 	if err != nil {
 		return nil, err
 	}
 
 	for _, service := range services {
-		if service.Spec.Annotations.Name == r.Application.Name {
+		if service.Spec.Annotations.Name == serviceName {
 			return &service, nil
 		}
 	}
 	return nil, nil
 }
 
+// FindServiceByLabel finds a service by label key-value pair (shared utility)
+func FindServiceByLabel(ctx context.Context, labelKey, labelValue string) (*swarm.Service, error) {
+	dockerService, err := docker.GetDockerServiceFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get docker service: %w", err)
+	}
+	services, err := dockerService.GetClusterServices()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, service := range services {
+		if service.Spec.Labels != nil && service.Spec.Labels[labelKey] == labelValue {
+			return &service, nil
+		}
+	}
+	return nil, nil
+}
+
+const labelWorkdir = "nixopus.workdir"
+
+// GetWorkdirFromService returns the workdir from nixopus.workdir label, or "/app" if unset.
+func GetWorkdirFromService(service *swarm.Service) string {
+	if service != nil && service.Spec.Labels != nil {
+		if w := service.Spec.Labels[labelWorkdir]; w != "" {
+			return w
+		}
+	}
+	return "/app"
+}
+
+// CreateOrUpdateService creates or updates a service (shared utility)
+func CreateOrUpdateService(ctx context.Context, serviceSpec swarm.ServiceSpec, existingService *swarm.Service) (string, error) {
+	dockerService, err := docker.GetDockerServiceFromContext(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get docker service: %w", err)
+	}
+	if existingService != nil {
+		// Update existing service
+		err := dockerService.UpdateService(existingService.ID, serviceSpec, "")
+		if err != nil {
+			return "", fmt.Errorf("failed to update service: %w", err)
+		}
+		return existingService.ID, nil
+	} else {
+		// Create new service
+		err := dockerService.CreateService(swarm.Service{
+			Spec: serviceSpec,
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to create service: %w", err)
+		}
+		// Get created service ID by name
+		createdService, err := FindServiceByName(ctx, serviceSpec.Annotations.Name)
+		if err != nil || createdService == nil {
+			return "", fmt.Errorf("failed to get created service: %w", err)
+		}
+		return createdService.ID, nil
+	}
+}
+
 // createServiceSpec creates a swarm service specification
-func (s *TaskService) createServiceSpec(r shared_types.TaskPayload, taskContext *TaskContext) (swarm.ServiceSpec, string) {
-	availablePort, err := s.getAvailablePort()
+func (s *TaskService) createServiceSpec(ctx context.Context, r shared_types.TaskPayload, taskContext *TaskContext) (swarm.ServiceSpec, string) {
+	availablePort, err := s.getAvailablePort(ctx)
 	if err != nil {
 		taskContext.LogAndUpdateStatus("Failed to get available port: "+err.Error(), shared_types.Failed)
 		return swarm.ServiceSpec{}, ""
@@ -222,28 +287,30 @@ func (s *TaskService) createServiceSpec(r shared_types.TaskPayload, taskContext 
 }
 
 // getServiceInfo retrieves service information
-func (s *TaskService) getServiceInfo(r shared_types.TaskPayload, taskContext *TaskContext) (swarm.Service, error) {
-	services, err := s.DockerRepo.GetClusterServices()
+func (s *TaskService) getServiceInfo(ctx context.Context, r shared_types.TaskPayload, taskContext *TaskContext) (swarm.Service, error) {
+	service, err := FindServiceByName(ctx, r.Application.Name)
 	if err != nil {
 		return swarm.Service{}, err
 	}
-
-	for _, service := range services {
-		if service.Spec.Annotations.Name == r.Application.Name {
-			return service, nil
-		}
+	if service == nil {
+		return swarm.Service{}, fmt.Errorf("service not found: %s", r.Application.Name)
 	}
-	return swarm.Service{}, fmt.Errorf("service not found: %s", r.Application.Name)
+	return *service, nil
 }
 
 // waitForServiceHealthy polls the service health until all replicas are running or timeout
-func (s *TaskService) waitForServiceHealthy(r shared_types.TaskPayload, taskContext *TaskContext, timeout, pollInterval time.Duration) (swarm.Service, error) {
+func (s *TaskService) waitForServiceHealthy(ctx context.Context, r shared_types.TaskPayload, taskContext *TaskContext, timeout, pollInterval time.Duration) (swarm.Service, error) {
 	deadline := time.Now().Add(timeout)
 
 	s.formatLog(taskContext, "Waiting for service to become healthy (timeout: %s)", timeout)
 
+	dockerService, err := s.getDockerService(ctx)
+	if err != nil {
+		return swarm.Service{}, fmt.Errorf("failed to get docker service: %w", err)
+	}
+
 	for time.Now().Before(deadline) {
-		serviceInfo, err := s.getServiceInfo(r, taskContext)
+		serviceInfo, err := s.getServiceInfo(ctx, r, taskContext)
 		if err != nil {
 			s.formatLog(taskContext, "Failed to get service info, retrying: %s", err.Error())
 			time.Sleep(pollInterval)
@@ -257,7 +324,7 @@ func (s *TaskService) waitForServiceHealthy(r shared_types.TaskPayload, taskCont
 		}
 
 		desiredReplicas := int(*serviceInfo.Spec.Mode.Replicated.Replicas)
-		running, _, err := s.DockerRepo.GetServiceHealth(serviceInfo)
+		running, _, err := dockerService.GetServiceHealth(serviceInfo)
 		if err != nil {
 			s.formatLog(taskContext, "Failed to get service health, retrying: %s", err.Error())
 			time.Sleep(pollInterval)
@@ -265,7 +332,7 @@ func (s *TaskService) waitForServiceHealthy(r shared_types.TaskPayload, taskCont
 		}
 
 		// Get detailed task states for debugging
-		taskStates := s.getTaskStatesForService(serviceInfo)
+		taskStates := s.getTaskStatesForService(ctx, serviceInfo)
 		s.formatLog(taskContext, "Service health: %d/%d running, task states: %s", running, desiredReplicas, taskStates)
 
 		if running >= desiredReplicas {
@@ -277,14 +344,18 @@ func (s *TaskService) waitForServiceHealthy(r shared_types.TaskPayload, taskCont
 	}
 
 	// Final attempt to get detailed error info
-	serviceInfo, _ := s.getServiceInfo(r, taskContext)
-	taskStates := s.getTaskStatesForService(serviceInfo)
+	serviceInfo, _ := s.getServiceInfo(ctx, r, taskContext)
+	taskStates := s.getTaskStatesForService(ctx, serviceInfo)
 	return swarm.Service{}, fmt.Errorf("timeout waiting for service to become healthy, task states: %s", taskStates)
 }
 
 // getTaskStatesForService returns a summary of task states for debugging
-func (s *TaskService) getTaskStatesForService(service swarm.Service) string {
-	tasks, err := s.DockerRepo.GetClusterTasks()
+func (s *TaskService) getTaskStatesForService(ctx context.Context, service swarm.Service) string {
+	dockerService, err := s.getDockerService(ctx)
+	if err != nil {
+		return fmt.Sprintf("failed to get docker service: %s", err.Error())
+	}
+	tasks, err := dockerService.GetClusterTasks()
 	if err != nil {
 		return fmt.Sprintf("failed to get tasks: %s", err.Error())
 	}

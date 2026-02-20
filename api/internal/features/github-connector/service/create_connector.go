@@ -1,9 +1,11 @@
 package service
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -27,15 +29,38 @@ func (s *GithubConnectorService) CreateConnector(connector *types.CreateGithubCo
 		return err
 	}
 
+	githubConfig := config.AppConfig.GitHub
+
+	// Use provided credentials if available, otherwise use shared config
+	appID := connector.AppID
+	slug := connector.Slug
+	pem := connector.Pem
+	clientID := connector.ClientID
+	clientSecret := connector.ClientSecret
+	webhookSecret := connector.WebhookSecret
+
+	if appID == "" || pem == "" {
+		if githubConfig.AppID == "" || githubConfig.Pem == "" {
+			s.logger.Log(logger.Error, "GitHub App credentials not configured", "")
+			return fmt.Errorf("GitHub App credentials not configured")
+		}
+		appID = githubConfig.AppID
+		slug = githubConfig.Slug
+		pem = githubConfig.Pem
+		clientID = githubConfig.ClientID
+		clientSecret = githubConfig.ClientSecret
+		webhookSecret = githubConfig.WebhookSecret
+	}
+
 	new_connector := shared_types.GithubConnector{
 		ID:             uuid.New(),
 		InstallationID: "",
-		AppID:          connector.AppID,
-		Slug:           connector.Slug,
-		Pem:            connector.Pem,
-		ClientID:       connector.ClientID,
-		ClientSecret:   connector.ClientSecret,
-		WebhookSecret:  connector.WebhookSecret,
+		AppID:          appID,
+		Slug:           slug,
+		Pem:            pem,
+		ClientID:       clientID,
+		ClientSecret:   clientSecret,
+		WebhookSecret:  webhookSecret,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 		DeletedAt:      nil,

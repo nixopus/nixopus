@@ -2,11 +2,11 @@
 
 import React from 'react';
 import { RefreshCw, X, ChevronRight } from 'lucide-react';
-import { CardWrapper } from '@/components/ui/card-wrapper';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { CardWrapper } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
+import { Skeleton } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
 import { cn } from '@/lib/utils';
 import {
   useDeploymentLogsViewer,
@@ -19,12 +19,19 @@ interface DeploymentLogsTableProps {
   id: string;
   isDeployment?: boolean;
   title?: string;
+  additionalLogs?: FormattedLogEntry[];
 }
 
-export function DeploymentLogsTable({ id, isDeployment = false, title }: DeploymentLogsTableProps) {
+export function DeploymentLogsTable({
+  id,
+  isDeployment = false,
+  title,
+  additionalLogs
+}: DeploymentLogsTableProps) {
   const {
-    logs,
+    logs: deploymentLogs,
     isLoading,
+    isFetching,
     toggleLogExpansion,
     isLogExpanded,
     expandAll,
@@ -41,6 +48,12 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
     setIsDense,
     refreshLogs
   } = useDeploymentLogsViewer({ id, isDeployment });
+
+  const logs = React.useMemo(() => {
+    if (!additionalLogs || additionalLogs.length === 0) return deploymentLogs;
+    const merged = [...deploymentLogs, ...additionalLogs];
+    return merged.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [deploymentLogs, additionalLogs]);
 
   const {
     hasLogs,
@@ -73,7 +86,7 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
   });
 
   return (
-    <CardWrapper className="border-0 shadow-none overflow-x-hidden bg-transparent">
+    <CardWrapper className="border-0 border-border shadow-none overflow-x-hidden bg-transparent">
       <div className="space-y-3 pb-4 px-0 border-none border-b-0 min-w-0">
         {title && (
           <div className="flex items-center justify-between min-w-0 gap-2">
@@ -132,7 +145,7 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
               <Badge
                 key={option.value}
                 variant={filters.level === option.value ? 'default' : 'outline'}
-                className="cursor-pointer transition-colors flex-shrink-0"
+                className="cursor-pointer transition-colors flex-shrink-0 border border-border"
                 onClick={() => handleLevelChange(option.value)}
               >
                 {option.label}
@@ -160,15 +173,15 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
           </div>
         </div>
       </div>
-      <div className="p-0 border rounded-md overflow-hidden min-w-0">
-        <div className="flex items-center gap-3 px-4 py-2 border-b bg-muted/30 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-0">
+      <div className="p-0 border border-border rounded-md overflow-hidden min-w-0">
+        <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-0">
           {tableHeaderColumns.map((col) => (
             <div key={col.key} className={`${col.width} flex-shrink-0`}>
               {col.label}
             </div>
           ))}
         </div>
-        {isLoading && logs.length === 0 ? (
+        {(isLoading || isFetching) && logs.length === 0 ? (
           <div className="p-4 space-y-3">
             {loadingSkeletons.map((i) => (
               <Skeleton key={i} className="h-12 w-full" />
@@ -198,7 +211,7 @@ export function DeploymentLogsTable({ id, isDeployment = false, title }: Deploym
                     <div className="ml-7 min-w-0">
                       <div
                         className={cn(
-                          'font-mono bg-muted/50 rounded border break-words whitespace-pre-wrap overflow-wrap-anywhere',
+                          'font-mono bg-muted/50 rounded border border-border break-words whitespace-pre-wrap overflow-wrap-anywhere',
                           isDense ? 'text-xs p-2' : 'text-sm p-3'
                         )}
                       >

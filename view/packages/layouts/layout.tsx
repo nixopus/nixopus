@@ -1,6 +1,8 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
-import { HelpCircle, Settings, TerminalIcon } from 'lucide-react';
+import Image from 'next/image';
+import { useTheme } from 'next-themes';
+import { Blocks, Settings, ChevronRight, TerminalIcon } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -14,24 +16,22 @@ import {
   SidebarRail,
   SidebarTrigger
 } from '@/components/ui/sidebar';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@nixopus/ui';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator
-} from '@/components/ui/breadcrumb';
-import { Button } from '@/components/ui/button';
-import { ModeToggler } from '@/components/ui/theme-toggler';
+} from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
+import { UserMenu } from '@/components/ui/user-menu';
+import { LogoutDialog } from '@/components/ui/logout-dialog';
 import { Separator } from '@/components/ui/separator';
-import { TeamSwitcher } from '@/components/ui/team-switcher';
 import { AnyPermissionGuard } from '@/packages/components/rbac';
 import { CreateTeam } from '@/packages/components/team-settings';
 import { NavMain } from '@/packages/components/nav-main';
-import { RBACGuard } from '@/packages/components/rbac';
 import { Terminal } from '@/packages/components/terminal';
-import { TopbarWidgets } from '@/packages/components/topbar-widgets';
 import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
 import {
   AppSidebarProps,
@@ -41,7 +41,6 @@ import {
 } from '@/packages/types/layout';
 import { cn } from '@/lib/utils';
 import { useLayout } from '@/packages/hooks/use-layout';
-import { Tour } from './Tour';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -72,14 +71,24 @@ function Layout({ children }: LayoutProps) {
     setTerminalPosition,
     fitAddonRef,
     setFitAddonRef,
-    startTour
+    startTour,
+    showLogoutDialog,
+    handleLogoutClick,
+    handleLogoutConfirm,
+    handleLogoutCancel
   } = useLayout();
 
   return (
     <SidebarProvider defaultOpen={false}>
       <AppSidebar
         user={user}
-        activeOrg={activeOrg}
+        activeOrg={
+          activeOrg
+            ? 'organization' in activeOrg
+              ? activeOrg.organization
+              : (activeOrg as any)
+            : null
+        }
         hasAnyPermission={hasAnyPermission}
         activeNav={activeNav}
         refetch={refetch}
@@ -94,30 +103,35 @@ function Layout({ children }: LayoutProps) {
           toggleTerminal={toggleTerminal}
           t={t}
           startTour={startTour}
+          user={user}
+          onLogout={handleLogoutClick}
         />
-        <Tour>
-          <CreateTeam
-            open={addTeamModalOpen}
-            setOpen={setAddTeamModalOpen}
-            createTeam={createTeam}
-            teamName={teamName}
-            teamDescription={teamDescription}
-            handleTeamNameChange={handleTeamNameChange}
-            handleTeamDescriptionChange={handleTeamDescriptionChange}
-            isLoading={isLoading}
+        <LogoutDialog
+          open={showLogoutDialog}
+          onConfirm={handleLogoutConfirm}
+          onCancel={handleLogoutCancel}
+        />
+        <CreateTeam
+          open={addTeamModalOpen}
+          setOpen={setAddTeamModalOpen}
+          createTeam={createTeam}
+          teamName={teamName}
+          teamDescription={teamDescription}
+          handleTeamNameChange={handleTeamNameChange}
+          handleTeamDescriptionChange={handleTeamDescriptionChange}
+          isLoading={isLoading}
+        />
+        <div className="w-full h-full flex-1">
+          <ResizablePanelLayout
+            TerminalPosition={TerminalPosition}
+            isTerminalOpen={isTerminalOpen}
+            fitAddonRef={fitAddonRef}
+            toggleTerminal={toggleTerminal}
+            setFitAddonRef={setFitAddonRef}
+            setTerminalPosition={setTerminalPosition}
+            children={children}
           />
-          <div className="w-full h-full flex-1">
-            <ResizablePanelLayout
-              TerminalPosition={TerminalPosition}
-              isTerminalOpen={isTerminalOpen}
-              fitAddonRef={fitAddonRef}
-              toggleTerminal={toggleTerminal}
-              setFitAddonRef={setFitAddonRef}
-              setTerminalPosition={setTerminalPosition}
-              children={children}
-            />
-          </div>
-        </Tour>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
@@ -221,7 +235,15 @@ function BreadCrumbs({ breadcrumbs }: BreadCrumbsProps) {
   );
 }
 
-function AppTopBar({ breadcrumbs, isTerminalOpen, toggleTerminal, t, startTour }: AppTopBarProps) {
+function AppTopBar({
+  breadcrumbs,
+  isTerminalOpen,
+  toggleTerminal,
+  t,
+  startTour,
+  user,
+  onLogout
+}: AppTopBarProps) {
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
       <div className="flex items-center gap-2 px-4 justify-between w-full">
@@ -231,7 +253,7 @@ function AppTopBar({ breadcrumbs, isTerminalOpen, toggleTerminal, t, startTour }
           {breadcrumbs?.length > 0 && <BreadCrumbs breadcrumbs={breadcrumbs} />}{' '}
         </div>
         <div className="flex items-center gap-4">
-          <TopbarWidgets />
+          {/* <TopbarWidgets /> */}
           <AnyPermissionGuard
             permissions={['terminal:create', 'terminal:read', 'terminal:update']}
             loadingFallback={null}
@@ -248,21 +270,10 @@ function AppTopBar({ breadcrumbs, isTerminalOpen, toggleTerminal, t, startTour }
                 isTerminalOpen && 'bg-primary/10 text-primary hover:bg-primary/20'
               )}
             >
-              <TerminalIcon className="h-5 w-5" />
+              <ChevronRight className="h-5 w-5" />
             </Button>
           </AnyPermissionGuard>
-          <Button
-            variant="outline"
-            size="icon"
-            className="ml-auto"
-            onClick={startTour}
-            data-slot="tour-trigger"
-          >
-            <HelpCircle className="h-5 w-5" />
-          </Button>
-          <RBACGuard resource="user" action="update">
-            <ModeToggler />
-          </RBACGuard>
+          <UserMenu user={user} onLogout={onLogout} />
         </div>
       </div>
     </header>
@@ -270,8 +281,6 @@ function AppTopBar({ breadcrumbs, isTerminalOpen, toggleTerminal, t, startTour }
 }
 
 export function AppSidebar({
-  toggleAddTeamModal,
-  addTeamModalOpen,
   user,
   activeOrg,
   hasAnyPermission,
@@ -283,19 +292,34 @@ export function AppSidebar({
   ...props
 }: AppSidebarProps) {
   const { openSettings } = useSettingsModal();
+  const router = useRouter();
+  const { resolvedTheme } = useTheme();
 
   if (!user || !activeOrg) {
     return null;
   }
 
+  const logoSrc = resolvedTheme === 'dark' ? '/logo_white.png' : '/logo_black.png';
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher
-          refetch={refetch}
-          toggleAddTeamModal={toggleAddTeamModal}
-          addTeamModalOpen={addTeamModalOpen}
-        />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              size="lg"
+              onClick={() => router.push('/apps')}
+              className="cursor-pointer"
+            >
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
+                <Image src={logoSrc} alt="Nixopus" width={32} height={32} />
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">Nixopus</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain
@@ -314,6 +338,15 @@ export function AppSidebar({
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => router.push('/extensions')}
+              className="cursor-pointer"
+            >
+              <Blocks />
+              <span>{t('navigation.extensions')}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={() => openSettings()} className="cursor-pointer">
               <Settings />

@@ -31,7 +31,7 @@ import { useDebounce } from '@/packages/hooks/shared/use-debounce';
  */
 function useGithubRepoPagination() {
   const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 16;
   const router = useRouter();
   const [selectedRepository, setSelectedRepository] = React.useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -103,7 +103,7 @@ function useGithubRepoPagination() {
 
   const onSelectRepository = (repository: string) => {
     setSelectedRepository(repository);
-    router.push(`/self-host/create/${repository}`);
+    router.push(`/apps/create/${repository}`);
   };
 
   return {

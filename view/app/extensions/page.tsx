@@ -4,11 +4,11 @@ import React from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import PageLayout from '@/packages/layouts/page-layout';
 import { useExtensions } from '../../packages/hooks/extensions/use-extensions';
-import PaginationWrapper from '@/components/ui/pagination';
-import MainPageHeader from '@/components/ui/main-page-header';
-import { SearchBar } from '@/components/ui/search-bar';
-import { SelectWrapper } from '@/components/ui/select-wrapper';
-import { Skeleton } from '@/components/ui/skeleton';
+import { PaginationWrapper } from '@nixopus/ui';
+import { MainPageHeader } from '@nixopus/ui';
+import { SearchBar } from '@nixopus/ui';
+import { SelectWrapper } from '@nixopus/ui';
+import { Skeleton } from '@nixopus/ui';
 import { ExtensionSortField, SortDirection } from '@/redux/types/extension';
 import { ExtensionGrid, ExtensionInput } from '@/packages/components/extension';
 import CategoryBadges from '@/packages/components/extension';
@@ -63,7 +63,7 @@ export default function ExtensionsPage() {
     <PageLayout maxWidth="full" padding="md" spacing="lg">
       <MainPageHeader
         label={t('extensions.title')}
-        description={t('extensions.description')}
+        highlightLabel={false}
         actions={
           <div className="flex items-center gap-12">
             <SearchBar

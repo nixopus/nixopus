@@ -3,9 +3,9 @@ import { useRouter } from 'next/navigation';
 import { useRollbackApplicationMutation } from '@/redux/services/deploy/applicationsApi';
 import { ApplicationDeployment } from '@/redux/types/applications';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { TableColumn } from '@/components/ui/data-table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { TableColumn } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
 import { Undo } from 'lucide-react';
 import { getDeploymentStatusIcon } from '@/packages/utils/colors';
 
@@ -41,7 +41,7 @@ export function useDeploymentsList({ deployments }: UseDeploymentsListProps) {
   };
 
   const handleRowClick = (deployment: ApplicationDeployment) => {
-    router.push(`/self-host/application/${deployment.application_id}/deployments/${deployment.id}`);
+    router.push(`/apps/application/${deployment.application_id}/deployments/${deployment.id}`);
   };
 
   const handleRollback = (deploymentId: string, e: React.MouseEvent) => {

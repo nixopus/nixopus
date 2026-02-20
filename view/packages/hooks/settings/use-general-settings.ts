@@ -1,7 +1,6 @@
 import { useAppSelector } from '@/redux/hooks';
 import {
   useGetUserSettingsQuery,
-  useUpdateFontMutation,
   useUpdateAutoUpdateMutation,
   useUpdateLanguageMutation,
   useUpdateThemeMutation,
@@ -31,7 +30,6 @@ function useGeneralSettings() {
     isLoading: isGettingUserSettings,
     refetch: refetchUserSettings
   } = useGetUserSettingsQuery();
-  const [updateFont, { isLoading: isUpdatingFont }] = useUpdateFontMutation();
   const [updateTheme, { isLoading: isUpdatingTheme }] = useUpdateThemeMutation();
   const [updateLanguage, { isLoading: isUpdatingLanguage }] = useUpdateLanguageMutation();
   const [updateAutoUpdate, { isLoading: isUpdatingAutoUpdate }] = useUpdateAutoUpdateMutation();
@@ -39,6 +37,11 @@ function useGeneralSettings() {
   const handleUsernameChange = async () => {
     if (username.trim() === '') {
       setUsernameError(t('settings.account.errors.emptyUsername'));
+      return;
+    }
+
+    if (!user) {
+      setUsernameError(t('settings.account.errors.updateFailed'));
       return;
     }
 
@@ -75,15 +78,6 @@ function useGeneralSettings() {
       toast.error(t('settings.account.errors.avatarUpdateFailed'));
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleFontChange = async (fontFamily: string, fontSize: number) => {
-    try {
-      await updateFont({ font_family: fontFamily, font_size: fontSize });
-      refetchUserSettings();
-    } catch (error) {
-      console.error(t('settings.account.errors.fontUpdateFailed'), error);
     }
   };
 
@@ -129,14 +123,12 @@ function useGeneralSettings() {
     user,
     userSettings,
     isGettingUserSettings,
-    isUpdatingFont,
     isUpdatingTheme,
     isUpdatingLanguage,
     isUpdatingAutoUpdate,
     handleThemeChange,
     handleLanguageChange,
-    handleAutoUpdateChange,
-    handleFontUpdate: handleFontChange
+    handleAutoUpdateChange
   };
 }
 

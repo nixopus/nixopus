@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -13,7 +14,7 @@ type dockerComposeModule struct{}
 
 func (dockerComposeModule) Type() string { return "docker_compose" }
 
-func (dockerComposeModule) Execute(_ *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
+func (dockerComposeModule) Execute(ctx context.Context, _ *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
 	fileRaw, _ := step.Properties["file"].(string)
 	action, _ := step.Properties["action"].(string) // up, down, pull, build, restart
 	_, _ = step.Properties["project"].(string)
@@ -27,13 +28,19 @@ func (dockerComposeModule) Execute(_ *ssh.SSH, step types.SpecStep, vars map[str
 		return "", nil, fmt.Errorf("docker_compose action is required")
 	}
 
-	svc, _ := deploydocker.GetDockerManager().GetDefaultService()
+	svc, err := deploydocker.GetDockerServiceFromContext(ctx)
+	if err != nil {
+		return "", nil, fmt.Errorf("docker_compose: failed to get docker service from context: %w", err)
+	}
+	if svc == nil {
+		return "", nil, fmt.Errorf("docker_compose: docker service is nil")
+	}
 
 	type handler func() (string, func(), error)
 	handlers := map[string]handler{
-		"up":    func() (string, func(), error) { return composeUp(svc, file) },
-		"down":  func() (string, func(), error) { return composeDown(svc, file) },
-		"build": func() (string, func(), error) { return composeBuild(svc, file) },
+		"up":    func() (string, func(), error) { return composeUp(ctx, svc, file) },
+		"down":  func() (string, func(), error) { return composeDown(ctx, svc, file) },
+		"build": func() (string, func(), error) { return composeBuild(ctx, svc, file) },
 	}
 
 	h, ok := handlers[action]
@@ -51,7 +58,7 @@ func (dockerComposeModule) Execute(_ *ssh.SSH, step types.SpecStep, vars map[str
 	return strings.TrimSpace(out), comp, nil
 }
 
-func composeUp(svc *deploydocker.DockerService, file string) (string, func(), error) {
+func composeUp(ctx context.Context, svc deploydocker.DockerRepository, file string) (string, func(), error) {
 	if err := svc.ComposeUp(file, map[string]string{}); err != nil {
 		return "", nil, err
 	}
@@ -59,7 +66,7 @@ func composeUp(svc *deploydocker.DockerService, file string) (string, func(), er
 	return "compose up", compensate, nil
 }
 
-func composeDown(svc *deploydocker.DockerService, file string) (string, func(), error) {
+func composeDown(ctx context.Context, svc deploydocker.DockerRepository, file string) (string, func(), error) {
 	if err := svc.ComposeDown(file); err != nil {
 		return "", nil, err
 	}
@@ -67,7 +74,7 @@ func composeDown(svc *deploydocker.DockerService, file string) (string, func(), 
 	return "compose down", compensate, nil
 }
 
-func composeBuild(svc *deploydocker.DockerService, file string) (string, func(), error) {
+func composeBuild(ctx context.Context, svc deploydocker.DockerRepository, file string) (string, func(), error) {
 	if err := svc.ComposeBuild(file, map[string]string{}); err != nil {
 		return "", nil, err
 	}

@@ -7,50 +7,38 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
-func (m *DashboardMonitor) Broadcast(action string, message interface{}) {
-	lockAcquired := make(chan bool, 1)
-	go func() {
-		m.connMutex.Lock()
-		lockAcquired <- true
-	}()
+// send writes a single message to this monitor's WebSocket connection.
+func (m *DashboardMonitor) send(action string, message interface{}) {
+	m.connMutex.Lock()
+	defer m.connMutex.Unlock()
 
-	select {
-	case <-lockAcquired:
-		defer m.connMutex.Unlock()
-		if m.conn == nil {
-			m.log.Log(logger.Error, "WebSocket connection is nil", "")
-			return
-		}
-		_ = m.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-
-		if err := m.conn.WriteJSON(map[string]interface{}{"action": action, "data": message, "timestamp": time.Now().Unix(), "topic": "dashboard_monitor"}); err != nil {
-			m.log.Log(logger.Error, "Failed to broadcast message", err.Error())
-		}
-
-		_ = m.conn.SetWriteDeadline(time.Time{})
-
-	case <-time.After(3 * time.Second):
-		m.log.Log(logger.Error, "Timeout waiting for broadcast lock", "")
-	}
-}
-
-func (m *DashboardMonitor) BroadcastDebug(message string) {
-	response := map[string]interface{}{
-		"action":    "debug",
-		"message":   message,
-		"timestamp": time.Now().Unix(),
-	}
-
-	jsonData, err := json.Marshal(response)
-	if err != nil {
-		m.log.Log(logger.Error, "Failed to marshal debug message", err.Error())
+	if m.conn == nil {
 		return
 	}
 
-	m.Broadcast("debug", string(jsonData))
+	msg := map[string]interface{}{
+		"action":    action,
+		"data":      message,
+		"timestamp": time.Now().Unix(),
+		"topic":     "dashboard_monitor",
+	}
+
+	deadline := time.Now().Add(5 * time.Second)
+	if err := m.conn.SetWriteDeadline(deadline); err != nil {
+		m.log.Log(logger.Error, "Failed to set write deadline", err.Error())
+		return
+	}
+
+	if err := m.conn.WriteJSON(msg); err != nil {
+		m.log.Log(logger.Error, "Failed to send message", err.Error())
+		return
+	}
+
+	_ = m.conn.SetWriteDeadline(time.Time{})
 }
 
-func (m *DashboardMonitor) BroadcastError(errMsg string, operation DashboardOperation) {
+// sendError writes an error message to this monitor's WebSocket connection.
+func (m *DashboardMonitor) sendError(errMsg string, operation DashboardOperation) {
 	response := map[string]interface{}{
 		"action":    operation,
 		"error":     errMsg,
@@ -63,5 +51,23 @@ func (m *DashboardMonitor) BroadcastError(errMsg string, operation DashboardOper
 		return
 	}
 
-	m.Broadcast("error", string(jsonData))
+	m.send("error", string(jsonData))
+}
+
+// broadcast fans out a message to every subscribed monitor.
+func (p *OrgPoller) broadcast(action string, data interface{}) {
+	p.subMu.RLock()
+	defer p.subMu.RUnlock()
+	for m := range p.subscribers {
+		m.send(action, data)
+	}
+}
+
+// broadcastError fans out an error to every subscribed monitor.
+func (p *OrgPoller) broadcastError(errMsg string, op DashboardOperation) {
+	p.subMu.RLock()
+	defer p.subMu.RUnlock()
+	for m := range p.subscribers {
+		m.sendError(errMsg, op)
+	}
 }

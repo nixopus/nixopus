@@ -6,21 +6,16 @@ import (
 )
 
 // RegisterAuthRoutes registers public authentication routes
+// Most auth routes are handled by Better Auth
 func (router *Router) RegisterAuthRoutes(authGroup *fuego.Server, authController *auth.AuthController) {
+	// Check if admin is registered (public endpoint for registration flow)
 	fuego.Get(authGroup, "/is-admin-registered", authController.IsAdminRegistered)
 }
 
-// RegisterAuthenticatedAuthRoutes registers protected authentication routes
-func (router *Router) RegisterAuthenticatedAuthRoutes(authGroup *fuego.Server, authController *auth.AuthController) {
-	fuego.Post(authGroup, "/logout", authController.Logout)
-	fuego.Post(authGroup, "/send-verification-email", authController.SendVerificationEmail)
-	fuego.Get(authGroup, "/verify-email", authController.VerifyEmail)
-	fuego.Post(authGroup, "/create-user", authController.CreateUser)
-	fuego.Post(authGroup, "/setup-2fa", authController.SetupTwoFactor)
-	fuego.Post(authGroup, "/verify-2fa", authController.VerifyTwoFactor)
-	fuego.Post(authGroup, "/disable-2fa", authController.DisableTwoFactor)
-	fuego.Post(authGroup, "/2fa-login", authController.TwoFactorLogin)
-	fuego.Post(authGroup, "/api-keys", authController.CreateAPIKey)
-	fuego.Get(authGroup, "/api-keys", authController.ListAPIKeys)
-	fuego.Delete(authGroup, "/api-keys/{id}", authController.RevokeAPIKey)
+// RegisterAuthProtectedRoutes registers authenticated authentication routes
+func (router *Router) RegisterAuthProtectedRoutes(authGroup *fuego.Server, authController *auth.AuthController) {
+	// Bootstrap: user, orgs, activeOrgId, isOnboarded, provisionStatus, hasServers (skips org resolution)
+	fuego.Get(authGroup, "/bootstrap", authController.HandleBootstrap)
+	// CLI init endpoint - requires authentication and creates a draft project
+	fuego.Post(authGroup, "/cli/init", authController.HandleCLIInit)
 }

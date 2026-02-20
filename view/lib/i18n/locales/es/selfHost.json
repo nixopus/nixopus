@@ -23,7 +23,12 @@
         "monitoring": "Monitoreo",
         "configuration": "Configuración",
         "deployments": "Despliegues",
-        "logs": "Registros"
+        "logs": "Registros",
+        "resources": "Recursos"
+      },
+      "logs": {
+        "deployment": "Deployment",
+        "resources": "Resources"
       }
     },
     "page": {

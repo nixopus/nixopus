@@ -1,4 +1,4 @@
-import { DialogWrapper, DialogAction } from '@/components/ui/dialog-wrapper';
+import { DialogWrapper, DialogAction } from '@nixopus/ui';
 import { LucideIcon } from 'lucide-react';
 import { ReactNode } from 'react';
 

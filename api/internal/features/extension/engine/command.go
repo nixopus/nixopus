@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
@@ -11,7 +12,7 @@ type commandModule struct{}
 
 func (commandModule) Type() string { return "command" }
 
-func (commandModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
+func (commandModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
 	raw, _ := step.Properties["cmd"].(string)
 	if raw == "" {
 		return "", nil, fmt.Errorf("command: 'cmd' is required")
@@ -19,7 +20,13 @@ func (commandModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[s
 	revertRaw, _ := step.Properties["revert_cmd"].(string)
 	user, _ := step.Properties["user"].(string)
 
-	cmd := replaceVars(raw, vars)
+	if user != "" {
+		if err := validateShellArgs(map[string]string{"user": user}); err != nil {
+			return "", nil, fmt.Errorf("command: %w", err)
+		}
+	}
+
+	cmd := replaceVarsSafe(raw, vars)
 	if user != "" {
 		cmd = fmt.Sprintf("sudo -u %s %s", user, cmd)
 	}
@@ -33,7 +40,7 @@ func (commandModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[s
 
 	var compensate func()
 	if revertRaw != "" {
-		rev := replaceVars(revertRaw, vars)
+		rev := replaceVarsSafe(revertRaw, vars)
 		if user != "" {
 			rev = fmt.Sprintf("sudo -u %s %s", user, rev)
 		}

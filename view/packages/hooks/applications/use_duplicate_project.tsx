@@ -9,9 +9,9 @@ import {
   useGetFamilyEnvironmentsQuery
 } from '@/redux/services/deploy/applicationsApi';
 import { useGetGithubRepositoryBranchesMutation } from '@/redux/services/connector/githubConnectorApi';
-import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { DialogAction } from '@/components/ui/dialog-wrapper';
+import { DropdownMenuItem } from '@nixopus/ui';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@nixopus/ui';
+import { DialogAction } from '@nixopus/ui';
 
 const ENVIRONMENTS: Environment[] = ['development', 'staging', 'production'];
 
@@ -105,7 +105,7 @@ export function useDuplicateProject({ application }: UseDuplicateProjectProps) {
       toast.success(t('selfHost.applicationDetails.header.duplicate.success'));
       setOpen(false);
       resetForm();
-      router.push(`/self-host/application/${result.id}`);
+      router.push(`/apps/application/${result.id}`);
     } catch (error) {
       toast.error(t('selfHost.applicationDetails.header.duplicate.error'));
     }

@@ -13,7 +13,7 @@ import (
 
 // ListContainers retrieves a paginated, filtered, and sorted list of containers
 func ListContainers(
-	dockerService *docker.DockerService,
+	dockerService docker.DockerRepository,
 	l logger.Logger,
 	params container_types.ContainerListParams,
 ) (container_types.ListContainersResponse, error) {
@@ -143,7 +143,7 @@ func applySearchSortPaginate(rows []container_types.ContainerListRow, p containe
 	return rows[start:end], totalCount
 }
 
-func appendContainerInfo(dockerService *docker.DockerService, l logger.Logger, pageRows []container_types.ContainerListRow, summaries []container.Summary) []container_types.Container {
+func appendContainerInfo(dockerService docker.DockerRepository, l logger.Logger, pageRows []container_types.ContainerListRow, summaries []container.Summary) []container_types.Container {
 	result := make([]container_types.Container, 0, len(pageRows))
 	for _, r := range pageRows {
 		info, err := dockerService.GetContainerById(r.ID)
@@ -194,12 +194,16 @@ func appendContainerInfo(dockerService *docker.DockerService, l logger.Logger, p
 			})
 		}
 		for name, network := range info.NetworkSettings.Networks {
+			aliases := network.Aliases
+			if aliases == nil {
+				aliases = []string{}
+			}
 			cd.Networks = append(cd.Networks, container_types.Network{
 				Name:       name,
 				IPAddress:  network.IPAddress,
 				Gateway:    network.Gateway,
 				MacAddress: network.MacAddress,
-				Aliases:    network.Aliases,
+				Aliases:    aliases,
 			})
 		}
 		result = append(result, cd)

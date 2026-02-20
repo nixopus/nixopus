@@ -2,17 +2,17 @@
 
 import * as React from 'react';
 import { Area, CartesianGrid, XAxis, YAxis, Line, ComposedChart } from 'recharts';
-import { CardWrapper } from '@/components/ui/card-wrapper';
+import { CardWrapper } from '@nixopus/ui';
 import {
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent
-} from '@/components/ui/chart';
-import { SelectWrapper } from '@/components/ui/select-wrapper';
+} from '@nixopus/ui';
+import { SelectWrapper } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { Button } from '@/components/ui/button';
+import { Button } from '@nixopus/ui';
 import { Settings } from 'lucide-react';
 import { useHealthCheckChart } from '@/packages/hooks/applications/use-health-check-chart';
 import { useState } from 'react';
@@ -24,10 +24,10 @@ import {
   HealthCheckCardProps,
   HealthCheckDialogProps
 } from '@/redux/types/applications';
-import { DialogWrapper } from '@/components/ui/dialog-wrapper';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
+import { DialogWrapper } from '@nixopus/ui';
+import { Label } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
+import { Switch } from '@nixopus/ui';
 
 export function HealthCheckChart({ applicationId, setDialogOpen }: HealthCheckChartProps) {
   const { t } = useTranslation();
@@ -77,10 +77,6 @@ export function HealthCheckChart({ applicationId, setDialogOpen }: HealthCheckCh
           <div className="grid flex-1 gap-1">
             <div className="text-sm font-bold">
               {t('selfHost.monitoring.healthCheck.history' as any) || 'Health Check History'}
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {t('selfHost.monitoring.healthCheck.historyDescription' as any) ||
-                'Response time and health status over time'}
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -279,7 +275,6 @@ export function HealthCheckDialog({
           ? t('selfHost.monitoring.healthCheck.editTitle' as any)
           : t('selfHost.monitoring.healthCheck.createTitle' as any)
       }
-      description={t('selfHost.monitoring.healthCheck.description' as any)}
       actions={dialogActions}
       loading={isLoading}
     >

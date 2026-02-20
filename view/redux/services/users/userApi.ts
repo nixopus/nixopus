@@ -24,8 +24,16 @@ export interface InviteResendRequest {
   role: string;
 }
 
+export interface InviteAcceptRequest {
+  token: string;
+  organization_id?: string;
+  role?: string;
+  email?: string;
+}
+
 import { baseQueryWithReauth } from '@/redux/base-query';
 import {
+  User,
   UserSettings,
   UpdateFontRequest,
   UpdateThemeRequest,
@@ -44,16 +52,7 @@ export const userApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ['User'],
   endpoints: (builder) => ({
-    getUserOrganizations: builder.query<UserOrganization[], void>({
-      query: () => ({
-        url: USERURLS.USER_ORGANIZATIONS,
-        method: 'GET'
-      }),
-      providesTags: [{ type: 'User', id: 'LIST' }],
-      transformResponse: (response: { data: UserOrganization[] }) => {
-        return response.data;
-      }
-    }),
+    // Note: getUserOrganizations removed - now using Better Auth service layer via useUserOrganizations hook
     createOrganization: builder.mutation<Organization, CreateOrganizationRequest>({
       query(organization) {
         return {
@@ -106,18 +105,61 @@ export const userApi = createApi({
         return response.data;
       }
     }),
-    getOrganizationUsers: builder.query<OrganizationUsers[], string>({
-      query(organizationId) {
+    getActiveMember: builder.query<
+      { role: string | string[]; permissions?: string[] },
+      { organizationId: string; userId: string }
+    >({
+      query: ({ organizationId }) => {
+        // Use list-members endpoint with organizationId
+        // We'll filter by userId in transformResponse
+        const url =
+          typeof window !== 'undefined'
+            ? `${window.location.origin}/api/auth/organization/list-members?organizationId=${organizationId}`
+            : `auth/organization/list-members?organizationId=${organizationId}`;
         return {
-          url: `${USERURLS.ORGANIZATION_USERS}?id=${organizationId}`,
+          url,
           method: 'GET'
         };
       },
-      providesTags: [{ type: 'User', id: 'LIST' }],
-      transformResponse: (response: { data: OrganizationUsers[] }) => {
-        return response.data;
+      providesTags: [{ type: 'User', id: 'ACTIVE_MEMBER' }],
+      transformResponse: (response: any, meta, { userId }) => {
+        // Better Auth returns array of members, find the current user's member record
+        let members = response;
+
+        // If wrapped in data property
+        if (response?.data && Array.isArray(response.data)) {
+          members = response.data;
+        } else if (!Array.isArray(response)) {
+          // If not an array, try to extract members
+          members = [];
+        }
+
+        if (!members || members.length === 0) {
+          console.warn('getActiveMember: No members found');
+          return { role: 'member', permissions: [] };
+        }
+
+        // Find the member record for the current user
+        const member = members.find((m: any) => {
+          const memberUserId = m.userId || m.user?.id;
+          return memberUserId === userId;
+        });
+
+        if (!member) {
+          console.warn('getActiveMember: Current user not found in members list');
+          return { role: 'member', permissions: [] };
+        }
+
+        const role = member.role || 'member';
+        const permissions = member.permissions || [];
+
+        return {
+          role,
+          permissions: Array.isArray(permissions) ? permissions : []
+        };
       }
     }),
+    // Note: getOrganizationUsers removed - now using Better Auth service layer via useOrganizationMembers hook
     updateOrganizationDetails: builder.mutation<Organization, UpdateOrganizationDetailsRequest>({
       query(payload) {
         return {
@@ -168,6 +210,19 @@ export const userApi = createApi({
       transformResponse: (response: { data: { message: string } }) => {
         return response.data;
       }
+    }),
+    acceptInvite: builder.mutation<{ message: string }, InviteAcceptRequest>({
+      query(payload) {
+        return {
+          url: USERURLS.ACCEPT_INVITE,
+          method: 'POST',
+          body: payload
+        };
+      },
+      transformResponse: (response: { data: { message: string } }) => {
+        return response.data;
+      },
+      invalidatesTags: [{ type: 'User', id: 'LIST' }]
     }),
     getResources: builder.query<string[], void>({
       query: () => ({
@@ -309,12 +364,13 @@ export const userApi = createApi({
 });
 
 export const {
-  useGetUserOrganizationsQuery,
+  // useGetUserOrganizationsQuery - Removed: Use useUserOrganizations from @/packages/hooks/auth/use-better-auth-orgs
   useCreateOrganizationMutation,
   useAddUserToOrganizationMutation,
   useRemoveUserFromOrganizationMutation,
   useUpdateUserNameMutation,
-  useGetOrganizationUsersQuery,
+  useGetActiveMemberQuery,
+  // useGetOrganizationUsersQuery - Removed: Use useOrganizationMembers from @/packages/hooks/auth/use-better-auth-orgs
   useUpdateOrganizationDetailsMutation,
   useCreateUserMutation,
   useUpdateUserRoleMutation,
@@ -330,6 +386,7 @@ export const {
   useUpdateAvatarMutation,
   useSendInviteMutation,
   useResendInviteMutation,
+  useAcceptInviteMutation,
   useGetUserPreferencesQuery,
   useUpdateUserPreferencesMutation,
   useGetOrganizationSettingsQuery,

@@ -3,21 +3,21 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, GitBranch } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { CardWrapper } from '@/components/ui/card-wrapper';
+import { Button } from '@nixopus/ui';
+import { CardWrapper } from '@nixopus/ui';
 import { ApplicationDeployment } from '@/redux/types/applications';
-import { TypographyMuted, TypographySmall } from '@/components/ui/typography';
+import { TypographyMuted, TypographySmall } from '@nixopus/ui';
 import { cn } from '@/lib/utils';
 import { getDeploymentStatusIcon, getDeploymentStatusBadgeClasses } from '@/packages/utils/colors';
 import { formatRelativeDate } from '@/packages/utils/format-date';
 import { useDeploymentsWidget } from '@/packages/hooks/dashboard/use-deployment-stats';
 import { useDeploymentStats } from '@/packages/hooks/dashboard/use-deployment-stats';
 import { BarChart3 } from 'lucide-react';
-import { ChartStyle } from '@/components/ui/chart';
-import { ChartContainer } from '@/components/ui/chart';
+import { ChartStyle } from '@nixopus/ui';
+import { ChartContainer } from '@nixopus/ui';
 import { PieChart } from 'recharts';
-import { ChartTooltip } from '@/components/ui/chart';
-import { ChartTooltipContent } from '@/components/ui/chart';
+import { ChartTooltip } from '@nixopus/ui';
+import { ChartTooltipContent } from '@nixopus/ui';
 import { Pie } from 'recharts';
 import { Sector } from 'recharts';
 import { Label } from 'recharts';
@@ -32,7 +32,7 @@ export const DeploymentsWidget: React.FC<DeploymentsWidgetProps> = ({ deployment
   const { deploymentItems, isEmpty } = useDeploymentsWidget(deploymentsData);
 
   const cardActions = (
-    <Button variant="outline" size="sm" onClick={() => router.push('/self-host')}>
+    <Button variant="outline" size="sm" onClick={() => router.push('/apps')}>
       <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
       View All
     </Button>
@@ -40,9 +40,7 @@ export const DeploymentsWidget: React.FC<DeploymentsWidgetProps> = ({ deployment
 
   const handleDeploymentClick = (deployment: ApplicationDeployment) => {
     if (deployment.application_id) {
-      router.push(
-        `/self-host/application/${deployment.application_id}/deployments/${deployment.id}`
-      );
+      router.push(`/apps/application/${deployment.application_id}/deployments/${deployment.id}`);
     }
   };
 

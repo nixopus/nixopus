@@ -6,10 +6,8 @@ import { LucideIcon } from 'lucide-react';
 import { translationKey } from '@/packages/hooks/shared/use-translation';
 
 export interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  toggleAddTeamModal?: () => void;
-  addTeamModalOpen?: boolean;
-  user: User;
-  activeOrg: Organization;
+  user: User | null;
+  activeOrg: Organization | null;
   hasAnyPermission: (resource: string) => boolean;
   activeNav: string;
   refetch: () => void;
@@ -39,6 +37,8 @@ export interface AppTopBarProps {
   toggleTerminal: () => void;
   t: (key: translationKey) => string;
   startTour: () => void;
+  user: User | null;
+  onLogout: () => void;
 }
 
 export interface BreadCrumbsProps {

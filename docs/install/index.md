@@ -147,6 +147,6 @@ If you continue to experience issues, create an issue on [GitHub](https://github
 
 After installation, you can:
 
-- [Deploy your first application](/self-host/)
+- [Deploy your first application](/apps/)
 - [Configure notifications](/notifications/)
 - [Learn CLI commands](/cli/cli-reference)

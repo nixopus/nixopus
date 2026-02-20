@@ -10,7 +10,7 @@ function Page() {
 
   useEffect(() => {
     openSettings('general');
-    router.replace('/dashboard');
+    router.replace('/apps');
   }, [openSettings, router]);
 
   return null;

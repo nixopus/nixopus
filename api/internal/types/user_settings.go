@@ -15,7 +15,7 @@ type UserSettings struct {
 	FontSize      int        `json:"font_size" bun:"font_size,notnull,default:14"`
 	Theme         string     `json:"theme" bun:"theme,notnull,default:'light'"`
 	Language      string     `json:"language" bun:"language,notnull,default:'en'"`
-	AutoUpdate    bool       `json:"auto_update" bun:"auto_update,notnull,default:true"`
+	AutoUpdate    bool       `json:"auto_update" bun:"auto_update,notnull,default:false"`
 	CreatedAt     time.Time  `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt     time.Time  `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 	DeletedAt     *time.Time `json:"deleted_at,omitempty" bun:"deleted_at"`

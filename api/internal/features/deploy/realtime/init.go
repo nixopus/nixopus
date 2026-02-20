@@ -7,16 +7,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func getDockerService() (*docker.DockerService, error) {
-	service, err := docker.GetDockerManager().GetDefaultService()
+func getDockerService(ctx context.Context) (docker.DockerRepository, error) {
+	service, err := docker.GetDockerServiceFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -29,13 +29,12 @@ func getDockerService() (*docker.DockerService, error) {
 type ApplicationMonitor struct {
 	conn          *websocket.Conn
 	connMutex     sync.Mutex
-	sshpkg        *sshpkg.SSH
+	sshManager    *sshpkg.SSHManager
 	log           logger.Logger
-	client        *goph.Client
 	Interval      time.Duration
 	cancel        context.CancelFunc
 	ctx           context.Context
-	dockerService *docker.DockerService
+	dockerService docker.DockerRepository
 	Operations    []ApplicationMonitorOperation
 }
 
@@ -50,11 +49,23 @@ const (
 	ContainerStatistics ApplicationMonitorOperation = "container_statistics"
 )
 
-func NewApplicationMonitor(conn *websocket.Conn, log logger.Logger) (*ApplicationMonitor, error) {
-	ssh_client := sshpkg.NewSSH()
+func NewApplicationMonitor(conn *websocket.Conn, log logger.Logger, organizationID string) (*ApplicationMonitor, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	dockerService, err := getDockerService()
+	// Get organization-specific SSH client
+	orgID, err := uuid.Parse(organizationID)
+	if err != nil {
+		cancel()
+		return nil, fmt.Errorf("invalid organization ID: %w", err)
+	}
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, orgID.String())
+	manager, err := sshpkg.GetSSHManagerFromContext(orgCtx)
+	if err != nil {
+		cancel()
+		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
+	}
+
+	dockerService, err := getDockerService(orgCtx)
 	if err != nil {
 		cancel()
 		return nil, fmt.Errorf("failed to get docker service: %w", err)
@@ -62,7 +73,7 @@ func NewApplicationMonitor(conn *websocket.Conn, log logger.Logger) (*Applicatio
 
 	monitor := &ApplicationMonitor{
 		conn:          conn,
-		sshpkg:        ssh_client,
+		sshManager:    manager,
 		log:           log,
 		ctx:           ctx,
 		cancel:        cancel,
@@ -78,21 +89,15 @@ func (m *ApplicationMonitor) Start() {
 	go func() {
 		ticker := time.NewTicker(m.Interval)
 		defer ticker.Stop()
-		client, err := m.sshpkg.Connect()
-		if err != nil {
-			m.log.Log(logger.Error, "Failed to connect to SSH server", err.Error())
-			m.BroadcastError(err.Error(), "ssh_connect")
-			return
-		}
-		m.client = client
-		defer client.Close()
+
+		m.HandleAllOperations()
 
 		for {
 			select {
 			case <-ticker.C:
 				m.HandleAllOperations()
 			case <-m.ctx.Done():
-				m.log.Log(logger.Info, "Dashboard monitor stopped", "")
+				m.log.Log(logger.Info, "Application monitor stopped", "")
 				return
 			}
 		}
@@ -210,11 +215,7 @@ func (m *ApplicationMonitor) SetOperations(operations []ApplicationMonitorOperat
 }
 
 func (m *ApplicationMonitor) Close() {
-	if m.client != nil {
-		m.client.Close()
-		m.client = nil
-	}
-
+	// SSH connections are managed by the connection pool - no cleanup needed here
 	if m.conn != nil {
 		m.connMutex.Lock()
 		_ = m.conn.WriteMessage(

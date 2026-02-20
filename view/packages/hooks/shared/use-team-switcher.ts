@@ -61,10 +61,16 @@ function useTeamSwitcher() {
       return;
     }
 
+    if (!displayTeam) {
+      return;
+    }
+
+    const orgId = 'organization' in displayTeam ? displayTeam.organization.id : displayTeam.id;
+
     try {
-      await deleteOrganization(displayTeam.id).unwrap();
+      await deleteOrganization(orgId).unwrap();
       const remainingTeams = teams?.filter(
-        (team: UserOrganization) => team.organization.id !== displayTeam.id
+        (team: UserOrganization) => team.organization.id !== orgId
       );
       if (remainingTeams && remainingTeams.length > 0) {
         handleTeamChange(remainingTeams[0]);
@@ -133,7 +139,7 @@ function useTeamSwitcher() {
       setTeamDescription('');
 
       // Refresh the page to ensure all roles and permissions are updated
-      // This is necessary because SuperTokens roles are session based
+      // Refresh to ensure all roles and permissions are updated
       setTimeout(() => {
         window.location.reload();
       }, 1000);

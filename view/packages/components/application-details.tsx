@@ -1,46 +1,42 @@
 import { ApplicationDeployment } from '@/redux/types/applications';
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import PaginationWrapper from '@/components/ui/pagination';
-import { DataTable } from '@/components/ui/data-table';
+import { PaginationWrapper } from '@nixopus/ui';
+import { DataTable } from '@nixopus/ui';
 import { useDeploymentsList } from '@/packages/hooks/applications/use_deployments_list';
 import { useDeploymentStatusChart } from '@/packages/hooks/applications/use_deployment_status_chart';
-import { CardWrapper } from '@/components/ui/card-wrapper';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { CardWrapper } from '@nixopus/ui';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@nixopus/ui';
 import { BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Bar } from 'recharts';
 import { Application } from '@/redux/types/applications';
 import { useDuplicateProject } from '@/packages/hooks/applications/use_duplicate_project';
-import { DialogWrapper } from '@/components/ui/dialog-wrapper';
-import { Label } from '@/components/ui/label';
-import { SelectWrapper } from '@/components/ui/select-wrapper';
-import { Input } from '@/components/ui/input';
+import { DialogWrapper } from '@nixopus/ui';
+import { Label } from '@nixopus/ui';
+import { SelectWrapper } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
 import { ResourceGuard } from '@/packages/components/rbac';
-import SubPageHeader from '@/components/ui/sub-page-header';
+import { SubPageHeader } from '@nixopus/ui';
 import { useApplicationHeader } from '@/packages/hooks/applications/use_application_header';
 import DeploymentLogsTable from '@/packages/components/deployment-logs';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@nixopus/ui';
 import { useProjectFamilySwitcher } from '@/packages/hooks/applications/use_project_family_switcher';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@nixopus/ui';
 import { useDeploymentOverview } from '@/packages/hooks/applications/use_deployment_overview';
 import { useDeploymentHealthChart } from '@/packages/hooks/applications/use_deployment_health_chart';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Check, Copy } from 'lucide-react';
+import { useApplicationLogs } from '@/packages/hooks/applications/use-application-logs';
+import { InfoLine } from '@/packages/components/container-sections';
 import { cn } from '@/lib/utils';
 import { useStatusIndicator } from '@/packages/hooks/applications/use_status_indicator';
 import { useLatestDeployment } from '@/packages/hooks/applications/use_latest_deployment';
-import { DraggableGrid } from '@/components/ui/draggable-grid';
+import { DraggableGrid } from '@nixopus/ui';
 import { useMonitoring } from '@/packages/hooks/applications/use-monitoring';
 import { DeploymentsListProps, UseMonitoringReturn } from '../types/application';
 import { MonitorProps } from '../types/application';
 import { DeploymentOverviewProps } from '../types/application';
 import { DeploymentHealthChartProps } from '../types/application';
 import { LatestDeploymentProps } from '../types/application';
-import { InfoLineProps } from '../types/application';
 import { SectionLabelProps } from '../types/application';
 import { StatBlockProps } from '../types/application';
 import { StatusIndicatorProps } from '../types/application';
@@ -79,7 +75,7 @@ function DeploymentsList({
           )}
         </>
       ) : (
-        <div className="text-center py-12 rounded-lg border">
+        <div className="text-center py-12 rounded-lg border border-border">
           <p className="text-muted-foreground">{t('selfHost.deployment.list.noDeployments')}</p>
         </div>
       )}
@@ -178,17 +174,19 @@ export function DuplicateProjectDialog({ application }: DuplicateProjectDialogPr
 }
 
 export const ApplicationDetailsHeader = ({ application }: { application?: Application }) => {
-  const { icon, title, metadata, actions } = useApplicationHeader({ application });
+  const { title, metadata, actions } = useApplicationHeader({ application });
 
   return (
     <ResourceGuard resource="deploy" action="read" loadingFallback={null}>
-      <SubPageHeader icon={icon} title={title} metadata={metadata} actions={actions} />
+      <SubPageHeader title={title} metadata={metadata} actions={actions} />
     </ResourceGuard>
   );
 };
 
-export const ApplicationLogs = ({ id }: ApplicationLogsProps) => {
-  return <DeploymentLogsTable id={id} isDeployment={false} />;
+export const ApplicationLogs = ({ id, applicationId }: ApplicationLogsProps) => {
+  const { containerLogEntries } = useApplicationLogs(applicationId);
+
+  return <DeploymentLogsTable id={id} isDeployment={false} additionalLogs={containerLogEntries} />;
 };
 
 export function Monitor({ application }: MonitorProps) {
@@ -266,7 +264,7 @@ export function DeploymentOverview({
   failedDeployments,
   currentStatus
 }: DeploymentOverviewProps) {
-  const { title, statBlocks } = useDeploymentOverview({
+  const { statBlocks } = useDeploymentOverview({
     totalDeployments,
     successfulDeployments,
     failedDeployments,
@@ -274,7 +272,7 @@ export function DeploymentOverview({
   });
 
   return (
-    <CardWrapper header={title}>
+    <CardWrapper>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         {statBlocks.map((block) => (
           <StatBlock
@@ -405,50 +403,7 @@ export function LatestDeployment({ deployment }: LatestDeploymentProps) {
   );
 }
 
-export function InfoLine({
-  icon: Icon,
-  label,
-  value,
-  displayValue,
-  sublabel,
-  mono,
-  copyable
-}: InfoLineProps) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="flex items-start gap-3 py-2">
-      <Icon className="h-4 w-4 mt-1 text-muted-foreground flex-shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">{label}</p>
-        <div className="flex items-center gap-2">
-          <span className={cn('text-sm truncate', mono && 'font-mono')} title={value}>
-            {displayValue || value}
-          </span>
-          {copyable && (
-            <button
-              onClick={handleCopy}
-              className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-            >
-              {copied ? (
-                <Check className="h-3 w-3 text-emerald-500" />
-              ) : (
-                <Copy className="h-3 w-3" />
-              )}
-            </button>
-          )}
-        </div>
-        {sublabel && <p className="text-xs text-muted-foreground/60 mt-0.5">{sublabel}</p>}
-      </div>
-    </div>
-  );
-}
+export { InfoLine };
 
 export function SectionLabel({ children }: SectionLabelProps) {
   return (

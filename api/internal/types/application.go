@@ -35,6 +35,7 @@ type Application struct {
 	Organization         *Organization            `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	Labels               []string                 `json:"labels,omitempty" bun:"labels,array"`
 	Domains              []*ApplicationDomain     `json:"domains,omitempty" bun:"rel:has-many,join:id=application_id"`
+	IsLiveDeployment     bool                     `json:"is_live_deployment" bun:"is_live_deployment,notnull,default:false"`
 }
 
 type ApplicationDeployment struct {
@@ -51,6 +52,8 @@ type ApplicationDeployment struct {
 	ContainerName   string                       `json:"container_name" bun:"container_name"`
 	ContainerImage  string                       `json:"container_image" bun:"container_image"`
 	ContainerStatus string                       `json:"container_status" bun:"container_status"`
+	ImageS3Key      string                       `json:"image_s3_key" bun:"image_s3_key,default:''"`
+	ImageSize       int64                        `json:"image_size" bun:"image_size,default:0"`
 }
 
 type ApplicationStatus struct {

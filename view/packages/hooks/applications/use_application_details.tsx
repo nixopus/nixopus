@@ -13,13 +13,14 @@ import {
   ApplicationDeploymentStatus
 } from '@/redux/types/applications';
 import { BuildPack, Environment } from '@/redux/types/deploy-form';
-import type { TabItem } from '@/components/ui/tabs-wrapper';
-import { Activity, Settings, Layers, ScrollText } from 'lucide-react';
+import type { TabItem } from '@nixopus/ui';
+import { Activity, Settings, Layers, ScrollText, Box } from 'lucide-react';
 import DeploymentsList, {
   ApplicationLogs,
   Monitor
 } from '@/packages/components/application-details';
 import { DeployConfigureForm } from '@/packages/components/application-form';
+import { ApplicationResources } from '@/packages/components/application-resources';
 import { useTranslation } from '../shared/use-translation';
 
 interface WebSocketMessage {
@@ -145,12 +146,19 @@ function useApplicationDetails() {
         )
       },
       {
+        value: 'resources',
+        label: t('selfHost.application.tabs.resources'),
+        icon: Box,
+        content: <ApplicationResources applicationId={applicationId} />
+      },
+      {
         value: 'logs',
         label: t('selfHost.application.tabs.logs'),
         icon: ScrollText,
         content: (
           <ApplicationLogs
             id={application?.id || ''}
+            applicationId={applicationId}
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
           />
@@ -160,6 +168,7 @@ function useApplicationDetails() {
     [
       t,
       application,
+      applicationId,
       envVariables,
       buildVariables,
       deploymentsPage,

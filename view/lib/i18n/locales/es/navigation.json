@@ -1,7 +1,7 @@
 {
   "navigation": {
-    "dashboard": "Panel de Control",
-    "selfHost": "Autoalojado",
+    "dashboard": "Gráficos",
+    "selfHost": "Apps",
     "fileManager": "Gestor de Archivos",
     "extensions": "Extensiones",
     "settings": "Configuración",
@@ -13,8 +13,8 @@
     "layout": {
       "breadcrumbs": {
         "home": "Inicio",
-        "dashboard": "Panel de Control",
-        "selfHost": "Autoalojado",
+        "dashboard": "Gráficos",
+        "selfHost": "Apps",
         "fileManager": "Gestor de Archivos",
         "settings": "Configuración",
         "general": "General",

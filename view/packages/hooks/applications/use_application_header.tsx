@@ -10,9 +10,9 @@ import {
   useDeployProjectMutation
 } from '@/redux/services/deploy/applicationsApi';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { Button } from '@nixopus/ui';
+import { Badge } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
 import { ExternalLink, RotateCcw, Trash2, Rocket, RefreshCw, X, Plus } from 'lucide-react';
 import {
   DropdownMenu,
@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+} from '@nixopus/ui';
 import { MoreVertical } from 'lucide-react';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import {
@@ -127,7 +127,7 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
     try {
       await deployProject({ id: application.id }).unwrap();
       toast.success(t('selfHost.applicationDetails.header.actions.redeploy.success'));
-      router.push('/self-host/application/' + application.id + '?logs=true');
+      router.push('/apps/application/' + application.id + '?logs=true');
     } catch {
       toast.error(t('selfHost.applicationDetails.header.actions.redeploy.error'));
     }
@@ -139,7 +139,7 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
         id: application?.id || ''
       }).unwrap();
       toast.success(t('selfHost.applicationDetails.header.actions.delete.success'));
-      router.push('/self-host');
+      router.push('/apps');
     } catch (error) {
       toast.error(t('selfHost.applicationDetails.header.actions.delete.error'));
     }
@@ -161,7 +161,7 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
         force: true,
         force_without_cache: forceWithoutCache
       }).unwrap();
-      router.push('/self-host/application/' + application?.id + '?logs=true');
+      router.push('/apps/application/' + application?.id + '?logs=true');
       toast.success(t('selfHost.applicationDetails.header.actions.redeploy.success'));
     } catch (error) {
       toast.error(t('selfHost.applicationDetails.header.actions.redeploy.error'));
@@ -202,21 +202,6 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
       setNewLabel('');
     }
   };
-
-  const icon = useMemo(
-    () => (
-      <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center', statusConfig.bg)}>
-        <div
-          className={cn(
-            'w-3 h-3 rounded-full',
-            statusConfig.dot,
-            statusConfig.pulse && 'animate-pulse'
-          )}
-        />
-      </div>
-    ),
-    [statusConfig]
-  );
 
   const title = useMemo(
     () => (
@@ -407,7 +392,6 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
   );
 
   return {
-    icon,
     title,
     metadata,
     actions,

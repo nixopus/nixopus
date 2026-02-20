@@ -6,8 +6,7 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/caddygo"
-	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
@@ -40,7 +39,7 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 
 	taskCtx.LogAndUpdateStatus("Starting deployment process", shared_types.Cloning)
 
-	repoPath, err := t.Clone(CloneConfig{
+	repoPath, err := t.Clone(ctx, CloneConfig{
 		TaskPayload:    TaskPayload,
 		DeploymentType: string(shared_types.DeploymentTypeCreate),
 		TaskContext:    taskCtx,
@@ -51,6 +50,10 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 	}
 
 	taskCtx.LogAndUpdateStatus("Repository cloned successfully", shared_types.Building)
+
+	// Add organization ID to context for docker service
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, TaskPayload.Application.OrganizationID.String())
+
 	taskCtx.AddLog("Building image from Dockerfile " + repoPath + " for application " + TaskPayload.Application.Name)
 	buildImageResult, err := t.BuildImage(BuildConfig{
 		TaskPayload:       TaskPayload,
@@ -58,6 +61,7 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 		Force:             false,
 		ForceWithoutCache: false,
 		TaskContext:       taskCtx,
+		Context:           orgCtx,
 	})
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to build image: "+err.Error(), shared_types.Failed)
@@ -65,9 +69,12 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 	}
 
 	taskCtx.AddLog("Image built successfully: " + buildImageResult + " for application " + TaskPayload.Application.Name)
+
+	t.ExportAndRecordImage(orgCtx, TaskPayload, buildImageResult, taskCtx)
+
 	taskCtx.UpdateStatus(shared_types.Deploying)
 
-	containerResult, err := t.AtomicUpdateContainer(TaskPayload, taskCtx)
+	containerResult, err := t.AtomicUpdateContainer(orgCtx, TaskPayload, taskCtx)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to update container: "+err.Error(), shared_types.Failed)
 		return err
@@ -76,30 +83,37 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 	taskCtx.AddLog("Container updated successfully for application " + TaskPayload.Application.Name + " with container id " + containerResult.ContainerID)
 	taskCtx.LogAndUpdateStatus("Deployment completed successfully", shared_types.Deployed)
 
-	// Add domains to proxy if any are provided
 	if len(TaskPayload.Application.Domains) > 0 {
-		client := GetCaddyClient()
 		port, err := strconv.Atoi(containerResult.AvailablePort)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
 			return err
 		}
-		upstreamHost := config.AppConfig.SSH.Host
 
-		// Loop through all domains and add them with TLS
+		upstreamHost, err := GetSSHHostForOrganization(ctx, TaskPayload.Application.OrganizationID)
+		if err != nil {
+			taskCtx.LogAndUpdateStatus("Failed to get SSH host: "+err.Error(), shared_types.Failed)
+			return err
+		}
+
+		var routes []caddy.DomainRoute
 		for _, appDomain := range TaskPayload.Application.Domains {
 			if appDomain.Domain == "" {
 				continue
 			}
-			err = client.AddDomainWithAutoTLS(appDomain.Domain, upstreamHost, port, caddygo.DomainOptions{})
-			if err != nil {
-				fmt.Printf("Failed to add domain %s: %v\n", appDomain.Domain, err)
-				taskCtx.LogAndUpdateStatus("Failed to add domain "+appDomain.Domain+": "+err.Error(), shared_types.Failed)
-				return err
-			}
-			taskCtx.AddLog("Domain " + appDomain.Domain + " added successfully with TLS")
+			routes = append(routes, caddy.DomainRoute{
+				Domain:       appDomain.Domain,
+				UpstreamDial: caddy.FormatDial(upstreamHost, port),
+			})
 		}
-		client.Reload()
+
+		if err := caddy.AddDomainsAtomic(orgCtx, nil, &t.Logger, routes); err != nil {
+			taskCtx.LogAndUpdateStatus("Failed to configure proxy: "+err.Error(), shared_types.Failed)
+			return err
+		}
+		for _, r := range routes {
+			taskCtx.AddLog("Domain " + r.Domain + " added successfully with TLS")
+		}
 	}
 	return nil
 }

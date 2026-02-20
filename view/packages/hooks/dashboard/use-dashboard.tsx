@@ -28,7 +28,7 @@ export const useDashboard = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const { t } = useTranslation();
   const columns = useContainer();
-  const { data: smtpConfig } = useGetSMTPConfigurationsQuery(activeOrganization?.id, {
+  const { data: smtpConfig } = useGetSMTPConfigurationsQuery(activeOrganization?.id ?? '', {
     skip: !activeOrganization
   });
 
@@ -171,7 +171,6 @@ export const useDashboard = () => {
     {
       id: 'system-info',
       component: <SystemInfoCard systemStats={systemStats} />,
-      className: 'md:col-span-2',
       isDefault: true
     },
     {

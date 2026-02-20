@@ -3,38 +3,26 @@
 import React from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { LogoutDialog } from '@/components/ui/logout-dialog';
-import { Button } from '@/components/ui/button';
+import { Button } from '@nixopus/ui';
 import { LogOut } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@nixopus/ui';
 import { ResourceGuard } from '@/packages/components/rbac';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { TypographyMuted, TypographyH1 } from '@/components/ui/typography';
+import { Input } from '@nixopus/ui';
+import { Label } from '@nixopus/ui';
+import { Switch } from '@nixopus/ui';
+import { TypographyMuted, TypographyH1 } from '@nixopus/ui';
 import { RotateCcw } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@nixopus/ui';
 import { cn } from '@/lib/utils';
-import { SelectWrapper } from '@/components/ui/select-wrapper';
-import {
-  AvatarSection,
-  AccountSection,
-  FeatureFlagsSettings
-} from '@/packages/components/general-settings';
+import { SelectWrapper } from '@nixopus/ui';
+import { AvatarSection, AccountSection } from '@/packages/components/general-settings';
 import { NotificationChannelsTab } from '@/packages/components/notification-settings';
 import { NotificationPreferencesTab } from '@/packages/components/notification-settings';
-import {
-  AddMember,
-  TeamMembers,
-  EditTeam,
-  TeamStats,
-  RecentActivity
-} from '@/packages/components/team-settings';
 // import DomainsTable from '@/app/settings/domains/components/domainsTable';
 // import UpdateDomainDialog from '@/app/settings/domains/components/update-domain';
 import {
   useGeneralSettingsContent,
   useNotificationsSettingsContent,
-  useTeamsSettingsContent,
   useNetworkSettingsContent,
   useTerminalSettingsContent,
   useContainerSettingsContent,
@@ -42,14 +30,14 @@ import {
   useKeyboardShortcutsSettingsContent,
   type SettingConfig
 } from '@/packages/hooks/settings/use-settings-content';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@nixopus/ui';
 import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
 import {
   SettingsCategory,
   useSettingsCategories
 } from '@/packages/hooks/shared/use-settings-categories';
 import { Heart, HelpCircle, AlertCircle, ArrowUpCircle } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@nixopus/ui';
 import { useSettingsFooter } from '@/packages/hooks/settings/use-settings-footer';
 import { SettingsSidebarProps } from '../types/settings';
 
@@ -211,7 +199,7 @@ function GeneralSettingsContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="space-y-6 flex-1 overflow-y-auto">
+      <div className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
         <h2 className="text-2xl font-semibold">{t('settings.title')}</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <AvatarSection onImageChange={settings.onImageChange} user={settings.user!} />
@@ -234,25 +222,27 @@ function GeneralSettingsContent() {
                   font_size: 16,
                   language: 'en',
                   theme: 'light',
-                  auto_update: true,
+                  auto_update: false,
                   created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString()
                 }
               }
               isGettingUserSettings={settings.isGettingUserSettings}
-              isUpdatingFont={settings.isUpdatingFont}
               isUpdatingTheme={settings.isUpdatingTheme}
               isUpdatingLanguage={settings.isUpdatingLanguage}
               isUpdatingAutoUpdate={settings.isUpdatingAutoUpdate}
               handleThemeChange={settings.handleThemeChange}
               handleLanguageChange={settings.handleLanguageChange}
               handleAutoUpdateChange={settings.handleAutoUpdateChange}
-              handleFontUpdate={settings.handleFontUpdate}
             />
           </div>
         </div>
       </div>
-      <Button variant="secondary" onClick={sidebar.handleLogoutClick} className="w-full gap-2">
+      <Button
+        variant="secondary"
+        onClick={sidebar.handleLogoutClick}
+        className="w-full gap-2 mt-4 sm:mb-0"
+      >
         <LogOut className="h-4 w-4" />
         {t('user.menu.logout')}
       </Button>
@@ -309,67 +299,6 @@ function NotificationsSettingsContent() {
   );
 }
 
-function TeamsSettingsContent() {
-  const { t } = useTranslation();
-  const { settings } = useTeamsSettingsContent();
-
-  return (
-    <ResourceGuard resource="organization" action="read">
-      <div className="space-y-6">
-        <h2 className="text-2xl font-semibold">Teams</h2>
-        <div className="flex items-center justify-between">
-          <div>
-            <TypographyH1>{settings.teamName}</TypographyH1>
-            <TypographyMuted>{settings.teamDescription}</TypographyMuted>
-          </div>
-          <div className="flex gap-2">
-            <ResourceGuard resource="organization" action="update">
-              <EditTeam
-                teamName={settings.teamName || ''}
-                teamDescription={settings.teamDescription || ''}
-                setEditTeamDialogOpen={settings.setEditTeamDialogOpen}
-                handleUpdateTeam={settings.handleUpdateTeam}
-                setTeamName={settings.setTeamName}
-                setTeamDescription={settings.setTeamDescription}
-                isEditTeamDialogOpen={settings.isEditTeamDialogOpen}
-                isUpdating={settings.isUpdating}
-              />
-            </ResourceGuard>
-            <ResourceGuard resource="user" action="create">
-              <AddMember
-                isAddUserDialogOpen={settings.isAddUserDialogOpen}
-                setIsAddUserDialogOpen={settings.setIsAddUserDialogOpen}
-                newUser={settings.newUser}
-                setNewUser={settings.setNewUser}
-                handleSendInvite={settings.handleSendInvite}
-                isInviteLoading={settings.isInviteLoading}
-              />
-            </ResourceGuard>
-          </div>
-        </div>
-        {settings.users.length > 0 ? (
-          <TeamMembers
-            users={settings.users}
-            handleRemoveUser={settings.handleRemoveUser}
-            getRoleBadgeVariant={settings.getRoleBadgeVariant}
-            onUpdateUser={settings.handleUpdateUser}
-          />
-        ) : (
-          <div className="text-center text-muted-foreground">{t('settings.teams.noMembers')}</div>
-        )}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TeamStats users={settings.users} />
-          <RecentActivity />
-        </div>
-      </div>
-    </ResourceGuard>
-  );
-}
-
-function FeatureFlagsSettingsContent() {
-  return <FeatureFlagsSettings />;
-}
-
 function KeyboardShortcutsSettingsContent() {
   const { t } = useTranslation();
   const { shortcuts } = useKeyboardShortcutsSettingsContent();
@@ -410,7 +339,7 @@ function NetworkSettingsContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="space-y-6 flex-1 overflow-y-auto">
+      <div className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold">{t('settings.network.title')}</h2>
@@ -446,7 +375,7 @@ function TerminalSettingsContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="space-y-6 flex-1 overflow-y-auto">
+      <div className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold">{t('settings.terminal.title')}</h2>
@@ -482,7 +411,7 @@ function ContainerSettingsContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="space-y-6 flex-1 overflow-y-auto">
+      <div className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold">{t('settings.container.title')}</h2>
@@ -518,7 +447,7 @@ function TroubleshootingSettingsContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="space-y-6 flex-1 overflow-y-auto">
+      <div className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold">{t('settings.troubleshooting.title')}</h2>
@@ -546,12 +475,10 @@ function TroubleshootingSettingsContent() {
 
 export function SettingsContent({ activeCategory }: SettingsContentProps) {
   return (
-    <div className="flex-1 flex flex-col overflow-hidden p-6">
+    <div className="flex-1 flex flex-col overflow-y-auto sm:overflow-hidden p-3 sm:p-6 pb-6 sm:pb-6">
       {activeCategory === 'general' && <GeneralSettingsContent />}
       {activeCategory === 'notifications' && <NotificationsSettingsContent />}
-      {activeCategory === 'teams' && <TeamsSettingsContent />}
       {/* {activeCategory === 'domains' && <DomainsSettingsContent />} */}
-      {activeCategory === 'feature-flags' && <FeatureFlagsSettingsContent />}
       {activeCategory === 'keyboard-shortcuts' && <KeyboardShortcutsSettingsContent />}
       {activeCategory === 'network' && <NetworkSettingsContent />}
       {activeCategory === 'terminal' && <TerminalSettingsContent />}
@@ -564,16 +491,27 @@ export function SettingsContent({ activeCategory }: SettingsContentProps) {
 export function SettingsModal() {
   const { open, closeSettings, activeCategory, setActiveCategory } = useSettingsModal();
   const categories = useSettingsCategories();
+
   return (
     <Dialog open={open} onOpenChange={closeSettings}>
-      <DialogContent className="!max-w-[1200px] w-[90vw] max-h-[90vh] h-[90vh] p-0 flex overflow-hidden">
+      <DialogContent className="w-screen h-screen max-w-none sm:max-w-[1200px] sm:w-[90vw] sm:h-[90vh] p-0 flex flex-col sm:flex-row overflow-hidden">
         <DialogTitle className="sr-only">Settings</DialogTitle>
-        <SettingsSidebar
-          categories={categories}
-          activeCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
-        />
-        <SettingsContent activeCategory={activeCategory} />
+        <div className="flex flex-col sm:w-[220px] bg-muted/50">
+          <SettingsSidebar
+            categories={categories}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+          />
+          <div className="hidden sm:block">
+            <SettingsFooter />
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <SettingsContent activeCategory={activeCategory} />
+          <div className="sm:hidden">
+            <SettingsFooter />
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -659,6 +597,34 @@ export function SettingsSidebar({
   const accountCategories = visibleCategories.filter((cat) => cat.scope === 'account');
   const orgCategories = visibleCategories.filter((cat) => cat.scope === 'organization');
 
+  const mobileOptions = [
+    ...(accountCategories.length > 0
+      ? [
+          {
+            value: '__account__',
+            label: t('settings.sidebar.account'),
+            disabled: true
+          },
+          ...accountCategories.map((cat) => ({
+            value: cat.id,
+            label: `  ${cat.label}`
+          }))
+        ]
+      : []),
+    ...(orgCategories.length > 0
+      ? [
+          {
+            value: '__org__',
+            label: t('settings.sidebar.organization'),
+            disabled: true
+          },
+          ...orgCategories.map((cat) => ({
+            value: cat.id,
+            label: `  ${cat.label}`
+          }))
+        ]
+      : [])
+  ];
   const renderCategoryButton = (cat: SettingsCategory) => {
     const Icon = cat.icon;
     return (
@@ -666,37 +632,49 @@ export function SettingsSidebar({
         key={cat.id}
         onClick={() => onCategoryChange(cat.id)}
         className={cn(
-          'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors overflow-hidden text-left',
+          'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors text-left',
           activeCategory === cat.id ? 'bg-muted font-medium' : 'hover:bg-muted/50'
         )}
       >
-        <Icon className="h-4 w-4 flex-shrink-0" />
-        <span className="min-w-0 break-normal leading-normal text-left">{cat.label}</span>
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className="truncate">{cat.label}</span>
       </button>
     );
   };
 
   return (
-    <div className="w-[240px] flex-shrink-0 bg-muted/50 border-r flex flex-col">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {accountCategories.length > 0 && (
-          <div className="space-y-1">
-            <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {t('settings.sidebar.account')}
-            </div>
-            {accountCategories.map(renderCategoryButton)}
-          </div>
-        )}
-        {orgCategories.length > 0 && (
-          <div className="space-y-1">
-            <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {t('settings.sidebar.organization')}
-            </div>
-            {orgCategories.map(renderCategoryButton)}
-          </div>
-        )}
+    <>
+      <div className="sm:hidden w-full border-b bg-muted/40 p-3 pr-12">
+        <SelectWrapper
+          value={activeCategory}
+          onValueChange={(val) => {
+            if (val.startsWith('__')) return;
+            onCategoryChange(val);
+          }}
+          options={mobileOptions}
+          className=" h-11"
+        />
       </div>
-      <SettingsFooter />
-    </div>
+      <div className="hidden sm:flex w-[220px] shrink-0 bg-muted/50 border-r flex-col flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex-1 p-4 space-y-4">
+          {accountCategories.length > 0 && (
+            <div className="space-y-1">
+              <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase">
+                {t('settings.sidebar.account')}
+              </div>
+              {accountCategories.map(renderCategoryButton)}
+            </div>
+          )}
+          {orgCategories.length > 0 && (
+            <div className="space-y-1">
+              <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase">
+                {t('settings.sidebar.organization')}
+              </div>
+              {orgCategories.map(renderCategoryButton)}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 }

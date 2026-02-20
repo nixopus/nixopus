@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
@@ -11,7 +12,7 @@ type serviceModule struct{}
 
 func (serviceModule) Type() string { return "service" }
 
-func (serviceModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
+func (serviceModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
 	nameRaw, _ := step.Properties["name"].(string)
 	action, _ := step.Properties["action"].(string)
 	revertAction, _ := step.Properties["revert_action"].(string)
@@ -25,6 +26,14 @@ func (serviceModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[s
 	}
 	if action == "" {
 		return "", nil, fmt.Errorf("service action is required for service step")
+	}
+
+	if err := validateShellArgs(map[string]string{
+		"name":   name,
+		"action": action,
+		"user":   runAsUser,
+	}); err != nil {
+		return "", nil, fmt.Errorf("service module: %w", err)
 	}
 	cmd := serviceCmd(sshClient, action, name, step.Timeout)
 	if runAsUser != "" {

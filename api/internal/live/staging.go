@@ -1,0 +1,144 @@
+package live
+
+import (
+	"context"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"sync"
+
+	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
+	github_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+)
+
+// StagingManager manages staging directories for live deployments using the same pattern as normal deployments
+type StagingManager struct {
+	githubService *github_service.GithubConnectorService
+	deployStorage storage.DeployRepository
+	fileReceivers map[uuid.UUID]map[string]*FileReceiver // applicationID -> path -> FileReceiver
+	mu            sync.RWMutex
+}
+
+// NewStagingManager creates a new staging manager
+func NewStagingManager(githubService *github_service.GithubConnectorService, deployStorage storage.DeployRepository) *StagingManager {
+	return &StagingManager{
+		githubService: githubService,
+		deployStorage: deployStorage,
+		fileReceivers: make(map[uuid.UUID]map[string]*FileReceiver),
+	}
+}
+
+// GetStagingPath gets or creates the staging path for an application using the same pattern as normal deployments
+// This reuses GetClonePath from github-connector service
+// For monorepo apps, the staging path includes the base_path subdirectory
+func (sm *StagingManager) GetStagingPath(ctx context.Context, applicationID, userID, organizationID uuid.UUID) (string, error) {
+	// Get application to get environment and base_path
+	application, err := sm.deployStorage.GetApplicationById(applicationID.String(), organizationID)
+	if err != nil {
+		return "", err
+	}
+
+	// Add organization ID to context for SSH manager access
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, organizationID.String())
+	// Use GetClonePath which creates the staging directory on the tenant's SSH server
+	// Path structure: /var/nixopus/repos/{userID}/{environment}/{applicationID}
+	stagingPath, _, err := sm.githubService.GetClonePath(orgCtx, userID.String(), string(application.Environment), applicationID.String())
+	if err != nil {
+		// In development, fall back to local staging when SSH is not configured (common when running API locally)
+		if config.AppConfig.App.Environment == "development" || config.AppConfig.App.Environment == "dev" {
+			localPath := filepath.Join(os.TempDir(), "nixopus-staging", userID.String(), string(application.Environment), applicationID.String())
+			if application.BasePath != "" && application.BasePath != "/" {
+				localPath = filepath.Join(localPath, application.BasePath)
+			}
+			if err := os.MkdirAll(localPath, 0755); err != nil {
+				return "", err
+			}
+			return localPath, nil
+		}
+		return "", err
+	}
+
+	// Add base_path to staging path if set (for monorepo apps)
+	// If base_path is "/" or empty, use the root staging path
+	if application.BasePath != "" && application.BasePath != "/" {
+		stagingPath = filepath.Join(stagingPath, application.BasePath)
+	}
+
+	return stagingPath, nil
+}
+
+// isLocalStagingPath returns true if the staging path is a local development path (not on remote SSH server)
+func isLocalStagingPath(stagingPath string) bool {
+	localRoot := filepath.Join(os.TempDir(), "nixopus-staging")
+	absRoot, err := filepath.Abs(localRoot)
+	if err != nil {
+		return false
+	}
+	absPath, err := filepath.Abs(stagingPath)
+	if err != nil {
+		return false
+	}
+	return strings.HasPrefix(absPath, absRoot+string(filepath.Separator)) || absPath == absRoot
+}
+
+func (sm *StagingManager) GetRepositorySource(ctx context.Context, application *shared_types.Application) string {
+	repoID, err := strconv.ParseUint(application.Repository, 10, 64)
+	if err != nil {
+		return ""
+	}
+	repo, err := sm.githubService.GetGithubRepositoryByID(application.UserID.String(), repoID)
+	if err != nil {
+		return ""
+	}
+	return repo.FullName
+}
+
+// GetFileReceiver gets or creates a file receiver. Uses RLock fast path when receiver exists.
+func (sm *StagingManager) GetFileReceiver(applicationID uuid.UUID, path string, totalChunks int, checksum string, stagingPath string) *FileReceiver {
+	// Fast path: receiver exists and checksum matches, use RLock
+	sm.mu.RLock()
+	if appReceivers := sm.fileReceivers[applicationID]; appReceivers != nil {
+		if receiver, exists := appReceivers[path]; exists && receiver.Checksum == checksum {
+			sm.mu.RUnlock()
+			return receiver
+		}
+	}
+	sm.mu.RUnlock()
+
+	// Slow path: create receiver
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+
+	if sm.fileReceivers[applicationID] == nil {
+		sm.fileReceivers[applicationID] = make(map[string]*FileReceiver)
+	}
+
+	if receiver, exists := sm.fileReceivers[applicationID][path]; exists {
+		if receiver.Checksum != checksum {
+			receiver.Reset(totalChunks, checksum)
+		}
+		receiver.UpdateMetadata(totalChunks, checksum)
+		return receiver
+	}
+
+	receiver := NewFileReceiver(path, totalChunks, checksum, stagingPath)
+	sm.fileReceivers[applicationID][path] = receiver
+	return receiver
+}
+
+// RemoveFileReceiver removes a file receiver
+func (sm *StagingManager) RemoveFileReceiver(applicationID uuid.UUID, path string) {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+
+	if receivers, exists := sm.fileReceivers[applicationID]; exists {
+		delete(receivers, path)
+		if len(receivers) == 0 {
+			delete(sm.fileReceivers, applicationID)
+		}
+	}
+}

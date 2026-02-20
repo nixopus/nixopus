@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/raghavyuva/caddygo"
-	"github.com/raghavyuva/nixopus-api/internal/config"
 	types "github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/queue"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -26,6 +24,8 @@ var (
 	TaskRollback          *taskq.Task
 	RestartQueue          taskq.Queue
 	TaskRestart           *taskq.Task
+	LiveDevQueue          taskq.Queue
+	TaskLiveDev           *taskq.Task
 )
 
 var (
@@ -39,16 +39,9 @@ var (
 	TASK_ROLLBACK           = "task_rollback_deployment"
 	QUEUE_RESTART           = "restart-deployment"
 	TASK_RESTART            = "task_restart_deployment"
+	QUEUE_LIVE_DEV          = "live-dev"
+	TASK_LIVE_DEV           = "task_live_dev"
 )
-
-var caddyClient *caddygo.Client
-
-func GetCaddyClient() *caddygo.Client {
-	if caddyClient == nil {
-		caddyClient = caddygo.NewClient(config.AppConfig.Proxy.CaddyEndpoint)
-	}
-	return caddyClient
-}
 
 func (t *TaskService) SetupCreateDeploymentQueue() {
 	onceQueues.Do(func() {
@@ -176,6 +169,31 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 				return nil
 			},
 		})
+
+		// Live dev queue and task registration
+		LiveDevQueue = queue.RegisterQueue(&taskq.QueueOptions{
+			Name:                QUEUE_LIVE_DEV,
+			ConsumerIdleTimeout: 10 * time.Minute,
+			MinNumWorker:        4,
+			MaxNumWorker:        4,
+			ReservationSize:     1,
+			ReservationTimeout:  15 * time.Minute,
+			WaitTimeout:         5 * time.Second,
+			BufferSize:          16,
+		})
+
+		TaskLiveDev = taskq.RegisterTask(&taskq.TaskOptions{
+			Name:       TASK_LIVE_DEV,
+			RetryLimit: 1,
+			Handler: func(ctx context.Context, config LiveDevConfig) error {
+				err := t.HandleBuildFirstLiveDev(ctx, config)
+				if err != nil {
+					fmt.Printf("error handling live dev deployment: %v\n", err)
+					return err
+				}
+				return nil
+			},
+		})
 	})
 }
 
@@ -187,7 +205,7 @@ func (t *TaskService) BuildPack(ctx context.Context, d shared_types.TaskPayload)
 	var err error
 	switch d.Application.BuildPack {
 	case shared_types.DockerFile:
-		err = t.PrerunCommands(d)
+		err = t.PrerunCommands(ctx, d)
 		if err != nil {
 			return err
 		}
@@ -195,7 +213,7 @@ func (t *TaskService) BuildPack(ctx context.Context, d shared_types.TaskPayload)
 		if err != nil {
 			return err
 		}
-		err = t.PostRunCommands(d)
+		err = t.PostRunCommands(ctx, d)
 		if err != nil {
 			return err
 		}

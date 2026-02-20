@@ -1,5 +1,5 @@
 # docker compose -f docker-compose-dev.yml up
-# Development setup - dependencies only (database, redis, supertokens, caddy)
+# Development setup - dependencies only (database, redis, auth, caddy)
 # API and View services should be run locally without hot reloading
 services:
   nixopus-redis:
@@ -48,26 +48,46 @@ services:
       timeout: 5s
       retries: 20
 
-  nixopus-supertokens:
-    image: registry.supertokens.io/supertokens/supertokens-postgresql:latest
-    container_name: nixopus-supertokens
+  nixopus-auth:
+    image: ghcr.io/nixopus/auth:latest
+    container_name: nixopus-auth
+    ports:
+      - "127.0.0.1:${AUTH_SERVICE_PORT:-9090}:9090"
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Database connection - using service name for Docker network
+      - DATABASE_URL=postgresql://${USERNAME:-postgres}:${PASSWORD:-changeme}@nixopus-db:5432/${DB_NAME:-postgres}?sslmode=disable
+      # Redis connection - using service name for Docker network
+      - REDIS_URL=redis://nixopus-redis:6379
+      # Auth service configuration
+      - PORT=9090
+      - NODE_ENV=development
+      # Better Auth configuration
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:9090}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      # Email configuration
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - nixopus-network
     depends_on:
       nixopus-db:
         condition: service_healthy
-    ports:
-      - "${SUPERTOKENS_API_PORT}:3567"
-    environment:
-      - POSTGRESQL_CONNECTION_URI=postgresql://${USERNAME:-postgres}:${PASSWORD:-changeme}@nixopus-db:5432/${DB_NAME:-postgres}
-      - POSTGRESQL_TABLE_NAMES_PREFIX=supertokens_
-    networks:
-      - nixopus-network
-    restart: unless-stopped
+        required: false
+      nixopus-redis:
+        condition: service_healthy
+        required: false
     healthcheck:
-      test: >
-        bash -c 'exec 3<>/dev/tcp/127.0.0.1/3567 && echo -e "GET /hello HTTP/1.1\r\nhost: 127.0.0.1:3567\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep "Hello"'
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/health"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
+      start_period: 30s
 
   nixopus-caddy:
     image: caddy:latest

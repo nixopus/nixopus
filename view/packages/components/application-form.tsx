@@ -1,19 +1,19 @@
 'use client';
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Form } from '@/components/ui/form';
-import FormInputField from '@/components/ui/form-input-field';
+import { Button } from '@nixopus/ui';
+import { Form } from '@nixopus/ui';
+import { FormInputField } from '@nixopus/ui';
 import FormSelectField from '@/components/ui/form-select-field';
 import { MultipleDomainInput } from '@/packages/components/multi-domains';
 import { EnvVariablesEditor } from '@/components/ui/env-variables-editor';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@nixopus/ui';
 import { BuildPack, Environment } from '@/redux/types/deploy-form';
 import useUpdateDeployment from '@/packages/hooks/applications/use_update_deployment';
 import { useDeploymentConfiguration } from '@/packages/hooks/applications/use_deployment_configuration';
 import { parsePort } from '@/packages/utils/util';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@nixopus/ui';
 import {
   ChevronDownIcon,
   ChevronRightIcon,
@@ -24,7 +24,7 @@ import {
   Terminal
 } from 'lucide-react';
 import { useQuickDeployForm } from '@/packages/hooks/applications/use_quick_deploy_form';
-import { CardWrapper } from '@/components/ui/card-wrapper';
+import { CardWrapper } from '@nixopus/ui';
 import { Plus } from 'lucide-react';
 
 interface DeployConfigureProps {
@@ -64,7 +64,7 @@ const CollapsibleSection = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="border border-border rounded-lg overflow-hidden">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors group">
           <div className="flex items-center gap-3">
@@ -92,7 +92,7 @@ const CollapsibleSection = ({
             <ChevronRightIcon className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
           )}
         </CollapsibleTrigger>
-        <CollapsibleContent className="border-t bg-muted/20">
+        <CollapsibleContent className="border-t border-border bg-muted/20">
           <div className="p-4 space-y-4">{children}</div>
         </CollapsibleContent>
       </Collapsible>
@@ -162,7 +162,7 @@ export const DeployConfigureForm = ({
       return (
         <div className="space-y-2">
           <label className="text-sm font-medium">{label}</label>
-          <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">
+          <div className="px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground">
             {domainList.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {domainList.map((domain, index) => (
@@ -189,7 +189,7 @@ export const DeployConfigureForm = ({
     return (
       <div className="space-y-2">
         <label className="text-sm font-medium">{label}</label>
-        <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground overflow-hidden">
+        <div className="px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground overflow-hidden">
           <div className={`${!isExpanded ? 'truncate' : ''}`}>{displayValue}</div>
           {shouldShowMore && (
             <button
@@ -209,7 +209,7 @@ export const DeployConfigureForm = ({
     <span>
       {descriptionText}{' '}
       <a
-        href="https://docs.nixopus.com/self-host/#docker-configuration"
+        href="https://docs.nixopus.com/apps/#docker-configuration"
         target="_blank"
         rel="noopener noreferrer"
         className="text-primary hover:underline"
@@ -227,8 +227,6 @@ export const DeployConfigureForm = ({
             <CollapsibleSection
               title={t('selfHost.configuration.sections.basicConfiguration')}
               icon={SettingsIcon}
-              badge="Required"
-              description="Essential settings for your application"
               defaultOpen={true}
             >
               <div className="grid sm:grid-cols-2 gap-4">
@@ -263,8 +261,6 @@ export const DeployConfigureForm = ({
                 <CollapsibleSection
                   title={t('selfHost.configuration.sections.dockerConfiguration')}
                   icon={ServerIcon}
-                  badge="Optional"
-                  description="Container and deployment configuration"
                   defaultOpen={false}
                 >
                   <div className="grid sm:grid-cols-2 gap-4">
@@ -285,8 +281,6 @@ export const DeployConfigureForm = ({
                 <CollapsibleSection
                   title={t('selfHost.configuration.sections.environmentVariables')}
                   icon={CodeIcon}
-                  badge="Optional"
-                  description="Runtime and build-time variables"
                   defaultOpen={false}
                 >
                   <div className="space-y-6">
@@ -307,8 +301,6 @@ export const DeployConfigureForm = ({
                 <CollapsibleSection
                   title={t('selfHost.configuration.sections.commands')}
                   icon={Terminal}
-                  badge="Optional"
-                  description="Pre and post deployment scripts"
                   defaultOpen={false}
                 >
                   <div className="grid sm:grid-cols-2 gap-4">
@@ -330,8 +322,6 @@ export const DeployConfigureForm = ({
             <CollapsibleSection
               title={t('selfHost.configuration.sections.deploymentInformation')}
               icon={InfoIcon}
-              badge="Read-only"
-              description="Current deployment settings and metadata"
               defaultOpen={false}
             >
               <div className="grid sm:grid-cols-2 gap-4">

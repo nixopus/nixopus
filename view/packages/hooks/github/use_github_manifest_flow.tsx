@@ -4,7 +4,7 @@ import { GitHubAppCredentials, GitHubAppManifest, GitHubAppStatus } from '@/redu
 import { useCreateGithubConnectorMutation } from '@/redux/services/connector/githubConnectorApi';
 import { getWebhookUrl } from '@/redux/conf';
 import { Loader2 } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@nixopus/ui';
 
 interface UseGithubManifestFlowProps {
   organization?: string;
@@ -53,6 +53,21 @@ const generateState = (): string => {
     .reduce((acc, val) => acc + val.toString(16).padStart(2, '0'), '');
 };
 
+const attemptConversion = async (code: string): Promise<GitHubAppCredentials> => {
+  const response = await fetch(`https://api.github.com/app-manifests/${code}/conversions`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/vnd.github.v3+json'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to convert manifest');
+  }
+
+  return await response.json();
+};
+
 export function useGithubManifestFlow({
   organization,
   appUrl = process.env.NEXT_PUBLIC_APP_URL,
@@ -85,8 +100,8 @@ export function useGithubManifestFlow({
         url: webhookUrl || `${window.location.origin}/github/webhook`,
         active: true
       },
-      redirect_url: redirectUrl || `${window.location.origin}/self-host`,
-      callback_urls: [redirectUrl || `${window.location.origin}/self-host`],
+      redirect_url: redirectUrl || `${window.location.origin}/apps`,
+      callback_urls: [redirectUrl || `${window.location.origin}/apps`],
       public: true,
       default_permissions: {
         contents: 'read',
@@ -95,7 +110,7 @@ export function useGithubManifestFlow({
         pull_requests: 'write'
       },
       default_events: ['issues', 'issue_comment', 'pull_request', 'push'],
-      setup_url: `${window.location.origin}/self-host`,
+      setup_url: `${window.location.origin}/apps`,
       setup_on_update: true
     };
 
@@ -121,19 +136,20 @@ export function useGithubManifestFlow({
   const handleGitHubCallback = useCallback(
     async (code: string, stateParam: string | null): Promise<void> => {
       setStatus('converting');
+      setError(null); // Clear any previous errors
+
       try {
-        const response = await fetch(`https://api.github.com/app-manifests/${code}/conversions`, {
-          method: 'POST',
-          headers: {
-            Accept: 'application/vnd.github.v3+json'
-          }
-        });
+        // Wait 5 seconds before first attempt
+        await new Promise((resolve) => setTimeout(resolve, 5000));
 
-        if (!response.ok) {
-          throw new Error('Failed to convert manifest');
+        let credentials: GitHubAppCredentials;
+        try {
+          credentials = await attemptConversion(code);
+        } catch (firstError) {
+          // Retry once after another 5 second wait
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+          credentials = await attemptConversion(code);
         }
-
-        const credentials: GitHubAppCredentials = await response.json();
 
         await createGithubConnector({
           app_id: credentials.id.toString(),

@@ -2,8 +2,8 @@
   "layout": {
     "breadcrumbs": {
       "home": "Accueil",
-      "dashboard": "Tableau de Bord",
-      "selfHost": "Auto-hébergé",
+      "dashboard": "Graphiques",
+      "selfHost": "Apps",
       "fileManager": "Gestionnaire de Fichiers",
       "settings": "Paramètres",
       "general": "Général",

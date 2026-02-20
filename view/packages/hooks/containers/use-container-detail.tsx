@@ -85,7 +85,7 @@ export function useContainerDetail() {
     try {
       await removeContainer(containerId).unwrap();
       toast.success(t('containers.remove_success'));
-      router.push('/containers');
+      router.back();
     } catch (error) {
       toast.error(t('containers.remove_error'));
     }

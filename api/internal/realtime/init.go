@@ -2,8 +2,6 @@ package realtime
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -40,8 +38,14 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// LiveDevNotificationHandler is called for live_dev_logs and live_dev_status
+// PostgreSQL notifications. The Gateway implements this to forward build logs
+// and status changes to the appropriate WebSocket client.
+type LiveDevNotificationHandler func(channel, payload string)
+
 type SocketServer struct {
-	conns               *sync.Map
+	conns               *sync.Map // conn -> userID
+	orgIDs              *sync.Map // conn -> organizationID
 	topicsMu            sync.RWMutex
 	topics              map[string]map[*websocket.Conn]bool
 	shutdown            chan struct{}
@@ -55,19 +59,21 @@ type SocketServer struct {
 	dashboardMutex      sync.Mutex
 	applicationMonitors map[*websocket.Conn]*realtime.ApplicationMonitor
 	applicationMutex    sync.Mutex
+
+	liveDevHandler   LiveDevNotificationHandler
+	liveDevHandlerMu sync.RWMutex
 }
 
 // NewSocketServer initializes and returns a new instance of SocketServer.
 func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx context.Context) (*SocketServer, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	// Load .env file if it exists (optional when using secret manager)
+	_ = godotenv.Load()
 
 	pgListener := NewPostgresListener()
 
 	server := &SocketServer{
 		conns:               &sync.Map{},
+		orgIDs:              &sync.Map{},
 		shutdown:            make(chan struct{}),
 		deployController:    deployController,
 		db:                  db,
@@ -78,9 +84,8 @@ func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx 
 		dashboardMonitors:   make(map[*websocket.Conn]*dashboard.DashboardMonitor),
 		applicationMonitors: make(map[*websocket.Conn]*realtime.ApplicationMonitor),
 	}
-	err = StartListeningAndNotify(&server.postgres_listener, ctx, server)
+	err := StartListeningAndNotify(&server.postgres_listener, ctx, server)
 	if err != nil {
-		log.Printf("Error initializing postgres listener: %v", err)
 		return nil, err
 	}
 	return server, nil
@@ -104,9 +109,13 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	orgID := r.URL.Query().Get("organization-id")
+	if orgID != "" {
+		r.Header.Set("X-Organization-Id", orgID)
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("Error upgrading connection: %v", err)
 		return
 	}
 
@@ -116,18 +125,19 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 		token = token[7:]
 	}
 
-	user, err := s.verifyToken(token)
+	user, orgID, err := s.verifyToken(token, r)
 	if err != nil || user == nil {
-		log.Printf("Auth error: %v", err)
 		s.sendError(conn, "Invalid authorization token")
 		conn.Close()
 		return
 	}
 
 	s.conns.Store(conn, user.ID)
+	if orgID != "" {
+		s.orgIDs.Store(conn, orgID)
+	}
 	defer s.handleDisconnect(conn)
 
-	log.Printf("User authenticated: %s", user.ID)
 	s.readLoop(conn)
 }
 
@@ -140,8 +150,8 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 // Returns:
 //   - nil
 func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
-	userID, _ := s.conns.Load(conn)
 	s.conns.Delete(conn)
+	s.orgIDs.Delete(conn)
 
 	s.topicsMu.Lock()
 	for topic, connections := range s.topics {
@@ -179,7 +189,14 @@ func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
 	s.applicationMutex.Unlock()
 
 	conn.Close()
-	fmt.Printf("Client disconnected: %s (User ID: %v)\n", conn.RemoteAddr(), userID)
+}
+
+// SetLiveDevHandler registers a handler for live_dev_logs and live_dev_status
+// notifications from PostgreSQL. The live Gateway calls this during initialization.
+func (s *SocketServer) SetLiveDevHandler(handler LiveDevNotificationHandler) {
+	s.liveDevHandlerMu.Lock()
+	s.liveDevHandler = handler
+	s.liveDevHandlerMu.Unlock()
 }
 
 func (s *SocketServer) Shutdown() {
@@ -191,8 +208,7 @@ func (s *SocketServer) Shutdown() {
 }
 
 func (s *SocketServer) handlePing(conn *websocket.Conn) {
-	userID, _ := s.conns.Load(conn)
-	fmt.Printf("Received ping from %s (User ID: %v)\n", conn.RemoteAddr(), userID)
+	_, _ = s.conns.Load(conn)
 }
 
 func (s *SocketServer) sendError(conn *websocket.Conn, message string) {

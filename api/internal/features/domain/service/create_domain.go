@@ -1,6 +1,9 @@
 package service
 
 import (
+	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -38,17 +41,28 @@ func (s *DomainsService) CreateDomain(req types.CreateDomainRequest, userID stri
 		return types.CreateDomainResponse{}, err
 	}
 
-	if err := validator.ValidateDomainBelongsToServer(req.Name); err != nil {
+	// Add organization ID to context for domain validation
+	orgCtx := context.WithValue(s.Ctx, shared_types.OrganizationIDKey, req.OrganizationID.String())
+	if err := validator.ValidateDomainBelongsToServer(orgCtx, req.Name); err != nil {
 		s.logger.Log(logger.Error, "domain does not belong to server", fmt.Sprintf("domain_name=%s", req.Name))
 		return types.CreateDomainResponse{}, err
 	}
 
-	org, err := s.store.Organization.GetOrganization(req.OrganizationID.String())
+	// Verify organization exists in local database (for foreign key constraints)
+	var org shared_types.Organization
+	err = s.store.DB.NewSelect().
+		Model(&org).
+		Where("id = ?", req.OrganizationID.String()).
+		Scan(s.Ctx)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			s.logger.Log(logger.Error, "organization not found", req.OrganizationID.String())
+			return types.CreateDomainResponse{}, fmt.Errorf("organization not found")
+		}
 		s.logger.Log(logger.Error, "error while retrieving organization", err.Error())
 		return types.CreateDomainResponse{}, fmt.Errorf("organization not found")
 	}
-	if org == nil || org.ID == uuid.Nil {
+	if org.ID == uuid.Nil {
 		s.logger.Log(logger.Error, "organization not found", req.OrganizationID.String())
 		return types.CreateDomainResponse{}, fmt.Errorf("organization not found")
 	}

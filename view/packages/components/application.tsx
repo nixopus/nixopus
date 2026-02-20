@@ -1,109 +1,109 @@
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@nixopus/ui';
+import { Card, CardContent } from '@nixopus/ui';
 import { Application } from '@/redux/types/applications';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@nixopus/ui';
 import { cn } from '@/lib/utils';
 import { useApplicationItem } from '@/packages/hooks/applications/use_application_item';
-import { DomainDropdown } from '@/packages/components/multi-domains';
+import { MoreVertical, MoveUpRight } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
 
 function AppItem(application: Application) {
-  const {
-    name,
-    domain,
-    domains,
-    currentStatus,
-    statusConfig,
-    environmentStyles,
-    statusTextColor,
-    timeAgo,
-    metadataItems,
-    displayLabels,
-    handleClick
-  } = useApplicationItem(application);
+  const { name, domains, currentStatus, statusConfig, environmentStyles, timeAgo, handleClick } =
+    useApplicationItem(application);
 
   return (
     <Card
-      className="relative w-full cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary/30 group"
+      className="relative w-full max-w-xs cursor-pointer overflow-hidden border border-white/[0.06] transition-colors duration-200 hover:bg-muted/50"
       onClick={handleClick}
     >
-      <CardContent className="p-5">
-        <div className="flex items-start gap-4">
-          <div
-            className={cn(
-              'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors',
-              statusConfig.bg
+      <CardContent className="px-6 pb-6">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-start justify-between">
+            <h3 className="font-semibold text-base tracking-tight truncate">{name}</h3>
+            {domains && domains.length === 1 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const domain = domains[0].domain;
+                  const url = domain.startsWith('http') ? domain : `https://${domain}`;
+                  window.open(url, '_blank', 'noopener,noreferrer');
+                }}
+              >
+                <MoveUpRight className="h-4 w-4" />
+              </Button>
             )}
-          >
-            <div
-              className={cn(
-                'w-2.5 h-2.5 rounded-full',
-                statusConfig.dot,
-                statusConfig.pulse && 'animate-pulse'
-              )}
-            />
+            {domains && domains.length > 1 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                  {domains.map((domainItem, index) => (
+                    <DropdownMenuItem
+                      key={index}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const url = domainItem.domain.startsWith('http')
+                          ? domainItem.domain
+                          : `https://${domainItem.domain}`;
+                        window.open(url, '_blank', 'noopener,noreferrer');
+                      }}
+                    >
+                      {domainItem.domain}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="font-semibold text-base tracking-tight truncate group-hover:text-primary transition-colors">
-                {name}
-              </h3>
-              <DomainDropdown domains={domains} variant="icon" />
-            </div>
+          {timeAgo && <span className="text-xs text-muted-foreground">Deployed {timeAgo}</span>}
 
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              {domains && domains.length > 0 && (
-                <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded truncate max-w-[180px]">
-                  {domains[0].domain}
-                </span>
+          <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span
+                className={cn(
+                  'inline-block h-2 w-2 rounded-full',
+                  currentStatus === 'deployed' || currentStatus === 'running'
+                    ? 'bg-emerald-500'
+                    : currentStatus === 'failed'
+                      ? 'bg-red-500'
+                      : currentStatus === 'building' ||
+                          currentStatus === 'deploying' ||
+                          currentStatus === 'cloning' ||
+                          currentStatus === 'started'
+                        ? 'bg-amber-500'
+                        : 'bg-zinc-500'
+                )}
+              />
+              {statusConfig.label}
+            </div>
+            <Badge
+              variant="outline"
+              className={cn(
+                'text-xs font-medium capitalize rounded-full px-3 py-0.5 border',
+                environmentStyles
               )}
-              <Badge variant="outline" className={cn('text-xs capitalize', environmentStyles)}>
-                {application.environment}
-              </Badge>
-              {displayLabels && (
-                <>
-                  {displayLabels.visible.map((label, index) => (
-                    <Badge
-                      key={index}
-                      variant="outline"
-                      className="text-xs border-violet-500/30 text-violet-500 bg-violet-500/10"
-                    >
-                      {label}
-                    </Badge>
-                  ))}
-                  {displayLabels.remainingCount > 0 && (
-                    <Badge
-                      variant="outline"
-                      className="text-xs border-muted-foreground/30 text-muted-foreground bg-muted"
-                    >
-                      +{displayLabels.remainingCount}
-                    </Badge>
-                  )}
-                </>
-              )}
-            </div>
-
-            <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
-              {metadataItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <span key={item.key} className="flex items-center gap-1">
-                    <Icon className="h-3 w-3" />
-                    <span className={item.key === 'buildPack' ? 'capitalize' : ''}>
-                      {item.label}
-                    </span>
-                  </span>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
-              <span className="text-xs text-muted-foreground">{timeAgo}</span>
-              <span className={cn('text-xs font-medium', statusTextColor)}>
-                {statusConfig.label}
-              </span>
-            </div>
+            >
+              {application.environment}
+            </Badge>
           </div>
         </div>
       </CardContent>
@@ -115,24 +115,17 @@ export default AppItem;
 
 export function AppItemSkeleton() {
   return (
-    <Card className="relative w-full">
-      <CardContent className="p-5">
-        <div className="flex items-start gap-4">
-          <Skeleton className="w-10 h-10 rounded-lg flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-7 w-7 rounded-md" />
-            </div>
-            <Skeleton className="h-3 w-48 mt-2" />
-            <div className="flex items-center gap-3 mt-3">
-              <Skeleton className="h-5 w-20 rounded-full" />
-              <Skeleton className="h-4 w-16" />
-            </div>
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
-              <Skeleton className="h-3 w-24" />
-              <Skeleton className="h-3 w-12" />
-            </div>
+    <Card className="relative w-full max-w-sm">
+      <CardContent className="px-6 pb-6">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-start justify-between">
+            <Skeleton className="h-6 w-36" />
+            <Skeleton className="h-7 w-7 rounded-md" />
+          </div>
+          <Skeleton className="h-4 w-40 mt-0.5" />
+          <div className="flex items-center gap-2 mt-2">
+            <Skeleton className="h-6 w-18 rounded-full" />
+            <Skeleton className="h-6 w-14 rounded-full" />
           </div>
         </div>
       </CardContent>

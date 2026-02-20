@@ -1,12 +1,14 @@
 package tasks
 
 import (
+	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/docker/docker/api/types/image"
 	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
+	s3store "github.com/raghavyuva/nixopus-api/internal/features/deploy/s3"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -15,7 +17,7 @@ import (
 // DeleteDeployment deletes a deployment and its associated resources.
 // It stops and removes the service, image, and repository.
 // It returns an error if any operation fails.
-func (s *TaskService) DeleteDeployment(deployment *types.DeleteDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) error {
+func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.DeleteDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) error {
 	application, err := s.Storage.GetApplicationById(deployment.ID.String(), organizationID)
 	if err != nil {
 		return fmt.Errorf("failed to get application details: %w", err)
@@ -33,60 +35,84 @@ func (s *TaskService) DeleteDeployment(deployment *types.DeleteDeploymentRequest
 		}
 	}
 
-	services, err := s.DockerRepo.GetClusterServices()
+	dockerService, err := s.getDockerService(ctx)
 	if err != nil {
-		s.Logger.Log(logger.Error, "Failed to get services", err.Error())
+		s.Logger.Log(logger.Error, "Failed to get docker service", err.Error())
 	} else {
-		for _, service := range services {
-			if service.Spec.Annotations.Name == application.Name {
-				s.Logger.Log(logger.Info, "Deleting service", service.ID)
-				if err := s.DockerRepo.DeleteService(service.ID); err != nil {
-					s.Logger.Log(logger.Error, "Failed to delete service", err.Error())
+		services, err := dockerService.GetClusterServices()
+		if err != nil {
+			s.Logger.Log(logger.Error, "Failed to get services", err.Error())
+		} else {
+			for _, service := range services {
+				if service.Spec.Annotations.Name == application.Name {
+					s.Logger.Log(logger.Info, "Deleting service", service.ID)
+					if err := dockerService.DeleteService(service.ID); err != nil {
+						s.Logger.Log(logger.Error, "Failed to delete service", err.Error())
+					} else {
+						s.Logger.Log(logger.Info, "Service deleted successfully", service.ID)
+					}
+					break
+				}
+			}
+		}
+
+		deployments, err := s.Storage.GetApplicationDeployments(application.ID)
+		if err != nil {
+			s.Logger.Log(logger.Error, "Failed to get application deployments", err.Error())
+		} else {
+			for _, dep := range deployments {
+				if dep.ContainerImage != "" {
+					s.Logger.Log(logger.Info, "Removing image", dep.ContainerImage)
+					if err := dockerService.RemoveImage(dep.ContainerImage, image.RemoveOptions{Force: true}); err != nil {
+						s.Logger.Log(logger.Error, "Failed to remove image", err.Error())
+					}
+				}
+			}
+
+			if s3store.IsConfigured(config.AppConfig.S3) {
+				store, err := s3store.NewImageStore(config.AppConfig.S3)
+				if err != nil {
+					s.Logger.Log(logger.Error, "Failed to create S3 store for cleanup", err.Error())
 				} else {
-					s.Logger.Log(logger.Info, "Service deleted successfully", service.ID)
+					for _, dep := range deployments {
+						if dep.ImageS3Key != "" {
+							s.Logger.Log(logger.Info, "Removing S3 image", dep.ImageS3Key)
+							if err := store.DeleteImage(ctx, dep.ImageS3Key); err != nil {
+								s.Logger.Log(logger.Error, "Failed to remove S3 image", err.Error())
+							}
+						}
+					}
 				}
-				break
 			}
 		}
 	}
 
-	deployments, err := s.Storage.GetApplicationDeployments(application.ID)
+	// Add organization ID to context for SSH manager access
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, organizationID.String())
+	// Get repository path using the same method as cloning (on tenant's SSH server)
+	repoPath, _, err := s.Github_service.GetClonePath(orgCtx, userID.String(), string(application.Environment), application.ID.String())
 	if err != nil {
-		s.Logger.Log(logger.Error, "Failed to get application deployments", err.Error())
+		s.Logger.Log(logger.Error, fmt.Sprintf("Failed to get repository path: %s", err.Error()), "")
 	} else {
-		for _, dep := range deployments {
-			if dep.ContainerImage != "" {
-				s.Logger.Log(logger.Info, "Removing image", dep.ContainerImage)
-				if err := s.DockerRepo.RemoveImage(dep.ContainerImage, image.RemoveOptions{Force: true}); err != nil {
-					s.Logger.Log(logger.Error, "Failed to remove image", err.Error())
-				}
-			}
-		}
+		s.Logger.Log(logger.Info, "Cleaning up repository directory", repoPath)
+		err = s.Github_service.RemoveRepository(orgCtx, repoPath)
 	}
-
-	repoPath := filepath.Join(os.Getenv("MOUNT_PATH"), userID.String(), string(application.Environment), application.ID.String())
-	s.Logger.Log(logger.Info, "Cleaning up repository directory", repoPath)
-
-	err = s.Github_service.RemoveRepository(repoPath)
 	if err != nil {
 		s.Logger.Log(logger.Error, "Failed to remove repository", err.Error())
 	}
 
-	// Remove all domains from Caddy
 	if len(application.Domains) > 0 {
-		client := GetCaddyClient()
-		if client == nil {
-			s.Logger.Log(logger.Warning, "Caddy client not configured", "")
-		} else {
-			for _, appDomain := range application.Domains {
-				if appDomain.Domain != "" {
-					err = client.DeleteDomain(appDomain.Domain)
-					if err != nil {
-						s.Logger.Log(logger.Error, "Failed to remove domain", err.Error())
-					}
-				}
+		var domainNames []string
+		for _, appDomain := range application.Domains {
+			if appDomain.Domain != "" {
+				domainNames = append(domainNames, appDomain.Domain)
 			}
-			client.Reload()
+		}
+		if err := caddy.RemoveDomainsWithRetry(orgCtx, nil, &s.Logger, domainNames); err != nil {
+			s.Logger.Log(logger.Warning, "failed to remove domains from proxy, enqueueing for retry", err.Error())
+			if enqErr := caddy.EnqueuePendingRemoval(organizationID, domainNames...); enqErr != nil {
+				s.Logger.Log(logger.Error, "failed to enqueue pending removal", enqErr.Error())
+			}
 		}
 	}
 

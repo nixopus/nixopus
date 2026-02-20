@@ -1,7 +1,7 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@nixopus/ui';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import {
   LogIn,
@@ -14,15 +14,15 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@nixopus/ui';
+import { Skeleton } from '@nixopus/ui';
 import { useState, useEffect } from 'react';
-import { useSessionContext } from 'supertokens-auth-react/recipe/session';
-import { TypographyH1, TypographyMuted } from '@/components/ui/typography';
+import { authClient } from '@/packages/lib/auth-client';
+import { TypographyH1, TypographyMuted } from '@nixopus/ui';
 import { cn } from '@/lib/utils';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { PasswordInputField } from '@/components/ui/password-input-field';
+import { Label } from '@nixopus/ui';
+import { Input } from '@nixopus/ui';
+import { PasswordInputField } from '@nixopus/ui';
 import Link from 'next/link';
 import nixopusLogo from '@/public/nixopus_logo_transparent.png';
 import { UseFormReturn } from 'react-hook-form';
@@ -245,32 +245,37 @@ export const AdminRegisteredError = ({ error }: AdminRegisteredErrorProps = {}) 
 export const AdminRegistrationSuccess = () => {
   const { t } = useTranslation();
   const router = useRouter();
-  const session = useSessionContext();
   const [countdown, setCountdown] = useState(3);
 
   // User is already logged in after registration, so redirect to dashboard
   useEffect(() => {
-    if (!session.loading) {
-      const sessionExists = 'doesSessionExist' in session ? session.doesSessionExist : false;
-      if (sessionExists) {
-        const timer = setInterval(() => {
-          setCountdown((prev) => {
-            if (prev <= 1) {
-              clearInterval(timer);
-              router.push('/dashboard');
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
+    const checkSession = async () => {
+      try {
+        const session = await authClient.getSession();
+        if (session?.data?.session) {
+          const timer = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                clearInterval(timer);
+                router.push('/apps');
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
 
-        return () => clearInterval(timer);
+          return () => clearInterval(timer);
+        }
+      } catch (error) {
+        // Session check failed, redirect anyway
+        router.push('/apps');
       }
-    }
-  }, [session, router]);
+    };
+    checkSession();
+  }, [router]);
 
   const handleGoToDashboard = () => {
-    router.push('/dashboard');
+    router.push('/apps');
   };
 
   return (

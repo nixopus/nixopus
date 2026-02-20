@@ -8,9 +8,10 @@ import {
   CommandInput,
   CommandItem,
   CommandList
-} from './command';
-import { Button } from './button';
+} from '@nixopus/ui';
+import { Button } from '@nixopus/ui';
 import { palette, themeColors } from '@/packages/utils/colors';
+import { cn } from '@/lib/utils';
 
 export function ModeToggler() {
   const [open, setOpen] = React.useState(false);
@@ -72,7 +73,7 @@ export function ModeToggler() {
         <div className="relative">
           <Button
             variant={'outline'}
-            className="text-foreground no-underline hover:no-underline"
+            className="text-foreground no-underline hover:no-underline hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={() => setOpen(true)}
           >
             <Palette className="h-4 w-4 text-primary" />
@@ -81,7 +82,7 @@ export function ModeToggler() {
       </div>
       <CommandDialog
         open={open}
-        onOpenChange={(nextOpen) => {
+        onOpenChange={(nextOpen: boolean) => {
           if (nextOpen) {
             // capture the theme at dialog open for preview revert
             startThemeRef.current = theme || prevTheme;
@@ -102,10 +103,17 @@ export function ModeToggler() {
                 onSelect={() => handleSelected(themeName)}
                 onMouseEnter={() => handleOnFocus(themeName)}
                 data-theme={themeName}
-                className="flex cursor-pointer items-center justify-between"
+                className={cn(
+                  'flex cursor-pointer items-center justify-between',
+                  themeName === prevTheme
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                )}
               >
                 <div className="flex items-center">
-                  {themeName === prevTheme && <Check className="absolute mr-2 max-h-4 max-w-4" />}
+                  {themeName === prevTheme && (
+                    <Check className="absolute mr-2 max-h-4 max-w-4 text-sidebar-accent-foreground" />
+                  )}
                   <span className="pl-5 capitalize">{themeName}</span>
                 </div>
                 <div

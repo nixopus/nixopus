@@ -12,11 +12,13 @@ export enum AUTHURLS {
   VERIFY_TWO_FACTOR = 'v1/auth/verify-2fa',
   DISABLE_TWO_FACTOR = 'v1/auth/disable-2fa',
   TWO_FACTOR_LOGIN = 'v1/auth/2fa-login',
-  IS_ADMIN_REGISTERED = 'v1/auth/is-admin-registered'
+  IS_ADMIN_REGISTERED = 'v1/auth/is-admin-registered',
+  CREATE_API_KEY = 'v1/auth/api-keys'
 }
 
 export enum USERURLS {
-  USER_ORGANIZATIONS = 'v1/user/organizations',
+  /** @deprecated Use useUserOrganizations hook from @/packages/hooks/auth/use-better-auth-orgs instead */
+  USER_ORGANIZATIONS = 'auth/organization/list',
   CREATE_ORGANIZATION = 'v1/organizations',
   ADD_USER_TO_ORGANIZATION = 'v1/organizations/add-user',
   REMOVE_USER_FROM_ORGANIZATION = 'v1/organizations/remove-user',
@@ -35,6 +37,7 @@ export enum USERURLS {
   UPDATE_AVATAR = 'v1/user/avatar',
   SEND_INVITE = 'v1/organizations/invite/send',
   RESEND_INVITE = 'v1/organizations/invite/resend',
+  ACCEPT_INVITE = 'v1/organizations/invite/accept',
   GET_PREFERENCES = 'v1/user/preferences',
   UPDATE_PREFERENCES = 'v1/user/preferences',
   GET_ORGANIZATION_SETTINGS = 'v1/organizations/settings',
