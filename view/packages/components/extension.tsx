@@ -474,8 +474,12 @@ export function ExtensionCard({
 
   const customHeader = (
     <div className="flex items-center gap-4 w-full">
-      <div className="flex size-12 items-center justify-center rounded-full bg-muted shrink-0">
-        <span className="text-lg font-bold text-muted-foreground">{extension.icon}</span>
+      <div className="flex size-12 items-center justify-center rounded-full bg-muted shrink-0 overflow-hidden">
+        {extension.icon?.startsWith('http') ? (
+          <img src={extension.icon} alt={extension.name} className="size-8 object-contain" />
+        ) : (
+          <span className="text-lg font-bold text-muted-foreground">{extension.icon}</span>
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="text-lg font-bold mb-1">{extension.name}</h3>
@@ -583,7 +587,6 @@ export function ExtensionInput({
       onOpenChange={onOpenChange}
       title={
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
           <span>{extension?.name || t('extensions.run')}</span>
         </div>
       }
@@ -639,8 +642,7 @@ function ProxyDomainInput({
   return (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-sm font-medium flex items-center gap-2">
-        <Globe className="h-4 w-4 text-muted-foreground" />
-        {variable.variable_name}
+        Custom Domain
         {variable.is_required && <span className="text-destructive">*</span>}
       </Label>
       <Input

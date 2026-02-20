@@ -3,7 +3,7 @@ metadata:
   name: "Redis"
   description: "Redis is an open source, in-memory data structure store, used as a database, cache, and message broker. Redis provides data structures such as strings, hashes, lists, sets, sorted sets with range queries, bitmaps, hyperloglogs, geospatial indexes, and streams."
   author: "Nixopus Team"
-  icon: "🔴"
+  icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Redis_logo.svg/250px-Redis_logo.svg.png"
   category: "Database"
   type: "install"
   version: "1.0.0"

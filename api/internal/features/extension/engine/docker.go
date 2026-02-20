@@ -293,6 +293,11 @@ func dockerRun(
 		containerCfg.Cmd = strings.Fields(cmdStr)
 	}
 
+	if existingID, err := findContainerIDByName(ctx, svc, name); err == nil && existingID != "" {
+		_ = svc.StopContainer(existingID, container.StopOptions{})
+		_ = svc.RemoveContainer(existingID, container.RemoveOptions{Force: true})
+	}
+
 	resp, err := svc.CreateContainer(containerCfg, hostCfg, networkingCfg, name)
 	if err != nil {
 		return "", nil, fmt.Errorf("docker: create container failed name=%q image=%q: %w", name, ref, err)
@@ -305,7 +310,7 @@ func dockerRun(
 }
 
 func dockerStop(ctx context.Context, svc deploydocker.DockerRepository, name string) (string, func(), error) {
-		id, err := findContainerIDByName(ctx, svc, name)
+	id, err := findContainerIDByName(ctx, svc, name)
 	if err != nil {
 		return "", nil, fmt.Errorf("docker: stop failed - %w", err)
 	}
@@ -317,7 +322,7 @@ func dockerStop(ctx context.Context, svc deploydocker.DockerRepository, name str
 }
 
 func dockerStart(ctx context.Context, svc deploydocker.DockerRepository, name string) (string, func(), error) {
-		id, err := findContainerIDByName(ctx, svc, name)
+	id, err := findContainerIDByName(ctx, svc, name)
 	if err != nil {
 		return "", nil, fmt.Errorf("docker: start failed - %w", err)
 	}
@@ -329,7 +334,7 @@ func dockerStart(ctx context.Context, svc deploydocker.DockerRepository, name st
 }
 
 func dockerRm(ctx context.Context, svc deploydocker.DockerRepository, name string) (string, func(), error) {
-		id, err := findContainerIDByName(ctx, svc, name)
+	id, err := findContainerIDByName(ctx, svc, name)
 	if err != nil {
 		return "", nil, fmt.Errorf("docker: rm failed - %w", err)
 	}

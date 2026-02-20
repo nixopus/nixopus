@@ -3,7 +3,7 @@ metadata:
   name: "File Browser"
   description: "File Browser provides a web interface to manage files and folders"
   author: "Nixopus Team"
-  icon: "🗂️"
+  icon: "https://raw.githubusercontent.com/filebrowser/filebrowser/master/branding/banner.png"
   category: "Storage"
   type: "install"
   version: "1.0.0"

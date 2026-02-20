@@ -3,7 +3,7 @@ metadata:
   name: "Dozzle"
   description: "Dozzle is a real-time log viewer for Docker containers. It provides a modern web interface to monitor and view logs from all your Docker containers in real-time, with support for container actions like stopping, starting, and restarting containers."
   author: "Nixopus Team"
-  icon: "📊"
+  icon: "https://dozzle.dev/logo.svg"
   category: "Monitoring"
   type: "install"
   version: "1.0.0"
