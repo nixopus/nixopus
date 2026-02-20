@@ -3,7 +3,7 @@ metadata:
   name: "Kimai"
   description: "Kimai is a professional grade time-tracking application, free and open-source. It handles use-cases of freelancers as well as companies with dozens or hundreds of users. Uses kimai image from linuxserver.io. Requires an external database (MariaDB or MySQL)."
   author: "Nixopus Team"
-  icon: "⏱️"
+  icon: "⏱https://www.kimai.org/images/kimai_logo_48.webp"
   category: "Productivity"
   type: "install"
   version: "1.0.0"
