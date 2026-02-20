@@ -80,7 +80,12 @@ func (s *ExtensionService) StartRun(ctx context.Context, extensionID string, var
 		s.logger.Log(logger.Error, fmt.Sprintf("failed to get default SSH client: %v", err), "")
 		return nil, err
 	}
-	runCtx := NewRunContext(ctx, exec, spec, variableValues, sshClient, steps)
+
+	// Detach from the HTTP request context so the execution isn't cancelled
+	// when the response is sent. Propagate the organization ID so downstream
+	// services (Docker, SSH) can look it up.
+	bgCtx := context.WithValue(context.Background(), types.OrganizationIDKey, ctx.Value(types.OrganizationIDKey))
+	runCtx := NewRunContext(bgCtx, exec, spec, variableValues, sshClient, steps)
 	go s.executeRun(runCtx)
 	return exec, nil
 }

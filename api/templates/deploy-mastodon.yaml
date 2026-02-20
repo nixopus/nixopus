@@ -3,7 +3,7 @@ metadata:
   name: "Mastodon"
   description: "Mastodon is a free, open-source social network server based on ActivityPub where users can follow friends and discover new ones. Uses mastodon image from linuxserver.io. Requires separate postgres and redis instances. Note: This container automatically redirects to HTTPS with a self-signed certificate."
   author: "Nixopus Team"
-  icon: "🐘"
+  icon: "https://joinmastodon.org/_next/static/media/wordmark-white-text.01e9f493.svg"
   category: "Social"
   type: "install"
   version: "1.0.0"

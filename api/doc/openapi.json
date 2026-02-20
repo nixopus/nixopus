@@ -457,6 +457,10 @@
 								},
 								"type": "array"
 							},
+							"provision_status": {
+								"nullable": true,
+								"type": "string"
+							},
 							"supertokens_user_id": {
 								"type": "string"
 							},
@@ -835,6 +839,10 @@
 											"type": "object"
 										},
 										"type": "array"
+									},
+									"provision_status": {
+										"nullable": true,
+										"type": "string"
 									},
 									"supertokens_user_id": {
 										"type": "string"
@@ -1299,6 +1307,10 @@
 										},
 										"type": "array"
 									},
+									"provision_status": {
+										"nullable": true,
+										"type": "string"
+									},
 									"supertokens_user_id": {
 										"type": "string"
 									},
@@ -1321,6 +1333,60 @@
 					},
 					"status": {
 						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"BootstrapResponse": {
+				"description": "BootstrapResponse schema",
+				"properties": {
+					"activeOrganizationId": {
+						"nullable": true,
+						"type": "string"
+					},
+					"hasServers": {
+						"type": "boolean"
+					},
+					"organizations": {
+						"items": {
+							"properties": {
+								"id": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								},
+								"role": {
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"provisionId": {
+						"nullable": true,
+						"type": "string"
+					},
+					"user": {
+						"properties": {
+							"email": {
+								"type": "string"
+							},
+							"id": {
+								"type": "string"
+							},
+							"isOnboarded": {
+								"type": "boolean"
+							},
+							"name": {
+								"type": "string"
+							},
+							"provisionStatus": {
+								"type": "string"
+							}
+						},
+						"type": "object"
 					}
 				},
 				"type": "object"
@@ -2181,6 +2247,10 @@
 													"type": "object"
 												},
 												"type": "array"
+											},
+											"provision_status": {
+												"nullable": true,
+												"type": "string"
 											},
 											"supertokens_user_id": {
 												"type": "string"
@@ -3717,6 +3787,10 @@
 													},
 													"type": "array"
 												},
+												"provision_status": {
+													"nullable": true,
+													"type": "string"
+												},
 												"supertokens_user_id": {
 													"type": "string"
 												},
@@ -4634,6 +4708,10 @@
 																"type": "object"
 															},
 															"type": "array"
+														},
+														"provision_status": {
+															"nullable": true,
+															"type": "string"
 														},
 														"supertokens_user_id": {
 															"type": "string"
@@ -6145,6 +6223,10 @@
 															},
 															"type": "array"
 														},
+														"provision_status": {
+															"nullable": true,
+															"type": "string"
+														},
 														"supertokens_user_id": {
 															"type": "string"
 														},
@@ -6570,6 +6652,10 @@
 																"type": "object"
 															},
 															"type": "array"
+														},
+														"provision_status": {
+															"nullable": true,
+															"type": "string"
 														},
 														"supertokens_user_id": {
 															"type": "string"
@@ -7207,6 +7293,10 @@
 														"type": "object"
 													},
 													"type": "array"
+												},
+												"provision_status": {
+													"nullable": true,
+													"type": "string"
 												},
 												"supertokens_user_id": {
 													"type": "string"
@@ -7989,6 +8079,10 @@
 						},
 						"type": "array"
 					},
+					"provision_status": {
+						"nullable": true,
+						"type": "string"
+					},
 					"supertokens_user_id": {
 						"type": "string"
 					},
@@ -8235,6 +8329,10 @@
 										},
 										"type": "array"
 									},
+									"provision_status": {
+										"nullable": true,
+										"type": "string"
+									},
 									"supertokens_user_id": {
 										"type": "string"
 									},
@@ -8374,6 +8472,10 @@
 									"type": "object"
 								},
 								"type": "array"
+							},
+							"provision_status": {
+								"nullable": true,
+								"type": "string"
 							},
 							"supertokens_user_id": {
 								"type": "string"
@@ -8543,6 +8645,10 @@
 										},
 										"type": "array"
 									},
+									"provision_status": {
+										"nullable": true,
+										"type": "string"
+									},
 									"supertokens_user_id": {
 										"type": "string"
 									},
@@ -8693,6 +8799,75 @@
 				"summary": "get recent audit logs",
 				"tags": [
 					"api/v1/audit"
+				]
+			}
+		},
+		"/api/v1/auth/bootstrap": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/auth/controller.(*AuthController).HandleBootstrap`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
+				"operationId": "GET_/api/v1/auth/bootstrap",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BootstrapResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/BootstrapResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "handle bootstrap",
+				"tags": [
+					"api/v1/auth"
 				]
 			}
 		},

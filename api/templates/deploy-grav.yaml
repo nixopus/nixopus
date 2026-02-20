@@ -3,8 +3,8 @@ metadata:
   name: "Grav"
   description: "Grav is a Fast, Simple, and Flexible, file-based Web-platform. Uses grav image from linuxserver.io. Our image includes the grav-admin plugin."
   author: "Nixopus Team"
-  icon: "🌐"
-  category: "Media"
+  icon: "https://avatars1.githubusercontent.com/u/8237355?v=2&s=50"
+  category: "Development"
   type: "install"
   version: "1.0.0"
   isVerified: false

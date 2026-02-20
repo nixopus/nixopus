@@ -138,8 +138,6 @@ func (s *SocketServer) handleNotifications(notificationChan <-chan *PostgresNoti
 				continue
 			}
 
-			resourceID := parsedPayload.ApplicationID
-
 			messageData := map[string]interface{}{
 				"table":          parsedPayload.Table,
 				"action":         parsedPayload.Action,
@@ -147,7 +145,17 @@ func (s *SocketServer) handleNotifications(notificationChan <-chan *PostgresNoti
 				"data":           parsedPayload.Data,
 			}
 
-			s.BroadcastToTopic(MonitorApplicationDeployment, resourceID, messageData)
+			// Broadcast to application_id (application-level log viewers)
+			s.BroadcastToTopic(MonitorApplicationDeployment, parsedPayload.ApplicationID, messageData)
+
+			// For application_logs, also broadcast to deployment_id so deployment-level viewers receive it
+			if parsedPayload.Table == "application_logs" && parsedPayload.Data != nil {
+				if depID, ok := parsedPayload.Data["application_deployment_id"]; ok && depID != nil {
+					if depIDStr, ok := depID.(string); ok && depIDStr != "" {
+						s.BroadcastToTopic(MonitorApplicationDeployment, depIDStr, messageData)
+					}
+				}
+			}
 
 		case "live_dev_logs", "live_dev_status":
 			s.liveDevHandlerMu.RLock()

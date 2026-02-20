@@ -3,8 +3,8 @@ metadata:
   name: "Appwrite"
   description: "Appwrite is a secure open-source backend server for web, mobile, and Flutter developers. This template runs the official installer to provision the stack via Docker."
   author: "Nixopus Team"
-  icon: "🧩"
-  category: "Containers"
+  icon: "https://appwrite.io/images/logos/appwrite.svg"
+  category: "Development"
   type: "install"
   version: "1.0.0"
   isVerified: false
