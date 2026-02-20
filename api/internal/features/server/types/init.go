@@ -40,3 +40,11 @@ type ListServersResponse struct {
 	Message string                  `json:"message"`
 	Data    ListServersResponseData `json:"data"`
 }
+
+// SSHConnectionStatusResponse represents the SSH connection status
+type SSHConnectionStatusResponse struct {
+	Status       string `json:"status"`        // "connected", "disconnected", "not_configured", "error"
+	Connected    bool   `json:"connected"`     // true if SSH is connected
+	Message      string `json:"message"`       // Human-readable message
+	IsConfigured bool   `json:"is_configured"` // true if SSH is configured (even if not connected)
+}

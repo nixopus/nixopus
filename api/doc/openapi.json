@@ -7568,6 +7568,24 @@
 				},
 				"type": "object"
 			},
+			"SSHConnectionStatusResponse": {
+				"description": "SSHConnectionStatusResponse schema",
+				"properties": {
+					"connected": {
+						"type": "boolean"
+					},
+					"is_configured": {
+						"type": "boolean"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"ToggleHealthCheckRequest": {
 				"description": "ToggleHealthCheckRequest schema",
 				"properties": {
@@ -15509,6 +15527,75 @@
 					}
 				},
 				"summary": "list servers",
+				"tags": [
+					"api/v1/servers"
+				]
+			}
+		},
+		"/api/v1/servers/ssh/status": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/server/controller.(*ServerController).CheckSSHStatus`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
+				"operationId": "GET_/api/v1/servers/ssh/status",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SSHConnectionStatusResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/SSHConnectionStatusResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "check s s h status",
 				"tags": [
 					"api/v1/servers"
 				]

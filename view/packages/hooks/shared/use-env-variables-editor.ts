@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, KeyboardEvent, ClipboardEvent } from 'react';
+import React, { useState, useEffect, useCallback, KeyboardEvent, ClipboardEvent } from 'react';
 import { parseEnvText, isMultiLineEnvPaste } from '@/packages/utils/parse-env';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
@@ -46,6 +46,8 @@ export function useEnvVariablesEditor({
   const [editKey, setEditKey] = useState('');
   const [editValue, setEditValue] = useState('');
   const [revealedIndices, setRevealedIndices] = useState<Set<number>>(new Set());
+  const [expandedIndices, setExpandedIndices] = useState<Set<number>>(new Set());
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [pastePreviewOpen, setPastePreviewOpen] = useState(false);
   const [pastePreviewItems, setPastePreviewItems] = useState<PastePreviewItem[]>([]);
 
@@ -92,8 +94,8 @@ export function useEnvVariablesEditor({
   }, [newKey, newValue, validator, variables, t]);
 
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         if (newKey.trim() && newValue.trim()) {
           addVariable();
@@ -103,7 +105,7 @@ export function useEnvVariablesEditor({
     [newKey, newValue, addVariable]
   );
 
-  const handlePaste = useCallback((e: ClipboardEvent<HTMLInputElement>) => {
+  const handlePaste = useCallback((e: ClipboardEvent<HTMLTextAreaElement>) => {
     const pastedText = e.clipboardData.getData('text');
     if (isMultiLineEnvPaste(pastedText)) {
       e.preventDefault();
@@ -238,6 +240,71 @@ export function useEnvVariablesEditor({
     return '•'.repeat(Math.min(value.length, 20));
   }, []);
 
+  const copyVariable = useCallback(
+    (index: number) => {
+      const variable = variables[index];
+      const text = `${variable.key}=${variable.value}`;
+      navigator.clipboard.writeText(text).then(() => {
+        setCopiedIndex(index);
+        setTimeout(() => {
+          setCopiedIndex(null);
+        }, 2000);
+      });
+    },
+    [variables]
+  );
+
+  const copyAllVariables = useCallback(() => {
+    const text = variables.map((v) => `${v.key}=${v.value}`).join('\n');
+    navigator.clipboard.writeText(text);
+  }, [variables]);
+
+  const toggleExpand = useCallback((index: number) => {
+    setExpandedIndices((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleBulkPaste = useCallback((text: string) => {
+    if (isMultiLineEnvPaste(text)) {
+      const parsed = parseEnvText(text);
+      const items: PastePreviewItem[] = Object.entries(parsed).map(([key, value]) => ({
+        key,
+        value,
+        isSecret: false,
+        selected: true
+      }));
+      if (items.length > 0) {
+        setPastePreviewItems(items);
+        setPastePreviewOpen(true);
+      }
+    }
+  }, []);
+
+  const importVariablesDirectly = useCallback((text: string) => {
+    if (isMultiLineEnvPaste(text)) {
+      const parsed = parseEnvText(text);
+      setVariables((prev) => {
+        const newVars = [...prev];
+        Object.entries(parsed).forEach(([key, value]) => {
+          const existingIndex = newVars.findIndex((v) => v.key === key);
+          if (existingIndex !== -1) {
+            newVars[existingIndex] = { key, value, isSecret: false };
+          } else {
+            newVars.push({ key, value, isSecret: false });
+          }
+        });
+        return newVars;
+      });
+    }
+  }, []);
+
   return {
     variables,
     newKey,
@@ -247,6 +314,8 @@ export function useEnvVariablesEditor({
     editKey,
     editValue,
     revealedIndices,
+    expandedIndices,
+    copiedIndex,
     pastePreviewOpen,
     pastePreviewItems,
     updateNewKey,
@@ -266,6 +335,11 @@ export function useEnvVariablesEditor({
     togglePastePreviewItemSecret,
     confirmPasteImport,
     setPastePreviewOpen,
-    maskValue
+    maskValue,
+    copyVariable,
+    copyAllVariables,
+    toggleExpand,
+    handleBulkPaste,
+    importVariablesDirectly
   };
 }
