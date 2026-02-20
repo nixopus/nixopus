@@ -1,13 +1,12 @@
 import { cn } from '@/lib/utils';
 import { Button } from '@nixopus/ui';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@nixopus/ui';
+import { Card, CardContent } from '@nixopus/ui';
 import { Input } from '@nixopus/ui';
 import { Label } from '@nixopus/ui';
 import { Alert, AlertDescription } from '@nixopus/ui';
 import { OTPInput } from '@nixopus/ui';
-import nixopusLogo from '@/public/nixopus_logo_transparent.png';
+import nixopusLogo from '@/public/logo_white.png';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import Link from 'next/link';
 import { useOtpLoginForm } from '@/packages/hooks/auth/use-otp-login-form';
 
 export interface OtpLoginFormProps {
@@ -34,23 +33,25 @@ export function OtpLoginForm({ ...props }: OtpLoginFormProps) {
 
   return (
     <div className={cn('flex flex-col gap-6')}>
-      <Card className="overflow-hidden p-0">
+      <Card className="overflow-hidden p-0 min-h-[500px] flex flex-col justify-center">
         <CardContent className="grid p-0 md:grid-cols-2">
           <div className="p-6 md:p-8">
             <div className="flex flex-col gap-6">
-              <CardHeader className="p-0 text-center">
-                <CardTitle className="text-2xl">
-                  {props.otpSent ? t('auth.otpLogin.verifyTitle') : t('auth.otpLogin.title')}
-                </CardTitle>
-                <CardDescription>
-                  {props.otpSent
-                    ? t('auth.otpLogin.verifyDescription')
-                    : t('auth.otpLogin.description')}
-                </CardDescription>
-              </CardHeader>
+              {props.otpSent && (
+                <div className="flex flex-col items-center text-center">
+                  <h1 className="text-2xl font-bold">{t('auth.otpLogin.verifyTitle')}</h1>
+                  <p className="text-muted-foreground text-balance">
+                    {t('auth.otpLogin.verifyDescription')}
+                  </p>
+                </div>
+              )}
+              {!props.otpSent && (
+                <div className="flex flex-col items-center text-center">
+                  <h1 className="text-2xl font-bold">Login with OTP</h1>
+                </div>
+              )}
               {!props.otpSent && (
                 <div className="grid gap-3">
-                  <Label htmlFor="email">{t('auth.email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -115,19 +116,13 @@ export function OtpLoginForm({ ...props }: OtpLoginFormProps) {
                   {props.isSendingOtp ? t('auth.otpLogin.sending') : t('auth.otpLogin.resendOtp')}
                 </Button>
               )}
-              <div className="text-center text-sm">
-                Don&apos;t have an account?{' '}
-                <Link href="/register" className="underline underline-offset-4">
-                  {t('auth.register.title')}
-                </Link>
-              </div>
             </div>
           </div>
           <div className="bg-muted relative hidden md:block">
             <img
               src={nixopusLogo.src}
               alt="Nixopus Logo"
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-contain p-8"
             />
           </div>
         </CardContent>
