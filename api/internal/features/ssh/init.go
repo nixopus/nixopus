@@ -91,6 +91,11 @@ func GetSSHManagerForOrganization(ctx context.Context, orgID uuid.UUID) (*SSHMan
 	if sshClient == nil {
 		return nil, fmt.Errorf("SSH config is nil for organization %s", orgIDStr)
 	}
+	// Validate credentials before caching - prevents caching managers that cannot authenticate
+	if len(sshClient.PrivateKey) == 0 && len(sshClient.Password) == 0 {
+		return nil, fmt.Errorf("SSH config for organization %s has no credentials: private key and password are both empty - please configure an SSH key or password in server settings", orgIDStr)
+	}
+
 	manager := NewSSHManager()
 	manager.clients["default"] = sshClient
 
@@ -100,6 +105,19 @@ func GetSSHManagerForOrganization(ctx context.Context, orgID uuid.UUID) (*SSHMan
 	orgManagersMu.Unlock()
 
 	return manager, nil
+}
+
+// InvalidateSSHManagerCache clears the cached SSH manager for an organization.
+// Call this when the organization's SSH keys are updated so the next request loads fresh config.
+// Safe to call with uuid.Nil - no-op.
+func InvalidateSSHManagerCache(orgID uuid.UUID) {
+	if orgID == uuid.Nil {
+		return
+	}
+	orgIDStr := orgID.String()
+	orgManagersMu.Lock()
+	delete(orgManagers, orgIDStr)
+	orgManagersMu.Unlock()
 }
 
 // GetSSHManagerFromContext extracts organization ID from context and returns the appropriate SSHManager.
