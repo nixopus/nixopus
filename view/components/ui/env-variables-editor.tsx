@@ -10,6 +10,7 @@ import {
   FormMessage
 } from '@nixopus/ui';
 import { Input } from '@nixopus/ui';
+import { Textarea } from '@nixopus/ui';
 import { Button } from '@nixopus/ui';
 import {
   Dialog,
@@ -31,7 +32,12 @@ import {
   X,
   Lock,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Copy,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  ClipboardPaste
 } from 'lucide-react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import {
@@ -40,6 +46,7 @@ import {
   type PastePreviewItem,
   type EnvVariable
 } from '@/packages/hooks/shared/use-env-variables-editor';
+import { isMultiLineEnvPaste } from '@/packages/utils/parse-env';
 import { cn } from '@/lib/utils';
 
 interface EnvVariablesEditorProps {
@@ -58,6 +65,7 @@ interface EnvVariableRowProps {
   editKey: string;
   editValue: string;
   isRevealed: boolean;
+  isExpanded: boolean;
   maskValue: (value: string) => string;
   onUpdateEditKey: (value: string) => void;
   onUpdateEditValue: (value: string) => void;
@@ -67,6 +75,9 @@ interface EnvVariableRowProps {
   onToggleSecret: () => void;
   onStartEditing: () => void;
   onRemove: () => void;
+  onCopy: () => void;
+  onToggleExpand: () => void;
+  copied: boolean;
 }
 
 const EnvVariableRow = ({
@@ -75,6 +86,7 @@ const EnvVariableRow = ({
   editKey,
   editValue,
   isRevealed,
+  isExpanded,
   maskValue,
   onUpdateEditKey,
   onUpdateEditValue,
@@ -83,72 +95,119 @@ const EnvVariableRow = ({
   onToggleReveal,
   onToggleSecret,
   onStartEditing,
-  onRemove
+  onRemove,
+  onCopy,
+  onToggleExpand,
+  copied
 }: EnvVariableRowProps) => {
   const { t } = useTranslation();
+  const isLongValue = variable.value.length > 60;
+  const displayValue =
+    variable.isSecret && !isRevealed ? maskValue(variable.value) : variable.value;
+  const shouldShowExpand = isLongValue && !isExpanded;
 
   if (isEditing) {
     return (
-      <>
-        <Input
+      <div className="flex items-start gap-2 w-full py-1">
+        <Textarea
           value={editKey}
           onChange={(e) => onUpdateEditKey(e.target.value)}
-          className="h-8 font-mono text-sm flex-1 max-w-[140px]"
+          className="font-mono text-sm min-h-[36px] max-w-[200px] resize-none"
           placeholder={t('selfHost.envEditor.keyPlaceholder')}
+          rows={1}
         />
-        <span className="text-muted-foreground">=</span>
-        <Input
+        <span className="text-muted-foreground flex-shrink-0 mt-2">=</span>
+        <Textarea
           value={editValue}
           onChange={(e) => onUpdateEditValue(e.target.value)}
-          className="h-8 font-mono text-sm flex-1"
+          className="font-mono text-sm min-h-[36px] flex-1 resize-none"
           placeholder={t('selfHost.envEditor.valuePlaceholder')}
+          rows={editValue.length > 100 ? 3 : 1}
         />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={onSaveEdit}
-          className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/20"
-        >
-          <Check size={16} />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={onCancelEdit}
-          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-        >
-          <X size={16} />
-        </Button>
-      </>
+        <div className="flex items-start gap-1 flex-shrink-0 pt-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onSaveEdit}
+            className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/20"
+          >
+            <Check size={16} />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onCancelEdit}
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+          >
+            <X size={16} />
+          </Button>
+        </div>
+      </div>
     );
   }
 
   return (
     <>
-      <div className="flex items-center gap-2 min-w-0 flex-1">
-        {variable.isSecret && <Lock size={14} className="text-amber-500 flex-shrink-0" />}
-        <span className="font-mono text-sm font-medium truncate max-w-[120px] sm:max-w-[160px]">
-          {variable.key}
-        </span>
-        <span className="text-muted-foreground">=</span>
-        <span
-          className={cn(
-            'font-mono text-sm text-muted-foreground truncate flex-1 min-w-0',
-            variable.isSecret && !isRevealed && 'select-none'
-          )}
-          title={
-            variable.isSecret && !isRevealed
-              ? t('selfHost.envEditor.clickToReveal')
-              : variable.value
-          }
-        >
-          {variable.isSecret && !isRevealed ? maskValue(variable.value) : variable.value}
-        </span>
+      <div className="flex items-start gap-2 min-w-0 flex-1 max-w-full">
+        {variable.isSecret && <Lock size={14} className="text-amber-500 flex-shrink-0 mt-1" />}
+        <div className="flex-1 min-w-0 max-w-full overflow-hidden">
+          <div className="flex items-center gap-2 mb-1 min-w-0">
+            <span className="font-mono text-sm font-medium break-all min-w-0">{variable.key}</span>
+            <span className="text-muted-foreground flex-shrink-0">=</span>
+          </div>
+          <div className="flex items-start gap-2 min-w-0">
+            <div className="flex-1 min-w-0 max-w-full overflow-hidden">
+              <div
+                className={cn(
+                  'font-mono text-sm text-muted-foreground',
+                  variable.isSecret && !isRevealed && 'select-none',
+                  !isExpanded && isLongValue && 'line-clamp-2'
+                )}
+                style={{
+                  wordBreak: 'break-all',
+                  overflowWrap: 'anywhere',
+                  wordWrap: 'break-word',
+                  maxWidth: '100%'
+                }}
+              >
+                {displayValue}
+              </div>
+              {shouldShowExpand && (
+                <button
+                  onClick={onToggleExpand}
+                  className="text-xs text-primary hover:underline mt-1 flex items-center gap-1"
+                >
+                  {t('selfHost.envEditor.showMore')}
+                  <ChevronDown size={12} />
+                </button>
+              )}
+              {isExpanded && isLongValue && (
+                <button
+                  onClick={onToggleExpand}
+                  className="text-xs text-primary hover:underline mt-1 flex items-center gap-1"
+                >
+                  {t('selfHost.envEditor.showLess')}
+                  <ChevronUp size={12} />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onCopy}
+          className={cn('h-8 w-8 p-0', copied && 'text-green-600')}
+          title={copied ? t('selfHost.envEditor.copied') : t('selfHost.envEditor.copy')}
+        >
+          {copied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+        </Button>
         {variable.isSecret && (
           <Button
             type="button"
@@ -294,6 +353,8 @@ export const EnvVariablesEditor = ({
   defaultValues = {}
 }: EnvVariablesEditorProps) => {
   const { t } = useTranslation();
+  const [bulkPasteText, setBulkPasteText] = React.useState('');
+
   const {
     variables,
     newKey,
@@ -303,6 +364,8 @@ export const EnvVariablesEditor = ({
     editKey,
     editValue,
     revealedIndices,
+    expandedIndices,
+    copiedIndex,
     pastePreviewOpen,
     pastePreviewItems,
     updateNewKey,
@@ -322,13 +385,36 @@ export const EnvVariablesEditor = ({
     togglePastePreviewItemSecret,
     confirmPasteImport,
     setPastePreviewOpen,
-    maskValue
+    maskValue,
+    copyVariable,
+    copyAllVariables,
+    toggleExpand,
+    handleBulkPaste
   } = useEnvVariablesEditor({
     validator,
     defaultValues,
     form,
     formFieldName: name
   });
+
+  const handleBulkPasteEvent = React.useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const pastedText = e.clipboardData.getData('text');
+      if (isMultiLineEnvPaste(pastedText)) {
+        e.preventDefault();
+        setBulkPasteText(pastedText);
+        handleBulkPaste(pastedText);
+      }
+    },
+    [handleBulkPaste]
+  );
+
+  const handleBulkPasteClick = React.useCallback(() => {
+    if (bulkPasteText.trim()) {
+      handleBulkPaste(bulkPasteText);
+      setBulkPasteText('');
+    }
+  }, [bulkPasteText, handleBulkPaste]);
 
   return (
     <FormField
@@ -345,14 +431,107 @@ export const EnvVariablesEditor = ({
 
           <FormControl>
             <div className="space-y-3">
+              {/* Bulk Paste Area - Top for easy access */}
+              <div className="rounded-lg border border-dashed p-4 bg-muted/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <ClipboardPaste size={16} className="text-muted-foreground" />
+                  <span className="text-sm font-medium">{t('selfHost.envEditor.bulkPaste')}</span>
+                </div>
+                <Textarea
+                  value={bulkPasteText}
+                  onChange={(e) => setBulkPasteText(e.target.value)}
+                  onPaste={handleBulkPasteEvent}
+                  placeholder={t('selfHost.envEditor.bulkPastePlaceholder')}
+                  className="font-mono text-sm min-h-[80px] resize-none"
+                  rows={4}
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <FileText size={12} />
+                    {t('selfHost.envEditor.pasteHint')}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkPasteClick}
+                    disabled={!bulkPasteText.trim()}
+                    className="h-7 text-xs"
+                  >
+                    {t('selfHost.envEditor.importPasted')}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Add New Variable Input - Middle for primary action */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Textarea
+                    value={newKey}
+                    onChange={(e) => updateNewKey(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onPaste={handlePaste}
+                    placeholder={t('selfHost.envEditor.keyPlaceholder')}
+                    className={cn(
+                      'font-mono text-sm min-h-[36px] max-w-[200px] resize-none',
+                      error && 'border-destructive'
+                    )}
+                    rows={1}
+                  />
+                  <span className="flex items-center text-muted-foreground flex-shrink-0">=</span>
+                  <Textarea
+                    value={newValue}
+                    onChange={(e) => updateNewValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onPaste={handlePaste}
+                    placeholder={t('selfHost.envEditor.valuePlaceholder')}
+                    className={cn(
+                      'font-mono text-sm min-h-[36px] flex-1 resize-none',
+                      error && 'border-destructive'
+                    )}
+                    rows={newValue.length > 100 ? 3 : 1}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={addVariable}
+                    disabled={!newKey.trim() || !newValue.trim()}
+                    className="flex-shrink-0 h-[36px] w-[36px]"
+                  >
+                    <Plus size={16} />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Variables List - Bottom to show all added variables */}
               {variables.length > 0 && (
                 <div className="rounded-lg border bg-card">
-                  <ScrollArea className={cn(variables.length > 5 && 'h-[280px]')}>
+                  <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
+                    <span className="text-sm font-medium">
+                      {variables.length}{' '}
+                      {variables.length === 1
+                        ? t('selfHost.envEditor.variable')
+                        : t('selfHost.envEditor.variables')}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={copyAllVariables}
+                      className="h-7 text-xs gap-1.5"
+                      title={t('selfHost.envEditor.copyAll')}
+                    >
+                      <Copy size={12} />
+                      {t('selfHost.envEditor.copyAll')}
+                    </Button>
+                  </div>
+                  <ScrollArea className={cn(variables.length > 5 && 'h-[400px]')}>
                     <div className="divide-y">
                       {variables.map((variable, index) => (
                         <div
                           key={`${variable.key}-${index}`}
-                          className="group flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors"
+                          className="group flex items-start gap-2 px-3 py-3 hover:bg-muted/50 transition-colors min-w-0 max-w-full overflow-hidden"
                         >
                           <EnvVariableRow
                             variable={variable}
@@ -360,6 +539,7 @@ export const EnvVariablesEditor = ({
                             editKey={editKey}
                             editValue={editValue}
                             isRevealed={revealedIndices.has(index)}
+                            isExpanded={expandedIndices.has(index)}
                             maskValue={maskValue}
                             onUpdateEditKey={updateEditKey}
                             onUpdateEditValue={updateEditValue}
@@ -369,6 +549,9 @@ export const EnvVariablesEditor = ({
                             onToggleSecret={() => toggleSecret(index)}
                             onStartEditing={() => startEditing(index)}
                             onRemove={() => removeVariable(index)}
+                            onCopy={() => copyVariable(index)}
+                            onToggleExpand={() => toggleExpand(index)}
+                            copied={copiedIndex === index}
                           />
                         </div>
                       ))}
@@ -377,47 +560,12 @@ export const EnvVariablesEditor = ({
                 </div>
               )}
 
-              <div className="flex gap-2">
-                <Input
-                  value={newKey}
-                  onChange={(e) => updateNewKey(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onPaste={handlePaste}
-                  placeholder={t('selfHost.envEditor.keyPlaceholder')}
-                  className={cn('font-mono flex-1 max-w-[160px]', error && 'border-destructive')}
-                />
-                <span className="flex items-center text-muted-foreground">=</span>
-                <Input
-                  value={newValue}
-                  onChange={(e) => updateNewValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onPaste={handlePaste}
-                  placeholder={t('selfHost.envEditor.valuePlaceholder')}
-                  className={cn('font-mono flex-1', error && 'border-destructive')}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={addVariable}
-                  disabled={!newKey.trim() || !newValue.trim()}
-                  className="flex-shrink-0"
-                >
-                  <Plus size={16} />
-                </Button>
-              </div>
-
               {error && (
                 <p className="text-sm font-medium text-destructive flex items-center gap-1.5">
                   <AlertCircle size={14} />
                   {error}
                 </p>
               )}
-
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <FileText size={12} />
-                {t('selfHost.envEditor.pasteHint')}
-              </p>
             </div>
           </FormControl>
 

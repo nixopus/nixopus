@@ -700,6 +700,16 @@
       "hide": "Hide value",
       "markSecret": "Mark as secret",
       "unmarkSecret": "Unmark as secret",
+      "copy": "Copy variable",
+      "copied": "Copied!",
+      "copyAll": "Copy all",
+      "showMore": "Show more",
+      "showLess": "Show less",
+      "variable": "variable",
+      "variables": "variables",
+      "bulkPaste": "Bulk Paste",
+      "bulkPastePlaceholder": "Paste environment variables here (KEY=VALUE format, one per line)...",
+      "importPasted": "Import",
       "errors": {
         "invalidFormat": "Must be in format KEY=VALUE"
       },
