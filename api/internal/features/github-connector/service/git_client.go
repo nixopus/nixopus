@@ -10,6 +10,7 @@ import (
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 // GitClient defines the interface for git operations
@@ -48,7 +49,13 @@ func (g *DefaultGitClient) run(cmd string) (string, error) {
 
 // Clone clones a git repository to the specified path
 func (g *DefaultGitClient) Clone(repoURL, destinationPath string) error {
-	cmd := fmt.Sprintf("git clone %s %s", repoURL, destinationPath)
+	if err := utils.ValidateShellArg(repoURL, "repoURL"); err != nil {
+		return fmt.Errorf("git clone: %w", err)
+	}
+	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
+		return fmt.Errorf("git clone: %w", err)
+	}
+	cmd := fmt.Sprintf("git clone %s %s", utils.ShellQuote(repoURL), utils.ShellQuote(destinationPath))
 	output, err := g.run(cmd)
 	if err != nil {
 		return fmt.Errorf("git clone failed: %s, output: %s", err.Error(), output)
@@ -60,7 +67,13 @@ func (g *DefaultGitClient) Clone(repoURL, destinationPath string) error {
 
 // Pull updates a git repository from remote
 func (g *DefaultGitClient) Pull(repoURL, destinationPath string) error {
-	cmd := fmt.Sprintf("cd %s && git pull %s", destinationPath, repoURL)
+	if err := utils.ValidateShellArg(repoURL, "repoURL"); err != nil {
+		return fmt.Errorf("git pull: %w", err)
+	}
+	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
+		return fmt.Errorf("git pull: %w", err)
+	}
+	cmd := fmt.Sprintf("cd %s && git pull %s", utils.ShellQuote(destinationPath), utils.ShellQuote(repoURL))
 	output, err := g.run(cmd)
 	if err != nil {
 		return fmt.Errorf("git pull failed: %s, output: %s", err.Error(), output)
@@ -118,7 +131,13 @@ func (g *DefaultGitClient) GetLatestCommitHash(repoURL string, accessToken strin
 
 // SetHeadToCommitHash sets the HEAD of the repository to a specific commit hash
 func (g *DefaultGitClient) SetHeadToCommitHash(repoURL, destinationPath, commitHash string) error {
-	cmd := fmt.Sprintf("cd %s && git checkout %s", destinationPath, commitHash)
+	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
+		return fmt.Errorf("git checkout: %w", err)
+	}
+	if err := utils.ValidateGitRef(commitHash, "commitHash"); err != nil {
+		return fmt.Errorf("git checkout: %w", err)
+	}
+	cmd := fmt.Sprintf("cd %s && git checkout %s", utils.ShellQuote(destinationPath), utils.ShellQuote(commitHash))
 	output, err := g.run(cmd)
 	if err != nil {
 		return fmt.Errorf("git checkout failed: %s, output: %s", err.Error(), output)
@@ -130,7 +149,13 @@ func (g *DefaultGitClient) SetHeadToCommitHash(repoURL, destinationPath, commitH
 
 // SwitchBranch switches to the specified branch in the repository
 func (g *DefaultGitClient) SwitchBranch(destinationPath, branch string) error {
-	cmd := fmt.Sprintf("cd %s && git checkout %s", destinationPath, branch)
+	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
+		return fmt.Errorf("git switch branch: %w", err)
+	}
+	if err := utils.ValidateGitRef(branch, "branch"); err != nil {
+		return fmt.Errorf("git switch branch: %w", err)
+	}
+	cmd := fmt.Sprintf("cd %s && git checkout %s", utils.ShellQuote(destinationPath), utils.ShellQuote(branch))
 	output, err := g.run(cmd)
 	if err != nil {
 		return fmt.Errorf("git checkout branch failed: %s, output: %s", err.Error(), output)
@@ -141,7 +166,10 @@ func (g *DefaultGitClient) SwitchBranch(destinationPath, branch string) error {
 }
 
 func (g *DefaultGitClient) HasUncommittedChanges(destinationPath string) (bool, error) {
-	cmd := fmt.Sprintf("cd %s && git status --porcelain", destinationPath)
+	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
+		return false, fmt.Errorf("git status: %w", err)
+	}
+	cmd := fmt.Sprintf("cd %s && git status --porcelain", utils.ShellQuote(destinationPath))
 	output, err := g.run(cmd)
 	if err != nil {
 		return false, fmt.Errorf("git status failed: %s, output: %s", err.Error(), output)
@@ -151,13 +179,17 @@ func (g *DefaultGitClient) HasUncommittedChanges(destinationPath string) (bool, 
 }
 
 func (g *DefaultGitClient) Stash(destinationPath string) (string, error) {
-	cmd := fmt.Sprintf("cd %s && git stash push -m 'nixopus-auto-stash'", destinationPath)
+	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
+		return "", fmt.Errorf("git stash: %w", err)
+	}
+	quoted := utils.ShellQuote(destinationPath)
+	cmd := fmt.Sprintf("cd %s && git stash push -m 'nixopus-auto-stash'", quoted)
 	output, err := g.run(cmd)
 	if err != nil {
 		return "", fmt.Errorf("git stash push failed: %s, output: %s", err.Error(), output)
 	}
 
-	cmd = fmt.Sprintf("cd %s && git stash list --format='%%H' -n 1", destinationPath)
+	cmd = fmt.Sprintf("cd %s && git stash list --format='%%H' -n 1", quoted)
 	stashOutput, err := g.run(cmd)
 	if err != nil {
 		return "", fmt.Errorf("git stash list failed: %s, output: %s", err.Error(), stashOutput)
@@ -173,7 +205,13 @@ func (g *DefaultGitClient) Stash(destinationPath string) (string, error) {
 }
 
 func (g *DefaultGitClient) ApplyStash(destinationPath, stashID string) error {
-	cmd := fmt.Sprintf("cd %s && git stash apply %s", destinationPath, stashID)
+	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
+		return fmt.Errorf("git stash apply: %w", err)
+	}
+	if err := utils.ValidateGitRef(stashID, "stashID"); err != nil {
+		return fmt.Errorf("git stash apply: %w", err)
+	}
+	cmd := fmt.Sprintf("cd %s && git stash apply %s", utils.ShellQuote(destinationPath), utils.ShellQuote(stashID))
 	output, err := g.run(cmd)
 	if err != nil {
 		return fmt.Errorf("git stash apply failed: %s, output: %s", err.Error(), output)
@@ -184,7 +222,10 @@ func (g *DefaultGitClient) ApplyStash(destinationPath, stashID string) error {
 }
 
 func (g *DefaultGitClient) ResetHard(destinationPath string) error {
-	cmd := fmt.Sprintf("cd %s && git reset --hard", destinationPath)
+	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
+		return fmt.Errorf("git reset: %w", err)
+	}
+	cmd := fmt.Sprintf("cd %s && git reset --hard", utils.ShellQuote(destinationPath))
 	output, err := g.run(cmd)
 	if err != nil {
 		return fmt.Errorf("git reset --hard failed: %s, output: %s", err.Error(), output)
@@ -195,7 +236,10 @@ func (g *DefaultGitClient) ResetHard(destinationPath string) error {
 }
 
 func (g *DefaultGitClient) RemoveRepository(repoPath string) error {
-	cmd := fmt.Sprintf("rm -rf %s", repoPath)
+	if err := utils.ValidatePath(repoPath, "repoPath"); err != nil {
+		return fmt.Errorf("remove repository: %w", err)
+	}
+	cmd := fmt.Sprintf("rm -rf %s", utils.ShellQuote(repoPath))
 	output, err := g.run(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to remove repository directory: %s, output: %s", err.Error(), output)
