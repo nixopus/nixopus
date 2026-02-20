@@ -82,8 +82,8 @@ export type ApplicationLogs = {
 export type ApplicationLogsResponse = {
   logs: ApplicationLogs[];
   total_count: number;
-  current_page: number;
-  total_pages: number;
+  page: number;
+  page_size: number;
 };
 
 export type Status =
