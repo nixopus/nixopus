@@ -3,7 +3,7 @@ metadata:
   name: "Statping-ng"
   description: "An easy to use Status Page for your websites and applications"
   author: "Nixopus Team"
-  icon: "📊"
+  icon: "https://raw.githubusercontent.com/statping-ng/statping-ng/dev/frontend/public/img/banner.png"
   category: "Monitoring"
   type: "install"
   version: "1.0.0"

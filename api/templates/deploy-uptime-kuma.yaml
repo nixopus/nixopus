@@ -3,7 +3,7 @@ metadata:
   name: "Uptime Kuma"
   description: "Uptime Kuma is a self-hosted monitoring tool"
   author: "Nixopus Team"
-  icon: "🕒"
+  icon: "https://uptime.kuma.pet/img/icon.svg"
   category: "Monitoring"
   type: "install"
   version: "1.0.0"
