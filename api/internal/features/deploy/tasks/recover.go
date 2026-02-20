@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/caddygo"
 	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
 	s3store "github.com/raghavyuva/nixopus-api/internal/features/deploy/s3"
 	deploy_types "github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
@@ -167,22 +167,23 @@ func (s *TaskService) recoverSingleApp(ctx context.Context, app *shared_types.Ap
 
 	domains, _ := s.Storage.GetApplicationDomains(app.ID)
 	if len(domains) > 0 {
-		client, err := GetCaddyClient(ctx, nil, &s.Logger)
-		if err != nil {
-			taskCtx.AddLog("Warning: Failed to get Caddy client for domain setup: " + err.Error())
+		port, _ := strconv.Atoi(containerResult.AvailablePort)
+		upstreamHost, hostErr := GetSSHHostForOrganization(ctx, app.OrganizationID)
+		if hostErr != nil {
+			taskCtx.AddLog("Warning: Failed to get SSH host for domain setup: " + hostErr.Error())
 		} else {
-			port, _ := strconv.Atoi(containerResult.AvailablePort)
-			upstreamHost, hostErr := GetSSHHostForOrganization(ctx, app.OrganizationID)
-			if hostErr == nil {
-				for _, d := range domains {
-					if d.Domain == "" {
-						continue
-					}
-					if addErr := client.AddDomainWithAutoTLS(d.Domain, upstreamHost, port, caddygo.DomainOptions{}); addErr != nil {
-						taskCtx.AddLog("Warning: Failed to add domain " + d.Domain + ": " + addErr.Error())
-					}
+			var routes []caddy.DomainRoute
+			for _, d := range domains {
+				if d.Domain == "" {
+					continue
 				}
-				client.Reload()
+				routes = append(routes, caddy.DomainRoute{
+					Domain:       d.Domain,
+					UpstreamDial: caddy.FormatDial(upstreamHost, port),
+				})
+			}
+			if err := caddy.AddDomainsWithRetry(ctx, nil, &s.Logger, routes); err != nil {
+				taskCtx.AddLog("Warning: Failed to configure proxy: " + err.Error())
 			}
 		}
 	}

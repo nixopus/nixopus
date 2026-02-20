@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -203,15 +203,12 @@ func (c *DeployController) RemoveApplicationDomain(f fuego.ContextWithBody[Remov
 		}
 	}
 
-	// Remove domain from Caddy proxy immediately
 	orgCtx := context.WithValue(f.Request().Context(), shared_types.OrganizationIDKey, organizationID.String())
-	client, clientErr := tasks.GetCaddyClient(orgCtx, nil, &c.logger)
-	if clientErr != nil {
-		c.logger.Log(logger.Warning, "failed to get Caddy client", clientErr.Error())
-	} else if err := client.DeleteDomain(data.Domain); err != nil {
-		c.logger.Log(logger.Warning, "failed to remove domain from proxy", err.Error())
-	} else {
-		client.Reload()
+	if err := caddy.RemoveDomainsWithRetry(orgCtx, nil, &c.logger, []string{data.Domain}); err != nil {
+		c.logger.Log(logger.Warning, "failed to remove domain from proxy, enqueueing for retry", err.Error())
+		if enqErr := caddy.EnqueuePendingRemoval(organizationID, data.Domain); enqErr != nil {
+			c.logger.Log(logger.Error, "failed to enqueue pending removal", enqErr.Error())
+		}
 	}
 
 	// Reload application with domains
