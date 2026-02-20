@@ -128,7 +128,18 @@ export function useQuickDeployForm({
   const handleCreate = async () => {
     const isValid = await form.trigger();
     if (!isValid) {
-      toast.warning('Please fix the errors before saving');
+      const fieldErrors = form.formState.errors;
+      const messages = Object.values(fieldErrors)
+        .map((err) => err?.message)
+        .filter(Boolean);
+      toast.warning(
+        messages.length === 1
+          ? String(messages[0])
+          : t('selfHost.quickDeploy.toast.validationFailed' as any),
+        {
+          description: messages.length > 1 ? messages.join('. ') : undefined
+        }
+      );
       return;
     }
 
@@ -155,8 +166,11 @@ export function useQuickDeployForm({
 
       toast.success(t('selfHost.quickDeploy.toast.draftSaved'));
       router.push('/apps/application/' + result.id);
-    } catch {
-      toast.error(t('selfHost.quickDeploy.toast.saveFailed'));
+    } catch (error: any) {
+      const detail = error?.data?.error || error?.data?.message || error?.error || error?.message;
+      toast.error(t('selfHost.quickDeploy.toast.saveFailed'), {
+        description: detail || t('selfHost.quickDeploy.toast.saveFailedDescription' as any)
+      });
     }
   };
 

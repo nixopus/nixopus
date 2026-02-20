@@ -664,6 +664,8 @@
         "draftSaved": "Project saved as draft. You can deploy it later.",
         "deploymentStarted": "Deployment started successfully",
         "saveFailed": "Failed to save project",
+        "saveFailedDescription": "Something went wrong while creating the project. Please check your inputs and try again.",
+        "validationFailed": "Please fix the errors before saving",
         "deployFailed": "Failed to start deployment"
       }
     },
