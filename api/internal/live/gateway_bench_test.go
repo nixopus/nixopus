@@ -222,7 +222,7 @@ func BenchmarkFileChunkPipeline(b *testing.B) {
 
 // BenchmarkCompletionJobChannel measures job enqueue throughput with single consumer.
 func BenchmarkCompletionJobChannel(b *testing.B) {
-	jobs := make(chan *fileCompletionJob, completionJobBuffer)
+	jobs := make(chan *fileCompletionJob, completionBuffer())
 	job := makeFileCompletionJob()
 
 	done := make(chan struct{})
@@ -245,7 +245,7 @@ func BenchmarkCompletionJobChannel(b *testing.B) {
 // Many producers enqueue; 16 consumers drain. Tests real gateway topology.
 func BenchmarkCompletionJobChannelMultiWorker(b *testing.B) {
 	const numWorkers = 16
-	jobs := make(chan *fileCompletionJob, completionJobBuffer)
+	jobs := make(chan *fileCompletionJob, completionBuffer())
 	job := makeFileCompletionJob()
 
 	var wg sync.WaitGroup

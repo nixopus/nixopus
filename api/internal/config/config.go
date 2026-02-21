@@ -258,6 +258,36 @@ func setupEnvVarMappings() {
 	viper.SetDefault("trail.default_image", "nixopus-trail")
 	viper.SetDefault("trail.allowed_images", []string{"nixopus-trail"})
 	viper.SetDefault("trail.trail_domain", "nixopus.com")
+
+	// Live gateway
+	viper.BindEnv("live.chunk_size", "NIXOPUS_LIVE_CHUNK_SIZE")
+	viper.BindEnv("live.completion_workers", "NIXOPUS_LIVE_COMPLETION_WORKERS")
+	viper.BindEnv("live.completion_buffer", "NIXOPUS_LIVE_COMPLETION_BUFFER")
+	viper.BindEnv("live.pending_completions_tick", "NIXOPUS_LIVE_PENDING_COMPLETIONS_TICK")
+	viper.BindEnv("live.read_buffer_size", "NIXOPUS_LIVE_READ_BUFFER_SIZE")
+	viper.BindEnv("live.write_buffer_size", "NIXOPUS_LIVE_WRITE_BUFFER_SIZE")
+	viper.BindEnv("live.read_deadline", "NIXOPUS_LIVE_READ_DEADLINE")
+	viper.BindEnv("live.write_deadline", "NIXOPUS_LIVE_WRITE_DEADLINE")
+	viper.BindEnv("live.file_inject_retries", "NIXOPUS_LIVE_FILE_INJECT_RETRIES")
+	viper.BindEnv("live.build_debounce", "NIXOPUS_LIVE_BUILD_DEBOUNCE")
+	viper.BindEnv("live.generated_dockerfile_name", "NIXOPUS_LIVE_GENERATED_DOCKERFILE_NAME")
+	viper.BindEnv("live.max_indexable_size", "NIXOPUS_LIVE_MAX_INDEXABLE_SIZE")
+	viper.BindEnv("live.check_origin", "NIXOPUS_LIVE_CHECK_ORIGIN")
+	viper.BindEnv("live.allowed_origins", "NIXOPUS_LIVE_ALLOWED_ORIGINS")
+
+	viper.SetDefault("live.chunk_size", 64*1024)
+	viper.SetDefault("live.completion_workers", 4)
+	viper.SetDefault("live.completion_buffer", 256)
+	viper.SetDefault("live.pending_completions_tick", "10ms")
+	viper.SetDefault("live.read_buffer_size", 256*1024)
+	viper.SetDefault("live.write_buffer_size", 256*1024)
+	viper.SetDefault("live.read_deadline", "5m")
+	viper.SetDefault("live.write_deadline", "10s")
+	viper.SetDefault("live.file_inject_retries", 3)
+	viper.SetDefault("live.build_debounce", "3s")
+	viper.SetDefault("live.generated_dockerfile_name", "Dockerfile.nixopus.dev")
+	viper.SetDefault("live.max_indexable_size", 512000)
+	viper.SetDefault("live.check_origin", false)
 }
 
 func validateConfig(config types.Config) error {
