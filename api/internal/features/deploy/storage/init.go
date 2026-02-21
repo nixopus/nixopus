@@ -124,6 +124,37 @@ func (s *DeployStorage) IsPortAlreadyTaken(port int) (bool, error) {
 }
 
 func (s *DeployStorage) IsDomainValid(domain string) (bool, error) {
+	if domain == "" {
+		return false, nil
+	}
+	if len(domain) > 253 {
+		return false, nil
+	}
+	// Reject path traversal and whitespace
+	for _, c := range domain {
+		if c == '/' || c == '\\' || c == ' ' || c == '\t' || c == '\n' || c == '\r' {
+			return false, nil
+		}
+	}
+	labels := strings.Split(domain, ".")
+	if len(labels) < 2 {
+		return false, nil
+	}
+	for _, label := range labels {
+		if label == "" || len(label) > 63 {
+			return false, nil
+		}
+		for i, c := range label {
+			isAlnum := (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+			isHyphen := c == '-'
+			if !isAlnum && !isHyphen {
+				return false, nil
+			}
+			if isHyphen && (i == 0 || i == len(label)-1) {
+				return false, nil
+			}
+		}
+	}
 	return true, nil
 }
 
@@ -221,7 +252,6 @@ func (s *DeployStorage) GetApplications(page, pageSize int, sortBy string, sortD
 	query := s.DB.NewSelect().
 		Model(&applications).
 		Relation("Status").
-		Relation("Logs").
 		Relation("Deployments.Status").
 		Relation("Domains").
 		Limit(pageSize).
