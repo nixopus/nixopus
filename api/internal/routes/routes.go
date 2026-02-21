@@ -331,7 +331,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterHealthCheckRoutes(healthCheckGroup, healthCheckController)
 
 	// Extension routes
-	extensionController := extension.NewExtensionsController(router.app.Store, router.app.Ctx, router.logger)
+	extensionController := extension.NewExtensionsController(router.app.Store, router.app.Ctx, router.logger, config.AppConfig.Redis.URL)
 	extensionGroup := fuego.Group(server, apiV1.Path+"/extensions")
 	router.applyMiddleware(extensionGroup, MiddlewareConfig{
 		RBAC:         false,
@@ -377,7 +377,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 // Better Auth handles authentication
 func (router *Router) createAuthController(notificationManager *notification.NotificationManager) *auth.AuthController {
 	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
-	authService := auth_service.NewAuthService(userStorage, router.logger, router.app.Ctx)
+	authService := auth_service.NewAuthService(userStorage, router.logger, router.app.Ctx, config.AppConfig.Redis.URL)
 	return auth.NewAuthController(router.app.Ctx, router.logger, notificationManager, *authService, router.app.Store)
 }
 
