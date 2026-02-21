@@ -17,7 +17,26 @@ type Config struct {
 	Stripe     StripeConfig     `mapstructure:"stripe"`
 	Agent      AgentConfig      `mapstructure:"agent"`
 	Trail      TrailConfig      `mapstructure:"trail"`
+	Live       LiveConfig       `mapstructure:"live"`
 	S3         S3Config         `mapstructure:"s3"`
+}
+
+// LiveConfig holds configuration for the live gateway (WebSocket, file sync, build).
+type LiveConfig struct {
+	ChunkSize               int64  `mapstructure:"chunk_size"`
+	CompletionWorkers       int    `mapstructure:"completion_workers"`
+	CompletionBuffer        int    `mapstructure:"completion_buffer"`
+	PendingCompletionsTick  string `mapstructure:"pending_completions_tick"`
+	ReadBufferSize          int    `mapstructure:"read_buffer_size"`
+	WriteBufferSize         int    `mapstructure:"write_buffer_size"`
+	ReadDeadline            string `mapstructure:"read_deadline"`
+	WriteDeadline           string `mapstructure:"write_deadline"`
+	FileInjectRetries       int    `mapstructure:"file_inject_retries"`
+	BuildDebounce           string `mapstructure:"build_debounce"`
+	GeneratedDockerfileName string `mapstructure:"generated_dockerfile_name"`
+	MaxIndexableSize        int    `mapstructure:"max_indexable_size"`
+	CheckOrigin             bool   `mapstructure:"check_origin"`
+	AllowedOrigins          string `mapstructure:"allowed_origins"` // Comma-separated; parsed at runtime
 }
 
 type S3Config struct {
