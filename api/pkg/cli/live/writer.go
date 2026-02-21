@@ -84,14 +84,14 @@ func (w *Writer) UserInput(text string) {
 	w.term.Println(fmt.Sprintf("\n%s %s\n", dimStyle.Render("you:"), text))
 }
 
-// codeStyle for Dockerfile/code blocks.
+// codeStyle for code/content blocks.
 var codeStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
 
-// ApprovalProposal renders a structured Dockerfile approval UI: header, summary,
-// validation, suggestions, and the proposed Dockerfile in a readable code block.
-func (w *Writer) ApprovalProposal(summary string, validationScore int, suggestions []string, dockerfile string) {
+// DockerfileApprover renders a Dockerfile approval UI: summary, validation, suggestions,
+// and the proposed Dockerfile content.
+func (w *Writer) DockerfileApprover(summary string, validationScore int, suggestions []string, dockerfile string) {
 	w.Blank()
-	w.term.Println(fmt.Sprintf("  %s", boldStyle.Render("━━ Dockerfile proposal ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")))
+	w.term.Println(fmt.Sprintf("  %s", boldStyle.Render("━━ Dockerfile proposal ━━━━━━━━━━━━━━━━━━━━━━━━━━━")))
 	w.Blank()
 
 	if summary != "" {

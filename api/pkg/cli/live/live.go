@@ -15,11 +15,11 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/raghavyuva/nixopus-api/pkg/cli/cliconfig"
-	"github.com/raghavyuva/nixopus-api/pkg/cli/logincmd"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/httpclient"
 	"github.com/raghavyuva/nixopus-api/internal/syncproto"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/cliconfig"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/logincmd"
 	"github.com/raghavyuva/nixopus-api/pkg/cli/mover"
 	"github.com/spf13/cobra"
 )
@@ -34,7 +34,7 @@ var (
 var LiveCmd = &cobra.Command{
 	Use:   "live [app-name]",
 	Short: "Start a live deploy session",
-	Long:  `Start watching for file changes and hot reload. Optionally specify an app name to use a specific application. Use --all to run all apps in the family simultaneously.`,
+	Long:  `Start watching for file changes and hot reload. Optionally specify an app name to use a specific application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Run login first if --login flag is set (replaces any stored credentials)
 		if loginFlag {
@@ -42,15 +42,11 @@ var LiveCmd = &cobra.Command{
 				return fmt.Errorf("login failed: %w", err)
 			}
 		}
-		if allFlag {
-			return runAllApps(args)
-		}
 		return runSingleApp(args)
 	},
 }
 
 func init() {
-	LiveCmd.Flags().BoolVar(&allFlag, "all", false, "Run all apps in the family simultaneously")
 	LiveCmd.Flags().BoolVar(&loginFlag, "login", false, "Run login flow and replace stored credentials before starting")
 	LiveCmd.Flags().StringVar(&envPath, "env-path", "", "Path to environment file (relative to project root, e.g., .env or .env.production). Only used during initialization if project is not initialized.")
 	LiveCmd.Flags().BoolVar(&forceFullSyncFlag, "force-full-sync", false, "Bypass incremental sync; clear persisted state and sync all files")
