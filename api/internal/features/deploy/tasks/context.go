@@ -1,12 +1,14 @@
 package tasks
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/uptrace/bun"
 )
 
 type ContextTask struct {
@@ -84,63 +86,36 @@ func (c *ContextTask) GetDeploymentConfig(applicationID uuid.UUID) shared_types.
 	return applicationDeployment
 }
 
-// PersistApplicationDeploymentData persists the application and application deployment data to the database.
-// It takes the operations to perform and their error messages as parameters.
-// It returns an error if any operation fails.
-func (c *ContextTask) PersistApplicationDeploymentData(operations []struct {
-	operation  func() error
-	errMessage string
-}) error {
-	for _, op := range operations {
-		if err := c.executeDBOperations(op.operation, op.errMessage); err != nil {
+// PersistCreateApplicationDeploymentData atomically persists the application and
+// deployment data within a single transaction to prevent orphaned records.
+func (c *ContextTask) PersistCreateApplicationDeploymentData(application shared_types.Application, applicationDeployment shared_types.ApplicationDeployment) error {
+	return c.TaskService.Storage.RunInTransaction(func(tx bun.Tx) error {
+		ctx := context.Background()
+		if _, err := tx.NewInsert().Model(&application).Exec(ctx); err != nil {
+			c.TaskService.Logger.Log(logger.Error, types.LogFailedToCreateApplicationRecord+err.Error(), "")
 			return err
 		}
-	}
-	return nil
-}
-
-// PersistCreateApplicationDeploymentData persists the application and application deployment data to the database.
-// It returns an error if the operation fails.
-func (c *ContextTask) PersistCreateApplicationDeploymentData(application shared_types.Application, applicationDeployment shared_types.ApplicationDeployment) error {
-	operations := []struct {
-		operation  func() error
-		errMessage string
-	}{
-		{
-			operation: func() error {
-				return c.TaskService.Storage.AddApplication(&application)
-			},
-			errMessage: types.LogFailedToCreateApplicationRecord,
-		},
-		{
-			operation: func() error {
-				return c.TaskService.Storage.AddApplicationDeployment(&applicationDeployment)
-			},
-			errMessage: types.LogFailedToCreateApplicationDeployment,
-		},
-	}
-	return c.PersistApplicationDeploymentData(operations)
+		if _, err := tx.NewInsert().Model(&applicationDeployment).Exec(ctx); err != nil {
+			c.TaskService.Logger.Log(logger.Error, types.LogFailedToCreateApplicationDeployment+err.Error(), "")
+			return err
+		}
+		return nil
+	})
 }
 
 func (c *ContextTask) PersistUpdateApplicationDeploymentData(application shared_types.Application, applicationDeployment shared_types.ApplicationDeployment) error {
-	operations := []struct {
-		operation  func() error
-		errMessage string
-	}{
-		{
-			operation: func() error {
-				return c.TaskService.Storage.UpdateApplication(&application)
-			},
-			errMessage: types.LogFailedToUpdateApplicationRecord,
-		},
-		{
-			operation: func() error {
-				return c.TaskService.Storage.AddApplicationDeployment(&applicationDeployment)
-			},
-			errMessage: types.LogFailedToUpdateApplicationDeployment,
-		},
-	}
-	return c.PersistApplicationDeploymentData(operations)
+	return c.TaskService.Storage.RunInTransaction(func(tx bun.Tx) error {
+		ctx := context.Background()
+		if _, err := tx.NewUpdate().Model(&application).OmitZero().WherePK().Exec(ctx); err != nil {
+			c.TaskService.Logger.Log(logger.Error, types.LogFailedToUpdateApplicationRecord+err.Error(), "")
+			return err
+		}
+		if _, err := tx.NewInsert().Model(&applicationDeployment).Exec(ctx); err != nil {
+			c.TaskService.Logger.Log(logger.Error, types.LogFailedToUpdateApplicationDeployment+err.Error(), "")
+			return err
+		}
+		return nil
+	})
 }
 
 // PersistApplicationDeploymentStatus creates and persists the initial application deployment status.
@@ -159,20 +134,6 @@ func (c *ContextTask) PersistCreateDeploymentStatus(applicationDeployment shared
 	}
 
 	return &initialStatus, nil
-}
-
-// executeDBOperations executes a database operation and logs an error if it fails.
-// The first parameter is a function that performs the database operation.
-// The second parameter is an error message prefix that is used when logging the error.
-// If the operation fails, it logs the error message and returns the error.
-// Otherwise, it returns nil.
-func (c *ContextTask) executeDBOperations(fn func() error, errMessage string) error {
-	err := fn()
-	if err != nil {
-		c.TaskService.Logger.Log(logger.Error, errMessage+err.Error(), "")
-		return err
-	}
-	return nil
 }
 
 // loadDomainsIntoApplication loads domains from database into the application's Domains field

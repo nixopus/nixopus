@@ -109,6 +109,7 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 
 		if err := caddy.AddDomainsAtomic(orgCtx, nil, &t.Logger, routes); err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to configure proxy: "+err.Error(), shared_types.Failed)
+			t.cleanupServiceOnFailure(orgCtx, TaskPayload.Application.Name, taskCtx)
 			return err
 		}
 		for _, r := range routes {
