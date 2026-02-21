@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -57,6 +58,7 @@ func GetMapFromString(s string) map[string]string {
 const logBatchSize = 50
 
 type TaskContext struct {
+	mu            sync.Mutex
 	service       *TaskService
 	applicationID uuid.UUID
 	deploymentID  uuid.UUID
@@ -104,6 +106,7 @@ func (tc *TaskContext) UpdateStatus(status shared_types.Status) {
 }
 
 func (tc *TaskContext) AddLog(logMessage string) {
+	tc.mu.Lock()
 	appLog := shared_types.ApplicationLogs{
 		ID:                      uuid.New(),
 		ApplicationID:           tc.applicationID,
@@ -114,7 +117,10 @@ func (tc *TaskContext) AddLog(logMessage string) {
 	}
 
 	tc.logBuffer = append(tc.logBuffer, appLog)
-	if len(tc.logBuffer) >= logBatchSize {
+	needsFlush := len(tc.logBuffer) >= logBatchSize
+	tc.mu.Unlock()
+
+	if needsFlush {
 		tc.FlushLogs()
 	}
 	if tc.onLogCallback != nil {
@@ -124,12 +130,15 @@ func (tc *TaskContext) AddLog(logMessage string) {
 
 // FlushLogs writes any buffered logs to the database in a single batch INSERT.
 func (tc *TaskContext) FlushLogs() {
+	tc.mu.Lock()
 	if len(tc.logBuffer) == 0 {
+		tc.mu.Unlock()
 		return
 	}
 	batch := make([]shared_types.ApplicationLogs, len(tc.logBuffer))
 	copy(batch, tc.logBuffer)
 	tc.logBuffer = tc.logBuffer[:0]
+	tc.mu.Unlock()
 
 	if err := tc.service.Storage.AddApplicationLogsBatch(batch); err != nil {
 		tc.service.Logger.Log(logger.Error, "Failed to flush log batch: "+err.Error(), "")
