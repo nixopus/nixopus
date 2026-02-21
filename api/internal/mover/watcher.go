@@ -72,9 +72,9 @@ func New(cfg Config) (*Watcher, error) {
 		return nil, fmt.Errorf("failed to create watcher: %w", err)
 	}
 
-	eventsBuf := 512
-	if cfg.EventsBufferSize > 0 {
-		eventsBuf = cfg.EventsBufferSize
+	eventsBuf := cfg.EventsBufferSize
+	if eventsBuf <= 0 {
+		eventsBuf = 512
 	}
 	w := &Watcher{
 		rootPath:      cfg.RootPath,
@@ -93,7 +93,7 @@ func parseDebounceDuration(ms int) time.Duration {
 	if ms > 0 {
 		return time.Duration(ms) * time.Millisecond
 	}
-	return 100 * time.Millisecond
+	return time.Duration(watcherDebounceMs()) * time.Millisecond
 }
 
 // Start begins watching for file changes
@@ -399,7 +399,7 @@ func contains(s []string, x string) bool {
 }
 
 func (p *pathIgnorer) batchGitCheckIgnore(paths []string) []string {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), gitCheckTimeout())
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "git", "check-ignore", "--stdin")
 	cmd.Dir = p.rootPath

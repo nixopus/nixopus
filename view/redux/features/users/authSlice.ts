@@ -3,6 +3,7 @@ import { userApi } from '@/redux/services/users/userApi';
 import { User } from '@/redux/types/user';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import { REHYDRATE } from 'redux-persist';
 import { authClient } from '@/packages/lib/auth-client';
 import { setActiveOrganization } from './userSlice';
 import { fetchUserOrganizations } from './orgSlice';
@@ -90,6 +91,12 @@ const initialState: AuthState = {
   }
 };
 
+function ensureTwoFactor(state: AuthState) {
+  if (!state.twoFactor) {
+    state.twoFactor = { isRequired: false, tempToken: undefined };
+  }
+}
+
 export const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -104,6 +111,7 @@ export const authSlice = createSlice({
         tempToken?: string;
       }>
     ) => {
+      ensureTwoFactor(state);
       const { user, token, refreshToken, expiresIn, tempToken } = action.payload;
 
       if (tempToken) {
@@ -125,6 +133,7 @@ export const authSlice = createSlice({
       state.user = user;
     },
     logout: (state) => {
+      ensureTwoFactor(state);
       state.user = null;
       state.token = undefined;
       state.refreshToken = undefined;
@@ -133,6 +142,7 @@ export const authSlice = createSlice({
       state.twoFactor.tempToken = undefined;
     },
     clearTwoFactor: (state) => {
+      ensureTwoFactor(state);
       state.twoFactor.isRequired = false;
       state.twoFactor.tempToken = undefined;
     },
@@ -144,10 +154,15 @@ export const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(REHYDRATE, (state) => {
+        ensureTwoFactor(state);
+      })
       .addCase(initializeAuth.pending, (state) => {
+        ensureTwoFactor(state);
         state.isLoading = true;
       })
       .addCase(initializeAuth.fulfilled, (state, action) => {
+        ensureTwoFactor(state);
         if (action.payload) {
           state.user = action.payload.user;
           state.token = action.payload.token;
@@ -167,6 +182,7 @@ export const authSlice = createSlice({
         state.isLoading = true;
       })
       .addMatcher(authApi.endpoints.loginUser.matchFulfilled, (state, { payload }) => {
+        ensureTwoFactor(state);
         if (payload?.temp_token) {
           state.twoFactor.isRequired = true;
           state.twoFactor.tempToken = payload.temp_token;
@@ -190,6 +206,7 @@ export const authSlice = createSlice({
         state.isLoading = true;
       })
       .addMatcher(authApi.endpoints.twoFactorLogin.matchFulfilled, (state, { payload }) => {
+        ensureTwoFactor(state);
         if (payload?.access_token) {
           state.user = payload.user;
           state.token = payload.access_token;
@@ -208,6 +225,7 @@ export const authSlice = createSlice({
         state.isLoading = true;
       })
       .addMatcher(authApi.endpoints.refreshToken.matchFulfilled, (state, { payload }) => {
+        ensureTwoFactor(state);
         if (payload?.access_token) {
           state.token = payload.access_token;
           state.refreshToken = payload.refresh_token || undefined;

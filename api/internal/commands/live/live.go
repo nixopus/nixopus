@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/raghavyuva/nixopus-api/internal/cliconfig"
 	"github.com/raghavyuva/nixopus-api/internal/commands/logincmd"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/httpclient"
@@ -26,6 +27,7 @@ var (
 	allFlag           bool
 	envPath           string
 	forceFullSyncFlag bool
+	loginFlag         bool
 )
 
 var LiveCmd = &cobra.Command{
@@ -33,7 +35,12 @@ var LiveCmd = &cobra.Command{
 	Short: "Start a live deploy session",
 	Long:  `Start watching for file changes and hot reload. Optionally specify an app name to use a specific application. Use --all to run all apps in the family simultaneously.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Check if --all flag is set
+		// Run login first if --login flag is set (replaces any stored credentials)
+		if loginFlag {
+			if err := logincmd.ForceLogin(); err != nil {
+				return fmt.Errorf("login failed: %w", err)
+			}
+		}
 		if allFlag {
 			return runAllApps(args)
 		}
@@ -43,6 +50,7 @@ var LiveCmd = &cobra.Command{
 
 func init() {
 	LiveCmd.Flags().BoolVar(&allFlag, "all", false, "Run all apps in the family simultaneously")
+	LiveCmd.Flags().BoolVar(&loginFlag, "login", false, "Run login flow and replace stored credentials before starting")
 	LiveCmd.Flags().StringVar(&envPath, "env-path", "", "Path to environment file (relative to project root, e.g., .env or .env.production). Only used during initialization if project is not initialized.")
 	LiveCmd.Flags().BoolVar(&forceFullSyncFlag, "force-full-sync", false, "Bypass incremental sync; clear persisted state and sync all files")
 }
@@ -117,6 +125,9 @@ func runSingleApp(args []string) error {
 		return fmt.Errorf("failed to connect")
 	}
 
+	// Configure mover from build-time CLI config (before creating Client/Engine)
+	mover.Configure(cliconfig.GetMoverConfig())
+
 	// Connection state handler — publishes events instead of updating Bubble Tea model
 	onStateChange := func(event mover.ConnectionEvent) {
 		tracker.SetConnectionStatus(connectionStatusFromMover(event.State))
@@ -185,6 +196,12 @@ func runSingleApp(args []string) error {
 	}()
 
 	// Wait for both WebSocket client and validations
+	initTimeout, toErr := cliconfig.GetInitTimeout()
+	if toErr != nil {
+		bus.Send(Event{Type: EventError, Message: toErr.Error()})
+		cancel()
+		return toErr
+	}
 	var client *mover.Client
 	var validationErr error
 	var clientErr error
@@ -203,7 +220,7 @@ func runSingleApp(args []string) error {
 			completed++
 		case path := <-repoPathChan:
 			repoPath = path
-		case <-time.After(30 * time.Second):
+		case <-time.After(initTimeout):
 			bus.Send(Event{Type: EventError, Message: "Initialization timeout"})
 			cancel()
 			return fmt.Errorf("initialization timeout")

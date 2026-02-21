@@ -8,13 +8,6 @@ import (
 	"strings"
 )
 
-const (
-	productionServerURL = "http://localhost:8080"
-	configFileName      = ".nixopus"
-	authFileName        = "auth.json"
-	syncStateFileName   = "sync-state.json"
-)
-
 // AuthConfig represents global authentication configuration stored in user's home directory
 type AuthConfig struct {
 	AccessToken    string `json:"access_token,omitempty"`    // Bearer token for API authentication
@@ -22,9 +15,45 @@ type AuthConfig struct {
 	OrganizationID string `json:"organization_id,omitempty"` // Active organization ID from Better Auth
 }
 
-// GetServerURL returns the server URL from environment variable or default
+// ServerURLProvider returns the API URL. Set by CLI main at startup; nil in API/server context.
+var ServerURLProvider func() string
+
+// ConfigFileNameProvider returns the project config file name. Set by CLI main; nil uses default.
+var ConfigFileNameProvider func() string
+
+// AuthFileNameProvider returns the auth file name. Set by CLI main; nil uses default.
+var AuthFileNameProvider func() string
+
+// SyncStateFileNameProvider returns the sync state file name. Set by CLI main; nil uses default.
+var SyncStateFileNameProvider func() string
+
+func getMoverConfigFileName() string {
+	if ConfigFileNameProvider != nil {
+		return ConfigFileNameProvider()
+	}
+	return ".nixopus"
+}
+
+func getMoverAuthFileName() string {
+	if AuthFileNameProvider != nil {
+		return AuthFileNameProvider()
+	}
+	return "auth.json"
+}
+
+func getMoverSyncStateFileName() string {
+	if SyncStateFileNameProvider != nil {
+		return SyncStateFileNameProvider()
+	}
+	return "sync-state.json"
+}
+
+// GetServerURL returns the API URL. Panics if ServerURLProvider not set (CLI must call InitCLIServerURL first).
 func GetServerURL() string {
-	return productionServerURL
+	if ServerURLProvider == nil {
+		panic("config: ServerURLProvider not set. CLI must call config.InitCLIServerURL at startup.")
+	}
+	return ServerURLProvider()
 }
 
 // Config represents the nixopus configuration stored in .nixopus file
@@ -57,7 +86,7 @@ func getConfigPath() (string, error) {
 		gitPath := filepath.Join(dir, ".git")
 		if _, err := os.Stat(gitPath); err == nil {
 			// Found .git directory, use this as project root
-			return filepath.Join(dir, configFileName), nil
+			return filepath.Join(dir, getMoverConfigFileName()), nil
 		}
 
 		parent := filepath.Dir(dir)
@@ -69,7 +98,7 @@ func getConfigPath() (string, error) {
 	}
 
 	// If no .git found, use current directory
-	return filepath.Join(cwd, configFileName), nil
+	return filepath.Join(cwd, getMoverConfigFileName()), nil
 }
 
 // Load reads the configuration from .nixopus file
@@ -229,7 +258,7 @@ func getAuthPath() (string, error) {
 	}
 
 	configDir := filepath.Join(homeDir, ".config", "nixopus")
-	authPath := filepath.Join(configDir, authFileName)
+	authPath := filepath.Join(configDir, getMoverAuthFileName())
 
 	return authPath, nil
 }
@@ -243,7 +272,7 @@ func GetSyncStatePath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get home directory: %w", err)
 	}
-	return filepath.Join(homeDir, ".config", "nixopus", syncStateFileName), nil
+	return filepath.Join(homeDir, ".config", "nixopus", getMoverSyncStateFileName()), nil
 }
 
 // ensureAuthDir ensures the auth directory exists
