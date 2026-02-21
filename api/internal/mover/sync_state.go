@@ -10,10 +10,7 @@ import (
 	"time"
 )
 
-const (
-	syncStateVersion    = 1
-	syncStateDebounceMs = 500 // Debounce saves to batch rapid updates
-)
+const syncStateVersion = 1
 
 // persistableState is the JSON structure written to disk.
 type persistableState struct {
@@ -245,7 +242,7 @@ func (s *SyncState) scheduleSave() {
 	if s.saveTimer != nil {
 		s.saveTimer.Stop()
 	}
-	s.saveTimer = time.AfterFunc(syncStateDebounceMs*time.Millisecond, func() {
+	s.saveTimer = time.AfterFunc(time.Duration(syncStateDebounceMs())*time.Millisecond, func() {
 		s.saveTimerMu.Lock()
 		s.saveTimer = nil
 		s.saveTimerMu.Unlock()

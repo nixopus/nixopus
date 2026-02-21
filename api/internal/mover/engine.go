@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -18,33 +17,6 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/joho/godotenv"
 )
-
-const (
-	defaultDebounceMs      = 100 // Fast response with fsnotify
-	largeSyncThreshold     = 50  // Use parallel sync earlier (was 100)
-	chunkSize              = 64 * 1024
-	manifestWaitTimeout    = 5 * time.Second
-	defaultSyncWorkers     = 20 // Scale for 2000+ file projects
-	defaultSyncConcurrency = 50
-)
-
-var (
-	syncWorkers     int
-	syncConcurrency int
-)
-
-func init() {
-	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_MOVER_SYNC_WORKERS")); err == nil && v > 0 {
-		syncWorkers = v
-	} else {
-		syncWorkers = defaultSyncWorkers
-	}
-	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_MOVER_SYNC_CONCURRENCY")); err == nil && v > 0 {
-		syncConcurrency = v
-	} else {
-		syncConcurrency = defaultSyncConcurrency
-	}
-}
 
 // ChangeType represents the type of file change
 type ChangeType string
@@ -118,7 +90,7 @@ type EngineConfig struct {
 func NewEngine(cfg EngineConfig) (*Engine, error) {
 	debounceMs := cfg.DebounceMs
 	if debounceMs <= 0 {
-		debounceMs = defaultDebounceMs
+		debounceMs = getMoverDebounceMs()
 	}
 
 	// Create file system watcher
@@ -126,7 +98,7 @@ func NewEngine(cfg EngineConfig) (*Engine, error) {
 		RootPath:         cfg.RootPath,
 		DebounceMs:       debounceMs,
 		IgnorePatterns:   cfg.Excludes,
-		EventsBufferSize: 512, // Handle bursty events (npm install, large refactors)
+		EventsBufferSize: eventsBufferSize(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create file watcher: %w", err)
@@ -309,7 +281,7 @@ func (e *Engine) InitialSync() error {
 	}
 
 	// Use parallel processing for large syncs
-	if len(filesToSync) > largeSyncThreshold {
+	if len(filesToSync) > largeSyncThreshold() {
 		if err := e.parallelSync(filesToSync); err != nil {
 			return err
 		}
@@ -352,7 +324,7 @@ type manifestResult struct {
 // Returns paths and root_hash from server, or nil paths if not received.
 func (e *Engine) waitForManifest() *manifestResult {
 	receive := e.client.Receive()
-	deadline := time.After(manifestWaitTimeout)
+	deadline := time.After(manifestWaitTimeout())
 	for {
 		select {
 		case msg, ok := <-receive:
@@ -395,7 +367,7 @@ func (e *Engine) computeChecksumsParallel(files []string) map[string]string {
 	if len(files) == 0 {
 		return make(map[string]string)
 	}
-	workers := syncWorkers
+	workers := syncWorkers()
 	if workers > len(files) {
 		workers = len(files)
 	}
@@ -494,12 +466,12 @@ var parallelSyncJobPool = sync.Pool{
 // parallelSync performs parallel file syncing using worker pool pattern.
 // Batches syncedFiles and syncState updates at the end to reduce lock contention.
 func (e *Engine) parallelSync(files []string) error {
-	jobs := make(chan *parallelSyncJob, syncConcurrency)
+	jobs := make(chan *parallelSyncJob, syncConcurrency())
 	results := make(chan parallelSyncResult, len(files))
 	var wg sync.WaitGroup
 
 	// Start workers - send files without per-file state updates (batch at end)
-	for w := 0; w < syncWorkers; w++ {
+	for w := 0; w < syncWorkers(); w++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -1058,14 +1030,15 @@ func (e *Engine) sendFileChangeNotification(change FileChangeEvent, info os.File
 
 // sendFileContentChunks sends file content in chunks
 func (e *Engine) sendFileContentChunks(path string, content []byte, checksum string) error {
-	totalChunks := (len(content) + chunkSize - 1) / chunkSize
+	chunkSz := chunkSize()
+	totalChunks := (len(content) + chunkSz - 1) / chunkSz
 	if totalChunks == 0 {
 		totalChunks = 1
 	}
 
 	for i := 0; i < totalChunks; i++ {
-		start := i * chunkSize
-		end := start + chunkSize
+		start := i * chunkSz
+		end := start + chunkSz
 		if end > len(content) {
 			end = len(content)
 		}
