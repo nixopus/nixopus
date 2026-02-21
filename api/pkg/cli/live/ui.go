@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/raghavyuva/nixopus-api/internal/mover"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/mover"
 )
 
 const (

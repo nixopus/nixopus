@@ -18,8 +18,8 @@ import (
 	betterauth "github.com/raghavyuva/nixopus-api/internal/features/auth"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/mover"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/raghavyuva/nixopus-api/internal/syncproto"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -185,10 +185,10 @@ func (g *Gateway) sendPipelineProgress(appID uuid.UUID, stageId, message string)
 		return
 	}
 
-	msg := mover.SyncMessage{
-		Type:      mover.MessageTypePipelineProgress,
+	msg := syncproto.SyncMessage{
+		Type:      syncproto.MessageTypePipelineProgress,
 		Timestamp: time.Now(),
-		Payload: mover.PipelineProgressPayload{
+		Payload: syncproto.PipelineProgressPayload{
 			StageId: stageId,
 			Message: message,
 		},
@@ -208,10 +208,10 @@ func (g *Gateway) sendBuildStatus(appID uuid.UUID, phase, message, errMsg string
 		return
 	}
 
-	msg := mover.SyncMessage{
-		Type:      mover.MessageTypeBuildStatus,
+	msg := syncproto.SyncMessage{
+		Type:      syncproto.MessageTypeBuildStatus,
 		Timestamp: time.Now(),
-		Payload: mover.BuildStatusPayload{
+		Payload: syncproto.BuildStatusPayload{
 			Phase:   phase,
 			Message: message,
 			Error:   errMsg,
@@ -238,10 +238,10 @@ func (g *Gateway) sendBuildLog(appID uuid.UUID, log string, timestamp string) {
 		return
 	}
 
-	msg := mover.SyncMessage{
-		Type:      mover.MessageTypeBuildLog,
+	msg := syncproto.SyncMessage{
+		Type:      syncproto.MessageTypeBuildLog,
 		Timestamp: time.Now(),
-		Payload: mover.BuildLogPayload{
+		Payload: syncproto.BuildLogPayload{
 			Log:       log,
 			Timestamp: timestamp,
 		},
@@ -263,14 +263,14 @@ func (g *Gateway) sendCodebaseIndexed(appCtx *ApplicationContext) error {
 		return nil
 	}
 
-	payload := mover.CodebaseIndexedPayload{
+	payload := syncproto.CodebaseIndexedPayload{
 		ApplicationID:  appCtx.ApplicationID.String(),
 		OrganizationID: appCtx.OrganizationID.String(),
 		Source:         appCtx.StagingPath,
 		Mode:           "development",
 	}
-	msg := mover.SyncMessage{
-		Type:      mover.MessageTypeCodebaseIndexed,
+	msg := syncproto.SyncMessage{
+		Type:      syncproto.MessageTypeCodebaseIndexed,
 		Timestamp: time.Now(),
 		Payload:   payload,
 	}
@@ -293,10 +293,10 @@ func (g *Gateway) sendDeploymentStatus(appID uuid.UUID, status string) {
 		return
 	}
 
-	msg := mover.SyncMessage{
-		Type:      mover.MessageTypeDeploymentStatus,
+	msg := syncproto.SyncMessage{
+		Type:      syncproto.MessageTypeDeploymentStatus,
 		Timestamp: time.Now(),
-		Payload: mover.DeploymentStatusPayload{
+		Payload: syncproto.DeploymentStatusPayload{
 			Status: status,
 		},
 	}
@@ -491,19 +491,19 @@ func (g *Gateway) VerifySession(ctx context.Context, tokenString string, origina
 // msg.Payload is json.RawMessage — handlers unmarshal directly (no double encode).
 func (g *Gateway) handleMessage(ctx context.Context, conn *websocket.Conn, appCtx *ApplicationContext, msg *recvMessage) error {
 	switch msg.Type {
-	case mover.MessageTypeFileChange:
+	case syncproto.MessageTypeFileChange:
 		return g.handleFileChange(appCtx, msg.Payload)
-	case mover.MessageTypeFileContent:
+	case syncproto.MessageTypeFileContent:
 		return g.handleFileContent(ctx, conn, appCtx, msg.Payload)
-	case mover.MessageTypeFileDelete:
+	case syncproto.MessageTypeFileDelete:
 		return g.handleFileDelete(ctx, appCtx, msg.Payload)
-	case mover.MessageTypeEnvVars:
+	case syncproto.MessageTypeEnvVars:
 		return g.handleEnvVars(ctx, appCtx, msg.Payload)
-	case mover.MessageTypeSyncComplete:
+	case syncproto.MessageTypeSyncComplete:
 		return g.handleSyncComplete(ctx, appCtx)
-	case mover.MessageTypeTriggerBuild:
+	case syncproto.MessageTypeTriggerBuild:
 		return g.handleTriggerBuild(ctx, appCtx, msg.Payload)
-	case mover.MessageTypePing:
+	case syncproto.MessageTypePing:
 		return g.websocketHandler.sendPong(conn)
 	default:
 		return fmt.Errorf("unknown message type: %s", msg.Type)
@@ -555,7 +555,7 @@ func (g *Gateway) handleSyncComplete(ctx context.Context, appCtx *ApplicationCon
 }
 
 func (g *Gateway) handleTriggerBuild(ctx context.Context, appCtx *ApplicationContext, payload json.RawMessage) error {
-	var p mover.TriggerBuildPayload
+	var p syncproto.TriggerBuildPayload
 	if err := json.Unmarshal(payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal trigger_build payload: %w", err)
 	}
@@ -571,7 +571,7 @@ func (g *Gateway) handleTriggerBuild(ctx context.Context, appCtx *ApplicationCon
 }
 
 func (g *Gateway) handleEnvVars(ctx context.Context, appCtx *ApplicationContext, payload json.RawMessage) error {
-	var p mover.EnvVarsPayload
+	var p syncproto.EnvVarsPayload
 	if err := json.Unmarshal(payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal env_vars payload: %w", err)
 	}
@@ -596,7 +596,7 @@ func (g *Gateway) handleEnvVars(ctx context.Context, appCtx *ApplicationContext,
 }
 
 func (g *Gateway) handleFileChange(appCtx *ApplicationContext, payload json.RawMessage) error {
-	var fileChange mover.FileChange
+	var fileChange syncproto.FileChange
 	if err := json.Unmarshal(payload, &fileChange); err != nil {
 		return fmt.Errorf("failed to unmarshal file_change payload: %w", err)
 	}
@@ -618,7 +618,7 @@ func (g *Gateway) handleFileChange(appCtx *ApplicationContext, payload json.RawM
 }
 
 func (g *Gateway) handleFileContent(ctx context.Context, conn *websocket.Conn, appCtx *ApplicationContext, payload json.RawMessage) error {
-	var fileContent mover.FileContent
+	var fileContent syncproto.FileContent
 	if err := json.Unmarshal(payload, &fileContent); err != nil {
 		return fmt.Errorf("failed to unmarshal file_content payload: %w", err)
 	}
@@ -684,7 +684,7 @@ func (g *Gateway) handleFileContent(ctx context.Context, conn *websocket.Conn, a
 }
 
 func (g *Gateway) handleFileDelete(ctx context.Context, appCtx *ApplicationContext, payload json.RawMessage) error {
-	var fileChange mover.FileChange
+	var fileChange syncproto.FileChange
 	if err := json.Unmarshal(payload, &fileChange); err != nil {
 		return fmt.Errorf("failed to unmarshal file_delete payload: %w", err)
 	}

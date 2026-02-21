@@ -16,6 +16,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/joho/godotenv"
+	"github.com/raghavyuva/nixopus-api/internal/syncproto"
 )
 
 // ChangeType represents the type of file change
@@ -57,7 +58,7 @@ type Engine struct {
 	// File sync and change tracking callbacks
 	onFileSynced     func(string)      // Called when a file is successfully synced
 	onChangeDetected func(string)      // Called when a file change is detected
-	onServerMessage  func(SyncMessage) // Called for server-originated messages
+	onServerMessage  func(syncproto.SyncMessage) // Called for server-originated messages
 
 	// Pending changes during disconnect
 	pendingChanges []FileChangeEvent
@@ -79,7 +80,7 @@ type EngineConfig struct {
 	OnStateChange    func(ConnectionEvent)
 	OnFileSynced     func(string)      // Called when a file is successfully synced
 	OnChangeDetected func(string)      // Called when a file change is detected
-	OnServerMessage  func(SyncMessage) // Called for server-originated messages (pipeline_progress, etc.)
+	OnServerMessage  func(syncproto.SyncMessage) // Called for server-originated messages (pipeline_progress, etc.)
 	SyncStatePath    string            // Path to .nixopus-sync-state.json for persisted sync state (empty = disabled)
 	ApplicationID    string            // Application ID for multi-app state (required if SyncStatePath is set)
 	ForceFullSync    bool              // If true, skip loading state and clear persisted state; sync all files
@@ -298,7 +299,7 @@ func (e *Engine) InitialSync() error {
 	// Persist Merkle root for cache hint (Phase 3b)
 	if e.syncState != nil && e.applicationID != "" {
 		e.syncedMu.RLock()
-		tree := BuildFromPaths(e.syncedFiles)
+		tree := syncproto.BuildFromPaths(e.syncedFiles)
 		e.syncedMu.RUnlock()
 		if tree.RootHash != "" {
 			e.syncState.SetRootHash(e.applicationID, tree.RootHash)
@@ -307,7 +308,7 @@ func (e *Engine) InitialSync() error {
 	}
 
 	// Signal server that initial sync is complete; triggers immediate build (no debounce).
-	if err := e.client.Send(e.newSyncMessage(MessageTypeSyncComplete, nil)); err != nil {
+	if err := e.client.Send(e.newSyncMessage(syncproto.MessageTypeSyncComplete, nil)); err != nil {
 		return fmt.Errorf("failed to send sync_complete: %w", err)
 	}
 
@@ -331,7 +332,7 @@ func (e *Engine) waitForManifest() *manifestResult {
 			if !ok {
 				return nil
 			}
-			if msg.Type == MessageTypeManifest {
+			if msg.Type == syncproto.MessageTypeManifest {
 				if m := extractManifestPayload(msg.Payload); m != nil {
 					return m
 				}
@@ -349,9 +350,9 @@ func extractManifestPayload(payload interface{}) *manifestResult {
 		return nil
 	}
 	switch m := payload.(type) {
-	case ManifestPayload:
+	case syncproto.ManifestPayload:
 		return &manifestResult{paths: m.Paths, rootHash: m.RootHash}
-	case *ManifestPayload:
+	case *syncproto.ManifestPayload:
 		if m != nil {
 			return &manifestResult{paths: m.Paths, rootHash: m.RootHash}
 		}
@@ -420,7 +421,7 @@ func (e *Engine) merkleDiffWithRootCheck(files []string, manifest *manifestResul
 		}
 	}
 
-	tree := BuildFromPaths(localLeaves)
+	tree := syncproto.BuildFromPaths(localLeaves)
 
 	// Phase 3b fast path: if roots match, nothing to sync or delete
 	if manifest != nil && manifest.rootHash != "" && tree.RootHash != "" && manifest.rootHash == tree.RootHash {
@@ -443,7 +444,7 @@ func (e *Engine) merkleDiffWithRootCheck(files []string, manifest *manifestResul
 	}
 	e.syncedMu.RUnlock()
 
-	return DiffAgainst(tree, serverLeaves)
+	return syncproto.DiffAgainst(tree, serverLeaves)
 }
 
 // parallelSyncJob is pooled to reduce allocations during large syncs.
@@ -592,7 +593,7 @@ func (e *Engine) sendEnvVars() {
 	if !connected {
 		return
 	}
-	msg := e.newSyncMessage(MessageTypeEnvVars, EnvVarsPayload{Vars: envVars})
+	msg := e.newSyncMessage(syncproto.MessageTypeEnvVars, syncproto.EnvVarsPayload{Vars: envVars})
 	_ = e.client.Send(msg)
 }
 
@@ -653,9 +654,9 @@ func (e *Engine) drainReceiveChannel() {
 			}
 			if e.onServerMessage != nil {
 				switch msg.Type {
-				case MessageTypePipelineProgress, MessageTypeBuildStatus,
-					MessageTypeBuildLog, MessageTypeDeploymentStatus,
-					MessageTypeCodebaseIndexed:
+				case syncproto.MessageTypePipelineProgress, syncproto.MessageTypeBuildStatus,
+					syncproto.MessageTypeBuildLog, syncproto.MessageTypeDeploymentStatus,
+					syncproto.MessageTypeCodebaseIndexed:
 					e.onServerMessage(msg)
 				}
 			}
@@ -922,7 +923,7 @@ func (e *Engine) sendChange(change FileChangeEvent) error {
 
 // sendDeleteMessage sends a file delete message
 func (e *Engine) sendDeleteMessage(path string) error {
-	msg := e.newSyncMessage(MessageTypeFileDelete, FileChange{
+	msg := e.newSyncMessage(syncproto.MessageTypeFileDelete, syncproto.FileChange{
 		Path:      path,
 		Operation: "delete",
 	})
@@ -1018,7 +1019,7 @@ func (e *Engine) computeFileChecksum(fullPath string) string {
 
 // sendFileChangeNotification sends the file change metadata
 func (e *Engine) sendFileChangeNotification(change FileChangeEvent, info os.FileInfo, checksum string) error {
-	msg := e.newSyncMessage(MessageTypeFileChange, FileChange{
+	msg := e.newSyncMessage(syncproto.MessageTypeFileChange, syncproto.FileChange{
 		Path:      change.Path,
 		Operation: changeTypeToOperation(change.Type),
 		Size:      info.Size(),
@@ -1043,7 +1044,7 @@ func (e *Engine) sendFileContentChunks(path string, content []byte, checksum str
 			end = len(content)
 		}
 
-		msg := e.newSyncMessage(MessageTypeFileContent, FileContent{
+		msg := e.newSyncMessage(syncproto.MessageTypeFileContent, syncproto.FileContent{
 			Path:        path,
 			ChunkIndex:  i,
 			TotalChunks: totalChunks,
@@ -1060,8 +1061,8 @@ func (e *Engine) sendFileContentChunks(path string, content []byte, checksum str
 }
 
 // newSyncMessage creates a new sync message with common fields
-func (e *Engine) newSyncMessage(msgType MessageType, payload interface{}) SyncMessage {
-	return SyncMessage{
+func (e *Engine) newSyncMessage(msgType syncproto.MessageType, payload interface{}) syncproto.SyncMessage {
+	return syncproto.SyncMessage{
 		Type:      msgType,
 		Timestamp: time.Now(),
 		Payload:   payload,

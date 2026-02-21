@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/cliconfig"
-	"github.com/raghavyuva/nixopus-api/internal/mover"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/cliconfig"
+	"github.com/raghavyuva/nixopus-api/internal/syncproto"
 )
 
 var workdirRe = regexp.MustCompile(`(?m)^WORKDIR\s+(\S+)`)
@@ -771,8 +771,8 @@ func (c *DeploymentWorkflowClient) parseResult(r *workflowResultPayload) (*Deplo
 }
 
 // ToTriggerBuildPayload converts the result to the WebSocket payload format.
-func (r *DeploymentWorkflowResult) ToTriggerBuildPayload() mover.TriggerBuildPayload {
-	return mover.TriggerBuildPayload{
+func (r *DeploymentWorkflowResult) ToTriggerBuildPayload() syncproto.TriggerBuildPayload {
+	return syncproto.TriggerBuildPayload{
 		Dockerfile:   r.Dockerfile,
 		Dockerignore: r.Dockerignore,
 		Port:         r.Port,

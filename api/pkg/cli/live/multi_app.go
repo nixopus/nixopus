@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/cliconfig"
-	"github.com/raghavyuva/nixopus-api/internal/commands/logincmd"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/cliconfig"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/logincmd"
 	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/mover"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/mover"
 )
 
 // AppSession manages a single app's connection and sync

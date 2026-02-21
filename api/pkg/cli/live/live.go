@@ -15,11 +15,12 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/raghavyuva/nixopus-api/internal/cliconfig"
-	"github.com/raghavyuva/nixopus-api/internal/commands/logincmd"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/cliconfig"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/logincmd"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/httpclient"
-	"github.com/raghavyuva/nixopus-api/internal/mover"
+	"github.com/raghavyuva/nixopus-api/internal/syncproto"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/mover"
 	"github.com/spf13/cobra"
 )
 
@@ -321,10 +322,10 @@ func runSingleApp(args []string) error {
 			changesDetected++
 			syncMu.Unlock()
 		},
-		OnServerMessage: func(msg mover.SyncMessage) {
+		OnServerMessage: func(msg syncproto.SyncMessage) {
 			switch msg.Type {
-			case mover.MessageTypePipelineProgress:
-				if p, ok := msg.Payload.(mover.PipelineProgressPayload); ok {
+			case syncproto.MessageTypePipelineProgress:
+				if p, ok := msg.Payload.(syncproto.PipelineProgressPayload); ok {
 					bus.Send(Event{
 						Type:    EventPipelineProgress,
 						Message: p.Message,
@@ -345,8 +346,8 @@ func runSingleApp(args []string) error {
 						},
 					})
 				}
-			case mover.MessageTypeBuildStatus:
-				if p, ok := msg.Payload.(mover.BuildStatusPayload); ok {
+			case syncproto.MessageTypeBuildStatus:
+				if p, ok := msg.Payload.(syncproto.BuildStatusPayload); ok {
 					ev := Event{
 						Type:    EventBuildStatus,
 						Message: p.Message,
@@ -378,8 +379,8 @@ func runSingleApp(args []string) error {
 					}
 					bus.Send(ev)
 				}
-			case mover.MessageTypeBuildLog:
-				if p, ok := msg.Payload.(mover.BuildLogPayload); ok {
+			case syncproto.MessageTypeBuildLog:
+				if p, ok := msg.Payload.(syncproto.BuildLogPayload); ok {
 					bus.Send(Event{
 						Type:    EventBuildLog,
 						Message: p.Log,
@@ -400,8 +401,8 @@ func runSingleApp(args []string) error {
 						},
 					})
 				}
-			case mover.MessageTypeDeploymentStatus:
-				if p, ok := msg.Payload.(mover.DeploymentStatusPayload); ok {
+			case syncproto.MessageTypeDeploymentStatus:
+				if p, ok := msg.Payload.(syncproto.DeploymentStatusPayload); ok {
 					bus.Send(Event{
 						Type:    EventDeploymentStatus,
 						Message: fmt.Sprintf("Deployment status: %s", p.Status),
@@ -422,7 +423,7 @@ func runSingleApp(args []string) error {
 						},
 					})
 				}
-			case mover.MessageTypeCodebaseIndexed:
+			case syncproto.MessageTypeCodebaseIndexed:
 				workflowRunningMu.Lock()
 				if workflowRunning {
 					workflowRunningMu.Unlock()
@@ -491,8 +492,8 @@ func runSingleApp(args []string) error {
 					}
 
 					triggerPayload := result.ToTriggerBuildPayload()
-					if err := client.Send(mover.SyncMessage{
-						Type:      mover.MessageTypeTriggerBuild,
+					if err := client.Send(syncproto.SyncMessage{
+						Type:      syncproto.MessageTypeTriggerBuild,
 						Timestamp: time.Now(),
 						Payload:   triggerPayload,
 					}); err != nil {
@@ -610,7 +611,7 @@ func buildDomainURL(projectID, deployDomain string) string {
 
 // extractCodebaseIndexedPayload extracts app ID, org ID, source, and mode from codebase_indexed payload.
 func extractCodebaseIndexedPayload(payload interface{}) (appID, orgID, source, mode string) {
-	if p, ok := payload.(mover.CodebaseIndexedPayload); ok {
+	if p, ok := payload.(syncproto.CodebaseIndexedPayload); ok {
 		return p.ApplicationID, p.OrganizationID, p.Source, p.Mode
 	}
 	if m, ok := payload.(map[string]interface{}); ok {
