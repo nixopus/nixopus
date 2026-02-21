@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/melbahja/goph"
 	"github.com/raghavyuva/caddygo"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -19,12 +20,15 @@ import (
 )
 
 // CaddyTunnel represents an SSH tunnel that forwards TCP connections
-// to the remote Caddy admin API through SSH.
+// to the remote Caddy admin API through SSH. It holds a persistent SSH
+// connection and multiplexes all forwarded traffic over it.
 type CaddyTunnel struct {
-	listener  net.Listener
-	sshClient *ssh.SSH
-	endpoint  string
-	cleanup   func() error
+	listener   net.Listener
+	sshClient  *ssh.SSH
+	endpoint   string
+	cleanup    func() error
+	connMu     sync.Mutex
+	persistSSH *goph.Client
 }
 
 // CreateCaddyTunnel creates a local TCP listener and forwards all connections
@@ -65,20 +69,55 @@ func (t *CaddyTunnel) handleConnections(remotePort string, lgr logger.Logger) {
 	}
 }
 
+// getOrCreateSSH returns a persistent SSH connection, reconnecting on failure.
+// All forwarded connections multiplex over this single SSH TCP connection.
+// No proactive liveness check—stale connections are detected when Dial fails.
+func (t *CaddyTunnel) getOrCreateSSH() (*goph.Client, error) {
+	t.connMu.Lock()
+	defer t.connMu.Unlock()
+
+	if t.persistSSH != nil {
+		return t.persistSSH, nil
+	}
+
+	client, err := t.sshClient.Connect()
+	if err != nil {
+		return nil, err
+	}
+	t.persistSSH = client
+	return client, nil
+}
+
 func (t *CaddyTunnel) forwardConnection(localConn net.Conn, remotePort string, lgr logger.Logger) {
 	defer localConn.Close()
 
-	sshConn, err := t.sshClient.Connect()
+	sshConn, err := t.getOrCreateSSH()
 	if err != nil {
 		lgr.Log(logger.Error, "Caddy tunnel: failed to establish SSH connection", err.Error())
 		return
 	}
-	defer sshConn.Close()
 
 	remoteConn, err := sshConn.Dial("tcp", "127.0.0.1:"+remotePort)
 	if err != nil {
-		lgr.Log(logger.Error, "Caddy tunnel: failed to connect to remote Caddy", err.Error())
-		return
+		// Connection may have gone stale between getOrCreateSSH and Dial.
+		// Invalidate and retry once.
+		t.connMu.Lock()
+		if t.persistSSH == sshConn {
+			t.persistSSH.Close()
+			t.persistSSH = nil
+		}
+		t.connMu.Unlock()
+
+		sshConn, err = t.getOrCreateSSH()
+		if err != nil {
+			lgr.Log(logger.Error, "Caddy tunnel: failed to reconnect SSH", err.Error())
+			return
+		}
+		remoteConn, err = sshConn.Dial("tcp", "127.0.0.1:"+remotePort)
+		if err != nil {
+			lgr.Log(logger.Error, "Caddy tunnel: failed to connect to remote Caddy after reconnect", err.Error())
+			return
+		}
 	}
 	defer remoteConn.Close()
 
@@ -102,8 +141,15 @@ func (t *CaddyTunnel) Endpoint() string {
 	return t.endpoint
 }
 
-// Close cleans up the tunnel by closing the listener.
+// Close cleans up the tunnel by closing the listener and persistent SSH connection.
 func (t *CaddyTunnel) Close() error {
+	t.connMu.Lock()
+	if t.persistSSH != nil {
+		t.persistSSH.Close()
+		t.persistSSH = nil
+	}
+	t.connMu.Unlock()
+
 	if t.cleanup != nil {
 		return t.cleanup()
 	}

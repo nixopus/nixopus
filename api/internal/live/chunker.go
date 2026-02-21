@@ -220,15 +220,13 @@ func makeFileChunk(filePath string, content string, startLine, endLine int) file
 	}
 }
 
-const maxIndexableSize = 512_000
-
 // IndexFileChunks chunks file content and persists to application_file_chunks.
 // Skips binary/large files. Call when file is written (has content).
 func IndexFileChunks(ctx context.Context, store *shared_storage.Store, applicationID uuid.UUID, path string, content []byte) error {
 	if store == nil || store.DB == nil {
 		return nil
 	}
-	if len(content) > maxIndexableSize {
+	if len(content) > maxIndexableSize() {
 		return nil
 	}
 	// Skip binary-ish content

@@ -377,7 +377,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 // Better Auth handles authentication
 func (router *Router) createAuthController(notificationManager *notification.NotificationManager) *auth.AuthController {
 	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
-	authService := auth_service.NewAuthService(userStorage, router.logger, router.app.Ctx)
+	authService := auth_service.NewAuthService(userStorage, router.logger, router.app.Ctx, config.AppConfig.Redis.URL)
 	return auth.NewAuthController(router.app.Ctx, router.logger, notificationManager, *authService, router.app.Store)
 }
 

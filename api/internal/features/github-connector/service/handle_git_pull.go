@@ -1,19 +1,12 @@
 package service
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
-func (s *GithubConnectorService) handleGitPull(ctx context.Context, authenticatedURL, clonePath string, userID string) error {
-	gitClient, err := s.getGitClient(ctx)
-	if err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("Failed to get git client: %s", err.Error()), userID)
-		return err
-	}
-
+func (s *GithubConnectorService) handleGitPullWithClient(gitClient GitClient, authenticatedURL, clonePath string, userID string) error {
 	hasChanges, err := gitClient.HasUncommittedChanges(clonePath)
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("Failed to check for uncommitted changes: %s", err.Error()), userID)

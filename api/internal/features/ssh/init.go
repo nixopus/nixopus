@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,6 +35,7 @@ type SSH struct {
 type connectionPoolEntry struct {
 	client   *goph.Client
 	lastUsed time.Time
+	inUse    atomic.Int64 // active borrowers; cleanup only closes when 0
 	mu       sync.RWMutex
 }
 
@@ -283,6 +285,33 @@ func (m *SSHManager) Connect() (*goph.Client, error) {
 	return m.ConnectWithID("")
 }
 
+// Borrow returns a pooled SSH connection and a release function.
+// Caller must call release() when done to avoid cleanup closing the connection while in use.
+// Prefer Borrow over Connect when holding the connection across async work (e.g. SFTP pool).
+func (m *SSHManager) Borrow(id string) (*goph.Client, func(), error) {
+	if id == "" {
+		id = m.defaultID
+	}
+	client, err := m.ConnectWithID(id)
+	if err != nil {
+		return nil, func() {}, err
+	}
+	// Increment inUse so cleanup won't close this connection until release is called.
+	// Small race window: cleanup could run between ConnectWithID return and our increment.
+	// If that happens, client may be closed; next use will fail and caller can retry.
+	m.poolMu.Lock()
+	entry, exists := m.pool[id]
+	if exists && entry != nil {
+		entry.inUse.Add(1)
+	}
+	m.poolMu.Unlock()
+	if !exists || entry == nil {
+		return client, func() {}, nil // no pool entry (e.g. freshly created, inUse lives in entry)
+	}
+	release := func() { entry.inUse.Add(-1) }
+	return client, release, nil
+}
+
 // IsClosedConnectionError checks if the error indicates a closed or stale network connection.
 // Aligned with SFTP pool detection: EOF, broken pipe, connection reset, etc.
 func IsClosedConnectionError(err error) bool {
@@ -497,7 +526,9 @@ func (m *SSHManager) cleanupIdleConnections() {
 			m.poolMu.Lock()
 			for id, entry := range m.pool {
 				entry.mu.Lock()
-				if entry.client != nil && now.Sub(entry.lastUsed) > m.maxIdleTime {
+				inUse := entry.inUse.Load()
+				idle := entry.client != nil && now.Sub(entry.lastUsed) > m.maxIdleTime
+				if idle && inUse == 0 {
 					entry.client.Close()
 					entry.client = nil
 					delete(m.pool, id)

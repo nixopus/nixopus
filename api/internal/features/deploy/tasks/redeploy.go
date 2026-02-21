@@ -85,6 +85,7 @@ func (s *TaskService) HandleReDeploy(ctx context.Context, TaskPayload shared_typ
 
 		if err := caddy.AddDomainsAtomic(orgCtx, nil, &s.Logger, routes); err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to configure proxy: "+err.Error(), shared_types.Failed)
+			s.cleanupServiceOnFailure(orgCtx, TaskPayload.Application.Name, taskCtx)
 			return err
 		}
 		for _, r := range routes {

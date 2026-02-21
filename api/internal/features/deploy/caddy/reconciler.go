@@ -235,19 +235,15 @@ func (r *Reconciler) getPublishedPort(ctx context.Context, serviceName string) (
 		return 0, fmt.Errorf("failed to get docker service: %w", err)
 	}
 
-	services, err := dockerService.GetClusterServices()
+	svc, err := dockerService.GetServiceByName(serviceName)
 	if err != nil {
-		return 0, fmt.Errorf("failed to list services: %w", err)
+		return 0, fmt.Errorf("failed to get service %s: %w", serviceName, err)
+	}
+	if svc == nil {
+		return 0, fmt.Errorf("service %s not found in swarm", serviceName)
 	}
 
-	for _, svc := range services {
-		if svc.Spec.Annotations.Name != serviceName {
-			continue
-		}
-		return extractPublishedPort(svc)
-	}
-
-	return 0, fmt.Errorf("service %s not found in swarm", serviceName)
+	return extractPublishedPort(*svc)
 }
 
 func extractPublishedPort(svc swarm.Service) (int, error) {

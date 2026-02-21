@@ -10,16 +10,13 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/raghavyuva/nixopus-api/internal/cliconfig"
 	"github.com/raghavyuva/nixopus-api/internal/mover"
 )
-
-// debugStream enables verbose logging of workflow stream events to stderr for debugging.
-var debugStream = os.Getenv("NIXOPUS_DEBUG_STREAM") == "1"
 
 var workdirRe = regexp.MustCompile(`(?m)^WORKDIR\s+(\S+)`)
 
@@ -45,13 +42,6 @@ func parseWorkdirFromDockerfile(dockerfile string) string {
 	}
 	return "/app"
 }
-
-const (
-	defaultWorkflowEndpoint = "http://localhost:4117"
-	// Mastra HTTP API uses the workflow registration key (from workflows: { deploymentWorkflow }).
-	defaultWorkflowID      = "deploymentWorkflow"
-	defaultWorkflowTimeout = 30 * time.Minute // LLM calls, dependency analysis, etc. can take 10+ minutes
-)
 
 // DeploymentWorkflowResult is the result of a successful deployment workflow run.
 type DeploymentWorkflowResult struct {
@@ -87,36 +77,18 @@ type DeploymentWorkflowClient struct {
 	httpClient  *http.Client
 }
 
-func getWorkflowID() string {
-	if id := os.Getenv("DEPLOYMENT_WORKFLOW_ID"); id != "" {
-		return id
-	}
-	return defaultWorkflowID
-}
-
-func getWorkflowTimeout() time.Duration {
-	if s := os.Getenv("DEPLOYMENT_WORKFLOW_TIMEOUT"); s != "" {
-		if d, err := time.ParseDuration(s); err == nil && d > 0 {
-			return d
-		}
-	}
-	return defaultWorkflowTimeout
-}
-
 // NewDeploymentWorkflowClient creates a client for the deployment workflow.
 func NewDeploymentWorkflowClient(accessToken, orgID string) *DeploymentWorkflowClient {
-	endpoint := os.Getenv("AGENT_ENDPOINT")
-	if endpoint == "" {
-		endpoint = defaultWorkflowEndpoint
+	timeout, err := cliconfig.GetWorkflowTimeout()
+	if err != nil {
+		panic("cliconfig: " + err.Error())
 	}
-	endpoint = strings.TrimRight(endpoint, "/")
-
 	return &DeploymentWorkflowClient{
-		endpoint:    endpoint,
+		endpoint:    cliconfig.GetAgentEndpoint(),
 		accessToken: accessToken,
 		orgID:       orgID,
 		httpClient: &http.Client{
-			Timeout: getWorkflowTimeout(),
+			Timeout: timeout,
 		},
 	}
 }
@@ -130,7 +102,7 @@ func (c *DeploymentWorkflowClient) createRun(ctx context.Context, applicationID 
 	if err != nil {
 		return "", fmt.Errorf("marshal create-run request: %w", err)
 	}
-	wfID := getWorkflowID()
+	wfID := cliconfig.GetWorkflowID()
 	req, err := http.NewRequestWithContext(ctx, "POST", c.endpoint+"/api/workflows/"+wfID+"/create-run", bytes.NewReader(body))
 	if err != nil {
 		return "", fmt.Errorf("create run request: %w", err)
@@ -197,7 +169,7 @@ func (c *DeploymentWorkflowClient) Run(ctx context.Context, applicationID, sourc
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	streamURL := c.endpoint + "/api/workflows/" + getWorkflowID() + "/stream?runId=" + url.QueryEscape(runID)
+	streamURL := c.endpoint + "/api/workflows/" + cliconfig.GetWorkflowID() + "/stream?runId=" + url.QueryEscape(runID)
 	req, err := http.NewRequestWithContext(ctx, "POST", streamURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
@@ -223,7 +195,7 @@ func (c *DeploymentWorkflowClient) Run(ctx context.Context, applicationID, sourc
 		return nil, fmt.Errorf("workflow returned %d: %s", resp.StatusCode, string(errBody))
 	}
 
-	if debugStream {
+	if cliconfig.IsDebugStream() {
 		log.Printf("[workflow-stream] DEBUG: connected to stream, Content-Type=%s", resp.Header.Get("Content-Type"))
 	}
 
@@ -326,7 +298,7 @@ func tryDeploymentProgress(payload []byte, onProgress ProgressFunc) bool {
 	if p.Message == "" {
 		p.Message = p.Step
 	}
-	if debugStream {
+	if cliconfig.IsDebugStream() {
 		log.Printf("[workflow-stream] tryDeploymentProgress HANDLED step=%q msg=%q", p.Step, truncMsg(p.Message, 50))
 	}
 	onProgress(p.Step, p.Message)
@@ -403,7 +375,7 @@ func (r *firstByteReader) Read(p []byte) (n int, err error) {
 	n, err = r.r.Read(p)
 	if n > 0 && !r.logged {
 		r.logged = true
-		if debugStream {
+		if cliconfig.IsDebugStream() {
 			log.Printf("[workflow-stream] first bytes received (%d bytes)", n)
 		}
 	}
@@ -437,7 +409,7 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 	var eventCount int
 	var lastEventType string
 
-	if debugStream {
+	if cliconfig.IsDebugStream() {
 		log.Printf("[workflow-stream] started reading stream")
 	}
 
@@ -453,7 +425,7 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 			case <-firstLineCh:
 				return
 			case <-ticker.C:
-				if debugStream {
+				if cliconfig.IsDebugStream() {
 					log.Printf("[workflow-stream] still waiting for stream data (no complete line received yet)...")
 				}
 			}
@@ -482,7 +454,7 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 		if rawLine == "" {
 			continue
 		}
-		if debugStream {
+		if cliconfig.IsDebugStream() {
 			preview := rawLine
 			if len(preview) > 300 {
 				preview = preview[:300] + "..."
@@ -492,7 +464,7 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 
 		var event workflowStreamEvent
 		if err := json.Unmarshal([]byte(rawLine), &event); err != nil {
-			if debugStream {
+			if cliconfig.IsDebugStream() {
 				preview := rawLine
 				if len(preview) > 100 {
 					preview = preview[:100] + "..."
@@ -505,7 +477,7 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 		eventCount++
 		lastEventType = event.Type
 
-		if debugStream {
+		if cliconfig.IsDebugStream() {
 			payloadPreview := string(event.Payload)
 			if len(payloadPreview) > 500 {
 				payloadPreview = payloadPreview[:500] + "..."
@@ -652,13 +624,13 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 	}
 
 	if err := scanner.Err(); err != nil {
-		if debugStream {
+		if cliconfig.IsDebugStream() {
 			log.Printf("[workflow-stream] scanner error: %v", err)
 		}
 		return "", nil, err
 	}
 
-	if debugStream {
+	if cliconfig.IsDebugStream() {
 		lastStatus, lastStep := "", ""
 		if lastResult != nil {
 			lastStatus = lastResult.Status
@@ -703,7 +675,7 @@ func (c *DeploymentWorkflowClient) resume(ctx context.Context, runID, step strin
 		return nil, fmt.Errorf("marshal resume request: %w", err)
 	}
 
-	resumeStreamURL := c.endpoint + "/api/workflows/" + getWorkflowID() + "/resume-stream?runId=" + url.QueryEscape(runID)
+	resumeStreamURL := c.endpoint + "/api/workflows/" + cliconfig.GetWorkflowID() + "/resume-stream?runId=" + url.QueryEscape(runID)
 	req, err := http.NewRequestWithContext(ctx, "POST", resumeStreamURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("create resume request: %w", err)

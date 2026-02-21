@@ -24,11 +24,12 @@ func NewExtensionsController(
 	store *shared_storage.Store,
 	ctx context.Context,
 	l logger.Logger,
+	redisURL string,
 ) *ExtensionsController {
 	storage := storage.ExtensionStorage{DB: store.DB, Ctx: ctx}
 	return &ExtensionsController{
 		store:     store,
-		service:   service.NewExtensionService(store, ctx, l, &storage),
+		service:   service.NewExtensionService(store, ctx, l, &storage, redisURL),
 		validator: validation.NewValidator(&storage),
 		ctx:       ctx,
 		logger:    l,

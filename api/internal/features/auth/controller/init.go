@@ -17,6 +17,7 @@ type AuthController struct {
 	ctx          context.Context
 	logger       logger.Logger
 	notification *notification.NotificationManager
+	cache        *auth_service.AuthCache
 }
 
 func NewAuthController(
@@ -33,5 +34,6 @@ func NewAuthController(
 		ctx:          ctx,
 		logger:       logger,
 		notification: notificationManager,
+		cache:        authService.Cache,
 	}
 }

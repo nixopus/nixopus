@@ -2,18 +2,12 @@ package logincmd
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"runtime"
 
+	"github.com/raghavyuva/nixopus-api/internal/cliconfig"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/spf13/cobra"
-)
-
-var (
-	betterAuthURL string
-	frontendURL   string
-	clientID      string
 )
 
 var LoginCmd = &cobra.Command{
@@ -21,27 +15,9 @@ var LoginCmd = &cobra.Command{
 	Short: "Authenticate with Nixopus using Device Authorization Grant",
 	Long:  `Authenticate with Nixopus by opening a browser and entering a device code.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Get Better Auth URL from flag or environment
-		authURL := betterAuthURL
-		if authURL == "" {
-			authURL = os.Getenv("BETTER_AUTH_URL")
-		}
-		if authURL == "" {
-			authURL = "https://auth.nixopus.com" // Default production URL
-		}
-
-		// Always use dashboard.nixopus.com for login display
-		frontend := "https://dashboard.nixopus.com"
-
-		// Get client ID from flag or environment
-		cliClientID := clientID
-		if cliClientID == "" {
-			cliClientID = os.Getenv("OAUTH_CLIENT_ID")
-		}
-		if cliClientID == "" {
-			cliClientID = "nixopus-cli" // Default client ID
-		}
-
+		authURL := cliconfig.GetBetterAuthURL()
+		frontend := cliconfig.GetFrontendURL()
+		cliClientID := cliconfig.GetOAuthClientID()
 		scope := "openid profile email"
 
 		// Start bubbletea program
@@ -71,6 +47,12 @@ var LoginCmd = &cobra.Command{
 	},
 }
 
+// ForceLogin performs a fresh login flow, replacing any existing credentials.
+// Use with --login flag on live/deploy commands to re-authenticate.
+func ForceLogin() error {
+	return performLogin()
+}
+
 // EnsureAuthenticated checks if the user is authenticated and prompts for login if not.
 // Returns an error if authentication fails or is cancelled.
 func EnsureAuthenticated() error {
@@ -87,21 +69,9 @@ func EnsureAuthenticated() error {
 
 // performLogin performs the login flow
 func performLogin() error {
-	// Get Better Auth URL from environment
-	authURL := os.Getenv("BETTER_AUTH_URL")
-	if authURL == "" {
-		authURL = "https://auth.nixopus.com" // Default production URL
-	}
-
-	// Always use dashboard.nixopus.com for login display
-	frontend := "https://dashboard.nixopus.com"
-
-	// Get client ID from environment
-	cliClientID := os.Getenv("OAUTH_CLIENT_ID")
-	if cliClientID == "" {
-		cliClientID = "nixopus-cli" // Default client ID
-	}
-
+	authURL := cliconfig.GetBetterAuthURL()
+	frontend := cliconfig.GetFrontendURL()
+	cliClientID := cliconfig.GetOAuthClientID()
 	scope := "openid profile email"
 
 	// Start bubbletea program
@@ -202,10 +172,4 @@ func openBrowser(url string) error {
 		return fmt.Errorf("unsupported platform")
 	}
 	return cmd.Run()
-}
-
-func init() {
-	LoginCmd.Flags().StringVar(&betterAuthURL, "auth-url", "", "Better Auth backend URL (default: https://auth.nixopus.com or BETTER_AUTH_URL env var)")
-	LoginCmd.Flags().StringVar(&frontendURL, "frontend-url", "", "Frontend URL for device verification page (default: http://localhost:3000 or FRONTEND_URL env var)")
-	LoginCmd.Flags().StringVar(&clientID, "client-id", "", "OAuth client ID (default: nixopus-cli or OAUTH_CLIENT_ID env var)")
 }

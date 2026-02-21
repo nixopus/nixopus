@@ -21,6 +21,7 @@ import (
 type ExtensionService struct {
 	store   *shared_storage.Store
 	storage storage.ExtensionStorageInterface
+	cache   *ExtensionCache
 	ctx     context.Context
 	logger  logger.Logger
 }
@@ -30,10 +31,22 @@ func NewExtensionService(
 	ctx context.Context,
 	l logger.Logger,
 	storage storage.ExtensionStorageInterface,
+	redisURL string,
 ) *ExtensionService {
+	var extCache *ExtensionCache
+	if redisURL != "" {
+		c, err := NewExtensionCache(redisURL)
+		if err != nil {
+			l.Log(logger.Error, "failed to create extension cache, proceeding without cache", err.Error())
+		} else {
+			extCache = c
+		}
+	}
+
 	return &ExtensionService{
 		store:   store,
 		storage: storage,
+		cache:   extCache,
 		ctx:     ctx,
 		logger:  l,
 	}
@@ -44,24 +57,59 @@ func (s *ExtensionService) CreateExtension(extension *types.Extension) error {
 		s.logger.Log(logger.Error, err.Error(), "")
 		return err
 	}
+	s.invalidateCategoriesCache()
 	return nil
 }
 
 func (s *ExtensionService) GetExtension(id string) (*types.Extension, error) {
+	if s.cache != nil {
+		cached, err := s.cache.GetExtension(s.ctx, id)
+		if err != nil {
+			s.logger.Log(logger.Error, "extension cache read failed, falling through to db", err.Error())
+		}
+		if cached != nil {
+			return cached, nil
+		}
+	}
+
 	extension, err := s.storage.GetExtension(id)
 	if err != nil {
 		s.logger.Log(logger.Error, err.Error(), "")
 		return nil, err
 	}
+
+	if s.cache != nil {
+		if cacheErr := s.cache.SetExtension(s.ctx, extension); cacheErr != nil {
+			s.logger.Log(logger.Error, "failed to cache extension", cacheErr.Error())
+		}
+	}
+
 	return extension, nil
 }
 
 func (s *ExtensionService) GetExtensionByID(extensionID string) (*types.Extension, error) {
+	if s.cache != nil {
+		cached, err := s.cache.GetExtensionByExtID(s.ctx, extensionID)
+		if err != nil {
+			s.logger.Log(logger.Error, "extension cache read failed, falling through to db", err.Error())
+		}
+		if cached != nil {
+			return cached, nil
+		}
+	}
+
 	extension, err := s.storage.GetExtensionByID(extensionID)
 	if err != nil {
 		s.logger.Log(logger.Error, err.Error(), "")
 		return nil, err
 	}
+
+	if s.cache != nil {
+		if cacheErr := s.cache.SetExtension(s.ctx, extension); cacheErr != nil {
+			s.logger.Log(logger.Error, "failed to cache extension", cacheErr.Error())
+		}
+	}
+
 	return extension, nil
 }
 
@@ -70,14 +118,23 @@ func (s *ExtensionService) UpdateExtension(extension *types.Extension) error {
 		s.logger.Log(logger.Error, err.Error(), "")
 		return err
 	}
+	s.invalidateExtensionCache(extension.ID.String(), extension.ExtensionID)
+	s.invalidateCategoriesCache()
 	return nil
 }
 
 func (s *ExtensionService) DeleteExtension(id string) error {
+	ext, _ := s.storage.GetExtension(id)
+
 	if err := s.storage.DeleteExtension(id); err != nil {
 		s.logger.Log(logger.Error, err.Error(), "")
 		return err
 	}
+
+	if ext != nil {
+		s.invalidateExtensionCache(ext.ID.String(), ext.ExtensionID)
+	}
+	s.invalidateCategoriesCache()
 	return nil
 }
 
@@ -89,7 +146,13 @@ func (s *ExtensionService) DeleteFork(id string) error {
 	if ext.ParentExtensionID == nil {
 		return fmt.Errorf("only forked extensions can be removed")
 	}
-	return s.storage.DeleteExtension(id)
+	if err := s.storage.DeleteExtension(id); err != nil {
+		return err
+	}
+
+	s.invalidateExtensionCache(ext.ID.String(), ext.ExtensionID)
+	s.invalidateCategoriesCache()
+	return nil
 }
 
 func (s *ExtensionService) ForkExtension(extensionID string, yamlOverride string, authorName string) (*types.Extension, error) {
@@ -148,6 +211,7 @@ func (s *ExtensionService) ForkExtension(extensionID string, yamlOverride string
 				return nil, err
 			}
 		}
+		s.invalidateCategoriesCache()
 		return &fork, nil
 	}
 
@@ -174,6 +238,7 @@ func (s *ExtensionService) ForkExtension(extensionID string, yamlOverride string
 			return nil, err
 		}
 	}
+	s.invalidateCategoriesCache()
 	return &fork, nil
 }
 
@@ -187,11 +252,28 @@ func (s *ExtensionService) ListExtensions(params types.ExtensionListParams) (*ty
 }
 
 func (s *ExtensionService) ListCategories() ([]types.ExtensionCategory, error) {
+	if s.cache != nil {
+		cached, err := s.cache.GetCategories(s.ctx)
+		if err != nil {
+			s.logger.Log(logger.Error, "categories cache read failed, falling through to db", err.Error())
+		}
+		if cached != nil {
+			return cached, nil
+		}
+	}
+
 	cats, err := s.storage.ListCategories()
 	if err != nil {
 		s.logger.Log(logger.Error, err.Error(), "")
 		return nil, err
 	}
+
+	if s.cache != nil {
+		if cacheErr := s.cache.SetCategories(s.ctx, cats); cacheErr != nil {
+			s.logger.Log(logger.Error, "failed to cache categories", cacheErr.Error())
+		}
+	}
+
 	return cats, nil
 }
 
@@ -290,4 +372,22 @@ func (s *ExtensionService) ListExecutionLogs(executionID string, afterSeq int64,
 	}
 
 	return logs, &exec.Status, nil
+}
+
+func (s *ExtensionService) invalidateExtensionCache(id string, extensionID string) {
+	if s.cache == nil {
+		return
+	}
+	if err := s.cache.InvalidateExtension(s.ctx, id, extensionID); err != nil {
+		s.logger.Log(logger.Error, "failed to invalidate extension cache", err.Error())
+	}
+}
+
+func (s *ExtensionService) invalidateCategoriesCache() {
+	if s.cache == nil {
+		return
+	}
+	if err := s.cache.InvalidateCategories(s.ctx); err != nil {
+		s.logger.Log(logger.Error, "failed to invalidate categories cache", err.Error())
+	}
 }

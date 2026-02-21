@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/raghavyuva/nixopus-api/internal/cliconfig"
 	"github.com/raghavyuva/nixopus-api/internal/commands/logincmd"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/mover"
@@ -88,6 +89,9 @@ func runAllApps(args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize or load config: %w", err)
 	}
+
+	// Configure mover from build-time CLI config
+	mover.Configure(cliconfig.GetMoverConfig())
 
 	// Get all apps from config
 	if len(cfg.Applications) == 0 {

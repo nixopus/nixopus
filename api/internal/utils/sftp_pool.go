@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,8 +33,10 @@ var (
 )
 
 type pooledSFTP struct {
-	client   *sftp.Client
-	lastUsed time.Time
+	client     *sftp.Client
+	lastUsed   time.Time
+	inUse      atomic.Int64 // active callers using this client; eviction only when 0
+	sshRelease func()       // called when evicting to release the underlying SSH connection
 }
 
 // SFTPClientFactory creates SFTP clients. Used for dependency injection in tests.
@@ -107,7 +110,7 @@ func WithSFTPClientFromPool(ctx context.Context, fn func(*sftp.Client) error) er
 	}
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		client, fromPool, createErr := pool.getOrCreate(ctx, orgID, sshMgr)
+		client, release, fromPool, createErr := pool.getOrCreate(ctx, orgID, sshMgr)
 		if client == nil {
 			if createErr != nil && isClosedConnectionError(createErr) && attempt < maxRetries-1 {
 				// Stale connection (e.g. "use of closed network connection"); evicted by getOrCreate, retry
@@ -118,9 +121,14 @@ func WithSFTPClientFromPool(ctx context.Context, fn func(*sftp.Client) error) er
 			}
 			return fmt.Errorf("failed to get SFTP client for org %s (unknown error)", orgID)
 		}
+		var releaseOnce sync.Once
+		doRelease := func() { releaseOnce.Do(release) }
+		defer doRelease()
+
 		err = fn(client)
 		if err != nil {
 			if isClosedConnectionError(err) {
+				doRelease() // Release before evict so refcount is accurate
 				pool.evict(orgID, client)
 				if fromPool {
 					sshMgr.CloseConnection("")
@@ -137,13 +145,22 @@ func WithSFTPClientFromPool(ctx context.Context, fn func(*sftp.Client) error) er
 	return fmt.Errorf("SFTP operation failed after %d attempts", maxRetries)
 }
 
-func (p *SFTPPool) getOrCreate(ctx context.Context, orgID string, sshMgr *ssh.SSHManager) (*sftp.Client, bool, error) {
+// getOrCreate returns (client, release, fromPool, error).
+// Caller must call release() when done (e.g. via defer) to avoid eviction races.
+func (p *SFTPPool) getOrCreate(ctx context.Context, orgID string, sshMgr *ssh.SSHManager) (*sftp.Client, func(), bool, error) {
+	noop := func() {}
+
 	p.mu.Lock()
 	if entry, ok := p.clients[orgID]; ok {
-		if time.Since(entry.lastUsed) <= p.idleTimeout {
+		// Only evict when idle AND no one is using it; otherwise reuse
+		inUse := entry.inUse.Load()
+		idle := time.Since(entry.lastUsed) > p.idleTimeout
+		if inUse > 0 || !idle {
+			entry.inUse.Add(1)
 			client := entry.client
+			release := func() { entry.inUse.Add(-1) }
 			p.mu.Unlock()
-			return client, true, nil
+			return client, release, true, nil
 		}
 		entry.client.Close()
 		delete(p.clients, orgID)
@@ -152,23 +169,26 @@ func (p *SFTPPool) getOrCreate(ctx context.Context, orgID string, sshMgr *ssh.SS
 
 	// Create new client outside lock to avoid blocking other orgs
 	var sftpClient *sftp.Client
+	var sshRelease func() // non-nil when created via Borrow
 	if p.clientFactory != nil {
 		var err error
 		sftpClient, err = p.clientFactory(orgID, sshMgr)
 		if err != nil {
-			return nil, false, err
+			return nil, noop, false, err
 		}
 	} else {
-		sshClient, err := sshMgr.Connect()
+		sshClient, release, err := sshMgr.Borrow("")
 		if err != nil {
-			return nil, false, fmt.Errorf("SSH connect: %w", err)
+			return nil, noop, false, fmt.Errorf("SSH connect: %w", err)
 		}
+		sshRelease = release
 		sftpClient, err = sshClient.NewSftp()
 		if err != nil {
+			sshRelease()
 			if isClosedConnectionError(err) {
 				sshMgr.CloseConnection("")
 			}
-			return nil, false, fmt.Errorf("SFTP subsystem: %w", err)
+			return nil, noop, false, fmt.Errorf("SFTP subsystem: %w", err)
 		}
 	}
 
@@ -176,18 +196,33 @@ func (p *SFTPPool) getOrCreate(ctx context.Context, orgID string, sshMgr *ssh.SS
 	if existing, ok := p.clients[orgID]; ok {
 		// Another goroutine added one while we were creating
 		p.mu.Unlock()
+		if sshRelease != nil {
+			sshRelease() // not using our new client
+		}
 		sftpClient.Close()
-		return existing.client, true, nil
+		existing.inUse.Add(1)
+		release := func() { existing.inUse.Add(-1) }
+		return existing.client, release, true, nil
 	}
-	p.clients[orgID] = &pooledSFTP{client: sftpClient, lastUsed: time.Now()}
+	entry := &pooledSFTP{
+		client:     sftpClient,
+		lastUsed:   time.Now(),
+		sshRelease: sshRelease, // nil for clientFactory path
+	}
+	entry.inUse.Store(1)
+	p.clients[orgID] = entry
 	p.mu.Unlock()
-	return sftpClient, false, nil
+	release := func() { entry.inUse.Add(-1) }
+	return sftpClient, release, false, nil
 }
 
 func (p *SFTPPool) evict(orgID string, c *sftp.Client) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if entry, ok := p.clients[orgID]; ok && entry.client == c {
+		if entry.sshRelease != nil {
+			entry.sshRelease()
+		}
 		entry.client.Close()
 		delete(p.clients, orgID)
 	}
@@ -207,6 +242,9 @@ func (p *SFTPPool) EvictOrg(orgID string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if entry, ok := p.clients[orgID]; ok {
+		if entry.sshRelease != nil {
+			entry.sshRelease()
+		}
 		entry.client.Close()
 		delete(p.clients, orgID)
 	}

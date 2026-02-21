@@ -20,16 +20,19 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  256 * 1024,
-	WriteBufferSize: 256 * 1024,
-	CheckOrigin:     func(r *http.Request) bool { return true },
-}
+var upgrader websocket.Upgrader
+var upgraderOnce sync.Once
 
-const (
-	readDeadline  = 5 * time.Minute
-	writeDeadline = 10 * time.Second
-)
+func getUpgrader() *websocket.Upgrader {
+	upgraderOnce.Do(func() {
+		upgrader = websocket.Upgrader{
+			ReadBufferSize:  readBufferSize(),
+			WriteBufferSize: writeBufferSize(),
+			CheckOrigin:     checkOriginFunc(),
+		}
+	})
+	return &upgrader
+}
 
 // WebSocketHandler manages WebSocket connections and message processing.
 // Uses per-connection write mutexes to avoid serializing writes across different connections.
@@ -88,7 +91,7 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := getUpgrader().Upgrade(w, r, nil)
 	if err != nil {
 		h.logger.Log(logger.Error, "websocket upgrade failed", err.Error())
 		return
@@ -129,7 +132,7 @@ func (h *WebSocketHandler) extractApplicationID(path string) (uuid.UUID, error) 
 // It handles file changes, content chunks, deletions, and ping/pong messages for maintaining the connection.
 func (h *WebSocketHandler) processMessages(ctx context.Context, conn *websocket.Conn, appCtx *ApplicationContext) {
 	h.setupConnectionHandlers(conn)
-	conn.SetReadDeadline(time.Now().Add(readDeadline))
+	conn.SetReadDeadline(time.Now().Add(readDeadline()))
 
 	for {
 		messageType, message, err := conn.ReadMessage()
@@ -138,7 +141,7 @@ func (h *WebSocketHandler) processMessages(ctx context.Context, conn *websocket.
 			break
 		}
 
-		conn.SetReadDeadline(time.Now().Add(readDeadline))
+		conn.SetReadDeadline(time.Now().Add(readDeadline()))
 
 		if messageType == websocket.PingMessage || messageType == websocket.PongMessage {
 			continue
@@ -160,17 +163,17 @@ func (h *WebSocketHandler) processMessages(ctx context.Context, conn *websocket.
 // setupConnectionHandlers configures ping/pong handlers for connection keepalive
 func (h *WebSocketHandler) setupConnectionHandlers(conn *websocket.Conn) {
 	conn.SetPongHandler(func(string) error {
-		conn.SetReadDeadline(time.Now().Add(readDeadline))
+		conn.SetReadDeadline(time.Now().Add(readDeadline()))
 		return nil
 	})
 
 	conn.SetPingHandler(func(appData string) error {
-		conn.SetReadDeadline(time.Now().Add(readDeadline))
-		conn.SetWriteDeadline(time.Now().Add(writeDeadline))
+		conn.SetReadDeadline(time.Now().Add(readDeadline()))
+		conn.SetWriteDeadline(time.Now().Add(writeDeadline()))
 		mu := h.getConnMutex(conn)
 		mu.Lock()
 		defer mu.Unlock()
-		return conn.WriteControl(websocket.PongMessage, []byte(appData), time.Now().Add(writeDeadline))
+		return conn.WriteControl(websocket.PongMessage, []byte(appData), time.Now().Add(writeDeadline()))
 	})
 }
 
@@ -256,7 +259,7 @@ func (h *WebSocketHandler) sendMessage(conn *websocket.Conn, msg mover.SyncMessa
 	mu := h.getConnMutex(conn)
 	mu.Lock()
 	defer mu.Unlock()
-	conn.SetWriteDeadline(time.Now().Add(writeDeadline))
+	conn.SetWriteDeadline(time.Now().Add(writeDeadline()))
 	return conn.WriteJSON(msg)
 }
 
