@@ -98,6 +98,7 @@ type DockerRepository interface {
 	GetClusterNodes() ([]swarm.Node, error)
 	GetClusterServices() ([]swarm.Service, error)
 	GetClusterTasks() ([]swarm.Task, error)
+	GetTasksByServiceID(serviceID string) ([]swarm.Task, error)
 	GetClusterSecrets() ([]swarm.Secret, error)
 	GetClusterConfigs() ([]swarm.Config, error)
 	GetClusterVolumes() ([]*volume.Volume, error)
@@ -113,6 +114,7 @@ type DockerRepository interface {
 	RollbackService(serviceID string) error
 	GetServiceByID(serviceID string) (swarm.Service, error)
 	GetServiceByName(name string) (*swarm.Service, error)
+	GetServiceByLabel(key, value string) (*swarm.Service, error)
 }
 
 // NewDockerServiceWithServer creates a new instance of DockerService using SSH tunneling.

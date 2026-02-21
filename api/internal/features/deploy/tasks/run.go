@@ -62,37 +62,30 @@ func (s *TaskService) getAvailablePort(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("failed to get SSH manager: %w", err)
 	}
 
-	generatePorts := "seq 49152 65535"
-	getUsedPorts := "command -v ss >/dev/null 2>&1 && ss -tan | awk '{print $4}' | cut -d':' -f2 | grep '[0-9]\\{1,5\\}' | sort -u || netstat -tan | awk '{print $4}' | grep ':[0-9]' | cut -d':' -f2 | sort -u"
-	cmd := fmt.Sprintf("comm -23 <(%s) <(%s) | shuf -n 1 | tr -d '\\n'", generatePorts, getUsedPorts)
+	// Single lightweight command: pick a random port from the available range.
+	// Uses shuf to generate a random candidate, then checks it with ss/netstat.
+	// Much cheaper than computing the full set difference on every attempt.
+	cmd := `bash -c 'for i in $(shuf -i 49152-65535 -n 10); do if ! (command -v ss >/dev/null 2>&1 && ss -tln | grep -q ":${i} " || netstat -tln 2>/dev/null | grep -q ":${i} "); then echo -n "$i"; exit 0; fi; done; exit 1'`
 
 	var lastErr error
 	for attempt := 0; attempt < maxPortRetries; attempt++ {
-		client, err := manager.Connect()
-		if err != nil {
-			lastErr = err
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-
-		output, err := client.Run(cmd)
-		client.Close()
+		output, err := manager.RunCommand(cmd)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to find available port: %w", err)
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(200 * time.Millisecond)
 			continue
 		}
 
-		port := string(output)
+		port := strings.TrimSpace(output)
 		if port == "" {
 			lastErr = fmt.Errorf("no available ports found in range 49152-65535")
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(200 * time.Millisecond)
 			continue
 		}
 
 		if _, parseErr := strconv.Atoi(port); parseErr != nil {
-			lastErr = fmt.Errorf("invalid port value returned: %s", port)
-			time.Sleep(500 * time.Millisecond)
+			lastErr = fmt.Errorf("invalid port value returned: %q", port)
+			time.Sleep(200 * time.Millisecond)
 			continue
 		}
 
@@ -116,7 +109,7 @@ func (s *TaskService) AtomicUpdateContainer(ctx context.Context, r shared_types.
 	// Check if service already exists
 	existingService, err := s.getExistingService(ctx, r, taskContext)
 	if err != nil {
-		s.formatLog(taskContext, "No existing service found, creating new service", "")
+		s.formatLog(taskContext, "No existing service found, creating new service")
 	}
 
 	// Create service spec
@@ -186,17 +179,7 @@ func FindServiceByLabel(ctx context.Context, labelKey, labelValue string) (*swar
 	if err != nil {
 		return nil, fmt.Errorf("failed to get docker service: %w", err)
 	}
-	services, err := dockerService.GetClusterServices()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, service := range services {
-		if service.Spec.Labels != nil && service.Spec.Labels[labelKey] == labelValue {
-			return &service, nil
-		}
-	}
-	return nil, nil
+	return dockerService.GetServiceByLabel(labelKey, labelValue)
 }
 
 const labelWorkdir = "nixopus.workdir"
@@ -357,28 +340,29 @@ func (s *TaskService) waitForServiceHealthy(ctx context.Context, r shared_types.
 	return swarm.Service{}, fmt.Errorf("timeout waiting for service to become healthy, task states: %s", taskStates)
 }
 
-// getTaskStatesForService returns a summary of task states for debugging
+// getTaskStatesForService returns a summary of task states for debugging.
+// Uses Docker API filter to fetch only tasks for this service instead of all cluster tasks.
 func (s *TaskService) getTaskStatesForService(ctx context.Context, service swarm.Service) string {
 	dockerService, err := s.getDockerService(ctx)
 	if err != nil {
 		return fmt.Sprintf("failed to get docker service: %s", err.Error())
 	}
-	tasks, err := dockerService.GetClusterTasks()
+	tasks, err := dockerService.GetTasksByServiceID(service.ID)
 	if err != nil {
 		return fmt.Sprintf("failed to get tasks: %s", err.Error())
+	}
+
+	if len(tasks) == 0 {
+		return "no tasks found"
 	}
 
 	stateCounts := make(map[string]int)
 	var latestError string
 
 	for _, task := range tasks {
-		if task.ServiceID != service.ID {
-			continue
-		}
 		state := string(task.Status.State)
 		stateCounts[state]++
 
-		// Capture the latest error message from failed tasks
 		if task.Status.State == swarm.TaskStateFailed ||
 			task.Status.State == swarm.TaskStateRejected ||
 			task.Status.State == swarm.TaskStateShutdown {
@@ -386,10 +370,6 @@ func (s *TaskService) getTaskStatesForService(ctx context.Context, service swarm
 				latestError = task.Status.Err
 			}
 		}
-	}
-
-	if len(stateCounts) == 0 {
-		return "no tasks found"
 	}
 
 	var states []string
