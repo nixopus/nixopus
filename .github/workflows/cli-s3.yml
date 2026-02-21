@@ -13,12 +13,14 @@
 #
 # Required GitHub variables (or use secrets):
 #   CLI_S3_BUCKET           - S3 bucket for CLI binaries
-#   CLI_S3_REGION           - AWS region (default: us-east-1)
+#   CLI_S3_REGION           - AWS region (default: ap-south-1)
 
 name: CLI Build and Push to S3
 
 on:
   push:
+    branches:
+      - '**'
     tags:
       - 'v*'
   release:
@@ -140,6 +142,8 @@ jobs:
           aws-region: ${{ vars.CLI_S3_REGION || secrets.AWS_REGION || 'ap-south-1' }}
 
       - name: Push to S3
+        env:
+          S3_ENDPOINT: ${{ vars.CLI_S3_ENDPOINT || secrets.CLI_S3_ENDPOINT }}
         run: |
           BUCKET="${{ vars.CLI_S3_BUCKET || secrets.CLI_S3_BUCKET }}"
           if [ -z "$BUCKET" ]; then
@@ -148,12 +152,20 @@ jobs:
           fi
           VERSION="${{ needs.build.outputs.version }}"
 
+          # For  S3-compatible backends, use --endpoint-url
+          if [ -n "$S3_ENDPOINT" ]; then
+            EXTRA="--endpoint-url $S3_ENDPOINT"
+            echo "Using S3-compatible endpoint: $S3_ENDPOINT (e.g. Supabase Storage)"
+          else
+            EXTRA="--acl public-read"
+          fi
+
           echo "Uploading CLI v${VERSION} to s3://${BUCKET}/cli/"
           for f in dist/*; do
             [ -f "$f" ] || continue
             NAME=$(basename "$f")
-            aws s3 cp "$f" "s3://${BUCKET}/cli/${VERSION}/${NAME}" --acl public-read
-            aws s3 cp "$f" "s3://${BUCKET}/cli/latest/${NAME}" --acl public-read
+            aws s3 cp "$f" "s3://${BUCKET}/cli/${VERSION}/${NAME}" $EXTRA
+            aws s3 cp "$f" "s3://${BUCKET}/cli/latest/${NAME}" $EXTRA
             echo "  -> $NAME"
           done
           echo "Done. Install: curl -sSL ... | tar xz -C /usr/local/bin"
