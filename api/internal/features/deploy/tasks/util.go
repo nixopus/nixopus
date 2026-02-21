@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -12,27 +13,48 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
+// GetStringFromMap serializes a map to a JSON string for safe storage.
+// Falls back to legacy space-delimited format only if JSON marshaling fails.
 func GetStringFromMap(m map[string]string) string {
-	var result string
-	for key, value := range m {
-		result += key + "=" + value + " "
+	if len(m) == 0 {
+		return ""
 	}
-	return result
+	data, err := json.Marshal(m)
+	if err != nil {
+		var result string
+		for key, value := range m {
+			result += key + "=" + value + " "
+		}
+		return result
+	}
+	return string(data)
 }
 
+// GetMapFromString deserializes a string to a map. Supports both JSON format
+// and the legacy space-delimited key=value format for backward compatibility.
 func GetMapFromString(s string) map[string]string {
+	if s == "" {
+		return make(map[string]string)
+	}
 	result := make(map[string]string)
+	if err := json.Unmarshal([]byte(s), &result); err == nil {
+		return result
+	}
+	// Legacy format: space-delimited key=value pairs
 	pairs := strings.Split(s, " ")
 	for _, pair := range pairs {
-		if pair != "" {
-			kv := strings.Split(pair, "=")
-			if len(kv) == 2 {
-				result[kv[0]] = kv[1]
-			}
+		if pair == "" {
+			continue
+		}
+		idx := strings.IndexByte(pair, '=')
+		if idx > 0 {
+			result[pair[:idx]] = pair[idx+1:]
 		}
 	}
 	return result
 }
+
+const logBatchSize = 50
 
 type TaskContext struct {
 	service       *TaskService
@@ -40,6 +62,7 @@ type TaskContext struct {
 	deploymentID  uuid.UUID
 	statusID      uuid.UUID
 	onLogCallback func(applicationID uuid.UUID, logLine string) // for live dev real-time streaming
+	logBuffer     []shared_types.ApplicationLogs
 }
 
 func (s *TaskService) NewTaskContext(result shared_types.TaskPayload) *TaskContext {
@@ -55,6 +78,7 @@ func (s *TaskService) NewTaskContext(result shared_types.TaskPayload) *TaskConte
 		applicationID: result.Application.ID,
 		deploymentID:  result.ApplicationDeployment.ID,
 		statusID:      statusID,
+		logBuffer:     make([]shared_types.ApplicationLogs, 0, logBatchSize),
 	}
 }
 
@@ -89,17 +113,37 @@ func (tc *TaskContext) AddLog(logMessage string) {
 		ApplicationDeploymentID: tc.deploymentID,
 	}
 
-	err := tc.service.Storage.AddApplicationLogs(&appLog)
-	if err != nil {
-		tc.service.Logger.Log(logger.Error, "Failed to add application log: "+err.Error(), "")
+	tc.logBuffer = append(tc.logBuffer, appLog)
+	if len(tc.logBuffer) >= logBatchSize {
+		tc.FlushLogs()
 	}
 	if tc.onLogCallback != nil {
 		tc.onLogCallback(tc.applicationID, logMessage)
 	}
 }
 
+// FlushLogs writes any buffered logs to the database in a single batch INSERT.
+func (tc *TaskContext) FlushLogs() {
+	if len(tc.logBuffer) == 0 {
+		return
+	}
+	batch := make([]shared_types.ApplicationLogs, len(tc.logBuffer))
+	copy(batch, tc.logBuffer)
+	tc.logBuffer = tc.logBuffer[:0]
+
+	if err := tc.service.Storage.AddApplicationLogsBatch(batch); err != nil {
+		tc.service.Logger.Log(logger.Error, "Failed to flush log batch: "+err.Error(), "")
+		for _, log := range batch {
+			if singleErr := tc.service.Storage.AddApplicationLogs(&log); singleErr != nil {
+				tc.service.Logger.Log(logger.Error, "Failed to add individual log: "+singleErr.Error(), "")
+			}
+		}
+	}
+}
+
 func (tc *TaskContext) LogAndUpdateStatus(message string, status shared_types.Status) {
 	tc.AddLog(message)
+	tc.FlushLogs()
 	tc.UpdateStatus(status)
 }
 
