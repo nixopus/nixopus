@@ -2,7 +2,9 @@ package validation
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
+	"strings"
 
 	"errors"
 
@@ -69,6 +71,9 @@ func validateDeploymentRequest(req *types.CreateDeploymentRequest) error {
 	if req.Port == 0 {
 		return errors.New("port is required")
 	}
+	if err := validateDomains(req.Domains); err != nil {
+		return err
+	}
 	if req.BasePath == "" {
 		req.BasePath = "/"
 	} else if req.BasePath[0] != '/' {
@@ -131,7 +136,9 @@ func validateCreateProjectRequest(req *types.CreateProjectRequest) error {
 	if req.Name == "" {
 		return types.ErrMissingName
 	}
-	// Domain is now optional - validation removed
+	if err := validateDomains(req.Domains); err != nil {
+		return err
+	}
 	if req.Repository == "" {
 		return types.ErrMissingRepository
 	}
@@ -172,6 +179,9 @@ func validateDuplicateProjectRequest(req types.DuplicateProjectRequest) error {
 	if req.SourceProjectID == uuid.Nil {
 		return types.ErrMissingSourceProjectID
 	}
+	if err := validateDomains(req.Domains); err != nil {
+		return err
+	}
 	if req.Environment == "" {
 		return types.ErrInvalidEnvironment
 	}
@@ -201,6 +211,9 @@ func validateAddApplicationToFamilyRequest(req *types.AddApplicationToFamilyRequ
 	if req.Repository == "" {
 		return types.ErrMissingRepository
 	}
+	if err := validateDomains(req.Domains); err != nil {
+		return err
+	}
 	// Set defaults for optional fields
 	if req.Environment == "" {
 		req.Environment = "development"
@@ -219,6 +232,47 @@ func validateAddApplicationToFamilyRequest(req *types.AddApplicationToFamilyRequ
 	}
 	if req.DockerfilePath == "" {
 		req.DockerfilePath = "Dockerfile"
+	}
+	return nil
+}
+
+// isDomainValid performs RFC 1035-compliant domain validation (pure string check, no DB).
+func isDomainValid(domain string) bool {
+	if domain == "" || len(domain) > 253 {
+		return false
+	}
+	for _, c := range domain {
+		if c == '/' || c == '\\' || c == ' ' || c == '\t' || c == '\n' || c == '\r' {
+			return false
+		}
+	}
+	labels := strings.Split(domain, ".")
+	if len(labels) < 2 {
+		return false
+	}
+	for _, label := range labels {
+		if label == "" || len(label) > 63 {
+			return false
+		}
+		for i, c := range label {
+			isAlnum := (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+			isHyphen := c == '-'
+			if !isAlnum && !isHyphen {
+				return false
+			}
+			if isHyphen && (i == 0 || i == len(label)-1) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func validateDomains(domains []string) error {
+	for _, d := range domains {
+		if !isDomainValid(d) {
+			return fmt.Errorf("invalid domain: %q", d)
+		}
 	}
 	return nil
 }
