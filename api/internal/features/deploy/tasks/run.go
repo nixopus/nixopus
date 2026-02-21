@@ -171,26 +171,16 @@ func (s *TaskService) getExistingService(ctx context.Context, r shared_types.Tas
 	return FindServiceByName(ctx, r.Application.Name)
 }
 
-// FindServiceByName finds a service by name (shared utility for both deploy and devrunner)
+// FindServiceByName finds a service by name using Docker API filtering.
 func FindServiceByName(ctx context.Context, serviceName string) (*swarm.Service, error) {
 	dockerService, err := docker.GetDockerServiceFromContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get docker service: %w", err)
 	}
-	services, err := dockerService.GetClusterServices()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, service := range services {
-		if service.Spec.Annotations.Name == serviceName {
-			return &service, nil
-		}
-	}
-	return nil, nil
+	return dockerService.GetServiceByName(serviceName)
 }
 
-// FindServiceByLabel finds a service by label key-value pair (shared utility)
+// FindServiceByLabel finds a service by label key-value pair using Docker API filtering.
 func FindServiceByLabel(ctx context.Context, labelKey, labelValue string) (*swarm.Service, error) {
 	dockerService, err := docker.GetDockerServiceFromContext(ctx)
 	if err != nil {

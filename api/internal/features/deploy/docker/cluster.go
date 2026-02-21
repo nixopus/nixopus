@@ -245,3 +245,18 @@ func (s *DockerService) GetServiceByID(serviceID string) (swarm.Service, error) 
 	service, _, err := s.Cli.ServiceInspectWithRaw(s.Ctx, serviceID, types.ServiceInspectOptions{})
 	return service, err
 }
+
+func (s *DockerService) GetServiceByName(name string) (*swarm.Service, error) {
+	services, err := s.Cli.ServiceList(s.Ctx, types.ServiceListOptions{
+		Filters: filters.NewArgs(filters.Arg("name", name)),
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, svc := range services {
+		if svc.Spec.Annotations.Name == name {
+			return &svc, nil
+		}
+	}
+	return nil, nil
+}
