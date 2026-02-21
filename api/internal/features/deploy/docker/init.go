@@ -112,6 +112,7 @@ type DockerRepository interface {
 	DeleteService(serviceID string) error
 	RollbackService(serviceID string) error
 	GetServiceByID(serviceID string) (swarm.Service, error)
+	GetServiceByName(name string) (*swarm.Service, error)
 }
 
 // NewDockerServiceWithServer creates a new instance of DockerService using SSH tunneling.
