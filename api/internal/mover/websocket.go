@@ -5,44 +5,12 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"os"
-	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/raghavyuva/nixopus-api/internal/config"
-)
-
-var (
-	sendBufferSize    int
-	receiveBufferSize int
-)
-
-func init() {
-	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_MOVER_SEND_BUFFER")); err == nil && v > 0 {
-		sendBufferSize = v
-	} else {
-		sendBufferSize = 8192 // Handle 2000+ files (file_change + chunks per file)
-	}
-	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_MOVER_RECEIVE_BUFFER")); err == nil && v > 0 {
-		receiveBufferSize = v
-	} else {
-		receiveBufferSize = 1024
-	}
-}
-
-const (
-	writeWait             = 10 * time.Second
-	pongWait              = 60 * time.Second
-	pingPeriod            = 25 * time.Second
-	maxMessageSize        = 64 * 1024 * 1024 // 64MB
-	initialReconnectDelay = 1 * time.Second
-	maxReconnectDelay     = 30 * time.Second
-	reconnectBackoffRate  = 2.0
-	maxReconnectAttempts  = 0                // 0 = unlimited retries
-	handshakeTimeout      = 60 * time.Second // Increased timeout for server-side DB operations
 )
 
 type ConnectionState int
@@ -123,8 +91,8 @@ func NewClient(serverURL, token string, opts ...ClientOption) (*Client, error) {
 	c := &Client{
 		serverURL:       serverURL,
 		token:           token,
-		send:            make(chan SyncMessage, sendBufferSize),
-		receive:         make(chan SyncMessage, receiveBufferSize),
+		send:            make(chan SyncMessage, sendBufferSize()),
+		receive:         make(chan SyncMessage, receiveBufferSize()),
 		done:            make(chan struct{}),
 		state:           StateDisconnected,
 		pendingMessages: make([]SyncMessage, 0),
@@ -268,7 +236,7 @@ func (c *Client) dialWebSocket() (*websocket.Conn, error) {
 	// Create custom dialer with increased handshake timeout
 	// This allows time for server-side database operations (session verification, app context lookup)
 	dialer := &websocket.Dialer{
-		HandshakeTimeout:  handshakeTimeout,
+		HandshakeTimeout:  handshakeTimeout(),
 		ReadBufferSize:    256 * 1024,
 		WriteBufferSize:   256 * 1024,
 		EnableCompression: false,
@@ -283,7 +251,7 @@ func (c *Client) dialWebSocket() (*websocket.Conn, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	conn.SetReadLimit(maxMessageSize)
+	conn.SetReadLimit(maxMessageSize())
 	return conn, nil
 }
 
@@ -337,10 +305,11 @@ func (c *Client) attemptReconnectionWithBackoff() {
 		attempt := atomic.AddInt64(&c.reconnectAttempts, 1)
 
 		// Check max attempts
-		if maxReconnectAttempts > 0 && int(attempt) > maxReconnectAttempts {
+		maxAttempts := maxReconnectAttempts()
+		if maxAttempts > 0 && int(attempt) > maxAttempts {
 			c.emitStateChange(ConnectionEvent{
 				State:   StateDisconnected,
-				Error:   fmt.Errorf("max reconnection attempts (%d) exceeded", maxReconnectAttempts),
+				Error:   fmt.Errorf("max reconnection attempts (%d) exceeded", maxAttempts),
 				Attempt: int(attempt),
 			})
 			return
@@ -370,9 +339,9 @@ func (c *Client) attemptReconnectionWithBackoff() {
 
 // calculateBackoffDelay computes exponential backoff delay
 func (c *Client) calculateBackoffDelay(attempt int) time.Duration {
-	delay := float64(initialReconnectDelay) * math.Pow(reconnectBackoffRate, float64(attempt-1))
-	if delay > float64(maxReconnectDelay) {
-		delay = float64(maxReconnectDelay)
+	delay := float64(initialReconnectDelay()) * math.Pow(reconnectBackoffRate(), float64(attempt-1))
+	if delay > float64(maxReconnectDelay()) {
+		delay = float64(maxReconnectDelay())
 	}
 	return time.Duration(delay)
 }
@@ -416,13 +385,13 @@ func (c *Client) runReadLoop() {
 
 		// Set read deadline and pong handler while holding lock
 		// This ensures pong handler uses the same connection
-		conn.SetReadDeadline(time.Now().Add(pongWait))
+		conn.SetReadDeadline(time.Now().Add(pongWait()))
 		conn.SetPongHandler(func(string) error {
 			// Pong handler needs to access connection atomically
 			c.connMu.RLock()
 			conn := c.conn
 			if conn != nil {
-				conn.SetReadDeadline(time.Now().Add(pongWait))
+				conn.SetReadDeadline(time.Now().Add(pongWait()))
 			}
 			c.connMu.RUnlock()
 			return nil
@@ -536,7 +505,7 @@ func (c *Client) runWriteLoop() {
 		return
 	}
 
-	ticker := time.NewTicker(pingPeriod)
+	ticker := time.NewTicker(pingPeriod())
 	defer ticker.Stop()
 
 	for {
@@ -589,7 +558,7 @@ func (c *Client) writeMessageToConnection(messageType int, data []byte) bool {
 		return false
 	}
 
-	conn.SetWriteDeadline(time.Now().Add(writeWait))
+	conn.SetWriteDeadline(time.Now().Add(writeWait()))
 	err := conn.WriteMessage(messageType, data)
 	c.connMu.RUnlock()
 
@@ -621,7 +590,7 @@ func (c *Client) queueMessage(msg SyncMessage) {
 
 // flushQueuedMessagesAfterDelay waits briefly then flushes queued messages
 func (c *Client) flushQueuedMessagesAfterDelay() {
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(closeFlushDelay())
 	c.flushQueuedMessages()
 }
 

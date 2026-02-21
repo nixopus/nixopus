@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -106,6 +107,10 @@ func (t *SSHTunnel) handleConnections(lgr logger.Logger) {
 	for {
 		localConn, err := t.listener.Accept()
 		if err != nil {
+			// Expected when Close() closes the listener (cache invalidation, replacement)
+			if errors.Is(err, net.ErrClosed) || isConnectionLevelError(err) {
+				return
+			}
 			lgr.Log(logger.Error, "SSH tunnel listener error", err.Error())
 			return
 		}

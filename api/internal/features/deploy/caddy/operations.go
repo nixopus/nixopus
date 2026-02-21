@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
+	"strconv"
 
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
@@ -324,11 +326,13 @@ func extractUpstreamFromRoute(route caddyhttp.Route) string {
 }
 
 func parseDial(dial string) (string, int, error) {
-	var host string
-	var port int
-	_, err := fmt.Sscanf(dial, "%[^:]:%d", &host, &port)
+	host, portStr, err := net.SplitHostPort(dial)
 	if err != nil {
 		return "", 0, fmt.Errorf("failed to parse dial string %q: %w", dial, err)
+	}
+	port, err := strconv.Atoi(portStr)
+	if err != nil || port < 1 || port > 65535 {
+		return "", 0, fmt.Errorf("failed to parse dial string %q: invalid port %q", dial, portStr)
 	}
 	return host, port, nil
 }
