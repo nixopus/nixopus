@@ -54,34 +54,52 @@ func (s *TaskService) sanitizeEnvVars(envVars map[string]string) []string {
 	return logEnvVars
 }
 
+const maxPortRetries = 5
+
 func (s *TaskService) getAvailablePort(ctx context.Context) (string, error) {
 	manager, err := ssh.GetSSHManagerFromContext(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	client, err := manager.Connect()
-	if err != nil {
-		return "", err
-	}
-	defer client.Close()
 
 	generatePorts := "seq 49152 65535"
-
 	getUsedPorts := "command -v ss >/dev/null 2>&1 && ss -tan | awk '{print $4}' | cut -d':' -f2 | grep '[0-9]\\{1,5\\}' | sort -u || netstat -tan | awk '{print $4}' | grep ':[0-9]' | cut -d':' -f2 | sort -u"
-
 	cmd := fmt.Sprintf("comm -23 <(%s) <(%s) | shuf -n 1 | tr -d '\\n'", generatePorts, getUsedPorts)
 
-	output, err := client.Run(cmd)
-	if err != nil {
-		return "", fmt.Errorf("failed to find available port: %w", err)
+	var lastErr error
+	for attempt := 0; attempt < maxPortRetries; attempt++ {
+		client, err := manager.Connect()
+		if err != nil {
+			lastErr = err
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		output, err := client.Run(cmd)
+		client.Close()
+		if err != nil {
+			lastErr = fmt.Errorf("failed to find available port: %w", err)
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		port := string(output)
+		if port == "" {
+			lastErr = fmt.Errorf("no available ports found in range 49152-65535")
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		if _, parseErr := strconv.Atoi(port); parseErr != nil {
+			lastErr = fmt.Errorf("invalid port value returned: %s", port)
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		return port, nil
 	}
 
-	port := string(output)
-	if port == "" {
-		return "", fmt.Errorf("no available ports found in range 49152-65535")
-	}
-
-	return port, nil
+	return "", fmt.Errorf("failed to allocate port after %d attempts: %w", maxPortRetries, lastErr)
 }
 
 // AtomicUpdateContainer performs a zero-downtime update of a running container
@@ -395,6 +413,26 @@ func (s *TaskService) getTaskStatesForService(ctx context.Context, service swarm
 	}
 
 	return result
+}
+
+// cleanupServiceOnFailure removes a Swarm service that was created/updated as part of a
+// deployment that subsequently failed (e.g. Caddy proxy configuration). This prevents
+// orphaned containers from consuming resources after a partial deployment.
+func (s *TaskService) cleanupServiceOnFailure(ctx context.Context, serviceName string, taskCtx *TaskContext) {
+	service, err := FindServiceByName(ctx, serviceName)
+	if err != nil || service == nil {
+		return
+	}
+	dockerService, err := s.getDockerService(ctx)
+	if err != nil {
+		taskCtx.AddLog("Cleanup warning: could not get docker service: " + err.Error())
+		return
+	}
+	if err := dockerService.DeleteService(service.ID); err != nil {
+		taskCtx.AddLog("Cleanup warning: failed to remove orphaned service: " + err.Error())
+	} else {
+		taskCtx.AddLog("Cleaned up orphaned service " + serviceName + " after deployment failure")
+	}
 }
 
 // containsSensitiveKeyword checks if a key likely contains sensitive information

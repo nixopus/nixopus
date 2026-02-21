@@ -22,12 +22,14 @@ type DeployStorage struct {
 }
 
 type DeployRepository interface {
+	RunInTransaction(fn func(tx bun.Tx) error) error
 	IsNameAlreadyTaken(name string) (bool, error)
 	IsDomainAlreadyTaken(domain string) (bool, error)
 	IsPortAlreadyTaken(port int) (bool, error)
 	IsDomainValid(domain string) (bool, error)
 	AddApplication(application *shared_types.Application) error
 	AddApplicationLogs(applicationLogs *shared_types.ApplicationLogs) error
+	AddApplicationLogsBatch(logs []shared_types.ApplicationLogs) error
 	AddApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
 	GetApplications(page int, pageSize int, sortBy string, sortDirection string, organizationID uuid.UUID) ([]shared_types.Application, int, error)
 	UpdateApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
@@ -42,7 +44,6 @@ type DeployRepository interface {
 	GetApplicationDeployments(applicationID uuid.UUID) ([]shared_types.ApplicationDeployment, error)
 	GetPaginatedApplicationDeployments(applicationID uuid.UUID, page, pageSize int) ([]shared_types.ApplicationDeployment, int, error)
 	GetLogs(applicationID string, page, pageSize int, level string, startTime, endTime time.Time, searchTerm string) ([]shared_types.ApplicationLogs, int, error)
-	// Domain management methods
 	AddApplicationDomains(applicationID uuid.UUID, domains []string) error
 	RemoveApplicationDomain(applicationID uuid.UUID, domain string) error
 	GetApplicationDomains(applicationID uuid.UUID) ([]shared_types.ApplicationDomain, error)
@@ -59,6 +60,27 @@ type DeployRepository interface {
 	GetLatestDeployments(organizationID uuid.UUID, limit int) ([]shared_types.ApplicationDeployment, error)
 	GetDeployedApplications(organizationID uuid.UUID) ([]shared_types.Application, error)
 	GetLatestS3Deployment(applicationID uuid.UUID) (*shared_types.ApplicationDeployment, error)
+}
+
+func (s *DeployStorage) RunInTransaction(fn func(tx bun.Tx) error) error {
+	tx, err := s.DB.BeginTx(s.Ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := fn(tx); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func (s *DeployStorage) AddApplicationLogsBatch(logs []shared_types.ApplicationLogs) error {
+	if len(logs) == 0 {
+		return nil
+	}
+	_, err := s.DB.NewInsert().Model(&logs).Exec(s.Ctx)
+	return err
 }
 
 func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
@@ -316,38 +338,49 @@ func (s *DeployStorage) DeleteDeployment(deployment *types.DeleteDeploymentReque
 		return fmt.Errorf("application not found or not authorized")
 	}
 
-	_, err = s.DB.NewDelete().
-		Table("application_logs").
-		Where("application_deployment_id IN (SELECT id FROM application_deployment WHERE application_id = ?)", deployment.ID).
-		Exec(s.Ctx)
+	return s.RunInTransaction(func(tx bun.Tx) error {
+		_, err := tx.NewDelete().
+			Table("application_logs").
+			Where("application_deployment_id IN (SELECT id FROM application_deployment WHERE application_id = ?)", deployment.ID).
+			Exec(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete application logs: %w", err)
+		}
 
-	if err != nil {
-		return err
-	}
+		_, err = tx.NewDelete().
+			Table("application_deployment_status").
+			Where("application_deployment_id IN (SELECT id FROM application_deployment WHERE application_id = ?)", deployment.ID).
+			Exec(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete deployment statuses: %w", err)
+		}
 
-	_, err = s.DB.NewDelete().
-		Table("application_deployment_status").
-		Where("application_deployment_id IN (SELECT id FROM application_deployment WHERE application_id = ?)", deployment.ID).
-		Exec(s.Ctx)
+		_, err = tx.NewDelete().
+			Table("application_deployment").
+			Where("application_id = ?", deployment.ID).
+			Exec(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete deployments: %w", err)
+		}
 
-	if err != nil {
-		return err
-	}
+		_, err = tx.NewDelete().
+			Table("application_domains").
+			Where("application_id = ?", deployment.ID).
+			Exec(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete application domains: %w", err)
+		}
 
-	_, err = s.DB.NewDelete().
-		Table("application_deployment").
-		Where("application_id = ?", deployment.ID).
-		Exec(s.Ctx)
+		_, err = tx.NewDelete().
+			Table("applications").
+			Where("id = ?", deployment.ID).
+			Exec(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete application: %w", err)
+		}
 
-	if err != nil {
-		return err
-	}
-
-	_, err = s.DB.NewDelete().
-		Table("applications").
-		Where("id = ?", deployment.ID).
-		Exec(s.Ctx)
-	return err
+		return nil
+	})
 }
 
 func (s *DeployStorage) GetApplicationDeployments(applicationID uuid.UUID) ([]shared_types.ApplicationDeployment, error) {
