@@ -7,9 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -24,29 +22,6 @@ import (
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
-
-const (
-	chunkSize = int64(64 * 1024)
-)
-
-var (
-	fileCompletionWorkers int
-	completionJobBuffer   int
-)
-
-func init() {
-	// Configurable via env for ops tuning. Defaults: 4 workers (avoids exhausting DB pool with Supabase).
-	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_LIVE_COMPLETION_WORKERS")); err == nil && v > 0 {
-		fileCompletionWorkers = v
-	} else {
-		fileCompletionWorkers = 4
-	}
-	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_LIVE_COMPLETION_BUFFER")); err == nil && v > 0 {
-		completionJobBuffer = v
-	} else {
-		completionJobBuffer = 256
-	}
-}
 
 type fileCompletionJob struct {
 	content       []byte
@@ -105,7 +80,7 @@ func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, 
 		stagingManager:     stagingManager,
 		store:              store,
 		logger:             logger,
-		completionJobs:     make(chan *fileCompletionJob, completionJobBuffer),
+		completionJobs:     make(chan *fileCompletionJob, completionBuffer()),
 		sessionEnvStore:    make(map[string]map[string]string),
 		activeConns:        make(map[uuid.UUID]*activeConn),
 		pendingCompletions: make(map[string]*atomic.Int64),
@@ -123,7 +98,7 @@ func NewGateway(stagingManager *StagingManager, taskService *tasks.TaskService, 
 		_ = gateway.sendCodebaseIndexed(appCtx)
 	})
 	gateway.websocketHandler = NewWebSocketHandler(gateway, logger)
-	for i := 0; i < fileCompletionWorkers; i++ {
+	for i := 0; i < completionWorkers(); i++ {
 		gateway.workerWg.Add(1)
 		go func() {
 			defer gateway.workerWg.Done()
@@ -184,7 +159,7 @@ func (g *Gateway) decPendingCompletion(appID uuid.UUID) {
 // waitForPendingCompletions blocks until the app has no pending file writes or timeout expires.
 func (g *Gateway) waitForPendingCompletions(appID uuid.UUID, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
-	tick := 10 * time.Millisecond
+	tick := pendingCompletionsTick()
 	for time.Now().Before(deadline) {
 		g.pendingCompletionsMu.RLock()
 		c, ok := g.pendingCompletions[appID.String()]
@@ -632,7 +607,7 @@ func (g *Gateway) handleFileChange(appCtx *ApplicationContext, payload json.RawM
 		return fmt.Errorf("invalid file path: %w", err)
 	}
 
-	totalChunks := int((fileChange.Size + chunkSize - 1) / chunkSize)
+	totalChunks := int((fileChange.Size + chunkSize() - 1) / chunkSize())
 	if totalChunks == 0 {
 		totalChunks = 1
 	}

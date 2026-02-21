@@ -116,7 +116,7 @@ func (bfm *BuildFirstManager) HandleFileWritten(ctx context.Context, appCtx *App
 
 	// .env is excluded from sync; values are sent via env_vars message from client
 	var lastErr error
-	for attempt := 0; attempt < 3; attempt++ {
+	for attempt := 0; attempt < fileInjectRetries(); attempt++ {
 		if attempt > 0 {
 			time.Sleep(time.Duration(attempt) * time.Second)
 		}
@@ -153,7 +153,7 @@ func (bfm *BuildFirstManager) triggerBuild(ctx context.Context, appCtx *Applicat
 		existing.Stop()
 	}
 	appCtxCopy := appCtx
-	bfm.buildTimers[appCtx.ApplicationID] = time.AfterFunc(3*time.Second, func() {
+	bfm.buildTimers[appCtx.ApplicationID] = time.AfterFunc(buildDebounce(), func() {
 		if bfm.codebaseIndexedFunc != nil {
 			bfm.codebaseIndexedFunc(appCtxCopy)
 		}
@@ -299,16 +299,14 @@ func (bfm *BuildFirstManager) MarkDeployed(appID uuid.UUID, workdir string) {
 	bfm.logger.Log(logger.Info, "live dev container ready, inject mode enabled", appID.String())
 }
 
-const generatedDockerfileName = "Dockerfile.nixopus.dev"
-
 func WriteDockerfileToStaging(ctx context.Context, stagingPath string, content string) (string, error) {
-	fullPath := filepath.Join(stagingPath, generatedDockerfileName)
+	fullPath := filepath.Join(stagingPath, generatedDockerfileName())
 
 	if isLocalStagingPath(stagingPath) {
 		if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
 			return "", fmt.Errorf("failed to write Dockerfile: %w", err)
 		}
-		return generatedDockerfileName, nil
+		return generatedDockerfileName(), nil
 	}
 
 	err := utils.WithSFTPClientFromPool(ctx, func(sftpClient *sftp.Client) error {
@@ -323,7 +321,7 @@ func WriteDockerfileToStaging(ctx context.Context, stagingPath string, content s
 	if err != nil {
 		return "", err
 	}
-	return generatedDockerfileName, nil
+	return generatedDockerfileName(), nil
 }
 
 func WriteDockerignoreToStaging(ctx context.Context, stagingPath string, content string) (string, error) {
@@ -351,34 +349,36 @@ func WriteDockerignoreToStaging(ctx context.Context, stagingPath string, content
 	return ".dockerignore", nil
 }
 
-var dependencyFiles = []string{
-	"package.json",
-	"package-lock.json",
-	"yarn.lock",
-	"pnpm-lock.yaml",
-	"bun.lockb",
-	".npmrc",
-	".yarnrc",
-	".yarnrc.yml",
-	"requirements.txt",
-	"requirements-dev.txt",
-	"pyproject.toml",
-	"setup.py",
-	"setup.cfg",
-	"Pipfile",
-	"Pipfile.lock",
-	"poetry.lock",
-	"uv.lock",
-	"Dockerfile",
-	"Dockerfile.dev",
-	"dockerfile",
-	generatedDockerfileName,
-	".dockerignore",
+func getDependencyFiles() []string {
+	return []string{
+		"package.json",
+		"package-lock.json",
+		"yarn.lock",
+		"pnpm-lock.yaml",
+		"bun.lockb",
+		".npmrc",
+		".yarnrc",
+		".yarnrc.yml",
+		"requirements.txt",
+		"requirements-dev.txt",
+		"pyproject.toml",
+		"setup.py",
+		"setup.cfg",
+		"Pipfile",
+		"Pipfile.lock",
+		"poetry.lock",
+		"uv.lock",
+		"Dockerfile",
+		"Dockerfile.dev",
+		"dockerfile",
+		generatedDockerfileName(),
+		".dockerignore",
+	}
 }
 
 func IsDependencyFile(filePath string) bool {
 	baseName := filepath.Base(filePath)
-	for _, df := range dependencyFiles {
+	for _, df := range getDependencyFiles() {
 		if baseName == df {
 			return true
 		}

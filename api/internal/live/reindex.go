@@ -97,7 +97,7 @@ func ReindexFromStaging(ctx context.Context, store *shared_storage.Store, stagin
 				}
 				continue
 			}
-			if isBinaryExt(info.Name()) || info.Size() > maxIndexableSize {
+			if isBinaryExt(info.Name()) || info.Size() > int64(maxIndexableSize()) {
 				continue
 			}
 			rel, err := filepath.Rel(stagingPath, path)
