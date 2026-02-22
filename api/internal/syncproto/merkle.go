@@ -1,4 +1,4 @@
-package mover
+package syncproto
 
 import (
 	"crypto/sha256"

@@ -26,7 +26,7 @@ concurrency:
 
 env:
   CLI_NAME: nixopus
-  CLI_PKG: github.com/raghavyuva/nixopus-api/internal/cliconfig
+  CLI_PKG: github.com/raghavyuva/nixopus-api/pkg/cli/cliconfig
 
 jobs:
   build:
