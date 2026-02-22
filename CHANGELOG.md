@@ -1,3 +1,24 @@
+# [0.1.0-alpha.130](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.129...v0.1.0-alpha.130) (2026-02-20)
+
+
+### Bug Fixes
+
+* cache eviction of ssh pools ([d04bf4c](https://github.com/raghavyuva/nixopus/commit/d04bf4c31ed994d8d33419d2a145a627e05c3daa))
+* field lvl validation msgs & deprecate`/dashboard` paths ([#1060](https://github.com/raghavyuva/nixopus/issues/1060)) ([2774ff5](https://github.com/raghavyuva/nixopus/commit/2774ff51a455dd324e90421704d2418eac7d70c5)), closes [#1067](https://github.com/raghavyuva/nixopus/issues/1067) [#1069](https://github.com/raghavyuva/nixopus/issues/1069) [#1070](https://github.com/raghavyuva/nixopus/issues/1070) [#1072](https://github.com/raghavyuva/nixopus/issues/1072) [#1074](https://github.com/raghavyuva/nixopus/issues/1074)
+* log refreshing shows no logs available ([bd6c85c](https://github.com/raghavyuva/nixopus/commit/bd6c85c7a3dfd08f6007940866d7c5cfe746a94f))
+* org context passing in deployment triggers ([2c299ad](https://github.com/raghavyuva/nixopus/commit/2c299ad06c7405e1735df3976f5233d62a8022a1))
+* path traversal issue across api ([#1073](https://github.com/raghavyuva/nixopus/issues/1073)) ([8316116](https://github.com/raghavyuva/nixopus/commit/83161167c99e8fd58950cd3fd97ac82c7e14778d))
+* ssh hammering from monitoring tikcer ([3f711a7](https://github.com/raghavyuva/nixopus/commit/3f711a77d885500d3899663ca70c09bddb340fbc))
+
+
+### Features
+
+* api for recovering of crashed apps  ([#1068](https://github.com/raghavyuva/nixopus/issues/1068)) ([292ad74](https://github.com/raghavyuva/nixopus/commit/292ad741e7cafce65bc3f6ced03d1b68793c314b))
+* queue based proxy reconcillation for proxy failure handling ([#1071](https://github.com/raghavyuva/nixopus/issues/1071)) ([2a82775](https://github.com/raghavyuva/nixopus/commit/2a8277591fda40d84b653d79796587bb5bf48b97))
+* s3 archive build images ([#1066](https://github.com/raghavyuva/nixopus/issues/1066)) ([795d25e](https://github.com/raghavyuva/nixopus/commit/795d25e5dd0bfa25345665577894d0a8428d7adb))
+
+
+
 # [0.1.0-alpha.129](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.128...v0.1.0-alpha.129) (2026-02-18)
 
 
