@@ -331,7 +331,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterHealthCheckRoutes(healthCheckGroup, healthCheckController)
 
 	// Extension routes
-	extensionController := extension.NewExtensionsController(router.app.Store, router.app.Ctx, router.logger, config.AppConfig.Redis.URL)
+	extensionController := extension.NewExtensionsController(router.app.Store, router.app.Ctx, router.logger)
 	extensionGroup := fuego.Group(server, apiV1.Path+"/extensions")
 	router.applyMiddleware(extensionGroup, MiddlewareConfig{
 		RBAC:         false,
