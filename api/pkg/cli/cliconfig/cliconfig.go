@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/mover"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/mover"
 )
 
 // Build-time variables (set via -ldflags). Must be present at build time.
