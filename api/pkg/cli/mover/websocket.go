@@ -67,7 +67,7 @@ type Client struct {
 	onStateChange     func(ConnectionEvent)
 
 	pendingMessages []syncproto.SyncMessage
-	pendingMu        sync.Mutex
+	pendingMu       sync.Mutex
 
 	wg sync.WaitGroup
 
@@ -471,12 +471,6 @@ func (c *Client) unmarshalPayloadByType(typ syncproto.MessageType, raw json.RawM
 		return m
 	case syncproto.MessageTypeBuildStatus:
 		var m syncproto.BuildStatusPayload
-		if err := json.Unmarshal(raw, &m); err != nil {
-			return nil
-		}
-		return m
-	case syncproto.MessageTypeBuildLog:
-		var m syncproto.BuildLogPayload
 		if err := json.Unmarshal(raw, &m); err != nil {
 			return nil
 		}

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -375,28 +376,6 @@ func runSingleApp(args []string) error {
 					}
 					bus.Send(ev)
 				}
-			case syncproto.MessageTypeBuildLog:
-				if p, ok := msg.Payload.(syncproto.BuildLogPayload); ok {
-					bus.Send(Event{
-						Type:    EventBuildLog,
-						Message: p.Log,
-						Payload: BuildLogPayload{
-							Log:       p.Log,
-							Timestamp: p.Timestamp,
-						},
-					})
-				} else if payload, ok := msg.Payload.(map[string]interface{}); ok {
-					logLine, _ := payload["log"].(string)
-					timestamp, _ := payload["timestamp"].(string)
-					bus.Send(Event{
-						Type:    EventBuildLog,
-						Message: logLine,
-						Payload: BuildLogPayload{
-							Log:       logLine,
-							Timestamp: timestamp,
-						},
-					})
-				}
 			case syncproto.MessageTypeDeploymentStatus:
 				if p, ok := msg.Payload.(syncproto.DeploymentStatusPayload); ok {
 					bus.Send(Event{
@@ -443,6 +422,7 @@ func runSingleApp(args []string) error {
 				}
 
 				wfClient := NewDeploymentWorkflowClient(accessToken, orgID)
+				log.Printf("[live] codebase_indexed received, starting deployment workflow (app=%s)", appID)
 				go func() {
 					defer func() {
 						workflowRunningMu.Lock()
@@ -452,42 +432,63 @@ func runSingleApp(args []string) error {
 
 					bus.Send(Event{Type: EventBuildStatus, Message: "Running deployment workflow...", Payload: BuildStatusPayload{Phase: "generating_dockerfile", Message: "Analyzing codebase..."}})
 
-					result, err := wfClient.Run(context.Background(), appID, source, mode, func(stepID, message string) {
-						bus.Send(Event{
-							Type:    EventPipelineProgress,
-							Message: message,
-							Payload: PipelineProgressPayload{StageId: stepID, Message: message},
-						})
-					}, func(ctx context.Context, approval *ApprovalContext) (bool, error) {
-						// Human-in-the-loop: show proposal (including prompt) via AgentUI, then wait for input
-						if approval != nil {
+					result, err := wfClient.Run(
+						context.Background(),
+						appID,
+						source,
+						mode,
+						func(stepID, message string) {
 							bus.Send(Event{
-								Type: EventApprovalNeeded,
-								Payload: ApprovalNeededPayload{
-									Dockerfile:      approval.Dockerfile,
-									Summary:         approval.Summary,
-									ValidationScore: approval.ValidationScore,
-									Suggestions:     approval.Suggestions,
-								},
+								Type:    EventPipelineProgress,
+								Message: message,
+								Payload: PipelineProgressPayload{StageId: stepID, Message: message},
 							})
-						} else {
-							term.Println("")
-							term.Print("Approve deployment? [y/N]: ")
-						}
-						scanner := bufio.NewScanner(os.Stdin)
-						if !scanner.Scan() {
-							return false, scanner.Err()
-						}
-						s := strings.ToLower(strings.TrimSpace(scanner.Text()))
-						return s == "y" || s == "yes", nil
-					})
+						},
+						func(step, chunk string) {
+							bus.Send(Event{
+								Type:    EventDeploymentReasoningChunk,
+								Payload: DeploymentReasoningChunkPayload{Step: step, Chunk: chunk},
+							})
+						},
+						func(step, log string) {
+							bus.Send(Event{
+								Type:    EventBuildLog,
+								Message: log,
+								Payload: BuildLogPayload{Step: step, Log: log},
+							})
+						},
+						func(ctx context.Context, approval *ApprovalContext) (bool, error) {
+							// Human-in-the-loop: show proposal (including prompt) via AgentUI, then wait for input
+							if approval != nil {
+								bus.Send(Event{
+									Type: EventApprovalNeeded,
+									Payload: ApprovalNeededPayload{
+										Dockerfile:      approval.Dockerfile,
+										Summary:         approval.Summary,
+										ValidationScore: approval.ValidationScore,
+										Suggestions:     approval.Suggestions,
+									},
+								})
+							} else {
+								term.Println("")
+								term.Print("Approve deployment? [y/N]: ")
+							}
+							scanner := bufio.NewScanner(os.Stdin)
+							if !scanner.Scan() {
+								return false, scanner.Err()
+							}
+							s := strings.ToLower(strings.TrimSpace(scanner.Text()))
+							return s == "y" || s == "yes", nil
+						})
 					if err != nil {
+						log.Printf("[live] workflow failed: %v", err)
 						bus.Send(Event{Type: EventError, Message: fmt.Sprintf("Workflow failed: %v", err)})
 						bus.Send(Event{Type: EventBuildStatus, Message: err.Error(), Payload: BuildStatusPayload{Phase: "error", Message: err.Error(), Error: err.Error()}, NeedsLLM: true})
 						return
 					}
 
 					triggerPayload := result.ToTriggerBuildPayload()
+					log.Printf("[live] workflow complete, sending trigger_build (dockerfile %d bytes)", len(triggerPayload.Dockerfile))
 					if err := client.Send(syncproto.SyncMessage{
 						Type:      syncproto.MessageTypeTriggerBuild,
 						Timestamp: time.Now(),

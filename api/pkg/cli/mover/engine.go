@@ -56,8 +56,8 @@ type Engine struct {
 	onStateChange func(ConnectionEvent)
 
 	// File sync and change tracking callbacks
-	onFileSynced     func(string)      // Called when a file is successfully synced
-	onChangeDetected func(string)      // Called when a file change is detected
+	onFileSynced     func(string)                // Called when a file is successfully synced
+	onChangeDetected func(string)                // Called when a file change is detected
 	onServerMessage  func(syncproto.SyncMessage) // Called for server-originated messages
 
 	// Pending changes during disconnect
@@ -78,13 +78,13 @@ type EngineConfig struct {
 	Excludes         []string
 	DebounceMs       int
 	OnStateChange    func(ConnectionEvent)
-	OnFileSynced     func(string)      // Called when a file is successfully synced
-	OnChangeDetected func(string)      // Called when a file change is detected
+	OnFileSynced     func(string)                // Called when a file is successfully synced
+	OnChangeDetected func(string)                // Called when a file change is detected
 	OnServerMessage  func(syncproto.SyncMessage) // Called for server-originated messages (pipeline_progress, etc.)
-	SyncStatePath    string            // Path to .nixopus-sync-state.json for persisted sync state (empty = disabled)
-	ApplicationID    string            // Application ID for multi-app state (required if SyncStatePath is set)
-	ForceFullSync    bool              // If true, skip loading state and clear persisted state; sync all files
-	EnvFilePath      string            // Absolute path to .env file; when set, values are sent (file is never synced)
+	SyncStatePath    string                      // Path to .nixopus-sync-state.json for persisted sync state (empty = disabled)
+	ApplicationID    string                      // Application ID for multi-app state (required if SyncStatePath is set)
+	ForceFullSync    bool                        // If true, skip loading state and clear persisted state; sync all files
+	EnvFilePath      string                      // Absolute path to .env file; when set, values are sent (file is never synced)
 }
 
 // NewEngine creates a new sync engine using fsnotify for file watching.
@@ -639,9 +639,8 @@ func (e *Engine) watchEnvFile() {
 }
 
 // drainReceiveChannel reads from client.Receive() to prevent the channel from filling
-// and blocking the WebSocket read loop. Server-originated messages (like pipeline_progress,
-// build_status, build_log, deployment_status) are forwarded via onServerMessage; other
-// messages are discarded (manifest already consumed).
+// and blocking the WebSocket read loop. Server-originated messages (pipeline_progress,
+// build_status, deployment_status) are forwarded via onServerMessage.
 func (e *Engine) drainReceiveChannel() {
 	receive := e.client.Receive()
 	for {
@@ -655,8 +654,7 @@ func (e *Engine) drainReceiveChannel() {
 			if e.onServerMessage != nil {
 				switch msg.Type {
 				case syncproto.MessageTypePipelineProgress, syncproto.MessageTypeBuildStatus,
-					syncproto.MessageTypeBuildLog, syncproto.MessageTypeDeploymentStatus,
-					syncproto.MessageTypeCodebaseIndexed:
+					syncproto.MessageTypeDeploymentStatus, syncproto.MessageTypeCodebaseIndexed:
 					e.onServerMessage(msg)
 				}
 			}
