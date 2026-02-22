@@ -8939,7 +8939,7 @@
 	"paths": {
 		"/api/v1/audit/logs": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/audit/controller.(*AuditController).GetRecentAuditLogs`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/audit/controller.(*AuditController).GetRecentAuditLogs`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/audit/logs",
 				"parameters": [
 					{
@@ -9226,7 +9226,7 @@
 		},
 		"/api/v1/container": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).ListContainers`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).ListContainers`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/container",
 				"parameters": [
 					{
@@ -9295,7 +9295,7 @@
 		},
 		"/api/v1/container/images": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).ListImages`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).ListImages`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/container/images",
 				"parameters": [
 					{
@@ -9375,7 +9375,7 @@
 		},
 		"/api/v1/container/prune/build-cache": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).PruneBuildCache`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).PruneBuildCache`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/container/prune/build-cache",
 				"parameters": [
 					{
@@ -9455,7 +9455,7 @@
 		},
 		"/api/v1/container/prune/images": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).PruneImages`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).PruneImages`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/container/prune/images",
 				"parameters": [
 					{
@@ -9535,7 +9535,7 @@
 		},
 		"/api/v1/container/{container_id}": {
 			"delete": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).RemoveContainer`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).RemoveContainer`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "DELETE_/api/v1/container/:container_id",
 				"parameters": [
 					{
@@ -9610,7 +9610,7 @@
 				]
 			},
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).GetContainer`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).GetContainer`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/container/:container_id",
 				"parameters": [
 					{
@@ -9687,7 +9687,7 @@
 		},
 		"/api/v1/container/{container_id}/logs": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).GetContainerLogs`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).GetContainerLogs`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/container/:container_id/logs",
 				"parameters": [
 					{
@@ -9775,7 +9775,7 @@
 		},
 		"/api/v1/container/{container_id}/resources": {
 			"put": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).UpdateContainerResources`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).UpdateContainerResources`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "PUT_/api/v1/container/:container_id/resources",
 				"parameters": [
 					{
@@ -9863,7 +9863,7 @@
 		},
 		"/api/v1/container/{container_id}/restart": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).RestartContainer`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).RestartContainer`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/container/:container_id/restart",
 				"parameters": [
 					{
@@ -9940,7 +9940,7 @@
 		},
 		"/api/v1/container/{container_id}/start": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).StartContainer`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).StartContainer`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/container/:container_id/start",
 				"parameters": [
 					{
@@ -10017,7 +10017,7 @@
 		},
 		"/api/v1/container/{container_id}/stop": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).StopContainer`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/container/controller.(*ContainerController).StopContainer`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/container/:container_id/stop",
 				"parameters": [
 					{
@@ -10094,7 +10094,7 @@
 		},
 		"/api/v1/deploy/application": {
 			"delete": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).DeleteApplication`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).DeleteApplication`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "DELETE_/api/v1/deploy/application",
 				"parameters": [
 					{
@@ -10173,7 +10173,7 @@
 				]
 			},
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetApplicationById`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetApplicationById`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/deploy/application",
 				"parameters": [
 					{
@@ -10241,7 +10241,7 @@
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleDeploy`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleDeploy`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/deploy/application",
 				"parameters": [
 					{
@@ -10320,7 +10320,7 @@
 				]
 			},
 			"put": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).UpdateApplication`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).UpdateApplication`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "PUT_/api/v1/deploy/application",
 				"parameters": [
 					{
@@ -10401,7 +10401,7 @@
 		},
 		"/api/v1/deploy/application/deployments": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetApplicationDeployments`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetApplicationDeployments`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/deploy/application/deployments",
 				"parameters": [
 					{
@@ -10482,7 +10482,7 @@
 		},
 		"/api/v1/deploy/application/deployments/{deployment_id}": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetDeploymentById`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetDeploymentById`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/deploy/application/deployments/:deployment_id",
 				"parameters": [
 					{
@@ -10560,7 +10560,7 @@
 		},
 		"/api/v1/deploy/application/deployments/{deployment_id}/logs": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetDeploymentLogs`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetDeploymentLogs`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/deploy/application/deployments/:deployment_id/logs",
 				"parameters": [
 					{
@@ -10638,7 +10638,7 @@
 		},
 		"/api/v1/deploy/application/domains": {
 			"delete": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).RemoveApplicationDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).RemoveApplicationDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "DELETE_/api/v1/deploy/application/domains",
 				"parameters": [
 					{
@@ -10717,7 +10717,7 @@
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).AddApplicationDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).AddApplicationDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/deploy/application/domains",
 				"parameters": [
 					{
@@ -10798,7 +10798,7 @@
 		},
 		"/api/v1/deploy/application/labels": {
 			"put": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).UpdateApplicationLabels`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).UpdateApplicationLabels`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "PUT_/api/v1/deploy/application/labels",
 				"parameters": [
 					{
@@ -10879,7 +10879,7 @@
 		},
 		"/api/v1/deploy/application/logs/{application_id}": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetLogs`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetLogs`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/deploy/application/logs/:application_id",
 				"parameters": [
 					{
@@ -10957,7 +10957,7 @@
 		},
 		"/api/v1/deploy/application/project": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleCreateProject`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleCreateProject`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/deploy/application/project",
 				"parameters": [
 					{
@@ -11038,7 +11038,7 @@
 		},
 		"/api/v1/deploy/application/project/add-to-family": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleAddApplicationToFamily`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleAddApplicationToFamily`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/deploy/application/project/add-to-family",
 				"parameters": [
 					{
@@ -11119,7 +11119,7 @@
 		},
 		"/api/v1/deploy/application/project/deploy": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleDeployProject`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleDeployProject`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/deploy/application/project/deploy",
 				"parameters": [
 					{
@@ -11200,7 +11200,7 @@
 		},
 		"/api/v1/deploy/application/project/duplicate": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleDuplicateProject`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleDuplicateProject`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/deploy/application/project/duplicate",
 				"parameters": [
 					{
@@ -11281,7 +11281,7 @@
 		},
 		"/api/v1/deploy/application/project/family": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleGetProjectFamily`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleGetProjectFamily`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/deploy/application/project/family",
 				"parameters": [
 					{
@@ -11351,7 +11351,7 @@
 		},
 		"/api/v1/deploy/application/project/family/environments": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleGetEnvironmentsInFamily`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleGetEnvironmentsInFamily`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/deploy/application/project/family/environments",
 				"parameters": [
 					{
@@ -11421,7 +11421,7 @@
 		},
 		"/api/v1/deploy/application/recover": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleRecover`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleRecover`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/deploy/application/recover",
 				"parameters": [
 					{
@@ -11502,7 +11502,7 @@
 		},
 		"/api/v1/deploy/application/redeploy": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).ReDeployApplication`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).ReDeployApplication`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/deploy/application/redeploy",
 				"parameters": [
 					{
@@ -11583,7 +11583,7 @@
 		},
 		"/api/v1/deploy/application/restart": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleRestart`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleRestart`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/deploy/application/restart",
 				"parameters": [
 					{
@@ -11664,7 +11664,7 @@
 		},
 		"/api/v1/deploy/application/rollback": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleRollback`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).HandleRollback`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/deploy/application/rollback",
 				"parameters": [
 					{
@@ -11745,7 +11745,7 @@
 		},
 		"/api/v1/deploy/applications": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetApplications`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetApplications`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/deploy/applications",
 				"parameters": [
 					{
@@ -11825,7 +11825,7 @@
 		},
 		"/api/v1/domain": {
 			"delete": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).DeleteDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).DeleteDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "DELETE_/api/v1/domain",
 				"parameters": [
 					{
@@ -11903,7 +11903,7 @@
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).CreateDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).CreateDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/domain",
 				"parameters": [
 					{
@@ -11981,7 +11981,7 @@
 				]
 			},
 			"put": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).UpdateDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).UpdateDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "PUT_/api/v1/domain",
 				"parameters": [
 					{
@@ -12061,7 +12061,7 @@
 		},
 		"/api/v1/domain/generate": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).GenerateRandomSubDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).GenerateRandomSubDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/domain/generate",
 				"parameters": [
 					{
@@ -12130,7 +12130,7 @@
 		},
 		"/api/v1/domains": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).GetDomains`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).GetDomains`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/domains",
 				"parameters": [
 					{
@@ -12199,7 +12199,7 @@
 		},
 		"/api/v1/execute": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/execute/controller.(*ExecuteController).Execute`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/execute/controller.(*ExecuteController).Execute`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/execute",
 				"parameters": [
 					{
@@ -12279,7 +12279,7 @@
 		},
 		"/api/v1/extensions": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).GetExtensions`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).GetExtensions`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/extensions",
 				"parameters": [
 					{
@@ -12348,7 +12348,7 @@
 		},
 		"/api/v1/extensions/by-extension-id/{extension_id}": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).GetExtensionByExtensionID`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).GetExtensionByExtensionID`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/extensions/by-extension-id/:extension_id",
 				"parameters": [
 					{
@@ -12425,7 +12425,7 @@
 		},
 		"/api/v1/extensions/by-extension-id/{extension_id}/executions": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).ListExecutionsByExtensionID`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).ListExecutionsByExtensionID`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/extensions/by-extension-id/:extension_id/executions",
 				"parameters": [
 					{
@@ -12502,7 +12502,7 @@
 		},
 		"/api/v1/extensions/categories": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).GetCategories`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).GetCategories`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/extensions/categories",
 				"parameters": [
 					{
@@ -12571,7 +12571,7 @@
 		},
 		"/api/v1/extensions/execution/{execution_id}": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).GetExecution`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).GetExecution`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/extensions/execution/:execution_id",
 				"parameters": [
 					{
@@ -12648,7 +12648,7 @@
 		},
 		"/api/v1/extensions/execution/{execution_id}/cancel": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).CancelExecution`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).CancelExecution`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/extensions/execution/:execution_id/cancel",
 				"parameters": [
 					{
@@ -12725,7 +12725,7 @@
 		},
 		"/api/v1/extensions/execution/{execution_id}/logs": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).ListExecutionLogs`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).ListExecutionLogs`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/extensions/execution/:execution_id/logs",
 				"parameters": [
 					{
@@ -12802,7 +12802,7 @@
 		},
 		"/api/v1/extensions/{extension_id}/fork": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).ForkExtension`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).ForkExtension`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/extensions/:extension_id/fork",
 				"parameters": [
 					{
@@ -12890,7 +12890,7 @@
 		},
 		"/api/v1/extensions/{extension_id}/run": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).RunExtension`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).RunExtension`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/extensions/:extension_id/run",
 				"parameters": [
 					{
@@ -12978,7 +12978,7 @@
 		},
 		"/api/v1/extensions/{id}": {
 			"delete": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).DeleteFork`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).DeleteFork`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "DELETE_/api/v1/extensions/:id",
 				"parameters": [
 					{
@@ -13053,7 +13053,7 @@
 				]
 			},
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).GetExtension`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).GetExtension`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/extensions/:id",
 				"parameters": [
 					{
@@ -13130,7 +13130,7 @@
 		},
 		"/api/v1/feature-flags": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/feature-flags/controller.(*FeatureFlagController).GetFeatureFlags`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/feature-flags/controller.(*FeatureFlagController).GetFeatureFlags`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/feature-flags",
 				"parameters": [
 					{
@@ -13197,7 +13197,7 @@
 				]
 			},
 			"put": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/feature-flags/controller.(*FeatureFlagController).UpdateFeatureFlag`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/feature-flags/controller.(*FeatureFlagController).UpdateFeatureFlag`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "PUT_/api/v1/feature-flags",
 				"parameters": [
 					{
@@ -13277,7 +13277,7 @@
 		},
 		"/api/v1/feature-flags/check": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/feature-flags/controller.(*FeatureFlagController).IsFeatureEnabled`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/feature-flags/controller.(*FeatureFlagController).IsFeatureEnabled`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/feature-flags/check",
 				"parameters": [
 					{
@@ -13346,7 +13346,7 @@
 		},
 		"/api/v1/file-manager": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).ListFiles`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).ListFiles`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/file-manager",
 				"parameters": [
 					{
@@ -13426,7 +13426,7 @@
 		},
 		"/api/v1/file-manager/copy-directory": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).CopyDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).CopyDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/file-manager/copy-directory",
 				"parameters": [
 					{
@@ -13506,7 +13506,7 @@
 		},
 		"/api/v1/file-manager/create-directory": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).CreateDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).CreateDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/file-manager/create-directory",
 				"parameters": [
 					{
@@ -13586,7 +13586,7 @@
 		},
 		"/api/v1/file-manager/delete-directory": {
 			"delete": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).DeleteDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).DeleteDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "DELETE_/api/v1/file-manager/delete-directory",
 				"parameters": [
 					{
@@ -13666,7 +13666,7 @@
 		},
 		"/api/v1/file-manager/move-directory": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).MoveDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).MoveDirectory`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/file-manager/move-directory",
 				"parameters": [
 					{
@@ -13746,7 +13746,7 @@
 		},
 		"/api/v1/file-manager/upload": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).UploadFile`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller.(*FileManagerController).UploadFile`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/file-manager/upload",
 				"parameters": [
 					{
@@ -13815,7 +13815,7 @@
 		},
 		"/api/v1/github-connector": {
 			"delete": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).DeleteGithubConnector`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).DeleteGithubConnector`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "DELETE_/api/v1/github-connector",
 				"parameters": [
 					{
@@ -13893,7 +13893,7 @@
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).CreateGithubConnector`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).CreateGithubConnector`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/github-connector",
 				"parameters": [
 					{
@@ -13971,7 +13971,7 @@
 				]
 			},
 			"put": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).UpdateGithubConnectorRequest`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).UpdateGithubConnectorRequest`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "PUT_/api/v1/github-connector",
 				"parameters": [
 					{
@@ -14051,7 +14051,7 @@
 		},
 		"/api/v1/github-connector/all": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).GetGithubConnectors`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).GetGithubConnectors`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/github-connector/all",
 				"parameters": [
 					{
@@ -14120,7 +14120,7 @@
 		},
 		"/api/v1/github-connector/repositories": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).GetGithubRepositories`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).GetGithubRepositories`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/github-connector/repositories",
 				"parameters": [
 					{
@@ -14189,7 +14189,7 @@
 		},
 		"/api/v1/github-connector/repository/branches": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).GetGithubRepositoryBranches`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller.(*GithubConnectorController).GetGithubRepositoryBranches`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/github-connector/repository/branches",
 				"parameters": [
 					{
@@ -14338,7 +14338,7 @@
 		},
 		"/api/v1/healthcheck": {
 			"delete": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).DeleteHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).DeleteHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "DELETE_/api/v1/healthcheck",
 				"parameters": [
 					{
@@ -14405,7 +14405,7 @@
 				]
 			},
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).GetHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).GetHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/healthcheck",
 				"parameters": [
 					{
@@ -14472,7 +14472,7 @@
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).CreateHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).CreateHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/healthcheck",
 				"parameters": [
 					{
@@ -14550,7 +14550,7 @@
 				]
 			},
 			"put": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).UpdateHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).UpdateHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "PUT_/api/v1/healthcheck",
 				"parameters": [
 					{
@@ -14630,7 +14630,7 @@
 		},
 		"/api/v1/healthcheck/results": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).GetHealthCheckResults`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).GetHealthCheckResults`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/healthcheck/results",
 				"parameters": [
 					{
@@ -14699,7 +14699,7 @@
 		},
 		"/api/v1/healthcheck/stats": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).GetHealthCheckStats`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).GetHealthCheckStats`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/healthcheck/stats",
 				"parameters": [
 					{
@@ -14768,7 +14768,7 @@
 		},
 		"/api/v1/healthcheck/toggle": {
 			"patch": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).ToggleHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller.(*HealthCheckController).ToggleHealthCheck`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "PATCH_/api/v1/healthcheck/toggle",
 				"parameters": [
 					{
@@ -14928,7 +14928,7 @@
 		},
 		"/api/v1/notification/preferences": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).GetPreferences`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).GetPreferences`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/notification/preferences",
 				"parameters": [
 					{
@@ -14996,7 +14996,7 @@
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).UpdatePreference`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).UpdatePreference`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/notification/preferences",
 				"parameters": [
 					{
@@ -15077,7 +15077,7 @@
 		},
 		"/api/v1/notification/smtp": {
 			"delete": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).DeleteSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).DeleteSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "DELETE_/api/v1/notification/smtp",
 				"parameters": [
 					{
@@ -15156,7 +15156,7 @@
 				]
 			},
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).GetSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).GetSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/notification/smtp",
 				"parameters": [
 					{
@@ -15224,7 +15224,7 @@
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).AddSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).AddSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/notification/smtp",
 				"parameters": [
 					{
@@ -15303,7 +15303,7 @@
 				]
 			},
 			"put": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).UpdateSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).UpdateSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "PUT_/api/v1/notification/smtp",
 				"parameters": [
 					{
@@ -15384,7 +15384,7 @@
 		},
 		"/api/v1/notification/webhook": {
 			"delete": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).DeleteWebhookConfig`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).DeleteWebhookConfig`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "DELETE_/api/v1/notification/webhook",
 				"parameters": [
 					{
@@ -15463,7 +15463,7 @@
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).CreateWebhookConfig`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).CreateWebhookConfig`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/notification/webhook",
 				"parameters": [
 					{
@@ -15542,7 +15542,7 @@
 				]
 			},
 			"put": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).UpdateWebhookConfig`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).UpdateWebhookConfig`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "PUT_/api/v1/notification/webhook",
 				"parameters": [
 					{
@@ -15623,7 +15623,7 @@
 		},
 		"/api/v1/notification/webhook/{type}": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).GetWebhookConfig`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).GetWebhookConfig`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/notification/webhook/:type",
 				"parameters": [
 					{
@@ -15701,7 +15701,7 @@
 		},
 		"/api/v1/servers": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/server/controller.(*ServerController).ListServers`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/server/controller.(*ServerController).ListServers`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/servers",
 				"parameters": [
 					{
@@ -15770,7 +15770,7 @@
 		},
 		"/api/v1/servers/ssh/status": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/server/controller.(*ServerController).CheckSSHStatus`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/server/controller.(*ServerController).CheckSSHStatus`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/servers/ssh/status",
 				"parameters": [
 					{
@@ -15839,7 +15839,7 @@
 		},
 		"/api/v1/trail/provision": {
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/trail/controller.(*TrailController).ProvisionTrail`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/trail/controller.(*TrailController).ProvisionTrail`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "POST_/api/v1/trail/provision",
 				"parameters": [
 					{
@@ -15919,7 +15919,7 @@
 		},
 		"/api/v1/trail/status/{sessionId}": {
 			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/trail/controller.(*TrailController).GetStatus`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n\n---\n\n",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/trail/controller.(*TrailController).GetStatus`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
 				"operationId": "GET_/api/v1/trail/status/:sessionId",
 				"parameters": [
 					{

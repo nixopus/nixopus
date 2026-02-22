@@ -231,7 +231,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	domainController := domain.NewDomainsController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
 	domainGroup := fuego.Group(server, apiV1.Path+"/domain")
 	domainsAllGroup := fuego.Group(server, apiV1.Path+"/domains")
-	domainMiddleware := MiddlewareConfig{RBAC: false, FeatureFlag: "domain", Audit: false, ResourceName: "domain"}
+	domainMiddleware := MiddlewareConfig{RBAC: true, FeatureFlag: "domain", Audit: true, ResourceName: "domain"}
 	router.applyMiddleware(domainGroup, domainMiddleware)
 	router.applyMiddleware(domainsAllGroup, domainMiddleware)
 	router.RegisterDomainRoutes(domainGroup, domainsAllGroup, domainController)
@@ -240,9 +240,9 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	githubConnectorController := githubConnector.NewGithubConnectorController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
 	githubConnectorGroup := fuego.Group(server, apiV1.Path+"/github-connector")
 	router.applyMiddleware(githubConnectorGroup, MiddlewareConfig{
-		RBAC:         false,
+		RBAC:         true,
 		FeatureFlag:  "github_connector",
-		Audit:        false,
+		Audit:        true,
 		ResourceName: "github-connector",
 	})
 	router.RegisterGithubConnectorRoutes(githubConnectorGroup, githubConnectorController)
@@ -251,9 +251,9 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	notifController := notificationController.NewNotificationController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
 	notificationGroup := fuego.Group(server, apiV1.Path+"/notification")
 	router.applyMiddleware(notificationGroup, MiddlewareConfig{
-		RBAC:         false,
+		RBAC:         true,
 		FeatureFlag:  "notifications",
-		Audit:        false,
+		Audit:        true,
 		ResourceName: "notification",
 	})
 	router.RegisterNotificationRoutes(notificationGroup, notifController)
@@ -265,9 +265,9 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	fileManagerController := file_manager.NewFileManagerController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
 	fileManagerGroup := fuego.Group(server, apiV1.Path+"/file-manager")
 	router.applyMiddleware(fileManagerGroup, MiddlewareConfig{
-		RBAC:         false,
+		RBAC:         true,
 		FeatureFlag:  "file_manager",
-		Audit:        false,
+		Audit:        true,
 		ResourceName: "file-manager",
 	})
 	router.RegisterFileManagerRoutes(fileManagerGroup, fileManagerController)
@@ -279,9 +279,9 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	}
 	deployGroup := fuego.Group(server, apiV1.Path+"/deploy")
 	router.applyMiddleware(deployGroup, MiddlewareConfig{
-		RBAC:         false,
+		RBAC:         true,
 		FeatureFlag:  "deploy",
-		Audit:        false,
+		Audit:        true,
 		ResourceName: "deploy",
 	})
 	router.RegisterDeployRoutes(deployGroup, deployController)
@@ -289,7 +289,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	// Audit routes
 	auditController := audit.NewAuditController(router.app.Store.DB, router.app.Ctx, router.logger)
 	auditGroup := fuego.Group(server, apiV1.Path+"/audit")
-	router.applyMiddleware(auditGroup, MiddlewareConfig{RBAC: false, FeatureFlag: "audit", Audit: false, ResourceName: "audit"})
+	router.applyMiddleware(auditGroup, MiddlewareConfig{RBAC: true, FeatureFlag: "audit", Audit: true, ResourceName: "audit"})
 	router.RegisterAuditRoutes(auditGroup, auditController)
 
 	// Update routes
@@ -302,7 +302,9 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	featureFlagController := router.createFeatureFlagController()
 	featureFlagReadGroup := fuego.Group(server, apiV1.Path+"/feature-flags")
 	featureFlagWriteGroup := fuego.Group(server, apiV1.Path+"/feature-flags")
-	router.applyMiddleware(featureFlagWriteGroup, MiddlewareConfig{RBAC: false, Audit: false, ResourceName: "feature_flags"})
+	featureFlagMiddleware := MiddlewareConfig{RBAC: true, Audit: true, ResourceName: "feature_flags"}
+	router.applyMiddleware(featureFlagReadGroup, featureFlagMiddleware)
+	router.applyMiddleware(featureFlagWriteGroup, featureFlagMiddleware)
 	router.RegisterFeatureFlagRoutes(featureFlagReadGroup, featureFlagWriteGroup, featureFlagController)
 
 	// Container routes
@@ -312,9 +314,9 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	}
 	containerGroup := fuego.Group(server, apiV1.Path+"/container")
 	router.applyMiddleware(containerGroup, MiddlewareConfig{
-		RBAC:         false,
+		RBAC:         true,
 		FeatureFlag:  "container",
-		Audit:        false,
+		Audit:        true,
 		ResourceName: "container",
 	})
 	router.RegisterContainerRoutes(containerGroup, containerController)
@@ -323,20 +325,20 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	healthCheckController := healthcheck.NewHealthCheckController(router.app.Store, router.app.Ctx, router.logger)
 	healthCheckGroup := fuego.Group(server, apiV1.Path+"/healthcheck")
 	router.applyMiddleware(healthCheckGroup, MiddlewareConfig{
-		RBAC:         false,
+		RBAC:         true,
 		FeatureFlag:  "deploy",
-		Audit:        false,
+		Audit:        true,
 		ResourceName: "healthcheck",
 	})
 	router.RegisterHealthCheckRoutes(healthCheckGroup, healthCheckController)
 
 	// Extension routes
-	extensionController := extension.NewExtensionsController(router.app.Store, router.app.Ctx, router.logger)
+	extensionController := extension.NewExtensionsController(router.app.Store, router.app.Ctx, router.logger, config.AppConfig.Redis.URL)
 	extensionGroup := fuego.Group(server, apiV1.Path+"/extensions")
 	router.applyMiddleware(extensionGroup, MiddlewareConfig{
-		RBAC:         false,
+		RBAC:         true,
 		FeatureFlag:  "extension",
-		Audit:        false,
+		Audit:        true,
 		ResourceName: "extension",
 	})
 	router.RegisterExtensionRoutes(extensionGroup, extensionController)
@@ -345,8 +347,8 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	serverController := server_controller.NewServerController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
 	serverGroup := fuego.Group(server, apiV1.Path+"/servers")
 	router.applyMiddleware(serverGroup, MiddlewareConfig{
-		RBAC:         false,
-		Audit:        false,
+		RBAC:         true,
+		Audit:        true,
 		ResourceName: "server",
 	})
 	router.RegisterServerRoutes(serverGroup, serverController)
@@ -355,9 +357,9 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	trailController := trail.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
 	trailGroup := fuego.Group(server, apiV1.Path+"/trail")
 	router.applyMiddleware(trailGroup, MiddlewareConfig{
-		RBAC:         false,
+		RBAC:         true,
 		FeatureFlag:  "trail",
-		Audit:        false,
+		Audit:        true,
 		ResourceName: "trail",
 	})
 	router.RegisterTrailRoutes(trailGroup, trailController)
@@ -366,7 +368,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	executeController := execute.NewExecuteController(router.app.Ctx, router.logger)
 	executeGroup := fuego.Group(server, apiV1.Path+"/execute")
 	router.applyMiddleware(executeGroup, MiddlewareConfig{
-		RBAC:         false,
+		RBAC:         true,
 		Audit:        true,
 		ResourceName: "execute",
 	})
