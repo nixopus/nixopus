@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/mover"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/raghavyuva/nixopus-api/internal/syncproto"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -60,8 +60,8 @@ func PersistManifest(ctx context.Context, store *shared_storage.Store, applicati
 		pathMap = make(types.PathChecksumMap)
 	}
 	now := time.Now().UTC()
-	tree := mover.BuildFromPaths(paths)
-	simhash := mover.ComputeSimhash(paths)
+	tree := syncproto.BuildFromPaths(paths)
+	simhash := syncproto.ComputeSimhash(paths)
 
 	ac := &types.ApplicationContext{
 		ApplicationID: applicationID,

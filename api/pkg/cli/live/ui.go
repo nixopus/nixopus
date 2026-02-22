@@ -7,9 +7,10 @@ import (
 
 // AgentUI is the main orchestrator. It listens on an EventBus and routes events to the writer.
 type AgentUI struct {
-	ctx    context.Context
-	writer *Writer
-	bus    *EventBus
+	ctx                  context.Context
+	writer               *Writer
+	bus                  *EventBus
+	currentReasoningStep string
 }
 
 // NewAgentUI creates the agent UI wired to the given event bus.
@@ -81,11 +82,32 @@ func (a *AgentUI) handleDirectEvent(ev Event) {
 		a.writer.Progress("Syncing files...")
 	case EventSyncProgress:
 		a.writer.Progress(ev.Message)
-	case EventSyncDone:
-		a.writer.FinishProgress(ev.Message)
 	case EventPipelineProgress:
-		if p, ok := ev.Payload.(PipelineProgressPayload); ok {
-			a.writer.Detail(fmt.Sprintf("[%s] %s", p.StageId, p.Message))
+		if a.currentReasoningStep != "" {
+			a.writer.FinishReasoning("", true)
+			a.currentReasoningStep = ""
+		} else if p, ok := ev.Payload.(PipelineProgressPayload); ok {
+			// Skip redundant step markers (message == stageId) — reasoning block will show the step
+			if p.Message != "" && p.Message != p.StageId {
+				a.writer.Detail(fmt.Sprintf("[%s] %s", p.StageId, p.Message))
+			}
+		} else if ev.Message != "" {
+			a.writer.Detail(ev.Message)
+		}
+	case EventDeploymentReasoningChunk:
+		if p, ok := ev.Payload.(DeploymentReasoningChunkPayload); ok {
+			if a.currentReasoningStep != p.Step {
+				if a.currentReasoningStep != "" {
+					a.writer.FinishReasoning("", true)
+				}
+				a.writer.StartReasoning(p.Step)
+				a.currentReasoningStep = p.Step
+			}
+			a.writer.ReasoningChunk(p.Chunk)
+		}
+	case EventBuildLog:
+		if p, ok := ev.Payload.(BuildLogPayload); ok {
+			a.writer.Detail(p.Log)
 		} else if ev.Message != "" {
 			a.writer.Detail(ev.Message)
 		}
@@ -105,12 +127,6 @@ func (a *AgentUI) handleDirectEvent(ev Event) {
 				a.writer.Detail(p.Message)
 			}
 		}
-	case EventBuildLog:
-		if p, ok := ev.Payload.(BuildLogPayload); ok {
-			a.writer.Detail(p.Log)
-		} else if ev.Message != "" {
-			a.writer.Detail(ev.Message)
-		}
 	case EventDeploymentStatus:
 		if p, ok := ev.Payload.(DeploymentStatusPayload); ok {
 			switch p.Status {
@@ -126,18 +142,12 @@ func (a *AgentUI) handleDirectEvent(ev Event) {
 				a.writer.Detail(fmt.Sprintf("Status: %s", p.Status))
 			}
 		}
-	case EventBuildStarted:
-		a.writer.Progress("Building...")
-	case EventDeploying:
-		a.writer.Progress("Deploying...")
-	case EventDeployed:
-		a.writer.FinishProgress(ev.Message)
 	case EventInfo:
 		a.writer.Detail(ev.Message)
 	case EventApprovalNeeded:
 		if p, ok := ev.Payload.(ApprovalNeededPayload); ok {
 			a.writer.FinishProgress("") // Clear any in-place progress before showing proposal
-			a.writer.ApprovalProposal(p.Summary, p.ValidationScore, p.Suggestions, p.Dockerfile)
+			a.writer.DockerfileApprover(p.Summary, p.ValidationScore, p.Suggestions, p.Dockerfile)
 		}
 	case EventError:
 		a.writer.Error(ev.Message)
@@ -148,47 +158,19 @@ func (a *AgentUI) handleDirectEvent(ev Event) {
 	}
 }
 
-// handleAgentEventFallback displays events directly.
+// handleAgentEventFallback displays events directly when NeedsLLM is set.
 func (a *AgentUI) handleAgentEventFallback(ev Event) {
 	switch ev.Type {
 	case EventAuth:
 		a.writer.Success(ev.Message)
 	case EventConfig:
 		a.writer.Success(ev.Message)
-	case EventEnvCheck:
-		if p, ok := ev.Payload.(EnvCheckPayload); ok && len(p.Missing) > 0 {
-			a.writer.Error(ev.Message)
-			for _, name := range p.Missing {
-				a.writer.Detail(fmt.Sprintf("  missing: %s", name))
-			}
-		} else {
-			a.writer.Success(ev.Message)
-		}
-	case EventFileDetected:
-		a.writer.Success(ev.Message)
-	case EventBuildFailed:
-		a.writer.Error("Build failed")
-		if ev.Message != "" {
-			a.writer.Detail(ev.Message)
-		}
-		if p, ok := ev.Payload.(BuildFailedPayload); ok {
-			for _, line := range p.Logs {
-				a.writer.Detail(line)
-			}
-		}
-	case EventBuildSuccess:
-		a.writer.FinishProgress("Build successful")
 	case EventBuildStatus:
 		if p, ok := ev.Payload.(BuildStatusPayload); ok && p.Phase == "error" {
 			a.writer.Error(p.Message)
 			if p.Error != "" {
 				a.writer.Detail(fmt.Sprintf("  %s", p.Error))
 			}
-		}
-	case EventDeployFailed:
-		a.writer.Error("Deploy failed")
-		if ev.Message != "" {
-			a.writer.Detail(ev.Message)
 		}
 	default:
 		a.handleDirectEvent(ev)
