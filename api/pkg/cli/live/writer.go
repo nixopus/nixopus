@@ -27,14 +27,14 @@ var (
 	boldStyle   = lipgloss.NewStyle().Bold(true)
 )
 
-// Success prints "  > text" in green. Used for completed steps and agent acknowledgments.
+// Success prints completed step in green with checkmark. Used for agent acknowledgments.
 func (w *Writer) Success(text string) {
-	w.term.Println(fmt.Sprintf("  %s %s", greenStyle.Render(">"), text))
+	w.term.Println(fmt.Sprintf("  %s %s", greenStyle.Render("✓"), text))
 }
 
-// Error prints "  x text" in red. Used for failures and missing items.
+// Error prints failure in red. Used for errors and missing items.
 func (w *Writer) Error(text string) {
-	w.term.Println(fmt.Sprintf("  %s %s", redStyle.Render("x"), text))
+	w.term.Println(fmt.Sprintf("  %s %s", redStyle.Render("✗"), text))
 }
 
 // Warning prints "  ! text" in yellow. Used for non-blocking issues.
@@ -46,18 +46,48 @@ func (w *Writer) Warning(text string) {
 // Used for in-progress status (connecting, syncing, building).
 // Call FinishProgress when the operation completes.
 func (w *Writer) Progress(text string) {
-	w.term.OverwriteLine(fmt.Sprintf("  %s %s", dimStyle.Render("."), dimStyle.Render(text)))
+	w.term.OverwriteLine(fmt.Sprintf("  %s %s", dimStyle.Render("◐"), dimStyle.Render(text)))
 }
 
 // FinishProgress replaces the in-place progress line with a green success line.
 func (w *Writer) FinishProgress(text string) {
-	w.term.FinishLine(fmt.Sprintf("  %s %s", greenStyle.Render(">"), text))
+	w.term.FinishLine(fmt.Sprintf("  %s %s", greenStyle.Render("✓"), text))
 }
 
 // Detail prints indented text (4 spaces). Used for agent explanations and multi-line output.
 func (w *Writer) Detail(text string) {
 	w.term.Println(fmt.Sprintf("    %s", text))
 }
+
+// StartReasoning begins a reasoning block. Call ReasoningChunk for each streamed chunk, then FinishReasoning.
+func (w *Writer) StartReasoning(step string) {
+	label := step
+	if label == "" {
+		label = "thinking"
+	}
+	w.term.Println(fmt.Sprintf("  %s %s", reasoningStepPrefix.Render(">"), reasoningLabelStyle.Render(label)))
+	w.term.Print(reasoningChunkIndent)
+}
+
+// ReasoningChunk appends a chunk inline (no newline). Streams token-by-token for agent thinking.
+func (w *Writer) ReasoningChunk(chunk string) {
+	w.term.Print(reasoningChunkStyle.Render(chunk))
+}
+
+// FinishReasoning completes the reasoning block. When streamed, just newline—no repeated ✓.
+func (w *Writer) FinishReasoning(finalMessage string, streamed bool) {
+	w.term.Println("")
+	if !streamed && finalMessage != "" {
+		w.term.Println(fmt.Sprintf("  %s %s", greenStyle.Render("✓"), finalMessage))
+	}
+}
+
+var (
+	reasoningStepPrefix  = lipgloss.NewStyle().Foreground(lipgloss.Color("99"))
+	reasoningLabelStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("117")).Bold(true)
+	reasoningChunkStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("248")).Italic(true)
+	reasoningChunkIndent = "    "
+)
 
 // Blank prints an empty line.
 func (w *Writer) Blank() {
@@ -84,23 +114,23 @@ func (w *Writer) UserInput(text string) {
 	w.term.Println(fmt.Sprintf("\n%s %s\n", dimStyle.Render("you:"), text))
 }
 
-// codeStyle for Dockerfile/code blocks.
+// codeStyle for code/content blocks.
 var codeStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
 
-// ApprovalProposal renders a structured Dockerfile approval UI: header, summary,
-// validation, suggestions, and the proposed Dockerfile in a readable code block.
-func (w *Writer) ApprovalProposal(summary string, validationScore int, suggestions []string, dockerfile string) {
+// DockerfileApprover renders a Dockerfile approval UI: summary, validation, suggestions,
+// and the proposed Dockerfile content.
+func (w *Writer) DockerfileApprover(summary string, validationScore int, suggestions []string, dockerfile string) {
 	w.Blank()
-	w.term.Println(fmt.Sprintf("  %s", boldStyle.Render("━━ Dockerfile proposal ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")))
+	w.term.Println(fmt.Sprintf("  %s", boldStyle.Render("━━ Dockerfile proposal ━━━━━━━━━━━━━━━━━━━━━━━━━━━")))
 	w.Blank()
 
 	if summary != "" {
 		if validationScore > 0 && validationScore < 70 {
-			w.term.Println(fmt.Sprintf("  %s %s", yellowStyle.Render("!"), summary))
+			w.term.Println(fmt.Sprintf("  %s %s", yellowStyle.Render("⚠"), summary))
 		} else if validationScore == 0 {
-			w.term.Println(fmt.Sprintf("  %s %s", yellowStyle.Render("!"), summary))
+			w.term.Println(fmt.Sprintf("  %s %s", yellowStyle.Render("⚠"), summary))
 		} else {
-			w.term.Println(fmt.Sprintf("  %s %s", greenStyle.Render(">"), summary))
+			w.term.Println(fmt.Sprintf("  %s %s", greenStyle.Render("✓"), summary))
 		}
 	}
 	if validationScore >= 0 {

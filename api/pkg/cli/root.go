@@ -1,12 +1,12 @@
-package commands
+package cli
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/commands/addcmd"
-	"github.com/raghavyuva/nixopus-api/internal/commands/listcmd"
-	"github.com/raghavyuva/nixopus-api/internal/commands/live"
-	"github.com/raghavyuva/nixopus-api/internal/commands/pause"
-	"github.com/raghavyuva/nixopus-api/internal/commands/removecmd"
-	setenv "github.com/raghavyuva/nixopus-api/internal/commands/set_env"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/addcmd"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/listcmd"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/live"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/pause"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/removecmd"
+	setenv "github.com/raghavyuva/nixopus-api/pkg/cli/set_env"
 	"github.com/spf13/cobra"
 )
 

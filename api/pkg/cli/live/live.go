@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -15,11 +16,12 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/raghavyuva/nixopus-api/internal/cliconfig"
-	"github.com/raghavyuva/nixopus-api/internal/commands/logincmd"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/httpclient"
-	"github.com/raghavyuva/nixopus-api/internal/mover"
+	"github.com/raghavyuva/nixopus-api/internal/syncproto"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/cliconfig"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/logincmd"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/mover"
 	"github.com/spf13/cobra"
 )
 
@@ -33,7 +35,7 @@ var (
 var LiveCmd = &cobra.Command{
 	Use:   "live [app-name]",
 	Short: "Start a live deploy session",
-	Long:  `Start watching for file changes and hot reload. Optionally specify an app name to use a specific application. Use --all to run all apps in the family simultaneously.`,
+	Long:  `Start watching for file changes and hot reload. Optionally specify an app name to use a specific application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Run login first if --login flag is set (replaces any stored credentials)
 		if loginFlag {
@@ -41,15 +43,11 @@ var LiveCmd = &cobra.Command{
 				return fmt.Errorf("login failed: %w", err)
 			}
 		}
-		if allFlag {
-			return runAllApps(args)
-		}
 		return runSingleApp(args)
 	},
 }
 
 func init() {
-	LiveCmd.Flags().BoolVar(&allFlag, "all", false, "Run all apps in the family simultaneously")
 	LiveCmd.Flags().BoolVar(&loginFlag, "login", false, "Run login flow and replace stored credentials before starting")
 	LiveCmd.Flags().StringVar(&envPath, "env-path", "", "Path to environment file (relative to project root, e.g., .env or .env.production). Only used during initialization if project is not initialized.")
 	LiveCmd.Flags().BoolVar(&forceFullSyncFlag, "force-full-sync", false, "Bypass incremental sync; clear persisted state and sync all files")
@@ -321,10 +319,10 @@ func runSingleApp(args []string) error {
 			changesDetected++
 			syncMu.Unlock()
 		},
-		OnServerMessage: func(msg mover.SyncMessage) {
+		OnServerMessage: func(msg syncproto.SyncMessage) {
 			switch msg.Type {
-			case mover.MessageTypePipelineProgress:
-				if p, ok := msg.Payload.(mover.PipelineProgressPayload); ok {
+			case syncproto.MessageTypePipelineProgress:
+				if p, ok := msg.Payload.(syncproto.PipelineProgressPayload); ok {
 					bus.Send(Event{
 						Type:    EventPipelineProgress,
 						Message: p.Message,
@@ -345,8 +343,8 @@ func runSingleApp(args []string) error {
 						},
 					})
 				}
-			case mover.MessageTypeBuildStatus:
-				if p, ok := msg.Payload.(mover.BuildStatusPayload); ok {
+			case syncproto.MessageTypeBuildStatus:
+				if p, ok := msg.Payload.(syncproto.BuildStatusPayload); ok {
 					ev := Event{
 						Type:    EventBuildStatus,
 						Message: p.Message,
@@ -378,30 +376,8 @@ func runSingleApp(args []string) error {
 					}
 					bus.Send(ev)
 				}
-			case mover.MessageTypeBuildLog:
-				if p, ok := msg.Payload.(mover.BuildLogPayload); ok {
-					bus.Send(Event{
-						Type:    EventBuildLog,
-						Message: p.Log,
-						Payload: BuildLogPayload{
-							Log:       p.Log,
-							Timestamp: p.Timestamp,
-						},
-					})
-				} else if payload, ok := msg.Payload.(map[string]interface{}); ok {
-					logLine, _ := payload["log"].(string)
-					timestamp, _ := payload["timestamp"].(string)
-					bus.Send(Event{
-						Type:    EventBuildLog,
-						Message: logLine,
-						Payload: BuildLogPayload{
-							Log:       logLine,
-							Timestamp: timestamp,
-						},
-					})
-				}
-			case mover.MessageTypeDeploymentStatus:
-				if p, ok := msg.Payload.(mover.DeploymentStatusPayload); ok {
+			case syncproto.MessageTypeDeploymentStatus:
+				if p, ok := msg.Payload.(syncproto.DeploymentStatusPayload); ok {
 					bus.Send(Event{
 						Type:    EventDeploymentStatus,
 						Message: fmt.Sprintf("Deployment status: %s", p.Status),
@@ -422,7 +398,7 @@ func runSingleApp(args []string) error {
 						},
 					})
 				}
-			case mover.MessageTypeCodebaseIndexed:
+			case syncproto.MessageTypeCodebaseIndexed:
 				workflowRunningMu.Lock()
 				if workflowRunning {
 					workflowRunningMu.Unlock()
@@ -446,6 +422,7 @@ func runSingleApp(args []string) error {
 				}
 
 				wfClient := NewDeploymentWorkflowClient(accessToken, orgID)
+				log.Printf("[live] codebase_indexed received, starting deployment workflow (app=%s)", appID)
 				go func() {
 					defer func() {
 						workflowRunningMu.Lock()
@@ -455,44 +432,65 @@ func runSingleApp(args []string) error {
 
 					bus.Send(Event{Type: EventBuildStatus, Message: "Running deployment workflow...", Payload: BuildStatusPayload{Phase: "generating_dockerfile", Message: "Analyzing codebase..."}})
 
-					result, err := wfClient.Run(context.Background(), appID, source, mode, func(stepID, message string) {
-						bus.Send(Event{
-							Type:    EventPipelineProgress,
-							Message: message,
-							Payload: PipelineProgressPayload{StageId: stepID, Message: message},
-						})
-					}, func(ctx context.Context, approval *ApprovalContext) (bool, error) {
-						// Human-in-the-loop: show proposal (including prompt) via AgentUI, then wait for input
-						if approval != nil {
+					result, err := wfClient.Run(
+						context.Background(),
+						appID,
+						source,
+						mode,
+						func(stepID, message string) {
 							bus.Send(Event{
-								Type: EventApprovalNeeded,
-								Payload: ApprovalNeededPayload{
-									Dockerfile:      approval.Dockerfile,
-									Summary:         approval.Summary,
-									ValidationScore: approval.ValidationScore,
-									Suggestions:     approval.Suggestions,
-								},
+								Type:    EventPipelineProgress,
+								Message: message,
+								Payload: PipelineProgressPayload{StageId: stepID, Message: message},
 							})
-						} else {
-							term.Println("")
-							term.Print("Approve deployment? [y/N]: ")
-						}
-						scanner := bufio.NewScanner(os.Stdin)
-						if !scanner.Scan() {
-							return false, scanner.Err()
-						}
-						s := strings.ToLower(strings.TrimSpace(scanner.Text()))
-						return s == "y" || s == "yes", nil
-					})
+						},
+						func(step, chunk string) {
+							bus.Send(Event{
+								Type:    EventDeploymentReasoningChunk,
+								Payload: DeploymentReasoningChunkPayload{Step: step, Chunk: chunk},
+							})
+						},
+						func(step, log string) {
+							bus.Send(Event{
+								Type:    EventBuildLog,
+								Message: log,
+								Payload: BuildLogPayload{Step: step, Log: log},
+							})
+						},
+						func(ctx context.Context, approval *ApprovalContext) (bool, error) {
+							// Human-in-the-loop: show proposal (including prompt) via AgentUI, then wait for input
+							if approval != nil {
+								bus.Send(Event{
+									Type: EventApprovalNeeded,
+									Payload: ApprovalNeededPayload{
+										Dockerfile:      approval.Dockerfile,
+										Summary:         approval.Summary,
+										ValidationScore: approval.ValidationScore,
+										Suggestions:     approval.Suggestions,
+									},
+								})
+							} else {
+								term.Println("")
+								term.Print("Approve deployment? [y/N]: ")
+							}
+							scanner := bufio.NewScanner(os.Stdin)
+							if !scanner.Scan() {
+								return false, scanner.Err()
+							}
+							s := strings.ToLower(strings.TrimSpace(scanner.Text()))
+							return s == "y" || s == "yes", nil
+						})
 					if err != nil {
+						log.Printf("[live] workflow failed: %v", err)
 						bus.Send(Event{Type: EventError, Message: fmt.Sprintf("Workflow failed: %v", err)})
 						bus.Send(Event{Type: EventBuildStatus, Message: err.Error(), Payload: BuildStatusPayload{Phase: "error", Message: err.Error(), Error: err.Error()}, NeedsLLM: true})
 						return
 					}
 
 					triggerPayload := result.ToTriggerBuildPayload()
-					if err := client.Send(mover.SyncMessage{
-						Type:      mover.MessageTypeTriggerBuild,
+					log.Printf("[live] workflow complete, sending trigger_build (dockerfile %d bytes)", len(triggerPayload.Dockerfile))
+					if err := client.Send(syncproto.SyncMessage{
+						Type:      syncproto.MessageTypeTriggerBuild,
 						Timestamp: time.Now(),
 						Payload:   triggerPayload,
 					}); err != nil {
@@ -610,7 +608,7 @@ func buildDomainURL(projectID, deployDomain string) string {
 
 // extractCodebaseIndexedPayload extracts app ID, org ID, source, and mode from codebase_indexed payload.
 func extractCodebaseIndexedPayload(payload interface{}) (appID, orgID, source, mode string) {
-	if p, ok := payload.(mover.CodebaseIndexedPayload); ok {
+	if p, ok := payload.(syncproto.CodebaseIndexedPayload); ok {
 		return p.ApplicationID, p.OrganizationID, p.Source, p.Mode
 	}
 	if m, ok := payload.(map[string]interface{}); ok {

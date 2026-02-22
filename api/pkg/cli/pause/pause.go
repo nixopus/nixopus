@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/raghavyuva/nixopus-api/internal/commands/logincmd"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/logincmd"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/httpclient"
 	"github.com/spf13/cobra"

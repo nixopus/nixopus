@@ -16,7 +16,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/mover"
+	"github.com/raghavyuva/nixopus-api/internal/syncproto"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -191,9 +191,9 @@ func (h *WebSocketHandler) handleReadError(err error, applicationID uuid.UUID) {
 // recvMessage is the receive-only message shape. Payload as json.RawMessage avoids
 // double encode: we unmarshal once, then unmarshal Payload directly into typed structs.
 type recvMessage struct {
-	Type      mover.MessageType `json:"type"`
-	Timestamp time.Time         `json:"timestamp"`
-	Payload   json.RawMessage   `json:"payload"`
+	Type      syncproto.MessageType `json:"type"`
+	Timestamp time.Time             `json:"timestamp"`
+	Payload   json.RawMessage       `json:"payload"`
 }
 
 // processMessage processes a single message and delegates to the gateway for handling
@@ -208,17 +208,17 @@ func (h *WebSocketHandler) processMessage(ctx context.Context, conn *websocket.C
 
 // sendError sends an error message to the client
 func (h *WebSocketHandler) sendError(conn *websocket.Conn, code, message string) error {
-	return h.sendMessage(conn, mover.SyncMessage{
-		Type:      mover.MessageTypeError,
+	return h.sendMessage(conn, syncproto.SyncMessage{
+		Type:      syncproto.MessageTypeError,
 		Timestamp: time.Now(),
-		Payload:   mover.ErrorPayload{Code: code, Message: message},
+		Payload:   syncproto.ErrorPayload{Code: code, Message: message},
 	})
 }
 
 // sendAck sends an acknowledgment message for a received file
 func (h *WebSocketHandler) sendAck(conn *websocket.Conn, filePath string) error {
-	return h.sendMessage(conn, mover.SyncMessage{
-		Type:      mover.MessageTypeAck,
+	return h.sendMessage(conn, syncproto.SyncMessage{
+		Type:      syncproto.MessageTypeAck,
 		Timestamp: time.Now(),
 		Payload:   map[string]interface{}{"file_path": filePath, "status": "received"},
 	})
@@ -235,19 +235,19 @@ func (h *WebSocketHandler) sendManifest(ctx context.Context, conn *websocket.Con
 	if paths == nil {
 		paths = make(map[string]string)
 	}
-	tree := mover.BuildFromPaths(paths)
-	return h.sendMessage(conn, mover.SyncMessage{
-		Type:      mover.MessageTypeManifest,
+	tree := syncproto.BuildFromPaths(paths)
+	return h.sendMessage(conn, syncproto.SyncMessage{
+		Type:      syncproto.MessageTypeManifest,
 		Timestamp: time.Now(),
-		Payload:   mover.ManifestPayload{Paths: paths, RootHash: tree.RootHash, Version: 1},
+		Payload:   syncproto.ManifestPayload{Paths: paths, RootHash: tree.RootHash, Version: 1},
 	})
 }
 
 // sendPong sends a pong message in response to a ping.
 // Uses sendMessage for proper per-connection write serialization (avoids race with other writers).
 func (h *WebSocketHandler) sendPong(conn *websocket.Conn) error {
-	return h.sendMessage(conn, mover.SyncMessage{
-		Type:      mover.MessageTypePong,
+	return h.sendMessage(conn, syncproto.SyncMessage{
+		Type:      syncproto.MessageTypePong,
 		Timestamp: time.Now(),
 	})
 }
@@ -255,7 +255,7 @@ func (h *WebSocketHandler) sendPong(conn *websocket.Conn) error {
 // sendMessage sends a message to the WebSocket connection with per-connection write mutex.
 // Gorilla websocket allows one concurrent writer per connection; each conn has its own mutex
 // so different connections can write concurrently without blocking each other.
-func (h *WebSocketHandler) sendMessage(conn *websocket.Conn, msg mover.SyncMessage) error {
+func (h *WebSocketHandler) sendMessage(conn *websocket.Conn, msg syncproto.SyncMessage) error {
 	mu := h.getConnMutex(conn)
 	mu.Lock()
 	defer mu.Unlock()

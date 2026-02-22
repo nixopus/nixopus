@@ -4,66 +4,27 @@ package live
 type EventType string
 
 const (
-	EventAuth             EventType = "auth"
-	EventConfig           EventType = "config"
-	EventEnvCheck         EventType = "env_check"
-	EventFileDetected     EventType = "file_detected"
-	EventConnecting       EventType = "connecting"
-	EventConnected        EventType = "connected"
-	EventDisconnected     EventType = "disconnected"
-	EventReconnecting     EventType = "reconnecting"
-	EventSyncStart        EventType = "sync_start"
-	EventSyncProgress     EventType = "sync_progress"
-	EventSyncDone         EventType = "sync_done"
-	EventBuildStarted     EventType = "build_started"
-	EventBuildFailed      EventType = "build_failed"
-	EventBuildSuccess     EventType = "build_success"
-	EventDeploying        EventType = "deploying"
-	EventDeployed         EventType = "deployed"
-	EventDeployFailed     EventType = "deploy_failed"
-	EventError            EventType = "error"
-	EventInfo             EventType = "info"
-	EventPipelineProgress EventType = "pipeline_progress"
-	EventBuildStatus      EventType = "build_status"
-	EventBuildLog         EventType = "build_log"
-	EventDeploymentStatus EventType = "deployment_status"
-	EventApprovalNeeded   EventType = "approval_needed"
+	EventAuth                     EventType = "auth"
+	EventConfig                   EventType = "config"
+	EventConnecting               EventType = "connecting"
+	EventConnected                EventType = "connected"
+	EventDisconnected             EventType = "disconnected"
+	EventReconnecting             EventType = "reconnecting"
+	EventSyncStart                EventType = "sync_start"
+	EventSyncProgress             EventType = "sync_progress"
+	EventError                    EventType = "error"
+	EventInfo                     EventType = "info"
+	EventPipelineProgress         EventType = "pipeline_progress"
+	EventBuildStatus              EventType = "build_status"
+	EventBuildLog                 EventType = "build_log"
+	EventDeploymentStatus         EventType = "deployment_status"
+	EventApprovalNeeded           EventType = "approval_needed"
+	EventDeploymentReasoningChunk EventType = "deployment_reasoning_chunk"
 )
 
 // EventPayload is the interface for type-safe event data.
 // Each event type that carries structured data gets its own struct.
 type EventPayload interface{ eventPayload() }
-
-// BuildFailedPayload carries build failure details.
-type BuildFailedPayload struct {
-	Logs  []string
-	Error string
-}
-
-func (BuildFailedPayload) eventPayload() {}
-
-// SyncProgressPayload carries file sync counters.
-type SyncProgressPayload struct {
-	FilesSynced int
-	Total       int
-}
-
-func (SyncProgressPayload) eventPayload() {}
-
-// EnvCheckPayload carries environment variable check results.
-type EnvCheckPayload struct {
-	Missing []string
-	Found   []string
-}
-
-func (EnvCheckPayload) eventPayload() {}
-
-// DeployedPayload carries deployment completion details.
-type DeployedPayload struct {
-	URL string
-}
-
-func (DeployedPayload) eventPayload() {}
 
 // PipelineProgressPayload carries real-time progress from the pipeline agent.
 type PipelineProgressPayload struct {
@@ -82,10 +43,10 @@ type BuildStatusPayload struct {
 
 func (BuildStatusPayload) eventPayload() {}
 
-// BuildLogPayload carries a single build log line from the database.
+// BuildLogPayload carries a single build log line from the workflow stream (listen-for-build).
 type BuildLogPayload struct {
-	Log       string
-	Timestamp string
+	Step string
+	Log  string
 }
 
 func (BuildLogPayload) eventPayload() {}
@@ -98,7 +59,7 @@ type DeploymentStatusPayload struct {
 
 func (DeploymentStatusPayload) eventPayload() {}
 
-// ApprovalNeededPayload carries the Dockerfile proposal for human approval.
+// ApprovalNeededPayload carries a proposal for human approval (Dockerfile, config, or other).
 type ApprovalNeededPayload struct {
 	Dockerfile      string
 	Summary         string
@@ -108,7 +69,17 @@ type ApprovalNeededPayload struct {
 
 func (ApprovalNeededPayload) eventPayload() {}
 
+// DeploymentReasoningChunkPayload carries a streaming reasoning chunk from the agent.
+// Clients append chunks to show LLM reasoning progressively; the final deployment-progress provides the complete message.
+type DeploymentReasoningChunkPayload struct {
+	Step  string
+	Chunk string
+}
+
+func (DeploymentReasoningChunkPayload) eventPayload() {}
+
 // Event is a deployment lifecycle event published by various components
+// (auth, sync engine, poller, watcher) and consumed by the AgentUI.
 // (auth, sync engine, poller, watcher) and consumed by the AgentUI.
 type Event struct {
 	Type    EventType
@@ -122,13 +93,7 @@ type Event struct {
 
 // isPriority returns true for events that must never be dropped.
 func (e Event) isPriority() bool {
-	if e.NeedsLLM ||
-		e.Type == EventError ||
-		e.Type == EventDeployed ||
-		e.Type == EventBuildFailed ||
-		e.Type == EventDeployFailed ||
-		e.Type == EventBuildSuccess ||
-		e.Type == EventApprovalNeeded {
+	if e.NeedsLLM || e.Type == EventError || e.Type == EventApprovalNeeded {
 		return true
 	}
 	// Build status errors are priority so the CLI always shows them

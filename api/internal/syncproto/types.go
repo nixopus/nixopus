@@ -1,4 +1,4 @@
-package mover
+package syncproto
 
 import "time"
 
@@ -79,7 +79,7 @@ type EnvVarsPayload struct {
 type ManifestPayload struct {
 	Paths    map[string]string `json:"paths"`
 	RootHash string            `json:"root_hash,omitempty"` // Merkle root of server's file tree
-	Version  int               `json:"version,omitempty"`   // For future protocol compatibility
+	Version  int               `json:"version,omitempty"`    // For future protocol compatibility
 }
 
 // SyncMessage is the envelope for all WebSocket messages
@@ -121,44 +121,4 @@ type SyncStatus struct {
 type ErrorPayload struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
-}
-
-// ConnectionStatus represents connection state
-type ConnectionStatus int
-
-const (
-	ConnectionStatusDisconnected ConnectionStatus = iota
-	ConnectionStatusConnecting
-	ConnectionStatusConnected
-	ConnectionStatusReconnecting
-)
-
-// ServiceStatus represents service state
-type ServiceStatus int
-
-const (
-	ServiceStatusUnknown ServiceStatus = iota
-	ServiceStatusStarting
-	ServiceStatusRunning
-	ServiceStatusError
-)
-
-// DeploymentInfo holds deployment status information
-type DeploymentInfo struct {
-	Status    string   `json:"status"`     // building, deploying, deployed, failed, etc.
-	Message   string   `json:"message"`    // Optional status message
-	Error     string   `json:"error"`      // Error message if failed
-	Logs      []string `json:"logs"`       // Recent deployment logs
-	UpdatedAt string   `json:"updated_at"` // Last update timestamp
-}
-
-// StatusInfo holds information for the status box
-type StatusInfo struct {
-	ConnectionStatus ConnectionStatus
-	FilesSynced      int
-	ChangesDetected  int
-	ServiceStatus    ServiceStatus
-	URL              string
-	EnvPath          string          // Path to environment file if detected
-	Deployment       *DeploymentInfo // Current deployment status
 }

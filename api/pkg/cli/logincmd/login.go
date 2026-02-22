@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/raghavyuva/nixopus-api/internal/cliconfig"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/cliconfig"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/spf13/cobra"
 )
