@@ -7,9 +7,10 @@ import (
 
 // AgentUI is the main orchestrator. It listens on an EventBus and routes events to the writer.
 type AgentUI struct {
-	ctx    context.Context
-	writer *Writer
-	bus    *EventBus
+	ctx                  context.Context
+	writer               *Writer
+	bus                  *EventBus
+	currentReasoningStep string
 }
 
 // NewAgentUI creates the agent UI wired to the given event bus.
@@ -82,8 +83,31 @@ func (a *AgentUI) handleDirectEvent(ev Event) {
 	case EventSyncProgress:
 		a.writer.Progress(ev.Message)
 	case EventPipelineProgress:
-		if p, ok := ev.Payload.(PipelineProgressPayload); ok {
-			a.writer.Detail(fmt.Sprintf("[%s] %s", p.StageId, p.Message))
+		if a.currentReasoningStep != "" {
+			a.writer.FinishReasoning("", true)
+			a.currentReasoningStep = ""
+		} else if p, ok := ev.Payload.(PipelineProgressPayload); ok {
+			// Skip redundant step markers (message == stageId) — reasoning block will show the step
+			if p.Message != "" && p.Message != p.StageId {
+				a.writer.Detail(fmt.Sprintf("[%s] %s", p.StageId, p.Message))
+			}
+		} else if ev.Message != "" {
+			a.writer.Detail(ev.Message)
+		}
+	case EventDeploymentReasoningChunk:
+		if p, ok := ev.Payload.(DeploymentReasoningChunkPayload); ok {
+			if a.currentReasoningStep != p.Step {
+				if a.currentReasoningStep != "" {
+					a.writer.FinishReasoning("", true)
+				}
+				a.writer.StartReasoning(p.Step)
+				a.currentReasoningStep = p.Step
+			}
+			a.writer.ReasoningChunk(p.Chunk)
+		}
+	case EventBuildLog:
+		if p, ok := ev.Payload.(BuildLogPayload); ok {
+			a.writer.Detail(p.Log)
 		} else if ev.Message != "" {
 			a.writer.Detail(ev.Message)
 		}
@@ -102,12 +126,6 @@ func (a *AgentUI) handleDirectEvent(ev Event) {
 			default:
 				a.writer.Detail(p.Message)
 			}
-		}
-	case EventBuildLog:
-		if p, ok := ev.Payload.(BuildLogPayload); ok {
-			a.writer.Detail(p.Log)
-		} else if ev.Message != "" {
-			a.writer.Detail(ev.Message)
 		}
 	case EventDeploymentStatus:
 		if p, ok := ev.Payload.(DeploymentStatusPayload); ok {

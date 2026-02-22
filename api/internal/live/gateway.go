@@ -222,35 +222,6 @@ func (g *Gateway) sendBuildStatus(appID uuid.UUID, phase, message, errMsg string
 	}
 }
 
-// SendBuildLog streams a build log line to the WebSocket client for the given app.
-func (g *Gateway) SendBuildLog(appID uuid.UUID, logLine string) {
-	timestamp := time.Now().Format("2006-01-02T15:04:05.000Z07:00")
-	g.sendBuildLog(appID, logLine, timestamp)
-}
-
-// sendBuildLog sends a build log line to the WebSocket client for the given app.
-func (g *Gateway) sendBuildLog(appID uuid.UUID, log string, timestamp string) {
-	g.activeConnsMu.RLock()
-	ac := g.activeConns[appID]
-	g.activeConnsMu.RUnlock()
-
-	if ac == nil {
-		return
-	}
-
-	msg := syncproto.SyncMessage{
-		Type:      syncproto.MessageTypeBuildLog,
-		Timestamp: time.Now(),
-		Payload: syncproto.BuildLogPayload{
-			Log:       log,
-			Timestamp: timestamp,
-		},
-	}
-	if err := ac.handler.sendMessage(ac.conn, msg); err != nil {
-		g.logger.Log(logger.Warning, "failed to send build log", fmt.Sprintf("app=%s err=%v", appID, err))
-	}
-}
-
 // sendCodebaseIndexed sends codebase_indexed to the CLI when indexing is complete.
 // Signals the CLI to run the deployment workflow.
 func (g *Gateway) sendCodebaseIndexed(appCtx *ApplicationContext) error {
@@ -305,26 +276,9 @@ func (g *Gateway) sendDeploymentStatus(appID uuid.UUID, status string) {
 	}
 }
 
-// HandleLiveDevNotification processes live_dev_logs and live_dev_status notifications
-// from the PostgresListener. This is registered as a callback on the SocketServer.
+// HandleLiveDevNotification processes live_dev_logs and live_dev_status notifications.
 func (g *Gateway) HandleLiveDevNotification(channel, payload string) {
 	switch channel {
-	case "live_dev_logs":
-		var n struct {
-			ApplicationID string `json:"application_id"`
-			Log           string `json:"log"`
-			CreatedAt     string `json:"created_at"`
-		}
-		if err := json.Unmarshal([]byte(payload), &n); err != nil {
-			g.logger.Log(logger.Warning, "failed to parse live_dev_logs notification", err.Error())
-			return
-		}
-		appID, err := uuid.Parse(n.ApplicationID)
-		if err != nil {
-			return
-		}
-		g.sendBuildLog(appID, n.Log, n.CreatedAt)
-
 	case "live_dev_status":
 		var n struct {
 			ApplicationID string `json:"application_id"`
@@ -555,6 +509,7 @@ func (g *Gateway) handleSyncComplete(ctx context.Context, appCtx *ApplicationCon
 }
 
 func (g *Gateway) handleTriggerBuild(ctx context.Context, appCtx *ApplicationContext, payload json.RawMessage) error {
+	g.logger.Log(logger.Info, "trigger_build received", fmt.Sprintf("app=%s", appCtx.ApplicationID))
 	var p syncproto.TriggerBuildPayload
 	if err := json.Unmarshal(payload, &p); err != nil {
 		return fmt.Errorf("failed to unmarshal trigger_build payload: %w", err)

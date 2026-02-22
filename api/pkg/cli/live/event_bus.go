@@ -4,21 +4,22 @@ package live
 type EventType string
 
 const (
-	EventAuth             EventType = "auth"
-	EventConfig           EventType = "config"
-	EventConnecting       EventType = "connecting"
-	EventConnected        EventType = "connected"
-	EventDisconnected     EventType = "disconnected"
-	EventReconnecting     EventType = "reconnecting"
-	EventSyncStart        EventType = "sync_start"
-	EventSyncProgress     EventType = "sync_progress"
-	EventError            EventType = "error"
-	EventInfo             EventType = "info"
-	EventPipelineProgress EventType = "pipeline_progress"
-	EventBuildStatus      EventType = "build_status"
-	EventBuildLog         EventType = "build_log"
-	EventDeploymentStatus EventType = "deployment_status"
-	EventApprovalNeeded   EventType = "approval_needed"
+	EventAuth                     EventType = "auth"
+	EventConfig                   EventType = "config"
+	EventConnecting               EventType = "connecting"
+	EventConnected                EventType = "connected"
+	EventDisconnected             EventType = "disconnected"
+	EventReconnecting             EventType = "reconnecting"
+	EventSyncStart                EventType = "sync_start"
+	EventSyncProgress             EventType = "sync_progress"
+	EventError                    EventType = "error"
+	EventInfo                     EventType = "info"
+	EventPipelineProgress         EventType = "pipeline_progress"
+	EventBuildStatus              EventType = "build_status"
+	EventBuildLog                 EventType = "build_log"
+	EventDeploymentStatus         EventType = "deployment_status"
+	EventApprovalNeeded           EventType = "approval_needed"
+	EventDeploymentReasoningChunk EventType = "deployment_reasoning_chunk"
 )
 
 // EventPayload is the interface for type-safe event data.
@@ -42,10 +43,10 @@ type BuildStatusPayload struct {
 
 func (BuildStatusPayload) eventPayload() {}
 
-// BuildLogPayload carries a single build log line from the database.
+// BuildLogPayload carries a single build log line from the workflow stream (listen-for-build).
 type BuildLogPayload struct {
-	Log       string
-	Timestamp string
+	Step string
+	Log  string
 }
 
 func (BuildLogPayload) eventPayload() {}
@@ -68,7 +69,17 @@ type ApprovalNeededPayload struct {
 
 func (ApprovalNeededPayload) eventPayload() {}
 
+// DeploymentReasoningChunkPayload carries a streaming reasoning chunk from the agent.
+// Clients append chunks to show LLM reasoning progressively; the final deployment-progress provides the complete message.
+type DeploymentReasoningChunkPayload struct {
+	Step  string
+	Chunk string
+}
+
+func (DeploymentReasoningChunkPayload) eventPayload() {}
+
 // Event is a deployment lifecycle event published by various components
+// (auth, sync engine, poller, watcher) and consumed by the AgentUI.
 // (auth, sync engine, poller, watcher) and consumed by the AgentUI.
 type Event struct {
 	Type    EventType
