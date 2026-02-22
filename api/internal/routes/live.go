@@ -51,10 +51,6 @@ func NewLiveDeployController(store *storage.Store) *LiveDeployController {
 		gateway.BuildFirstManager().MarkDeployed(appID, workdir)
 	})
 
-	taskService.SetOnLiveDevLog(func(appID uuid.UUID, logLine string) {
-		gateway.SendBuildLog(appID, logLine)
-	})
-
 	log.Println("Live deploy components initialized")
 
 	return &LiveDeployController{
@@ -69,8 +65,7 @@ func (router *Router) RegisterLiveDeployRoutes(server *fuego.Server, apiV1 api.V
 	controller := NewLiveDeployController(router.app.Store)
 
 	// Wire live dev PostgreSQL notifications from the shared listener to the Gateway.
-	// The SocketServer's PostgresListener already subscribes to live_dev_logs and
-	// live_dev_status channels; we just need to route those to the Gateway.
+	// live_dev_logs and live_dev_status are forwarded to the CLI via WebSocket.
 	if router.socketServer != nil {
 		router.socketServer.SetLiveDevHandler(controller.gateway.HandleLiveDevNotification)
 	}
