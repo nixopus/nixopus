@@ -24,7 +24,7 @@ import { Label } from '@nixopus/ui';
 import { Input } from '@nixopus/ui';
 import { PasswordInputField } from '@nixopus/ui';
 import Link from 'next/link';
-import nixopusLogo from '@/public/nixopus_logo_transparent.png';
+import nixopusLogo from '@/public/logo_white.png';
 import { UseFormReturn } from 'react-hook-form';
 import { RegisterForm } from '../hooks/auth/use-register';
 
@@ -409,7 +409,7 @@ export const RegisterFormComponent = ({
               <img
                 src={nixopusLogo.src}
                 alt="Nixopus Logo"
-                className="absolute inset-0 h-full w-full object-cover"
+                className="absolute inset-0 h-full w-full object-contain p-8"
               />
             </div>
           </CardContent>

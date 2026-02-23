@@ -2485,22 +2485,6 @@
 				},
 				"type": "object"
 			},
-			"ExecuteRequest": {
-				"description": "ExecuteRequest schema",
-				"properties": {
-					"args": {
-						"items": {
-							"type": "string"
-						},
-						"nullable": true,
-						"type": "array"
-					},
-					"command": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
 			"ExecutionResponse": {
 				"description": "ExecutionResponse schema",
 				"properties": {
@@ -12197,86 +12181,6 @@
 				]
 			}
 		},
-		"/api/v1/execute": {
-			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/execute/controller.(*ExecuteController).Execute`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
-				"operationId": "POST_/api/v1/execute",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"*/*": {
-							"schema": {
-								"$ref": "#/components/schemas/ExecuteRequest"
-							}
-						}
-					},
-					"description": "Request body for types.ExecuteRequest",
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/Response"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/Response"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							},
-							"application/xml": {
-								"schema": {
-									"$ref": "#/components/schemas/HTTPError"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "execute",
-				"tags": [
-					"api/v1/execute"
-				]
-			}
-		},
 		"/api/v1/extensions": {
 			"get": {
 				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/extension/controller.(*ExtensionsController).GetExtensions`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
@@ -17278,9 +17182,6 @@
 		},
 		{
 			"name": "api/v1/domains"
-		},
-		{
-			"name": "api/v1/execute"
 		},
 		{
 			"name": "api/v1/extensions"

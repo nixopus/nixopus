@@ -17,7 +17,6 @@ import (
 	container "github.com/raghavyuva/nixopus-api/internal/features/container/controller"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
 	domain "github.com/raghavyuva/nixopus-api/internal/features/domain/controller"
-	execute "github.com/raghavyuva/nixopus-api/internal/features/execute/controller"
 	extension "github.com/raghavyuva/nixopus-api/internal/features/extension/controller"
 	feature_flags_controller "github.com/raghavyuva/nixopus-api/internal/features/feature-flags/controller"
 	feature_flags_service "github.com/raghavyuva/nixopus-api/internal/features/feature-flags/service"
@@ -363,16 +362,6 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 		ResourceName: "trail",
 	})
 	router.RegisterTrailRoutes(trailGroup, trailController)
-
-	// Execute routes
-	executeController := execute.NewExecuteController(router.app.Ctx, router.logger)
-	executeGroup := fuego.Group(server, apiV1.Path+"/execute")
-	router.applyMiddleware(executeGroup, MiddlewareConfig{
-		RBAC:         true,
-		Audit:        true,
-		ResourceName: "execute",
-	})
-	router.RegisterExecuteRoutes(executeGroup, executeController)
 }
 
 // createAuthController creates and returns an auth controller

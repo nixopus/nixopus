@@ -126,13 +126,15 @@ func (ac *AuthController) HandleBootstrap(c fuego.ContextNoBody) (*BootstrapResp
 			Order("created_at DESC").
 			Limit(1).
 			Scan(ctx)
-		if err == nil {
-			id := upd.ID.String()
-			provisionID = &id
-			if upd.Step != nil {
-				step := string(*upd.Step)
-				provisionStep = &step
-			}
+		if err != nil {
+			ac.logger.Log(logger.Error, "bootstrap: failed to query user_provision_details", err.Error())
+			return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
+		}
+		id := upd.ID.String()
+		provisionID = &id
+		if upd.Step != nil {
+			step := string(*upd.Step)
+			provisionStep = &step
 		}
 	}
 

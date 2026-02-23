@@ -49,7 +49,7 @@ const (
 	ProvisionStepInitializing       ProvisionStep = "INITIALIZING"
 	ProvisionStepCreatingContainer  ProvisionStep = "CREATING_CONTAINER"
 	ProvisionStepSetupNetworking    ProvisionStep = "SETUP_NETWORKING"
-	ProvisionStepInstallingDeps     ProvisionStep = "INSTALLING_DEPS"
+	ProvisionStepInstallingDeps     ProvisionStep = "INSTALLING_DEPENDENCIES"
 	ProvisionStepConfiguringSSH     ProvisionStep = "CONFIGURING_SSH"
 	ProvisionStepSetupSSHForwarding ProvisionStep = "SETUP_SSH_FORWARDING"
 	ProvisionStepVerifyingSSH       ProvisionStep = "VERIFYING_SSH"
