@@ -10,41 +10,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/joho/godotenv"
+	"github.com/raghavyuva/nixopus-api/internal/syncproto"
 )
-
-const (
-	defaultDebounceMs      = 100 // Fast response with fsnotify
-	largeSyncThreshold     = 50  // Use parallel sync earlier (was 100)
-	chunkSize              = 64 * 1024
-	manifestWaitTimeout    = 5 * time.Second
-	defaultSyncWorkers     = 20 // Scale for 2000+ file projects
-	defaultSyncConcurrency = 50
-)
-
-var (
-	syncWorkers     int
-	syncConcurrency int
-)
-
-func init() {
-	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_MOVER_SYNC_WORKERS")); err == nil && v > 0 {
-		syncWorkers = v
-	} else {
-		syncWorkers = defaultSyncWorkers
-	}
-	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_MOVER_SYNC_CONCURRENCY")); err == nil && v > 0 {
-		syncConcurrency = v
-	} else {
-		syncConcurrency = defaultSyncConcurrency
-	}
-}
 
 // ChangeType represents the type of file change
 type ChangeType string
@@ -83,9 +56,9 @@ type Engine struct {
 	onStateChange func(ConnectionEvent)
 
 	// File sync and change tracking callbacks
-	onFileSynced     func(string)      // Called when a file is successfully synced
-	onChangeDetected func(string)      // Called when a file change is detected
-	onServerMessage  func(SyncMessage) // Called for server-originated messages
+	onFileSynced     func(string)                // Called when a file is successfully synced
+	onChangeDetected func(string)                // Called when a file change is detected
+	onServerMessage  func(syncproto.SyncMessage) // Called for server-originated messages
 
 	// Pending changes during disconnect
 	pendingChanges []FileChangeEvent
@@ -105,20 +78,20 @@ type EngineConfig struct {
 	Excludes         []string
 	DebounceMs       int
 	OnStateChange    func(ConnectionEvent)
-	OnFileSynced     func(string)      // Called when a file is successfully synced
-	OnChangeDetected func(string)      // Called when a file change is detected
-	OnServerMessage  func(SyncMessage) // Called for server-originated messages (pipeline_progress, etc.)
-	SyncStatePath    string            // Path to .nixopus-sync-state.json for persisted sync state (empty = disabled)
-	ApplicationID    string            // Application ID for multi-app state (required if SyncStatePath is set)
-	ForceFullSync    bool              // If true, skip loading state and clear persisted state; sync all files
-	EnvFilePath      string            // Absolute path to .env file; when set, values are sent (file is never synced)
+	OnFileSynced     func(string)                // Called when a file is successfully synced
+	OnChangeDetected func(string)                // Called when a file change is detected
+	OnServerMessage  func(syncproto.SyncMessage) // Called for server-originated messages (pipeline_progress, etc.)
+	SyncStatePath    string                      // Path to .nixopus-sync-state.json for persisted sync state (empty = disabled)
+	ApplicationID    string                      // Application ID for multi-app state (required if SyncStatePath is set)
+	ForceFullSync    bool                        // If true, skip loading state and clear persisted state; sync all files
+	EnvFilePath      string                      // Absolute path to .env file; when set, values are sent (file is never synced)
 }
 
 // NewEngine creates a new sync engine using fsnotify for file watching.
 func NewEngine(cfg EngineConfig) (*Engine, error) {
 	debounceMs := cfg.DebounceMs
 	if debounceMs <= 0 {
-		debounceMs = defaultDebounceMs
+		debounceMs = getMoverDebounceMs()
 	}
 
 	// Create file system watcher
@@ -126,7 +99,7 @@ func NewEngine(cfg EngineConfig) (*Engine, error) {
 		RootPath:         cfg.RootPath,
 		DebounceMs:       debounceMs,
 		IgnorePatterns:   cfg.Excludes,
-		EventsBufferSize: 512, // Handle bursty events (npm install, large refactors)
+		EventsBufferSize: eventsBufferSize(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create file watcher: %w", err)
@@ -309,7 +282,7 @@ func (e *Engine) InitialSync() error {
 	}
 
 	// Use parallel processing for large syncs
-	if len(filesToSync) > largeSyncThreshold {
+	if len(filesToSync) > largeSyncThreshold() {
 		if err := e.parallelSync(filesToSync); err != nil {
 			return err
 		}
@@ -326,7 +299,7 @@ func (e *Engine) InitialSync() error {
 	// Persist Merkle root for cache hint (Phase 3b)
 	if e.syncState != nil && e.applicationID != "" {
 		e.syncedMu.RLock()
-		tree := BuildFromPaths(e.syncedFiles)
+		tree := syncproto.BuildFromPaths(e.syncedFiles)
 		e.syncedMu.RUnlock()
 		if tree.RootHash != "" {
 			e.syncState.SetRootHash(e.applicationID, tree.RootHash)
@@ -335,7 +308,7 @@ func (e *Engine) InitialSync() error {
 	}
 
 	// Signal server that initial sync is complete; triggers immediate build (no debounce).
-	if err := e.client.Send(e.newSyncMessage(MessageTypeSyncComplete, nil)); err != nil {
+	if err := e.client.Send(e.newSyncMessage(syncproto.MessageTypeSyncComplete, nil)); err != nil {
 		return fmt.Errorf("failed to send sync_complete: %w", err)
 	}
 
@@ -352,14 +325,14 @@ type manifestResult struct {
 // Returns paths and root_hash from server, or nil paths if not received.
 func (e *Engine) waitForManifest() *manifestResult {
 	receive := e.client.Receive()
-	deadline := time.After(manifestWaitTimeout)
+	deadline := time.After(manifestWaitTimeout())
 	for {
 		select {
 		case msg, ok := <-receive:
 			if !ok {
 				return nil
 			}
-			if msg.Type == MessageTypeManifest {
+			if msg.Type == syncproto.MessageTypeManifest {
 				if m := extractManifestPayload(msg.Payload); m != nil {
 					return m
 				}
@@ -377,9 +350,9 @@ func extractManifestPayload(payload interface{}) *manifestResult {
 		return nil
 	}
 	switch m := payload.(type) {
-	case ManifestPayload:
+	case syncproto.ManifestPayload:
 		return &manifestResult{paths: m.Paths, rootHash: m.RootHash}
-	case *ManifestPayload:
+	case *syncproto.ManifestPayload:
 		if m != nil {
 			return &manifestResult{paths: m.Paths, rootHash: m.RootHash}
 		}
@@ -395,7 +368,7 @@ func (e *Engine) computeChecksumsParallel(files []string) map[string]string {
 	if len(files) == 0 {
 		return make(map[string]string)
 	}
-	workers := syncWorkers
+	workers := syncWorkers()
 	if workers > len(files) {
 		workers = len(files)
 	}
@@ -448,7 +421,7 @@ func (e *Engine) merkleDiffWithRootCheck(files []string, manifest *manifestResul
 		}
 	}
 
-	tree := BuildFromPaths(localLeaves)
+	tree := syncproto.BuildFromPaths(localLeaves)
 
 	// Phase 3b fast path: if roots match, nothing to sync or delete
 	if manifest != nil && manifest.rootHash != "" && tree.RootHash != "" && manifest.rootHash == tree.RootHash {
@@ -471,7 +444,7 @@ func (e *Engine) merkleDiffWithRootCheck(files []string, manifest *manifestResul
 	}
 	e.syncedMu.RUnlock()
 
-	return DiffAgainst(tree, serverLeaves)
+	return syncproto.DiffAgainst(tree, serverLeaves)
 }
 
 // parallelSyncJob is pooled to reduce allocations during large syncs.
@@ -494,12 +467,12 @@ var parallelSyncJobPool = sync.Pool{
 // parallelSync performs parallel file syncing using worker pool pattern.
 // Batches syncedFiles and syncState updates at the end to reduce lock contention.
 func (e *Engine) parallelSync(files []string) error {
-	jobs := make(chan *parallelSyncJob, syncConcurrency)
+	jobs := make(chan *parallelSyncJob, syncConcurrency())
 	results := make(chan parallelSyncResult, len(files))
 	var wg sync.WaitGroup
 
 	// Start workers - send files without per-file state updates (batch at end)
-	for w := 0; w < syncWorkers; w++ {
+	for w := 0; w < syncWorkers(); w++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -620,7 +593,7 @@ func (e *Engine) sendEnvVars() {
 	if !connected {
 		return
 	}
-	msg := e.newSyncMessage(MessageTypeEnvVars, EnvVarsPayload{Vars: envVars})
+	msg := e.newSyncMessage(syncproto.MessageTypeEnvVars, syncproto.EnvVarsPayload{Vars: envVars})
 	_ = e.client.Send(msg)
 }
 
@@ -666,9 +639,8 @@ func (e *Engine) watchEnvFile() {
 }
 
 // drainReceiveChannel reads from client.Receive() to prevent the channel from filling
-// and blocking the WebSocket read loop. Server-originated messages (like pipeline_progress,
-// build_status, build_log, deployment_status) are forwarded via onServerMessage; other
-// messages are discarded (manifest already consumed).
+// and blocking the WebSocket read loop. Server-originated messages (pipeline_progress,
+// build_status, deployment_status) are forwarded via onServerMessage.
 func (e *Engine) drainReceiveChannel() {
 	receive := e.client.Receive()
 	for {
@@ -681,9 +653,8 @@ func (e *Engine) drainReceiveChannel() {
 			}
 			if e.onServerMessage != nil {
 				switch msg.Type {
-				case MessageTypePipelineProgress, MessageTypeBuildStatus,
-					MessageTypeBuildLog, MessageTypeDeploymentStatus,
-					MessageTypeCodebaseIndexed:
+				case syncproto.MessageTypePipelineProgress, syncproto.MessageTypeBuildStatus,
+					syncproto.MessageTypeDeploymentStatus, syncproto.MessageTypeCodebaseIndexed:
 					e.onServerMessage(msg)
 				}
 			}
@@ -950,7 +921,7 @@ func (e *Engine) sendChange(change FileChangeEvent) error {
 
 // sendDeleteMessage sends a file delete message
 func (e *Engine) sendDeleteMessage(path string) error {
-	msg := e.newSyncMessage(MessageTypeFileDelete, FileChange{
+	msg := e.newSyncMessage(syncproto.MessageTypeFileDelete, syncproto.FileChange{
 		Path:      path,
 		Operation: "delete",
 	})
@@ -1046,7 +1017,7 @@ func (e *Engine) computeFileChecksum(fullPath string) string {
 
 // sendFileChangeNotification sends the file change metadata
 func (e *Engine) sendFileChangeNotification(change FileChangeEvent, info os.FileInfo, checksum string) error {
-	msg := e.newSyncMessage(MessageTypeFileChange, FileChange{
+	msg := e.newSyncMessage(syncproto.MessageTypeFileChange, syncproto.FileChange{
 		Path:      change.Path,
 		Operation: changeTypeToOperation(change.Type),
 		Size:      info.Size(),
@@ -1058,19 +1029,20 @@ func (e *Engine) sendFileChangeNotification(change FileChangeEvent, info os.File
 
 // sendFileContentChunks sends file content in chunks
 func (e *Engine) sendFileContentChunks(path string, content []byte, checksum string) error {
-	totalChunks := (len(content) + chunkSize - 1) / chunkSize
+	chunkSz := chunkSize()
+	totalChunks := (len(content) + chunkSz - 1) / chunkSz
 	if totalChunks == 0 {
 		totalChunks = 1
 	}
 
 	for i := 0; i < totalChunks; i++ {
-		start := i * chunkSize
-		end := start + chunkSize
+		start := i * chunkSz
+		end := start + chunkSz
 		if end > len(content) {
 			end = len(content)
 		}
 
-		msg := e.newSyncMessage(MessageTypeFileContent, FileContent{
+		msg := e.newSyncMessage(syncproto.MessageTypeFileContent, syncproto.FileContent{
 			Path:        path,
 			ChunkIndex:  i,
 			TotalChunks: totalChunks,
@@ -1087,8 +1059,8 @@ func (e *Engine) sendFileContentChunks(path string, content []byte, checksum str
 }
 
 // newSyncMessage creates a new sync message with common fields
-func (e *Engine) newSyncMessage(msgType MessageType, payload interface{}) SyncMessage {
-	return SyncMessage{
+func (e *Engine) newSyncMessage(msgType syncproto.MessageType, payload interface{}) syncproto.SyncMessage {
+	return syncproto.SyncMessage{
 		Type:      msgType,
 		Timestamp: time.Now(),
 		Payload:   payload,

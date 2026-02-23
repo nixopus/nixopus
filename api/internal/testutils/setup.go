@@ -206,7 +206,7 @@ func NewTestSetup() *TestSetup {
 	// }
 	// Create services
 	// orgService := organization_service.NewOrganizationService(store, ctx, l, orgStorage, cache)
-	authService := authService.NewAuthService(userStorage, l, ctx)
+	authService := authService.NewAuthService(userStorage, l, ctx, "")
 
 	return &TestSetup{
 		DB:          testDB,
@@ -253,7 +253,7 @@ func (s *TestSetup) RegistrationHelper(email, password, username, orgName, orgDe
 	// Better Auth handles authentication now
 	// Use SignupViaSupertokens or SigninViaSupertokens for test authentication
 	return nil, nil, fmt.Errorf("RegistrationHelper is deprecated - use SignupViaSupertokens or SigninViaSupertokens instead")
-	
+
 	// Old implementation (commented out):
 	// registrationRequest := authTypes.RegisterRequest{
 	// 	Email:    email,

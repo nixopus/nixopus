@@ -9,8 +9,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/sftp"
-	"github.com/raghavyuva/nixopus-api/internal/mover"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/raghavyuva/nixopus-api/internal/syncproto"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
@@ -97,7 +97,7 @@ func ReindexFromStaging(ctx context.Context, store *shared_storage.Store, stagin
 				}
 				continue
 			}
-			if isBinaryExt(info.Name()) || info.Size() > maxIndexableSize {
+			if isBinaryExt(info.Name()) || info.Size() > int64(maxIndexableSize()) {
 				continue
 			}
 			rel, err := filepath.Rel(stagingPath, path)
@@ -122,8 +122,8 @@ func ReindexFromStaging(ctx context.Context, store *shared_storage.Store, stagin
 			storedPaths = make(map[string]string)
 		}
 
-		tree := mover.BuildFromPaths(currentPaths)
-		toSync, toDelete := mover.DiffAgainst(tree, storedPaths)
+		tree := syncproto.BuildFromPaths(currentPaths)
+		toSync, toDelete := syncproto.DiffAgainst(tree, storedPaths)
 
 		for _, p := range toDelete {
 			if err := DeleteFileChunks(orgCtx, store, applicationID, p); err != nil {

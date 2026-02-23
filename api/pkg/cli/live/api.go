@@ -10,16 +10,13 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/mover"
+	"github.com/raghavyuva/nixopus-api/internal/syncproto"
+	"github.com/raghavyuva/nixopus-api/pkg/cli/cliconfig"
 )
-
-// debugStream enables verbose logging of workflow stream events to stderr for debugging.
-var debugStream = os.Getenv("NIXOPUS_DEBUG_STREAM") == "1"
 
 var workdirRe = regexp.MustCompile(`(?m)^WORKDIR\s+(\S+)`)
 
@@ -46,13 +43,6 @@ func parseWorkdirFromDockerfile(dockerfile string) string {
 	return "/app"
 }
 
-const (
-	defaultWorkflowEndpoint = "http://localhost:4117"
-	// Mastra HTTP API uses the workflow registration key (from workflows: { deploymentWorkflow }).
-	defaultWorkflowID      = "deploymentWorkflow"
-	defaultWorkflowTimeout = 30 * time.Minute // LLM calls, dependency analysis, etc. can take 10+ minutes
-)
-
 // DeploymentWorkflowResult is the result of a successful deployment workflow run.
 type DeploymentWorkflowResult struct {
 	Dockerfile   string
@@ -63,6 +53,13 @@ type DeploymentWorkflowResult struct {
 
 // ProgressFunc is called for each progress event during workflow execution.
 type ProgressFunc func(stepID, message string)
+
+// ReasoningChunkFunc is called for each streaming reasoning chunk from the agent.
+// When provided, chunks are streamed incrementally; the final deployment-progress still provides the full message.
+type ReasoningChunkFunc func(step, chunk string)
+
+// OnBuildLog is called for each build log line from the listen-for-build step in the workflow stream.
+type OnBuildLog func(step, log string)
 
 // ApprovalContext holds the Dockerfile proposal and metadata shown to the user before approval.
 type ApprovalContext struct {
@@ -87,36 +84,18 @@ type DeploymentWorkflowClient struct {
 	httpClient  *http.Client
 }
 
-func getWorkflowID() string {
-	if id := os.Getenv("DEPLOYMENT_WORKFLOW_ID"); id != "" {
-		return id
-	}
-	return defaultWorkflowID
-}
-
-func getWorkflowTimeout() time.Duration {
-	if s := os.Getenv("DEPLOYMENT_WORKFLOW_TIMEOUT"); s != "" {
-		if d, err := time.ParseDuration(s); err == nil && d > 0 {
-			return d
-		}
-	}
-	return defaultWorkflowTimeout
-}
-
 // NewDeploymentWorkflowClient creates a client for the deployment workflow.
 func NewDeploymentWorkflowClient(accessToken, orgID string) *DeploymentWorkflowClient {
-	endpoint := os.Getenv("AGENT_ENDPOINT")
-	if endpoint == "" {
-		endpoint = defaultWorkflowEndpoint
+	timeout, err := cliconfig.GetWorkflowTimeout()
+	if err != nil {
+		panic("cliconfig: " + err.Error())
 	}
-	endpoint = strings.TrimRight(endpoint, "/")
-
 	return &DeploymentWorkflowClient{
-		endpoint:    endpoint,
+		endpoint:    cliconfig.GetAgentEndpoint(),
 		accessToken: accessToken,
 		orgID:       orgID,
 		httpClient: &http.Client{
-			Timeout: getWorkflowTimeout(),
+			Timeout: timeout,
 		},
 	}
 }
@@ -130,7 +109,7 @@ func (c *DeploymentWorkflowClient) createRun(ctx context.Context, applicationID 
 	if err != nil {
 		return "", fmt.Errorf("marshal create-run request: %w", err)
 	}
-	wfID := getWorkflowID()
+	wfID := cliconfig.GetWorkflowID()
 	req, err := http.NewRequestWithContext(ctx, "POST", c.endpoint+"/api/workflows/"+wfID+"/create-run", bytes.NewReader(body))
 	if err != nil {
 		return "", fmt.Errorf("create run request: %w", err)
@@ -170,7 +149,9 @@ func (c *DeploymentWorkflowClient) createRun(ctx context.Context, applicationID 
 // Returns the Dockerfile and related metadata on success.
 // When the workflow suspends at request-approval, if onRequestApproval is non-nil
 // it is called to obtain user approval before resuming; otherwise auto-approves.
-func (c *DeploymentWorkflowClient) Run(ctx context.Context, applicationID, source, mode string, onProgress ProgressFunc, onRequestApproval OnRequestApproval) (*DeploymentWorkflowResult, error) {
+// If onReasoningChunk is non-nil, LLM reasoning is streamed chunk-by-chunk for a rich agent UI.
+// If onBuildLog is non-nil, build log lines from listen-for-build are streamed to the caller.
+func (c *DeploymentWorkflowClient) Run(ctx context.Context, applicationID, source, mode string, onProgress ProgressFunc, onReasoningChunk ReasoningChunkFunc, onBuildLog OnBuildLog, onRequestApproval OnRequestApproval) (*DeploymentWorkflowResult, error) {
 	if mode == "" {
 		mode = "development"
 	}
@@ -197,7 +178,7 @@ func (c *DeploymentWorkflowClient) Run(ctx context.Context, applicationID, sourc
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	streamURL := c.endpoint + "/api/workflows/" + getWorkflowID() + "/stream?runId=" + url.QueryEscape(runID)
+	streamURL := c.endpoint + "/api/workflows/" + cliconfig.GetWorkflowID() + "/stream?runId=" + url.QueryEscape(runID)
 	req, err := http.NewRequestWithContext(ctx, "POST", streamURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
@@ -223,12 +204,12 @@ func (c *DeploymentWorkflowClient) Run(ctx context.Context, applicationID, sourc
 		return nil, fmt.Errorf("workflow returned %d: %s", resp.StatusCode, string(errBody))
 	}
 
-	if debugStream {
+	if cliconfig.IsDebugStream() {
 		log.Printf("[workflow-stream] DEBUG: connected to stream, Content-Type=%s", resp.Header.Get("Content-Type"))
 	}
 
 	// Parse stream (SSE or NDJSON)
-	runID, result, err := c.readWorkflowStream(ctx, resp.Body, onProgress)
+	runID, result, err := c.readWorkflowStream(ctx, resp.Body, onProgress, onReasoningChunk, onBuildLog)
 	if err != nil {
 		return nil, err
 	}
@@ -253,6 +234,13 @@ func (c *DeploymentWorkflowClient) Run(ctx context.Context, applicationID, sourc
 			return nil, fmt.Errorf("workflow suspended but no step information")
 		}
 
+		// listen-for-build (or listenForBuild) suspends waiting for build logs, but the build only starts after we send trigger_build.
+		// We already have the Dockerfile from success-output; treat as success and return so we can send trigger_build.
+		if isListenForBuildStep(step) && len(result.Result) > 0 && bytes.Contains(result.Result, []byte(`"dockerfile"`)) {
+			log.Printf("[live] workflow suspended at %q with Dockerfile, treating as success (sending trigger_build)", step)
+			return c.parseResult(result)
+		}
+
 		var resumeData map[string]interface{}
 		approvalCtx := result.ApprovalContext
 		if approvalCtx == nil {
@@ -268,7 +256,7 @@ func (c *DeploymentWorkflowClient) Run(ctx context.Context, applicationID, sourc
 			resumeData = c.getResumeDataForStep(step)
 		}
 
-		result, err = c.resume(ctx, runID, step, resumeData, onProgress)
+		result, err = c.resume(ctx, runID, step, resumeData, onProgress, onReasoningChunk, onBuildLog)
 		if err != nil {
 			return nil, err
 		}
@@ -302,6 +290,34 @@ type workflowStreamEvent struct {
 	RunID   string          `json:"runId"`
 }
 
+// tryDeploymentReasoningChunk parses deployment-reasoning-chunk format.
+// Returns true if handled.
+func tryDeploymentReasoningChunk(payload []byte, onReasoningChunk ReasoningChunkFunc) bool {
+	if onReasoningChunk == nil || len(payload) == 0 {
+		return false
+	}
+	var p struct {
+		Type  string `json:"type"`
+		Step  string `json:"step"`
+		Chunk string `json:"chunk"`
+	}
+	if err := json.Unmarshal(payload, &p); err != nil {
+		return false
+	}
+	if p.Type != "deployment-reasoning-chunk" {
+		return false
+	}
+	if cliconfig.IsDebugStream() {
+		preview := p.Chunk
+		if len(preview) > 30 {
+			preview = preview[:30] + "..."
+		}
+		log.Printf("[workflow-stream] reasoning-chunk step=%q chunk=%q", p.Step, preview)
+	}
+	onReasoningChunk(p.Step, p.Chunk)
+	return true
+}
+
 // tryDeploymentProgress parses deployment-progress format (from streamProgress in agent).
 // Returns true if handled. Handles both top-level and nested (inside payload.output).
 func tryDeploymentProgress(payload []byte, onProgress ProgressFunc) bool {
@@ -326,10 +342,31 @@ func tryDeploymentProgress(payload []byte, onProgress ProgressFunc) bool {
 	if p.Message == "" {
 		p.Message = p.Step
 	}
-	if debugStream {
+	if cliconfig.IsDebugStream() {
 		log.Printf("[workflow-stream] tryDeploymentProgress HANDLED step=%q msg=%q", p.Step, truncMsg(p.Message, 50))
 	}
 	onProgress(p.Step, p.Message)
+	return true
+}
+
+// tryBuildLog parses build-log format (from listen-for-build step in the Mastra workflow).
+// Returns true if handled.
+func tryBuildLog(payload []byte, onBuildLog OnBuildLog) bool {
+	if onBuildLog == nil || len(payload) == 0 {
+		return false
+	}
+	var p struct {
+		Type string `json:"type"`
+		Step string `json:"step"`
+		Log  string `json:"log"`
+	}
+	if err := json.Unmarshal(payload, &p); err != nil {
+		return false
+	}
+	if p.Type != "build-log" {
+		return false
+	}
+	onBuildLog(p.Step, p.Log)
 	return true
 }
 
@@ -403,7 +440,7 @@ func (r *firstByteReader) Read(p []byte) (n int, err error) {
 	n, err = r.r.Read(p)
 	if n > 0 && !r.logged {
 		r.logged = true
-		if debugStream {
+		if cliconfig.IsDebugStream() {
 			log.Printf("[workflow-stream] first bytes received (%d bytes)", n)
 		}
 	}
@@ -425,7 +462,7 @@ func splitRecordSeparator(data []byte, atEOF bool) (advance int, token []byte, e
 	return 0, nil, nil
 }
 
-func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body io.Reader, onProgress ProgressFunc) (string, *workflowResultPayload, error) {
+func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body io.Reader, onProgress ProgressFunc, onReasoningChunk ReasoningChunkFunc, onBuildLog OnBuildLog) (string, *workflowResultPayload, error) {
 	body = &firstByteReader{r: body}
 	scanner := bufio.NewScanner(body)
 	scanner.Buffer(make([]byte, 0, 64*1024), 512*1024)
@@ -437,7 +474,7 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 	var eventCount int
 	var lastEventType string
 
-	if debugStream {
+	if cliconfig.IsDebugStream() {
 		log.Printf("[workflow-stream] started reading stream")
 	}
 
@@ -453,7 +490,7 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 			case <-firstLineCh:
 				return
 			case <-ticker.C:
-				if debugStream {
+				if cliconfig.IsDebugStream() {
 					log.Printf("[workflow-stream] still waiting for stream data (no complete line received yet)...")
 				}
 			}
@@ -482,7 +519,7 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 		if rawLine == "" {
 			continue
 		}
-		if debugStream {
+		if cliconfig.IsDebugStream() {
 			preview := rawLine
 			if len(preview) > 300 {
 				preview = preview[:300] + "..."
@@ -492,7 +529,7 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 
 		var event workflowStreamEvent
 		if err := json.Unmarshal([]byte(rawLine), &event); err != nil {
-			if debugStream {
+			if cliconfig.IsDebugStream() {
 				preview := rawLine
 				if len(preview) > 100 {
 					preview = preview[:100] + "..."
@@ -505,7 +542,7 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 		eventCount++
 		lastEventType = event.Type
 
-		if debugStream {
+		if cliconfig.IsDebugStream() {
 			payloadPreview := string(event.Payload)
 			if len(payloadPreview) > 500 {
 				payloadPreview = payloadPreview[:500] + "..."
@@ -529,11 +566,20 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 			}
 		}
 
-		// deployment-progress can be top-level or nested inside workflow-step-output
+		// deployment-reasoning-chunk, deployment-progress, and build-log can be top-level or nested inside workflow-step-output
+		if tryDeploymentReasoningChunk(deployProgressBytes, onReasoningChunk) {
+			continue
+		}
 		if tryDeploymentProgress(deployProgressBytes, onProgress) {
 			continue
 		}
-		if event.Type == "deployment-progress" {
+		if tryBuildLog(deployProgressBytes, onBuildLog) {
+			continue
+		}
+		if tryBuildLog(payloadBytes, onBuildLog) {
+			continue
+		}
+		if event.Type == "deployment-progress" || event.Type == "deployment-reasoning-chunk" || event.Type == "build-log" {
 			continue
 		}
 
@@ -561,7 +607,7 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 			}
 		case "workflow-step-start", "workflow-step-output", "workflow-step-progress":
 			var payload workflowStepPayload
-			if err := json.Unmarshal(payloadBytes, &payload); err == nil && onProgress != nil {
+			if err := json.Unmarshal(payloadBytes, &payload); err == nil {
 				stepID := payload.StepID
 				if stepID == "" {
 					stepID = payload.ID
@@ -569,18 +615,31 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 				if stepID == "" {
 					stepID = payload.StepName
 				}
-				msg := payload.Message
-				if msg == "" {
-					msg = payload.StepName
+				// listen-for-build keeps stream open waiting for build logs, but build only starts after we send trigger_build.
+				// We already have the Dockerfile from success-output; return now so we can send trigger_build.
+				if isListenForBuildStep(stepID) && len(collectedResult) > 0 && bytes.Contains(collectedResult, []byte(`"dockerfile"`)) {
+					log.Printf("[live] reached %q with Dockerfile in collectedResult, treating as success (sending trigger_build)", stepID)
+					return runID, &workflowResultPayload{
+						Status:         "success",
+						WorkflowStatus: "success",
+						RunID:          runID,
+						Result:         collectedResult,
+					}, nil
 				}
-				if msg == "" {
-					msg = payload.StepID
-				}
-				if msg == "" {
-					msg = payload.ID
-				}
-				if msg != "" {
-					onProgress(stepID, msg)
+				if onProgress != nil {
+					msg := payload.Message
+					if msg == "" {
+						msg = payload.StepName
+					}
+					if msg == "" {
+						msg = payload.StepID
+					}
+					if msg == "" {
+						msg = payload.ID
+					}
+					if msg != "" {
+						onProgress(stepID, msg)
+					}
 				}
 			}
 		case "workflow-step-result":
@@ -652,13 +711,13 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 	}
 
 	if err := scanner.Err(); err != nil {
-		if debugStream {
+		if cliconfig.IsDebugStream() {
 			log.Printf("[workflow-stream] scanner error: %v", err)
 		}
 		return "", nil, err
 	}
 
-	if debugStream {
+	if cliconfig.IsDebugStream() {
 		lastStatus, lastStep := "", ""
 		if lastResult != nil {
 			lastStatus = lastResult.Status
@@ -675,7 +734,25 @@ func (c *DeploymentWorkflowClient) readWorkflowStream(ctx context.Context, body 
 		lastResult.Result = collectedResult
 	}
 
+	// Stream ended without workflow-finish or workflow-step-suspended (e.g. agent closes after success-output).
+	// If we have a Dockerfile from workflow-step-result, treat as success so we can send trigger_build.
+	if lastResult == nil && len(collectedResult) > 0 && bytes.Contains(collectedResult, []byte(`"dockerfile"`)) {
+		log.Printf("[live] stream ended with Dockerfile in collectedResult (no workflow-finish), treating as success (sending trigger_build)")
+		lastResult = &workflowResultPayload{
+			Status:         "success",
+			WorkflowStatus: "success",
+			RunID:          runID,
+			Result:         collectedResult,
+		}
+	}
+
 	return runID, lastResult, nil
+}
+
+// isListenForBuildStep returns true if the step is the listen-for-build step (name may vary by agent).
+func isListenForBuildStep(step string) bool {
+	s := strings.ToLower(strings.ReplaceAll(step, "_", "-"))
+	return strings.Contains(s, "listen") && strings.Contains(s, "build")
 }
 
 func (c *DeploymentWorkflowClient) getResumeDataForStep(step string) map[string]interface{} {
@@ -691,7 +768,7 @@ func (c *DeploymentWorkflowClient) getResumeDataForStep(step string) map[string]
 	}
 }
 
-func (c *DeploymentWorkflowClient) resume(ctx context.Context, runID, step string, resumeData map[string]interface{}, onProgress ProgressFunc) (*workflowResultPayload, error) {
+func (c *DeploymentWorkflowClient) resume(ctx context.Context, runID, step string, resumeData map[string]interface{}, onProgress ProgressFunc, onReasoningChunk ReasoningChunkFunc, onBuildLog OnBuildLog) (*workflowResultPayload, error) {
 	// Mastra resume-stream expects step as array (path to suspended step)
 	reqBody := map[string]interface{}{
 		"step":       []string{step},
@@ -703,7 +780,7 @@ func (c *DeploymentWorkflowClient) resume(ctx context.Context, runID, step strin
 		return nil, fmt.Errorf("marshal resume request: %w", err)
 	}
 
-	resumeStreamURL := c.endpoint + "/api/workflows/" + getWorkflowID() + "/resume-stream?runId=" + url.QueryEscape(runID)
+	resumeStreamURL := c.endpoint + "/api/workflows/" + cliconfig.GetWorkflowID() + "/resume-stream?runId=" + url.QueryEscape(runID)
 	req, err := http.NewRequestWithContext(ctx, "POST", resumeStreamURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("create resume request: %w", err)
@@ -730,7 +807,7 @@ func (c *DeploymentWorkflowClient) resume(ctx context.Context, runID, step strin
 	}
 
 	// resume-stream returns a stream; parse it like the initial stream
-	_, result, err := c.readWorkflowStream(ctx, resp.Body, onProgress)
+	_, result, err := c.readWorkflowStream(ctx, resp.Body, onProgress, onReasoningChunk, onBuildLog)
 	if err != nil {
 		return nil, fmt.Errorf("resume stream: %w", err)
 	}
@@ -799,8 +876,8 @@ func (c *DeploymentWorkflowClient) parseResult(r *workflowResultPayload) (*Deplo
 }
 
 // ToTriggerBuildPayload converts the result to the WebSocket payload format.
-func (r *DeploymentWorkflowResult) ToTriggerBuildPayload() mover.TriggerBuildPayload {
-	return mover.TriggerBuildPayload{
+func (r *DeploymentWorkflowResult) ToTriggerBuildPayload() syncproto.TriggerBuildPayload {
+	return syncproto.TriggerBuildPayload{
 		Dockerfile:   r.Dockerfile,
 		Dockerignore: r.Dockerignore,
 		Port:         r.Port,

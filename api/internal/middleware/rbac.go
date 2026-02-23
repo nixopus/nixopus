@@ -32,20 +32,25 @@ func InitRBACCache(c *cache.Cache) {
 func RBACMiddleware(next http.Handler, app *appStorage.App, resource string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requiredPermission := buildRequiredPermission(resource, r.Method)
+		log.Printf("DEBUG RBAC: %s %s -> required permission=%s", r.Method, r.URL.Path, requiredPermission)
+
 		organizationID := extractOrganizationID(w, r)
 		if organizationID == "" {
+			log.Printf("DEBUG RBAC: %s %s -> blocked: missing or invalid X-Organization-Id header", r.Method, r.URL.Path)
 			return
 		}
 
 		// Get user from context (set by AuthMiddleware)
 		userAny := r.Context().Value(types.UserContextKey)
 		if userAny == nil {
+			log.Printf("DEBUG RBAC: %s %s -> blocked: user not in context", r.Method, r.URL.Path)
 			utils.SendErrorResponse(w, "User not found in context", http.StatusUnauthorized)
 			return
 		}
 
 		user, ok := userAny.(*types.User)
 		if !ok {
+			log.Printf("DEBUG RBAC: %s %s -> blocked: invalid user type in context", r.Method, r.URL.Path)
 			utils.SendErrorResponse(w, "Invalid user type in context", http.StatusUnauthorized)
 			return
 		}
@@ -55,10 +60,12 @@ func RBACMiddleware(next http.Handler, app *appStorage.App, resource string) htt
 
 		// Validate permission
 		if !validateUserPermission(ctx, user, organizationID, requiredPermission, app) {
+			log.Printf("DEBUG RBAC: %s %s -> blocked: user %s lacks %s for org %s", r.Method, r.URL.Path, user.ID, requiredPermission, organizationID)
 			utils.SendErrorResponse(w, fmt.Sprintf("User lacks permission %s for organization %s", requiredPermission, organizationID), http.StatusForbidden)
 			return
 		}
 
+		log.Printf("DEBUG RBAC: %s %s -> allowed (user=%s, org=%s)", r.Method, r.URL.Path, user.ID, organizationID)
 		next.ServeHTTP(w, r)
 	})
 }
@@ -67,9 +74,11 @@ func RBACMiddleware(next http.Handler, app *appStorage.App, resource string) htt
 func validateUserPermission(ctx context.Context, user *types.User, organizationID, requiredPermission string, app *appStorage.App) bool {
 	// Try cache first
 	if result := validateCachedPermissions(user.ID.String(), organizationID, requiredPermission); result != nil {
+		log.Printf("DEBUG RBAC: cache hit for user=%s org=%s -> hasPerm=%v", user.ID, organizationID, *result)
 		return *result
 	}
 
+	log.Printf("DEBUG RBAC: cache miss for user=%s org=%s -> fetching from Better Auth", user.ID, organizationID)
 	// Cache miss: fetch from database
 	return validateAndCachePermissions(ctx, user, organizationID, requiredPermission, app)
 }
@@ -107,9 +116,12 @@ func validateAndCachePermissions(ctx context.Context, user *types.User, organiza
 	// Get user's role from Better Auth organization membership
 	member, err := getBetterAuthOrganizationMember(ctx, httpReq, user.ID.String(), organizationID)
 	if err != nil || member == nil {
+		log.Printf("DEBUG RBAC: getBetterAuthOrganizationMember failed for user=%s org=%s: err=%v", user.ID, organizationID, err)
 		// If we can't verify membership, deny access
 		return false
 	}
+
+	log.Printf("DEBUG RBAC: Better Auth member found for user=%s org=%s, role=%v", user.ID, organizationID, member.Role)
 
 	// Extract role from Better Auth member data
 	// Better Auth can return role as string or array
@@ -131,6 +143,8 @@ func validateAndCachePermissions(ctx context.Context, user *types.User, organiza
 
 	roles := []string{role}
 	permissions := getPermissionsForRole(role)
+
+	log.Printf("DEBUG RBAC: resolved role=%s -> %d permissions, hasRequired=%v", role, len(permissions), hasPermission(permissions, requiredPermission))
 
 	// Cache permissions
 	cachePermissions(user.ID.String(), organizationID, roles, permissions)
@@ -251,12 +265,10 @@ func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Requ
 	return nil, fmt.Errorf("user %s is not a member of organization %s", userID, organizationID)
 }
 
-// getPermissionsForRole returns permissions for a given role
-// TODO: This should be fetched from database or a configuration
-// TEMPORARY: All roles have all permissions - will be fixed later
-func getPermissionsForRole(role string) []string {
-	// All permissions for all roles (temporary fix)
-	allPermissions := []string{
+// rolePermissions defines permissions per organization role.
+// owner/admin: full access; member: create/read/update/delete on most resources; viewer: read-only.
+var rolePermissions = map[string][]string{
+	"owner": {
 		"user:create", "user:read", "user:update", "user:delete",
 		"organization:create", "organization:read", "organization:update", "organization:delete",
 		"role:create", "role:read", "role:update", "role:delete",
@@ -272,10 +284,67 @@ func getPermissionsForRole(role string) []string {
 		"feature_flags:read", "feature_flags:update",
 		"dashboard:read", "extension:read", "extension:create", "extension:update", "extension:delete",
 		"healthcheck:create", "healthcheck:read", "healthcheck:update", "healthcheck:delete",
-	}
+		"server:create", "server:read", "server:update", "server:delete",
+		"trail:create", "trail:read", "trail:update", "trail:delete",
+		"execute:create", "execute:read", "execute:update", "execute:delete",
+	},
+	"admin": {
+		"user:create", "user:read", "user:update", "user:delete",
+		"organization:create", "organization:read", "organization:update", "organization:delete",
+		"role:create", "role:read", "role:update", "role:delete",
+		"permission:create", "permission:read", "permission:update", "permission:delete",
+		"domain:create", "domain:read", "domain:update", "domain:delete",
+		"github-connector:create", "github-connector:read", "github-connector:update", "github-connector:delete",
+		"notification:create", "notification:read", "notification:update", "notification:delete",
+		"file-manager:create", "file-manager:read", "file-manager:update", "file-manager:delete",
+		"deploy:create", "deploy:read", "deploy:update", "deploy:delete",
+		"container:create", "container:read", "container:update", "container:delete",
+		"audit:create", "audit:read", "audit:update", "audit:delete",
+		"terminal:create", "terminal:read", "terminal:update", "terminal:delete",
+		"feature_flags:read", "feature_flags:update",
+		"dashboard:read", "extension:read", "extension:create", "extension:update", "extension:delete",
+		"healthcheck:create", "healthcheck:read", "healthcheck:update", "healthcheck:delete",
+		"server:create", "server:read", "server:update", "server:delete",
+		"trail:create", "trail:read", "trail:update", "trail:delete",
+		"execute:create", "execute:read", "execute:update", "execute:delete",
+	},
+	"member": {
+		"user:read",
+		"organization:read",
+		"role:read", "permission:read",
+		"domain:create", "domain:read", "domain:update", "domain:delete",
+		"github-connector:create", "github-connector:read", "github-connector:update", "github-connector:delete",
+		"notification:create", "notification:read", "notification:update", "notification:delete",
+		"file-manager:create", "file-manager:read", "file-manager:update", "file-manager:delete",
+		"deploy:create", "deploy:read", "deploy:update", "deploy:delete",
+		"container:create", "container:read", "container:update", "container:delete",
+		"audit:read",
+		"terminal:create", "terminal:read", "terminal:update", "terminal:delete",
+		"feature_flags:read",
+		"dashboard:read", "extension:read", "extension:create", "extension:update", "extension:delete",
+		"healthcheck:create", "healthcheck:read", "healthcheck:update", "healthcheck:delete",
+		"server:create", "server:read", "server:update", "server:delete",
+		"trail:create", "trail:read", "trail:update", "trail:delete",
+		"execute:create", "execute:read", "execute:update", "execute:delete",
+	},
+	"viewer": {
+		"user:read", "organization:read", "role:read", "permission:read",
+		"domain:read", "github-connector:read", "notification:read", "file-manager:read",
+		"deploy:read", "container:read", "audit:read", "terminal:read",
+		"feature_flags:read", "dashboard:read", "extension:read",
+		"healthcheck:read", "server:read", "trail:read", "execute:read",
+	},
+}
 
-	// Return all permissions for any role (temporary)
-	return allPermissions
+// getPermissionsForRole returns permissions for a given organization role.
+// Unknown roles default to viewer (read-only) for safety.
+func getPermissionsForRole(role string) []string {
+	role = strings.ToLower(strings.TrimSpace(role))
+	if perms, ok := rolePermissions[role]; ok {
+		return perms
+	}
+	// Custom roles (e.g. orgid_xxx_custom) or unknown: default to viewer
+	return rolePermissions["viewer"]
 }
 
 // cachePermissions caches user permissions for future requests
@@ -297,16 +366,28 @@ func buildRequiredPermission(resource, method string) string {
 	return resource + ":" + action
 }
 
-// extractOrganizationID extracts and validates organization ID from request header
+// extractOrganizationID extracts and validates organization ID from request header or auth context.
+// Falls back to OrganizationIDKey from AuthMiddleware (Better Auth session) when header is missing.
 func extractOrganizationID(w http.ResponseWriter, r *http.Request) string {
 	organizationID := r.Header.Get("X-Organization-Id")
 	if organizationID == "" {
+		// Fallback: use org from auth context (set by AuthMiddleware from Better Auth session)
+		if orgAny := r.Context().Value(types.OrganizationIDKey); orgAny != nil {
+			if orgStr, ok := orgAny.(string); ok && orgStr != "" {
+				organizationID = orgStr
+				log.Printf("DEBUG RBAC: using org from context for %s %s (header missing)", r.Method, r.URL.Path)
+			}
+		}
+	}
+	if organizationID == "" {
+		log.Printf("DEBUG RBAC: X-Organization-Id header missing and no org in context for %s %s", r.Method, r.URL.Path)
 		utils.SendErrorResponse(w, "Organization ID is required", http.StatusBadRequest)
 		return ""
 	}
 
 	// Validate UUID format
 	if _, err := uuid.Parse(organizationID); err != nil {
+		log.Printf("DEBUG RBAC: X-Organization-Id invalid format '%s' for %s %s", organizationID, r.Method, r.URL.Path)
 		utils.SendErrorResponse(w, "Invalid organization ID format", http.StatusBadRequest)
 		return ""
 	}
@@ -320,7 +401,7 @@ func filterOrganizationRolesFromStrings(roles []string, organizationID string) [
 	var orgSpecificRoles []string
 
 	for _, role := range roles {
-		if strings.HasPrefix(role, prefix) || role == "admin" || role == "member" || role == "viewer" {
+		if strings.HasPrefix(role, prefix) || role == "owner" || role == "admin" || role == "member" || role == "viewer" {
 			orgSpecificRoles = append(orgSpecificRoles, role)
 		}
 	}

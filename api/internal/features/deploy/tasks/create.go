@@ -28,7 +28,7 @@ func (t *TaskService) CreateDeploymentTask(deployment *types.CreateDeploymentReq
 
 	err = CreateDeploymentQueue.Add(TaskCreateDeployment.WithArgs(context.Background(), TaskPayload))
 	if err != nil {
-		fmt.Printf("error enqueuing create deployment: %v\n", err)
+		return shared_types.Application{}, fmt.Errorf("failed to enqueue deployment: %w", err)
 	}
 
 	return TaskPayload.Application, nil
@@ -109,6 +109,7 @@ func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, Task
 
 		if err := caddy.AddDomainsAtomic(orgCtx, nil, &t.Logger, routes); err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to configure proxy: "+err.Error(), shared_types.Failed)
+			t.cleanupServiceOnFailure(orgCtx, TaskPayload.Application.Name, taskCtx)
 			return err
 		}
 		for _, r := range routes {
@@ -157,7 +158,7 @@ func (t *TaskService) DeployProject(request *types.DeployProjectRequest, userID 
 
 	err = CreateDeploymentQueue.Add(TaskCreateDeployment.WithArgs(context.Background(), TaskPayload))
 	if err != nil {
-		fmt.Printf("error enqueuing deploy project: %v\n", err)
+		return shared_types.Application{}, fmt.Errorf("failed to enqueue project deployment: %w", err)
 	}
 
 	return application, nil
@@ -187,7 +188,7 @@ func (t *TaskService) ReDeployApplication(request *types.ReDeployApplicationRequ
 
 	err = ReDeployQueue.Add(TaskReDeploy.WithArgs(context.Background(), TaskPayload))
 	if err != nil {
-		fmt.Printf("error enqueuing redeploy: %v\n", err)
+		return shared_types.Application{}, fmt.Errorf("failed to enqueue redeploy: %w", err)
 	}
 
 	return application, nil

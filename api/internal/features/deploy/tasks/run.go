@@ -54,34 +54,45 @@ func (s *TaskService) sanitizeEnvVars(envVars map[string]string) []string {
 	return logEnvVars
 }
 
+const maxPortRetries = 5
+
 func (s *TaskService) getAvailablePort(ctx context.Context) (string, error) {
 	manager, err := ssh.GetSSHManagerFromContext(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	client, err := manager.Connect()
-	if err != nil {
-		return "", err
+
+	// Single lightweight command: pick a random port from the available range.
+	// Uses shuf to generate a random candidate, then checks it with ss/netstat.
+	// Much cheaper than computing the full set difference on every attempt.
+	cmd := `bash -c 'for i in $(shuf -i 49152-65535 -n 10); do if ! (command -v ss >/dev/null 2>&1 && ss -tln | grep -q ":${i} " || netstat -tln 2>/dev/null | grep -q ":${i} "); then echo -n "$i"; exit 0; fi; done; exit 1'`
+
+	var lastErr error
+	for attempt := 0; attempt < maxPortRetries; attempt++ {
+		output, err := manager.RunCommand(cmd)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to find available port: %w", err)
+			time.Sleep(200 * time.Millisecond)
+			continue
+		}
+
+		port := strings.TrimSpace(output)
+		if port == "" {
+			lastErr = fmt.Errorf("no available ports found in range 49152-65535")
+			time.Sleep(200 * time.Millisecond)
+			continue
+		}
+
+		if _, parseErr := strconv.Atoi(port); parseErr != nil {
+			lastErr = fmt.Errorf("invalid port value returned: %q", port)
+			time.Sleep(200 * time.Millisecond)
+			continue
+		}
+
+		return port, nil
 	}
-	defer client.Close()
 
-	generatePorts := "seq 49152 65535"
-
-	getUsedPorts := "command -v ss >/dev/null 2>&1 && ss -tan | awk '{print $4}' | cut -d':' -f2 | grep '[0-9]\\{1,5\\}' | sort -u || netstat -tan | awk '{print $4}' | grep ':[0-9]' | cut -d':' -f2 | sort -u"
-
-	cmd := fmt.Sprintf("comm -23 <(%s) <(%s) | shuf -n 1 | tr -d '\\n'", generatePorts, getUsedPorts)
-
-	output, err := client.Run(cmd)
-	if err != nil {
-		return "", fmt.Errorf("failed to find available port: %w", err)
-	}
-
-	port := string(output)
-	if port == "" {
-		return "", fmt.Errorf("no available ports found in range 49152-65535")
-	}
-
-	return port, nil
+	return "", fmt.Errorf("failed to allocate port after %d attempts: %w", maxPortRetries, lastErr)
 }
 
 // AtomicUpdateContainer performs a zero-downtime update of a running container
@@ -98,7 +109,7 @@ func (s *TaskService) AtomicUpdateContainer(ctx context.Context, r shared_types.
 	// Check if service already exists
 	existingService, err := s.getExistingService(ctx, r, taskContext)
 	if err != nil {
-		s.formatLog(taskContext, "No existing service found, creating new service", "")
+		s.formatLog(taskContext, "No existing service found, creating new service")
 	}
 
 	// Create service spec
@@ -153,42 +164,22 @@ func (s *TaskService) getExistingService(ctx context.Context, r shared_types.Tas
 	return FindServiceByName(ctx, r.Application.Name)
 }
 
-// FindServiceByName finds a service by name (shared utility for both deploy and devrunner)
+// FindServiceByName finds a service by name using Docker API filtering.
 func FindServiceByName(ctx context.Context, serviceName string) (*swarm.Service, error) {
 	dockerService, err := docker.GetDockerServiceFromContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get docker service: %w", err)
 	}
-	services, err := dockerService.GetClusterServices()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, service := range services {
-		if service.Spec.Annotations.Name == serviceName {
-			return &service, nil
-		}
-	}
-	return nil, nil
+	return dockerService.GetServiceByName(serviceName)
 }
 
-// FindServiceByLabel finds a service by label key-value pair (shared utility)
+// FindServiceByLabel finds a service by label key-value pair using Docker API filtering.
 func FindServiceByLabel(ctx context.Context, labelKey, labelValue string) (*swarm.Service, error) {
 	dockerService, err := docker.GetDockerServiceFromContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get docker service: %w", err)
 	}
-	services, err := dockerService.GetClusterServices()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, service := range services {
-		if service.Spec.Labels != nil && service.Spec.Labels[labelKey] == labelValue {
-			return &service, nil
-		}
-	}
-	return nil, nil
+	return dockerService.GetServiceByLabel(labelKey, labelValue)
 }
 
 const labelWorkdir = "nixopus.workdir"
@@ -349,28 +340,29 @@ func (s *TaskService) waitForServiceHealthy(ctx context.Context, r shared_types.
 	return swarm.Service{}, fmt.Errorf("timeout waiting for service to become healthy, task states: %s", taskStates)
 }
 
-// getTaskStatesForService returns a summary of task states for debugging
+// getTaskStatesForService returns a summary of task states for debugging.
+// Uses Docker API filter to fetch only tasks for this service instead of all cluster tasks.
 func (s *TaskService) getTaskStatesForService(ctx context.Context, service swarm.Service) string {
 	dockerService, err := s.getDockerService(ctx)
 	if err != nil {
 		return fmt.Sprintf("failed to get docker service: %s", err.Error())
 	}
-	tasks, err := dockerService.GetClusterTasks()
+	tasks, err := dockerService.GetTasksByServiceID(service.ID)
 	if err != nil {
 		return fmt.Sprintf("failed to get tasks: %s", err.Error())
+	}
+
+	if len(tasks) == 0 {
+		return "no tasks found"
 	}
 
 	stateCounts := make(map[string]int)
 	var latestError string
 
 	for _, task := range tasks {
-		if task.ServiceID != service.ID {
-			continue
-		}
 		state := string(task.Status.State)
 		stateCounts[state]++
 
-		// Capture the latest error message from failed tasks
 		if task.Status.State == swarm.TaskStateFailed ||
 			task.Status.State == swarm.TaskStateRejected ||
 			task.Status.State == swarm.TaskStateShutdown {
@@ -378,10 +370,6 @@ func (s *TaskService) getTaskStatesForService(ctx context.Context, service swarm
 				latestError = task.Status.Err
 			}
 		}
-	}
-
-	if len(stateCounts) == 0 {
-		return "no tasks found"
 	}
 
 	var states []string
@@ -395,6 +383,26 @@ func (s *TaskService) getTaskStatesForService(ctx context.Context, service swarm
 	}
 
 	return result
+}
+
+// cleanupServiceOnFailure removes a Swarm service that was created/updated as part of a
+// deployment that subsequently failed (e.g. Caddy proxy configuration). This prevents
+// orphaned containers from consuming resources after a partial deployment.
+func (s *TaskService) cleanupServiceOnFailure(ctx context.Context, serviceName string, taskCtx *TaskContext) {
+	service, err := FindServiceByName(ctx, serviceName)
+	if err != nil || service == nil {
+		return
+	}
+	dockerService, err := s.getDockerService(ctx)
+	if err != nil {
+		taskCtx.AddLog("Cleanup warning: could not get docker service: " + err.Error())
+		return
+	}
+	if err := dockerService.DeleteService(service.ID); err != nil {
+		taskCtx.AddLog("Cleanup warning: failed to remove orphaned service: " + err.Error())
+	} else {
+		taskCtx.AddLog("Cleaned up orphaned service " + serviceName + " after deployment failure")
+	}
 }
 
 // containsSensitiveKeyword checks if a key likely contains sensitive information

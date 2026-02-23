@@ -132,6 +132,12 @@ func (s *DockerService) GetClusterTasks() ([]swarm.Task, error) {
 	return tasks, err
 }
 
+func (s *DockerService) GetTasksByServiceID(serviceID string) ([]swarm.Task, error) {
+	return s.Cli.TaskList(s.Ctx, types.TaskListOptions{
+		Filters: filters.NewArgs(filters.Arg("service", serviceID)),
+	})
+}
+
 func (s *DockerService) GetClusterSecrets() ([]swarm.Secret, error) {
 	secrets, err := s.Cli.SecretList(s.Ctx, types.SecretListOptions{})
 	return secrets, err
@@ -244,4 +250,32 @@ func (s *DockerService) RollbackService(serviceID string) error {
 func (s *DockerService) GetServiceByID(serviceID string) (swarm.Service, error) {
 	service, _, err := s.Cli.ServiceInspectWithRaw(s.Ctx, serviceID, types.ServiceInspectOptions{})
 	return service, err
+}
+
+func (s *DockerService) GetServiceByName(name string) (*swarm.Service, error) {
+	services, err := s.Cli.ServiceList(s.Ctx, types.ServiceListOptions{
+		Filters: filters.NewArgs(filters.Arg("name", name)),
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, svc := range services {
+		if svc.Spec.Annotations.Name == name {
+			return &svc, nil
+		}
+	}
+	return nil, nil
+}
+
+func (s *DockerService) GetServiceByLabel(key, value string) (*swarm.Service, error) {
+	services, err := s.Cli.ServiceList(s.Ctx, types.ServiceListOptions{
+		Filters: filters.NewArgs(filters.Arg("label", key+"="+value)),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(services) > 0 {
+		return &services[0], nil
+	}
+	return nil, nil
 }
