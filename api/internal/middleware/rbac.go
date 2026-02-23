@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/cache"
+	betterauth "github.com/raghavyuva/nixopus-api/internal/features/auth"
 	appStorage "github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
@@ -195,12 +195,7 @@ func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Requ
 		}
 	}
 
-	// Make the request with timeout
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-
-	resp, err := client.Do(req)
+	resp, err := betterauth.HTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch organization members: %w", err)
 	}
@@ -345,6 +340,27 @@ func getPermissionsForRole(role string) []string {
 	}
 	// Custom roles (e.g. orgid_xxx_custom) or unknown: default to viewer
 	return rolePermissions["viewer"]
+}
+
+// cacheRBACPermissionsFromMember extracts role from member and caches permissions.
+// Called by Auth middleware when it fetches member data, so RBAC avoids duplicate API call.
+func cacheRBACPermissionsFromMember(userID, organizationID string, member *BetterAuthMember) {
+	var role string
+	if member.Role != nil {
+		if roleStr, ok := member.Role.(string); ok {
+			role = roleStr
+		} else if roleArr, ok := member.Role.([]interface{}); ok && len(roleArr) > 0 {
+			if roleStr, ok := roleArr[0].(string); ok {
+				role = roleStr
+			}
+		}
+	}
+	if role == "" {
+		role = "member"
+	}
+	roles := []string{role}
+	permissions := getPermissionsForRole(role)
+	cachePermissions(userID, organizationID, roles, permissions)
 }
 
 // cachePermissions caches user permissions for future requests

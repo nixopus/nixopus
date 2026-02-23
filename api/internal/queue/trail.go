@@ -1,161 +1,141 @@
-package queue
+package service
 
 import (
-	"context"
 	"fmt"
-	"log"
-	"sync"
-	"time"
+	"strings"
 
-	trail_types "github.com/raghavyuva/nixopus-api/internal/features/trail/types"
-	"github.com/vmihailenco/taskq/v3"
+	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
 )
 
-var (
-	onceTrailQueues sync.Once
-	ProvisionQueue  taskq.Queue
-	TaskProvision   *taskq.Task
-)
-
-// Queue and task name constants (must match abyss consumer).
-const (
-	queueProvision = "provision-trail"
-	taskProvision  = "task_provision_trail"
-)
-
-// SetupProvisionQueue initializes the provision queue and task.
-// The handler is a no-op since actual processing happens in the abyss consumer.
-// Also ensures the consumer group exists and is positioned correctly to read all messages.
-func SetupProvisionQueue() {
-	onceTrailQueues.Do(func() {
-		ProvisionQueue = RegisterQueue(&taskq.QueueOptions{
-			Name:                queueProvision,
-			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        1,
-			MaxNumWorker:        1,
-			ReservationSize:     1,
-			ReservationTimeout:  15 * time.Minute,
-			WaitTimeout:         5 * time.Second,
-			BufferSize:          16,
-		})
-
-		TaskProvision = taskq.RegisterTask(&taskq.TaskOptions{
-			Name:       taskProvision,
-			RetryLimit: 1,
-			Handler: func(ctx context.Context, payload trail_types.ProvisionPayload) error {
-				fmt.Printf("[%s] task enqueued: session_id=%s, provision_details_id=%s\n",
-					taskProvision, payload.SessionID, payload.ProvisionDetailsID)
-				return nil
-			},
-		})
-
-		log.Printf("Trail provision queue registered: %s", queueProvision)
-
-		// Ensure consumer group exists and is positioned correctly
-		// This makes startup order independent - whether niixopus-api or abyss starts first,
-		// the consumer group will be ready to read all messages
-		ensureConsumerGroupReady(context.Background(), queueProvision)
-	})
-}
-
-// ensureConsumerGroupReady ensures the consumer group exists and is positioned to read all messages
-// (both existing and new). Call this at startup and before each enqueue so that any messages,
-// old or new, are always eligible for the consumer to pick up.
-func ensureConsumerGroupReady(ctx context.Context, queueName string) {
-	redisClient := RedisClient()
-	if redisClient == nil {
-		log.Printf("Warning: Redis client not available, skipping consumer group setup for queue '%s'", queueName)
-		return
+// ProvisionTrail handles the business logic for provisioning a new trail instance.
+//
+// Parameters:
+//   - userID: the UUID of the requesting user
+//   - orgID: the UUID of the organization
+//   - req: the provision request containing optional image selection
+//
+// Returns:
+//   - *types.ProvisionResponse: the provision response with session ID
+//   - error: domain error if provisioning fails
+func (s *TrailService) ProvisionTrail(userID, orgID string, req types.ProvisionRequest) (*types.ProvisionResponse, error) {
+	image := req.Image
+	if image == "" {
+		image = s.config.DefaultImage
 	}
 
-	streamKey := fmt.Sprintf("taskq:{%s}", queueName)
-	groupName := "taskq"
+	if !s.IsImageAllowed(image) {
+		s.logger.Log(logger.Warning, fmt.Sprintf("User %s requested disallowed image: %s", userID, image), userID)
+		return nil, types.ErrImageNotAllowed
+	}
 
-	// Create consumer group starting from "0" (beginning) if it doesn't exist
-	// This ensures all messages are readable regardless of when they were added
-	groupCreateCmd := redisClient.XGroupCreateMkStream(ctx, streamKey, groupName, "0")
-	if groupCreateCmd.Err() != nil {
-		errMsg := groupCreateCmd.Err().Error()
-		// Group already exists - check if it needs to be reset so all messages (old + new) are readable
-		if errMsg == "BUSYGROUP Consumer Group name already exists" || errMsg == "BUSYGROUP" {
-			// Group exists, check if it's positioned correctly to read all messages
-			groupInfoCmd := redisClient.XInfoGroups(ctx, streamKey)
-			if groupInfoCmd.Err() == nil {
-				groups, _ := groupInfoCmd.Result()
-				for _, group := range groups {
-					if group.Name != groupName {
-						continue
-					}
-					streamLenCmd := redisClient.XLen(ctx, streamKey)
-					streamLen := int64(0)
-					if streamLenCmd.Err() == nil {
-						streamLen, _ = streamLenCmd.Result()
-					}
-					if streamLen == 0 {
-						break
-					}
+	activeProvision, err := s.storage.GetActiveProvisionByUserAndOrg(userID, orgID)
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), userID)
+		return nil, fmt.Errorf("failed to check active provisions: %w", err)
+	}
 
-					// Reset to "0" when group would miss existing messages:
-					// "$" = only new messages; "0-0" or "" = initial/empty; or last-delivered-id behind first message
-					needsReset := false
-					switch group.LastDeliveredID {
-					case "$", "0-0", "":
-						needsReset = true
-					default:
-						rangeCmd := redisClient.XRangeN(ctx, streamKey, "-", "+", 1)
-						if rangeCmd.Err() == nil {
-							messages, err := rangeCmd.Result()
-							if err == nil && len(messages) > 0 {
-								if compareStreamID(group.LastDeliveredID, messages[0].ID) < 0 {
-									needsReset = true
-								}
-							}
-						}
-					}
+	if activeProvision != nil {
+		return nil, types.ErrActiveProvisionExists
+	}
 
-					// Only reset if no pending messages (avoid re-delivering in-flight work)
-					if needsReset && group.Pending == 0 {
-						log.Printf("Queue '%s': Consumer group at '%s' with %d messages - resetting to '0' to read all",
-							queueName, group.LastDeliveredID, streamLen)
-						setIdCmd := redisClient.XGroupSetID(ctx, streamKey, groupName, "0")
-						if setIdCmd.Err() == nil {
-							log.Printf("Queue '%s': Consumer group reset to '0' - will read all messages", queueName)
-						}
-					}
-					break
-				}
-			}
+	// TODO: Re-enable capacity check after testing
+	// count, err := s.storage.CountActiveProvisions()
+	// if err != nil {
+	// 	s.logger.Log(logger.Error, err.Error(), "")
+	// 	return nil, fmt.Errorf("failed to check system capacity: %w", err)
+	// }
+	//
+	// if count >= s.config.MaxConcurrentTrails {
+	// 	s.logger.Log(logger.Warning, fmt.Sprintf("Max concurrent trails reached (%d/%d)", count, s.config.MaxConcurrentTrails), "")
+	// 	return nil, types.ErrSystemAtCapacity
+	// }
+
+	subdomain, err := s.GenerateSubdomain()
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), userID)
+		return nil, fmt.Errorf("failed to generate subdomain: %w", err)
+	}
+
+	user, err := s.storage.GetUserByID(userID)
+	if err != nil {
+		s.logger.Log(logger.Error, err.Error(), userID)
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	displayName := ""
+	if user != nil {
+		if user.Name != "" {
+			displayName = user.Name
 		} else {
-			log.Printf("Warning: Failed to create consumer group '%s' for queue '%s': %v", groupName, queueName, groupCreateCmd.Err())
+			displayName = user.Email
 		}
-	} else {
-		log.Printf("Created consumer group '%s' for queue '%s' (starting from beginning)", groupName, queueName)
-	}
-}
-
-// compareStreamID compares two Redis stream message IDs (timestamp-sequence).
-// Returns: -1 if id1 < id2, 0 if id1 == id2, 1 if id1 > id2
-func compareStreamID(id1, id2 string) int {
-	if id1 < id2 {
-		return -1
-	}
-	if id1 > id2 {
-		return 1
-	}
-	return 0
-}
-
-// EnqueueProvisionTask enqueues a provision task to the Redis queue.
-// Ensures the consumer group is ready to read all messages (old and new) before adding,
-// so that abyss reliably picks up every message regardless of timing.
-func EnqueueProvisionTask(ctx context.Context, payload trail_types.ProvisionPayload) error {
-	if ProvisionQueue == nil {
-		return fmt.Errorf("provision queue not initialized - call SetupProvisionQueue first")
 	}
 
-	// Ensure consumer group is positioned to read all messages before we add this one.
-	// This makes delivery consistent even when abyss starts after messages exist.
-	ensureConsumerGroupReady(ctx, queueProvision)
+	containerName := s.GenerateContainerName(displayName)
 
-	return ProvisionQueue.Add(TaskProvision.WithArgs(ctx, payload))
+	fullDomain := fmt.Sprintf("%s.%s", subdomain, s.config.TrailDomain)
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID: %w", err)
+	}
+
+	orgUUID, err := uuid.Parse(orgID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid organization ID: %w", err)
+	}
+
+	initialStep := types.ProvisionStepInitializing
+	provisionDetails := &types.UserProvisionDetails{
+		UserID:           userUUID,
+		OrganizationID:   orgUUID,
+		LXDContainerName: &containerName,
+		Subdomain:        &subdomain,
+		Domain:           &fullDomain,
+		Step:             &initialStep,
+	}
+
+	if err := s.storage.CreateActiveUserProvision(provisionDetails); err != nil {
+		if strings.Contains(err.Error(), "active_provision_per_user_org") || strings.Contains(err.Error(), "duplicate") {
+			return nil, types.ErrActiveProvisionExists
+		}
+		s.logger.Log(logger.Error, err.Error(), userID)
+		return nil, fmt.Errorf("failed to create provision record: %w", err)
+	}
+
+	if err := s.storage.UpdateUserProvisionStatus(userID, types.UserProvisionStatusProvisioning); err != nil {
+		s.logger.Log(logger.Warning, fmt.Sprintf("Failed to set user provision_status=PROVISIONING: %v", err), userID)
+	}
+
+	payload := types.ProvisionPayload{
+		SessionID:          provisionDetails.ID.String(),
+		Subdomain:          subdomain,
+		ContainerName:      containerName,
+		Image:              image,
+		UserID:             userID,
+		OrgID:              orgID,
+		ProvisionDetailsID: provisionDetails.ID.String(),
+	}
+
+	if err := s.EnqueueProvisionTask(s.ctx, payload); err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("Failed to enqueue provision task: %v", err), userID)
+
+		if updateErr := s.storage.UpdateUserProvisionDetailsWithError(provisionDetails.ID.String(), fmt.Sprintf("Failed to enqueue task: %v", err)); updateErr != nil {
+			s.logger.Log(logger.Warning, fmt.Sprintf("Failed to update provision details error: %v", updateErr), userID)
+		}
+
+		if updateErr := s.storage.UpdateUserProvisionStatus(userID, types.UserProvisionStatusFailed); updateErr != nil {
+			s.logger.Log(logger.Warning, fmt.Sprintf("Failed to update user provision_status: %v", updateErr), userID)
+		}
+
+		return nil, types.ErrFailedToEnqueueTask
+	}
+
+	return &types.ProvisionResponse{
+		SessionID: provisionDetails.ID.String(),
+		Status:    string(types.UserProvisionStatusProvisioning),
+		Message:   "Trail provisioning started",
+	}, nil
 }

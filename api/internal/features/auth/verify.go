@@ -8,9 +8,21 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/raghavyuva/nixopus-api/internal/config"
 )
+
+// HTTPClient is a shared HTTP client for Better Auth API calls.
+// Uses connection pooling and timeouts to reduce latency from repeated connection setup.
+var HTTPClient = &http.Client{
+	Timeout: 5 * time.Second,
+	Transport: &http.Transport{
+		MaxIdleConns:        50,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
+	},
+}
 
 // getBetterAuthURL returns the Better Auth URL from config with fallback to localhost for development.
 func getBetterAuthURL() string {
@@ -166,8 +178,7 @@ func VerifySession(r *http.Request) (*SessionResponse, error) {
 	forwardCookies(r, req)
 	forwardHeaders(r, req)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := HTTPClient.Do(req)
 	if err != nil {
 		log.Printf("ERROR VerifySession: HTTP request failed: %v", err)
 		return nil, fmt.Errorf("failed to verify session: %w", err)
@@ -204,8 +215,7 @@ func SendOTP(email string) error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := HTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to send OTP: %w", err)
 	}
