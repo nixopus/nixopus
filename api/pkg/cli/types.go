@@ -1,4 +1,4 @@
-package commands
+package cli
 
 // CreateProjectRequest represents the request body for creating a project
 type CreateProjectRequest struct {

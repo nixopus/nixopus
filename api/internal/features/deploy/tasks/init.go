@@ -2,9 +2,10 @@ package tasks
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 
 	types "github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/queue"
@@ -49,24 +50,23 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			Name:                QUEUE_CREATE_DEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
 			MinNumWorker:        4,
-			MaxNumWorker:        4,
+			MaxNumWorker:        16,
 			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          16,
+			BufferSize:          64,
 		})
 
 		TaskCreateDeployment = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_CREATE_DEPLOYMENT,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
-				fmt.Printf("[%s] start: correlation_id=%s\n", TASK_CREATE_DEPLOYMENT, data.CorrelationID)
-				err := t.BuildPack(ctx, data)
-				if err != nil {
-					fmt.Print("error handling create deployment: ", err)
+				t.Logger.Log(logger.Info, "starting create deployment", data.CorrelationID)
+				if err := t.BuildPack(ctx, data); err != nil {
+					t.Logger.Log(logger.Error, "create deployment failed: "+err.Error(), data.CorrelationID)
 					return err
 				}
-				fmt.Printf("[%s] done: correlation_id=%s\n", TASK_CREATE_DEPLOYMENT, data.CorrelationID)
+				t.Logger.Log(logger.Info, "create deployment completed", data.CorrelationID)
 				return nil
 			},
 		})
@@ -75,120 +75,99 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			Name:                QUEUE_UPDATE_DEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
 			MinNumWorker:        4,
-			MaxNumWorker:        4,
+			MaxNumWorker:        16,
 			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          16,
+			BufferSize:          64,
 		})
 
 		TaskUpdateDeployment = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_UPDATE_DEPLOYMENT,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
-				fmt.Println("Updating deployment")
-				err := t.HandleUpdateDeployment(ctx, data)
-				if err != nil {
-					return err
-				}
-				return nil
+				t.Logger.Log(logger.Info, "starting update deployment", data.CorrelationID)
+				return t.HandleUpdateDeployment(ctx, data)
 			},
 		})
 
-		// Redeploy queue and task registration
 		ReDeployQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_REDEPLOYMENT,
 			ConsumerIdleTimeout: 10 * time.Minute,
 			MinNumWorker:        4,
-			MaxNumWorker:        4,
+			MaxNumWorker:        16,
 			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          16,
+			BufferSize:          64,
 		})
 
 		TaskReDeploy = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_REDEPLOYMENT,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
-				fmt.Println("Redeploying application")
-				err := t.HandleReDeploy(ctx, data)
-				if err != nil {
-					return err
-				}
-				return nil
+				t.Logger.Log(logger.Info, "starting redeploy", data.CorrelationID)
+				return t.HandleReDeploy(ctx, data)
 			},
 		})
 
-		// Rollback queue and task registration
 		RollbackQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_ROLLBACK,
 			ConsumerIdleTimeout: 10 * time.Minute,
 			MinNumWorker:        4,
-			MaxNumWorker:        4,
+			MaxNumWorker:        16,
 			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          16,
+			BufferSize:          64,
 		})
 
 		TaskRollback = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_ROLLBACK,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
-				fmt.Println("Rolling back deployment")
-				err := t.HandleRollback(ctx, data)
-				if err != nil {
-					return err
-				}
-				return nil
+				t.Logger.Log(logger.Info, "starting rollback", data.CorrelationID)
+				return t.HandleRollback(ctx, data)
 			},
 		})
 
-		// Restart queue and task registration
 		RestartQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_RESTART,
 			ConsumerIdleTimeout: 10 * time.Minute,
 			MinNumWorker:        4,
-			MaxNumWorker:        4,
+			MaxNumWorker:        16,
 			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          16,
+			BufferSize:          64,
 		})
 
 		TaskRestart = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_RESTART,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
-				fmt.Println("Restarting deployment")
-				err := t.HandleRestart(ctx, data)
-				if err != nil {
-					return err
-				}
-				return nil
+				t.Logger.Log(logger.Info, "starting restart", data.CorrelationID)
+				return t.HandleRestart(ctx, data)
 			},
 		})
 
-		// Live dev queue and task registration
 		LiveDevQueue = queue.RegisterQueue(&taskq.QueueOptions{
 			Name:                QUEUE_LIVE_DEV,
 			ConsumerIdleTimeout: 10 * time.Minute,
 			MinNumWorker:        4,
-			MaxNumWorker:        4,
+			MaxNumWorker:        16,
 			ReservationSize:     1,
 			ReservationTimeout:  15 * time.Minute,
 			WaitTimeout:         5 * time.Second,
-			BufferSize:          16,
+			BufferSize:          64,
 		})
 
 		TaskLiveDev = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_LIVE_DEV,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, config LiveDevConfig) error {
-				err := t.HandleBuildFirstLiveDev(ctx, config)
-				if err != nil {
-					fmt.Printf("error handling live dev deployment: %v\n", err)
+				if err := t.HandleBuildFirstLiveDev(ctx, config); err != nil {
+					t.Logger.Log(logger.Error, "live dev deployment failed: "+err.Error(), config.ApplicationID.String())
 					return err
 				}
 				return nil

@@ -5,44 +5,13 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"os"
-	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/raghavyuva/nixopus-api/internal/config"
-)
-
-var (
-	sendBufferSize    int
-	receiveBufferSize int
-)
-
-func init() {
-	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_MOVER_SEND_BUFFER")); err == nil && v > 0 {
-		sendBufferSize = v
-	} else {
-		sendBufferSize = 8192 // Handle 2000+ files (file_change + chunks per file)
-	}
-	if v, err := strconv.Atoi(os.Getenv("NIXOPUS_MOVER_RECEIVE_BUFFER")); err == nil && v > 0 {
-		receiveBufferSize = v
-	} else {
-		receiveBufferSize = 1024
-	}
-}
-
-const (
-	writeWait             = 10 * time.Second
-	pongWait              = 60 * time.Second
-	pingPeriod            = 25 * time.Second
-	maxMessageSize        = 64 * 1024 * 1024 // 64MB
-	initialReconnectDelay = 1 * time.Second
-	maxReconnectDelay     = 30 * time.Second
-	reconnectBackoffRate  = 2.0
-	maxReconnectAttempts  = 0                // 0 = unlimited retries
-	handshakeTimeout      = 60 * time.Second // Increased timeout for server-side DB operations
+	"github.com/raghavyuva/nixopus-api/internal/syncproto"
 )
 
 type ConnectionState int
@@ -88,8 +57,8 @@ type Client struct {
 	state   ConnectionState
 	stateMu sync.RWMutex
 
-	send    chan SyncMessage
-	receive chan SyncMessage
+	send    chan syncproto.SyncMessage
+	receive chan syncproto.SyncMessage
 	done    chan struct{}
 
 	reconnectAttempts int64 // Use atomic for thread-safe access
@@ -97,7 +66,7 @@ type Client struct {
 	reconnectNeeded   chan struct{}
 	onStateChange     func(ConnectionEvent)
 
-	pendingMessages []SyncMessage
+	pendingMessages []syncproto.SyncMessage
 	pendingMu       sync.Mutex
 
 	wg sync.WaitGroup
@@ -123,11 +92,11 @@ func NewClient(serverURL, token string, opts ...ClientOption) (*Client, error) {
 	c := &Client{
 		serverURL:       serverURL,
 		token:           token,
-		send:            make(chan SyncMessage, sendBufferSize),
-		receive:         make(chan SyncMessage, receiveBufferSize),
+		send:            make(chan syncproto.SyncMessage, sendBufferSize()),
+		receive:         make(chan syncproto.SyncMessage, receiveBufferSize()),
 		done:            make(chan struct{}),
 		state:           StateDisconnected,
-		pendingMessages: make([]SyncMessage, 0),
+		pendingMessages: make([]syncproto.SyncMessage, 0),
 		reconnectNeeded: make(chan struct{}, 1),
 	}
 
@@ -147,7 +116,7 @@ func NewClient(serverURL, token string, opts ...ClientOption) (*Client, error) {
 	return c, nil
 }
 
-func (c *Client) Send(msg SyncMessage) error {
+func (c *Client) Send(msg syncproto.SyncMessage) error {
 	// Check state atomically
 	c.stateMu.RLock()
 	state := c.state
@@ -173,7 +142,7 @@ func (c *Client) Send(msg SyncMessage) error {
 	}
 }
 
-func (c *Client) Receive() <-chan SyncMessage {
+func (c *Client) Receive() <-chan syncproto.SyncMessage {
 	return c.receive
 }
 
@@ -268,7 +237,7 @@ func (c *Client) dialWebSocket() (*websocket.Conn, error) {
 	// Create custom dialer with increased handshake timeout
 	// This allows time for server-side database operations (session verification, app context lookup)
 	dialer := &websocket.Dialer{
-		HandshakeTimeout:  handshakeTimeout,
+		HandshakeTimeout:  handshakeTimeout(),
 		ReadBufferSize:    256 * 1024,
 		WriteBufferSize:   256 * 1024,
 		EnableCompression: false,
@@ -283,7 +252,7 @@ func (c *Client) dialWebSocket() (*websocket.Conn, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	conn.SetReadLimit(maxMessageSize)
+	conn.SetReadLimit(maxMessageSize())
 	return conn, nil
 }
 
@@ -337,10 +306,11 @@ func (c *Client) attemptReconnectionWithBackoff() {
 		attempt := atomic.AddInt64(&c.reconnectAttempts, 1)
 
 		// Check max attempts
-		if maxReconnectAttempts > 0 && int(attempt) > maxReconnectAttempts {
+		maxAttempts := maxReconnectAttempts()
+		if maxAttempts > 0 && int(attempt) > maxAttempts {
 			c.emitStateChange(ConnectionEvent{
 				State:   StateDisconnected,
-				Error:   fmt.Errorf("max reconnection attempts (%d) exceeded", maxReconnectAttempts),
+				Error:   fmt.Errorf("max reconnection attempts (%d) exceeded", maxAttempts),
 				Attempt: int(attempt),
 			})
 			return
@@ -370,9 +340,9 @@ func (c *Client) attemptReconnectionWithBackoff() {
 
 // calculateBackoffDelay computes exponential backoff delay
 func (c *Client) calculateBackoffDelay(attempt int) time.Duration {
-	delay := float64(initialReconnectDelay) * math.Pow(reconnectBackoffRate, float64(attempt-1))
-	if delay > float64(maxReconnectDelay) {
-		delay = float64(maxReconnectDelay)
+	delay := float64(initialReconnectDelay()) * math.Pow(reconnectBackoffRate(), float64(attempt-1))
+	if delay > float64(maxReconnectDelay()) {
+		delay = float64(maxReconnectDelay())
 	}
 	return time.Duration(delay)
 }
@@ -416,13 +386,13 @@ func (c *Client) runReadLoop() {
 
 		// Set read deadline and pong handler while holding lock
 		// This ensures pong handler uses the same connection
-		conn.SetReadDeadline(time.Now().Add(pongWait))
+		conn.SetReadDeadline(time.Now().Add(pongWait()))
 		conn.SetPongHandler(func(string) error {
 			// Pong handler needs to access connection atomically
 			c.connMu.RLock()
 			conn := c.conn
 			if conn != nil {
-				conn.SetReadDeadline(time.Now().Add(pongWait))
+				conn.SetReadDeadline(time.Now().Add(pongWait()))
 			}
 			c.connMu.RUnlock()
 			return nil
@@ -457,9 +427,9 @@ func (c *Client) handleReadError(err error) {
 // recvEnvelope is the first-pass decode. Payload stays as json.RawMessage
 // to avoid double Marshal/Unmarshal when forwarding to typed structs.
 type recvEnvelope struct {
-	Type      MessageType     `json:"type"`
-	Timestamp time.Time       `json:"timestamp"`
-	Payload   json.RawMessage `json:"payload"`
+	Type      syncproto.MessageType `json:"type"`
+	Timestamp time.Time             `json:"timestamp"`
+	Payload   json.RawMessage       `json:"payload"`
 }
 
 // parseAndForwardMessage parses JSON once and unmarshals Payload into the typed struct.
@@ -471,7 +441,7 @@ func (c *Client) parseAndForwardMessage(message []byte) bool {
 	}
 
 	payload := c.unmarshalPayloadByType(env.Type, env.Payload)
-	msg := SyncMessage{Type: env.Type, Timestamp: env.Timestamp, Payload: payload}
+	msg := syncproto.SyncMessage{Type: env.Type, Timestamp: env.Timestamp, Payload: payload}
 
 	select {
 	case c.receive <- msg:
@@ -482,37 +452,31 @@ func (c *Client) parseAndForwardMessage(message []byte) bool {
 }
 
 // unmarshalPayloadByType unmarshals RawMessage into the appropriate typed struct.
-func (c *Client) unmarshalPayloadByType(typ MessageType, raw json.RawMessage) interface{} {
+func (c *Client) unmarshalPayloadByType(typ syncproto.MessageType, raw json.RawMessage) interface{} {
 	if len(raw) == 0 {
 		return nil
 	}
 	switch typ {
-	case MessageTypeManifest:
-		var m ManifestPayload
+	case syncproto.MessageTypeManifest:
+		var m syncproto.ManifestPayload
 		if err := json.Unmarshal(raw, &m); err != nil {
 			return nil
 		}
 		return m
-	case MessageTypePipelineProgress:
-		var m PipelineProgressPayload
+	case syncproto.MessageTypePipelineProgress:
+		var m syncproto.PipelineProgressPayload
 		if err := json.Unmarshal(raw, &m); err != nil {
 			return nil
 		}
 		return m
-	case MessageTypeBuildStatus:
-		var m BuildStatusPayload
+	case syncproto.MessageTypeBuildStatus:
+		var m syncproto.BuildStatusPayload
 		if err := json.Unmarshal(raw, &m); err != nil {
 			return nil
 		}
 		return m
-	case MessageTypeBuildLog:
-		var m BuildLogPayload
-		if err := json.Unmarshal(raw, &m); err != nil {
-			return nil
-		}
-		return m
-	case MessageTypeDeploymentStatus:
-		var m DeploymentStatusPayload
+	case syncproto.MessageTypeDeploymentStatus:
+		var m syncproto.DeploymentStatusPayload
 		if err := json.Unmarshal(raw, &m); err != nil {
 			return nil
 		}
@@ -536,7 +500,7 @@ func (c *Client) runWriteLoop() {
 		return
 	}
 
-	ticker := time.NewTicker(pingPeriod)
+	ticker := time.NewTicker(pingPeriod())
 	defer ticker.Stop()
 
 	for {
@@ -562,7 +526,7 @@ func (c *Client) runWriteLoop() {
 }
 
 // writeTextMessageToConnection marshals and writes a text message
-func (c *Client) writeTextMessageToConnection(msg SyncMessage) bool {
+func (c *Client) writeTextMessageToConnection(msg syncproto.SyncMessage) bool {
 	data, err := json.Marshal(msg)
 	if err != nil {
 		return true // Skip invalid messages
@@ -589,7 +553,7 @@ func (c *Client) writeMessageToConnection(messageType int, data []byte) bool {
 		return false
 	}
 
-	conn.SetWriteDeadline(time.Now().Add(writeWait))
+	conn.SetWriteDeadline(time.Now().Add(writeWait()))
 	err := conn.WriteMessage(messageType, data)
 	c.connMu.RUnlock()
 
@@ -613,7 +577,7 @@ func (c *Client) handleWriteError(err error) {
 }
 
 // queueMessage adds a message to the pending queue
-func (c *Client) queueMessage(msg SyncMessage) {
+func (c *Client) queueMessage(msg syncproto.SyncMessage) {
 	c.pendingMu.Lock()
 	c.pendingMessages = append(c.pendingMessages, msg)
 	c.pendingMu.Unlock()
@@ -621,7 +585,7 @@ func (c *Client) queueMessage(msg SyncMessage) {
 
 // flushQueuedMessagesAfterDelay waits briefly then flushes queued messages
 func (c *Client) flushQueuedMessagesAfterDelay() {
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(closeFlushDelay())
 	c.flushQueuedMessages()
 }
 
@@ -629,7 +593,7 @@ func (c *Client) flushQueuedMessagesAfterDelay() {
 func (c *Client) flushQueuedMessages() {
 	c.pendingMu.Lock()
 	messages := c.pendingMessages
-	c.pendingMessages = make([]SyncMessage, 0)
+	c.pendingMessages = make([]syncproto.SyncMessage, 0)
 	c.pendingMu.Unlock()
 
 	for _, msg := range messages {
