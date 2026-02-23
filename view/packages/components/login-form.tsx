@@ -5,7 +5,6 @@ import { Input } from '@nixopus/ui';
 import { PasswordInputField } from '@nixopus/ui';
 import { Label } from '@nixopus/ui';
 import { Alert, AlertDescription } from '@nixopus/ui';
-import nixopusLogo from '@/public/logo_white.png';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -78,7 +77,7 @@ export function LoginForm({ ...props }: LoginFormProps) {
               )}
               {!props.showTwoFactor && (
                 <div className="flex flex-col items-center text-center">
-                  <h1 className="text-2xl font-bold">Login with password</h1>
+                  <h1 className="text-2xl font-bold">Login</h1>
                 </div>
               )}
               {!props.showTwoFactor && (
@@ -162,11 +161,16 @@ export function LoginForm({ ...props }: LoginFormProps) {
               )}
             </div>
           </div>
-          <div className="bg-muted relative hidden md:block">
+          <div className="bg-muted relative hidden md:flex md:items-center md:justify-center p-8">
             <img
-              src={nixopusLogo.src}
+              src="/logo_black.png"
               alt="Nixopus Logo"
-              className="absolute inset-0 h-full w-full object-contain p-8"
+              className="max-h-56 max-w-56 object-contain dark:hidden"
+            />
+            <img
+              src="/logo_white.png"
+              alt="Nixopus Logo"
+              className="max-h-56 max-w-56 object-contain hidden dark:block"
             />
           </div>
         </CardContent>

@@ -71,8 +71,8 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 		ctx = context.WithValue(ctx, types.UserContextKey, &user)
 
 		if !isAuthEndpoint(r.URL.Path) {
-			// Resolve and verify organization membership
-			organizationID, err := resolveAndVerifyOrganization(ctx, r, cache, betterAuthUserID)
+			// Resolve and verify organization membership (reuse sessionResp to avoid duplicate VerifySession call)
+			organizationID, err := resolveAndVerifyOrganization(ctx, r, cache, betterAuthUserID, sessionResp)
 			if err != nil {
 				log.Printf("ERROR AuthMiddleware: Failed to resolve organization: %v", err)
 				statusCode := http.StatusBadRequest
@@ -121,20 +121,25 @@ func isAuthEndpoint(path string) bool {
 	return false
 }
 
-// resolveAndVerifyOrganization resolves the organization ID from Better Auth session
+// extractOrgIDFromSession extracts organization ID from session response or X-Organization-Id header.
+func extractOrgIDFromSession(sessionResp *betterauth.SessionResponse, r *http.Request) string {
+	if sessionResp != nil && sessionResp.Session.ActiveOrganizationID != nil && *sessionResp.Session.ActiveOrganizationID != "" {
+		return *sessionResp.Session.ActiveOrganizationID
+	}
+	return r.Header.Get("X-Organization-Id")
+}
+
+// resolveAndVerifyOrganization resolves the organization ID from the already-verified session
 // and verifies user membership via Better Auth API (with caching).
 func resolveAndVerifyOrganization(
 	ctx context.Context,
 	r *http.Request,
 	cache *cache.Cache,
 	betterAuthUserID string,
+	sessionResp *betterauth.SessionResponse,
 ) (string, error) {
-	// Get organization ID from Better Auth session only
-	organizationID, err := utils.GetOrganizationIDFromBetterAuth(r)
-	if err != nil {
-		return "", fmt.Errorf("failed to get organization ID from Better Auth session: %w", err)
-	}
-
+	// Extract organization ID from session (already verified, no duplicate API call)
+	organizationID := extractOrgIDFromSession(sessionResp, r)
 	if organizationID == "" {
 		return "", fmt.Errorf("no organization ID found in Better Auth session")
 	}
@@ -153,7 +158,8 @@ func resolveAndVerifyOrganization(
 }
 
 // verifyOrganizationMembership verifies if a user belongs to an organization.
-// Uses cache to avoid repeated API calls.
+// Uses cache to avoid repeated API calls. When fetching from API, also populates
+// RBAC cache so RBAC middleware avoids a duplicate Better Auth API call.
 func verifyOrganizationMembership(
 	ctx context.Context,
 	r *http.Request,
@@ -182,6 +188,9 @@ func verifyOrganizationMembership(
 	if cache != nil {
 		cache.SetOrgMembership(ctx, betterAuthUserID, organizationID, true)
 	}
+
+	// Populate RBAC cache so RBAC middleware avoids duplicate Better Auth API call
+	cacheRBACPermissionsFromMember(betterAuthUserID, organizationID, member)
 
 	return true, nil
 }

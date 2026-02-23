@@ -87,8 +87,9 @@
     "sshBanner": {
       "message": "La connexion SSH ne fonctionne pas. Veuillez vérifier la configuration de votre serveur.",
       "notConfigured": "SSH n'est pas configuré pour votre serveur. Veuillez configurer les paramètres SSH pour vous connecter à votre serveur.",
-      "notConnected": "Impossible de se connecter au serveur SSH. Veuillez résoudre les problèmes de votre configuration SSH.",
-      "troubleshoot": "Dépanner"
+      "notConnected": "Impossible de se connecter à la machine.",
+      "troubleshoot": "Dépanner",
+      "contactSupport": "Contacter le support"
     }
   }
 }

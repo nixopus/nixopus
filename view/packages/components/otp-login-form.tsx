@@ -2,11 +2,9 @@ import { cn } from '@/lib/utils';
 import { Button } from '@nixopus/ui';
 import { Card, CardContent } from '@nixopus/ui';
 import { Input } from '@nixopus/ui';
-import { Label } from '@nixopus/ui';
 import { Alert, AlertDescription } from '@nixopus/ui';
 import { OTPInput } from '@nixopus/ui';
-import nixopusLogo from '@/public/logo_white.png';
-import { useTranslation } from '@/packages/hooks/shared/use-translation';
+import { useTranslation, type translationKey } from '@/packages/hooks/shared/use-translation';
 import { useOtpLoginForm } from '@/packages/hooks/auth/use-otp-login-form';
 
 export interface OtpLoginFormProps {
@@ -16,6 +14,7 @@ export interface OtpLoginFormProps {
   handleOtpChange: (otp: string) => void;
   handleSendOtp: () => void;
   handleVerifyOtp: () => void;
+  handleChangeEmail: () => void;
   isSendingOtp: boolean;
   isVerifyingOtp: boolean;
   otpSent: boolean;
@@ -32,51 +31,54 @@ export function OtpLoginForm({ ...props }: OtpLoginFormProps) {
   });
 
   return (
-    <div className={cn('flex flex-col gap-6')}>
-      <Card className="overflow-hidden p-0 min-h-[500px] flex flex-col justify-center">
-        <CardContent className="grid p-0 md:grid-cols-2">
-          <div className="p-6 md:p-8">
-            <div className="flex flex-col gap-6">
-              {props.otpSent && (
-                <div className="flex flex-col items-center text-center">
-                  <h1 className="text-2xl font-bold">{t('auth.otpLogin.verifyTitle')}</h1>
-                  <p className="text-muted-foreground text-balance">
-                    {t('auth.otpLogin.verifyDescription')}
-                  </p>
-                </div>
-              )}
-              {!props.otpSent && (
-                <div className="flex flex-col items-center text-center">
-                  <h1 className="text-2xl font-bold">Login with OTP</h1>
-                </div>
-              )}
-              {!props.otpSent && (
-                <div className="grid gap-3">
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder={t('auth.login.emailPlaceholder')}
-                    required
-                    value={props.email}
-                    onChange={props.handleEmailChange}
-                  />
-                  {emailError && (
-                    <Alert variant="destructive">
-                      <AlertDescription className="text-xs !text-red-600 font-medium">
-                        {emailError}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-              )}
-              {props.otpSent && (
-                <div className="grid gap-3">
-                  <Label htmlFor="otp">{t('auth.otpLogin.enterOtp')}</Label>
+    <div className={cn('flex flex-col gap-4')}>
+      <div className="flex justify-center">
+        <img
+          src="/logo_black.png"
+          alt="Nixopus Logo"
+          className="max-h-16 max-w-16 object-contain dark:hidden"
+        />
+        <img
+          src="/logo_white.png"
+          alt="Nixopus Logo"
+          className="max-h-16 max-w-16 object-contain hidden dark:block"
+        />
+      </div>
+      <Card className="overflow-hidden p-0 flex flex-col justify-center border-0 shadow-none">
+        <CardContent className="p-6 md:p-8">
+          <div className="flex flex-col gap-4">
+            {!props.otpSent && (
+              <div className="grid gap-2">
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder={t('auth.login.emailPlaceholder')}
+                  required
+                  value={props.email}
+                  onChange={props.handleEmailChange}
+                  className="h-11 placeholder:text-gray-500"
+                />
+                {emailError && (
+                  <Alert variant="destructive">
+                    <AlertDescription className="text-xs !text-red-600 font-medium">
+                      {emailError}
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            )}
+            {props.otpSent && (
+              <>
+                <p className="text-center text-sm text-muted-foreground">
+                  {t('auth.otpLogin.otpSentTo')} {props.email}
+                </p>
+                <div className="grid gap-2">
                   <OTPInput
                     value={props.otp}
                     onChange={props.handleOtpChange}
                     length={6}
                     disabled={props.isVerifyingOtp}
+                    className="[&_input]:h-11"
                   />
                   {otpError && (
                     <Alert variant="destructive">
@@ -85,45 +87,43 @@ export function OtpLoginForm({ ...props }: OtpLoginFormProps) {
                       </AlertDescription>
                     </Alert>
                   )}
-                  <p className="text-muted-foreground text-sm">
-                    {t('auth.otpLogin.otpSentTo')}{' '}
-                    <span className="font-medium">{props.email}</span>
-                  </p>
                 </div>
-              )}
-              <Button
-                type="submit"
-                className="w-full"
-                onClick={props.otpSent ? handleVerifyOtpClick : handleSendOtpClick}
-                disabled={props.otpSent ? props.isVerifyingOtp : props.isSendingOtp}
-              >
-                {props.otpSent
-                  ? props.isVerifyingOtp
-                    ? t('auth.otpLogin.verifying')
-                    : t('auth.otpLogin.verifyButton')
-                  : props.isSendingOtp
-                    ? t('auth.otpLogin.sending')
-                    : t('auth.otpLogin.sendOtpButton')}
-              </Button>
-              {props.otpSent && (
-                <Button
+              </>
+            )}
+            <Button
+              type="submit"
+              className="w-full"
+              onClick={props.otpSent ? handleVerifyOtpClick : handleSendOtpClick}
+              disabled={props.otpSent ? props.isVerifyingOtp : props.isSendingOtp}
+            >
+              {props.otpSent
+                ? props.isVerifyingOtp
+                  ? t('auth.otpLogin.verifying')
+                  : t('auth.otpLogin.verifyButton')
+                : props.isSendingOtp
+                  ? t('auth.otpLogin.sending')
+                  : t('auth.otpLogin.sendOtpButton')}
+            </Button>
+            {props.otpSent && (
+              <div className="flex items-center justify-between">
+                <button
                   type="button"
-                  variant="ghost"
-                  className="w-full"
                   onClick={handleSendOtpClick}
                   disabled={props.isSendingOtp}
+                  className="text-sm text-muted-foreground hover:text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {props.isSendingOtp ? t('auth.otpLogin.sending') : t('auth.otpLogin.resendOtp')}
+                </button>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto p-0 text-sm text-muted-foreground hover:text-primary hover:underline"
+                  onClick={props.handleChangeEmail}
+                >
+                  {t('auth.otpLogin.changeEmail' as translationKey)}
                 </Button>
-              )}
-            </div>
-          </div>
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src={nixopusLogo.src}
-              alt="Nixopus Logo"
-              className="absolute inset-0 h-full w-full object-contain p-8"
-            />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -4,8 +4,20 @@ import React from 'react';
 import { Alert, AlertDescription } from '@nixopus/ui';
 import { TypographyMuted } from '@nixopus/ui';
 import { Button } from '@nixopus/ui';
-import { X } from 'lucide-react';
+import { X, Mail } from 'lucide-react';
 import useSshBanner from '@/packages/hooks/dashboard/use-ssh-banner';
+import type { translationKey } from '@/packages/hooks/shared/use-translation';
+
+const SUPPORT_EMAIL = 'raghav@nixopus.com';
+const SUPPORT_MAIL_SUBJECT = 'SSH Connection Issue - Unable to connect to server';
+const SUPPORT_MAIL_BODY = `Hi Nixopus Support,
+
+I'm unable to connect to my SSH server. Please ensure I have a machine connected and help me troubleshoot my SSH configuration.
+
+Additional details:
+- [Please describe your setup and any error messages you're seeing]
+
+Thank you.`;
 
 export function SSHBanner() {
   const { handleDismiss, t, isVisible, sshStatus, isLoading } = useSshBanner();
@@ -31,17 +43,24 @@ export function SSHBanner() {
     return t('dashboard.sshBanner.message');
   };
 
+  // Show Contact Support when SSH is configured but not connected (no machine connected)
+  const showContactSupport = sshStatus.is_configured && !sshStatus.connected;
+  const contactSupportUrl = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(SUPPORT_MAIL_SUBJECT)}&body=${encodeURIComponent(SUPPORT_MAIL_BODY)}`;
+
   return (
-    <Alert className="mb-4 border-red-500/50 bg-red-50 dark:bg-red-950/20">
+    <Alert className="mb-4 border border-red-500/50 dark:border-red-800/50">
       <AlertDescription className="flex items-center justify-between">
-        <TypographyMuted className="text-red-800 dark:text-red-200">{getMessage()}</TypographyMuted>
+        <TypographyMuted>{getMessage()}</TypographyMuted>
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDismiss}
-            className="text-red-800 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-900/30"
-          >
+          {showContactSupport && (
+            <Button variant="outline" size="sm" asChild>
+              <a href={contactSupportUrl}>
+                <Mail className="h-4 w-4 mr-1.5" />
+                {t('dashboard.sshBanner.contactSupport' as translationKey)}
+              </a>
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={handleDismiss}>
             <X className="h-4 w-4" />
           </Button>
         </div>
