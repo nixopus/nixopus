@@ -3,6 +3,7 @@ package caddy
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,14 +16,22 @@ import (
 
 // ServerHealth tracks the health state of a remote server's Caddy instance.
 type ServerHealth struct {
-	OrganizationID uuid.UUID
-	Host           string
-	Healthy        bool
-	LastCheck      time.Time
-	LastHealthy    time.Time
-	FailCount      int
-	LastError      string
+	OrganizationID     uuid.UUID
+	Host               string
+	Healthy            bool
+	LastCheck          time.Time
+	LastHealthy        time.Time
+	FailCount          int
+	LastError          string
+	RestartAttempts    int
+	LastRestartAttempt time.Time
+	ContainerMissing   bool
 }
+
+const (
+	restartBaseDelay = 1 * time.Minute
+	restartMaxDelay  = 10 * time.Minute
+)
 
 // HealthMonitor distributes health checks across Redis-backed workers and
 // triggers reconciliation when a Caddy instance recovers from a failure.
@@ -174,7 +183,7 @@ func (h *HealthMonitor) checkServer(ctx context.Context, orgID uuid.UUID) {
 		h.updateHealth(orgID, host, false, err.Error())
 
 		health := h.GetServerHealth(orgID)
-		if health != nil && health.FailCount >= 3 {
+		if health != nil && health.FailCount >= 3 && h.shouldAttemptRestart(orgID) {
 			h.logger.Log(logger.Warning,
 				fmt.Sprintf("caddy on %s unreachable for %d consecutive checks, attempting container restart", host, health.FailCount),
 				orgID.String())
@@ -214,9 +223,36 @@ func (h *HealthMonitor) updateHealth(orgID uuid.UUID, host string, healthy bool,
 		s.Healthy = true
 		s.FailCount = 0
 		s.LastHealthy = time.Now()
+		s.RestartAttempts = 0
+		s.ContainerMissing = false
+		s.LastRestartAttempt = time.Time{}
 	} else {
 		s.Healthy = false
 		s.FailCount++
+	}
+}
+
+func (h *HealthMonitor) shouldAttemptRestart(orgID uuid.UUID) bool {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	s, exists := h.servers[orgID]
+	if !exists || s.RestartAttempts == 0 {
+		return true
+	}
+	backoff := restartBaseDelay * time.Duration(1<<uint(min(s.RestartAttempts, 6)))
+	if backoff > restartMaxDelay {
+		backoff = restartMaxDelay
+	}
+	return time.Since(s.LastRestartAttempt) >= backoff
+}
+
+func (h *HealthMonitor) recordRestartAttempt(orgID uuid.UUID, containerMissing bool) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if s, exists := h.servers[orgID]; exists {
+		s.RestartAttempts++
+		s.LastRestartAttempt = time.Now()
+		s.ContainerMissing = containerMissing
 	}
 }
 
@@ -252,12 +288,22 @@ func (h *HealthMonitor) attemptCaddyRestart(ctx context.Context, orgID uuid.UUID
 
 	output, err := session.CombinedOutput("docker restart nixopus-caddy")
 	if err != nil {
-		h.logger.Log(logger.Error,
-			fmt.Sprintf("caddy container restart failed on %s", host),
-			fmt.Sprintf("error: %v, output: %s", err, string(output)))
+		missing := strings.Contains(string(output), "No such container")
+		h.recordRestartAttempt(orgID, missing)
+
+		if missing {
+			h.logger.Log(logger.Warning,
+				fmt.Sprintf("caddy container does not exist on %s, will retry with backoff", host),
+				orgID.String())
+		} else {
+			h.logger.Log(logger.Error,
+				fmt.Sprintf("caddy container restart failed on %s", host),
+				fmt.Sprintf("error: %v, output: %s", err, string(output)))
+		}
 		return
 	}
 
+	h.recordRestartAttempt(orgID, false)
 	h.logger.Log(logger.Info, fmt.Sprintf("caddy container restarted on %s", host), orgID.String())
 
 	InvalidateTunnel(host)
