@@ -1,3 +1,12 @@
+# [0.1.0-alpha.131](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.130...v0.1.0-alpha.131) (2026-02-24)
+
+
+### Bug Fixes
+
+* race condition on ssh pooler ([2c6ec90](https://github.com/raghavyuva/nixopus/commit/2c6ec90fab5655b1b07b7ca8afd2042d1031ec13))
+
+
+
 # [0.1.0-alpha.130](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.129...v0.1.0-alpha.130) (2026-02-20)
 
 
