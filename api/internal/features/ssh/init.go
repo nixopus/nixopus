@@ -20,6 +20,13 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+const (
+	dialTimeout         = 15 * time.Second
+	KeepaliveInterval   = 15 * time.Second
+	KeepaliveMaxMissed  = 4
+	keepaliveReqTimeout = 10 * time.Second
+)
+
 // SSH represents a single SSH connection configuration
 type SSH struct {
 	PrivateKey          string `json:"private_key"`
@@ -33,10 +40,11 @@ type SSH struct {
 
 // connectionPoolEntry represents a pooled SSH connection with metadata
 type connectionPoolEntry struct {
-	client   *goph.Client
-	lastUsed time.Time
-	inUse    atomic.Int64 // active borrowers; cleanup only closes when 0
-	mu       sync.RWMutex
+	client        *goph.Client
+	lastUsed      time.Time
+	inUse         atomic.Int64 // active borrowers; cleanup only closes when 0
+	mu            sync.RWMutex
+	stopKeepalive chan struct{} // closed to stop the keepalive goroutine for this connection
 }
 
 // SSHConnectFunc creates SSH connections. Used for dependency injection in tests.
@@ -327,12 +335,62 @@ func IsClosedConnectionError(err error) bool {
 		strings.Contains(errMsg, "connection lost") ||
 		strings.Contains(errMsg, "EOF") ||
 		strings.Contains(errMsg, "broken pipe") ||
-		strings.Contains(errMsg, "connection reset by peer")
+		strings.Contains(errMsg, "connection reset by peer") ||
+		strings.Contains(errMsg, "unexpected packet")
 }
 
 // isClosedConnectionError is an internal alias for IsClosedConnectionError
 func isClosedConnectionError(err error) bool {
 	return IsClosedConnectionError(err)
+}
+
+// StartKeepalive sends periodic keepalive@openssh.com requests over the SSH
+// connection to prevent NAT/firewall idle timeouts and detect dead connections
+// early. When maxMissed consecutive keepalives fail, the client is closed so
+// callers see immediate errors and trigger reconnection. The goroutine stops
+// when stop is closed or maxMissed is exceeded.
+func StartKeepalive(client *goph.Client, interval time.Duration, maxMissed int, stop <-chan struct{}) {
+	if client == nil {
+		return
+	}
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		missed := 0
+		for {
+			select {
+			case <-stop:
+				return
+			case <-ticker.C:
+				if !sendKeepalive(client, keepaliveReqTimeout) {
+					missed++
+					if missed >= maxMissed {
+						client.Close()
+						return
+					}
+				} else {
+					missed = 0
+				}
+			}
+		}
+	}()
+}
+
+// sendKeepalive sends a single keepalive request with a timeout guard.
+// Returns true if the remote replied successfully within the deadline.
+// The timeout prevents a hung TCP connection from blocking the keepalive loop.
+func sendKeepalive(client *goph.Client, timeout time.Duration) bool {
+	done := make(chan bool, 1)
+	go func() {
+		_, _, err := client.SendRequest("keepalive@openssh.com", true, nil)
+		done <- (err == nil)
+	}()
+	select {
+	case ok := <-done:
+		return ok
+	case <-time.After(timeout):
+		return false
+	}
 }
 
 // isConnectionAlive checks if an SSH connection is still valid by attempting to create a test session
@@ -434,11 +492,15 @@ func (m *SSHManager) ConnectWithID(id string) (*goph.Client, error) {
 			m.poolMu.Unlock()
 			return client, nil
 		}
-		// Connection is dead, remove it from pool
+		// Connection is dead, remove it from pool and stop its keepalive
 		m.poolMu.Lock()
 		if entry, exists := m.pool[id]; exists {
 			entry.mu.Lock()
 			if entry.client == client {
+				if entry.stopKeepalive != nil {
+					close(entry.stopKeepalive)
+					entry.stopKeepalive = nil
+				}
 				entry.client = nil
 			}
 			entry.mu.Unlock()
@@ -500,11 +562,14 @@ func (m *SSHManager) ConnectWithID(id string) (*goph.Client, error) {
 		return nil, fmt.Errorf("SSH connection factory returned nil client")
 	}
 
-	// Store in pool
+	// Store in pool and start keepalive to prevent NAT/firewall idle timeouts
+	stopCh := make(chan struct{})
+	StartKeepalive(client, KeepaliveInterval, KeepaliveMaxMissed, stopCh)
 	m.poolMu.Lock()
 	m.pool[id] = &connectionPoolEntry{
-		client:   client,
-		lastUsed: time.Now(),
+		client:        client,
+		lastUsed:      time.Now(),
+		stopKeepalive: stopCh,
 	}
 	m.poolMu.Unlock()
 
@@ -529,6 +594,10 @@ func (m *SSHManager) cleanupIdleConnections() {
 				inUse := entry.inUse.Load()
 				idle := entry.client != nil && now.Sub(entry.lastUsed) > m.maxIdleTime
 				if idle && inUse == 0 {
+					if entry.stopKeepalive != nil {
+						close(entry.stopKeepalive)
+						entry.stopKeepalive = nil
+					}
 					entry.client.Close()
 					entry.client = nil
 					delete(m.pool, id)
@@ -548,6 +617,10 @@ func (m *SSHManager) CloseConnection(id string) {
 	m.poolMu.Lock()
 	if entry, exists := m.pool[id]; exists {
 		entry.mu.Lock()
+		if entry.stopKeepalive != nil {
+			close(entry.stopKeepalive)
+			entry.stopKeepalive = nil
+		}
 		if entry.client != nil {
 			entry.client.Close()
 			entry.client = nil
@@ -558,8 +631,9 @@ func (m *SSHManager) CloseConnection(id string) {
 	m.poolMu.Unlock()
 }
 
-// Close shuts down this manager: stops the cleanup goroutine and closes all
-// pooled connections. The manager must not be used after calling Close.
+// Close shuts down this manager: stops the cleanup goroutine, stops all
+// keepalive goroutines, and closes all pooled connections. The manager
+// must not be used after calling Close.
 func (m *SSHManager) Close() {
 	select {
 	case <-m.done:
@@ -571,6 +645,10 @@ func (m *SSHManager) Close() {
 	m.poolMu.Lock()
 	for id, entry := range m.pool {
 		entry.mu.Lock()
+		if entry.stopKeepalive != nil {
+			close(entry.stopKeepalive)
+			entry.stopKeepalive = nil
+		}
 		if entry.client != nil {
 			entry.client.Close()
 			entry.client = nil
@@ -698,6 +776,7 @@ func (s *SSH) ConnectWithPassword() (*goph.Client, error) {
 		Addr:     s.Host,
 		Port:     uint(s.Port),
 		Auth:     auth,
+		Timeout:  dialTimeout,
 		Callback: ssh.InsecureIgnoreHostKey(),
 	})
 	if err != nil {
@@ -772,6 +851,7 @@ func (s *SSH) ConnectWithPrivateKey() (*goph.Client, error) {
 		Addr:     s.Host,
 		Port:     uint(s.Port),
 		Auth:     auth,
+		Timeout:  dialTimeout,
 		Callback: ssh.InsecureIgnoreHostKey(),
 	})
 	if err != nil {

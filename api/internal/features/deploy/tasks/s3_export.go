@@ -33,14 +33,14 @@ func (s *TaskService) ExportImageToS3(ctx context.Context, cfg ExportConfig, tas
 		return "", 0, fmt.Errorf("failed to get SSH manager: %w", err)
 	}
 
-	clientConn, err := sshManager.Connect()
+	clientConn, release, err := sshManager.Borrow("")
 	if err != nil {
 		return "", 0, fmt.Errorf("failed to connect via SSH: %w", err)
 	}
+	defer release()
 
 	session, err := clientConn.NewSession()
 	if err != nil {
-		clientConn.Close()
 		if sshpkg.IsClosedConnectionError(err) {
 			sshManager.CloseConnection("")
 		}
@@ -53,13 +53,11 @@ func (s *TaskService) ExportImageToS3(ctx context.Context, cfg ExportConfig, tas
 	stdout, err := session.StdoutPipe()
 	if err != nil {
 		session.Close()
-		clientConn.Close()
 		return "", 0, fmt.Errorf("failed to get stdout pipe: %w", err)
 	}
 
 	if err := session.Start(cmd); err != nil {
 		session.Close()
-		clientConn.Close()
 		return "", 0, fmt.Errorf("failed to start docker save: %w", err)
 	}
 
@@ -70,7 +68,6 @@ func (s *TaskService) ExportImageToS3(ctx context.Context, cfg ExportConfig, tas
 
 	waitErr := session.Wait()
 	session.Close()
-	clientConn.Close()
 
 	if err != nil {
 		return "", 0, fmt.Errorf("failed to upload image to S3: %w", err)
@@ -132,23 +129,20 @@ func (s *TaskService) LoadImageFromS3(ctx context.Context, s3Key string, taskCtx
 		return fmt.Errorf("failed to get SSH manager: %w", err)
 	}
 
-	clientConn, err := sshManager.Connect()
+	clientConn, release, err := sshManager.Borrow("")
 	if err != nil {
 		return fmt.Errorf("failed to connect via SSH: %w", err)
 	}
+	defer release()
 
 	session, err := clientConn.NewSession()
 	if err != nil {
-		clientConn.Close()
 		if sshpkg.IsClosedConnectionError(err) {
 			sshManager.CloseConnection("")
 		}
 		return fmt.Errorf("failed to create SSH session: %w", err)
 	}
-	defer func() {
-		session.Close()
-		clientConn.Close()
-	}()
+	defer session.Close()
 
 	session.Stdin = body
 

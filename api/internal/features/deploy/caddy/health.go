@@ -227,7 +227,16 @@ func (h *HealthMonitor) attemptCaddyRestart(ctx context.Context, orgID uuid.UUID
 		return
 	}
 
-	conn, err := manager.Connect()
+	sshClient, err := manager.GetDefaultSSH()
+	if err != nil {
+		h.logger.Log(logger.Error, "failed to get SSH config for caddy restart", err.Error())
+		return
+	}
+
+	// Create a dedicated, non-pooled connection so that closing it after the
+	// restart command doesn't kill other sessions (e.g. terminals) that share
+	// the pooled connection.
+	conn, err := sshClient.Connect()
 	if err != nil {
 		h.logger.Log(logger.Error, "failed to SSH connect for caddy restart", err.Error())
 		return

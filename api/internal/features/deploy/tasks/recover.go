@@ -133,15 +133,15 @@ func (s *TaskService) recoverSingleApp(ctx context.Context, app *shared_types.Ap
 		return fmt.Errorf("failed to get SSH manager: %w", err)
 	}
 
-	clientConn, err := sshManager.Connect()
+	clientConn, release, err := sshManager.Borrow("")
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to connect via SSH: "+err.Error(), shared_types.Failed)
 		return fmt.Errorf("SSH connection failed: %w", err)
 	}
+	defer release()
 
 	session, err := clientConn.NewSession()
 	if err != nil {
-		clientConn.Close()
 		taskCtx.LogAndUpdateStatus("Failed to create SSH session: "+err.Error(), shared_types.Failed)
 		return fmt.Errorf("SSH session failed: %w", err)
 	}
@@ -149,7 +149,6 @@ func (s *TaskService) recoverSingleApp(ctx context.Context, app *shared_types.Ap
 	tagCmd := fmt.Sprintf("docker tag %s %s", commitTag, latestTag)
 	output, err := session.CombinedOutput(tagCmd)
 	session.Close()
-	clientConn.Close()
 
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to tag image: "+err.Error(), shared_types.Failed)

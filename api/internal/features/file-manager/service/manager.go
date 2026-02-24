@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/sftp"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 )
 
 type FileInfo struct {
@@ -51,17 +52,23 @@ type SFTPFileMode interface {
 	String() string
 }
 
-// withSFTPClient safely executes an operation with an SFTP client
+// withSFTPClient safely executes an operation with an SFTP client.
+// Uses Borrow so the pooled SSH connection is not closed when we're done.
 func (f *FileManagerService) withSFTPClient(ctx context.Context, operation func(SFTPClient) error) error {
 	if f == nil {
 		return fmt.Errorf("file manager service is nil")
 	}
 
-	sshClient, err := f.getSSHClient(ctx)
+	manager, err := ssh.GetSSHManagerFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get SSH manager: %w", err)
+	}
+
+	sshClient, release, err := manager.Borrow("")
 	if err != nil {
 		return fmt.Errorf("failed to get SSH client: %w", err)
 	}
-	defer sshClient.Close()
+	defer release()
 
 	client, err := sshClient.NewSftp()
 	if err != nil {
