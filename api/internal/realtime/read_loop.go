@@ -7,24 +7,17 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// readLoop is the main read loop for the socket server.
-// It reads messages from the client and handles them. based on the action, it will call the appropriate handler.
-// Parameters
-//
-//	conn - the *websocket.Conn representing the client connection.
-//	user - the *types.User representing the authenticated user.
 func (s *SocketServer) readLoop(conn *websocket.Conn) {
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Printf("Error reading message: %v\n", err)
-			s.sendError(conn, "Failed to read message")
+			fmt.Printf("[ws] readLoop: read error (conn closing): %v\n", err)
 			return
 		}
 
 		var msg types.Payload
 		if err := json.Unmarshal(message, &msg); err != nil {
-			fmt.Printf("Error unmarshaling message: %v\n", err)
+			fmt.Printf("[ws] readLoop: unmarshal error: %v\n", err)
 			s.sendError(conn, "Invalid message format")
 			continue
 		}

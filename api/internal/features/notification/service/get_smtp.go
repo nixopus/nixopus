@@ -22,7 +22,8 @@ func (s *NotificationService) GetSmtp(ID string, organizationID string) (*shared
 
 	smtpConfigs, err := s.storage.GetOrganizationsSmtp(organizationID)
 	if err != nil {
-		return nil, err
+		s.logger.Log(logger.Warning, "org SMTP lookup failed (migration pending?)", err.Error())
+		return nil, notification.ErrSMTPConfigNotFound
 	}
 
 	if len(smtpConfigs) == 0 {

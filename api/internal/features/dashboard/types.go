@@ -65,7 +65,7 @@ var (
 // subscribes to a shared OrgPoller. It does NOT run its own polling loop.
 type DashboardMonitor struct {
 	conn      *websocket.Conn
-	connMutex sync.Mutex
+	connMutex *sync.Mutex // shared per-connection write mutex
 	log       logger.Logger
 	poller    *OrgPoller
 

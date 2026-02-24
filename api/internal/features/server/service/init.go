@@ -101,27 +101,16 @@ func (s *ServerService) CheckSSHConnection(orgID uuid.UUID) (*types.SSHConnectio
 		}, nil
 	}
 
-	// Try to connect
-	client, err := sshMgr.Connect()
+	// Test connection by creating (and immediately closing) a session on the
+	// pooled connection.  Do NOT call client.Close() -- that would destroy the
+	// shared pooled transport used by terminals & other features.
+	session, err := sshMgr.NewSessionWithRetry("")
 	if err != nil {
 		s.logger.Log(logger.Error, err.Error(), orgID.String())
 		return &types.SSHConnectionStatusResponse{
 			Status:       "disconnected",
 			Connected:    false,
 			Message:      "Unable to connect to SSH server",
-			IsConfigured: true,
-		}, nil
-	}
-	defer client.Close()
-
-	// Test connection by creating a session
-	session, err := client.NewSession()
-	if err != nil {
-		s.logger.Log(logger.Error, err.Error(), orgID.String())
-		return &types.SSHConnectionStatusResponse{
-			Status:       "disconnected",
-			Connected:    false,
-			Message:      "Unable to create SSH session",
 			IsConfigured: true,
 		}, nil
 	}

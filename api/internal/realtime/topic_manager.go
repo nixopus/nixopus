@@ -80,7 +80,7 @@ func (s *SocketServer) SubscribeToTopic(topic Topics, resourceID string, conn *w
 	}
 	s.topics[topicKey][conn] = true
 
-	conn.WriteJSON(types.Payload{
+	s.writeJSON(conn, types.Payload{
 		Action: "subscribed",
 		Topic:  string(topicKey),
 		Data:   nil,
@@ -112,7 +112,7 @@ func (s *SocketServer) UnsubscribeFromTopic(topic Topics, resourceID string, con
 			delete(s.topics, topicKey)
 		}
 
-		conn.WriteJSON(types.Payload{
+		s.writeJSON(conn, types.Payload{
 			Action: "unsubscribed",
 			Topic:  string(topicKey),
 			Data:   nil,
@@ -139,7 +139,7 @@ func (s *SocketServer) BroadcastToTopic(topic Topics, resourceID string, payload
 
 	if connections, exists := s.topics[topicKey]; exists {
 		for conn := range connections {
-			err := conn.WriteJSON(types.Payload{
+			err := s.writeJSON(conn, types.Payload{
 				Action: "message",
 				Topic:  string(topicKey),
 				Data:   payload,

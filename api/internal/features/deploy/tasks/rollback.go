@@ -76,15 +76,15 @@ func (s *TaskService) handleS3Rollback(ctx context.Context, TaskPayload shared_t
 		return err
 	}
 
-	clientConn, err := sshManager.Connect()
+	clientConn, release, err := sshManager.Borrow("")
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to connect via SSH: "+err.Error(), shared_types.Failed)
 		return err
 	}
+	defer release()
 
 	session, err := clientConn.NewSession()
 	if err != nil {
-		clientConn.Close()
 		taskCtx.LogAndUpdateStatus("Failed to create SSH session: "+err.Error(), shared_types.Failed)
 		return err
 	}
@@ -92,7 +92,6 @@ func (s *TaskService) handleS3Rollback(ctx context.Context, TaskPayload shared_t
 	tagCmd := fmt.Sprintf("docker tag %s %s", commitTag, latestTag)
 	output, err := session.CombinedOutput(tagCmd)
 	session.Close()
-	clientConn.Close()
 
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to tag image: "+err.Error()+" output: "+string(output), shared_types.Failed)

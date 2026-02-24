@@ -28,7 +28,7 @@ func getDockerService(ctx context.Context) (docker.DockerRepository, error) {
 
 type ApplicationMonitor struct {
 	conn          *websocket.Conn
-	connMutex     sync.Mutex
+	connMutex     *sync.Mutex
 	sshManager    *sshpkg.SSHManager
 	log           logger.Logger
 	Interval      time.Duration
@@ -49,10 +49,9 @@ const (
 	ContainerStatistics ApplicationMonitorOperation = "container_statistics"
 )
 
-func NewApplicationMonitor(conn *websocket.Conn, log logger.Logger, organizationID string) (*ApplicationMonitor, error) {
+func NewApplicationMonitor(conn *websocket.Conn, wsMu *sync.Mutex, log logger.Logger, organizationID string) (*ApplicationMonitor, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Get organization-specific SSH client
 	orgID, err := uuid.Parse(organizationID)
 	if err != nil {
 		cancel()
@@ -73,6 +72,7 @@ func NewApplicationMonitor(conn *websocket.Conn, log logger.Logger, organization
 
 	monitor := &ApplicationMonitor{
 		conn:          conn,
+		connMutex:     wsMu,
 		sshManager:    manager,
 		log:           log,
 		ctx:           ctx,
@@ -215,17 +215,9 @@ func (m *ApplicationMonitor) SetOperations(operations []ApplicationMonitorOperat
 }
 
 func (m *ApplicationMonitor) Close() {
-	// SSH connections are managed by the connection pool - no cleanup needed here
-	if m.conn != nil {
-		m.connMutex.Lock()
-		_ = m.conn.WriteMessage(
-			websocket.CloseMessage,
-			websocket.FormatCloseMessage(websocket.CloseNormalClosure, "closing connection"),
-		)
-		_ = m.conn.Close()
-		m.conn = nil
-		m.connMutex.Unlock()
-	}
+	m.connMutex.Lock()
+	m.conn = nil
+	m.connMutex.Unlock()
 }
 
 func (m *ApplicationMonitor) Stop() {

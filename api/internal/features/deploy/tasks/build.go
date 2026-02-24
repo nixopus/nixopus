@@ -114,12 +114,13 @@ func (s *TaskService) createBuildContextArchiveFromRemote(ctx context.Context, b
 	if err != nil {
 		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	clientConn, err := sshManager.Connect()
+	clientConn, release, err := sshManager.Borrow("")
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect via SSH: %w", err)
 	}
 	session, err := clientConn.NewSession()
 	if err != nil {
+		release()
 		if sshpkg.IsClosedConnectionError(err) {
 			sshManager.CloseConnection("")
 		}
@@ -143,33 +144,35 @@ func (s *TaskService) createBuildContextArchiveFromRemote(ctx context.Context, b
 	stdout, err := session.StdoutPipe()
 	if err != nil {
 		session.Close()
+		release()
 		return nil, fmt.Errorf("failed to get stdout pipe: %w", err)
 	}
 	if err := session.Start(buildCmd); err != nil {
 		session.Close()
+		release()
 		return nil, fmt.Errorf("failed to start docker build: %w", err)
 	}
 	return &remoteBuildReader{
 		stdout:  stdout,
 		session: session,
-		client:  clientConn,
+		release: release,
 	}, nil
 }
 
 // remoteBuildReader streams docker build output and returns build failure as Read error when command exits non-zero.
-// Always call Close() when done (e.g. via defer) to prevent SSH connection leaks.
+// Always call Close() when done (e.g. via defer) to release the pooled SSH connection borrow.
 type remoteBuildReader struct {
 	stdout  io.Reader
 	session interface {
 		Wait() error
 		Close() error
 	}
-	client  interface{ Close() error }
+	release func()
 	closed  bool
 	errored bool
 }
 
-// Close releases the SSH session and connection. Safe to call multiple times.
+// Close releases the SSH session and pool borrow. Safe to call multiple times.
 func (r *remoteBuildReader) Close() {
 	if r.closed {
 		return
@@ -178,8 +181,8 @@ func (r *remoteBuildReader) Close() {
 	if r.session != nil {
 		r.session.Close()
 	}
-	if r.client != nil {
-		r.client.Close()
+	if r.release != nil {
+		r.release()
 	}
 }
 

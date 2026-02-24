@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -148,7 +149,7 @@ func (p *OrgPoller) handleOperation(operation DashboardOperation) {
 
 // NewDashboardMonitor creates a monitor that subscribes to the shared per-org
 // poller. Call Start to begin receiving data and Stop to unsubscribe.
-func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger, organizationID string, deployService DeployServiceProvider) (*DashboardMonitor, error) {
+func NewDashboardMonitor(conn *websocket.Conn, wsMu *sync.Mutex, log logger.Logger, organizationID string, deployService DeployServiceProvider) (*DashboardMonitor, error) {
 	orgID, err := uuid.Parse(organizationID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid organization ID: %w", err)
@@ -170,6 +171,7 @@ func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger, organizationID
 
 	monitor := &DashboardMonitor{
 		conn:       conn,
+		connMutex:  wsMu,
 		log:        log,
 		poller:     poller,
 		Interval:   defaultPollerInterval,
@@ -205,14 +207,7 @@ func (m *DashboardMonitor) Stop() {
 func (m *DashboardMonitor) Close() {
 	m.connMutex.Lock()
 	defer m.connMutex.Unlock()
-	if m.conn != nil {
-		_ = m.conn.WriteMessage(
-			websocket.CloseMessage,
-			websocket.FormatCloseMessage(websocket.CloseNormalClosure, "closing connection"),
-		)
-		_ = m.conn.Close()
-		m.conn = nil
-	}
+	m.conn = nil
 }
 
 // UpdateConfig and SetOperations are kept for API compatibility.
