@@ -23,6 +23,7 @@
 					},
 					"build_variables": {
 						"additionalProperties": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
@@ -34,6 +35,7 @@
 					},
 					"domains": {
 						"items": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
@@ -45,13 +47,15 @@
 					},
 					"environment_variables": {
 						"additionalProperties": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
 						"type": "object"
 					},
 					"family_id": {
-						"nullable": true
+						"format": "uuid",
+						"type": "string"
 					},
 					"name": {
 						"type": "string"
@@ -118,97 +122,9 @@
 					},
 					"deployments": {
 						"items": {
-							"nullable": true,
-							"properties": {
-								"application": {
-									"$ref": "#/components/schemas/Application"
-								},
-								"application_id": {},
-								"commit_hash": {
-									"type": "string"
-								},
-								"container_id": {
-									"type": "string"
-								},
-								"container_image": {
-									"type": "string"
-								},
-								"container_name": {
-									"type": "string"
-								},
-								"container_status": {
-									"type": "string"
-								},
-								"created_at": {
-									"format": "date-time",
-									"type": "string"
-								},
-								"id": {},
-								"image_s3_key": {
-									"type": "string"
-								},
-								"image_size": {
-									"format": "int64",
-									"type": "integer"
-								},
-								"logs": {
-									"items": {
-										"nullable": true,
-										"properties": {
-											"application": {
-												"$ref": "#/components/schemas/Application"
-											},
-											"application_deployment": {
-												"$ref": "#/components/schemas/ApplicationDeployment"
-											},
-											"application_deployment_id": {},
-											"application_id": {},
-											"created_at": {
-												"format": "date-time",
-												"type": "string"
-											},
-											"id": {},
-											"log": {
-												"type": "string"
-											},
-											"updated_at": {
-												"format": "date-time",
-												"type": "string"
-											}
-										},
-										"type": "object"
-									},
-									"type": "array"
-								},
-								"status": {
-									"nullable": true,
-									"properties": {
-										"application_deployment": {
-											"$ref": "#/components/schemas/ApplicationDeployment"
-										},
-										"application_deployment_id": {},
-										"created_at": {
-											"format": "date-time",
-											"type": "string"
-										},
-										"id": {},
-										"status": {
-											"type": "string"
-										},
-										"updated_at": {
-											"format": "date-time",
-											"type": "string"
-										}
-									},
-									"type": "object"
-								},
-								"updated_at": {
-									"format": "date-time",
-									"type": "string"
-								}
-							},
-							"type": "object"
+							"$ref": "#/components/schemas/ApplicationDeployment"
 						},
+						"nullable": true,
 						"type": "array"
 					},
 					"dockerfile_path": {
@@ -221,7 +137,10 @@
 								"application": {
 									"$ref": "#/components/schemas/Application"
 								},
-								"application_id": {},
+								"application_id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"created_at": {
 									"format": "date-time",
 									"type": "string"
@@ -229,10 +148,14 @@
 								"domain": {
 									"type": "string"
 								},
-								"id": {}
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								}
 							},
 							"type": "object"
 						},
+						"nullable": true,
 						"type": "array"
 					},
 					"environment": {
@@ -242,44 +165,27 @@
 						"type": "string"
 					},
 					"family_id": {
-						"nullable": true
+						"format": "uuid",
+						"type": "string"
 					},
-					"id": {},
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
 					"is_live_deployment": {
 						"type": "boolean"
 					},
 					"labels": {
 						"items": {
+							"nullable": true,
 							"type": "string"
 						},
+						"nullable": true,
 						"type": "array"
 					},
 					"logs": {
 						"items": {
-							"nullable": true,
-							"properties": {
-								"application": {
-									"$ref": "#/components/schemas/Application"
-								},
-								"application_deployment": {
-									"$ref": "#/components/schemas/ApplicationDeployment"
-								},
-								"application_deployment_id": {},
-								"application_id": {},
-								"created_at": {
-									"format": "date-time",
-									"type": "string"
-								},
-								"id": {},
-								"log": {
-									"type": "string"
-								},
-								"updated_at": {
-									"format": "date-time",
-									"type": "string"
-								}
-							},
-							"type": "object"
+							"$ref": "#/components/schemas/ApplicationLogs"
 						},
 						"type": "array"
 					},
@@ -293,7 +199,10 @@
 								"format": "date-time",
 								"type": "string"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"logo": {
 								"nullable": true,
 								"type": "string"
@@ -311,7 +220,10 @@
 						},
 						"type": "object"
 					},
-					"organization_id": {},
+					"organization_id": {
+						"format": "uuid",
+						"type": "string"
+					},
 					"port": {
 						"type": "integer"
 					},
@@ -333,12 +245,18 @@
 							"application": {
 								"$ref": "#/components/schemas/Application"
 							},
-							"application_id": {},
+							"application_id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"created_at": {
 								"format": "date-time",
 								"type": "string"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"status": {
 								"type": "string"
 							},
@@ -369,7 +287,10 @@
 							"email_verified": {
 								"type": "boolean"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"image": {
 								"nullable": true,
 								"type": "string"
@@ -396,7 +317,10 @@
 											"nullable": true,
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"organization": {
 											"nullable": true,
 											"properties": {
@@ -404,7 +328,10 @@
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"logo": {
 													"nullable": true,
 													"type": "string"
@@ -422,7 +349,10 @@
 											},
 											"type": "object"
 										},
-										"organization_id": {},
+										"organization_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"updated_at": {
 											"format": "date-time",
 											"type": "string"
@@ -430,10 +360,14 @@
 										"user": {
 											"$ref": "#/components/schemas/User"
 										},
-										"user_id": {}
+										"user_id": {
+											"format": "uuid",
+											"type": "string"
+										}
 									},
 									"type": "object"
 								},
+								"nullable": true,
 								"type": "array"
 							},
 							"organizations": {
@@ -444,7 +378,10 @@
 											"format": "date-time",
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"logo": {
 											"nullable": true,
 											"type": "string"
@@ -462,6 +399,7 @@
 									},
 									"type": "object"
 								},
+								"nullable": true,
 								"type": "array"
 							},
 							"provision_status": {
@@ -481,7 +419,10 @@
 						},
 						"type": "object"
 					},
-					"user_id": {}
+					"user_id": {
+						"format": "uuid",
+						"type": "string"
+					}
 				},
 				"type": "object"
 			},
@@ -508,97 +449,9 @@
 							},
 							"deployments": {
 								"items": {
-									"nullable": true,
-									"properties": {
-										"application": {
-											"$ref": "#/components/schemas/Application"
-										},
-										"application_id": {},
-										"commit_hash": {
-											"type": "string"
-										},
-										"container_id": {
-											"type": "string"
-										},
-										"container_image": {
-											"type": "string"
-										},
-										"container_name": {
-											"type": "string"
-										},
-										"container_status": {
-											"type": "string"
-										},
-										"created_at": {
-											"format": "date-time",
-											"type": "string"
-										},
-										"id": {},
-										"image_s3_key": {
-											"type": "string"
-										},
-										"image_size": {
-											"format": "int64",
-											"type": "integer"
-										},
-										"logs": {
-											"items": {
-												"nullable": true,
-												"properties": {
-													"application": {
-														"$ref": "#/components/schemas/Application"
-													},
-													"application_deployment": {
-														"$ref": "#/components/schemas/ApplicationDeployment"
-													},
-													"application_deployment_id": {},
-													"application_id": {},
-													"created_at": {
-														"format": "date-time",
-														"type": "string"
-													},
-													"id": {},
-													"log": {
-														"type": "string"
-													},
-													"updated_at": {
-														"format": "date-time",
-														"type": "string"
-													}
-												},
-												"type": "object"
-											},
-											"type": "array"
-										},
-										"status": {
-											"nullable": true,
-											"properties": {
-												"application_deployment": {
-													"$ref": "#/components/schemas/ApplicationDeployment"
-												},
-												"application_deployment_id": {},
-												"created_at": {
-													"format": "date-time",
-													"type": "string"
-												},
-												"id": {},
-												"status": {
-													"type": "string"
-												},
-												"updated_at": {
-													"format": "date-time",
-													"type": "string"
-												}
-											},
-											"type": "object"
-										},
-										"updated_at": {
-											"format": "date-time",
-											"type": "string"
-										}
-									},
-									"type": "object"
+									"$ref": "#/components/schemas/ApplicationDeployment"
 								},
+								"nullable": true,
 								"type": "array"
 							},
 							"dockerfile_path": {
@@ -611,7 +464,10 @@
 										"application": {
 											"$ref": "#/components/schemas/Application"
 										},
-										"application_id": {},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"created_at": {
 											"format": "date-time",
 											"type": "string"
@@ -619,10 +475,14 @@
 										"domain": {
 											"type": "string"
 										},
-										"id": {}
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										}
 									},
 									"type": "object"
 								},
+								"nullable": true,
 								"type": "array"
 							},
 							"environment": {
@@ -632,16 +492,22 @@
 								"type": "string"
 							},
 							"family_id": {
-								"nullable": true
+								"format": "uuid",
+								"type": "string"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"is_live_deployment": {
 								"type": "boolean"
 							},
 							"labels": {
 								"items": {
+									"nullable": true,
 									"type": "string"
 								},
+								"nullable": true,
 								"type": "array"
 							},
 							"logs": {
@@ -654,13 +520,22 @@
 										"application_deployment": {
 											"$ref": "#/components/schemas/ApplicationDeployment"
 										},
-										"application_deployment_id": {},
-										"application_id": {},
+										"application_deployment_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"created_at": {
 											"format": "date-time",
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"log": {
 											"type": "string"
 										},
@@ -671,6 +546,7 @@
 									},
 									"type": "object"
 								},
+								"nullable": true,
 								"type": "array"
 							},
 							"name": {
@@ -683,7 +559,10 @@
 										"format": "date-time",
 										"type": "string"
 									},
-									"id": {},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"logo": {
 										"nullable": true,
 										"type": "string"
@@ -701,7 +580,10 @@
 								},
 								"type": "object"
 							},
-							"organization_id": {},
+							"organization_id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"port": {
 								"type": "integer"
 							},
@@ -723,12 +605,18 @@
 									"application": {
 										"$ref": "#/components/schemas/Application"
 									},
-									"application_id": {},
+									"application_id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"created_at": {
 										"format": "date-time",
 										"type": "string"
 									},
-									"id": {},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"status": {
 										"type": "string"
 									},
@@ -759,7 +647,10 @@
 									"email_verified": {
 										"type": "boolean"
 									},
-									"id": {},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"image": {
 										"nullable": true,
 										"type": "string"
@@ -786,7 +677,10 @@
 													"nullable": true,
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"organization": {
 													"nullable": true,
 													"properties": {
@@ -794,7 +688,10 @@
 															"format": "date-time",
 															"type": "string"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"logo": {
 															"nullable": true,
 															"type": "string"
@@ -812,7 +709,10 @@
 													},
 													"type": "object"
 												},
-												"organization_id": {},
+												"organization_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"updated_at": {
 													"format": "date-time",
 													"type": "string"
@@ -820,10 +720,14 @@
 												"user": {
 													"$ref": "#/components/schemas/User"
 												},
-												"user_id": {}
+												"user_id": {
+													"format": "uuid",
+													"type": "string"
+												}
 											},
 											"type": "object"
 										},
+										"nullable": true,
 										"type": "array"
 									},
 									"organizations": {
@@ -834,7 +738,10 @@
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"logo": {
 													"nullable": true,
 													"type": "string"
@@ -852,6 +759,7 @@
 											},
 											"type": "object"
 										},
+										"nullable": true,
 										"type": "array"
 									},
 									"provision_status": {
@@ -871,11 +779,17 @@
 								},
 								"type": "object"
 							},
-							"user_id": {}
+							"user_id": {
+								"format": "uuid",
+								"type": "string"
+							}
 						},
 						"type": "object"
 					},
-					"application_id": {},
+					"application_id": {
+						"format": "uuid",
+						"type": "string"
+					},
 					"commit_hash": {
 						"type": "string"
 					},
@@ -895,7 +809,10 @@
 						"format": "date-time",
 						"type": "string"
 					},
-					"id": {},
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
 					"image_s3_key": {
 						"type": "string"
 					},
@@ -908,18 +825,349 @@
 							"nullable": true,
 							"properties": {
 								"application": {
-									"$ref": "#/components/schemas/Application"
+									"nullable": true,
+									"properties": {
+										"base_path": {
+											"type": "string"
+										},
+										"branch": {
+											"type": "string"
+										},
+										"build_pack": {
+											"type": "string"
+										},
+										"build_variables": {
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deployments": {
+											"items": {
+												"$ref": "#/components/schemas/ApplicationDeployment"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"dockerfile_path": {
+											"type": "string"
+										},
+										"domains": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"domain": {
+														"type": "string"
+													},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"environment": {
+											"type": "string"
+										},
+										"environment_variables": {
+											"type": "string"
+										},
+										"family_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"is_live_deployment": {
+											"type": "boolean"
+										},
+										"labels": {
+											"items": {
+												"nullable": true,
+												"type": "string"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"logs": {
+											"items": {
+												"$ref": "#/components/schemas/ApplicationLogs"
+											},
+											"type": "array"
+										},
+										"name": {
+											"type": "string"
+										},
+										"organization": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"logo": {
+													"nullable": true,
+													"type": "string"
+												},
+												"metadata": {
+													"nullable": true,
+													"type": "string"
+												},
+												"name": {
+													"type": "string"
+												},
+												"slug": {
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"organization_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"port": {
+											"type": "integer"
+										},
+										"post_run_command": {
+											"type": "string"
+										},
+										"pre_run_command": {
+											"type": "string"
+										},
+										"proxy_server": {
+											"type": "string"
+										},
+										"repository": {
+											"type": "string"
+										},
+										"status": {
+											"nullable": true,
+											"properties": {
+												"application": {
+													"$ref": "#/components/schemas/Application"
+												},
+												"application_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"status": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"user": {
+											"nullable": true,
+											"properties": {
+												"avatar": {
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"email": {
+													"type": "string"
+												},
+												"email_verified": {
+													"type": "boolean"
+												},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"image": {
+													"nullable": true,
+													"type": "string"
+												},
+												"is_onboarded": {
+													"type": "boolean"
+												},
+												"is_verified": {
+													"type": "boolean"
+												},
+												"name": {
+													"type": "string"
+												},
+												"organization_users": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"deleted_at": {
+																"format": "date-time",
+																"nullable": true,
+																"type": "string"
+															},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"organization": {
+																"nullable": true,
+																"properties": {
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"logo": {
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"metadata": {
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"name": {
+																		"type": "string"
+																	},
+																	"slug": {
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"organization_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"user": {
+																"$ref": "#/components/schemas/User"
+															},
+															"user_id": {
+																"format": "uuid",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"nullable": true,
+													"type": "array"
+												},
+												"organizations": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"logo": {
+																"nullable": true,
+																"type": "string"
+															},
+															"metadata": {
+																"nullable": true,
+																"type": "string"
+															},
+															"name": {
+																"type": "string"
+															},
+															"slug": {
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"nullable": true,
+													"type": "array"
+												},
+												"provision_status": {
+													"nullable": true,
+													"type": "string"
+												},
+												"supertokens_user_id": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"username": {
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"user_id": {
+											"format": "uuid",
+											"type": "string"
+										}
+									},
+									"type": "object"
 								},
 								"application_deployment": {
 									"$ref": "#/components/schemas/ApplicationDeployment"
 								},
-								"application_deployment_id": {},
-								"application_id": {},
+								"application_deployment_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"application_id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"created_at": {
 									"format": "date-time",
 									"type": "string"
 								},
-								"id": {},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"log": {
 									"type": "string"
 								},
@@ -939,12 +1187,18 @@
 							"application_deployment": {
 								"$ref": "#/components/schemas/ApplicationDeployment"
 							},
-							"application_deployment_id": {},
+							"application_deployment_id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"created_at": {
 								"format": "date-time",
 								"type": "string"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"status": {
 								"type": "string"
 							},
@@ -954,6 +1208,41 @@
 							}
 						},
 						"type": "object"
+					},
+					"updated_at": {
+						"format": "date-time",
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ApplicationLogs": {
+				"nullable": true,
+				"properties": {
+					"application": {
+						"$ref": "#/components/schemas/Application"
+					},
+					"application_deployment": {
+						"$ref": "#/components/schemas/ApplicationDeployment"
+					},
+					"application_deployment_id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"application_id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"created_at": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"log": {
+						"type": "string"
 					},
 					"updated_at": {
 						"format": "date-time",
@@ -990,7 +1279,10 @@
 										"application": {
 											"$ref": "#/components/schemas/Application"
 										},
-										"application_id": {},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"commit_hash": {
 											"type": "string"
 										},
@@ -1010,7 +1302,10 @@
 											"format": "date-time",
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"image_s3_key": {
 											"type": "string"
 										},
@@ -1028,13 +1323,22 @@
 													"application_deployment": {
 														"$ref": "#/components/schemas/ApplicationDeployment"
 													},
-													"application_deployment_id": {},
-													"application_id": {},
+													"application_deployment_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"created_at": {
 														"format": "date-time",
 														"type": "string"
 													},
-													"id": {},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"log": {
 														"type": "string"
 													},
@@ -1045,6 +1349,7 @@
 												},
 												"type": "object"
 											},
+											"nullable": true,
 											"type": "array"
 										},
 										"status": {
@@ -1053,12 +1358,18 @@
 												"application_deployment": {
 													"$ref": "#/components/schemas/ApplicationDeployment"
 												},
-												"application_deployment_id": {},
+												"application_deployment_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"created_at": {
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"status": {
 													"type": "string"
 												},
@@ -1089,7 +1400,10 @@
 										"application": {
 											"$ref": "#/components/schemas/Application"
 										},
-										"application_id": {},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"created_at": {
 											"format": "date-time",
 											"type": "string"
@@ -1097,7 +1411,10 @@
 										"domain": {
 											"type": "string"
 										},
-										"id": {}
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										}
 									},
 									"type": "object"
 								},
@@ -1111,14 +1428,19 @@
 								"type": "string"
 							},
 							"family_id": {
-								"nullable": true
+								"format": "uuid",
+								"type": "string"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"is_live_deployment": {
 								"type": "boolean"
 							},
 							"labels": {
 								"items": {
+									"nullable": true,
 									"type": "string"
 								},
 								"nullable": true,
@@ -1132,15 +1454,102 @@
 											"$ref": "#/components/schemas/Application"
 										},
 										"application_deployment": {
-											"$ref": "#/components/schemas/ApplicationDeployment"
+											"nullable": true,
+											"properties": {
+												"application": {
+													"$ref": "#/components/schemas/Application"
+												},
+												"application_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"commit_hash": {
+													"type": "string"
+												},
+												"container_id": {
+													"type": "string"
+												},
+												"container_image": {
+													"type": "string"
+												},
+												"container_name": {
+													"type": "string"
+												},
+												"container_status": {
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"image_s3_key": {
+													"type": "string"
+												},
+												"image_size": {
+													"format": "int64",
+													"type": "integer"
+												},
+												"logs": {
+													"items": {
+														"$ref": "#/components/schemas/ApplicationLogs"
+													},
+													"type": "array"
+												},
+												"status": {
+													"nullable": true,
+													"properties": {
+														"application_deployment": {
+															"$ref": "#/components/schemas/ApplicationDeployment"
+														},
+														"application_deployment_id": {
+															"format": "uuid",
+															"type": "string"
+														},
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
+														"status": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
 										},
-										"application_deployment_id": {},
-										"application_id": {},
+										"application_deployment_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"created_at": {
 											"format": "date-time",
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"log": {
 											"type": "string"
 										},
@@ -1164,7 +1573,10 @@
 										"format": "date-time",
 										"type": "string"
 									},
-									"id": {},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"logo": {
 										"nullable": true,
 										"type": "string"
@@ -1182,7 +1594,10 @@
 								},
 								"type": "object"
 							},
-							"organization_id": {},
+							"organization_id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"port": {
 								"type": "integer"
 							},
@@ -1204,12 +1619,18 @@
 									"application": {
 										"$ref": "#/components/schemas/Application"
 									},
-									"application_id": {},
+									"application_id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"created_at": {
 										"format": "date-time",
 										"type": "string"
 									},
-									"id": {},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"status": {
 										"type": "string"
 									},
@@ -1240,7 +1661,10 @@
 									"email_verified": {
 										"type": "boolean"
 									},
-									"id": {},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"image": {
 										"nullable": true,
 										"type": "string"
@@ -1267,7 +1691,10 @@
 													"nullable": true,
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"organization": {
 													"nullable": true,
 													"properties": {
@@ -1275,7 +1702,10 @@
 															"format": "date-time",
 															"type": "string"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"logo": {
 															"nullable": true,
 															"type": "string"
@@ -1293,7 +1723,10 @@
 													},
 													"type": "object"
 												},
-												"organization_id": {},
+												"organization_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"updated_at": {
 													"format": "date-time",
 													"type": "string"
@@ -1301,10 +1734,14 @@
 												"user": {
 													"$ref": "#/components/schemas/User"
 												},
-												"user_id": {}
+												"user_id": {
+													"format": "uuid",
+													"type": "string"
+												}
 											},
 											"type": "object"
 										},
+										"nullable": true,
 										"type": "array"
 									},
 									"organizations": {
@@ -1315,7 +1752,10 @@
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"logo": {
 													"nullable": true,
 													"type": "string"
@@ -1333,6 +1773,7 @@
 											},
 											"type": "object"
 										},
+										"nullable": true,
 										"type": "array"
 									},
 									"provision_status": {
@@ -1352,7 +1793,10 @@
 								},
 								"type": "object"
 							},
-							"user_id": {}
+							"user_id": {
+								"format": "uuid",
+								"type": "string"
+							}
 						},
 						"type": "object"
 					},
@@ -1432,6 +1876,7 @@
 					},
 					"domains": {
 						"items": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
@@ -1439,6 +1884,7 @@
 					},
 					"environment_variables": {
 						"additionalProperties": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
@@ -1596,6 +2042,7 @@
 					},
 					"domains": {
 						"items": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
@@ -1643,7 +2090,10 @@
 					"name": {
 						"type": "string"
 					},
-					"organization_id": {}
+					"organization_id": {
+						"format": "uuid",
+						"type": "string"
+					}
 				},
 				"type": "object"
 			},
@@ -1706,6 +2156,7 @@
 					},
 					"expected_status_codes": {
 						"items": {
+							"nullable": true,
 							"type": "integer"
 						},
 						"nullable": true,
@@ -1717,6 +2168,7 @@
 					},
 					"headers": {
 						"additionalProperties": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
@@ -1764,6 +2216,7 @@
 					},
 					"build_variables": {
 						"additionalProperties": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
@@ -1775,6 +2228,7 @@
 					},
 					"domains": {
 						"items": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
@@ -1786,6 +2240,7 @@
 					},
 					"environment_variables": {
 						"additionalProperties": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
@@ -1824,7 +2279,10 @@
 					"host": {
 						"type": "string"
 					},
-					"organization_id": {},
+					"organization_id": {
+						"format": "uuid",
+						"type": "string"
+					},
 					"password": {
 						"type": "string"
 					},
@@ -1855,7 +2313,10 @@
 			"DeleteDeploymentRequest": {
 				"description": "DeleteDeploymentRequest schema",
 				"properties": {
-					"id": {}
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					}
 				},
 				"type": "object"
 			},
@@ -1892,7 +2353,10 @@
 			"DeleteSMTPConfigRequest": {
 				"description": "DeleteSMTPConfigRequest schema",
 				"properties": {
-					"id": {}
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					}
 				},
 				"type": "object"
 			},
@@ -1911,7 +2375,10 @@
 			"DeployProjectRequest": {
 				"description": "DeployProjectRequest schema",
 				"properties": {
-					"id": {}
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					}
 				},
 				"type": "object"
 			},
@@ -1941,97 +2408,9 @@
 									},
 									"deployments": {
 										"items": {
-											"nullable": true,
-											"properties": {
-												"application": {
-													"$ref": "#/components/schemas/Application"
-												},
-												"application_id": {},
-												"commit_hash": {
-													"type": "string"
-												},
-												"container_id": {
-													"type": "string"
-												},
-												"container_image": {
-													"type": "string"
-												},
-												"container_name": {
-													"type": "string"
-												},
-												"container_status": {
-													"type": "string"
-												},
-												"created_at": {
-													"format": "date-time",
-													"type": "string"
-												},
-												"id": {},
-												"image_s3_key": {
-													"type": "string"
-												},
-												"image_size": {
-													"format": "int64",
-													"type": "integer"
-												},
-												"logs": {
-													"items": {
-														"nullable": true,
-														"properties": {
-															"application": {
-																"$ref": "#/components/schemas/Application"
-															},
-															"application_deployment": {
-																"$ref": "#/components/schemas/ApplicationDeployment"
-															},
-															"application_deployment_id": {},
-															"application_id": {},
-															"created_at": {
-																"format": "date-time",
-																"type": "string"
-															},
-															"id": {},
-															"log": {
-																"type": "string"
-															},
-															"updated_at": {
-																"format": "date-time",
-																"type": "string"
-															}
-														},
-														"type": "object"
-													},
-													"type": "array"
-												},
-												"status": {
-													"nullable": true,
-													"properties": {
-														"application_deployment": {
-															"$ref": "#/components/schemas/ApplicationDeployment"
-														},
-														"application_deployment_id": {},
-														"created_at": {
-															"format": "date-time",
-															"type": "string"
-														},
-														"id": {},
-														"status": {
-															"type": "string"
-														},
-														"updated_at": {
-															"format": "date-time",
-															"type": "string"
-														}
-													},
-													"type": "object"
-												},
-												"updated_at": {
-													"format": "date-time",
-													"type": "string"
-												}
-											},
-											"type": "object"
+											"$ref": "#/components/schemas/ApplicationDeployment"
 										},
+										"nullable": true,
 										"type": "array"
 									},
 									"dockerfile_path": {
@@ -2044,7 +2423,10 @@
 												"application": {
 													"$ref": "#/components/schemas/Application"
 												},
-												"application_id": {},
+												"application_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"created_at": {
 													"format": "date-time",
 													"type": "string"
@@ -2052,10 +2434,14 @@
 												"domain": {
 													"type": "string"
 												},
-												"id": {}
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												}
 											},
 											"type": "object"
 										},
+										"nullable": true,
 										"type": "array"
 									},
 									"environment": {
@@ -2065,16 +2451,22 @@
 										"type": "string"
 									},
 									"family_id": {
-										"nullable": true
+										"format": "uuid",
+										"type": "string"
 									},
-									"id": {},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"is_live_deployment": {
 										"type": "boolean"
 									},
 									"labels": {
 										"items": {
+											"nullable": true,
 											"type": "string"
 										},
+										"nullable": true,
 										"type": "array"
 									},
 									"logs": {
@@ -2087,13 +2479,22 @@
 												"application_deployment": {
 													"$ref": "#/components/schemas/ApplicationDeployment"
 												},
-												"application_deployment_id": {},
-												"application_id": {},
+												"application_deployment_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"application_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"created_at": {
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"log": {
 													"type": "string"
 												},
@@ -2104,6 +2505,7 @@
 											},
 											"type": "object"
 										},
+										"nullable": true,
 										"type": "array"
 									},
 									"name": {
@@ -2116,7 +2518,10 @@
 												"format": "date-time",
 												"type": "string"
 											},
-											"id": {},
+											"id": {
+												"format": "uuid",
+												"type": "string"
+											},
 											"logo": {
 												"nullable": true,
 												"type": "string"
@@ -2134,7 +2539,10 @@
 										},
 										"type": "object"
 									},
-									"organization_id": {},
+									"organization_id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"port": {
 										"type": "integer"
 									},
@@ -2156,12 +2564,18 @@
 											"application": {
 												"$ref": "#/components/schemas/Application"
 											},
-											"application_id": {},
+											"application_id": {
+												"format": "uuid",
+												"type": "string"
+											},
 											"created_at": {
 												"format": "date-time",
 												"type": "string"
 											},
-											"id": {},
+											"id": {
+												"format": "uuid",
+												"type": "string"
+											},
 											"status": {
 												"type": "string"
 											},
@@ -2192,7 +2606,10 @@
 											"email_verified": {
 												"type": "boolean"
 											},
-											"id": {},
+											"id": {
+												"format": "uuid",
+												"type": "string"
+											},
 											"image": {
 												"nullable": true,
 												"type": "string"
@@ -2219,7 +2636,10 @@
 															"nullable": true,
 															"type": "string"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"organization": {
 															"nullable": true,
 															"properties": {
@@ -2227,7 +2647,10 @@
 																	"format": "date-time",
 																	"type": "string"
 																},
-																"id": {},
+																"id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
 																"logo": {
 																	"nullable": true,
 																	"type": "string"
@@ -2245,7 +2668,10 @@
 															},
 															"type": "object"
 														},
-														"organization_id": {},
+														"organization_id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"updated_at": {
 															"format": "date-time",
 															"type": "string"
@@ -2253,10 +2679,14 @@
 														"user": {
 															"$ref": "#/components/schemas/User"
 														},
-														"user_id": {}
+														"user_id": {
+															"format": "uuid",
+															"type": "string"
+														}
 													},
 													"type": "object"
 												},
+												"nullable": true,
 												"type": "array"
 											},
 											"organizations": {
@@ -2267,7 +2697,10 @@
 															"format": "date-time",
 															"type": "string"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"logo": {
 															"nullable": true,
 															"type": "string"
@@ -2285,6 +2718,7 @@
 													},
 													"type": "object"
 												},
+												"nullable": true,
 												"type": "array"
 											},
 											"provision_status": {
@@ -2304,11 +2738,17 @@
 										},
 										"type": "object"
 									},
-									"user_id": {}
+									"user_id": {
+										"format": "uuid",
+										"type": "string"
+									}
 								},
 								"type": "object"
 							},
-							"application_id": {},
+							"application_id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"commit_hash": {
 								"type": "string"
 							},
@@ -2328,7 +2768,10 @@
 								"format": "date-time",
 								"type": "string"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"image_s3_key": {
 								"type": "string"
 							},
@@ -2341,18 +2784,349 @@
 									"nullable": true,
 									"properties": {
 										"application": {
-											"$ref": "#/components/schemas/Application"
+											"nullable": true,
+											"properties": {
+												"base_path": {
+													"type": "string"
+												},
+												"branch": {
+													"type": "string"
+												},
+												"build_pack": {
+													"type": "string"
+												},
+												"build_variables": {
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deployments": {
+													"items": {
+														"$ref": "#/components/schemas/ApplicationDeployment"
+													},
+													"nullable": true,
+													"type": "array"
+												},
+												"dockerfile_path": {
+													"type": "string"
+												},
+												"domains": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"domain": {
+																"type": "string"
+															},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"nullable": true,
+													"type": "array"
+												},
+												"environment": {
+													"type": "string"
+												},
+												"environment_variables": {
+													"type": "string"
+												},
+												"family_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"is_live_deployment": {
+													"type": "boolean"
+												},
+												"labels": {
+													"items": {
+														"nullable": true,
+														"type": "string"
+													},
+													"nullable": true,
+													"type": "array"
+												},
+												"logs": {
+													"items": {
+														"$ref": "#/components/schemas/ApplicationLogs"
+													},
+													"type": "array"
+												},
+												"name": {
+													"type": "string"
+												},
+												"organization": {
+													"nullable": true,
+													"properties": {
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
+														"logo": {
+															"nullable": true,
+															"type": "string"
+														},
+														"metadata": {
+															"nullable": true,
+															"type": "string"
+														},
+														"name": {
+															"type": "string"
+														},
+														"slug": {
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"organization_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"port": {
+													"type": "integer"
+												},
+												"post_run_command": {
+													"type": "string"
+												},
+												"pre_run_command": {
+													"type": "string"
+												},
+												"proxy_server": {
+													"type": "string"
+												},
+												"repository": {
+													"type": "string"
+												},
+												"status": {
+													"nullable": true,
+													"properties": {
+														"application": {
+															"$ref": "#/components/schemas/Application"
+														},
+														"application_id": {
+															"format": "uuid",
+															"type": "string"
+														},
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
+														"status": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"user": {
+													"nullable": true,
+													"properties": {
+														"avatar": {
+															"type": "string"
+														},
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"email": {
+															"type": "string"
+														},
+														"email_verified": {
+															"type": "boolean"
+														},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
+														"image": {
+															"nullable": true,
+															"type": "string"
+														},
+														"is_onboarded": {
+															"type": "boolean"
+														},
+														"is_verified": {
+															"type": "boolean"
+														},
+														"name": {
+															"type": "string"
+														},
+														"organization_users": {
+															"items": {
+																"nullable": true,
+																"properties": {
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"deleted_at": {
+																		"format": "date-time",
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"organization": {
+																		"nullable": true,
+																		"properties": {
+																			"created_at": {
+																				"format": "date-time",
+																				"type": "string"
+																			},
+																			"id": {
+																				"format": "uuid",
+																				"type": "string"
+																			},
+																			"logo": {
+																				"nullable": true,
+																				"type": "string"
+																			},
+																			"metadata": {
+																				"nullable": true,
+																				"type": "string"
+																			},
+																			"name": {
+																				"type": "string"
+																			},
+																			"slug": {
+																				"type": "string"
+																			}
+																		},
+																		"type": "object"
+																	},
+																	"organization_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"user": {
+																		"$ref": "#/components/schemas/User"
+																	},
+																	"user_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"nullable": true,
+															"type": "array"
+														},
+														"organizations": {
+															"items": {
+																"nullable": true,
+																"properties": {
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"logo": {
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"metadata": {
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"name": {
+																		"type": "string"
+																	},
+																	"slug": {
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"nullable": true,
+															"type": "array"
+														},
+														"provision_status": {
+															"nullable": true,
+															"type": "string"
+														},
+														"supertokens_user_id": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"username": {
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"user_id": {
+													"format": "uuid",
+													"type": "string"
+												}
+											},
+											"type": "object"
 										},
 										"application_deployment": {
 											"$ref": "#/components/schemas/ApplicationDeployment"
 										},
-										"application_deployment_id": {},
-										"application_id": {},
+										"application_deployment_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"created_at": {
 											"format": "date-time",
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"log": {
 											"type": "string"
 										},
@@ -2372,12 +3146,18 @@
 									"application_deployment": {
 										"$ref": "#/components/schemas/ApplicationDeployment"
 									},
-									"application_deployment_id": {},
+									"application_deployment_id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"created_at": {
 										"format": "date-time",
 										"type": "string"
 									},
-									"id": {},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"status": {
 										"type": "string"
 									},
@@ -2419,16 +3199,25 @@
 								"nullable": true,
 								"type": "string"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"name": {
 								"type": "string"
 							},
-							"organization_id": {},
+							"organization_id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"updated_at": {
 								"format": "date-time",
 								"type": "string"
 							},
-							"user_id": {}
+							"user_id": {
+								"format": "uuid",
+								"type": "string"
+							}
 						},
 						"type": "object"
 					},
@@ -2450,6 +3239,7 @@
 					},
 					"domains": {
 						"items": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
@@ -2458,7 +3248,10 @@
 					"environment": {
 						"type": "string"
 					},
-					"source_project_id": {}
+					"source_project_id": {
+						"format": "uuid",
+						"type": "string"
+					}
 				},
 				"type": "object"
 			},
@@ -2545,7 +3338,10 @@
 									"icon": {
 										"type": "string"
 									},
-									"id": {},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"is_verified": {
 										"type": "boolean"
 									},
@@ -2553,7 +3349,8 @@
 										"type": "string"
 									},
 									"parent_extension_id": {
-										"nullable": true
+										"format": "uuid",
+										"type": "string"
 									},
 									"parsed_content": {
 										"type": "string"
@@ -2570,20 +3367,30 @@
 									},
 									"variables": {
 										"items": {
+											"nullable": true,
 											"properties": {
 												"created_at": {
 													"format": "date-time",
 													"type": "string"
 												},
-												"default_value": {},
+												"default_value": {
+													"description": "JSON-encoded value",
+													"type": "string"
+												},
 												"description": {
 													"type": "string"
 												},
 												"extension": {
 													"$ref": "#/components/schemas/Extension"
 												},
-												"extension_id": {},
-												"id": {},
+												"extension_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"is_required": {
 													"type": "boolean"
 												},
@@ -2599,6 +3406,7 @@
 											},
 											"type": "object"
 										},
+										"nullable": true,
 										"type": "array"
 									},
 									"version": {
@@ -2610,8 +3418,14 @@
 								},
 								"type": "object"
 							},
-							"extension_id": {},
-							"id": {},
+							"extension_id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"log_seq": {
 								"format": "int64",
 								"type": "integer"
@@ -2628,6 +3442,7 @@
 							},
 							"steps": {
 								"items": {
+									"nullable": true,
 									"properties": {
 										"completed_at": {
 											"format": "date-time",
@@ -2641,11 +3456,17 @@
 										"execution": {
 											"$ref": "#/components/schemas/ExtensionExecution"
 										},
-										"execution_id": {},
+										"execution_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"exit_code": {
 											"type": "integer"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"output": {
 											"type": "string"
 										},
@@ -2668,6 +3489,7 @@
 									},
 									"type": "object"
 								},
+								"nullable": true,
 								"type": "array"
 							},
 							"variable_values": {
@@ -2721,7 +3543,10 @@
 					"icon": {
 						"type": "string"
 					},
-					"id": {},
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
 					"is_verified": {
 						"type": "boolean"
 					},
@@ -2729,7 +3554,8 @@
 						"type": "string"
 					},
 					"parent_extension_id": {
-						"nullable": true
+						"format": "uuid",
+						"type": "string"
 					},
 					"parsed_content": {
 						"type": "string"
@@ -2746,20 +3572,30 @@
 					},
 					"variables": {
 						"items": {
+							"nullable": true,
 							"properties": {
 								"created_at": {
 									"format": "date-time",
 									"type": "string"
 								},
-								"default_value": {},
+								"default_value": {
+									"description": "JSON-encoded value",
+									"type": "string"
+								},
 								"description": {
 									"type": "string"
 								},
 								"extension": {
 									"$ref": "#/components/schemas/Extension"
 								},
-								"extension_id": {},
-								"id": {},
+								"extension_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"is_required": {
 									"type": "boolean"
 								},
@@ -2775,6 +3611,7 @@
 							},
 							"type": "object"
 						},
+						"nullable": true,
 						"type": "array"
 					},
 					"version": {
@@ -2843,7 +3680,10 @@
 							"icon": {
 								"type": "string"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"is_verified": {
 								"type": "boolean"
 							},
@@ -2851,7 +3691,8 @@
 								"type": "string"
 							},
 							"parent_extension_id": {
-								"nullable": true
+								"format": "uuid",
+								"type": "string"
 							},
 							"parsed_content": {
 								"type": "string"
@@ -2868,20 +3709,30 @@
 							},
 							"variables": {
 								"items": {
+									"nullable": true,
 									"properties": {
 										"created_at": {
 											"format": "date-time",
 											"type": "string"
 										},
-										"default_value": {},
+										"default_value": {
+											"description": "JSON-encoded value",
+											"type": "string"
+										},
 										"description": {
 											"type": "string"
 										},
 										"extension": {
 											"$ref": "#/components/schemas/Extension"
 										},
-										"extension_id": {},
-										"id": {},
+										"extension_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"is_required": {
 											"type": "boolean"
 										},
@@ -2897,6 +3748,7 @@
 									},
 									"type": "object"
 								},
+								"nullable": true,
 								"type": "array"
 							},
 							"version": {
@@ -2908,8 +3760,14 @@
 						},
 						"type": "object"
 					},
-					"extension_id": {},
-					"id": {},
+					"extension_id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
 					"log_seq": {
 						"format": "int64",
 						"type": "integer"
@@ -2926,6 +3784,7 @@
 					},
 					"steps": {
 						"items": {
+							"nullable": true,
 							"properties": {
 								"completed_at": {
 									"format": "date-time",
@@ -2939,11 +3798,17 @@
 								"execution": {
 									"$ref": "#/components/schemas/ExtensionExecution"
 								},
-								"execution_id": {},
+								"execution_id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"exit_code": {
 									"type": "integer"
 								},
-								"id": {},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"output": {
 									"type": "string"
 								},
@@ -2966,6 +3831,7 @@
 							},
 							"type": "object"
 						},
+						"nullable": true,
 						"type": "array"
 					},
 					"variable_values": {
@@ -3012,7 +3878,10 @@
 							"icon": {
 								"type": "string"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"is_verified": {
 								"type": "boolean"
 							},
@@ -3020,7 +3889,8 @@
 								"type": "string"
 							},
 							"parent_extension_id": {
-								"nullable": true
+								"format": "uuid",
+								"type": "string"
 							},
 							"parsed_content": {
 								"type": "string"
@@ -3037,20 +3907,30 @@
 							},
 							"variables": {
 								"items": {
+									"nullable": true,
 									"properties": {
 										"created_at": {
 											"format": "date-time",
 											"type": "string"
 										},
-										"default_value": {},
+										"default_value": {
+											"description": "JSON-encoded value",
+											"type": "string"
+										},
 										"description": {
 											"type": "string"
 										},
 										"extension": {
 											"$ref": "#/components/schemas/Extension"
 										},
-										"extension_id": {},
-										"id": {},
+										"extension_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"is_required": {
 											"type": "boolean"
 										},
@@ -3122,7 +4002,11 @@
 											"type": "string"
 										},
 										"metadata": {
-											"additionalProperties": {},
+											"additionalProperties": {
+												"description": "Variable value (string, number, boolean, or JSON as string)",
+												"type": "string"
+											},
+											"nullable": true,
 											"type": "object"
 										},
 										"resource": {
@@ -3354,15 +4238,23 @@
 					},
 					"errors": {
 						"items": {
+							"nullable": true,
 							"properties": {
 								"more": {
-									"additionalProperties": {},
+									"additionalProperties": {
+										"description": "Variable value (string, number, boolean, or JSON as string)",
+										"type": "string"
+									},
+									"description": "Additional information about the error",
+									"nullable": true,
 									"type": "object"
 								},
 								"name": {
+									"description": "For example, name of the parameter that caused the error",
 									"type": "string"
 								},
 								"reason": {
+									"description": "Human readable error message",
 									"type": "string"
 								}
 							},
@@ -3495,7 +4387,10 @@
 													"application": {
 														"$ref": "#/components/schemas/Application"
 													},
-													"application_id": {},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"commit_hash": {
 														"type": "string"
 													},
@@ -3515,7 +4410,10 @@
 														"format": "date-time",
 														"type": "string"
 													},
-													"id": {},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"image_s3_key": {
 														"type": "string"
 													},
@@ -3533,13 +4431,22 @@
 																"application_deployment": {
 																	"$ref": "#/components/schemas/ApplicationDeployment"
 																},
-																"application_deployment_id": {},
-																"application_id": {},
+																"application_deployment_id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"application_id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
 																"created_at": {
 																	"format": "date-time",
 																	"type": "string"
 																},
-																"id": {},
+																"id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
 																"log": {
 																	"type": "string"
 																},
@@ -3550,6 +4457,7 @@
 															},
 															"type": "object"
 														},
+														"nullable": true,
 														"type": "array"
 													},
 													"status": {
@@ -3558,12 +4466,18 @@
 															"application_deployment": {
 																"$ref": "#/components/schemas/ApplicationDeployment"
 															},
-															"application_deployment_id": {},
+															"application_deployment_id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"created_at": {
 																"format": "date-time",
 																"type": "string"
 															},
-															"id": {},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"status": {
 																"type": "string"
 															},
@@ -3594,7 +4508,10 @@
 													"application": {
 														"$ref": "#/components/schemas/Application"
 													},
-													"application_id": {},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"created_at": {
 														"format": "date-time",
 														"type": "string"
@@ -3602,7 +4519,10 @@
 													"domain": {
 														"type": "string"
 													},
-													"id": {}
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													}
 												},
 												"type": "object"
 											},
@@ -3616,14 +4536,19 @@
 											"type": "string"
 										},
 										"family_id": {
-											"nullable": true
+											"format": "uuid",
+											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"is_live_deployment": {
 											"type": "boolean"
 										},
 										"labels": {
 											"items": {
+												"nullable": true,
 												"type": "string"
 											},
 											"nullable": true,
@@ -3637,15 +4562,102 @@
 														"$ref": "#/components/schemas/Application"
 													},
 													"application_deployment": {
-														"$ref": "#/components/schemas/ApplicationDeployment"
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"commit_hash": {
+																"type": "string"
+															},
+															"container_id": {
+																"type": "string"
+															},
+															"container_image": {
+																"type": "string"
+															},
+															"container_name": {
+																"type": "string"
+															},
+															"container_status": {
+																"type": "string"
+															},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"image_s3_key": {
+																"type": "string"
+															},
+															"image_size": {
+																"format": "int64",
+																"type": "integer"
+															},
+															"logs": {
+																"items": {
+																	"$ref": "#/components/schemas/ApplicationLogs"
+																},
+																"type": "array"
+															},
+															"status": {
+																"nullable": true,
+																"properties": {
+																	"application_deployment": {
+																		"$ref": "#/components/schemas/ApplicationDeployment"
+																	},
+																	"application_deployment_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"status": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
 													},
-													"application_deployment_id": {},
-													"application_id": {},
+													"application_deployment_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"created_at": {
 														"format": "date-time",
 														"type": "string"
 													},
-													"id": {},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"log": {
 														"type": "string"
 													},
@@ -3669,7 +4681,10 @@
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"logo": {
 													"nullable": true,
 													"type": "string"
@@ -3687,7 +4702,10 @@
 											},
 											"type": "object"
 										},
-										"organization_id": {},
+										"organization_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"port": {
 											"type": "integer"
 										},
@@ -3709,12 +4727,18 @@
 												"application": {
 													"$ref": "#/components/schemas/Application"
 												},
-												"application_id": {},
+												"application_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"created_at": {
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"status": {
 													"type": "string"
 												},
@@ -3745,7 +4769,10 @@
 												"email_verified": {
 													"type": "boolean"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"image": {
 													"nullable": true,
 													"type": "string"
@@ -3772,7 +4799,10 @@
 																"nullable": true,
 																"type": "string"
 															},
-															"id": {},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"organization": {
 																"nullable": true,
 																"properties": {
@@ -3780,7 +4810,10 @@
 																		"format": "date-time",
 																		"type": "string"
 																	},
-																	"id": {},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"logo": {
 																		"nullable": true,
 																		"type": "string"
@@ -3798,7 +4831,10 @@
 																},
 																"type": "object"
 															},
-															"organization_id": {},
+															"organization_id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"updated_at": {
 																"format": "date-time",
 																"type": "string"
@@ -3806,10 +4842,14 @@
 															"user": {
 																"$ref": "#/components/schemas/User"
 															},
-															"user_id": {}
+															"user_id": {
+																"format": "uuid",
+																"type": "string"
+															}
 														},
 														"type": "object"
 													},
+													"nullable": true,
 													"type": "array"
 												},
 												"organizations": {
@@ -3820,7 +4860,10 @@
 																"format": "date-time",
 																"type": "string"
 															},
-															"id": {},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"logo": {
 																"nullable": true,
 																"type": "string"
@@ -3838,6 +4881,7 @@
 														},
 														"type": "object"
 													},
+													"nullable": true,
 													"type": "array"
 												},
 												"provision_status": {
@@ -3857,7 +4901,10 @@
 											},
 											"type": "object"
 										},
-										"user_id": {}
+										"user_id": {
+											"format": "uuid",
+											"type": "string"
+										}
 									},
 									"type": "object"
 								},
@@ -3945,7 +4992,10 @@
 									"nullable": true,
 									"type": "string"
 								},
-								"id": {},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"installation_id": {
 									"type": "string"
 								},
@@ -3959,7 +5009,10 @@
 									"format": "date-time",
 									"type": "string"
 								},
-								"user_id": {},
+								"user_id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"webhook_secret": {
 									"type": "string"
 								}
@@ -4105,6 +5158,7 @@
 							},
 							"groups": {
 								"items": {
+									"nullable": true,
 									"properties": {
 										"application_id": {
 											"type": "string"
@@ -4265,6 +5319,7 @@
 							},
 							"ungrouped": {
 								"items": {
+									"nullable": true,
 									"properties": {
 										"command": {
 											"type": "string"
@@ -4423,97 +5478,9 @@
 												},
 												"deployments": {
 													"items": {
-														"nullable": true,
-														"properties": {
-															"application": {
-																"$ref": "#/components/schemas/Application"
-															},
-															"application_id": {},
-															"commit_hash": {
-																"type": "string"
-															},
-															"container_id": {
-																"type": "string"
-															},
-															"container_image": {
-																"type": "string"
-															},
-															"container_name": {
-																"type": "string"
-															},
-															"container_status": {
-																"type": "string"
-															},
-															"created_at": {
-																"format": "date-time",
-																"type": "string"
-															},
-															"id": {},
-															"image_s3_key": {
-																"type": "string"
-															},
-															"image_size": {
-																"format": "int64",
-																"type": "integer"
-															},
-															"logs": {
-																"items": {
-																	"nullable": true,
-																	"properties": {
-																		"application": {
-																			"$ref": "#/components/schemas/Application"
-																		},
-																		"application_deployment": {
-																			"$ref": "#/components/schemas/ApplicationDeployment"
-																		},
-																		"application_deployment_id": {},
-																		"application_id": {},
-																		"created_at": {
-																			"format": "date-time",
-																			"type": "string"
-																		},
-																		"id": {},
-																		"log": {
-																			"type": "string"
-																		},
-																		"updated_at": {
-																			"format": "date-time",
-																			"type": "string"
-																		}
-																	},
-																	"type": "object"
-																},
-																"type": "array"
-															},
-															"status": {
-																"nullable": true,
-																"properties": {
-																	"application_deployment": {
-																		"$ref": "#/components/schemas/ApplicationDeployment"
-																	},
-																	"application_deployment_id": {},
-																	"created_at": {
-																		"format": "date-time",
-																		"type": "string"
-																	},
-																	"id": {},
-																	"status": {
-																		"type": "string"
-																	},
-																	"updated_at": {
-																		"format": "date-time",
-																		"type": "string"
-																	}
-																},
-																"type": "object"
-															},
-															"updated_at": {
-																"format": "date-time",
-																"type": "string"
-															}
-														},
-														"type": "object"
+														"$ref": "#/components/schemas/ApplicationDeployment"
 													},
+													"nullable": true,
 													"type": "array"
 												},
 												"dockerfile_path": {
@@ -4526,7 +5493,10 @@
 															"application": {
 																"$ref": "#/components/schemas/Application"
 															},
-															"application_id": {},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"created_at": {
 																"format": "date-time",
 																"type": "string"
@@ -4534,10 +5504,14 @@
 															"domain": {
 																"type": "string"
 															},
-															"id": {}
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															}
 														},
 														"type": "object"
 													},
+													"nullable": true,
 													"type": "array"
 												},
 												"environment": {
@@ -4547,16 +5521,22 @@
 													"type": "string"
 												},
 												"family_id": {
-													"nullable": true
+													"format": "uuid",
+													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"is_live_deployment": {
 													"type": "boolean"
 												},
 												"labels": {
 													"items": {
+														"nullable": true,
 														"type": "string"
 													},
+													"nullable": true,
 													"type": "array"
 												},
 												"logs": {
@@ -4569,13 +5549,22 @@
 															"application_deployment": {
 																"$ref": "#/components/schemas/ApplicationDeployment"
 															},
-															"application_deployment_id": {},
-															"application_id": {},
+															"application_deployment_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"created_at": {
 																"format": "date-time",
 																"type": "string"
 															},
-															"id": {},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"log": {
 																"type": "string"
 															},
@@ -4586,6 +5575,7 @@
 														},
 														"type": "object"
 													},
+													"nullable": true,
 													"type": "array"
 												},
 												"name": {
@@ -4598,7 +5588,10 @@
 															"format": "date-time",
 															"type": "string"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"logo": {
 															"nullable": true,
 															"type": "string"
@@ -4616,7 +5609,10 @@
 													},
 													"type": "object"
 												},
-												"organization_id": {},
+												"organization_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"port": {
 													"type": "integer"
 												},
@@ -4638,12 +5634,18 @@
 														"application": {
 															"$ref": "#/components/schemas/Application"
 														},
-														"application_id": {},
+														"application_id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"created_at": {
 															"format": "date-time",
 															"type": "string"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"status": {
 															"type": "string"
 														},
@@ -4674,7 +5676,10 @@
 														"email_verified": {
 															"type": "boolean"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"image": {
 															"nullable": true,
 															"type": "string"
@@ -4701,7 +5706,10 @@
 																		"nullable": true,
 																		"type": "string"
 																	},
-																	"id": {},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"organization": {
 																		"nullable": true,
 																		"properties": {
@@ -4709,7 +5717,10 @@
 																				"format": "date-time",
 																				"type": "string"
 																			},
-																			"id": {},
+																			"id": {
+																				"format": "uuid",
+																				"type": "string"
+																			},
 																			"logo": {
 																				"nullable": true,
 																				"type": "string"
@@ -4727,7 +5738,10 @@
 																		},
 																		"type": "object"
 																	},
-																	"organization_id": {},
+																	"organization_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"updated_at": {
 																		"format": "date-time",
 																		"type": "string"
@@ -4735,10 +5749,14 @@
 																	"user": {
 																		"$ref": "#/components/schemas/User"
 																	},
-																	"user_id": {}
+																	"user_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	}
 																},
 																"type": "object"
 															},
+															"nullable": true,
 															"type": "array"
 														},
 														"organizations": {
@@ -4749,7 +5767,10 @@
 																		"format": "date-time",
 																		"type": "string"
 																	},
-																	"id": {},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"logo": {
 																		"nullable": true,
 																		"type": "string"
@@ -4767,6 +5788,7 @@
 																},
 																"type": "object"
 															},
+															"nullable": true,
 															"type": "array"
 														},
 														"provision_status": {
@@ -4786,11 +5808,17 @@
 													},
 													"type": "object"
 												},
-												"user_id": {}
+												"user_id": {
+													"format": "uuid",
+													"type": "string"
+												}
 											},
 											"type": "object"
 										},
-										"application_id": {},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"commit_hash": {
 											"type": "string"
 										},
@@ -4810,7 +5838,10 @@
 											"format": "date-time",
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"image_s3_key": {
 											"type": "string"
 										},
@@ -4823,18 +5854,349 @@
 												"nullable": true,
 												"properties": {
 													"application": {
-														"$ref": "#/components/schemas/Application"
+														"nullable": true,
+														"properties": {
+															"base_path": {
+																"type": "string"
+															},
+															"branch": {
+																"type": "string"
+															},
+															"build_pack": {
+																"type": "string"
+															},
+															"build_variables": {
+																"type": "string"
+															},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"deployments": {
+																"items": {
+																	"$ref": "#/components/schemas/ApplicationDeployment"
+																},
+																"nullable": true,
+																"type": "array"
+															},
+															"dockerfile_path": {
+																"type": "string"
+															},
+															"domains": {
+																"items": {
+																	"nullable": true,
+																	"properties": {
+																		"application": {
+																			"$ref": "#/components/schemas/Application"
+																		},
+																		"application_id": {
+																			"format": "uuid",
+																			"type": "string"
+																		},
+																		"created_at": {
+																			"format": "date-time",
+																			"type": "string"
+																		},
+																		"domain": {
+																			"type": "string"
+																		},
+																		"id": {
+																			"format": "uuid",
+																			"type": "string"
+																		}
+																	},
+																	"type": "object"
+																},
+																"nullable": true,
+																"type": "array"
+															},
+															"environment": {
+																"type": "string"
+															},
+															"environment_variables": {
+																"type": "string"
+															},
+															"family_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"is_live_deployment": {
+																"type": "boolean"
+															},
+															"labels": {
+																"items": {
+																	"nullable": true,
+																	"type": "string"
+																},
+																"nullable": true,
+																"type": "array"
+															},
+															"logs": {
+																"items": {
+																	"$ref": "#/components/schemas/ApplicationLogs"
+																},
+																"type": "array"
+															},
+															"name": {
+																"type": "string"
+															},
+															"organization": {
+																"nullable": true,
+																"properties": {
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"logo": {
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"metadata": {
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"name": {
+																		"type": "string"
+																	},
+																	"slug": {
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"organization_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"port": {
+																"type": "integer"
+															},
+															"post_run_command": {
+																"type": "string"
+															},
+															"pre_run_command": {
+																"type": "string"
+															},
+															"proxy_server": {
+																"type": "string"
+															},
+															"repository": {
+																"type": "string"
+															},
+															"status": {
+																"nullable": true,
+																"properties": {
+																	"application": {
+																		"$ref": "#/components/schemas/Application"
+																	},
+																	"application_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"status": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"user": {
+																"nullable": true,
+																"properties": {
+																	"avatar": {
+																		"type": "string"
+																	},
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"email": {
+																		"type": "string"
+																	},
+																	"email_verified": {
+																		"type": "boolean"
+																	},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"image": {
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"is_onboarded": {
+																		"type": "boolean"
+																	},
+																	"is_verified": {
+																		"type": "boolean"
+																	},
+																	"name": {
+																		"type": "string"
+																	},
+																	"organization_users": {
+																		"items": {
+																			"nullable": true,
+																			"properties": {
+																				"created_at": {
+																					"format": "date-time",
+																					"type": "string"
+																				},
+																				"deleted_at": {
+																					"format": "date-time",
+																					"nullable": true,
+																					"type": "string"
+																				},
+																				"id": {
+																					"format": "uuid",
+																					"type": "string"
+																				},
+																				"organization": {
+																					"nullable": true,
+																					"properties": {
+																						"created_at": {
+																							"format": "date-time",
+																							"type": "string"
+																						},
+																						"id": {
+																							"format": "uuid",
+																							"type": "string"
+																						},
+																						"logo": {
+																							"nullable": true,
+																							"type": "string"
+																						},
+																						"metadata": {
+																							"nullable": true,
+																							"type": "string"
+																						},
+																						"name": {
+																							"type": "string"
+																						},
+																						"slug": {
+																							"type": "string"
+																						}
+																					},
+																					"type": "object"
+																				},
+																				"organization_id": {
+																					"format": "uuid",
+																					"type": "string"
+																				},
+																				"updated_at": {
+																					"format": "date-time",
+																					"type": "string"
+																				},
+																				"user": {
+																					"$ref": "#/components/schemas/User"
+																				},
+																				"user_id": {
+																					"format": "uuid",
+																					"type": "string"
+																				}
+																			},
+																			"type": "object"
+																		},
+																		"nullable": true,
+																		"type": "array"
+																	},
+																	"organizations": {
+																		"items": {
+																			"nullable": true,
+																			"properties": {
+																				"created_at": {
+																					"format": "date-time",
+																					"type": "string"
+																				},
+																				"id": {
+																					"format": "uuid",
+																					"type": "string"
+																				},
+																				"logo": {
+																					"nullable": true,
+																					"type": "string"
+																				},
+																				"metadata": {
+																					"nullable": true,
+																					"type": "string"
+																				},
+																				"name": {
+																					"type": "string"
+																				},
+																				"slug": {
+																					"type": "string"
+																				}
+																			},
+																			"type": "object"
+																		},
+																		"nullable": true,
+																		"type": "array"
+																	},
+																	"provision_status": {
+																		"nullable": true,
+																		"type": "string"
+																	},
+																	"supertokens_user_id": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"username": {
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"user_id": {
+																"format": "uuid",
+																"type": "string"
+															}
+														},
+														"type": "object"
 													},
 													"application_deployment": {
 														"$ref": "#/components/schemas/ApplicationDeployment"
 													},
-													"application_deployment_id": {},
-													"application_id": {},
+													"application_deployment_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"created_at": {
 														"format": "date-time",
 														"type": "string"
 													},
-													"id": {},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"log": {
 														"type": "string"
 													},
@@ -4854,12 +6216,18 @@
 												"application_deployment": {
 													"$ref": "#/components/schemas/ApplicationDeployment"
 												},
-												"application_deployment_id": {},
+												"application_deployment_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"created_at": {
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"status": {
 													"type": "string"
 												},
@@ -4915,16 +6283,25 @@
 									"nullable": true,
 									"type": "string"
 								},
-								"id": {},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"name": {
 									"type": "string"
 								},
-								"organization_id": {},
+								"organization_id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"updated_at": {
 									"format": "date-time",
 									"type": "string"
 								},
-								"user_id": {}
+								"user_id": {
+									"format": "uuid",
+									"type": "string"
+								}
 							},
 							"type": "object"
 						},
@@ -4999,7 +6376,10 @@
 										"icon": {
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"is_verified": {
 											"type": "boolean"
 										},
@@ -5007,7 +6387,8 @@
 											"type": "string"
 										},
 										"parent_extension_id": {
-											"nullable": true
+											"format": "uuid",
+											"type": "string"
 										},
 										"parsed_content": {
 											"type": "string"
@@ -5024,20 +6405,30 @@
 										},
 										"variables": {
 											"items": {
+												"nullable": true,
 												"properties": {
 													"created_at": {
 														"format": "date-time",
 														"type": "string"
 													},
-													"default_value": {},
+													"default_value": {
+														"description": "JSON-encoded value",
+														"type": "string"
+													},
 													"description": {
 														"type": "string"
 													},
 													"extension": {
 														"$ref": "#/components/schemas/Extension"
 													},
-													"extension_id": {},
-													"id": {},
+													"extension_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"is_required": {
 														"type": "boolean"
 													},
@@ -5053,6 +6444,7 @@
 												},
 												"type": "object"
 											},
+											"nullable": true,
 											"type": "array"
 										},
 										"version": {
@@ -5064,8 +6456,14 @@
 									},
 									"type": "object"
 								},
-								"extension_id": {},
-								"id": {},
+								"extension_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"log_seq": {
 									"format": "int64",
 									"type": "integer"
@@ -5082,6 +6480,7 @@
 								},
 								"steps": {
 									"items": {
+										"nullable": true,
 										"properties": {
 											"completed_at": {
 												"format": "date-time",
@@ -5095,11 +6494,17 @@
 											"execution": {
 												"$ref": "#/components/schemas/ExtensionExecution"
 											},
-											"execution_id": {},
+											"execution_id": {
+												"format": "uuid",
+												"type": "string"
+											},
 											"exit_code": {
 												"type": "integer"
 											},
-											"id": {},
+											"id": {
+												"format": "uuid",
+												"type": "string"
+											},
 											"output": {
 												"type": "string"
 											},
@@ -5122,6 +6527,7 @@
 										},
 										"type": "object"
 									},
+									"nullable": true,
 									"type": "array"
 								},
 								"variable_values": {
@@ -5182,7 +6588,10 @@
 										"icon": {
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"is_verified": {
 											"type": "boolean"
 										},
@@ -5190,7 +6599,8 @@
 											"type": "string"
 										},
 										"parent_extension_id": {
-											"nullable": true
+											"format": "uuid",
+											"type": "string"
 										},
 										"parsed_content": {
 											"type": "string"
@@ -5207,20 +6617,30 @@
 										},
 										"variables": {
 											"items": {
+												"nullable": true,
 												"properties": {
 													"created_at": {
 														"format": "date-time",
 														"type": "string"
 													},
-													"default_value": {},
+													"default_value": {
+														"description": "JSON-encoded value",
+														"type": "string"
+													},
 													"description": {
 														"type": "string"
 													},
 													"extension": {
 														"$ref": "#/components/schemas/Extension"
 													},
-													"extension_id": {},
-													"id": {},
+													"extension_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"is_required": {
 														"type": "boolean"
 													},
@@ -5292,7 +6712,10 @@
 								"feature_name": {
 									"type": "string"
 								},
-								"id": {},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"is_enabled": {
 									"type": "boolean"
 								},
@@ -5303,7 +6726,10 @@
 											"format": "date-time",
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"logo": {
 											"nullable": true,
 											"type": "string"
@@ -5321,7 +6747,10 @@
 									},
 									"type": "object"
 								},
-								"organization_id": {},
+								"organization_id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"updated_at": {
 									"format": "date-time",
 									"type": "string"
@@ -5498,9 +6927,18 @@
 											"format": "date-time",
 											"type": "string"
 										},
-										"data": {},
-										"execution_id": {},
-										"id": {},
+										"data": {
+											"description": "JSON-encoded value",
+											"type": "string"
+										},
+										"execution_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"level": {
 											"type": "string"
 										},
@@ -5512,7 +6950,8 @@
 											"type": "integer"
 										},
 										"step_id": {
-											"nullable": true
+											"format": "uuid",
+											"type": "string"
 										}
 									},
 									"type": "object"
@@ -5977,7 +7416,10 @@
 											"nullable": true,
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"is_active": {
 											"type": "boolean"
 										},
@@ -6004,7 +7446,10 @@
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"logo": {
 													"nullable": true,
 													"type": "string"
@@ -6022,7 +7467,10 @@
 											},
 											"type": "object"
 										},
-										"organization_id": {},
+										"organization_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"port": {
 											"nullable": true,
 											"type": "integer"
@@ -6042,7 +7490,10 @@
 													"nullable": true,
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"lxd_container_name": {
 													"nullable": true,
 													"type": "string"
@@ -6054,7 +7505,10 @@
 															"format": "date-time",
 															"type": "string"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"logo": {
 															"nullable": true,
 															"type": "string"
@@ -6072,7 +7526,10 @@
 													},
 													"type": "object"
 												},
-												"organization_id": {},
+												"organization_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"ssh_key": {
 													"nullable": true,
 													"properties": {
@@ -6100,7 +7557,10 @@
 															"nullable": true,
 															"type": "string"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"is_active": {
 															"type": "boolean"
 														},
@@ -6127,7 +7587,10 @@
 																	"format": "date-time",
 																	"type": "string"
 																},
-																"id": {},
+																"id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
 																"logo": {
 																	"nullable": true,
 																	"type": "string"
@@ -6145,7 +7608,10 @@
 															},
 															"type": "object"
 														},
-														"organization_id": {},
+														"organization_id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"port": {
 															"nullable": true,
 															"type": "integer"
@@ -6166,7 +7632,8 @@
 													"type": "object"
 												},
 												"ssh_key_id": {
-													"nullable": true
+													"format": "uuid",
+													"type": "string"
 												},
 												"step": {
 													"nullable": true,
@@ -6196,7 +7663,10 @@
 														"email_verified": {
 															"type": "boolean"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"image": {
 															"nullable": true,
 															"type": "string"
@@ -6223,7 +7693,10 @@
 																		"nullable": true,
 																		"type": "string"
 																	},
-																	"id": {},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"organization": {
 																		"nullable": true,
 																		"properties": {
@@ -6231,7 +7704,10 @@
 																				"format": "date-time",
 																				"type": "string"
 																			},
-																			"id": {},
+																			"id": {
+																				"format": "uuid",
+																				"type": "string"
+																			},
 																			"logo": {
 																				"nullable": true,
 																				"type": "string"
@@ -6249,7 +7725,10 @@
 																		},
 																		"type": "object"
 																	},
-																	"organization_id": {},
+																	"organization_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"updated_at": {
 																		"format": "date-time",
 																		"type": "string"
@@ -6257,10 +7736,14 @@
 																	"user": {
 																		"$ref": "#/components/schemas/User"
 																	},
-																	"user_id": {}
+																	"user_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	}
 																},
 																"type": "object"
 															},
+															"nullable": true,
 															"type": "array"
 														},
 														"organizations": {
@@ -6271,7 +7754,10 @@
 																		"format": "date-time",
 																		"type": "string"
 																	},
-																	"id": {},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"logo": {
 																		"nullable": true,
 																		"type": "string"
@@ -6289,6 +7775,7 @@
 																},
 																"type": "object"
 															},
+															"nullable": true,
 															"type": "array"
 														},
 														"provision_status": {
@@ -6308,7 +7795,10 @@
 													},
 													"type": "object"
 												},
-												"user_id": {}
+												"user_id": {
+													"format": "uuid",
+													"type": "string"
+												}
 											},
 											"type": "object"
 										},
@@ -6387,7 +7877,10 @@
 															"application": {
 																"$ref": "#/components/schemas/Application"
 															},
-															"application_id": {},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"commit_hash": {
 																"type": "string"
 															},
@@ -6407,7 +7900,10 @@
 																"format": "date-time",
 																"type": "string"
 															},
-															"id": {},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"image_s3_key": {
 																"type": "string"
 															},
@@ -6417,31 +7913,9 @@
 															},
 															"logs": {
 																"items": {
-																	"nullable": true,
-																	"properties": {
-																		"application": {
-																			"$ref": "#/components/schemas/Application"
-																		},
-																		"application_deployment": {
-																			"$ref": "#/components/schemas/ApplicationDeployment"
-																		},
-																		"application_deployment_id": {},
-																		"application_id": {},
-																		"created_at": {
-																			"format": "date-time",
-																			"type": "string"
-																		},
-																		"id": {},
-																		"log": {
-																			"type": "string"
-																		},
-																		"updated_at": {
-																			"format": "date-time",
-																			"type": "string"
-																		}
-																	},
-																	"type": "object"
+																	"$ref": "#/components/schemas/ApplicationLogs"
 																},
+																"nullable": true,
 																"type": "array"
 															},
 															"status": {
@@ -6450,12 +7924,18 @@
 																	"application_deployment": {
 																		"$ref": "#/components/schemas/ApplicationDeployment"
 																	},
-																	"application_deployment_id": {},
+																	"application_deployment_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"created_at": {
 																		"format": "date-time",
 																		"type": "string"
 																	},
-																	"id": {},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"status": {
 																		"type": "string"
 																	},
@@ -6473,6 +7953,7 @@
 														},
 														"type": "object"
 													},
+													"nullable": true,
 													"type": "array"
 												},
 												"dockerfile_path": {
@@ -6485,7 +7966,10 @@
 															"application": {
 																"$ref": "#/components/schemas/Application"
 															},
-															"application_id": {},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"created_at": {
 																"format": "date-time",
 																"type": "string"
@@ -6493,10 +7977,14 @@
 															"domain": {
 																"type": "string"
 															},
-															"id": {}
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															}
 														},
 														"type": "object"
 													},
+													"nullable": true,
 													"type": "array"
 												},
 												"environment": {
@@ -6506,45 +7994,29 @@
 													"type": "string"
 												},
 												"family_id": {
-													"nullable": true
+													"format": "uuid",
+													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"is_live_deployment": {
 													"type": "boolean"
 												},
 												"labels": {
 													"items": {
+														"nullable": true,
 														"type": "string"
 													},
+													"nullable": true,
 													"type": "array"
 												},
 												"logs": {
 													"items": {
-														"nullable": true,
-														"properties": {
-															"application": {
-																"$ref": "#/components/schemas/Application"
-															},
-															"application_deployment": {
-																"$ref": "#/components/schemas/ApplicationDeployment"
-															},
-															"application_deployment_id": {},
-															"application_id": {},
-															"created_at": {
-																"format": "date-time",
-																"type": "string"
-															},
-															"id": {},
-															"log": {
-																"type": "string"
-															},
-															"updated_at": {
-																"format": "date-time",
-																"type": "string"
-															}
-														},
-														"type": "object"
+														"$ref": "#/components/schemas/ApplicationLogs"
 													},
+													"nullable": true,
 													"type": "array"
 												},
 												"name": {
@@ -6557,7 +8029,10 @@
 															"format": "date-time",
 															"type": "string"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"logo": {
 															"nullable": true,
 															"type": "string"
@@ -6575,7 +8050,10 @@
 													},
 													"type": "object"
 												},
-												"organization_id": {},
+												"organization_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"port": {
 													"type": "integer"
 												},
@@ -6597,12 +8075,18 @@
 														"application": {
 															"$ref": "#/components/schemas/Application"
 														},
-														"application_id": {},
+														"application_id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"created_at": {
 															"format": "date-time",
 															"type": "string"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"status": {
 															"type": "string"
 														},
@@ -6633,7 +8117,10 @@
 														"email_verified": {
 															"type": "boolean"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"image": {
 															"nullable": true,
 															"type": "string"
@@ -6660,7 +8147,10 @@
 																		"nullable": true,
 																		"type": "string"
 																	},
-																	"id": {},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"organization": {
 																		"nullable": true,
 																		"properties": {
@@ -6668,7 +8158,10 @@
 																				"format": "date-time",
 																				"type": "string"
 																			},
-																			"id": {},
+																			"id": {
+																				"format": "uuid",
+																				"type": "string"
+																			},
 																			"logo": {
 																				"nullable": true,
 																				"type": "string"
@@ -6686,7 +8179,10 @@
 																		},
 																		"type": "object"
 																	},
-																	"organization_id": {},
+																	"organization_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"updated_at": {
 																		"format": "date-time",
 																		"type": "string"
@@ -6694,10 +8190,14 @@
 																	"user": {
 																		"$ref": "#/components/schemas/User"
 																	},
-																	"user_id": {}
+																	"user_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	}
 																},
 																"type": "object"
 															},
+															"nullable": true,
 															"type": "array"
 														},
 														"organizations": {
@@ -6708,7 +8208,10 @@
 																		"format": "date-time",
 																		"type": "string"
 																	},
-																	"id": {},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"logo": {
 																		"nullable": true,
 																		"type": "string"
@@ -6726,6 +8229,7 @@
 																},
 																"type": "object"
 															},
+															"nullable": true,
 															"type": "array"
 														},
 														"provision_status": {
@@ -6745,7 +8249,10 @@
 													},
 													"type": "object"
 												},
-												"user_id": {}
+												"user_id": {
+													"format": "uuid",
+													"type": "string"
+												}
 											},
 											"type": "object"
 										},
@@ -6753,9 +8260,335 @@
 											"nullable": true,
 											"properties": {
 												"application": {
-													"$ref": "#/components/schemas/Application"
+													"nullable": true,
+													"properties": {
+														"base_path": {
+															"type": "string"
+														},
+														"branch": {
+															"type": "string"
+														},
+														"build_pack": {
+															"type": "string"
+														},
+														"build_variables": {
+															"type": "string"
+														},
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"deployments": {
+															"items": {
+																"$ref": "#/components/schemas/ApplicationDeployment"
+															},
+															"nullable": true,
+															"type": "array"
+														},
+														"dockerfile_path": {
+															"type": "string"
+														},
+														"domains": {
+															"items": {
+																"nullable": true,
+																"properties": {
+																	"application": {
+																		"$ref": "#/components/schemas/Application"
+																	},
+																	"application_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"domain": {
+																		"type": "string"
+																	},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"nullable": true,
+															"type": "array"
+														},
+														"environment": {
+															"type": "string"
+														},
+														"environment_variables": {
+															"type": "string"
+														},
+														"family_id": {
+															"format": "uuid",
+															"type": "string"
+														},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
+														"is_live_deployment": {
+															"type": "boolean"
+														},
+														"labels": {
+															"items": {
+																"nullable": true,
+																"type": "string"
+															},
+															"nullable": true,
+															"type": "array"
+														},
+														"logs": {
+															"items": {
+																"$ref": "#/components/schemas/ApplicationLogs"
+															},
+															"nullable": true,
+															"type": "array"
+														},
+														"name": {
+															"type": "string"
+														},
+														"organization": {
+															"nullable": true,
+															"properties": {
+																"created_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"logo": {
+																	"nullable": true,
+																	"type": "string"
+																},
+																"metadata": {
+																	"nullable": true,
+																	"type": "string"
+																},
+																"name": {
+																	"type": "string"
+																},
+																"slug": {
+																	"type": "string"
+																}
+															},
+															"type": "object"
+														},
+														"organization_id": {
+															"format": "uuid",
+															"type": "string"
+														},
+														"port": {
+															"type": "integer"
+														},
+														"post_run_command": {
+															"type": "string"
+														},
+														"pre_run_command": {
+															"type": "string"
+														},
+														"proxy_server": {
+															"type": "string"
+														},
+														"repository": {
+															"type": "string"
+														},
+														"status": {
+															"nullable": true,
+															"properties": {
+																"application": {
+																	"$ref": "#/components/schemas/Application"
+																},
+																"application_id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"created_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"status": {
+																	"type": "string"
+																},
+																"updated_at": {
+																	"format": "date-time",
+																	"type": "string"
+																}
+															},
+															"type": "object"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"user": {
+															"nullable": true,
+															"properties": {
+																"avatar": {
+																	"type": "string"
+																},
+																"created_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"email": {
+																	"type": "string"
+																},
+																"email_verified": {
+																	"type": "boolean"
+																},
+																"id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"image": {
+																	"nullable": true,
+																	"type": "string"
+																},
+																"is_onboarded": {
+																	"type": "boolean"
+																},
+																"is_verified": {
+																	"type": "boolean"
+																},
+																"name": {
+																	"type": "string"
+																},
+																"organization_users": {
+																	"items": {
+																		"nullable": true,
+																		"properties": {
+																			"created_at": {
+																				"format": "date-time",
+																				"type": "string"
+																			},
+																			"deleted_at": {
+																				"format": "date-time",
+																				"nullable": true,
+																				"type": "string"
+																			},
+																			"id": {
+																				"format": "uuid",
+																				"type": "string"
+																			},
+																			"organization": {
+																				"nullable": true,
+																				"properties": {
+																					"created_at": {
+																						"format": "date-time",
+																						"type": "string"
+																					},
+																					"id": {
+																						"format": "uuid",
+																						"type": "string"
+																					},
+																					"logo": {
+																						"nullable": true,
+																						"type": "string"
+																					},
+																					"metadata": {
+																						"nullable": true,
+																						"type": "string"
+																					},
+																					"name": {
+																						"type": "string"
+																					},
+																					"slug": {
+																						"type": "string"
+																					}
+																				},
+																				"type": "object"
+																			},
+																			"organization_id": {
+																				"format": "uuid",
+																				"type": "string"
+																			},
+																			"updated_at": {
+																				"format": "date-time",
+																				"type": "string"
+																			},
+																			"user": {
+																				"$ref": "#/components/schemas/User"
+																			},
+																			"user_id": {
+																				"format": "uuid",
+																				"type": "string"
+																			}
+																		},
+																		"type": "object"
+																	},
+																	"nullable": true,
+																	"type": "array"
+																},
+																"organizations": {
+																	"items": {
+																		"nullable": true,
+																		"properties": {
+																			"created_at": {
+																				"format": "date-time",
+																				"type": "string"
+																			},
+																			"id": {
+																				"format": "uuid",
+																				"type": "string"
+																			},
+																			"logo": {
+																				"nullable": true,
+																				"type": "string"
+																			},
+																			"metadata": {
+																				"nullable": true,
+																				"type": "string"
+																			},
+																			"name": {
+																				"type": "string"
+																			},
+																			"slug": {
+																				"type": "string"
+																			}
+																		},
+																		"type": "object"
+																	},
+																	"nullable": true,
+																	"type": "array"
+																},
+																"provision_status": {
+																	"nullable": true,
+																	"type": "string"
+																},
+																"supertokens_user_id": {
+																	"type": "string"
+																},
+																"updated_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"username": {
+																	"type": "string"
+																}
+															},
+															"type": "object"
+														},
+														"user_id": {
+															"format": "uuid",
+															"type": "string"
+														}
+													},
+													"type": "object"
 												},
-												"application_id": {},
+												"application_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"commit_hash": {
 													"type": "string"
 												},
@@ -6775,7 +8608,10 @@
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"image_s3_key": {
 													"type": "string"
 												},
@@ -6785,31 +8621,9 @@
 												},
 												"logs": {
 													"items": {
-														"nullable": true,
-														"properties": {
-															"application": {
-																"$ref": "#/components/schemas/Application"
-															},
-															"application_deployment": {
-																"$ref": "#/components/schemas/ApplicationDeployment"
-															},
-															"application_deployment_id": {},
-															"application_id": {},
-															"created_at": {
-																"format": "date-time",
-																"type": "string"
-															},
-															"id": {},
-															"log": {
-																"type": "string"
-															},
-															"updated_at": {
-																"format": "date-time",
-																"type": "string"
-															}
-														},
-														"type": "object"
+														"$ref": "#/components/schemas/ApplicationLogs"
 													},
+													"nullable": true,
 													"type": "array"
 												},
 												"status": {
@@ -6818,12 +8632,18 @@
 														"application_deployment": {
 															"$ref": "#/components/schemas/ApplicationDeployment"
 														},
-														"application_deployment_id": {},
+														"application_deployment_id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"created_at": {
 															"format": "date-time",
 															"type": "string"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"status": {
 															"type": "string"
 														},
@@ -6841,13 +8661,22 @@
 											},
 											"type": "object"
 										},
-										"application_deployment_id": {},
-										"application_id": {},
+										"application_deployment_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"created_at": {
 											"format": "date-time",
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"log": {
 											"type": "string"
 										},
@@ -6951,6 +8780,11 @@
 											"type": "string"
 										}
 									},
+									"required": [
+										"description",
+										"id",
+										"label"
+									],
 									"type": "object"
 								},
 								"type": "array"
@@ -6971,6 +8805,11 @@
 											"type": "string"
 										}
 									},
+									"required": [
+										"description",
+										"id",
+										"label"
+									],
 									"type": "object"
 								},
 								"type": "array"
@@ -6991,6 +8830,11 @@
 											"type": "string"
 										}
 									},
+									"required": [
+										"description",
+										"id",
+										"label"
+									],
 									"type": "object"
 								},
 								"type": "array"
@@ -7038,7 +8882,10 @@
 													"application": {
 														"$ref": "#/components/schemas/Application"
 													},
-													"application_id": {},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"commit_hash": {
 														"type": "string"
 													},
@@ -7058,7 +8905,10 @@
 														"format": "date-time",
 														"type": "string"
 													},
-													"id": {},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"image_s3_key": {
 														"type": "string"
 													},
@@ -7076,13 +8926,22 @@
 																"application_deployment": {
 																	"$ref": "#/components/schemas/ApplicationDeployment"
 																},
-																"application_deployment_id": {},
-																"application_id": {},
+																"application_deployment_id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"application_id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
 																"created_at": {
 																	"format": "date-time",
 																	"type": "string"
 																},
-																"id": {},
+																"id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
 																"log": {
 																	"type": "string"
 																},
@@ -7093,6 +8952,7 @@
 															},
 															"type": "object"
 														},
+														"nullable": true,
 														"type": "array"
 													},
 													"status": {
@@ -7101,12 +8961,18 @@
 															"application_deployment": {
 																"$ref": "#/components/schemas/ApplicationDeployment"
 															},
-															"application_deployment_id": {},
+															"application_deployment_id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"created_at": {
 																"format": "date-time",
 																"type": "string"
 															},
-															"id": {},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"status": {
 																"type": "string"
 															},
@@ -7137,7 +9003,10 @@
 													"application": {
 														"$ref": "#/components/schemas/Application"
 													},
-													"application_id": {},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"created_at": {
 														"format": "date-time",
 														"type": "string"
@@ -7145,7 +9014,10 @@
 													"domain": {
 														"type": "string"
 													},
-													"id": {}
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													}
 												},
 												"type": "object"
 											},
@@ -7159,14 +9031,19 @@
 											"type": "string"
 										},
 										"family_id": {
-											"nullable": true
+											"format": "uuid",
+											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"is_live_deployment": {
 											"type": "boolean"
 										},
 										"labels": {
 											"items": {
+												"nullable": true,
 												"type": "string"
 											},
 											"nullable": true,
@@ -7180,15 +9057,102 @@
 														"$ref": "#/components/schemas/Application"
 													},
 													"application_deployment": {
-														"$ref": "#/components/schemas/ApplicationDeployment"
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"commit_hash": {
+																"type": "string"
+															},
+															"container_id": {
+																"type": "string"
+															},
+															"container_image": {
+																"type": "string"
+															},
+															"container_name": {
+																"type": "string"
+															},
+															"container_status": {
+																"type": "string"
+															},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"image_s3_key": {
+																"type": "string"
+															},
+															"image_size": {
+																"format": "int64",
+																"type": "integer"
+															},
+															"logs": {
+																"items": {
+																	"$ref": "#/components/schemas/ApplicationLogs"
+																},
+																"type": "array"
+															},
+															"status": {
+																"nullable": true,
+																"properties": {
+																	"application_deployment": {
+																		"$ref": "#/components/schemas/ApplicationDeployment"
+																	},
+																	"application_deployment_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"status": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
 													},
-													"application_deployment_id": {},
-													"application_id": {},
+													"application_deployment_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"created_at": {
 														"format": "date-time",
 														"type": "string"
 													},
-													"id": {},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"log": {
 														"type": "string"
 													},
@@ -7212,7 +9176,10 @@
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"logo": {
 													"nullable": true,
 													"type": "string"
@@ -7230,7 +9197,10 @@
 											},
 											"type": "object"
 										},
-										"organization_id": {},
+										"organization_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"port": {
 											"type": "integer"
 										},
@@ -7252,12 +9222,18 @@
 												"application": {
 													"$ref": "#/components/schemas/Application"
 												},
-												"application_id": {},
+												"application_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"created_at": {
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"status": {
 													"type": "string"
 												},
@@ -7288,7 +9264,10 @@
 												"email_verified": {
 													"type": "boolean"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"image": {
 													"nullable": true,
 													"type": "string"
@@ -7315,7 +9294,10 @@
 																"nullable": true,
 																"type": "string"
 															},
-															"id": {},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"organization": {
 																"nullable": true,
 																"properties": {
@@ -7323,7 +9305,10 @@
 																		"format": "date-time",
 																		"type": "string"
 																	},
-																	"id": {},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"logo": {
 																		"nullable": true,
 																		"type": "string"
@@ -7341,7 +9326,10 @@
 																},
 																"type": "object"
 															},
-															"organization_id": {},
+															"organization_id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"updated_at": {
 																"format": "date-time",
 																"type": "string"
@@ -7349,10 +9337,14 @@
 															"user": {
 																"$ref": "#/components/schemas/User"
 															},
-															"user_id": {}
+															"user_id": {
+																"format": "uuid",
+																"type": "string"
+															}
 														},
 														"type": "object"
 													},
+													"nullable": true,
 													"type": "array"
 												},
 												"organizations": {
@@ -7363,7 +9355,10 @@
 																"format": "date-time",
 																"type": "string"
 															},
-															"id": {},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"logo": {
 																"nullable": true,
 																"type": "string"
@@ -7381,6 +9376,7 @@
 														},
 														"type": "object"
 													},
+													"nullable": true,
 													"type": "array"
 												},
 												"provision_status": {
@@ -7400,7 +9396,10 @@
 											},
 											"type": "object"
 										},
-										"user_id": {}
+										"user_id": {
+											"format": "uuid",
+											"type": "string"
+										}
 									},
 									"type": "object"
 								},
@@ -7467,11 +9466,14 @@
 						"properties": {
 							"images_deleted": {
 								"items": {
+									"nullable": true,
 									"properties": {
 										"deleted": {
+											"nullable": true,
 											"type": "string"
 										},
 										"untagged": {
+											"nullable": true,
 											"type": "string"
 										}
 									},
@@ -7529,7 +9531,10 @@
 					"force_without_cache": {
 						"type": "boolean"
 					},
-					"id": {}
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					}
 				},
 				"type": "object"
 			},
@@ -7537,7 +9542,8 @@
 				"description": "RecoverRequest schema",
 				"properties": {
 					"application_id": {
-						"nullable": true
+						"format": "uuid",
+						"type": "string"
 					}
 				},
 				"type": "object"
@@ -7550,7 +9556,10 @@
 							"failed": {
 								"items": {
 									"properties": {
-										"application_id": {},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"application_name": {
 											"type": "string"
 										},
@@ -7565,7 +9574,10 @@
 							"recovered": {
 								"items": {
 									"properties": {
-										"application_id": {},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"application_name": {
 											"type": "string"
 										},
@@ -7580,7 +9592,10 @@
 							"skipped": {
 								"items": {
 									"properties": {
-										"application_id": {},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"application_name": {
 											"type": "string"
 										},
@@ -7636,14 +9651,20 @@
 			"RestartDeploymentRequest": {
 				"description": "RestartDeploymentRequest schema",
 				"properties": {
-					"id": {}
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					}
 				},
 				"type": "object"
 			},
 			"RollbackDeploymentRequest": {
 				"description": "RollbackDeploymentRequest schema",
 				"properties": {
-					"id": {}
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					}
 				},
 				"type": "object"
 			},
@@ -7651,7 +9672,10 @@
 				"description": "RunExtensionRequest schema",
 				"properties": {
 					"variables": {
-						"additionalProperties": {},
+						"additionalProperties": {
+							"description": "Variable value (string, number, boolean, or JSON as string)",
+							"type": "string"
+						},
 						"type": "object"
 					}
 				},
@@ -7676,11 +9700,17 @@
 							"host": {
 								"type": "string"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"is_active": {
 								"type": "boolean"
 							},
-							"organization_id": {},
+							"organization_id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"port": {
 								"type": "integer"
 							},
@@ -7691,7 +9721,10 @@
 								"format": "date-time",
 								"type": "string"
 							},
-							"user_id": {},
+							"user_id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"username": {
 								"type": "string"
 							}
@@ -7820,6 +9853,7 @@
 							},
 							"warnings": {
 								"items": {
+									"nullable": true,
 									"type": "string"
 								},
 								"nullable": true,
@@ -7846,6 +9880,7 @@
 					},
 					"build_variables": {
 						"additionalProperties": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
@@ -7861,6 +9896,7 @@
 					},
 					"environment_variables": {
 						"additionalProperties": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
@@ -7871,7 +9907,8 @@
 						"type": "boolean"
 					},
 					"id": {
-						"nullable": true
+						"format": "uuid",
+						"type": "string"
 					},
 					"name": {
 						"nullable": true,
@@ -7960,6 +9997,7 @@
 					},
 					"expected_status_codes": {
 						"items": {
+							"nullable": true,
 							"type": "integer"
 						},
 						"nullable": true,
@@ -7971,6 +10009,7 @@
 					},
 					"headers": {
 						"additionalProperties": {
+							"nullable": true,
 							"type": "string"
 						},
 						"nullable": true,
@@ -8007,7 +10046,8 @@
 				"properties": {
 					"labels": {
 						"items": {
-							"type": "string"
+							"type": "string",
+							"x-fuego-required-marker": true
 						},
 						"type": "array"
 					}
@@ -8081,8 +10121,14 @@
 						"nullable": true,
 						"type": "string"
 					},
-					"id": {},
-					"organization_id": {},
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"organization_id": {
+						"format": "uuid",
+						"type": "string"
+					},
 					"password": {
 						"nullable": true,
 						"type": "string"
@@ -8172,7 +10218,10 @@
 					"email_verified": {
 						"type": "boolean"
 					},
-					"id": {},
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
 					"image": {
 						"nullable": true,
 						"type": "string"
@@ -8199,7 +10248,10 @@
 									"nullable": true,
 									"type": "string"
 								},
-								"id": {},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"organization": {
 									"nullable": true,
 									"properties": {
@@ -8207,7 +10259,10 @@
 											"format": "date-time",
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"logo": {
 											"nullable": true,
 											"type": "string"
@@ -8225,7 +10280,10 @@
 									},
 									"type": "object"
 								},
-								"organization_id": {},
+								"organization_id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"updated_at": {
 									"format": "date-time",
 									"type": "string"
@@ -8233,10 +10291,14 @@
 								"user": {
 									"$ref": "#/components/schemas/User"
 								},
-								"user_id": {}
+								"user_id": {
+									"format": "uuid",
+									"type": "string"
+								}
 							},
 							"type": "object"
 						},
+						"nullable": true,
 						"type": "array"
 					},
 					"organizations": {
@@ -8247,7 +10309,10 @@
 									"format": "date-time",
 									"type": "string"
 								},
-								"id": {},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"logo": {
 									"nullable": true,
 									"type": "string"
@@ -8265,6 +10330,7 @@
 							},
 							"type": "object"
 						},
+						"nullable": true,
 						"type": "array"
 					},
 					"provision_status": {
@@ -8348,7 +10414,10 @@
 								"format": "date-time",
 								"type": "string"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"preferences": {
 								"properties": {
 									"debug_mode": {
@@ -8422,7 +10491,10 @@
 									"email_verified": {
 										"type": "boolean"
 									},
-									"id": {},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"image": {
 										"nullable": true,
 										"type": "string"
@@ -8449,7 +10521,10 @@
 													"nullable": true,
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"organization": {
 													"nullable": true,
 													"properties": {
@@ -8457,7 +10532,10 @@
 															"format": "date-time",
 															"type": "string"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"logo": {
 															"nullable": true,
 															"type": "string"
@@ -8475,7 +10553,10 @@
 													},
 													"type": "object"
 												},
-												"organization_id": {},
+												"organization_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"updated_at": {
 													"format": "date-time",
 													"type": "string"
@@ -8483,10 +10564,14 @@
 												"user": {
 													"$ref": "#/components/schemas/User"
 												},
-												"user_id": {}
+												"user_id": {
+													"format": "uuid",
+													"type": "string"
+												}
 											},
 											"type": "object"
 										},
+										"nullable": true,
 										"type": "array"
 									},
 									"organizations": {
@@ -8497,7 +10582,10 @@
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"logo": {
 													"nullable": true,
 													"type": "string"
@@ -8515,6 +10603,7 @@
 											},
 											"type": "object"
 										},
+										"nullable": true,
 										"type": "array"
 									},
 									"provision_status": {
@@ -8534,7 +10623,10 @@
 								},
 								"type": "object"
 							},
-							"user_id": {}
+							"user_id": {
+								"format": "uuid",
+								"type": "string"
+							}
 						},
 						"type": "object"
 					},
@@ -8566,7 +10658,10 @@
 							"email_verified": {
 								"type": "boolean"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"image": {
 								"nullable": true,
 								"type": "string"
@@ -8593,7 +10688,10 @@
 											"nullable": true,
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"organization": {
 											"nullable": true,
 											"properties": {
@@ -8601,7 +10699,10 @@
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"logo": {
 													"nullable": true,
 													"type": "string"
@@ -8619,7 +10720,10 @@
 											},
 											"type": "object"
 										},
-										"organization_id": {},
+										"organization_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"updated_at": {
 											"format": "date-time",
 											"type": "string"
@@ -8627,10 +10731,14 @@
 										"user": {
 											"$ref": "#/components/schemas/User"
 										},
-										"user_id": {}
+										"user_id": {
+											"format": "uuid",
+											"type": "string"
+										}
 									},
 									"type": "object"
 								},
+								"nullable": true,
 								"type": "array"
 							},
 							"organizations": {
@@ -8641,7 +10749,10 @@
 											"format": "date-time",
 											"type": "string"
 										},
-										"id": {},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"logo": {
 											"nullable": true,
 											"type": "string"
@@ -8659,6 +10770,7 @@
 									},
 									"type": "object"
 								},
+								"nullable": true,
 								"type": "array"
 							},
 							"provision_status": {
@@ -8711,7 +10823,10 @@
 							"font_size": {
 								"type": "integer"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"language": {
 								"type": "string"
 							},
@@ -8738,7 +10853,10 @@
 									"email_verified": {
 										"type": "boolean"
 									},
-									"id": {},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"image": {
 										"nullable": true,
 										"type": "string"
@@ -8765,7 +10883,10 @@
 													"nullable": true,
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"organization": {
 													"nullable": true,
 													"properties": {
@@ -8773,7 +10894,10 @@
 															"format": "date-time",
 															"type": "string"
 														},
-														"id": {},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
 														"logo": {
 															"nullable": true,
 															"type": "string"
@@ -8791,7 +10915,10 @@
 													},
 													"type": "object"
 												},
-												"organization_id": {},
+												"organization_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"updated_at": {
 													"format": "date-time",
 													"type": "string"
@@ -8799,10 +10926,14 @@
 												"user": {
 													"$ref": "#/components/schemas/User"
 												},
-												"user_id": {}
+												"user_id": {
+													"format": "uuid",
+													"type": "string"
+												}
 											},
 											"type": "object"
 										},
+										"nullable": true,
 										"type": "array"
 									},
 									"organizations": {
@@ -8813,7 +10944,10 @@
 													"format": "date-time",
 													"type": "string"
 												},
-												"id": {},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"logo": {
 													"nullable": true,
 													"type": "string"
@@ -8831,6 +10965,7 @@
 											},
 											"type": "object"
 										},
+										"nullable": true,
 										"type": "array"
 									},
 									"provision_status": {
@@ -8850,7 +10985,10 @@
 								},
 								"type": "object"
 							},
-							"user_id": {}
+							"user_id": {
+								"format": "uuid",
+								"type": "string"
+							}
 						},
 						"type": "object"
 					},
@@ -8873,11 +11011,17 @@
 								"format": "date-time",
 								"type": "string"
 							},
-							"id": {},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"is_active": {
 								"type": "boolean"
 							},
-							"organization_id": {},
+							"organization_id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"type": {
 								"type": "string"
 							},
@@ -8885,7 +11029,10 @@
 								"format": "date-time",
 								"type": "string"
 							},
-							"user_id": {},
+							"user_id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"webhook_url": {
 								"type": "string"
 							}

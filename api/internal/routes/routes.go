@@ -29,6 +29,7 @@ import (
 	notificationController "github.com/raghavyuva/nixopus-api/internal/features/notification/controller"
 	server_controller "github.com/raghavyuva/nixopus-api/internal/features/server/controller"
 	trail "github.com/raghavyuva/nixopus-api/internal/features/trail/controller"
+	"github.com/raghavyuva/nixopus-api/internal/openapi"
 
 	// Organization packages removed - migrated to Better Auth
 	update "github.com/raghavyuva/nixopus-api/internal/features/update/controller"
@@ -104,6 +105,7 @@ func (router *Router) createServer(port string) *fuego.Server {
 				SpecURL:          "/swagger/openapi.json",
 				JSONFilePath:     "doc/openapi.json",
 			}),
+			fuego.WithOpenAPIGeneratorSchemaCustomizer(openapi.SchemaCustomizer),
 		),
 		fuego.WithGlobalMiddlewares(
 			middleware.RecoveryMiddleware,
