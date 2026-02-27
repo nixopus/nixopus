@@ -28,16 +28,20 @@ export type Permission = `${Resource}:${Action}`;
 export const useRBAC = () => {
   const { isAuthenticated, isInitialized, user } = useAppSelector((state) => state.auth);
   const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
-  
+
   // Get role from Better Auth for the current organization
-  const { data: activeMemberData, isLoading: isMemberLoading, error } = useGetActiveMemberQuery(
+  const {
+    data: activeMemberData,
+    isLoading: isMemberLoading,
+    error
+  } = useGetActiveMemberQuery(
     {
       organizationId: activeOrganization?.id || '',
       userId: user?.id || ''
     },
     {
       skip: !isAuthenticated || !activeOrganization?.id || !user?.id,
-      refetchOnMountOrArgChange: true
+      refetchOnMountOrArgChange: 60
     }
   );
 

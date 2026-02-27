@@ -91,30 +91,26 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
     initAuth();
   }, [dispatch]);
 
-  // Re-check session when pathname changes to catch login state changes
-  // This is a fallback in case Redux state hasn't updated yet
+  // Re-check session only on auth/login routes to catch post-login state before Redux updates
+  const isAuthCheckRoute =
+    pathname === '/auth' || pathname === '/login' || pathname === '/register';
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized || !isAuthCheckRoute) return;
 
     const checkSession = async () => {
       try {
         const session = await authClient.getSession();
         const hasSession = !!session?.data?.session;
-        // If session exists but Redux says not authenticated, re-initialize
-        // This can happen right after login before Redux state updates
         if (hasSession && !isAuthenticated) {
           await dispatch(initializeAuth() as any);
         }
-      } catch (error) {
+      } catch {
         // Session check failed, rely on Redux state
       }
     };
 
-    // Only check on public routes to avoid unnecessary checks
-    if (isPublicRoute) {
-      checkSession();
-    }
-  }, [pathname, isAuthenticated, isInitialized, isPublicRoute, dispatch]);
+    checkSession();
+  }, [pathname, isAuthenticated, isInitialized, isAuthCheckRoute, dispatch]);
 
   useEffect(() => {
     if (isLoading || !isInitialized) return;

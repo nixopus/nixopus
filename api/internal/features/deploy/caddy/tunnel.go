@@ -30,12 +30,14 @@ type CaddyTunnel struct {
 	connMu        sync.Mutex
 	persistSSH    *goph.Client
 	stopKeepalive chan struct{} // closed to stop the keepalive goroutine
+	orgID         uuid.UUID     // for debug logging when tunnel fails
 }
 
 // CreateCaddyTunnel creates a local TCP listener and forwards all connections
 // through SSH to the remote Caddy admin API. The port is parsed from CADDY_ENDPOINT.
 // Returns a CaddyTunnel with an endpoint suitable for caddygo.Client.
-func CreateCaddyTunnel(sshClient *ssh.SSH, remotePort string, lgr logger.Logger) (*CaddyTunnel, error) {
+// orgID is used for debug logging when the tunnel fails (pass uuid.Nil if unknown).
+func CreateCaddyTunnel(sshClient *ssh.SSH, remotePort string, orgID uuid.UUID, lgr logger.Logger) (*CaddyTunnel, error) {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create caddy tunnel listener: %w", err)
@@ -48,6 +50,7 @@ func CreateCaddyTunnel(sshClient *ssh.SSH, remotePort string, lgr logger.Logger)
 		listener:  listener,
 		sshClient: sshClient,
 		endpoint:  endpoint,
+		orgID:     orgID,
 		cleanup: func() error {
 			return listener.Close()
 		},
@@ -92,6 +95,13 @@ func (t *CaddyTunnel) getOrCreateSSH() (*goph.Client, error) {
 	return client, nil
 }
 
+func (t *CaddyTunnel) tunnelErrLog(hostLabel, errMsg string) string {
+	if t.orgID != uuid.Nil {
+		return fmt.Sprintf("host=%s org=%s err=%s", hostLabel, t.orgID.String(), errMsg)
+	}
+	return fmt.Sprintf("host=%s err=%s", hostLabel, errMsg)
+}
+
 func (t *CaddyTunnel) forwardConnection(localConn net.Conn, remotePort string, lgr logger.Logger) {
 	defer localConn.Close()
 
@@ -102,7 +112,7 @@ func (t *CaddyTunnel) forwardConnection(localConn net.Conn, remotePort string, l
 
 	sshConn, err := t.getOrCreateSSH()
 	if err != nil {
-		lgr.Log(logger.Error, "Caddy tunnel: failed to establish SSH connection", fmt.Sprintf("host=%s err=%s", hostLabel, err.Error()))
+		lgr.Log(logger.Error, "Caddy tunnel: failed to establish SSH connection", t.tunnelErrLog(hostLabel, err.Error()))
 		return
 	}
 
@@ -123,12 +133,12 @@ func (t *CaddyTunnel) forwardConnection(localConn net.Conn, remotePort string, l
 
 		sshConn, err = t.getOrCreateSSH()
 		if err != nil {
-			lgr.Log(logger.Error, "Caddy tunnel: failed to reconnect SSH", fmt.Sprintf("host=%s err=%s", hostLabel, err.Error()))
+			lgr.Log(logger.Error, "Caddy tunnel: failed to reconnect SSH", t.tunnelErrLog(hostLabel, err.Error()))
 			return
 		}
 		remoteConn, err = sshConn.Dial("tcp", "127.0.0.1:"+remotePort)
 		if err != nil {
-			lgr.Log(logger.Error, "Caddy tunnel: failed to connect to remote Caddy after reconnect", fmt.Sprintf("host=%s err=%s", hostLabel, err.Error()))
+			lgr.Log(logger.Error, "Caddy tunnel: failed to connect to remote Caddy after reconnect", t.tunnelErrLog(hostLabel, err.Error()))
 			return
 		}
 	}
@@ -241,6 +251,27 @@ func parseCaddyEndpointPort() (string, error) {
 	return port, nil
 }
 
+// orgIDFromContext extracts organization ID from context for debug logging.
+// Returns uuid.Nil if not present or invalid.
+func orgIDFromContext(ctx context.Context) uuid.UUID {
+	orgIDAny := ctx.Value(shared_types.OrganizationIDKey)
+	if orgIDAny == nil {
+		return uuid.Nil
+	}
+	switch v := orgIDAny.(type) {
+	case string:
+		id, err := uuid.Parse(v)
+		if err != nil {
+			return uuid.Nil
+		}
+		return id
+	case uuid.UUID:
+		return v
+	default:
+		return uuid.Nil
+	}
+}
+
 // GetCaddyClient returns a caddygo client that uses an SSH tunnel to reach
 // the Caddy admin API on the given host. Uses existing SSH config (ctx org or sshClient).
 // Port is parsed from CADDY_ENDPOINT. Caches tunnel per host+port for reuse.
@@ -251,25 +282,14 @@ func GetCaddyClient(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Logger)
 	}
 
 	var s *ssh.SSH
+	var orgID uuid.UUID
 	if sshClient != nil {
 		s = sshClient
+		orgID = orgIDFromContext(ctx)
 	} else {
-		orgIDAny := ctx.Value(shared_types.OrganizationIDKey)
-		if orgIDAny == nil {
+		orgID = orgIDFromContext(ctx)
+		if orgID == uuid.Nil {
 			return nil, fmt.Errorf("organization ID or SSH client required for Caddy")
-		}
-		var orgID uuid.UUID
-		switch v := orgIDAny.(type) {
-		case string:
-			var err error
-			orgID, err = uuid.Parse(v)
-			if err != nil {
-				return nil, fmt.Errorf("invalid organization ID: %w", err)
-			}
-		case uuid.UUID:
-			orgID = v
-		default:
-			return nil, fmt.Errorf("unexpected organization ID type: %T", orgIDAny)
 		}
 		manager, err := ssh.GetSSHManagerForOrganization(ctx, orgID)
 		if err != nil {
@@ -303,7 +323,7 @@ func GetCaddyClient(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Logger)
 		def := logger.NewLogger()
 		lgr = &def
 	}
-	tunnel, err := CreateCaddyTunnel(s, remotePort, *lgr)
+	tunnel, err := CreateCaddyTunnel(s, remotePort, orgID, *lgr)
 	if err != nil {
 		return nil, err
 	}
