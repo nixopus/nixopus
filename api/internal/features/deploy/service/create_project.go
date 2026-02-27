@@ -16,6 +16,19 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 	s.logger.Log(logger.Info, "creating project without deployment", "name: "+req.Name)
 
 	now := time.Now()
+
+	domains := req.Domains
+
+	// Set BasePath default to "/" if empty (for CLI init, always root)
+	basePath := req.BasePath
+	if basePath == "" {
+		basePath = "/"
+	}
+
+	// Create a new family_id for this application
+	// This allows grouping multiple apps (monorepo) or environments (duplicates)
+	familyID := uuid.New()
+
 	application := shared_types.Application{
 		ID:                   uuid.New(),
 		Name:                 req.Name,
@@ -28,19 +41,47 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 		PreRunCommand:        req.PreRunCommand,
 		PostRunCommand:       req.PostRunCommand,
 		Port:                 req.Port,
-		Domain:               req.Domain,
 		UserID:               userID,
 		CreatedAt:            now,
 		UpdatedAt:            now,
 		DockerfilePath:       req.DockerfilePath,
-		BasePath:             req.BasePath,
+		BasePath:             basePath,
 		OrganizationID:       organizationID,
+		FamilyID:             &familyID,
 	}
 
+	// Begin transaction for atomicity
+	tx, err := s.store.DB.BeginTx(s.Ctx, nil)
+	if err != nil {
+		s.logger.Log(logger.Error, "failed to begin transaction", err.Error())
+		return shared_types.Application{}, err
+	}
+	defer tx.Rollback()
+
 	// Save the application to the database
-	if err := s.storage.AddApplication(&application); err != nil {
+	if _, err := tx.NewInsert().Model(&application).Exec(s.Ctx); err != nil {
 		s.logger.Log(logger.Error, "failed to create application", err.Error())
 		return shared_types.Application{}, err
+	}
+
+	// Add domains to application_domains table within transaction
+	if len(domains) > 0 {
+		// Use transaction for domain operations
+		for _, domain := range domains {
+			if domain == "" {
+				continue
+			}
+			appDomain := &shared_types.ApplicationDomain{
+				ID:            uuid.New(),
+				ApplicationID: application.ID,
+				Domain:        domain,
+				CreatedAt:     now,
+			}
+			if _, err := tx.NewInsert().Model(appDomain).Exec(s.Ctx); err != nil {
+				s.logger.Log(logger.Error, "failed to add domain", err.Error())
+				return shared_types.Application{}, err
+			}
+		}
 	}
 
 	// Create an application status with "draft" status
@@ -52,9 +93,30 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 		UpdatedAt:     now,
 	}
 
-	if err := s.storage.AddApplicationStatus(&appStatus); err != nil {
+	if _, err := tx.NewInsert().Model(&appStatus).Exec(s.Ctx); err != nil {
 		s.logger.Log(logger.Error, "failed to create application status", err.Error())
 		return shared_types.Application{}, err
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		s.logger.Log(logger.Error, "failed to commit transaction", err.Error())
+		return shared_types.Application{}, err
+	}
+
+	// Load domains into application for response (after successful commit)
+	if len(domains) > 0 {
+		domainsList, err := s.storage.GetApplicationDomains(application.ID)
+		if err != nil {
+			s.logger.Log(logger.Error, "failed to load domains after creation", err.Error())
+			return shared_types.Application{}, err
+		}
+		// Convert []ApplicationDomain to []*ApplicationDomain
+		domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
+		for i := range domainsList {
+			domainPtrs[i] = &domainsList[i]
+		}
+		application.Domains = domainPtrs
 	}
 
 	// Attach the status to the application for the response

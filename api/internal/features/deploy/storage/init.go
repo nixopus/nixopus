@@ -2,8 +2,10 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,14 +22,16 @@ type DeployStorage struct {
 }
 
 type DeployRepository interface {
+	RunInTransaction(fn func(tx bun.Tx) error) error
 	IsNameAlreadyTaken(name string) (bool, error)
 	IsDomainAlreadyTaken(domain string) (bool, error)
 	IsPortAlreadyTaken(port int) (bool, error)
 	IsDomainValid(domain string) (bool, error)
 	AddApplication(application *shared_types.Application) error
 	AddApplicationLogs(applicationLogs *shared_types.ApplicationLogs) error
+	AddApplicationLogsBatch(logs []shared_types.ApplicationLogs) error
 	AddApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
-	GetApplications(page int, pageSize int, organizationID uuid.UUID) ([]shared_types.Application, int, error)
+	GetApplications(page int, pageSize int, sortBy string, sortDirection string, organizationID uuid.UUID) ([]shared_types.Application, int, error)
 	UpdateApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
 	GetApplicationById(id string, organizationID uuid.UUID) (shared_types.Application, error)
 	AddApplicationDeployment(deployment *shared_types.ApplicationDeployment) error
@@ -40,6 +44,9 @@ type DeployRepository interface {
 	GetApplicationDeployments(applicationID uuid.UUID) ([]shared_types.ApplicationDeployment, error)
 	GetPaginatedApplicationDeployments(applicationID uuid.UUID, page, pageSize int) ([]shared_types.ApplicationDeployment, int, error)
 	GetLogs(applicationID string, page, pageSize int, level string, startTime, endTime time.Time, searchTerm string) ([]shared_types.ApplicationLogs, int, error)
+	AddApplicationDomains(applicationID uuid.UUID, domains []string) error
+	RemoveApplicationDomain(applicationID uuid.UUID, domain string) error
+	GetApplicationDomains(applicationID uuid.UUID) ([]shared_types.ApplicationDomain, error)
 	GetDeploymentLogs(deploymentID string, page, pageSize int, level string, startTime, endTime time.Time, searchTerm string) ([]shared_types.ApplicationLogs, int, error)
 	GetApplicationByRepositoryID(repositoryID uint64) (shared_types.Application, error)
 	GetApplicationByRepositoryIDAndBranch(repositoryID uint64, branch string) ([]shared_types.Application, error)
@@ -50,6 +57,30 @@ type DeployRepository interface {
 	GetEnvironmentsInFamily(familyID uuid.UUID, organizationID uuid.UUID) ([]shared_types.Environment, error)
 	CountFamilyMembers(familyID uuid.UUID) (int, error)
 	ClearFamilyIDIfSingleMember(familyID uuid.UUID) error
+	GetLatestDeployments(organizationID uuid.UUID, limit int) ([]shared_types.ApplicationDeployment, error)
+	GetDeployedApplications(organizationID uuid.UUID) ([]shared_types.Application, error)
+	GetLatestS3Deployment(applicationID uuid.UUID) (*shared_types.ApplicationDeployment, error)
+}
+
+func (s *DeployStorage) RunInTransaction(fn func(tx bun.Tx) error) error {
+	tx, err := s.DB.BeginTx(s.Ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := fn(tx); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func (s *DeployStorage) AddApplicationLogsBatch(logs []shared_types.ApplicationLogs) error {
+	if len(logs) == 0 {
+		return nil
+	}
+	_, err := s.DB.NewInsert().Model(&logs).Exec(s.Ctx)
+	return err
 }
 
 func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
@@ -64,14 +95,21 @@ func (s *DeployStorage) IsNameAlreadyTaken(name string) (bool, error) {
 }
 
 func (s *DeployStorage) IsDomainAlreadyTaken(domain string) (bool, error) {
+	if domain == "" {
+		return false, nil
+	}
 	var count int
 	err := s.DB.NewSelect().
-		TableExpr("applications").
+		TableExpr("application_domains").
 		ColumnExpr("count(*)").
 		Where("domain = ?", domain).
 		Scan(s.Ctx, &count)
 
-	return count > 0, err
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }
 
 func (s *DeployStorage) IsPortAlreadyTaken(port int) (bool, error) {
@@ -86,6 +124,37 @@ func (s *DeployStorage) IsPortAlreadyTaken(port int) (bool, error) {
 }
 
 func (s *DeployStorage) IsDomainValid(domain string) (bool, error) {
+	if domain == "" {
+		return false, nil
+	}
+	if len(domain) > 253 {
+		return false, nil
+	}
+	// Reject path traversal and whitespace
+	for _, c := range domain {
+		if c == '/' || c == '\\' || c == ' ' || c == '\t' || c == '\n' || c == '\r' {
+			return false, nil
+		}
+	}
+	labels := strings.Split(domain, ".")
+	if len(labels) < 2 {
+		return false, nil
+	}
+	for _, label := range labels {
+		if label == "" || len(label) > 63 {
+			return false, nil
+		}
+		for i, c := range label {
+			isAlnum := (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+			isHyphen := c == '-'
+			if !isAlnum && !isHyphen {
+				return false, nil
+			}
+			if isHyphen && (i == 0 || i == len(label)-1) {
+				return false, nil
+			}
+		}
+	}
 	return true, nil
 }
 
@@ -163,29 +232,37 @@ func (s *DeployStorage) AddApplicationLogs(applicationLogs *shared_types.Applica
 	return nil
 }
 
-func (s *DeployStorage) GetApplications(page, pageSize int, organizationID uuid.UUID) ([]shared_types.Application, int, error) {
+func (s *DeployStorage) GetApplications(page, pageSize int, sortBy string, sortDirection string, organizationID uuid.UUID) ([]shared_types.Application, int, error) {
 	var applications []shared_types.Application
 
 	offset := (page - 1) * pageSize
 
 	totalCount, err := s.DB.NewSelect().
 		Model((*shared_types.Application)(nil)).
+		Where("organization_id = ?", organizationID).
 		Count(s.Ctx)
 
 	if err != nil {
 		return nil, 0, err
 	}
 
-	err = s.DB.NewSelect().
+	// Build order expression based on sort parameters
+	orderExpr := s.buildOrderExpression(sortBy, sortDirection)
+
+	query := s.DB.NewSelect().
 		Model(&applications).
 		Relation("Status").
-		Relation("Logs").
 		Relation("Deployments.Status").
-		Order("created_at DESC").
+		Relation("Domains").
 		Limit(pageSize).
 		Offset(offset).
-		Where("organization_id = ?", organizationID).
-		Scan(s.Ctx)
+		Where("organization_id = ?", organizationID)
+
+	if orderExpr != "" {
+		query = query.OrderExpr(orderExpr)
+	}
+
+	err = query.Scan(s.Ctx)
 
 	if err != nil {
 		return nil, 0, err
@@ -202,16 +279,56 @@ func (s *DeployStorage) GetApplications(page, pageSize int, organizationID uuid.
 	return applications, totalCount, nil
 }
 
+// buildOrderExpression builds the SQL ORDER BY expression based on sort parameters
+// Valid sortBy values: name, environment, updated_at, created_at
+// Valid sortDirection values: asc, desc (case-insensitive)
+// Defaults: sortBy="updated_at", sortDirection="desc" if not provided
+func (s *DeployStorage) buildOrderExpression(sortBy string, sortDirection string) string {
+	// Default to updated_at DESC if no sort specified
+	if sortBy == "" {
+		return "a.updated_at DESC"
+	}
+
+	// Normalize sort direction - default to ASC if empty or invalid
+	dir := "ASC"
+	sortDirLower := strings.ToLower(sortDirection)
+	if sortDirLower == "desc" {
+		dir = "DESC"
+	} else if sortDirLower != "asc" && sortDirection != "" {
+		// Invalid direction provided, default to ASC
+		dir = "ASC"
+	}
+
+	// Map sortBy to actual database column names
+	switch sortBy {
+	case "name":
+		return fmt.Sprintf("a.name %s", dir)
+	case "environment":
+		return fmt.Sprintf("a.environment %s", dir)
+	case "updated_at":
+		return fmt.Sprintf("a.updated_at %s", dir)
+	case "created_at":
+		return fmt.Sprintf("a.created_at %s", dir)
+	default:
+		// Invalid sortBy, return default
+		return "a.updated_at DESC"
+	}
+}
+
 func (s *DeployStorage) GetApplicationById(id string, organizationID uuid.UUID) (shared_types.Application, error) {
 	var application shared_types.Application
 
 	err := s.DB.NewSelect().
 		Model(&application).
 		Relation("Status").
+		Relation("Domains").
 		Where("a.id = ? AND a.organization_id = ?", id, organizationID).
 		Scan(s.Ctx)
 
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return shared_types.Application{}, fmt.Errorf("application not found")
+		}
 		return shared_types.Application{}, err
 	}
 
@@ -251,38 +368,49 @@ func (s *DeployStorage) DeleteDeployment(deployment *types.DeleteDeploymentReque
 		return fmt.Errorf("application not found or not authorized")
 	}
 
-	_, err = s.DB.NewDelete().
-		Table("application_logs").
-		Where("application_deployment_id IN (SELECT id FROM application_deployment WHERE application_id = ?)", deployment.ID).
-		Exec(s.Ctx)
+	return s.RunInTransaction(func(tx bun.Tx) error {
+		_, err := tx.NewDelete().
+			Table("application_logs").
+			Where("application_deployment_id IN (SELECT id FROM application_deployment WHERE application_id = ?)", deployment.ID).
+			Exec(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete application logs: %w", err)
+		}
 
-	if err != nil {
-		return err
-	}
+		_, err = tx.NewDelete().
+			Table("application_deployment_status").
+			Where("application_deployment_id IN (SELECT id FROM application_deployment WHERE application_id = ?)", deployment.ID).
+			Exec(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete deployment statuses: %w", err)
+		}
 
-	_, err = s.DB.NewDelete().
-		Table("application_deployment_status").
-		Where("application_deployment_id IN (SELECT id FROM application_deployment WHERE application_id = ?)", deployment.ID).
-		Exec(s.Ctx)
+		_, err = tx.NewDelete().
+			Table("application_deployment").
+			Where("application_id = ?", deployment.ID).
+			Exec(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete deployments: %w", err)
+		}
 
-	if err != nil {
-		return err
-	}
+		_, err = tx.NewDelete().
+			Table("application_domains").
+			Where("application_id = ?", deployment.ID).
+			Exec(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete application domains: %w", err)
+		}
 
-	_, err = s.DB.NewDelete().
-		Table("application_deployment").
-		Where("application_id = ?", deployment.ID).
-		Exec(s.Ctx)
+		_, err = tx.NewDelete().
+			Table("applications").
+			Where("id = ?", deployment.ID).
+			Exec(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete application: %w", err)
+		}
 
-	if err != nil {
-		return err
-	}
-
-	_, err = s.DB.NewDelete().
-		Table("applications").
-		Where("id = ?", deployment.ID).
-		Exec(s.Ctx)
-	return err
+		return nil
+	})
 }
 
 func (s *DeployStorage) GetApplicationDeployments(applicationID uuid.UUID) ([]shared_types.ApplicationDeployment, error) {
@@ -431,6 +559,7 @@ func (s *DeployStorage) GetApplicationByRepositoryIDAndBranch(repositoryID uint6
 		Relation("Status").
 		Relation("Deployments", func(q *bun.SelectQuery) *bun.SelectQuery { return q.Order("created_at DESC") }).
 		Relation("Deployments.Status").
+		Relation("Domains").
 		Where("repository = ? AND branch = ?", fmt.Sprintf("%d", repositoryID), branch).
 		Scan(s.Ctx)
 
@@ -462,6 +591,7 @@ func (s *DeployStorage) GetProjectsByFamilyID(familyID uuid.UUID, organizationID
 			return q.Order("created_at DESC").Limit(1)
 		}).
 		Relation("Deployments.Status").
+		Relation("Domains").
 		Where("family_id = ? AND organization_id = ?", familyID, organizationID).
 		Order("created_at ASC").
 		Scan(s.Ctx)
@@ -522,6 +652,27 @@ func (s *DeployStorage) CountFamilyMembers(familyID uuid.UUID) (int, error) {
 	return count, err
 }
 
+// GetLatestDeployments retrieves the latest deployments across all applications for an organization.
+func (s *DeployStorage) GetLatestDeployments(organizationID uuid.UUID, limit int) ([]shared_types.ApplicationDeployment, error) {
+	var deployments []shared_types.ApplicationDeployment
+
+	err := s.DB.NewSelect().
+		Model(&deployments).
+		Relation("Application").
+		Relation("Status").
+		Join("JOIN applications a ON a.id = ad.application_id").
+		Where("a.organization_id = ?", organizationID).
+		Order("ad.created_at DESC").
+		Limit(limit).
+		Scan(s.Ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return deployments, nil
+}
+
 // ClearFamilyIDIfSingleMember clears the family_id if only one member remains in the family.
 func (s *DeployStorage) ClearFamilyIDIfSingleMember(familyID uuid.UUID) error {
 	count, err := s.CountFamilyMembers(familyID)
@@ -540,4 +691,107 @@ func (s *DeployStorage) ClearFamilyIDIfSingleMember(familyID uuid.UUID) error {
 	}
 
 	return nil
+}
+
+// AddApplicationDomains adds multiple domains to an application.
+// Domains are validated for uniqueness globally before insertion.
+func (s *DeployStorage) AddApplicationDomains(applicationID uuid.UUID, domains []string) error {
+	if len(domains) == 0 {
+		return nil
+	}
+
+	// Check for duplicate domains globally
+	for _, domain := range domains {
+		if domain == "" {
+			continue
+		}
+		exists, err := s.IsDomainAlreadyTaken(domain)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return fmt.Errorf("domain %s is already taken", domain)
+		}
+	}
+
+	// Insert domains
+	for _, domain := range domains {
+		if domain == "" {
+			continue
+		}
+		appDomain := &shared_types.ApplicationDomain{
+			ID:            uuid.New(),
+			ApplicationID: applicationID,
+			Domain:        domain,
+			CreatedAt:     time.Now(),
+		}
+		_, err := s.DB.NewInsert().Model(appDomain).Exec(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to add domain %s: %w", domain, err)
+		}
+	}
+
+	return nil
+}
+
+// RemoveApplicationDomain removes a domain from an application.
+func (s *DeployStorage) RemoveApplicationDomain(applicationID uuid.UUID, domain string) error {
+	_, err := s.DB.NewDelete().
+		Model((*shared_types.ApplicationDomain)(nil)).
+		Where("application_id = ? AND domain = ?", applicationID, domain).
+		Exec(s.Ctx)
+	return err
+}
+
+// GetApplicationDomains retrieves all domains for an application.
+func (s *DeployStorage) GetApplicationDomains(applicationID uuid.UUID) ([]shared_types.ApplicationDomain, error) {
+	var domains []shared_types.ApplicationDomain
+	err := s.DB.NewSelect().
+		Model(&domains).
+		Where("application_id = ?", applicationID).
+		Order("created_at ASC").
+		Scan(s.Ctx)
+	return domains, err
+}
+
+// GetDeployedApplications returns all applications with status "deployed" for an organization.
+func (s *DeployStorage) GetDeployedApplications(organizationID uuid.UUID) ([]shared_types.Application, error) {
+	var applications []shared_types.Application
+
+	err := s.DB.NewSelect().
+		Model(&applications).
+		Relation("Status").
+		Relation("Domains").
+		Where("a.organization_id = ?", organizationID).
+		Where("EXISTS (SELECT 1 FROM application_status ast WHERE ast.application_id = a.id AND ast.status = ?)", shared_types.Deployed).
+		Scan(s.Ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return applications, nil
+}
+
+// GetLatestS3Deployment returns the most recent deployment with an S3 image key for an application.
+func (s *DeployStorage) GetLatestS3Deployment(applicationID uuid.UUID) (*shared_types.ApplicationDeployment, error) {
+	var deployment shared_types.ApplicationDeployment
+
+	err := s.DB.NewSelect().
+		Model(&deployment).
+		Relation("Status").
+		Where("ad.application_id = ?", applicationID).
+		Where("ad.image_s3_key != ''").
+		Order("ad.created_at DESC").
+		Limit(1).
+		Scan(s.Ctx)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &deployment, nil
 }

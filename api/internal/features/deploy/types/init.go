@@ -25,7 +25,7 @@ type IsPortAlreadyTakenRequest struct {
 
 type CreateDeploymentRequest struct {
 	Name                 string                   `json:"name"`
-	Domain               string                   `json:"domain"`
+	Domains              []string                 `json:"domains,omitempty"`
 	Environment          shared_types.Environment `json:"environment"`
 	BuildPack            shared_types.BuildPack   `json:"build_pack"`
 	Repository           string                   `json:"repository"`
@@ -42,7 +42,7 @@ type CreateDeploymentRequest struct {
 // CreateProjectRequest is used to create a project (application) without triggering deployment.
 type CreateProjectRequest struct {
 	Name                 string                   `json:"name"`
-	Domain               string                   `json:"domain"`
+	Domains              []string                 `json:"domains,omitempty"`
 	Environment          shared_types.Environment `json:"environment,omitempty"`
 	BuildPack            shared_types.BuildPack   `json:"build_pack,omitempty"`
 	Repository           string                   `json:"repository"`
@@ -96,7 +96,7 @@ type RestartDeploymentRequest struct {
 // DuplicateProjectRequest is used to create a duplicate of an existing project with a different environment.
 type DuplicateProjectRequest struct {
 	SourceProjectID uuid.UUID                `json:"source_project_id"`
-	Domain          string                   `json:"domain"`
+	Domains         []string                 `json:"domains,omitempty"`
 	Environment     shared_types.Environment `json:"environment"`
 	Branch          string                   `json:"branch,omitempty"`
 }
@@ -104,6 +104,24 @@ type DuplicateProjectRequest struct {
 // GetProjectFamilyRequest is used to get all projects in a family.
 type GetProjectFamilyRequest struct {
 	FamilyID uuid.UUID `json:"family_id"`
+}
+
+// AddApplicationToFamilyRequest is used to add a new application to an existing family.
+type AddApplicationToFamilyRequest struct {
+	FamilyID             *uuid.UUID               `json:"family_id,omitempty"` // If nil, creates new family
+	Name                 string                   `json:"name"`
+	Path                 string                   `json:"path"` // Base path for the application, e.g., "api/" or "view/"
+	Repository           string                   `json:"repository"`
+	Branch               string                   `json:"branch,omitempty"`
+	Environment          shared_types.Environment `json:"environment,omitempty"`
+	BuildPack            shared_types.BuildPack   `json:"build_pack,omitempty"`
+	Port                 int                      `json:"port,omitempty"`
+	DockerfilePath       string                   `json:"dockerfile_path,omitempty"`
+	PreRunCommand        string                   `json:"pre_run_command,omitempty"`
+	PostRunCommand       string                   `json:"post_run_command,omitempty"`
+	BuildVariables       map[string]string        `json:"build_variables,omitempty"`
+	EnvironmentVariables map[string]string        `json:"environment_variables,omitempty"`
+	Domains              []string                 `json:"domains,omitempty"`
 }
 
 // ProjectFamilyResponseData contains the data for project family response.
@@ -202,7 +220,30 @@ type LabelsResponse struct {
 	Data    []string `json:"data"`
 }
 
+type RecoverRequest struct {
+	ApplicationID *uuid.UUID `json:"application_id,omitempty"`
+}
+
+type RecoverAppResult struct {
+	ApplicationID   uuid.UUID `json:"application_id"`
+	ApplicationName string    `json:"application_name"`
+	Reason          string    `json:"reason"`
+}
+
+type RecoverResult struct {
+	Recovered []RecoverAppResult `json:"recovered"`
+	Skipped   []RecoverAppResult `json:"skipped"`
+	Failed    []RecoverAppResult `json:"failed"`
+}
+
+type RecoverResponse struct {
+	Status  string        `json:"status"`
+	Message string        `json:"message"`
+	Data    RecoverResult `json:"data"`
+}
+
 var (
+	ErrS3NotConfigured                  = errors.New("S3 image storage is not configured")
 	ErrMissingID                        = errors.New("id is required")
 	ErrInvalidRequestType               = errors.New("invalid request type")
 	ErrMissingName                      = errors.New("name is required")
@@ -234,6 +275,9 @@ var (
 	ErrEnvironmentAlreadyExistsInFamily = errors.New("a project with this environment already exists in the family")
 	ErrSameEnvironmentAsDuplicate       = errors.New("cannot duplicate project with the same environment")
 	ErrProjectFamilyNotFound            = errors.New("project family not found")
+	ErrDomainLimitReached               = errors.New("maximum of 5 domains per application reached")
+	ErrDomainAlreadyExists              = errors.New("domain already exists for this application")
+	ErrPaymentRequired                  = errors.New("payment required: deployment limit reached, please upgrade your plan")
 )
 
 const (

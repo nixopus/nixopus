@@ -2,7 +2,9 @@ package validation
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
+	"strings"
 
 	"errors"
 
@@ -43,6 +45,8 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return validateDuplicateProjectRequest(*r)
 	case *types.GetProjectFamilyRequest:
 		return validateGetProjectFamilyRequest(*r)
+	case *types.AddApplicationToFamilyRequest:
+		return validateAddApplicationToFamilyRequest(r)
 	default:
 		return types.ErrInvalidRequestType
 	}
@@ -51,9 +55,6 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 func validateDeploymentRequest(req *types.CreateDeploymentRequest) error {
 	if req.Name == "" {
 		return errors.New("name is required")
-	}
-	if req.Domain == "" {
-		return errors.New("domain is required")
 	}
 	if req.Environment == "" {
 		return errors.New("environment is required")
@@ -69,6 +70,9 @@ func validateDeploymentRequest(req *types.CreateDeploymentRequest) error {
 	}
 	if req.Port == 0 {
 		return errors.New("port is required")
+	}
+	if err := validateDomains(req.Domains); err != nil {
+		return err
 	}
 	if req.BasePath == "" {
 		req.BasePath = "/"
@@ -127,13 +131,13 @@ func validateRestartDeploymentRequest(req types.RestartDeploymentRequest) error 
 }
 
 // validateCreateProjectRequest validates a request to create a project without deploying.
-// Only name, domain, and repository are required. Other fields have defaults.
+// Only name and repository are required. Domain is optional. Other fields have defaults.
 func validateCreateProjectRequest(req *types.CreateProjectRequest) error {
 	if req.Name == "" {
 		return types.ErrMissingName
 	}
-	if req.Domain == "" {
-		return types.ErrMissingDomain
+	if err := validateDomains(req.Domains); err != nil {
+		return err
 	}
 	if req.Repository == "" {
 		return types.ErrMissingRepository
@@ -175,8 +179,8 @@ func validateDuplicateProjectRequest(req types.DuplicateProjectRequest) error {
 	if req.SourceProjectID == uuid.Nil {
 		return types.ErrMissingSourceProjectID
 	}
-	if req.Domain == "" {
-		return types.ErrMissingDomain
+	if err := validateDomains(req.Domains); err != nil {
+		return err
 	}
 	if req.Environment == "" {
 		return types.ErrInvalidEnvironment
@@ -195,6 +199,80 @@ func validateDuplicateProjectRequest(req types.DuplicateProjectRequest) error {
 func validateGetProjectFamilyRequest(req types.GetProjectFamilyRequest) error {
 	if req.FamilyID == uuid.Nil {
 		return types.ErrMissingID
+	}
+	return nil
+}
+
+// validateAddApplicationToFamilyRequest validates a request to add an application to a family.
+func validateAddApplicationToFamilyRequest(req *types.AddApplicationToFamilyRequest) error {
+	if req.Name == "" {
+		return types.ErrMissingName
+	}
+	if req.Repository == "" {
+		return types.ErrMissingRepository
+	}
+	if err := validateDomains(req.Domains); err != nil {
+		return err
+	}
+	// Set defaults for optional fields
+	if req.Environment == "" {
+		req.Environment = "development"
+	}
+	if req.BuildPack == "" {
+		req.BuildPack = "dockerfile"
+	}
+	if req.Branch == "" {
+		req.Branch = "main"
+	}
+	if req.Port == 0 {
+		req.Port = 8080
+	}
+	if req.Path == "" {
+		req.Path = "/"
+	}
+	if req.DockerfilePath == "" {
+		req.DockerfilePath = "Dockerfile"
+	}
+	return nil
+}
+
+// isDomainValid performs RFC 1035-compliant domain validation (pure string check, no DB).
+func isDomainValid(domain string) bool {
+	if domain == "" || len(domain) > 253 {
+		return false
+	}
+	for _, c := range domain {
+		if c == '/' || c == '\\' || c == ' ' || c == '\t' || c == '\n' || c == '\r' {
+			return false
+		}
+	}
+	labels := strings.Split(domain, ".")
+	if len(labels) < 2 {
+		return false
+	}
+	for _, label := range labels {
+		if label == "" || len(label) > 63 {
+			return false
+		}
+		for i, c := range label {
+			isAlnum := (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+			isHyphen := c == '-'
+			if !isAlnum && !isHyphen {
+				return false
+			}
+			if isHyphen && (i == 0 || i == len(label)-1) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func validateDomains(domains []string) error {
+	for _, d := range domains {
+		if !isDomainValid(d) {
+			return fmt.Errorf("invalid domain: %q", d)
+		}
 	}
 	return nil
 }

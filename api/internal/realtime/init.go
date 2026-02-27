@@ -3,7 +3,6 @@ package realtime
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -25,10 +24,11 @@ const (
 	pingTimeout    = 60 * time.Second
 )
 
-type topics string
+type Topics string
 
 const (
-	MonitorApplicationDeployment topics = "monitor_application_deployment"
+	MonitorApplicationDeployment Topics = "monitor_application_deployment"
+	MonitorHealthCheck           Topics = "monitor_health_check"
 )
 
 var upgrader = websocket.Upgrader{
@@ -39,8 +39,15 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// LiveDevNotificationHandler is called for live_dev_logs and live_dev_status
+// PostgreSQL notifications. The Gateway implements this to forward build logs
+// and status changes to the appropriate WebSocket client.
+type LiveDevNotificationHandler func(channel, payload string)
+
 type SocketServer struct {
-	conns               *sync.Map
+	conns               *sync.Map // conn -> userID
+	orgIDs              *sync.Map // conn -> organizationID
+	connWriteMu         sync.Map  // conn -> *sync.Mutex (per-connection write serialization)
 	topicsMu            sync.RWMutex
 	topics              map[string]map[*websocket.Conn]bool
 	shutdown            chan struct{}
@@ -54,19 +61,21 @@ type SocketServer struct {
 	dashboardMutex      sync.Mutex
 	applicationMonitors map[*websocket.Conn]*realtime.ApplicationMonitor
 	applicationMutex    sync.Mutex
+
+	liveDevHandler   LiveDevNotificationHandler
+	liveDevHandlerMu sync.RWMutex
 }
 
 // NewSocketServer initializes and returns a new instance of SocketServer.
 func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx context.Context) (*SocketServer, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	// Load .env file if it exists (optional when using secret manager)
+	_ = godotenv.Load()
 
 	pgListener := NewPostgresListener()
 
 	server := &SocketServer{
 		conns:               &sync.Map{},
+		orgIDs:              &sync.Map{},
 		shutdown:            make(chan struct{}),
 		deployController:    deployController,
 		db:                  db,
@@ -77,9 +86,8 @@ func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx 
 		dashboardMonitors:   make(map[*websocket.Conn]*dashboard.DashboardMonitor),
 		applicationMonitors: make(map[*websocket.Conn]*realtime.ApplicationMonitor),
 	}
-	err = StartListeningAndNotify(&server.postgres_listener, ctx, server)
+	err := StartListeningAndNotify(&server.postgres_listener, ctx, server)
 	if err != nil {
-		log.Printf("Error initializing postgres listener: %v", err)
 		return nil, err
 	}
 	return server, nil
@@ -103,9 +111,13 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	orgID := r.URL.Query().Get("organization-id")
+	if orgID != "" {
+		r.Header.Set("X-Organization-Id", orgID)
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("Error upgrading connection: %v", err)
 		return
 	}
 
@@ -115,18 +127,19 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 		token = token[7:]
 	}
 
-	user, err := s.verifyToken(token)
+	user, orgID, err := s.verifyToken(token, r)
 	if err != nil || user == nil {
-		log.Printf("Auth error: %v", err)
 		s.sendError(conn, "Invalid authorization token")
 		conn.Close()
 		return
 	}
 
 	s.conns.Store(conn, user.ID)
+	if orgID != "" {
+		s.orgIDs.Store(conn, orgID)
+	}
 	defer s.handleDisconnect(conn)
 
-	log.Printf("User authenticated: %s", user.ID)
 	s.readLoop(conn)
 }
 
@@ -139,8 +152,9 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 // Returns:
 //   - nil
 func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
-	userID, _ := s.conns.Load(conn)
+	fmt.Println("[ws] handleDisconnect: client disconnected, cleaning up")
 	s.conns.Delete(conn)
+	s.orgIDs.Delete(conn)
 
 	s.topicsMu.Lock()
 	for topic, connections := range s.topics {
@@ -156,7 +170,9 @@ func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
 
 	s.terminalMutex.Lock()
 	if terminalSessions, exists := s.terminals[conn]; exists {
-		for _, terminalSession := range terminalSessions {
+		fmt.Printf("[ws] handleDisconnect: closing %d terminal session(s)\n", len(terminalSessions))
+		for id, terminalSession := range terminalSessions {
+			fmt.Printf("[ws] handleDisconnect: closing terminal %s\n", id)
 			terminalSession.Close()
 		}
 		delete(s.terminals, conn)
@@ -178,7 +194,15 @@ func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
 	s.applicationMutex.Unlock()
 
 	conn.Close()
-	fmt.Printf("Client disconnected: %s (User ID: %v)\n", conn.RemoteAddr(), userID)
+	s.connWriteMu.Delete(conn)
+}
+
+// SetLiveDevHandler registers a handler for live_dev_logs and live_dev_status
+// notifications from PostgreSQL. The live Gateway calls this during initialization.
+func (s *SocketServer) SetLiveDevHandler(handler LiveDevNotificationHandler) {
+	s.liveDevHandlerMu.Lock()
+	s.liveDevHandler = handler
+	s.liveDevHandlerMu.Unlock()
 }
 
 func (s *SocketServer) Shutdown() {
@@ -190,12 +214,29 @@ func (s *SocketServer) Shutdown() {
 }
 
 func (s *SocketServer) handlePing(conn *websocket.Conn) {
-	userID, _ := s.conns.Load(conn)
-	fmt.Printf("Received ping from %s (User ID: %v)\n", conn.RemoteAddr(), userID)
+	_, _ = s.conns.Load(conn)
+}
+
+// getConnWriteMu returns the per-connection write mutex, creating one if needed.
+func (s *SocketServer) getConnWriteMu(conn *websocket.Conn) *sync.Mutex {
+	if mu, ok := s.connWriteMu.Load(conn); ok {
+		return mu.(*sync.Mutex)
+	}
+	mu := &sync.Mutex{}
+	actual, _ := s.connWriteMu.LoadOrStore(conn, mu)
+	return actual.(*sync.Mutex)
+}
+
+// writeJSON serializes all writes to a connection through its per-connection mutex.
+func (s *SocketServer) writeJSON(conn *websocket.Conn, v interface{}) error {
+	mu := s.getConnWriteMu(conn)
+	mu.Lock()
+	defer mu.Unlock()
+	return conn.WriteJSON(v)
 }
 
 func (s *SocketServer) sendError(conn *websocket.Conn, message string) {
-	conn.WriteJSON(types.Payload{
+	s.writeJSON(conn, types.Payload{
 		Action: "error",
 		Data:   message,
 	})

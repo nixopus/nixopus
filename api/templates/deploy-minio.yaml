@@ -3,11 +3,12 @@ metadata:
   name: "MinIO"
   description: "Minio is a high-performance, S3-compatible object storage system designed for private cloud and AI/ML workloads"
   author: "Nixopus Team"
-  icon: "🗄️"
+  icon: "https://avatars.githubusercontent.com/u/695951?s=48&v=4"
   category: "Storage"
   type: "install"
   version: "1.0.0"
   isVerified: false
+  featured: true
 
 variables:
   image:

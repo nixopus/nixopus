@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQueryWithReauth } from '@/redux/base-query';
-import { GetFeatureFlagsResponse, UpdateFeatureFlagRequest } from '@/types/feature-flags';
+import { GetFeatureFlagsResponse, UpdateFeatureFlagRequest } from '@/packages/types/feature-flags';
 import { FEATURE_FLAGS } from '@/redux/api-conf';
 
 export const FeatureFlagsApi = createApi({
@@ -14,6 +14,7 @@ export const FeatureFlagsApi = createApi({
         method: 'GET'
       }),
       providesTags: [{ type: 'FeatureFlags', id: 'LIST' }],
+      keepUnusedDataFor: 300,
       transformResponse: (response: { data: GetFeatureFlagsResponse }) => {
         return response.data;
       }

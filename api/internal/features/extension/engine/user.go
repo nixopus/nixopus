@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -12,7 +13,7 @@ type userModule struct{}
 
 func (userModule) Type() string { return "user" }
 
-func (userModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
+func (userModule) Execute(ctx context.Context, sshClient *ssh.SSH, step types.SpecStep, vars map[string]interface{}) (string, func(), error) {
 	usernameRaw, _ := step.Properties["username"].(string)
 	action, _ := step.Properties["action"].(string)
 	shellRaw, _ := step.Properties["shell"].(string)
@@ -27,6 +28,15 @@ func (userModule) Execute(sshClient *ssh.SSH, step types.SpecStep, vars map[stri
 
 	if username == "" {
 		return "", nil, fmt.Errorf("username is required for user operations")
+	}
+
+	if err := validateShellArgs(map[string]string{
+		"username": username,
+		"shell":    shell,
+		"home":     home,
+		"groups":   groups,
+	}); err != nil {
+		return "", nil, fmt.Errorf("user module: %w", err)
 	}
 
 	tools := userTools(sshClient)

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@nixopus/ui';
 import { PieChart, Pie, Cell, Label } from 'recharts';
 
 export interface DoughnutChartDataItem {

@@ -2,6 +2,7 @@ package tests
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	domainService "github.com/raghavyuva/nixopus-api/internal/features/domain/service"
@@ -74,21 +75,24 @@ func TestGetDomains(t *testing.T) {
 		assert.NoError(t, err)
 
 		org2 := &shared_types.Organization{
-			ID:          uuid.New(),
-			Name:        "test-org-2",
-			Description: "Test organization 2",
+			ID:        uuid.New(),
+			Name:      "test-org-2",
+			Slug:      "test-org-2",
+			CreatedAt: time.Now(),
 		}
 
-		err = setup.OrgStorage.CreateOrganization(*org2)
+		_, err = setup.DB.NewInsert().Model(org2).Exec(setup.Ctx)
 		assert.NoError(t, err)
 
 		orgUser := &shared_types.OrganizationUsers{
 			ID:             uuid.New(),
 			UserID:         user.ID,
 			OrganizationID: org2.ID,
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
 		}
 
-		err = setup.OrgStorage.AddUserToOrganization(*orgUser)
+		_, err = setup.DB.NewInsert().Model(orgUser).Exec(setup.Ctx)
 		assert.NoError(t, err)
 
 		org1Domain := &shared_types.Domain{

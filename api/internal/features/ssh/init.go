@@ -1,16 +1,30 @@
 package ssh
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"os"
-	"strconv"
+	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh/service"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
+)
+
+const (
+	dialTimeout         = 15 * time.Second
+	KeepaliveInterval   = 15 * time.Second
+	KeepaliveMaxMissed  = 4
+	keepaliveReqTimeout = 10 * time.Second
 )
 
 // SSH represents a single SSH connection configuration
@@ -24,46 +38,206 @@ type SSH struct {
 	PrivateKeyProtected string `json:"private_key_protected"`
 }
 
+// connectionPoolEntry represents a pooled SSH connection with metadata
+type connectionPoolEntry struct {
+	client        *goph.Client
+	lastUsed      time.Time
+	inUse         atomic.Int64 // active borrowers; cleanup only closes when 0
+	mu            sync.RWMutex
+	stopKeepalive chan struct{} // closed to stop the keepalive goroutine for this connection
+}
+
+// SSHConnectFunc creates SSH connections. Used for dependency injection in tests.
+// When non-nil, ConnectWithID uses it instead of sshClient.ConnectWithRetry.
+type SSHConnectFunc func(id string) (*goph.Client, error)
+
 // SSHManager manages multiple SSH clients and provides a unified interface
 // For now, it defaults to single client mode for backward compatibility
 // In the future, it can be extended to support multiple clients/discoveries
 type SSHManager struct {
-	clients   map[string]*SSH // Map of client ID to SSH config
-	defaultID string          // ID of the default client
-	mu        sync.RWMutex    // Mutex for thread safe access
+	clients        map[string]*SSH                 // Map of client ID to SSH config
+	defaultID      string                          // ID of the default client
+	mu             sync.RWMutex                    // Mutex for thread safe access
+	pool           map[string]*connectionPoolEntry // Connection pool by client ID
+	poolMu         sync.RWMutex                    // Mutex for connection pool
+	connectingMu   map[string]*sync.Mutex          // Mutex per client ID to prevent concurrent connection creation
+	connectingMuMu sync.Mutex                      // Mutex for accessing connectingMu map
+	maxIdleTime    time.Duration                   // Maximum idle time before closing connection
+	connectFunc    SSHConnectFunc                  // when non-nil, used for ConnectWithID (for tests)
+	done           chan struct{}                   // closed to stop the cleanup goroutine
 }
 
 var (
-	// globalSSHManager is the singleton instance of SSHManager
-	globalSSHManager *SSHManager
-	globalSSHMu      sync.Once
+	// orgManagers caches SSHManager instances per organization ID
+	orgManagers   = make(map[string]*SSHManager)
+	orgManagersMu sync.RWMutex
+
+	// onInvalidateHooks are called (in order) after an org's SSH manager is
+	// evicted. Downstream packages (docker, SFTP pool, caddy) register hooks
+	// via RegisterInvalidateHook so they can flush their own caches without
+	// creating import cycles.
+	onInvalidateHooks   []func(orgID uuid.UUID)
+	onInvalidateHooksMu sync.Mutex
 )
 
-// GetSSHManager returns the global singleton SSHManager instance
-// This ensures we have a single SSHManager instance across the entire application
-// It's initialized lazily on first access with the default SSH config
-func GetSSHManager() *SSHManager {
-	globalSSHMu.Do(func() {
-		defaultClient := NewSSH()
-		globalSSHManager = &SSHManager{
-			clients:   make(map[string]*SSH),
-			defaultID: "default",
-		}
-		globalSSHManager.clients["default"] = defaultClient
-	})
-	return globalSSHManager
+// RegisterInvalidateHook adds a callback that fires whenever an org's SSH
+// cache is invalidated. Use this from init() in packages that maintain their
+// own SSH-derived caches (Docker service, SFTP pool, Caddy tunnels).
+func RegisterInvalidateHook(fn func(orgID uuid.UUID)) {
+	onInvalidateHooksMu.Lock()
+	onInvalidateHooks = append(onInvalidateHooks, fn)
+	onInvalidateHooksMu.Unlock()
 }
 
-// NewSSHManager creates a new SSH manager with a single default client from config
-// This maintains backward compatibility while enabling future multi-client support
-// For most use cases, prefer GetSSHManager() to use the singleton instance
-func NewSSHManager() *SSHManager {
-	defaultClient := NewSSH()
-	manager := &SSHManager{
-		clients:   make(map[string]*SSH),
-		defaultID: "default",
+func fireInvalidateHooks(orgID uuid.UUID) {
+	onInvalidateHooksMu.Lock()
+	hooks := make([]func(uuid.UUID), len(onInvalidateHooks))
+	copy(hooks, onInvalidateHooks)
+	onInvalidateHooksMu.Unlock()
+	for _, fn := range hooks {
+		fn(orgID)
 	}
-	manager.clients["default"] = defaultClient
+}
+
+// GetSSHManagerForOrganization returns an SSHManager for a specific organization.
+// Caches managers per organization to avoid repeated database queries.
+// Uses double-checked locking so concurrent callers for the same org don't race.
+func GetSSHManagerForOrganization(ctx context.Context, orgID uuid.UUID) (*SSHManager, error) {
+	if config.GlobalStore == nil {
+		return nil, fmt.Errorf("global store not initialized, ensure config.Init() has been called")
+	}
+
+	orgIDStr := orgID.String()
+
+	// Fast path: check cache under read lock
+	orgManagersMu.RLock()
+	if manager, exists := orgManagers[orgIDStr]; exists {
+		orgManagersMu.RUnlock()
+		return manager, nil
+	}
+	orgManagersMu.RUnlock()
+
+	// Slow path: acquire write lock and double-check before creating
+	orgManagersMu.Lock()
+	defer orgManagersMu.Unlock()
+
+	if manager, exists := orgManagers[orgIDStr]; exists {
+		return manager, nil
+	}
+
+	sshService := service.NewSSHKeyService(config.GlobalStore, ctx, logger.NewLogger())
+	sshConfig, err := sshService.GetSSHConfigForOrganization(orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get SSH config for organization %s: %w", orgIDStr, err)
+	}
+
+	sshClient := NewSSHFromConfig(sshConfig)
+	if sshClient == nil {
+		return nil, fmt.Errorf("SSH config is nil for organization %s", orgIDStr)
+	}
+	if len(sshClient.PrivateKey) == 0 && len(sshClient.Password) == 0 {
+		return nil, fmt.Errorf("SSH config for organization %s has no credentials: private key and password are both empty - please configure an SSH key or password in server settings", orgIDStr)
+	}
+
+	manager := NewSSHManager()
+	manager.clients["default"] = sshClient
+	orgManagers[orgIDStr] = manager
+
+	return manager, nil
+}
+
+// InvalidateSSHManagerCache clears the cached SSH manager for an organization.
+// Closes all pooled connections and stops the cleanup goroutine before removing
+// the manager, so no resources leak. Also fires registered hooks so downstream
+// caches (Docker, SFTP, Caddy) are flushed. Safe to call with uuid.Nil (no-op).
+func InvalidateSSHManagerCache(orgID uuid.UUID) {
+	if orgID == uuid.Nil {
+		return
+	}
+	orgIDStr := orgID.String()
+
+	orgManagersMu.Lock()
+	old, exists := orgManagers[orgIDStr]
+	delete(orgManagers, orgIDStr)
+	orgManagersMu.Unlock()
+
+	if exists && old != nil {
+		old.Close()
+	}
+
+	fireInvalidateHooks(orgID)
+}
+
+// InvalidateAllSSHManagerCaches clears every cached manager. Useful at shutdown
+// or when a global config change (e.g. key rotation) affects all orgs.
+func InvalidateAllSSHManagerCaches() {
+	orgManagersMu.Lock()
+	snapshot := orgManagers
+	orgManagers = make(map[string]*SSHManager)
+	orgManagersMu.Unlock()
+
+	for _, mgr := range snapshot {
+		if mgr != nil {
+			mgr.Close()
+		}
+	}
+}
+
+// GetSSHManagerFromContext extracts organization ID from context and returns the appropriate SSHManager.
+// This is the new primary entry point for getting SSH managers.
+// The organization ID should be set in context by the auth middleware via types.OrganizationIDKey.
+// Uses the global store set during config.Init().
+func GetSSHManagerFromContext(ctx context.Context) (*SSHManager, error) {
+	orgIDAny := ctx.Value(types.OrganizationIDKey)
+	if orgIDAny == nil {
+		return nil, fmt.Errorf("organization ID not found in context")
+	}
+
+	var orgID uuid.UUID
+	switch v := orgIDAny.(type) {
+	case string:
+		var err error
+		orgID, err = uuid.Parse(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid organization ID in context: %w", err)
+		}
+	case uuid.UUID:
+		orgID = v
+	default:
+		return nil, fmt.Errorf("unexpected organization ID type in context: %T", v)
+	}
+
+	return GetSSHManagerForOrganization(ctx, orgID)
+}
+
+// NewSSHManager creates a new empty SSH manager.
+// Clients must be added via AddClient() or use GetSSHManagerForOrganization() / GetSSHManagerFromContext()
+// to get an organization-specific manager with pre-configured clients.
+// For most use cases, prefer GetSSHManagerFromContext() to get an organization-specific manager.
+func NewSSHManager() *SSHManager {
+	return newSSHManager(5*time.Minute, nil)
+}
+
+// NewSSHManagerForTest creates a manager with an optional connection factory for testing.
+// When connectFunc is non-nil, ConnectWithID uses it instead of real SSH. maxIdleTime can be 0 for default.
+func NewSSHManagerForTest(connectFunc SSHConnectFunc, maxIdleTime time.Duration) *SSHManager {
+	if maxIdleTime == 0 {
+		maxIdleTime = 5 * time.Minute
+	}
+	return newSSHManager(maxIdleTime, connectFunc)
+}
+
+func newSSHManager(maxIdleTime time.Duration, connectFunc SSHConnectFunc) *SSHManager {
+	manager := &SSHManager{
+		clients:      make(map[string]*SSH),
+		defaultID:    "default",
+		pool:         make(map[string]*connectionPoolEntry),
+		connectingMu: make(map[string]*sync.Mutex),
+		maxIdleTime:  maxIdleTime,
+		connectFunc:  connectFunc,
+		done:         make(chan struct{}),
+	}
+	go manager.cleanupIdleConnections()
 	return manager
 }
 
@@ -113,33 +287,397 @@ func (m *SSHManager) SetDefault(id string) error {
 	return nil
 }
 
-// Connect connects to the default SSH client
+// Connect connects to the default SSH client with connection pooling
 // This maintains backward compatibility with the single-client approach
 func (m *SSHManager) Connect() (*goph.Client, error) {
 	return m.ConnectWithID("")
 }
 
-// ConnectWithID connects to a specific SSH client by ID
+// Borrow returns a pooled SSH connection and a release function.
+// Caller must call release() when done to avoid cleanup closing the connection while in use.
+// Prefer Borrow over Connect when holding the connection across async work (e.g. SFTP pool).
+func (m *SSHManager) Borrow(id string) (*goph.Client, func(), error) {
+	if id == "" {
+		id = m.defaultID
+	}
+	client, err := m.ConnectWithID(id)
+	if err != nil {
+		return nil, func() {}, err
+	}
+	// Increment inUse so cleanup won't close this connection until release is called.
+	// Small race window: cleanup could run between ConnectWithID return and our increment.
+	// If that happens, client may be closed; next use will fail and caller can retry.
+	m.poolMu.Lock()
+	entry, exists := m.pool[id]
+	if exists && entry != nil {
+		entry.inUse.Add(1)
+	}
+	m.poolMu.Unlock()
+	if !exists || entry == nil {
+		return client, func() {}, nil // no pool entry (e.g. freshly created, inUse lives in entry)
+	}
+	release := func() { entry.inUse.Add(-1) }
+	return client, release, nil
+}
+
+// IsClosedConnectionError checks if the error indicates a closed or stale network connection.
+// Aligned with SFTP pool detection: EOF, broken pipe, connection reset, etc.
+func IsClosedConnectionError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if err == io.EOF {
+		return true
+	}
+	errMsg := err.Error()
+	return strings.Contains(errMsg, "use of closed network connection") ||
+		strings.Contains(errMsg, "connection closed") ||
+		strings.Contains(errMsg, "connection lost") ||
+		strings.Contains(errMsg, "EOF") ||
+		strings.Contains(errMsg, "broken pipe") ||
+		strings.Contains(errMsg, "connection reset by peer") ||
+		strings.Contains(errMsg, "unexpected packet")
+}
+
+// isClosedConnectionError is an internal alias for IsClosedConnectionError
+func isClosedConnectionError(err error) bool {
+	return IsClosedConnectionError(err)
+}
+
+// StartKeepalive sends periodic keepalive@openssh.com requests over the SSH
+// connection to prevent NAT/firewall idle timeouts and detect dead connections
+// early. When maxMissed consecutive keepalives fail, the client is closed so
+// callers see immediate errors and trigger reconnection. The goroutine stops
+// when stop is closed or maxMissed is exceeded.
+func StartKeepalive(client *goph.Client, interval time.Duration, maxMissed int, stop <-chan struct{}) {
+	if client == nil {
+		return
+	}
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		missed := 0
+		for {
+			select {
+			case <-stop:
+				return
+			case <-ticker.C:
+				if !sendKeepalive(client, keepaliveReqTimeout) {
+					missed++
+					if missed >= maxMissed {
+						client.Close()
+						return
+					}
+				} else {
+					missed = 0
+				}
+			}
+		}
+	}()
+}
+
+// sendKeepalive sends a single keepalive request with a timeout guard.
+// Returns true if the remote replied successfully within the deadline.
+// The timeout prevents a hung TCP connection from blocking the keepalive loop.
+func sendKeepalive(client *goph.Client, timeout time.Duration) bool {
+	done := make(chan bool, 1)
+	go func() {
+		_, _, err := client.SendRequest("keepalive@openssh.com", true, nil)
+		done <- (err == nil)
+	}()
+	select {
+	case ok := <-done:
+		return ok
+	case <-time.After(timeout):
+		return false
+	}
+}
+
+// isConnectionAlive checks if an SSH connection is still valid by attempting to create a test session
+func (m *SSHManager) isConnectionAlive(client *goph.Client) bool {
+	if client == nil {
+		return false
+	}
+	// Try to create a new session to validate the connection
+	session, err := client.NewSession()
+	if err != nil {
+		return false
+	}
+	session.Close()
+	return true
+}
+
+// NewSessionWithRetry creates a new SSH session with automatic retry on closed connection errors.
+// This method handles stale connections by removing them from the pool and retrying.
+// The returned session should be closed by the caller when done.
+func (m *SSHManager) NewSessionWithRetry(id string) (*ssh.Session, error) {
+	const maxRetries = 2
+
+	if id == "" {
+		id = m.defaultID
+	}
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		// Get connection from pool (reuses existing or creates new if needed)
+		client, err := m.ConnectWithID(id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect via SSH: %w", err)
+		}
+
+		session, err := client.NewSession()
+		if err != nil {
+			if isClosedConnectionError(err) {
+				// Remove the bad connection from pool and retry
+				m.CloseConnection(id)
+				if attempt < maxRetries-1 {
+					continue
+				}
+			}
+			return nil, fmt.Errorf("failed to create SSH session: %w", err)
+		}
+
+		return session, nil
+	}
+
+	return nil, fmt.Errorf("failed to create SSH session after %d attempts due to connection issues", maxRetries)
+}
+
+// ConnectWithID connects to a specific SSH client by ID with connection pooling
 func (m *SSHManager) ConnectWithID(id string) (*goph.Client, error) {
-	client, err := m.GetClient(id)
+	if id == "" {
+		id = m.defaultID
+	}
+
+	// Try to get existing connection from pool
+	m.poolMu.RLock()
+	entry, exists := m.pool[id]
+	var client *goph.Client
+	var err error
+	if exists && entry != nil {
+		entry.mu.RLock()
+		client = entry.client
+		entry.mu.RUnlock()
+	}
+	m.poolMu.RUnlock()
+
+	// Validate the pooled connection is still alive
+	if client != nil {
+		// Check if connection was recently used (within last 30 seconds) - skip validation if so
+		// This avoids unnecessary validation checks that can fail due to server rate limiting
+		m.poolMu.RLock()
+		entry, entryExists := m.pool[id]
+		recentlyUsed := false
+		var lastUsed time.Time
+		if entryExists && entry != nil {
+			entry.mu.RLock()
+			lastUsed = entry.lastUsed
+			entry.mu.RUnlock()
+			// If used within last 30 seconds, consider it still valid without validation
+			if time.Since(lastUsed) < 30*time.Second {
+				recentlyUsed = true
+			}
+		}
+		m.poolMu.RUnlock()
+
+		// Only validate if not recently used (to avoid unnecessary checks that might fail)
+		// Recently used connections are assumed to be alive to avoid false negatives
+		if recentlyUsed || m.isConnectionAlive(client) {
+			// Connection is valid, update last used time and return
+			m.poolMu.Lock()
+			if entry, exists := m.pool[id]; exists && entry != nil {
+				entry.mu.Lock()
+				entry.lastUsed = time.Now()
+				entry.mu.Unlock()
+			}
+			m.poolMu.Unlock()
+			return client, nil
+		}
+		// Connection is dead, remove it from pool and stop its keepalive
+		m.poolMu.Lock()
+		if entry, exists := m.pool[id]; exists {
+			entry.mu.Lock()
+			if entry.client == client {
+				if entry.stopKeepalive != nil {
+					close(entry.stopKeepalive)
+					entry.stopKeepalive = nil
+				}
+				entry.client = nil
+			}
+			entry.mu.Unlock()
+			delete(m.pool, id)
+		}
+		m.poolMu.Unlock()
+	}
+
+	// No valid pooled connection available, create new one
+	// Use per-client-ID mutex to prevent concurrent connection creation
+	m.connectingMuMu.Lock()
+	connMu, exists := m.connectingMu[id]
+	if !exists {
+		connMu = &sync.Mutex{}
+		m.connectingMu[id] = connMu
+	}
+	m.connectingMuMu.Unlock()
+
+	connMu.Lock()
+	defer connMu.Unlock()
+
+	// Double-check: another goroutine might have created the connection while we waited
+	m.poolMu.RLock()
+	entry, exists = m.pool[id]
+	var existingClient *goph.Client
+	if exists && entry != nil {
+		entry.mu.RLock()
+		existingClient = entry.client
+		entry.mu.RUnlock()
+	}
+	m.poolMu.RUnlock()
+
+	if existingClient != nil && m.isConnectionAlive(existingClient) {
+		// Connection was created by another goroutine, use it
+		m.poolMu.Lock()
+		if entry, exists := m.pool[id]; exists {
+			entry.mu.Lock()
+			entry.lastUsed = time.Now()
+			entry.mu.Unlock()
+		}
+		m.poolMu.Unlock()
+		return existingClient, nil
+	}
+
+	if m.connectFunc != nil {
+		client, err = m.connectFunc(id)
+	} else {
+		var sshClient *SSH
+		sshClient, err = m.GetClient(id)
+		if err != nil {
+			return nil, err
+		}
+		client, err = sshClient.ConnectWithRetry()
+	}
 	if err != nil {
 		return nil, err
 	}
-	return client.Connect()
+	if client == nil {
+		return nil, fmt.Errorf("SSH connection factory returned nil client")
+	}
+
+	// Store in pool and start keepalive to prevent NAT/firewall idle timeouts
+	stopCh := make(chan struct{})
+	StartKeepalive(client, KeepaliveInterval, KeepaliveMaxMissed, stopCh)
+	m.poolMu.Lock()
+	m.pool[id] = &connectionPoolEntry{
+		client:        client,
+		lastUsed:      time.Now(),
+		stopKeepalive: stopCh,
+	}
+	m.poolMu.Unlock()
+
+	return client, nil
 }
 
-// RunCommand runs a command on the default SSH client
+// cleanupIdleConnections periodically closes idle connections.
+// Stops when the manager's done channel is closed.
+func (m *SSHManager) cleanupIdleConnections() {
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-m.done:
+			return
+		case <-ticker.C:
+			now := time.Now()
+			m.poolMu.Lock()
+			for id, entry := range m.pool {
+				entry.mu.Lock()
+				inUse := entry.inUse.Load()
+				idle := entry.client != nil && now.Sub(entry.lastUsed) > m.maxIdleTime
+				if idle && inUse == 0 {
+					if entry.stopKeepalive != nil {
+						close(entry.stopKeepalive)
+						entry.stopKeepalive = nil
+					}
+					entry.client.Close()
+					entry.client = nil
+					delete(m.pool, id)
+				}
+				entry.mu.Unlock()
+			}
+			m.poolMu.Unlock()
+		}
+	}
+}
+
+// CloseConnection closes a specific connection in the pool
+func (m *SSHManager) CloseConnection(id string) {
+	if id == "" {
+		id = m.defaultID
+	}
+	m.poolMu.Lock()
+	if entry, exists := m.pool[id]; exists {
+		entry.mu.Lock()
+		if entry.stopKeepalive != nil {
+			close(entry.stopKeepalive)
+			entry.stopKeepalive = nil
+		}
+		if entry.client != nil {
+			entry.client.Close()
+			entry.client = nil
+		}
+		entry.mu.Unlock()
+		delete(m.pool, id)
+	}
+	m.poolMu.Unlock()
+}
+
+// Close shuts down this manager: stops the cleanup goroutine, stops all
+// keepalive goroutines, and closes all pooled connections. The manager
+// must not be used after calling Close.
+func (m *SSHManager) Close() {
+	select {
+	case <-m.done:
+		// already closed
+	default:
+		close(m.done)
+	}
+
+	m.poolMu.Lock()
+	for id, entry := range m.pool {
+		entry.mu.Lock()
+		if entry.stopKeepalive != nil {
+			close(entry.stopKeepalive)
+			entry.stopKeepalive = nil
+		}
+		if entry.client != nil {
+			entry.client.Close()
+			entry.client = nil
+		}
+		entry.mu.Unlock()
+		delete(m.pool, id)
+	}
+	m.poolMu.Unlock()
+}
+
+// RunCommand runs a command on the default SSH client using the connection pool.
 func (m *SSHManager) RunCommand(cmd string) (string, error) {
 	return m.RunCommandWithID("", cmd)
 }
 
-// RunCommandWithID runs a command on a specific SSH client by ID
+// RunCommandWithID runs a command on a specific SSH client by ID using the
+// connection pool. Stale connections are automatically evicted and retried.
 func (m *SSHManager) RunCommandWithID(id string, cmd string) (string, error) {
-	client, err := m.GetClient(id)
+	session, err := m.NewSessionWithRetry(id)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to get SSH session: %w", err)
 	}
-	return client.RunCommand(cmd)
+	defer session.Close()
+
+	output, err := session.CombinedOutput(cmd)
+	if err != nil {
+		return string(output), err
+	}
+	return string(output), nil
 }
 
 // ListClients returns a list of all client IDs
@@ -160,17 +698,47 @@ func (m *SSHManager) GetDefaultSSH() (*SSH, error) {
 	return m.GetClient("")
 }
 
-// NewSSH creates a new SSH client from the global config
-// This is the default way to create a single SSH client
-func NewSSH() *SSH {
-	return &SSH{
-		PrivateKey:          config.AppConfig.SSH.PrivateKey,
-		Host:                config.AppConfig.SSH.Host,
-		User:                config.AppConfig.SSH.User,
-		Port:                config.AppConfig.SSH.Port,
-		Password:            config.AppConfig.SSH.Password,
-		PrivateKeyProtected: config.AppConfig.SSH.PrivateKeyProtected,
+// GetOrganizationSSH returns the organization-specific SSH client struct
+// This manager is organization-specific, so this returns the organization's SSH client
+func (m *SSHManager) GetOrganizationSSH() (*SSH, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	client, exists := m.clients[m.defaultID]
+	if !exists {
+		return nil, fmt.Errorf("SSH client not found for organization")
 	}
+	return client, nil
+}
+
+// GetSSHHost returns the SSH host for the organization's SSH client
+func (m *SSHManager) GetSSHHost() (string, error) {
+	sshClient, err := m.GetOrganizationSSH()
+	if err != nil {
+		return "", fmt.Errorf("failed to get organization SSH client: %w", err)
+	}
+	if sshClient.Host == "" {
+		return "", fmt.Errorf("SSH host is not configured for organization")
+	}
+	return sshClient.Host, nil
+}
+
+// GetSSHUser returns the SSH user for the organization's SSH client
+func (m *SSHManager) GetSSHUser() (string, error) {
+	sshClient, err := m.GetOrganizationSSH()
+	if err != nil {
+		return "", fmt.Errorf("failed to get organization SSH client: %w", err)
+	}
+	if sshClient.User == "" {
+		return "", fmt.Errorf("SSH user is not configured for organization")
+	}
+	return sshClient.User, nil
+}
+
+// GetSSHConfig returns the SSH config struct for read-only access
+// Returns the organization-specific SSH configuration
+func (m *SSHManager) GetSSHConfig() (*SSH, error) {
+	return m.GetOrganizationSSH()
 }
 
 // NewSSHFromConfig creates a new SSH client from a custom SSHConfig
@@ -184,7 +752,7 @@ func NewSSH() *SSH {
 //	manager.AddClient("server2", client2)
 func NewSSHFromConfig(sshConfig *types.SSHConfig) *SSH {
 	if sshConfig == nil {
-		return NewSSH() // Fallback to default config
+		return nil // Don't fallback to config - SSH config must be provided
 	}
 	return &SSH{
 		PrivateKey:          sshConfig.PrivateKey,
@@ -208,6 +776,7 @@ func (s *SSH) ConnectWithPassword() (*goph.Client, error) {
 		Addr:     s.Host,
 		Port:     uint(s.Port),
 		Auth:     auth,
+		Timeout:  dialTimeout,
 		Callback: ssh.InsecureIgnoreHostKey(),
 	})
 	if err != nil {
@@ -217,35 +786,54 @@ func (s *SSH) ConnectWithPassword() (*goph.Client, error) {
 	return client, nil
 }
 
+// Connect creates a new SSH connection (used internally, prefer SSHManager.Connect for pooling)
 func (s *SSH) Connect() (*goph.Client, error) {
+	return s.ConnectWithRetry()
+}
+
+// ConnectWithRetry attempts to connect with exponential backoff
+func (s *SSH) ConnectWithRetry() (*goph.Client, error) {
 	if s.User == "" || s.Host == "" {
 		return nil, fmt.Errorf("user and host are required for SSH connection")
 	}
 
-	client, err := s.ConnectWithPrivateKey()
-	if err == nil {
-		return client, nil
+	hasPrivateKey := len(s.PrivateKey) > 0
+	hasPassword := len(s.Password) > 0
+
+	var keyErr error
+	if hasPrivateKey {
+		client, err := s.ConnectWithPrivateKey()
+		if err == nil {
+			return client, nil
+		}
+		keyErr = err
 	}
 
-	fmt.Printf("private key connection failed: %v\n", err)
-
-	client, err = s.ConnectWithPassword()
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect with both private key and password: %w", err)
+	if !hasPassword {
+		if keyErr != nil {
+			return nil, fmt.Errorf("private key auth failed: %w; no password configured as fallback", keyErr)
+		}
+		return nil, fmt.Errorf("no authentication method available: private key and password are both empty")
 	}
 
-	return client, nil
-}
+	maxRetries := 3
+	baseDelay := 100 * time.Millisecond
 
-func parsePort(port string) uint64 {
-	if port == "" {
-		return 22
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			delay := time.Duration(attempt) * baseDelay
+			time.Sleep(delay)
+		}
+
+		client, err := s.ConnectWithPassword()
+		if err == nil {
+			return client, nil
+		}
+		lastErr = err
 	}
-	p, err := strconv.ParseUint(port, 10, 32)
-	if err != nil {
-		return 22
-	}
-	return p
+
+	return nil, fmt.Errorf("failed to connect with both private key and password after %d attempts: %w", maxRetries, lastErr)
 }
 
 func (s *SSH) ConnectWithPrivateKey() (*goph.Client, error) {
@@ -253,7 +841,7 @@ func (s *SSH) ConnectWithPrivateKey() (*goph.Client, error) {
 		return nil, fmt.Errorf("private key is required for SSH connection")
 	}
 
-	auth, err := goph.Key(s.PrivateKey, "")
+	auth, err := goph.RawKey(s.PrivateKey, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create SSH auth from private key: %w", err)
 	}
@@ -263,6 +851,7 @@ func (s *SSH) ConnectWithPrivateKey() (*goph.Client, error) {
 		Addr:     s.Host,
 		Port:     uint(s.Port),
 		Auth:     auth,
+		Timeout:  dialTimeout,
 		Callback: ssh.InsecureIgnoreHostKey(),
 	})
 	if err != nil {

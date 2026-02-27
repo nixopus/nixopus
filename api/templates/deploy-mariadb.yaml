@@ -3,7 +3,7 @@ metadata:
   name: "MariaDB"
   description: "MariaDB is one of the most popular database servers. Made by the original developers of MySQL. Uses mariadb image from linuxserver.io. Note: Changing any MYSQL_ variables after initial setup has no effect - use mysqladmin tool or CLI to make changes. Note: If using MYSQL_DATABASE, MYSQL_USER, and MYSQL_PASSWORD, all three must be set."
   author: "Nixopus Team"
-  icon: "🗄️"
+  icon: "https://avatars.githubusercontent.com/u/5877084?s=200&v=4"
   category: "Database"
   type: "install"
   version: "1.0.0"

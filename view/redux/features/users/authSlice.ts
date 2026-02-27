@@ -3,9 +3,10 @@ import { userApi } from '@/redux/services/users/userApi';
 import { User } from '@/redux/types/user';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { setAuthTokens, clearAuthTokens } from '@/lib/auth';
-import { doesSessionExist, signOut } from 'supertokens-auth-react/recipe/session';
+import { REHYDRATE } from 'redux-persist';
+import { authClient } from '@/packages/lib/auth-client';
 import { setActiveOrganization } from './userSlice';
+import { fetchUserOrganizations } from './orgSlice';
 
 interface AuthState {
   user: User | null;
@@ -30,33 +31,29 @@ export const initializeAuth = createAsyncThunk<AuthPayload | null, void, { rejec
   'auth/initialize',
   async (_, { dispatch, rejectWithValue }) => {
     try {
-      const sessionExists = await doesSessionExist();
+      const sessionResult = await authClient.getSession();
 
-      if (!sessionExists) {
+      if (!sessionResult?.data?.session) {
         return null;
       }
 
       try {
-        const userResult = await dispatch(
-          authApi.endpoints.getUserDetails.initiate(undefined)
-        ).unwrap();
+        // Parallelize: getUserDetails and fetchUserOrganizations don't depend on each other
+        const [userResult, organizationsResult] = await Promise.all([
+          dispatch(authApi.endpoints.getUserDetails.initiate(undefined)).unwrap(),
+          dispatch(fetchUserOrganizations())
+            .unwrap()
+            .catch(() => [] as any)
+        ]);
 
-        try {
-          const organizationsResult = await dispatch(
-            userApi.endpoints.getUserOrganizations.initiate(undefined)
-          ).unwrap();
-
-          if (organizationsResult && organizationsResult.length > 0) {
-            const firstOrg = organizationsResult[0];
-            dispatch(setActiveOrganization(firstOrg.organization));
-          }
-        } catch (orgError: any) {
-          // Don't fail auth if organizations can't be loaded
+        if (organizationsResult && organizationsResult.length > 0) {
+          const firstOrg = organizationsResult[0];
+          dispatch(setActiveOrganization(firstOrg.organization));
         }
 
         return {
           user: userResult,
-          token: 'supertokens-session',
+          token: sessionResult.data.session.token || '',
           refreshToken: undefined
         };
       } catch (error: any) {
@@ -70,10 +67,10 @@ export const initializeAuth = createAsyncThunk<AuthPayload | null, void, { rejec
 
 export const logoutUser = createAsyncThunk('auth/logoutUser', async (_, { dispatch }) => {
   try {
-    await signOut();
+    await authClient.signOut();
     dispatch(logout());
   } catch (error) {
-    console.error('SuperTokens logout failed:', error);
+    console.error('Better Auth logout failed:', error);
     dispatch(logout());
   }
 });
@@ -91,6 +88,12 @@ const initialState: AuthState = {
   }
 };
 
+function ensureTwoFactor(state: AuthState) {
+  if (!state.twoFactor) {
+    state.twoFactor = { isRequired: false, tempToken: undefined };
+  }
+}
+
 export const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -105,6 +108,7 @@ export const authSlice = createSlice({
         tempToken?: string;
       }>
     ) => {
+      ensureTwoFactor(state);
       const { user, token, refreshToken, expiresIn, tempToken } = action.payload;
 
       if (tempToken) {
@@ -112,23 +116,11 @@ export const authSlice = createSlice({
         state.twoFactor.isRequired = true;
         state.token = tempToken;
         state.isAuthenticated = false;
-
-        setAuthTokens({
-          access_token: tempToken,
-          refresh_token: undefined,
-          expires_in: expiresIn
-        });
       } else if (token) {
         state.token = token;
         state.isAuthenticated = true;
         state.twoFactor.isRequired = false;
         state.twoFactor.tempToken = undefined;
-
-        setAuthTokens({
-          access_token: token,
-          refresh_token: refreshToken,
-          expires_in: expiresIn
-        });
       }
 
       if (refreshToken) {
@@ -138,15 +130,16 @@ export const authSlice = createSlice({
       state.user = user;
     },
     logout: (state) => {
+      ensureTwoFactor(state);
       state.user = null;
       state.token = undefined;
       state.refreshToken = undefined;
       state.isAuthenticated = false;
       state.twoFactor.isRequired = false;
       state.twoFactor.tempToken = undefined;
-      clearAuthTokens();
     },
     clearTwoFactor: (state) => {
+      ensureTwoFactor(state);
       state.twoFactor.isRequired = false;
       state.twoFactor.tempToken = undefined;
     },
@@ -158,10 +151,15 @@ export const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(REHYDRATE, (state) => {
+        ensureTwoFactor(state);
+      })
       .addCase(initializeAuth.pending, (state) => {
+        ensureTwoFactor(state);
         state.isLoading = true;
       })
       .addCase(initializeAuth.fulfilled, (state, action) => {
+        ensureTwoFactor(state);
         if (action.payload) {
           state.user = action.payload.user;
           state.token = action.payload.token;
@@ -181,17 +179,12 @@ export const authSlice = createSlice({
         state.isLoading = true;
       })
       .addMatcher(authApi.endpoints.loginUser.matchFulfilled, (state, { payload }) => {
+        ensureTwoFactor(state);
         if (payload?.temp_token) {
           state.twoFactor.isRequired = true;
           state.twoFactor.tempToken = payload.temp_token;
           state.token = payload.temp_token;
           state.isAuthenticated = false;
-
-          setAuthTokens({
-            access_token: payload.temp_token,
-            refresh_token: undefined,
-            expires_in: payload.expires_in
-          });
         } else if (payload?.access_token) {
           state.user = payload.user;
           state.token = payload.access_token;
@@ -200,12 +193,6 @@ export const authSlice = createSlice({
           state.isInitialized = true;
           state.twoFactor.isRequired = false;
           state.twoFactor.tempToken = undefined;
-
-          setAuthTokens({
-            access_token: payload.access_token,
-            refresh_token: payload.refresh_token || undefined,
-            expires_in: payload.expires_in
-          });
         }
         state.isLoading = false;
       })
@@ -216,6 +203,7 @@ export const authSlice = createSlice({
         state.isLoading = true;
       })
       .addMatcher(authApi.endpoints.twoFactorLogin.matchFulfilled, (state, { payload }) => {
+        ensureTwoFactor(state);
         if (payload?.access_token) {
           state.user = payload.user;
           state.token = payload.access_token;
@@ -224,12 +212,6 @@ export const authSlice = createSlice({
           state.isInitialized = true;
           state.twoFactor.isRequired = false;
           state.twoFactor.tempToken = undefined;
-
-          setAuthTokens({
-            access_token: payload.access_token,
-            refresh_token: payload.refresh_token || undefined,
-            expires_in: payload.expires_in
-          });
         }
         state.isLoading = false;
       })
@@ -240,16 +222,11 @@ export const authSlice = createSlice({
         state.isLoading = true;
       })
       .addMatcher(authApi.endpoints.refreshToken.matchFulfilled, (state, { payload }) => {
+        ensureTwoFactor(state);
         if (payload?.access_token) {
           state.token = payload.access_token;
           state.refreshToken = payload.refresh_token || undefined;
           state.isAuthenticated = true;
-
-          setAuthTokens({
-            access_token: payload.access_token,
-            refresh_token: payload.refresh_token || undefined,
-            expires_in: payload.expires_in
-          });
         }
         state.isLoading = false;
       })

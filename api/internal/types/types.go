@@ -1,28 +1,65 @@
 package types
 
+import (
+	"log"
+	"os"
+)
+
 type Config struct {
-	Server      ServerConfig      `mapstructure:"server"`
-	Database    DatabaseConfig    `mapstructure:"database"`
-	Redis       RedisConfig       `mapstructure:"redis"`
-	SSH         SSHConfig         `mapstructure:"ssh"`
-	Deployment  DeploymentConfig  `mapstructure:"deployment"`
-	Docker      DockerConfig      `mapstructure:"docker"`
-	Proxy       ProxyConfig       `mapstructure:"proxy"`
-	CORS        CORSConfig        `mapstructure:"cors"`
-	App         AppConfig         `mapstructure:"app"`
-	Supertokens SupertokensConfig `mapstructure:"supertokens"`
+	Server     ServerConfig     `mapstructure:"server"`
+	Database   DatabaseConfig   `mapstructure:"database"`
+	Redis      RedisConfig      `mapstructure:"redis"`
+	Proxy      ProxyConfig      `mapstructure:"proxy"`
+	CORS       CORSConfig       `mapstructure:"cors"`
+	App        AppConfig        `mapstructure:"app"`
+	GitHub     GitHubConfig     `mapstructure:"github"`
+	BetterAuth BetterAuthConfig `mapstructure:"betterauth"`
+	Stripe     StripeConfig     `mapstructure:"stripe"`
+	Agent      AgentConfig      `mapstructure:"agent"`
+	Trail      TrailConfig      `mapstructure:"trail"`
+	Live       LiveConfig       `mapstructure:"live"`
+	S3         S3Config         `mapstructure:"s3"`
 }
 
-type SupertokensConfig struct {
-	APIKey          string `mapstructure:"api_key" validate:"required"`
-	APIDomain       string `mapstructure:"api_domain" validate:"required"`
-	WebsiteDomain   string `mapstructure:"website_domain" validate:"required"`
-	ConnectionURI   string `mapstructure:"connection_uri" validate:"required"`
-	EnableDebugLogs bool   `mapstructure:"enable_debug_logs"`
+// LiveConfig holds configuration for the live gateway (WebSocket, file sync, build).
+type LiveConfig struct {
+	ChunkSize               int64  `mapstructure:"chunk_size"`
+	CompletionWorkers       int    `mapstructure:"completion_workers"`
+	CompletionBuffer        int    `mapstructure:"completion_buffer"`
+	PendingCompletionsTick  string `mapstructure:"pending_completions_tick"`
+	ReadBufferSize          int    `mapstructure:"read_buffer_size"`
+	WriteBufferSize         int    `mapstructure:"write_buffer_size"`
+	ReadDeadline            string `mapstructure:"read_deadline"`
+	WriteDeadline           string `mapstructure:"write_deadline"`
+	FileInjectRetries       int    `mapstructure:"file_inject_retries"`
+	BuildDebounce           string `mapstructure:"build_debounce"`
+	GeneratedDockerfileName string `mapstructure:"generated_dockerfile_name"`
+	MaxIndexableSize        int    `mapstructure:"max_indexable_size"`
+	CheckOrigin             bool   `mapstructure:"check_origin"`
+	AllowedOrigins          string `mapstructure:"allowed_origins"` // Comma-separated; parsed at runtime
+}
+
+type S3Config struct {
+	Endpoint  string `mapstructure:"endpoint"`
+	Bucket    string `mapstructure:"bucket"`
+	Region    string `mapstructure:"region"`
+	AccessKey string `mapstructure:"access_key"`
+	SecretKey string `mapstructure:"secret_key"`
+	UseSSL    bool   `mapstructure:"use_ssl"`
+}
+
+type AgentConfig struct {
+	Endpoint string `mapstructure:"endpoint"`
+}
+
+type BetterAuthConfig struct {
+	URL    string `mapstructure:"url" validate:"required"`
+	Secret string `mapstructure:"secret" validate:"required"`
 }
 
 type ServerConfig struct {
-	Port string `mapstructure:"port" validate:"required"`
+	Port    string `mapstructure:"port" validate:"required"`
+	MCPPort string `mapstructure:"mcp_port"`
 }
 
 type DatabaseConfig struct {
@@ -50,18 +87,8 @@ type SSHConfig struct {
 	PrivateKeyProtected string `mapstructure:"private_key_protected"`
 }
 
-type DeploymentConfig struct {
-	MountPath string `mapstructure:"mount_path" validate:"required"`
-}
-
-type DockerConfig struct {
-	Host    string `mapstructure:"host"`
-	Port    string `mapstructure:"port"`
-	Context string `mapstructure:"context"`
-}
-
 type ProxyConfig struct {
-	CaddyEndpoint string `mapstructure:"caddy_endpoint" validate:"required"`
+	CaddyEndpoint string `mapstructure:"caddy_endpoint"` // Caddy admin API (tunneled via SSH). Defaults to http://localhost:2019
 }
 
 type CORSConfig struct {
@@ -69,9 +96,34 @@ type CORSConfig struct {
 }
 
 type AppConfig struct {
-	Environment string `mapstructure:"environment"`
-	Version     string `mapstructure:"version"`
-	LogsPath    string `mapstructure:"logs_path"`
+	Environment  string `mapstructure:"environment"`
+	Version      string `mapstructure:"version"`
+	LogsPath     string `mapstructure:"logs_path"`
+	DeployDomain string `mapstructure:"deploy_domain"` // Base domain for generated app URLs (e.g. nixopus.com)
+}
+
+type GitHubConfig struct {
+	AppID         string `mapstructure:"app_id"`
+	Slug          string `mapstructure:"slug"`
+	Pem           string `mapstructure:"pem"`
+	ClientID      string `mapstructure:"client_id"`
+	ClientSecret  string `mapstructure:"client_secret"`
+	WebhookSecret string `mapstructure:"webhook_secret"`
+}
+
+type StripeConfig struct {
+	SecretKey            string `mapstructure:"secret_key"`
+	WebhookSecret        string `mapstructure:"webhook_secret"`
+	PriceID              string `mapstructure:"price_id"`
+	FreeDeploymentsLimit int    `mapstructure:"free_deployments_limit"`
+}
+
+// TrailConfig holds configuration for trail provisioning.
+type TrailConfig struct {
+	MaxConcurrentTrails int      `mapstructure:"max_concurrent_trails"`
+	DefaultImage        string   `mapstructure:"default_image"`
+	AllowedImages       []string `mapstructure:"allowed_images"`
+	TrailDomain         string   `mapstructure:"trail_domain"`
 }
 
 type ClientContext string
@@ -102,7 +154,18 @@ type Payload struct {
 	Topic  string           `json:"topic"`
 }
 
-var JWTSecretKey = []byte("secret-key")
+var JWTSecretKey []byte
+
+const defaultJWTSecret = "a3f1b9c7e2d4a6f8b0c1d3e5f7a9b2c4d6e8f0a1b3c5d7e9f0a2b4c6d8e0f1"
+
+func InitJWTSecret() {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" || len(secret) < 32 {
+		log.Println("WARNING: JWT_SECRET is not set or too short, falling back to default secret.")
+		secret = defaultJWTSecret
+	}
+	JWTSecretKey = []byte(secret)
+}
 
 type ValidationError struct {
 	Field   string `json:"field"`

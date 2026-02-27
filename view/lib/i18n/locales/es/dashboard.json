@@ -1,6 +1,6 @@
 {
   "dashboard": {
-    "title": "Panel de control",
+    "title": "Gráficos",
     "description": "Monitorea tus aplicaciones y recursos del sistema",
     "containers": {
       "title": "Contenedores",
@@ -83,6 +83,13 @@
     "smtpBanner": {
       "message": "Configura los ajustes SMTP para recibir notificaciones",
       "configure": "Configurar"
+    },
+    "sshBanner": {
+      "message": "La conexión SSH no está funcionando. Por favor, verifica la configuración de tu servidor.",
+      "notConfigured": "SSH no está configurado para tu servidor. Por favor, configura los ajustes SSH para conectarte a tu servidor.",
+      "notConnected": "No se puede conectar a la máquina.",
+      "troubleshoot": "Solucionar problemas",
+      "contactSupport": "Contactar soporte"
     }
   }
 }

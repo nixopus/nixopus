@@ -20,7 +20,7 @@ func (c *ExtensionsController) RunExtension(ctx fuego.ContextWithBody[RunExtensi
 		if err != nil {
 			return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
 		}
-		exec, err := c.service.StartRun(extensionID, vars)
+		exec, err := c.service.StartRun(ctx.Request().Context(), extensionID, vars)
 		if err != nil {
 			c.logger.Log(logger.Error, err.Error(), "")
 			return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
@@ -36,7 +36,7 @@ func (c *ExtensionsController) RunExtension(ctx fuego.ContextWithBody[RunExtensi
 	if err != nil {
 		return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
 	}
-	exec, err := c.service.StartRun(extensionID, req.Variables)
+	exec, err := c.service.StartRun(ctx.Request().Context(), extensionID, req.Variables)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}

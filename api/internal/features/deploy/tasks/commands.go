@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -8,7 +9,7 @@ import (
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (s *TaskService) runCommands(applicationID uuid.UUID, deploymentConfigID uuid.UUID, command string, commandType string) error {
+func (s *TaskService) runCommands(ctx context.Context, applicationID uuid.UUID, deploymentConfigID uuid.UUID, command string, commandType string) error {
 	taskCtx := s.NewTaskContext(shared_types.TaskPayload{
 		Application: shared_types.Application{
 			ID: applicationID,
@@ -23,7 +24,10 @@ func (s *TaskService) runCommands(applicationID uuid.UUID, deploymentConfigID uu
 		return nil
 	}
 
-	manager := ssh.GetSSHManager()
+	manager, err := ssh.GetSSHManagerFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get SSH manager: %w", err)
+	}
 	output, err := manager.RunCommand(command)
 	if err != nil {
 		taskCtx.AddLog(fmt.Sprintf("Error while running %s command %v", commandType, output))
@@ -37,12 +41,16 @@ func (s *TaskService) runCommands(applicationID uuid.UUID, deploymentConfigID uu
 	return nil
 }
 
-func (s *TaskService) PrerunCommands(d shared_types.TaskPayload) error {
-	return s.runCommands(d.Application.ID, d.ApplicationDeployment.ID,
+func (s *TaskService) PrerunCommands(ctx context.Context, d shared_types.TaskPayload) error {
+	// Create context with organization ID from TaskPayload
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, d.Application.OrganizationID.String())
+	return s.runCommands(orgCtx, d.Application.ID, d.ApplicationDeployment.ID,
 		d.Application.PreRunCommand, "pre run")
 }
 
-func (s *TaskService) PostRunCommands(d shared_types.TaskPayload) error {
-	return s.runCommands(d.Application.ID, d.ApplicationDeployment.ID,
+func (s *TaskService) PostRunCommands(ctx context.Context, d shared_types.TaskPayload) error {
+	// Create context with organization ID from TaskPayload
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, d.Application.OrganizationID.String())
+	return s.runCommands(orgCtx, d.Application.ID, d.ApplicationDeployment.ID,
 		d.Application.PostRunCommand, "post run")
 }

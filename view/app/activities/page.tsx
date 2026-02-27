@@ -1,33 +1,28 @@
 'use client';
 
 import React from 'react';
-import { useTranslation } from '@/hooks/use-translation';
-import { SelectWrapper } from '@/components/ui/select-wrapper';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
+import { SelectWrapper } from '@nixopus/ui';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';
-import { TypographySmall, TypographyMuted } from '@/components/ui/typography';
-import { DahboardUtilityHeader } from '@/components/layout/dashboard-page-header';
-import PaginationWrapper from '@/components/ui/pagination';
-import { DataTable, TableColumn } from '@/components/ui/data-table';
+import { TypographySmall, TypographyMuted } from '@nixopus/ui';
+import { DahboardUtilityHeader } from '@/packages/components/utility-header';
+import { PaginationWrapper } from '@nixopus/ui';
+import { DataTable, TableColumn } from '@nixopus/ui';
 import { ActivityMessage } from '@/redux/types/audit';
 import useActivities, {
   ActivityListProps,
   getActionColor,
   resourceTypeOptions
-} from './hooks/use-activities';
-import PageLayout from '@/components/layout/page-layout';
+} from '../../packages/hooks/activities/use-activities';
+import PageLayout from '@/packages/layouts/page-layout';
 
 export default function ActivitiesPage() {
   const { t } = useTranslation();
 
   return (
     <PageLayout maxWidth="full" padding="md" spacing="lg">
-      <ActivityList
-        title={t('activities.list.title')}
-        description={t('activities.list.description')}
-        showFilters={true}
-        pageSize={20}
-      />
+      <ActivityList title={t('activities.list.title')} showFilters={true} pageSize={20} />
     </PageLayout>
   );
 }

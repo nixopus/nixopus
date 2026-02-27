@@ -10,9 +10,18 @@ import (
 
 func (c *ContainerController) RemoveContainer(f fuego.ContextNoBody) (*types.ContainerActionResponse, error) {
 	containerID := f.PathParam("container_id")
+	ctx := f.Request().Context()
 
-	if resp, skipped := c.isProtectedContainer(containerID, "remove"); skipped {
+	if resp, skipped := c.isProtectedContainer(ctx, containerID, "remove"); skipped {
 		return resp, nil
+	}
+
+	dockerService, err := c.getDockerService(ctx)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
 	}
 
 	opts := service.RemoveContainerOptions{
@@ -20,7 +29,7 @@ func (c *ContainerController) RemoveContainer(f fuego.ContextNoBody) (*types.Con
 		Force:       true,
 	}
 
-	response, err := service.RemoveContainer(c.dockerService, c.logger, opts)
+	response, err := service.RemoveContainer(dockerService, c.logger, opts)
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,

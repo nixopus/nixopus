@@ -1,0 +1,27 @@
+# Workflow: Trigger API Client Sync
+# Description: Notifies nixopus-api-client repo when OpenAPI spec changes
+# Why: Keeps the published npm package in sync with the API
+
+name: Trigger API Client Sync
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'api/doc/openapi.json'
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger nixopus-api-client sync
+        env:
+          GH_TOKEN: ${{ secrets.API_CLIENT_REPO_TOKEN }}
+        run: |
+          curl -sS -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.API_CLIENT_REPO_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/nixopus/api-client/dispatches \
+            -d '{"event_type":"nixopus-api-updated"}'

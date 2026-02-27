@@ -1,7 +1,7 @@
 {
   "navigation": {
-    "dashboard": "ഡാഷ്‌ബോർഡ്",
-    "selfHost": "സ്വയം ഹോസ്റ്റ്",
+    "dashboard": "ചാർട്ടുകൾ",
+    "selfHost": "ആപ്പുകൾ",
     "fileManager": "ഫയൽ മാനേജർ",
     "extensions": "എക്സ്റ്റെൻഷനുകൾ",
     "settings": "ക്രമീകരണങ്ങൾ",

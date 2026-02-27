@@ -11,18 +11,16 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	"github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 type ContainerController struct {
-	store         *shared_storage.Store
-	dockerService *docker.DockerService
-	ctx           context.Context
-	logger        logger.Logger
-	notification  *notification.NotificationManager
+	store        *shared_storage.Store
+	ctx          context.Context
+	logger       logger.Logger
+	notification *notification.NotificationManager
 }
 
 func NewContainerController(
@@ -31,24 +29,32 @@ func NewContainerController(
 	l logger.Logger,
 	notificationManager *notification.NotificationManager,
 ) (*ContainerController, error) {
-	dockerService, err := docker.GetDockerManager().GetDefaultService()
+	return &ContainerController{
+		store:        store,
+		ctx:          ctx,
+		logger:       l,
+		notification: notificationManager,
+	}, nil
+}
+
+// getDockerService retrieves docker service from request context
+func (c *ContainerController) getDockerService(ctx context.Context) (docker.DockerRepository, error) {
+	dockerService, err := docker.GetDockerServiceFromContext(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get default docker service: %w", err)
+		return nil, fmt.Errorf("failed to get docker service: %w", err)
 	}
 	if dockerService == nil {
 		return nil, fmt.Errorf("docker service is nil")
 	}
-	return &ContainerController{
-		store:         store,
-		dockerService: dockerService,
-		ctx:           ctx,
-		logger:        l,
-		notification:  notificationManager,
-	}, nil
+	return dockerService, nil
 }
 
-func (c *ContainerController) isProtectedContainer(containerID string, action string) (*types.ContainerActionResponse, bool) {
-	details, err := c.dockerService.GetContainerById(containerID)
+func (c *ContainerController) isProtectedContainer(ctx context.Context, containerID string, action string) (*types.ContainerActionResponse, bool) {
+	dockerService, err := c.getDockerService(ctx)
+	if err != nil {
+		return nil, false
+	}
+	details, err := dockerService.GetContainerById(containerID)
 	if err != nil {
 		return nil, false
 	}
@@ -66,46 +72,15 @@ func (c *ContainerController) isProtectedContainer(containerID string, action st
 
 // getOrganizationSettings retrieves organization settings with defaults
 func (c *ContainerController) getOrganizationSettings(r *http.Request) shared_types.OrganizationSettingsData {
-	orgID := utils.GetOrganizationID(r)
-	if orgID == uuid.Nil {
+	orgID, err := utils.GetOrCreateOrganizationID(r.Context(), r, &shared_storage.App{Store: c.store, Ctx: c.ctx})
+	if err != nil || orgID == uuid.Nil {
 		return shared_types.DefaultOrganizationSettingsData()
 	}
 
-	orgStore := storage.OrganizationStore{DB: c.store.DB, Ctx: c.ctx}
-	settings, err := orgStore.GetOrganizationSettings(orgID.String())
-	if err != nil || settings == nil {
+	settings, err := utils.GetOrganizationSettings(c.ctx, c.store.DB, orgID)
+	if err != nil {
 		return shared_types.DefaultOrganizationSettingsData()
 	}
 
-	// Merge with defaults to ensure all fields are set
-	defaults := shared_types.DefaultOrganizationSettingsData()
-	result := shared_types.OrganizationSettingsData{
-		WebsocketReconnectAttempts:       settings.Settings.WebsocketReconnectAttempts,
-		WebsocketReconnectInterval:       settings.Settings.WebsocketReconnectInterval,
-		ApiRetryAttempts:                 settings.Settings.ApiRetryAttempts,
-		DisableApiCache:                  settings.Settings.DisableApiCache,
-		ContainerLogTailLines:            defaults.ContainerLogTailLines,
-		ContainerDefaultRestartPolicy:    defaults.ContainerDefaultRestartPolicy,
-		ContainerStopTimeout:             defaults.ContainerStopTimeout,
-		ContainerAutoPruneDanglingImages: defaults.ContainerAutoPruneDanglingImages,
-		ContainerAutoPruneBuildCache:     defaults.ContainerAutoPruneBuildCache,
-	}
-
-	if settings.Settings.ContainerLogTailLines != nil {
-		result.ContainerLogTailLines = settings.Settings.ContainerLogTailLines
-	}
-	if settings.Settings.ContainerDefaultRestartPolicy != nil {
-		result.ContainerDefaultRestartPolicy = settings.Settings.ContainerDefaultRestartPolicy
-	}
-	if settings.Settings.ContainerStopTimeout != nil {
-		result.ContainerStopTimeout = settings.Settings.ContainerStopTimeout
-	}
-	if settings.Settings.ContainerAutoPruneDanglingImages != nil {
-		result.ContainerAutoPruneDanglingImages = settings.Settings.ContainerAutoPruneDanglingImages
-	}
-	if settings.Settings.ContainerAutoPruneBuildCache != nil {
-		result.ContainerAutoPruneBuildCache = settings.Settings.ContainerAutoPruneBuildCache
-	}
-
-	return result
+	return settings
 }

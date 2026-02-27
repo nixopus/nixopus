@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type DashboardOperation string
@@ -17,29 +17,64 @@ type DashboardOperation string
 const (
 	GetContainers  DashboardOperation = "get_containers"
 	GetSystemStats DashboardOperation = "get_system_stats"
+	GetDeployments DashboardOperation = "get_deployments"
 )
 
 var AllOperations = []DashboardOperation{
 	GetContainers,
 	GetSystemStats,
+	GetDeployments,
 }
+
+const defaultPollerInterval = 10 * time.Second
 
 type MonitoringConfig struct {
 	Interval   time.Duration        `json:"interval"`
 	Operations []DashboardOperation `json:"operations"`
 }
 
+// DeployServiceProvider defines the interface for fetching latest deployments.
+type DeployServiceProvider interface {
+	GetLatestDeployments(organizationID string, limit int) ([]shared_types.ApplicationDeployment, error)
+}
+
+// OrgPoller runs a single polling loop per organization. All DashboardMonitors
+// for the same org share one poller, so only ONE SSH session is created per
+// polling interval regardless of how many users have the dashboard open.
+type OrgPoller struct {
+	subMu          sync.RWMutex
+	subscribers    map[*DashboardMonitor]struct{}
+	sshManager     *sshpkg.SSHManager
+	dockerService  docker.DockerRepository
+	deployService  DeployServiceProvider
+	organizationID string
+	log            logger.Logger
+
+	runMu   sync.Mutex
+	running bool
+	ctx     context.Context
+	cancel  context.CancelFunc
+}
+
+var (
+	orgPollers   = make(map[string]*OrgPoller)
+	orgPollersMu sync.Mutex
+)
+
+// DashboardMonitor is a thin wrapper around a WebSocket connection that
+// subscribes to a shared OrgPoller. It does NOT run its own polling loop.
 type DashboardMonitor struct {
-	conn          *websocket.Conn
-	connMutex     sync.Mutex
-	sshpkg        *sshpkg.SSH
-	log           logger.Logger
-	client        *goph.Client
-	Interval      time.Duration
-	Operations    []DashboardOperation
-	cancel        context.CancelFunc
-	ctx           context.Context
-	dockerService *docker.DockerService
+	conn      *websocket.Conn
+	connMutex *sync.Mutex // shared per-connection write mutex
+	log       logger.Logger
+	poller    *OrgPoller
+
+	subMu      sync.Mutex
+	subscribed bool
+
+	// Kept for API compatibility with the realtime package.
+	Interval   time.Duration
+	Operations []DashboardOperation
 }
 
 type SystemStats struct {

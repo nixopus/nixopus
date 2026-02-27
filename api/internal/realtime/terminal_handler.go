@@ -1,6 +1,10 @@
 package realtime
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/terminal"
@@ -14,9 +18,6 @@ import (
 //	conn - the *websocket.Conn representing the client connection.
 //	msg - the types.Payload representing the message from the client.
 func (s *SocketServer) handleTerminal(conn *websocket.Conn, msg types.Payload) {
-	s.terminalMutex.Lock()
-	defer s.terminalMutex.Unlock()
-
 	dataMap, ok := msg.Data.(map[string]interface{})
 	if !ok {
 		s.sendError(conn, "Invalid terminal data")
@@ -33,24 +34,72 @@ func (s *SocketServer) handleTerminal(conn *websocket.Conn, msg types.Payload) {
 		return
 	}
 
-	// Ensure map exists for this connection
+	term := s.getOrCreateTerminal(conn, terminalId)
+	if term == nil {
+		return
+	}
+
+	if err := term.WriteMessage(input); err != nil {
+		fmt.Printf("[ws] handleTerminal: WriteMessage failed for terminal %s: %v\n", terminalId, err)
+	}
+}
+
+// getOrCreateTerminal returns the existing terminal for the given ID or creates
+// a new one. The mutex is only held during map lookup/creation, never during
+// blocking I/O. Returns nil if terminal creation failed (error sent to client).
+func (s *SocketServer) getOrCreateTerminal(conn *websocket.Conn, terminalId string) *terminal.Terminal {
+	s.terminalMutex.Lock()
+	defer s.terminalMutex.Unlock()
+
 	if s.terminals[conn] == nil {
 		s.terminals[conn] = make(map[string]*terminal.Terminal)
 	}
 
-	term, exists := s.terminals[conn][terminalId]
-	if !exists {
-		newTerminal, err := terminal.NewTerminal(conn, &logger.Logger{}, terminalId)
-		if err != nil {
-			s.sendError(conn, "Failed to start terminal")
-			return
+	if term, exists := s.terminals[conn][terminalId]; exists {
+		if !term.IsDone() {
+			return term
 		}
-		s.terminals[conn][terminalId] = newTerminal
-		go newTerminal.Start()
-		term = newTerminal
+		fmt.Printf("[ws] getOrCreateTerminal: terminal %s is dead, cleaning up and recreating\n", terminalId)
+		term.Close()
+		delete(s.terminals[conn], terminalId)
 	}
 
-	term.WriteMessage(input)
+	return s.createTerminal(conn, terminalId)
+}
+
+func (s *SocketServer) createTerminal(conn *websocket.Conn, terminalId string) *terminal.Terminal {
+	fmt.Printf("[ws] createTerminal: creating terminal %s\n", terminalId)
+
+	orgIDVal, ok := s.orgIDs.Load(conn)
+	if !ok || orgIDVal == nil {
+		s.sendError(conn, "Organization ID not found for this connection")
+		return nil
+	}
+
+	orgIDStr, ok := orgIDVal.(string)
+	if !ok || orgIDStr == "" {
+		s.sendError(conn, "Invalid organization ID for this connection")
+		return nil
+	}
+
+	orgID, err := uuid.Parse(orgIDStr)
+	if err != nil {
+		s.sendError(conn, fmt.Sprintf("Invalid organization ID format: %v", err))
+		return nil
+	}
+
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, orgID.String())
+	log := logger.NewLogger()
+	newTerminal, err := terminal.NewTerminal(ctx, conn, s.getConnWriteMu(conn), &log, terminalId)
+	if err != nil {
+		fmt.Printf("[ws] createTerminal: failed to create terminal %s: %v\n", terminalId, err)
+		s.sendError(conn, fmt.Sprintf("Failed to start terminal: %v", err))
+		return nil
+	}
+	s.terminals[conn][terminalId] = newTerminal
+	go newTerminal.Start()
+	fmt.Printf("[ws] createTerminal: terminal %s started\n", terminalId)
+	return newTerminal
 }
 
 // handleTerminalResize handles the terminal resize.
@@ -60,9 +109,6 @@ func (s *SocketServer) handleTerminal(conn *websocket.Conn, msg types.Payload) {
 //	conn - the *websocket.Conn representing the client connection.
 //	msg - the types.Payload representing the message from the client.
 func (s *SocketServer) handleTerminalResize(conn *websocket.Conn, msg types.Payload) {
-	s.terminalMutex.Lock()
-	defer s.terminalMutex.Unlock()
-
 	data, ok := msg.Data.(map[string]interface{})
 	if !ok {
 		s.sendError(conn, "Invalid resize data")
@@ -75,12 +121,6 @@ func (s *SocketServer) handleTerminalResize(conn *websocket.Conn, msg types.Payl
 		return
 	}
 
-	term, exists := s.terminals[conn][terminalId]
-	if !exists {
-		s.sendError(conn, "Terminal not started")
-		return
-	}
-
 	rows, ok := data["rows"].(float64)
 	if !ok {
 		s.sendError(conn, "Invalid rows value")
@@ -90,6 +130,15 @@ func (s *SocketServer) handleTerminalResize(conn *websocket.Conn, msg types.Payl
 	cols, ok := data["cols"].(float64)
 	if !ok {
 		s.sendError(conn, "Invalid cols value")
+		return
+	}
+
+	s.terminalMutex.RLock()
+	term, exists := s.terminals[conn][terminalId]
+	s.terminalMutex.RUnlock()
+
+	if !exists {
+		s.sendError(conn, "Terminal not started")
 		return
 	}
 

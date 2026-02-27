@@ -2,21 +2,20 @@ package tasks
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/google/uuid"
+	"github.com/moby/term"
+	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/raghavyuva/nixopus-api/internal/utils"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
-
-	docker_types "github.com/docker/docker/api/types"
-	"github.com/docker/docker/pkg/archive"
-	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/google/uuid"
-	"github.com/moby/term"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type BuildConfig struct {
@@ -25,6 +24,7 @@ type BuildConfig struct {
 	Force             bool
 	ForceWithoutCache bool
 	TaskContext       *TaskContext
+	Context           context.Context // Context for organization-aware docker service
 }
 
 // buildImageFromDockerfile builds a Docker image from a Dockerfile using the provided DeployerConfig. It logs
@@ -37,18 +37,28 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 		buildContextPath = filepath.Join(b.ContextPath, b.Application.BasePath)
 	}
 
-	if _, err := os.Stat(buildContextPath); os.IsNotExist(err) {
+	// Get SSH manager from context to check path and create archive on remote server
+	sshManager, err := sshpkg.GetSSHManagerFromContext(b.Context)
+	if err != nil {
+		b.TaskContext.LogAndUpdateStatus("Failed to get SSH manager: "+err.Error(), shared_types.Failed)
+		return "", fmt.Errorf("failed to get SSH manager: %w", err)
+	}
+
+	// Check if path exists on remote server using SFTP with retry logic
+	b.TaskContext.AddLog("Checking build context path on remote server...")
+	sftpClient, err := utils.CreateSFTPClientWithRetry(sshManager)
+	if err != nil {
+		b.TaskContext.LogAndUpdateStatus("Failed to create SFTP client: "+err.Error(), shared_types.Failed)
+		return "", fmt.Errorf("failed to create SFTP client: %w", err)
+	}
+	defer sftpClient.Close()
+
+	info, err := sftpClient.Stat(buildContextPath)
+	if err != nil || !info.IsDir() {
 		b.TaskContext.LogAndUpdateStatus("Build context path does not exist: "+buildContextPath, shared_types.Failed)
 		return "", fmt.Errorf("build context path does not exist: %s", buildContextPath)
 	}
-
-	b.TaskContext.AddLog("Creating build context archive...")
-	archive, err := s.createBuildContextArchive(buildContextPath)
-	if err != nil {
-		b.TaskContext.LogAndUpdateStatus("Failed to create build context archive: "+err.Error(), shared_types.Failed)
-		return "", err
-	}
-	b.TaskContext.AddLog("Build context archive created successfully")
+	b.TaskContext.AddLog("Build context path verified on remote server")
 
 	dockerfile_path := "Dockerfile"
 	if b.Application.DockerfilePath != "" {
@@ -57,28 +67,29 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 
 	dockerfileFullPath := filepath.Join(buildContextPath, dockerfile_path)
 	b.TaskContext.AddLog("Validating Dockerfile path...")
-	if _, err := os.Stat(dockerfileFullPath); os.IsNotExist(err) {
+	_, err = sftpClient.Stat(dockerfileFullPath)
+	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Dockerfile not found at path: "+dockerfileFullPath, shared_types.Failed)
-		return "", fmt.Errorf("dockerfile not found at path: %v", err)
+		return "", fmt.Errorf("dockerfile not found at path: %s", dockerfileFullPath)
 	}
 	b.TaskContext.AddLog("Dockerfile validation successful")
 
-	b.TaskContext.AddLog("Starting Docker image build...")
-	buildOptions := s.createBuildOptions(b, dockerfile_path)
-	resp, err := s.DockerRepo.BuildImage(buildOptions, archive)
+	b.TaskContext.AddLog("Starting Docker image build on remote server...")
+	buildOutput, err := s.createBuildContextArchiveFromRemote(b.Context, b, buildContextPath, dockerfile_path)
 	if err != nil {
-		b.TaskContext.LogAndUpdateStatus("Failed to build image: "+err.Error(), shared_types.Failed)
+		b.TaskContext.LogAndUpdateStatus("Failed to start remote build: "+err.Error(), shared_types.Failed)
 		return "", err
 	}
-	b.TaskContext.AddLog("Docker build started successfully")
-	defer resp.Body.Close()
+	defer buildOutput.Close()
+	b.TaskContext.AddLog("Docker build started on remote server")
 
 	logReader := &LogReader{
-		Reader:            resp.Body,
+		Reader:            buildOutput,
 		ApplicationID:     b.Application.ID,
 		DeployService:     s,
 		deployment_config: &b.ApplicationDeployment,
 		TaskContext:       b.TaskContext,
+		PlainOutput:       true,
 	}
 
 	b.TaskContext.AddLog("Processing build output...")
@@ -91,42 +102,135 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 
 	b.TaskContext.LogAndUpdateStatus("Image built successfully", shared_types.Deploying)
 
-	return b.Application.Name, nil
+	commitTag := CommitImageTag(b.Application.Name, b.ApplicationDeployment.CommitHash)
+	return commitTag, nil
 }
 
-// createBuildContextArchive creates a tar archive of the build context at the provided path.
-// It returns the archive as an io.Reader and an error if the archive creation fails.
-func (s *TaskService) createBuildContextArchive(contextPath string) (io.Reader, error) {
-	buildContextTar, err := archive.TarWithOptions(contextPath, &archive.TarOptions{
-		ExcludePatterns: []string{".git", "node_modules", "vendor"},
-	})
+// createBuildContextArchiveFromRemote runs docker build on the remote server (build context stays on remote).
+// Returns the build output stream for logging. No network transfer of build context.
+// The caller must defer Close() on the returned reader to avoid SSH connection leaks.
+func (s *TaskService) createBuildContextArchiveFromRemote(ctx context.Context, b BuildConfig, contextPath, dockerfilePath string) (*remoteBuildReader, error) {
+	sshManager, err := sshpkg.GetSSHManagerFromContext(ctx)
 	if err != nil {
-		return nil, types.ErrFailedToCreateTarFromContext
+		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	return buildContextTar, nil
+	clientConn, release, err := sshManager.Borrow("")
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect via SSH: %w", err)
+	}
+	session, err := clientConn.NewSession()
+	if err != nil {
+		release()
+		if sshpkg.IsClosedConnectionError(err) {
+			sshManager.CloseConnection("")
+		}
+		return nil, fmt.Errorf("failed to create SSH session: %w", err)
+	}
+	latestTag := fmt.Sprintf("%s:latest", b.Application.Name)
+	commitTag := CommitImageTag(b.Application.Name, b.ApplicationDeployment.CommitHash)
+	escape := func(x string) string { return "'" + strings.ReplaceAll(x, "'", "'\\''") + "'" }
+	quotedPath := escape(contextPath)
+	buildCmd := fmt.Sprintf("cd %s && docker build --progress=plain -t %s -t %s -f %s", quotedPath, latestTag, commitTag, dockerfilePath)
+	if b.ForceWithoutCache {
+		buildCmd += " --no-cache"
+	}
+	for k, v := range GetMapFromString(b.Application.BuildVariables) {
+		buildCmd += " --build-arg " + escape(k+"="+v)
+	}
+	for k, v := range s.prepareLabels(b) {
+		buildCmd += " --label " + escape(k+"="+v)
+	}
+	buildCmd += " . 2>&1"
+	stdout, err := session.StdoutPipe()
+	if err != nil {
+		session.Close()
+		release()
+		return nil, fmt.Errorf("failed to get stdout pipe: %w", err)
+	}
+	if err := session.Start(buildCmd); err != nil {
+		session.Close()
+		release()
+		return nil, fmt.Errorf("failed to start docker build: %w", err)
+	}
+	return &remoteBuildReader{
+		stdout:  stdout,
+		session: session,
+		release: release,
+	}, nil
 }
 
-// createBuildOptions creates a docker_types.ImageBuildOptions struct based on the provided DeployerConfig.
-// The returned ImageBuildOptions include the following settings:
-// - Dockerfile: the path to the Dockerfile
-// - Remove: true, to remove intermediate containers
-// - Tags: two tags, one for the latest version of the image and one for the deployment-specific version
-// - NoCache: true if the force flag is set in the deployment config, false otherwise
-// - ForceRemove: true if the force flag is set in the deployment config, false otherwise
-// - BuildArgs: a map of build variables extracted from the deployment request
-// - Labels: a map of labels extracted from the deployment request
-// - BuildID: a unique identifier for the build
-func (s *TaskService) createBuildOptions(b BuildConfig, dockerfile_path string) docker_types.ImageBuildOptions {
-	return docker_types.ImageBuildOptions{
-		Dockerfile:  dockerfile_path,
-		Remove:      true,
-		Tags:        []string{fmt.Sprintf("%s:latest", b.Application.Name)},
-		NoCache:     b.ForceWithoutCache,
-		ForceRemove: b.Force,
-		BuildArgs:   s.prepareBuildArgs(b),
-		Labels:      s.prepareLabels(b),
-		BuildID:     b.ApplicationDeployment.ID.String(), // build id is the deployment id
+// remoteBuildReader streams docker build output and returns build failure as Read error when command exits non-zero.
+// Always call Close() when done (e.g. via defer) to release the pooled SSH connection borrow.
+type remoteBuildReader struct {
+	stdout  io.Reader
+	session interface {
+		Wait() error
+		Close() error
 	}
+	release func()
+	closed  bool
+	errored bool
+}
+
+// Close releases the SSH session and pool borrow. Safe to call multiple times.
+func (r *remoteBuildReader) Close() {
+	if r.closed {
+		return
+	}
+	r.closed = true
+	if r.session != nil {
+		r.session.Close()
+	}
+	if r.release != nil {
+		r.release()
+	}
+}
+
+func (r *remoteBuildReader) Read(p []byte) (n int, err error) {
+	if r.closed {
+		return 0, io.EOF
+	}
+	n, err = r.stdout.Read(p)
+	if err == io.EOF {
+		waitErr := r.checkWait()
+		r.Close()
+		if waitErr != nil {
+			return n, waitErr
+		}
+		return n, io.EOF
+	}
+	if err != nil {
+		r.Close()
+	}
+	return n, err
+}
+
+func (r *remoteBuildReader) checkWait() error {
+	if r.errored {
+		return nil
+	}
+	r.errored = true
+	if err := r.session.Wait(); err != nil {
+		return fmt.Errorf("docker build failed: %w", err)
+	}
+	return nil
+}
+
+// CommitImageTag returns a Docker image tag based on the app name and commit hash.
+// Falls back to "latest" if the commit hash is empty.
+func CommitImageTag(appName, commitHash string) string {
+	short := shortHash(commitHash)
+	if short == "" {
+		return appName + ":latest"
+	}
+	return appName + ":" + short
+}
+
+func shortHash(hash string) string {
+	if len(hash) >= 8 {
+		return hash[:8]
+	}
+	return hash
 }
 
 // prepareBuildArgs takes a DeployerConfig and returns a map of build arguments extracted from the build variables
@@ -152,14 +256,23 @@ func (s *TaskService) prepareLabels(d BuildConfig) map[string]string {
 	return labels
 }
 
-// processBuildOutput reads the build output stream from the provided LogReader and
-// displays the output stream as JSON messages to the standard output. It captures
-// any errors that occur during the build output processing and logs the error
-// messages to the application. If an error occurs during the build output
-// processing, it returns the error.
+// processBuildOutput reads the build output stream from the provided LogReader.
+// The LogReader's Read method intercepts each line for logging to the database,
+// so we just need to drain the reader. Output is discarded rather than written to
+// server stdout (which is useless in production and adds I/O overhead).
 func (s *TaskService) processBuildOutput(logReader *LogReader) error {
+	if logReader.PlainOutput {
+		_, err := io.Copy(io.Discard, logReader)
+		if err != nil {
+			errorMsg := fmt.Sprintf("Build output processing failed: %v", err)
+			s.Logger.Log(logger.Error, errorMsg, logReader.deployment_config.ID.String())
+			logReader.TaskContext.AddLog(errorMsg)
+			return err
+		}
+		return nil
+	}
 	termFd, isTerm := term.GetFdInfo(os.Stdout)
-	err := jsonmessage.DisplayJSONMessagesStream(logReader, os.Stdout, termFd, isTerm, nil)
+	err := jsonmessage.DisplayJSONMessagesStream(logReader, io.Discard, termFd, isTerm, nil)
 	if err != nil {
 		errorMsg := fmt.Sprintf("Build output processing failed: %v", err)
 		s.Logger.Log(logger.Error, errorMsg, logReader.deployment_config.ID.String())
@@ -177,6 +290,7 @@ type LogReader struct {
 	buffer            []byte
 	deployment_config *shared_types.ApplicationDeployment
 	TaskContext       *TaskContext
+	PlainOutput       bool
 }
 
 // Read implements the io.Reader interface for LogReader. It reads from the underlying Reader and
@@ -199,7 +313,13 @@ func (r *LogReader) Read(p []byte) (n int, err error) {
 			if err := json.Unmarshal(line, &jsonMsg); err == nil {
 				r.processJSONMessage(jsonMsg)
 			} else {
-				r.DeployService.Logger.Log(logger.Error, "Build: "+string(line), r.deployment_config.ID.String())
+				level := logger.Error
+				if r.PlainOutput {
+					level = logger.Info
+				}
+				msg := "Build: " + string(line)
+				r.DeployService.Logger.Log(level, msg, r.deployment_config.ID.String())
+				r.TaskContext.AddLog(msg)
 			}
 		}
 	}

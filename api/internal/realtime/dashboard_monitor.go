@@ -24,7 +24,7 @@ func (s *SocketServer) handleStopDashboardMonitor(conn *websocket.Conn) {
 		monitor.Stop()
 		delete(s.dashboardMonitors, conn)
 
-		conn.WriteJSON(types.Payload{
+		s.writeJSON(conn, types.Payload{
 			Action: "dashboard_monitor_stopped",
 			Data:   nil,
 		})
@@ -44,7 +44,16 @@ func (s *SocketServer) handleDashboardMonitor(conn *websocket.Conn, msg types.Pa
 	s.dashboardMutex.Lock()
 	monitor, exists := s.dashboardMonitors[conn]
 	if !exists {
-		newMonitor, err := dashboard.NewDashboardMonitor(conn, logger.NewLogger())
+		var organizationID string
+		if msg.Data != nil {
+			if dataMap, ok := msg.Data.(map[string]interface{}); ok {
+				if orgID, ok := dataMap["organization_id"].(string); ok {
+					organizationID = orgID
+				}
+			}
+		}
+
+		newMonitor, err := dashboard.NewDashboardMonitor(conn, s.getConnWriteMu(conn), logger.NewLogger(), organizationID, s.deployController.Service())
 		if err != nil {
 			s.dashboardMutex.Unlock()
 			s.sendError(conn, "Failed to create dashboard monitor")
@@ -125,5 +134,8 @@ func (s *SocketServer) sendResponse(conn *websocket.Conn, response types.Payload
 		return
 	}
 
+	mu := s.getConnWriteMu(conn)
+	mu.Lock()
 	conn.WriteMessage(websocket.TextMessage, jsonData)
+	mu.Unlock()
 }

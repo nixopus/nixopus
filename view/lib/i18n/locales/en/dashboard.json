@@ -1,6 +1,6 @@
 {
   "dashboard": {
-    "title": "Dashboard",
+    "title": "Charts",
     "description": "Monitor your applications and system resources",
     "containers": {
       "title": "Containers",
@@ -83,6 +83,33 @@
     "smtpBanner": {
       "message": "Configure SMTP settings to receive notifications",
       "configure": "Configure"
+    },
+    "sshBanner": {
+      "message": "SSH connection is not working. Please check your server configuration.",
+      "notConfigured": "SSH is not configured for your server. Please configure SSH settings to connect to your server.",
+      "notConnected": "Unable to connect to machine.",
+      "troubleshoot": "Troubleshoot",
+      "contactSupport": "Contact Support"
+    },
+    "deployments": {
+      "title": "Latest Deployments",
+      "viewAll": "View All",
+      "noDeployments": "No deployments found",
+      "justNow": "Just now",
+      "minutesAgo": "m ago",
+      "hoursAgo": "h ago",
+      "daysAgo": "d ago"
+    },
+    "deploymentStats": {
+      "title": "Deployment Stats",
+      "noData": "No deployment data available",
+      "total": "Total",
+      "successRate": "Success Rate",
+      "deployed": "Deployed",
+      "failed": "Failed",
+      "inProgress": "In Progress",
+      "count": "Count",
+      "status": "Status"
     }
   }
 }

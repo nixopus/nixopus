@@ -1,12 +1,14 @@
 package tasks
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/uptrace/bun"
 )
 
 type ContextTask struct {
@@ -54,7 +56,6 @@ func (c *ContextTask) GetApplicationData(
 		PreRunCommand:        deployment.PreRunCommand,
 		PostRunCommand:       deployment.PostRunCommand,
 		Port:                 deployment.Port,
-		Domain:               deployment.Domain,
 		UserID:               c.UserId,
 		CreatedAt:            timeValue,
 		UpdatedAt:            time.Now(),
@@ -85,63 +86,36 @@ func (c *ContextTask) GetDeploymentConfig(applicationID uuid.UUID) shared_types.
 	return applicationDeployment
 }
 
-// PersistApplicationDeploymentData persists the application and application deployment data to the database.
-// It takes the operations to perform and their error messages as parameters.
-// It returns an error if any operation fails.
-func (c *ContextTask) PersistApplicationDeploymentData(operations []struct {
-	operation  func() error
-	errMessage string
-}) error {
-	for _, op := range operations {
-		if err := c.executeDBOperations(op.operation, op.errMessage); err != nil {
+// PersistCreateApplicationDeploymentData atomically persists the application and
+// deployment data within a single transaction to prevent orphaned records.
+func (c *ContextTask) PersistCreateApplicationDeploymentData(application shared_types.Application, applicationDeployment shared_types.ApplicationDeployment) error {
+	return c.TaskService.Storage.RunInTransaction(func(tx bun.Tx) error {
+		ctx := context.Background()
+		if _, err := tx.NewInsert().Model(&application).Exec(ctx); err != nil {
+			c.TaskService.Logger.Log(logger.Error, types.LogFailedToCreateApplicationRecord+err.Error(), "")
 			return err
 		}
-	}
-	return nil
-}
-
-// PersistCreateApplicationDeploymentData persists the application and application deployment data to the database.
-// It returns an error if the operation fails.
-func (c *ContextTask) PersistCreateApplicationDeploymentData(application shared_types.Application, applicationDeployment shared_types.ApplicationDeployment) error {
-	operations := []struct {
-		operation  func() error
-		errMessage string
-	}{
-		{
-			operation: func() error {
-				return c.TaskService.Storage.AddApplication(&application)
-			},
-			errMessage: types.LogFailedToCreateApplicationRecord,
-		},
-		{
-			operation: func() error {
-				return c.TaskService.Storage.AddApplicationDeployment(&applicationDeployment)
-			},
-			errMessage: types.LogFailedToCreateApplicationDeployment,
-		},
-	}
-	return c.PersistApplicationDeploymentData(operations)
+		if _, err := tx.NewInsert().Model(&applicationDeployment).Exec(ctx); err != nil {
+			c.TaskService.Logger.Log(logger.Error, types.LogFailedToCreateApplicationDeployment+err.Error(), "")
+			return err
+		}
+		return nil
+	})
 }
 
 func (c *ContextTask) PersistUpdateApplicationDeploymentData(application shared_types.Application, applicationDeployment shared_types.ApplicationDeployment) error {
-	operations := []struct {
-		operation  func() error
-		errMessage string
-	}{
-		{
-			operation: func() error {
-				return c.TaskService.Storage.UpdateApplication(&application)
-			},
-			errMessage: types.LogFailedToUpdateApplicationRecord,
-		},
-		{
-			operation: func() error {
-				return c.TaskService.Storage.AddApplicationDeployment(&applicationDeployment)
-			},
-			errMessage: types.LogFailedToUpdateApplicationDeployment,
-		},
-	}
-	return c.PersistApplicationDeploymentData(operations)
+	return c.TaskService.Storage.RunInTransaction(func(tx bun.Tx) error {
+		ctx := context.Background()
+		if _, err := tx.NewUpdate().Model(&application).OmitZero().WherePK().Exec(ctx); err != nil {
+			c.TaskService.Logger.Log(logger.Error, types.LogFailedToUpdateApplicationRecord+err.Error(), "")
+			return err
+		}
+		if _, err := tx.NewInsert().Model(&applicationDeployment).Exec(ctx); err != nil {
+			c.TaskService.Logger.Log(logger.Error, types.LogFailedToUpdateApplicationDeployment+err.Error(), "")
+			return err
+		}
+		return nil
+	})
 }
 
 // PersistApplicationDeploymentStatus creates and persists the initial application deployment status.
@@ -162,18 +136,17 @@ func (c *ContextTask) PersistCreateDeploymentStatus(applicationDeployment shared
 	return &initialStatus, nil
 }
 
-// executeDBOperations executes a database operation and logs an error if it fails.
-// The first parameter is a function that performs the database operation.
-// The second parameter is an error message prefix that is used when logging the error.
-// If the operation fails, it logs the error message and returns the error.
-// Otherwise, it returns nil.
-func (c *ContextTask) executeDBOperations(fn func() error, errMessage string) error {
-	err := fn()
-	if err != nil {
-		c.TaskService.Logger.Log(logger.Error, errMessage+err.Error(), "")
-		return err
+// loadDomainsIntoApplication loads domains from database into the application's Domains field
+func (c *ContextTask) loadDomainsIntoApplication(application *shared_types.Application) {
+	domainsList, err := c.TaskService.Storage.GetApplicationDomains(application.ID)
+	if err == nil && len(domainsList) > 0 {
+		// Convert []ApplicationDomain to []*ApplicationDomain
+		domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
+		for i := range domainsList {
+			domainPtrs[i] = &domainsList[i]
+		}
+		application.Domains = domainPtrs
 	}
-	return nil
 }
 
 // PrepareCreateDeploymentContext prepares the context for the deployment.
@@ -187,6 +160,17 @@ func (c *ContextTask) PrepareCreateDeploymentContext() (shared_types.TaskPayload
 	if err != nil {
 		return shared_types.TaskPayload{}, err
 	}
+
+	// Add domains to application_domains table
+	domains := deployment.Domains
+	if len(domains) > 0 {
+		if err := c.TaskService.Storage.AddApplicationDomains(application.ID, domains); err != nil {
+			return shared_types.TaskPayload{}, err
+		}
+	}
+
+	c.loadDomainsIntoApplication(&application)
+
 	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
 	if err != nil {
 		return shared_types.TaskPayload{}, err
@@ -210,6 +194,8 @@ func (c *ContextTask) PrepareUpdateDeploymentContext() (shared_types.TaskPayload
 	if err != nil {
 		return shared_types.TaskPayload{}, err
 	}
+
+	c.loadDomainsIntoApplication(&application)
 
 	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
 	if err != nil {
@@ -286,6 +272,8 @@ func (c *ContextTask) PrepareReDeploymentContext() (shared_types.TaskPayload, er
 		return shared_types.TaskPayload{}, err
 	}
 
+	c.loadDomainsIntoApplication(&app)
+
 	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
 	if err != nil {
 		return shared_types.TaskPayload{}, err
@@ -317,10 +305,15 @@ func (c *ContextTask) PrepareRollbackContext() (shared_types.TaskPayload, error)
 
 	applicationDeployment := c.GetDeploymentConfig(app.ID)
 	applicationDeployment.CommitHash = dep.CommitHash
+	applicationDeployment.ImageS3Key = dep.ImageS3Key
+	applicationDeployment.ContainerID = dep.ContainerID
 
 	if err := c.PersistUpdateApplicationDeploymentData(app, applicationDeployment); err != nil {
 		return shared_types.TaskPayload{}, err
 	}
+
+	// Load domains into application for TaskPayload (available throughout deployment)
+	c.loadDomainsIntoApplication(&app)
 
 	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
 	if err != nil {
@@ -347,6 +340,8 @@ func (c *ContextTask) PrepareRestartContext() (shared_types.TaskPayload, error) 
 	if err := c.PersistUpdateApplicationDeploymentData(app, applicationDeployment); err != nil {
 		return shared_types.TaskPayload{}, err
 	}
+
+	c.loadDomainsIntoApplication(&app)
 
 	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
 	if err != nil {
@@ -376,6 +371,8 @@ func (c *ContextTask) PrepareDeployProjectContext() (shared_types.TaskPayload, e
 	if err := c.TaskService.Storage.AddApplicationDeployment(&applicationDeployment); err != nil {
 		return shared_types.TaskPayload{}, err
 	}
+
+	c.loadDomainsIntoApplication(&app)
 
 	initialStatus, err := c.PersistCreateDeploymentStatus(applicationDeployment)
 	if err != nil {

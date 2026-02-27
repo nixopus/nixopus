@@ -6,22 +6,67 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/raghavyuva/nixopus-api/internal/secrets"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/spf13/viper"
 )
 
 var (
-	AppConfig types.Config
+	AppConfig   types.Config
+	GlobalStore *storage.Store // Global storage instance, set during Init()
 )
+
+// getMigrationsPath returns the migrations path from environment variable or defaults to path relative to executable
+func getMigrationsPath() string {
+	// Use MIGRATIONS_PATH environment variable if set
+	if migrationsPath := os.Getenv("MIGRATIONS_PATH"); migrationsPath != "" {
+		return migrationsPath
+	}
+
+	// Default: use migrations directory relative to executable location
+	// If executable is at api/nixopus-mcp-server or api/nixopus-api, migrations are at api/migrations
+	if execPath, err := os.Executable(); err == nil {
+		execDir := filepath.Dir(execPath)
+		migrationsPath := filepath.Join(execDir, "migrations")
+		if absPath, err := filepath.Abs(migrationsPath); err == nil {
+			if _, err := os.Stat(absPath); err == nil {
+				return absPath
+			}
+		}
+	}
+
+	// Final fallback: relative to current working directory
+	return "./migrations"
+}
 
 // Init initializes the app configuration using Viper to load values from config files,
 // environment variables, and defaults. It then creates a new PostgreSQL client using
 // the loaded configuration and initializes the storage.Store.
 func Init() *storage.Store {
+	// Load secrets from secret manager first (if enabled)
+	// This allows secrets to override .env file values
+	secretConfig := secrets.LoadSecretManagerConfig("api")
+	if secretConfig.Enabled {
+		secretManager, err := secrets.NewSecretManager(secretConfig)
+		if err != nil {
+			log.Printf("Warning: Failed to initialize secret manager: %v. Falling back to .env files", err)
+		} else {
+			// Load secrets with service-specific prefix (e.g., "API_", "NIXOPUS_API_")
+			prefixes := []string{"API_", "NIXOPUS_API_", ""}
+			for _, prefix := range prefixes {
+				if err := secrets.LoadSecretsIntoEnv(secretManager, prefix); err != nil {
+					log.Printf("Warning: Failed to load secrets with prefix %s: %v", prefix, err)
+				}
+			}
+		}
+	}
+
+	// Load .env file (will be overridden by secrets if they exist)
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Warning: .env file not found, using environment variables")
@@ -44,6 +89,9 @@ func Init() *storage.Store {
 	log.Printf("Server will start on port: %s", AppConfig.Server.Port)
 	log.Printf("Database host: %s:%s", AppConfig.Database.Host, AppConfig.Database.Port)
 	log.Printf("Redis URL configured: %t", AppConfig.Redis.URL != "")
+	log.Printf("S3 image storage configured: %t", AppConfig.S3.Bucket != "")
+
+	migrationsPath := getMigrationsPath()
 
 	storage_config := storage.Config{
 		Host:           AppConfig.Database.Host,
@@ -55,35 +103,30 @@ func Init() *storage.Store {
 		MaxOpenConn:    AppConfig.Database.MaxOpenConn,
 		Debug:          AppConfig.Database.Debug,
 		MaxIdleConn:    AppConfig.Database.MaxIdleConn,
-		MigrationsPath: "./migrations",
+		MigrationsPath: migrationsPath,
 	}
 
 	store, err := storage.NewDB(&storage_config)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = storage.RunMigrations(store, storage_config.MigrationsPath)
-	if err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
-	}
 
-	log.Println("Migrations completed successfully")
 	if AppConfig.Server.Port == "" {
 		AppConfig.Server.Port = "8080"
 	}
-	if err != nil {
-		log.Fatalf("Failed to initialize postgres client: %v", err)
-	}
 
-	storage := storage.NewStore(store)
+	storageInstance := storage.NewStore(store)
 
-	err = storage.Init(context.Background())
+	err = storageInstance.Init(context.Background())
 
 	if err != nil {
 		log.Fatalf("Failed to initialize storage: %v", err)
 	}
 
-	return storage
+	// Set global store for use throughout the application
+	GlobalStore = storageInstance
+
+	return storageInstance
 }
 
 func initViper() {
@@ -155,28 +198,20 @@ func setupEnvVarMappings() {
 	viper.BindEnv("database.password", "PASSWORD")
 	viper.BindEnv("database.name", "DB_NAME")
 	viper.BindEnv("database.ssl_mode", "SSL_MODE")
+	viper.BindEnv("database.max_open_conn", "DB_MAX_OPEN_CONN")
+	viper.BindEnv("database.max_idle_conn", "DB_MAX_IDLE_CONN")
+
+	// Default connection pool limits to avoid exhausting Supabase/Postgres (session pools often 15-20)
+	viper.SetDefault("database.max_open_conn", 10)
+	viper.SetDefault("database.max_idle_conn", 5)
 
 	// Redis
 	viper.BindEnv("redis.url", "REDIS_URL")
 
-	// SSH
-	viper.BindEnv("ssh.host", "SSH_HOST")
-	viper.BindEnv("ssh.port", "SSH_PORT")
-	viper.BindEnv("ssh.user", "SSH_USER")
-	viper.BindEnv("ssh.password", "SSH_PASSWORD")
-	viper.BindEnv("ssh.private_key", "SSH_PRIVATE_KEY")
-	viper.BindEnv("ssh.private_key_protected", "SSH_PRIVATE_KEY_PROTECTED")
-
-	// Deployment
-	viper.BindEnv("deployment.mount_path", "MOUNT_PATH")
-
-	// Docker
-	viper.BindEnv("docker.host", "DOCKER_HOST")
-	viper.BindEnv("docker.port", "DOCKER_PORT")
-	viper.BindEnv("docker.context", "DOCKER_CONTEXT")
-
 	// Proxy
 	viper.BindEnv("proxy.caddy_endpoint", "CADDY_ENDPOINT")
+
+	viper.BindEnv("agent.endpoint", "AGENT_ENDPOINT")
 
 	// CORS
 	viper.BindEnv("cors.allowed_origin", "ALLOWED_ORIGIN")
@@ -185,14 +220,74 @@ func setupEnvVarMappings() {
 	viper.BindEnv("app.environment", "ENV")
 	viper.BindEnv("app.version", "APP_VERSION")
 	viper.BindEnv("app.logs_path", "LOGS_PATH")
+	viper.BindEnv("app.deploy_domain", "DEPLOY_DOMAIN")
 
-	// SuperTokens
-	viper.BindEnv("supertokens.api_key", "SUPERTOKENS_API_KEY")
-	viper.BindEnv("supertokens.api_domain", "SUPERTOKENS_API_DOMAIN")
-	viper.BindEnv("supertokens.website_domain", "SUPERTOKENS_WEBSITE_DOMAIN")
-	viper.BindEnv("supertokens.connection_uri", "SUPERTOKENS_CONNECTION_URI")
-	viper.BindEnv("supertokens.enable_debug_logs", "SUPERTOKENS_ENABLE_DEBUG_LOGS")
-	viper.SetDefault("supertokens.enable_debug_logs", false)
+	// GitHub App (shared credentials)
+	viper.BindEnv("github.app_id", "GITHUB_APP_ID")
+	viper.BindEnv("github.slug", "GITHUB_APP_SLUG")
+	viper.BindEnv("github.pem", "GITHUB_APP_PEM")
+	viper.BindEnv("github.client_id", "GITHUB_APP_CLIENT_ID")
+	viper.BindEnv("github.client_secret", "GITHUB_APP_CLIENT_SECRET")
+	viper.BindEnv("github.webhook_secret", "GITHUB_APP_WEBHOOK_SECRET")
+	// Better Auth
+	viper.BindEnv("betterauth.url", "BETTER_AUTH_URL")
+	viper.BindEnv("betterauth.secret", "BETTER_AUTH_SECRET")
+
+	// S3 (optional, for image storage)
+	viper.BindEnv("s3.endpoint", "S3_ENDPOINT")
+	viper.BindEnv("s3.bucket", "S3_BUCKET")
+	viper.BindEnv("s3.region", "S3_REGION")
+	viper.BindEnv("s3.access_key", "S3_ACCESS_KEY")
+	viper.BindEnv("s3.secret_key", "S3_SECRET_KEY")
+	viper.BindEnv("s3.use_ssl", "S3_USE_SSL")
+
+	viper.SetDefault("s3.use_ssl", true)
+
+	// Set default for free deployments limit
+	viper.SetDefault("stripe.free_deployments_limit", 1)
+	viper.SetDefault("app.deploy_domain", "nixopus.com")
+
+	// Trail provisioning configuration
+	viper.BindEnv("trail.max_concurrent_trails", "MAX_CONCURRENT_TRAILS")
+	viper.BindEnv("trail.default_image", "DEFAULT_IMAGE_CONTAINER_NAME")
+	viper.BindEnv("trail.allowed_images", "ALLOWED_TRAIL_IMAGES")
+	viper.BindEnv("trail.trail_domain", "TRAIL_DOMAIN")
+
+	// Trail defaults (matching abyss defaults)
+	viper.SetDefault("trail.max_concurrent_trails", 7)
+	viper.SetDefault("trail.default_image", "nixopus-trail")
+	viper.SetDefault("trail.allowed_images", []string{"nixopus-trail"})
+	viper.SetDefault("trail.trail_domain", "nixopus.com")
+
+	// Live gateway
+	viper.BindEnv("live.chunk_size", "NIXOPUS_LIVE_CHUNK_SIZE")
+	viper.BindEnv("live.completion_workers", "NIXOPUS_LIVE_COMPLETION_WORKERS")
+	viper.BindEnv("live.completion_buffer", "NIXOPUS_LIVE_COMPLETION_BUFFER")
+	viper.BindEnv("live.pending_completions_tick", "NIXOPUS_LIVE_PENDING_COMPLETIONS_TICK")
+	viper.BindEnv("live.read_buffer_size", "NIXOPUS_LIVE_READ_BUFFER_SIZE")
+	viper.BindEnv("live.write_buffer_size", "NIXOPUS_LIVE_WRITE_BUFFER_SIZE")
+	viper.BindEnv("live.read_deadline", "NIXOPUS_LIVE_READ_DEADLINE")
+	viper.BindEnv("live.write_deadline", "NIXOPUS_LIVE_WRITE_DEADLINE")
+	viper.BindEnv("live.file_inject_retries", "NIXOPUS_LIVE_FILE_INJECT_RETRIES")
+	viper.BindEnv("live.build_debounce", "NIXOPUS_LIVE_BUILD_DEBOUNCE")
+	viper.BindEnv("live.generated_dockerfile_name", "NIXOPUS_LIVE_GENERATED_DOCKERFILE_NAME")
+	viper.BindEnv("live.max_indexable_size", "NIXOPUS_LIVE_MAX_INDEXABLE_SIZE")
+	viper.BindEnv("live.check_origin", "NIXOPUS_LIVE_CHECK_ORIGIN")
+	viper.BindEnv("live.allowed_origins", "NIXOPUS_LIVE_ALLOWED_ORIGINS")
+
+	viper.SetDefault("live.chunk_size", 64*1024)
+	viper.SetDefault("live.completion_workers", 4)
+	viper.SetDefault("live.completion_buffer", 256)
+	viper.SetDefault("live.pending_completions_tick", "10ms")
+	viper.SetDefault("live.read_buffer_size", 256*1024)
+	viper.SetDefault("live.write_buffer_size", 256*1024)
+	viper.SetDefault("live.read_deadline", "5m")
+	viper.SetDefault("live.write_deadline", "10s")
+	viper.SetDefault("live.file_inject_retries", 3)
+	viper.SetDefault("live.build_debounce", "3s")
+	viper.SetDefault("live.generated_dockerfile_name", "Dockerfile.nixopus.dev")
+	viper.SetDefault("live.max_indexable_size", 512000)
+	viper.SetDefault("live.check_origin", false)
 }
 
 func validateConfig(config types.Config) error {
@@ -222,35 +317,14 @@ func validateConfig(config types.Config) error {
 		errors = append(errors, "redis URL is required")
 	}
 
-	if config.SSH.Host == "" {
-		errors = append(errors, "SSH host is required")
-	}
-	if config.SSH.User == "" {
-		errors = append(errors, "SSH user is required")
-	}
-
-	if config.Deployment.MountPath == "" {
-		errors = append(errors, "deployment mount path is required")
-	}
-
-	if config.Proxy.CaddyEndpoint == "" {
-		errors = append(errors, "proxy caddy endpoint is required")
-	}
-
 	if config.CORS.AllowedOrigin == "" {
 		errors = append(errors, "CORS allowed origin is required")
 	}
-	if config.Supertokens.APIKey == "" {
-		errors = append(errors, "SuperTokens API key is required")
+	if config.BetterAuth.URL == "" {
+		errors = append(errors, "Better Auth URL is required")
 	}
-	if config.Supertokens.APIDomain == "" {
-		errors = append(errors, "SuperTokens API domain is required")
-	}
-	if config.Supertokens.WebsiteDomain == "" {
-		errors = append(errors, "SuperTokens website domain is required")
-	}
-	if config.Supertokens.ConnectionURI == "" {
-		errors = append(errors, "SuperTokens connection URI is required")
+	if config.BetterAuth.Secret == "" {
+		errors = append(errors, "Better Auth secret is required")
 	}
 
 	if len(errors) > 0 {
@@ -258,4 +332,25 @@ func validateConfig(config types.Config) error {
 	}
 
 	return nil
+}
+
+// GetDeployDomain returns the base domain for generated app URLs.
+// Uses AppConfig when initialized, otherwise DEPLOY_DOMAIN env, otherwise default.
+func GetDeployDomain() string {
+	if AppConfig.App.DeployDomain != "" {
+		return AppConfig.App.DeployDomain
+	}
+	if domain := os.Getenv("DEPLOY_DOMAIN"); domain != "" {
+		return domain
+	}
+	return "nixopus.com"
+}
+
+// BuildDeployDomainURL builds the full deploy URL from project/application ID.
+// Format: https://{first-8-chars}.{deploy_domain}
+func BuildDeployDomainURL(projectID string) string {
+	if projectID == "" || len(projectID) < 8 {
+		return ""
+	}
+	return "https://" + projectID[:8] + "." + GetDeployDomain()
 }

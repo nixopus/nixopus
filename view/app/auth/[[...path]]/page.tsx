@@ -1,43 +1,134 @@
 'use client';
-import { ResetPasswordUsingToken } from 'supertokens-auth-react/recipe/emailpassword/prebuiltui';
-import { LoginForm } from '@/components/features/login-form';
-import useAuth from '../hooks/use-auth';
+import { cn } from '@/lib/utils';
+import { LoginForm } from '@/packages/components/login-form';
+import { OtpLoginForm } from '@/packages/components/otp-login-form';
+import { ForgotPasswordForm } from '@/packages/components/forgot-password-form';
+import { ResetPasswordForm } from '@/packages/components/reset-password-form';
+import useAuth from '@/packages/hooks/auth/use-auth';
+import useOtpAuth from '@/packages/hooks/auth/use-otp-auth';
+import { usePasswordLoginEnabled } from '@/packages/hooks/shared/use-config';
+import { useIsAdminRegisteredQuery } from '@/redux/services/users/authApi';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function Auth() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const passwordLoginEnabled = usePasswordLoginEnabled();
+  const { data: isAdminRegistered } = useIsAdminRegisteredQuery();
+
+  const isResetPasswordPage = pathname === '/auth/reset-password';
+  const resetToken = searchParams.get('token');
+  const showForgotPassword = isResetPasswordPage && !resetToken;
+  const showResetPassword = isResetPasswordPage && !!resetToken;
+
+  // Redirect password-related pages to main auth when password login is disabled
+  const isPasswordRelatedPage = showForgotPassword || showResetPassword;
+  useEffect(() => {
+    if (passwordLoginEnabled === false && isPasswordRelatedPage) {
+      router.replace('/auth');
+    }
+  }, [passwordLoginEnabled, isPasswordRelatedPage, router]);
+
   const {
     isLoading,
-    handleEmailChange,
+    handleEmailChange: handleEmailLoginChange,
     handleLogin,
-    email,
+    email: loginEmail,
     password,
     handlePasswordChange,
-    loaded
+    loaded: loginLoaded
   } = useAuth();
+
+  const {
+    isSendingOtp,
+    isVerifyingOtp,
+    handleEmailChange: handleOtpEmailChange,
+    handleOtpChange,
+    handleSendOtp,
+    handleVerifyOtp,
+    handleChangeEmail,
+    email: otpEmail,
+    otp,
+    otpSent,
+    loaded: otpLoaded
+  } = useOtpAuth();
+
+  const loaded =
+    passwordLoginEnabled === null ? false : passwordLoginEnabled ? loginLoaded : otpLoaded;
 
   if (!loaded) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+      <div className="flex h-screen flex-col items-center justify-center bg-background">
+        <div className="flex items-center gap-1.5">
+          <div
+            className="app-loading-dot h-1.5 w-1.5 rounded-full bg-primary/60"
+            style={{ animationDelay: '0ms' }}
+          />
+          <div
+            className="app-loading-dot h-1.5 w-1.5 rounded-full bg-primary/60"
+            style={{ animationDelay: '150ms' }}
+          />
+          <div
+            className="app-loading-dot h-1.5 w-1.5 rounded-full bg-primary/60"
+            style={{ animationDelay: '300ms' }}
+          />
+        </div>
       </div>
     );
   }
 
-  const path = typeof window !== 'undefined' ? window.location.pathname : '';
-  const isResetPath = path === '/auth/reset-password';
+  if (showForgotPassword && passwordLoginEnabled) {
+    return (
+      <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-sm md:max-w-md">
+          <ForgotPasswordForm />
+        </div>
+      </div>
+    );
+  }
+
+  if (showResetPassword && resetToken && passwordLoginEnabled) {
+    return (
+      <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-sm md:max-w-md">
+          <ResetPasswordForm token={resetToken} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm md:max-w-3xl">
-        {isResetPath ? (
-          <ResetPasswordUsingToken />
-        ) : (
+      <div
+        className={cn(
+          'w-full',
+          passwordLoginEnabled ? 'max-w-sm md:max-w-3xl' : 'max-w-sm md:max-w-md'
+        )}
+      >
+        {passwordLoginEnabled ? (
           <LoginForm
-            email={email}
+            email={loginEmail}
             password={password}
-            handleEmailChange={handleEmailChange}
+            handleEmailChange={handleEmailLoginChange}
             handlePasswordChange={handlePasswordChange}
             handleLogin={handleLogin}
             isLoading={isLoading}
+            hideRegistration={isAdminRegistered}
+          />
+        ) : (
+          <OtpLoginForm
+            email={otpEmail}
+            otp={otp}
+            handleEmailChange={handleOtpEmailChange}
+            handleOtpChange={handleOtpChange}
+            handleSendOtp={handleSendOtp}
+            handleVerifyOtp={handleVerifyOtp}
+            handleChangeEmail={handleChangeEmail}
+            isSendingOtp={isSendingOtp}
+            isVerifyingOtp={isVerifyingOtp}
+            otpSent={otpSent}
           />
         )}
       </div>

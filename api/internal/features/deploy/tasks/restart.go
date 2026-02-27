@@ -3,7 +3,6 @@ package tasks
 import (
 	"context"
 
-	"github.com/docker/docker/api/types/swarm"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -45,8 +44,14 @@ func (s *TaskService) HandleRestart(ctx context.Context, TaskPayload shared_type
 
 	taskCtx.LogAndUpdateStatus("Restarting application service", shared_types.Deploying)
 
+	dockerService, err := s.getDockerService(ctx)
+	if err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to get docker service: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
 	// Find the existing service
-	existingService, err := s.getExistingService(TaskPayload, taskCtx)
+	existingService, err := s.getExistingService(ctx, TaskPayload, taskCtx)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to find service: "+err.Error(), shared_types.Failed)
 		return err
@@ -59,19 +64,10 @@ func (s *TaskService) HandleRestart(ctx context.Context, TaskPayload shared_type
 
 	taskCtx.AddLog("Restarting service " + existingService.ID)
 
-	// Get current service spec
-	services, err := s.DockerRepo.GetClusterServices()
+	currentService, err := dockerService.GetServiceByID(existingService.ID)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to get service details: "+err.Error(), shared_types.Failed)
 		return err
-	}
-
-	var currentService swarm.Service
-	for _, service := range services {
-		if service.ID == existingService.ID {
-			currentService = service
-			break
-		}
 	}
 
 	if currentService.ID == "" {
@@ -79,8 +75,7 @@ func (s *TaskService) HandleRestart(ctx context.Context, TaskPayload shared_type
 		return types.ErrContainerNotRunning
 	}
 
-	// Note : Restart service by updating it with the same spec will restart the service so we don't need to specifically restart the services
-	err = s.DockerRepo.UpdateService(existingService.ID, currentService.Spec, "")
+	err = dockerService.UpdateService(existingService.ID, currentService.Spec, "")
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to restart service: "+err.Error(), shared_types.Failed)
 		return err

@@ -1,11 +1,17 @@
 let config: any = null;
+let configPromise: Promise<any> | null = null;
 
 async function fetchConfig() {
-  if (!config) {
-    const response = await fetch('/api/config');
-    config = await response.json();
+  if (config) return config;
+  if (!configPromise) {
+    configPromise = fetch('/api/config')
+      .then((r) => r.json())
+      .then((c) => {
+        config = c;
+        return c;
+      });
   }
-  return config;
+  return configPromise;
 }
 
 export async function getBaseUrl() {
@@ -26,4 +32,9 @@ export async function getWebhookUrl() {
 export async function getWebsiteDomain() {
   const { websiteDomain } = await fetchConfig();
   return websiteDomain;
+}
+
+export async function getPasswordLoginEnabled() {
+  const { passwordLoginEnabled } = await fetchConfig();
+  return passwordLoginEnabled;
 }

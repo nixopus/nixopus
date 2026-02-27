@@ -34,9 +34,13 @@ func (c *DeployController) GetApplicationById(f fuego.ContextNoBody) (*types.App
 	application, err := c.service.GetApplicationById(id, organizationID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
+		status := http.StatusInternalServerError
+		if err.Error() == "application not found" {
+			status = http.StatusNotFound
+		}
 		return nil, fuego.HTTPError{
 			Err:    err,
-			Status: http.StatusInternalServerError,
+			Status: status,
 		}
 	}
 

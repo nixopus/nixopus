@@ -1,13 +1,17 @@
 package controller
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/update/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/update/types"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -69,7 +73,18 @@ func (c *UpdateController) CheckForUpdates(s fuego.ContextNoBody) (*types.Update
 
 		if autoUpdate {
 			go func() {
-				if err := c.service.PerformUpdate(); err != nil {
+				// Get organization ID from request context
+				orgID := utils.GetOrganizationID(r)
+				if orgID == uuid.Nil {
+					c.logger.Log(logger.Error, "failed to perform auto-update", "organization ID not found in context")
+					return
+				}
+				orgCtx := r.Context()
+				if orgCtx == nil {
+					orgCtx = context.Background()
+				}
+				orgCtx = context.WithValue(orgCtx, shared_types.OrganizationIDKey, orgID.String())
+				if err := c.service.PerformUpdate(orgCtx); err != nil {
 					c.logger.Log(logger.Error, "failed to perform auto-update", err.Error())
 				}
 			}()
@@ -122,7 +137,17 @@ func (c *UpdateController) PerformUpdate(s fuego.ContextWithBody[types.UpdateReq
 		}, nil
 	}
 
-	if err := c.service.PerformUpdate(); err != nil {
+	// Get organization ID from request context
+	orgID := utils.GetOrganizationID(r)
+	if orgID == uuid.Nil {
+		return nil, fuego.HTTPError{
+			Err:    fmt.Errorf("organization ID not found in context"),
+			Status: http.StatusBadRequest,
+		}
+	}
+	orgCtx := r.Context()
+	orgCtx = context.WithValue(orgCtx, "organization_id", orgID.String())
+	if err := c.service.PerformUpdate(orgCtx); err != nil {
 		c.logger.Log(logger.Error, "failed to perform update", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,

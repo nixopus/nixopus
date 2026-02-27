@@ -10,6 +10,7 @@ type ExtensionMetadata struct {
 	Type        string `yaml:"type"`
 	Version     string `yaml:"version"`
 	IsVerified  bool   `yaml:"isVerified"`
+	Featured    bool   `yaml:"featured"`
 }
 
 type ExtensionVariable struct {

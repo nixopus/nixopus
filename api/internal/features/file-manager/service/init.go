@@ -2,29 +2,19 @@ package service
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 )
 
 type FileManagerService struct {
 	logger logger.Logger
-	Ctx    context.Context
-	sshpkg *goph.Client
+	store  *shared_storage.Store
 }
 
-func NewFileManagerService(ctx context.Context, logger logger.Logger) *FileManagerService {
-	manager := ssh.GetSSHManager()
-	client, err := manager.Connect()
-	if err != nil {
-		fmt.Printf("Failed to create ssh client in file manager")
-		return &FileManagerService{}
-	}
+func NewFileManagerService(ctx context.Context, store *shared_storage.Store, logger logger.Logger) *FileManagerService {
 	return &FileManagerService{
 		logger: logger,
-		Ctx:    ctx,
-		sshpkg: client,
+		store:  store,
 	}
 }

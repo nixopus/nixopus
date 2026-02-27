@@ -18,6 +18,7 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 	fuego.Post(applicationGroup, "/project", deployController.HandleCreateProject)
 	fuego.Post(applicationGroup, "/project/deploy", deployController.HandleDeployProject)
 	fuego.Post(applicationGroup, "/project/duplicate", deployController.HandleDuplicateProject)
+	fuego.Post(applicationGroup, "/project/add-to-family", deployController.HandleAddApplicationToFamily)
 	fuego.Get(applicationGroup, "/project/family", deployController.HandleGetProjectFamily)
 	fuego.Get(applicationGroup, "/project/family/environments", deployController.HandleGetEnvironmentsInFamily)
 	fuego.Get(applicationGroup, "", deployController.GetApplicationById)
@@ -31,4 +32,7 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 	fuego.Get(applicationGroup, "/deployments/{deployment_id}/logs", deployController.GetDeploymentLogs)
 	fuego.Get(applicationGroup, "/deployments", deployController.GetApplicationDeployments)
 	fuego.Put(applicationGroup, "/labels", deployController.UpdateApplicationLabels)
+	fuego.Post(applicationGroup, "/domains", deployController.AddApplicationDomain)
+	fuego.Delete(applicationGroup, "/domains", deployController.RemoveApplicationDomain)
+	fuego.Post(applicationGroup, "/recover", deployController.HandleRecover)
 }

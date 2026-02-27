@@ -3,11 +3,12 @@ metadata:
   name: "Postiz"
   description: "Postiz is an open-source social media management platform for scheduling posts across multiple platforms including X/Twitter, LinkedIn, Reddit, Facebook, Instagram, TikTok, YouTube, Pinterest, and more."
   author: "Nixopus Team"
-  icon: "📱"
-  category: "Containers"
+  icon: "https://postiz.com/_next/static/media/logo.7379cc96.svg"
+  category: "Social"
   type: "install"
   version: "1.0.0"
   isVerified: false
+  featured: true
 
 variables:
   container_name:

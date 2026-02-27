@@ -2,26 +2,36 @@ package middleware
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
+	"log"
+	"net/http"
+	"strings"
+
+	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/cache"
-	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
+	betterauth "github.com/raghavyuva/nixopus-api/internal/features/auth"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-	"github.com/supertokens/supertokens-golang/recipe/session"
-	"net/http"
-	"strings"
 )
 
 // AuthMiddleware is a middleware that checks if the request has a valid
-// SuperTokens session. If the session is valid, it adds both the user and
+// Better Auth session. If the session is valid, it adds both the user and
 // the authenticated client to the request context.
 func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) http.Handler {
-	return session.VerifySession(nil, func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		// Get the session from the request context
-		sessionContainer := session.GetSessionFromRequestContext(ctx)
-		userID := sessionContainer.GetUserID()
+		// Verify Better Auth session
+		sessionResp, err := betterauth.VerifySession(r)
+		if err != nil {
+			log.Printf("ERROR AuthMiddleware: Session auth failed for path %s: %v", r.URL.Path, err)
+			utils.SendErrorResponse(w, "Unauthorized: "+err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		betterAuthUserID := sessionResp.User.ID
 
 		// Optionally cache can be disabled by setting the X-Disable-Cache header to true
 		disableCache := r.Header.Get("X-Disable-Cache")
@@ -29,68 +39,48 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 			cache = nil
 		}
 
-		// Get user details from database
-		userStorage := user_storage.UserStorage{
-			DB:  app.Store.DB,
-			Ctx: ctx,
+		// Get user details from Better Auth user table (matching auth_schema.ts)
+		var user types.User
+		userIDUUID, err := uuid.Parse(betterAuthUserID)
+		if err != nil {
+			log.Printf("ERROR AuthMiddleware: Invalid Better Auth user ID format: %s", betterAuthUserID)
+			utils.SendErrorResponse(w, "Invalid user ID", http.StatusUnauthorized)
+			return
 		}
 
-		var user *types.User
-		var err error
+		err = app.Store.DB.NewSelect().
+			Model(&user).
+			Where("id = ?", userIDUUID).
+			Scan(ctx)
 
-		// Try to get user from cache first
-		if cache != nil {
-			if cachedUser, err := cache.GetUser(ctx, userID); err == nil && cachedUser != nil {
-				user = cachedUser
-			}
-		}
-
-		// If not in cache, fetch from database using SuperTokens user ID
-		if user == nil {
-			user, err = userStorage.FindUserBySupertokensID(userID)
-			if err != nil {
+		if err != nil {
+			if err == sql.ErrNoRows {
+				log.Printf("ERROR AuthMiddleware: User not found in Better Auth user table with ID %s", betterAuthUserID)
 				utils.SendErrorResponse(w, "User not found", http.StatusUnauthorized)
 				return
 			}
-
-			// Cache the user for future requests
-			if cache != nil {
-				cache.SetUser(ctx, user.Email, user)
-			}
+			log.Printf("ERROR AuthMiddleware: Failed to query Better Auth user table: %v", err)
+			utils.SendErrorResponse(w, "Failed to fetch user", http.StatusInternalServerError)
+			return
 		}
 
-		// TODO: Add 2FA verification logic here (claims has to be sest by overriding supertokens session claims)
-		ctx = context.WithValue(ctx, types.UserContextKey, user)
+		// Compute backward compatibility fields
+		user.ComputeCompatibilityFields()
+
+		// Use user directly in context
+		ctx = context.WithValue(ctx, types.UserContextKey, &user)
 
 		if !isAuthEndpoint(r.URL.Path) {
-			organizationID := r.Header.Get("X-Organization-Id")
-			if organizationID == "" {
-				utils.SendErrorResponse(w, "No organization ID provided", http.StatusBadRequest)
+			// Resolve and verify organization membership (reuse sessionResp to avoid duplicate VerifySession call)
+			organizationID, err := resolveAndVerifyOrganization(ctx, r, cache, betterAuthUserID, sessionResp)
+			if err != nil {
+				log.Printf("ERROR AuthMiddleware: Failed to resolve organization: %v", err)
+				statusCode := http.StatusBadRequest
+				if strings.Contains(err.Error(), "does not belong") {
+					statusCode = http.StatusForbidden
+				}
+				utils.SendErrorResponse(w, err.Error(), statusCode)
 				return
-			}
-
-			var belongsToOrg bool
-			if cache != nil {
-				if cached, err := cache.GetOrgMembership(ctx, user.ID.String(), organizationID); err == nil {
-					belongsToOrg = cached
-				}
-			}
-
-			if !belongsToOrg {
-				belongsToOrg, err = userStorage.UserBelongsToOrganization(user.ID.String(), organizationID)
-				if err != nil {
-					utils.SendErrorResponse(w, "Error verifying organization membership", http.StatusInternalServerError)
-					return
-				}
-
-				if !belongsToOrg {
-					utils.SendErrorResponse(w, "User does not belong to the specified organization", http.StatusForbidden)
-					return
-				}
-
-				if cache != nil {
-					cache.SetOrgMembership(ctx, user.ID.String(), organizationID, belongsToOrg)
-				}
 			}
 
 			ctx = context.WithValue(ctx, types.OrganizationIDKey, organizationID)
@@ -103,6 +93,7 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 
 func isAuthEndpoint(path string) bool {
 	authPaths := []string{
+		"/api/v1/auth/bootstrap",
 		"/api/v1/auth/login",
 		"/api/v1/auth/2fa-login",
 		"/api/v1/auth/verify-2fa",
@@ -118,6 +109,8 @@ func isAuthEndpoint(path string) bool {
 		"/api/v1/user/",
 		"/api/v1/user/organizations",
 		"/api/v1/user/name",
+		// Better Auth endpoints
+		"/api/auth",
 	}
 
 	for _, authPath := range authPaths {
@@ -126,4 +119,78 @@ func isAuthEndpoint(path string) bool {
 		}
 	}
 	return false
+}
+
+// extractOrgIDFromSession extracts organization ID from session response or X-Organization-Id header.
+func extractOrgIDFromSession(sessionResp *betterauth.SessionResponse, r *http.Request) string {
+	if sessionResp != nil && sessionResp.Session.ActiveOrganizationID != nil && *sessionResp.Session.ActiveOrganizationID != "" {
+		return *sessionResp.Session.ActiveOrganizationID
+	}
+	return r.Header.Get("X-Organization-Id")
+}
+
+// resolveAndVerifyOrganization resolves the organization ID from the already-verified session
+// and verifies user membership via Better Auth API (with caching).
+func resolveAndVerifyOrganization(
+	ctx context.Context,
+	r *http.Request,
+	cache *cache.Cache,
+	betterAuthUserID string,
+	sessionResp *betterauth.SessionResponse,
+) (string, error) {
+	// Extract organization ID from session (already verified, no duplicate API call)
+	organizationID := extractOrgIDFromSession(sessionResp, r)
+	if organizationID == "" {
+		return "", fmt.Errorf("no organization ID found in Better Auth session")
+	}
+
+	// Check organization membership via Better Auth API (with caching)
+	belongsToOrg, err := verifyOrganizationMembership(ctx, r, cache, betterAuthUserID, organizationID)
+	if err != nil {
+		return "", fmt.Errorf("user %s does not belong to organization %s: %w", betterAuthUserID, organizationID, err)
+	}
+
+	if !belongsToOrg {
+		return "", fmt.Errorf("user %s does not belong to organization %s", betterAuthUserID, organizationID)
+	}
+
+	return organizationID, nil
+}
+
+// verifyOrganizationMembership verifies if a user belongs to an organization.
+// Uses cache to avoid repeated API calls. When fetching from API, also populates
+// RBAC cache so RBAC middleware avoids a duplicate Better Auth API call.
+func verifyOrganizationMembership(
+	ctx context.Context,
+	r *http.Request,
+	cache *cache.Cache,
+	betterAuthUserID string,
+	organizationID string,
+) (bool, error) {
+	// Check cache first
+	if cache != nil {
+		if cached, err := cache.GetOrgMembership(ctx, betterAuthUserID, organizationID); err == nil && cached {
+			return true, nil
+		}
+	}
+
+	// Verify membership via Better Auth API
+	member, err := getBetterAuthOrganizationMember(ctx, r, betterAuthUserID, organizationID)
+	if err != nil || member == nil {
+		// Cache negative result to avoid repeated API calls
+		if cache != nil {
+			cache.SetOrgMembership(ctx, betterAuthUserID, organizationID, false)
+		}
+		return false, err
+	}
+
+	// Cache positive result
+	if cache != nil {
+		cache.SetOrgMembership(ctx, betterAuthUserID, organizationID, true)
+	}
+
+	// Populate RBAC cache so RBAC middleware avoids duplicate Better Auth API call
+	cacheRBACPermissionsFromMember(betterAuthUserID, organizationID, member)
+
+	return true, nil
 }

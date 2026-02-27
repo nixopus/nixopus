@@ -3,11 +3,12 @@ metadata:
   name: "Ollama"
   description: "Ollama is a tool for running large language models locally. It provides a simple way to run, create, and share large language models on your own machine with a REST API and command-line interface."
   author: "Nixopus Team"
-  icon: "🤖"
+  icon: "https://ollama.com/public/hello.png"
   category: "Development"
   type: "install"
   version: "1.0.0"
   isVerified: false
+  featured: true
 
 variables:
   image:

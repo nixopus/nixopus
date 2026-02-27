@@ -3,11 +3,12 @@ package controller
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
+	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
+	"github.com/google/uuid"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
@@ -23,13 +24,16 @@ import (
 )
 
 type DeployController struct {
-	store        *shared_storage.Store
-	validator    *validation.Validator
-	service      *service.DeployService
-	ctx          context.Context
-	logger       logger.Logger
-	notification *notification.NotificationManager
-	taskService  *tasks.TaskService
+	store            *shared_storage.Store
+	validator        *validation.Validator
+	service          *service.DeployService
+	storage          *storage.DeployStorage
+	ctx              context.Context
+	logger           logger.Logger
+	notification     *notification.NotificationManager
+	taskService      *tasks.TaskService
+	reconcilerDaemon *caddy.ReconcilerDaemon
+	healthMonitor    *caddy.HealthMonitor
 }
 
 func NewDeployController(
@@ -38,30 +42,60 @@ func NewDeployController(
 	l logger.Logger,
 	notificationManager *notification.NotificationManager,
 ) (*DeployController, error) {
-	storage := storage.DeployStorage{DB: store.DB, Ctx: ctx}
-	docker_repo, err := docker.GetDockerManager().GetDefaultService()
-	if err != nil {
-		l.Log(logger.Error, "Failed to get default docker service", err.Error())
-		return nil, fmt.Errorf("failed to get default docker service: %w", err)
-	}
-	if docker_repo == nil {
-		l.Log(logger.Error, "Docker service is nil", "")
-		return nil, fmt.Errorf("docker service is nil")
-	}
+	deployStorage := storage.DeployStorage{DB: store.DB, Ctx: ctx}
 	github_service := github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx})
-	taskService := tasks.NewTaskService(&storage, l, docker_repo, github_service, store)
+	taskService := tasks.NewTaskService(&deployStorage, l, github_service, store)
 	taskService.SetupCreateDeploymentQueue()
+
+	orgFetcher := newOrgFetcher(store)
+
+	reconcilerDaemon := caddy.NewReconcilerDaemon(&deployStorage, l, 5*time.Minute, orgFetcher)
+	reconcilerDaemon.SetupQueues()
+
+	healthMonitor := caddy.NewHealthMonitor(l, reconcilerDaemon.Reconciler(), 30*time.Second, orgFetcher)
+	healthMonitor.SetupQueue()
+
 	taskService.StartConsumers(ctx)
 
+	reconcilerDaemon.Start(ctx)
+	healthMonitor.Start(ctx)
+
 	return &DeployController{
-		store:        store,
-		validator:    validation.NewValidator(),
-		service:      service.NewDeployService(store, ctx, l, &storage),
-		ctx:          ctx,
-		logger:       l,
-		notification: notificationManager,
-		taskService:  taskService,
+		store:            store,
+		validator:        validation.NewValidator(),
+		service:          service.NewDeployService(store, ctx, l, &deployStorage),
+		storage:          &deployStorage,
+		ctx:              ctx,
+		logger:           l,
+		notification:     notificationManager,
+		taskService:      taskService,
+		reconcilerDaemon: reconcilerDaemon,
+		healthMonitor:    healthMonitor,
 	}, nil
+}
+
+// newOrgFetcher returns a function that queries the DB for all organization IDs
+// that have active SSH keys (i.e. servers attached). These are the orgs whose
+// Caddy instances need monitoring and reconciliation.
+func newOrgFetcher(store *shared_storage.Store) func(ctx context.Context) ([]uuid.UUID, error) {
+	return func(ctx context.Context) ([]uuid.UUID, error) {
+		var orgIDs []uuid.UUID
+		err := store.DB.NewSelect().
+			TableExpr("ssh_keys").
+			ColumnExpr("DISTINCT organization_id").
+			Where("is_active = ?", true).
+			Where("deleted_at IS NULL").
+			Scan(ctx, &orgIDs)
+		if err != nil {
+			return nil, err
+		}
+		return orgIDs, nil
+	}
+}
+
+// Service returns the deploy service instance.
+func (c *DeployController) Service() *service.DeployService {
+	return c.service
 }
 
 // parseAndValidate parses and validates the request body.

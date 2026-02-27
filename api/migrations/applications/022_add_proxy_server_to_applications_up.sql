@@ -1,1 +1,0 @@
-ALTER TABLE applications ADD COLUMN proxy_server VARCHAR(255) NOT NULL DEFAULT 'caddy'; 

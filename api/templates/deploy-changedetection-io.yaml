@@ -3,11 +3,12 @@ metadata:
   name: "Changedetection.io"
   description: "Changedetection.io provides free, open-source web page monitoring, notification and change detection. Uses changedetection.io image from linuxserver.io"
   author: "Nixopus Team"
-  icon: "🔍"
-  category: "Containers"
+  icon: "https://changedetection.io/themes/cdio/assets/images/logo/logo.svg"
+  category: "Monitoring"
   type: "install"
   version: "1.0.0"
   isVerified: false
+  featured: false
 
 variables:
   image:
