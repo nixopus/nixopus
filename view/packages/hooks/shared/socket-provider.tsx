@@ -24,9 +24,9 @@ type WebSocketContextValue = {
 const WebSocketContext = createContext<WebSocketContextValue>({
   isReady: false,
   message: null,
-  sendMessage: () => { },
-  sendJsonMessage: () => { },
-  subscribe: () => () => { }
+  sendMessage: () => {},
+  sendJsonMessage: () => {},
+  subscribe: () => () => {}
 });
 
 interface WebSocketProviderProps {
@@ -54,12 +54,20 @@ export const WebSocketProvider = ({
   const isConnectingRef = useRef(false);
   const messageQueueRef = useRef<string[]>([]);
   const listenersRef = useRef(new Set<(data: string) => void>());
-  const { isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+  const {
+    isAuthenticated,
+    isInitialized,
+    token: reduxToken
+  } = useAppSelector((state) => state.auth);
   const organizationId = useAppSelector((state) => state.user.activeOrganization?.id) || '';
 
   const connectWebSocket = async () => {
-    const session = await authClient.getSession();
-    const token = session?.data?.session?.token || '';
+    // Use Redux token when available to avoid getSession call
+    let token = reduxToken;
+    if (!token) {
+      const session = await authClient.getSession();
+      token = session?.data?.session?.token || '';
+    }
     if (!token) {
       return;
     }
@@ -97,7 +105,8 @@ export const WebSocketProvider = ({
     console.log('Initiating WebSocket connection...');
 
     try {
-      const wsUrl = url || (await getWebsocketUrl()) + '?token=' + token + '&organization-id=' + organizationId;
+      const wsUrl =
+        url || (await getWebsocketUrl()) + '?token=' + token + '&organization-id=' + organizationId;
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {
@@ -200,7 +209,7 @@ export const WebSocketProvider = ({
         wsRef.current = null;
       }
     };
-  }, [isAuthenticated, isInitialized]);
+  }, [isAuthenticated, isInitialized, organizationId]);
 
   const sendMessage = useCallback((data: string) => {
     const ws = wsRef.current;

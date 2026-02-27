@@ -38,9 +38,13 @@ const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryEr
     baseUrl: currentBaseUrl,
     prepareHeaders: async (headers, { getState }) => {
       try {
-        const session = await authClient.getSession();
-        const token = session?.data?.session?.token;
         const state = getState() as RootState;
+        // Use Redux token when available to avoid getSession on every API request
+        let token = state.auth.token;
+        if (!token) {
+          const session = await authClient.getSession();
+          token = session?.data?.session?.token;
+        }
         const organizationId =
           state.user.activeOrganization?.id || state.orgs.organizations[0]?.organization.id;
 

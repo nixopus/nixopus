@@ -122,6 +122,7 @@ export const userApi = createApi({
         };
       },
       providesTags: [{ type: 'User', id: 'ACTIVE_MEMBER' }],
+      keepUnusedDataFor: 120,
       transformResponse: (response: any, meta, { userId }) => {
         // Better Auth returns array of members, find the current user's member record
         let members = response;
@@ -294,6 +295,7 @@ export const userApi = createApi({
         url: USERURLS.CHECK_FOR_UPDATES,
         method: 'GET'
       }),
+      keepUnusedDataFor: 300,
       transformResponse: (response: { data: UpdateCheckResponse }) => {
         return response.data;
       }

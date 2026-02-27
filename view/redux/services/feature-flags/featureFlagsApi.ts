@@ -14,6 +14,7 @@ export const FeatureFlagsApi = createApi({
         method: 'GET'
       }),
       providesTags: [{ type: 'FeatureFlags', id: 'LIST' }],
+      keepUnusedDataFor: 300,
       transformResponse: (response: { data: GetFeatureFlagsResponse }) => {
         return response.data;
       }

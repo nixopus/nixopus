@@ -38,20 +38,17 @@ export const initializeAuth = createAsyncThunk<AuthPayload | null, void, { rejec
       }
 
       try {
-        const userResult = await dispatch(
-          authApi.endpoints.getUserDetails.initiate(undefined)
-        ).unwrap();
+        // Parallelize: getUserDetails and fetchUserOrganizations don't depend on each other
+        const [userResult, organizationsResult] = await Promise.all([
+          dispatch(authApi.endpoints.getUserDetails.initiate(undefined)).unwrap(),
+          dispatch(fetchUserOrganizations())
+            .unwrap()
+            .catch(() => [] as any)
+        ]);
 
-        try {
-          // Use new Better Auth organizations service
-          const organizationsResult = await dispatch(fetchUserOrganizations()).unwrap();
-
-          if (organizationsResult && organizationsResult.length > 0) {
-            const firstOrg = organizationsResult[0];
-            dispatch(setActiveOrganization(firstOrg.organization));
-          }
-        } catch (orgError: any) {
-          // Don't fail auth if organizations can't be loaded
+        if (organizationsResult && organizationsResult.length > 0) {
+          const firstOrg = organizationsResult[0];
+          dispatch(setActiveOrganization(firstOrg.organization));
         }
 
         return {
