@@ -17,6 +17,24 @@
       "attachFile": "Attach file",
       "sendMessage": "Send message"
     },
+    "toolExecution": {
+      "label": "Tool execution",
+      "askBefore": "Ask before executing",
+      "autoRun": "Auto-run tools"
+    },
+    "context": {
+      "addContext": "Add context",
+      "noItems": "No items found",
+      "search": "Search",
+      "apps": "Apps",
+      "containers": "Containers",
+      "domains": "Domains"
+    },
+    "toolApproval": {
+      "title": "Tool approval required",
+      "approve": "Approve",
+      "decline": "Decline"
+    },
     "threads": {
       "newChat": "New Chat",
       "recentChats": "Recent Chats",
@@ -25,7 +43,11 @@
         "description": "Start a new chat above"
       },
       "error": "Failed to load threads",
-      "untitledChat": "Untitled Chat"
+      "untitledChat": "Untitled Chat",
+      "collapseSidebar": "Collapse sidebar",
+      "expandSidebar": "Expand sidebar",
+      "searchChats": "Search chats...",
+      "searchResults": "Search results"
     }
   }
 }

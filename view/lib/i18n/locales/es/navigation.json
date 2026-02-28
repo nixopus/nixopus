@@ -10,6 +10,7 @@
     "team": "Equipo",
     "domains": "Dominios",
     "containers": "Contenedores",
+    "chats": "Chats",
     "layout": {
       "breadcrumbs": {
         "home": "Inicio",

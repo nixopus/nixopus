@@ -51,6 +51,7 @@
         "monitoring": "Monitoring",
         "configuration": "Configuration",
         "deployments": "Deployments",
+        "workflows": "Workflows",
         "logs": "Logs",
         "resources": "Resources"
       },
