@@ -51,8 +51,6 @@ export function useEnvVariablesEditor({
   const [pastePreviewOpen, setPastePreviewOpen] = useState(false);
   const [pastePreviewItems, setPastePreviewItems] = useState<PastePreviewItem[]>([]);
 
-  // Sync local variables from props whenever fresh data arrives (e.g. after refresh or new get).
-  // Always run when defaultValues reference changes so refetched data is previewed.
   useEffect(() => {
     const vars =
       defaultValues && Object.keys(defaultValues).length > 0
